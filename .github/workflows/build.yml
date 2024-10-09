@@ -19,6 +19,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf,thumbv7em-none-eabi
       
       - name: Build
         working-directory: ${{ matrix.board_directory }}
