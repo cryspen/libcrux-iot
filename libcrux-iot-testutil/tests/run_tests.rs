@@ -30,12 +30,13 @@ fn run_tests_no_early_abort() {
         core_freq: 25_000_000,
         only_names: vec!["test_pass", "test_log", "test_error"],
         early_abort: false,
+        benchmark_runs: 5,
     };
 
     let mut logger = VecLogger::default();
 
-    let err = test_config
-        .run_test_suite(&mut logger, test_suite)
+    let err = test_suite
+        .run(&mut logger, &test_config)
         .expect_err("expected test suite failure");
 
     assert_eq!(
@@ -54,19 +55,19 @@ fn run_tests_no_early_abort() {
     assert_eq!(
         events[1],
         TestUtilEvent::Test(TestEvent::Run {
-            test_name: "test_pass".to_string()
+            name: "test_pass".to_string()
         })
     );
     assert_eq!(
         events[2],
         TestUtilEvent::Test(TestEvent::Pass {
-            test_name: "test_pass".to_string()
+            name: "test_pass".to_string()
         })
     );
     assert_eq!(
         events[3],
         TestUtilEvent::Test(TestEvent::Run {
-            test_name: "test_log".to_string()
+            name: "test_log".to_string()
         })
     );
     assert_eq!(
@@ -76,26 +77,26 @@ fn run_tests_no_early_abort() {
     assert_eq!(
         events[5],
         TestUtilEvent::Test(TestEvent::Pass {
-            test_name: "test_log".to_string()
+            name: "test_log".to_string()
         })
     );
     assert_eq!(
         events[6],
         TestUtilEvent::Test(TestEvent::Run {
-            test_name: "test_error".to_string()
+            name: "test_error".to_string()
         })
     );
     assert_eq!(
         events[7],
         TestUtilEvent::Test(TestEvent::Error {
-            test_name: "test_error".to_string(),
+            name: "test_error".to_string(),
             error_message: "an error occurred!".to_string()
         })
     );
     assert_eq!(
         events[8],
         TestUtilEvent::Test(TestEvent::Skip {
-            test_name: "test_skip".to_string()
+            name: "test_skip".to_string()
         })
     );
 }
