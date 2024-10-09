@@ -12,6 +12,7 @@ env:
 
 jobs:
   build:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         board_directory: [libcrux-nrf52840, libcrux-nucleo-l4r5zi]
