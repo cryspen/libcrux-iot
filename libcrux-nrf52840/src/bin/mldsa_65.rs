@@ -43,7 +43,7 @@ fn main() -> ! {
     let counter_start = rtc.get_counter();
     rtc.enable_counter();
     for _ in 0..100 {
-        let _ = ml_dsa_65::sign(&keypair.signing_key, &message, signing_randomness);
+        let _ = ml_dsa_65::sign(&keypair.signing_key, &message, b"", signing_randomness);
     }
     rtc.disable_counter();
     let counter_end = rtc.get_counter();
@@ -52,13 +52,13 @@ fn main() -> ! {
     let time_sign_avg = counter_sign_avg * RTC_RESOLUTION;
     defmt::println!("Took {=f32} µs to sign on average", time_sign_avg);
 
-    let signature = ml_dsa_65::sign(&keypair.signing_key, &message, signing_randomness);
+    let signature = ml_dsa_65::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
 
     defmt::println!("Verifying 100 times.");
     let counter_start = rtc.get_counter();
     rtc.enable_counter();
     for _ in 0..100 {
-        let _ = ml_dsa_65::verify(&keypair.verification_key, &message, &signature).unwrap();
+        let _ = ml_dsa_65::verify(&keypair.verification_key, &message, b"", &signature).unwrap();
     }
     let counter_end = rtc.get_counter();
     let counter_verify_total = counter_end - counter_start;
