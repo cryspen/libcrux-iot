@@ -1,0 +1,24 @@
+name: Build for all boards
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main", *"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        board_directory: [libcrux-nrf52840, libcrux-nucleo-l4r5zi]
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build
+        working-directory: ${{ matrix.board_directory }}
+        run: cargo build
