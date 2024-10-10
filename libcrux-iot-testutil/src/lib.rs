@@ -34,6 +34,7 @@ mod logger;
 
 pub use events::*;
 pub use logger::vec_logger::VecLogger;
+pub use logger::defmt_logger::DefmtInfoLogger;
 pub use logger::EventLogger;
 
 extern crate alloc;
@@ -46,21 +47,21 @@ use alloc::{
 };
 
 /// A test function.
-pub type TestFn<L, E> = fn(l: &mut L) -> Result<(), E>;
+pub type TestFn<L, E, S> = fn(l: &mut L, state: &S) -> Result<(), E>;
 
 #[derive(Debug)]
 /// A test case. The name is used for filtering which tests to run.
-pub struct TestCase<'a, L, E> {
+pub struct TestCase<'a, L, E, S> {
     name: &'a str,
-    test_fn: TestFn<L, E>,
+    test_fn: TestFn<L, E, S>,
 }
 
-impl<'a, L, E> TestCase<'a, L, E> {
-    pub fn new(name: &'a str, test_fn: TestFn<L, E>) -> Self {
+impl<'a, L, E, S> TestCase<'a, L, E, S> {
+    pub fn new(name: &'a str, test_fn: TestFn<L, E, S>) -> Self {
         Self { name, test_fn }
     }
 }
-impl<'a, L, E> TestCase<'a, L, E>
+impl<'a, L, E, S> TestCase<'a, L, E, S>
 where
     L: EventLogger,
     E: Display,
@@ -73,12 +74,12 @@ where
     }
     /// If the configuration permits, runs the test case. Logs the appropriate
     /// messages, and returns the error returned by the test.
-    pub fn run(&self, logger: &mut L) -> Result<(), E> {
+    pub fn run(&self, logger: &mut L, state: &S) -> Result<(), E> {
         logger.log_event(TestUtilEvent::Test(TestEvent::Run {
             name: String::from(self.name),
         }));
 
-        let result = (self.test_fn)(logger);
+        let result = (self.test_fn)(logger, state);
 
         match &result {
             Ok(_) => logger.log_event(TestUtilEvent::Test(TestEvent::Pass {
@@ -97,14 +98,14 @@ where
 
     /// If the configuration permits, runs the test case as a benchmark. Logs the
     /// appropriate messages, and returns the error returned by the test.
-    pub fn benchmark(&self, logger: &mut L, run_id: u32) -> Result<u32, E> {
+    pub fn benchmark(&self, logger: &mut L, run_id: u32, state: &S) -> Result<u32, E> {
         logger.log_event(TestUtilEvent::Benchmark(BenchmarkEvent::Run {
             name: String::from(self.name),
             run_id,
         }));
 
         let cycles_start = cortex_m::peripheral::DWT::cycle_count();
-        let result = core::hint::black_box((self.test_fn)(logger));
+        let result = core::hint::black_box((self.test_fn)(logger, state));
         let cycles_end = cortex_m::peripheral::DWT::cycle_count();
         let cycles = cycles_end - cycles_start;
 
@@ -129,21 +130,26 @@ where
 
 #[derive(Default)]
 /// A test suite containing all the tests that can be run
-pub struct TestSuite<'a, L, E>(Vec<TestCase<'a, L, E>>);
+pub struct TestSuite<'a, L, E, S>(Vec<TestCase<'a, L, E, S>>);
 
-impl<'a, L, E: Debug> TestSuite<'a, L, E> {
+impl<'a, L, E: Debug, S> TestSuite<'a, L, E, S> {
+    pub fn new() -> Self {
+        Self (
+            Vec::new()
+        )
+    }
     /// Registers a new test in the test suite.
-    pub fn register(&mut self, name: &'a str, test_fn: TestFn<L, E>) {
+    pub fn register(&mut self, name: &'a str, test_fn: TestFn<L, E, S>) {
         self.0.push(TestCase { name, test_fn })
     }
 }
 
-impl<'a, L: EventLogger, E: Display> TestSuite<'a, L, E> {
+impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
     /// Runs the test suite using the given logger. If `early_abort` is set, it
     /// returns the first error, wrapped in [`ErrorReport::EarlyAbort`].
     /// Otherwise it runs all tests and, if errors were encountered, returns the
     /// vector of all errors wrapped in [`ErrorReport::Combined`].
-    pub fn run(&self, logger: &mut L, config: &TestConfig<'a>) -> Result<(), ErrorReport<E>>
+    pub fn run(&self, logger: &mut L, config: &TestConfig<'a>, state: &S) -> Result<(), ErrorReport<E>>
     where
         E: Display,
     {
@@ -162,7 +168,7 @@ impl<'a, L: EventLogger, E: Display> TestSuite<'a, L, E> {
                 continue;
             }
 
-            if let Err(err) = test_case.run(logger) {
+            if let Err(err) = test_case.run(logger, state) {
                 if config.early_abort {
                     return Err(ErrorReport::EarlyAbort(err));
                 } else {
@@ -186,6 +192,7 @@ impl<'a, L: EventLogger, E: Display> TestSuite<'a, L, E> {
         &self,
         logger: &mut L,
         config: &TestConfig<'a>,
+        state: &S
     ) -> Result<Vec<(&'a str, u32, u32)>, ErrorReport<E>>
     where
         E: Display + Debug,
@@ -207,7 +214,7 @@ impl<'a, L: EventLogger, E: Display> TestSuite<'a, L, E> {
             }
 
             for run_id in 0..config.benchmark_runs {
-                let result = test_case.benchmark(logger, run_id);
+                let result = test_case.benchmark(logger, run_id, state);
 
                 if config.early_abort {
                     cycle_infos.push((

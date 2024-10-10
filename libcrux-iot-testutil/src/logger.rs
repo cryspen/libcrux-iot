@@ -48,13 +48,14 @@ pub mod defmt_logger {
     use alloc::string::String;
 
     // A logger that encodes and writes all events using `defmt::info!`.
+    #[derive(Default)]
     pub struct DefmtInfoLogger;
 
     impl EventLogger for DefmtInfoLogger {
         fn log_event(&mut self, ev: TestUtilEvent) {
             let mut encoded = String::with_capacity(64);
             ev.encode(&mut encoded);
-            defmt::info!("{}", encoded);
+            defmt::info!("{=str}", encoded);
         }
     }
 }
