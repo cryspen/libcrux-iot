@@ -43,10 +43,10 @@ fn main() -> ! {
     let signing_randomness = [4u8; 32];
     let message = [5u8; 1024];
 
-    let signature = ml_dsa_65::sign(&keypair.signing_key, &message, signing_randomness);
+    let signature = ml_dsa_65::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
     defmt::println!("\tSigning OK");
 
-    let result = ml_dsa_65::verify(&keypair.verification_key, &message, &signature);
+    let result = ml_dsa_65::verify(&keypair.verification_key, &message, b"", &signature);
     defmt::println!("\tVerification OK");
 
     assert!(result.is_ok());
@@ -76,7 +76,7 @@ fn main() -> ! {
             (message, keypair, signing_randomness)
         },
         |(message, keypair, signing_randomness)| {
-            ml_dsa_65::sign(&keypair.signing_key, message, *signing_randomness);
+            let _ = ml_dsa_65::sign(&keypair.signing_key, message, b"", *signing_randomness);
         },
         SIGN_ITERATIONS,
     );
@@ -89,11 +89,11 @@ fn main() -> ! {
             let message = [5u8; 1024];
 
             let keypair = ml_dsa_65::generate_key_pair(randomness_gen);
-            let signature = ml_dsa_65::sign(&keypair.signing_key, &message, signing_randomness);
+            let signature = ml_dsa_65::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
             (message, keypair, signature)
         },
         |(message, keypair, signature)| {
-            ml_dsa_65::verify(&keypair.verification_key, message, signature).unwrap();
+            ml_dsa_65::verify(&keypair.verification_key, message, b"", signature).unwrap();
         },
         VERIFY_ITERATIONS,
     );
