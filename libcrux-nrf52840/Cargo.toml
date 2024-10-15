@@ -20,8 +20,8 @@ defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 nrf52840-hal = "0.18.0"
-libcrux-ml-kem = { git = "https://github.com/cryspen/libcrux.git", default-features = false, features = ["pre-verification", "mlkem512", "mlkem768", "mlkem1024"] }
-libcrux-ml-dsa = { git = "https://github.com/cryspen/libcrux.git" }
+libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = ["pre-verification", "mlkem512", "mlkem768", "mlkem1024"] }
+libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" }
 
 [dev-dependencies]
 defmt-test = "0.3"
