@@ -261,7 +261,7 @@ impl<E: Display> Display for ErrorReport<E> {
         match self {
             ErrorReport::EarlyAbort(err) => err.fmt(f),
             ErrorReport::Combined(errs) => {
-                writeln!(f, "encountered multimple errors:")?;
+                writeln!(f, "encountered multiple errors:")?;
                 for err in errs {
                     writeln!(f, "- {err}")?
                 }
@@ -289,7 +289,7 @@ impl<'a> TestConfig<'a> {
 
                 // handle the flags
                 match (word, value) {
-                    ("--early-abord", _) => early_abort = true,
+                    ("--early-abort", _) => early_abort = true,
                     ("--benchmark-runs", Some(value)) => {
                         benchmark_runs = value.parse().map_err(|err| {
                             alloc::format!("error parsing --benchmark-runs: {err}")
