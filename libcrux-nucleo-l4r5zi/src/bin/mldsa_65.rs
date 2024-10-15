@@ -66,10 +66,13 @@ fn main() -> ! {
     }
 
     // set up the test suite
-    let mut test_suite = TestSuite::new();
-    test_suite.register("bench_keygen", bench_keygen);
-    test_suite.register("bench_sign", bench_sign);
-    test_suite.register("bench_verify", bench_verify);
+    let test_cases = [
+        TestCase::new("bench_keygen", bench_keygen),
+        TestCase::new("bench_sign", bench_sign),
+        TestCase::new("bench_verify", bench_verify),
+    ];
+
+    let test_suite = TestSuite::new(&test_cases);
 
     // set up the test config
     let test_config = TestConfig {

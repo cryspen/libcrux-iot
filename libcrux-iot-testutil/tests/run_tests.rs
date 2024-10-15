@@ -1,30 +1,45 @@
 use libcrux_iot_testutil::VecLogger;
 use libcrux_iot_testutil::*;
 
+extern crate alloc;
+
+#[derive(Debug, PartialEq, Eq)]
+struct TestError;
+
+impl alloc::fmt::Display for TestError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "an error occurred!")
+    }
+}
+
 #[test]
 fn run_tests_no_early_abort() {
-    fn test_pass<L: EventLogger>(_l: &mut L) -> Result<(), String> {
+    fn test_pass<L: EventLogger>(_logger: &mut L, _state: &()) -> Result<(), TestError> {
         Ok(())
     }
 
-    fn test_log<L: EventLogger>(l: &mut L) -> Result<(), String> {
-        l.log_user("this is a test log");
+    fn test_log<L: EventLogger>(logger: &mut L, _state: &()) -> Result<(), TestError> {
+        logger.log_user("this is a test log");
         Ok(())
     }
 
-    fn test_error<L: EventLogger>(_l: &mut L) -> Result<(), String> {
-        Err("an error occurred!".to_string())
+    fn test_error<L: EventLogger>(_logger: &mut L, _state: &()) -> Result<(), TestError> {
+        return Err(TestError);
+        //Err(.to_string())
     }
 
-    fn test_skip<L: EventLogger>(_l: &mut L) -> Result<(), String> {
+    fn test_skip<L: EventLogger>(_logger: &mut L, _state: &()) -> Result<(), TestError> {
         unreachable!()
     }
 
-    let mut test_suite = TestSuite::default();
-    test_suite.register("test_pass", test_pass);
-    test_suite.register("test_log", test_log);
-    test_suite.register("test_error", test_error);
-    test_suite.register("test_skip", test_skip);
+    let cases = [
+        TestCase::new("test_pass", test_pass),
+        TestCase::new("test_log", test_log),
+        TestCase::new("test_error", test_error),
+        TestCase::new("test_pass", test_pass),
+    ];
+
+    let test_suite = TestSuite::new(&cases);
 
     let test_config = TestConfig {
         core_freq: 25_000_000,
@@ -36,13 +51,10 @@ fn run_tests_no_early_abort() {
     let mut logger = VecLogger::default();
 
     let err = test_suite
-        .run(&mut logger, &test_config)
+        .run(&mut logger, &test_config, &())
         .expect_err("expected test suite failure");
 
-    assert_eq!(
-        err,
-        ErrorReport::Combined(vec!["an error occurred!".to_string()])
-    );
+    assert_eq!(err, ErrorReport::Combined(vec![TestError]));
 
     let events = logger.into_events();
 

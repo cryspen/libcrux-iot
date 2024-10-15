@@ -130,15 +130,11 @@ where
 
 #[derive(Default)]
 /// A test suite containing all the tests that can be run
-pub struct TestSuite<'a, L, E, S>(Vec<TestCase<'a, L, E, S>>);
+pub struct TestSuite<'a, L, E, S>(&'a [TestCase<'a, L, E, S>]);
 
 impl<'a, L, E: Debug, S> TestSuite<'a, L, E, S> {
-    pub fn new() -> Self {
-        Self(Vec::new())
-    }
-    /// Registers a new test in the test suite.
-    pub fn register(&mut self, name: &'a str, test_fn: TestFn<L, E, S>) {
-        self.0.push(TestCase { name, test_fn })
+    pub fn new(test_cases: &'a [TestCase<'a, L, E, S>]) -> Self {
+        Self(test_cases)
     }
 }
 
@@ -162,7 +158,7 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
 
         let mut errors = vec![];
 
-        for test_case in &self.0 {
+        for test_case in self.0 {
             if test_case.is_skipped(config) {
                 logger.log_event(TestUtilEvent::Test(TestEvent::Skip {
                     name: String::from(test_case.name),
@@ -207,7 +203,7 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
         let mut cycle_infos = vec![];
         let mut errors = vec![];
 
-        for test_case in &self.0 {
+        for test_case in self.0 {
             if test_case.is_skipped(config) {
                 logger.log_event(TestUtilEvent::Test(TestEvent::Skip {
                     name: String::from(test_case.name),
