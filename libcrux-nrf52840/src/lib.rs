@@ -5,7 +5,7 @@ use cortex_m_semihosting::debug;
 
 use defmt_rtt as _; // global logger
 
-use nrf52840_hal as _; // memory layout
+use embassy_nrf as _; // memory layout
 
 use panic_probe as _;
 
