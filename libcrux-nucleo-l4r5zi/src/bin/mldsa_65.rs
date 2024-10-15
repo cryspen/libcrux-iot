@@ -6,9 +6,9 @@ use embassy_time::{self, Instant};
 use libcrux_ml_dsa::ml_dsa_65;
 use libcrux_nucleo_l4r5zi as _; // global logger + panicking-behavior + memory layout
 
-const KEYGEN_ITERATIONS: usize = 100;
-const SIGN_ITERATIONS: usize = 100;
-const VERIFY_ITERATIONS: usize = 100;
+const KEYGEN_ITERATIONS: usize = 5;
+const SIGN_ITERATIONS: usize = 5;
+const VERIFY_ITERATIONS: usize = 5;
 
 fn time_operation<SetupF, OpF, Input>(
     description: &str,
