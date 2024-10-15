@@ -21,7 +21,8 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = ["pre-verification", "mlkem512", "mlkem768", "mlkem1024"] }
 libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" }
-embassy-stm32 = { version = "0.1.0", features = ["stm32l4r5zi", "defmt"] }
+embassy-time = "0.3.2"
+embassy-stm32 = { version = "0.1.0", features = ["stm32l4r5zi", "defmt", "time", "time-driver-any"] }
 
 [dev-dependencies]
 defmt-test = "0.3"
