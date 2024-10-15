@@ -33,8 +33,8 @@ mod events;
 mod logger;
 
 pub use events::*;
-pub use logger::vec_logger::VecLogger;
 pub use logger::defmt_logger::DefmtInfoLogger;
+pub use logger::vec_logger::VecLogger;
 pub use logger::EventLogger;
 
 extern crate alloc;
@@ -134,9 +134,7 @@ pub struct TestSuite<'a, L, E, S>(Vec<TestCase<'a, L, E, S>>);
 
 impl<'a, L, E: Debug, S> TestSuite<'a, L, E, S> {
     pub fn new() -> Self {
-        Self (
-            Vec::new()
-        )
+        Self(Vec::new())
     }
     /// Registers a new test in the test suite.
     pub fn register(&mut self, name: &'a str, test_fn: TestFn<L, E, S>) {
@@ -149,7 +147,12 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
     /// returns the first error, wrapped in [`ErrorReport::EarlyAbort`].
     /// Otherwise it runs all tests and, if errors were encountered, returns the
     /// vector of all errors wrapped in [`ErrorReport::Combined`].
-    pub fn run(&self, logger: &mut L, config: &TestConfig<'a>, state: &S) -> Result<(), ErrorReport<E>>
+    pub fn run(
+        &self,
+        logger: &mut L,
+        config: &TestConfig<'a>,
+        state: &S,
+    ) -> Result<(), ErrorReport<E>>
     where
         E: Display,
     {
@@ -192,7 +195,7 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
         &self,
         logger: &mut L,
         config: &TestConfig<'a>,
-        state: &S
+        state: &S,
     ) -> Result<Vec<(&'a str, u32, u32)>, ErrorReport<E>>
     where
         E: Display + Debug,

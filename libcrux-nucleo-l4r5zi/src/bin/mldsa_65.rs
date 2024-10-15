@@ -65,25 +65,28 @@ fn main() -> ! {
         peripherals.DWT.enable_cycle_counter();
     }
 
+    // set up the test suite
     let mut test_suite = TestSuite::new();
     test_suite.register("bench_keygen", bench_keygen);
     test_suite.register("bench_sign", bench_sign);
     test_suite.register("bench_verify", bench_verify);
 
+    // set up the test config
     let test_config = TestConfig {
-        core_freq: 25_000_000,
+        core_freq: 4_000_000,
         only_names: vec!["bench_keygen", "bench_sign", "bench_verify"],
         early_abort: false,
         benchmark_runs: 5,
     };
 
-    let mut logger = DefmtInfoLogger;
+    // prepare the state for the benchmarked functions
     let randomness_gen = [1u8; 32];
     let keypair = ml_dsa_65::generate_key_pair(randomness_gen);
     let signing_randomness = [4u8; 32];
     let message = [5u8; 1024];
     let signature =
         ml_dsa_65::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
+
     let state = MLDSABenchState {
         randomness_gen,
         keypair,
@@ -91,6 +94,9 @@ fn main() -> ! {
         message,
         signature,
     };
+
+    // run the benchmark
+    let mut logger = DefmtInfoLogger;
     let _ = test_suite.benchmark(&mut logger, &test_config, &state);
 
     libcrux_nucleo_l4r5zi::exit()
