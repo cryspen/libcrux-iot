@@ -1,11 +1,11 @@
 [package]
 name = "libcrux-ml-kem"
-version.workspace = true
-authors.workspace = true
-license.workspace = true
-homepage.workspace = true
-edition.workspace = true
-repository.workspace = true
+version = "0.0.2-beta.2"
+authors = ["Cryspen"]
+license = "AGPL-3.0-only"
+homepage = "https://github.com/cryspen/libcrux-iot"
+edition = "2021"
+repository = "https://github.com/cryspen/libcrux-iot"
 readme = "README.md"
 description = "Libcrux ML-KEM & Kyber implementations"
 exclude = [
@@ -23,7 +23,7 @@ bench = false # so libtest doesn't eat the arguments to criterion
 
 [dependencies]
 rand = { version = "0.8", optional = true }
-libcrux-platform = { version = "0.0.2-beta.2", path = "../sys/platform" }
+libcrux-platform = { version = "0.0.2-beta.2", path = "../libcrux-platform" }
 libcrux-sha3 = { version = "0.0.2-beta.2", path = "../libcrux-sha3" }
 libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" }
 

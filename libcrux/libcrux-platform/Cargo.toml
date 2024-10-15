@@ -1,13 +1,13 @@
 [package]
 name = "libcrux-platform"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-homepage.workspace = true
-repository.workspace = true
-readme.workspace = true
-description = "Platform detection crate for libcrux."
+version = "0.0.2-beta.2"
+authors = ["Cryspen"]
+license = "AGPL-3.0-only"
+homepage = "https://github.com/cryspen/libcrux-iot"
+edition = "2021"
+repository = "https://github.com/cryspen/libcrux-iot"
+readme = "Readme.md"
+description = "Platform detection crate for libcrux-iot."
 
 [dependencies]
 libc = "0.2.153"

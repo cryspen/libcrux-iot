@@ -1,13 +1,12 @@
 [package]
 name = "libcrux-ml-dsa"
-version.workspace = true
-authors.workspace = true
-license.workspace = true
-homepage.workspace = true
-edition.workspace = true
-repository.workspace = true
-readme.workspace = true
-description = "Libcrux ML-DSA implementation"
+version = "0.0.2-beta.2"
+authors = ["Cryspen"]
+license = "AGPL-3.0-only"
+homepage = "https://github.com/cryspen/libcrux-iot"
+edition = "2021"
+repository = "https://github.com/cryspen/libcrux-iot"
+description = "Libcrux-IoT ML-DSA implementation"
 publish = false
 
 [lib]
@@ -18,7 +17,7 @@ bench = false # so libtest doesn't eat the arguments to criterion
 [dependencies]
 libcrux-sha3 = { version = "0.0.2-beta.2", path = "../libcrux-sha3" }
 libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" }
-libcrux-platform = { version = "0.0.2-beta.2", path = "../sys/platform" }
+libcrux-platform = { version = "0.0.2-beta.2", path = "../libcrux-platform" }
 
 [dev-dependencies]
 rand = { version = "0.8" }

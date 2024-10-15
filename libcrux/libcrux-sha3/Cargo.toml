@@ -1,20 +1,20 @@
 [package]
 name = "libcrux-sha3"
-version.workspace = true
-authors.workspace = true
-license.workspace = true
-homepage.workspace = true
-edition.workspace = true
-repository.workspace = true
+version = "0.0.2-beta.2"
+authors = ["Cryspen"]
+license = "AGPL-3.0-only"
+homepage = "https://github.com/cryspen/libcrux-iot"
+edition = "2021"
+repository = "https://github.com/cryspen/libcrux-iot"
 readme = "README.md"
-description = "Libcrux SHA-3 implementation"
-exclude = ["/proofs", "/c.sh", "/c.yaml", "/tests/tv", "tests/cavp.rs"]
+description = "Libcrux-IoT SHA-3 implementation"
+exclude = ["/c.sh", "/c.yaml", "/tests/tv", "tests/cavp.rs"]
 
 [lib]
 bench = false # so libtest doesn't eat the arguments to criterion
 
 [dependencies]
-libcrux-platform = { version = "0.0.2-beta.2", path = "../sys/platform" }
+libcrux-platform = { version = "0.0.2-beta.2", path = "../libcrux-platform" }
 libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" }
 
 # This is only required for verification.
