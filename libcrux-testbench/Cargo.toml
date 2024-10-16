@@ -1,0 +1,9 @@
+[package]
+name = "libcrux-testbench"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" }
+libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = [ "pre-verification", "mlkem512", "mlkem768", "mlkem1024",] } 
+libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
