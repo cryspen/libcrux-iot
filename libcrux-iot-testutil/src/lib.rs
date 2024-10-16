@@ -57,6 +57,7 @@ pub struct TestCase<'a, L, E, S> {
 }
 
 impl<'a, L, E, S> TestCase<'a, L, E, S> {
+    /// Retuns a new test case with the given name and function.
     pub fn new(name: &'a str, test_fn: TestFn<L, E, S>) -> Self {
         Self { name, test_fn }
     }
@@ -66,6 +67,7 @@ where
     L: EventLogger,
     E: Display,
 {
+    /// Returns whether the test configuration is set to skip the test case.
     pub fn is_skipped(&self, config: &TestConfig) -> bool {
         let all_tests_should_run = config.only_names.is_empty();
         let test_is_selected = config.only_names.contains(&self.name);
@@ -133,6 +135,7 @@ where
 pub struct TestSuite<'a, L, E, S>(&'a [TestCase<'a, L, E, S>]);
 
 impl<'a, L, E: Debug, S> TestSuite<'a, L, E, S> {
+    /// Returns a new test suite containing the passed test cases.
     pub fn new(test_cases: &'a [TestCase<'a, L, E, S>]) -> Self {
         Self(test_cases)
     }

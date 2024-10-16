@@ -37,6 +37,7 @@ pub mod vec_logger {
     }
 
     impl VecLogger {
+        /// Consumes the logger and returns the logged events
         pub fn into_events(self) -> Vec<TestUtilEvent> {
             self.0
         }
