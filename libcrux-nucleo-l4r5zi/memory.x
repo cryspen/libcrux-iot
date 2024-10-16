@@ -7,6 +7,8 @@ MEMORY
 
 /* This is where the call stack will be allocated. */
 /* The stack is of the full descending type. */
-/* You may want to use this variable to locate the call stack and static
-   variables in different memory regions. Below is shown the default value */
+/* We use this variable to locate the call stack and static variables
+   in different memory regions.  For the L4R5ZI, we want to locate it
+   at the top of SRAM3, the largest RAM region.  For more details, see
+   https://md.cryspen.com/68n4HBCpR1qRe17_CRxiaQ */
 _stack_start = 0x200a0000;
