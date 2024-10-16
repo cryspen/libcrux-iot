@@ -24,8 +24,7 @@ fn run_tests_no_early_abort() {
     }
 
     fn test_error<L: EventLogger>(_logger: &mut L, _state: &()) -> Result<(), TestError> {
-        return Err(TestError);
-        //Err(.to_string())
+        Err(TestError)
     }
 
     fn test_skip<L: EventLogger>(_logger: &mut L, _state: &()) -> Result<(), TestError> {
@@ -36,10 +35,10 @@ fn run_tests_no_early_abort() {
         TestCase::new("test_pass", test_pass),
         TestCase::new("test_log", test_log),
         TestCase::new("test_error", test_error),
-        TestCase::new("test_pass", test_pass),
+        TestCase::new("test_skip", test_skip),
     ];
 
-    let test_suite = TestSuite::new(&cases);
+    let test_suite = TestSuite::new("suite for testing", &cases);
 
     let test_config = TestConfig {
         core_freq: 25_000_000,
@@ -61,7 +60,8 @@ fn run_tests_no_early_abort() {
     assert_eq!(
         events[0],
         TestUtilEvent::Launch(LaunchEvent {
-            core_freq: 25_000_000
+            core_freq: 25_000_000,
+            name: "suite for testing".to_string(),
         })
     );
     assert_eq!(

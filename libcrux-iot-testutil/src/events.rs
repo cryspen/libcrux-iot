@@ -18,6 +18,8 @@ pub enum TestUtilEvent {
 /// This is emitted once at the start of a test suite
 #[derive(Debug, PartialEq, Eq)]
 pub struct LaunchEvent {
+    /// The name of the launched test suite.
+    pub name: String,
     /// The frequency of the CPU core.
     pub core_freq: u32,
 }
@@ -57,6 +59,7 @@ pub enum BenchmarkEvent {
 }
 
 impl TestUtilEvent {
+    /// Encodes the event in the custom format.
     pub fn encode(&self, dest: &mut String) {
         match self {
             TestUtilEvent::Launch(ev) => {
@@ -78,6 +81,7 @@ impl TestUtilEvent {
         }
     }
 
+    /// Parses the custom event format.
     pub fn parse(data: &str) -> Option<Self> {
         let (tag, rest) = data.split_once(',')?;
 
@@ -92,26 +96,33 @@ impl TestUtilEvent {
 }
 
 impl LaunchEvent {
+    /// Encodes the event in the custom format.
     pub fn encode(&self, dest: &mut String) {
         // the schema version
         dest.push_str("0,");
         dest.push_str(&self.core_freq.to_string());
+        dest.push(',');
+        dest.push_str(&self.name);
     }
 
+    /// Parses the custom event format.
     pub fn parse(data: &str) -> Option<Self> {
         let (schema_version, rest) = data.split_once(',')?;
+        let (core_freq, name) = rest.split_once(',')?;
 
         if schema_version != "0" {
             None
         } else {
             Some(Self {
-                core_freq: rest.parse().ok()?,
+                core_freq: core_freq.parse().ok()?,
+                name: name.to_string(),
             })
         }
     }
 }
 
 impl TestEvent {
+    /// Encodes the event in the custom format.
     pub fn encode(&self, dest: &mut String) {
         let (tag, name, err_msg) = match self {
             TestEvent::Run { name: test_name } => ('r', test_name, None),
@@ -133,6 +144,7 @@ impl TestEvent {
         }
     }
 
+    /// Parses the custom event format.
     pub fn parse(data: &str) -> Option<Self> {
         let (tag, rest) = data.split_once(',')?;
         match tag {
@@ -159,6 +171,7 @@ impl TestEvent {
 }
 
 impl BenchmarkEvent {
+    /// Encodes the event in the custom format.
     pub fn encode(&self, dest: &mut String) {
         let (tag, name, run_id) = match self {
             BenchmarkEvent::Run { name, run_id } => ('r', name, Some(run_id)),
@@ -188,6 +201,7 @@ impl BenchmarkEvent {
         }
     }
 
+    /// Parses the custom event format.
     pub fn parse(data: &str) -> Option<Self> {
         let (tag, rest) = data.split_once(',')?;
         let (run_id, rest) = rest.split_once(',')?;

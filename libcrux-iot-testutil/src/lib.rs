@@ -3,9 +3,6 @@
 //! run tests and benchmarks on microcontrollers, where we don't have the
 //! standard rust test runner available.
 //!
-//! The crate will support both tests and benchmarks, but so far only tests are
-//! implemented.
-//!
 //! The core types in this crate are the [`TestConfig`] and the [`TestSuite`].
 //! The test config contains information on the system and configures how the
 //! tests are run. The test suite contains all the tests that can be run.
@@ -57,6 +54,7 @@ pub struct TestCase<'a, L, E, S> {
 }
 
 impl<'a, L, E, S> TestCase<'a, L, E, S> {
+    /// Retuns a new test case with the given name and function.
     pub fn new(name: &'a str, test_fn: TestFn<L, E, S>) -> Self {
         Self { name, test_fn }
     }
@@ -66,6 +64,7 @@ where
     L: EventLogger,
     E: Display,
 {
+    /// Returns whether the test configuration is set to skip the test case.
     pub fn is_skipped(&self, config: &TestConfig) -> bool {
         let all_tests_should_run = config.only_names.is_empty();
         let test_is_selected = config.only_names.contains(&self.name);
@@ -130,11 +129,15 @@ where
 
 #[derive(Default)]
 /// A test suite containing all the tests that can be run
-pub struct TestSuite<'a, L, E, S>(&'a [TestCase<'a, L, E, S>]);
+pub struct TestSuite<'a, L, E, S> {
+    name: &'a str,
+    test_cases: &'a [TestCase<'a, L, E, S>],
+}
 
 impl<'a, L, E: Debug, S> TestSuite<'a, L, E, S> {
-    pub fn new(test_cases: &'a [TestCase<'a, L, E, S>]) -> Self {
-        Self(test_cases)
+    /// Returns a new test suite containing the passed test cases.
+    pub fn new(name: &'a str, test_cases: &'a [TestCase<'a, L, E, S>]) -> Self {
+        Self { name, test_cases }
     }
 }
 
@@ -154,11 +157,12 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
     {
         logger.log_event(TestUtilEvent::Launch(LaunchEvent {
             core_freq: config.core_freq,
+            name: self.name.to_string(),
         }));
 
         let mut errors = vec![];
 
-        for test_case in self.0 {
+        for test_case in self.test_cases {
             if test_case.is_skipped(config) {
                 logger.log_event(TestUtilEvent::Test(TestEvent::Skip {
                     name: String::from(test_case.name),
@@ -198,12 +202,13 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
     {
         logger.log_event(TestUtilEvent::Launch(LaunchEvent {
             core_freq: config.core_freq,
+            name: self.name.to_string(),
         }));
 
         let mut cycle_infos = vec![];
         let mut errors = vec![];
 
-        for test_case in self.0 {
+        for test_case in self.test_cases {
             if test_case.is_skipped(config) {
                 logger.log_event(TestUtilEvent::Test(TestEvent::Skip {
                     name: String::from(test_case.name),
@@ -242,9 +247,16 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
 /// The test config contains information on the system and settings that control
 /// how the tests are run.
 pub struct TestConfig<'a> {
+    /// The core frequency used when benchmarking, so we can reconstruct the actual time passed
+    /// of running the benchmark.
     pub core_freq: u32,
+    /// The number of runs used for each benchmark.
     pub benchmark_runs: u32,
+    /// Only run benchmarks that are in the provided list.
     pub only_names: Vec<&'a str>,
+    /// If true, the runner aborts on first error. If not, it runs all the tests or benchmarks and
+    /// either returns `Ok(())` (in case of no errors) or `Err(ErrorReport::Combined(_))` which
+    /// contains all the errors that were encountered.
     pub early_abort: bool,
 }
 
