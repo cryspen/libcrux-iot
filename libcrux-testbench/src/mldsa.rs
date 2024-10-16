@@ -48,7 +48,7 @@ pub fn run_benchmarks() {
         TestCase::new("bench_verify", bench_verify),
     ];
 
-    let test_suite = TestSuite::new(&test_cases);
+    let test_suite = TestSuite::new("ML-DSA Benchmark", &test_cases);
 
     // set up the test config
     let test_config = TestConfig {

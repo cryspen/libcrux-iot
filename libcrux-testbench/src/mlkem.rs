@@ -38,7 +38,7 @@ pub fn run_benchmarks() {
         TestCase::new("bench_decaps", bench_decaps),
     ];
 
-    let test_suite = TestSuite::new(&test_cases);
+    let test_suite = TestSuite::new("ML-KEM Benchmark", &test_cases);
 
     // set up the test config
     let test_config = TestConfig {
