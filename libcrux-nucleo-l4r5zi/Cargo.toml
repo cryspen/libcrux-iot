@@ -19,10 +19,12 @@ defmt = "0.3"
 defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
-libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = ["pre-verification", "mlkem512", "mlkem768", "mlkem1024"] }
+libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = [ "pre-verification", "mlkem512", "mlkem768", "mlkem1024", ] }
 libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" }
+libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 embassy-time = "0.3.2"
-embassy-stm32 = { version = "0.1.0", features = ["stm32l4r5zi", "defmt", "time", "time-driver-any"] }
+embassy-stm32 = { version = "0.1.0", features = [ "stm32l4r5zi", "defmt", "time", "time-driver-any", ] }
+embedded-alloc = "0.6.0"
 
 [dev-dependencies]
 defmt-test = "0.3"
@@ -64,4 +66,3 @@ incremental = false
 lto = 'fat'
 opt-level = 3            # <-
 overflow-checks = false  # <-
-

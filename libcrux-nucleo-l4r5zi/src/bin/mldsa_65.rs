@@ -1,102 +1,106 @@
 #![no_main]
 #![no_std]
 
-use embassy_stm32::Config;
-use embassy_time::{self, Instant};
+use libcrux_iot_testutil::DefmtInfoLogger;
+use libcrux_iot_testutil::*;
+extern crate alloc;
+use alloc::string::String;
+use alloc::vec;
+
+use cortex_m::peripheral::Peripherals;
 use libcrux_ml_dsa::ml_dsa_65;
 use libcrux_nucleo_l4r5zi as _; // global logger + panicking-behavior + memory layout
 
-const KEYGEN_ITERATIONS: usize = 5;
-const SIGN_ITERATIONS: usize = 5;
-const VERIFY_ITERATIONS: usize = 5;
+use core::ptr::addr_of_mut;
+use embedded_alloc::LlffHeap as Heap;
 
-fn time_operation<SetupF, OpF, Input>(
-    description: &str,
-    setup: SetupF,
-    operation: OpF,
-    iterations: usize,
-) where
-    SetupF: FnOnce() -> Input,
-    OpF: Fn(&Input) -> (),
-{
-    defmt::println!("{=str} ({=usize} times)", description, iterations);
-    let input = setup();
-    let start_measuring = Instant::now();
-    for _ in 0..iterations {
-        let _ = operation(&input);
-    }
-    let end_measuring = Instant::now();
-    let time_avg = (end_measuring.as_micros() - start_measuring.as_micros()) / (iterations as u64);
-    defmt::println!("Took {=u64} µs on average", time_avg);
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
+
+struct MLDSABenchState {
+    randomness_gen: [u8; 32],
+    keypair: ml_dsa_65::MLDSA65KeyPair,
+    signing_randomness: [u8; 32],
+    message: [u8; 1024],
+    signature: ml_dsa_65::MLDSA65Signature,
+}
+
+fn bench_keygen<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(), String> {
+    let _pair = ml_dsa_65::generate_key_pair(state.randomness_gen);
+    Ok(())
+}
+
+fn bench_sign<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(), String> {
+    let _signature = ml_dsa_65::sign(
+        &state.keypair.signing_key,
+        &state.message,
+        b"",
+        state.signing_randomness,
+    );
+    Ok(())
+}
+
+fn bench_verify<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(), String> {
+    let _ = ml_dsa_65::verify(
+        &state.keypair.verification_key,
+        &state.message,
+        b"",
+        &state.signature,
+    );
+
+    Ok(())
 }
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    // Need to initialize this, otherwise we have no timers
-    let _peripherals = embassy_stm32::init(Config::default());
+    // Initialize the allocator BEFORE you use it
+    {
+        use core::mem::MaybeUninit;
+        const HEAP_SIZE: usize = 1024;
+        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+        unsafe { HEAP.init(addr_of_mut!(HEAP_MEM) as usize, HEAP_SIZE) }
 
-    defmt::println!("Testing that everything works");
+        let mut peripherals = Peripherals::take().unwrap();
+        peripherals.DCB.enable_trace();
+        peripherals.DWT.enable_cycle_counter();
+    }
+
+    // set up the test suite
+    let test_cases = [
+        TestCase::new("bench_keygen", bench_keygen),
+        TestCase::new("bench_sign", bench_sign),
+        TestCase::new("bench_verify", bench_verify),
+    ];
+
+    let test_suite = TestSuite::new("ml_dsa65", &test_cases);
+
+    // set up the test config
+    let test_config = TestConfig {
+        core_freq: 4_000_000,
+        only_names: vec!["bench_keygen", "bench_sign", "bench_verify"],
+        early_abort: false,
+        benchmark_runs: 5,
+    };
+
+    // prepare the state for the benchmarked functions
     let randomness_gen = [1u8; 32];
     let keypair = ml_dsa_65::generate_key_pair(randomness_gen);
-    defmt::println!("\tKey Generation OK");
-
     let signing_randomness = [4u8; 32];
     let message = [5u8; 1024];
+    let signature =
+        ml_dsa_65::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
 
-    let signature = ml_dsa_65::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
-    defmt::println!("\tSigning OK");
+    let state = MLDSABenchState {
+        randomness_gen,
+        keypair,
+        signing_randomness,
+        message,
+        signature,
+    };
 
-    let result = ml_dsa_65::verify(&keypair.verification_key, &message, b"", &signature);
-    defmt::println!("\tVerification OK");
-
-    assert!(result.is_ok());
-    defmt::println!("\tSuccess!");
-
-    defmt::println!("Benchmarking");
-    time_operation(
-        "\tKey Generation",
-        || {
-            let randomness_gen = [1u8; 32];
-            randomness_gen
-        },
-        |randomness| {
-            let _pair = ml_dsa_65::generate_key_pair(*randomness);
-        },
-        KEYGEN_ITERATIONS,
-    );
-
-    time_operation(
-        "\tSigning",
-        || {
-            let randomness_gen = [1u8; 32];
-            let signing_randomness = [4u8; 32];
-            let message = [5u8; 1024];
-
-            let keypair = ml_dsa_65::generate_key_pair(randomness_gen);
-            (message, keypair, signing_randomness)
-        },
-        |(message, keypair, signing_randomness)| {
-            let _ = ml_dsa_65::sign(&keypair.signing_key, message, b"", *signing_randomness);
-        },
-        SIGN_ITERATIONS,
-    );
-
-    time_operation(
-        "\tVerification",
-        || {
-            let randomness_gen = [1u8; 32];
-            let signing_randomness = [4u8; 32];
-            let message = [5u8; 1024];
-
-            let keypair = ml_dsa_65::generate_key_pair(randomness_gen);
-            let signature = ml_dsa_65::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
-            (message, keypair, signature)
-        },
-        |(message, keypair, signature)| {
-            ml_dsa_65::verify(&keypair.verification_key, message, b"", signature).unwrap();
-        },
-        VERIFY_ITERATIONS,
-    );
+    // run the benchmark
+    let mut logger = DefmtInfoLogger;
+    let _ = test_suite.benchmark(&mut logger, &test_config, &state);
 
     libcrux_nucleo_l4r5zi::exit()
 }

@@ -1,0 +1,9 @@
+[package]
+name = "libcrux-iot-testutil"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+defmt = "0.3"
+embassy-time = "0.3.2"
+cortex-m = "0.7.7"
