@@ -27,6 +27,15 @@ embedded-alloc = "0.6.0"
 [dev-dependencies]
 defmt-test = "0.3"
 
+[features]
+default = ["mldsa87", "mlkem1024"] # We want to benchmark the most expensive variants by default
+mldsa44 = ["libcrux-testbench/mldsa44"]
+mldsa65 = ["libcrux-testbench/mldsa65"]
+mldsa87 = ["libcrux-testbench/mldsa87"]
+mlkem512 = ["libcrux-testbench/mlkem512"]
+mlkem768 = ["libcrux-testbench/mlkem768"]
+mlkem1024 = ["libcrux-testbench/mlkem1024"]
+
 # cargo build/run
 [profile.dev]
 codegen-units = 1
