@@ -3,9 +3,6 @@
 //! run tests and benchmarks on microcontrollers, where we don't have the
 //! standard rust test runner available.
 //!
-//! The crate will support both tests and benchmarks, but so far only tests are
-//! implemented.
-//!
 //! The core types in this crate are the [`TestConfig`] and the [`TestSuite`].
 //! The test config contains information on the system and configures how the
 //! tests are run. The test suite contains all the tests that can be run.
@@ -250,9 +247,16 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
 /// The test config contains information on the system and settings that control
 /// how the tests are run.
 pub struct TestConfig<'a> {
+    /// The core frequency used when benchmarking, so we can reconstruct the actual time passed
+    /// of running the benchmark.
     pub core_freq: u32,
+    /// The number of runs used for each benchmark.
     pub benchmark_runs: u32,
+    /// Only run benchmarks that are in the provided list.
     pub only_names: Vec<&'a str>,
+    /// If true, the runner aborts on first error. If not, it runs all the tests or benchmarks and
+    /// either returns `Ok(())` (in case of no errors) or `Err(ErrorReport::Combined(_))` which
+    /// contains all the errors that were encountered.
     pub early_abort: bool,
 }
 
