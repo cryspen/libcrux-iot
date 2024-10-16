@@ -1,37 +1,45 @@
-#![no_main]
-#![no_std]
-
 use libcrux_iot_testutil::DefmtInfoLogger;
 use libcrux_iot_testutil::*;
 extern crate alloc;
 use alloc::string::String;
 use alloc::vec;
 
-use cortex_m::peripheral::Peripherals;
-use libcrux_ml_dsa::ml_dsa_65;
-use libcrux_nucleo_l4r5zi as _; // global logger + panicking-behavior + memory layout
+#[cfg(feature = "mldsa44")]
+use libcrux_ml_dsa::ml_dsa_44 as mldsa;
+#[cfg(feature = "mldsa44")]
+type MLDSASignature = mldsa::MLDSA44Signature;
+#[cfg(feature = "mldsa44")]
+type MLDSAKeyPair = mldsa::MLDSA44KeyPair;
 
-use core::ptr::addr_of_mut;
-use embedded_alloc::LlffHeap as Heap;
+#[cfg(feature = "mldsa65")]
+use libcrux_ml_dsa::ml_dsa_65 as mldsa;
+#[cfg(feature = "mldsa65")]
+type MLDSASignature = mldsa::MLDSA65Signature;
+#[cfg(feature = "mldsa65")]
+type MLDSAKeyPair = mldsa::MLDSA65KeyPair;
 
-#[global_allocator]
-static HEAP: Heap = Heap::empty();
+#[cfg(feature = "mldsa87")]
+use libcrux_ml_dsa::ml_dsa_87 as mldsa;
+#[cfg(feature = "mldsa87")]
+type MLDSASignature = mldsa::MLDSA87Signature;
+#[cfg(feature = "mldsa87")]
+type MLDSAKeyPair = mldsa::MLDSA87KeyPair;
 
 struct MLDSABenchState {
     randomness_gen: [u8; 32],
-    keypair: ml_dsa_65::MLDSA65KeyPair,
+    keypair: MLDSAKeyPair,
     signing_randomness: [u8; 32],
     message: [u8; 1024],
-    signature: ml_dsa_65::MLDSA65Signature,
+    signature: MLDSASignature,
 }
 
 fn bench_keygen<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(), String> {
-    let _pair = ml_dsa_65::generate_key_pair(state.randomness_gen);
+    let _pair = mldsa::generate_key_pair(state.randomness_gen);
     Ok(())
 }
 
 fn bench_sign<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(), String> {
-    let _signature = ml_dsa_65::sign(
+    let _signature = mldsa::sign(
         &state.keypair.signing_key,
         &state.message,
         b"",
@@ -41,7 +49,7 @@ fn bench_sign<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(),
 }
 
 fn bench_verify<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(), String> {
-    let _ = ml_dsa_65::verify(
+    let _ = mldsa::verify(
         &state.keypair.verification_key,
         &state.message,
         b"",
@@ -51,20 +59,7 @@ fn bench_verify<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(
     Ok(())
 }
 
-#[cortex_m_rt::entry]
-fn main() -> ! {
-    // Initialize the allocator BEFORE you use it
-    {
-        use core::mem::MaybeUninit;
-        const HEAP_SIZE: usize = 1024;
-        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
-        unsafe { HEAP.init(addr_of_mut!(HEAP_MEM) as usize, HEAP_SIZE) }
-
-        let mut peripherals = Peripherals::take().unwrap();
-        peripherals.DCB.enable_trace();
-        peripherals.DWT.enable_cycle_counter();
-    }
-
+pub fn run_benchmarks() {
     // set up the test suite
     let test_cases = [
         TestCase::new("bench_keygen", bench_keygen),
@@ -72,23 +67,22 @@ fn main() -> ! {
         TestCase::new("bench_verify", bench_verify),
     ];
 
-    let test_suite = TestSuite::new("ml_dsa65", &test_cases);
+    let test_suite = TestSuite::new("ML-DSA Benchmark", &test_cases);
 
     // set up the test config
     let test_config = TestConfig {
         core_freq: 4_000_000,
         only_names: vec!["bench_keygen", "bench_sign", "bench_verify"],
         early_abort: false,
-        benchmark_runs: 5,
+        benchmark_runs: 1,
     };
 
     // prepare the state for the benchmarked functions
     let randomness_gen = [1u8; 32];
-    let keypair = ml_dsa_65::generate_key_pair(randomness_gen);
+    let keypair = mldsa::generate_key_pair(randomness_gen);
     let signing_randomness = [4u8; 32];
     let message = [5u8; 1024];
-    let signature =
-        ml_dsa_65::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
+    let signature = mldsa::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
 
     let state = MLDSABenchState {
         randomness_gen,
@@ -101,6 +95,4 @@ fn main() -> ! {
     // run the benchmark
     let mut logger = DefmtInfoLogger;
     let _ = test_suite.benchmark(&mut logger, &test_config, &state);
-
-    libcrux_nucleo_l4r5zi::exit()
 }

@@ -24,7 +24,7 @@ fn main() -> ! {
         peripherals.DWT.enable_cycle_counter();
     }
 
-    libcrux_testbench::mlkem::run_benchmarks();
+    libcrux_testbench::mldsa::run_benchmarks();
 
     libcrux_nrf52840::exit()
 }

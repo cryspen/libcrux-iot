@@ -1,6 +1,6 @@
 [package]
 authors = ["Jonas Schneider-Bensch <jonas@cryspen.com>"]
-name = "libcrux-nrf52840"
+name = "libcrux-nrf5340"
 edition = "2021"
 version = "0.1.0"
 
@@ -21,7 +21,7 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 libcrux-testbench = { path = "../libcrux-testbench" }
-embassy-nrf = { version = "0.1.0", features = [ "nrf52840", "defmt", ] }
+embassy-nrf = { version = "0.1.0", features = [ "nrf5340-app-ns", "defmt", ] }
 embedded-alloc = "0.6.0"
 
 [dev-dependencies]

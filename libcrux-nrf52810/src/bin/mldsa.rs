@@ -2,7 +2,7 @@
 #![no_std]
 
 use cortex_m::peripheral::Peripherals;
-use libcrux_nrf52840 as _; // global logger + panicking-behavior + memory layout
+use libcrux_nrf52810 as _; // global logger + panicking-behavior + memory layout
 
 use core::ptr::addr_of_mut;
 use embedded_alloc::LlffHeap as Heap;
@@ -24,7 +24,7 @@ fn main() -> ! {
         peripherals.DWT.enable_cycle_counter();
     }
 
-    libcrux_testbench::mlkem::run_benchmarks();
+    libcrux_testbench::mldsa::run_benchmarks();
 
-    libcrux_nrf52840::exit()
+    libcrux_nrf52810::exit()
 }
