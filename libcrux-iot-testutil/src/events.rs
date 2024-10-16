@@ -18,6 +18,8 @@ pub enum TestUtilEvent {
 /// This is emitted once at the start of a test suite
 #[derive(Debug, PartialEq, Eq)]
 pub struct LaunchEvent {
+    /// The name of the launched test suite.
+    pub name: String,
     /// The frequency of the CPU core.
     pub core_freq: u32,
 }
@@ -99,17 +101,21 @@ impl LaunchEvent {
         // the schema version
         dest.push_str("0,");
         dest.push_str(&self.core_freq.to_string());
+        dest.push(',');
+        dest.push_str(&self.name);
     }
 
     /// Parses the custom event format.
     pub fn parse(data: &str) -> Option<Self> {
         let (schema_version, rest) = data.split_once(',')?;
+        let (core_freq, name) = rest.split_once(',')?;
 
         if schema_version != "0" {
             None
         } else {
             Some(Self {
-                core_freq: rest.parse().ok()?,
+                core_freq: core_freq.parse().ok()?,
+                name: name.to_string(),
             })
         }
     }

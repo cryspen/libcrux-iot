@@ -72,7 +72,7 @@ fn main() -> ! {
         TestCase::new("bench_verify", bench_verify),
     ];
 
-    let test_suite = TestSuite::new(&test_cases);
+    let test_suite = TestSuite::new("ml_dsa65", &test_cases);
 
     // set up the test config
     let test_config = TestConfig {

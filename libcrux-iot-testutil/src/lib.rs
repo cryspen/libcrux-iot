@@ -132,12 +132,15 @@ where
 
 #[derive(Default)]
 /// A test suite containing all the tests that can be run
-pub struct TestSuite<'a, L, E, S>(&'a [TestCase<'a, L, E, S>]);
+pub struct TestSuite<'a, L, E, S> {
+    name: &'a str,
+    test_cases: &'a [TestCase<'a, L, E, S>],
+}
 
 impl<'a, L, E: Debug, S> TestSuite<'a, L, E, S> {
     /// Returns a new test suite containing the passed test cases.
-    pub fn new(test_cases: &'a [TestCase<'a, L, E, S>]) -> Self {
-        Self(test_cases)
+    pub fn new(name: &'a str, test_cases: &'a [TestCase<'a, L, E, S>]) -> Self {
+        Self { name, test_cases }
     }
 }
 
@@ -157,11 +160,12 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
     {
         logger.log_event(TestUtilEvent::Launch(LaunchEvent {
             core_freq: config.core_freq,
+            name: self.name.to_string(),
         }));
 
         let mut errors = vec![];
 
-        for test_case in self.0 {
+        for test_case in self.test_cases {
             if test_case.is_skipped(config) {
                 logger.log_event(TestUtilEvent::Test(TestEvent::Skip {
                     name: String::from(test_case.name),
@@ -201,12 +205,13 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
     {
         logger.log_event(TestUtilEvent::Launch(LaunchEvent {
             core_freq: config.core_freq,
+            name: self.name.to_string(),
         }));
 
         let mut cycle_infos = vec![];
         let mut errors = vec![];
 
-        for test_case in self.0 {
+        for test_case in self.test_cases {
             if test_case.is_skipped(config) {
                 logger.log_event(TestUtilEvent::Test(TestEvent::Skip {
                     name: String::from(test_case.name),
