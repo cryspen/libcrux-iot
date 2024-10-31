@@ -58,7 +58,7 @@ fn bench_verify<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(
     Ok(())
 }
 
-pub fn run_benchmarks(test_config: TestConfig) {
+pub fn run_benchmarks<P: platform::Platform>(test_config: TestConfig<P>) {
     // set up the test suite
     let test_cases = [
         TestCase::new("bench_keygen", bench_keygen),

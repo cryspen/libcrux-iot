@@ -41,6 +41,7 @@ fn run_tests_no_early_abort() {
     let test_suite = TestSuite::new("suite for testing", &cases);
 
     let test_config = TestConfig {
+        platform: platform::CortexM,
         core_freq: 25_000_000,
         only_names: vec!["test_pass", "test_log", "test_error"],
         early_abort: false,
