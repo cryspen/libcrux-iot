@@ -14,6 +14,7 @@ static HEAP: Heap = Heap::empty();
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
+    use libcrux_iot_testutil::*;
     // Initialize the allocator BEFORE you use it
     {
         use core::mem::MaybeUninit;
