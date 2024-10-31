@@ -1,7 +1,6 @@
 #![no_main]
 #![no_std]
 
-use cortex_m::peripheral::Peripherals;
 use libcrux_nrf52840 as board; // global logger + panicking-behavior + memory layout
 
 extern crate alloc;
