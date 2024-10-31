@@ -2,7 +2,9 @@
 #![no_std]
 
 use cortex_m::peripheral::Peripherals;
-use libcrux_nrf5340 as _; // global logger + panicking-behavior + memory layout
+use libcrux_nrf5340 as board; // global logger + panicking-behavior + memory layout
+
+extern crate alloc;
 
 use core::ptr::addr_of_mut;
 use embedded_alloc::LlffHeap as Heap;
@@ -12,6 +14,8 @@ static HEAP: Heap = Heap::empty();
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
+    use libcrux_iot_testutil::*;
+    
     // Initialize the allocator BEFORE you use it
     {
         use core::mem::MaybeUninit;
@@ -23,8 +27,16 @@ fn main() -> ! {
         peripherals.DCB.enable_trace();
         peripherals.DWT.enable_cycle_counter();
     }
+    
+    // set up the test config
+    let test_config = TestConfig {
+        core_freq: board::COREFREQ,
+        only_names: alloc::vec![],
+        early_abort: false,
+        benchmark_runs: 5,
+    };
 
-    libcrux_testbench::mldsa::run_benchmarks();
+    libcrux_testbench::mldsa::run_benchmarks(test_config);
 
-    libcrux_nrf5340::exit()
+    board::exit()
 }

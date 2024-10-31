@@ -2,7 +2,6 @@ use libcrux_iot_testutil::DefmtInfoLogger;
 use libcrux_iot_testutil::*;
 extern crate alloc;
 use alloc::string::String;
-use alloc::vec;
 
 #[cfg(feature = "mlkem512")]
 use libcrux_ml_kem::mlkem512 as mlkem;
@@ -55,7 +54,7 @@ fn bench_decaps<L: EventLogger>(_l: &mut L, state: &MlKemBenchState) -> Result<(
     Ok(())
 }
 
-pub fn run_benchmarks() {
+pub fn run_benchmarks(test_config: TestConfig) {
     // set up the test suite
     let test_cases = [
         TestCase::new("bench_keygen", bench_keygen),
@@ -64,14 +63,6 @@ pub fn run_benchmarks() {
     ];
 
     let test_suite = TestSuite::new("ML-KEM Benchmark", &test_cases);
-
-    // set up the test config
-    let test_config = TestConfig {
-        core_freq: 4_000_000,
-        only_names: vec!["bench_keygen", "bench_encaps", "bench_decaps"],
-        early_abort: false,
-        benchmark_runs: 1,
-    };
 
     // prepare the state for the benchmarked functions
     let randomness_gen = [1u8; libcrux_ml_kem::KEY_GENERATION_SEED_SIZE];
