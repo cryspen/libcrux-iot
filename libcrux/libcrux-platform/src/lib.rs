@@ -54,6 +54,7 @@ mod platform {
 
 #[cfg(not(hax))]
 mod platform {
+    #[cfg(not(target_os = "none"))]
     use super::*;
     
     // TODO: Check for z14 or z15
