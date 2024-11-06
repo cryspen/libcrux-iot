@@ -29,6 +29,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: thumbv7em-none-eabihf,thumbv7em-none-eabi,thumbv8m.main-none-eabihf
+          components: rust-std
 
       - name: Install flip-link
         run: cargo install flip-link
