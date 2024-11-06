@@ -35,4 +35,4 @@ jobs:
 
       - name: Build
         working-directory: ${{ matrix.board_directory }}
-        run: cargo build
+        run: cargo build --verbose
