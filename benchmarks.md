@@ -2,6 +2,17 @@
 
 All numbers reported here refer to cycle counts.
 
+| Device                          | Clock speed                   |
+|---------------------------------|-------------------------------|
+| [ESP32-S3] [^1] [^2]            | 240 MHz                       |
+| [STM32-L4R5xx] (our Nucleo-144) | 4 MHz (default, up to 120MHz) |
+| [ESP32-C6] [^3]                 | 160 MHz                       |
+| [nRF52840-DK]                   | 64 MHz                        |
+| [nRF5340-DK]                    | 128 MHz                       |
+| [nRF52-DK]                      |                               |
+| - nRF52832                      | 64 MHz                        |
+| - nRF52810                      | 64 MHz                        |
+
 ## ML-KEM
 
 ### ML-KEM 512
