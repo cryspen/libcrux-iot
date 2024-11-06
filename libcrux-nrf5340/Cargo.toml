@@ -44,7 +44,8 @@ debug-assertions = true # <-
 incremental = false
 opt-level = 'z'         # <-
 overflow-checks = true  # <-
-
+panic = "abort"
+    
 # cargo test
 [profile.test]
 codegen-units = 1

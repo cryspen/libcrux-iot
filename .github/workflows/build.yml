@@ -15,18 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        board_directory: [libcrux-nrf52840, libcrux-nucleo-l4r5zi]
+        board_directory: [
+                          libcrux-nucleo-l4r5zi,
+                          libcrux-nrf52840,
+                          libcrux-nrf52810,
+                          libcrux-nrf52832,
+                          libcrux-nrf5340,
+                         ]
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: thumbv7em-none-eabihf,thumbv7em-none-eabi
+          targets: thumbv7em-none-eabihf,thumbv7em-none-eabi,thumbv8m.main-none-eabihf
 
       - name: Install flip-link
         run: cargo install flip-link
 
       - name: Build
         working-directory: ${{ matrix.board_directory }}
-        run: cargo build
+        run: cargo build --verbose
