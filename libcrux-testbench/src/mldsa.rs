@@ -68,7 +68,6 @@ pub fn run_benchmarks(test_config: TestConfig) {
 
     let test_suite = TestSuite::new("ML-DSA Benchmark", &test_cases);
 
-
     // prepare the state for the benchmarked functions
     let randomness_gen = [1u8; 32];
     let keypair = mldsa::generate_key_pair(randomness_gen);
