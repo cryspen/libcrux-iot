@@ -54,6 +54,9 @@ mod platform {
 
 #[cfg(not(hax))]
 mod platform {
+    #[cfg(not(target_os = "none"))]
+    use super::*;
+    
     // TODO: Check for z14 or z15
     pub fn simd128_support() -> bool {
         #[cfg(all(target_arch = "aarch64", target_os = "macos"))]

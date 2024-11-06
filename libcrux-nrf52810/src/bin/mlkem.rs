@@ -2,7 +2,7 @@
 #![no_std]
 
 use cortex_m::peripheral::Peripherals;
-use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
+use libcrux_nrf52810 as board; // global logger + panicking-behavior + memory layout
 
 extern crate alloc;
 
@@ -34,7 +34,7 @@ fn main() -> ! {
         early_abort: false,
         benchmark_runs: 5,
     };
-    
+
     libcrux_testbench::mlkem::run_benchmarks(test_config);
 
     board::exit()

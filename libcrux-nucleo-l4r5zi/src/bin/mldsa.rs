@@ -26,7 +26,6 @@ fn main() -> ! {
         peripherals.DCB.enable_trace();
         peripherals.DWT.enable_cycle_counter();
     }
-
     // set up the test config
     let test_config = TestConfig {
         core_freq: board::COREFREQ,
@@ -35,7 +34,7 @@ fn main() -> ! {
         benchmark_runs: 5,
     };
     
-    libcrux_testbench::mlkem::run_benchmarks(test_config);
+    libcrux_testbench::mldsa::run_benchmarks(test_config);
 
     board::exit()
 }
