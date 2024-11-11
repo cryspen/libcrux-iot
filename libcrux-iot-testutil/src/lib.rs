@@ -29,6 +29,8 @@
 mod events;
 mod logger;
 
+pub mod platform;
+
 pub use events::*;
 pub use logger::defmt_logger::DefmtInfoLogger;
 pub use logger::vec_logger::VecLogger;
@@ -65,7 +67,7 @@ where
     E: Display,
 {
     /// Returns whether the test configuration is set to skip the test case.
-    pub fn is_skipped(&self, config: &TestConfig) -> bool {
+    pub fn is_skipped<P: platform::Platform>(&self, config: &TestConfig<P>) -> bool {
         let all_tests_should_run = config.only_names.is_empty();
         let test_is_selected = config.only_names.contains(&self.name);
 
@@ -97,15 +99,15 @@ where
 
     /// If the configuration permits, runs the test case as a benchmark. Logs the
     /// appropriate messages, and returns the error returned by the test.
-    pub fn benchmark(&self, logger: &mut L, run_id: u32, state: &S) -> Result<u32, E> {
+    pub fn benchmark<P: platform::Platform>(&self, config: &TestConfig<P>, logger: &mut L, run_id: u32, state: &S) -> Result<u32, E> {
         logger.log_event(TestUtilEvent::Benchmark(BenchmarkEvent::Run {
             name: String::from(self.name),
             run_id,
         }));
 
-        let cycles_start = cortex_m::peripheral::DWT::cycle_count();
+        let cycles_start = config.platform.cycle_count();
         let result = core::hint::black_box((self.test_fn)(logger, state));
-        let cycles_end = cortex_m::peripheral::DWT::cycle_count();
+        let cycles_end = config.platform.cycle_count();
         let cycles = cycles_end - cycles_start;
 
         match &result {
@@ -146,10 +148,10 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
     /// returns the first error, wrapped in [`ErrorReport::EarlyAbort`].
     /// Otherwise it runs all tests and, if errors were encountered, returns the
     /// vector of all errors wrapped in [`ErrorReport::Combined`].
-    pub fn run(
+    pub fn run<P: platform::Platform>(
         &self,
         logger: &mut L,
-        config: &TestConfig<'a>,
+        config: &TestConfig<'a, P>,
         state: &S,
     ) -> Result<(), ErrorReport<E>>
     where
@@ -191,15 +193,16 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
     /// set, it returns the first error, wrapped in [`ErrorReport::EarlyAbort`].
     /// Otherwise it runs all tests and, if errors were encountered, returns the
     /// vector of all errors wrapped in [`ErrorReport::Combined`].
-    pub fn benchmark(
+    pub fn benchmark<P: platform::Platform>(
         &self,
         logger: &mut L,
-        config: &TestConfig<'a>,
+        config: &TestConfig<'a, P>,
         state: &S,
     ) -> Result<Vec<(&'a str, u32, u32)>, ErrorReport<E>>
     where
         E: Display + Debug,
     {
+        config.platform.init();
         logger.log_event(TestUtilEvent::Launch(LaunchEvent {
             core_freq: config.core_freq,
             name: self.name.to_string(),
@@ -218,7 +221,7 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
             }
 
             for run_id in 0..config.benchmark_runs {
-                let result = test_case.benchmark(logger, run_id, state);
+                let result = test_case.benchmark(config,logger, run_id, state);
 
                 if config.early_abort {
                     cycle_infos.push((
@@ -246,7 +249,8 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
 #[derive(Debug)]
 /// The test config contains information on the system and settings that control
 /// how the tests are run.
-pub struct TestConfig<'a> {
+pub struct TestConfig<'a, P: platform::Platform> {
+    pub platform: P,
     /// The core frequency used when benchmarking, so we can reconstruct the actual time passed
     /// of running the benchmark.
     pub core_freq: u32,
@@ -283,9 +287,9 @@ impl<E: Display> Display for ErrorReport<E> {
     }
 }
 
-impl<'a> TestConfig<'a> {
+impl<'a, P: platform::Platform> TestConfig<'a, P> {
     /// Parses a config string.
-    pub fn parse_config(core_freq: u32, config: &'a str) -> Result<Self, String> {
+    pub fn parse_config(platform: P, core_freq: u32, config: &'a str) -> Result<Self, String> {
         let mut early_abort = false;
         let mut only_names = vec![];
         let mut benchmark_runs = 5;
@@ -320,6 +324,7 @@ impl<'a> TestConfig<'a> {
         }
 
         Ok(Self {
+            platform,
             core_freq,
             only_names,
             early_abort,
