@@ -24,13 +24,13 @@ fn main() -> ! {
     }
     // set up the test config
     let test_config = TestConfig {
-        platform: platform::CortexM,
+        platform: platform::cortex_m_platform::CortexM,
         core_freq: board::COREFREQ,
         only_names: alloc::vec![],
         early_abort: false,
         benchmark_runs: 5,
     };
-    
+
     libcrux_testbench::mldsa::run_benchmarks(test_config);
 
     board::exit()

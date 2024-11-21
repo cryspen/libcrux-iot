@@ -14,7 +14,7 @@ static HEAP: Heap = Heap::empty();
 #[cortex_m_rt::entry]
 fn main() -> ! {
     use libcrux_iot_testutil::*;
-    
+
     // Initialize the allocator BEFORE you use it
     {
         use core::mem::MaybeUninit;
@@ -22,10 +22,10 @@ fn main() -> ! {
         static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
         unsafe { HEAP.init(addr_of_mut!(HEAP_MEM) as usize, HEAP_SIZE) }
     }
-    
+
     // set up the test config
     let test_config = TestConfig {
-        platform: platform::CortexM,
+        platform: platform::cortex_m_platform::CortexM,
         core_freq: board::COREFREQ,
         only_names: alloc::vec![],
         early_abort: false,

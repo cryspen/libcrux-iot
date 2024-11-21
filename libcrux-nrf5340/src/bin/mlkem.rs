@@ -1,7 +1,6 @@
 #![no_main]
 #![no_std]
 
-
 use libcrux_nrf5340 as board; // global logger + panicking-behavior + memory layout
 
 extern crate alloc;
@@ -25,7 +24,7 @@ fn main() -> ! {
 
     // set up the test config
     let test_config = TestConfig {
-        platform: platform::CortexM,
+        platform: platform::cortex_m_platform::CortexM,
         core_freq: board::COREFREQ,
         only_names: alloc::vec![],
         early_abort: false,

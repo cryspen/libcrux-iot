@@ -8,18 +8,22 @@ pub trait Platform {
 }
 
 /// The Cortex-M specific implementation details.
-pub struct CortexM;
+#[cfg(feature = "cortex-m")]
+pub mod cortex_m_platform {
+    use super::*;
 
-impl Platform for CortexM {
-    
-    fn init(&self) {
-        use cortex_m::peripheral::Peripherals;
-        let mut peripherals = Peripherals::take().unwrap();
-        peripherals.DCB.enable_trace();
-        peripherals.DWT.enable_cycle_counter();
-    }
+    pub struct CortexM;
 
-    fn cycle_count(&self) -> u32 {
-        cortex_m::peripheral::DWT::cycle_count()
+    impl Platform for CortexM {
+        fn init(&self) {
+            use cortex_m::peripheral::Peripherals;
+            let mut peripherals = Peripherals::take().unwrap();
+            peripherals.DCB.enable_trace();
+            peripherals.DWT.enable_cycle_counter();
+        }
+
+        fn cycle_count(&self) -> u32 {
+            cortex_m::peripheral::DWT::cycle_count()
+        }
     }
 }
