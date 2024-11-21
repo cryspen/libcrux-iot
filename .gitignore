@@ -21,3 +21,5 @@ kyber-crate/
 /libcrux/libcrux-sha3/target/
 /libcrux/libcrux-intrinsics/target/
 *.lock
+/libcrux-testbench/target/
+/esp32c6/target/

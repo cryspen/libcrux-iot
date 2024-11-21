@@ -1,0 +1,15 @@
+[package]
+name = "libcrux-esp32c6"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+esp-hal = { version = "0.21.0", features = ["esp32c6"] }
+esp-backtrace = { version = "0.14.2", features = [
+    "esp32c6",
+    "panic-handler",
+    "exception-handler",
+    "println",
+] }
+esp-println = { version = "0.12.0", features = ["esp32c6"] }
+libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = [ "pre-verification", "mlkem512", "mlkem768", "mlkem1024",] } 
