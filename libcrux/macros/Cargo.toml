@@ -1,0 +1,19 @@
+[package]
+name = "libcrux-macros"
+version = "0.0.2-beta.2"
+authors = ["Cryspen"]
+license = "AGPL-3.0-only"
+homepage = "https://github.com/cryspen/libcrux-iot"
+edition = "2021"
+repository = "https://github.com/cryspen/libcrux-iot"
+description = "Macros for the Libcrux-IoT ML-DSA implementation"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quote = "1.0.37"
+syn = { version = "2.0.89", features = ["full"] }
+
+[lib]
+proc-macro = true
