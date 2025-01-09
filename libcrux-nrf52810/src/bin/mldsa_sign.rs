@@ -248,7 +248,7 @@ fn main() -> ! {
     use libcrux_ml_dsa::MLDSASigningKey;
     let signing_randomness = [4u8; 32];
     let message = [5u8; 2];
-    let _signature = mldsa::sign(&MLDSASigningKey(SK), &message, b"", signing_randomness).unwrap();
+    let _signature = mldsa::sign(&MLDSASigningKey::new(SK), &message, b"", signing_randomness).unwrap();
 
     board::exit()
 }
