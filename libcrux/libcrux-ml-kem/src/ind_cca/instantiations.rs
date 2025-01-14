@@ -7,12 +7,19 @@ macro_rules! instantiate {
             };
 
             /// Portable generate key pair.
+            #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                $CPA_PRIVATE_KEY_SIZE == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K /\
+                $PRIVATE_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
+                $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
+                $RANKED_BYTES_PER_RING_ELEMENT == Spec.MLKEM.v_RANKED_BYTES_PER_RING_ELEMENT $K /\
+                $ETA1 == Spec.MLKEM.v_ETA1 $K /\
+                $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K"#))]
             pub(crate) fn generate_keypair<
                 const K: usize,
                 const CPA_PRIVATE_KEY_SIZE: usize,
                 const PRIVATE_KEY_SIZE: usize,
                 const PUBLIC_KEY_SIZE: usize,
-                const BYTES_PER_RING_ELEMENT: usize,
+                const RANKED_BYTES_PER_RING_ELEMENT: usize,
                 const ETA1: usize,
                 const ETA1_RANDOMNESS_SIZE: usize,
             >(
@@ -23,7 +30,7 @@ macro_rules! instantiate {
                     CPA_PRIVATE_KEY_SIZE,
                     PRIVATE_KEY_SIZE,
                     PUBLIC_KEY_SIZE,
-                    BYTES_PER_RING_ELEMENT,
+                    RANKED_BYTES_PER_RING_ELEMENT,
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     $vector,
@@ -58,8 +65,11 @@ macro_rules! instantiate {
                 >(randomness)
             }
 
-            /// Portable public key validation
+            /// Public key validation
             #[inline(always)]
+            #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                $RANKED_BYTES_PER_RING_ELEMENT == Spec.MLKEM.v_RANKED_BYTES_PER_RING_ELEMENT $K /\
+                $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CCA_PUBLIC_KEY_SIZE $K"#))]
             pub(crate) fn validate_public_key<
                 const K: usize,
                 const RANKED_BYTES_PER_RING_ELEMENT: usize,
@@ -75,8 +85,11 @@ macro_rules! instantiate {
                 >(public_key)
             }
 
-            /// Portable private key validation
+            /// Private key validation
             #[inline(always)]
+            #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                $SECRET_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
+                $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K"#))]
             pub(crate) fn validate_private_key<
                 const K: usize,
                 const SECRET_KEY_SIZE: usize,
@@ -89,6 +102,19 @@ macro_rules! instantiate {
                     private_key,
                     ciphertext,
                 )
+            }
+
+            /// Private key validation
+            #[inline(always)]
+            #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                $SECRET_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K"#))]
+            pub(crate) fn validate_private_key_only<
+                const K: usize,
+                const SECRET_KEY_SIZE: usize,
+            >(
+                private_key: &MlKemPrivateKey<SECRET_KEY_SIZE>,
+            ) -> bool {
+                crate::ind_cca::validate_private_key_only::<K, SECRET_KEY_SIZE, $hash>(private_key)
             }
 
             /// Portable encapsulate
@@ -131,6 +157,19 @@ macro_rules! instantiate {
                 >(public_key, randomness)
             }
 
+            #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
+                $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
+                $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
+                $C1_SIZE == Spec.MLKEM.v_C1_SIZE $K /\
+                $C2_SIZE == Spec.MLKEM.v_C2_SIZE $K /\
+                $VECTOR_U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR  $K /\
+                $VECTOR_V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR  $K /\
+                $C1_BLOCK_SIZE == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
+                $ETA1 == Spec.MLKEM.v_ETA1 $K /\
+                $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
+                $ETA2 == Spec.MLKEM.v_ETA2 $K /\
+                $ETA2_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K"#))]
             pub(crate) fn encapsulate<
                 const K: usize,
                 const CIPHERTEXT_SIZE: usize,
@@ -140,7 +179,7 @@ macro_rules! instantiate {
                 const C2_SIZE: usize,
                 const VECTOR_U_COMPRESSION_FACTOR: usize,
                 const VECTOR_V_COMPRESSION_FACTOR: usize,
-                const VECTOR_U_BLOCK_LEN: usize,
+                const C1_BLOCK_SIZE: usize,
                 const ETA1: usize,
                 const ETA1_RANDOMNESS_SIZE: usize,
                 const ETA2: usize,
@@ -158,7 +197,7 @@ macro_rules! instantiate {
                     C2_SIZE,
                     VECTOR_U_COMPRESSION_FACTOR,
                     VECTOR_V_COMPRESSION_FACTOR,
-                    VECTOR_U_BLOCK_LEN,
+                    C1_BLOCK_SIZE,
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     ETA2,
@@ -216,6 +255,22 @@ macro_rules! instantiate {
             }
 
             /// Portable decapsulate
+            #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                $SECRET_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
+                $CPA_SECRET_KEY_SIZE == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K /\
+                $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
+                $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
+                $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
+                $C1_SIZE == Spec.MLKEM.v_C1_SIZE $K /\
+                $C2_SIZE == Spec.MLKEM.v_C2_SIZE $K /\
+                $VECTOR_U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR  $K /\
+                $VECTOR_V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR  $K /\
+                $C1_BLOCK_SIZE == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
+                $ETA1 == Spec.MLKEM.v_ETA1 $K /\
+                $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
+                $ETA2 == Spec.MLKEM.v_ETA2 $K /\
+                $ETA2_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K /\
+                $IMPLICIT_REJECTION_HASH_INPUT_SIZE == Spec.MLKEM.v_IMPLICIT_REJECTION_HASH_INPUT_SIZE $K"#))]
             pub fn decapsulate<
                 const K: usize,
                 const SECRET_KEY_SIZE: usize,
@@ -270,6 +325,12 @@ macro_rules! instantiate {
                     crate::ind_cca::unpacked::MlKemPublicKeyUnpacked<K, $vector>;
 
                 /// Get the unpacked public key.
+                #[hax_lib::requires(
+                    fstar!(r#"Spec.MLKEM.is_rank $K /\
+                    $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
+                    $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K"#)
+                )]
+                #[inline(always)]
                 pub(crate) fn unpack_public_key<
                     const K: usize,
                     const T_AS_NTT_ENCODED_SIZE: usize,
@@ -289,7 +350,46 @@ macro_rules! instantiate {
                     >(public_key, unpacked_public_key)
                 }
 
+                /// Take a serialized private key and generate an unpacked key pair from it.
+                #[inline(always)]
+                #[hax_lib::requires(
+                    fstar!(r#"Spec.MLKEM.is_rank $K /\
+                            v_SECRET_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE v_K /\
+                            v_CPA_SECRET_KEY_SIZE == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE v_K /\
+                            v_PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE v_K /\
+                            v_BYTES_PER_RING_ELEMENT == Spec.MLKEM.v_RANKED_BYTES_PER_RING_ELEMENT v_K /\
+                            v_T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE v_K"#))]
+                pub(crate) fn keypair_from_private_key<
+                    const K: usize,
+                    const SECRET_KEY_SIZE: usize,
+                    const CPA_SECRET_KEY_SIZE: usize,
+                    const PUBLIC_KEY_SIZE: usize,
+                    const BYTES_PER_RING_ELEMENT: usize,
+                    const T_AS_NTT_ENCODED_SIZE: usize,
+                >(
+                    private_key: &MlKemPrivateKey<SECRET_KEY_SIZE>,
+                    key_pair: &mut MlKemKeyPairUnpacked<K>,
+                ) {
+                    crate::ind_cca::unpacked::keys_from_private_key::<
+                        K,
+                        SECRET_KEY_SIZE,
+                        CPA_SECRET_KEY_SIZE,
+                        PUBLIC_KEY_SIZE,
+                        BYTES_PER_RING_ELEMENT,
+                        T_AS_NTT_ENCODED_SIZE,
+                        $vector,
+                    >(private_key, key_pair);
+                }
+
                 /// Generate a key pair
+                #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                    $CPA_PRIVATE_KEY_SIZE == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K /\
+                    $PRIVATE_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
+                    $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
+                    $BYTES_PER_RING_ELEMENT == Spec.MLKEM.v_RANKED_BYTES_PER_RING_ELEMENT $K /\
+                    $ETA1 == Spec.MLKEM.v_ETA1 $K /\
+                    $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K"#))]
+                #[inline(always)]
                 pub(crate) fn generate_keypair<
                     const K: usize,
                     const CPA_PRIVATE_KEY_SIZE: usize,
@@ -317,6 +417,20 @@ macro_rules! instantiate {
                 }
 
                 /// Unpacked encapsulate
+                #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                    $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
+                    $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
+                    $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
+                    $C1_SIZE == Spec.MLKEM.v_C1_SIZE $K /\
+                    $C2_SIZE == Spec.MLKEM.v_C2_SIZE $K /\
+                    $VECTOR_U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR  $K /\
+                    $VECTOR_V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR  $K /\
+                    $VECTOR_U_BLOCK_LEN == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
+                    $ETA1 == Spec.MLKEM.v_ETA1 $K /\
+                    $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
+                    $ETA2 == Spec.MLKEM.v_ETA2 $K /\
+                    $ETA2_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K"#))]
+                #[inline(always)]
                 pub(crate) fn encapsulate<
                     const K: usize,
                     const CIPHERTEXT_SIZE: usize,
@@ -355,6 +469,23 @@ macro_rules! instantiate {
                 }
 
                 /// Unpacked decapsulate
+                #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                    $SECRET_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
+                    $CPA_SECRET_KEY_SIZE == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K /\
+                    $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
+                    $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
+                    $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
+                    $C1_SIZE == Spec.MLKEM.v_C1_SIZE $K /\
+                    $C2_SIZE == Spec.MLKEM.v_C2_SIZE $K /\
+                    $VECTOR_U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR  $K /\
+                    $VECTOR_V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR  $K /\
+                    $C1_BLOCK_SIZE == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
+                    $ETA1 == Spec.MLKEM.v_ETA1 $K /\
+                    $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
+                    $ETA2 == Spec.MLKEM.v_ETA2 $K /\
+                    $ETA2_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K /\
+                    $IMPLICIT_REJECTION_HASH_INPUT_SIZE == Spec.MLKEM.v_IMPLICIT_REJECTION_HASH_INPUT_SIZE $K"#))]
+                #[inline(always)]
                 pub(crate) fn decapsulate<
                     const K: usize,
                     const SECRET_KEY_SIZE: usize,
@@ -407,7 +538,7 @@ instantiate! {portable, crate::vector::portable::PortableVector, crate::hash_fun
 
 // AVX2 generic implementation.
 #[cfg(feature = "simd256")]
-instantiate! {avx2, crate::vector::SIMD256Vector, crate::hash_functions::avx2::Simd256Hash}
+pub mod avx2;
 
 // NEON generic implementation.
 #[cfg(feature = "simd128")]

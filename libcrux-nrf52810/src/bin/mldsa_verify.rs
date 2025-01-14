@@ -367,10 +367,10 @@ fn main() -> ! {
     use libcrux_ml_dsa::{MLDSASignature, MLDSAVerificationKey};
     let message = [5u8; 2];
     let _ = mldsa::verify(
-        &MLDSAVerificationKey(VK),
+        &MLDSAVerificationKey::new(VK),
         &message,
         b"",
-        &MLDSASignature(SIGNATURE),
+        &MLDSASignature::new(SIGNATURE),
     )
     .unwrap();
 

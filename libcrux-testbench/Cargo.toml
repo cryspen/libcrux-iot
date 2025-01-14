@@ -9,6 +9,7 @@ libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false,
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 
 [features]
+default = ["mldsa87", "mlkem1024"]
 mldsa44 = []
 mldsa65 = []
 mldsa87 = []
