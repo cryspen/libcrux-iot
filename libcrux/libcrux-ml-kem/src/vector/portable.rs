@@ -1,5 +1,5 @@
 use super::Operations;
-mod arithmetic;
+pub mod arithmetic;
 mod compress;
 mod ntt;
 mod sampling;

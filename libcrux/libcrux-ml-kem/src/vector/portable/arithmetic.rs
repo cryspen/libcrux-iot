@@ -213,7 +213,7 @@ pub fn cond_subtract_3329(mut vec: PortableVector) -> PortableVector {
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 28296 value"#)))]
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
                 v result % 3329 == v value % 3329"#)))]
-pub(crate) fn barrett_reduce_element(value: FieldElement) -> FieldElement {
+pub fn barrett_reduce_element(value: FieldElement) -> FieldElement {
     let t = (i32::from(value) * BARRETT_MULTIPLIER) + (BARRETT_R >> 1);
     hax_lib::fstar!(
         "assert_norm (v v_BARRETT_MULTIPLIER == (pow2 27 + 3329) / (2*3329));
@@ -290,7 +290,7 @@ pub(crate) fn barrett_reduce(mut vec: PortableVector) -> PortableVector {
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b (3328 + 1665) result /\
                 (Spec.Utils.is_i32b (3328 * pow2 15) value ==> Spec.Utils.is_i16b 3328 result) /\
                 v result % 3329 == (v value * 169) % 3329"#)))]
-pub(crate) fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
+pub fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
     // This forces hax to extract code for MONTGOMERY_R before it extracts code
     // for this function. The removal of this line is being tracked in:
     // https://github.com/cryspen/libcrux/issues/134
@@ -387,7 +387,7 @@ pub(crate) fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 fer"#)))]
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
                 v result % 3329 == (v fe * v fer * 169) % 3329"#)))]
-pub(crate) fn montgomery_multiply_fe_by_fer(
+pub fn montgomery_multiply_fe_by_fer(
     fe: FieldElement,
     fer: FieldElementTimesMontgomeryR,
 ) -> FieldElement {
@@ -420,4 +420,36 @@ pub(crate) fn montgomery_multiply_by_constant(mut vec: PortableVector, c: i16) -
         vec.elements[i] = montgomery_multiply_fe_by_fer(vec.elements[i], c)
     }
     vec
+}
+
+/// Plantard reduction
+///
+/// Input: a = a_top || a_bottom
+/// Output: r = (a_top mod^{+-} q) || (a_top mod^{+-} q), meaning
+/// -(q+1)/2 <= r_top, r_bottom < q/2
+fn plantard_reduce(packed_elements: u32) -> u32 {
+    todo!()
+}
+
+pub fn plantard_multiply(packed_elements: u32, zetas: u32) -> u32 {
+    todo!()
+}
+
+#[allow(unsafe_code)]
+pub fn plantard_multiply_single_coeff(coeff: i16, zeta: u32) -> i16 {
+    use core::arch::asm;
+    const PLANTARD_FIELD_MODULUS: i16 = FIELD_MODULUS * 8;
+
+    let mut res: u32;
+    unsafe{asm!(
+        "smulwb {res}, {zeta}, {coeff}",
+        "smlabb {res}, {res}, {q}, {q8}",
+        zeta = in(reg) zeta,
+        coeff = in(reg) coeff,
+        q = in(reg) 3329,
+        q8 = in(reg) PLANTARD_FIELD_MODULUS,
+        res = out(reg) res,
+    );
+    }
+    (res / (1 << 16)) as i16
 }
