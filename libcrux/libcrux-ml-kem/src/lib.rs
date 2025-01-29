@@ -107,6 +107,7 @@ mod types;
 mod utils;
 mod variant;
 pub mod vector;
+pub mod cortex_m;
 
 #[cfg(feature = "mlkem512")]
 #[cfg_attr(docsrs, doc(cfg(feature = "mlkem512")))]
@@ -167,3 +168,4 @@ cfg_kyber! {
         }
     }
 }
+

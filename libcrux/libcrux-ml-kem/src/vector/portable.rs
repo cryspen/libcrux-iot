@@ -1,10 +1,10 @@
 use super::Operations;
 pub mod arithmetic;
 mod compress;
-mod ntt;
+pub mod ntt;
 mod sampling;
 mod serialize;
-mod vector_type;
+pub mod vector_type;
 
 use arithmetic::*;
 use compress::*;

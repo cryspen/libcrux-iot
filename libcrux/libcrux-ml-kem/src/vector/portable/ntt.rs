@@ -15,7 +15,7 @@ use super::vector_type::*;
                                               (Spec.Utils.is_i16b (b+3328) ${vec}_future.f_elements.[i] /\
                                                Spec.Utils.is_i16b (b+3328) ${vec}_future.f_elements.[j])) /\
                                     Spec.Utils.ntt_spec ${vec}.f_elements (v $zeta) (v $i) (v $j) ${vec}_future.f_elements"#))]
-pub(crate) fn ntt_step(vec: &mut PortableVector, zeta: i16, i: usize, j: usize) {
+pub fn ntt_step(vec: &mut PortableVector, zeta: i16, i: usize, j: usize) {
     let t = montgomery_multiply_fe_by_fer(vec.elements[j], zeta);
     hax_lib::fstar!(
         "assert (v t % 3329 == ((v (Seq.index vec.f_elements (v j)) * v zeta * 169) % 3329))"
@@ -64,7 +64,7 @@ pub(crate) fn ntt_step(vec: &mut PortableVector, zeta: i16, i: usize, j: usize) 
                             Spec.Utils.is_i16b 1664 zeta2 /\ Spec.Utils.is_i16b 1664 zeta3 /\
                             Spec.Utils.is_i16b_array (11207+5*3328) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array (11207+6*3328) ${result}.f_elements"#))]
-pub(crate) fn ntt_layer_1_step(
+pub fn ntt_layer_1_step(
     mut vec: PortableVector,
     zeta0: i16,
     zeta1: i16,

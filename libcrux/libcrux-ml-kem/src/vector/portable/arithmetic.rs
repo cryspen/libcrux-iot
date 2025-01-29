@@ -404,7 +404,7 @@ Spec.Utils.is_i16b_array 3328 ${result}.f_elements /\
 (forall i. i < 16 ==> 
     (v (Seq.index ${result}.f_elements i) % 3329 == 
        (v (Seq.index ${vec}.f_elements i) * v c * 169) %3329))"#)))]
-pub(crate) fn montgomery_multiply_by_constant(mut vec: PortableVector, c: i16) -> PortableVector {
+pub fn montgomery_multiply_by_constant(mut vec: PortableVector, c: i16) -> PortableVector {
     let _vec0 = vec;
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
@@ -422,34 +422,56 @@ pub(crate) fn montgomery_multiply_by_constant(mut vec: PortableVector, c: i16) -
     vec
 }
 
-/// Plantard reduction
-///
-/// Input: a = a_top || a_bottom
-/// Output: r = (a_top mod^{+-} q) || (a_top mod^{+-} q), meaning
-/// -(q+1)/2 <= r_top, r_bottom < q/2
-fn plantard_reduce(packed_elements: u32) -> u32 {
+const PLANTARD_ZETAS: [i32; 128] = [1290168, -2064267850, -966335387, -51606696, -886345008, 812805467, -1847519726, 1094061961, 1370157786, -1819136043, 249002310, 1028263423, -700560901, -89021551, 734105255, -2042335004, 381889553, -1137927652, 1727534158, 1904287092, -365117376, 72249375, -1404992305, 1719793153, 1839778722, -1593356746, 690239563, -576704830, -1207596692, -580575332, -1748176835, 1059227441, 372858381, 427045412, -98052722, -2029433330, 1544330386, -1322421591, -1357256111, -1643673275, 838608815, -1744306333, -1052776603, 815385801, -598637676, 42575525, 1703020977, -1824296712, -1303069080, 1851390229, 1041165097, 583155668, 1855260731, -594767174, 1979116802, -1195985185, -879894171, -918599193, 1910737929, 836028480, -1103093132, -282546662, 1583035408, 1174052340, 21932846, -732815086, 752167598, -877313836, 2112004045, 932791035, -1343064270, 1419184148, 1817845876, -860541660, -61928035, 300609006, 975366560, -1513366367, -405112565, -359956706, -2097812202, 2130066389, -696690399, -1986857805, -1912028096, 1228239371, 1884934581, -828287474, 1211467195, -1317260921, -1150829326, -1214047529, 945692709, -1279846067, 345764865, 826997308, 2043625172, -1330162596, -1666896289, -140628247, 483812778, -1006330577, -1598517416, 2122325384, 1371447954, 411563403, -717333077, 976656727, -1586905909, 723783916, -1113414471, -948273043, -677337888, 1408862808, 519937465, 1323711759, 1474661346, -1521107372, -714752743, 1143088323, -2073299022, 1563682897, -1877193576, 1327582262, -1572714068, -508325958, 1141798155, -1515946702];
+
+pub fn plantard_double_ct(a: u32, b: u32, zeta: i32) -> (u32, u32) {
     todo!()
 }
 
-pub fn plantard_multiply(packed_elements: u32, zetas: u32) -> u32 {
-    todo!()
-}
-
-#[allow(unsafe_code)]
-pub fn plantard_multiply_single_coeff(coeff: i16, zeta: u32) -> i16 {
-    use core::arch::asm;
-    const PLANTARD_FIELD_MODULUS: i16 = FIELD_MODULUS * 8;
-
-    let mut res: u32;
-    unsafe{asm!(
-        "smulwb {res}, {zeta}, {coeff}",
-        "smlabb {res}, {res}, {q}, {q8}",
-        zeta = in(reg) zeta,
-        coeff = in(reg) coeff,
-        q = in(reg) 3329,
-        q8 = in(reg) PLANTARD_FIELD_MODULUS,
-        res = out(reg) res,
-    );
+#[inline(never)]
+/// Unreduced Plantard multiplication
+pub fn plantard_multiply_single_coeffs(coeffs: &mut [i16; FIELD_ELEMENTS_IN_VECTOR], zeta: i32) {
+    let modulus = 3326;
+    let modulus_alpha = 26632;
+    let mut result = [0i16; 16];
+    for i in 0..coeffs.len() {
+            let mut res = smulwb(zeta, coeffs[i]);  
+            res = smlabb(res , modulus, modulus_alpha); 
+            coeffs[i] = ((res as u32) >> 16) as i16
     }
-    (res / (1 << 16)) as i16
+}
+
+#[inline(always)]
+#[allow(unsafe_code)]
+pub fn smulwb(word: i32, half_word: i16) -> i32 {
+    use core::arch::asm;
+    let mut res: i32;
+    unsafe{
+        asm!(
+            "smulwb {dest}, {w}, {hw}",
+            w    = in(reg) word,
+            hw   = in(reg) half_word,
+            dest = out(reg) res,
+            options(pure, nomem, nostack)
+        )
+    }
+    res
+}
+
+#[inline(always)]
+#[allow(unsafe_code)]
+pub fn smlabb(left: i32, right: i32, accumulator: i32) -> i32 {
+    use core::arch::asm;
+    let mut res: i32;
+    unsafe{
+        asm!(
+            "smlabb {dest}, {l}, {r}, {acc}",
+            l    = in(reg) left,
+            r    = in(reg) right,
+            acc  = in(reg) accumulator,
+            dest = out(reg) res,
+            options(pure, nomem, nostack)
+        )
+    }
+    res
 }
