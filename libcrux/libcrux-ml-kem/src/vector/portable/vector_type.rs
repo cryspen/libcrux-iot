@@ -7,7 +7,7 @@ pub(crate) type FieldElement = i16;
 
 #[derive(Clone, Copy)]
 pub struct PortableVector {
-    pub(crate) elements: [FieldElement; FIELD_ELEMENTS_IN_VECTOR],
+    pub elements: [FieldElement; FIELD_ELEMENTS_IN_VECTOR],
 }
 
 #[inline(always)]

@@ -46,7 +46,7 @@ use alloc::{
 };
 
 /// A test function.
-pub type TestFn<L, E, S> = fn(l: &mut L, state: &S) -> Result<(), E>;
+pub type TestFn<L, E, S> = fn(l: &mut L, state: &mut S) -> Result<(), E>;
 
 #[derive(Debug)]
 /// A test case. The name is used for filtering which tests to run.
@@ -75,7 +75,7 @@ where
     }
     /// If the configuration permits, runs the test case. Logs the appropriate
     /// messages, and returns the error returned by the test.
-    pub fn run(&self, logger: &mut L, state: &S) -> Result<(), E> {
+    pub fn run(&self, logger: &mut L, state: &mut S) -> Result<(), E> {
         logger.log_event(TestUtilEvent::Test(TestEvent::Run {
             name: String::from(self.name),
         }));
@@ -99,7 +99,7 @@ where
 
     /// If the configuration permits, runs the test case as a benchmark. Logs the
     /// appropriate messages, and returns the error returned by the test.
-    pub fn benchmark<P: platform::Platform>(&self, config: &TestConfig<P>, logger: &mut L, run_id: u32, state: &S) -> Result<u32, E> {
+    pub fn benchmark<P: platform::Platform>(&self, config: &TestConfig<P>, logger: &mut L, run_id: u32, state: &mut S) -> Result<u32, E> {
         logger.log_event(TestUtilEvent::Benchmark(BenchmarkEvent::Run {
             name: String::from(self.name),
             run_id,
@@ -152,7 +152,7 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
         &self,
         logger: &mut L,
         config: &TestConfig<'a, P>,
-        state: &S,
+        state: &mut S,
     ) -> Result<(), ErrorReport<E>>
     where
         E: Display,
@@ -197,7 +197,7 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
         &self,
         logger: &mut L,
         config: &TestConfig<'a, P>,
-        state: &S,
+        state: &mut S,
     ) -> Result<Vec<(&'a str, u32, u32)>, ErrorReport<E>>
     where
         E: Display + Debug,

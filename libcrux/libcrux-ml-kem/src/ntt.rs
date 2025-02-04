@@ -331,7 +331,7 @@ pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
 #[hax_lib::fstar::options("--z3rlimit 200")]
 #[hax_lib::ensures(|_| fstar!(r#"Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector ${re}_future ==
     Spec.MLKEM.poly_ntt (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector $re)"#))]
-pub(crate) fn ntt_vector_u<const VECTOR_U_COMPRESSION_FACTOR: usize, Vector: Operations>(
+pub fn ntt_vector_u<const VECTOR_U_COMPRESSION_FACTOR: usize, Vector: Operations>(
     re: &mut PolynomialRingElement<Vector>,
 ) {
     hax_debug_assert!(to_i16_array(re)

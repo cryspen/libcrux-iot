@@ -26,6 +26,7 @@ embedded-alloc = "0.6.0"
 
 [dev-dependencies]
 defmt-test = "0.3"
+libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = [ "pre-verification", "mlkem512", "mlkem768", "mlkem1024",] } 
 
 [features]
 default = ["mldsa87", "mlkem1024"] # We want to benchmark the most expensive variants by default
@@ -57,7 +58,7 @@ overflow-checks = true  # <-
 # cargo build/run --release
 [profile.release]
 codegen-units = 1
-debug = 2
+# debug = 2
 debug-assertions = false # <-
 incremental = false
 lto = 'fat'
