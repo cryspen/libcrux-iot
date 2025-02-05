@@ -239,6 +239,7 @@ fn encap_decap() {
 
         match kat.tests {
             EncapDecapTests::EncapTests { tests } => {
+                eprintln!("Running {} ACVP tests.", tests.len());
                 for test in tests {
                     let expected_result = results
                         .testGroups

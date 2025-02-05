@@ -1,8 +1,9 @@
 use crate::{
-    hax_utils::hax_debug_assert,
-    polynomial::{zeta, PolynomialRingElement, VECTORS_IN_RING_ELEMENT},
-    vector::{montgomery_multiply_fe, Operations},
+    hax_utils::hax_debug_assert, polynomial::{self, zeta, PolynomialRingElement, VECTORS_IN_RING_ELEMENT}, vector::{montgomery_multiply_fe, Operations}
 };
+
+#[cfg(target_arch="arm")]
+use crate::cortex_m;
 
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 200 --ext context_pruning")]
@@ -308,6 +309,7 @@ pub(crate) fn ntt_at_layer_7<Vector: Operations>(re: &mut PolynomialRingElement<
 #[hax_lib::ensures(|_| fstar!(r#"Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector ${re}_future ==
     Spec.MLKEM.poly_ntt (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector $re) /\
     Libcrux_ml_kem.Serialize.coefficients_field_modulus_range #$:Vector ${re}_future"#))]
+#[cfg(not(target_arch="arm"))]
 pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
     re: &mut PolynomialRingElement<Vector>,
 ) {
@@ -323,6 +325,16 @@ pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
     ntt_at_layer_2(&mut zeta_i, re, 11207 + 4 * 3328);
     ntt_at_layer_1(&mut zeta_i, re, 11207 + 5 * 3328);
 
+    re.poly_barrett_reduce()
+}
+
+#[cfg(target_arch="arm")]
+pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
+    re: &mut PolynomialRingElement<Vector>,
+) {
+    let mut flat_coefficient_array = polynomial::to_i16_array(re);
+    cortex_m::ntt(&mut flat_coefficient_array);
+    *re = polynomial::from_i16_array(&flat_coefficient_array);
     re.poly_barrett_reduce()
 }
 

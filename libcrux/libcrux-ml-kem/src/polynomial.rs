@@ -84,6 +84,18 @@ pub fn from_i16_array<Vector: Operations>(a: &[i16]) -> PolynomialRingElement<Ve
     result
 }
 
+#[inline(always)]
+#[hax_lib::requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
+pub fn to_i16_array<Vector: Operations>(poly: &PolynomialRingElement<Vector>) -> [i16; 256] {
+    let mut result = [0; 256];
+
+    for (index, vec) in poly.coefficients.iter().enumerate() {
+        result[index * 16..index * 16 + 16].copy_from_slice(&Vector::to_i16_array(*vec));
+    }
+
+    result
+}
+
 /// Given two polynomial ring elements `lhs` and `rhs`, compute the pointwise
 /// sum of their constituent coefficients.
 #[inline(always)]
