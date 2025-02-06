@@ -1,7 +1,7 @@
 use super::intrinsics::*;
 use super::vector::*;
 
-const FIELD_MODULUS: u32 = 3326;
+const FIELD_MODULUS: u32 = 3329;
 const FIELD_MODULUS_ALPHA: u32 = 26632;
 
 pub fn plantard_multiply(a: u32, zeta:u32) -> u32 {
@@ -10,7 +10,7 @@ pub fn plantard_multiply(a: u32, zeta:u32) -> u32 {
 
 
 #[allow(unsafe_code)]
-pub fn plantard_double_ct_reference(a: u32, b: u32, zeta: u32) -> (u32, u32) {
+pub fn plantard_double_ct_reference(a: u32, b: u32, zeta: i32) -> (u32, u32) {
     use core::arch::asm;
     
     let mut a_res;
@@ -18,17 +18,17 @@ pub fn plantard_double_ct_reference(a: u32, b: u32, zeta: u32) -> (u32, u32) {
 
     unsafe{
     asm!(
-        "smulwb {tmp}, {zeta}, {b}",
+        "smulwb {t}, {zeta}, {b}",
         "smulwt {b}, {zeta}, {b}",
-        "smlabb {tmp}, {tmp}, {q}, {qa}",
+        "smlabb {t}, {t}, {q}, {qa}",
         "smlabb {b}, {b}, {q}, {qa}",
-        "pkhtb {tmp}, {b}, {tmp}, asr#16",
-        "usub16 {b}, {a}, {tmp}",
-        "uadd16 {a}, {a}, {tmp}",
+        "pkhtb {t}, {b}, {t}, asr#16",
+        "usub16 {b}, {a}, {t}",
+        "uadd16 {a}, {a}, {t}",
         a = inout(reg) a => a_res,
         b = inout(reg) b => b_res,
         zeta = in(reg) zeta,
-        tmp = in(reg) 0,
+        t = in(reg) 0,
         q = in(reg) FIELD_MODULUS,
         qa = in(reg) FIELD_MODULUS_ALPHA,
         options(pure, nomem, nostack)

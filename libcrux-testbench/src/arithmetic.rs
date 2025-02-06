@@ -26,14 +26,14 @@ fn bench_montgomery<L: EventLogger>(_l: &mut L, state: &mut BenchState) -> Resul
 
 fn bench_plantard<L: EventLogger>(_l: &mut L, state: &mut BenchState) -> Result<(), String> {
     // let packed = libcrux_ml_kem::cortex_m::vector::PackedVector::from(state.portable);
-    core::hint::black_box(ntt_layer_1_step(
-        state.packed,
-        1,
-        2,
-        3,
-        4,
-        plantard_double_ct_reference,
-    ));
+    // core::hint::black_box(ntt_layer_1_step(
+    //     state.packed,
+    //     1,
+    //     2,
+    //     3,
+    //     4,
+    //     plantard_double_ct_reference,
+    // ));
 
     Ok(())
 }

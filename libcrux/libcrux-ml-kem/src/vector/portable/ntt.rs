@@ -15,8 +15,54 @@ use super::vector_type::*;
                                               (Spec.Utils.is_i16b (b+3328) ${vec}_future.f_elements.[i] /\
                                                Spec.Utils.is_i16b (b+3328) ${vec}_future.f_elements.[j])) /\
                                     Spec.Utils.ntt_spec ${vec}.f_elements (v $zeta) (v $i) (v $j) ${vec}_future.f_elements"#))]
-pub fn ntt_step(vec: &mut PortableVector, zeta: i16, i: usize, j: usize) {
+#[cfg(target_arch = "arm")]
+pub fn ntt_double_step(
+    vec: &mut PortableVector,
+    zeta: usize,
+    i1: usize,
+    j1: usize,
+    i2: usize,
+    j2: usize,
+) {
+    let zeta = crate::cortex_m::plantard_zeta(zeta);
+    defmt::println!("\na1: {=i16}", vec.elements[i1]);
+    defmt::println!("b1: {=i16}", vec.elements[j1]);
+    defmt::println!("a2: {=i16}", vec.elements[i2]);
+    defmt::println!("b2: {=i16}", vec.elements[j2]);
+
+    defmt::println!("zeta: {=i32}", zeta);
+
+    let a = crate::cortex_m::vector::pack(vec.elements[i1], vec.elements[i2]);
+    let b = crate::cortex_m::vector::pack(vec.elements[j1], vec.elements[j2]);
+    let (a_out, b_out) = crate::cortex_m::arithmetic::plantard_double_ct_reference(a, b, zeta);
+    let (a1, a2) = crate::cortex_m::vector::unpack(a_out);
+    let (b1, b2) = crate::cortex_m::vector::unpack(b_out);
+    vec.elements[i1] = a1;
+    vec.elements[i2] = a2;
+    vec.elements[j1] = b1;
+    vec.elements[j2] = b2;
+    defmt::println!("a1 + b2 * zeta: {=i16}", vec.elements[i1]);
+    defmt::println!("a1 - b2 * zeta: {=i16}", vec.elements[j1]);
+    defmt::println!("a2 + b2 * zeta: {=i16}", vec.elements[i2]);
+    defmt::println!("a2 - b2 * zeta: {=i16}", vec.elements[j2]);
+    
+}
+
+pub fn ntt_step(vec: &mut PortableVector, zeta: usize, i: usize, j: usize, print: bool) {
+    if print {
+        defmt::println!("\na: {=i16}", vec.elements[i]);
+        defmt::println!("b: {=i16}", vec.elements[j]);
+    }
+    let zeta = crate::polynomial::zeta(zeta);
+    if print {
+        defmt::println!("zeta: {=i16}", zeta);
+    }
     let t = montgomery_multiply_fe_by_fer(vec.elements[j], zeta);
+
+    if print {
+        defmt::println!("b * zeta: {=i16}", t);
+    }
+
     hax_lib::fstar!(
         "assert (v t % 3329 == ((v (Seq.index vec.f_elements (v j)) * v zeta * 169) % 3329))"
     );
@@ -52,6 +98,10 @@ pub fn ntt_step(vec: &mut PortableVector, zeta: i16, i: usize, j: usize) {
     );
     vec.elements[j] = a_minus_t;
     vec.elements[i] = a_plus_t;
+    if print {
+        defmt::println!("a + b*zeta: {=i16}", vec.elements[i]);
+        defmt::println!("a - b*zeta: {=i16}", vec.elements[j]);
+    }
     hax_lib::fstar!(
         "assert (Seq.index vec.f_elements (v i) == a_plus_t);
                      assert (Seq.index vec.f_elements (v j) == a_minus_t)"
@@ -64,21 +114,37 @@ pub fn ntt_step(vec: &mut PortableVector, zeta: i16, i: usize, j: usize) {
                             Spec.Utils.is_i16b 1664 zeta2 /\ Spec.Utils.is_i16b 1664 zeta3 /\
                             Spec.Utils.is_i16b_array (11207+5*3328) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array (11207+6*3328) ${result}.f_elements"#))]
+#[cfg(not(target_arch = "arm"))]
 pub fn ntt_layer_1_step(
     mut vec: PortableVector,
-    zeta0: i16,
-    zeta1: i16,
-    zeta2: i16,
-    zeta3: i16,
+    zeta0: usize,
+    zeta1: usize,
+    zeta2: usize,
+    zeta3: usize,
 ) -> PortableVector {
-    ntt_step(&mut vec, zeta0, 0, 2);
-    ntt_step(&mut vec, zeta0, 1, 3);
-    ntt_step(&mut vec, zeta1, 4, 6);
-    ntt_step(&mut vec, zeta1, 5, 7);
-    ntt_step(&mut vec, zeta2, 8, 10);
-    ntt_step(&mut vec, zeta2, 9, 11);
-    ntt_step(&mut vec, zeta3, 12, 14);
-    ntt_step(&mut vec, zeta3, 13, 15);
+    ntt_step(&mut vec, zeta0, 0, 2, true);
+    ntt_step(&mut vec, zeta0, 1, 3, true);
+    ntt_step(&mut vec, zeta1, 4, 6, true);
+    ntt_step(&mut vec, zeta1, 5, 7, true);
+    ntt_step(&mut vec, zeta2, 8, 10, true);
+    ntt_step(&mut vec, zeta2, 9, 11, true);
+    ntt_step(&mut vec, zeta3, 12, 14, true);
+    ntt_step(&mut vec, zeta3, 13, 15, true);
+    vec
+}
+
+#[cfg(target_arch = "arm")]
+pub fn ntt_layer_1_step(
+    mut vec: PortableVector,
+    zeta0: usize,
+    zeta1: usize,
+    zeta2: usize,
+    zeta3: usize,
+) -> PortableVector {
+    ntt_double_step(&mut vec, zeta0, 0, 2, 1, 3);
+    ntt_double_step(&mut vec, zeta1, 4, 6, 5, 7);
+    ntt_double_step(&mut vec, zeta2, 8, 10, 9, 11);
+    ntt_double_step(&mut vec, zeta3, 12, 14, 13, 15);
     vec
 }
 
@@ -87,15 +153,19 @@ pub fn ntt_layer_1_step(
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta0 /\ Spec.Utils.is_i16b 1664 zeta1 /\
                             Spec.Utils.is_i16b_array (11207+4*3328) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array (11207+5*3328) ${result}.f_elements"#))]
-pub(crate) fn ntt_layer_2_step(mut vec: PortableVector, zeta0: i16, zeta1: i16) -> PortableVector {
-    ntt_step(&mut vec, zeta0, 0, 4);
-    ntt_step(&mut vec, zeta0, 1, 5);
-    ntt_step(&mut vec, zeta0, 2, 6);
-    ntt_step(&mut vec, zeta0, 3, 7);
-    ntt_step(&mut vec, zeta1, 8, 12);
-    ntt_step(&mut vec, zeta1, 9, 13);
-    ntt_step(&mut vec, zeta1, 10, 14);
-    ntt_step(&mut vec, zeta1, 11, 15);
+pub(crate) fn ntt_layer_2_step(
+    mut vec: PortableVector,
+    zeta0: usize,
+    zeta1: usize,
+) -> PortableVector {
+    ntt_step(&mut vec, zeta0, 0, 4, false);
+    ntt_step(&mut vec, zeta0, 1, 5, false);
+    ntt_step(&mut vec, zeta0, 2, 6, false);
+    ntt_step(&mut vec, zeta0, 3, 7, false);
+    ntt_step(&mut vec, zeta1, 8, 12, false);
+    ntt_step(&mut vec, zeta1, 9, 13, false);
+    ntt_step(&mut vec, zeta1, 10, 14, false);
+    ntt_step(&mut vec, zeta1, 11, 15, false);
     vec
 }
 
@@ -104,15 +174,15 @@ pub(crate) fn ntt_layer_2_step(mut vec: PortableVector, zeta0: i16, zeta1: i16) 
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta /\
                             Spec.Utils.is_i16b_array (11207+3*3328) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array (11207+4*3328) ${result}.f_elements"#))]
-pub(crate) fn ntt_layer_3_step(mut vec: PortableVector, zeta: i16) -> PortableVector {
-    ntt_step(&mut vec, zeta, 0, 8);
-    ntt_step(&mut vec, zeta, 1, 9);
-    ntt_step(&mut vec, zeta, 2, 10);
-    ntt_step(&mut vec, zeta, 3, 11);
-    ntt_step(&mut vec, zeta, 4, 12);
-    ntt_step(&mut vec, zeta, 5, 13);
-    ntt_step(&mut vec, zeta, 6, 14);
-    ntt_step(&mut vec, zeta, 7, 15);
+pub(crate) fn ntt_layer_3_step(mut vec: PortableVector, zeta: usize) -> PortableVector {
+    ntt_step(&mut vec, zeta, 0, 8, false);
+    ntt_step(&mut vec, zeta, 1, 9, false);
+    ntt_step(&mut vec, zeta, 2, 10, false);
+    ntt_step(&mut vec, zeta, 3, 11, false);
+    ntt_step(&mut vec, zeta, 4, 12, false);
+    ntt_step(&mut vec, zeta, 5, 13, false);
+    ntt_step(&mut vec, zeta, 6, 14, false);
+    ntt_step(&mut vec, zeta, 7, 15, false);
     vec
 }
 

@@ -102,15 +102,15 @@ pub trait Operations: Copy + Clone + Repr {
                        Spec.Utils.is_i16b 1664 zeta2 /\ Spec.Utils.is_i16b 1664 zeta3 /\
                        Spec.Utils.is_i16b_array (11207+5*3328) (f_repr ${a})"#))]
     #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+6*3328) (f_repr $out)"#))]
-    fn ntt_layer_1_step(a: Self, zeta0: i16, zeta1: i16, zeta2: i16, zeta3: i16) -> Self;
+    fn ntt_layer_1_step(a: Self, zeta0: usize, zeta1: usize, zeta2: usize, zeta3: usize) -> Self;
     #[requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta0 /\ Spec.Utils.is_i16b 1664 zeta1 /\
                        Spec.Utils.is_i16b_array (11207+4*3328) (f_repr ${a})"#))]
     #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+5*3328) (f_repr $out)"#))]
-    fn ntt_layer_2_step(a: Self, zeta0: i16, zeta1: i16) -> Self;
+    fn ntt_layer_2_step(a: Self, zeta0: usize, zeta1: usize) -> Self;
     #[requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta /\
                        Spec.Utils.is_i16b_array (11207+3*3328) (f_repr ${a})"#))]
     #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+4*3328) (f_repr $out)"#))]
-    fn ntt_layer_3_step(a: Self, zeta: i16) -> Self;
+    fn ntt_layer_3_step(a: Self, zeta: usize) -> Self;
 
     #[requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta0 /\ Spec.Utils.is_i16b 1664 zeta1 /\ 
                        Spec.Utils.is_i16b 1664 zeta2 /\ Spec.Utils.is_i16b 1664 zeta3 /\

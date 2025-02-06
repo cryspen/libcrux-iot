@@ -26,6 +26,10 @@ const PLANTARD_ZETAS: [i32; 128] =
      -677337888, 1408862808, 519937465, 1323711759, 1474661346, -1521107372, -714752743, 1143088323,
      -2073299022, 1563682897, -1877193576, 1327582262, -1572714068, -508325958, 1141798155, -1515946702];
 
+pub(crate) fn plantard_zeta(index: usize) -> i32 {
+    PLANTARD_ZETAS[index]
+}
+
 pub(crate) fn ntt_at_layer(zeta_i: &mut usize, re: &mut [u32; 128], layer: usize) {
     let step = 1 << (layer - 1);
 
@@ -36,7 +40,7 @@ pub(crate) fn ntt_at_layer(zeta_i: &mut usize, re: &mut [u32; 128], layer: usize
         let offset = round * step * 2;
 
         for j in offset..offset + step {
-            let (x, y) = plantard_double_ct_reference(re[j], re[j + step], PLANTARD_ZETAS[*zeta_i] as u32);
+            let (x, y) = plantard_double_ct_reference(re[j], re[j + step], PLANTARD_ZETAS[*zeta_i]);
             re[j] = x;
             re[j + step] = y;
         }

@@ -58,10 +58,10 @@ pub(crate) fn ntt_at_layer_1<Vector: Operations>(
         );
         re.coefficients[round] = Vector::ntt_layer_1_step(
             re.coefficients[round],
-            zeta(*zeta_i),
-            zeta(*zeta_i + 1),
-            zeta(*zeta_i + 2),
-            zeta(*zeta_i + 3),
+            *zeta_i,
+            *zeta_i + 1,
+            *zeta_i + 2,
+            *zeta_i + 3,
         );
         *zeta_i += 3;
         hax_lib::fstar!(
@@ -120,7 +120,7 @@ pub(crate) fn ntt_at_layer_2<Vector: Operations>(
                         (Libcrux_ml_kem.Vector.Traits.f_to_i16_array (re.f_coefficients.[ round ])))"#
         );
         re.coefficients[round] =
-            Vector::ntt_layer_2_step(re.coefficients[round], zeta(*zeta_i), zeta(*zeta_i + 1));
+            Vector::ntt_layer_2_step(re.coefficients[round], *zeta_i, *zeta_i + 1);
         *zeta_i += 1;
         hax_lib::fstar!(
             r#"reveal_opaque (`%Spec.Utils.is_i16b_array_opaque) 
@@ -177,7 +177,7 @@ pub(crate) fn ntt_at_layer_3<Vector: Operations>(
                         (Spec.Utils.is_i16b_array_opaque (11207+3*3328)
                         (Libcrux_ml_kem.Vector.Traits.f_to_i16_array (re.f_coefficients.[ round ])))"#
         );
-        re.coefficients[round] = Vector::ntt_layer_3_step(re.coefficients[round], zeta(*zeta_i));
+        re.coefficients[round] = Vector::ntt_layer_3_step(re.coefficients[round], *zeta_i);
         hax_lib::fstar!(
             "reveal_opaque (`%Spec.Utils.is_i16b_array_opaque) 
             (Spec.Utils.is_i16b_array_opaque (11207+4*3328)

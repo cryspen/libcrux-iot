@@ -90,10 +90,10 @@ fn compress<const COEFFICIENT_BITS: i32>(vector: SIMD256Vector) -> SIMD256Vector
 #[hax_lib::ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+6*3328) (repr $out)"#))]
 fn ntt_layer_1_step(
     vector: SIMD256Vector,
-    zeta0: i16,
-    zeta1: i16,
-    zeta2: i16,
-    zeta3: i16,
+    zeta0: usize,
+    zeta1: usize,
+    zeta2: usize,
+    zeta3: usize,
 ) -> SIMD256Vector {
     SIMD256Vector {
         elements: ntt::ntt_layer_1_step(vector.elements, zeta0, zeta1, zeta2, zeta3),
@@ -105,7 +105,7 @@ fn ntt_layer_1_step(
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta0 /\ Spec.Utils.is_i16b 1664 zeta1 /\
                     Spec.Utils.is_i16b_array (11207+4*3328) (repr ${vector})"#))]
 #[hax_lib::ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+5*3328) (repr $out)"#))]
-fn ntt_layer_2_step(vector: SIMD256Vector, zeta0: i16, zeta1: i16) -> SIMD256Vector {
+fn ntt_layer_2_step(vector: SIMD256Vector, zeta0: usize, zeta1: usize) -> SIMD256Vector {
     SIMD256Vector {
         elements: ntt::ntt_layer_2_step(vector.elements, zeta0, zeta1),
     }
@@ -116,7 +116,7 @@ fn ntt_layer_2_step(vector: SIMD256Vector, zeta0: i16, zeta1: i16) -> SIMD256Vec
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta /\
                     Spec.Utils.is_i16b_array (11207+3*3328) (repr ${vector})"#))]
 #[hax_lib::ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+4*3328) (repr $out)"#))]
-fn ntt_layer_3_step(vector: SIMD256Vector, zeta: i16) -> SIMD256Vector {
+fn ntt_layer_3_step(vector: SIMD256Vector, zeta: usize) -> SIMD256Vector {
     SIMD256Vector {
         elements: ntt::ntt_layer_3_step(vector.elements, zeta),
     }
@@ -401,7 +401,7 @@ impl Operations for SIMD256Vector {
                        Spec.Utils.is_i16b_array (11207+5*3328) (impl.f_repr ${vector})"#))]
     #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+6*3328) (impl.f_repr $out)"#))]
     #[inline(always)]
-    fn ntt_layer_1_step(vector: Self, zeta0: i16, zeta1: i16, zeta2: i16, zeta3: i16) -> Self {
+    fn ntt_layer_1_step(vector: Self, zeta0: usize, zeta1: usize, zeta2: usize, zeta3: usize) -> Self {
         ntt_layer_1_step(vector, zeta0, zeta1, zeta2, zeta3)
     }
 
@@ -409,7 +409,7 @@ impl Operations for SIMD256Vector {
                        Spec.Utils.is_i16b_array (11207+4*3328) (impl.f_repr ${vector})"#))]
     #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+5*3328) (impl.f_repr $out)"#))]
     #[inline(always)]
-    fn ntt_layer_2_step(vector: Self, zeta0: i16, zeta1: i16) -> Self {
+    fn ntt_layer_2_step(vector: Self, zeta0: usize, zeta1: usize) -> Self {
         ntt_layer_2_step(vector, zeta0, zeta1)
     }
 
@@ -417,7 +417,7 @@ impl Operations for SIMD256Vector {
                        Spec.Utils.is_i16b_array (11207+3*3328) (impl.f_repr ${vector})"#))]
     #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+4*3328) (impl.f_repr $out)"#))]
     #[inline(always)]
-    fn ntt_layer_3_step(vector: Self, zeta: i16) -> Self {
+    fn ntt_layer_3_step(vector: Self, zeta: usize) -> Self {
         ntt_layer_3_step(vector, zeta)
     }
 

@@ -22,17 +22,17 @@ fn main() -> ! {
     let randomness_encaps = [2u8; libcrux_ml_kem::ENCAPS_SEED_SIZE];
     let (ciphertext, shared_secret) = mlkem::encapsulate(pair.public_key(), randomness_encaps);
 
-    defmt::println!("Public Key:");
-    defmt::println!("{=[u8]}", *pair.public_key().as_slice());
+    // defmt::println!("Public Key:");
+    // defmt::println!("{=[u8]}", *pair.public_key().as_slice());
 
-    defmt::println!("\nPrivate Key:");
-    defmt::println!("{=[u8]}", *pair.private_key().as_slice());
+    // defmt::println!("\nPrivate Key:");
+    // defmt::println!("{=[u8]}", *pair.private_key().as_slice());
 
-    defmt::println!("\nCiphertext:");
-    defmt::println!("{=[u8]}", *ciphertext.as_slice());
+    // defmt::println!("\nCiphertext:");
+    // defmt::println!("{=[u8]}", *ciphertext.as_slice());
 
     defmt::println!("\nShared Secret:");
     defmt::println!("{=[u8]}", *shared_secret.as_slice());
-
+    defmt::println!("\n Done");
     board::exit()
 }
