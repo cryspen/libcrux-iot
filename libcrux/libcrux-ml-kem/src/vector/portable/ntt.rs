@@ -1,5 +1,20 @@
+use crate::vector::FIELD_ELEMENTS_IN_VECTOR;
+
 use super::arithmetic::*;
 use super::vector_type::*;
+
+#[inline(always)]
+#[cfg(target_arch = "arm")]
+fn ntt_double_step(
+    vec: &mut PackedFieldElementArray,
+    zeta: usize,
+    a: usize,
+    b: usize,
+) {
+    let zeta = crate::cortex_m::plantard_zeta(zeta);
+
+    (vec[a], vec[b]) = crate::cortex_m::plantard_double_ct_reference(vec[a], vec[b], zeta);
+}
 
 #[inline(always)]
 #[hax_lib::fstar::before(interface, "[@@ \"opaque_to_smt\"]")]
@@ -15,58 +30,14 @@ use super::vector_type::*;
                                               (Spec.Utils.is_i16b (b+3328) ${vec}_future.f_elements.[i] /\
                                                Spec.Utils.is_i16b (b+3328) ${vec}_future.f_elements.[j])) /\
                                     Spec.Utils.ntt_spec ${vec}.f_elements (v $zeta) (v $i) (v $j) ${vec}_future.f_elements"#))]
-#[cfg(target_arch = "arm")]
-pub fn ntt_double_step(
-    vec: &mut PortableVector,
-    zeta: usize,
-    i1: usize,
-    j1: usize,
-    i2: usize,
-    j2: usize,
-) {
-    let zeta = crate::cortex_m::plantard_zeta(zeta);
-    defmt::println!("\na1: {=i16}", vec.elements[i1]);
-    defmt::println!("b1: {=i16}", vec.elements[j1]);
-    defmt::println!("a2: {=i16}", vec.elements[i2]);
-    defmt::println!("b2: {=i16}", vec.elements[j2]);
-
-    defmt::println!("zeta: {=i32}", zeta);
-
-    let a = crate::cortex_m::vector::pack(vec.elements[i1], vec.elements[i2]);
-    let b = crate::cortex_m::vector::pack(vec.elements[j1], vec.elements[j2]);
-    let (a_out, b_out) = crate::cortex_m::arithmetic::plantard_double_ct_reference(a, b, zeta);
-    let (a1, a2) = crate::cortex_m::vector::unpack(a_out);
-    let (b1, b2) = crate::cortex_m::vector::unpack(b_out);
-    vec.elements[i1] = a1;
-    vec.elements[i2] = a2;
-    vec.elements[j1] = b1;
-    vec.elements[j2] = b2;
-    defmt::println!("a1 + b2 * zeta: {=i16}", vec.elements[i1]);
-    defmt::println!("a1 - b2 * zeta: {=i16}", vec.elements[j1]);
-    defmt::println!("a2 + b2 * zeta: {=i16}", vec.elements[i2]);
-    defmt::println!("a2 - b2 * zeta: {=i16}", vec.elements[j2]);
-    
-}
-
-pub fn ntt_step(vec: &mut PortableVector, zeta: usize, i: usize, j: usize, print: bool) {
-    if print {
-        defmt::println!("\na: {=i16}", vec.elements[i]);
-        defmt::println!("b: {=i16}", vec.elements[j]);
-    }
+fn ntt_step(vec: &mut UnpackedFieldElementArray, zeta: usize, i: usize, j: usize) {
     let zeta = crate::polynomial::zeta(zeta);
-    if print {
-        defmt::println!("zeta: {=i16}", zeta);
-    }
-    let t = montgomery_multiply_fe_by_fer(vec.elements[j], zeta);
-
-    if print {
-        defmt::println!("b * zeta: {=i16}", t);
-    }
+    let t = montgomery_multiply_fe_by_fer(vec[j], zeta);
 
     hax_lib::fstar!(
         "assert (v t % 3329 == ((v (Seq.index vec.f_elements (v j)) * v zeta * 169) % 3329))"
     );
-    let a_minus_t = vec.elements[i] - t;
+    let a_minus_t = vec[i] - t;
     hax_lib::fstar!(
         r#"
     calc (==) {
@@ -81,7 +52,7 @@ pub fn ntt_step(vec: &mut PortableVector, zeta: usize, i: usize, j: usize, print
         (v (Seq.index vec.f_elements (v $i)) - (v (Seq.index vec.f_elements (v $j)) * v $zeta * 169)) % 3329;
         }"#
     );
-    let a_plus_t = vec.elements[i] + t;
+    let a_plus_t = vec[i] + t;
     hax_lib::fstar!(
         r#"
     calc (==) {
@@ -96,12 +67,9 @@ pub fn ntt_step(vec: &mut PortableVector, zeta: usize, i: usize, j: usize, print
         (v (Seq.index vec.f_elements (v $i)) + (v (Seq.index vec.f_elements (v $j)) * v $zeta * 169)) % 3329;
     }"#
     );
-    vec.elements[j] = a_minus_t;
-    vec.elements[i] = a_plus_t;
-    if print {
-        defmt::println!("a + b*zeta: {=i16}", vec.elements[i]);
-        defmt::println!("a - b*zeta: {=i16}", vec.elements[j]);
-    }
+    vec[j] = a_minus_t;
+    vec[i] = a_plus_t;
+
     hax_lib::fstar!(
         "assert (Seq.index vec.f_elements (v i) == a_plus_t);
                      assert (Seq.index vec.f_elements (v j) == a_minus_t)"
@@ -114,38 +82,38 @@ pub fn ntt_step(vec: &mut PortableVector, zeta: usize, i: usize, j: usize, print
                             Spec.Utils.is_i16b 1664 zeta2 /\ Spec.Utils.is_i16b 1664 zeta3 /\
                             Spec.Utils.is_i16b_array (11207+5*3328) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array (11207+6*3328) ${result}.f_elements"#))]
-#[cfg(not(target_arch = "arm"))]
-pub fn ntt_layer_1_step(
-    mut vec: PortableVector,
+pub(crate) fn ntt_layer_1_step_unpacked(
+    mut vec: UnpackedFieldElementArray,
     zeta0: usize,
     zeta1: usize,
     zeta2: usize,
     zeta3: usize,
-) -> PortableVector {
-    ntt_step(&mut vec, zeta0, 0, 2, true);
-    ntt_step(&mut vec, zeta0, 1, 3, true);
-    ntt_step(&mut vec, zeta1, 4, 6, true);
-    ntt_step(&mut vec, zeta1, 5, 7, true);
-    ntt_step(&mut vec, zeta2, 8, 10, true);
-    ntt_step(&mut vec, zeta2, 9, 11, true);
-    ntt_step(&mut vec, zeta3, 12, 14, true);
-    ntt_step(&mut vec, zeta3, 13, 15, true);
+) -> UnpackedFieldElementArray {
+    ntt_step(&mut vec, zeta0, 0, 2);
+    ntt_step(&mut vec, zeta0, 1, 3);
+    ntt_step(&mut vec, zeta1, 4, 6);
+    ntt_step(&mut vec, zeta1, 5, 7);
+    ntt_step(&mut vec, zeta2, 8, 10);
+    ntt_step(&mut vec, zeta2, 9, 11);
+    ntt_step(&mut vec, zeta3, 12, 14);
+    ntt_step(&mut vec, zeta3, 13, 15);
     vec
 }
 
 #[cfg(target_arch = "arm")]
-pub fn ntt_layer_1_step(
-    mut vec: PortableVector,
+#[inline(always)]
+pub(crate) fn ntt_layer_1_step_packed(
+    mut vec: PackedFieldElementArray,
     zeta0: usize,
     zeta1: usize,
     zeta2: usize,
     zeta3: usize,
-) -> PortableVector {
-    ntt_double_step(&mut vec, zeta0, 0, 2, 1, 3);
-    ntt_double_step(&mut vec, zeta1, 4, 6, 5, 7);
-    ntt_double_step(&mut vec, zeta2, 8, 10, 9, 11);
-    ntt_double_step(&mut vec, zeta3, 12, 14, 13, 15);
-    vec
+) -> UnpackedFieldElementArray {
+    ntt_double_step(&mut vec, zeta0, 0, 1);
+    ntt_double_step(&mut vec, zeta1, 2, 3);
+    ntt_double_step(&mut vec, zeta2, 4, 5);
+    ntt_double_step(&mut vec, zeta3, 6, 7);
+    unpack_array(vec)
 }
 
 #[inline(always)]
@@ -153,19 +121,33 @@ pub fn ntt_layer_1_step(
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta0 /\ Spec.Utils.is_i16b 1664 zeta1 /\
                             Spec.Utils.is_i16b_array (11207+4*3328) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array (11207+5*3328) ${result}.f_elements"#))]
-pub(crate) fn ntt_layer_2_step(
-    mut vec: PortableVector,
+pub(crate) fn ntt_layer_2_step_unpacked(
+    mut vec: UnpackedFieldElementArray,
     zeta0: usize,
     zeta1: usize,
-) -> PortableVector {
-    ntt_step(&mut vec, zeta0, 0, 4, false);
-    ntt_step(&mut vec, zeta0, 1, 5, false);
-    ntt_step(&mut vec, zeta0, 2, 6, false);
-    ntt_step(&mut vec, zeta0, 3, 7, false);
-    ntt_step(&mut vec, zeta1, 8, 12, false);
-    ntt_step(&mut vec, zeta1, 9, 13, false);
-    ntt_step(&mut vec, zeta1, 10, 14, false);
-    ntt_step(&mut vec, zeta1, 11, 15, false);
+) -> UnpackedFieldElementArray {
+    ntt_step(&mut vec, zeta0, 0, 4);
+    ntt_step(&mut vec, zeta0, 1, 5);
+    ntt_step(&mut vec, zeta0, 2, 6);
+    ntt_step(&mut vec, zeta0, 3, 7);
+    ntt_step(&mut vec, zeta1, 8, 12);
+    ntt_step(&mut vec, zeta1, 9, 13);
+    ntt_step(&mut vec, zeta1, 10, 14);
+    ntt_step(&mut vec, zeta1, 11, 15);
+    vec
+}
+
+#[cfg(target_arch = "arm")]
+#[inline(always)]
+pub(crate) fn ntt_layer_2_step_packed(
+    mut vec: PackedFieldElementArray,
+    zeta0: usize,
+    zeta1: usize,
+) -> PackedFieldElementArray {
+    ntt_double_step(&mut vec, zeta0, 0, 2);
+    ntt_double_step(&mut vec, zeta0, 1, 3);
+    ntt_double_step(&mut vec, zeta1, 4, 6);
+    ntt_double_step(&mut vec, zeta1, 5, 7);
     vec
 }
 
@@ -174,15 +156,26 @@ pub(crate) fn ntt_layer_2_step(
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta /\
                             Spec.Utils.is_i16b_array (11207+3*3328) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array (11207+4*3328) ${result}.f_elements"#))]
-pub(crate) fn ntt_layer_3_step(mut vec: PortableVector, zeta: usize) -> PortableVector {
-    ntt_step(&mut vec, zeta, 0, 8, false);
-    ntt_step(&mut vec, zeta, 1, 9, false);
-    ntt_step(&mut vec, zeta, 2, 10, false);
-    ntt_step(&mut vec, zeta, 3, 11, false);
-    ntt_step(&mut vec, zeta, 4, 12, false);
-    ntt_step(&mut vec, zeta, 5, 13, false);
-    ntt_step(&mut vec, zeta, 6, 14, false);
-    ntt_step(&mut vec, zeta, 7, 15, false);
+pub(crate) fn ntt_layer_3_step_unpacked(mut vec: UnpackedFieldElementArray, zeta: usize) -> UnpackedFieldElementArray {
+    ntt_step(&mut vec, zeta, 0, 8);
+    ntt_step(&mut vec, zeta, 1, 9);
+    ntt_step(&mut vec, zeta, 2, 10);
+    ntt_step(&mut vec, zeta, 3, 11);
+    ntt_step(&mut vec, zeta, 4, 12);
+    ntt_step(&mut vec, zeta, 5, 13);
+    ntt_step(&mut vec, zeta, 6, 14);
+    ntt_step(&mut vec, zeta, 7, 15);
+    vec
+}
+
+#[cfg(target_arch = "arm")]
+#[inline(always)]
+pub(crate) fn ntt_layer_3_step_packed(mut vec: UnpackedFieldElementArray, zeta: usize) -> PackedFieldElementArray {
+    let mut vec = pack_array(vec);
+    ntt_double_step(&mut vec, zeta, 0, 4);
+    ntt_double_step(&mut vec, zeta, 1, 5);
+    ntt_double_step(&mut vec, zeta, 2, 6);
+    ntt_double_step(&mut vec, zeta, 3, 7);
     vec
 }
 
@@ -197,9 +190,9 @@ pub(crate) fn ntt_layer_3_step(mut vec: PortableVector, zeta: usize) -> Portable
                                     Spec.Utils.is_i16b 3328 (Seq.index ${vec}_future.f_elements (v i)) /\
                                     Spec.Utils.is_i16b 3328 (Seq.index ${vec}_future.f_elements (v j)) /\
                                     Spec.Utils.inv_ntt_spec ${vec}.f_elements (v $zeta) (v $i) (v $j) ${vec}_future.f_elements"#))]
-pub(crate) fn inv_ntt_step(vec: &mut PortableVector, zeta: i16, i: usize, j: usize) {
-    let a_minus_b = vec.elements[j] - vec.elements[i];
-    let a_plus_b = vec.elements[j] + vec.elements[i];
+pub(crate) fn inv_ntt_step(vec: &mut UnpackedFieldElementArray, zeta: i16, i: usize, j: usize) {
+    let a_minus_b = vec[j] - vec[i];
+    let a_plus_b = vec[j] + vec[i];
     hax_lib::fstar!(
         r#"assert (v a_minus_b = v (Seq.index vec.f_elements (v j)) - v (Seq.index vec.f_elements (v i)));
                      assert (v a_plus_b = v (Seq.index vec.f_elements (v j)) + v (Seq.index vec.f_elements (v i)))"#
@@ -223,8 +216,8 @@ pub(crate) fn inv_ntt_step(vec: &mut PortableVector, zeta: i16, i: usize, j: usi
         ((v (Seq.index vec.f_elements (v j)) - v (Seq.index vec.f_elements (v i))) * v zeta * 169) % 3329;
     }"#
     );
-    vec.elements[i] = o0;
-    vec.elements[j] = o1;
+    vec[i] = o0;
+    vec[j] = o1;
     hax_lib::fstar!(
         r#"assert (Seq.index vec.f_elements (v i) == o0);
                      assert (Seq.index vec.f_elements (v j) == o1)"#
@@ -238,12 +231,12 @@ pub(crate) fn inv_ntt_step(vec: &mut PortableVector, zeta: i16, i: usize, j: usi
                             Spec.Utils.is_i16b_array (4*3328) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array 3328 ${result}.f_elements"#))]
 pub(crate) fn inv_ntt_layer_1_step(
-    mut vec: PortableVector,
+    mut vec: UnpackedFieldElementArray,
     zeta0: i16,
     zeta1: i16,
     zeta2: i16,
     zeta3: i16,
-) -> PortableVector {
+) -> UnpackedFieldElementArray {
     inv_ntt_step(&mut vec, zeta0, 0, 2);
     inv_ntt_step(&mut vec, zeta0, 1, 3);
     inv_ntt_step(&mut vec, zeta1, 4, 6);
@@ -280,10 +273,10 @@ pub(crate) fn inv_ntt_layer_1_step(
                             Spec.Utils.is_i16b_array 3328 ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array 3328 ${result}.f_elements"#))]
 pub(crate) fn inv_ntt_layer_2_step(
-    mut vec: PortableVector,
+    mut vec: UnpackedFieldElementArray,
     zeta0: i16,
     zeta1: i16,
-) -> PortableVector {
+) -> UnpackedFieldElementArray {
     inv_ntt_step(&mut vec, zeta0, 0, 4);
     inv_ntt_step(&mut vec, zeta0, 1, 5);
     inv_ntt_step(&mut vec, zeta0, 2, 6);
@@ -300,7 +293,7 @@ pub(crate) fn inv_ntt_layer_2_step(
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta /\
                             Spec.Utils.is_i16b_array 3328 ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array 3328 ${result}.f_elements"#))]
-pub(crate) fn inv_ntt_layer_3_step(mut vec: PortableVector, zeta: i16) -> PortableVector {
+pub(crate) fn inv_ntt_layer_3_step(mut vec: UnpackedFieldElementArray, zeta: i16) -> UnpackedFieldElementArray {
     inv_ntt_step(&mut vec, zeta, 0, 8);
     inv_ntt_step(&mut vec, zeta, 1, 9);
     inv_ntt_step(&mut vec, zeta, 2, 10);
@@ -355,16 +348,16 @@ pub(crate) fn inv_ntt_layer_3_step(mut vec: PortableVector, zeta: i16) -> Portab
          ((v oi % 3329) == (((v ai * v bi + (v aj * v bj * v zeta * 169)) * 169) % 3329)) /\
          ((v oj % 3329) == (((v ai * v bj + v aj * v bi) * 169) % 3329)))"#))]
 pub(crate) fn ntt_multiply_binomials(
-    a: &PortableVector,
-    b: &PortableVector,
+    a: &UnpackedFieldElementArray,
+    b: &UnpackedFieldElementArray,
     zeta: FieldElementTimesMontgomeryR,
     i: usize,
-    out: &mut PortableVector,
+    out: &mut UnpackedFieldElementArray,
 ) {
-    let ai = a.elements[2 * i];
-    let bi = b.elements[2 * i];
-    let aj = a.elements[2 * i + 1];
-    let bj = b.elements[2 * i + 1];
+    let ai = a[2 * i];
+    let bi = b[2 * i];
+    let aj = a[2 * i + 1];
+    let bj = b[2 * i + 1];
     hax_lib::fstar!(
         "assert(Spec.Utils.is_i16b 3328 $ai);
                      assert(Spec.Utils.is_i16b 3328 $bi);
@@ -435,9 +428,8 @@ pub(crate) fn ntt_multiply_binomials(
         ((v ai * v bj + v aj * v bi) * 169) % 3329;
     }"
     );
-    let _out0 = out.elements;
-    out.elements[2 * i] = o0;
-    out.elements[2 * i + 1] = o1;
+    out[2 * i] = o0;
+    out[2 * i + 1] = o1;
     hax_lib::fstar!(
         r#"assert (Seq.index out.f_elements (2 * v i) == o0);
                      assert (Seq.index out.f_elements (2 * v i + 1) == o1);
@@ -469,13 +461,13 @@ pub(crate) fn ntt_multiply_binomials(
             ((v oi % 3329) == (((v ai * v bi + (v aj * v bj * (Seq.index zetas i) * 169)) * 169) % 3329)) /\
             ((v oj % 3329) == (((v ai * v bj + v aj * v bi) * 169) % 3329)))))"#))]
 pub(crate) fn ntt_multiply(
-    lhs: &PortableVector,
-    rhs: &PortableVector,
+    lhs: &UnpackedFieldElementArray,
+    rhs: &UnpackedFieldElementArray,
     zeta0: i16,
     zeta1: i16,
     zeta2: i16,
     zeta3: i16,
-) -> PortableVector {
+) -> UnpackedFieldElementArray {
     let nzeta0 = -zeta0;
     let nzeta1 = -zeta1;
     let nzeta2 = -zeta2;
@@ -484,7 +476,7 @@ pub(crate) fn ntt_multiply(
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta1)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta2)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta3)"#);
-    let mut out = zero();
+    let mut out = [0i16; FIELD_ELEMENTS_IN_VECTOR];
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
     ntt_multiply_binomials(lhs, rhs, zeta0, 0, &mut out);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);

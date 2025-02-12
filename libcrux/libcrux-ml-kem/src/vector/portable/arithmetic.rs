@@ -7,12 +7,12 @@ use crate::vector::traits::{
 /// If 'x' denotes a value of type `fe`, values having this type hold a
 /// representative y ≡ x·MONTGOMERY_R^(-1) (mod FIELD_MODULUS).
 /// We use 'mfe' as a shorthand for this type
-pub type MontgomeryFieldElement = i16;
+pub(crate) type MontgomeryFieldElement = i16;
 
 /// If 'x' denotes a value of type `fe`, values having this type hold a
 /// representative y ≡ x·MONTGOMERY_R (mod FIELD_MODULUS).
 /// We use 'fer' as a shorthand for this type.
-pub type FieldElementTimesMontgomeryR = i16;
+pub(crate) type FieldElementTimesMontgomeryR = i16;
 
 pub(crate) const MONTGOMERY_SHIFT: u8 = 16;
 pub(crate) const MONTGOMERY_R: i32 = 1 << MONTGOMERY_SHIFT;
@@ -51,7 +51,7 @@ pub(crate) fn get_n_least_significant_bits(n: u8, value: u32) -> u32 {
 #[hax_lib::ensures(|result| fstar!(r#"forall i. i < 16 ==> 
     (v (Seq.index ${result}.f_elements i) == 
      v (Seq.index ${lhs}.f_elements i) + v (Seq.index ${rhs}.f_elements i))"#))]
-pub fn add(mut lhs: PortableVector, rhs: &PortableVector) -> PortableVector {
+pub(crate) fn add(mut lhs: [FieldElement; FIELD_ELEMENTS_IN_VECTOR], rhs: &[FieldElement; FIELD_ELEMENTS_IN_VECTOR]) -> [FieldElement; FIELD_ELEMENTS_IN_VECTOR] {
     let _lhs0 = lhs;
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
@@ -62,7 +62,7 @@ pub fn add(mut lhs: PortableVector, rhs: &PortableVector) -> PortableVector {
               (forall j. j >= v i ==> (Seq.index ${lhs}.f_elements j) == (Seq.index ${_lhs0}.f_elements j))"#
             )
         });
-        lhs.elements[i] += rhs.elements[i];
+        lhs[i] += rhs[i];
     }
     hax_lib::fstar!(
         "assert (forall i. v (Seq.index ${lhs}.f_elements i) ==
@@ -77,7 +77,7 @@ pub fn add(mut lhs: PortableVector, rhs: &PortableVector) -> PortableVector {
 #[hax_lib::ensures(|result| fstar!(r#"forall i. i < 16 ==> 
     (v (Seq.index ${result}.f_elements i) == 
      v (Seq.index ${lhs}.f_elements i) - v (Seq.index ${rhs}.f_elements i))"#))]
-pub fn sub(mut lhs: PortableVector, rhs: &PortableVector) -> PortableVector {
+pub(crate) fn sub(mut lhs: [FieldElement; FIELD_ELEMENTS_IN_VECTOR], rhs: &UnpackedFieldElementArray) -> UnpackedFieldElementArray {
     let _lhs0 = lhs;
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
@@ -88,7 +88,7 @@ pub fn sub(mut lhs: PortableVector, rhs: &PortableVector) -> PortableVector {
               (forall j. j >= v i ==> (Seq.index ${lhs}.f_elements j) == (Seq.index ${_lhs0}.f_elements j))"#
             )
         });
-        lhs.elements[i] -= rhs.elements[i];
+        lhs[i] -= rhs[i];
     }
     hax_lib::fstar!(
         "assert (forall i. v (Seq.index ${lhs}.f_elements i) ==
@@ -103,7 +103,7 @@ pub fn sub(mut lhs: PortableVector, rhs: &PortableVector) -> PortableVector {
 #[hax_lib::ensures(|result| fstar!(r#"forall i. i < 16 ==> 
     (v (Seq.index ${result}.f_elements i) == 
      v (Seq.index ${vec}.f_elements i) * v c)"#))]
-pub fn multiply_by_constant(mut vec: PortableVector, c: i16) -> PortableVector {
+pub(crate) fn multiply_by_constant(mut vec: UnpackedFieldElementArray, c: i16) -> UnpackedFieldElementArray {
     let _vec0 = vec;
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
@@ -114,7 +114,7 @@ pub fn multiply_by_constant(mut vec: PortableVector, c: i16) -> PortableVector {
               (forall j. j >= v i ==> (Seq.index ${vec}.f_elements j) == (Seq.index ${_vec0}.f_elements j))"#
             )
         });
-        vec.elements[i] *= c;
+        vec[i] *= c;
     }
     hax_lib::fstar!(
         "assert (forall i. v (Seq.index ${vec}.f_elements i) ==
@@ -125,7 +125,7 @@ pub fn multiply_by_constant(mut vec: PortableVector, c: i16) -> PortableVector {
 
 #[inline(always)]
 #[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == Spec.Utils.map_array (fun x -> x &. c) (${vec}.f_elements)"#))]
-pub fn bitwise_and_with_constant(mut vec: PortableVector, c: i16) -> PortableVector {
+pub(crate) fn bitwise_and_with_constant(mut vec: UnpackedFieldElementArray, c: i16) -> UnpackedFieldElementArray {
     let _vec0 = vec;
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
@@ -136,7 +136,7 @@ pub fn bitwise_and_with_constant(mut vec: PortableVector, c: i16) -> PortableVec
               (forall j. j >= v i ==> Seq.index ${vec}.f_elements j == Seq.index ${_vec0}.f_elements j)"#
             )
         });
-        vec.elements[i] &= c;
+        vec[i] &= c;
     }
     hax_lib::fstar!(
         r#"Seq.lemma_eq_intro ${vec}.f_elements (Spec.Utils.map_array (fun x -> x &. c) ${_vec0}.f_elements)"#
@@ -148,7 +148,7 @@ pub fn bitwise_and_with_constant(mut vec: PortableVector, c: i16) -> PortableVec
 #[hax_lib::requires(SHIFT_BY >= 0 && SHIFT_BY < 16)]
 #[hax_lib::ensures(|result| fstar!(r#"(v_SHIFT_BY >=. 0l /\ v_SHIFT_BY <. 16l) ==> 
         ${result}.f_elements == Spec.Utils.map_array (fun x -> x >>! ${SHIFT_BY}) (${vec}.f_elements)"#))]
-pub fn shift_right<const SHIFT_BY: i32>(mut vec: PortableVector) -> PortableVector {
+pub(crate) fn shift_right<const SHIFT_BY: i32>(mut vec: UnpackedFieldElementArray) -> UnpackedFieldElementArray {
     let _vec0 = vec;
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
@@ -159,7 +159,7 @@ pub fn shift_right<const SHIFT_BY: i32>(mut vec: PortableVector) -> PortableVect
               (forall j. j >= v i ==> Seq.index ${vec}.f_elements j == Seq.index ${_vec0}.f_elements j)"#
             )
         });
-        vec.elements[i] = vec.elements[i] >> SHIFT_BY;
+        vec[i] = vec[i] >> SHIFT_BY;
     }
     hax_lib::fstar!(
         r#"Seq.lemma_eq_intro ${vec}.f_elements (Spec.Utils.map_array (fun x -> x >>! ${SHIFT_BY}) ${_vec0}.f_elements)"#
@@ -174,7 +174,7 @@ pub fn shift_right<const SHIFT_BY: i32>(mut vec: PortableVector) -> PortableVect
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b_array (pow2 12 - 1) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == Spec.Utils.map_array 
                 (fun x -> if x >=. 3329s then x -! 3329s else x) (${vec}.f_elements)"#))]
-pub fn cond_subtract_3329(mut vec: PortableVector) -> PortableVector {
+pub(crate) fn cond_subtract_3329(mut vec: UnpackedFieldElementArray) -> UnpackedFieldElementArray {
     let _vec0 = vec;
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
@@ -186,8 +186,8 @@ pub fn cond_subtract_3329(mut vec: PortableVector) -> PortableVector {
               (forall j. j >= v i ==> Seq.index ${vec}.f_elements j == Seq.index ${_vec0}.f_elements j)"#
             )
         });
-        if vec.elements[i] >= 3329 {
-            vec.elements[i] -= 3329
+        if vec[i] >= 3329 {
+            vec[i] -= 3329
         }
     }
     hax_lib::fstar!(
@@ -213,7 +213,7 @@ pub fn cond_subtract_3329(mut vec: PortableVector) -> PortableVector {
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 28296 value"#)))]
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
                 v result % 3329 == v value % 3329"#)))]
-pub fn barrett_reduce_element(value: FieldElement) -> FieldElement {
+pub(crate) fn barrett_reduce_element(value: FieldElement) -> FieldElement {
     let t = (i32::from(value) * BARRETT_MULTIPLIER) + (BARRETT_R >> 1);
     hax_lib::fstar!(
         "assert_norm (v v_BARRETT_MULTIPLIER == (pow2 27 + 3329) / (2*3329));
@@ -247,7 +247,7 @@ pub fn barrett_reduce_element(value: FieldElement) -> FieldElement {
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array 3328 ${result}.f_elements /\
                 (forall i. (v (Seq.index ${result}.f_elements i) % 3329) == 
                            (v (Seq.index ${vec}.f_elements i) % 3329))"#)))]
-pub(crate) fn barrett_reduce(mut vec: PortableVector) -> PortableVector {
+pub(crate) fn barrett_reduce(mut vec: UnpackedFieldElementArray) -> UnpackedFieldElementArray {
     let _vec0 = vec;
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
@@ -259,8 +259,8 @@ pub(crate) fn barrett_reduce(mut vec: PortableVector) -> PortableVector {
                                          Spec.Utils.is_i16b 28296 (Seq.index ${vec}.f_elements j)))"#
             )
         });
-        let vi = barrett_reduce_element(vec.elements[i]);
-        vec.elements[i] = vi;
+        let vi = barrett_reduce_element(vec[i]);
+        vec[i] = vi;
         hax_lib::fstar!(
             r#"assert (v (mk_int #usize_inttype (v i + 1)) == v i + 1);
                          assert (forall j. j < v i ==> Spec.Utils.is_i16b 3328 (Seq.index vec.f_elements j));
@@ -290,7 +290,7 @@ pub(crate) fn barrett_reduce(mut vec: PortableVector) -> PortableVector {
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b (3328 + 1665) result /\
                 (Spec.Utils.is_i32b (3328 * pow2 15) value ==> Spec.Utils.is_i16b 3328 result) /\
                 v result % 3329 == (v value * 169) % 3329"#)))]
-pub fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
+pub(crate) fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
     // This forces hax to extract code for MONTGOMERY_R before it extracts code
     // for this function. The removal of this line is being tracked in:
     // https://github.com/cryspen/libcrux/issues/134
@@ -387,7 +387,7 @@ pub fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 fer"#)))]
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
                 v result % 3329 == (v fe * v fer * 169) % 3329"#)))]
-pub fn montgomery_multiply_fe_by_fer(
+pub(crate) fn montgomery_multiply_fe_by_fer(
     fe: FieldElement,
     fer: FieldElementTimesMontgomeryR,
 ) -> FieldElement {
@@ -404,7 +404,7 @@ Spec.Utils.is_i16b_array 3328 ${result}.f_elements /\
 (forall i. i < 16 ==> 
     (v (Seq.index ${result}.f_elements i) % 3329 == 
        (v (Seq.index ${vec}.f_elements i) * v c * 169) %3329))"#)))]
-pub fn montgomery_multiply_by_constant(mut vec: PortableVector, c: i16) -> PortableVector {
+pub(crate) fn montgomery_multiply_by_constant(mut vec: UnpackedFieldElementArray, c: i16) -> UnpackedFieldElementArray {
     let _vec0 = vec;
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
@@ -417,7 +417,7 @@ pub fn montgomery_multiply_by_constant(mut vec: PortableVector, c: i16) -> Porta
               (forall j. j >= v i ==> (Seq.index ${vec}.f_elements j) == (Seq.index ${_vec0}.f_elements j))"#
             )
         });
-        vec.elements[i] = montgomery_multiply_fe_by_fer(vec.elements[i], c)
+        vec[i] = montgomery_multiply_fe_by_fer(vec[i], c)
     }
     vec
 }

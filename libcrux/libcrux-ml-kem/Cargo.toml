@@ -73,6 +73,10 @@ name = "ml-kem"
 harness = false
 
 [[example]]
+name = "test"
+required-features = ["mlkem512"]
+
+[[example]]
 name = "encapsulate"
 required-features = ["mlkem768"]
 

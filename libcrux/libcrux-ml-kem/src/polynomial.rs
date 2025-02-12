@@ -20,7 +20,7 @@ pub(crate) const ZETAS_TIMES_MONTGOMERY_R: [i16; 128] = {
 #[hax_lib::fstar::verification_status(panic_free)]
 #[hax_lib::requires(i < 128)]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b 1664 result"#))]
-pub fn zeta(i: usize) -> i16 {
+pub(crate) fn zeta(i: usize) -> i16 {
     ZETAS_TIMES_MONTGOMERY_R[i]
 }
 
@@ -61,7 +61,7 @@ pub(crate) const VECTORS_IN_RING_ELEMENT: usize =
 )]
 // XXX: We don't want to copy this. But for eurydice we have to have this.
 #[derive(Clone, Copy)]
-pub struct PolynomialRingElement<Vector: Operations> {
+pub(crate) struct PolynomialRingElement<Vector: Operations> {
     pub(crate) coefficients: [Vector; VECTORS_IN_RING_ELEMENT],
 }
 
@@ -76,7 +76,7 @@ fn ZERO<Vector: Operations>() -> PolynomialRingElement<Vector> {
 
 #[inline(always)]
 #[hax_lib::requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
-pub fn from_i16_array<Vector: Operations>(a: &[i16]) -> PolynomialRingElement<Vector> {
+pub(crate) fn from_i16_array<Vector: Operations>(a: &[i16]) -> PolynomialRingElement<Vector> {
     let mut result = ZERO();
     for i in 0..VECTORS_IN_RING_ELEMENT {
         result.coefficients[i] = Vector::from_i16_array(&a[i * 16..(i + 1) * 16]);
@@ -86,7 +86,7 @@ pub fn from_i16_array<Vector: Operations>(a: &[i16]) -> PolynomialRingElement<Ve
 
 #[inline(always)]
 #[hax_lib::requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
-pub fn to_i16_array<Vector: Operations>(poly: &PolynomialRingElement<Vector>) -> [i16; 256] {
+pub(crate) fn to_i16_array<Vector: Operations>(poly: &PolynomialRingElement<Vector>) -> [i16; 256] {
     let mut result = [0; 256];
 
     for (index, vec) in poly.coefficients.iter().enumerate() {

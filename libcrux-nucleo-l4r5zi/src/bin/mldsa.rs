@@ -1,7 +1,6 @@
 #![no_main]
 #![no_std]
 
-use cortex_m::peripheral::Peripherals;
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
 extern crate alloc;

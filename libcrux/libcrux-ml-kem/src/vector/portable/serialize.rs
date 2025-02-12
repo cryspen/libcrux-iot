@@ -54,23 +54,23 @@ let serialize_1_bit_vec_lemma (v: t_Array i16 (sz 16))
     )
 )]
 #[inline(always)]
-pub(crate) fn serialize_1(v: PortableVector) -> [u8; 2] {
-    let result0 = (v.elements[0] as u8)
-        | ((v.elements[1] as u8) << 1)
-        | ((v.elements[2] as u8) << 2)
-        | ((v.elements[3] as u8) << 3)
-        | ((v.elements[4] as u8) << 4)
-        | ((v.elements[5] as u8) << 5)
-        | ((v.elements[6] as u8) << 6)
-        | ((v.elements[7] as u8) << 7);
-    let result1 = (v.elements[8] as u8)
-        | ((v.elements[9] as u8) << 1)
-        | ((v.elements[10] as u8) << 2)
-        | ((v.elements[11] as u8) << 3)
-        | ((v.elements[12] as u8) << 4)
-        | ((v.elements[13] as u8) << 5)
-        | ((v.elements[14] as u8) << 6)
-        | ((v.elements[15] as u8) << 7);
+pub(crate) fn serialize_1(v: [i16; 16]) -> [u8; 2] {
+    let result0 = (v[0] as u8)
+        | ((v[1] as u8) << 1)
+        | ((v[2] as u8) << 2)
+        | ((v[3] as u8) << 3)
+        | ((v[4] as u8) << 4)
+        | ((v[5] as u8) << 5)
+        | ((v[6] as u8) << 6)
+        | ((v[7] as u8) << 7);
+    let result1 = (v[8] as u8)
+        | ((v[9] as u8) << 1)
+        | ((v[10] as u8) << 2)
+        | ((v[11] as u8) << 3)
+        | ((v[12] as u8) << 4)
+        | ((v[13] as u8) << 5)
+        | ((v[14] as u8) << 6)
+        | ((v[15] as u8) << 7);
     [result0, result1]
 }
 
@@ -137,7 +137,7 @@ let deserialize_1_bit_vec_lemma (v: t_Array u8 (sz 2))
      ${v.len() == 2}
 "#))]
 #[inline(always)]
-pub(crate) fn deserialize_1(v: &[u8]) -> PortableVector {
+pub(crate) fn deserialize_1(v: &[u8]) -> UnpackedFieldElementArray {
     let result0 = (v[0] & 0x1) as i16;
     let result1 = ((v[0] >> 1) & 0x1) as i16;
     let result2 = ((v[0] >> 2) & 0x1) as i16;
@@ -154,12 +154,10 @@ pub(crate) fn deserialize_1(v: &[u8]) -> PortableVector {
     let result13 = ((v[1] >> 5) & 0x1) as i16;
     let result14 = ((v[1] >> 6) & 0x1) as i16;
     let result15 = ((v[1] >> 7) & 0x1) as i16;
-    PortableVector {
-        elements: [
-            result0, result1, result2, result3, result4, result5, result6, result7, result8,
-            result9, result10, result11, result12, result13, result14, result15,
-        ],
-    }
+    [
+        result0, result1, result2, result3, result4, result5, result6, result7, result8, result9,
+        result10, result11, result12, result13, result14, result15,
+    ]
 }
 
 #[inline(always)]
@@ -214,9 +212,9 @@ let serialize_4_bit_vec_lemma (v: t_Array i16 (sz 16))
     )
 )]
 #[inline(always)]
-pub(crate) fn serialize_4(v: PortableVector) -> [u8; 8] {
-    let result0_3 = serialize_4_int(&v.elements[0..8]);
-    let result4_7 = serialize_4_int(&v.elements[8..16]);
+pub(crate) fn serialize_4(v: UnpackedFieldElementArray) -> [u8; 8] {
+    let result0_3 = serialize_4_int(&v[0..8]);
+    let result4_7 = serialize_4_int(&v[8..16]);
     [
         result0_3.0,
         result0_3.1,
@@ -308,15 +306,15 @@ let deserialize_4_bit_vec_lemma (v: t_Array u8 (sz 8))
      ${bytes.len() == 8}
 "#))]
 #[inline(always)]
-pub(crate) fn deserialize_4(bytes: &[u8]) -> PortableVector {
+pub(crate) fn deserialize_4(bytes: &[u8]) -> UnpackedFieldElementArray {
     let v0_7 = deserialize_4_int(&bytes[0..4]);
     let v8_15 = deserialize_4_int(&bytes[4..8]);
-    PortableVector {
-        elements: [
+
+        [
             v0_7.0, v0_7.1, v0_7.2, v0_7.3, v0_7.4, v0_7.5, v0_7.6, v0_7.7, v8_15.0, v8_15.1,
             v8_15.2, v8_15.3, v8_15.4, v8_15.5, v8_15.6, v8_15.7,
-        ],
-    }
+        ]
+
 }
 
 #[inline(always)]
@@ -333,9 +331,9 @@ pub(crate) fn serialize_5_int(v: &[i16]) -> (u8, u8, u8, u8, u8) {
 }
 
 #[inline(always)]
-pub(crate) fn serialize_5(v: PortableVector) -> [u8; 10] {
-    let r0_4 = serialize_5_int(&v.elements[0..8]);
-    let r5_9 = serialize_5_int(&v.elements[8..16]);
+pub(crate) fn serialize_5(v: UnpackedFieldElementArray) -> [u8; 10] {
+    let r0_4 = serialize_5_int(&v[0..8]);
+    let r5_9 = serialize_5_int(&v[8..16]);
     [
         r0_4.0, r0_4.1, r0_4.2, r0_4.3, r0_4.4, r5_9.0, r5_9.1, r5_9.2, r5_9.3, r5_9.4,
     ]
@@ -361,15 +359,15 @@ pub(crate) fn deserialize_5_int(bytes: &[u8]) -> (i16, i16, i16, i16, i16, i16, 
      ${bytes.len() == 10}
 "#))]
 #[inline(always)]
-pub(crate) fn deserialize_5(bytes: &[u8]) -> PortableVector {
+pub(crate) fn deserialize_5(bytes: &[u8]) -> UnpackedFieldElementArray {
     let v0_7 = deserialize_5_int(&bytes[0..5]);
     let v8_15 = deserialize_5_int(&bytes[5..10]);
-    PortableVector {
-        elements: [
+
+[
             v0_7.0, v0_7.1, v0_7.2, v0_7.3, v0_7.4, v0_7.5, v0_7.6, v0_7.7, v8_15.0, v8_15.1,
             v8_15.2, v8_15.3, v8_15.4, v8_15.5, v8_15.6, v8_15.7,
-        ],
-    }
+        ]
+
 }
 
 #[inline(always)]
@@ -425,11 +423,11 @@ let serialize_10_bit_vec_lemma (v: t_Array i16 (sz 16))
     )
 )]
 #[inline(always)]
-pub(crate) fn serialize_10(v: PortableVector) -> [u8; 20] {
-    let r0_4 = serialize_10_int(&v.elements[0..4]);
-    let r5_9 = serialize_10_int(&v.elements[4..8]);
-    let r10_14 = serialize_10_int(&v.elements[8..12]);
-    let r15_19 = serialize_10_int(&v.elements[12..16]);
+pub(crate) fn serialize_10(v: UnpackedFieldElementArray) -> [u8; 20] {
+    let r0_4 = serialize_10_int(&v[0..4]);
+    let r5_9 = serialize_10_int(&v[4..8]);
+    let r10_14 = serialize_10_int(&v[8..12]);
+    let r15_19 = serialize_10_int(&v[12..16]);
     [
         r0_4.0, r0_4.1, r0_4.2, r0_4.3, r0_4.4, r5_9.0, r5_9.1, r5_9.2, r5_9.3, r5_9.4, r10_14.0,
         r10_14.1, r10_14.2, r10_14.3, r10_14.4, r15_19.0, r15_19.1, r15_19.2, r15_19.3, r15_19.4,
@@ -515,15 +513,15 @@ let deserialize_10_bit_vec_lemma (v: t_Array u8 (sz 20))
      ${bytes.len() == 20}
 "#))]
 #[inline(always)]
-pub(crate) fn deserialize_10(bytes: &[u8]) -> PortableVector {
+pub(crate) fn deserialize_10(bytes: &[u8]) -> UnpackedFieldElementArray {
     let v0_7 = deserialize_10_int(&bytes[0..10]);
     let v8_15 = deserialize_10_int(&bytes[10..20]);
-    PortableVector {
-        elements: [
+
+        [
             v0_7.0, v0_7.1, v0_7.2, v0_7.3, v0_7.4, v0_7.5, v0_7.6, v0_7.7, v8_15.0, v8_15.1,
             v8_15.2, v8_15.3, v8_15.4, v8_15.5, v8_15.6, v8_15.7,
-        ],
-    }
+        ]
+    
 }
 
 #[inline(always)]
@@ -546,9 +544,9 @@ pub(crate) fn serialize_11_int(v: &[i16]) -> (u8, u8, u8, u8, u8, u8, u8, u8, u8
 }
 
 #[inline(always)]
-pub(crate) fn serialize_11(v: PortableVector) -> [u8; 22] {
-    let r0_10 = serialize_11_int(&v.elements[0..8]);
-    let r11_21 = serialize_11_int(&v.elements[8..16]);
+pub(crate) fn serialize_11(v: UnpackedFieldElementArray) -> [u8; 22] {
+    let r0_10 = serialize_11_int(&v[0..8]);
+    let r11_21 = serialize_11_int(&v[8..16]);
     [
         r0_10.0, r0_10.1, r0_10.2, r0_10.3, r0_10.4, r0_10.5, r0_10.6, r0_10.7, r0_10.8, r0_10.9,
         r0_10.10, r11_21.0, r11_21.1, r11_21.2, r11_21.3, r11_21.4, r11_21.5, r11_21.6, r11_21.7,
@@ -576,15 +574,15 @@ pub(crate) fn deserialize_11_int(bytes: &[u8]) -> (i16, i16, i16, i16, i16, i16,
      ${bytes.len() == 22}
 "#))]
 #[inline(always)]
-pub(crate) fn deserialize_11(bytes: &[u8]) -> PortableVector {
+pub(crate) fn deserialize_11(bytes: &[u8]) -> UnpackedFieldElementArray {
     let v0_7 = deserialize_11_int(&bytes[0..11]);
     let v8_15 = deserialize_11_int(&bytes[11..22]);
-    PortableVector {
-        elements: [
+
+        [
             v0_7.0, v0_7.1, v0_7.2, v0_7.3, v0_7.4, v0_7.5, v0_7.6, v0_7.7, v8_15.0, v8_15.1,
             v8_15.2, v8_15.3, v8_15.4, v8_15.5, v8_15.6, v8_15.7,
-        ],
-    }
+        ]
+    
 }
 
 #[inline(always)]
@@ -638,15 +636,15 @@ let serialize_12_bit_vec_lemma (v: t_Array i16 (sz 16))
     )
 )]
 #[inline(always)]
-pub(crate) fn serialize_12(v: PortableVector) -> [u8; 24] {
-    let r0_2 = serialize_12_int(&v.elements[0..2]);
-    let r3_5 = serialize_12_int(&v.elements[2..4]);
-    let r6_8 = serialize_12_int(&v.elements[4..6]);
-    let r9_11 = serialize_12_int(&v.elements[6..8]);
-    let r12_14 = serialize_12_int(&v.elements[8..10]);
-    let r15_17 = serialize_12_int(&v.elements[10..12]);
-    let r18_20 = serialize_12_int(&v.elements[12..14]);
-    let r21_23 = serialize_12_int(&v.elements[14..16]);
+pub(crate) fn serialize_12(v: UnpackedFieldElementArray) -> [u8; 24] {
+    let r0_2 = serialize_12_int(&v[0..2]);
+    let r3_5 = serialize_12_int(&v[2..4]);
+    let r6_8 = serialize_12_int(&v[4..6]);
+    let r9_11 = serialize_12_int(&v[6..8]);
+    let r12_14 = serialize_12_int(&v[8..10]);
+    let r15_17 = serialize_12_int(&v[10..12]);
+    let r18_20 = serialize_12_int(&v[12..14]);
+    let r21_23 = serialize_12_int(&v[14..16]);
     [
         r0_2.0, r0_2.1, r0_2.2, r3_5.0, r3_5.1, r3_5.2, r6_8.0, r6_8.1, r6_8.2, r9_11.0, r9_11.1,
         r9_11.2, r12_14.0, r12_14.1, r12_14.2, r15_17.0, r15_17.1, r15_17.2, r18_20.0, r18_20.1,
@@ -730,7 +728,7 @@ let deserialize_12_bit_vec_lemma (v: t_Array u8 (sz 24))
      ${bytes.len() == 24}
 "#))]
 #[inline(always)]
-pub(crate) fn deserialize_12(bytes: &[u8]) -> PortableVector {
+pub(crate) fn deserialize_12(bytes: &[u8]) -> UnpackedFieldElementArray {
     let v0_1 = deserialize_12_int(&bytes[0..3]);
     let v2_3 = deserialize_12_int(&bytes[3..6]);
     let v4_5 = deserialize_12_int(&bytes[6..9]);
@@ -739,10 +737,8 @@ pub(crate) fn deserialize_12(bytes: &[u8]) -> PortableVector {
     let v10_11 = deserialize_12_int(&bytes[15..18]);
     let v12_13 = deserialize_12_int(&bytes[18..21]);
     let v14_15 = deserialize_12_int(&bytes[21..24]);
-    PortableVector {
-        elements: [
+         [
             v0_1.0, v0_1.1, v2_3.0, v2_3.1, v4_5.0, v4_5.1, v6_7.0, v6_7.1, v8_9.0, v8_9.1,
             v10_11.0, v10_11.1, v12_13.0, v12_13.1, v14_15.0, v14_15.1,
-        ],
+        ]
     }
-}

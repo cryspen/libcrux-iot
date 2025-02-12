@@ -1,11 +1,9 @@
-use arithmetic::plantard_double_ct_reference;
-use vector::{pack, unpack, PackedVector};
+pub(crate) use arithmetic::plantard_double_ct_reference;
 
 use crate::{polynomial::PolynomialRingElement, vector::portable::PortableVector};
 
-pub mod arithmetic;
+mod arithmetic;
 mod intrinsics;
-pub mod vector;
 
 #[rustfmt::skip]
 const PLANTARD_ZETAS: [i32; 128] = 
@@ -28,38 +26,4 @@ const PLANTARD_ZETAS: [i32; 128] =
 
 pub(crate) fn plantard_zeta(index: usize) -> i32 {
     PLANTARD_ZETAS[index]
-}
-
-pub(crate) fn ntt_at_layer(zeta_i: &mut usize, re: &mut [u32; 128], layer: usize) {
-    let step = 1 << (layer - 1);
-
-    let _zeta_i_init = *zeta_i;
-
-    for round in 0..(128 >> layer) {
-        *zeta_i += 1;
-        let offset = round * step * 2;
-
-        for j in offset..offset + step {
-            let (x, y) = plantard_double_ct_reference(re[j], re[j + step], PLANTARD_ZETAS[*zeta_i]);
-            re[j] = x;
-            re[j + step] = y;
-        }
-    }
-}
-
-// We take a flat coefficient vector as input.
-pub fn ntt(re: &mut [i16; 256]) {
-    let mut packed: [u32; 128] = core::array::from_fn(|i| pack(re[i], re[i + 1]));
-
-    let mut zeta_i = 0;
-    for i in (1..8).rev() {
-        ntt_at_layer(&mut zeta_i, &mut packed, i);
-    }
-
-    for i in 0..128 {
-        let (a, b) = unpack(packed[i]);
-        re[i] = a;
-
-        re[i + 1] = b;
-    }
 }

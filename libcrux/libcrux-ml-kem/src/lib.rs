@@ -108,7 +108,7 @@ mod utils;
 mod variant;
 pub mod vector;
 #[cfg(target_arch="arm")]
-pub mod cortex_m;
+mod cortex_m;
 
 #[cfg(feature = "mlkem512")]
 #[cfg_attr(docsrs, doc(cfg(feature = "mlkem512")))]
