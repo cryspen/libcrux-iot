@@ -24,7 +24,7 @@ pub fn plantard_double_ct_reference(a: u32, b: u32, zeta: i32) -> (u32, u32) {
         a = inout(reg) a => a_res,
         b = inout(reg) b => b_res,
         zeta = in(reg) zeta,
-        t = in(reg) 0,
+        t = out(reg) _,
         q = in(reg) FIELD_MODULUS,
         qa = in(reg) FIELD_MODULUS_ALPHA,
         options(pure, nomem, nostack)
