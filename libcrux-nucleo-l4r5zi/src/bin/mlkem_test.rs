@@ -17,7 +17,8 @@ fn main() -> ! {
     let randomness_gen = [1u8; libcrux_ml_kem::KEY_GENERATION_SEED_SIZE];
     let pair = mlkem::generate_key_pair(randomness_gen);
     let randomness_encaps = [2u8; libcrux_ml_kem::ENCAPS_SEED_SIZE];
-    let (ciphertext, shared_secret) = mlkem::encapsulate(pair.public_key(), randomness_encaps);
+    let (ciphertext, shared_secret_initiator) = mlkem::encapsulate(pair.public_key(), randomness_encaps);
+    let shared_secret_responder = mlkem::decapsulate(pair.private_key(), &ciphertext);
 
     defmt::println!("Public Key:");
     defmt::println!("{=[u8]}", *pair.public_key().as_slice());
@@ -28,8 +29,11 @@ fn main() -> ! {
     defmt::println!("\nCiphertext:");
     defmt::println!("{=[u8]}", *ciphertext.as_slice());
 
-    defmt::println!("\nShared Secret:");
-    defmt::println!("{=[u8]}", *shared_secret.as_slice());
+    defmt::println!("\nShared Secret (Initiator):");
+    defmt::println!("{=[u8]}", *shared_secret_initiator.as_slice());
+
+    defmt::println!("\nShared Secret (Responder):");
+    defmt::println!("{=[u8]}", *shared_secret_responder.as_slice());
     defmt::println!("\n Done");
     board::exit()
 }

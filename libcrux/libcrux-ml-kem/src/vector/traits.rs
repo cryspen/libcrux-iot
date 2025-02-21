@@ -4,7 +4,7 @@ pub const FIELD_ELEMENTS_IN_VECTOR: usize = 16;
 pub const INVERSE_OF_MODULUS_MOD_MONTGOMERY_R: u32 = 62209; // FIELD_MODULUS^{-1} mod MONTGOMERY_R
 pub const BARRETT_SHIFT: i32 = 26;
 pub const BARRETT_R: i32 = 1 << BARRETT_SHIFT;
-
+use crate::polynomial::VECTORS_IN_RING_ELEMENT;
 // We define a trait that allows us to talk about the contents of a vector.
 // This is used extensively in pre- and post-conditions to reason about the code.
 #[hax_lib::attributes]
@@ -16,6 +16,9 @@ pub trait Repr: Copy + Clone {
 #[cfg(not(eurydice))]
 #[hax_lib::attributes]
 pub trait Operations: Copy + Clone + Repr {
+    fn ntt(zeta: &mut usize, vectors: &mut [Self; VECTORS_IN_RING_ELEMENT]);
+    fn ntt_binomially_sampled(zeta: &mut usize, vectors: &mut [Self; VECTORS_IN_RING_ELEMENT]);
+    
     #[allow(non_snake_case)]
     #[requires(true)]
     #[ensures(|result| fstar!(r#"f_repr $result == Seq.create 16 0s"#))]

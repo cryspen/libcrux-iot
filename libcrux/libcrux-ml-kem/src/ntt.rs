@@ -234,8 +234,6 @@ pub(crate) fn ntt_at_layer_4_plus<Vector: Operations>(
     let step = 1 << layer;
 
     let _zeta_i_init = *zeta_i;
-    // The semicolon and parentheses at the end of loop are a workaround
-    // for the following bug https://github.com/hacspec/hax/issues/720
     for round in 0..(128 >> layer) {
         *zeta_i += 1;
 
@@ -312,19 +310,14 @@ pub(crate) fn ntt_at_layer_7<Vector: Operations>(re: &mut PolynomialRingElement<
 pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
     re: &mut PolynomialRingElement<Vector>,
 ) {
+
+    
     // Due to the small coefficient bound, we can skip the first round of
     // Montgomery reductions.
     ntt_at_layer_7(re);
 
     let mut zeta_i = 1;
-    ntt_at_layer_4_plus(&mut zeta_i, re, 6, 11207);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 5, 11207 + 3328);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 4, 11207 + 2 * 3328);
-    ntt_at_layer_3(&mut zeta_i, re, 11207 + 3 * 3328);
-    ntt_at_layer_2(&mut zeta_i, re, 11207 + 4 * 3328);
-    ntt_at_layer_1(&mut zeta_i, re, 11207 + 5 * 3328);
-
-    re.poly_barrett_reduce()
+    Vector::ntt_binomially_sampled(&mut zeta_i, &mut re.coefficients);
 }
 
 #[inline(always)]
@@ -335,19 +328,12 @@ pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
 pub fn ntt_vector_u<const VECTOR_U_COMPRESSION_FACTOR: usize, Vector: Operations>(
     re: &mut PolynomialRingElement<Vector>,
 ) {
+
     hax_debug_assert!(to_i16_array(re)
         .into_iter()
         .all(|coefficient| coefficient.abs() <= 3328));
 
     let mut zeta_i = 0;
+    Vector::ntt(&mut zeta_i, &mut re.coefficients);
 
-    ntt_at_layer_4_plus(&mut zeta_i, re, 7, 3328);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 6, 2 * 3328);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 5, 3 * 3328);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 4, 4 * 3328);
-    ntt_at_layer_3(&mut zeta_i, re, 5 * 3328);
-    ntt_at_layer_2(&mut zeta_i, re, 6 * 3328);
-    ntt_at_layer_1(&mut zeta_i, re, 7 * 3328);
-
-    re.poly_barrett_reduce()
 }

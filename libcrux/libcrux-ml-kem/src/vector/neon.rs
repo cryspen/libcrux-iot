@@ -1,7 +1,7 @@
 //! Vectors for libcrux using aarch64 (neon) intrinsics
 
 use super::{Operations, FIELD_MODULUS};
-
+use crate::polynomial::VECTORS_IN_RING_ELEMENT;
 // mod sampling;
 mod arithmetic;
 mod compress;
@@ -24,6 +24,10 @@ impl crate::vector::traits::Repr for SIMD128Vector {
 
 #[hax_lib::attributes]
 impl Operations for SIMD128Vector {
+    fn ntt(_vectors: &mut [Self; VECTORS_IN_RING_ELEMENT]){
+        todo!()
+    }
+    
     #[inline(always)]
     #[ensures(|out| fstar!(r#"impl.f_repr out == Seq.create 16 0s"#))]
     fn ZERO() -> Self {

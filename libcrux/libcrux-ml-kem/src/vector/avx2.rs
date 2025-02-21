@@ -1,6 +1,6 @@
 use super::traits::Operations;
 pub(crate) use libcrux_intrinsics::avx2::*;
-
+use crate::polynomial::VECTORS_IN_RING_ELEMENT;
 mod arithmetic;
 mod compress;
 mod ntt;
@@ -262,6 +262,10 @@ impl crate::vector::traits::Repr for SIMD256Vector {
 
 #[hax_lib::attributes]
 impl Operations for SIMD256Vector {
+    fn ntt(_vectors: &mut [Self; VECTORS_IN_RING_ELEMENT]) {
+        todo!()
+    }
+    
     #[inline(always)]
     #[ensures(|out| fstar!(r#"impl.f_repr out == Seq.create 16 0s"#))]
     fn ZERO() -> Self {

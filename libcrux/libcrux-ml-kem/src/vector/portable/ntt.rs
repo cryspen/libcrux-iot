@@ -1,19 +1,31 @@
+use crate::polynomial::zeta;
+use crate::vector::montgomery_multiply_fe;
 use crate::vector::FIELD_ELEMENTS_IN_VECTOR;
 
 use super::arithmetic::*;
 use super::vector_type::*;
+use super::Operations;
+use super::VECTORS_IN_RING_ELEMENT;
 
 #[inline(always)]
 #[cfg(feature = "armv7em")]
-fn ntt_double_step(
-    vec: &mut PackedFieldElementArray,
-    zeta: usize,
-    a: usize,
-    b: usize,
-) {
+fn ntt_double_step(vec: &mut PackedFieldElementArray, zeta: usize, a: usize, b: usize) {
     let zeta = crate::cortex_m::plantard_zeta(zeta);
 
     (vec[a], vec[b]) = crate::cortex_m::plantard_double_ct_reference(vec[a], vec[b], zeta);
+}
+
+#[inline(always)]
+#[cfg(feature = "armv7em")]
+fn ntt_double_vec_step(
+    vec_a: &mut PackedFieldElementArray,
+    vec_b: &mut PackedFieldElementArray,
+    zeta: i32,
+) {
+    for i in 0..(FIELD_ELEMENTS_IN_VECTOR / 2) {
+        (vec_a[i], vec_b[i]) =
+            crate::cortex_m::plantard_double_ct_reference(vec_a[i], vec_b[i], zeta);
+    }
 }
 
 #[inline(always)]
@@ -108,12 +120,12 @@ pub(crate) fn ntt_layer_1_step_packed(
     zeta1: usize,
     zeta2: usize,
     zeta3: usize,
-) -> UnpackedFieldElementArray {
+) -> PackedFieldElementArray {
     ntt_double_step(&mut vec, zeta0, 0, 1);
     ntt_double_step(&mut vec, zeta1, 2, 3);
     ntt_double_step(&mut vec, zeta2, 4, 5);
     ntt_double_step(&mut vec, zeta3, 6, 7);
-    unpack_array(vec)
+    vec
 }
 
 #[inline(always)]
@@ -156,7 +168,10 @@ pub(crate) fn ntt_layer_2_step_packed(
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta /\
                             Spec.Utils.is_i16b_array (11207+3*3328) ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array (11207+4*3328) ${result}.f_elements"#))]
-pub(crate) fn ntt_layer_3_step_unpacked(mut vec: UnpackedFieldElementArray, zeta: usize) -> UnpackedFieldElementArray {
+pub(crate) fn ntt_layer_3_step_unpacked(
+    mut vec: UnpackedFieldElementArray,
+    zeta: usize,
+) -> UnpackedFieldElementArray {
     ntt_step(&mut vec, zeta, 0, 8);
     ntt_step(&mut vec, zeta, 1, 9);
     ntt_step(&mut vec, zeta, 2, 10);
@@ -170,8 +185,10 @@ pub(crate) fn ntt_layer_3_step_unpacked(mut vec: UnpackedFieldElementArray, zeta
 
 #[cfg(feature = "armv7em")]
 #[inline(always)]
-pub(crate) fn ntt_layer_3_step_packed(mut vec: UnpackedFieldElementArray, zeta: usize) -> PackedFieldElementArray {
-    let mut vec = pack_array(vec);
+pub(crate) fn ntt_layer_3_step_packed(
+    mut vec: PackedFieldElementArray,
+    zeta: usize,
+) -> PackedFieldElementArray {
     ntt_double_step(&mut vec, zeta, 0, 4);
     ntt_double_step(&mut vec, zeta, 1, 5);
     ntt_double_step(&mut vec, zeta, 2, 6);
@@ -293,7 +310,10 @@ pub(crate) fn inv_ntt_layer_2_step(
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta /\
                             Spec.Utils.is_i16b_array 3328 ${vec}.f_elements"#))]
 #[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array 3328 ${result}.f_elements"#))]
-pub(crate) fn inv_ntt_layer_3_step(mut vec: UnpackedFieldElementArray, zeta: i16) -> UnpackedFieldElementArray {
+pub(crate) fn inv_ntt_layer_3_step(
+    mut vec: UnpackedFieldElementArray,
+    zeta: i16,
+) -> UnpackedFieldElementArray {
     inv_ntt_step(&mut vec, zeta, 0, 8);
     inv_ntt_step(&mut vec, zeta, 1, 9);
     inv_ntt_step(&mut vec, zeta, 2, 10);
@@ -495,4 +515,200 @@ pub(crate) fn ntt_multiply(
     ntt_multiply_binomials(lhs, rhs, nzeta3, 7, &mut out);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
     out
+}
+
+#[inline(always)]
+pub(crate) fn ntt_at_layer_1(
+    zeta_i: &mut usize,
+    re: &mut [PortableVector; VECTORS_IN_RING_ELEMENT],
+    _initial_coefficient_bound: usize, // This can be used for specifying the range of values allowed in re
+) {
+    let _zeta_i_init = *zeta_i;
+    // The semicolon and parentheses at the end of loop are a workaround
+    // for the following bug https://github.com/hacspec/hax/issues/720
+    for round in 0..16 {
+        *zeta_i += 1;
+        re[round] = PortableVector::ntt_layer_1_step(
+            re[round],
+            *zeta_i,
+            *zeta_i + 1,
+            *zeta_i + 2,
+            *zeta_i + 3,
+        );
+        *zeta_i += 3;
+    }
+}
+
+#[inline(always)]
+pub(crate) fn ntt_at_layer_2(
+    zeta_i: &mut usize,
+    re: &mut [PortableVector; VECTORS_IN_RING_ELEMENT],
+    _initial_coefficient_bound: usize, // This can be used for specifying the range of values allowed in re
+) {
+    let _zeta_i_init = *zeta_i;
+    // The semicolon and parentheses at the end of loop are a workaround
+    // for the following bug https://github.com/hacspec/hax/issues/720
+    for round in 0..16 {
+        *zeta_i += 1;
+
+        re[round] = PortableVector::ntt_layer_2_step(re[round], *zeta_i, *zeta_i + 1);
+        *zeta_i += 1;
+    }
+}
+
+#[inline(always)]
+pub(crate) fn ntt_at_layer_3(
+    zeta_i: &mut usize,
+    re: &mut [PortableVector; VECTORS_IN_RING_ELEMENT],
+    _initial_coefficient_bound: usize, // This can be used for specifying the range of values allowed in re
+) {
+    let _zeta_i_init = *zeta_i;
+    for round in 0..16 {
+        *zeta_i += 1;
+        re[round] = PortableVector::ntt_layer_3_step(re[round], *zeta_i);
+    }
+}
+
+#[inline(always)]
+fn ntt_layer_int_vec_step(
+    mut a: PortableVector,
+    mut b: PortableVector,
+    zeta_index: usize,
+) -> (PortableVector, PortableVector) {
+    match (a, b) {
+
+        (PortableVector::Unpacked { elements: _ }, PortableVector::Unpacked { elements: _ }) => {
+            let zeta_r = zeta(zeta_index);
+            let t = montgomery_multiply_fe::<PortableVector>(b, zeta_r);
+            b = PortableVector::sub(a, &t);
+            a = PortableVector::add(a, &t);
+            (a, b)
+        }
+        
+        #[cfg(feature = "armv7em")]
+        (
+            PortableVector::Packed {
+                elements: mut elements_a,
+            },
+            PortableVector::Packed {
+                elements: mut elements_b,
+            },
+        ) => {
+            let zeta_p = crate::cortex_m::plantard_zeta(zeta_index);
+            let mut elements_a_new = [0; FIELD_ELEMENTS_IN_VECTOR / 2];
+            let mut elements_b_new = [0; FIELD_ELEMENTS_IN_VECTOR / 2];
+            for i in 0..(FIELD_ELEMENTS_IN_VECTOR / 2) {
+                (elements_a_new[i], elements_b_new[i]) =
+            crate::cortex_m::plantard_double_ct_reference(elements_a[i], elements_b[i], zeta_p);
+            }
+            let a = PortableVector::Packed{elements: elements_a_new};
+            let b = PortableVector::Packed{elements: elements_b_new};
+            (a, b)
+        }
+
+        _ => panic!(),
+    }
+}
+
+#[inline(always)]
+pub(crate) fn ntt_at_layer_4_plus(
+    zeta_i: &mut usize,
+    re: &mut [PortableVector; VECTORS_IN_RING_ELEMENT],
+    layer: usize,
+    _initial_coefficient_bound: usize, // This can be used for specifying the range of values allowed in re
+) {
+    let step = 1 << layer;
+
+    let _zeta_i_init = *zeta_i;
+    for round in 0..(128 >> layer) {
+        *zeta_i += 1;
+
+        let offset = round * step * 2;
+        let offset_vec = offset / 16; //FIELD_ELEMENTS_IN_VECTOR;
+        let step_vec = step / 16; //FIELD_ELEMENTS_IN_VECTOR;
+
+        for j in offset_vec..offset_vec + step_vec {
+            let (x, y) = ntt_layer_int_vec_step(re[j], re[j + step_vec], *zeta_i);
+
+            re[j] = x;
+            re[j + step_vec] = y;
+        }
+    }
+}
+
+#[inline(always)]
+pub fn ntt(zeta_i: &mut usize, re: &mut [PortableVector; VECTORS_IN_RING_ELEMENT]) {
+    #[cfg(feature = "armv7em")]
+    for vec in re.into_iter() {
+        *vec = match vec {
+            PortableVector::Unpacked { elements } => PortableVector::Packed {
+                elements: pack_array(*elements),
+            },
+            _ => panic!(),
+        };
+    }
+    ntt_at_layer_4_plus(zeta_i, re, 7, 3328);
+    ntt_at_layer_4_plus(zeta_i, re, 6, 2 * 3328);
+    ntt_at_layer_4_plus(zeta_i, re, 5, 3 * 3328);
+    ntt_at_layer_4_plus(zeta_i, re, 4, 4 * 3328);
+    ntt_at_layer_3(zeta_i, re, 5 * 3328);
+    ntt_at_layer_2(zeta_i, re, 6 * 3328);
+    ntt_at_layer_1(zeta_i, re, 7 * 3328);
+
+    #[cfg(feature = "armv7em")]
+    for vec in re.into_iter() {
+        *vec = match vec {
+            PortableVector::Packed { elements } => PortableVector::Unpacked {
+                elements: unpack_array(*elements),
+            },
+            _ => panic!(),
+        };
+    }
+
+    for vec in re {
+        *vec = match vec {
+            PortableVector::Unpacked { elements } => PortableVector::Unpacked {
+                elements: barrett_reduce(*elements),
+            },
+            _ => panic!(),
+        };
+    }
+}
+
+#[inline(always)]
+pub fn ntt_binomially_sampled(zeta_i: &mut usize, re: &mut [PortableVector; VECTORS_IN_RING_ELEMENT]) {
+    #[cfg(feature = "armv7em")]
+    for vec in re.into_iter() {
+        *vec = match vec {
+            PortableVector::Unpacked { elements } => PortableVector::Packed {
+                elements: pack_array(*elements),
+            },
+            _ => panic!(),
+        };
+    }
+    ntt_at_layer_4_plus(zeta_i, re, 6, 2 * 3328);
+    ntt_at_layer_4_plus(zeta_i, re, 5, 3 * 3328);
+    ntt_at_layer_4_plus( zeta_i, re, 4, 4 * 3328);
+    ntt_at_layer_3( zeta_i, re, 5 * 3328);
+    ntt_at_layer_2( zeta_i, re, 6 * 3328);
+    ntt_at_layer_1( zeta_i, re, 7 * 3328);
+
+    #[cfg(feature = "armv7em")]
+    for vec in re.into_iter() {
+        *vec = match vec {
+            PortableVector::Packed { elements } => PortableVector::Unpacked {
+                elements: unpack_array(*elements),
+            },
+            _ => panic!(),
+        };
+    }
+
+    for vec in re {
+        *vec = match vec {
+            PortableVector::Unpacked { elements } => PortableVector::Unpacked {
+                elements: barrett_reduce(*elements),
+            },
+            _ => panic!(),
+        };
+    }
 }

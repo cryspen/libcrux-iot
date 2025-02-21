@@ -1,4 +1,6 @@
 use super::Operations;
+use crate::polynomial::PolynomialRingElement;
+use crate::polynomial::VECTORS_IN_RING_ELEMENT;
 pub mod arithmetic;
 mod compress;
 pub mod ntt;
@@ -139,6 +141,17 @@ fn deserialize_12(a: &[u8]) -> PortableVector {
 #[hax_lib::fstar::after(r#"#pop-options"#)]
 #[hax_lib::attributes]
 impl Operations for PortableVector {
+    fn ntt_binomially_sampled(zeta: &mut usize, vectors: &mut [Self; VECTORS_IN_RING_ELEMENT])
+    {
+        ntt_binomially_sampled(zeta, vectors)
+    }
+    
+    
+    #[inline(always)]
+    fn ntt(zeta: &mut usize, vectors: &mut [Self; VECTORS_IN_RING_ELEMENT]) {
+        ntt(zeta, vectors)
+    }
+
     #[ensures(|out| fstar!(r#"impl.f_repr out == Seq.create 16 0s"#))]
     fn ZERO() -> Self {
         zero()
@@ -320,7 +333,7 @@ impl Operations for PortableVector {
                 elements: ntt_layer_1_step_unpacked(elements, zeta0, zeta1, zeta2, zeta3),
             },
             #[cfg(feature = "armv7em")]
-            PortableVector::Packed { elements } => PortableVector::Unpacked {
+            PortableVector::Packed { elements } => PortableVector::Packed {
                 elements: ntt_layer_1_step_packed(elements, zeta0, zeta1, zeta2, zeta3),
             },
             _ => panic!(),
@@ -349,14 +362,12 @@ impl Operations for PortableVector {
     #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array (11207+4*3328) (impl.f_repr $out)"#))]
     fn ntt_layer_3_step(a: Self, zeta: usize) -> Self {
         match a {
-
-            #[cfg(not(feature = "armv7em"))]
             PortableVector::Unpacked { elements } => PortableVector::Unpacked {
                 elements: ntt_layer_3_step_unpacked(elements, zeta),
             },
             // If on Cortex-M4, this is where we pack the vector.
             #[cfg(feature = "armv7em")]
-            PortableVector::Unpacked { elements } => PortableVector::Packed {
+            PortableVector::Packed { elements } => PortableVector::Packed {
                 elements: ntt_layer_3_step_packed(elements, zeta),
             },
             _ => panic!(),
