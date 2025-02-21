@@ -47,6 +47,9 @@ default = ["mlkem512", "mlkem768", "mlkem1024"]
 simd128 = ["libcrux-sha3/simd128", "libcrux-intrinsics/simd128"]
 simd256 = ["libcrux-sha3/simd256", "libcrux-intrinsics/simd256"]
 
+# No runtime feature detection is available for the following, yet
+armv7em = []
+
 # Features for the different key sizes of ML-KEM
 mlkem512 = []
 mlkem768 = []

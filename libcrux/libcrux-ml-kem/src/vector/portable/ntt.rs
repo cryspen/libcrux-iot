@@ -4,7 +4,7 @@ use super::arithmetic::*;
 use super::vector_type::*;
 
 #[inline(always)]
-#[cfg(target_arch = "arm")]
+#[cfg(feature = "armv7em")]
 fn ntt_double_step(
     vec: &mut PackedFieldElementArray,
     zeta: usize,
@@ -100,7 +100,7 @@ pub(crate) fn ntt_layer_1_step_unpacked(
     vec
 }
 
-#[cfg(target_arch = "arm")]
+#[cfg(feature = "armv7em")]
 #[inline(always)]
 pub(crate) fn ntt_layer_1_step_packed(
     mut vec: PackedFieldElementArray,
@@ -137,7 +137,7 @@ pub(crate) fn ntt_layer_2_step_unpacked(
     vec
 }
 
-#[cfg(target_arch = "arm")]
+#[cfg(feature = "armv7em")]
 #[inline(always)]
 pub(crate) fn ntt_layer_2_step_packed(
     mut vec: PackedFieldElementArray,
@@ -168,7 +168,7 @@ pub(crate) fn ntt_layer_3_step_unpacked(mut vec: UnpackedFieldElementArray, zeta
     vec
 }
 
-#[cfg(target_arch = "arm")]
+#[cfg(feature = "armv7em")]
 #[inline(always)]
 pub(crate) fn ntt_layer_3_step_packed(mut vec: UnpackedFieldElementArray, zeta: usize) -> PackedFieldElementArray {
     let mut vec = pack_array(vec);

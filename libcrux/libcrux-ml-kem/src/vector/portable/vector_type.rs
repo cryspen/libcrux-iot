@@ -10,7 +10,7 @@ pub(crate) type UnpackedFieldElementArray = [FieldElement; FIELD_ELEMENTS_IN_VEC
 pub(crate) type PackedFieldElementArray = [PackedFieldElements; FIELD_ELEMENTS_IN_VECTOR / 2];
 
 #[derive(Clone, Copy)]
-pub(crate) enum PortableVector {
+pub enum PortableVector {
     Unpacked { elements: UnpackedFieldElementArray },
     Packed { elements: PackedFieldElementArray },
 }

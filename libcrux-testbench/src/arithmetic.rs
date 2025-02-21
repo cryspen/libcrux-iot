@@ -3,72 +3,28 @@ use libcrux_iot_testutil::*;
 extern crate alloc;
 use alloc::string::String;
 use libcrux_ml_kem::{
-    cortex_m::{
-        arithmetic::{ntt_layer_1_step, plantard_double_ct, plantard_double_ct_reference},
-        vector::PackedVector,
-    },
     polynomial::PolynomialRingElement,
     ntt::ntt_vector_u,
-    vector::portable::vector_type::{from_i16_array, PortableVector},
+    vector::portable::vector_type::PortableVector,
 };
 
-fn bench_montgomery<L: EventLogger>(_l: &mut L, state: &mut BenchState) -> Result<(), String> {
-    core::hint::black_box(libcrux_ml_kem::vector::portable::ntt::ntt_layer_1_step(
-        state.portable,
-        1,
-        2,
-        3,
-        4,
-    ));
-
-    Ok(())
-}
-
-fn bench_plantard<L: EventLogger>(_l: &mut L, state: &mut BenchState) -> Result<(), String> {
-    // let packed = libcrux_ml_kem::cortex_m::vector::PackedVector::from(state.portable);
-    // core::hint::black_box(ntt_layer_1_step(
-    //     state.packed,
-    //     1,
-    //     2,
-    //     3,
-    //     4,
-    //     plantard_double_ct_reference,
-    // ));
-
-    Ok(())
-}
-
-fn bench_portable_ntt<L: EventLogger>(_l: &mut L, state: &mut BenchState) -> Result<(), String> {
+fn bench_ntt<L: EventLogger>(_l: &mut L, state: &mut BenchState) -> Result<(), String> {
     core::hint::black_box(ntt_vector_u::<10, PortableVector>(&mut state.ring_element_portable));
-    Ok(())
-}
-
-fn bench_plantard_ntt<L: EventLogger>(_l: &mut L, state: &mut BenchState) -> Result<(), String> {
-    core::hint::black_box(libcrux_ml_kem::cortex_m::ntt(&mut state.ring_element_flat));
     Ok(())
 }
 
 struct BenchState {
     ring_element_portable: PolynomialRingElement<PortableVector>,
     ring_element_flat: [i16; 256],
-    portable: PortableVector,
-    packed: PackedVector,
 }
 
 pub fn run_benchmarks<P: platform::Platform>(test_config: TestConfig<P>) {
     // set up the test suite
     let test_cases = [
-        // TestCase::new("bench_montgomery", bench_montgomery),
-        // TestCase::new("bench_plantard", bench_plantard),
-        TestCase::new("bench_portable_ntt", bench_portable_ntt),
-        TestCase::new("bench_plantard_ntt", bench_plantard_ntt),
-        
+        TestCase::new("bench_ntt", bench_ntt),
     ];
 
     let test_suite = TestSuite::new("Arithmetic Benchmark", &test_cases);
-
-    let portable = libcrux_ml_kem::vector::portable::vector_type::from_i16_array(&[2; 16]);
-    let packed = PackedVector::from(portable);
 
     let ring_element_flat = [
         56, 673, -456, 430, -940, -706, 1269, 1635, 1261, -1125, 1480, 1031, 895, -811, 299, 1663,
@@ -91,7 +47,7 @@ pub fn run_benchmarks<P: platform::Platform>(test_config: TestConfig<P>) {
     ];
 
     let ring_element_portable = libcrux_ml_kem::polynomial::from_i16_array(&ring_element_flat);
-    let mut state = BenchState { portable, packed, ring_element_flat, ring_element_portable};
+    let mut state = BenchState { ring_element_flat, ring_element_portable};
 
     // run the benchmark
     let mut logger = DefmtInfoLogger;

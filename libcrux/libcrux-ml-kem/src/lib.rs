@@ -107,7 +107,7 @@ mod types;
 mod utils;
 mod variant;
 pub mod vector;
-#[cfg(target_arch="arm")]
+#[cfg(feature = "armv7em")]
 mod cortex_m;
 
 #[cfg(feature = "mlkem512")]

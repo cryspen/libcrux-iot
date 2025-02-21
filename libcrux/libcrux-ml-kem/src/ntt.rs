@@ -2,7 +2,7 @@ use crate::{
     hax_utils::hax_debug_assert, polynomial::{zeta, PolynomialRingElement, VECTORS_IN_RING_ELEMENT}, vector::{montgomery_multiply_fe, Operations}
 };
 
-#[cfg(target_arch="arm")]
+#[cfg(feature = "armv7em")]
 use crate::cortex_m;
 
 #[inline(always)]
@@ -309,7 +309,6 @@ pub(crate) fn ntt_at_layer_7<Vector: Operations>(re: &mut PolynomialRingElement<
 #[hax_lib::ensures(|_| fstar!(r#"Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector ${re}_future ==
     Spec.MLKEM.poly_ntt (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector $re) /\
     Libcrux_ml_kem.Serialize.coefficients_field_modulus_range #$:Vector ${re}_future"#))]
-// #[cfg(not(target_arch="arm"))]
 pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
     re: &mut PolynomialRingElement<Vector>,
 ) {
@@ -333,7 +332,7 @@ pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
 #[hax_lib::fstar::options("--z3rlimit 200")]
 #[hax_lib::ensures(|_| fstar!(r#"Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector ${re}_future ==
     Spec.MLKEM.poly_ntt (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector $re)"#))]
-pub(crate) fn ntt_vector_u<const VECTOR_U_COMPRESSION_FACTOR: usize, Vector: Operations>(
+pub fn ntt_vector_u<const VECTOR_U_COMPRESSION_FACTOR: usize, Vector: Operations>(
     re: &mut PolynomialRingElement<Vector>,
 ) {
     hax_debug_assert!(to_i16_array(re)

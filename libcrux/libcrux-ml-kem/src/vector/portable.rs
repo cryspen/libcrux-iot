@@ -319,7 +319,7 @@ impl Operations for PortableVector {
             PortableVector::Unpacked { elements } => PortableVector::Unpacked {
                 elements: ntt_layer_1_step_unpacked(elements, zeta0, zeta1, zeta2, zeta3),
             },
-            #[cfg(target_arch = "arm")]
+            #[cfg(feature = "armv7em")]
             PortableVector::Packed { elements } => PortableVector::Unpacked {
                 elements: ntt_layer_1_step_packed(elements, zeta0, zeta1, zeta2, zeta3),
             },
@@ -335,11 +335,11 @@ impl Operations for PortableVector {
             PortableVector::Unpacked { elements } => PortableVector::Unpacked {
                 elements: ntt_layer_2_step_unpacked(elements, zeta0, zeta1),
             },
-            #[cfg(target_arch = "arm")]
+            #[cfg(feature = "armv7em")]
             PortableVector::Packed { elements } => PortableVector::Packed {
                 elements: ntt_layer_2_step_packed(elements, zeta0, zeta1),
             },
-            #[cfg(not(target_arch = "arm"))]
+            #[cfg(not(feature = "armv7em"))]
             _ => panic!(),
         }
     }
@@ -350,12 +350,12 @@ impl Operations for PortableVector {
     fn ntt_layer_3_step(a: Self, zeta: usize) -> Self {
         match a {
 
-            #[cfg(not(target_arch = "arm"))]
+            #[cfg(not(feature = "armv7em"))]
             PortableVector::Unpacked { elements } => PortableVector::Unpacked {
                 elements: ntt_layer_3_step_unpacked(elements, zeta),
             },
             // If on Cortex-M4, this is where we pack the vector.
-            #[cfg(target_arch = "arm")]
+            #[cfg(feature = "armv7em")]
             PortableVector::Unpacked { elements } => PortableVector::Packed {
                 elements: ntt_layer_3_step_packed(elements, zeta),
             },

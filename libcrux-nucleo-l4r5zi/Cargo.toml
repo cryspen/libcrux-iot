@@ -23,7 +23,7 @@ libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 libcrux-testbench = { path = "../libcrux-testbench" }
 embassy-stm32 = { version = "0.1.0", features = [ "stm32l4r5zi", "defmt", ] }
 embedded-alloc = "0.6.0"
-libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = [ "pre-verification", "mlkem512", "mlkem768", "mlkem1024",] } 
+# libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = [ "pre-verification", "mlkem512", "mlkem768", "mlkem1024", "armv7em"] } 
 
 [dev-dependencies]
 defmt-test = "0.3"
