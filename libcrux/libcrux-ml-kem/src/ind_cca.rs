@@ -208,7 +208,7 @@ pub(crate) fn generate_keypair<
     let mut ind_cpa_private_key = [0u8; CPA_PRIVATE_KEY_SIZE];
     let mut public_key = [0u8; PUBLIC_KEY_SIZE];
 
-    let measurement_count = CycleCounter::start_measurement("CPA generate_keypair", file!(), line!());
+    let measurement_count = CycleCounter::start_measurement("generate_keypair", file!(), line!());
     crate::ind_cpa::generate_keypair::<
         K,
         CPA_PRIVATE_KEY_SIZE,
@@ -238,7 +238,7 @@ pub(crate) fn generate_keypair<
         MlKemPrivateKey::from(secret_key_serialized);
     CycleCounter::end_measurement("serialize_kem_secret_key_mut", file!(), line!(), measurement_count);
     
-    CycleCounter::end_section("CCA generate_keypair", file!(), line!(), section_count);
+    CycleCounter::end_section("generate_keypair", file!(), line!(), section_count);
     MlKemKeyPair::from(private_key, MlKemPublicKey::from(public_key))
 }
 
@@ -282,7 +282,7 @@ pub(crate) fn encapsulate<
     public_key: &MlKemPublicKey<PUBLIC_KEY_SIZE>,
     randomness: [u8; SHARED_SECRET_SIZE],
 ) -> (MlKemCiphertext<CIPHERTEXT_SIZE>, MlKemSharedSecret) {
-    let cca_count = CycleCounter::start_section("CCA encapsulate", file!(), line!());
+    let cca_count = CycleCounter::start_section("encapsulate", file!(), line!());
     let mut processed_randomness = [0u8; 32];
     Scheme::entropy_preprocess::<K, Hasher>(&randomness, &mut processed_randomness);
     let mut to_hash: [u8; 2 * H_DIGEST_SIZE] = into_padded_array(&processed_randomness);
@@ -302,7 +302,7 @@ pub(crate) fn encapsulate<
     CycleCounter::end_measurement("Hash G", file!(), line!(), g_count);
     let (shared_secret, pseudorandomness) = hashed.split_at(SHARED_SECRET_SIZE);
 
-    let cpa_encrypt_count = CycleCounter::start_measurement("CPA encrypt", file!(), line!());
+    let cpa_encrypt_count = CycleCounter::start_measurement("encrypt", file!(), line!());
     let mut ciphertext = [0u8; CIPHERTEXT_SIZE];
     let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
         core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
@@ -332,12 +332,12 @@ pub(crate) fn encapsulate<
         &mut r_as_ntt,
         &mut error_2,
     );
-    CycleCounter::end_measurement("CPA encrypt", file!(), line!(), cpa_encrypt_count);
+    CycleCounter::end_measurement("encrypt", file!(), line!(), cpa_encrypt_count);
     
     let ciphertext = MlKemCiphertext::from(ciphertext);
     let mut shared_secret_array = [0u8; 32];
     Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(shared_secret, &ciphertext, &mut shared_secret_array);
-    CycleCounter::end_section("CCA encapsulate", file!(), line!(), cca_count);
+    CycleCounter::end_section("encapsulate", file!(), line!(), cca_count);
     (ciphertext, shared_secret_array)
 }
 
@@ -389,13 +389,14 @@ pub(crate) fn decapsulate<
     private_key: &MlKemPrivateKey<SECRET_KEY_SIZE>,
     ciphertext: &MlKemCiphertext<CIPHERTEXT_SIZE>,
 ) -> MlKemSharedSecret {
-    let section_count = CycleCounter::start_section("CCA decapsulate", file!(), line!());
+    let section_count = CycleCounter::start_section("decapsulate", file!(), line!());
     hax_lib::fstar!(
         r#"assert (v $CIPHERTEXT_SIZE == v $IMPLICIT_REJECTION_HASH_INPUT_SIZE - v $SHARED_SECRET_SIZE)"#
     );
+    let measurement_count = CycleCounter::start_measurement("unpack_private_key", file!(), line!());
     let (ind_cpa_secret_key, ind_cpa_public_key, ind_cpa_public_key_hash, implicit_rejection_value) =
         unpack_private_key::<CPA_SECRET_KEY_SIZE, PUBLIC_KEY_SIZE>(&private_key.value);
-
+    CycleCounter::end_measurement("unpack_private_key", file!(), line!(), measurement_count);
     hax_lib::fstar!(
         r#"assert ($ind_cpa_secret_key == slice ${private_key}.f_value (sz 0) $CPA_SECRET_KEY_SIZE);
         assert ($ind_cpa_public_key == slice ${private_key}.f_value $CPA_SECRET_KEY_SIZE ($CPA_SECRET_KEY_SIZE +! $PUBLIC_KEY_SIZE));
@@ -404,6 +405,7 @@ pub(crate) fn decapsulate<
         assert ($implicit_rejection_value == slice ${private_key}.f_value ($CPA_SECRET_KEY_SIZE +! $PUBLIC_KEY_SIZE +! Spec.MLKEM.v_H_DIGEST_SIZE)
             (length ${private_key}.f_value))"#
     );
+    let measurement_count = CycleCounter::start_measurement("decrypt", file!(), line!());
     let mut decrypted = [0u8; 32];
     crate::ind_cpa::decrypt::<
         K,
@@ -413,7 +415,7 @@ pub(crate) fn decapsulate<
         VECTOR_V_COMPRESSION_FACTOR,
         Vector,
     >(ind_cpa_secret_key, &ciphertext.value, &mut decrypted);
-
+CycleCounter::end_measurement("decrypt", file!(), line!(), measurement_count);
     let mut to_hash: [u8; SHARED_SECRET_SIZE + H_DIGEST_SIZE] = into_padded_array(&decrypted);
     hax_lib::fstar!(r#"eq_intro (Seq.slice $to_hash 0 32) $decrypted"#);
     to_hash[SHARED_SECRET_SIZE..].copy_from_slice(ind_cpa_public_key_hash);
@@ -423,8 +425,10 @@ pub(crate) fn decapsulate<
         assert ($decrypted == Spec.MLKEM.ind_cpa_decrypt $K $ind_cpa_secret_key ${ciphertext}.f_value);
         assert ($to_hash == concat $decrypted $ind_cpa_public_key_hash)"#
     );
+    let measurement_count = CycleCounter::start_measurement("Hasher::G", file!(), line!());
     let mut hashed = [0u8; G_DIGEST_SIZE];
     Hasher::G(&to_hash, &mut hashed);
+    CycleCounter::end_measurement("Hasher::G", file!(), line!(), measurement_count);
     let (shared_secret, pseudorandomness) = hashed.split_at(SHARED_SECRET_SIZE);
 
     hax_lib::fstar!(
@@ -443,13 +447,15 @@ pub(crate) fn decapsulate<
         assert (i4.f_PRF_pre (sz 32) $to_hash);
         lemma_slice_append $to_hash $implicit_rejection_value ${ciphertext}.f_value"
     );
+    let measurement_count = CycleCounter::start_measurement("Hasher::PRF", file!(), line!());
     let mut implicit_rejection_shared_secret = [0u8; SHARED_SECRET_SIZE];
     Hasher::PRF::<32>(&to_hash, &mut implicit_rejection_shared_secret);
-
+CycleCounter::end_measurement("Hasher::PRF", file!(), line!(), measurement_count);
     hax_lib::fstar!(
         "assert ($implicit_rejection_shared_secret == Spec.Utils.v_PRF (sz 32) $to_hash);
         assert (Seq.length $ind_cpa_public_key == v $PUBLIC_KEY_SIZE)"
     );
+    let measurement_count = CycleCounter::start_measurement("encrypt", file!(), line!());
     let mut expected_ciphertext = [0u8; CIPHERTEXT_SIZE];
     let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
         core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
@@ -479,16 +485,20 @@ pub(crate) fn decapsulate<
         &mut r_as_ntt,
         &mut error_2,
     );
-
+    CycleCounter::end_measurement("encrypt", file!(), line!(), measurement_count);
+    let measurement_count = CycleCounter::start_measurement("Scheme::kdf", file!(), line!());
     let mut implicit_rejection_shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
     Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(
         &implicit_rejection_shared_secret,
         ciphertext,
         &mut implicit_rejection_shared_secret_kdf,
     );
+    CycleCounter::end_measurement("Scheme::kdf", file!(), line!(), measurement_count);
+    let measurement_count = CycleCounter::start_measurement("Scheme::kdf", file!(), line!());
     let mut shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
     Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(shared_secret, ciphertext, &mut shared_secret_kdf);
-
+    CycleCounter::end_measurement("Scheme::kdf", file!(), line!(), measurement_count);
+    let measurement_count = CycleCounter::start_measurement("compare_ciphertexts_select_shared_secret_in_constant_time", file!(), line!());
     let mut shared_secret = [0u8; 32];
     compare_ciphertexts_select_shared_secret_in_constant_time(
         ciphertext.as_ref(),
@@ -497,7 +507,8 @@ pub(crate) fn decapsulate<
         &implicit_rejection_shared_secret_kdf,
         &mut shared_secret,
     );
-    CycleCounter::end_section("CCA decapsulate", file!(), line!(), section_count);
+    CycleCounter::end_measurement("compare_ciphertexts_select_shared_secret_in_constant_time", file!(), line!(), measurement_count);
+    CycleCounter::end_section("decapsulate", file!(), line!(), section_count);
     shared_secret
 }
 

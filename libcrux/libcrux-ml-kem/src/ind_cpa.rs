@@ -883,9 +883,13 @@ pub(crate) fn encrypt_c2<
     message: [u8; SHARED_SECRET_SIZE],
     ciphertext: &mut [u8],
 ) {
+    let section_count = CycleCounter::start_section("encrypt_cr", file!(), line!());
     // v := NTT^{−1}(tˆT ◦ rˆ) + e_2 + Decompress_q(Decode_1(m),1)
+    let measurement_count = CycleCounter::start_measurement("deserialize_then_decompress_message", file!(), line!());
     let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
     deserialize_then_decompress_message(message, &mut message_as_ring_element);
+    CycleCounter::end_measurement("deserialize_then_decompress_message", file!(), line!(), measurement_count);
+    let measurement_count = CycleCounter::start_measurement("compute_ring_element_v", file!(), line!());
     let mut v = PolynomialRingElement::<Vector>::ZERO();
     compute_ring_element_v(
         t_as_ntt,
@@ -894,12 +898,16 @@ pub(crate) fn encrypt_c2<
         &message_as_ring_element,
         &mut v,
     );
+    CycleCounter::end_measurement("compute_ring_element_v", file!(), line!(), measurement_count);
     hax_lib::fstar!("assert ($C2_LEN = Spec.MLKEM.v_C2_SIZE v_K)");
 
     // c_2 := Encode_{dv}(Compress_q(v,d_v))
+    let measurement_count = CycleCounter::start_measurement("compress_then_serialize_ring_element_v", file!(), line!());
     compress_then_serialize_ring_element_v::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
         v, ciphertext,
     );
+    CycleCounter::end_measurement("compress_then_serialize_ring_element_v", file!(), line!(), measurement_count);
+    CycleCounter::end_section("encrypt_c2", file!(), line!(), section_count);
 }
 
 #[allow(non_snake_case)]
@@ -948,7 +956,7 @@ pub(crate) fn encrypt<
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
 ) {
-    let section_count = CycleCounter::start_section("CPA encrypt", file!(), line!());
+    let section_count = CycleCounter::start_section("encrypt", file!(), line!());
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_encrypt) Spec.MLKEM.ind_cpa_encrypt"#);
     // XXX: Can we pass this in?
     let measurement_count = CycleCounter::start_measurement("IndCpaPublicKeyUnpacked::<K, Vector>::default()", file!(), line!());
@@ -988,7 +996,7 @@ pub(crate) fn encrypt<
         error_2,
     );
     CycleCounter::end_measurement("encrypt_unpacked", file!(), line!(), measurement_count);
-    CycleCounter::end_section("CPA encrypt", file!(), line!(), section_count);
+    CycleCounter::end_section("encrypt", file!(), line!(), section_count);
 }
 
 #[inline(always)]
@@ -1012,18 +1020,21 @@ pub(crate) fn build_unpacked_public_key_mut<
     public_key: &[u8],
     unpacked_public_key: &mut IndCpaPublicKeyUnpacked<K, Vector>,
 ) {
+    let section_count = CycleCounter::start_section("build_unpacked_public_key_mut", file!(), line!());
     // tˆ := Decode_12(pk)
+    let measurement_count = CycleCounter::start_measurement("deserialize_ring_elements_reduced", file!(), line!());
     deserialize_ring_elements_reduced::<K, Vector>(
         &public_key[..T_AS_NTT_ENCODED_SIZE],
         &mut unpacked_public_key.t_as_ntt,
     );
-
+    CycleCounter::end_measurement("deserialize_ring_elements_reduced", file!(), line!(), measurement_count);
     // ρ := pk + 12·k·n / 8
     // for i from 0 to k−1 do
     //     for j from 0 to k − 1 do
     //         AˆT[i][j] := Parse(XOF(ρ, i, j))
     //     end for
     // end for
+    let measurement_count = CycleCounter::start_measurement("sample_matrix_A", file!(), line!());
     let seed = &public_key[T_AS_NTT_ENCODED_SIZE..];
     hax_lib::fstar!(
         "Lib.Sequence.eq_intro #u8 #32 $seed
@@ -1034,6 +1045,8 @@ pub(crate) fn build_unpacked_public_key_mut<
         into_padded_array(seed),
         false,
     );
+    CycleCounter::end_measurement("sample_matrix_A", file!(), line!(), measurement_count);
+    CycleCounter::end_section("build_unpacked_public_key_mut", file!(), line!(), section_count);
 }
 
 /// Call [`deserialize_then_decompress_ring_element_u`] on each ring element
@@ -1166,24 +1179,33 @@ pub(crate) fn decrypt_unpacked<
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     decrypted: &mut [u8],
 ) {
+    let section_count = CycleCounter::start_section("decrypt_unpacked", file!(), line!());
     // u := Decompress_q(Decode_{d_u}(c), d_u)
+    let measurement_count = CycleCounter::start_measurement("deserialize_then_decompress_u", file!(), line!());
     let mut u_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
     deserialize_then_decompress_u::<K, CIPHERTEXT_SIZE, U_COMPRESSION_FACTOR, Vector>(
         ciphertext,
         &mut u_as_ntt,
     );
+    CycleCounter::end_measurement("deserialize_then_decompress_u", file!(), line!(), measurement_count);
 
     // v := Decompress_q(Decode_{d_v}(c + d_u·k·n / 8), d_v)
+    let measurement_count = CycleCounter::start_measurement("deserialize_then_decompress_ring_element_v", file!(), line!());
     let mut v = PolynomialRingElement::<Vector>::ZERO();
     deserialize_then_decompress_ring_element_v::<K, V_COMPRESSION_FACTOR, Vector>(
         &ciphertext[VECTOR_U_ENCODED_SIZE..],
         &mut v,
     );
-
+    CycleCounter::end_measurement("deserialize_then_decompress_ring_element_v", file!(), line!(), measurement_count);
     // m := Encode_1(Compress_q(v − NTT^{−1}(sˆT ◦ NTT(u)) , 1))
+    let measurement_count = CycleCounter::start_measurement("compute_message", file!(), line!());
     let mut message = PolynomialRingElement::<Vector>::ZERO();
     compute_message(&v, &secret_key.secret_as_ntt, &u_as_ntt, &mut message);
+    CycleCounter::end_measurement("compute_message", file!(), line!(), measurement_count);
+    let measurement_count = CycleCounter::start_measurement("compress_then_serialize_message", file!(), line!());
     compress_then_serialize_message(message, decrypted);
+    CycleCounter::end_measurement("compress_then_serialize_message", file!(), line!(), measurement_count);
+    CycleCounter::end_section("decrypt_unpacked", file!(), line!(), section_count);
 }
 
 #[allow(non_snake_case)]
@@ -1209,12 +1231,16 @@ pub(crate) fn decrypt<
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     decrypted: &mut [u8],
 ) {
+    let section_count = CycleCounter::start_section("decrypt", file!(), line!());
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_decrypt) Spec.MLKEM.ind_cpa_decrypt"#);
     // sˆ := Decode_12(sk)
+    let measurement_count = CycleCounter::start_measurement("deserialize_vector", file!(), line!());
     let mut secret_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
     deserialize_vector::<K, Vector>(secret_key, &mut secret_as_ntt);
+    CycleCounter::end_measurement("deserialize_vector", file!(), line!(), measurement_count);
     let secret_key_unpacked = IndCpaPrivateKeyUnpacked { secret_as_ntt };
 
+    let measurement_count = CycleCounter::start_measurement("decrypt_unpacked", file!(), line!());
     decrypt_unpacked::<
         K,
         CIPHERTEXT_SIZE,
@@ -1222,5 +1248,7 @@ pub(crate) fn decrypt<
         U_COMPRESSION_FACTOR,
         V_COMPRESSION_FACTOR,
         Vector,
-    >(&secret_key_unpacked, ciphertext, decrypted);
+        >(&secret_key_unpacked, ciphertext, decrypted);
+    CycleCounter::end_measurement("decrypt_unpacked", file!(), line!(), measurement_count);
+    CycleCounter::end_section("decrypt", file!(), line!(), section_count);
 }
