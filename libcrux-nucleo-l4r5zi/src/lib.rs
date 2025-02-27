@@ -3,7 +3,7 @@
 
 use cortex_m_semihosting::debug;
 
-use defmt_rtt as _; // global logger
+// use defmt_rtt as _; // global logger
 
 use embassy_stm32 as _; // memory layout
 
