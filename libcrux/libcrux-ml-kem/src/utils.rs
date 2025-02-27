@@ -28,31 +28,35 @@ impl CycleCounter {
     }
 
     /// Signal the start of a measurement section.
-    pub (crate) fn start_section(msg: &str, file: &str, line: u32) {
+    pub (crate) fn start_section(msg: &str, file: &str, line: u32) -> u32 {
         let current = cortex_m::peripheral::DWT::cycle_count();
         defmt::println!("[START_SECTION {=str}] ({=str}, {=u32}) : {=u32}", msg, file, line, current);
+        current
     }
 
     /// Signal the end of a measurement section.
-    pub (crate) fn end_section(msg: &str, file: &str, line: u32) {
+    pub (crate) fn end_section(msg: &str, file: &str, line: u32, start: u32) {
         let current = cortex_m::peripheral::DWT::cycle_count();
-        defmt::println!("[END_SECTION {=str}] ({=str}, {=u32}) : {=u32}", msg, file, line, current);
+        let diff = current - start;
+        defmt::println!("[END_SECTION {=str}] ({=str}, {=u32}) : {=u32} (+ {=u32})", msg, file, line, current, diff);
     }
 
     /// Start measuring cycles.
     ///
     /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
-    pub (crate) fn start_measurement(msg: &str, file: &str, line: u32) {
+    pub (crate) fn start_measurement(msg: &str, file: &str, line: u32) -> u32 {
         let current = cortex_m::peripheral::DWT::cycle_count();
         defmt::println!("[START_MEASUREMENT {=str}] ({=str}, {=u32}) : {=u32}", msg, file, line, current);
+        current
     }
 
     /// Report cycles current cycles (Use this to mark the end of measurement).
     ///
     /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
-    pub (crate) fn end_measurement(msg: &str, file: &str, line: u32) {
+    pub (crate) fn end_measurement(msg: &str, file: &str, line: u32, start: u32) {
         let current = cortex_m::peripheral::DWT::cycle_count();
-        defmt::println!("[END_MEASUREMENT {=str}] ({=str}, {=u32}) : {=u32}", msg, file, line, current);
+        let diff = current - start;
+        defmt::println!("[END_MEASUREMENT {=str}] ({=str}, {=u32}) : {=u32} (+ {=u32})", msg, file, line, current, diff);
     }
 }
 
