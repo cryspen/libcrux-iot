@@ -1,0 +1,17 @@
+[START_SECTION decapsulate] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 392) : 1010710372
+[START_MEASUREMENT unpack_private_key] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 396) : 1010725360
+[END_MEASUREMENT unpack_private_key] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 399) : 1010741268 (+ 15908)
+[END_MEASUREMENT decrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 418) : 1010904123 (+ 146380)
+[START_MEASUREMENT Hasher::G] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 428) : 1010919067
+[END_MEASUREMENT Hasher::G] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 431) : 1010952925 (+ 33858)
+[START_MEASUREMENT Hasher::PRF] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 450) : 1010969256
+[END_MEASUREMENT Hasher::PRF] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 453) : 1011102927 (+ 133671)
+[START_MEASUREMENT encrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 458) : 1011118460
+[END_MEASUREMENT encrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 488) : 1011825827 (+ 707367)
+[START_MEASUREMENT Scheme::kdf] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 489) : 1011840715
+[END_MEASUREMENT Scheme::kdf] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 496) : 1011855326 (+ 14611)
+[START_MEASUREMENT Scheme::kdf] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 497) : 1011870442
+[END_MEASUREMENT Scheme::kdf] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 500) : 1011885050 (+ 14608)
+[START_MEASUREMENT compare_ciphertexts_select_shared_secret_in_constant_time] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 501) : 1011900167
+[END_MEASUREMENT compare_ciphertexts_select_shared_secret_in_constant_time] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 510) : 1011927993 (+ 27826)
+[END_SECTION decapsulate] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 511) : 1011949965 (+ 1239593)

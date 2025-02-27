@@ -1,0 +1,7 @@
+[START_SECTION encapsulate] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 285) : 990731949
+[START_MEASUREMENT Hash H] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 291) : 990746741
+[END_MEASUREMENT Hash H] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 293) : 990879749 (+ 133008)
+[START_MEASUREMENT Hash G] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 299) : 990894330
+[END_MEASUREMENT Hash G] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 302) : 990927473 (+ 33143)
+[START_MEASUREMENT encrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 305) : 990941922
+[END_SECTION encapsulate] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cca.rs, 340) : 991662474 (+ 930525)

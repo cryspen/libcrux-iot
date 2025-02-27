@@ -1,0 +1,5 @@
+[START_MEASUREMENT generate_keypair_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 554) : 816997930
+[END_MEASUREMENT generate_keypair_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 564) : 817612304 (+ 614374)
+[START_MEASUREMENT serialize_unpacked_secret_key] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 566) : 817629970
+[END_MEASUREMENT serialize_unpacked_secret_key] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 573) : 817662570 (+ 32600)
+[END_SECTION generate_keypair] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 574) : 817680719 (+ 701937)

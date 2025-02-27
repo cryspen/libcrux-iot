@@ -1,0 +1,15 @@
+[START_SECTION encrypt_cr] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 886) : 876599247
+[START_MEASUREMENT deserialize_then_decompress_message] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 888) : 876614074
+[END_MEASUREMENT deserialize_then_decompress_message] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 891) : 876634166 (+ 20092)
+[START_MEASUREMENT compute_ring_element_v] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 892) : 876653221
+[START_MEASUREMENT compress_then_serialize_ring_element_v] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 905) : 876761970
+[END_MEASUREMENT compress_then_serialize_ring_element_v] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 909) : 876785296 (+ 23326)
+[END_SECTION encrypt_c2] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 910) : 876804823 (+ 205576)
+[START_SECTION encrypt_cr] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 886) : 877707486
+[START_MEASUREMENT deserialize_then_decompress_message] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 888) : 877722181
+[END_MEASUREMENT deserialize_then_decompress_message] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 891) : 877742091 (+ 19910)
+[START_MEASUREMENT compute_ring_element_v] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 892) : 877760786
+[END_MEASUREMENT compute_ring_element_v] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 901) : 877851994 (+ 91208)
+[START_MEASUREMENT compress_then_serialize_ring_element_v] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 905) : 877868880
+[END_MEASUREMENT compress_then_serialize_ring_element_v] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 909) : 877891788 (+ 22908)
+[END_SECTION encrypt_c2] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 910) : 877910946 (+ 203460)

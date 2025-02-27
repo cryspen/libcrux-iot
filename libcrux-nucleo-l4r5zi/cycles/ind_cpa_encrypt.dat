@@ -1,0 +1,15 @@
+[START_SECTION encrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 959) : 895254379
+[START_MEASUREMENT IndCpaPublicKeyUnpacked::<K, Vector>::default()] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 962) : 895268740
+[END_MEASUREMENT IndCpaPublicKeyUnpacked::<K, Vector>::default()] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 964) : 895291590 (+ 22850)
+[START_MEASUREMENT build_unpacked_public_key_mut] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 965) : 895312449
+[START_MEASUREMENT encrypt_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 971) : 895627949
+[END_MEASUREMENT encrypt_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 998) : 896050753 (+ 422804)
+[END_SECTION encrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 999) : 896067051 (+ 812672)
+[START_SECTION encrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 959) : 896356900
+[START_MEASUREMENT IndCpaPublicKeyUnpacked::<K, Vector>::default()] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 962) : 896371132
+[END_MEASUREMENT IndCpaPublicKeyUnpacked::<K, Vector>::default()] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 964) : 896393806 (+ 22674)
+[START_MEASUREMENT build_unpacked_public_key_mut] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 965) : 896414269
+[END_MEASUREMENT build_unpacked_public_key_mut] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 970) : 896712831 (+ 298562)
+[START_MEASUREMENT encrypt_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 971) : 896731091
+[END_MEASUREMENT encrypt_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 998) : 897155047 (+ 423956)
+[END_SECTION encrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 999) : 897171345 (+ 814445)

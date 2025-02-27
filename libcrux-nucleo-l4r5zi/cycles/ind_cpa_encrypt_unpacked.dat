@@ -1,0 +1,11 @@
+[START_SECTION encrypt_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 750) : 837224808
+[START_MEASUREMENT encrypt_c1] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 751) : 837240539
+[END_MEASUREMENT encrypt_c1] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 772) : 837581337 (+ 340798)
+[START_MEASUREMENT encrypt_c2] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 773) : 837596720
+[END_MEASUREMENT encrypt_c2] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 781) : 837692609 (+ 95889)
+[START_SECTION encrypt_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 750) : 838286711
+[START_MEASUREMENT encrypt_c1] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 751) : 838302313
+[END_MEASUREMENT encrypt_c1] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 772) : 838642546 (+ 340233)
+[START_MEASUREMENT encrypt_c2] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 773) : 838657928
+[END_MEASUREMENT encrypt_c2] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 781) : 838753240 (+ 95312)
+[END_SECTION encrypt_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 782) : 838768557 (+ 481846)

@@ -1,0 +1,5 @@
+[START_SECTION decrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1234) : 953498636
+[START_MEASUREMENT deserialize_vector] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1237) : 953512828
+[END_MEASUREMENT deserialize_vector] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1240) : 953533556 (+ 20728)
+[END_MEASUREMENT decrypt_unpacked] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1252) : 953692764 (+ 141726)
+[END_SECTION decrypt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1253) : 953708840 (+ 210204)

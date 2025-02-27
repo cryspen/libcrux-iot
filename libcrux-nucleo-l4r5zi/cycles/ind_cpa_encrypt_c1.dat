@@ -1,0 +1,28 @@
+[START_SECTION encrypt_c1] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 806) : 856486546
+[START_MEASUREMENT sample_vector_cbd_then_ntt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 812) : 856501364
+[END_MEASUREMENT sample_vector_cbd_then_ntt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 822) : 856649778 (+ 148414)
+[START_MEASUREMENT sample_ring_element_cbd] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 832) : 856667592
+[END_MEASUREMENT sample_ring_element_cbd] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 842) : 856729641 (+ 62049)
+[START_MEASUREMENT PRF] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 849) : 856746873
+[END_MEASUREMENT PRF] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 852) : 856780085 (+ 33212)
+[START_MEASUREMENT sample_from_binomial_distribution] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 853) : 856794149
+[END_MEASUREMENT sample_from_binomial_distribution] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 855) : 856813853 (+ 19704)
+[START_MEASUREMENT PolynomialRingElement::from_i16_array] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 856) : 856832604
+[END_MEASUREMENT PolynomialRingElement::from_i16_array] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 858) : 856851786 (+ 19182)
+[END_MEASUREMENT compute_vector_u] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 864) : 857130262 (+ 259484)
+[START_MEASUREMENT compress_then_serialize_u] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 867) : 857146556
+[END_MEASUREMENT compress_then_serialize_u] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 869) : 857177209 (+ 30653)
+[END_SECTION encrypt_c1] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 870) : 857194754 (+ 708208)
+[START_MEASUREMENT sample_vector_cbd_then_ntt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 812) : 857862770
+[END_MEASUREMENT sample_vector_cbd_then_ntt] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 822) : 858011725 (+ 148955)
+[START_MEASUREMENT sample_ring_element_cbd] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 832) : 858029539
+[END_MEASUREMENT sample_ring_element_cbd] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 842) : 858091447 (+ 61908)
+[START_MEASUREMENT PRF] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 849) : 858108354
+[END_MEASUREMENT PRF] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 852) : 858141309 (+ 32955)
+[START_MEASUREMENT sample_from_binomial_distribution] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 853) : 858155112
+[END_MEASUREMENT sample_from_binomial_distribution] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 855) : 858174470 (+ 19358)
+[START_MEASUREMENT compute_vector_u] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 861) : 858325168
+[END_MEASUREMENT compute_vector_u] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 864) : 858455184 (+ 130016)
+[START_MEASUREMENT compress_then_serialize_u] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 867) : 858471477
+[END_MEASUREMENT compress_then_serialize_u] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 869) : 858501695 (+ 30218)
+[END_SECTION encrypt_c1] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 870) : 858518911 (+ 670832)

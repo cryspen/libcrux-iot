@@ -1,0 +1,11 @@
+[START_SECTION build_unpacked_public_key_mut] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1023) : 914517247
+[START_MEASUREMENT deserialize_ring_elements_reduced] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1025) : 914534958
+[END_MEASUREMENT deserialize_ring_elements_reduced] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1030) : 914562439 (+ 27481)
+[START_MEASUREMENT sample_matrix_A] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1037) : 914581184
+[END_MEASUREMENT sample_matrix_A] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1048) : 914866193 (+ 285009)
+[START_SECTION build_unpacked_public_key_mut] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1023) : 915583609
+[START_MEASUREMENT deserialize_ring_elements_reduced] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1025) : 915601186
+[END_MEASUREMENT deserialize_ring_elements_reduced] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1030) : 915628953 (+ 27767)
+[START_MEASUREMENT sample_matrix_A] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1037) : 915647698
+[END_MEASUREMENT sample_matrix_A] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1048) : 915932837 (+ 285139)
+[END_SECTION build_unpacked_public_key_mut] (/home/jonas/worktrees/iot/wip/libcrux/libcrux-ml-kem/src/ind_cpa.rs, 1049) : 915948990 (+ 365381)
