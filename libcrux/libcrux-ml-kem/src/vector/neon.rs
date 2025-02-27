@@ -25,7 +25,7 @@ impl crate::vector::traits::Repr for SIMD128Vector {
 #[hax_lib::attributes]
 impl Operations for SIMD128Vector {
     #[inline(always)]
-    #[ensures(|out| fstar!(r#"impl.f_repr out == Seq.create 16 0s"#))]
+    #[ensures(|out| fstar!(r#"impl.f_repr out == Seq.create 16 (mk_i16 0)"#))]
     fn ZERO() -> Self {
         ZERO()
     }
@@ -39,6 +39,16 @@ impl Operations for SIMD128Vector {
     #[ensures(|out| fstar!(r#"out == impl.f_repr $x"#))]
     fn to_i16_array(x: Self) -> [i16; 16] {
         to_i16_array(x)
+    }
+
+    #[requires(array.len() >= 32)]
+    fn from_bytes(array: &[u8]) -> Self {
+        from_bytes(array)
+    }
+
+    #[requires(bytes.len() >= 32)]
+    fn to_bytes(x: Self, bytes: &mut [u8]) {
+        to_bytes(x, bytes)
     }
 
     fn add(lhs: Self, rhs: &Self) -> Self {

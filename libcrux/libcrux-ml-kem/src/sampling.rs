@@ -1,6 +1,6 @@
 use crate::{
     constants::COEFFICIENTS_IN_RING_ELEMENT, hash_functions::*, helper::cloop,
-    polynomial::PolynomialRingElement, vector::Operations,
+    vector::Operations,
 };
 
 /// If `bytes` contains a set of uniformly random bytes, this function
@@ -43,9 +43,9 @@ use crate::{
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
 #[inline(always)]
 fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, const N: usize>(
-    randomness: [[u8; N]; K],
-    sampled_coefficients: &mut [usize; K],
-    out: &mut [[i16; 272]; K],
+    randomness: &[[u8; N]],
+    sampled_coefficients: &mut [usize],
+    out: &mut [[i16; 272]],
 ) -> bool {
     // Would be great to trigger auto-vectorization or at least loop unrolling here
     for i in 0..K {
@@ -72,19 +72,20 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
-pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash<K>>(
-    seeds: [[u8; 34]; K],
-) -> [PolynomialRingElement<Vector>; K] {
-    let mut sampled_coefficients: [usize; K] = [0; K];
-    let mut out: [[i16; 272]; K] = [[0; 272]; K];
-
+pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
+    seeds: &[[u8; 34]],
+    sampled_coefficients: &mut [usize],
+    out: &mut [[i16; 272]],
+) {
     let mut xof_state = Hasher::shake128_init_absorb_final(seeds);
-    let randomness = xof_state.shake128_squeeze_first_three_blocks();
+    let mut randomness = [[0u8; THREE_BLOCKS]; K];
+    let mut randomness_blocksize = [[0u8; BLOCK_SIZE]; K];
+    xof_state.shake128_squeeze_first_three_blocks(&mut randomness);
 
     let mut done = sample_from_uniform_distribution_next::<Vector, K, THREE_BLOCKS>(
-        randomness,
-        &mut sampled_coefficients,
-        &mut out,
+        &randomness,
+        sampled_coefficients,
+        out,
     );
 
     // Requiring more than 5 blocks to sample a ring element should be very
@@ -93,15 +94,13 @@ pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash<K
     // To avoid failing here, we squeeze more blocks out of the state until
     // we have enough.
     while !done {
-        let randomness = xof_state.shake128_squeeze_next_block();
+        xof_state.shake128_squeeze_next_block(&mut randomness_blocksize);
         done = sample_from_uniform_distribution_next::<Vector, K, BLOCK_SIZE>(
-            randomness,
-            &mut sampled_coefficients,
-            &mut out,
+            &randomness_blocksize,
+            sampled_coefficients,
+            out,
         );
-    }
-
-    out.map(|s| PolynomialRingElement::<Vector>::from_i16_array(&s[0..256]))
+    };
 }
 
 /// Given a series of uniformly random bytes in `randomness`, for some number `eta`,
@@ -162,13 +161,12 @@ pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash<K
 #[hax_lib::fstar::options("--z3rlimit 800")]
 fn sample_from_binomial_distribution_2<Vector: Operations>(
     randomness: &[u8],
-) -> PolynomialRingElement<Vector> {
+    sampled_i16s: &mut [i16],
+) {
     hax_lib::fstar!(
         "assert (v (sz 2 *! sz 64) == 128);
         assert (Seq.length $randomness == 128)"
     );
-    let mut sampled_i16s = [0i16; 256];
-
     cloop! {
         for (chunk_number, byte_chunk) in randomness.chunks_exact(4).enumerate() {
             let random_bits_as_u32: u32 = (byte_chunk[0] as u32)
@@ -178,21 +176,21 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
 
             let even_bits = random_bits_as_u32 & 0x55555555;
             let odd_bits = (random_bits_as_u32 >> 1) & 0x55555555;
-            hax_lib::fstar!(r#"logand_lemma $random_bits_as_u32 1431655765ul;
-                logand_lemma ($random_bits_as_u32 >>! 1l) 1431655765ul"#);
+            hax_lib::fstar!(r#"logand_lemma $random_bits_as_u32 (mk_u32 1431655765);
+                logand_lemma ($random_bits_as_u32 >>! (mk_i32 1)) (mk_u32 1431655765)"#);
             let coin_toss_outcomes = even_bits + odd_bits;
 
             cloop! {
                 for outcome_set in (0..u32::BITS).step_by(4) {
                     let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x3) as i16;
                     let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 2)) & 0x3) as i16;
-                    hax_lib::fstar!(r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) 3ul;
-                        logand_lemma ($coin_toss_outcomes >>! ($outcome_set +! 2ul <: u32) <: u32) 3ul;
+                    hax_lib::fstar!(r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) (mk_u32 3);
+                        logand_lemma ($coin_toss_outcomes >>! ($outcome_set +! (mk_u32 2) <: u32) <: u32) (mk_u32 3);
                         assert (v $outcome_1 >= 0 /\ v $outcome_1 <= 3);
                         assert (v $outcome_2 >= 0 /\ v $outcome_2 <= 3);
                         assert (v $chunk_number <= 31);
                         assert (v (sz 8 *! $chunk_number <: usize) <= 248);
-                        assert (v (cast ($outcome_set >>! 2l <: u32) <: usize) <= 7)"#);
+                        assert (v (cast ($outcome_set >>! (mk_i32 2) <: u32) <: usize) <= 7)"#);
 
                     let offset = (outcome_set >> 2) as usize;
                     sampled_i16s[8 * chunk_number + offset] = outcome_1 - outcome_2;
@@ -200,7 +198,6 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
             }
         }
     }
-    PolynomialRingElement::from_i16_array(&sampled_i16s)
 }
 
 #[hax_lib::requires(randomness.len() == 3 * 64)]
@@ -213,12 +210,12 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
 #[hax_lib::fstar::options("--z3rlimit 800")]
 fn sample_from_binomial_distribution_3<Vector: Operations>(
     randomness: &[u8],
-) -> PolynomialRingElement<Vector> {
+    sampled_i16s: &mut [i16; 256],
+) {
     hax_lib::fstar!(
         "assert (v (sz 3 *! sz 64) == 192);
         assert (Seq.length $randomness == 192)"
     );
-    let mut sampled_i16s = [0i16; 256];
 
     cloop! {
         for (chunk_number, byte_chunk) in randomness.chunks_exact(3).enumerate() {
@@ -228,9 +225,9 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
             let first_bits = random_bits_as_u24 & 0x00249249;
             let second_bits = (random_bits_as_u24 >> 1) & 0x00249249;
             let third_bits = (random_bits_as_u24 >> 2) & 0x00249249;
-            hax_lib::fstar!(r#"logand_lemma $random_bits_as_u24 2396745ul;
-                logand_lemma ($random_bits_as_u24 >>! 1l <: u32) 2396745ul;
-                logand_lemma ($random_bits_as_u24 >>! 2l <: u32) 2396745ul"#);
+            hax_lib::fstar!(r#"logand_lemma $random_bits_as_u24 (mk_u32 2396745);
+                logand_lemma ($random_bits_as_u24 >>! (mk_i32 1) <: u32) (mk_u32 2396745);
+                logand_lemma ($random_bits_as_u24 >>! (mk_i32 2) <: u32) (mk_u32 2396745)"#);
 
             let coin_toss_outcomes = first_bits + second_bits + third_bits;
 
@@ -238,13 +235,13 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
                 for outcome_set in (0..24).step_by(6) {
                     let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x7) as i16;
                     let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 3)) & 0x7) as i16;
-                    hax_lib::fstar!(r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) 7ul;
-                        logand_lemma ($coin_toss_outcomes >>! ($outcome_set +! 3l <: i32) <: u32) 7ul;
+                    hax_lib::fstar!(r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) (mk_u32 7);
+                        logand_lemma ($coin_toss_outcomes >>! ($outcome_set +! (mk_i32 3) <: i32) <: u32) (mk_u32 7);
                         assert (v $outcome_1 >= 0 /\ v $outcome_1 <= 7);
                         assert (v $outcome_2 >= 0 /\ v $outcome_2 <= 7);
                         assert (v $chunk_number <= 63);
                         assert (v (sz 4 *! $chunk_number <: usize) <= 252);
-                        assert (v (cast ($outcome_set /! 6l <: i32) <: usize) <= 3)"#);
+                        assert (v (cast ($outcome_set /! (mk_i32 6) <: i32) <: usize) <= 3)"#);
 
                     let offset = (outcome_set / 6) as usize;
                     sampled_i16s[4 * chunk_number + offset] = outcome_1 - outcome_2;
@@ -252,7 +249,6 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
             }
         }
     }
-    PolynomialRingElement::from_i16_array(&sampled_i16s)
 }
 
 #[inline(always)]
@@ -264,15 +260,16 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
         Spec.MLKEM.sample_poly_cbd $ETA $randomness"#))]
 pub(super) fn sample_from_binomial_distribution<const ETA: usize, Vector: Operations>(
     randomness: &[u8],
-) -> PolynomialRingElement<Vector> {
+    output: &mut [i16; 256],
+) {
     hax_lib::fstar!(
         r#"assert (
         (v (cast $ETA <: u32) == 2) \/
         (v (cast $ETA <: u32) == 3))"#
     );
     match ETA as u32 {
-        2 => sample_from_binomial_distribution_2(randomness),
-        3 => sample_from_binomial_distribution_3(randomness),
+        2 => sample_from_binomial_distribution_2::<Vector>(randomness, output),
+        3 => sample_from_binomial_distribution_3::<Vector>(randomness, output),
         _ => unreachable!(),
-    }
+    };
 }
