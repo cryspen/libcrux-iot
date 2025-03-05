@@ -18,7 +18,7 @@ use crate::{
         deserialize_then_decompress_ring_element_v, deserialize_to_uncompressed_ring_element,
         serialize_uncompressed_ring_element,
     },
-    utils::{into_padded_array, prf_input_inc, CycleCounter},
+    utils::{into_padded_array, prf_input_inc},
     variant::Variant,
     vector::Operations,
 };
@@ -82,10 +82,11 @@ pub(crate) fn serialize_public_key_mut<
     t_as_ntt: &[PolynomialRingElement<Vector>; K],
     seed_for_a: &[u8],
     serialized: &mut [u8],
+    scratch: &mut Vector
 ) {
     serialize_vector::<K, Vector>(
         t_as_ntt,
-        &mut serialized[0..ranked_bytes_per_ring_element(K)],
+        &mut serialized[0..ranked_bytes_per_ring_element(K)], scratch
     );
 
     serialized[ranked_bytes_per_ring_element(K)..].copy_from_slice(seed_for_a);
@@ -110,6 +111,7 @@ pub(crate) fn serialize_public_key_mut<
 pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
     key: &[PolynomialRingElement<Vector>; K],
     out: &mut [u8],
+    scratch: &mut Vector,
 ) {
     hax_lib::fstar!(r#"assert_norm (Spec.MLKEM.polynomial_d 12 == Spec.MLKEM.polynomial)"#);
 
@@ -126,8 +128,8 @@ pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
                 )
             });
 
-            out[i * BYTES_PER_RING_ELEMENT..(i + 1) * BYTES_PER_RING_ELEMENT]
-            .copy_from_slice(&serialize_uncompressed_ring_element(&re));
+
+            serialize_uncompressed_ring_element(&re, scratch, &mut out[i * BYTES_PER_RING_ELEMENT..(i + 1) * BYTES_PER_RING_ELEMENT]);
 
             hax_lib::fstar!(r#"
                 let lemma_aux (j: nat{ j < v $i }) : Lemma
@@ -352,6 +354,7 @@ fn sample_vector_cbd_then_ntt<
     re_as_ntt: &mut [PolynomialRingElement<Vector>],
     prf_input: [u8; 33],
     mut domain_separator: u8,
+    scratch: &mut Vector
 ) -> u8 {
     let mut prf_inputs = [prf_input; K];
     let _domain_separator_init = domain_separator;
@@ -374,7 +377,7 @@ fn sample_vector_cbd_then_ntt<
         let mut sample_buffer = [0i16; 256];
         sample_from_binomial_distribution::<ETA, Vector>(randomness, &mut sample_buffer);
         PolynomialRingElement::from_i16_array(&sample_buffer, &mut re_as_ntt[i]);
-        ntt_binomially_sampled_ring_element(&mut re_as_ntt[i]);
+        ntt_binomially_sampled_ring_element(&mut re_as_ntt[i], scratch);
     }
     hax_lib::fstar!(
         "sample_vector_cbd_then_ntt_helper_2
@@ -453,6 +456,7 @@ pub(crate) fn generate_keypair_unpacked<
     key_generation_seed: &[u8],
     private_key: &mut IndCpaPrivateKeyUnpacked<K, Vector>,
     public_key: &mut IndCpaPublicKeyUnpacked<K, Vector>,
+    scratch: &mut PolynomialRingElement<Vector>
 ) {
     // (ρ,σ) := G(d) for Kyber, (ρ,σ) := G(d || K) for ML-KEM
     let mut hashed = [0u8; 64];
@@ -480,7 +484,7 @@ pub(crate) fn generate_keypair_unpacked<
         PRF_OUTPUT_SIZE1,
         Vector,
         Hasher,
-    >(&mut private_key.secret_as_ntt, prf_input, 0);
+        >(&mut private_key.secret_as_ntt, prf_input, 0, &mut scratch.coefficients[0]);
     let mut error_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
     let _ = sample_vector_cbd_then_ntt::<
         K,
@@ -489,7 +493,7 @@ pub(crate) fn generate_keypair_unpacked<
         PRF_OUTPUT_SIZE1,
         Vector,
         Hasher,
-    >(&mut error_as_ntt, prf_input, domain_separator);
+        >(&mut error_as_ntt, prf_input, domain_separator,&mut scratch.coefficients[0]);
 
     // tˆ := Aˆ ◦ sˆ + eˆ
     compute_As_plus_e(
@@ -497,6 +501,7 @@ pub(crate) fn generate_keypair_unpacked<
         &public_key.A,
         &private_key.secret_as_ntt,
         &error_as_ntt,
+        scratch
     );
 
     public_key.seed_for_A = seed_for_A.try_into().unwrap();
@@ -545,13 +550,12 @@ pub(crate) fn generate_keypair<
     key_generation_seed: &[u8],
     serialized_ind_cpa_private_key: &mut [u8],
     serialized_public_key: &mut [u8],
+    scratch: &mut PolynomialRingElement<Vector>
 ) {
-    CycleCounter::start_section("CPA generate keypair", file!(), line!());
     // XXX: Can Eurydice handle these when passind in as &mut from outside?
     let mut private_key = IndCpaPrivateKeyUnpacked::default();
     let mut public_key = IndCpaPublicKeyUnpacked::default();
 
-    CycleCounter::start_measurement("generate_keypair_unpacked", file!(), line!());
     generate_keypair_unpacked::<
         K,
         ETA1,
@@ -560,18 +564,15 @@ pub(crate) fn generate_keypair<
         Vector,
         Hasher,
         Scheme,
-    >(key_generation_seed, &mut private_key, &mut public_key);
-    CycleCounter::end_measurement("generate_keypair_unpacked", file!(), line!());
+        >(key_generation_seed, &mut private_key, &mut public_key, scratch);
 
-    CycleCounter::start_measurement("serialize_unpacked_secret_key", file!(), line!());
     serialize_unpacked_secret_key::<K, PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE, Vector>(
         &public_key,
         &private_key,
         serialized_ind_cpa_private_key,
         serialized_public_key,
-    );
-    CycleCounter::end_measurement("serialize_unpacked_secret_key", file!(), line!());
-    CycleCounter::end_section("CPA generate keypair", file!(), line!());
+        &mut scratch.coefficients[0]
+    )
 }
 
 /// Serialize the secret key from the unpacked key pair generation.
@@ -586,16 +587,18 @@ pub(crate) fn serialize_unpacked_secret_key<
     private_key: &IndCpaPrivateKeyUnpacked<K, Vector>,
     serialized_private_key: &mut [u8],
     serialized_public_key: &mut [u8],
+    scratch: &mut Vector,
 ) {
     // pk := (Encode_12(tˆ mod^{+}q) || ρ)
     serialize_public_key_mut::<K, PUBLIC_KEY_SIZE, Vector>(
         &public_key.t_as_ntt,
         &public_key.seed_for_A,
         serialized_public_key,
+        scratch
     );
 
     // sk := Encode_12(sˆ mod^{+}q)
-    serialize_vector(&private_key.secret_as_ntt, serialized_private_key);
+    serialize_vector(&private_key.secret_as_ntt, serialized_private_key, scratch);
 }
 
 /// Call [`compress_then_serialize_ring_element_u`] on each ring element.
@@ -621,6 +624,7 @@ fn compress_then_serialize_u<
 >(
     input: [PolynomialRingElement<Vector>; K],
     out: &mut [u8],
+    scratch: &mut Vector,
 ) {
     hax_lib::fstar!(
         "assert (v (sz 32 *! $COMPRESSION_FACTOR) == 32 * v $COMPRESSION_FACTOR);
@@ -641,9 +645,9 @@ fn compress_then_serialize_u<
                 ((Seq.slice out (j * (v $OUT_LEN / v $K)) (((j + 1)) * (v $OUT_LEN / v $K)) == 
                 Spec.MLKEM.compress_then_byte_encode (v $COMPRESSION_FACTOR)
                     (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector (Seq.index $input j)))))"#);
-            out[i * (OUT_LEN / K)..(i + 1) * (OUT_LEN / K)].copy_from_slice(
-                &compress_then_serialize_ring_element_u::<COMPRESSION_FACTOR, BLOCK_LEN, Vector>(&re),
-            );
+
+            compress_then_serialize_ring_element_u::<COMPRESSION_FACTOR, BLOCK_LEN, Vector>(&re, &mut out[i * (OUT_LEN / K)..(i + 1) * (OUT_LEN / K)],scratch);
+
             hax_lib::fstar!(r#"let lemma_aux (j: nat{ j < v $i }) : Lemma
                 (Seq.slice out (j * (v $OUT_LEN / v $K)) (((j + 1)) * (v $OUT_LEN / v $K)) ==
                 Spec.MLKEM.compress_then_byte_encode (v $COMPRESSION_FACTOR)
@@ -746,9 +750,8 @@ pub(crate) fn encrypt_unpacked<
     ciphertext: &mut [u8],
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
+    scratch: &mut PolynomialRingElement<Vector>
 ) {
-    CycleCounter::start_section("encrypt_unpacked", file!(), line!());
-    CycleCounter::start_measurement("encrypt_c1", file!(), line!());
     encrypt_c1::<
         K,
         C1_LEN,
@@ -768,18 +771,17 @@ pub(crate) fn encrypt_unpacked<
         &mut ciphertext[0..C1_LEN],
         r_as_ntt,
         error_2,
+        scratch
     );
-    CycleCounter::end_measurement("encrypt_c1", file!(), line!());
-    CycleCounter::start_measurement("encrypt_c2", file!(), line!());
+
     encrypt_c2::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
         &public_key.t_as_ntt,
         r_as_ntt,
         &error_2,
         message,
         &mut ciphertext[C1_LEN..],
+        scratch
     );
-    CycleCounter::end_measurement("encrypt_c2", file!(), line!());
-    CycleCounter::end_section("encrypt_unpacked", file!(), line!());
 }
 
 #[inline(always)]
@@ -802,14 +804,13 @@ pub(crate) fn encrypt_c1<
     ciphertext: &mut [u8], // C1_LEN
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
+    scratch: &mut PolynomialRingElement<Vector>,
 ) {
-    CycleCounter::start_section("encrypt_c1", file!(), line!());
     // for i from 0 to k−1 do
     //     r[i] := CBD{η1}(PRF(r, N))
     //     N := N + 1
     // end for
     // rˆ := NTT(r)
-    CycleCounter::start_measurement("sample_vector_cbd_then_ntt", file!(), line!());
     let mut prf_input: [u8; 33] = into_padded_array(randomness);
     let domain_separator = sample_vector_cbd_then_ntt::<
         K,
@@ -818,8 +819,7 @@ pub(crate) fn encrypt_c1<
         PRF_OUTPUT_SIZE1,
         Vector,
         Hasher,
-        >(r_as_ntt, prf_input, 0);
-    CycleCounter::end_measurement("sample_vector_cbd_then_ntt", file!(), line!());
+        >(r_as_ntt, prf_input, 0, &mut scratch.coefficients[0]);
     hax_lib::fstar!(
         "Lib.Sequence.eq_intro #u8 #32 $randomness (Seq.slice $prf_input 0 32);
         assert (v $domain_separator == v $K)"
@@ -829,7 +829,6 @@ pub(crate) fn encrypt_c1<
     //     e1[i] := CBD_{η2}(PRF(r,N))
     //     N := N + 1
     // end for
-    CycleCounter::start_measurement("sample_ring_element_cbd", file!(), line!());
     let mut error_1 = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
     let mut sampling_buffer = [0i16; 256];
     let domain_separator =
@@ -839,35 +838,26 @@ pub(crate) fn encrypt_c1<
             &mut error_1,
             &mut sampling_buffer,
         );
-    CycleCounter::end_measurement("sample_ring_element_cbd", file!(), line!());
+
     // e_2 := CBD{η2}(PRF(r, N))
     prf_input[32] = domain_separator;
     hax_lib::fstar!(
         "assert (Seq.equal $prf_input (Seq.append $randomness (Seq.create 1 $domain_separator)));
         assert ($prf_input == Seq.append $randomness (Seq.create 1 $domain_separator))"
     );
-    CycleCounter::start_measurement("PRF", file!(), line!());
     let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
     Hasher::PRF::<32>(&prf_input, &mut prf_output);
-    CycleCounter::end_measurement("PRF", file!(), line!());
-    CycleCounter::start_measurement("sample_from_binomial_distribution", file!(), line!());
     sample_from_binomial_distribution::<ETA2, Vector>(&prf_output, &mut sampling_buffer);
-    CycleCounter::end_measurement("sample_from_binomial_distribution", file!(), line!());
-    CycleCounter::start_measurement("PolynomialRingElement::from_i16_array", file!(), line!());
     PolynomialRingElement::from_i16_array(&sampling_buffer, error_2);
-    CycleCounter::end_measurement("PolynomialRingElement::from_i16_array", file!(), line!());
 
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
-    CycleCounter::start_measurement("compute_vector_u", file!(), line!());
     let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    compute_vector_u(matrix, &r_as_ntt, &error_1, &mut u);
-    CycleCounter::end_measurement("compute_vector_u", file!(), line!());
-    
+    compute_vector_u(matrix, &r_as_ntt, &error_1, &mut u, scratch);
+
     // c_1 := Encode_{du}(Compress_q(u,d_u))
-    CycleCounter::start_measurement("compress_then_serialize_u", file!(), line!());
-    compress_then_serialize_u::<K, C1_LEN, U_COMPRESSION_FACTOR, BLOCK_LEN, Vector>(u, ciphertext);
-    CycleCounter::end_measurement("compress_then_serialize_u", file!(), line!());
-    CycleCounter::end_section("encrypt_c1", file!(), line!());
+    compress_then_serialize_u::<K, C1_LEN, U_COMPRESSION_FACTOR, BLOCK_LEN, Vector>(
+        u, ciphertext, &mut scratch.coefficients[0],
+    );
 }
 
 #[inline(always)]
@@ -882,6 +872,7 @@ pub(crate) fn encrypt_c2<
     error_2: &PolynomialRingElement<Vector>,
     message: [u8; SHARED_SECRET_SIZE],
     ciphertext: &mut [u8],
+    scratch: &mut PolynomialRingElement<Vector>,
 ) {
     // v := NTT^{−1}(tˆT ◦ rˆ) + e_2 + Decompress_q(Decode_1(m),1)
     let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
@@ -893,12 +884,13 @@ pub(crate) fn encrypt_c2<
         error_2,
         &message_as_ring_element,
         &mut v,
+        scratch
     );
     hax_lib::fstar!("assert ($C2_LEN = Spec.MLKEM.v_C2_SIZE v_K)");
 
     // c_2 := Encode_{dv}(Compress_q(v,d_v))
     compress_then_serialize_ring_element_v::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
-        v, ciphertext,
+        v, ciphertext, &mut scratch.coefficients[0],
     );
 }
 
@@ -947,20 +939,16 @@ pub(crate) fn encrypt<
     ciphertext: &mut [u8],
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
+    scratch: &mut PolynomialRingElement<Vector>
 ) {
-    CycleCounter::start_section("CPA encrypt", file!(), line!());
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_encrypt) Spec.MLKEM.ind_cpa_encrypt"#);
     // XXX: Can we pass this in?
-    CycleCounter::start_measurement("IndCpaPublicKeyUnpacked::<K, Vector>::default()", file!(), line!());
     let mut unpacked_public_key = IndCpaPublicKeyUnpacked::<K, Vector>::default();
-    CycleCounter::end_measurement("IndCpaPublicKeyUnpacked::<K, Vector>::default()", file!(), line!());
-    CycleCounter::start_measurement("build_unpacked_public_key_mut", file!(), line!());
     build_unpacked_public_key_mut::<K, T_AS_NTT_ENCODED_SIZE, Vector, Hasher>(
         public_key,
         &mut unpacked_public_key,
     );
-    CycleCounter::end_measurement("build_unpacked_public_key_mut", file!(), line!());
-    CycleCounter::start_measurement("encrypt_unpacked", file!(), line!());
+
     // After unpacking the public key we can now call the unpacked decryption.
     encrypt_unpacked::<
         K,
@@ -986,9 +974,8 @@ pub(crate) fn encrypt<
         ciphertext,
         r_as_ntt,
         error_2,
-    );
-    CycleCounter::end_measurement("encrypt_unpacked", file!(), line!());
-    CycleCounter::end_section("CPA encrypt", file!(), line!());
+        scratch
+    )
 }
 
 #[inline(always)]
@@ -1055,6 +1042,7 @@ fn deserialize_then_decompress_u<
 >(
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     u_as_ntt: &mut [PolynomialRingElement<Vector>],
+    scratch: &mut Vector
 ) {
     hax_lib::fstar!(
         "assert (v (($COEFFICIENTS_IN_RING_ELEMENT *! $U_COMPRESSION_FACTOR ) /!
@@ -1072,7 +1060,7 @@ fn deserialize_then_decompress_u<
                   (Seq.slice $ciphertext (j * v (Spec.MLKEM.v_C1_BLOCK_SIZE $K))
                     (j * v (Spec.MLKEM.v_C1_BLOCK_SIZE $K) + v (Spec.MLKEM.v_C1_BLOCK_SIZE $K))))"#) });
             deserialize_then_decompress_ring_element_u::<U_COMPRESSION_FACTOR, Vector>(u_bytes, &mut u_as_ntt[i]);
-            ntt_vector_u::<U_COMPRESSION_FACTOR, Vector>(&mut u_as_ntt[i]);
+            ntt_vector_u::<U_COMPRESSION_FACTOR, Vector>(&mut u_as_ntt[i], scratch);
         }
     }
     hax_lib::fstar!(
@@ -1165,12 +1153,14 @@ pub(crate) fn decrypt_unpacked<
     secret_key: &IndCpaPrivateKeyUnpacked<K, Vector>,
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     decrypted: &mut [u8],
+    scratch: &mut PolynomialRingElement<Vector>,
 ) {
     // u := Decompress_q(Decode_{d_u}(c), d_u)
     let mut u_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
     deserialize_then_decompress_u::<K, CIPHERTEXT_SIZE, U_COMPRESSION_FACTOR, Vector>(
         ciphertext,
         &mut u_as_ntt,
+        &mut scratch.coefficients[0]
     );
 
     // v := Decompress_q(Decode_{d_v}(c + d_u·k·n / 8), d_v)
@@ -1182,8 +1172,8 @@ pub(crate) fn decrypt_unpacked<
 
     // m := Encode_1(Compress_q(v − NTT^{−1}(sˆT ◦ NTT(u)) , 1))
     let mut message = PolynomialRingElement::<Vector>::ZERO();
-    compute_message(&v, &secret_key.secret_as_ntt, &u_as_ntt, &mut message);
-    compress_then_serialize_message(message, decrypted);
+    compute_message(&v, &secret_key.secret_as_ntt, &u_as_ntt, &mut message, scratch);
+    compress_then_serialize_message(&message, decrypted, &mut scratch.coefficients[0]);
 }
 
 #[allow(non_snake_case)]
@@ -1208,6 +1198,7 @@ pub(crate) fn decrypt<
     secret_key: &[u8],
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     decrypted: &mut [u8],
+    scratch: &mut PolynomialRingElement<Vector>,
 ) {
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_decrypt) Spec.MLKEM.ind_cpa_decrypt"#);
     // sˆ := Decode_12(sk)
@@ -1222,5 +1213,5 @@ pub(crate) fn decrypt<
         U_COMPRESSION_FACTOR,
         V_COMPRESSION_FACTOR,
         Vector,
-    >(&secret_key_unpacked, ciphertext, decrypted);
+    >(&secret_key_unpacked, ciphertext, decrypted, scratch);
 }
