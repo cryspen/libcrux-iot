@@ -15,7 +15,7 @@ static HEAP: Heap = Heap::empty();
 #[cortex_m_rt::entry]
 fn main() -> ! {
     // Init rtt-target defmt support
-    rtt_target::rtt_init_defmt!();
+    // rtt_target::rtt_init_defmt!();
     
     // Initialize cycle counter
     {

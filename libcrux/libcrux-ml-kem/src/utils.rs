@@ -3,59 +3,6 @@
 // libcrux_core.{c,h}, so if you need something that has to be shared across multiple mlkem
 // instances / implementations, it can go in here.
 
-/// A utility to quickly get cycle counts during execution.
-///
-/// ⚠️ Note, that the hardware must be initialized before the counter
-/// can function.
-pub(crate) struct CycleCounter {
-    start: u32,
-}
-
-impl CycleCounter {
-    /// Use this to initialize the hardwar, if it hasn't been initialized elsewhere.
-    pub (crate) fn init() {
-        use cortex_m::peripheral::Peripherals;
-        let mut peripherals = Peripherals::take().unwrap();
-        peripherals.DCB.enable_trace();
-        peripherals.DWT.enable_cycle_counter();
-    }
-
-    /// Create a new CycleCounter.
-    pub (crate) fn new() -> Self {
-        Self {
-            start: 0
-        }
-    }
-
-    /// Signal the start of a measurement section.
-    pub (crate) fn start_section(msg: &str, file: &str, line: u32) {
-        let current = cortex_m::peripheral::DWT::cycle_count();
-        defmt::println!("[START_SECTION {=str}] ({=str}, {=u32}) : {=u32}", msg, file, line, current);
-    }
-
-    /// Signal the end of a measurement section.
-    pub (crate) fn end_section(msg: &str, file: &str, line: u32) {
-        let current = cortex_m::peripheral::DWT::cycle_count();
-        defmt::println!("[END_SECTION {=str}] ({=str}, {=u32}) : {=u32}", msg, file, line, current);
-    }
-
-    /// Start measuring cycles.
-    ///
-    /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
-    pub (crate) fn start_measurement(msg: &str, file: &str, line: u32) {
-        let current = cortex_m::peripheral::DWT::cycle_count();
-        defmt::println!("[START_MEASUREMENT {=str}] ({=str}, {=u32}) : {=u32}", msg, file, line, current);
-    }
-
-    /// Report cycles current cycles (Use this to mark the end of measurement).
-    ///
-    /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
-    pub (crate) fn end_measurement(msg: &str, file: &str, line: u32) {
-        let current = cortex_m::peripheral::DWT::cycle_count();
-        defmt::println!("[END_MEASUREMENT {=str}] ({=str}, {=u32}) : {=u32}", msg, file, line, current);
-    }
-}
-
 /// Pad the `slice` with `0`s at the end.
 #[inline(always)]
 #[cfg_attr(hax, hax_lib::requires(
