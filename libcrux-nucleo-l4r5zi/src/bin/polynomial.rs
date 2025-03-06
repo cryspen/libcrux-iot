@@ -78,10 +78,17 @@ fn main() -> ! {
     let mut a_flat = [0i16; 256];
     let b_flat = [23i16; 256];
 
+    let mut a_32 = [0u32; 128];
+    let b_32 = [23u32; 128];
+    
     for i in 0..10 {
     let measurement_count = CycleCounter::start_measurement("flat addition", file!(), line!());
     core::hint::black_box(flat_addition(&mut a_flat, &b_flat));
     CycleCounter::end_measurement("flat addition", file!(), line!(), measurement_count);
+
+        let measurement_count = CycleCounter::start_measurement("flat addition (32)", file!(), line!());
+    core::hint::black_box(flat_addition(&mut a_flat, &b_flat));
+        CycleCounter::end_measurement("flat addition (32)", file!(), line!(), measurement_count);
 
     let measurement_count = CycleCounter::start_measurement("poly addition", file!(), line!());
     core::hint::black_box(RE::add_to_ring_element::<4>(
@@ -98,6 +105,12 @@ fn flat_addition(a_flat: &mut [i16], b_flat: &[i16]) {
     for i in 0..256 {
         a_flat[i] += b_flat[i];
     }
+}
+
+fn flat_addition_32(a: &mut [u32], b: &[u32]) {
+    for i in 0..128 {
+        a[i] += b[i];
+    }    
 }
 
 pub trait Repr: Copy + Clone {

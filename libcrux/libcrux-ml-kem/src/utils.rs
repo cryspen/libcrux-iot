@@ -3,6 +3,50 @@
 // libcrux_core.{c,h}, so if you need something that has to be shared across multiple mlkem
 // instances / implementations, it can go in here.
 
+/// A utility to quickly get cycle counts during execution.
+///
+/// ⚠️ Note, that the hardware must be initialized before the counter
+/// can function.
+pub(crate) struct CycleCounter {
+    start: u32,
+}
+
+impl CycleCounter {
+    /// Use this to initialize the hardwar, if it hasn't been initialized elsewhere.
+    pub(crate) fn init() {
+        use cortex_m::peripheral::Peripherals;
+        let mut peripherals = Peripherals::take().unwrap();
+        peripherals.DCB.enable_trace();
+        peripherals.DWT.enable_cycle_counter();
+    }
+
+    /// Create a new CycleCounter.
+    pub(crate) fn new() -> Self {
+        Self { start: 0 }
+    }
+
+    /// Signal the start of a measurement section.
+    pub(crate) fn start_measurement(msg: &str, file: &str, line: u32) -> u32 {
+        let current = cortex_m::peripheral::DWT::cycle_count();
+        current
+    }
+
+    /// Signal the end of a measurement section.
+    pub(crate) fn end_measurement(msg: &str, file: &str, line: u32, start: u32) {
+        let current = cortex_m::peripheral::DWT::cycle_count();
+        let diff = current - start;
+        defmt::println!(
+            "[END_MEASUREMENT {=str}] ({=str}, {=u32}) : {=u32} (+ {=u32})",
+            msg,
+            file,
+            line,
+            current,
+            diff
+        );
+    }
+}
+
+
 /// Pad the `slice` with `0`s at the end.
 #[inline(always)]
 #[cfg_attr(hax, hax_lib::requires(

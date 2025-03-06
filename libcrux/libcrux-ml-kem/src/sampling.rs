@@ -1,5 +1,6 @@
 use crate::{
-    constants::COEFFICIENTS_IN_RING_ELEMENT, hash_functions::*, helper::cloop, vector::Operations,
+    constants::COEFFICIENTS_IN_RING_ELEMENT, hash_functions::*, helper::cloop, utils::CycleCounter,
+    vector::Operations,
 };
 
 /// If `bytes` contains a set of uniformly random bytes, this function
@@ -162,23 +163,76 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
     randomness: &[u8],
     sampled_i16s: &mut [i16],
 ) {
+    // let measurement_count = CycleCounter::start_measurement("notghin", file!(), line!());
+    // CycleCounter::end_measurement("nothing", file!(), line!(), measurement_count);
+    // let measurement_count = CycleCounter::start_measurement("fstar", file!(), line!());
     hax_lib::fstar!(
         "assert (v (sz 2 *! sz 64) == 128);
         assert (Seq.length $randomness == 128)"
     );
+    // CycleCounter::end_measurement("fstar", file!(), line!(), measurement_count);
+
+    // let mut remaining_bytes = &randomness[..];
+    // for chunk_number in 0..32 {
+    //     let (byte_chunk, rest) = remaining_bytes.split_at(4);
+    //     remaining_bytes = rest;
+    //     let random_bits_as_u32: u32 = (byte_chunk[0] as u32)
+    //         | (byte_chunk[1] as u32) << 8
+    //         | (byte_chunk[2] as u32) << 16
+    //         | (byte_chunk[3] as u32) << 24;
+
+    //     // let measurement_count = CycleCounter::start_measurement("even bits", file!(), line!());
+    //     let even_bits = random_bits_as_u32 & 0x55555555;
+    //     // CycleCounter::end_measurement("even bits", file!(), line!(), measurement_count);
+    //     // let measurement_count = CycleCounter::start_measurement("odd bits", file!(), line!());
+    //     let odd_bits = (random_bits_as_u32 >> 1) & 0x55555555;
+    //     // CycleCounter::end_measurement("odd bits", file!(), line!(), measurement_count);
+    //     hax_lib::fstar!(
+    //         r#"logand_lemma $random_bits_as_u32 (mk_u32 1431655765);
+    //             logand_lemma ($random_bits_as_u32 >>! (mk_i32 1)) (mk_u32 1431655765)"#
+    //     );
+    //     // let measurement_count = CycleCounter::start_measurement("coin_toss_outcome", file!(), line!());
+    //     let coin_toss_outcomes = even_bits + odd_bits;
+
+    //     for outcome_set in (0..u32::BITS).step_by(4) {
+    //         let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x3) as i16;
+    //         let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 2)) & 0x3) as i16;
+    //         hax_lib::fstar!(
+    //             r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) (mk_u32 3);
+    //                     logand_lemma ($coin_toss_outcomes >>! ($outcome_set +! (mk_u32 2) <: u32) <: u32) (mk_u32 3);
+    //                     assert (v $outcome_1 >= 0 /\ v $outcome_1 <= 3);
+    //                     assert (v $outcome_2 >= 0 /\ v $outcome_2 <= 3);
+    //                     assert (v $chunk_number <= 31);
+    //                     assert (v (sz 8 *! $chunk_number <: usize) <= 248);
+    //                     assert (v (cast ($outcome_set >>! (mk_i32 2) <: u32) <: usize) <= 7)"#
+    //         );
+
+    //         let offset = (outcome_set >> 2) as usize;
+    //         sampled_i16s[8 * chunk_number + offset] = outcome_1 - outcome_2;
+    //     }
+    // }
     cloop! {
         for (chunk_number, byte_chunk) in randomness.chunks_exact(4).enumerate() {
+            // let measurement_count = CycleCounter::start_measurement("random_bits_as_u32", file!(), line!());
             let random_bits_as_u32: u32 = (byte_chunk[0] as u32)
-                | (byte_chunk[1] as u32) << 8
-                | (byte_chunk[2] as u32) << 16
-                | (byte_chunk[3] as u32) << 24;
+            | (byte_chunk[1] as u32) << 8
+            | (byte_chunk[2] as u32) << 16
+            | (byte_chunk[3] as u32) << 24;
+            // CycleCounter::end_measurement("random_bits_as_u32", file!(), line!(), measurement_count);
 
+            // let measurement_count = CycleCounter::start_measurement("even bits", file!(), line!());
             let even_bits = random_bits_as_u32 & 0x55555555;
+            // CycleCounter::end_measurement("even bits", file!(), line!(), measurement_count);
+            // let measurement_count = CycleCounter::start_measurement("odd bits", file!(), line!());
             let odd_bits = (random_bits_as_u32 >> 1) & 0x55555555;
+            // CycleCounter::end_measurement("odd bits", file!(), line!(), measurement_count);
             hax_lib::fstar!(r#"logand_lemma $random_bits_as_u32 (mk_u32 1431655765);
                 logand_lemma ($random_bits_as_u32 >>! (mk_i32 1)) (mk_u32 1431655765)"#);
+            // let measurement_count = CycleCounter::start_measurement("coin_toss_outcome", file!(), line!());
             let coin_toss_outcomes = even_bits + odd_bits;
+            // CycleCounter::end_measurement("coin toss outcome", file!(), line!(), measurement_count);
 
+            // let measurement_count = CycleCounter::start_measurement("inner loop", file!(), line!());
             cloop! {
                 for outcome_set in (0..u32::BITS).step_by(4) {
                     let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x3) as i16;
@@ -195,6 +249,7 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
                     sampled_i16s[8 * chunk_number + offset] = outcome_1 - outcome_2;
                 }
             }
+            // CycleCounter::end_measurement("inner_loop", file!(), line!(), measurement_count);
         }
     }
 }

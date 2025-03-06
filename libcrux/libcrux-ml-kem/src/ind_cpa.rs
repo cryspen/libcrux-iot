@@ -18,7 +18,7 @@ use crate::{
         deserialize_then_decompress_ring_element_v, deserialize_to_uncompressed_ring_element,
         serialize_uncompressed_ring_element,
     },
-    utils::{into_padded_array, prf_input_inc},
+    utils::{into_padded_array, prf_input_inc, CycleCounter},
     variant::Variant,
     vector::Operations,
 };
@@ -365,12 +365,16 @@ fn sample_vector_cbd_then_ntt<
 ) -> u8 {
     let mut prf_inputs = [prf_input; K];
     let _domain_separator_init = domain_separator;
+    // let measurement_count = CycleCounter::start_measurement("prf_input_inc", file!(), line!());
     domain_separator = prf_input_inc::<K>(&mut prf_inputs, domain_separator);
+    // CycleCounter::end_measurement("prf_input_inc", file!(), line!(), measurement_count);
     hax_lib::fstar!(
         "sample_vector_cbd_then_ntt_helper_1 $K $prf_inputs $prf_input $_domain_separator_init"
     );
     let mut prf_outputs = [0u8; PRF_OUTPUT_SIZE];
+    // let measurement_count = CycleCounter::start_measurement("Hasher::PRFxN", file!(), line!());
     Hasher::PRFxN(&prf_inputs, &mut prf_outputs, ETA_RANDOMNESS_SIZE);
+    // CycleCounter::end_measurement("PRFxN", file!(), line!(), measurement_count);
     for i in 0..K {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
@@ -382,9 +386,14 @@ fn sample_vector_cbd_then_ntt<
         });
         let randomness = &prf_outputs[i * ETA_RANDOMNESS_SIZE..(i + 1) * ETA_RANDOMNESS_SIZE];
         let mut sample_buffer = [0i16; 256];
+        
+        let measurement_count = CycleCounter::start_measurement("sample_from_binomial_distribution", file!(), line!());
         sample_from_binomial_distribution::<ETA, Vector>(randomness, &mut sample_buffer);
+        CycleCounter::end_measurement("sample_from_binomial_distribution", file!(), line!(), measurement_count);
         PolynomialRingElement::from_i16_array(&sample_buffer, &mut re_as_ntt[i]);
+        // let measurement_count = CycleCounter::start_measurement("ntt_binomially_sampled_ring_element", file!(), line!());
         ntt_binomially_sampled_ring_element(&mut re_as_ntt[i], scratch);
+        // CycleCounter::end_measurement("ntt_binomially_sampled_ring_element", file!(), line!(), measurement_count);
     }
     hax_lib::fstar!(
         "sample_vector_cbd_then_ntt_helper_2
@@ -840,7 +849,10 @@ pub(crate) fn encrypt_c1<
     //     N := N + 1
     // end for
     // rˆ := NTT(r)
+    let measurement_count = CycleCounter::start_measurement("into_padded_array", file!(), line!());
     let mut prf_input: [u8; 33] = into_padded_array(randomness);
+    // CycleCounter::end_measurement("into_padded_array", file!(), line!(), measurement_count);
+    let measurement_count = CycleCounter::start_measurement("sample_vector_cbd_then_ntt", file!(), line!());
     let domain_separator = sample_vector_cbd_then_ntt::<
         K,
         ETA1,
@@ -848,7 +860,8 @@ pub(crate) fn encrypt_c1<
         PRF_OUTPUT_SIZE1,
         Vector,
         Hasher,
-    >(r_as_ntt, prf_input, 0, &mut scratch.coefficients[0]);
+        >(r_as_ntt, prf_input, 0, &mut scratch.coefficients[0]);
+    // CycleCounter::end_measurement("sample_vector_cbd_then_ntt", file!(), line!(), measurement_count);
     hax_lib::fstar!(
         "Lib.Sequence.eq_intro #u8 #32 $randomness (Seq.slice $prf_input 0 32);
         assert (v $domain_separator == v $K)"
@@ -858,9 +871,11 @@ pub(crate) fn encrypt_c1<
     //     e1[i] := CBD_{η2}(PRF(r,N))
     //     N := N + 1
     // end for
+
     let mut error_1: [PolynomialRingElement<Vector>; K] =
         from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
     let mut sampling_buffer = [0i16; 256];
+    // let measurement_count = CycleCounter::start_measurement("sample_ring_element_cbd", file!(), line!());
     let domain_separator =
         sample_ring_element_cbd::<K, ETA2_RANDOMNESS_SIZE, ETA2, PRF_OUTPUT_SIZE2, Vector, Hasher>(
             prf_input,
@@ -868,7 +883,7 @@ pub(crate) fn encrypt_c1<
             &mut error_1,
             &mut sampling_buffer,
         );
-
+    // CycleCounter::end_measurement("sample_ring_element_cbd", file!(), line!(), measurement_count);
     // e_2 := CBD{η2}(PRF(r, N))
     prf_input[32] = domain_separator;
     hax_lib::fstar!(
@@ -876,20 +891,29 @@ pub(crate) fn encrypt_c1<
         assert ($prf_input == Seq.append $randomness (Seq.create 1 $domain_separator))"
     );
     let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
+    // let measurement_count = CycleCounter::start_measurement("Hasher::PRF", file!(), line!());
     Hasher::PRF::<32>(&prf_input, &mut prf_output);
+    // CycleCounter::end_measurement("Hasher::PRF", file!(), line!(), measurement_count);
+    // let measurement_count = CycleCounter::start_measurement("sample_from_binomial_distribution", file!(), line!());
     sample_from_binomial_distribution::<ETA2, Vector>(&prf_output, &mut sampling_buffer);
+    // CycleCounter::end_measurement("sample_from_binomial_distribution", file!(), line!(), measurement_count);
+    // let measurement_count = CycleCounter::start_measurement("from_i16_array", file!(), line!());
     PolynomialRingElement::from_i16_array(&sampling_buffer, error_2);
-
+    // CycleCounter::end_measurement("from_i16_array", file!(), line!(), measurement_count);
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
-    let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    compute_vector_u::<K, Vector>(matrix, &r_as_ntt, &error_1, &mut u, scratch);
 
+    let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
+    // let measurement_count = CycleCounter::start_measurement("compute_vector_u", file!(), line!());
+    compute_vector_u::<K, Vector>(matrix, &r_as_ntt, &error_1, &mut u, scratch);
+    // CycleCounter::end_measurement("compute_vectore_u", file!(), line!(), measurement_count);
     // c_1 := Encode_{du}(Compress_q(u,d_u))
+    // let measurement_count = CycleCounter::start_measurement("compress_then_serialize_u", file!(), line!());
     compress_then_serialize_u::<K, C1_LEN, U_COMPRESSION_FACTOR, BLOCK_LEN, Vector>(
         u,
         ciphertext,
         &mut scratch.coefficients[0],
     );
+    // CycleCounter::end_measurement("compress_then_serialize_u", file!(), line!(), measurement_count);
 }
 
 #[inline(always)]
