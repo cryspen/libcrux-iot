@@ -388,7 +388,7 @@ fn sample_vector_cbd_then_ntt<
         });
         let randomness = &prf_outputs[i * ETA_RANDOMNESS_SIZE..(i + 1) * ETA_RANDOMNESS_SIZE];
         let mut sample_buffer = [0i16; 256];
-        
+
         // let measurement_count = CycleCounter::start_measurement("sample_from_binomial_distribution", file!(), line!());
         sample_from_binomial_distribution::<ETA, Vector>(randomness, &mut sample_buffer);
         // CycleCounter::end_measurement("sample_from_binomial_distribution", file!(), line!(), measurement_count);
@@ -855,7 +855,8 @@ pub(crate) fn encrypt_c1<
     let measurement_count = CycleCounter::start_measurement("into_padded_array", file!(), line!());
     let mut prf_input: [u8; 33] = into_padded_array(randomness);
     // CycleCounter::end_measurement("into_padded_array", file!(), line!(), measurement_count);
-    let measurement_count = CycleCounter::start_measurement("sample_vector_cbd_then_ntt", file!(), line!());
+    let measurement_count =
+        CycleCounter::start_measurement("sample_vector_cbd_then_ntt", file!(), line!());
     let domain_separator = sample_vector_cbd_then_ntt::<
         K,
         ETA1,
@@ -863,7 +864,7 @@ pub(crate) fn encrypt_c1<
         PRF_OUTPUT_SIZE1,
         Vector,
         Hasher,
-        >(r_as_ntt, prf_input, 0, &mut scratch.coefficients[0]);
+    >(r_as_ntt, prf_input, 0, &mut scratch.coefficients[0]);
     // CycleCounter::end_measurement("sample_vector_cbd_then_ntt", file!(), line!(), measurement_count);
     hax_lib::fstar!(
         "Lib.Sequence.eq_intro #u8 #32 $randomness (Seq.slice $prf_input 0 32);

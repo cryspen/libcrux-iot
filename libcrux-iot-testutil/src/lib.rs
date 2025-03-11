@@ -99,7 +99,13 @@ where
 
     /// If the configuration permits, runs the test case as a benchmark. Logs the
     /// appropriate messages, and returns the error returned by the test.
-    pub fn benchmark<P: platform::Platform>(&self, config: &TestConfig<P>, logger: &mut L, run_id: u32, state: &S) -> Result<u32, E> {
+    pub fn benchmark<P: platform::Platform>(
+        &self,
+        config: &TestConfig<P>,
+        logger: &mut L,
+        run_id: u32,
+        state: &S,
+    ) -> Result<u32, E> {
         logger.log_event(TestUtilEvent::Benchmark(BenchmarkEvent::Run {
             name: String::from(self.name),
             run_id,
@@ -221,7 +227,7 @@ impl<'a, L: EventLogger, E: Display, S> TestSuite<'a, L, E, S> {
             }
 
             for run_id in 0..config.benchmark_runs {
-                let result = test_case.benchmark(config,logger, run_id, state);
+                let result = test_case.benchmark(config, logger, run_id, state);
 
                 if config.early_abort {
                     cycle_infos.push((

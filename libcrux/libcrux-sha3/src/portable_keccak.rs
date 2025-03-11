@@ -37,7 +37,7 @@ fn _veorq_n_u64(a: u64, c: u64) -> u64 {
     a ^ c
 }
 
-#[inline(always)]
+#[inline(never)]
 pub(crate) fn load_block<const RATE: usize>(s: &mut [[u64; 5]; 5], blocks: [&[u8]; 1]) {
     debug_assert!(RATE <= blocks[0].len() && RATE % 8 == 0);
     for i in 0..RATE / 8 {

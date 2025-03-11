@@ -46,7 +46,6 @@ impl CycleCounter {
     }
 }
 
-
 /// Pad the `slice` with `0`s at the end.
 #[inline(always)]
 #[cfg_attr(hax, hax_lib::requires(

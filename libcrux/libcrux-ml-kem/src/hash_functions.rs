@@ -118,7 +118,7 @@ pub(crate) mod portable {
         }
     }
 
-    #[inline(always)]
+    #[inline(never)]
     fn shake128_init_absorb_final(input: &[[u8; 34]]) -> PortableHash {
         debug_assert!(input.len() == 2 || input.len() == 3 || input.len() == 4);
 

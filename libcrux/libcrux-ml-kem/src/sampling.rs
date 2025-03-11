@@ -41,7 +41,7 @@ use crate::{
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
-#[inline(always)]
+#[inline(never)]
 fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, const N: usize>(
     randomness: &[[u8; N]],
     sampled_coefficients: &mut [usize],
@@ -70,7 +70,7 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
     done
 }
 
-#[inline(always)]
+#[inline(never)]
 #[hax_lib::fstar::verification_status(lax)]
 pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
     seeds: &[[u8; 34]],

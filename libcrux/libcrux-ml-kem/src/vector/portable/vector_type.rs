@@ -23,7 +23,7 @@ pub fn to_i16_array(x: PortableVector, out: &mut [i16; 16]) {
     *out = x.elements;
 }
 
-#[inline(always)]
+#[inline(never)]
 #[hax_lib::requires(array.len() == 16)]
 #[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == $array"#))]
 pub fn from_i16_array(array: &[i16], out: &mut PortableVector) {

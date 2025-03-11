@@ -342,7 +342,7 @@ pub mod portable {
         }
 
         /// Create a new SHAKE-128 state object.
-        #[inline(always)]
+        #[inline(never)]
         pub fn shake128_init() -> KeccakState {
             KeccakState {
                 state: GenericState::<1, u64>::new(),

@@ -173,7 +173,7 @@ impl Operations for PortableVector {
     fn sub(lhs: &mut Self, rhs: &Self) {
         sub(lhs, rhs)
     }
-    
+
     #[inline(always)]
     fn negate(vec: &mut Self) {
         negate(vec)
@@ -381,7 +381,7 @@ impl Operations for PortableVector {
     fn serialize_11(a: Self, out: &mut [u8]) {
         serialize_11(a, out)
     }
-    
+
     #[inline(always)]
     #[requires(a.len() == 22)]
     fn deserialize_11(a: &[u8], out: &mut Self) {

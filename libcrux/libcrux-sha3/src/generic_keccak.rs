@@ -366,7 +366,7 @@ pub(crate) fn iota<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N,
     s.st[0][0] = T::xor_constant(s.st[0][0], ROUNDCONSTANTS[i]);
 }
 
-#[inline(always)]
+#[inline(never)]
 pub(crate) fn keccakf1600<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
     for i in 0..24 {
         theta_rho(s);
@@ -385,7 +385,7 @@ pub(crate) fn absorb_block<const N: usize, T: KeccakStateItem<N>, const RATE: us
     keccakf1600(s)
 }
 
-#[inline(always)]
+#[inline(never)]
 pub(crate) fn absorb_final<
     const N: usize,
     T: KeccakStateItem<N>,

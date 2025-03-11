@@ -321,7 +321,7 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
         VECTORS_IN_RING_ELEMENT * 32
     }
 
-    #[inline(always)]
+    #[inline(never)]
     #[requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
     pub(crate) fn from_i16_array(a: &[i16], out: &mut Self) {
         from_i16_array(a, out)

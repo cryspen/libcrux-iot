@@ -31,7 +31,7 @@ fn main() -> ! {
         early_abort: false,
         benchmark_runs: 5,
     };
-    
+
     libcrux_testbench::mlkem::run_benchmarks(test_config);
 
     board::exit()

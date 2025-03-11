@@ -15,7 +15,7 @@ pub(crate) fn entry<const K: usize, Vector: Operations>(
     &matrix[i * K + j]
 }
 
-#[inline(always)]
+#[inline(never)]
 pub(crate) fn entry_mut<const K: usize, Vector: Operations>(
     matrix: &mut [PolynomialRingElement<Vector>],
     i: usize,
@@ -27,7 +27,7 @@ pub(crate) fn entry_mut<const K: usize, Vector: Operations>(
     &mut matrix[i * K + j]
 }
 
-#[inline(always)]
+#[inline(never)]
 #[allow(non_snake_case)]
 #[hax_lib::fstar::verification_status(panic_free)]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K"#))]
