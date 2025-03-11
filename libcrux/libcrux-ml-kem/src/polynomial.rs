@@ -55,6 +55,7 @@ pub(crate) struct PolynomialRingElement<Vector: Operations> {
 }
 
 #[allow(non_snake_case)]
+#[inline(always)]
 fn ZERO<Vector: Operations>() -> PolynomialRingElement<Vector> {
     PolynomialRingElement {
         // https://github.com/hacspec/hax/issues/27

@@ -219,6 +219,7 @@ pub fn cond_subtract_3329(vec: &mut PortableVector) {
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 28296 value"#)))]
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
                 v result % 3329 == v value % 3329"#)))]
+#[inline(always)]
 pub(crate) fn barrett_reduce_element(value: FieldElement) -> FieldElement {
     let t = (i32::from(value) * BARRETT_MULTIPLIER) + (BARRETT_R >> 1);
     hax_lib::fstar!(
@@ -291,6 +292,7 @@ pub(crate) fn barrett_reduce(vec: &mut PortableVector) {
 /// In particular, if `|value| ≤ FIELD_MODULUS-1 * FIELD_MODULUS-1`, then `|o| <= FIELD_MODULUS-1`.
 /// And, if `|value| ≤ pow2 16 * FIELD_MODULUS-1`, then `|o| <= FIELD_MODULUS + 1664
 ///
+#[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 500 --split_queries always")]
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i32b (3328 * pow2 16) value "#)))]
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b (3328 + 1665) result /\

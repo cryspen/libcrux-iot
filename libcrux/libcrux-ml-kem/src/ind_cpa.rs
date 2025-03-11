@@ -34,6 +34,7 @@ pub(crate) mod unpacked {
     }
 
     impl<const K: usize, Vector: Operations> Default for IndCpaPrivateKeyUnpacked<K, Vector> {
+        #[inline(always)]
         fn default() -> Self {
             Self {
                 secret_as_ntt: [PolynomialRingElement::<Vector>::ZERO(); K],
@@ -56,6 +57,7 @@ pub(crate) mod unpacked {
     impl<const K: usize, const K_SQUARED: usize, Vector: Operations> Default
         for IndCpaPublicKeyUnpacked<K, K_SQUARED, Vector>
     {
+        #[inline(always)]
         fn default() -> Self {
             Self {
                 t_as_ntt: [PolynomialRingElement::<Vector>::ZERO(); K],
@@ -602,6 +604,7 @@ pub(crate) fn generate_keypair<
 
 /// Serialize the secret key from the unpacked key pair generation.
 #[hax_lib::fstar::verification_status(lax)]
+#[inline(always)]
 pub(crate) fn serialize_unpacked_secret_key<
     const K: usize,
     const K_SQUARED: usize,
