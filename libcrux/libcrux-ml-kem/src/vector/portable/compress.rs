@@ -23,6 +23,7 @@ use crate::vector::FIELD_MODULUS;
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
+#[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 200 --ext context_pruning")]
 #[cfg_attr(hax, hax_lib::requires(fe < (FIELD_MODULUS as u16)))]
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"((833 <= v fe && v fe <= 2496) ==> v result == 1) /\
@@ -85,6 +86,7 @@ pub(crate) fn compress_message_coefficient(fe: u16) -> u8 {
     res
 }
 
+#[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 200 --ext context_pruning")]
 #[cfg_attr(hax,
     hax_lib::requires(

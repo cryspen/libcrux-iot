@@ -34,6 +34,7 @@ pub(crate) mod unpacked {
     }
 
     impl<const K: usize, Vector: Operations> Default for IndCpaPrivateKeyUnpacked<K, Vector> {
+        #[inline(always)]
         fn default() -> Self {
             Self {
                 secret_as_ntt: [PolynomialRingElement::<Vector>::ZERO(); K],
@@ -56,6 +57,7 @@ pub(crate) mod unpacked {
     impl<const K: usize, const K_SQUARED: usize, Vector: Operations> Default
         for IndCpaPublicKeyUnpacked<K, K_SQUARED, Vector>
     {
+        #[inline(always)]
         fn default() -> Self {
             Self {
                 t_as_ntt: [PolynomialRingElement::<Vector>::ZERO(); K],
@@ -387,9 +389,9 @@ fn sample_vector_cbd_then_ntt<
         let randomness = &prf_outputs[i * ETA_RANDOMNESS_SIZE..(i + 1) * ETA_RANDOMNESS_SIZE];
         let mut sample_buffer = [0i16; 256];
         
-        let measurement_count = CycleCounter::start_measurement("sample_from_binomial_distribution", file!(), line!());
+        // let measurement_count = CycleCounter::start_measurement("sample_from_binomial_distribution", file!(), line!());
         sample_from_binomial_distribution::<ETA, Vector>(randomness, &mut sample_buffer);
-        CycleCounter::end_measurement("sample_from_binomial_distribution", file!(), line!(), measurement_count);
+        // CycleCounter::end_measurement("sample_from_binomial_distribution", file!(), line!(), measurement_count);
         PolynomialRingElement::from_i16_array(&sample_buffer, &mut re_as_ntt[i]);
         // let measurement_count = CycleCounter::start_measurement("ntt_binomially_sampled_ring_element", file!(), line!());
         ntt_binomially_sampled_ring_element(&mut re_as_ntt[i], scratch);
@@ -611,6 +613,7 @@ pub(crate) fn generate_keypair<
 
 /// Serialize the secret key from the unpacked key pair generation.
 #[hax_lib::fstar::verification_status(lax)]
+#[inline(always)]
 pub(crate) fn serialize_unpacked_secret_key<
     const K: usize,
     const K_SQUARED: usize,

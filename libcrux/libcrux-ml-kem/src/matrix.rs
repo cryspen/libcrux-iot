@@ -3,6 +3,7 @@ use crate::{
     polynomial::PolynomialRingElement, sampling::sample_from_xof, vector::Operations,
 };
 
+#[inline(always)]
 pub(crate) fn entry<const K: usize, Vector: Operations>(
     matrix: &[PolynomialRingElement<Vector>],
     i: usize,
@@ -14,6 +15,7 @@ pub(crate) fn entry<const K: usize, Vector: Operations>(
     &matrix[i * K + j]
 }
 
+#[inline(always)]
 pub(crate) fn entry_mut<const K: usize, Vector: Operations>(
     matrix: &mut [PolynomialRingElement<Vector>],
     i: usize,
