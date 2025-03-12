@@ -16,7 +16,7 @@ bench = false # so libtest doesn't eat the arguments to criterion
 [dependencies]
 libcrux-platform = { version = "0.0.2-beta.2", path = "../libcrux-platform" }
 libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" }
-
+libcrux-macros = {git = "https://github.com/cryspen/libcrux"}
 # This is only required for verification.
 # The hax config is set by the hax toolchain.
 [target.'cfg(hax)'.dependencies]

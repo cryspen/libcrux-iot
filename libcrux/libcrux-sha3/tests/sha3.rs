@@ -21,3 +21,4 @@ fn sha3_simd_kat_oneshot() {
         "2bf5e6dee6079fad604f573194ba8426bd4d30eb13e8ba2edae70e529b570cbdd588f2c5dd4e465dfbaf";
     assert_eq!(hex::encode(&dshake), expectedshake);
 }
+

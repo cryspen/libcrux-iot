@@ -3,13 +3,13 @@
 use crate::traits::internal::*;
 
 #[inline(always)]
-fn rotate_left<const LEFT: i32, const RIGHT: i32>(x: u64) -> u64 {
+pub(crate) fn rotate_left<const LEFT: i32, const RIGHT: i32>(x: u64) -> u64 {
     debug_assert!(LEFT + RIGHT == 64);
     (x << LEFT) | (x >> RIGHT)
 }
 
 #[inline(always)]
-fn _veor5q_u64(a: u64, b: u64, c: u64, d: u64, e: u64) -> u64 {
+pub(crate) fn _veor5q_u64(a: u64, b: u64, c: u64, d: u64, e: u64) -> u64 {
     let ab = a ^ b;
     let cd = c ^ d;
     let abcd = ab ^ cd;

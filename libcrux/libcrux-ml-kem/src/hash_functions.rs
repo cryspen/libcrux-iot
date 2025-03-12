@@ -72,7 +72,7 @@ pub(crate) trait Hash<const K: usize> {
 /// A portable implementation of [`Hash`]
 pub(crate) mod portable {
     use super::*;
-    use libcrux_sha3::portable::{self, incremental, KeccakState};
+    use libcrux_sha3::split_lanes::{self, incremental, KeccakState};
 
     /// The state.
     ///
@@ -89,7 +89,7 @@ pub(crate) mod portable {
     #[inline(always)]
     fn G(input: &[u8]) -> [u8; G_DIGEST_SIZE] {
         let mut digest = [0u8; G_DIGEST_SIZE];
-        portable::sha512(&mut digest, input);
+        split_lanes::sha512(&mut digest, input);
         digest
     }
 
@@ -99,7 +99,7 @@ pub(crate) mod portable {
     #[inline(always)]
     fn H(input: &[u8]) -> [u8; H_DIGEST_SIZE] {
         let mut digest = [0u8; H_DIGEST_SIZE];
-        portable::sha256(&mut digest, input);
+        split_lanes::sha256(&mut digest, input);
         digest
     }
 
@@ -110,7 +110,7 @@ pub(crate) mod portable {
     #[inline(always)]
     fn PRF<const LEN: usize>(input: &[u8]) -> [u8; LEN] {
         let mut digest = [0u8; LEN];
-        portable::shake256(&mut digest, input);
+        split_lanes::shake256(&mut digest, input);
         digest
     }
 
@@ -124,7 +124,7 @@ pub(crate) mod portable {
 
         let mut out = [[0u8; LEN]; K];
         for i in 0..K {
-            portable::shake256(&mut out[i], &input[i]);
+            split_lanes::shake256(&mut out[i], &input[i]);
         }
         out
     }
