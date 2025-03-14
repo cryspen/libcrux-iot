@@ -1355,3 +1355,50 @@ pub mod avx2 {
         }
     }
 }
+
+
+/// A utility to quickly get cycle counts during execution.
+///
+/// ⚠️ Note, that the hardware must be initialized before the counter
+/// can function.
+pub(crate) struct CycleCounter {}
+
+impl CycleCounter {
+    /// Use this to initialize the hardwar, if it hasn't been initialized elsewhere.
+    pub (crate) fn init() {
+        use cortex_m::peripheral::Peripherals;
+        let mut peripherals = Peripherals::take().unwrap();
+        peripherals.DCB.enable_trace();
+        peripherals.DWT.enable_cycle_counter();
+    }
+
+    /// Signal the start of a measurement section.
+    pub (crate) fn start_section(msg: &str, file: &str, line: u32) -> u32 {
+        let current = cortex_m::peripheral::DWT::cycle_count();
+        current
+    }
+
+    /// Signal the end of a measurement section.
+    pub (crate) fn end_section(msg: &str, file: &str, line: u32, start: u32) {
+        let current = cortex_m::peripheral::DWT::cycle_count();
+        let diff = current - start;
+        defmt::println!("[END_SECTION {=str}] ({=str}, {=u32}) : {=u32} (+ {=u32})", msg, file, line, current, diff);
+    }
+
+    /// Start measuring cycles.
+    ///
+    /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
+    #[inline(never)]
+    pub (crate) fn start_measurement() -> u32 {
+        cortex_m::peripheral::DWT::cycle_count()
+    }
+
+    /// Report cycles current cycles (Use this to mark the end of measurement).
+    ///
+    /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
+    #[inline(never)]
+    pub (crate) fn end_measurement(msg: &str, start: u32) {
+        let diff = cortex_m::peripheral::DWT::cycle_count() - start;
+        defmt::println!("[END_MEASUREMENT {=str}] : + {=u32}", msg, diff);
+    }
+}

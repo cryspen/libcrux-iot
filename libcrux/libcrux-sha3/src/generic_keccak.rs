@@ -3,7 +3,7 @@
 
 use core::ops::Index;
 
-use crate::traits::*;
+use crate::{traits::*, CycleCounter};
 
 #[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy)]
@@ -242,6 +242,7 @@ const _ROTC: [usize; 24] = [
 
 #[inline(always)]
 pub(crate) fn theta_rho<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
+    let start = CycleCounter::start_measurement();
     let c: [T; 5] = [
         T::xor5(s.st[0][0], s.st[1][0], s.st[2][0], s.st[3][0], s.st[4][0]),
         T::xor5(s.st[0][1], s.st[1][1], s.st[2][1], s.st[3][1], s.st[4][1]),
@@ -249,6 +250,8 @@ pub(crate) fn theta_rho<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakSta
         T::xor5(s.st[0][3], s.st[1][3], s.st[2][3], s.st[3][3], s.st[4][3]),
         T::xor5(s.st[0][4], s.st[1][4], s.st[2][4], s.st[3][4], s.st[4][4]),
     ];
+    CycleCounter::end_measurement("xor5", start);
+    let start = CycleCounter::start_measurement();
     #[allow(clippy::identity_op)]
     let t: [T; 5] = [
         T::rotate_left1_and_xor(c[(0 + 4) % 5], c[(0 + 1) % 5]),
@@ -257,7 +260,8 @@ pub(crate) fn theta_rho<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakSta
         T::rotate_left1_and_xor(c[(3 + 4) % 5], c[(3 + 1) % 5]),
         T::rotate_left1_and_xor(c[(4 + 4) % 5], c[(4 + 1) % 5]),
     ];
-
+    CycleCounter::end_measurement("rotate_left1_and_xor", start);
+    let start = CycleCounter::start_measurement();
     s.st[0][0] = T::xor(s.st[0][0], t[0]);
     s.st[1][0] = T::xor_and_rotate::<36, 28>(s.st[1][0], t[0]);
     s.st[2][0] = T::xor_and_rotate::<3, 61>(s.st[2][0], t[0]);
@@ -287,6 +291,7 @@ pub(crate) fn theta_rho<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakSta
     s.st[2][4] = T::xor_and_rotate::<39, 25>(s.st[2][4], t[4]);
     s.st[3][4] = T::xor_and_rotate::<8, 56>(s.st[3][4], t[4]);
     s.st[4][4] = T::xor_and_rotate::<14, 50>(s.st[4][4], t[4]);
+    CycleCounter::end_measurement("xor_and_rotate", start);
 }
 
 const _PI: [usize; 24] = [
@@ -366,13 +371,21 @@ pub(crate) fn iota<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N,
     s.st[0][0] = T::xor_constant(s.st[0][0], ROUNDCONSTANTS[i]);
 }
 
-#[inline(always)]
+#[inline(never)]
 pub(crate) fn keccakf1600<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
     for i in 0..24 {
+        // let start = CycleCounter::start_measurement();
         theta_rho(s);
+        // CycleCounter::end_measurement("theta_rho", start);
+        // let start = CycleCounter::start_measurement();
         pi(s);
+        // CycleCounter::end_measurement("pi", start);
+        // let start = CycleCounter::start_measurement();
         chi(s);
+        // CycleCounter::end_measurement("chi", start);
+        // let start = CycleCounter::start_measurement();
         iota(s, i);
+        // CycleCounter::end_measurement("iota", start);
     }
 }
 
@@ -381,8 +394,12 @@ pub(crate) fn absorb_block<const N: usize, T: KeccakStateItem<N>, const RATE: us
     s: &mut KeccakState<N, T>,
     blocks: [&[u8]; N],
 ) {
+    // let start = CycleCounter::start_measurement();
     T::load_block::<RATE>(&mut s.st, blocks);
-    keccakf1600(s)
+    // CycleCounter::end_measurement("load_block", start);
+    // let start = CycleCounter::start_measurement();
+    keccakf1600(s);
+    // CycleCounter::end_measurement("keccakf1600", start);
 }
 
 #[inline(always)]
@@ -494,24 +511,37 @@ pub(crate) fn keccak<const N: usize, T: KeccakStateItem<N>, const RATE: usize, c
     out: [&mut [u8]; N],
 ) {
     let mut s = KeccakState::<N, T>::new();
+    // let start = CycleCounter::start_measurement();
     for i in 0..data[0].len() / RATE {
         absorb_block::<N, T, RATE>(&mut s, T::slice_n(data, i * RATE, RATE));
     }
+    // CycleCounter::end_measurement("absorb_block", start);
+    // let start = CycleCounter::start_measurement();
     let rem = data[0].len() % RATE;
     absorb_final::<N, T, RATE, DELIM>(&mut s, T::slice_n(data, data[0].len() - rem, rem));
+    // CycleCounter::end_measurement("absorb_final", start);
 
     let outlen = out[0].len();
     let blocks = outlen / RATE;
     let last = outlen - (outlen % RATE);
 
     if blocks == 0 {
-        squeeze_first_and_last::<N, T, RATE>(&s, out)
+        // let start = CycleCounter::start_measurement();
+        squeeze_first_and_last::<N, T, RATE>(&s, out);
+        // CycleCounter::end_measurement("squeeze_first_and_last", start);
     } else {
+        // let start = CycleCounter::start_measurement();
         let (o0, mut o1) = T::split_at_mut_n(out, RATE);
+        // CycleCounter::end_measurement("split_at_mut_n", start);
+        // let start = CycleCounter::start_measurement();
+
         squeeze_first_block::<N, T, RATE>(&s, o0);
+        // CycleCounter::end_measurement("squeeze_first_block", start);
         for _i in 1..blocks {
             let (o, orest) = T::split_at_mut_n(o1, RATE);
+            // let start = CycleCounter::start_measurement();
             squeeze_next_block::<N, T, RATE>(&mut s, o);
+            // CycleCounter::end_measurement("squeeze_next_block", start);
             o1 = orest;
         }
         if last < outlen {

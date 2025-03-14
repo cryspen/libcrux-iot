@@ -37,7 +37,7 @@ fn _veorq_n_u64(a: u64, c: u64) -> u64 {
     a ^ c
 }
 
-#[inline(always)]
+#[inline(never)]
 pub(crate) fn load_block<const RATE: usize>(s: &mut [[u64; 5]; 5], blocks: [&[u8]; 1]) {
     debug_assert!(RATE <= blocks[0].len() && RATE % 8 == 0);
     for i in 0..RATE / 8 {
@@ -80,15 +80,15 @@ impl KeccakItem<1> for u64 {
     fn zero() -> Self {
         0
     }
-    #[inline(always)]
+    #[inline(never)]
     fn xor5(a: Self, b: Self, c: Self, d: Self, e: Self) -> Self {
         _veor5q_u64(a, b, c, d, e)
     }
-    #[inline(always)]
+    #[inline(never)]
     fn rotate_left1_and_xor(a: Self, b: Self) -> Self {
         _vrax1q_u64(a, b)
     }
-    #[inline(always)]
+    #[inline(never)]
     fn xor_and_rotate<const LEFT: i32, const RIGHT: i32>(a: Self, b: Self) -> Self {
         _vxarq_u64::<LEFT, RIGHT>(a, b)
     }

@@ -16,6 +16,8 @@ bench = false # so libtest doesn't eat the arguments to criterion
 [dependencies]
 libcrux-platform = { version = "0.0.2-beta.2", path = "../libcrux-platform" }
 libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" }
+cortex-m = { version = "0.7", features = ["critical-section-single-core"] }
+defmt = "0.3"
 
 # This is only required for verification.
 # The hax config is set by the hax toolchain.
