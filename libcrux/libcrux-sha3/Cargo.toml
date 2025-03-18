@@ -1,6 +1,6 @@
 [package]
 name = "libcrux-sha3"
-version = "0.0.2-beta.2"
+version = "0.0.2-beta.3"
 authors = ["Cryspen"]
 license = "AGPL-3.0-only"
 homepage = "https://github.com/cryspen/libcrux-iot"
@@ -14,15 +14,15 @@ exclude = ["/c.sh", "/c.yaml", "/tests/tv", "tests/cavp.rs"]
 bench = false # so libtest doesn't eat the arguments to criterion
 
 [dependencies]
-libcrux-platform = { version = "0.0.2-beta.2", path = "../libcrux-platform" }
-libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" }
+libcrux-platform = { version = "0.0.2-beta.3", path = "../libcrux-platform" }
+libcrux-intrinsics = { version = "0.0.2-beta.3", path = "../libcrux-intrinsics" }
 cortex-m = { version = "0.7", features = ["critical-section-single-core"] }
 defmt = "0.3"
 
 # This is only required for verification.
 # The hax config is set by the hax toolchain.
 [target.'cfg(hax)'.dependencies]
-hax-lib = { version = "0.1.0-alpha.1", git = "https://github.com/hacspec/hax/" }
+hax-lib = { version = "0.2", git = "https://github.com/hacspec/hax/" }
 
 [features]
 simd128 = []

@@ -21,6 +21,16 @@ pub fn _vst1q_s16(out: &mut [i16], v: int16x8_t) {
 }
 
 #[inline(always)]
+pub fn _vst1q_bytes(out: &mut [u8], v: int16x8_t) {
+    unsafe { vst1q_u8(out.as_mut_ptr(), vreinterpretq_u8_s16(v)) }
+}
+
+#[inline(always)]
+pub fn _vld1q_bytes(bytes: &[u8]) -> int16x8_t {
+    unsafe { vreinterpretq_s16_u8(vld1q_u8(bytes.as_ptr())) }
+}
+
+#[inline(always)]
 pub fn _vld1q_s16(array: &[i16]) -> int16x8_t {
     unsafe { vld1q_s16(array.as_ptr()) }
 }
@@ -165,6 +175,7 @@ pub fn _vreinterpretq_u32_s32(a: int32x4_t) -> uint32x4_t {
 pub fn _vshrq_n_u32<const N: i32>(a: uint32x4_t) -> uint32x4_t {
     unsafe { vshrq_n_u32::<N>(a) }
 }
+
 #[inline(always)]
 pub fn _vandq_u32(a: uint32x4_t, b: uint32x4_t) -> uint32x4_t {
     unsafe { vandq_u32(a, b) }
@@ -343,4 +354,80 @@ pub fn _vcleq_s16(a: int16x8_t, b: int16x8_t) -> uint16x8_t {
 #[inline(always)]
 pub fn _vaddvq_u16(a: uint16x8_t) -> u16 {
     unsafe { vaddvq_u16(a) }
+}
+
+#[inline(always)]
+pub fn _vrax1q_u64(a: uint64x2_t, b: uint64x2_t) -> uint64x2_t {
+    #[cfg(all(
+        any(target_arch = "aarch64", target_arch = "arm64ec"),
+        target_feature = "neon",
+        target_feature = "sha3"
+    ))]
+    unsafe {
+        vrax1q_u64(a, b)
+    }
+    #[cfg(not(all(
+        any(target_arch = "aarch64", target_arch = "arm64ec"),
+        target_feature = "neon",
+        target_feature = "sha3"
+    )))]
+    _veorq_u64(a, _veorq_u64(_vshlq_n_u64::<1>(b), _vshrq_n_u64::<63>(b)))
+}
+
+#[inline(always)]
+pub fn _veor3q_u64(a: uint64x2_t, b: uint64x2_t, c: uint64x2_t) -> uint64x2_t {
+    #[cfg(all(
+        any(target_arch = "aarch64", target_arch = "arm64ec"),
+        target_feature = "neon",
+        target_feature = "sha3"
+    ))]
+    unsafe {
+        veor3q_u64(a, b, c)
+    }
+    #[cfg(not(all(
+        any(target_arch = "aarch64", target_arch = "arm64ec"),
+        target_feature = "neon",
+        target_feature = "sha3"
+    )))]
+    _veorq_u64(a, _veorq_u64(b, c));
+}
+
+#[inline(always)]
+pub fn _vxarq_u64<const LEFT: i32, const RIGHT: i32>(a: uint64x2_t, b: uint64x2_t) -> uint64x2_t {
+    debug_assert!(LEFT + RIGHT == 64);
+    #[cfg(all(
+        any(target_arch = "aarch64", target_arch = "arm64ec"),
+        target_feature = "neon",
+        target_feature = "sha3"
+    ))]
+    unsafe {
+        vxarq_u64::<RIGHT>(a, b)
+    }
+    #[cfg(not(all(
+        any(target_arch = "aarch64", target_arch = "arm64ec"),
+        target_feature = "neon",
+        target_feature = "sha3"
+    )))]
+    {
+        let a_xor_b = _veorq_u64(a, b);
+        _veorq_u64(_vshlq_n_u64::<LEFT>(b), _vshrq_n_u64::<RIGHT>(a_xor_b))
+    }
+}
+
+#[inline(always)]
+pub fn _vbcaxq_u64(a: uint64x2_t, b: uint64x2_t, c: uint64x2_t) -> uint64x2_t {
+    #[cfg(all(
+        any(target_arch = "aarch64", target_arch = "arm64ec"),
+        target_feature = "neon",
+        target_feature = "sha3"
+    ))]
+    unsafe {
+        vbcaxq_u64(a, b, c)
+    }
+    #[cfg(not(all(
+        any(target_arch = "aarch64", target_arch = "arm64ec"),
+        target_feature = "neon",
+        target_feature = "sha3"
+    )))]
+    _veorq_u64(a, _vbicq_u64(b, c))
 }

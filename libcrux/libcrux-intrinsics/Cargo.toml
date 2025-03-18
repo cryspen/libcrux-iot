@@ -1,6 +1,6 @@
 [package]
 name = "libcrux-intrinsics"
-version = "0.0.2-beta.2"
+version = "0.0.2-beta.3"
 authors = ["Cryspen"]
 license = "AGPL-3.0-only"
 homepage = "https://github.com/cryspen/libcrux-iot"
@@ -10,7 +10,7 @@ description = "Libcrux-IoT intrinsics crate"
 exclude = ["/proofs"]
 
 [dependencies]
-hax-lib = { version = "0.1.0-alpha.1", git = "https://github.com/hacspec/hax/" }
+hax-lib = { version = "0.2", git = "https://github.com/hacspec/hax/" }
 
 [features]
 simd128 = []

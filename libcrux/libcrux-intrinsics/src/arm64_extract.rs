@@ -38,6 +38,16 @@ pub fn _vst1q_s16(out: &mut [i16], v: _int16x8_t) {
 }
 
 #[inline(always)]
+pub fn _vst1q_bytes(out: &mut [u8], v: _int16x8_t) {
+    unimplemented!()
+}
+
+#[inline(always)]
+pub fn _vld1q_bytes(bytes: &[u8]) -> _int16x8_t {
+    unimplemented!()
+}
+
+#[inline(always)]
 pub fn _vld1q_s16(array: &[i16]) -> _int16x8_t {
     unimplemented!()
 }
@@ -98,6 +108,11 @@ pub fn _vshrq_n_u64<const SHIFT_BY: i32>(v: _uint64x2_t) -> _uint64x2_t {
 }
 
 #[inline(always)]
+pub fn _vxarq_u64<const SHIFT_BY: i32>(a: _uint64x2_t, b: _uint64x2_t) -> _uint64x2_t {
+    unimplemented!()
+}
+
+#[inline(always)]
 pub fn _vshlq_n_u64<const SHIFT_BY: i32>(v: _uint64x2_t) -> _uint64x2_t {
     unimplemented!()
 }
@@ -134,6 +149,11 @@ pub fn _vbicq_u64(a: _uint64x2_t, b: _uint64x2_t) -> _uint64x2_t {
 }
 
 #[inline(always)]
+pub fn _vbcaxq_u64(a: _uint64x2_t, b: _uint64x2_t, c: _uint64x2_t) -> _uint64x2_t {
+    unimplemented!()
+}
+
+#[inline(always)]
 pub fn _vreinterpretq_s16_u16(m0: _uint16x8_t) -> _int16x8_t {
     unimplemented!()
 }
@@ -153,6 +173,16 @@ pub fn _veorq_s16(mask: _int16x8_t, shifted: _int16x8_t) -> _int16x8_t {
 
 #[inline(always)]
 pub fn _veorq_u64(mask: _uint64x2_t, shifted: _uint64x2_t) -> _uint64x2_t {
+    unimplemented!()
+}
+
+#[inline(always)]
+pub fn _vrax1q_u64(a: _uint64x2_t, b: _uint64x2_t) -> _uint64x2_t {
+    unimplemented!()
+}
+
+#[inline(always)]
+pub fn _veor3q_u64(a: _uint64x2_t, b: _uint64x2_t, c: _uint64x2_t) -> _uint64x2_t {
     unimplemented!()
 }
 
@@ -182,6 +212,7 @@ pub fn _vreinterpretq_u32_s32(a: _int32x4_t) -> _uint32x4_t {
 pub fn _vshrq_n_u32<const N: i32>(a: _uint32x4_t) -> _uint32x4_t {
     unimplemented!()
 }
+
 #[inline(always)]
 pub fn _vandq_u32(a: _uint32x4_t, b: _uint32x4_t) -> _uint32x4_t {
     unimplemented!()

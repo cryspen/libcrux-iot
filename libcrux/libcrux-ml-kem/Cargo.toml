@@ -23,15 +23,15 @@ bench = false # so libtest doesn't eat the arguments to criterion
 
 [dependencies]
 rand = { version = "0.8", optional = true }
-libcrux-platform = { version = "0.0.2-beta.2", path = "../libcrux-platform" }
-libcrux-sha3 = { version = "0.0.2-beta.2", path = "../libcrux-sha3" }
-libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" }
-hax-lib = { version = "0.1.0-alpha.1", git = "https://github.com/hacspec/hax/" }
+libcrux-platform = { version = "0.0.2-beta.3", path = "../libcrux-platform" }
+libcrux-sha3 = { version = "0.0.2-beta.3", path = "../libcrux-sha3" }
+libcrux-intrinsics = { version = "0.0.2-beta.3", path = "../libcrux-intrinsics" }
+hax-lib = { version = "0.2", git = "https://github.com/hacspec/hax/" }
 
 # This is only required for verification.
 # The hax config is set by the hax toolchain.
 [target.'cfg(hax)'.dependencies]
-hax-lib = { version = "0.1.0-alpha.1", git = "https://github.com/hacspec/hax/" }
+hax-lib = { version = "0.2", git = "https://github.com/hacspec/hax/" }
 
 [features]
 # By default all variants and std are enabled.

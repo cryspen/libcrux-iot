@@ -1,6 +1,6 @@
 [package]
 name = "libcrux-platform"
-version = "0.0.2-beta.2"
+version = "0.0.2-beta.3"
 authors = ["Cryspen"]
 license = "AGPL-3.0-only"
 homepage = "https://github.com/cryspen/libcrux-iot"

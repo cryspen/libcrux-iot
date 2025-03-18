@@ -24,6 +24,7 @@ libcrux-testbench = { path = "../libcrux-testbench" }
 libcrux-sha3 = { path = "../libcrux/libcrux-sha3" }
 embassy-stm32 = { version = "0.1.0", features = [ "stm32l4r5zi", "defmt", ] }
 embedded-alloc = "0.6.0"
+embassy-executor = { version = "0.7.0", features = ["task-arena-size-32768", "arch-cortex-m", "executor-thread", "defmt"] }
 
 [dev-dependencies]
 defmt-test = "0.3"
