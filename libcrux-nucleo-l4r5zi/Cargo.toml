@@ -21,6 +21,7 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 libcrux-testbench = { path = "../libcrux-testbench" }
+libcrux-sha3 = { path = "../libcrux/libcrux-sha3" }
 embassy-stm32 = { version = "0.1.0", features = [ "stm32l4r5zi", "defmt", ] }
 embedded-alloc = "0.6.0"
 
