@@ -14,7 +14,7 @@ static HEAP: Heap = Heap::empty();
 fn main() -> ! {
     // Init rtt-target defmt support
     // rtt_target::rtt_init_defmt!();
-    
+
     // Initialize cycle counter
     {
         use cortex_m::peripheral::Peripherals;
@@ -26,16 +26,17 @@ fn main() -> ! {
     let in2 = [2u8; 1024];
     let in3 = [3u8; 1024 * 20];
 
-    let start = CycleCounter::start_measurement();
-    let _d1 = core::hint::black_box(libcrux_sha3::sha256(&in1));
-    CycleCounter::end_measurement("128 bytes", start);
-    let start = CycleCounter::start_measurement();
-    let _d2 = core::hint::black_box(libcrux_sha3::sha256(&in2));
-    CycleCounter::end_measurement("1 KB", start);
-    let start = CycleCounter::start_measurement();
-    let _d3 = core::hint::black_box(libcrux_sha3::sha256(&in3));
-    CycleCounter::end_measurement("20 KB", start);
-
+    for i in 0..3 {
+        let start = CycleCounter::start_measurement();
+        let _d1 = core::hint::black_box(libcrux_sha3::sha256(&in1));
+        core::hint::black_box(CycleCounter::end_measurement("128 bytes", start, &_d1));
+        let start = CycleCounter::start_measurement();
+        let _d2 = core::hint::black_box(libcrux_sha3::sha256(&in2));
+        core::hint::black_box(CycleCounter::end_measurement("1 KB", start, &_d2));
+        let start = CycleCounter::start_measurement();
+        let _d3 = core::hint::black_box(libcrux_sha3::sha256(&in3));
+        core::hint::black_box(CycleCounter::end_measurement("20 KB", start, &_d3));
+    }
     board::exit()
 }
 
@@ -47,7 +48,7 @@ pub(crate) struct CycleCounter {}
 
 impl CycleCounter {
     /// Use this to initialize the hardwar, if it hasn't been initialized elsewhere.
-    pub (crate) fn init() {
+    pub(crate) fn init() {
         use cortex_m::peripheral::Peripherals;
         let mut peripherals = Peripherals::take().unwrap();
         peripherals.DCB.enable_trace();
@@ -55,23 +56,30 @@ impl CycleCounter {
     }
 
     /// Signal the start of a measurement section.
-    pub (crate) fn start_section(msg: &str, file: &str, line: u32) -> u32 {
+    pub(crate) fn start_section(msg: &str, file: &str, line: u32) -> u32 {
         let current = cortex_m::peripheral::DWT::cycle_count();
         current
     }
 
     /// Signal the end of a measurement section.
-    pub (crate) fn end_section(msg: &str, file: &str, line: u32, start: u32) {
+    pub(crate) fn end_section(msg: &str, file: &str, line: u32, start: u32) {
         let current = cortex_m::peripheral::DWT::cycle_count();
         let diff = current - start;
-        defmt::println!("[END_SECTION {=str}] ({=str}, {=u32}) : {=u32} (+ {=u32})", msg, file, line, current, diff);
+        defmt::println!(
+            "[END_SECTION {=str}] ({=str}, {=u32}) : {=u32} (+ {=u32})",
+            msg,
+            file,
+            line,
+            current,
+            diff
+        );
     }
 
     /// Start measuring cycles.
     ///
     /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
     #[inline(never)]
-    pub (crate) fn start_measurement() -> u32 {
+    pub(crate) fn start_measurement() -> u32 {
         cortex_m::peripheral::DWT::cycle_count()
     }
 
@@ -79,9 +87,8 @@ impl CycleCounter {
     ///
     /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
     #[inline(never)]
-    pub (crate) fn end_measurement(msg: &str, start: u32) {
+    pub(crate) fn end_measurement(msg: &str, start: u32, _input: &[u8]) {
         let diff = cortex_m::peripheral::DWT::cycle_count() - start;
         defmt::println!("[END_MEASUREMENT {=str}] : + {=u32}", msg, diff);
     }
 }
-

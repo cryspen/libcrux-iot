@@ -113,7 +113,7 @@ pub fn sha224_ema(digest: &mut [u8], payload: &[u8]) {
 }
 
 /// SHA3 256
-#[inline(always)]
+#[inline(never)]
 pub fn sha256(data: &[u8]) -> Sha3_256Digest {
     let mut out = [0u8; 32];
     sha256_ema(&mut out, data);
@@ -126,7 +126,7 @@ pub fn sha256_ema(digest: &mut [u8], payload: &[u8]) {
     debug_assert!(payload.len() <= u32::MAX as usize);
     debug_assert!(digest.len() == 32);
 
-    split_lanes::sha256(digest, payload)
+    portable::sha256(digest, payload)
 }
 
 /// SHA3 384
