@@ -1,5 +1,7 @@
 //! A portable SHA3 implementation using the generic implementation.
 
+use aligned::{Aligned, A4};
+
 use crate::traits::internal::*;
 
 #[inline(always)]
@@ -38,7 +40,7 @@ fn _veorq_n_u64(a: u64, c: u64) -> u64 {
 }
 
 #[inline(always)]
-pub(crate) fn load_block<const RATE: usize>(s: &mut [[u64; 5]; 5], blocks: [&[u8]; 1]) {
+pub(crate) fn load_block<const RATE: usize>(s: &mut [Aligned<A4,[u64; 5]>; 5], blocks: [&[u8]; 1]) {
     debug_assert!(RATE <= blocks[0].len() && RATE % 8 == 0);
     for i in 0..RATE / 8 {
         s[i / 5][i % 5] ^= u64::from_le_bytes(blocks[0][8 * i..8 * i + 8].try_into().unwrap());
@@ -46,19 +48,19 @@ pub(crate) fn load_block<const RATE: usize>(s: &mut [[u64; 5]; 5], blocks: [&[u8
 }
 
 #[inline(always)]
-pub(crate) fn load_block_full<const RATE: usize>(s: &mut [[u64; 5]; 5], blocks: [[u8; 200]; 1]) {
+pub(crate) fn load_block_full<const RATE: usize>(s: &mut [Aligned<A4,[u64; 5]>; 5], blocks: [[u8; 200]; 1]) {
     load_block::<RATE>(s, [&blocks[0] as &[u8]]);
 }
 
 #[inline(always)]
-pub(crate) fn store_block<const RATE: usize>(s: &[[u64; 5]; 5], out: [&mut [u8]; 1]) {
+pub(crate) fn store_block<const RATE: usize>(s: &[Aligned<A4,[u64; 5]>; 5], out: [&mut [u8]; 1]) {
     for i in 0..RATE / 8 {
         out[0][8 * i..8 * i + 8].copy_from_slice(&s[i / 5][i % 5].to_le_bytes());
     }
 }
 
 #[inline(always)]
-pub(crate) fn store_block_full<const RATE: usize>(s: &[[u64; 5]; 5]) -> [[u8; 200]; 1] {
+pub(crate) fn store_block_full<const RATE: usize>(s: &[Aligned<A4,[u64; 5]>; 5]) -> [[u8; 200]; 1] {
     let mut out = [0u8; 200];
     store_block::<RATE>(s, [&mut out]);
     [out]
@@ -105,19 +107,19 @@ impl KeccakItem<1> for u64 {
         a ^ b
     }
     #[inline(always)]
-    fn load_block<const RATE: usize>(a: &mut [[Self; 5]; 5], b: [&[u8]; 1]) {
+    fn load_block<const RATE: usize>(a: &mut [Aligned<A4, [Self; 5]>; 5], b: [&[u8]; 1]) {
         load_block::<RATE>(a, b)
     }
     #[inline(always)]
-    fn store_block<const RATE: usize>(a: &[[Self; 5]; 5], b: [&mut [u8]; 1]) {
+    fn store_block<const RATE: usize>(a: &[Aligned<A4, [Self; 5]>; 5], b: [&mut [u8]; 1]) {
         store_block::<RATE>(a, b)
     }
     #[inline(always)]
-    fn load_block_full<const RATE: usize>(a: &mut [[Self; 5]; 5], b: [[u8; 200]; 1]) {
+    fn load_block_full<const RATE: usize>(a: &mut [Aligned<A4, [Self; 5]>; 5], b: [[u8; 200]; 1]) {
         load_block_full::<RATE>(a, b)
     }
     #[inline(always)]
-    fn store_block_full<const RATE: usize>(a: &[[Self; 5]; 5]) -> [[u8; 200]; 1] {
+    fn store_block_full<const RATE: usize>(a: &[Aligned<A4, [Self; 5]>; 5]) -> [[u8; 200]; 1] {
         store_block_full::<RATE>(a)
     }
     #[inline(always)]
@@ -131,7 +133,7 @@ impl KeccakItem<1> for u64 {
 
     /// `out` has the exact size we want here. It must be less than or equal to `RATE`.
     #[inline(always)]
-    fn store<const RATE: usize>(state: &[[Self; 5]; 5], out: [&mut [u8]; 1]) {
+    fn store<const RATE: usize>(state: &[Aligned<A4, [Self; 5]>; 5], out: [&mut [u8]; 1]) {
         debug_assert!(out.len() <= RATE / 8, "{} > {}", out.len(), RATE);
 
         let num_full_blocks = out[0].len() / 8;

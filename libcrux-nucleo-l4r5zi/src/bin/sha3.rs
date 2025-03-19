@@ -1,6 +1,7 @@
 #![no_main]
 #![no_std]
 
+use aligned::{Aligned, A4};
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
 extern crate alloc;
@@ -25,7 +26,7 @@ fn main() -> ! {
     // let in_h = [1u8; 128];
     // let in_g = [1u8; 128];
     
-    let in_34 = [1u8; 34];
+    let in_34: Aligned<A4, [u8;34]> = Aligned([1u8; 34]);
 
     // let mut out_g = [0u8; 64];
     // let mut out_h = [0u8; 32];
@@ -38,8 +39,8 @@ fn main() -> ! {
 
     // let mut out_prf_4_eta1_eta2 = [0u8; 2 * 64 * 4];
     
-    let mut out_block = [0u8; 168];
-    let mut out_three_blocks = [0u8; 168 * 3];
+    let mut out_block: Aligned<A4, [u8; 168]> = Aligned([0u8; 168]);
+    let mut out_three_blocks: Aligned<A4, [u8; 168 * 3]> = Aligned([0u8; 168 * 3]);
 
     for _i in 0..3 {
         // let start = CycleCounter::start_measurement();

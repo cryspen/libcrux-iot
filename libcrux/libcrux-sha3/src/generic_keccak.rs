@@ -3,12 +3,14 @@
 
 use core::ops::Index;
 
+use aligned::{Aligned, A4};
+
 use crate::traits::*;
 
 #[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy)]
 pub(crate) struct KeccakState<const N: usize, T: KeccakStateItem<N>> {
-    st: [[T; 5]; 5],
+    st: [Aligned<A4, [T; 5]>; 5],
 }
 
 impl<const N: usize, T: KeccakStateItem<N>> Index<usize> for KeccakState<N, T> {
@@ -24,7 +26,7 @@ impl<const N: usize, T: KeccakStateItem<N>> KeccakState<N, T> {
     #[inline(always)]
     pub(crate) fn new() -> Self {
         Self {
-            st: [[T::zero(); 5]; 5],
+            st: [Aligned([T::zero(); 5]); 5],
         }
     }
 }

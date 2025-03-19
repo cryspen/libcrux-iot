@@ -6,6 +6,8 @@ pub trait KeccakStateItem<const N: usize>: internal::KeccakItem<N> {}
 impl<const N: usize, T: internal::KeccakItem<N>> KeccakStateItem<N> for T {}
 
 pub(crate) mod internal {
+    use aligned::{Aligned, A4};
+
     /// A trait for multiplexing implementations.
     pub trait KeccakItem<const N: usize>: Clone + Copy {
         fn zero() -> Self;
@@ -15,12 +17,12 @@ pub(crate) mod internal {
         fn and_not_xor(a: Self, b: Self, c: Self) -> Self;
         fn xor_constant(a: Self, c: u64) -> Self;
         fn xor(a: Self, b: Self) -> Self;
-        fn load_block<const RATE: usize>(a: &mut [[Self; 5]; 5], b: [&[u8]; N]);
-        fn store_block<const RATE: usize>(a: &[[Self; 5]; 5], b: [&mut [u8]; N]);
-        fn load_block_full<const RATE: usize>(a: &mut [[Self; 5]; 5], b: [[u8; 200]; N]);
-        fn store_block_full<const RATE: usize>(a: &[[Self; 5]; 5]) -> [[u8; 200]; N];
+        fn load_block<const RATE: usize>(a: &mut [Aligned<A4, [Self; 5]>; 5], b: [&[u8]; N]);
+        fn store_block<const RATE: usize>(a: &[Aligned<A4, [Self; 5]>; 5], b: [&mut [u8]; N]);
+        fn load_block_full<const RATE: usize>(a: &mut [Aligned<A4, [Self; 5]>; 5], b: [[u8; 200]; N]);
+        fn store_block_full<const RATE: usize>(a: &[Aligned<A4, [Self; 5]>; 5]) -> [[u8; 200]; N];
         fn slice_n(a: [&[u8]; N], start: usize, len: usize) -> [&[u8]; N];
         fn split_at_mut_n(a: [&mut [u8]; N], mid: usize) -> ([&mut [u8]; N], [&mut [u8]; N]);
-        fn store<const RATE: usize>(state: &[[Self; 5]; 5], out: [&mut [u8]; N]);
+        fn store<const RATE: usize>(state: &[Aligned<A4,[Self; 5]>; 5], out: [&mut [u8]; N]);
     }
 }

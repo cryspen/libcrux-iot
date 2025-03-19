@@ -258,6 +258,7 @@ pub mod portable {
 
     /// An incremental API for SHAKE
     pub mod incremental {
+        use aligned::{Aligned, A4};
         use generic_keccak::{
             absorb_final, squeeze_first_block, squeeze_first_five_blocks,
             squeeze_first_three_blocks, squeeze_next_block, KeccakXofState,
@@ -351,7 +352,7 @@ pub mod portable {
 
         /// Absorb
         #[inline(never)]
-        pub fn shake128_absorb_final(s: &mut KeccakState, data0: &[u8]) {
+        pub fn shake128_absorb_final(s: &mut KeccakState, data0: &Aligned<A4,[u8]>) {
             absorb_final::<1, u64, 168, 0x1fu8>(&mut s.state, [data0]);
         }
 
