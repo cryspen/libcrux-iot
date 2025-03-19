@@ -3,9 +3,29 @@
 use crate::traits::internal::*;
 
 #[inline(always)]
-pub(crate) fn rotate_left<const LEFT: i32, const RIGHT: i32>(x: u64) -> u64 {
+fn to_split(a: u64) -> (u32, u32) {
+    ((a >> 32) as u32, a as u32)
+}
+
+#[inline(always)]
+fn from_split(a: (u32, u32)) -> u64 {
+    (a.0 as u64) << 32 | (a.1 as u64)
+}
+
+
+#[inline(always)]
+fn rotate_left<const LEFT: i32, const RIGHT: i32>(x: u64) -> u64 {
     debug_assert!(LEFT + RIGHT == 64);
-    (x << LEFT) | (x >> RIGHT)
+    let (x0, x1) = to_split(x);
+    let x = if LEFT == 1 {
+        (x1 << 1, x0)
+    } else if LEFT % 2 == 0 {
+        (x0 << LEFT % 32, x1 << LEFT % 32)
+    } else {
+        let tau = (LEFT - 1) / 2;
+        (x1 << (tau + 1) % 32, x0 << tau % 32)
+    };
+    from_split(x)
 }
 
 #[inline(always)]
@@ -37,11 +57,61 @@ fn _veorq_n_u64(a: u64, c: u64) -> u64 {
     a ^ c
 }
 
+/// Separate even and odd bits of `a`.
+///
+/// deinterleave(a) = a_even || a_odd
+#[inline(always)]
+fn deinterleave(a: u64) -> u64 {
+    let mut even_bits = a & 0x5555_5555_5555_5555;
+    even_bits = (even_bits ^ (even_bits >> 1)) & 0x3333_3333_3333_3333;
+    even_bits = (even_bits ^ (even_bits >> 2)) & 0x0f0f_0f0f_0f0f_0f0f;
+    even_bits = (even_bits ^ (even_bits >> 4)) & 0x00ff_00ff_00ff_00ff;
+    even_bits = (even_bits ^ (even_bits >> 8)) & 0x0000_ffff_0000_ffff;
+    even_bits = (even_bits ^ (even_bits >> 16)) & 0x0000_0000_ffff_ffff;
+
+    let mut odd_bits = (a >> 1) & 0x5555_5555_5555_5555;
+    odd_bits = (odd_bits ^ (odd_bits >> 1)) & 0x3333_3333_3333_3333;
+    odd_bits = (odd_bits ^ (odd_bits >> 2)) & 0x0f0f_0f0f_0f0f_0f0f;
+    odd_bits = (odd_bits ^ (odd_bits >> 4)) & 0x00ff_00ff_00ff_00ff;
+    odd_bits = (odd_bits ^ (odd_bits >> 8)) & 0x0000_ffff_0000_ffff;
+    odd_bits = (odd_bits ^ (odd_bits >> 16)) & 0x0000_0000_ffff_ffff;
+
+    from_split((even_bits as u32, odd_bits as u32))
+}
+
+/// Interleave bits from the top and bottom halves of `input`.
+#[inline(always)]
+fn interleave(input: u64) -> u64 {
+    let (even_bits, odd_bits) = to_split(input);
+    let mut even_spaced = even_bits as u64;
+    even_spaced = (even_spaced ^ (even_spaced << 16)) & 0x0000_ffff_0000_ffff;
+    even_spaced = (even_spaced ^ (even_spaced << 8)) & 0x00ff_00ff_00ff_00ff;
+    even_spaced = (even_spaced ^ (even_spaced << 4)) & 0x0f0f_0f0f_0f0f_0f0f;
+    even_spaced = (even_spaced ^ (even_spaced << 2)) & 0x3333_3333_3333_3333;
+    even_spaced = (even_spaced ^ (even_spaced << 1)) & 0x5555_5555_5555_5555;
+    
+
+    let mut odd_spaced = odd_bits as u64;                                   
+    odd_spaced = (odd_spaced ^ (odd_spaced << 16)) & 0x0000_ffff_0000_ffff;
+    odd_spaced = (odd_spaced ^ (odd_spaced << 8)) & 0x00ff_00ff_00ff_00ff;
+    odd_spaced = (odd_spaced ^ (odd_spaced << 4)) & 0x0f0f_0f0f_0f0f_0f0f;
+    odd_spaced = (odd_spaced ^ (odd_spaced << 2)) & 0x3333_3333_3333_3333;
+    odd_spaced = (odd_spaced ^ (odd_spaced << 1)) & 0x5555_5555_5555_5555;
+        
+    even_spaced | (odd_spaced << 1)
+}
+
 #[inline(always)]
 pub(crate) fn load_block<const RATE: usize>(s: &mut [[u64; 5]; 5], blocks: [&[u8]; 1]) {
     debug_assert!(RATE <= blocks[0].len() && RATE % 8 == 0);
+    let mut out = [0u64; RATE];
+
     for i in 0..RATE / 8 {
-        s[i / 5][i % 5] ^= u64::from_le_bytes(blocks[0][8 * i..8 * i + 8].try_into().unwrap());
+        out[i] = deinterleave(u64::from_le_bytes(blocks[0][8 * i..8 * i + 8].try_into().unwrap()));
+    }
+
+    for i in 0..RATE / 8 {
+        s[i / 5][i % 5] ^= out[i]
     }
 }
 
@@ -53,7 +123,7 @@ pub(crate) fn load_block_full<const RATE: usize>(s: &mut [[u64; 5]; 5], blocks: 
 #[inline(always)]
 pub(crate) fn store_block<const RATE: usize>(s: &[[u64; 5]; 5], out: [&mut [u8]; 1]) {
     for i in 0..RATE / 8 {
-        out[0][8 * i..8 * i + 8].copy_from_slice(&s[i / 5][i % 5].to_le_bytes());
+        out[0][8 * i..8 * i + 8].copy_from_slice(&interleave(s[i / 5][i % 5]).to_le_bytes());
     }
 }
 
@@ -138,11 +208,11 @@ impl KeccakItem<1> for u64 {
         let last_block_len = out[0].len() % 8;
 
         for i in 0..num_full_blocks {
-            out[0][i * 8..i * 8 + 8].copy_from_slice(&state[i / 5][i % 5].to_le_bytes());
+            out[0][i * 8..i * 8 + 8].copy_from_slice(&interleave(state[i / 5][i % 5]).to_le_bytes());
         }
         if last_block_len != 0 {
             out[0][num_full_blocks * 8..num_full_blocks * 8 + last_block_len].copy_from_slice(
-                &state[num_full_blocks / 5][num_full_blocks % 5].to_le_bytes()[0..last_block_len],
+                &interleave(state[num_full_blocks / 5][num_full_blocks % 5]).to_le_bytes()[0..last_block_len],
             );
         }
     }
