@@ -227,7 +227,7 @@ pub mod portable {
     }
 
     /// A portable SHA3 256 implementation.
-    #[inline(always)]
+    #[inline(never)]
     pub fn sha256(digest: &mut [u8], data: &[u8]) {
         keccakx1::<136, 0x06u8>([data], [digest]);
     }
@@ -239,7 +239,7 @@ pub mod portable {
     }
 
     /// A portable SHA3 512 implementation.
-    #[inline(always)]
+    #[inline(never)]
     pub fn sha512(digest: &mut [u8], data: &[u8]) {
         keccakx1::<72, 0x06u8>([data], [digest]);
     }
@@ -342,7 +342,7 @@ pub mod portable {
         }
 
         /// Create a new SHAKE-128 state object.
-        #[inline(always)]
+        #[inline(never)]
         pub fn shake128_init() -> KeccakState {
             KeccakState {
                 state: GenericState::<1, u64>::new(),
@@ -350,13 +350,13 @@ pub mod portable {
         }
 
         /// Absorb
-        #[inline(always)]
+        #[inline(never)]
         pub fn shake128_absorb_final(s: &mut KeccakState, data0: &[u8]) {
             absorb_final::<1, u64, 168, 0x1fu8>(&mut s.state, [data0]);
         }
 
         /// Squeeze three blocks
-        #[inline(always)]
+        #[inline(never)]
         pub fn shake128_squeeze_first_three_blocks(s: &mut KeccakState, out0: &mut [u8]) {
             squeeze_first_three_blocks::<1, u64, 168>(&mut s.state, [out0])
         }
@@ -368,7 +368,7 @@ pub mod portable {
         }
 
         /// Squeeze another block
-        #[inline(always)]
+        #[inline(never)]
         pub fn shake128_squeeze_next_block(s: &mut KeccakState, out0: &mut [u8]) {
             squeeze_next_block::<1, u64, 168>(&mut s.state, [out0])
         }

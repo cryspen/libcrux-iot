@@ -27,6 +27,7 @@ libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem" }
 libcrux-sha3 = { path = "../libcrux/libcrux-sha3" }
 embassy-stm32 = { version = "0.1.0", features = [ "stm32l4r5zi", "defmt", ] }
 embedded-alloc = "0.6.0"
+aligned = "0.4.2"
 
 [dev-dependencies]
 defmt-test = "0.3"
