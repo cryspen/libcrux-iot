@@ -37,17 +37,63 @@ fn _veorq_n_u64(a: u64, c: u64) -> u64 {
 pub(crate) fn load_block<const RATE: usize>(state: &mut [u64; 25], blocks: &[u8], start: usize) {
     debug_assert!(RATE <= blocks.len() && RATE % 8 == 0);
     let mut state_flat = [0u64; 25];
-    for i in 0..RATE / 8 {
-        let offset = start + 8 * i;
-        state_flat[i] = u64::from_le_bytes(blocks[offset..offset + 8].try_into().unwrap());
+
+    let mut offset_a: usize;
+    let mut offset_b: usize;
+    let mut offset_c: usize;
+    let mut offset_d: usize;
+    let mut offset_e: usize;
+    let mut offset_f: usize;
+
+    /*
+     * What a good factor is here depends on several things:
+     * - we can't make it too high, because we don't want to waste registers
+     * - we want to squeeze in the most consecutive loads we can get, so they pipeline nicely
+     * - it's fine if we do something in between the stores - it's not pipelined, but we have to to
+     *   the stores at some point.
+     * - for some reason this gets slower if we make it longer. My guess is that our register
+     *   budget is very limited, because the surrounding code keeps some state in there, and if we
+     *   overspend, then some other part of the code has to spill.
+     * */
+    const UNROLL_FACTOR: usize = 6;
+
+    for i in 0..RATE / 8 / UNROLL_FACTOR {
+        let i = UNROLL_FACTOR * i;
+        offset_a = start + 8 * (i + 0);
+        offset_b = start + 8 * (i + 1);
+        offset_c = start + 8 * (i + 2);
+        offset_d = start + 8 * (i + 3);
+        offset_e = start + 8 * (i + 4);
+        offset_f = start + 8 * (i + 5);
+
+        let v_a = blocks[offset_a..offset_a + 8].try_into().unwrap();
+        let v_b = blocks[offset_b..offset_b + 8].try_into().unwrap();
+        let v_c = blocks[offset_c..offset_c + 8].try_into().unwrap();
+        let v_d = blocks[offset_d..offset_d + 8].try_into().unwrap();
+        let v_e = blocks[offset_e..offset_e + 8].try_into().unwrap();
+        let v_f = blocks[offset_f..offset_f + 8].try_into().unwrap();
+
+        state_flat[i + 0] = u64::from_le_bytes(v_a);
+        state_flat[i + 1] = u64::from_le_bytes(v_b);
+        state_flat[i + 2] = u64::from_le_bytes(v_c);
+        state_flat[i + 3] = u64::from_le_bytes(v_d);
+        state_flat[i + 4] = u64::from_le_bytes(v_e);
+        state_flat[i + 5] = u64::from_le_bytes(v_f);
     }
+
+    // load remaining blocks
+    for i in RATE / 8 / UNROLL_FACTOR..RATE / 8 {
+        let offset = start + 8 * i;
+        let v = blocks[offset..offset + 8].try_into().unwrap();
+        state_flat[i] = u64::from_le_bytes(v);
+    }
+
+    // I tried unrolling and pipelining this, but that made things worse
     for i in 0..RATE / 8 {
-        set_ij(
-            state,
-            i / 5,
-            i % 5,
-            get_ij(state, i / 5, i % 5) ^ state_flat[i],
-        );
+        {
+            let offset = 5 * (i % 5) + (i / 5);
+            state[offset] ^= state_flat[i];
+        };
     }
 }
 
@@ -62,6 +108,8 @@ pub(crate) fn load_block_full<const RATE: usize>(
 
 #[inline(always)]
 pub(crate) fn store_block<const RATE: usize>(s: &[u64; 25], out: &mut [u8]) {
+    // I tried the unroll-andgroup technhique here, didn't do anything. Tried groups of 5, since
+    // that lets us get rid of the divisions as well
     for i in 0..RATE / 8 {
         out[8 * i..8 * i + 8].copy_from_slice(&get_ij(s, i / 5, i % 5).to_le_bytes());
     }
