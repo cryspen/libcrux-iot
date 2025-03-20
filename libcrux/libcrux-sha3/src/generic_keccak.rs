@@ -348,24 +348,37 @@ pub(crate) fn pi<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T
     s.set(4, 4, old.get(4, 1));
 }
 
+fn collect_arr<const N: usize, T: KeccakStateItem<N>>(mut iter: impl Iterator<Item = T>) -> [T; 5] {
+    debug_assert_eq!(iter.size_hint().0, 5);
+    debug_assert_eq!(iter.size_hint().1, Some(5));
+
+    let mut arr = [T::zero(); 5];
+
+    arr[0] = iter.next().unwrap();
+    arr[1] = iter.next().unwrap();
+    arr[2] = iter.next().unwrap();
+    arr[3] = iter.next().unwrap();
+    arr[4] = iter.next().unwrap();
+
+    arr
+}
+
 #[inline(always)]
 pub(crate) fn chi<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
     let old = s.clone();
 
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..5 {
+    (0..5).for_each(|i| {
+        let row = collect_arr((0..5).map(|j| {
+            let idx1 = (j + 2) % 5;
+            let idx2 = (j + 1) % 5;
+            T::and_not_xor(s.get(i, j), old.get(i, idx1), old.get(i, idx2))
+        }));
+
+        #[allow(clippy::needless_range_loop)]
         for j in 0..5 {
-            s.set(
-                i,
-                j,
-                T::and_not_xor(
-                    s.get(i, j),
-                    old.get(i, (j + 2) % 5),
-                    old.get(i, (j + 1) % 5),
-                ),
-            );
+            s.set(i, j, row[j]);
         }
-    }
+    });
 }
 
 const ROUNDCONSTANTS: [u64; 24] = [
