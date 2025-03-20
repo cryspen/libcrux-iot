@@ -25,17 +25,21 @@ fn main() -> ! {
         peripherals.DWT.enable_cycle_counter();
     }
     let in1 = [1u8; 128];
-    let in2 = [2u8; 1024];
-    let in3 = [3u8; 1024 * 20];
+    let in2 = [1u8; 256];
+    let in3 = [2u8; 1024];
+    let in4 = [3u8; 1024 * 20];
 
     let start = CycleCounter::start_measurement();
     let _d1 = black_box(libcrux_sha3::sha256(&black_box(in1)));
     CycleCounter::end_measurement("128 bytes", start);
     let start = CycleCounter::start_measurement();
     let _d2 = black_box(libcrux_sha3::sha256(&black_box(in2)));
-    CycleCounter::end_measurement("1 KB", start);
+    CycleCounter::end_measurement("256 bytes", start);
     let start = CycleCounter::start_measurement();
     let _d3 = black_box(libcrux_sha3::sha256(&black_box(in3)));
+    CycleCounter::end_measurement("1 KB", start);
+    let start = CycleCounter::start_measurement();
+    let _d4 = black_box(libcrux_sha3::sha256(&black_box(in4)));
     CycleCounter::end_measurement("20 KB", start);
 
     board::exit()
