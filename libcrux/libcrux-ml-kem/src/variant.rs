@@ -53,7 +53,7 @@ impl Variant for Kyber {
     }
 
     #[inline(always)]
-    fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &mut [u8], out: &mut [u8]) {
+    fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &[u8], out: &mut [u8]) {
         Hasher::H(&randomness, out)
     }
 
@@ -61,7 +61,7 @@ impl Variant for Kyber {
     fn cpa_keygen_seed<const K: usize, Hasher: Hash>(
         key_generation_seed: &[u8],
         out: &mut [u8],
-    ) -> [u8; 64] {
+    ) {
         Hasher::G(key_generation_seed, out)
     }
 }

@@ -3,7 +3,7 @@ use super::{constants::*, ind_cca::*, types::*, *};
 
 const RANK: usize = 2;
 const RANK_SQUARED: usize = RANK * RANK;
-#[cfg(any(feature = "incremental", eurydice))]
+#[cfg(eurydice)]
 const RANKED_BYTES_PER_RING_ELEMENT: usize = RANK * BITS_PER_RING_ELEMENT / 8;
 const T_AS_NTT_ENCODED_SIZE: usize =
     (RANK * COEFFICIENTS_IN_RING_ELEMENT * BITS_PER_COEFFICIENT) / 8;
@@ -164,6 +164,7 @@ macro_rules! instantiate {
             ) -> (MlKem512Ciphertext, MlKemSharedSecret) {
                     p::kyber_encapsulate::<
                         RANK,
+                        RANK_SQUARED,
                         CPA_PKE_CIPHERTEXT_SIZE,
                         CPA_PKE_PUBLIC_KEY_SIZE,
                         T_AS_NTT_ENCODED_SIZE,
@@ -375,8 +376,8 @@ RANK_SQUARED,
 
 
                         p::unpacked::encapsulate::<
-                    RANK,
-                    RANK_SQUARED,
+                            RANK,
+                            RANK_SQUARED,
                             CPA_PKE_CIPHERTEXT_SIZE,
                             CPA_PKE_PUBLIC_KEY_SIZE,
                             T_AS_NTT_ENCODED_SIZE,
@@ -435,10 +436,6 @@ RANK_SQUARED,
 // Instantiations
 
 instantiate! {portable, ind_cca::instantiations::portable, vector::portable::PortableVector, "Portable ML-KEM 512"}
-// #[cfg(feature = "simd256")]
-// instantiate! {avx2, ind_cca::instantiations::avx2, vector::SIMD256Vector, "AVX2 Optimised ML-KEM 512"}
-#[cfg(feature = "simd128")]
-instantiate! {neon, ind_cca::instantiations::neon, vector::SIMD128Vector, "Neon Optimised ML-KEM 512"}
 
 /// Validate a public key.
 ///
@@ -618,7 +615,7 @@ pub(crate) mod kyber {
     pub fn generate_key_pair(randomness: [u8; KEY_GENERATION_SEED_SIZE]) -> MlKem512KeyPair {
         multiplexing::kyber_generate_keypair::<
             RANK,
-            CPA_PKE_RANK_SQUARED,
+            RANK_SQUARED,
             CPA_PKE_SECRET_KEY_SIZE,
             SECRET_KEY_SIZE,
             CPA_PKE_PUBLIC_KEY_SIZE,
@@ -639,6 +636,7 @@ pub(crate) mod kyber {
     ) -> (MlKem512Ciphertext, MlKemSharedSecret) {
         multiplexing::kyber_encapsulate::<
             RANK,
+            RANK_SQUARED,
             CPA_PKE_CIPHERTEXT_SIZE,
             CPA_PKE_PUBLIC_KEY_SIZE,
             T_AS_NTT_ENCODED_SIZE,
@@ -687,14 +685,4 @@ pub(crate) mod kyber {
             IMPLICIT_REJECTION_HASH_INPUT_SIZE,
         >(private_key, ciphertext)
     }
-}
-
-/// Incremental API.
-///
-/// **NOTE:** This is a non-standard API. Use with caution!
-#[cfg(all(not(eurydice), feature = "incremental"))]
-pub mod incremental {
-    use crate::mlkem::impl_incr_key_size;
-
-    impl_incr_key_size!();
 }

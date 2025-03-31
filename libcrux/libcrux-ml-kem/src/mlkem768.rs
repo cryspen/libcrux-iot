@@ -4,7 +4,7 @@ use super::{constants::*, ind_cca::*, types::*, *};
 
 const RANK: usize = 3;
 const RANK_SQUARED: usize = RANK * RANK;
-#[cfg(any(feature = "incremental", eurydice))]
+#[cfg( eurydice)]
 const RANKED_BYTES_PER_RING_ELEMENT: usize = RANK * BITS_PER_RING_ELEMENT / 8;
 const T_AS_NTT_ENCODED_SIZE: usize =
     (RANK * COEFFICIENTS_IN_RING_ELEMENT * BITS_PER_COEFFICIENT) / 8;
@@ -96,7 +96,7 @@ macro_rules! instantiate {
             ) -> MlKem768KeyPair {
                 p::generate_keypair::<
                     RANK,
-RANK_SQUARED,
+                    RANK_SQUARED,
                     CPA_PKE_SECRET_KEY_SIZE,
                     SECRET_KEY_SIZE,
                     CPA_PKE_PUBLIC_KEY_SIZE,
@@ -114,7 +114,7 @@ RANK_SQUARED,
             ) -> MlKem768KeyPair {
                 p::kyber_generate_keypair::<
                     RANK,
-RANK_SQUARED,
+                    RANK_SQUARED,
                     CPA_PKE_SECRET_KEY_SIZE,
                     SECRET_KEY_SIZE,
                     CPA_PKE_PUBLIC_KEY_SIZE,
@@ -135,7 +135,7 @@ RANK_SQUARED,
             ) -> (MlKem768Ciphertext, MlKemSharedSecret) {
                 p::encapsulate::<
                     RANK,
-RANK_SQUARED,
+                    RANK_SQUARED,
                     CPA_PKE_CIPHERTEXT_SIZE,
                     CPA_PKE_PUBLIC_KEY_SIZE,
                     T_AS_NTT_ENCODED_SIZE,
@@ -166,7 +166,7 @@ RANK_SQUARED,
             ) -> (MlKem768Ciphertext, MlKemSharedSecret) {
                 p::kyber_encapsulate::<
                     RANK,
-RANK_SQUARED,
+                    RANK_SQUARED,
                     CPA_PKE_CIPHERTEXT_SIZE,
                     CPA_PKE_PUBLIC_KEY_SIZE,
                     T_AS_NTT_ENCODED_SIZE,
@@ -194,7 +194,7 @@ RANK_SQUARED,
             ) -> MlKemSharedSecret {
                 p::decapsulate::<
                     RANK,
-RANK_SQUARED,
+                    RANK_SQUARED,
                     SECRET_KEY_SIZE,
                     CPA_PKE_SECRET_KEY_SIZE,
                     CPA_PKE_PUBLIC_KEY_SIZE,
@@ -227,7 +227,7 @@ RANK_SQUARED,
             ) -> MlKemSharedSecret {
                 p::kyber_decapsulate::<
                     RANK,
-RANK_SQUARED,
+                    RANK_SQUARED,
                     SECRET_KEY_SIZE,
                     CPA_PKE_SECRET_KEY_SIZE,
                     CPA_PKE_PUBLIC_KEY_SIZE,
@@ -341,7 +341,7 @@ RANK_SQUARED,
                 ) {
                     p::unpacked::generate_keypair::<
                         RANK,
-RANK_SQUARED,
+                        RANK_SQUARED,
                         CPA_PKE_SECRET_KEY_SIZE,
                         SECRET_KEY_SIZE,
                         CPA_PKE_PUBLIC_KEY_SIZE,
@@ -375,7 +375,7 @@ RANK_SQUARED,
                 ) -> (MlKem768Ciphertext, MlKemSharedSecret) {
                     p::unpacked::encapsulate::<
                         RANK,
-RANK_SQUARED,
+                        RANK_SQUARED,
                         CPA_PKE_CIPHERTEXT_SIZE,
                         CPA_PKE_PUBLIC_KEY_SIZE,
                         T_AS_NTT_ENCODED_SIZE,
@@ -404,7 +404,7 @@ RANK_SQUARED,
                 ) -> MlKemSharedSecret {
                     p::unpacked::decapsulate::<
                         RANK,
-RANK_SQUARED,
+                        RANK_SQUARED,
                         SECRET_KEY_SIZE,
                         CPA_PKE_SECRET_KEY_SIZE,
                         CPA_PKE_PUBLIC_KEY_SIZE,
@@ -432,10 +432,6 @@ RANK_SQUARED,
 // Instantiations
 
 instantiate! {portable, ind_cca::instantiations::portable, "Portable ML-KEM 768"}
-// #[cfg(feature = "simd256")]
-// instantiate! {avx2, ind_cca::instantiations::avx2, "AVX2 Optimised ML-KEM 768"}
-#[cfg(feature = "simd128")]
-instantiate! {neon, ind_cca::instantiations::neon, "Neon Optimised ML-KEM 768"}
 
 /// Validate a public key.
 ///
@@ -684,93 +680,6 @@ pub(crate) mod kyber {
             IMPLICIT_REJECTION_HASH_INPUT_SIZE,
         >(private_key, ciphertext)
     }
-}
-
-/// # Incremental API.
-///
-/// **NOTE:** This is a non-standard API. Use with caution!
-///
-/// ## Serialized keys
-/// ```
-/// #[cfg(feature = "rand")]
-/// {
-/// use libcrux_ml_kem::mlkem768::incremental::*;
-///
-/// // USE ONLY CRYPTOGRAPHICALLY SECURE RANDOMNESS OR `generate`
-/// let randomness = [0x13; 64];
-/// let key_pair = KeyPairBytes::from_seed(randomness);
-///
-/// // Get pk1 and pk2 to send to the other party.
-/// let pk1 = key_pair.pk1();
-/// let pk2 = key_pair.pk2();
-///
-/// // On the receiver, encapsulate to the public keys.
-/// // Check the public key for consistency.
-/// assert!(validate_pk_bytes(pk1, pk2).is_ok());
-///
-/// let mut encaps_state = [0u8; encaps_state_len()];
-/// let mut encaps_shared_secret = [0u8; shared_secret_size()];
-/// let randomness = [0xAF; 32];
-/// let ct1 = encapsulate1(
-///     pk1,
-///     randomness,
-///     &mut encaps_state,
-///     &mut encaps_shared_secret,
-/// )
-/// .unwrap();
-///
-/// let ct2 = encapsulate2(&encaps_state, &pk2);
-///
-/// // Decapsulate the shared secret after receiving ct1 and ct2.
-/// let shared_secret = decapsulate_incremental_key(key_pair.as_ref(), &ct1, &ct2).unwrap();
-///
-/// assert_eq!(shared_secret, encaps_shared_secret);
-/// }
-/// ```
-///
-/// ## Compressed keys and randomness
-/// ```
-/// #[cfg(feature = "rand")]
-/// {
-/// use libcrux_ml_kem::mlkem768::incremental::*;
-///
-/// // Use a n RNG that is safe to use for cryptography.
-/// // THIS ONE IS NOT!
-/// let mut rng = ::rand::rng();
-///
-/// let key_pair = KeyPairCompressedBytes::generate(&mut rng);
-///
-/// // Get pk1 and pk2 to send to the other party.
-/// let pk1 = key_pair.pk1();
-/// let pk2 = key_pair.pk2();
-///
-/// // On the receiver, encapsulate to the public keys.
-/// // Check the public key for consistency.
-/// assert!(validate_pk_bytes(pk1, pk2).is_ok());
-///
-/// let mut encaps_state = [0u8; encaps_state_len()];
-/// let mut encaps_shared_secret = [0u8; shared_secret_size()];
-/// let ct1 = rand::encapsulate1(
-///     pk1,
-///     &mut rng,
-///     &mut encaps_state,
-///     &mut encaps_shared_secret,
-/// )
-/// .unwrap();
-///
-/// let ct2 = encapsulate2(&encaps_state, pk2);
-///
-/// // Decapsulate the shared secret after receiving ct1 and ct2.
-/// let shared_secret = decapsulate_compressed_key(key_pair.sk(), &ct1, &ct2);
-///
-/// assert_eq!(shared_secret, encaps_shared_secret);
-/// }
-/// ```
-#[cfg(all(not(eurydice), feature = "incremental"))]
-pub mod incremental {
-    use crate::mlkem::impl_incr_key_size;
-
-    impl_incr_key_size!();
 }
 
 #[cfg(test)]

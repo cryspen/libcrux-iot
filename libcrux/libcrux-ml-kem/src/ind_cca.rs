@@ -37,10 +37,6 @@ pub(crate) mod multiplexing;
 /// To use these, runtime checks must be performed before calling them.
 pub(crate) mod instantiations;
 
-/// This module implements an incremental API for ML-KEM.
-#[cfg(not(eurydice))]
-pub(crate) mod incremental;
-
 /// Serialize the secret key.
 
 #[inline(always)]

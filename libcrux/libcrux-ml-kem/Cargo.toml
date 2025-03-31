@@ -27,8 +27,6 @@ libcrux-platform = { version = "0.0.2-beta.2", path = "../libcrux-platform" }
 libcrux-sha3 = { version = "0.0.2-beta.2", path = "../libcrux-sha3" }
 libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" }
 hax-lib = { version = "0.2.0", git = "https://github.com/hacspec/hax/" }
-cortex-m = "0.7.7" # For reporting cycle counts
-defmt = "0.3"
 
 # This is only required for verification.
 # The hax config is set by the hax toolchain.
@@ -39,12 +37,6 @@ hax-lib = { version = "0.2.0", git = "https://github.com/hacspec/hax/" }
 # By default all variants and std are enabled.
 default = ["mlkem512", "mlkem768", "mlkem1024"]
 
-# Hardware features can be force enabled.
-# It is not recommended to use these. This crate performs CPU feature detection
-# and enables the features when they are available.
-simd128 = ["libcrux-sha3/simd128", "libcrux-intrinsics/simd128"]
-simd256 = ["libcrux-sha3/simd256", "libcrux-intrinsics/simd256"]
-
 # Features for the different key sizes of ML-KEM
 mlkem512 = []
 mlkem768 = []
@@ -52,9 +44,6 @@ mlkem1024 = []
 
 # Enable Round 3 Kyber in addition to ML-KEM
 kyber = []
-
-# Code that is not yet verified
-pre-verification = []
 
 # APIs that sample their own randomness
 rand = ["dep:rand"]

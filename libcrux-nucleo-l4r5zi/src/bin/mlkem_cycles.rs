@@ -1,3 +1,8 @@
+//! ML-KEM Operations driver
+//!
+//! This binary just runs the ML-KEM top-level operations, which
+//! should be instrumented for cycle measurement.
+
 #![no_main]
 #![no_std]
 
@@ -14,9 +19,6 @@ static HEAP: Heap = Heap::empty();
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    // Init rtt-target defmt support
-    // rtt_target::rtt_init_defmt!();
-    
     // Initialize cycle counter
     {
         use cortex_m::peripheral::Peripherals;

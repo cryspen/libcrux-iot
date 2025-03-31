@@ -54,15 +54,15 @@ pub(crate) struct PolynomialRingElement<Vector: Operations> {
     pub(crate) coefficients: [Vector; VECTORS_IN_RING_ELEMENT],
 }
 
-#[allow(non_snake_case)]
-#[inline(always)]
-fn ZERO<Vector: Operations>() -> PolynomialRingElement<Vector> {
-    PolynomialRingElement {
-        // https://github.com/hacspec/hax/issues/27
-        // FIXME:  The THIR body of item DefId(0:415 ~ libcrux_ml_kem[9000]::polynomial::{impl#0}::ZERO::{constant#0}) was stolen.
-        coefficients: [Vector::ZERO(); 16],
-    }
-}
+// #[allow(non_snake_case)]
+// #[inline(always)]
+// pub(crate) fn ZERO<Vector: Operations>() -> PolynomialRingElement<Vector> {
+//     PolynomialRingElement {
+//         // https://github.com/hacspec/hax/issues/27
+//         // FIXME:  The THIR body of item DefId(0:415 ~ libcrux_ml_kem[9000]::polynomial::{impl#0}::ZERO::{constant#0}) was stolen.
+//         coefficients: [Vector::ZERO(); 16],
+//     }
+// }
 
 #[inline(always)]
 #[hax_lib::requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
@@ -409,31 +409,6 @@ mod tests {
 
         let mut re_decoded = RingElement::ZERO();
         RingElement::from_bytes(&bytes, &mut re_decoded);
-
-        // Compare
-        let mut i16s = [0; RingElement::num_bytes() / 2];
-        re.to_i16_array(&mut i16s);
-
-        let mut i16s2 = [0; RingElement::num_bytes() / 2];
-        re_decoded.to_i16_array(&mut i16s2);
-
-        assert_eq!(i16s, i16s2);
-    }
-
-    #[cfg(feature = "simd128")]
-    #[test]
-    fn encoding_neon() {
-        use crate::vector::{Operations, SIMD128Vector};
-
-        type RingElement = PolynomialRingElement<SIMD128Vector>;
-        let mut re = RingElement::ZERO();
-        re.coefficients[0] = SIMD128Vector::from_i16_array(&[0xAB; 32]);
-        re.coefficients[15] = SIMD128Vector::from_i16_array(&[0xCD; 32]);
-
-        let mut bytes = [0u8; RingElement::num_bytes()];
-        re.to_bytes(&mut bytes);
-
-        let re_decoded = RingElement::from_bytes(&bytes);
 
         // Compare
         let mut i16s = [0; RingElement::num_bytes() / 2];
