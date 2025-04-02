@@ -28,6 +28,18 @@ fn create_bindings(_: &Path) {}
 // This triggers the mupq build system.
 fn build() {
     if !std::process::Command::new("git")
+        .arg("submodule")
+        .arg("update")
+        .arg("--init")
+        .arg("--recursive")
+        .status()
+        .expect("could not run git")
+        .success()
+    {
+        panic!("git could not update submodules.")
+    }
+    
+    if !std::process::Command::new("git")
         .arg("-C")
         .arg("pqm4")
         .arg("checkout")
