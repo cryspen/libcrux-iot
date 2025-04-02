@@ -256,9 +256,34 @@ pub mod portable {
         keccakx1::<136, 0x1fu8>([data], [digest]);
     }
 
-    /// perform the Keccak-1600 round function on the provided state.
+    /// Evaluate the Keccak-1600 round function on the provided state.
+    #[inline(always)]
     pub fn keccak1600(s: &mut KeccakState) {
         generic_keccak::keccakf1600(&mut s.state);
+    }
+
+    /// Evaluate the theta and rho functions on the provided state.
+    #[inline(always)]
+    pub fn theta_rho(s: &mut KeccakState) {
+        generic_keccak::theta_rho(&mut s.state);
+    }
+
+    /// Evaluate the pi function on the provided state.
+    #[inline(always)]
+    pub fn pi(s: &mut KeccakState) {
+        generic_keccak::pi(&mut s.state);
+    }
+
+    /// Evaluate the chi function on the provided state.
+    #[inline(always)]
+    pub fn chi(s: &mut KeccakState) {
+        generic_keccak::chi(&mut s.state);
+    }
+
+    /// Evaluate the iota function on the provided state.
+    #[inline(always)]
+    pub fn iota(s: &mut KeccakState, i: usize) {
+        generic_keccak::iota(&mut s.state, i);
     }
 
     /// An incremental API for SHAKE
