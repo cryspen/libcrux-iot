@@ -14,20 +14,20 @@ impl alloc::fmt::Display for TestError {
 
 #[test]
 fn run_tests_no_early_abort() {
-    fn test_pass<L: EventLogger>(_logger: &mut L, _state: &()) -> Result<(), TestError> {
+    fn test_pass<L: EventLogger>(_logger: &mut L, _state: &mut ()) -> Result<(), TestError> {
         Ok(())
     }
 
-    fn test_log<L: EventLogger>(logger: &mut L, _state: &()) -> Result<(), TestError> {
+    fn test_log<L: EventLogger>(logger: &mut L, _state: &mut ()) -> Result<(), TestError> {
         logger.log_user("this is a test log");
         Ok(())
     }
 
-    fn test_error<L: EventLogger>(_logger: &mut L, _state: &()) -> Result<(), TestError> {
+    fn test_error<L: EventLogger>(_logger: &mut L, _state: &mut ()) -> Result<(), TestError> {
         Err(TestError)
     }
 
-    fn test_skip<L: EventLogger>(_logger: &mut L, _state: &()) -> Result<(), TestError> {
+    fn test_skip<L: EventLogger>(_logger: &mut L, _state: &mut ()) -> Result<(), TestError> {
         unreachable!()
     }
 
@@ -51,7 +51,7 @@ fn run_tests_no_early_abort() {
     let mut logger = VecLogger::default();
 
     let err = test_suite
-        .run(&mut logger, &test_config, &())
+        .run(&mut logger, &test_config, &mut ())
         .expect_err("expected test suite failure");
 
     assert_eq!(err, ErrorReport::Combined(vec![TestError]));
