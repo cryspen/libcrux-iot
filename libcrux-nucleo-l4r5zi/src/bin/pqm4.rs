@@ -28,21 +28,27 @@ fn main() -> ! {
     let mut ss_enc = [0u8; libcrux_pqm4::KYBER_SSBYTES as usize];
     let mut ss_dec = [0u8; libcrux_pqm4::KYBER_SSBYTES as usize];
 
-    unsafe {
+    let start = board::CycleCounter::start_measurement();
+    core::hint::black_box(unsafe {
         libcrux_pqm4::crypto_kem_keypair(addr_of_mut!(pk[0]), addr_of_mut!(sk[0]));
-    }
+    });
+    board::CycleCounter::end_measurement("pqm4: Generate Key Pair ML-KEM 1024", start);
 
-    unsafe {
+    let start = board::CycleCounter::start_measurement();
+    core::hint::black_box(unsafe {
         libcrux_pqm4::crypto_kem_enc(
             addr_of_mut!(ct[0]),
             addr_of_mut!(ss_enc[0]),
             addr_of!(pk[0]),
         );
-    }
+    });
+    board::CycleCounter::end_measurement("pqm4: Encapsulate ML-KEM 1024", start);
 
-    unsafe {
+    let start = board::CycleCounter::start_measurement();
+    core::hint::black_box(unsafe {
         libcrux_pqm4::crypto_kem_dec(addr_of_mut!(ss_dec[0]), addr_of!(ct[0]), addr_of!(sk[0]));
-    }
+    });
+    board::CycleCounter::end_measurement("pqm4: Decapsulate ML-KEM 1024", start);
 
     assert_eq!(ss_enc, ss_dec);
 
