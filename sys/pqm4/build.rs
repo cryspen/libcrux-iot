@@ -30,15 +30,27 @@ fn build() {
     if !std::process::Command::new("git")
         .arg("-C")
         .arg("pqm4")
+        .arg("checkout")
+        .arg("pqm4-bindings")
+        .status()
+        .expect("could not run git")
+        .success()
+    {
+        panic!("git could not checkout submodule branch `origin/pqm4-bindings`.")
+    }
+
+    if !std::process::Command::new("git")
+        .arg("-C")
+        .arg("pqm4")
         .arg("submodule")
         .arg("update")
         .arg("--init")
         .arg("--recursive")
         .status()
-        .expect("could not git init/update submodules")
+        .expect("could not run git")
         .success()
     {
-        panic!("Could not run `make clean` before building shared libraries.")
+        panic!("git could not update submodules.")
     }
     
     if !std::process::Command::new("make")
