@@ -1,12 +1,11 @@
 #![no_main]
 #![no_std]
 
-use cortex_m::peripheral::Peripherals;
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
 extern crate alloc;
 
-use core::ptr::addr_of_mut;
+use core::ptr::{addr_of, addr_of_mut};
 use embedded_alloc::LlffHeap as Heap;
 
 #[global_allocator]
@@ -14,7 +13,6 @@ static HEAP: Heap = Heap::empty();
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    use libcrux_iot_testutil::*;
     // Initialize the allocator BEFORE you use it
     {
         use core::mem::MaybeUninit;
@@ -23,21 +21,30 @@ fn main() -> ! {
         unsafe { HEAP.init(addr_of_mut!(HEAP_MEM) as usize, HEAP_SIZE) }
     }
 
-    // set up the test config
-    let test_config = TestConfig {
-        platform: platform::CortexM,
-        core_freq: board::COREFREQ,
-        only_names: alloc::vec![],
-        early_abort: false,
-        benchmark_runs: 5,
-    };
+    let mut sk = [0u8; libcrux_pqm4::KYBER_SECRETKEYBYTES as usize];
+    let mut pk = [0u8; libcrux_pqm4::KYBER_PUBLICKEYBYTES as usize];
 
-    let mut sk = [0u8; 2000];
-    let mut pk = [0u8; 2000];
+    let mut ct = [0u8; libcrux_pqm4::KYBER_CIPHERTEXTBYTES as usize];
+    let mut ss_enc = [0u8; libcrux_pqm4::KYBER_SSBYTES as usize];
+    let mut ss_dec = [0u8; libcrux_pqm4::KYBER_SSBYTES as usize];
 
-    unsafe{
-        libcrux_pqm4::crypto_kem_keypair(&mut pk[0] as *mut u8, &mut sk[0] as *mut u8);
+    unsafe {
+        libcrux_pqm4::crypto_kem_keypair(addr_of_mut!(pk[0]), addr_of_mut!(sk[0]));
     }
+
+    unsafe {
+        libcrux_pqm4::crypto_kem_enc(
+            addr_of_mut!(ct[0]),
+            addr_of_mut!(ss_enc[0]),
+            addr_of!(pk[0]),
+        );
+    }
+
+    unsafe {
+        libcrux_pqm4::crypto_kem_dec(addr_of_mut!(ss_dec[0]), addr_of!(ct[0]), addr_of!(sk[0]));
+    }
+
+    assert_eq!(ss_enc, ss_dec);
 
     board::exit()
 }
