@@ -256,6 +256,11 @@ pub mod portable {
         keccakx1::<136, 0x1fu8>(&[data], [digest]);
     }
 
+    /// perform the Keccak-1600 round function on the provided state.
+    pub fn keccak1600(s: &mut KeccakState) {
+        generic_keccak::keccakf1600(&mut s.state);
+    }
+
     /// An incremental API for SHAKE
     pub mod incremental {
         use generic_keccak::{
