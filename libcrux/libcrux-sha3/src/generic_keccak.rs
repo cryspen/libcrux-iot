@@ -7,7 +7,7 @@ use crate::traits::*;
 
 #[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy)]
-pub(crate) struct KeccakState<const N: usize, T: KeccakStateItem<N>> {
+pub struct KeccakState<const N: usize, T: KeccakStateItem<N>> {
     st: [[T; 5]; 5],
 }
 
@@ -367,7 +367,7 @@ pub(crate) fn iota<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N,
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
+pub fn keccakf1600<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
     for i in 0..24 {
         theta_rho(s);
         pi(s);
