@@ -43,7 +43,7 @@ fn build() {
         .arg("-C")
         .arg("pqm4")
         .arg("checkout")
-        .arg("pqm4-bindings")
+        .arg("ca48f77f3a7e474c9e8076debf7ae3e23c1323e8")
         .status()
         .expect("could not run git")
         .success()
