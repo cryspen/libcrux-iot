@@ -50,20 +50,6 @@ fn build() {
     {
         panic!("git could not checkout submodule branch `origin/pqm4-bindings`.")
     }
-
-    if !std::process::Command::new("git")
-        .arg("-C")
-        .arg("pqm4")
-        .arg("submodule")
-        .arg("update")
-        .arg("--init")
-        .arg("--recursive")
-        .status()
-        .expect("could not run git")
-        .success()
-    {
-        panic!("git could not update submodules.")
-    }
     
     if !std::process::Command::new("make")
         .arg("-C")
