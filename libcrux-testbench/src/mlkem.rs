@@ -38,17 +38,17 @@ struct MlKemBenchState<'a> {
     ciphertext: MlKemCiphertext,
 }
 
-fn bench_keygen<L: EventLogger>(_l: &mut L, state: &MlKemBenchState) -> Result<(), String> {
+fn bench_keygen<L: EventLogger>(_l: &mut L, state: &mut MlKemBenchState) -> Result<(), String> {
     let _pair = mlkem::generate_key_pair(state.randomness_gen);
     Ok(())
 }
 
-fn bench_encaps<L: EventLogger>(_l: &mut L, state: &MlKemBenchState) -> Result<(), String> {
+fn bench_encaps<L: EventLogger>(_l: &mut L, state: &mut MlKemBenchState) -> Result<(), String> {
     let _ = mlkem::encapsulate(&state.public_key, state.randomness_encaps);
     Ok(())
 }
 
-fn bench_decaps<L: EventLogger>(_l: &mut L, state: &MlKemBenchState) -> Result<(), String> {
+fn bench_decaps<L: EventLogger>(_l: &mut L, state: &mut MlKemBenchState) -> Result<(), String> {
     let _ = mlkem::decapsulate(&state.private_key, &state.ciphertext);
 
     Ok(())
@@ -69,7 +69,7 @@ pub fn run_benchmarks<P: platform::Platform>(test_config: TestConfig<P>) {
     let pair = mlkem::generate_key_pair(randomness_gen);
     let randomness_encaps = [2u8; libcrux_ml_kem::ENCAPS_SEED_SIZE];
     let (ciphertext, _shared_secret) = mlkem::encapsulate(pair.public_key(), randomness_encaps);
-    let state = MlKemBenchState {
+    let mut state = MlKemBenchState {
         randomness_gen,
         public_key: pair.public_key(),
         private_key: pair.private_key(),
@@ -79,5 +79,5 @@ pub fn run_benchmarks<P: platform::Platform>(test_config: TestConfig<P>) {
 
     // run the benchmark
     let mut logger = DefmtInfoLogger;
-    let _ = test_suite.benchmark(&mut logger, &test_config, &state);
+    let _ = test_suite.benchmark(&mut logger, &test_config, &mut state);
 }

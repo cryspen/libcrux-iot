@@ -32,12 +32,12 @@ struct MLDSABenchState {
     signature: MLDSASignature,
 }
 
-fn bench_keygen<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(), String> {
+fn bench_keygen<L: EventLogger>(_l: &mut L, state: &mut MLDSABenchState) -> Result<(), String> {
     let _pair = mldsa::generate_key_pair(state.randomness_gen);
     Ok(())
 }
 
-fn bench_sign<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(), String> {
+fn bench_sign<L: EventLogger>(_l: &mut L, state: &mut MLDSABenchState) -> Result<(), String> {
     let _signature = mldsa::sign(
         &state.keypair.signing_key,
         &state.message,
@@ -47,7 +47,7 @@ fn bench_sign<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(),
     Ok(())
 }
 
-fn bench_verify<L: EventLogger>(_l: &mut L, state: &MLDSABenchState) -> Result<(), String> {
+fn bench_verify<L: EventLogger>(_l: &mut L, state: &mut MLDSABenchState) -> Result<(), String> {
     let _ = mldsa::verify(
         &state.keypair.verification_key,
         &state.message,
@@ -75,7 +75,7 @@ pub fn run_benchmarks<P: platform::Platform>(test_config: TestConfig<P>) {
     let message = [5u8; 1024];
     let signature = mldsa::sign(&keypair.signing_key, &message, b"", signing_randomness).unwrap();
 
-    let state = MLDSABenchState {
+    let mut state = MLDSABenchState {
         randomness_gen,
         keypair,
         signing_randomness,
@@ -85,5 +85,5 @@ pub fn run_benchmarks<P: platform::Platform>(test_config: TestConfig<P>) {
 
     // run the benchmark
     let mut logger = DefmtInfoLogger;
-    let _ = test_suite.benchmark(&mut logger, &test_config, &state);
+    let _ = test_suite.benchmark(&mut logger, &test_config, &mut state);
 }
