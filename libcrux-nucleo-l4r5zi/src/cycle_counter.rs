@@ -22,6 +22,6 @@ impl CycleCounter {
     #[inline(never)]
     pub fn end_measurement(msg: &str, start: u32) {
         let diff = cortex_m::peripheral::DWT::cycle_count() - start;
-        defmt::println!("[END_MEASUREMENT {=str}] : + {=u32}", msg, diff);
+        defmt::println!("[CYCLE_MEASUREMENT {=str}] : + {=u32} cycles", msg, diff);
     }
 }
