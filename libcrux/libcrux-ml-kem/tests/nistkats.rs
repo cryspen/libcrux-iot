@@ -131,3 +131,64 @@ impl_nist_known_answer_tests!(
     1024,
     libcrux_ml_kem::kyber1024
 );
+
+// Testing multiplexing APIs
+
+macro_rules! impl_kats {
+    ($name:ident, $variant:literal, $parameter_set:literal, $module:path) => {
+        #[test]
+        fn $name() {
+            use $module::*;
+
+            let katfile_path = Path::new("tests")
+                .join("kats")
+            .join(format!("nistkats_{}_{}.json", $variant, $parameter_set));
+            let katfile = File::open(katfile_path).expect("Could not open KAT file.");
+            let reader = BufReader::new(katfile);
+
+            let nist_kats: Vec<MlKemNISTKAT> =
+                serde_json::from_reader(reader).expect("Could not deserialize KAT file.");
+
+            for kat in nist_kats {
+                let key_pair = generate_key_pair(kat.key_generation_seed);
+
+                assert!(validate_public_key(key_pair.public_key()));
+
+                let public_key_hash = sha256(key_pair.pk());
+                let secret_key_hash = sha256(key_pair.sk());
+
+                assert_eq!(public_key_hash, kat.sha3_256_hash_of_public_key, "lhs: computed public key hash, rhs: hash from kat");
+                assert_eq!(secret_key_hash, kat.sha3_256_hash_of_secret_key, "lhs: computed secret key hash, rhs: hash from kat");
+
+                // Encapsulate
+                let (ciphertext, shared_secret) =
+                encapsulate(key_pair.public_key(), kat.encapsulation_seed);
+                let ciphertext_hash = sha256(ciphertext.as_ref());
+
+                assert_eq!(ciphertext_hash, kat.sha3_256_hash_of_ciphertext, "lhs: computed ciphertext hash, rhs: hash from akt");
+                assert_eq!(shared_secret.as_ref(), kat.shared_secret, "lhs: computed shared secret from encapsulate, rhs: shared secret from kat");
+
+                // Decapsulate
+                assert!(validate_private_key(key_pair.private_key(), &ciphertext));
+
+                let shared_secret_from_decapsulate =
+                decapsulate(key_pair.private_key(), &ciphertext);
+                assert_eq!(shared_secret_from_decapsulate, shared_secret.as_ref(), "lhs: shared secret computed via decapsulation, rhs: shared secret computed via encapsulation");
+            }
+        }
+    };
+}
+
+#[cfg(all(feature = "mlkem512"))]
+impl_kats!(mlkem512_nist_kats, "mlkem", 512, libcrux_ml_kem::mlkem512);
+
+#[cfg(all(feature = "mlkem768"))]
+impl_kats!(mlkem768_nist_kat, "mlkem", 768, libcrux_ml_kem::mlkem768);
+
+#[cfg(all(feature = "mlkem1024"))]
+impl_kats!(
+    mlkem1024_nist_kats,
+    "mlkem",
+    1024,
+    libcrux_ml_kem::mlkem1024
+);

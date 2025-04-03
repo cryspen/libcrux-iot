@@ -31,57 +31,117 @@ pub(crate) const VECTORS_IN_RING_ELEMENT: usize =
     hax,
     hax_lib::fstar::after(
         interface,
-        "let to_spec_matrix_t (#r:Spec.MLKEM.rank) (#v_Vector: Type0)
-    {| i2: Libcrux_ml_kem.Vector.Traits.t_Operations v_Vector |}
-    (m:t_Array (t_Array (t_PolynomialRingElement v_Vector) r) r) : Spec.MLKEM.matrix r =
-    createi r (fun i -> to_spec_vector_t #r #v_Vector (m.[i]))"
-    )
-)]
-#[cfg_attr(
-    hax,
-    hax_lib::fstar::after(
-        interface,
-        "let to_spec_vector_t (#r:Spec.MLKEM.rank) (#v_Vector: Type0)
-    {| i2: Libcrux_ml_kem.Vector.Traits.t_Operations v_Vector |}
-    (m:t_Array (t_PolynomialRingElement v_Vector) r) : Spec.MLKEM.vector r =
-    createi r (fun i -> to_spec_poly_t #v_Vector (m.[i]))"
-    )
-)]
-#[cfg_attr(
-    hax,
-    hax_lib::fstar::after(
-        interface,
         "let to_spec_poly_t (#v_Vector: Type0)
     {| i2: Libcrux_ml_kem.Vector.Traits.t_Operations v_Vector |}
     (p: t_PolynomialRingElement v_Vector) : Spec.MLKEM.polynomial =
     createi (sz 256) (fun i -> Spec.MLKEM.Math.to_spec_fe 
                                 (Seq.index (i2._super_12682756204189288427.f_repr 
-                                    (Seq.index p.f_coefficients (v i / 16))) (v i % 16)))"
+                                    (Seq.index p.f_coefficients (v i / 16))) (v i % 16)))
+let to_spec_vector_t (#r:Spec.MLKEM.rank) (#v_Vector: Type0)
+    {| i2: Libcrux_ml_kem.Vector.Traits.t_Operations v_Vector |}
+    (m:t_Array (t_PolynomialRingElement v_Vector) r) : Spec.MLKEM.vector r =
+    createi r (fun i -> to_spec_poly_t #v_Vector (m.[i]))
+let to_spec_matrix_t (#r:Spec.MLKEM.rank) (#v_Vector: Type0)
+    {| i2: Libcrux_ml_kem.Vector.Traits.t_Operations v_Vector |}
+    (m:t_Array (t_Array (t_PolynomialRingElement v_Vector) r) r) : Spec.MLKEM.matrix r =
+    createi r (fun i -> to_spec_vector_t #r #v_Vector (m.[i]))"
     )
 )]
 // XXX: We don't want to copy this. But for eurydice we have to have this.
 #[derive(Clone, Copy)]
+#[repr(transparent)]
 pub(crate) struct PolynomialRingElement<Vector: Operations> {
     pub(crate) coefficients: [Vector; VECTORS_IN_RING_ELEMENT],
 }
 
-#[allow(non_snake_case)]
-fn ZERO<Vector: Operations>() -> PolynomialRingElement<Vector> {
-    PolynomialRingElement {
-        // https://github.com/hacspec/hax/issues/27
-        // FIXME:  The THIR body of item DefId(0:415 ~ libcrux_ml_kem[9000]::polynomial::{impl#0}::ZERO::{constant#0}) was stolen.
-        coefficients: [Vector::ZERO(); 16],
+// #[allow(non_snake_case)]
+// #[inline(always)]
+// pub(crate) fn ZERO<Vector: Operations>() -> PolynomialRingElement<Vector> {
+//     PolynomialRingElement {
+//         // https://github.com/hacspec/hax/issues/27
+//         // FIXME:  The THIR body of item DefId(0:415 ~ libcrux_ml_kem[9000]::polynomial::{impl#0}::ZERO::{constant#0}) was stolen.
+//         coefficients: [Vector::ZERO(); 16],
+//     }
+// }
+
+#[inline(always)]
+#[hax_lib::requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
+fn from_i16_array<Vector: Operations>(a: &[i16], result: &mut PolynomialRingElement<Vector>) {
+    for i in 0..VECTORS_IN_RING_ELEMENT {
+        Vector::from_i16_array(&a[i * 16..(i + 1) * 16], &mut result.coefficients[i]);
+    }
+}
+
+#[allow(dead_code)]
+#[inline(always)]
+#[hax_lib::requires(out.len() >= VECTORS_IN_RING_ELEMENT * 16)]
+fn to_i16_array<Vector: Operations>(re: PolynomialRingElement<Vector>, out: &mut [i16]) {
+    let _out_len = out.len();
+    for i in 0..re.coefficients.len() {
+        hax_lib::loop_invariant!(|_i: usize| out.len() == _out_len);
+        Vector::to_i16_array(
+            re.coefficients[i],
+            &mut out[i * 16..(i + 1) * 16].try_into().unwrap(),
+        );
     }
 }
 
 #[inline(always)]
-#[hax_lib::requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
-fn from_i16_array<Vector: Operations>(a: &[i16]) -> PolynomialRingElement<Vector> {
-    let mut result = ZERO();
+#[hax_lib::requires(VECTORS_IN_RING_ELEMENT * 16 *2 <= bytes.len())]
+fn from_bytes<Vector: Operations>(bytes: &[u8], result: &mut PolynomialRingElement<Vector>) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        result.coefficients[i] = Vector::from_i16_array(&a[i * 16..(i + 1) * 16]);
+        Vector::from_bytes(&bytes[i * 32..(i + 1) * 32], &mut result.coefficients[i]);
     }
-    result
+}
+
+#[hax_lib::fstar::verification_status(lax)]
+#[inline(always)]
+#[hax_lib::requires(VECTORS_IN_RING_ELEMENT * 16 * 2 <= out.len())]
+fn to_bytes<Vector: Operations>(re: PolynomialRingElement<Vector>, out: &mut [u8]) {
+    let _out_len = out.len();
+    for i in 0..re.coefficients.len() {
+        hax_lib::loop_invariant!(|_i: usize| out.len() == _out_len);
+        Vector::to_bytes(re.coefficients[i], &mut out[i * 32..(i + 1) * 32]);
+    }
+}
+
+/// Get the bytes of the vector of ring elements in `re` and write them to `out`.
+#[inline(always)]
+#[allow(dead_code)]
+#[hax_lib::requires(re.len() <= 4 && VECTORS_IN_RING_ELEMENT * 16 * 2 * re.len() <= out.len())]
+pub(crate) fn vec_to_bytes<Vector: Operations>(
+    re: &[PolynomialRingElement<Vector>],
+    out: &mut [u8],
+) {
+    let _out_len = out.len();
+    let re_bytes = PolynomialRingElement::<Vector>::num_bytes();
+    for i in 0..re.len() {
+        hax_lib::loop_invariant!(|_i: usize| out.len() == _out_len);
+        PolynomialRingElement::<Vector>::to_bytes(re[i], &mut out[i * re_bytes..]);
+    }
+}
+
+/// Build a vector of ring elements from `bytes`.
+#[inline(always)]
+#[allow(dead_code)]
+#[hax_lib::requires(out.len() <= 4 && VECTORS_IN_RING_ELEMENT * 16 * 2 * out.len() <= bytes.len())]
+pub(crate) fn vec_from_bytes<Vector: Operations>(
+    bytes: &[u8],
+    out: &mut [PolynomialRingElement<Vector>],
+) {
+    let _out_len = out.len();
+    let re_bytes = PolynomialRingElement::<Vector>::num_bytes();
+    for i in 0..out.len() {
+        hax_lib::loop_invariant!(|_i: usize| out.len() == _out_len);
+        PolynomialRingElement::<Vector>::from_bytes(&bytes[i * re_bytes..], &mut out[i]);
+    }
+}
+
+/// The length of a vector of ring elements in bytes
+#[hax_lib::requires(K <= 4)]
+#[allow(dead_code)]
+pub(crate) const fn vec_len_bytes<const K: usize, Vector: Operations>() -> usize {
+    K * PolynomialRingElement::<Vector>::num_bytes()
 }
 
 /// Given two polynomial ring elements `lhs` and `rhs`, compute the pointwise
@@ -92,42 +152,32 @@ fn add_to_ring_element<Vector: Operations, const K: usize>(
     myself: &mut PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
 ) {
-    // The semicolon and parentheses at the end of loop are a workaround
-    // for the following bug https://github.com/hacspec/hax/issues/720
     for i in 0..myself.coefficients.len() {
-        myself.coefficients[i] = Vector::add(myself.coefficients[i], &rhs.coefficients[i]);
+        Vector::add(&mut myself.coefficients[i], &rhs.coefficients[i]);
     }
-    ()
 }
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
 fn poly_barrett_reduce<Vector: Operations>(myself: &mut PolynomialRingElement<Vector>) {
     // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
-    // The semicolon and parentheses at the end of loop are a workaround
-    // for the following bug https://github.com/hacspec/hax/issues/720
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        myself.coefficients[i] = Vector::barrett_reduce(myself.coefficients[i]);
+        Vector::barrett_reduce(&mut myself.coefficients[i]);
     }
-    ()
 }
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
 fn subtract_reduce<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
-    mut b: PolynomialRingElement<Vector>,
-) -> PolynomialRingElement<Vector> {
-    // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
+    b: &mut PolynomialRingElement<Vector>,
+) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        let coefficient_normal_form =
-            Vector::montgomery_multiply_by_constant(b.coefficients[i], 1441);
-        b.coefficients[i] = Vector::barrett_reduce(Vector::sub(
-            myself.coefficients[i],
-            &coefficient_normal_form,
-        ));
+        Vector::montgomery_multiply_by_constant(&mut b.coefficients[i], 1441);
+        Vector::sub(&mut b.coefficients[i], &myself.coefficients[i]);
+        Vector::negate(&mut b.coefficients[i]);
+        Vector::barrett_reduce(&mut b.coefficients[i]);
     }
-    b
 }
 
 #[inline(always)]
@@ -135,12 +185,12 @@ fn subtract_reduce<Vector: Operations>(
 fn add_message_error_reduce<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     message: &PolynomialRingElement<Vector>,
-    mut result: PolynomialRingElement<Vector>,
-) -> PolynomialRingElement<Vector> {
+    result: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
+) {
     // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        let coefficient_normal_form =
-            Vector::montgomery_multiply_by_constant(result.coefficients[i], 1441);
+        Vector::montgomery_multiply_by_constant(&mut result.coefficients[i], 1441);
 
         // FIXME: Eurydice crashes with:
         //
@@ -157,12 +207,11 @@ fn add_message_error_reduce<Vector: Operations>(
         //     &Vector::add(myself.coefficients[i], &message.coefficients[i]),
         // ));
         // ```
-
-        let tmp = Vector::add(myself.coefficients[i], &message.coefficients[i]);
-        let tmp = Vector::add(coefficient_normal_form, &tmp);
-        result.coefficients[i] = Vector::barrett_reduce(tmp);
+        *scratch = myself.coefficients[i].clone(); // XXX: Need this?
+        Vector::add(scratch, &message.coefficients[i]);
+        Vector::add(&mut result.coefficients[i], &scratch);
+        Vector::barrett_reduce(&mut result.coefficients[i]);
     }
-    result
 }
 
 #[inline(always)]
@@ -172,16 +221,11 @@ fn add_error_reduce<Vector: Operations>(
     error: &PolynomialRingElement<Vector>,
 ) {
     // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
-    // The semicolon and parentheses at the end of loop are a workaround
-    // for the following bug https://github.com/hacspec/hax/issues/720
     for j in 0..VECTORS_IN_RING_ELEMENT {
-        let coefficient_normal_form =
-            Vector::montgomery_multiply_by_constant(myself.coefficients[j], 1441);
-
-        myself.coefficients[j] =
-            Vector::barrett_reduce(Vector::add(coefficient_normal_form, &error.coefficients[j]));
+        Vector::montgomery_multiply_by_constant(&mut myself.coefficients[j], 1441);
+        Vector::add(&mut myself.coefficients[j], &error.coefficients[j]);
+        Vector::barrett_reduce(&mut myself.coefficients[j]);
     }
-    ()
 }
 
 #[inline(always)]
@@ -191,17 +235,13 @@ fn add_standard_error_reduce<Vector: Operations>(
     error: &PolynomialRingElement<Vector>,
 ) {
     // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
-    // The semicolon and parentheses at the end of loop are a workaround
-    // for the following bug https://github.com/hacspec/hax/issues/720
     for j in 0..VECTORS_IN_RING_ELEMENT {
         // The coefficients are of the form aR^{-1} mod q, which means
         // calling to_montgomery_domain() on them should return a mod q.
-        let coefficient_normal_form = to_standard_domain::<Vector>(myself.coefficients[j]);
-
-        myself.coefficients[j] =
-            Vector::barrett_reduce(Vector::add(coefficient_normal_form, &error.coefficients[j]));
+        to_standard_domain::<Vector>(&mut myself.coefficients[j]);
+        Vector::add(&mut myself.coefficients[j], &error.coefficients[j]);
+        Vector::barrett_reduce(&mut myself.coefficients[j]);
     }
-    ()
 }
 
 /// Given two `KyberPolynomialRingElement`s in their NTT representations,
@@ -247,21 +287,19 @@ fn add_standard_error_reduce<Vector: Operations>(
 fn ntt_multiply<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
-) -> PolynomialRingElement<Vector> {
-    let mut out = ZERO();
-
+    out: &mut PolynomialRingElement<Vector>,
+) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        out.coefficients[i] = Vector::ntt_multiply(
+        Vector::ntt_multiply(
             &myself.coefficients[i],
             &rhs.coefficients[i],
+            &mut out.coefficients[i],
             zeta(64 + 4 * i),
             zeta(64 + 4 * i + 1),
             zeta(64 + 4 * i + 2),
             zeta(64 + 4 * i + 3),
         );
     }
-
-    out
 }
 
 // FIXME: We pulled out all the items because of https://github.com/hacspec/hax/issues/1183
@@ -275,10 +313,39 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
         }
     }
 
+    /// Size of a ring element in bytes.
+    #[inline(always)]
+    #[allow(dead_code)]
+    #[ensures(|result| result == 512 )]
+    pub(crate) const fn num_bytes() -> usize {
+        VECTORS_IN_RING_ELEMENT * 32
+    }
+
     #[inline(always)]
     #[requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
-    pub(crate) fn from_i16_array(a: &[i16]) -> Self {
-        from_i16_array(a)
+    pub(crate) fn from_i16_array(a: &[i16], out: &mut Self) {
+        from_i16_array(a, out)
+    }
+
+    #[allow(dead_code)]
+    #[inline(always)]
+    #[requires(VECTORS_IN_RING_ELEMENT * 16 <= out.len())]
+    pub(crate) fn to_i16_array(self, out: &mut [i16]) {
+        to_i16_array(self, out)
+    }
+
+    #[inline(always)]
+    #[allow(dead_code)]
+    #[requires(VECTORS_IN_RING_ELEMENT * 16 * 2 <= bytes.len())]
+    pub(crate) fn from_bytes(bytes: &[u8], out: &mut Self) {
+        from_bytes(bytes, out)
+    }
+
+    #[inline(always)]
+    #[allow(dead_code)]
+    #[requires(VECTORS_IN_RING_ELEMENT * 16 * 2 <= out.len())]
+    pub(crate) fn to_bytes(self, out: &mut [u8]) {
+        to_bytes(self, out)
     }
 
     /// Given two polynomial ring elements `lhs` and `rhs`, compute the pointwise
@@ -294,13 +361,18 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
-    pub(crate) fn subtract_reduce(&self, b: Self) -> Self {
+    pub(crate) fn subtract_reduce(&self, b: &mut Self) {
         subtract_reduce(self, b)
     }
 
     #[inline(always)]
-    pub(crate) fn add_message_error_reduce(&self, message: &Self, result: Self) -> Self {
-        add_message_error_reduce(self, message, result)
+    pub(crate) fn add_message_error_reduce(
+        &self,
+        message: &Self,
+        result: &mut Self,
+        scratch: &mut Vector,
+    ) {
+        add_message_error_reduce(self, message, result, scratch);
     }
 
     #[inline(always)]
@@ -314,7 +386,37 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
-    pub(crate) fn ntt_multiply(&self, rhs: &Self) -> Self {
-        ntt_multiply(self, rhs)
+    pub(crate) fn ntt_multiply(&self, rhs: &Self, out: &mut Self) {
+        ntt_multiply(self, rhs, out)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::vector::portable::PortableVector;
+
+    use super::PolynomialRingElement;
+
+    #[test]
+    fn encoding_portable() {
+        type RingElement = PolynomialRingElement<PortableVector>;
+        let mut re = RingElement::ZERO();
+        re.coefficients[0].elements = [0xAB; 16];
+        re.coefficients[15].elements = [0xCD; 16];
+
+        let mut bytes = [0u8; RingElement::num_bytes()];
+        re.to_bytes(&mut bytes);
+
+        let mut re_decoded = RingElement::ZERO();
+        RingElement::from_bytes(&bytes, &mut re_decoded);
+
+        // Compare
+        let mut i16s = [0; RingElement::num_bytes() / 2];
+        re.to_i16_array(&mut i16s);
+
+        let mut i16s2 = [0; RingElement::num_bytes() / 2];
+        re_decoded.to_i16_array(&mut i16s2);
+
+        assert_eq!(i16s, i16s2);
     }
 }
