@@ -14,7 +14,7 @@ static HEAP: Heap = Heap::empty();
 fn main() -> ! {
     use libcrux_iot_testutil::*;
     // Initialize the allocator BEFORE you use it
-    board::initialize_allocator(&HEAP);
+    board::init::initialize_allocator(&HEAP);
 
     // set up the test config
     let test_config = TestConfig {

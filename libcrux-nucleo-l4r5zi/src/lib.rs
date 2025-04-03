@@ -11,48 +11,9 @@ use panic_probe as _;
 
 pub const COREFREQ: u32 = 4_000_000;
 
-/// A utility to quickly get cycle counts during execution.
-///
-/// ⚠️ Note, that the hardware must be initialized before the counter
-/// can function.
-pub struct CycleCounter {}
+pub mod init;
 
-use core::ptr::addr_of_mut;
-use embedded_alloc::LlffHeap as Heap;
-
-pub fn initialize_allocator(heap: &'static Heap) {
-        use core::mem::MaybeUninit;
-        const HEAP_SIZE: usize = 1024;
-        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
-        unsafe { heap.init(addr_of_mut!(HEAP_MEM) as usize, HEAP_SIZE) }
-}
-
-impl CycleCounter {
-    /// Use this to initialize the hardwar, if it hasn't been initialized elsewhere.
-    pub fn init() {
-        use cortex_m::peripheral::Peripherals;
-        let mut peripherals = Peripherals::take().unwrap();
-        peripherals.DCB.enable_trace();
-        peripherals.DWT.enable_cycle_counter();
-    }
-
-    /// Start measuring cycles.
-    ///
-    /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
-    #[inline(never)]
-    pub fn start_measurement() -> u32 {
-        cortex_m::peripheral::DWT::cycle_count()
-    }
-
-    /// Report cycles current cycles (Use this to mark the end of measurement).
-    ///
-    /// ⚠️ Using this presupposes that the cycle counter has been initialized somewhere.
-    #[inline(never)]
-    pub fn end_measurement(msg: &str, start: u32) {
-        let diff = cortex_m::peripheral::DWT::cycle_count() - start;
-        defmt::println!("[END_MEASUREMENT {=str}] : + {=u32}", msg, diff);
-    }
-}
+pub mod cycle_counter;
 
 // same panicking *behavior* as `panic-probe` but doesn't print a panic message
 // this prevents the panic message being printed *twice* when `defmt::panic` is invoked
