@@ -4,12 +4,16 @@
 use board::cycle_counter::CycleCounter;
 use board::init::setup_cycle_counter;
 
-use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
+use libcrux_nucleo_l4r5zi::{self as board, init::ClockConfig}; // global logger + panicking-behavior + memory layout
 
 use core::ptr::{addr_of, addr_of_mut};
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
+    // Set up the system clock.
+    let clock_config = ClockConfig::CycleBenchmark;
+    board::init::setup_clock(clock_config);
+    
     setup_cycle_counter();
 
     let mut sk = [0u8; libcrux_pqm4::KYBER_SECRETKEYBYTES as usize];

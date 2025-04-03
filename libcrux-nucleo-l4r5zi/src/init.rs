@@ -21,6 +21,7 @@ pub fn setup_cycle_counter() {
 }
 
 /// The system clock configuration.
+#[derive(Clone, Copy, Debug)]
 pub enum ClockConfig {
     /// A slow clock configuration, which aims to minimize flash wait
     /// states, to measure cycles spent on any function under test in
@@ -33,6 +34,16 @@ pub enum ClockConfig {
     ///
     /// Runs the system clock from PLL, which scales HSI16 to 80 MHz.
     Fast,
+}
+
+impl ClockConfig {
+    /// Returns the configuration's target core frequency in Hz.
+    pub fn core_freq(&self) -> u32 {
+        match self {
+            ClockConfig::CycleBenchmark => 16_000_000,
+            ClockConfig::Fast => 80_000_000,
+        }
+    }
 }
 
 /// Use this to set up the system clock.

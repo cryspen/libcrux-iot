@@ -9,8 +9,6 @@ use embassy_stm32 as _; // memory layout
 
 use panic_probe as _;
 
-pub const COREFREQ: u32 = 4_000_000;
-
 pub mod init;
 
 pub mod cycle_counter;

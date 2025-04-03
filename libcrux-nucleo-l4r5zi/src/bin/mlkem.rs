@@ -1,7 +1,7 @@
 #![no_main]
 #![no_std]
 
-use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
+use libcrux_nucleo_l4r5zi::{self as board, init::ClockConfig}; // global logger + panicking-behavior + memory layout
 
 extern crate alloc;
 
@@ -16,10 +16,14 @@ fn main() -> ! {
     // Initialize the allocator BEFORE you use it
     board::init::initialize_allocator(&HEAP);
 
+    // Set up the system clock.
+    let clock_config = ClockConfig::CycleBenchmark;
+    board::init::setup_clock(clock_config);
+
     // set up the test config
     let test_config = TestConfig {
         platform: platform::CortexM,
-        core_freq: board::COREFREQ,
+        core_freq: clock_config.core_freq(),
         only_names: alloc::vec![],
         early_abort: false,
         benchmark_runs: 5,
