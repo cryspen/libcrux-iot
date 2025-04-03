@@ -1,8 +1,8 @@
 //! This module provides a drop-in real time benchmark utilites.
 //!
 //! The timer resolution is set via the `tick-hz-*` feature selected
-//! on `embassy-time`. Currently the tick rate is set to 160 MHz,
-//! twice the maximum system clock frequency configurable via
+//! on `embassy-time`. Currently the tick rate is set to 80 MHz,
+//! the highest system clock frequency configurable at the moment via
 //! [`ClockConfig`].
 
 use embassy_time::Instant;
