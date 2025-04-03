@@ -26,6 +26,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install GNU ARM Toolchain
+        uses: carlosperate/arm-none-eabi-gcc-action@v1.8.0
+        with:
+          release: 13.2.Rel1
+             
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: thumbv7em-none-eabihf,thumbv7em-none-eabi,thumbv8m.main-none-eabihf

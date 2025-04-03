@@ -1,0 +1,11 @@
+[package]
+name = "libcrux-pqm4"
+authors = ["Cryspen"]
+edition = "2021"
+version = "0.1.0"
+description = "pqm4 wrapper for libcrux-iot tests and benchmarks."
+publish = false
+
+[build-dependencies]
+bindgen = "0.71"
+
