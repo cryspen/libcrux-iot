@@ -49,12 +49,11 @@ pub fn setup_clock(c: ClockConfig) {
     config.rcc.apb1_pre = APBPrescaler::DIV1;
     config.rcc.apb2_pre = APBPrescaler::DIV1;
     config.rcc.ahb_pre = AHBPrescaler::DIV1;
-    
+    config.rcc.hsi = true;
     match c {
         ClockConfig::CycleBenchmark => {
             // Drive the system clock from the HSI16 directly, which
             // should run at 16 MHz.
-            config.rcc.hsi = true;
             config.rcc.sys = Sysclk::HSI;
         }
         ClockConfig::Fast => {
