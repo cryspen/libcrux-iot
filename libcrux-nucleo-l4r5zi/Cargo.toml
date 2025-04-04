@@ -21,12 +21,13 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 libcrux-testbench = { path = "../libcrux-testbench" }
-embassy-stm32 = { version = "0.2.0", features = [ "stm32l4r5zi", "defmt" ] }
-embassy-time = { version = "0.4", features = ["tick-hz-80_000_000", "generic-queue-8"], optional = true}
+embassy-stm32 = { version = "0.2.0", features = ["stm32l4r5zi", "defmt"] }
+embassy-time = { version = "0.4", features = ["tick-hz-80_000_000", "generic-queue-8"], optional = true }
 libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem" }
-libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" } 
+libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" }
 embedded-alloc = "0.6.0"
 libcrux-pqm4 = { path = "../sys/pqm4", optional = true }
+libcrux-sha3 = { path = "../libcrux/libcrux-sha3" }
 
 [dev-dependencies]
 defmt-test = "0.3"
