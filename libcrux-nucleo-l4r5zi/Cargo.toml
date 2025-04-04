@@ -25,6 +25,10 @@ embassy-stm32 = { version = "0.2.0", features = [ "stm32l4r5zi", "defmt", ] }
 embedded-alloc = "0.6.0"
 libcrux-sha3 = { path = "../libcrux/libcrux-sha3" }
 libcrux-pqm4 = { path = "../sys/pqm4" }
+rand_core = {version = "0.6.4"} # This is the version of rand_core
+                                # that embassy_stm32.0.2.0 depends
+                                # on. We need it to get the right
+                                # RngCore trait for the on-device RNG.
 
 [dev-dependencies]
 defmt-test = "0.3"
