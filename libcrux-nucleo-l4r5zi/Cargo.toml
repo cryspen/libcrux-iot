@@ -23,6 +23,7 @@ libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 libcrux-testbench = { path = "../libcrux-testbench" }
 embassy-stm32 = { version = "0.2.0", features = [ "stm32l4r5zi", "defmt", ] }
 embedded-alloc = "0.6.0"
+libcrux-sha3 = { path = "../libcrux/libcrux-sha3" }
 libcrux-pqm4 = { path = "../sys/pqm4" }
 
 [dev-dependencies]
