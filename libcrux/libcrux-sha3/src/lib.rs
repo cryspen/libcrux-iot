@@ -3,7 +3,7 @@
 //! A SHA3 implementation with optional simd optimisations.
 
 #![no_std]
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![deny(missing_docs)]
 
 pub mod simd;
@@ -11,6 +11,7 @@ pub mod simd;
 mod generic_keccak;
 mod portable_keccak;
 mod traits;
+mod alloc;
 
 /// A SHA3 224 Digest
 pub type Sha3_224Digest = [u8; 28];
