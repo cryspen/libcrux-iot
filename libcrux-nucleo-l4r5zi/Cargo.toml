@@ -26,6 +26,7 @@ embassy-time = { version = "0.4", features = ["tick-hz-80_000_000", "generic-que
 libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem" }
 libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" } 
 embedded-alloc = "0.6.0"
+libcrux-sha3 = { path = "../libcrux/libcrux-sha3" }
 libcrux-pqm4 = { path = "../sys/pqm4" }
 
 [dev-dependencies]
