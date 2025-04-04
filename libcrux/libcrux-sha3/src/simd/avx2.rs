@@ -1,4 +1,4 @@
-use crate::traits::internal::*;
+use crate::traits::{internal::*, *};
 use libcrux_intrinsics::avx2::*;
 
 #[inline(always)]
@@ -40,13 +40,18 @@ fn _veorq_n_u64(a: Vec256, c: u64) -> Vec256 {
 }
 
 #[inline(always)]
-pub(crate) fn load_block<const RATE: usize>(s: &mut [[Vec256; 5]; 5], blocks: [&[u8]; 4]) {
+pub(crate) fn load_block<const RATE: usize>(
+    state: &mut [Vec256; 25],
+    blocks: &[&[u8]; 4],
+    offset: usize,
+) {
     debug_assert!(RATE <= blocks[0].len() && RATE % 8 == 0 && (RATE % 32 == 8 || RATE % 32 == 16));
     for i in 0..RATE / 32 {
-        let v0 = mm256_loadu_si256_u8(&blocks[0][32 * i..32 * (i + 1)]);
-        let v1 = mm256_loadu_si256_u8(&blocks[1][32 * i..32 * (i + 1)]);
-        let v2 = mm256_loadu_si256_u8(&blocks[2][32 * i..32 * (i + 1)]);
-        let v3 = mm256_loadu_si256_u8(&blocks[3][32 * i..32 * (i + 1)]);
+        let start = offset + 32 * i;
+        let v0 = mm256_loadu_si256_u8(&blocks[0][start..start + 32]);
+        let v1 = mm256_loadu_si256_u8(&blocks[1][start..start + 32]);
+        let v2 = mm256_loadu_si256_u8(&blocks[2][start..start + 32]);
+        let v3 = mm256_loadu_si256_u8(&blocks[3][start..start + 32]);
 
         let v0l = mm256_unpacklo_epi64(v0, v1); // 0 0 2 2
         let v1h = mm256_unpackhi_epi64(v0, v1); // 1 1 3 3
@@ -58,17 +63,23 @@ pub(crate) fn load_block<const RATE: usize>(s: &mut [[Vec256; 5]; 5], blocks: [&
         let v2 = mm256_permute2x128_si256::<0x31>(v0l, v2l); // 2 2 2 2
         let v3 = mm256_permute2x128_si256::<0x31>(v1h, v3h); // 3 3 3 3
 
-        s[(4 * i) / 5][(4 * i) % 5] = mm256_xor_si256(s[(4 * i) / 5][(4 * i) % 5], v0);
-        s[(4 * i + 1) / 5][(4 * i + 1) % 5] =
-            mm256_xor_si256(s[(4 * i + 1) / 5][(4 * i + 1) % 5], v1);
-        s[(4 * i + 2) / 5][(4 * i + 2) % 5] =
-            mm256_xor_si256(s[(4 * i + 2) / 5][(4 * i + 2) % 5], v2);
-        s[(4 * i + 3) / 5][(4 * i + 3) % 5] =
-            mm256_xor_si256(s[(4 * i + 3) / 5][(4 * i + 3) % 5], v3);
+        let i0 = (4 * i) / 5;
+        let j0 = (4 * i) % 5;
+        let i1 = (4 * i + 1) / 5;
+        let j1 = (4 * i + 1) % 5;
+        let i2 = (4 * i + 2) / 5;
+        let j2 = (4 * i + 2) % 5;
+        let i3 = (4 * i + 3) / 5;
+        let j3 = (4 * i + 3) % 5;
+
+        set_ij(state, i0, j0, mm256_xor_si256(get_ij(state, i0, j0), v0));
+        set_ij(state, i1, j1, mm256_xor_si256(get_ij(state, i1, j1), v1));
+        set_ij(state, i2, j2, mm256_xor_si256(get_ij(state, i2, j2), v2));
+        set_ij(state, i3, j3, mm256_xor_si256(get_ij(state, i3, j3), v3));
     }
 
     let rem = RATE % 32; // has to be 8 or 16
-    let start = 32 * (RATE / 32);
+    let start = offset + 32 * (RATE / 32);
     let mut u8s = [0u8; 32];
     u8s[0..8].copy_from_slice(&blocks[0][start..start + 8]);
     u8s[8..16].copy_from_slice(&blocks[1][start..start + 8]);
@@ -77,7 +88,7 @@ pub(crate) fn load_block<const RATE: usize>(s: &mut [[Vec256; 5]; 5], blocks: [&
     let u = mm256_loadu_si256_u8(u8s.as_slice());
     let i = (4 * (RATE / 32)) / 5;
     let j = (4 * (RATE / 32)) % 5;
-    s[i][j] = mm256_xor_si256(s[i][j], u);
+    set_ij(state, i, j, mm256_xor_si256(get_ij(state, i, j), u));
     if rem == 16 {
         let mut u8s = [0u8; 32];
         u8s[0..8].copy_from_slice(&blocks[0][start + 8..start + 16]);
@@ -87,43 +98,45 @@ pub(crate) fn load_block<const RATE: usize>(s: &mut [[Vec256; 5]; 5], blocks: [&
         let u = mm256_loadu_si256_u8(u8s.as_slice());
         let i = (4 * (RATE / 32) + 1) / 5;
         let j = (4 * (RATE / 32) + 1) % 5;
-        s[i][j] = mm256_xor_si256(s[i][j], u);
+        set_ij(state, i, j, mm256_xor_si256(get_ij(state, i, j), u));
     }
 }
 
 #[inline(always)]
-pub(crate) fn load_block_full<const RATE: usize>(s: &mut [[Vec256; 5]; 5], blocks: [[u8; 200]; 4]) {
+pub(crate) fn load_block_full<const RATE: usize>(
+    state: &mut [Vec256; 25],
+    blocks: &[[u8; 200]; 4],
+    start: usize,
+) {
     load_block::<RATE>(
-        s,
-        [
+        state,
+        &[
             &blocks[0] as &[u8],
             &blocks[1] as &[u8],
             &blocks[2] as &[u8],
             &blocks[3] as &[u8],
         ],
+        start,
     );
 }
 
 #[inline(always)]
-pub(crate) fn store_block<const RATE: usize>(s: &[[Vec256; 5]; 5], out: [&mut [u8]; 4]) {
+pub(crate) fn store_block<const RATE: usize>(s: &[Vec256; 25], out: &mut [&mut [u8]; 4]) {
     for i in 0..RATE / 32 {
-        let v0l = mm256_permute2x128_si256::<0x20>(
-            s[(4 * i) / 5][(4 * i) % 5],
-            s[(4 * i + 2) / 5][(4 * i + 2) % 5],
-        );
+        let i0 = (4 * i) / 5;
+        let j0 = (4 * i) % 5;
+        let i1 = (4 * i + 1) / 5;
+        let j1 = (4 * i + 1) % 5;
+        let i2 = (4 * i + 2) / 5;
+        let j2 = (4 * i + 2) % 5;
+        let i3 = (4 * i + 3) / 5;
+        let j3 = (4 * i + 3) % 5;
+
+        let v0l = mm256_permute2x128_si256::<0x20>(get_ij(s, i0, j0), get_ij(s, i2, j2));
         // 0 0 2 2
-        let v1h = mm256_permute2x128_si256::<0x20>(
-            s[(4 * i + 1) / 5][(4 * i + 1) % 5],
-            s[(4 * i + 3) / 5][(4 * i + 3) % 5],
-        ); // 1 1 3 3
-        let v2l = mm256_permute2x128_si256::<0x31>(
-            s[(4 * i) / 5][(4 * i) % 5],
-            s[(4 * i + 2) / 5][(4 * i + 2) % 5],
-        ); // 0 0 2 2
-        let v3h = mm256_permute2x128_si256::<0x31>(
-            s[(4 * i + 1) / 5][(4 * i + 1) % 5],
-            s[(4 * i + 3) / 5][(4 * i + 3) % 5],
-        ); // 1 1 3 3
+        let v1h = mm256_permute2x128_si256::<0x20>(get_ij(s, i1, j1), get_ij(s, i3, j3)); // 1 1 3 3
+        let v2l = mm256_permute2x128_si256::<0x31>(get_ij(s, i0, j0), get_ij(s, i2, j2)); // 0 0 2 2
+        let v3h = mm256_permute2x128_si256::<0x31>(get_ij(s, i1, j1), get_ij(s, i3, j3)); // 1 1 3 3
 
         let v0 = mm256_unpacklo_epi64(v0l, v1h); // 0 1 2 3
         let v1 = mm256_unpackhi_epi64(v0l, v1h); // 0 1 2 3
@@ -141,7 +154,7 @@ pub(crate) fn store_block<const RATE: usize>(s: &[[Vec256; 5]; 5], out: [&mut [u
     let mut u8s = [0u8; 32];
     let i = (4 * (RATE / 32)) / 5;
     let j = (4 * (RATE / 32)) % 5;
-    mm256_storeu_si256_u8(&mut u8s, s[i][j]);
+    mm256_storeu_si256_u8(&mut u8s, get_ij(s, i, j));
     out[0][start..start + 8].copy_from_slice(&u8s[0..8]);
     out[1][start..start + 8].copy_from_slice(&u8s[8..16]);
     out[2][start..start + 8].copy_from_slice(&u8s[16..24]);
@@ -150,7 +163,7 @@ pub(crate) fn store_block<const RATE: usize>(s: &[[Vec256; 5]; 5], out: [&mut [u
         let mut u8s = [0u8; 32];
         let i = (4 * (RATE / 32) + 1) / 5;
         let j = (4 * (RATE / 32) + 1) % 5;
-        mm256_storeu_si256_u8(&mut u8s, s[i][j]);
+        mm256_storeu_si256_u8(&mut u8s, get_ij(s, i, j));
         out[0][start + 8..start + 16].copy_from_slice(&u8s[0..8]);
         out[1][start + 8..start + 16].copy_from_slice(&u8s[8..16]);
         out[2][start + 8..start + 16].copy_from_slice(&u8s[16..24]);
@@ -159,23 +172,15 @@ pub(crate) fn store_block<const RATE: usize>(s: &[[Vec256; 5]; 5], out: [&mut [u
 }
 
 #[inline(always)]
-pub(crate) fn store_block_full<const RATE: usize>(s: &[[Vec256; 5]; 5]) -> [[u8; 200]; 4] {
-    let mut out0 = [0u8; 200];
-    let mut out1 = [0u8; 200];
-    let mut out2 = [0u8; 200];
-    let mut out3 = [0u8; 200];
-    store_block::<RATE>(s, [&mut out0, &mut out1, &mut out2, &mut out3]);
-    [out0, out1, out2, out3]
-}
+pub(crate) fn store_block_full<const RATE: usize>(state: &[Vec256; 25], out: &mut [[u8; 200]; 4]) {
+    let (out0, rest) = out.split_at_mut(1);
+    let (out1, rest) = rest.split_at_mut(1);
+    let (out2, out3) = rest.split_at_mut(1);
 
-#[inline(always)]
-fn slice_4(a: [&[u8]; 4], start: usize, len: usize) -> [&[u8]; 4] {
-    [
-        &a[0][start..start + len],
-        &a[1][start..start + len],
-        &a[2][start..start + len],
-        &a[3][start..start + len],
-    ]
+    store_block::<RATE>(
+        state,
+        &mut [&mut out0[0], &mut out1[0], &mut out2[0], &mut out3[0]],
+    );
 }
 
 #[inline(always)]
@@ -218,32 +223,33 @@ impl KeccakItem<4> for Vec256 {
         mm256_xor_si256(a, b)
     }
     #[inline(always)]
-    fn load_block<const RATE: usize>(a: &mut [[Self; 5]; 5], b: [&[u8]; 4]) {
-        load_block::<RATE>(a, b)
+    fn load_block<const RATE: usize>(state: &mut [Self; 25], blocks: &[&[u8]; 4], start: usize) {
+        load_block::<RATE>(state, blocks, start)
     }
     #[inline(always)]
-    fn store_block<const RATE: usize>(a: &[[Self; 5]; 5], b: [&mut [u8]; 4]) {
+    fn store_block<const RATE: usize>(a: &[Self; 25], b: &mut [&mut [u8]; 4]) {
         store_block::<RATE>(a, b)
     }
     #[inline(always)]
-    fn load_block_full<const RATE: usize>(a: &mut [[Self; 5]; 5], b: [[u8; 200]; 4]) {
-        load_block_full::<RATE>(a, b)
+    fn load_block_full<const RATE: usize>(
+        state: &mut [Self; 25],
+        blocks: &[[u8; 200]; 4],
+        start: usize,
+    ) {
+        load_block_full::<RATE>(state, blocks, start)
     }
     #[inline(always)]
-    fn store_block_full<const RATE: usize>(a: &[[Self; 5]; 5]) -> [[u8; 200]; 4] {
-        store_block_full::<RATE>(a)
+    fn store_block_full<const RATE: usize>(state: &[Self; 25], out: &mut [[u8; 200]; 4]) {
+        store_block_full::<RATE>(state, out)
     }
-    #[inline(always)]
-    fn slice_n(a: [&[u8]; 4], start: usize, len: usize) -> [&[u8]; 4] {
-        slice_4(a, start, len)
-    }
+
     #[inline(always)]
     fn split_at_mut_n(a: [&mut [u8]; 4], mid: usize) -> ([&mut [u8]; 4], [&mut [u8]; 4]) {
         split_at_mut_4(a, mid)
     }
 
     // TODO: Do we need this, or not? cf. https://github.com/cryspen/libcrux/issues/482
-    fn store<const RATE: usize>(_state: &[[Self; 5]; 5], _out: [&mut [u8]; 4]) {
+    fn store<const RATE: usize>(_state: &[Self; 25], _out: [&mut [u8]; 4]) {
         todo!()
     }
 }

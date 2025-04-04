@@ -1,21 +1,20 @@
 //! The generic SHA3 implementation that uses portable or platform specific
 //! sub-routines.
 
-use core::ops::Index;
-
 use crate::traits::*;
 
 #[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy)]
 pub(crate) struct KeccakState<const N: usize, T: KeccakStateItem<N>> {
-    st: [[T; 5]; 5],
+    st: [T; 25],
 }
 
-impl<const N: usize, T: KeccakStateItem<N>> Index<usize> for KeccakState<N, T> {
-    type Output = [T; 5];
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.st[index]
+impl<const N: usize, T: KeccakStateItem<N>> KeccakState<N, T> {
+    fn get(&self, i: usize, j: usize) -> T {
+        get_ij(&self.st, i, j)
+    }
+    fn set(&mut self, i: usize, j: usize, v: T) {
+        set_ij(&mut self.st, i, j, v);
     }
 }
 
@@ -24,7 +23,7 @@ impl<const N: usize, T: KeccakStateItem<N>> KeccakState<N, T> {
     #[inline(always)]
     pub(crate) fn new() -> Self {
         Self {
-            st: [[T::zero(); 5]; 5],
+            st: [T::zero(); 25],
         }
     }
 }
@@ -77,7 +76,7 @@ impl<const PARALLEL_LANES: usize, const RATE: usize, STATE: KeccakStateItem<PARA
     ///
     /// This works best with relatively small `inputs`.
     #[inline(always)]
-    pub(crate) fn absorb(&mut self, inputs: [&[u8]; PARALLEL_LANES]) {
+    pub(crate) fn absorb(&mut self, inputs: &[&[u8]; PARALLEL_LANES]) {
         let input_remainder_len = self.absorb_full(inputs);
 
         // ... buffer the rest if there's not enough input (left).
@@ -96,7 +95,7 @@ impl<const PARALLEL_LANES: usize, const RATE: usize, STATE: KeccakStateItem<PARA
         }
     }
 
-    fn absorb_full(&mut self, inputs: [&[u8]; PARALLEL_LANES]) -> usize {
+    fn absorb_full(&mut self, inputs: &[&[u8]; PARALLEL_LANES]) -> usize {
         debug_assert!(PARALLEL_LANES > 0);
         debug_assert!(self.buf_len < RATE);
         #[cfg(debug_assertions)]
@@ -115,7 +114,7 @@ impl<const PARALLEL_LANES: usize, const RATE: usize, STATE: KeccakStateItem<PARA
             for i in 0..PARALLEL_LANES {
                 borrowed[i] = &self.buf[i];
             }
-            STATE::load_block::<RATE>(&mut self.inner.st, borrowed);
+            STATE::load_block::<RATE>(&mut self.inner.st, &borrowed, 0);
             keccakf1600(&mut self.inner);
 
             // "empty" the local buffer
@@ -130,10 +129,7 @@ impl<const PARALLEL_LANES: usize, const RATE: usize, STATE: KeccakStateItem<PARA
         let remainder = input_to_consume % RATE;
         for i in 0..num_blocks {
             // We only get in here if `input_len / RATE > 0`.
-            STATE::load_block::<RATE>(
-                &mut self.inner.st,
-                STATE::slice_n(inputs, input_consumed + i * RATE, RATE),
-            );
+            STATE::load_block::<RATE>(&mut self.inner.st, &inputs, input_consumed + i * RATE);
             keccakf1600(&mut self.inner);
         }
 
@@ -147,7 +143,7 @@ impl<const PARALLEL_LANES: usize, const RATE: usize, STATE: KeccakStateItem<PARA
     /// content to consume, and `0` otherwise.
     /// If `consumed > 0` is returned, `self.buf` contains a full block to be
     /// loaded.
-    fn fill_buffer(&mut self, inputs: [&[u8]; PARALLEL_LANES]) -> usize {
+    fn fill_buffer(&mut self, inputs: &[&[u8]; PARALLEL_LANES]) -> usize {
         let input_len = inputs[0].len();
         let mut consumed = 0;
         if self.buf_len > 0 {
@@ -170,7 +166,7 @@ impl<const PARALLEL_LANES: usize, const RATE: usize, STATE: KeccakStateItem<PARA
     /// The `inputs` block may be empty. Everything in the `inputs` block beyond
     /// `RATE` bytes is ignored.
     #[inline(always)]
-    pub(crate) fn absorb_final<const DELIMITER: u8>(&mut self, inputs: [&[u8]; PARALLEL_LANES]) {
+    pub(crate) fn absorb_final<const DELIMITER: u8>(&mut self, inputs: &[&[u8]; PARALLEL_LANES]) {
         let input_remainder_len = self.absorb_full(inputs);
 
         // Consume the remaining bytes.
@@ -189,7 +185,7 @@ impl<const PARALLEL_LANES: usize, const RATE: usize, STATE: KeccakStateItem<PARA
             blocks[i][RATE - 1] |= 0x80;
         }
 
-        STATE::load_block_full::<RATE>(&mut self.inner.st, blocks);
+        STATE::load_block_full::<RATE>(&mut self.inner.st, &blocks, 0);
         keccakf1600(&mut self.inner);
     }
 
@@ -243,11 +239,41 @@ const _ROTC: [usize; 24] = [
 #[inline(always)]
 pub(crate) fn theta_rho<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
     let c: [T; 5] = [
-        T::xor5(s.st[0][0], s.st[1][0], s.st[2][0], s.st[3][0], s.st[4][0]),
-        T::xor5(s.st[0][1], s.st[1][1], s.st[2][1], s.st[3][1], s.st[4][1]),
-        T::xor5(s.st[0][2], s.st[1][2], s.st[2][2], s.st[3][2], s.st[4][2]),
-        T::xor5(s.st[0][3], s.st[1][3], s.st[2][3], s.st[3][3], s.st[4][3]),
-        T::xor5(s.st[0][4], s.st[1][4], s.st[2][4], s.st[3][4], s.st[4][4]),
+        T::xor5(
+            s.get(0, 0),
+            s.get(1, 0),
+            s.get(2, 0),
+            s.get(3, 0),
+            s.get(4, 0),
+        ),
+        T::xor5(
+            s.get(0, 1),
+            s.get(1, 1),
+            s.get(2, 1),
+            s.get(3, 1),
+            s.get(4, 1),
+        ),
+        T::xor5(
+            s.get(0, 2),
+            s.get(1, 2),
+            s.get(2, 2),
+            s.get(3, 2),
+            s.get(4, 2),
+        ),
+        T::xor5(
+            s.get(0, 3),
+            s.get(1, 3),
+            s.get(2, 3),
+            s.get(3, 3),
+            s.get(4, 3),
+        ),
+        T::xor5(
+            s.get(0, 4),
+            s.get(1, 4),
+            s.get(2, 4),
+            s.get(3, 4),
+            s.get(4, 4),
+        ),
     ];
     #[allow(clippy::identity_op)]
     let t: [T; 5] = [
@@ -258,35 +284,35 @@ pub(crate) fn theta_rho<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakSta
         T::rotate_left1_and_xor(c[(4 + 4) % 5], c[(4 + 1) % 5]),
     ];
 
-    s.st[0][0] = T::xor(s.st[0][0], t[0]);
-    s.st[1][0] = T::xor_and_rotate::<36, 28>(s.st[1][0], t[0]);
-    s.st[2][0] = T::xor_and_rotate::<3, 61>(s.st[2][0], t[0]);
-    s.st[3][0] = T::xor_and_rotate::<41, 23>(s.st[3][0], t[0]);
-    s.st[4][0] = T::xor_and_rotate::<18, 46>(s.st[4][0], t[0]);
+    s.set(0, 0, T::xor(s.get(0, 0), t[0]));
+    s.set(1, 0, T::xor_and_rotate::<36, 28>(s.get(1, 0), t[0]));
+    s.set(2, 0, T::xor_and_rotate::<3, 61>(s.get(2, 0), t[0]));
+    s.set(3, 0, T::xor_and_rotate::<41, 23>(s.get(3, 0), t[0]));
+    s.set(4, 0, T::xor_and_rotate::<18, 46>(s.get(4, 0), t[0]));
 
-    s.st[0][1] = T::xor_and_rotate::<1, 63>(s.st[0][1], t[1]);
-    s.st[1][1] = T::xor_and_rotate::<44, 20>(s.st[1][1], t[1]);
-    s.st[2][1] = T::xor_and_rotate::<10, 54>(s.st[2][1], t[1]);
-    s.st[3][1] = T::xor_and_rotate::<45, 19>(s.st[3][1], t[1]);
-    s.st[4][1] = T::xor_and_rotate::<2, 62>(s.st[4][1], t[1]);
+    s.set(0, 1, T::xor_and_rotate::<1, 63>(s.get(0, 1), t[1]));
+    s.set(1, 1, T::xor_and_rotate::<44, 20>(s.get(1, 1), t[1]));
+    s.set(2, 1, T::xor_and_rotate::<10, 54>(s.get(2, 1), t[1]));
+    s.set(3, 1, T::xor_and_rotate::<45, 19>(s.get(3, 1), t[1]));
+    s.set(4, 1, T::xor_and_rotate::<2, 62>(s.get(4, 1), t[1]));
 
-    s.st[0][2] = T::xor_and_rotate::<62, 2>(s.st[0][2], t[2]);
-    s.st[1][2] = T::xor_and_rotate::<6, 58>(s.st[1][2], t[2]);
-    s.st[2][2] = T::xor_and_rotate::<43, 21>(s.st[2][2], t[2]);
-    s.st[3][2] = T::xor_and_rotate::<15, 49>(s.st[3][2], t[2]);
-    s.st[4][2] = T::xor_and_rotate::<61, 3>(s.st[4][2], t[2]);
+    s.set(0, 2, T::xor_and_rotate::<62, 2>(s.get(0, 2), t[2]));
+    s.set(1, 2, T::xor_and_rotate::<6, 58>(s.get(1, 2), t[2]));
+    s.set(2, 2, T::xor_and_rotate::<43, 21>(s.get(2, 2), t[2]));
+    s.set(3, 2, T::xor_and_rotate::<15, 49>(s.get(3, 2), t[2]));
+    s.set(4, 2, T::xor_and_rotate::<61, 3>(s.get(4, 2), t[2]));
 
-    s.st[0][3] = T::xor_and_rotate::<28, 36>(s.st[0][3], t[3]);
-    s.st[1][3] = T::xor_and_rotate::<55, 9>(s.st[1][3], t[3]);
-    s.st[2][3] = T::xor_and_rotate::<25, 39>(s.st[2][3], t[3]);
-    s.st[3][3] = T::xor_and_rotate::<21, 43>(s.st[3][3], t[3]);
-    s.st[4][3] = T::xor_and_rotate::<56, 8>(s.st[4][3], t[3]);
+    s.set(0, 3, T::xor_and_rotate::<28, 36>(s.get(0, 3), t[3]));
+    s.set(1, 3, T::xor_and_rotate::<55, 9>(s.get(1, 3), t[3]));
+    s.set(2, 3, T::xor_and_rotate::<25, 39>(s.get(2, 3), t[3]));
+    s.set(3, 3, T::xor_and_rotate::<21, 43>(s.get(3, 3), t[3]));
+    s.set(4, 3, T::xor_and_rotate::<56, 8>(s.get(4, 3), t[3]));
 
-    s.st[0][4] = T::xor_and_rotate::<27, 37>(s.st[0][4], t[4]);
-    s.st[1][4] = T::xor_and_rotate::<20, 44>(s.st[1][4], t[4]);
-    s.st[2][4] = T::xor_and_rotate::<39, 25>(s.st[2][4], t[4]);
-    s.st[3][4] = T::xor_and_rotate::<8, 56>(s.st[3][4], t[4]);
-    s.st[4][4] = T::xor_and_rotate::<14, 50>(s.st[4][4], t[4]);
+    s.set(0, 4, T::xor_and_rotate::<27, 37>(s.get(0, 4), t[4]));
+    s.set(1, 4, T::xor_and_rotate::<20, 44>(s.get(1, 4), t[4]));
+    s.set(2, 4, T::xor_and_rotate::<39, 25>(s.get(2, 4), t[4]));
+    s.set(3, 4, T::xor_and_rotate::<8, 56>(s.get(3, 4), t[4]));
+    s.set(4, 4, T::xor_and_rotate::<14, 50>(s.get(4, 4), t[4]));
 }
 
 const _PI: [usize; 24] = [
@@ -295,41 +321,49 @@ const _PI: [usize; 24] = [
 
 #[inline(always)]
 pub(crate) fn pi<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
-    let old = s.st;
-    s.st[0][1] = old[1][1];
-    s.st[0][2] = old[2][2];
-    s.st[0][3] = old[3][3];
-    s.st[0][4] = old[4][4];
-    s.st[1][0] = old[0][3];
-    s.st[1][1] = old[1][4];
-    s.st[1][2] = old[2][0];
-    s.st[1][3] = old[3][1];
-    s.st[1][4] = old[4][2];
-    s.st[2][0] = old[0][1];
-    s.st[2][1] = old[1][2];
-    s.st[2][2] = old[2][3];
-    s.st[2][3] = old[3][4];
-    s.st[2][4] = old[4][0];
-    s.st[3][0] = old[0][4];
-    s.st[3][1] = old[1][0];
-    s.st[3][2] = old[2][1];
-    s.st[3][3] = old[3][2];
-    s.st[3][4] = old[4][3];
-    s.st[4][0] = old[0][2];
-    s.st[4][1] = old[1][3];
-    s.st[4][2] = old[2][4];
-    s.st[4][3] = old[3][0];
-    s.st[4][4] = old[4][1];
+    let old = s.clone();
+    s.set(1, 0, old.get(0, 3));
+    s.set(2, 0, old.get(0, 1));
+    s.set(3, 0, old.get(0, 4));
+    s.set(4, 0, old.get(0, 2));
+    s.set(0, 1, old.get(1, 1));
+    s.set(1, 1, old.get(1, 4));
+    s.set(2, 1, old.get(1, 2));
+    s.set(3, 1, old.get(1, 0));
+    s.set(4, 1, old.get(1, 3));
+    s.set(0, 2, old.get(2, 2));
+    s.set(1, 2, old.get(2, 0));
+    s.set(2, 2, old.get(2, 3));
+    s.set(3, 2, old.get(2, 1));
+    s.set(4, 2, old.get(2, 4));
+    s.set(0, 3, old.get(3, 3));
+    s.set(1, 3, old.get(3, 1));
+    s.set(2, 3, old.get(3, 4));
+    s.set(3, 3, old.get(3, 2));
+    s.set(4, 3, old.get(3, 0));
+    s.set(0, 4, old.get(4, 4));
+    s.set(1, 4, old.get(4, 2));
+    s.set(2, 4, old.get(4, 0));
+    s.set(3, 4, old.get(4, 3));
+    s.set(4, 4, old.get(4, 1));
 }
 
 #[inline(always)]
 pub(crate) fn chi<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
-    let old = s.st;
+    let old = s.clone();
 
     #[allow(clippy::needless_range_loop)]
     for i in 0..5 {
         for j in 0..5 {
-            s.st[i][j] = T::and_not_xor(s.st[i][j], old[i][(j + 2) % 5], old[i][(j + 1) % 5]);
+            s.set(
+                i,
+                j,
+                T::and_not_xor(
+                    s.get(i, j),
+                    old.get(i, (j + 2) % 5),
+                    old.get(i, (j + 1) % 5),
+                ),
+            );
         }
     }
 }
@@ -363,7 +397,7 @@ const ROUNDCONSTANTS: [u64; 24] = [
 
 #[inline(always)]
 pub(crate) fn iota<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>, i: usize) {
-    s.st[0][0] = T::xor_constant(s.st[0][0], ROUNDCONSTANTS[i]);
+    s.set(0, 0, T::xor_constant(s.get(0, 0), ROUNDCONSTANTS[i]));
 }
 
 #[inline(always)]
@@ -379,9 +413,10 @@ pub(crate) fn keccakf1600<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakS
 #[inline(always)]
 pub(crate) fn absorb_block<const N: usize, T: KeccakStateItem<N>, const RATE: usize>(
     s: &mut KeccakState<N, T>,
-    blocks: [&[u8]; N],
+    blocks: &[&[u8]; N],
+    start: usize,
 ) {
-    T::load_block::<RATE>(&mut s.st, blocks);
+    T::load_block::<RATE>(&mut s.st, blocks, start);
     keccakf1600(s)
 }
 
@@ -393,26 +428,28 @@ pub(crate) fn absorb_final<
     const DELIM: u8,
 >(
     s: &mut KeccakState<N, T>,
-    last: [&[u8]; N],
+    last: &[&[u8]; N],
+    start: usize,
+    len: usize,
 ) {
-    debug_assert!(N > 0 && last[0].len() < RATE);
-    let last_len = last[0].len();
+    debug_assert!(N > 0 && len < RATE); // && last[0].len() < RATE
+
     let mut blocks = [[0u8; 200]; N];
     for i in 0..N {
-        if last_len > 0 {
-            blocks[i][0..last_len].copy_from_slice(last[i]);
+        if len > 0 {
+            blocks[i][0..len].copy_from_slice(&last[i][start..start + len]);
         }
-        blocks[i][last_len] = DELIM;
+        blocks[i][len] = DELIM;
         blocks[i][RATE - 1] |= 0x80;
     }
-    T::load_block_full::<RATE>(&mut s.st, blocks);
+    T::load_block_full::<RATE>(&mut s.st, &blocks, 0);
     keccakf1600(s)
 }
 
 #[inline(always)]
 pub(crate) fn squeeze_first_block<const N: usize, T: KeccakStateItem<N>, const RATE: usize>(
     s: &KeccakState<N, T>,
-    out: [&mut [u8]; N],
+    out: &mut [&mut [u8]; N],
 ) {
     T::store_block::<RATE>(&s.st, out)
 }
@@ -420,7 +457,7 @@ pub(crate) fn squeeze_first_block<const N: usize, T: KeccakStateItem<N>, const R
 #[inline(always)]
 pub(crate) fn squeeze_next_block<const N: usize, T: KeccakStateItem<N>, const RATE: usize>(
     s: &mut KeccakState<N, T>,
-    out: [&mut [u8]; N],
+    out: &mut [&mut [u8]; N],
 ) {
     keccakf1600(s);
     T::store_block::<RATE>(&s.st, out)
@@ -435,11 +472,11 @@ pub(crate) fn squeeze_first_three_blocks<
     s: &mut KeccakState<N, T>,
     out: [&mut [u8]; N],
 ) {
-    let (o0, o1) = T::split_at_mut_n(out, RATE);
-    squeeze_first_block::<N, T, RATE>(s, o0);
-    let (o1, o2) = T::split_at_mut_n(o1, RATE);
-    squeeze_next_block::<N, T, RATE>(s, o1);
-    squeeze_next_block::<N, T, RATE>(s, o2);
+    let (mut o0, o1) = T::split_at_mut_n(out, RATE);
+    squeeze_first_block::<N, T, RATE>(s, &mut o0);
+    let (mut o1, mut o2) = T::split_at_mut_n(o1, RATE);
+    squeeze_next_block::<N, T, RATE>(s, &mut o1);
+    squeeze_next_block::<N, T, RATE>(s, &mut o2);
 }
 
 #[inline(always)]
@@ -451,18 +488,18 @@ pub(crate) fn squeeze_first_five_blocks<
     s: &mut KeccakState<N, T>,
     out: [&mut [u8]; N],
 ) {
-    let (o0, o1) = T::split_at_mut_n(out, RATE);
-    squeeze_first_block::<N, T, RATE>(s, o0);
-    let (o1, o2) = T::split_at_mut_n(o1, RATE);
+    let (mut o0, o1) = T::split_at_mut_n(out, RATE);
+    squeeze_first_block::<N, T, RATE>(s, &mut o0);
+    let (mut o1, o2) = T::split_at_mut_n(o1, RATE);
 
-    squeeze_next_block::<N, T, RATE>(s, o1);
-    let (o2, o3) = T::split_at_mut_n(o2, RATE);
+    squeeze_next_block::<N, T, RATE>(s, &mut o1);
+    let (mut o2, o3) = T::split_at_mut_n(o2, RATE);
 
-    squeeze_next_block::<N, T, RATE>(s, o2);
-    let (o3, o4) = T::split_at_mut_n(o3, RATE);
+    squeeze_next_block::<N, T, RATE>(s, &mut o2);
+    let (mut o3, mut o4) = T::split_at_mut_n(o3, RATE);
 
-    squeeze_next_block::<N, T, RATE>(s, o3);
-    squeeze_next_block::<N, T, RATE>(s, o4);
+    squeeze_next_block::<N, T, RATE>(s, &mut o3);
+    squeeze_next_block::<N, T, RATE>(s, &mut o4);
 }
 
 #[inline(always)]
@@ -471,7 +508,8 @@ pub(crate) fn squeeze_last<const N: usize, T: KeccakStateItem<N>, const RATE: us
     out: [&mut [u8]; N],
 ) {
     keccakf1600(&mut s);
-    let b = T::store_block_full::<RATE>(&s.st);
+    let mut b = [[0u8; 200]; N];
+    T::store_block_full::<RATE>(&s.st, &mut b);
     for i in 0..N {
         out[i].copy_from_slice(&b[i][0..out[i].len()]);
     }
@@ -482,7 +520,8 @@ pub(crate) fn squeeze_first_and_last<const N: usize, T: KeccakStateItem<N>, cons
     s: &KeccakState<N, T>,
     out: [&mut [u8]; N],
 ) {
-    let b = T::store_block_full::<RATE>(&s.st);
+    let mut b = [[0u8; 200]; N];
+    T::store_block_full::<RATE>(&s.st, &mut b);
     for i in 0..N {
         out[i].copy_from_slice(&b[i][0..out[i].len()]);
     }
@@ -490,15 +529,17 @@ pub(crate) fn squeeze_first_and_last<const N: usize, T: KeccakStateItem<N>, cons
 
 #[inline(always)]
 pub(crate) fn keccak<const N: usize, T: KeccakStateItem<N>, const RATE: usize, const DELIM: u8>(
-    data: [&[u8]; N],
+    data: &[&[u8]; N],
     out: [&mut [u8]; N],
 ) {
     let mut s = KeccakState::<N, T>::new();
     for i in 0..data[0].len() / RATE {
-        absorb_block::<N, T, RATE>(&mut s, T::slice_n(data, i * RATE, RATE));
+        // T::slice_n(data, i * RATE, RATE)
+        absorb_block::<N, T, RATE>(&mut s, &data, i * RATE);
     }
     let rem = data[0].len() % RATE;
-    absorb_final::<N, T, RATE, DELIM>(&mut s, T::slice_n(data, data[0].len() - rem, rem));
+    // T::slice_n(data, data[0].len() - rem, rem)
+    absorb_final::<N, T, RATE, DELIM>(&mut s, data, data[0].len() - rem, rem);
 
     let outlen = out[0].len();
     let blocks = outlen / RATE;
@@ -507,11 +548,11 @@ pub(crate) fn keccak<const N: usize, T: KeccakStateItem<N>, const RATE: usize, c
     if blocks == 0 {
         squeeze_first_and_last::<N, T, RATE>(&s, out)
     } else {
-        let (o0, mut o1) = T::split_at_mut_n(out, RATE);
-        squeeze_first_block::<N, T, RATE>(&s, o0);
+        let (mut o0, mut o1) = T::split_at_mut_n(out, RATE);
+        squeeze_first_block::<N, T, RATE>(&s, &mut o0);
         for _i in 1..blocks {
-            let (o, orest) = T::split_at_mut_n(o1, RATE);
-            squeeze_next_block::<N, T, RATE>(&mut s, o);
+            let (mut o, orest) = T::split_at_mut_n(o1, RATE);
+            squeeze_next_block::<N, T, RATE>(&mut s, &mut o);
             o1 = orest;
         }
         if last < outlen {
