@@ -39,6 +39,13 @@ fn main() -> ! {
     });
     CycleCounter::end_measurement("pqm4: Decapsulate ML-KEM 1024", start);
 
+    let mut sha3_output = [0u8; 64];
+    let sha3_input = [1,2,3,4];
+    unsafe {
+        libcrux_pqm4::sha3_512(addr_of_mut!(sha3_output[0]), addr_of!(sha3_input[0]), 4);
+    }
+    defmt::println!("SHA3-512([1,2,3,4]): {=[u8]}", sha3_output);
+    
     assert_eq!(ss_enc, ss_dec);
 
     board::exit()
