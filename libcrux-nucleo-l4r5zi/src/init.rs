@@ -89,8 +89,8 @@ pub fn setup_clock(c: ClockConfig) -> embassy_stm32::Peripherals {
     embassy_stm32::init(config)
 }
 
-use embassy_stm32::rng::{Instance, Rng};
-use embassy_stm32::{bind_interrupts, peripherals, rng, Config, Peripheral, Peripherals};
+use embassy_stm32::rng::Rng;
+use embassy_stm32::{bind_interrupts, peripherals, rng, Peripherals};
 
 bind_interrupts!(struct Irqs {
     RNG => rng::InterruptHandler<peripherals::RNG>;
