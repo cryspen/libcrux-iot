@@ -55,11 +55,20 @@ fn main() -> ! {
     let mut sha3_state = [1u64; 25];
     let start = CycleCounter::start_measurement();
     unsafe {
-        core::hint::black_box(libcrux_pqm4::KeccakF1600_StatePermute(
+        core::hint::black_box(libcrux_pqm4::KeccakF1600_StatePermute_4Rounds(
             core::hint::black_box(sha3_state.as_mut_ptr()),
         ));
     }
-    CycleCounter::end_measurement("pqm4: KeccakF1600_StatePermute", start);
+    CycleCounter::end_measurement("pqm4: KeccakF1600_StatePermute_4Rounds", start);
+
+    let mut sha3_state = libcrux_sha3::portable::incremental::shake128_init();
+    let start = CycleCounter::start_measurement();
+    unsafe {
+        core::hint::black_box(libcrux_sha3::portable::incremental::keccakf1660_4rounds(
+            core::hint::black_box(&mut sha3_state),
+        ));
+    }
+    CycleCounter::end_measurement("libcrux: keccakf1600_4rounds", start);
 
     assert_eq!(ss_enc, ss_dec);
 

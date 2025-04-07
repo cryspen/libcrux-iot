@@ -409,6 +409,29 @@ pub(crate) fn keccakf1600<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakS
         iota(s, i);
     }
 }
+#[inline(always)]
+pub(crate) fn keccakf1600_4rounds<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
+        theta_rho(s);
+        pi(s);
+        chi(s);
+        iota(s, 0);
+
+        theta_rho(s);
+        pi(s);
+        chi(s);
+        iota(s, 1);
+
+        theta_rho(s);
+        pi(s);
+        chi(s);
+        iota(s, 2);
+
+        theta_rho(s);
+        pi(s);
+        chi(s);
+        iota(s, 3);
+}
+
 
 #[inline(always)]
 pub(crate) fn absorb_block<const N: usize, T: KeccakStateItem<N>, const RATE: usize>(
