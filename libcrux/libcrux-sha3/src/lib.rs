@@ -355,6 +355,12 @@ pub mod portable {
             absorb_final::<1, u64, 168, 0x1fu8>(&mut s.state, &[data0], 0, data0.len());
         }
 
+        /// Perform four rounds of the keccak permutation functions
+        #[inline(never)]
+        pub fn keccakf1660_4rounds(s: &mut KeccakState) {
+            generic_keccak::keccakf1600_4rounds(&mut s.state);
+        }
+
         /// Squeeze three blocks
         #[inline(always)]
         pub fn shake128_squeeze_first_three_blocks(s: &mut KeccakState, out0: &mut [u8]) {
