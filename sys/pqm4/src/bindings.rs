@@ -318,3 +318,22 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub fn sha3_512(output: *mut u8, input: *const u8, inlen: usize);
 }
+unsafe extern "C" {
+    pub fn KeccakF1600_StateExtractBytes(
+        state: *mut u64,
+        data: *mut ::core::ffi::c_uchar,
+        offset: ::core::ffi::c_uint,
+        length: ::core::ffi::c_uint,
+    );
+}
+unsafe extern "C" {
+    pub fn KeccakF1600_StateXORBytes(
+        state: *mut u64,
+        data: *const ::core::ffi::c_uchar,
+        offset: ::core::ffi::c_uint,
+        length: ::core::ffi::c_uint,
+    );
+}
+unsafe extern "C" {
+    pub fn KeccakF1600_StatePermute(state: *mut u64);
+}
