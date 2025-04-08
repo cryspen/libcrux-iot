@@ -11,9 +11,9 @@ pub(crate) struct KeccakState<'a, const N: usize, T: KeccakStateItem<N>> {
 impl<'a, const N: usize, T: KeccakStateItem<N>> KeccakState<'a, N, T> {
     /// Create a new Shake128 x4 state.
     #[inline(always)]
-    pub(crate) fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE>) -> Self {
+    pub(crate) fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE, T>) -> Self {
         Self {
-            st: alloc.alloc(25, |_| T::zero()),
+            st: alloc.alloc(25),
         }
     }
 
@@ -59,7 +59,7 @@ impl<
     }
 
     /// Generate a new keccak xof state.
-    pub(crate) fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE>) -> Self {
+    pub(crate) fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE, STATE>) -> Self {
         Self {
             inner: KeccakState::new(alloc),
             buf: [Self::zero_block(); PARALLEL_LANES],
@@ -78,7 +78,7 @@ impl<
     ///
     /// This works best with relatively small `inputs`.
     #[inline(always)]
-    pub(crate) fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE>, inputs: &[&[u8]; PARALLEL_LANES]) {
+    pub(crate) fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE, STATE>, inputs: &[&[u8]; PARALLEL_LANES]) {
         let input_remainder_len = self.absorb_full(alloc, inputs);
 
         // ... buffer the rest if there's not enough input (left).
@@ -99,7 +99,7 @@ impl<
 
     fn absorb_full<const STACK_SIZE: usize>(
         &mut self,
-        alloc: &Alloc<STACK_SIZE>,
+        alloc: &Alloc<STACK_SIZE, STATE>,
         inputs: &[&[u8]; PARALLEL_LANES],
     ) -> usize {
         debug_assert!(PARALLEL_LANES > 0);
@@ -174,7 +174,7 @@ impl<
     #[inline(always)]
     pub(crate) fn absorb_final<const STACK_SIZE: usize, const DELIMITER: u8>(
         &mut self,
-        alloc: &Alloc<STACK_SIZE>,
+        alloc: &Alloc<STACK_SIZE, STATE>,
         inputs: &[&[u8]; PARALLEL_LANES],
     ) {
         let input_remainder_len = self.absorb_full(alloc, inputs);
@@ -201,7 +201,7 @@ impl<
 
     /// Squeeze `N` x `LEN` bytes.
     #[inline(always)]
-    pub(crate) fn squeeze<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE>, out: [&mut [u8]; PARALLEL_LANES]) {
+    pub(crate) fn squeeze<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE, STATE>, out: [&mut [u8]; PARALLEL_LANES]) {
         if self.sponge {
             // If we called `squeeze` before, call f1600 first.
             // We do it this way around so that we don't call f1600 at the end
@@ -421,10 +421,10 @@ pub(crate) fn iota<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N,
 
 #[inline(always)]
 pub(crate) fn keccakf1600<const STACK_SIZE: usize, const N: usize, T: KeccakStateItem<N>>(
-    alloc: &Alloc<STACK_SIZE>,
+    alloc: &Alloc<STACK_SIZE, T>,
     s: &mut KeccakState<N, T>,
 ) {
-    let scratch = alloc.alloc(25, |_| T::zero());
+    let scratch = alloc.alloc(25);
     for i in 0..24 {
         theta_rho(s);
         pi(s, scratch);
@@ -441,7 +441,7 @@ pub(crate) fn absorb_block<
     T: KeccakStateItem<N>,
     const RATE: usize,
 >(
-    alloc: &Alloc<STACK_SIZE>,
+    alloc: &Alloc<STACK_SIZE, T>,
     s: &mut KeccakState<N, T>,
     blocks: &[&[u8]; N],
     start: usize,
@@ -458,7 +458,7 @@ pub(crate) fn absorb_final<
     const RATE: usize,
     const DELIM: u8,
 >(
-    alloc: &Alloc<STACK_SIZE>,
+    alloc: &Alloc<STACK_SIZE, T>,
     s: &mut KeccakState<N, T>,
     last: &[&[u8]; N],
     start: usize,
@@ -493,7 +493,7 @@ pub(crate) fn squeeze_next_block<
     T: KeccakStateItem<N>,
     const RATE: usize,
 >(
-    alloc: &Alloc<STACK_SIZE>,
+    alloc: &Alloc<STACK_SIZE, T>,
     s: &mut KeccakState<N, T>,
 
     out: &mut [&mut [u8]; N],
@@ -509,7 +509,7 @@ pub(crate) fn squeeze_first_three_blocks<
     T: KeccakStateItem<N>,
     const RATE: usize,
 >(
-    alloc: &Alloc<STACK_SIZE>,
+    alloc: &Alloc<STACK_SIZE, T>,
     s: &mut KeccakState<N, T>,
     out: [&mut [u8]; N],
 ) {
@@ -527,7 +527,7 @@ pub(crate) fn squeeze_first_five_blocks<
     T: KeccakStateItem<N>,
     const RATE: usize,
 >(
-    alloc: &Alloc<STACK_SIZE>,
+    alloc: &Alloc<STACK_SIZE, T>,
     s: &mut KeccakState<N, T>,
 
     out: [&mut [u8]; N],
@@ -553,7 +553,7 @@ pub(crate) fn squeeze_last<
     T: KeccakStateItem<N>,
     const RATE: usize,
 >(
-    alloc: &Alloc<STACK_SIZE>,
+    alloc: &Alloc<STACK_SIZE, T>,
     mut s: KeccakState<N, T>,
     out: [&mut [u8]; N],
 ) {
@@ -582,7 +582,7 @@ pub(crate) fn keccak<const N: usize, T: KeccakStateItem<N>, const RATE: usize, c
     data: &[&[u8]; N],
     out: [&mut [u8]; N],
 ) {
-    let alloc = Alloc::<500>::new();
+    let alloc = Alloc::<500, T>::new();
     let mut s = KeccakState::<N, T>::new(&alloc);
 
     for i in 0..data[0].len() / RATE {

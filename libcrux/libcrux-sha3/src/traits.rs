@@ -1,6 +1,7 @@
 /// A Keccak Item
 /// This holds the internal state and depends on the architecture.
-pub trait KeccakStateItem<const N: usize>: internal::KeccakItem<N> {}
+
+pub trait KeccakStateItem<const N: usize>: internal::KeccakItem<N> + Default {}
 
 // Implement the public trait for all items.
 impl<const N: usize, T: internal::KeccakItem<N>> KeccakStateItem<N> for T {}
@@ -24,7 +25,7 @@ pub(crate) fn set_ij<const N: usize, T: KeccakStateItem<N>>(
 
 pub(crate) mod internal {
     /// A trait for multiplexing implementations.
-    pub trait KeccakItem<const N: usize>: Clone + Copy {
+    pub trait KeccakItem<const N: usize>: Clone + Copy + Default {
         fn zero() -> Self;
         fn xor5(a: Self, b: Self, c: Self, d: Self, e: Self) -> Self;
         fn rotate_left1_and_xor(a: Self, b: Self) -> Self;

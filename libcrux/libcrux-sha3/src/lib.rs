@@ -285,40 +285,40 @@ pub mod portable {
         /// An XOF
         pub trait Xof<'a, const RATE: usize>: private::Sealed {
             /// Create new absorb state
-            fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE>) -> Self;
+            fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE, u64>) -> Self;
 
             /// Absorb input
-            fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE>, input: &[u8]);
+            fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE, u64>, input: &[u8]);
 
             /// Absorb final input (may be empty)
             fn absorb_final<const STACK_SIZE: usize>(
                 &mut self,
-                alloc: &Alloc<STACK_SIZE>,
+                alloc: &Alloc<STACK_SIZE, u64>,
                 input: &[u8],
             );
 
             /// Squeeze output bytes
             fn squeeze<const STACK_SIZE: usize>(
                 &mut self,
-                alloc: &Alloc<STACK_SIZE>,
+                alloc: &Alloc<STACK_SIZE, u64>,
                 out: &mut [u8],
             );
         }
 
         impl<'a> Xof<'a, 168> for Shake128Xof<'a> {
-            fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE>) -> Self {
+            fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE, u64>) -> Self {
                 Self {
                     state: KeccakXofState::<1, 168, u64>::new(alloc),
                 }
             }
 
-            fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE>, input: &[u8]) {
+            fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE, u64>, input: &[u8]) {
                 self.state.absorb(alloc, &[input]);
             }
 
             fn absorb_final<const STACK_SIZE: usize>(
                 &mut self,
-                alloc: &Alloc<STACK_SIZE>,
+                alloc: &Alloc<STACK_SIZE, u64>,
                 input: &[u8],
             ) {
                 self.state
@@ -328,7 +328,7 @@ pub mod portable {
             /// Shake128 squeeze
             fn squeeze<const STACK_SIZE: usize>(
                 &mut self,
-                alloc: &Alloc<STACK_SIZE>,
+                alloc: &Alloc<STACK_SIZE, u64>,
                 out: &mut [u8],
             ) {
                 self.state.squeeze(alloc, [out]);
@@ -338,21 +338,21 @@ pub mod portable {
         /// Shake256 XOF in absorb state
         impl<'a> Xof<'a, 136> for Shake256Xof<'a> {
             /// Shake256 new state
-            fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE>) -> Self {
+            fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE, u64>) -> Self {
                 Self {
                     state: KeccakXofState::<1, 136, u64>::new(alloc),
                 }
             }
 
             /// Shake256 absorb
-            fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE>, input: &[u8]) {
+            fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE, u64>, input: &[u8]) {
                 self.state.absorb(alloc, &[input]);
             }
 
             /// Shake256 absorb final
             fn absorb_final<const STACK_SIZE: usize>(
                 &mut self,
-                alloc: &Alloc<STACK_SIZE>,
+                alloc: &Alloc<STACK_SIZE, u64>,
                 input: &[u8],
             ) {
                 self.state
@@ -362,7 +362,7 @@ pub mod portable {
             /// Shake256 squeeze
             fn squeeze<const STACK_SIZE: usize>(
                 &mut self,
-                alloc: &Alloc<STACK_SIZE>,
+                alloc: &Alloc<STACK_SIZE, u64>,
                 out: &mut [u8],
             ) {
                 self.state.squeeze(alloc, [out]);
@@ -371,7 +371,7 @@ pub mod portable {
 
         /// Create a new SHAKE-128 state object.
         #[inline(never)]
-        pub fn shake128_init<const STACK_SIZE: usize>(alloc: &Alloc<STACK_SIZE>) -> KeccakState {
+        pub fn shake128_init<const STACK_SIZE: usize>(alloc: &Alloc<STACK_SIZE, u64>) -> KeccakState {
             KeccakState {
                 state: GenericState::<1, u64>::new(&alloc),
             }
@@ -380,7 +380,7 @@ pub mod portable {
         /// Absorb
         #[inline(never)]
         pub fn shake128_absorb_final<const STACK_SIZE: usize>(
-            alloc: &Alloc<STACK_SIZE>,
+            alloc: &Alloc<STACK_SIZE, u64>,
             s: &mut KeccakState,
             data0: &[u8],
         ) {
@@ -396,7 +396,7 @@ pub mod portable {
         /// Squeeze three blocks
         #[inline(always)]
         pub fn shake128_squeeze_first_three_blocks<const STACK_SIZE: usize>(
-            alloc: &Alloc<STACK_SIZE>,
+            alloc: &Alloc<STACK_SIZE, u64>,
             s: &mut KeccakState,
             out0: &mut [u8],
         ) {
@@ -406,7 +406,7 @@ pub mod portable {
         /// Squeeze five blocks
         #[inline(always)]
         pub fn shake128_squeeze_first_five_blocks<const STACK_SIZE: usize>(
-            alloc: &Alloc<STACK_SIZE>,
+            alloc: &Alloc<STACK_SIZE, u64>,
             s: &mut KeccakState,
             out0: &mut [u8],
         ) {
@@ -416,7 +416,7 @@ pub mod portable {
         /// Squeeze another block
         #[inline(never)]
         pub fn shake128_squeeze_next_block<const STACK_SIZE: usize>(
-            alloc: &Alloc<STACK_SIZE>,
+            alloc: &Alloc<STACK_SIZE, u64>,
             s: &mut KeccakState,
             out0: &mut [u8],
         ) {
@@ -425,7 +425,7 @@ pub mod portable {
 
         /// Create a new SHAKE-256 state object.
         #[inline(always)]
-        pub fn shake256_init<const STACK_SIZE: usize>(alloc: &Alloc<STACK_SIZE>) -> KeccakState {
+        pub fn shake256_init<const STACK_SIZE: usize>(alloc: &Alloc<STACK_SIZE, u64>) -> KeccakState {
             KeccakState {
                 state: GenericState::<1, u64>::new(&alloc),
             }
@@ -434,7 +434,7 @@ pub mod portable {
         /// Absorb some data for SHAKE-256 for the last time
         #[inline(always)]
         pub fn shake256_absorb_final<const STACK_SIZE: usize>(
-            alloc: &Alloc<STACK_SIZE>,
+            alloc: &Alloc<STACK_SIZE, u64>,
             s: &mut KeccakState,
             data: &[u8],
         ) {
@@ -456,7 +456,7 @@ pub mod portable {
         /// Squeeze the next SHAKE-256 block
         #[inline(always)]
         pub fn shake256_squeeze_next_block<const STACK_SIZE: usize>(
-            alloc: &Alloc<STACK_SIZE>,
+            alloc: &Alloc<STACK_SIZE, u64>,
             s: &mut KeccakState,
             out: &mut [u8],
         ) {
