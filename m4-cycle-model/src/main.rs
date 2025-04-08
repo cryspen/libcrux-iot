@@ -21,7 +21,7 @@ impl<'a> Instruction<'a> {
             Instruction::Bic
         } else if line.contains("\torr") {
             Instruction::Orr
-        } else if line.contains("\torr") {
+        } else if line.contains("\tlsl") {
             Instruction::Lsl
         } else {
             Instruction::Other(line)
