@@ -583,6 +583,8 @@ pub(crate) fn keccak<const N: usize, T: KeccakStateItem<N>, const RATE: usize, c
     out: [&mut [u8]; N],
 ) {
     let alloc = Alloc::<500, T>::new();
+    alloc.set_pointer(); // We have to set the pointer here because
+                         // the assignment above also moves `alloc`.
     let mut s = KeccakState::<N, T>::new(&alloc);
 
     for i in 0..data[0].len() / RATE {

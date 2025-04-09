@@ -2,7 +2,7 @@
 //!
 //! A SHA3 implementation with optional simd optimisations.
 
-// #![no_std]
+#![no_std]
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
 
