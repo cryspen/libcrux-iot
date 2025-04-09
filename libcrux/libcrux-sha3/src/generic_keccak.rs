@@ -1,6 +1,8 @@
 //! The generic SHA3 implementation that uses portable or platform specific
 //! sub-routines.
 
+use core::mem::zeroed;
+
 use crate::traits::*;
 
 #[cfg_attr(hax, hax_lib::opaque)]
@@ -315,6 +317,23 @@ pub(crate) fn theta_rho<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakSta
     s.set(4, 4, T::xor_and_rotate::<14, 50>(s.get(4, 4), t[4]));
 }
 
+const fn ni(i: usize, (x, y): (usize, usize)) -> (usize, usize) {
+    // matrix has order 4
+    if i & 0b11 == 0 {
+        (x, (x + 2 * y) % 5)
+    } else {
+        ni(i - 1, (x, x + 2 * y))
+    }
+}
+
+const fn minv((x, y): (usize, usize)) -> (usize, usize) {
+    ((x + 3 * y) % 5, x)
+}
+
+const fn niminv(i: usize, xy: (usize, usize)) -> (usize, usize) {
+    minv(ni(i, xy))
+}
+
 const _PI: [usize; 24] = [
     6, 12, 18, 24, 3, 9, 10, 16, 22, 1, 7, 13, 19, 20, 4, 5, 11, 17, 23, 2, 8, 14, 15, 21,
 ];
@@ -401,37 +420,255 @@ pub(crate) fn iota<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N,
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
-    for i in 0..24 {
+fn keccakf1600_round<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>, i: usize) {
+    /* old
         theta_rho(s);
         pi(s);
         chi(s);
         iota(s, i);
+    */
+
+    let mut b = [T::zero(); 5];
+    let mut c = [T::zero(); 5];
+    let mut d = [T::zero(); 5];
+    let mut e = KeccakState::<N, T>::new();
+
+    c_loop(s, &mut c);
+    d_loop(s, &c, &mut d);
+
+    // y=0
+    b_loop_0(s, &mut b, &d);
+    e_loop(s, 0, &mut e, &b);
+
+    // y=1
+    b_loop_1(s, &mut b, &d);
+    e_loop(s, 1, &mut e, &b);
+
+    // y=2
+    b_loop_2(s, &mut b, &d);
+    e_loop(s, 2, &mut e, &b);
+
+    // y=3
+    b_loop_3(s, &mut b, &d);
+    e_loop(s, 3, &mut e, &b);
+
+    // y=4
+    b_loop_4(s, &mut b, &d);
+    e_loop(s, 4, &mut e, &b);
+
+    e.set(0, 0, T::xor_constant(e.get(0, 0), ROUNDCONSTANTS[i]));
+
+    for i in 0..5 {
+        for j in 0..5 {
+            s.set(i, j, e.get(i, j))
+        }
+    }
+}
+
+fn c_loop<const N: usize, T: KeccakStateItem<N>>(s: &KeccakState<N, T>, c: &mut [T; 5]) {
+    c.iter_mut().enumerate().for_each(|(x, dst)| {
+        let t0 = s.get(x, 0);
+        let t1 = s.get(x, 1);
+        let t2 = s.get(x, 2);
+        let t3 = s.get(x, 3);
+        let t4 = s.get(x, 4);
+
+        *dst = T::xor5(t0, t1, t2, t3, t4);
+    });
+}
+
+fn d_loop<const N: usize, T: KeccakStateItem<N>>(
+    s: &KeccakState<N, T>,
+    c: &[T; 5],
+    d: &mut [T; 5],
+) {
+    let c0 = c[0];
+    let c2 = c[2];
+    let c4 = c[4];
+    let c1 = c[1];
+    let c3 = c[3];
+
+    d[1] = T::rotate_left1_and_xor(c0, c2);
+    d[3] = T::rotate_left1_and_xor(c2, c4);
+    d[0] = T::rotate_left1_and_xor(c4, c1);
+    d[2] = T::rotate_left1_and_xor(c1, c3);
+    d[4] = T::rotate_left1_and_xor(c3, c0);
+}
+
+fn b_loop_0<const N: usize, T: KeccakStateItem<N>>(
+    s: &KeccakState<N, T>,
+    b: &mut [T; 5],
+    d: &[T; 5],
+) {
+    const Y: usize = 0;
+
+    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
+    let t0_d = d[minv((0, Y)).0];
+    b[0] = T::xor(t0_s, t0_d);
+
+    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
+    let t1_d = d[minv((1, Y)).0];
+    b[1] = T::xor_and_rotate::<36, 28>(t1_s, t1_d);
+
+    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
+    let t2_d = d[minv((2, Y)).0];
+    b[2] = T::xor_and_rotate::<3, 61>(t2_s, t2_d);
+
+    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
+    let t3_d = d[minv((3, Y)).0];
+    b[3] = T::xor_and_rotate::<41, 23>(t3_s, t3_d);
+
+    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
+    let t4_d = d[minv((4, Y)).0];
+    b[4] = T::xor_and_rotate::<18, 46>(t4_s, t4_d);
+}
+
+fn b_loop_1<const N: usize, T: KeccakStateItem<N>>(
+    s: &KeccakState<N, T>,
+    b: &mut [T; 5],
+    d: &[T; 5],
+) {
+    const Y: usize = 1;
+
+    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
+    let t0_d = d[minv((0, Y)).0];
+    b[0] = T::xor_and_rotate::<1, 63>(t0_s, t0_d);
+
+    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
+    let t1_d = d[minv((1, Y)).0];
+    b[1] = T::xor_and_rotate::<44, 20>(t1_s, t1_d);
+
+    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
+    let t2_d = d[minv((2, Y)).0];
+    b[2] = T::xor_and_rotate::<10, 51>(t2_s, t2_d);
+
+    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
+    let t3_d = d[minv((3, Y)).0];
+    b[3] = T::xor_and_rotate::<45, 19>(t3_s, t3_d);
+
+    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
+    let t4_d = d[minv((4, Y)).0];
+    b[4] = T::xor_and_rotate::<2, 62>(t4_s, t4_d);
+}
+
+fn b_loop_2<const N: usize, T: KeccakStateItem<N>>(
+    s: &KeccakState<N, T>,
+    b: &mut [T; 5],
+    d: &[T; 5],
+) {
+    const Y: usize = 2;
+
+    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
+    let t0_d = d[minv((0, Y)).0];
+    b[0] = T::xor_and_rotate::<62, 2>(t0_s, t0_d);
+
+    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
+    let t1_d = d[minv((1, Y)).0];
+    b[1] = T::xor_and_rotate::<6, 58>(t1_s, t1_d);
+
+    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
+    let t2_d = d[minv((2, Y)).0];
+    b[2] = T::xor_and_rotate::<43, 21>(t2_s, t2_d);
+
+    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
+    let t3_d = d[minv((3, Y)).0];
+    b[3] = T::xor_and_rotate::<15, 49>(t3_s, t3_d);
+
+    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
+    let t4_d = d[minv((4, Y)).0];
+    b[4] = T::xor_and_rotate::<61, 3>(t4_s, t4_d);
+}
+
+fn b_loop_3<const N: usize, T: KeccakStateItem<N>>(
+    s: &KeccakState<N, T>,
+    b: &mut [T; 5],
+    d: &[T; 5],
+) {
+    const Y: usize = 3;
+
+    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
+    let t0_d = d[minv((0, Y)).0];
+    b[0] = T::xor_and_rotate::<28, 36>(t0_s, t0_d);
+
+    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
+    let t1_d = d[minv((1, Y)).0];
+    b[1] = T::xor_and_rotate::<55, 9>(t1_s, t1_d);
+
+    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
+    let t2_d = d[minv((2, Y)).0];
+    b[2] = T::xor_and_rotate::<25, 39>(t2_s, t2_d);
+
+    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
+    let t3_d = d[minv((3, Y)).0];
+    b[3] = T::xor_and_rotate::<21, 43>(t3_s, t3_d);
+
+    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
+    let t4_d = d[minv((4, Y)).0];
+    b[4] = T::xor_and_rotate::<56, 8>(t4_s, t4_d);
+}
+
+fn b_loop_4<const N: usize, T: KeccakStateItem<N>>(
+    s: &KeccakState<N, T>,
+    b: &mut [T; 5],
+    d: &[T; 5],
+) {
+    const Y: usize = 4;
+
+    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
+    let t0_d = d[minv((0, Y)).0];
+    b[0] = T::xor_and_rotate::<27, 37>(t0_s, t0_d);
+
+    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
+    let t1_d = d[minv((1, Y)).0];
+    b[1] = T::xor_and_rotate::<20, 44>(t1_s, t1_d);
+
+    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
+    let t2_d = d[minv((2, Y)).0];
+    b[2] = T::xor_and_rotate::<39, 25>(t2_s, t2_d);
+
+    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
+    let t3_d = d[minv((3, Y)).0];
+    b[3] = T::xor_and_rotate::<8, 56>(t3_s, t3_d);
+
+    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
+    let t4_d = d[minv((4, Y)).0];
+    b[4] = T::xor_and_rotate::<14, 50>(t4_s, t4_d);
+}
+
+fn e_loop<const N: usize, T: KeccakStateItem<N>>(
+    s: &KeccakState<N, T>,
+    y: usize,
+    e: &mut KeccakState<N, T>,
+    b: &[T; 5],
+) {
+    let b0 = b[0];
+    let b1 = b[1];
+    let b2 = b[2];
+    let b3 = b[3];
+    let b4 = b[4];
+
+    e.set(0, y, T::and_not_xor(b0, b2, b1));
+    e.set(1, y, T::and_not_xor(b1, b3, b2));
+    e.set(2, y, T::and_not_xor(b2, b4, b3));
+    e.set(3, y, T::and_not_xor(b3, b0, b4));
+    e.set(4, y, T::and_not_xor(b4, b1, b0));
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
+    for i in 0..24 {
+        keccakf1600_round(s, i);
     }
 }
 #[inline(always)]
-pub(crate) fn keccakf1600_4rounds<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
-        theta_rho(s);
-        pi(s);
-        chi(s);
-        iota(s, 0);
-
-        theta_rho(s);
-        pi(s);
-        chi(s);
-        iota(s, 1);
-
-        theta_rho(s);
-        pi(s);
-        chi(s);
-        iota(s, 2);
-
-        theta_rho(s);
-        pi(s);
-        chi(s);
-        iota(s, 3);
+pub(crate) fn keccakf1600_4rounds<const N: usize, T: KeccakStateItem<N>>(
+    s: &mut KeccakState<N, T>,
+) {
+    keccakf1600_round(s, 0);
+    keccakf1600_round(s, 1);
+    keccakf1600_round(s, 2);
+    keccakf1600_round(s, 3);
 }
-
 
 #[inline(always)]
 pub(crate) fn absorb_block<const N: usize, T: KeccakStateItem<N>, const RATE: usize>(
