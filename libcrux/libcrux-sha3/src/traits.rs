@@ -26,7 +26,6 @@ pub(crate) fn set_ij<const N: usize, T: KeccakStateItem<N>>(
 pub(crate) mod internal {
     /// A trait for multiplexing implementations.
     pub trait KeccakItem<const N: usize>: Clone + Copy + Default {
-        fn zero() -> Self;
         fn xor5(a: Self, b: Self, c: Self, d: Self, e: Self) -> Self;
         fn rotate_left1_and_xor(a: Self, b: Self) -> Self;
         fn xor_and_rotate<const LEFT: i32, const RIGHT: i32>(a: Self, b: Self) -> Self;

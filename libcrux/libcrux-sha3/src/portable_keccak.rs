@@ -72,10 +72,6 @@ fn split_at_mut_1(out: &mut [u8], mid: usize) -> (&mut [u8], &mut [u8]) {
 
 impl KeccakItem<1> for u64 {
     #[inline(always)]
-    fn zero() -> Self {
-        0
-    }
-    #[inline(always)]
     fn xor5(a: Self, b: Self, c: Self, d: Self, e: Self) -> Self {
         _veor5q_u64(a, b, c, d, e)
     }
