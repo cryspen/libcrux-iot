@@ -9,6 +9,7 @@
 
 use board::cycle_counter::CycleCounter;
 use board::init::setup_cycle_counter;
+use libcrux_sha3::alloc::Alloc;
 
 use core::ptr::{addr_of, addr_of_mut};
 
@@ -454,9 +455,17 @@ fn main() -> ! {
 
     // SHAKE128
     {
+        let alloc_u64 = Alloc::<50, u64>::new();
+        alloc_u64.set_pointer(); // We have to set the pointer here because
+                                 // the assignment above also moves `alloc`.
+
+        let alloc_buffer = Alloc::<1, [u8; 200]>::new();
+        alloc_buffer.set_pointer();
+
         let start = CycleCounter::start_measurement();
-        let mut shake128_state =
-            core::hint::black_box(libcrux_sha3::portable::incremental::shake128_init());
+        let mut shake128_state = core::hint::black_box(
+            libcrux_sha3::portable::incremental::shake128_init(&alloc_u64),
+        );
         CycleCounter::end_measurement("libcrux SHAKE128 Init", start);
 
         let mut shake128_state_pqm4 = libcrux_pqm4::shake128incctx { ctx: [0u64; 26] };
@@ -470,6 +479,8 @@ fn main() -> ! {
             rng.fill_bytes(&mut init_absorb_final_input);
             let start = CycleCounter::start_measurement();
             core::hint::black_box(libcrux_sha3::portable::incremental::shake128_absorb_final(
+                &alloc_buffer,
+                &alloc_u64,
                 &mut shake128_state,
                 &init_absorb_final_input,
             ));
@@ -495,6 +506,7 @@ fn main() -> ! {
             let start = CycleCounter::start_measurement();
             core::hint::black_box(
                 libcrux_sha3::portable::incremental::shake128_squeeze_next_block(
+                    &alloc_u64,
                     &mut shake128_state,
                     &mut one_block,
                 ),
@@ -518,6 +530,7 @@ fn main() -> ! {
             let start = CycleCounter::start_measurement();
             core::hint::black_box(
                 libcrux_sha3::portable::incremental::shake128_squeeze_first_three_blocks(
+                    &alloc_u64,
                     &mut shake128_state,
                     &mut three_blocks,
                 ),
