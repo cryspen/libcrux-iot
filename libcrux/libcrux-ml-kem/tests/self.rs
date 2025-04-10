@@ -1,7 +1,7 @@
 use libcrux_ml_kem::{MlKemCiphertext, MlKemPrivateKey};
 
 use libcrux_sha3::shake256;
-use rand::{rngs::OsRng, thread_rng, RngCore};
+use rand::{rng, rngs::OsRng, TryRngCore};
 
 const SHARED_SECRET_SIZE: usize = 32;
 
@@ -135,7 +135,7 @@ fn modify_ciphertext<const LEN: usize>(ciphertext: MlKemCiphertext<LEN>) -> MlKe
     let mut raw_ciphertext = [0u8; LEN];
     raw_ciphertext.copy_from_slice(ciphertext.as_ref());
 
-    let mut random_u32: usize = thread_rng().next_u32().try_into().unwrap();
+    let mut random_u32: usize = rng().try_next_u32().unwrap().try_into().unwrap();
 
     let mut random_byte: u8 = (random_u32 & 0xFF) as u8;
     if random_byte == 0 {
@@ -182,7 +182,7 @@ fn modify_secret_key<const LEN: usize>(
     let mut raw_secret_key = [0u8; LEN];
     raw_secret_key.copy_from_slice(secret_key.as_slice());
 
-    let mut random_u32: usize = thread_rng().next_u32().try_into().unwrap();
+    let mut random_u32: usize = rng().try_next_u32().unwrap().try_into().unwrap();
 
     let mut random_byte: u8 = (random_u32 & 0xFF) as u8;
     if random_byte == 0 {
@@ -298,52 +298,16 @@ impl_consistency_unpacked!(
     libcrux_ml_kem::mlkem512::portable
 );
 
-#[cfg(all(feature = "mlkem512", feature = "simd128",))]
-impl_consistency_unpacked!(
-    consistency_unpacked_512_neon,
-    libcrux_ml_kem::mlkem512::neon
-);
-
-#[cfg(all(feature = "mlkem512", feature = "simd256",))]
-impl_consistency_unpacked!(
-    consistency_unpacked_512_avx2,
-    libcrux_ml_kem::mlkem512::avx2
-);
-
 #[cfg(all(feature = "mlkem1024"))]
 impl_consistency_unpacked!(
     consistency_unpacked_1024_portable,
     libcrux_ml_kem::mlkem1024::portable
 );
 
-#[cfg(all(feature = "mlkem1024", feature = "simd128",))]
-impl_consistency_unpacked!(
-    consistency_unpacked_1024_neon,
-    libcrux_ml_kem::mlkem1024::neon
-);
-
-#[cfg(all(feature = "mlkem1024", feature = "simd256",))]
-impl_consistency_unpacked!(
-    consistency_unpacked_1024_avx2,
-    libcrux_ml_kem::mlkem1024::avx2
-);
-
 #[cfg(all(feature = "mlkem768",))]
 impl_consistency_unpacked!(
     consistency_unpacked_768_portable,
     libcrux_ml_kem::mlkem768::portable
-);
-
-#[cfg(all(feature = "mlkem768", feature = "simd128",))]
-impl_consistency_unpacked!(
-    consistency_unpacked_768_neon,
-    libcrux_ml_kem::mlkem768::neon
-);
-
-#[cfg(all(feature = "mlkem768", feature = "simd256",))]
-impl_consistency_unpacked!(
-    consistency_unpacked_768_avx2,
-    libcrux_ml_kem::mlkem768::avx2
 );
 
 #[cfg(feature = "mlkem512")]

@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" }
-libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = [ "pre-verification", "mlkem512", "mlkem768", "mlkem1024",] } 
+libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem", default-features = false, features = [ "mlkem512", "mlkem768", "mlkem1024",] } 
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 
 [features]
