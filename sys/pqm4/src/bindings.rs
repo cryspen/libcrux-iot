@@ -22,6 +22,11 @@ pub const CRYPTO_PUBLICKEYBYTES: u32 = 1568;
 pub const CRYPTO_CIPHERTEXTBYTES: u32 = 1568;
 pub const CRYPTO_BYTES: u32 = 32;
 pub const CRYPTO_ALGNAME: &[u8; 10] = b"Kyber1024\0";
+pub const SHAKE128_RATE: u32 = 168;
+pub const SHAKE256_RATE: u32 = 136;
+pub const SHA3_256_RATE: u32 = 136;
+pub const SHA3_384_RATE: u32 = 104;
+pub const SHA3_512_RATE: u32 = 72;
 unsafe extern "C" {
     pub fn crypto_kem_keypair(
         pk: *mut ::core::ffi::c_uchar,
@@ -41,4 +46,275 @@ unsafe extern "C" {
         ct: *const ::core::ffi::c_uchar,
         sk: *const ::core::ffi::c_uchar,
     ) -> ::core::ffi::c_int;
+}
+pub type wchar_t = ::core::ffi::c_uint;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct max_align_t {
+    pub __clang_max_align_nonce1: ::core::ffi::c_longlong,
+    pub __clang_max_align_nonce2: f64,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of max_align_t"][::core::mem::size_of::<max_align_t>() - 16usize];
+    ["Alignment of max_align_t"][::core::mem::align_of::<max_align_t>() - 8usize];
+    ["Offset of field: max_align_t::__clang_max_align_nonce1"]
+        [::core::mem::offset_of!(max_align_t, __clang_max_align_nonce1) - 0usize];
+    ["Offset of field: max_align_t::__clang_max_align_nonce2"]
+        [::core::mem::offset_of!(max_align_t, __clang_max_align_nonce2) - 8usize];
+};
+pub type int_least64_t = i64;
+pub type uint_least64_t = u64;
+pub type int_fast64_t = i64;
+pub type uint_fast64_t = u64;
+pub type int_least32_t = i32;
+pub type uint_least32_t = u32;
+pub type int_fast32_t = i32;
+pub type uint_fast32_t = u32;
+pub type int_least16_t = i16;
+pub type uint_least16_t = u16;
+pub type int_fast16_t = i16;
+pub type uint_fast16_t = u16;
+pub type int_least8_t = i8;
+pub type uint_least8_t = u8;
+pub type int_fast8_t = i8;
+pub type uint_fast8_t = u8;
+pub type intmax_t = ::core::ffi::c_longlong;
+pub type uintmax_t = ::core::ffi::c_ulonglong;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct shake128incctx {
+    pub ctx: [u64; 26usize],
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of shake128incctx"][::core::mem::size_of::<shake128incctx>() - 208usize];
+    ["Alignment of shake128incctx"][::core::mem::align_of::<shake128incctx>() - 8usize];
+    ["Offset of field: shake128incctx::ctx"][::core::mem::offset_of!(shake128incctx, ctx) - 0usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct shake128ctx {
+    pub ctx: [u64; 25usize],
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of shake128ctx"][::core::mem::size_of::<shake128ctx>() - 200usize];
+    ["Alignment of shake128ctx"][::core::mem::align_of::<shake128ctx>() - 8usize];
+    ["Offset of field: shake128ctx::ctx"][::core::mem::offset_of!(shake128ctx, ctx) - 0usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct shake256incctx {
+    pub ctx: [u64; 26usize],
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of shake256incctx"][::core::mem::size_of::<shake256incctx>() - 208usize];
+    ["Alignment of shake256incctx"][::core::mem::align_of::<shake256incctx>() - 8usize];
+    ["Offset of field: shake256incctx::ctx"][::core::mem::offset_of!(shake256incctx, ctx) - 0usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct shake256ctx {
+    pub ctx: [u64; 25usize],
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of shake256ctx"][::core::mem::size_of::<shake256ctx>() - 200usize];
+    ["Alignment of shake256ctx"][::core::mem::align_of::<shake256ctx>() - 8usize];
+    ["Offset of field: shake256ctx::ctx"][::core::mem::offset_of!(shake256ctx, ctx) - 0usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct sha3_256incctx {
+    pub ctx: [u64; 26usize],
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of sha3_256incctx"][::core::mem::size_of::<sha3_256incctx>() - 208usize];
+    ["Alignment of sha3_256incctx"][::core::mem::align_of::<sha3_256incctx>() - 8usize];
+    ["Offset of field: sha3_256incctx::ctx"][::core::mem::offset_of!(sha3_256incctx, ctx) - 0usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct sha3_384incctx {
+    pub ctx: [u64; 26usize],
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of sha3_384incctx"][::core::mem::size_of::<sha3_384incctx>() - 208usize];
+    ["Alignment of sha3_384incctx"][::core::mem::align_of::<sha3_384incctx>() - 8usize];
+    ["Offset of field: sha3_384incctx::ctx"][::core::mem::offset_of!(sha3_384incctx, ctx) - 0usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct sha3_512incctx {
+    pub ctx: [u64; 26usize],
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of sha3_512incctx"][::core::mem::size_of::<sha3_512incctx>() - 208usize];
+    ["Alignment of sha3_512incctx"][::core::mem::align_of::<sha3_512incctx>() - 8usize];
+    ["Offset of field: sha3_512incctx::ctx"][::core::mem::offset_of!(sha3_512incctx, ctx) - 0usize];
+};
+unsafe extern "C" {
+    pub fn shake128_absorb(state: *mut shake128ctx, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn shake128_squeezeblocks(output: *mut u8, nblocks: usize, state: *mut shake128ctx);
+}
+unsafe extern "C" {
+    pub fn shake128_ctx_release(state: *mut shake128ctx);
+}
+unsafe extern "C" {
+    pub fn shake128_ctx_clone(dest: *mut shake128ctx, src: *const shake128ctx);
+}
+unsafe extern "C" {
+    pub fn cshake128_simple_absorb(
+        state: *mut shake128ctx,
+        cstm: u16,
+        input: *const u8,
+        inlen: usize,
+    );
+}
+unsafe extern "C" {
+    pub fn cshake128_simple_squeezeblocks(output: *mut u8, nblocks: usize, state: *mut shake128ctx);
+}
+unsafe extern "C" {
+    pub fn cshake128_simple(
+        output: *mut u8,
+        outlen: usize,
+        cstm: u16,
+        input: *const u8,
+        inlen: usize,
+    );
+}
+unsafe extern "C" {
+    pub fn shake128_inc_init(state: *mut shake128incctx);
+}
+unsafe extern "C" {
+    pub fn shake128_inc_absorb(state: *mut shake128incctx, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn shake128_inc_finalize(state: *mut shake128incctx);
+}
+unsafe extern "C" {
+    pub fn shake128_inc_squeeze(output: *mut u8, outlen: usize, state: *mut shake128incctx);
+}
+unsafe extern "C" {
+    pub fn shake128_inc_ctx_clone(dest: *mut shake128incctx, src: *const shake128incctx);
+}
+unsafe extern "C" {
+    pub fn shake128_inc_ctx_release(state: *mut shake128incctx);
+}
+unsafe extern "C" {
+    pub fn shake256_absorb(state: *mut shake256ctx, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn shake256_squeezeblocks(output: *mut u8, nblocks: usize, state: *mut shake256ctx);
+}
+unsafe extern "C" {
+    pub fn shake256_ctx_release(state: *mut shake256ctx);
+}
+unsafe extern "C" {
+    pub fn shake256_ctx_clone(dest: *mut shake256ctx, src: *const shake256ctx);
+}
+unsafe extern "C" {
+    pub fn cshake256_simple_absorb(
+        state: *mut shake256ctx,
+        cstm: u16,
+        input: *const u8,
+        inlen: usize,
+    );
+}
+unsafe extern "C" {
+    pub fn cshake256_simple_squeezeblocks(output: *mut u8, nblocks: usize, state: *mut shake256ctx);
+}
+unsafe extern "C" {
+    pub fn cshake256_simple(
+        output: *mut u8,
+        outlen: usize,
+        cstm: u16,
+        input: *const u8,
+        inlen: usize,
+    );
+}
+unsafe extern "C" {
+    pub fn shake256_inc_init(state: *mut shake256incctx);
+}
+unsafe extern "C" {
+    pub fn shake256_inc_absorb(state: *mut shake256incctx, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn shake256_inc_finalize(state: *mut shake256incctx);
+}
+unsafe extern "C" {
+    pub fn shake256_inc_squeeze(output: *mut u8, outlen: usize, state: *mut shake256incctx);
+}
+unsafe extern "C" {
+    pub fn shake256_inc_ctx_clone(dest: *mut shake256incctx, src: *const shake256incctx);
+}
+unsafe extern "C" {
+    pub fn shake256_inc_ctx_release(state: *mut shake256incctx);
+}
+unsafe extern "C" {
+    pub fn shake128(output: *mut u8, outlen: usize, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn shake256(output: *mut u8, outlen: usize, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn sha3_256_inc_init(state: *mut sha3_256incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_256_inc_absorb(state: *mut sha3_256incctx, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn sha3_256_inc_finalize(output: *mut u8, state: *mut sha3_256incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_256_inc_ctx_clone(dest: *mut sha3_256incctx, src: *const sha3_256incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_256_inc_ctx_release(state: *mut sha3_256incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_256(output: *mut u8, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn sha3_384_inc_init(state: *mut sha3_384incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_384_inc_absorb(state: *mut sha3_384incctx, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn sha3_384_inc_finalize(output: *mut u8, state: *mut sha3_384incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_384_inc_ctx_clone(dest: *mut sha3_384incctx, src: *const sha3_384incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_384_inc_ctx_release(state: *mut sha3_384incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_384(output: *mut u8, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn sha3_512_inc_init(state: *mut sha3_512incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_512_inc_absorb(state: *mut sha3_512incctx, input: *const u8, inlen: usize);
+}
+unsafe extern "C" {
+    pub fn sha3_512_inc_finalize(output: *mut u8, state: *mut sha3_512incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_512_inc_ctx_clone(dest: *mut sha3_512incctx, src: *const sha3_512incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_512_inc_ctx_release(state: *mut sha3_512incctx);
+}
+unsafe extern "C" {
+    pub fn sha3_512(output: *mut u8, input: *const u8, inlen: usize);
 }

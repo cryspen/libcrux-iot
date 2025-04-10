@@ -2,12 +2,13 @@ use std::{env, path::Path};
 
 #[cfg(not(windows))]
 fn create_bindings(home_dir: &Path) {
-    let c_dir = home_dir.join("pqm4/crypto_kem/ml-kem-1024/m4fspeed/api.h");
-    let clang_args = vec![format!("-I{}", c_dir.display())];
+    let mlkem_dir = home_dir.join("pqm4/crypto_kem/ml-kem-1024/m4fspeed/api.h");
+    let fips202_dir = home_dir.join("pqm4/mupq/common/fips202.h");
+    let clang_args = vec![format!("-I{}", mlkem_dir.display()), format!("-I{}", fips202_dir.display())];
 
     let bindings = bindgen::Builder::default()
         // Header to wrap headers
-        .header("pqm4/crypto_kem/ml-kem-1024/m4fspeed/api.h")
+        .header("wrapper.h")
         // Set include paths for headers
         .clang_args(clang_args)
         // Generate bindings
