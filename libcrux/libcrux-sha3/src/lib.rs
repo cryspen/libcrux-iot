@@ -8,7 +8,7 @@
 
 // pub mod simd;
 
-mod alloc;
+pub mod alloc;
 mod generic_keccak;
 mod portable_keccak;
 mod traits;

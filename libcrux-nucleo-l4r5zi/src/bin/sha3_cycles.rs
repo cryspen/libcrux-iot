@@ -7,6 +7,8 @@
 #![no_main]
 #![no_std]
 
+use core::alloc::GlobalAlloc;
+
 use board::cycle_counter::CycleCounter;
 use board::init::setup_cycle_counter;
 
@@ -59,6 +61,8 @@ fn main() -> ! {
     setup_cycle_counter();
 
     let mut rng = board::init::init_rng(p);
+    let alloc = Alloc::<500, T>::new();
+    alloc.set_pointer();
 
     // G aka SHA3-512
     let mut g_digest = [0u8; G_DIGEST_SIZE];
@@ -265,14 +269,14 @@ fn main() -> ! {
     {
         let start = CycleCounter::start_measurement();
         let mut shake128_state =
-            core::hint::black_box(libcrux_sha3::portable::incremental::shake128_init());
+            core::hint::black_box(libcrux_sha3::portable::incremental::shake128_init(&alloc));
         CycleCounter::end_measurement("SHAKE128 Init", start);
 
         {
             let mut init_absorb_final_input = [0u8; INIT_ABSORB_FINAL_INPUT_SIZE];
             rng.fill_bytes(&mut init_absorb_final_input);
             let start = CycleCounter::start_measurement();
-            core::hint::black_box(libcrux_sha3::portable::incremental::shake128_absorb_final(
+            core::hint::black_box(libcrux_sha3::portable::incremental::shake128_absorb_final(&alloc,
                 &mut shake128_state,
                 &init_absorb_final_input,
             ));
@@ -284,7 +288,7 @@ fn main() -> ! {
             rng.fill_bytes(&mut one_block);
             let start = CycleCounter::start_measurement();
             core::hint::black_box(
-                libcrux_sha3::portable::incremental::shake128_squeeze_next_block(
+                libcrux_sha3::portable::incremental::shake128_squeeze_next_block(&alloc,
                     &mut shake128_state,
                     &mut one_block,
                 ),
@@ -297,7 +301,7 @@ fn main() -> ! {
             rng.fill_bytes(&mut three_blocks);
             let start = CycleCounter::start_measurement();
             core::hint::black_box(
-                libcrux_sha3::portable::incremental::shake128_squeeze_first_three_blocks(
+                libcrux_sha3::portable::incremental::shake128_squeeze_first_three_blocks(&alloc,
                     &mut shake128_state,
                     &mut three_blocks,
                 ),
