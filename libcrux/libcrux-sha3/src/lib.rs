@@ -6,7 +6,7 @@
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
 
-mod alloc;
+pub mod alloc;
 mod generic_keccak;
 mod portable_keccak;
 mod traits;
@@ -286,7 +286,11 @@ pub mod portable {
             fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE, u64>) -> Self;
 
             /// Absorb input
-            fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE, u64>, input: &[u8]);
+            fn absorb<const STACK_SIZE: usize>(
+                &mut self,
+                alloc: &Alloc<STACK_SIZE, u64>,
+                input: &[u8],
+            );
 
             /// Absorb final input (may be empty)
             fn absorb_final<const STACK_SIZE: usize>(
@@ -310,7 +314,11 @@ pub mod portable {
                 }
             }
 
-            fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE, u64>, input: &[u8]) {
+            fn absorb<const STACK_SIZE: usize>(
+                &mut self,
+                alloc: &Alloc<STACK_SIZE, u64>,
+                input: &[u8],
+            ) {
                 self.state.absorb(alloc, &[input]);
             }
 
@@ -343,7 +351,11 @@ pub mod portable {
             }
 
             /// Shake256 absorb
-            fn absorb<const STACK_SIZE: usize>(&mut self, alloc: &Alloc<STACK_SIZE, u64>, input: &[u8]) {
+            fn absorb<const STACK_SIZE: usize>(
+                &mut self,
+                alloc: &Alloc<STACK_SIZE, u64>,
+                input: &[u8],
+            ) {
                 self.state.absorb(alloc, &[input]);
             }
 
@@ -369,7 +381,9 @@ pub mod portable {
 
         /// Create a new SHAKE-128 state object.
         #[inline(never)]
-        pub fn shake128_init<const STACK_SIZE: usize>(alloc: &Alloc<STACK_SIZE, u64>) -> KeccakState {
+        pub fn shake128_init<const STACK_SIZE: usize>(
+            alloc: &Alloc<STACK_SIZE, u64>,
+        ) -> KeccakState {
             KeccakState {
                 state: GenericState::<1, u64>::new(&alloc),
             }
@@ -378,11 +392,13 @@ pub mod portable {
         /// Absorb
         #[inline(never)]
         pub fn shake128_absorb_final<const STACK_SIZE: usize>(
+            alloc_b: &Alloc<1, [u8; 200]>,
             alloc: &Alloc<STACK_SIZE, u64>,
             s: &mut KeccakState,
             data0: &[u8],
         ) {
             absorb_final::<STACK_SIZE, 1, u64, 168, 0x1fu8>(
+                alloc_b,
                 alloc,
                 &mut s.state,
                 &[data0],
@@ -423,7 +439,9 @@ pub mod portable {
 
         /// Create a new SHAKE-256 state object.
         #[inline(always)]
-        pub fn shake256_init<const STACK_SIZE: usize>(alloc: &Alloc<STACK_SIZE, u64>) -> KeccakState {
+        pub fn shake256_init<const STACK_SIZE: usize>(
+            alloc: &Alloc<STACK_SIZE, u64>,
+        ) -> KeccakState {
             KeccakState {
                 state: GenericState::<1, u64>::new(&alloc),
             }
@@ -432,11 +450,13 @@ pub mod portable {
         /// Absorb some data for SHAKE-256 for the last time
         #[inline(always)]
         pub fn shake256_absorb_final<const STACK_SIZE: usize>(
+            alloc_b: &Alloc<1, [u8; 200]>,
             alloc: &Alloc<STACK_SIZE, u64>,
             s: &mut KeccakState,
             data: &[u8],
         ) {
-            absorb_final::<STACK_SIZE, 1, u64, 136, 0x1fu8>(
+            absorb_final::<STACK_SIZE,  1, u64, 136, 0x1fu8>(
+                alloc_b,
                 alloc,
                 &mut s.state,
                 &[data],

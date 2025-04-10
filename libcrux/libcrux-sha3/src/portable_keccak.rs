@@ -1,6 +1,6 @@
 //! A portable SHA3 implementation using the generic implementation.
 
-use crate::traits::{internal::*, *};
+use crate::{alloc::Init, traits::{internal::*, *}};
 
 #[inline(always)]
 fn rotate_left<const LEFT: i32, const RIGHT: i32>(x: u64) -> u64 {
@@ -70,6 +70,12 @@ fn split_at_mut_1(out: &mut [u8], mid: usize) -> (&mut [u8], &mut [u8]) {
     out.split_at_mut(mid)
 }
 
+impl Init for u64 {
+    fn init() -> Self {
+        0
+    }
+}
+
 impl KeccakItem<1> for u64 {
     #[inline(always)]
     fn xor5(a: Self, b: Self, c: Self, d: Self, e: Self) -> Self {
@@ -106,13 +112,13 @@ impl KeccakItem<1> for u64 {
     #[inline(always)]
     fn load_block_full<const RATE: usize>(
         state: &mut [Self],
-        blocks: &[[u8; 200]; 1],
+        blocks: &[[u8; 200]],
         start: usize,
     ) {
         load_block_full::<RATE>(state, &blocks[0], start)
     }
     #[inline(always)]
-    fn store_block_full<const RATE: usize>(state: &[Self], out: &mut [[u8; 200]; 1]) {
+    fn store_block_full<const RATE: usize>(state: &[Self], out: &mut [[u8; 200]]) {
         store_block_full::<RATE>(state, &mut out[0]);
     }
 

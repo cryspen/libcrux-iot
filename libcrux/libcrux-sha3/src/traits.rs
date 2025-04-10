@@ -1,7 +1,7 @@
 /// A Keccak Item
 /// This holds the internal state and depends on the architecture.
-
 pub trait KeccakStateItem<const N: usize>: internal::KeccakItem<N> + Default {}
+
 
 // Implement the public trait for all items.
 impl<const N: usize, T: internal::KeccakItem<N>> KeccakStateItem<N> for T {}
@@ -36,10 +36,10 @@ pub(crate) mod internal {
         fn store_block<const RATE: usize>(state: &[Self], blocks: &mut [&mut [u8]; N]);
         fn load_block_full<const RATE: usize>(
             state: &mut [Self],
-            blocks: &[[u8; 200]; N],
+            blocks: &[[u8; 200]],
             start: usize,
         );
-        fn store_block_full<const RATE: usize>(a: &[Self], out: &mut [[u8; 200]; N]);
+        fn store_block_full<const RATE: usize>(a: &[Self], out: &mut [[u8; 200]]);
         fn split_at_mut_n(a: [&mut [u8]; N], mid: usize) -> ([&mut [u8]; N], [&mut [u8]; N]);
         fn store<const RATE: usize>(state: &[Self], out: [&mut [u8]; N]);
     }
