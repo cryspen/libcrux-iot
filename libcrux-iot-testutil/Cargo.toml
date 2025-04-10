@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 defmt = "0.3"
-embassy-time = "0.3.2"
+embassy-time = "0.4"
 cortex-m = "0.7.7"
