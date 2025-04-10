@@ -225,7 +225,7 @@ pub mod portable {
     }
 
     /// A portable SHA3 256 implementation.
-    #[inline(always)]
+    #[inline(never)]
     pub fn sha256(digest: &mut [u8], data: &[u8]) {
         keccakx1::<136, 0x06u8>(&[data], [digest]);
     }
@@ -237,7 +237,7 @@ pub mod portable {
     }
 
     /// A portable SHA3 512 implementation.
-    #[inline(always)]
+    #[inline(never)]
     pub fn sha512(digest: &mut [u8], data: &[u8]) {
         keccakx1::<72, 0x06u8>(&[data], [digest]);
     }
@@ -249,7 +249,7 @@ pub mod portable {
     }
 
     /// A portable SHAKE256 implementation.
-    #[inline(always)]
+    #[inline(never)]
     pub fn shake256(digest: &mut [u8], data: &[u8]) {
         keccakx1::<136, 0x1fu8>(&[data], [digest]);
     }
