@@ -1,8 +1,6 @@
 //! The generic SHA3 implementation that uses portable or platform specific
 //! sub-routines.
 
-use core::mem::zeroed;
-
 use crate::traits::*;
 
 #[cfg_attr(hax, hax_lib::opaque)]
@@ -351,89 +349,6 @@ macro_rules! xor_and_rotate {
     };
     (4, 4, $t:ty) => {
         <$t>::xor_and_rotate::<39, 25>
-    };
-}
-
-/// r[(x, y)]
-macro_rules! r {
-    (3, 2, $t:ty) => {
-        <$t>::xor_and_rotate::<25, 39>
-    };
-    (4, 2, $t:ty) => {
-        <$t>::xor_and_rotate::<39, 25>
-    };
-    (0, 2, $t:ty) => {
-        <$t>::xor_and_rotate::<3, 61>
-    };
-    (1, 2, $t:ty) => {
-        <$t>::xor_and_rotate::<10, 54>
-    };
-    (2, 2, $t:ty) => {
-        <$t>::xor_and_rotate::<43, 21>
-    };
-
-    (3, 1, $t:ty) => {
-        <$t>::xor_and_rotate::<55, 9>
-    };
-    (4, 1, $t:ty) => {
-        <$t>::xor_and_rotate::<20, 44>
-    };
-    (0, 1, $t:ty) => {
-        <$t>::xor_and_rotate::<36, 28>
-    };
-    (1, 1, $t:ty) => {
-        <$t>::xor_and_rotate::<44, 20>
-    };
-    (2, 1, $t:ty) => {
-        <$t>::xor_and_rotate::<6, 58>
-    };
-
-    (3, 0, $t:ty) => {
-        <$t>::xor_and_rotate::<28, 36>
-    };
-    (4, 0, $t:ty) => {
-        <$t>::xor_and_rotate::<27, 37>
-    };
-    (0, 0, $t:ty) => {
-        <$t>::xor_and_rotate::<0, 64>
-    };
-    (1, 0, $t:ty) => {
-        <$t>::xor_and_rotate::<1, 63>
-    };
-    (2, 0, $t:ty) => {
-        <$t>::xor_and_rotate::<62, 2>
-    };
-
-    (3, 4, $t:ty) => {
-        <$t>::xor_and_rotate::<56, 8>
-    };
-    (4, 4, $t:ty) => {
-        <$t>::xor_and_rotate::<14, 50>
-    };
-    (0, 4, $t:ty) => {
-        <$t>::xor_and_rotate::<18, 46>
-    };
-    (1, 4, $t:ty) => {
-        <$t>::xor_and_rotate::<2, 62>
-    };
-    (2, 4, $t:ty) => {
-        <$t>::xor_and_rotate::<61, 3>
-    };
-
-    (3, 3, $t:ty) => {
-        <$t>::xor_and_rotate::<21, 43>
-    };
-    (4, 3, $t:ty) => {
-        <$t>::xor_and_rotate::<9, 55>
-    };
-    (0, 3, $t:ty) => {
-        <$t>::xor_and_rotate::<41, 23>
-    };
-    (1, 3, $t:ty) => {
-        <$t>::xor_and_rotate::<45, 19>
-    };
-    (2, 3, $t:ty) => {
-        <$t>::xor_and_rotate::<15, 49>
     };
 }
 
