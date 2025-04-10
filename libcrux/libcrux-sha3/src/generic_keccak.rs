@@ -317,23 +317,6 @@ pub(crate) fn theta_rho<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakSta
     s.set(4, 4, T::xor_and_rotate::<14, 50>(s.get(4, 4), t[4]));
 }
 
-const fn ni(i: usize, (x, y): (usize, usize)) -> (usize, usize) {
-    // matrix has order 4
-    if i & 0b11 == 0 {
-        (x, (x + 2 * y) % 5)
-    } else {
-        ni(i - 1, (x, x + 2 * y))
-    }
-}
-
-const fn minv((x, y): (usize, usize)) -> (usize, usize) {
-    ((x + 3 * y) % 5, x)
-}
-
-const fn niminv(i: usize, xy: (usize, usize)) -> (usize, usize) {
-    minv(ni(i, xy))
-}
-
 const _PI: [usize; 24] = [
     6, 12, 18, 24, 3, 9, 10, 16, 22, 1, 7, 13, 19, 20, 4, 5, 11, 17, 23, 2, 8, 14, 15, 21,
 ];
@@ -419,64 +402,438 @@ pub(crate) fn iota<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N,
     s.set(0, 0, T::xor_constant(s.get(0, 0), ROUNDCONSTANTS[i]));
 }
 
-#[inline(always)]
-fn keccakf1600_round<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>, i: usize) {
-    /* old
-        theta_rho(s);
-        pi(s);
-        chi(s);
-        iota(s, i);
-    */
-
-    let mut b = [T::zero(); 5];
-    let mut c = [T::zero(); 5];
-    let mut d = [T::zero(); 5];
-    let mut e = KeccakState::<N, T>::new();
-
-    c_loop(s, &mut c);
-    d_loop(s, &c, &mut d);
-
-    // y=0
-    b_loop_0(s, &mut b, &d);
-    e_loop(s, 0, &mut e, &b);
-
-    // y=1
-    b_loop_1(s, &mut b, &d);
-    e_loop(s, 1, &mut e, &b);
-
-    // y=2
-    b_loop_2(s, &mut b, &d);
-    e_loop(s, 2, &mut e, &b);
-
-    // y=3
-    b_loop_3(s, &mut b, &d);
-    e_loop(s, 3, &mut e, &b);
-
-    // y=4
-    b_loop_4(s, &mut b, &d);
-    e_loop(s, 4, &mut e, &b);
-
-    e.set(0, 0, T::xor_constant(e.get(0, 0), ROUNDCONSTANTS[i]));
-
-    for i in 0..5 {
-        for j in 0..5 {
-            s.set(i, j, e.get(i, j))
+macro_rules! ni_y {
+    ($i:expr, $x:literal, $y: literal) => {
+        match $i {
+            0 | 4 => $y,
+            1 => ($x + 2 * $y) % 5,
+            2 => (3 * $x + 4 * $y) % 5,
+            3 => (2 * $x + 3 * $y) % 5,
+            _ => unreachable!("round number too high: {} > 4", $i),
         }
-    }
+    };
 }
 
-fn c_loop<const N: usize, T: KeccakStateItem<N>>(s: &KeccakState<N, T>, c: &mut [T; 5]) {
-    c.iter_mut().enumerate().for_each(|(x, dst)| {
-        let t0 = s.get(x, 0);
-        let t1 = s.get(x, 1);
-        let t2 = s.get(x, 2);
-        let t3 = s.get(x, 3);
-        let t4 = s.get(x, 4);
-
-        *dst = T::xor5(t0, t1, t2, t3, t4);
-    });
+macro_rules! n_y {
+    ($x:expr, $y:expr) => {
+        ($x + 2 * $y) % 5
+    };
 }
 
+macro_rules! xor_and_rotate {
+    (0, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<0, 64>
+    };
+    (0, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<3, 61>
+    };
+    (0, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<18, 46>
+    };
+    (0, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<36, 28>
+    };
+    (0, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<41, 23>
+    };
+    (1, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<44, 20>
+    };
+    (1, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<45, 19>
+    };
+    (1, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<1, 63>
+    };
+    (1, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<10, 54>
+    };
+    (1, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<2, 62>
+    };
+    (2, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<43, 21>
+    };
+    (2, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<61, 3>
+    };
+    (2, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<6, 58>
+    };
+    (2, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<15, 49>
+    };
+    (2, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<62, 2>
+    };
+    (3, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<21, 43>
+    };
+    (3, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<28, 36>
+    };
+    (3, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<25, 39>
+    };
+    (3, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<56, 8>
+    };
+    (3, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<55, 9>
+    };
+    (4, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<14, 50>
+    };
+    (4, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<20, 44>
+    };
+    (4, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<9, 55>
+    };
+    (4, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<27, 37>
+    };
+    (4, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<39, 25>
+    };
+}
+
+macro_rules! r {
+    (3, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<25, 39>
+    };
+    (4, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<39, 25>
+    };
+    (0, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<3, 61>
+    };
+    (1, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<10, 54>
+    };
+    (2, 2, $t:ty) => {
+        <$t>::xor_and_rotate::<43, 21>
+    };
+
+    (3, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<55, 9>
+    };
+    (4, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<20, 44>
+    };
+    (0, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<36, 28>
+    };
+    (1, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<44, 20>
+    };
+    (2, 1, $t:ty) => {
+        <$t>::xor_and_rotate::<6, 58>
+    };
+
+    (3, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<28, 36>
+    };
+    (4, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<27, 37>
+    };
+    (0, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<0, 64>
+    };
+    (1, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<1, 63>
+    };
+    (2, 0, $t:ty) => {
+        <$t>::xor_and_rotate::<62, 2>
+    };
+
+    (3, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<56, 8>
+    };
+    (4, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<14, 50>
+    };
+    (0, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<18, 46>
+    };
+    (1, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<2, 62>
+    };
+    (2, 4, $t:ty) => {
+        <$t>::xor_and_rotate::<61, 3>
+    };
+
+    (3, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<21, 43>
+    };
+    (4, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<9, 55>
+    };
+    (0, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<41, 23>
+    };
+    (1, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<45, 19>
+    };
+    (2, 3, $t:ty) => {
+        <$t>::xor_and_rotate::<15, 49>
+    };
+}
+
+macro_rules! defn_c_loop {
+    ($name:ident, $i:literal) => {
+        #[inline(always)]
+        fn $name<const N: usize, T: KeccakStateItem<N>>(s: &KeccakState<N, T>, c: &mut [T; 5]) {
+            let t0 = s.get(0, ni_y!($i, 0, 0));
+            let t1 = s.get(0, ni_y!($i, 0, 1));
+            let t2 = s.get(0, ni_y!($i, 0, 2));
+            let t3 = s.get(0, ni_y!($i, 0, 3));
+            let t4 = s.get(0, ni_y!($i, 0, 4));
+            c[0] = T::xor5(t0, t1, t2, t3, t4);
+
+            let t0 = s.get(1, ni_y!($i, 1, 0));
+            let t1 = s.get(1, ni_y!($i, 1, 1));
+            let t2 = s.get(1, ni_y!($i, 1, 2));
+            let t3 = s.get(1, ni_y!($i, 1, 3));
+            let t4 = s.get(1, ni_y!($i, 1, 4));
+            c[1] = T::xor5(t0, t1, t2, t3, t4);
+
+            let t0 = s.get(2, ni_y!($i, 2, 0));
+            let t1 = s.get(2, ni_y!($i, 2, 1));
+            let t2 = s.get(2, ni_y!($i, 2, 2));
+            let t3 = s.get(2, ni_y!($i, 2, 3));
+            let t4 = s.get(2, ni_y!($i, 2, 4));
+            c[2] = T::xor5(t0, t1, t2, t3, t4);
+
+            let t0 = s.get(3, ni_y!($i, 3, 0));
+            let t1 = s.get(3, ni_y!($i, 3, 1));
+            let t2 = s.get(3, ni_y!($i, 3, 2));
+            let t3 = s.get(3, ni_y!($i, 3, 3));
+            let t4 = s.get(3, ni_y!($i, 3, 4));
+            c[3] = T::xor5(t0, t1, t2, t3, t4);
+
+            let t0 = s.get(4, ni_y!($i, 4, 0));
+            let t1 = s.get(4, ni_y!($i, 4, 1));
+            let t2 = s.get(4, ni_y!($i, 4, 2));
+            let t3 = s.get(4, ni_y!($i, 4, 3));
+            let t4 = s.get(4, ni_y!($i, 4, 4));
+            c[4] = T::xor5(t0, t1, t2, t3, t4);
+        }
+    };
+}
+
+macro_rules! defn_b_loop {
+    ($name_y0:ident, $name_y1:ident, $name_y2:ident, $name_y3:ident, $name_y4:ident, $i:literal) => {
+        #[inline(always)]
+        fn $name_y0<const N: usize, T: KeccakStateItem<N>>(
+            s: &KeccakState<N, T>,
+            b: &mut [T; 5],
+            d: &[T; 5],
+        ) {
+            let t0_s = s.get(0, ni_y!($i + 1, 0, 0));
+            let t0_d = d[1];
+            b[0] = xor_and_rotate!(0, 0, T)(t0_s, t0_d);
+
+            let t1_s = s.get(1, ni_y!($i + 1, 1, 0));
+            let t1_d = d[1];
+            b[1] = xor_and_rotate!(1, 0, T)(t1_s, t1_d);
+
+            let t2_s = s.get(2, ni_y!($i + 1, 2, 0));
+            let t2_d = d[2];
+            b[2] = xor_and_rotate!(2, 0, T)(t2_s, t2_d);
+
+            let t3_s = s.get(3, ni_y!($i + 1, 3, 0));
+            let t3_d = d[3];
+            b[3] = xor_and_rotate!(3, 0, T)(t3_s, t3_d);
+
+            let t4_s = s.get(4, ni_y!($i + 1, 4, 0));
+            let t4_d = d[4];
+            b[4] = xor_and_rotate!(4, 0, T)(t4_s, t4_d);
+        }
+
+        #[inline(always)]
+        fn $name_y1<const N: usize, T: KeccakStateItem<N>>(
+            s: &KeccakState<N, T>,
+            b: &mut [T; 5],
+            d: &[T; 5],
+        ) {
+            let t0_s = s.get(0, ni_y!($i + 1, 0, 1));
+            let t0_d = d[1];
+            b[0] = xor_and_rotate!(0, 1, T)(t0_s, t0_d);
+
+            let t1_s = s.get(1, ni_y!($i + 1, 1, 1));
+            let t1_d = d[1];
+            b[0] = xor_and_rotate!(1, 1, T)(t1_s, t1_d);
+
+            let t2_s = s.get(2, ni_y!($i + 1, 2, 1));
+            let t2_d = d[2];
+            b[2] = xor_and_rotate!(2, 1, T)(t2_s, t2_d);
+
+            let t3_s = s.get(3, ni_y!($i + 1, 3, 1));
+            let t3_d = d[3];
+            b[3] = xor_and_rotate!(3, 1, T)(t3_s, t3_d);
+
+            let t4_s = s.get(4, ni_y!($i + 1, 4, 1));
+            let t4_d = d[4];
+            b[4] = xor_and_rotate!(4, 1, T)(t4_s, t4_d);
+        }
+
+        #[inline(always)]
+        fn $name_y2<const N: usize, T: KeccakStateItem<N>>(
+            s: &KeccakState<N, T>,
+            b: &mut [T; 5],
+            d: &[T; 5],
+        ) {
+            let t0_s = s.get(0, ni_y!($i + 1, 0, 2));
+            let t0_d = d[1];
+            b[0] = xor_and_rotate!(0, 2, T)(t0_s, t0_d);
+
+            let t1_s = s.get(1, ni_y!($i + 1, 1, 2));
+            let t1_d = d[1];
+            b[0] = xor_and_rotate!(1, 2, T)(t1_s, t1_d);
+
+            let t2_s = s.get(2, ni_y!($i + 1, 2, 2));
+            let t2_d = d[2];
+            b[2] = xor_and_rotate!(2, 2, T)(t2_s, t2_d);
+
+            let t3_s = s.get(3, ni_y!($i + 1, 3, 2));
+            let t3_d = d[3];
+            b[3] = xor_and_rotate!(3, 2, T)(t3_s, t3_d);
+
+            let t4_s = s.get(4, ni_y!($i + 1, 4, 2));
+            let t4_d = d[4];
+            b[4] = xor_and_rotate!(4, 2, T)(t4_s, t4_d);
+        }
+
+        #[inline(always)]
+        fn $name_y3<const N: usize, T: KeccakStateItem<N>>(
+            s: &KeccakState<N, T>,
+            b: &mut [T; 5],
+            d: &[T; 5],
+        ) {
+            let t0_s = s.get(0, ni_y!($i + 1, 0, 3));
+            let t0_d = d[1];
+            b[0] = xor_and_rotate!(0, 3, T)(t0_s, t0_d);
+
+            let t1_s = s.get(1, ni_y!($i + 1, 1, 3));
+            let t1_d = d[1];
+            b[0] = xor_and_rotate!(1, 3, T)(t1_s, t1_d);
+
+            let t2_s = s.get(2, ni_y!($i + 1, 2, 3));
+            let t2_d = d[2];
+            b[2] = xor_and_rotate!(2, 3, T)(t2_s, t2_d);
+
+            let t3_s = s.get(3, ni_y!($i + 1, 3, 3));
+            let t3_d = d[3];
+            b[3] = xor_and_rotate!(3, 3, T)(t3_s, t3_d);
+
+            let t4_s = s.get(4, ni_y!($i + 1, 4, 3));
+            let t4_d = d[4];
+            b[4] = xor_and_rotate!(4, 3, T)(t4_s, t4_d);
+        }
+
+        #[inline(always)]
+        fn $name_y4<const N: usize, T: KeccakStateItem<N>>(
+            s: &KeccakState<N, T>,
+            b: &mut [T; 5],
+            d: &[T; 5],
+        ) {
+            let t0_s = s.get(0, ni_y!($i + 1, 0, 4));
+            let t0_d = d[1];
+            b[0] = xor_and_rotate!(0, 4, T)(t0_s, t0_d);
+
+            let t1_s = s.get(1, ni_y!($i + 1, 1, 4));
+            let t1_d = d[1];
+            b[0] = xor_and_rotate!(1, 4, T)(t1_s, t1_d);
+
+            let t2_s = s.get(2, ni_y!($i + 1, 2, 4));
+            let t2_d = d[2];
+            b[2] = xor_and_rotate!(2, 4, T)(t2_s, t2_d);
+
+            let t3_s = s.get(3, ni_y!($i + 1, 3, 4));
+            let t3_d = d[3];
+            b[3] = xor_and_rotate!(3, 4, T)(t3_s, t3_d);
+
+            let t4_s = s.get(4, ni_y!($i + 1, 4, 4));
+            let t4_d = d[4];
+            b[4] = xor_and_rotate!(4, 4, T)(t4_s, t4_d);
+        }
+    };
+}
+
+macro_rules! defn_a_loop {
+    ($name:ident, $i:expr, $y:literal) => {
+        #[inline(always)]
+        fn $name<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>, b: &[T; 5]) {
+            let b0 = b[0];
+            let b1 = b[1];
+            let b2 = b[2];
+            let b3 = b[3];
+            let b4 = b[4];
+
+            s.set(0, ni_y!($i + 1, 0, $y), T::and_not_xor(b0, b2, b1));
+            s.set(1, ni_y!($i + 1, 1, $y), T::and_not_xor(b1, b3, b2));
+            s.set(2, ni_y!($i + 1, 2, $y), T::and_not_xor(b2, b4, b3));
+            s.set(3, ni_y!($i + 1, 3, $y), T::and_not_xor(b3, b0, b4));
+            s.set(4, ni_y!($i + 1, 4, $y), T::and_not_xor(b4, b1, b0));
+        }
+    };
+}
+
+macro_rules! defn_keccak_round {
+    ($name:ident, $i:literal) => {
+        #[inline(always)]
+        fn $name<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>, i: usize) {
+            let mut b = [T::zero(); 5];
+            let mut c = [T::zero(); 5];
+            let mut d = [T::zero(); 5];
+
+            defn_c_loop!(c_loop, $i);
+
+            defn_b_loop!(b_loop_y0, b_loop_y1, b_loop_y2, b_loop_y3, b_loop_y4, $i);
+
+            defn_a_loop!(a_loop_y0, $i, 0);
+            defn_a_loop!(a_loop_y1, $i, 1);
+            defn_a_loop!(a_loop_y2, $i, 2);
+            defn_a_loop!(a_loop_y3, $i, 3);
+            defn_a_loop!(a_loop_y4, $i, 4);
+
+            c_loop(s, &mut c);
+            d_loop(s, &c, &mut d);
+
+            // for y in 0..5 {
+            // y=0
+            b_loop_y0(s, &mut b, &d);
+            a_loop_y0(s, &b);
+
+            // y=1
+            b_loop_y1(s, &mut b, &d);
+            a_loop_y1(s, &b);
+
+            // y=2
+            b_loop_y2(s, &mut b, &d);
+            a_loop_y2(s, &b);
+
+            // y=3
+            b_loop_y3(s, &mut b, &d);
+            a_loop_y3(s, &b);
+
+            // y=4
+            b_loop_y4(s, &mut b, &d);
+            a_loop_y4(s, &b);
+            // }
+
+            s.set(0, 0, T::xor_constant(s.get(0, 0), ROUNDCONSTANTS[i]));
+        }
+    };
+}
+
+defn_keccak_round!(keccakf1600_round_i0, 0);
+defn_keccak_round!(keccakf1600_round_i1, 1);
+defn_keccak_round!(keccakf1600_round_i2, 2);
+defn_keccak_round!(keccakf1600_round_i3, 3);
+
+#[inline(always)]
 fn d_loop<const N: usize, T: KeccakStateItem<N>>(
     s: &KeccakState<N, T>,
     c: &[T; 5],
@@ -495,179 +852,23 @@ fn d_loop<const N: usize, T: KeccakStateItem<N>>(
     d[4] = T::rotate_left1_and_xor(c3, c0);
 }
 
-fn b_loop_0<const N: usize, T: KeccakStateItem<N>>(
-    s: &KeccakState<N, T>,
-    b: &mut [T; 5],
-    d: &[T; 5],
-) {
-    const Y: usize = 0;
-
-    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
-    let t0_d = d[minv((0, Y)).0];
-    b[0] = T::xor(t0_s, t0_d);
-
-    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
-    let t1_d = d[minv((1, Y)).0];
-    b[1] = T::xor_and_rotate::<36, 28>(t1_s, t1_d);
-
-    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
-    let t2_d = d[minv((2, Y)).0];
-    b[2] = T::xor_and_rotate::<3, 61>(t2_s, t2_d);
-
-    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
-    let t3_d = d[minv((3, Y)).0];
-    b[3] = T::xor_and_rotate::<41, 23>(t3_s, t3_d);
-
-    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
-    let t4_d = d[minv((4, Y)).0];
-    b[4] = T::xor_and_rotate::<18, 46>(t4_s, t4_d);
-}
-
-fn b_loop_1<const N: usize, T: KeccakStateItem<N>>(
-    s: &KeccakState<N, T>,
-    b: &mut [T; 5],
-    d: &[T; 5],
-) {
-    const Y: usize = 1;
-
-    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
-    let t0_d = d[minv((0, Y)).0];
-    b[0] = T::xor_and_rotate::<1, 63>(t0_s, t0_d);
-
-    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
-    let t1_d = d[minv((1, Y)).0];
-    b[1] = T::xor_and_rotate::<44, 20>(t1_s, t1_d);
-
-    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
-    let t2_d = d[minv((2, Y)).0];
-    b[2] = T::xor_and_rotate::<10, 51>(t2_s, t2_d);
-
-    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
-    let t3_d = d[minv((3, Y)).0];
-    b[3] = T::xor_and_rotate::<45, 19>(t3_s, t3_d);
-
-    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
-    let t4_d = d[minv((4, Y)).0];
-    b[4] = T::xor_and_rotate::<2, 62>(t4_s, t4_d);
-}
-
-fn b_loop_2<const N: usize, T: KeccakStateItem<N>>(
-    s: &KeccakState<N, T>,
-    b: &mut [T; 5],
-    d: &[T; 5],
-) {
-    const Y: usize = 2;
-
-    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
-    let t0_d = d[minv((0, Y)).0];
-    b[0] = T::xor_and_rotate::<62, 2>(t0_s, t0_d);
-
-    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
-    let t1_d = d[minv((1, Y)).0];
-    b[1] = T::xor_and_rotate::<6, 58>(t1_s, t1_d);
-
-    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
-    let t2_d = d[minv((2, Y)).0];
-    b[2] = T::xor_and_rotate::<43, 21>(t2_s, t2_d);
-
-    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
-    let t3_d = d[minv((3, Y)).0];
-    b[3] = T::xor_and_rotate::<15, 49>(t3_s, t3_d);
-
-    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
-    let t4_d = d[minv((4, Y)).0];
-    b[4] = T::xor_and_rotate::<61, 3>(t4_s, t4_d);
-}
-
-fn b_loop_3<const N: usize, T: KeccakStateItem<N>>(
-    s: &KeccakState<N, T>,
-    b: &mut [T; 5],
-    d: &[T; 5],
-) {
-    const Y: usize = 3;
-
-    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
-    let t0_d = d[minv((0, Y)).0];
-    b[0] = T::xor_and_rotate::<28, 36>(t0_s, t0_d);
-
-    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
-    let t1_d = d[minv((1, Y)).0];
-    b[1] = T::xor_and_rotate::<55, 9>(t1_s, t1_d);
-
-    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
-    let t2_d = d[minv((2, Y)).0];
-    b[2] = T::xor_and_rotate::<25, 39>(t2_s, t2_d);
-
-    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
-    let t3_d = d[minv((3, Y)).0];
-    b[3] = T::xor_and_rotate::<21, 43>(t3_s, t3_d);
-
-    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
-    let t4_d = d[minv((4, Y)).0];
-    b[4] = T::xor_and_rotate::<56, 8>(t4_s, t4_d);
-}
-
-fn b_loop_4<const N: usize, T: KeccakStateItem<N>>(
-    s: &KeccakState<N, T>,
-    b: &mut [T; 5],
-    d: &[T; 5],
-) {
-    const Y: usize = 4;
-
-    let t0_s = s.get(minv((0, Y)).0, minv((0, Y)).1);
-    let t0_d = d[minv((0, Y)).0];
-    b[0] = T::xor_and_rotate::<27, 37>(t0_s, t0_d);
-
-    let t1_s = s.get(minv((1, Y)).0, minv((1, Y)).1);
-    let t1_d = d[minv((1, Y)).0];
-    b[1] = T::xor_and_rotate::<20, 44>(t1_s, t1_d);
-
-    let t2_s = s.get(minv((2, Y)).0, minv((2, Y)).1);
-    let t2_d = d[minv((2, Y)).0];
-    b[2] = T::xor_and_rotate::<39, 25>(t2_s, t2_d);
-
-    let t3_s = s.get(minv((3, Y)).0, minv((3, Y)).1);
-    let t3_d = d[minv((3, Y)).0];
-    b[3] = T::xor_and_rotate::<8, 56>(t3_s, t3_d);
-
-    let t4_s = s.get(minv((4, Y)).0, minv((4, Y)).1);
-    let t4_d = d[minv((4, Y)).0];
-    b[4] = T::xor_and_rotate::<14, 50>(t4_s, t4_d);
-}
-
-fn e_loop<const N: usize, T: KeccakStateItem<N>>(
-    s: &KeccakState<N, T>,
-    y: usize,
-    e: &mut KeccakState<N, T>,
-    b: &[T; 5],
-) {
-    let b0 = b[0];
-    let b1 = b[1];
-    let b2 = b[2];
-    let b3 = b[3];
-    let b4 = b[4];
-
-    e.set(0, y, T::and_not_xor(b0, b2, b1));
-    e.set(1, y, T::and_not_xor(b1, b3, b2));
-    e.set(2, y, T::and_not_xor(b2, b4, b3));
-    e.set(3, y, T::and_not_xor(b3, b0, b4));
-    e.set(4, y, T::and_not_xor(b4, b1, b0));
-}
-
 #[inline(always)]
 pub(crate) fn keccakf1600<const N: usize, T: KeccakStateItem<N>>(s: &mut KeccakState<N, T>) {
-    for i in 0..24 {
-        keccakf1600_round(s, i);
+    for j in 0..6 {
+        keccakf1600_round_i0::<N, T>(s, j * 4);
+        keccakf1600_round_i1::<N, T>(s, j * 4 + 1);
+        keccakf1600_round_i2::<N, T>(s, j * 4 + 2);
+        keccakf1600_round_i3::<N, T>(s, j * 4 + 3);
     }
 }
 #[inline(always)]
 pub(crate) fn keccakf1600_4rounds<const N: usize, T: KeccakStateItem<N>>(
     s: &mut KeccakState<N, T>,
 ) {
-    keccakf1600_round(s, 0);
-    keccakf1600_round(s, 1);
-    keccakf1600_round(s, 2);
-    keccakf1600_round(s, 3);
+    keccakf1600_round_i0::<N, T>(s, 0);
+    keccakf1600_round_i1::<N, T>(s, 1);
+    keccakf1600_round_i2::<N, T>(s, 2);
+    keccakf1600_round_i3::<N, T>(s, 3);
 }
 
 #[inline(always)]
