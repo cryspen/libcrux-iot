@@ -22,6 +22,7 @@ cortex-m-semihosting = "0.5.0"
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 libcrux-testbench = { path = "../libcrux-testbench" }
 embassy-stm32 = { version = "0.2.0", features = [ "stm32l4r5zi", "defmt", ] }
+libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem" }
 embedded-alloc = "0.6.0"
 libcrux-sha3 = { path = "../libcrux/libcrux-sha3" }
 libcrux-pqm4 = { path = "../sys/pqm4" }
