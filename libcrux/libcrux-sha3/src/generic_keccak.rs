@@ -20,9 +20,11 @@ impl<'a, const N: usize, T: KeccakStateItem<N> + Init> KeccakState<'a, N, T> {
         }
     }
 
+    #[inline(always)]
     fn get(&self, i: usize, j: usize) -> T {
         get_ij(&self.st, i, j)
     }
+    #[inline(always)]
     fn set(&mut self, i: usize, j: usize, v: T) {
         set_ij(&mut self.st, i, j, v);
     }
@@ -104,6 +106,7 @@ impl<
         }
     }
 
+    #[inline(always)]
     fn absorb_full<const STACK_SIZE: usize>(
         &mut self,
         alloc: &Alloc<STACK_SIZE, STATE>,
@@ -156,6 +159,7 @@ impl<
     /// content to consume, and `0` otherwise.
     /// If `consumed > 0` is returned, `self.buf` contains a full block to be
     /// loaded.
+    #[inline(always)]
     fn fill_buffer(&mut self, inputs: &[&[u8]; PARALLEL_LANES]) -> usize {
         let input_len = inputs[0].len();
         let mut consumed = 0;

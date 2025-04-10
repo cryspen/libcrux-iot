@@ -37,6 +37,7 @@ impl<const STACK_SIZE: usize, T: Sized + Init + Copy> Alloc<STACK_SIZE, T> {
     /// After the allocator has been created and assigned to a place,
     /// use `self.set_pointer` to initialize the internal
     /// pointer. After this, the allocator MUST NOT be moved.
+    #[inline(always)]
     pub fn new() -> Self {
         let buffer = [T::init(); STACK_SIZE];
         // We can only set the pointer to the start of `buffer` once
@@ -56,12 +57,14 @@ impl<const STACK_SIZE: usize, T: Sized + Init + Copy> Alloc<STACK_SIZE, T> {
     /// This MUST be done before calling `alloc` for the first time.
     /// After calling this `self` MUST NOT be moved, as this lead to
     /// an invalid state of `self.pointer`.
+    #[inline(always)]
     pub fn set_pointer(&self) {
         let buffer_ptr = self.buffer.as_ptr();
         *(self.pointer.borrow_mut()) = buffer_ptr as *mut T;
     }
 
     /// Allocate a mutable T-slice of length `len`.
+    #[inline(always)]
     pub fn alloc(&self, len: usize) -> &mut [T] {
         assert!(!(*self.pointer.borrow()).is_null(), "Internal pointer must be set with `self.set_pointer`, after which `self` MUST NOT be moved");
         let allocation_start = *self.pointer.borrow();
@@ -82,6 +85,7 @@ impl<const STACK_SIZE: usize, T: Sized + Init + Copy> Alloc<STACK_SIZE, T> {
     ///
     /// This MUST NOT be used if `allocation` cannot be proven to be
     /// the most recent allocation.
+    #[inline(always)]
     pub fn free(&self, allocation: &mut [T]) {
         let new_pointer = unsafe { (*self.pointer.borrow()).sub(allocation.len()) };
         if (new_pointer as *const T) != allocation.as_ptr() {

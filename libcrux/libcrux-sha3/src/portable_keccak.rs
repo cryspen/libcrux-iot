@@ -71,6 +71,7 @@ fn split_at_mut_1(out: &mut [u8], mid: usize) -> (&mut [u8], &mut [u8]) {
 }
 
 impl Init for u64 {
+    #[inline(always)]
     fn init() -> Self {
         0
     }
