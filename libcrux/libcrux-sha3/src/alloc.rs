@@ -15,9 +15,9 @@
 #![allow(unsafe_code)]
 
 use core::cell::RefCell;
-use core::default::Default;
 
-pub struct Alloc<const STACK_SIZE: usize, T: Sized + Default + Copy> {
+/// Bump allocator for mutable slices of a single type.
+pub struct Alloc<const STACK_SIZE: usize, T: Sized + Init + Copy> {
     /// The backing buffer.
     #[allow(dead_code)]
     buffer: [T; STACK_SIZE],
@@ -25,14 +25,20 @@ pub struct Alloc<const STACK_SIZE: usize, T: Sized + Default + Copy> {
     pointer: RefCell<*mut T>,
 }
 
-impl<const STACK_SIZE: usize, T: Sized + Default + Copy> Alloc<STACK_SIZE, T> {
+/// Type initialization wrapper.
+pub  trait Init {
+    /// Initialize the type
+    fn init() -> Self;
+}
+
+impl<const STACK_SIZE: usize, T: Sized + Init + Copy> Alloc<STACK_SIZE, T> {
     /// Creates a new Allocator.
     ///
     /// After the allocator has been created and assigned to a place,
     /// use `self.set_pointer` to initialize the internal
     /// pointer. After this, the allocator MUST NOT be moved.
-    pub(crate) fn new() -> Self {
-        let buffer = [T::default(); STACK_SIZE];
+    pub fn new() -> Self {
+        let buffer = [T::init(); STACK_SIZE];
         // We can only set the pointer to the start of `buffer` once
         // we can assume that `buffer` will not be moved anymore.
         let pointer = RefCell::new(core::ptr::null_mut::<T>()); 
@@ -50,18 +56,18 @@ impl<const STACK_SIZE: usize, T: Sized + Default + Copy> Alloc<STACK_SIZE, T> {
     /// This MUST be done before calling `alloc` for the first time.
     /// After calling this `self` MUST NOT be moved, as this lead to
     /// an invalid state of `self.pointer`.
-    pub(crate) fn set_pointer(&self) {
+    pub fn set_pointer(&self) {
         let buffer_ptr = self.buffer.as_ptr();
         *(self.pointer.borrow_mut()) = buffer_ptr as *mut T;
     }
 
     /// Allocate a mutable T-slice of length `len`.
-    pub(crate) fn alloc(&self, len: usize) -> &mut [T] {
+    pub fn alloc(&self, len: usize) -> &mut [T] {
         assert!(!(*self.pointer.borrow()).is_null(), "Internal pointer must be set with `self.set_pointer`, after which `self` MUST NOT be moved");
         let allocation_start = *self.pointer.borrow();
         let allocation_end = unsafe { (*self.pointer.borrow()).add(len) };
 
-        if (allocation_end as *const T) >= unsafe { self.buffer.as_ptr().add(STACK_SIZE) } {
+        if (allocation_end as *const T) > unsafe { self.buffer.as_ptr().add(STACK_SIZE) } {
             panic!("Insufficient memory")
         }
 
@@ -76,7 +82,7 @@ impl<const STACK_SIZE: usize, T: Sized + Default + Copy> Alloc<STACK_SIZE, T> {
     ///
     /// This MUST NOT be used if `allocation` cannot be proven to be
     /// the most recent allocation.
-    pub(crate) fn free(&self, allocation: &mut [T]) {
+    pub fn free(&self, allocation: &mut [T]) {
         let new_pointer = unsafe { (*self.pointer.borrow()).sub(allocation.len()) };
         if (new_pointer as *const T) != allocation.as_ptr() {
             panic!("Invalid free")
