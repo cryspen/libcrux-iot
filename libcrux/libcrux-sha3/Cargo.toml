@@ -22,10 +22,6 @@ libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" 
 [target.'cfg(hax)'.dependencies]
 hax-lib = { version = "0.2.0", git = "https://github.com/hacspec/hax/" }
 
-[features]
-simd128 = []
-simd256 = []
-
 [[bench]]
 name = "sha3"
 harness = false
