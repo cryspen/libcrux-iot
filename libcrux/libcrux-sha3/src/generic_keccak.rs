@@ -1,6 +1,8 @@
 //! The generic SHA3 implementation that uses portable or platform specific
 //! sub-routines.
 
+use core::pin::{pin, Pin};
+
 use crate::{
     alloc::{Alloc, Init},
     traits::*,
@@ -14,9 +16,9 @@ pub(crate) struct KeccakState<'a, const N: usize, T: KeccakStateItem<N> + Init> 
 impl<'a, const N: usize, T: KeccakStateItem<N> + Init> KeccakState<'a, N, T> {
     /// Create a new Shake128 x4 state.
     #[inline(always)]
-    pub(crate) fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE, T>) -> Self {
+    pub(crate) fn new<const STACK_SIZE: usize>(alloc: Pin<&'a Alloc<STACK_SIZE, T>>) -> Self {
         Self {
-            st: alloc.alloc(25),
+            st: Alloc::alloc(alloc, 25),
         }
     }
 
@@ -64,7 +66,7 @@ impl<
     }
 
     /// Generate a new keccak xof state.
-    pub(crate) fn new<const STACK_SIZE: usize>(alloc: &'a Alloc<STACK_SIZE, STATE>) -> Self {
+    pub(crate) fn new<const STACK_SIZE: usize>(alloc: Pin<&'a Alloc<STACK_SIZE, STATE>>) -> Self {
         Self {
             inner: KeccakState::new(alloc),
             buf: [Self::zero_block(); PARALLEL_LANES],
@@ -85,7 +87,7 @@ impl<
     #[inline(always)]
     pub(crate) fn absorb<const STACK_SIZE: usize>(
         &mut self,
-        alloc: &Alloc<STACK_SIZE, STATE>,
+        alloc: Pin<&Alloc<STACK_SIZE, STATE>>,
         inputs: &[&[u8]; PARALLEL_LANES],
     ) {
         let input_remainder_len = self.absorb_full(alloc, inputs);
@@ -109,7 +111,7 @@ impl<
     #[inline(always)]
     fn absorb_full<const STACK_SIZE: usize>(
         &mut self,
-        alloc: &Alloc<STACK_SIZE, STATE>,
+        alloc: Pin<&Alloc<STACK_SIZE, STATE>>,
         inputs: &[&[u8]; PARALLEL_LANES],
     ) -> usize {
         debug_assert!(PARALLEL_LANES > 0);
@@ -185,7 +187,7 @@ impl<
     #[inline(always)]
     pub(crate) fn absorb_final<const STACK_SIZE: usize, const DELIMITER: u8>(
         &mut self,
-        alloc: &Alloc<STACK_SIZE, STATE>,
+        alloc: Pin<&Alloc<STACK_SIZE, STATE>>,
         inputs: &[&[u8]; PARALLEL_LANES],
     ) {
         let input_remainder_len = self.absorb_full(alloc, inputs);
@@ -214,7 +216,7 @@ impl<
     #[inline(always)]
     pub(crate) fn squeeze<const STACK_SIZE: usize>(
         &mut self,
-        alloc: &Alloc<STACK_SIZE, STATE>,
+        alloc: Pin<&Alloc<STACK_SIZE, STATE>>,
         out: [&mut [u8]; PARALLEL_LANES],
     ) {
         if self.sponge {
@@ -439,10 +441,10 @@ pub(crate) fn iota<const N: usize, T: KeccakStateItem<N> + Init>(
 
 #[inline(always)]
 pub(crate) fn keccakf1600<const STACK_SIZE: usize, const N: usize, T: KeccakStateItem<N> + Init>(
-    alloc: &Alloc<STACK_SIZE, T>,
+    alloc: Pin<&Alloc<STACK_SIZE, T>>,
     s: &mut KeccakState<N, T>,
 ) {
-    let scratch = alloc.alloc(25);
+    let scratch = Alloc::alloc(alloc, 25);
     for i in 0..24 {
         theta_rho(s);
         pi(s, scratch);
@@ -459,7 +461,7 @@ pub(crate) fn absorb_block<
     T: KeccakStateItem<N> + Init,
     const RATE: usize,
 >(
-    alloc: &Alloc<STACK_SIZE, T>,
+    alloc: Pin<&Alloc<STACK_SIZE, T>>,
     s: &mut KeccakState<N, T>,
     blocks: &[&[u8]; N],
     start: usize,
@@ -476,8 +478,8 @@ pub(crate) fn absorb_final<
     const RATE: usize,
     const DELIM: u8,
 >(
-    alloc_b: &Alloc<N, [u8; 200]>,
-    alloc_t: &Alloc<STACK_SIZE, T>,
+    alloc_b: Pin<&Alloc<N, [u8; 200]>>,
+    alloc_t: Pin<&Alloc<STACK_SIZE, T>>,
     s: &mut KeccakState<N, T>,
     last: &[&[u8]; N],
     start: usize,
@@ -485,7 +487,7 @@ pub(crate) fn absorb_final<
 ) {
     debug_assert!(N > 0 && len < RATE); // && last[0].len() < RATE
 
-    let blocks = alloc_b.alloc(N);
+    let blocks = Alloc::alloc(alloc_b, N);
     for i in 0..N {
         if len > 0 {
             blocks[i][0..len].copy_from_slice(&last[i][start..start + len]);
@@ -517,7 +519,7 @@ pub(crate) fn squeeze_next_block<
     T: KeccakStateItem<N> + Init,
     const RATE: usize,
 >(
-    alloc: &Alloc<STACK_SIZE, T>,
+    alloc: Pin<&Alloc<STACK_SIZE, T>>,
     s: &mut KeccakState<N, T>,
 
     out: &mut [&mut [u8]; N],
@@ -533,7 +535,7 @@ pub(crate) fn squeeze_first_three_blocks<
     T: KeccakStateItem<N> + Init,
     const RATE: usize,
 >(
-    alloc: &Alloc<STACK_SIZE, T>,
+    alloc: Pin<&Alloc<STACK_SIZE, T>>,
     s: &mut KeccakState<N, T>,
     out: [&mut [u8]; N],
 ) {
@@ -551,7 +553,7 @@ pub(crate) fn squeeze_first_five_blocks<
     T: KeccakStateItem<N> + Init,
     const RATE: usize,
 >(
-    alloc: &Alloc<STACK_SIZE, T>,
+    alloc: Pin<&Alloc<STACK_SIZE, T>>,
     s: &mut KeccakState<N, T>,
 
     out: [&mut [u8]; N],
@@ -577,13 +579,13 @@ pub(crate) fn squeeze_last<
     T: KeccakStateItem<N> + Init,
     const RATE: usize,
 >(
-    alloc_b: &Alloc<N, [u8; 200]>,
-    alloc_t: &Alloc<STACK_SIZE_T, T>,
+    alloc_b: Pin<&Alloc<N, [u8; 200]>>,
+    alloc_t: Pin<&Alloc<STACK_SIZE_T, T>>,
     mut s: KeccakState<N, T>,
     out: [&mut [u8]; N],
 ) {
     keccakf1600(alloc_t, &mut s);
-    let b = alloc_b.alloc(N);
+    let b = Alloc::alloc(alloc_b, N);
     T::store_block_full::<RATE>(&s.st, b);
     for i in 0..N {
         out[i].copy_from_slice(&b[i][0..out[i].len()]);
@@ -597,11 +599,11 @@ pub(crate) fn squeeze_first_and_last<
     T: KeccakStateItem<N> + Init,
     const RATE: usize,
 >(
-    alloc_b: &Alloc<N, [u8; 200]>,
+    alloc_b: Pin<&Alloc<N, [u8; 200]>>,
     s: &KeccakState<N, T>,
     out: [&mut [u8]; N],
 ) {
-    let b = alloc_b.alloc(N);
+    let b = Alloc::alloc(alloc_b, N);
     T::store_block_full::<RATE>(&s.st, b);
     for i in 0..N {
         out[i].copy_from_slice(&b[i][0..out[i].len()]);
@@ -627,24 +629,24 @@ pub(crate) fn keccak<
     out: [&mut [u8]; N],
 ) {
     const STACK_SIZE_T: usize = 50;
-    let alloc_t = Alloc::<STACK_SIZE_T, T>::new();
-    alloc_t.set_pointer(); // We have to set the pointer here because
-                           // the assignment above also moves `alloc`.
+    let alloc_t = pin!(Alloc::<STACK_SIZE_T, T>::new());
+    Alloc::set_pointer(alloc_t.as_ref()); // We have to set the pointer here because
+                                          // the assignment above also moves `alloc`.
 
-    let alloc_buffer = Alloc::<N, [u8; 200]>::new();
-    alloc_buffer.set_pointer();
+    let alloc_buffer = pin!(Alloc::<N, [u8; 200]>::new());
+    Alloc::set_pointer(alloc_buffer.as_ref());
 
-    let mut s = KeccakState::<N, T>::new(&alloc_t);
+    let mut s = KeccakState::<N, T>::new(alloc_t.as_ref());
 
     for i in 0..data[0].len() / RATE {
         // T::slice_n(data, i * RATE, RATE)
-        absorb_block::<STACK_SIZE_T, N, T, RATE>(&alloc_t, &mut s, &data, i * RATE);
+        absorb_block::<STACK_SIZE_T, N, T, RATE>(alloc_t.as_ref(), &mut s, &data, i * RATE);
     }
     let rem = data[0].len() % RATE;
     // T::slice_n(data, data[0].len() - rem, rem)
     absorb_final::<STACK_SIZE_T, N, T, RATE, DELIM>(
-        &alloc_buffer,
-        &alloc_t,
+        alloc_buffer.as_ref(),
+        alloc_t.as_ref(),
         &mut s,
         data,
         data[0].len() - rem,
@@ -656,17 +658,17 @@ pub(crate) fn keccak<
     let last = outlen - (outlen % RATE);
 
     if blocks == 0 {
-        squeeze_first_and_last::<N, T, RATE>(&alloc_buffer, &s, out)
+        squeeze_first_and_last::<N, T, RATE>(alloc_buffer.as_ref(), &s, out)
     } else {
         let (mut o0, mut o1) = T::split_at_mut_n(out, RATE);
         squeeze_first_block::<N, T, RATE>(&s, &mut o0);
         for _i in 1..blocks {
             let (mut o, orest) = T::split_at_mut_n(o1, RATE);
-            squeeze_next_block::<STACK_SIZE_T, N, T, RATE>(&alloc_t, &mut s, &mut o);
+            squeeze_next_block::<STACK_SIZE_T, N, T, RATE>(alloc_t.as_ref(), &mut s, &mut o);
             o1 = orest;
         }
         if last < outlen {
-            squeeze_last::<STACK_SIZE_T, N, T, RATE>(&alloc_buffer, &alloc_t, s, o1)
+            squeeze_last::<STACK_SIZE_T, N, T, RATE>(alloc_buffer.as_ref(), alloc_t.as_ref(), s, o1)
         }
     }
 }

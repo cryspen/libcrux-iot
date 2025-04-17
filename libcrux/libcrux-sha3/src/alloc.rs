@@ -15,6 +15,8 @@
 #![allow(unsafe_code)]
 
 use core::cell::RefCell;
+use core::marker::PhantomPinned;
+use core::pin::Pin;
 
 /// Bump allocator for mutable slices of a single type.
 pub struct Alloc<const STACK_SIZE: usize, T: Sized + Init + Copy> {
@@ -23,6 +25,7 @@ pub struct Alloc<const STACK_SIZE: usize, T: Sized + Init + Copy> {
     buffer: [T; STACK_SIZE],
     /// Points to the region of available memory within [buffer].
     pointer: RefCell<*mut T>,
+    _pin: PhantomPinned
 }
 
 /// Type initialization wrapper.
@@ -47,6 +50,7 @@ impl<const STACK_SIZE: usize, T: Sized + Init + Copy> Alloc<STACK_SIZE, T> {
         let out = Self {
             buffer,
             pointer,
+            _pin: PhantomPinned
         };
 
         out
@@ -58,25 +62,25 @@ impl<const STACK_SIZE: usize, T: Sized + Init + Copy> Alloc<STACK_SIZE, T> {
     /// After calling this `self` MUST NOT be moved, as this lead to
     /// an invalid state of `self.pointer`.
     #[inline(always)]
-    pub fn set_pointer(&self) {
-        let buffer_ptr = self.buffer.as_ptr();
-        *(self.pointer.borrow_mut()) = buffer_ptr as *mut T;
+    pub fn set_pointer(alloc: Pin<&Self>) {
+        let buffer_ptr = alloc.buffer.as_ptr();
+        *(alloc.pointer.borrow_mut()) = buffer_ptr as *mut T;
     }
 
     /// Allocate a mutable T-slice of length `len`.
     #[inline(always)]
-    pub fn alloc(&self, len: usize) -> &mut [T] {
-        assert!(!(*self.pointer.borrow()).is_null(), "Internal pointer must be set with `self.set_pointer`, after which `self` MUST NOT be moved");
-        let allocation_start = *self.pointer.borrow();
-        let allocation_end = unsafe { (*self.pointer.borrow()).add(len) };
+    pub fn alloc(alloc: Pin<&Self>, len: usize) -> &mut [T] {
+        assert!(!(*alloc.pointer.borrow()).is_null(), "Internal pointer must be set with `self.set_pointer`, after which `self` MUST NOT be moved");
+        let allocation_start = *alloc.pointer.borrow();
+        let allocation_end = unsafe { (*alloc.pointer.borrow()).add(len) };
 
-        if (allocation_end as *const T) > unsafe { self.buffer.as_ptr().add(STACK_SIZE) } {
+        if (allocation_end as *const T) > unsafe { alloc.buffer.as_ptr().add(STACK_SIZE) } {
             panic!("Insufficient memory")
         }
 
         let out: &mut [T] = unsafe { core::slice::from_raw_parts_mut(allocation_start, len) };
 
-        *self.pointer.borrow_mut() = allocation_end;
+        *alloc.pointer.borrow_mut() = allocation_end;
 
         out
     }
