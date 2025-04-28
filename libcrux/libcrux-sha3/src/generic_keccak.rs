@@ -342,7 +342,7 @@ macro_rules! xor_and_rotate {
         <$t>::xor_and_rotate::<20, 44>
     };
     (4, 2, $t:ty) => {
-        <$t>::xor_and_rotate::<9, 55>
+        <$t>::xor_and_rotate::<8, 56>
     };
     (4, 3, $t:ty) => {
         <$t>::xor_and_rotate::<27, 37>
@@ -403,7 +403,7 @@ macro_rules! defn_b_loop {
             d: &[T; 5],
         ) {
             let t0_s = s.get(0, ni_y!($i + 1, 0, 0));
-            let t0_d = d[1];
+            let t0_d = d[0];
             b[0] = xor_and_rotate!(0, 0, T)(t0_s, t0_d);
 
             let t1_s = s.get(1, ni_y!($i + 1, 1, 0));
@@ -430,7 +430,7 @@ macro_rules! defn_b_loop {
             d: &[T; 5],
         ) {
             let t0_s = s.get(0, ni_y!($i + 1, 0, 1));
-            let t0_d = d[1];
+            let t0_d = d[0];
             b[2] = xor_and_rotate!(0, 1, T)(t0_s, t0_d);
 
             let t1_s = s.get(1, ni_y!($i + 1, 1, 1));
@@ -457,7 +457,7 @@ macro_rules! defn_b_loop {
             d: &[T; 5],
         ) {
             let t0_s = s.get(0, ni_y!($i + 1, 0, 2));
-            let t0_d = d[1];
+            let t0_d = d[0];
             b[4] = xor_and_rotate!(0, 2, T)(t0_s, t0_d);
 
             let t1_s = s.get(1, ni_y!($i + 1, 1, 2));
@@ -484,7 +484,7 @@ macro_rules! defn_b_loop {
             d: &[T; 5],
         ) {
             let t0_s = s.get(0, ni_y!($i + 1, 0, 3));
-            let t0_d = d[1];
+            let t0_d = d[0];
             b[1] = xor_and_rotate!(0, 3, T)(t0_s, t0_d);
 
             let t1_s = s.get(1, ni_y!($i + 1, 1, 3));
@@ -511,7 +511,7 @@ macro_rules! defn_b_loop {
             d: &[T; 5],
         ) {
             let t0_s = s.get(0, ni_y!($i + 1, 0, 4));
-            let t0_d = d[1];
+            let t0_d = d[0];
             b[3] = xor_and_rotate!(0, 4, T)(t0_s, t0_d);
 
             let t1_s = s.get(1, ni_y!($i + 1, 1, 4));
