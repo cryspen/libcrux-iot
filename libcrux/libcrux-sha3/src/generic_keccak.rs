@@ -356,39 +356,39 @@ macro_rules! defn_c_loop {
     ($name:ident, $i:literal) => {
         #[inline(always)]
         fn $name<const N: usize, T: KeccakStateItem<N>>(s: &KeccakState<N, T>, c: &mut [T; 5]) {
-            let t0 = s.get(0, ni_y!($i, 0, 0));
-            let t1 = s.get(0, ni_y!($i, 0, 1));
-            let t2 = s.get(0, ni_y!($i, 0, 2));
-            let t3 = s.get(0, ni_y!($i, 0, 3));
-            let t4 = s.get(0, ni_y!($i, 0, 4));
+            let t0 = s.get(ni_y!($i, 0, 0), 0);
+            let t1 = s.get(ni_y!($i, 0, 1), 0);
+            let t2 = s.get(ni_y!($i, 0, 2), 0);
+            let t3 = s.get(ni_y!($i, 0, 3), 0);
+            let t4 = s.get(ni_y!($i, 0, 4), 0);
             c[0] = T::xor5(t0, t1, t2, t3, t4);
 
-            let t0 = s.get(1, ni_y!($i, 1, 0));
-            let t1 = s.get(1, ni_y!($i, 1, 1));
-            let t2 = s.get(1, ni_y!($i, 1, 2));
-            let t3 = s.get(1, ni_y!($i, 1, 3));
-            let t4 = s.get(1, ni_y!($i, 1, 4));
+            let t0 = s.get(ni_y!($i, 1, 0), 1);
+            let t1 = s.get(ni_y!($i, 1, 1), 1);
+            let t2 = s.get(ni_y!($i, 1, 2), 1);
+            let t3 = s.get(ni_y!($i, 1, 3), 1);
+            let t4 = s.get(ni_y!($i, 1, 4), 1);
             c[1] = T::xor5(t0, t1, t2, t3, t4);
 
-            let t0 = s.get(2, ni_y!($i, 2, 0));
-            let t1 = s.get(2, ni_y!($i, 2, 1));
-            let t2 = s.get(2, ni_y!($i, 2, 2));
-            let t3 = s.get(2, ni_y!($i, 2, 3));
-            let t4 = s.get(2, ni_y!($i, 2, 4));
+            let t0 = s.get(ni_y!($i, 2, 0), 2);
+            let t1 = s.get(ni_y!($i, 2, 1), 2);
+            let t2 = s.get(ni_y!($i, 2, 2), 2);
+            let t3 = s.get(ni_y!($i, 2, 3), 2);
+            let t4 = s.get(ni_y!($i, 2, 4), 2);
             c[2] = T::xor5(t0, t1, t2, t3, t4);
 
-            let t0 = s.get(3, ni_y!($i, 3, 0));
-            let t1 = s.get(3, ni_y!($i, 3, 1));
-            let t2 = s.get(3, ni_y!($i, 3, 2));
-            let t3 = s.get(3, ni_y!($i, 3, 3));
-            let t4 = s.get(3, ni_y!($i, 3, 4));
+            let t0 = s.get(ni_y!($i, 3, 0), 3);
+            let t1 = s.get(ni_y!($i, 3, 1), 3);
+            let t2 = s.get(ni_y!($i, 3, 2), 3);
+            let t3 = s.get(ni_y!($i, 3, 3), 3);
+            let t4 = s.get(ni_y!($i, 3, 4), 3);
             c[3] = T::xor5(t0, t1, t2, t3, t4);
 
-            let t0 = s.get(4, ni_y!($i, 4, 0));
-            let t1 = s.get(4, ni_y!($i, 4, 1));
-            let t2 = s.get(4, ni_y!($i, 4, 2));
-            let t3 = s.get(4, ni_y!($i, 4, 3));
-            let t4 = s.get(4, ni_y!($i, 4, 4));
+            let t0 = s.get(ni_y!($i, 4, 0), 4);
+            let t1 = s.get(ni_y!($i, 4, 1), 4);
+            let t2 = s.get(ni_y!($i, 4, 2), 4);
+            let t3 = s.get(ni_y!($i, 4, 3), 4);
+            let t4 = s.get(ni_y!($i, 4, 4), 4);
             c[4] = T::xor5(t0, t1, t2, t3, t4);
         }
     };
@@ -402,23 +402,23 @@ macro_rules! defn_b_loop {
             b: &mut [T; 5],
             d: &[T; 5],
         ) {
-            let t0_s = s.get(0, ni_y!($i + 1, 0, 0));
+            let t0_s = s.get(ni_y!($i + 1, 0, 0), 0);
             let t0_d = d[0];
             b[0] = xor_and_rotate!(0, 0, T)(t0_s, t0_d);
 
-            let t1_s = s.get(1, ni_y!($i + 1, 1, 0));
+            let t1_s = s.get(ni_y!($i + 1, 1, 0), 1);
             let t1_d = d[1];
             b[1] = xor_and_rotate!(1, 0, T)(t1_s, t1_d);
 
-            let t2_s = s.get(2, ni_y!($i + 1, 2, 0));
+            let t2_s = s.get(ni_y!($i + 1, 2, 0), 2);
             let t2_d = d[2];
             b[2] = xor_and_rotate!(2, 0, T)(t2_s, t2_d);
 
-            let t3_s = s.get(3, ni_y!($i + 1, 3, 0));
+            let t3_s = s.get(ni_y!($i + 1, 3, 0), 3);
             let t3_d = d[3];
             b[3] = xor_and_rotate!(3, 0, T)(t3_s, t3_d);
 
-            let t4_s = s.get(4, ni_y!($i + 1, 4, 0));
+            let t4_s = s.get(ni_y!($i + 1, 4, 0), 4);
             let t4_d = d[4];
             b[4] = xor_and_rotate!(4, 0, T)(t4_s, t4_d);
         }
@@ -429,23 +429,23 @@ macro_rules! defn_b_loop {
             b: &mut [T; 5],
             d: &[T; 5],
         ) {
-            let t0_s = s.get(0, ni_y!($i + 1, 0, 1));
+            let t0_s = s.get(ni_y!($i + 1, 0, 1), 0);
             let t0_d = d[0];
             b[2] = xor_and_rotate!(0, 1, T)(t0_s, t0_d);
 
-            let t1_s = s.get(1, ni_y!($i + 1, 1, 1));
+            let t1_s = s.get(ni_y!($i + 1, 1, 1), 1);
             let t1_d = d[1];
             b[3] = xor_and_rotate!(1, 1, T)(t1_s, t1_d);
 
-            let t2_s = s.get(2, ni_y!($i + 1, 2, 1));
+            let t2_s = s.get(ni_y!($i + 1, 2, 1), 2);
             let t2_d = d[2];
             b[4] = xor_and_rotate!(2, 1, T)(t2_s, t2_d);
 
-            let t3_s = s.get(3, ni_y!($i + 1, 3, 1));
+            let t3_s = s.get(ni_y!($i + 1, 3, 1), 3);
             let t3_d = d[3];
             b[0] = xor_and_rotate!(3, 1, T)(t3_s, t3_d);
 
-            let t4_s = s.get(4, ni_y!($i + 1, 4, 1));
+            let t4_s = s.get(ni_y!($i + 1, 4, 1), 4);
             let t4_d = d[4];
             b[1] = xor_and_rotate!(4, 1, T)(t4_s, t4_d);
         }
@@ -456,23 +456,23 @@ macro_rules! defn_b_loop {
             b: &mut [T; 5],
             d: &[T; 5],
         ) {
-            let t0_s = s.get(0, ni_y!($i + 1, 0, 2));
+            let t0_s = s.get(ni_y!($i + 1, 0, 2), 0);
             let t0_d = d[0];
             b[4] = xor_and_rotate!(0, 2, T)(t0_s, t0_d);
 
-            let t1_s = s.get(1, ni_y!($i + 1, 1, 2));
+            let t1_s = s.get(ni_y!($i + 1, 1, 2), 1);
             let t1_d = d[1];
             b[0] = xor_and_rotate!(1, 2, T)(t1_s, t1_d);
 
-            let t2_s = s.get(2, ni_y!($i + 1, 2, 2));
+            let t2_s = s.get(ni_y!($i + 1, 2, 2), 2);
             let t2_d = d[2];
             b[1] = xor_and_rotate!(2, 2, T)(t2_s, t2_d);
 
-            let t3_s = s.get(3, ni_y!($i + 1, 3, 2));
+            let t3_s = s.get(ni_y!($i + 1, 3, 2), 3);
             let t3_d = d[3];
             b[2] = xor_and_rotate!(3, 2, T)(t3_s, t3_d);
 
-            let t4_s = s.get(4, ni_y!($i + 1, 4, 2));
+            let t4_s = s.get(ni_y!($i + 1, 4, 2), 4);
             let t4_d = d[4];
             b[3] = xor_and_rotate!(4, 2, T)(t4_s, t4_d);
         }
@@ -483,23 +483,23 @@ macro_rules! defn_b_loop {
             b: &mut [T; 5],
             d: &[T; 5],
         ) {
-            let t0_s = s.get(0, ni_y!($i + 1, 0, 3));
+            let t0_s = s.get(ni_y!($i + 1, 0, 3), 0);
             let t0_d = d[0];
             b[1] = xor_and_rotate!(0, 3, T)(t0_s, t0_d);
 
-            let t1_s = s.get(1, ni_y!($i + 1, 1, 3));
+            let t1_s = s.get(ni_y!($i + 1, 1, 3), 1);
             let t1_d = d[1];
             b[2] = xor_and_rotate!(1, 3, T)(t1_s, t1_d);
 
-            let t2_s = s.get(2, ni_y!($i + 1, 2, 3));
+            let t2_s = s.get(ni_y!($i + 1, 2, 3), 2);
             let t2_d = d[2];
             b[3] = xor_and_rotate!(2, 3, T)(t2_s, t2_d);
 
-            let t3_s = s.get(3, ni_y!($i + 1, 3, 3));
+            let t3_s = s.get(ni_y!($i + 1, 3, 3), 3);
             let t3_d = d[3];
             b[4] = xor_and_rotate!(3, 3, T)(t3_s, t3_d);
 
-            let t4_s = s.get(4, ni_y!($i + 1, 4, 3));
+            let t4_s = s.get(ni_y!($i + 1, 4, 3), 4);
             let t4_d = d[4];
             b[0] = xor_and_rotate!(4, 3, T)(t4_s, t4_d);
         }
@@ -510,23 +510,23 @@ macro_rules! defn_b_loop {
             b: &mut [T; 5],
             d: &[T; 5],
         ) {
-            let t0_s = s.get(0, ni_y!($i + 1, 0, 4));
+            let t0_s = s.get(ni_y!($i + 1, 0, 4), 0);
             let t0_d = d[0];
             b[3] = xor_and_rotate!(0, 4, T)(t0_s, t0_d);
 
-            let t1_s = s.get(1, ni_y!($i + 1, 1, 4));
+            let t1_s = s.get(ni_y!($i + 1, 1, 4), 1);
             let t1_d = d[1];
             b[4] = xor_and_rotate!(1, 4, T)(t1_s, t1_d);
 
-            let t2_s = s.get(2, ni_y!($i + 1, 2, 4));
+            let t2_s = s.get(ni_y!($i + 1, 2, 4), 2);
             let t2_d = d[2];
             b[0] = xor_and_rotate!(2, 4, T)(t2_s, t2_d);
 
-            let t3_s = s.get(3, ni_y!($i + 1, 3, 4));
+            let t3_s = s.get(ni_y!($i + 1, 3, 4), 3);
             let t3_d = d[3];
             b[1] = xor_and_rotate!(3, 4, T)(t3_s, t3_d);
 
-            let t4_s = s.get(4, ni_y!($i + 1, 4, 4));
+            let t4_s = s.get(ni_y!($i + 1, 4, 4), 4);
             let t4_d = d[4];
             b[2] = xor_and_rotate!(4, 4, T)(t4_s, t4_d);
         }
@@ -543,11 +543,11 @@ macro_rules! defn_a_loop {
             let b3 = b[3];
             let b4 = b[4];
 
-            s.set(0, ni_y!($i + 1, 0, $y), T::and_not_xor(b0, b2, b1));
-            s.set(1, ni_y!($i + 1, 1, $y), T::and_not_xor(b1, b3, b2));
-            s.set(2, ni_y!($i + 1, 2, $y), T::and_not_xor(b2, b4, b3));
-            s.set(3, ni_y!($i + 1, 3, $y), T::and_not_xor(b3, b0, b4));
-            s.set(4, ni_y!($i + 1, 4, $y), T::and_not_xor(b4, b1, b0));
+            s.set(ni_y!($i + 1, 0, $y), 0, T::and_not_xor(b0, b2, b1));
+            s.set(ni_y!($i + 1, 1, $y), 1, T::and_not_xor(b1, b3, b2));
+            s.set(ni_y!($i + 1, 2, $y), 2, T::and_not_xor(b2, b4, b3));
+            s.set(ni_y!($i + 1, 3, $y), 3, T::and_not_xor(b3, b0, b4));
+            s.set(ni_y!($i + 1, 4, $y), 4, T::and_not_xor(b4, b1, b0));
         }
     };
 }
