@@ -9,9 +9,9 @@ use embassy_stm32 as _; // memory layout
 
 use panic_probe as _;
 
-pub mod init;
-
 pub mod cycle_counter;
+pub mod init;
+pub mod real_time;
 
 // same panicking *behavior* as `panic-probe` but doesn't print a panic message
 // this prevents the panic message being printed *twice* when `defmt::panic` is invoked
