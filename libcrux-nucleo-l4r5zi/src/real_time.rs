@@ -18,6 +18,10 @@ impl Timer {
     #[inline(never)]
     pub fn end_measurement(msg: &str, start: Instant) {
         let diff = start.elapsed();
-        defmt::println!("[REAL_TIME_MEASUREMENT {=str}] : + {=u64} μs", msg, diff.as_micros());
+        defmt::println!(
+            "[REAL_TIME_MEASUREMENT {=str}] : + {=u64} μs",
+            msg,
+            diff.as_micros()
+        );
     }
 }

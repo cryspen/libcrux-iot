@@ -19,7 +19,7 @@ fn main() -> ! {
     // Set up the system clock.
     let clock_config = ClockConfig::CycleBenchmark;
     board::init::setup_clock(clock_config);
-    
+
     // set up the test config
     let test_config = TestConfig {
         platform: platform::CortexM,
