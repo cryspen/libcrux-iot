@@ -27,6 +27,7 @@ pub(crate) mod internal {
     pub trait KeccakItem<const N: usize>: Clone + Copy {
         fn zero() -> Self;
         fn xor5(a: Self, b: Self, c: Self, d: Self, e: Self) -> Self;
+        fn xor3(a: Self, b: Self, c: Self) -> Self;
         fn rotate_left1_and_xor(a: Self, b: Self) -> Self;
         fn xor_and_rotate<const LEFT: i32, const RIGHT: i32>(a: Self, b: Self) -> Self;
         fn and_not_xor(a: Self, b: Self, c: Self) -> Self;

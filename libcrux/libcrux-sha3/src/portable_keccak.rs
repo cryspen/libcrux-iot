@@ -14,6 +14,11 @@ fn _veor5q_u64(a: u64, b: u64, c: u64, d: u64, e: u64) -> u64 {
 }
 
 #[inline(always)]
+fn _veor3q_u64(a: u64, b: u64, c: u64) -> u64 {
+    a ^ b ^ c
+}
+
+#[inline(always)]
 fn _vrax1q_u64(a: u64, b: u64) -> u64 {
     a ^ rotate_left::<1, 63>(b)
 }
@@ -85,6 +90,10 @@ impl KeccakItem<1> for u64 {
     #[inline(always)]
     fn xor5(a: Self, b: Self, c: Self, d: Self, e: Self) -> Self {
         _veor5q_u64(a, b, c, d, e)
+    }
+    #[inline(always)]
+    fn xor3(a: Self, b: Self, c: Self) -> Self {
+        _veor3q_u64(a, b, c)
     }
     #[inline(always)]
     fn rotate_left1_and_xor(a: Self, b: Self) -> Self {
