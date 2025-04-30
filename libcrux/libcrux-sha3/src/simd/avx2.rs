@@ -17,6 +17,12 @@ fn _veor5q_u64(a: Vec256, b: Vec256, c: Vec256, d: Vec256, e: Vec256) -> Vec256 
 }
 
 #[inline(always)]
+fn _veor3q_u64(a: Vec256, b: Vec256, c: Vec256) -> Vec256 {
+    let ab = mm256_xor_si256(a, b);
+    mm256_xor_si256(ab, c)
+}
+
+#[inline(always)]
 fn _vrax1q_u64(a: Vec256, b: Vec256) -> Vec256 {
     mm256_xor_si256(a, rotate_left::<1, 63>(b))
 }
@@ -201,6 +207,10 @@ impl KeccakItem<4> for Vec256 {
     #[inline(always)]
     fn xor5(a: Self, b: Self, c: Self, d: Self, e: Self) -> Self {
         _veor5q_u64(a, b, c, d, e)
+    }
+    #[inline(always)]
+    fn xor3(a: Self, b: Self, c: Self) -> Self {
+        _veor3q_u64(a, b, c)
     }
     #[inline(always)]
     fn rotate_left1_and_xor(a: Self, b: Self) -> Self {
