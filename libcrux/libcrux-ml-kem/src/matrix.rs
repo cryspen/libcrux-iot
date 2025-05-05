@@ -189,31 +189,36 @@ pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
     error_as_ntt: &[PolynomialRingElement<Vector>; K],
     scratch: &mut PolynomialRingElement<Vector>,
 ) {
-    for i in 0..K {
+    // During the first row of multiplications, we build up the cache
+    // of intermediate values.
+    t_as_ntt[0] = PolynomialRingElement::<Vector>::ZERO();
+    let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+    for j in 0..K {
+        entry::<K, Vector>(matrix_A, 0, j).ntt_multiply_caching(
+            &s_as_ntt[j],
+            scratch,
+            &mut s_cache[j],
+        );
+        t_as_ntt[0].add_to_ring_element::<K>(scratch);
+    }
+    t_as_ntt[0].add_standard_error_reduce(&error_as_ntt[0]);
+
+    // The remaining rows can re-use the cached intermediate values.
+    for i in 1..K {
         // This may be externally provided memory. Ensure that `t_as_ntt`
         // is all 0.
         t_as_ntt[i] = PolynomialRingElement::<Vector>::ZERO();
 
         for j in 0..K {
-            entry::<K, Vector>(matrix_A, i, j).ntt_multiply(&s_as_ntt[j], scratch);
+            entry::<K, Vector>(matrix_A, i, j).ntt_multiply_cached(
+                &s_as_ntt[j],
+                scratch,
+                &s_cache[j],
+            );
             t_as_ntt[i].add_to_ring_element::<K>(scratch);
         }
         t_as_ntt[i].add_standard_error_reduce(&error_as_ntt[i]);
     }
 
-    // cloop! {
-    //     for (i, row) in matrix_A.iter().enumerate() {
-    //         // This may be externally provided memory. Ensure that `t_as_ntt`
-    //         // is all 0.
-    //         t_as_ntt[i] = PolynomialRingElement::<Vector>::ZERO();
-    //         cloop! {
-    //             for (j, matrix_element) in row.iter().enumerate() {
-    //                 matrix_element.ntt_multiply(&s_as_ntt[j], scratch);
-    //                 t_as_ntt[i].add_to_ring_element::<K>(scratch);
-    //             }
-    //         }
-    //         t_as_ntt[i].add_standard_error_reduce(&error_as_ntt[i]);
-    //     }
-    // };
     ()
 }

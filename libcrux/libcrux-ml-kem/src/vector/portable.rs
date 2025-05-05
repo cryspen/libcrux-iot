@@ -173,7 +173,7 @@ impl Operations for PortableVector {
     fn sub(lhs: &mut Self, rhs: &Self) {
         sub(lhs, rhs)
     }
-    
+
     #[inline(always)]
     fn negate(vec: &mut Self) {
         negate(vec)
@@ -324,6 +324,23 @@ impl Operations for PortableVector {
         ntt_multiply(lhs, rhs, out, zeta0, zeta1, zeta2, zeta3)
     }
 
+    fn ntt_multiply_caching(
+        lhs: &Self,
+        rhs: &Self,
+        out: &mut Self,
+        cache: &mut Self,
+        zeta0: i16,
+        zeta1: i16,
+        zeta2: i16,
+        zeta3: i16,
+    ) {
+        ntt_multiply_caching(lhs, rhs, out, cache, zeta0, zeta1, zeta2, zeta3)
+    }
+
+    fn ntt_multiply_cached(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self) {
+        ntt_multiply_cached(lhs, rhs, out, cache)
+    }
+
     #[inline(always)]
     #[requires(fstar!(r#"Spec.MLKEM.serialize_pre 1 (impl.f_repr $a)"#))]
     #[ensures(|out| fstar!(r#"Spec.MLKEM.serialize_pre 1 (impl.f_repr $a) ==> Spec.MLKEM.serialize_post 1 (impl.f_repr $a) $out"#))]
@@ -381,7 +398,7 @@ impl Operations for PortableVector {
     fn serialize_11(a: Self, out: &mut [u8]) {
         serialize_11(a, out)
     }
-    
+
     #[inline(always)]
     #[requires(a.len() == 22)]
     fn deserialize_11(a: &[u8], out: &mut Self) {
