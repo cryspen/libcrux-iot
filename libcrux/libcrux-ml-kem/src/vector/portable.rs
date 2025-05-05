@@ -324,6 +324,7 @@ impl Operations for PortableVector {
         ntt_multiply(lhs, rhs, out, zeta0, zeta1, zeta2, zeta3)
     }
 
+    #[inline(always)]
     fn ntt_multiply_caching(
         lhs: &Self,
         rhs: &Self,
@@ -337,6 +338,7 @@ impl Operations for PortableVector {
         ntt_multiply_caching(lhs, rhs, out, cache, zeta0, zeta1, zeta2, zeta3)
     }
 
+    #[inline(always)]
     fn ntt_multiply_cached(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self) {
         ntt_multiply_cached(lhs, rhs, out, cache)
     }

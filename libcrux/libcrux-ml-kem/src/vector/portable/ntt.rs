@@ -368,6 +368,7 @@ pub(crate) fn ntt_multiply_binomials(
     );
 }
 
+#[inline(always)]
 pub(crate) fn ntt_multiply_binomials_caching(
     a: &PortableVector,
     b: &PortableVector,
@@ -464,6 +465,7 @@ pub(crate) fn ntt_multiply_binomials_caching(
     );
 }
 
+#[inline(always)]
 pub(crate) fn ntt_multiply_binomials_cached(
     a: &PortableVector,
     b: &PortableVector,
@@ -612,6 +614,7 @@ pub(crate) fn ntt_multiply_caching(
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
 }
 
+#[inline(always)]
 pub(crate) fn ntt_multiply_cached(
     lhs: &PortableVector,
     rhs: &PortableVector,
@@ -640,7 +643,7 @@ pub(crate) fn ntt_multiply_cached(
     ntt_multiply_binomials_cached(lhs, rhs, 7, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
 }
-
+#[inline(always)]
 pub(crate) fn ntt_multiply(
     lhs: &PortableVector,
     rhs: &PortableVector,
