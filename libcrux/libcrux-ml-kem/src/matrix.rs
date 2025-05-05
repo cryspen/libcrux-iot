@@ -121,9 +121,10 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     message: &PolynomialRingElement<Vector>,
     result: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
+    cache: &[PolynomialRingElement<Vector>],
 ) {
     for i in 0..K {
-        t_as_ntt[i].ntt_multiply(&r_as_ntt[i], scratch);
+        t_as_ntt[i].ntt_multiply_cached(&r_as_ntt[i], scratch, &cache[i]);
         result.add_to_ring_element::<K>(&scratch);
     }
 
@@ -148,6 +149,7 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
 pub(crate) fn compute_vector_u<const K: usize, Vector: Operations>(
     a_as_ntt: &[PolynomialRingElement<Vector>],
     r_as_ntt: &[PolynomialRingElement<Vector>],
+    cache: &mut [PolynomialRingElement<Vector>],
     error_1: &[PolynomialRingElement<Vector>],
     result: &mut [PolynomialRingElement<Vector>],
     scratch: &mut PolynomialRingElement<Vector>,
@@ -156,9 +158,25 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations>(
     debug_assert!(r_as_ntt.len() == K);
     debug_assert!(error_1.len() == K);
 
-    for i in 0..K {
+    for j in 0..K {
+        entry::<K, Vector>(a_as_ntt, 0, j).ntt_multiply_caching(
+            &r_as_ntt[j],
+            scratch,
+            &mut cache[j],
+        );
+        result[0].add_to_ring_element::<K>(scratch);
+    }
+
+    invert_ntt_montgomery::<K, Vector>(&mut result[0], &mut scratch.coefficients[0]);
+    result[0].add_error_reduce(&error_1[0]);
+
+    for i in 1..K {
         for j in 0..K {
-            entry::<K, Vector>(a_as_ntt, i, j).ntt_multiply(&r_as_ntt[j], scratch);
+            entry::<K, Vector>(a_as_ntt, i, j).ntt_multiply_cached(
+                &r_as_ntt[j],
+                scratch,
+                &cache[j],
+            );
             result[i].add_to_ring_element::<K>(scratch);
         }
 

@@ -782,6 +782,7 @@ pub(crate) fn encrypt_unpacked<
     error_2: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
 ) {
+    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
     encrypt_c1::<
         K,
         K_SQUARED,
@@ -803,6 +804,7 @@ pub(crate) fn encrypt_unpacked<
         r_as_ntt,
         error_2,
         scratch,
+        &mut cache,
     );
 
     encrypt_c2::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
@@ -812,6 +814,7 @@ pub(crate) fn encrypt_unpacked<
         message,
         &mut ciphertext[C1_LEN..],
         scratch,
+        &cache,
     );
 }
 
@@ -837,6 +840,7 @@ pub(crate) fn encrypt_c1<
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
+    cache: &mut [PolynomialRingElement<Vector>],
 ) {
     // for i from 0 to k−1 do
     //     r[i] := CBD{η1}(PRF(r, N))
@@ -885,7 +889,8 @@ pub(crate) fn encrypt_c1<
 
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
     let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    compute_vector_u::<K, Vector>(matrix, &r_as_ntt, &error_1, &mut u, scratch);
+
+    compute_vector_u::<K, Vector>(matrix, &r_as_ntt, cache, &error_1, &mut u, scratch);
 
     // c_1 := Encode_{du}(Compress_q(u,d_u))
     compress_then_serialize_u::<K, C1_LEN, U_COMPRESSION_FACTOR, BLOCK_LEN, Vector>(
@@ -908,6 +913,7 @@ pub(crate) fn encrypt_c2<
     message: [u8; SHARED_SECRET_SIZE],
     ciphertext: &mut [u8],
     scratch: &mut PolynomialRingElement<Vector>,
+    cache: &[PolynomialRingElement<Vector>],
 ) {
     // v := NTT^{−1}(tˆT ◦ rˆ) + e_2 + Decompress_q(Decode_1(m),1)
     let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
@@ -920,6 +926,7 @@ pub(crate) fn encrypt_c2<
         &message_as_ring_element,
         &mut v,
         scratch,
+        cache,
     );
     hax_lib::fstar!("assert ($C2_LEN = Spec.MLKEM.v_C2_SIZE v_K)");
 
