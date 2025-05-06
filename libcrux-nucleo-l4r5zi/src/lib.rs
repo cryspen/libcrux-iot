@@ -11,6 +11,7 @@ use panic_probe as _;
 
 pub mod cycle_counter;
 pub mod init;
+#[cfg(feature = "realtime")]
 pub mod real_time;
 
 // same panicking *behavior* as `panic-probe` but doesn't print a panic message
