@@ -1,5 +1,5 @@
 use super::Operations;
-mod arithmetic;
+pub(crate) mod arithmetic;
 mod compress;
 mod ntt;
 mod sampling;
@@ -328,7 +328,7 @@ impl Operations for PortableVector {
     fn ntt_multiply_caching(
         lhs: &Self,
         rhs: &Self,
-        out: &mut Self,
+        out: &mut [i32],
         cache: &mut Self,
         zeta0: i16,
         zeta1: i16,
@@ -339,7 +339,7 @@ impl Operations for PortableVector {
     }
 
     #[inline(always)]
-    fn ntt_multiply_cached(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self) {
+    fn ntt_multiply_cached(lhs: &Self, rhs: &Self, out: &mut [i32], cache: &Self) {
         ntt_multiply_cached(lhs, rhs, out, cache)
     }
 

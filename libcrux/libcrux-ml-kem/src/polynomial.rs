@@ -307,14 +307,14 @@ fn ntt_multiply<Vector: Operations>(
 fn ntt_multiply_caching<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
-    out: &mut PolynomialRingElement<Vector>,
+    accumulator: &mut [i32; 256],
     cache: &mut PolynomialRingElement<Vector>,
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
         Vector::ntt_multiply_caching(
             &myself.coefficients[i],
             &rhs.coefficients[i],
-            &mut out.coefficients[i],
+            &mut accumulator[i * 16..(i + 1) * 16],
             &mut cache.coefficients[i],
             zeta(64 + 4 * i),
             zeta(64 + 4 * i + 1),
@@ -329,14 +329,14 @@ fn ntt_multiply_caching<Vector: Operations>(
 fn ntt_multiply_cached<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
-    out: &mut PolynomialRingElement<Vector>,
+    accumulator: &mut [i32; 256],
     cache: &PolynomialRingElement<Vector>,
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
         Vector::ntt_multiply_cached(
             &myself.coefficients[i],
             &rhs.coefficients[i],
-            &mut out.coefficients[i],
+            &mut accumulator[i * 16..(i + 1) * 16],
             &cache.coefficients[i],
         );
     }
@@ -431,13 +431,23 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
-    pub(crate) fn ntt_multiply_caching(&self, rhs: &Self, out: &mut Self, cache: &mut Self) {
-        ntt_multiply_caching(self, rhs, out, cache)
+    pub(crate) fn ntt_multiply_caching(
+        &self,
+        rhs: &Self,
+        accumulator: &mut [i32; 256],
+        cache: &mut Self,
+    ) {
+        ntt_multiply_caching(self, rhs, accumulator, cache)
     }
 
     #[inline(always)]
-    pub(crate) fn ntt_multiply_cached(&self, rhs: &Self, out: &mut Self, cache: &Self) {
-        ntt_multiply_cached(self, rhs, out, cache)
+    pub(crate) fn ntt_multiply_cached(
+        &self,
+        rhs: &Self,
+        accumulator: &mut [i32; 256],
+        cache: &Self,
+    ) {
+        ntt_multiply_cached(self, rhs, accumulator, cache)
     }
 }
 

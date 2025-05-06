@@ -374,7 +374,7 @@ pub(crate) fn ntt_multiply_binomials_caching(
     b: &PortableVector,
     zeta: FieldElementTimesMontgomeryR,
     i: usize,
-    out: &mut PortableVector,
+    out: &mut [i32],
     cache: &mut PortableVector,
 ) {
     let ai = a.elements[2 * i];
@@ -401,7 +401,7 @@ pub(crate) fn ntt_multiply_binomials_caching(
     let ai_bi_aj_bj = ai_bi + aj_bj_zeta;
     hax_lib::fstar!(r#"assert(Spec.Utils.is_i32b (3328*3328 + 3328*1664) $ai_bi_aj_bj)"#);
     hax_lib::fstar!(r#"assert_norm (3328 * 3328 + 3328 * 1664 <= 3328 * pow2 15)"#);
-    let o0 = montgomery_reduce_element(ai_bi_aj_bj);
+    let o0 = ai_bi_aj_bj;
     hax_lib::fstar!(
         r#"calc  ( == ) {
         v $o0 % 3329;
@@ -438,7 +438,7 @@ pub(crate) fn ntt_multiply_binomials_caching(
     let ai_bj_aj_bi = ai_bj + aj_bi;
     hax_lib::fstar!(r#"assert(Spec.Utils.is_i32b (3328*3328 + 3328*3328) ai_bj_aj_bi) "#);
     hax_lib::fstar!(r#"assert_norm (3328 * 3328 + 3328 * 3328 <= 3328 * pow2 15)"#);
-    let o1 = montgomery_reduce_element(ai_bj_aj_bi);
+    let o1 = ai_bj_aj_bi;
     hax_lib::fstar!(
         "calc  ( == ) {
         v $o1 % 3329;
@@ -452,9 +452,8 @@ pub(crate) fn ntt_multiply_binomials_caching(
         ((v ai * v bj + v aj * v bi) * 169) % 3329;
     }"
     );
-    let _out0 = out.elements;
-    out.elements[2 * i] = o0;
-    out.elements[2 * i + 1] = o1;
+    out[2 * i] += o0;
+    out[2 * i + 1] += o1;
     hax_lib::fstar!(
         r#"assert (Seq.index out.f_elements (2 * v i) == o0);
                      assert (Seq.index out.f_elements (2 * v i + 1) == o1);
@@ -470,7 +469,8 @@ pub(crate) fn ntt_multiply_binomials_cached(
     a: &PortableVector,
     b: &PortableVector,
     i: usize,
-    out: &mut PortableVector,
+    out: &mut [i32],
+
     cache: &PortableVector,
 ) {
     let ai = a.elements[2 * i];
@@ -493,7 +493,7 @@ pub(crate) fn ntt_multiply_binomials_cached(
     let ai_bi_aj_bj = ai_bi + aj_bj_zeta;
     hax_lib::fstar!(r#"assert(Spec.Utils.is_i32b (3328*3328 + 3328*1664) $ai_bi_aj_bj)"#);
     hax_lib::fstar!(r#"assert_norm (3328 * 3328 + 3328 * 1664 <= 3328 * pow2 15)"#);
-    let o0 = montgomery_reduce_element(ai_bi_aj_bj);
+    let o0 = ai_bi_aj_bj;
     hax_lib::fstar!(
         r#"calc  ( == ) {
         v $o0 % 3329;
@@ -530,7 +530,7 @@ pub(crate) fn ntt_multiply_binomials_cached(
     let ai_bj_aj_bi = ai_bj + aj_bi;
     hax_lib::fstar!(r#"assert(Spec.Utils.is_i32b (3328*3328 + 3328*3328) ai_bj_aj_bi) "#);
     hax_lib::fstar!(r#"assert_norm (3328 * 3328 + 3328 * 3328 <= 3328 * pow2 15)"#);
-    let o1 = montgomery_reduce_element(ai_bj_aj_bi);
+    let o1 = ai_bj_aj_bi;
     hax_lib::fstar!(
         "calc  ( == ) {
         v $o1 % 3329;
@@ -544,9 +544,8 @@ pub(crate) fn ntt_multiply_binomials_cached(
         ((v ai * v bj + v aj * v bi) * 169) % 3329;
     }"
     );
-    let _out0 = out.elements;
-    out.elements[2 * i] = o0;
-    out.elements[2 * i + 1] = o1;
+    out[2 * i] += o0;
+    out[2 * i + 1] += o1;
     hax_lib::fstar!(
         r#"assert (Seq.index out.f_elements (2 * v i) == o0);
                      assert (Seq.index out.f_elements (2 * v i + 1) == o1);
@@ -580,7 +579,7 @@ pub(crate) fn ntt_multiply_binomials_cached(
 pub(crate) fn ntt_multiply_caching(
     lhs: &PortableVector,
     rhs: &PortableVector,
-    out: &mut PortableVector,
+    out: &mut [i32],
     cache: &mut PortableVector,
     zeta0: i16,
     zeta1: i16,
@@ -618,7 +617,7 @@ pub(crate) fn ntt_multiply_caching(
 pub(crate) fn ntt_multiply_cached(
     lhs: &PortableVector,
     rhs: &PortableVector,
-    out: &mut PortableVector,
+    out: &mut [i32],
     cache: &PortableVector,
 ) {
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta0)"#);
