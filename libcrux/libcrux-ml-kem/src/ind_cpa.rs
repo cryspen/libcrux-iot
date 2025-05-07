@@ -814,6 +814,7 @@ pub(crate) fn encrypt_unpacked<
         error_2,
         scratch,
         cache,
+        accumulator,
     );
 
     encrypt_c2::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
@@ -851,6 +852,7 @@ pub(crate) fn encrypt_c1<
     error_2: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
     cache: &mut [PolynomialRingElement<Vector>],
+    accumulator: &mut [i32; 256],
 ) {
     // for i from 0 to k−1 do
     //     r[i] := CBD{η1}(PRF(r, N))
@@ -900,7 +902,15 @@ pub(crate) fn encrypt_c1<
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
     let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
 
-    compute_vector_u::<K, Vector>(matrix, &r_as_ntt, cache, &error_1, &mut u, scratch);
+    compute_vector_u::<K, Vector>(
+        matrix,
+        &r_as_ntt,
+        cache,
+        &error_1,
+        &mut u,
+        scratch,
+        accumulator,
+    );
 
     // c_1 := Encode_{du}(Compress_q(u,d_u))
     compress_then_serialize_u::<K, C1_LEN, U_COMPRESSION_FACTOR, BLOCK_LEN, Vector>(
