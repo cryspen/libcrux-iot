@@ -369,7 +369,7 @@ pub(crate) fn ntt_multiply_binomials(
 }
 
 #[inline(always)]
-pub(crate) fn ntt_multiply_binomials_caching(
+pub(crate) fn accumulating_ntt_multiply_binomials_fill_cache(
     a: &PortableVector,
     b: &PortableVector,
     zeta: FieldElementTimesMontgomeryR,
@@ -465,7 +465,7 @@ pub(crate) fn ntt_multiply_binomials_caching(
 }
 
 #[inline(always)]
-pub(crate) fn ntt_multiply_binomials_cached(
+pub(crate) fn accumulating_ntt_multiply_binomials_use_cache(
     a: &PortableVector,
     b: &PortableVector,
     i: usize,
@@ -576,7 +576,7 @@ pub(crate) fn ntt_multiply_binomials_cached(
             let oj = Seq.index result.f_elements (2 * i + 1) in
             ((v oi % 3329) == (((v ai * v bi + (v aj * v bj * (Seq.index zetas i) * 169)) * 169) % 3329)) /\
             ((v oj % 3329) == (((v ai * v bj + v aj * v bi) * 169) % 3329)))))"#))]
-pub(crate) fn ntt_multiply_caching(
+pub(crate) fn accumulating_ntt_multiply_fill_cache(
     lhs: &PortableVector,
     rhs: &PortableVector,
     out: &mut [i32],
@@ -595,26 +595,26 @@ pub(crate) fn ntt_multiply_caching(
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta2)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta3)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_caching(lhs, rhs, zeta0, 0, out, cache);
+    accumulating_ntt_multiply_binomials_fill_cache(lhs, rhs, zeta0, 0, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_caching(lhs, rhs, nzeta0, 1, out, cache);
+    accumulating_ntt_multiply_binomials_fill_cache(lhs, rhs, nzeta0, 1, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_caching(lhs, rhs, zeta1, 2, out, cache);
+    accumulating_ntt_multiply_binomials_fill_cache(lhs, rhs, zeta1, 2, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_caching(lhs, rhs, nzeta1, 3, out, cache);
+    accumulating_ntt_multiply_binomials_fill_cache(lhs, rhs, nzeta1, 3, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_caching(lhs, rhs, zeta2, 4, out, cache);
+    accumulating_ntt_multiply_binomials_fill_cache(lhs, rhs, zeta2, 4, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_caching(lhs, rhs, nzeta2, 5, out, cache);
+    accumulating_ntt_multiply_binomials_fill_cache(lhs, rhs, nzeta2, 5, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_caching(lhs, rhs, zeta3, 6, out, cache);
+    accumulating_ntt_multiply_binomials_fill_cache(lhs, rhs, zeta3, 6, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_caching(lhs, rhs, nzeta3, 7, out, cache);
+    accumulating_ntt_multiply_binomials_fill_cache(lhs, rhs, nzeta3, 7, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
 }
 
 #[inline(always)]
-pub(crate) fn ntt_multiply_cached(
+pub(crate) fn accumulating_ntt_multiply_use_cache(
     lhs: &PortableVector,
     rhs: &PortableVector,
     out: &mut [i32],
@@ -625,21 +625,21 @@ pub(crate) fn ntt_multiply_cached(
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta2)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta3)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_cached(lhs, rhs, 0, out, cache);
+    accumulating_ntt_multiply_binomials_use_cache(lhs, rhs, 0, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_cached(lhs, rhs, 1, out, cache);
+    accumulating_ntt_multiply_binomials_use_cache(lhs, rhs, 1, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_cached(lhs, rhs, 2, out, cache);
+    accumulating_ntt_multiply_binomials_use_cache(lhs, rhs, 2, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_cached(lhs, rhs, 3, out, cache);
+    accumulating_ntt_multiply_binomials_use_cache(lhs, rhs, 3, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_cached(lhs, rhs, 4, out, cache);
+    accumulating_ntt_multiply_binomials_use_cache(lhs, rhs, 4, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_cached(lhs, rhs, 5, out, cache);
+    accumulating_ntt_multiply_binomials_use_cache(lhs, rhs, 5, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_cached(lhs, rhs, 6, out, cache);
+    accumulating_ntt_multiply_binomials_use_cache(lhs, rhs, 6, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials_cached(lhs, rhs, 7, out, cache);
+    accumulating_ntt_multiply_binomials_use_cache(lhs, rhs, 7, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
 }
 #[inline(always)]

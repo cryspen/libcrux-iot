@@ -325,7 +325,7 @@ impl Operations for PortableVector {
     }
 
     #[inline(always)]
-    fn ntt_multiply_caching(
+    fn accumulating_ntt_multiply_fill_cache(
         lhs: &Self,
         rhs: &Self,
         out: &mut [i32],
@@ -335,12 +335,12 @@ impl Operations for PortableVector {
         zeta2: i16,
         zeta3: i16,
     ) {
-        ntt_multiply_caching(lhs, rhs, out, cache, zeta0, zeta1, zeta2, zeta3)
+        accumulating_ntt_multiply_fill_cache(lhs, rhs, out, cache, zeta0, zeta1, zeta2, zeta3)
     }
 
     #[inline(always)]
-    fn ntt_multiply_cached(lhs: &Self, rhs: &Self, out: &mut [i32], cache: &Self) {
-        ntt_multiply_cached(lhs, rhs, out, cache)
+    fn accumulating_ntt_multiply_use_cache(lhs: &Self, rhs: &Self, out: &mut [i32], cache: &Self) {
+        accumulating_ntt_multiply_use_cache(lhs, rhs, out, cache)
     }
 
     #[inline(always)]

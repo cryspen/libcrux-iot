@@ -304,14 +304,14 @@ fn ntt_multiply<Vector: Operations>(
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
-fn ntt_multiply_caching<Vector: Operations>(
+fn accumulating_ntt_multiply_fill_cache<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
     accumulator: &mut [i32; 256],
     cache: &mut PolynomialRingElement<Vector>,
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        Vector::ntt_multiply_caching(
+        Vector::accumulating_ntt_multiply_fill_cache(
             &myself.coefficients[i],
             &rhs.coefficients[i],
             &mut accumulator[i * 16..(i + 1) * 16],
@@ -326,14 +326,14 @@ fn ntt_multiply_caching<Vector: Operations>(
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
-fn ntt_multiply_cached<Vector: Operations>(
+fn accumulating_ntt_multiply_use_cache<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
     accumulator: &mut [i32; 256],
     cache: &PolynomialRingElement<Vector>,
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        Vector::ntt_multiply_cached(
+        Vector::accumulating_ntt_multiply_use_cache(
             &myself.coefficients[i],
             &rhs.coefficients[i],
             &mut accumulator[i * 16..(i + 1) * 16],
@@ -431,23 +431,23 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
-    pub(crate) fn ntt_multiply_caching(
+    pub(crate) fn accumulating_ntt_multiply_fill_cache(
         &self,
         rhs: &Self,
         accumulator: &mut [i32; 256],
         cache: &mut Self,
     ) {
-        ntt_multiply_caching(self, rhs, accumulator, cache)
+        accumulating_ntt_multiply_fill_cache(self, rhs, accumulator, cache)
     }
 
     #[inline(always)]
-    pub(crate) fn ntt_multiply_cached(
+    pub(crate) fn accumulating_ntt_multiply_use_cache(
         &self,
         rhs: &Self,
         accumulator: &mut [i32; 256],
         cache: &Self,
     ) {
-        ntt_multiply_cached(self, rhs, accumulator, cache)
+        accumulating_ntt_multiply_use_cache(self, rhs, accumulator, cache)
     }
 }
 

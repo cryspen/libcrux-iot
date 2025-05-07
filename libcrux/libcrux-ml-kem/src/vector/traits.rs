@@ -149,7 +149,7 @@ pub trait Operations: Copy + Clone + Repr {
         zeta3: i16,
     );
 
-    fn ntt_multiply_caching(
+    fn accumulating_ntt_multiply_fill_cache(
         lhs: &Self,
         rhs: &Self,
         accumulator: &mut [i32], // length: 16
@@ -160,7 +160,12 @@ pub trait Operations: Copy + Clone + Repr {
         zeta3: i16,
     );
 
-    fn ntt_multiply_cached(lhs: &Self, rhs: &Self, accumulator: &mut [i32], cache: &Self);
+    fn accumulating_ntt_multiply_use_cache(
+        lhs: &Self,
+        rhs: &Self,
+        accumulator: &mut [i32],
+        cache: &Self,
+    );
 
     // Serialization and deserialization
     #[requires(fstar!(r#"Spec.MLKEM.serialize_pre 1 (f_repr $a)"#))]

@@ -129,7 +129,7 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
 ) {
     let mut accumulator = [0i32; 256];
     for i in 0..K {
-        t_as_ntt[i].ntt_multiply_cached(&r_as_ntt[i], &mut accumulator, &cache[i]);
+        t_as_ntt[i].accumulating_ntt_multiply_use_cache(&r_as_ntt[i], &mut accumulator, &cache[i]);
         // result.add_to_ring_element::<K>(&scratch);
     }
     let mut accumulator_reduced = [0i16; 256];
@@ -170,7 +170,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations>(
 
     let mut accumulator = [0i32; 256];
     for j in 0..K {
-        entry::<K, Vector>(a_as_ntt, 0, j).ntt_multiply_caching(
+        entry::<K, Vector>(a_as_ntt, 0, j).accumulating_ntt_multiply_fill_cache(
             &r_as_ntt[j],
             &mut accumulator,
             &mut cache[j],
@@ -189,7 +189,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations>(
     for i in 1..K {
         accumulator = [0i32; 256];
         for j in 0..K {
-            entry::<K, Vector>(a_as_ntt, i, j).ntt_multiply_cached(
+            entry::<K, Vector>(a_as_ntt, i, j).accumulating_ntt_multiply_use_cache(
                 &r_as_ntt[j],
                 &mut accumulator,
                 &cache[j],
@@ -235,7 +235,7 @@ pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
     let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
     let mut accumulator = [0i32; 256];
     for j in 0..K {
-        entry::<K, Vector>(matrix_A, 0, j).ntt_multiply_caching(
+        entry::<K, Vector>(matrix_A, 0, j).accumulating_ntt_multiply_fill_cache(
             &s_as_ntt[j],
             &mut accumulator,
             &mut s_cache[j],
@@ -258,7 +258,7 @@ pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
         t_as_ntt[i] = PolynomialRingElement::<Vector>::ZERO();
         accumulator = [0i32; 256];
         for j in 0..K {
-            entry::<K, Vector>(matrix_A, i, j).ntt_multiply_cached(
+            entry::<K, Vector>(matrix_A, i, j).accumulating_ntt_multiply_use_cache(
                 &s_as_ntt[j],
                 &mut accumulator,
                 &s_cache[j],
