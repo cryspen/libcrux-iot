@@ -197,7 +197,7 @@ pub(crate) fn ntt_at_layer_3<Vector: Operations>(
         (v (Seq.index (Libcrux_ml_kem.Vector.Traits.f_to_i16_array $a) i) +
         v (Seq.index (Libcrux_ml_kem.Vector.Traits.f_to_i16_array t) i))))"#))]
 fn ntt_layer_int_vec_step<Vector: Operations>(a: &mut Vector, b: &mut Vector, zeta_r: i16) {
-    Vector::montgomery_butterfly(a, b, zeta_r);
+    Vector::montgomery_ct_butterfly(a, b, zeta_r);
 }
 
 #[inline(always)]
@@ -273,7 +273,7 @@ pub(crate) fn ntt_at_layer_7<Vector: Operations>(re: &mut PolynomialRingElement<
             )
         });
         hax_lib::fstar!(r#"reveal_opaque (`%ntt_layer_7_pre) (ntt_layer_7_pre #$:Vector)"#);
-        Vector::butterfly(&mut a[j], &mut b[j], -1600);
+        Vector::ct_butterfly(&mut a[j], &mut b[j], -1600);
     }
 }
 

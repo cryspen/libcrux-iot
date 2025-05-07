@@ -89,7 +89,6 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     secret_as_ntt: &[PolynomialRingElement<Vector>; K],
     u_as_ntt: &[PolynomialRingElement<Vector>; K],
     result: &mut PolynomialRingElement<Vector>,
-    scratch: &mut Vector,
     accumulator: &mut [i32; 256],
 ) {
     *accumulator = [0i32; 256];
@@ -98,7 +97,7 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     }
 
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
-    invert_ntt_montgomery::<K, Vector>(result, scratch);
+    invert_ntt_montgomery::<K, Vector>(result);
     v.subtract_reduce(result);
 }
 
@@ -132,7 +131,7 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
 
-    invert_ntt_montgomery::<K, Vector>(result, &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K, Vector>(result);
     error_2.add_message_error_reduce(message, result, &mut scratch.coefficients[0]);
 }
 
@@ -156,7 +155,6 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations>(
     cache: &mut [PolynomialRingElement<Vector>],
     error_1: &[PolynomialRingElement<Vector>],
     result: &mut [PolynomialRingElement<Vector>],
-    scratch: &mut PolynomialRingElement<Vector>,
     accumulator: &mut [i32; 256],
 ) {
     debug_assert!(a_as_ntt.len() == K * K);
@@ -173,7 +171,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations>(
         // result[0].add_to_ring_element::<K>(scratch);
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[0]);
-    invert_ntt_montgomery::<K, Vector>(&mut result[0], &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K, Vector>(&mut result[0]);
     result[0].add_error_reduce(&error_1[0]);
 
     for i in 1..K {
@@ -188,7 +186,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations>(
         }
         PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[i]);
 
-        invert_ntt_montgomery::<K, Vector>(&mut result[i], &mut scratch.coefficients[0]);
+        invert_ntt_montgomery::<K, Vector>(&mut result[i]);
         result[i].add_error_reduce(&error_1[i]);
     }
 }

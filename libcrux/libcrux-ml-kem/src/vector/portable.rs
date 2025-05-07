@@ -228,12 +228,19 @@ impl Operations for PortableVector {
         montgomery_multiply_by_constant(v, r)
     }
 
-    fn montgomery_butterfly(a: &mut Self, b: &mut Self, fer: i16) {
-        montgomery_butterfly(a, b, fer)
+    #[inline(always)]
+    fn montgomery_ct_butterfly(a: &mut Self, b: &mut Self, fer: i16) {
+        montgomery_ct_butterfly(a, b, fer)
     }
 
-    fn butterfly(a: &mut Self, b: &mut Self, fer: i16) {
-        butterfly(a, b, fer)
+    #[inline(always)]
+    fn ct_butterfly(a: &mut Self, b: &mut Self, fer: i16) {
+        ct_butterfly(a, b, fer)
+    }
+
+    #[inline(always)]
+    fn gs_butterfly(a: &mut Self, b: &mut Self, fer: i16) {
+        gs_butterfly(a, b, fer)
     }
 
     #[inline(always)]

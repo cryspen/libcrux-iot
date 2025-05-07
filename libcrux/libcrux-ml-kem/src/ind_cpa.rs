@@ -891,15 +891,7 @@ pub(crate) fn encrypt_c1<
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
     let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
 
-    compute_vector_u::<K, Vector>(
-        matrix,
-        &r_as_ntt,
-        cache,
-        &error_1,
-        &mut u,
-        scratch,
-        accumulator,
-    );
+    compute_vector_u::<K, Vector>(matrix, &r_as_ntt, cache, &error_1, &mut u, accumulator);
 
     // c_1 := Encode_{du}(Compress_q(u,d_u))
     compress_then_serialize_u::<K, C1_LEN, U_COMPRESSION_FACTOR, BLOCK_LEN, Vector>(
@@ -1104,7 +1096,6 @@ fn deserialize_then_decompress_u<
 >(
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     u_as_ntt: &mut [PolynomialRingElement<Vector>],
-    scratch: &mut Vector,
 ) {
     hax_lib::fstar!(
         "assert (v (($COEFFICIENTS_IN_RING_ELEMENT *! $U_COMPRESSION_FACTOR ) /!
@@ -1223,7 +1214,6 @@ pub(crate) fn decrypt_unpacked<
     deserialize_then_decompress_u::<K, CIPHERTEXT_SIZE, U_COMPRESSION_FACTOR, Vector>(
         ciphertext,
         &mut u_as_ntt,
-        scratch,
     );
 
     // v := Decompress_q(Decode_{d_v}(c + d_u·k·n / 8), d_v)
@@ -1240,7 +1230,6 @@ pub(crate) fn decrypt_unpacked<
         &secret_key.secret_as_ntt,
         &u_as_ntt,
         &mut message,
-        scratch,
         accumulator,
     );
     compress_then_serialize_message(&message, decrypted, scratch);

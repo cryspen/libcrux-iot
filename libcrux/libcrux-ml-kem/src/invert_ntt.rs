@@ -177,15 +177,9 @@ pub(crate) fn invert_ntt_at_layer_3<Vector: Operations>(
 pub(crate) fn inv_ntt_layer_int_vec_step_reduce<Vector: Operations>(
     a: &mut Vector,
     b: &mut Vector,
-    scratch: &mut Vector,
     zeta_r: i16,
 ) {
-    *scratch = b.clone();
-    Vector::sub(scratch, &a);
-    Vector::add(a, b);
-    Vector::barrett_reduce(a);
-    montgomery_multiply_fe::<Vector>(scratch, zeta_r);
-    *b = scratch.clone();
+    Vector::gs_butterfly(a, b, zeta_r);
 }
 
 #[inline(always)]
@@ -195,7 +189,6 @@ pub(crate) fn invert_ntt_at_layer_4_plus<Vector: Operations>(
     zeta_i: &mut usize,
     re: &mut PolynomialRingElement<Vector>,
     layer: usize,
-    scratch: &mut Vector,
 ) {
     let step = 1 << layer;
     let step_vec = step / FIELD_ELEMENTS_IN_VECTOR;
@@ -210,7 +203,7 @@ pub(crate) fn invert_ntt_at_layer_4_plus<Vector: Operations>(
         let (b, rest) = rest.split_at_mut(step_vec);
         remaining_elements = rest;
         for j in 0..step_vec {
-            inv_ntt_layer_int_vec_step_reduce(&mut a[j], &mut b[j], scratch, zeta(*zeta_i));
+            inv_ntt_layer_int_vec_step_reduce(&mut a[j], &mut b[j], zeta(*zeta_i));
         }
     }
 }
@@ -219,7 +212,6 @@ pub(crate) fn invert_ntt_at_layer_4_plus<Vector: Operations>(
 #[hax_lib::requires(fstar!(r#"invert_ntt_re_range_1 $re"#))]
 pub(crate) fn invert_ntt_montgomery<const K: usize, Vector: Operations>(
     re: &mut PolynomialRingElement<Vector>,
-    scratch: &mut Vector,
 ) {
     // We only ever call this function after matrix/vector multiplication
     hax_debug_assert!(to_i16_array(re)
@@ -231,10 +223,10 @@ pub(crate) fn invert_ntt_montgomery<const K: usize, Vector: Operations>(
     invert_ntt_at_layer_1(&mut zeta_i, re);
     invert_ntt_at_layer_2(&mut zeta_i, re);
     invert_ntt_at_layer_3(&mut zeta_i, re);
-    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 4, scratch);
-    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 5, scratch);
-    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 6, scratch);
-    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 7, scratch);
+    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 4);
+    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 5);
+    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 6);
+    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 7);
 
     hax_debug_assert!(
         to_i16_array(re)[0].abs() < 128 * (K as i16) * FIELD_MODULUS

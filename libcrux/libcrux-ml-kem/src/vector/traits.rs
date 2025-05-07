@@ -84,8 +84,9 @@ pub trait Operations: Copy + Clone + Repr {
     #[requires(fstar!(r#"Spec.Utils.is_i16b 1664 c"#))]
     fn montgomery_multiply_by_constant(v: &mut Self, c: i16);
 
-    fn montgomery_butterfly(a: &mut Self, b: &mut Self, fer: i16);
-    fn butterfly(a: &mut Self, b: &mut Self, fer: i16);
+    fn montgomery_ct_butterfly(a: &mut Self, b: &mut Self, fer: i16);
+    fn ct_butterfly(a: &mut Self, b: &mut Self, fer: i16);
+    fn gs_butterfly(a: &mut Self, b: &mut Self, fer: i16);
     // Compression
     #[requires(fstar!(r#"forall (i:nat). i < 16 ==> v (Seq.index (f_repr $a) i) >= 0 /\
         v (Seq.index (f_repr $a) i) < 3329"#))]
@@ -235,8 +236,9 @@ pub trait Operations: Copy + Clone {
     fn cond_subtract_3329(v: Self) -> Self;
     fn barrett_reduce(vector: Self) -> Self;
     fn montgomery_multiply_by_constant(v: Self, c: i16) -> Self;
-    fn montgomery_butterfly(a: &mut Self, b: &mut Self, fer: i16);
-    fn butterfly(a: &mut Self, b: &mut Self, fer: i16);
+    fn montgomery_ct_butterfly(a: &mut Self, b: &mut Self, fer: i16);
+    fn ct_butterfly(a: &mut Self, b: &mut Self, fer: i16);
+    fn gs_butterfly(a: &mut Self, b: &mut Self, fer: i16);
     fn compress_1(v: Self) -> Self;
     fn compress<const COEFFICIENT_BITS: i32>(v: Self) -> Self;
     fn decompress_ciphertext_coefficient<const COEFFICIENT_BITS: i32>(a: Self) -> Self;

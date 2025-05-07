@@ -430,7 +430,8 @@ pub(crate) fn montgomery_multiply_by_constant(vec: &mut PortableVector, c: i16) 
     }
 }
 
-pub(crate) fn montgomery_butterfly(a: &mut PortableVector, b: &mut PortableVector, fer: i16) {
+#[inline(always)]
+pub(crate) fn montgomery_ct_butterfly(a: &mut PortableVector, b: &mut PortableVector, fer: i16) {
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
@@ -448,7 +449,27 @@ pub(crate) fn montgomery_butterfly(a: &mut PortableVector, b: &mut PortableVecto
     }
 }
 
-pub(crate) fn butterfly(a: &mut PortableVector, b: &mut PortableVector, fer: i16) {
+#[inline(always)]
+pub(crate) fn gs_butterfly(a: &mut PortableVector, b: &mut PortableVector, fer: i16) {
+    for i in 0..FIELD_ELEMENTS_IN_VECTOR {
+        hax_lib::loop_invariant!(|i: usize| {
+            fstar!(
+                r#"
+              (forall j. j < v i ==>
+	      	  (let vecj = Seq.index ${vec}.f_elements j in
+		       (Spec.Utils.is_i16b 3328 vecj /\
+                v vecj % 3329 == (v (Seq.index ${_vec0}.f_elements j) * v c * 169) % 3329))) /\
+              (forall j. j >= v i ==> (Seq.index ${vec}.f_elements j) == (Seq.index ${_vec0}.f_elements j))"#
+            )
+        });
+        let diff = b.elements[i] - a.elements[i];
+        a.elements[i] = barrett_reduce_element(a.elements[i] + b.elements[i]);
+        b.elements[i] = montgomery_multiply_fe_by_fer(diff, fer);
+    }
+}
+
+#[inline(always)]
+pub(crate) fn ct_butterfly(a: &mut PortableVector, b: &mut PortableVector, fer: i16) {
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
