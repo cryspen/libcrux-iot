@@ -216,6 +216,7 @@ pub trait Operations: Copy + Clone + Repr {
         fstar!(r#"Seq.length $out_future == Seq.length $out /\ v $result <= 16"#)
     )]
     fn rej_sample(a: &[u8], out: &mut [i16]) -> usize;
+    fn to_unsigned_representative(a: &mut Self);
 }
 
 // The trait is duplicated for Eurudice to avoid the trait inheritance between Operations and Repr

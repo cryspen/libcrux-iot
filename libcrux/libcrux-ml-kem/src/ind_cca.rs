@@ -114,12 +114,10 @@ pub(crate) fn validate_public_key<
         &mut deserialized_pk,
     );
     let mut public_key_serialized = [0u8; PUBLIC_KEY_SIZE];
-    let mut scratch = Vector::ZERO();
     serialize_public_key_mut::<K, PUBLIC_KEY_SIZE, Vector>(
-        &deserialized_pk,
+        &mut deserialized_pk,
         &public_key[ranked_bytes_per_ring_element(K)..],
         &mut public_key_serialized,
-        &mut scratch,
     );
 
     *public_key == public_key_serialized
@@ -205,7 +203,6 @@ pub(crate) fn generate_keypair<
 
     let mut ind_cpa_private_key = [0u8; CPA_PRIVATE_KEY_SIZE];
     let mut public_key = [0u8; PUBLIC_KEY_SIZE];
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
     let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
 
@@ -224,7 +221,6 @@ pub(crate) fn generate_keypair<
         ind_cpa_keypair_randomness,
         &mut ind_cpa_private_key,
         &mut public_key,
-        &mut scratch,
         &mut s_cache,
         &mut accumulator,
     );
@@ -421,7 +417,6 @@ pub(crate) fn decapsulate<
         ind_cpa_secret_key,
         &ciphertext.value,
         &mut decrypted,
-        &mut scratch.coefficients[0],
         &mut accumulator,
     );
 
@@ -628,12 +623,11 @@ pub(crate) mod unpacked {
             &self,
             serialized: &mut MlKemPublicKey<PUBLIC_KEY_SIZE>,
         ) {
-            let mut scratch = Vector::ZERO();
+            let mut inplace_serialization = self.ind_cpa_public_key.t_as_ntt.clone();
             serialize_public_key_mut::<K, PUBLIC_KEY_SIZE, Vector>(
-                &self.ind_cpa_public_key.t_as_ntt,
+                &mut inplace_serialization,
                 &self.ind_cpa_public_key.seed_for_A,
                 &mut serialized.value,
-                &mut scratch,
             );
         }
 
@@ -654,12 +648,11 @@ pub(crate) mod unpacked {
         )]
         pub fn serialized<const PUBLIC_KEY_SIZE: usize>(&self) -> MlKemPublicKey<PUBLIC_KEY_SIZE> {
             let mut public_key = [0u8; PUBLIC_KEY_SIZE];
-            let mut scratch = Vector::ZERO();
+            let mut inplace_serialization = self.ind_cpa_public_key.t_as_ntt.clone();
             serialize_public_key_mut::<K, PUBLIC_KEY_SIZE, Vector>(
-                &self.ind_cpa_public_key.t_as_ntt,
+                &mut inplace_serialization,
                 &self.ind_cpa_public_key.seed_for_A,
                 &mut public_key,
-                &mut scratch,
             );
             MlKemPublicKey::from(public_key)
         }
@@ -846,7 +839,8 @@ pub(crate) mod unpacked {
         ) {
             let mut ind_cpa_private_key = [0u8; CPA_PRIVATE_KEY_SIZE];
             let mut ind_cpa_public_key = [0u8; PUBLIC_KEY_SIZE];
-            let mut scratch = Vector::ZERO();
+            let mut inplace_serialization_cpa_pub = self.public_key.ind_cpa_public_key.clone();
+            let mut inplace_serialization_cpa_priv = self.private_key.ind_cpa_private_key.clone();
             ind_cpa::serialize_unpacked_secret_key::<
                 K,
                 K_SQUARED,
@@ -854,11 +848,10 @@ pub(crate) mod unpacked {
                 PUBLIC_KEY_SIZE,
                 Vector,
             >(
-                &self.public_key.ind_cpa_public_key,
-                &self.private_key.ind_cpa_private_key,
+                &mut inplace_serialization_cpa_pub,
+                &mut inplace_serialization_cpa_priv,
                 &mut ind_cpa_private_key,
                 &mut ind_cpa_public_key,
-                &mut scratch,
             );
 
             serialize_kem_secret_key_mut::<K, PRIVATE_KEY_SIZE, PortableHash>(
@@ -986,7 +979,6 @@ pub(crate) mod unpacked {
     ) {
         let ind_cpa_keypair_randomness = &randomness[0..CPA_PKE_KEY_GENERATION_SEED_SIZE];
         let implicit_rejection_value = &randomness[CPA_PKE_KEY_GENERATION_SEED_SIZE..];
-        let mut scratch = PolynomialRingElement::<Vector>::ZERO();
 
         let mut accumulator = [0i32; 256];
         let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
@@ -1003,7 +995,6 @@ pub(crate) mod unpacked {
             ind_cpa_keypair_randomness,
             &mut out.private_key.ind_cpa_private_key,
             &mut out.public_key.ind_cpa_public_key,
-            &mut scratch,
             &mut s_cache,
             &mut accumulator,
         );
@@ -1034,12 +1025,10 @@ pub(crate) mod unpacked {
         out.public_key.ind_cpa_public_key.A = A;
 
         let mut pk_serialized = [0u8; PUBLIC_KEY_SIZE];
-        let mut scratch = Vector::ZERO();
         serialize_public_key_mut::<K, PUBLIC_KEY_SIZE, Vector>(
-            &out.public_key.ind_cpa_public_key.t_as_ntt,
+            &mut out.public_key.ind_cpa_public_key.t_as_ntt,
             &out.public_key.ind_cpa_public_key.seed_for_A,
             &mut pk_serialized,
-            &mut scratch,
         );
         Hasher::H(&pk_serialized, &mut out.public_key.public_key_hash);
         out.private_key.implicit_rejection_value = implicit_rejection_value.try_into().unwrap();
@@ -1229,7 +1218,6 @@ pub(crate) mod unpacked {
             &key_pair.private_key.ind_cpa_private_key,
             &ciphertext.value,
             &mut decrypted,
-            &mut scratch.coefficients[0],
             &mut accumulator,
         );
 

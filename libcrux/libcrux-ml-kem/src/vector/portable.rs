@@ -1,4 +1,4 @@
-use super::Operations;
+use super::{Operations, FIELD_ELEMENTS_IN_VECTOR, FIELD_MODULUS};
 pub(crate) mod arithmetic;
 mod compress;
 mod ntt;
@@ -159,6 +159,15 @@ impl Operations for PortableVector {
     #[requires(bytes.len() >= 32)]
     fn to_bytes(x: Self, bytes: &mut [u8]) {
         to_bytes(x, bytes)
+    }
+
+    #[inline(always)]
+    fn to_unsigned_representative(a: &mut Self) {
+        for i in 0..FIELD_ELEMENTS_IN_VECTOR {
+            let mut tmp = a.elements[i] >> 15;
+            tmp &= FIELD_MODULUS;
+            a.elements[i] += tmp;
+        }
     }
 
     #[inline(always)]

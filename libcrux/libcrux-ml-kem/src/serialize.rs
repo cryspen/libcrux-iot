@@ -31,9 +31,9 @@ let coefficients_field_modulus_range (#v_Vector: Type0)
 #[hax_lib::ensures(|result| fstar!(r#"forall (i:nat). i < 16 ==>
     v (Seq.index (Libcrux_ml_kem.Vector.Traits.f_to_i16_array $result) i) >= 0 /\
     v (Seq.index (Libcrux_ml_kem.Vector.Traits.f_to_i16_array $result) i) < v $FIELD_MODULUS"#))]
-pub(super) fn to_unsigned_field_modulus<Vector: Operations>(a: &Vector, out: &mut Vector) {
+pub(super) fn to_unsigned_field_modulus<Vector: Operations>(a: &mut Vector) {
     hax_lib::fstar!(r#"reveal_opaque (`%field_modulus_range) (field_modulus_range #$:Vector)"#);
-    to_unsigned_representative::<Vector>(a, out)
+    Vector::to_unsigned_representative(a);
 }
 
 #[inline(always)]
@@ -44,9 +44,8 @@ pub(super) fn to_unsigned_field_modulus<Vector: Operations>(a: &Vector, out: &mu
         Spec.MLKEM.compress_then_encode_message (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector $re)"#)
 )]
 pub(super) fn compress_then_serialize_message<Vector: Operations>(
-    re: &PolynomialRingElement<Vector>,
+    re: &mut PolynomialRingElement<Vector>,
     serialized: &mut [u8],
-    scratch: &mut Vector,
 ) {
     for i in 0..16 {
         hax_lib::loop_invariant!(|i: usize| {
@@ -60,10 +59,10 @@ pub(super) fn compress_then_serialize_message<Vector: Operations>(
             "reveal_opaque (`%coefficients_field_modulus_range)
             (coefficients_field_modulus_range #$:Vector)"
         );
-        to_unsigned_field_modulus(&re.coefficients[i], scratch);
-        Vector::compress_1(scratch);
+        to_unsigned_field_modulus(&mut re.coefficients[i]);
+        Vector::compress_1(&mut re.coefficients[i]);
 
-        Vector::serialize_1(*scratch, &mut serialized[2 * i..2 * i + 2]);
+        Vector::serialize_1(re.coefficients[i], &mut serialized[2 * i..2 * i + 2]);
     }
 }
 
@@ -91,8 +90,7 @@ pub(super) fn deserialize_then_decompress_message<Vector: Operations>(
         Spec.MLKEM.byte_encode 12 (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector $re)"#)
 )]
 pub(super) fn serialize_uncompressed_ring_element<Vector: Operations>(
-    re: &PolynomialRingElement<Vector>,
-    scratch: &mut Vector,
+    re: &mut PolynomialRingElement<Vector>,
     serialized: &mut [u8],
 ) {
     debug_assert!(serialized.len() == BYTES_PER_RING_ELEMENT);
@@ -109,9 +107,9 @@ pub(super) fn serialize_uncompressed_ring_element<Vector: Operations>(
             "reveal_opaque (`%coefficients_field_modulus_range)
             (coefficients_field_modulus_range #$:Vector)"
         );
-        to_unsigned_field_modulus(&re.coefficients[i], scratch);
+        to_unsigned_field_modulus(&mut re.coefficients[i]);
 
-        Vector::serialize_12(*scratch, &mut serialized[24 * i..24 * i + 24]);
+        Vector::serialize_12(re.coefficients[i], &mut serialized[24 * i..24 * i + 24]);
     }
 }
 
@@ -190,9 +188,8 @@ pub(super) fn deserialize_ring_elements_reduced<const K: usize, Vector: Operatio
 #[hax_lib::fstar::verification_status(panic_free)]
 #[hax_lib::requires(fstar!(r#"v $OUT_LEN == 320 /\ coefficients_field_modulus_range $re"#))]
 fn compress_then_serialize_10<const OUT_LEN: usize, Vector: Operations>(
-    re: &PolynomialRingElement<Vector>,
+    re: &mut PolynomialRingElement<Vector>,
     serialized: &mut [u8],
-    scratch: &mut Vector,
 ) {
     debug_assert!(serialized.len() == OUT_LEN);
     hax_lib::fstar!(r#"assert_norm (pow2 10 == 1024)"#);
@@ -208,27 +205,26 @@ fn compress_then_serialize_10<const OUT_LEN: usize, Vector: Operations>(
             "reveal_opaque (`%coefficients_field_modulus_range)
             (coefficients_field_modulus_range #$:Vector)"
         );
-        to_unsigned_field_modulus(&re.coefficients[i], scratch);
-        Vector::compress::<10>(scratch);
+        to_unsigned_field_modulus(&mut re.coefficients[i]);
+        Vector::compress::<10>(&mut re.coefficients[i]);
 
-        Vector::serialize_10(*scratch, &mut serialized[20 * i..20 * i + 20]);
+        Vector::serialize_10(re.coefficients[i], &mut serialized[20 * i..20 * i + 20]);
     }
 }
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
 fn compress_then_serialize_11<const OUT_LEN: usize, Vector: Operations>(
-    re: &PolynomialRingElement<Vector>,
+    re: &mut PolynomialRingElement<Vector>,
     serialized: &mut [u8],
-    scratch: &mut Vector,
 ) {
     debug_assert!(serialized.len() == OUT_LEN);
 
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        to_unsigned_representative::<Vector>(&re.coefficients[i], scratch);
-        Vector::compress::<11>(scratch);
+        to_unsigned_field_modulus(&mut re.coefficients[i]);
+        Vector::compress::<11>(&mut re.coefficients[i]);
 
-        Vector::serialize_11(*scratch, &mut serialized[22 * i..22 * i + 22]);
+        Vector::serialize_11(re.coefficients[i], &mut serialized[22 * i..22 * i + 22]);
     }
 }
 
@@ -245,9 +241,8 @@ pub(super) fn compress_then_serialize_ring_element_u<
     const OUT_LEN: usize,
     Vector: Operations,
 >(
-    re: &PolynomialRingElement<Vector>,
+    re: &mut PolynomialRingElement<Vector>,
     serialized: &mut [u8],
-    scratch: &mut Vector,
 ) {
     hax_lib::fstar!(
         r#"assert (
@@ -255,8 +250,8 @@ pub(super) fn compress_then_serialize_ring_element_u<
         (v (cast $COMPRESSION_FACTOR <: u32) == 11))"#
     );
     match COMPRESSION_FACTOR as u32 {
-        10 => compress_then_serialize_10::<OUT_LEN, Vector>(re, serialized, scratch),
-        11 => compress_then_serialize_11::<OUT_LEN, Vector>(re, serialized, scratch),
+        10 => compress_then_serialize_10::<OUT_LEN, Vector>(re, serialized),
+        11 => compress_then_serialize_11::<OUT_LEN, Vector>(re, serialized),
         _ => unreachable!(),
     }
 }
@@ -269,9 +264,8 @@ pub(super) fn compress_then_serialize_ring_element_u<
     fstar!(r#"${serialized_future.len()} == ${serialized.len()}"#)
 )]
 fn compress_then_serialize_4<Vector: Operations>(
-    re: PolynomialRingElement<Vector>,
+    re: &mut PolynomialRingElement<Vector>,
     serialized: &mut [u8],
-    scratch: &mut Vector,
 ) {
     hax_lib::fstar!(r#"assert_norm (pow2 4 == 16)"#);
     for i in 0..VECTORS_IN_RING_ELEMENT {
@@ -287,10 +281,10 @@ fn compress_then_serialize_4<Vector: Operations>(
             "reveal_opaque (`%coefficients_field_modulus_range)
             (coefficients_field_modulus_range #$:Vector)"
         );
-        to_unsigned_field_modulus(&re.coefficients[i], scratch);
-        Vector::compress::<4>(scratch);
+        to_unsigned_field_modulus(&mut re.coefficients[i]);
+        Vector::compress::<4>(&mut re.coefficients[i]);
 
-        Vector::serialize_4(*scratch, &mut serialized[8 * i..8 * i + 8]);
+        Vector::serialize_4(re.coefficients[i], &mut serialized[8 * i..8 * i + 8]);
     }
 }
 
@@ -303,15 +297,14 @@ fn compress_then_serialize_4<Vector: Operations>(
     fstar!(r#"${serialized_future.len()} == ${serialized.len()}"#)
 )]
 fn compress_then_serialize_5<Vector: Operations>(
-    re: PolynomialRingElement<Vector>,
+    re: &mut PolynomialRingElement<Vector>,
     serialized: &mut [u8],
-    scratch: &mut Vector,
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        to_unsigned_representative::<Vector>(&re.coefficients[i], scratch);
-        Vector::compress::<5>(scratch);
+        to_unsigned_field_modulus(&mut re.coefficients[i]);
+        Vector::compress::<5>(&mut re.coefficients[i]);
 
-        Vector::serialize_5(*scratch, &mut serialized[10 * i..10 * i + 10]);
+        Vector::serialize_5(re.coefficients[i], &mut serialized[10 * i..10 * i + 10]);
     }
 }
 
@@ -332,9 +325,8 @@ pub(super) fn compress_then_serialize_ring_element_v<
     const OUT_LEN: usize,
     Vector: Operations,
 >(
-    re: PolynomialRingElement<Vector>,
+    re: &mut PolynomialRingElement<Vector>,
     out: &mut [u8],
-    scratch: &mut Vector,
 ) {
     hax_lib::fstar!(
         r#"assert (
@@ -342,8 +334,8 @@ pub(super) fn compress_then_serialize_ring_element_v<
         (v (cast $COMPRESSION_FACTOR <: u32) == 5))"#
     );
     match COMPRESSION_FACTOR as u32 {
-        4 => compress_then_serialize_4::<Vector>(re, out, scratch),
-        5 => compress_then_serialize_5::<Vector>(re, out, scratch),
+        4 => compress_then_serialize_4::<Vector>(re, out),
+        5 => compress_then_serialize_5::<Vector>(re, out),
         _ => unreachable!(),
     }
 }
