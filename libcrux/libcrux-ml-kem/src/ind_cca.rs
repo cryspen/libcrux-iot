@@ -206,6 +206,9 @@ pub(crate) fn generate_keypair<
     let mut ind_cpa_private_key = [0u8; CPA_PRIVATE_KEY_SIZE];
     let mut public_key = [0u8; PUBLIC_KEY_SIZE];
     let mut scratch = PolynomialRingElement::<Vector>::ZERO();
+    let mut accumulator = [0i32; 256];
+    let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+
     crate::ind_cpa::generate_keypair::<
         K,
         K_SQUARED,
@@ -222,6 +225,8 @@ pub(crate) fn generate_keypair<
         &mut ind_cpa_private_key,
         &mut public_key,
         &mut scratch,
+        &mut s_cache,
+        &mut accumulator,
     );
 
     let mut secret_key_serialized = [0u8; PRIVATE_KEY_SIZE];
@@ -299,6 +304,9 @@ pub(crate) fn encapsulate<
         core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
     let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
     let mut scratch = PolynomialRingElement::<Vector>::ZERO();
+    let mut accumulator = [0i32; 256];
+    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+
     crate::ind_cpa::encrypt::<
         K,
         K_SQUARED,
@@ -325,6 +333,8 @@ pub(crate) fn encapsulate<
         &mut r_as_ntt,
         &mut error_2,
         &mut scratch,
+        &mut cache,
+        &mut accumulator,
     );
 
     let ciphertext = MlKemCiphertext::from(ciphertext);
@@ -453,6 +463,9 @@ pub(crate) fn decapsulate<
     let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
         core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
     let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
+    let mut accumulator = [0i32; 256];
+    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+
     crate::ind_cpa::encrypt::<
         K,
         K_SQUARED,
@@ -479,6 +492,8 @@ pub(crate) fn decapsulate<
         &mut r_as_ntt,
         &mut error_2,
         &mut scratch,
+        &mut cache,
+        &mut accumulator,
     );
 
     let mut implicit_rejection_shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
@@ -970,6 +985,9 @@ pub(crate) mod unpacked {
         let ind_cpa_keypair_randomness = &randomness[0..CPA_PKE_KEY_GENERATION_SEED_SIZE];
         let implicit_rejection_value = &randomness[CPA_PKE_KEY_GENERATION_SEED_SIZE..];
         let mut scratch = PolynomialRingElement::<Vector>::ZERO();
+
+        let mut accumulator = [0i32; 256];
+        let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
         generate_keypair_unpacked::<
             K,
             K_SQUARED,
@@ -984,6 +1002,8 @@ pub(crate) mod unpacked {
             &mut out.private_key.ind_cpa_private_key,
             &mut out.public_key.ind_cpa_public_key,
             &mut scratch,
+            &mut s_cache,
+            &mut accumulator,
         );
 
         #[allow(non_snake_case)]
@@ -1076,6 +1096,9 @@ pub(crate) mod unpacked {
             from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
         let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
         let mut scratch = PolynomialRingElement::<Vector>::ZERO();
+
+        let mut accumulator = [0i32; 256];
+        let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
         ind_cpa::encrypt_unpacked::<
             K,
             K_SQUARED,
@@ -1102,6 +1125,8 @@ pub(crate) mod unpacked {
             &mut r_as_ntt,
             &mut error_2,
             &mut scratch,
+            &mut cache,
+            &mut accumulator,
         );
         let mut shared_secret_array = [0u8; SHARED_SECRET_SIZE];
         shared_secret_array.copy_from_slice(shared_secret);
@@ -1232,6 +1257,9 @@ pub(crate) mod unpacked {
         let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
             from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
         let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
+        let mut accumulator = [0i32; 256];
+        let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+
         ind_cpa::encrypt_unpacked::<
             K,
             K_SQUARED,
@@ -1258,6 +1286,8 @@ pub(crate) mod unpacked {
             &mut r_as_ntt,
             &mut error_2,
             &mut scratch,
+            &mut cache,
+            &mut accumulator,
         );
 
         let selector =

@@ -72,6 +72,15 @@ fn from_i16_array<Vector: Operations>(a: &[i16], result: &mut PolynomialRingElem
     }
 }
 
+fn reducing_from_i32_array<Vector: Operations>(
+    a: &[i32],
+    result: &mut PolynomialRingElement<Vector>,
+) {
+    for i in 0..VECTORS_IN_RING_ELEMENT {
+        Vector::reducing_from_i32_array(&a[i * 16..(i + 1) * 16], &mut result.coefficients[i]);
+    }
+}
+
 #[allow(dead_code)]
 #[inline(always)]
 #[hax_lib::requires(out.len() >= VECTORS_IN_RING_ELEMENT * 16)]
@@ -303,6 +312,45 @@ fn ntt_multiply<Vector: Operations>(
 }
 
 #[inline(always)]
+fn ntt_multiply_fill_cache<Vector: Operations>(
+    myself: &PolynomialRingElement<Vector>,
+    rhs: &PolynomialRingElement<Vector>,
+    out: &mut PolynomialRingElement<Vector>,
+    cache: &mut PolynomialRingElement<Vector>,
+) {
+    for i in 0..VECTORS_IN_RING_ELEMENT {
+        Vector::ntt_multiply_fill_cache(
+            &myself.coefficients[i],
+            &rhs.coefficients[i],
+            &mut out.coefficients[i],
+            &mut cache.coefficients[i],
+            zeta(64 + 4 * i),
+            zeta(64 + 4 * i + 1),
+            zeta(64 + 4 * i + 2),
+            zeta(64 + 4 * i + 3),
+        );
+    }
+}
+
+#[inline(always)]
+#[hax_lib::fstar::verification_status(lax)]
+fn ntt_multiply_use_cache<Vector: Operations>(
+    myself: &PolynomialRingElement<Vector>,
+    rhs: &PolynomialRingElement<Vector>,
+    out: &mut PolynomialRingElement<Vector>,
+    cache: &PolynomialRingElement<Vector>,
+) {
+    for i in 0..VECTORS_IN_RING_ELEMENT {
+        Vector::ntt_multiply_use_cache(
+            &myself.coefficients[i],
+            &rhs.coefficients[i],
+            &mut out.coefficients[i],
+            &cache.coefficients[i],
+        );
+    }
+}
+
+#[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
 fn accumulating_ntt_multiply_fill_cache<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
@@ -367,6 +415,12 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
         from_i16_array(a, out)
     }
 
+    #[inline(always)]
+    #[requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
+    pub(crate) fn reducing_from_i32_array(a: &[i32], out: &mut Self) {
+        reducing_from_i32_array(a, out)
+    }
+
     #[allow(dead_code)]
     #[inline(always)]
     #[requires(VECTORS_IN_RING_ELEMENT * 16 <= out.len())]
@@ -428,6 +482,16 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     #[inline(always)]
     pub(crate) fn ntt_multiply(&self, rhs: &Self, out: &mut Self) {
         ntt_multiply(self, rhs, out)
+    }
+
+    #[inline(always)]
+    pub(crate) fn ntt_multiply_fill_cache(&self, rhs: &Self, out: &mut Self, cache: &mut Self) {
+        ntt_multiply_fill_cache(self, rhs, out, cache)
+    }
+
+    #[inline(always)]
+    pub(crate) fn ntt_multiply_use_cache(&self, rhs: &Self, out: &mut Self, cache: &Self) {
+        ntt_multiply_use_cache(self, rhs, out, cache)
     }
 
     #[inline(always)]

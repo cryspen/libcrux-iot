@@ -467,6 +467,8 @@ pub(crate) fn generate_keypair_unpacked<
     private_key: &mut IndCpaPrivateKeyUnpacked<K, Vector>,
     public_key: &mut IndCpaPublicKeyUnpacked<K, K_SQUARED, Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
+    s_cache: &mut [PolynomialRingElement<Vector>; K],
+    accumulator: &mut [i32; 256],
 ) {
     // (ρ,σ) := G(d) for Kyber, (ρ,σ) := G(d || K) for ML-KEM
     let mut hashed = [0u8; 64];
@@ -521,7 +523,8 @@ pub(crate) fn generate_keypair_unpacked<
         &public_key.A,
         &private_key.secret_as_ntt,
         &error_as_ntt,
-        scratch,
+        s_cache,
+        accumulator,
     );
 
     public_key.seed_for_A = seed_for_A.try_into().unwrap();
@@ -572,6 +575,8 @@ pub(crate) fn generate_keypair<
     serialized_ind_cpa_private_key: &mut [u8],
     serialized_public_key: &mut [u8],
     scratch: &mut PolynomialRingElement<Vector>,
+    s_cache: &mut [PolynomialRingElement<Vector>; K],
+    accumulator: &mut [i32; 256],
 ) {
     // XXX: Can Eurydice handle these when passind in as &mut from outside?
     let mut private_key = IndCpaPrivateKeyUnpacked::default();
@@ -591,6 +596,8 @@ pub(crate) fn generate_keypair<
         &mut private_key,
         &mut public_key,
         scratch,
+        s_cache,
+        accumulator,
     );
 
     serialize_unpacked_secret_key::<K, K_SQUARED, PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE, Vector>(
@@ -781,8 +788,10 @@ pub(crate) fn encrypt_unpacked<
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
+    cache: &mut [PolynomialRingElement<Vector>],
+    accumulator: &mut [i32; 256],
 ) {
-    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+    // let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
     encrypt_c1::<
         K,
         K_SQUARED,
@@ -804,7 +813,7 @@ pub(crate) fn encrypt_unpacked<
         r_as_ntt,
         error_2,
         scratch,
-        &mut cache,
+        cache,
     );
 
     encrypt_c2::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
@@ -815,6 +824,7 @@ pub(crate) fn encrypt_unpacked<
         &mut ciphertext[C1_LEN..],
         scratch,
         &cache,
+        accumulator,
     );
 }
 
@@ -914,6 +924,7 @@ pub(crate) fn encrypt_c2<
     ciphertext: &mut [u8],
     scratch: &mut PolynomialRingElement<Vector>,
     cache: &[PolynomialRingElement<Vector>],
+    accumulator: &mut [i32; 256],
 ) {
     // v := NTT^{−1}(tˆT ◦ rˆ) + e_2 + Decompress_q(Decode_1(m),1)
     let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
@@ -927,6 +938,7 @@ pub(crate) fn encrypt_c2<
         &mut v,
         scratch,
         cache,
+        accumulator,
     );
     hax_lib::fstar!("assert ($C2_LEN = Spec.MLKEM.v_C2_SIZE v_K)");
 
@@ -985,6 +997,8 @@ pub(crate) fn encrypt<
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
+    cache: &mut [PolynomialRingElement<Vector>],
+    accumulator: &mut [i32; 256],
 ) {
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_encrypt) Spec.MLKEM.ind_cpa_encrypt"#);
     // XXX: Can we pass this in?
@@ -1021,6 +1035,8 @@ pub(crate) fn encrypt<
         r_as_ntt,
         error_2,
         scratch,
+        cache,
+        accumulator,
     )
 }
 

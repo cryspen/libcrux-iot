@@ -25,6 +25,10 @@ pub trait Operations: Copy + Clone + Repr {
     #[ensures(|result| fstar!(r#"f_repr $result == $array"#))]
     fn from_i16_array(array: &[i16], out: &mut Self);
 
+    #[requires(array.len() == 16)]
+    #[ensures(|result| fstar!(r#"f_repr $result == $array"#))]
+    fn reducing_from_i32_array(array: &[i32], out: &mut Self);
+
     #[requires(true)]
     #[ensures(|result| fstar!(r#"f_repr $x == $result"#))]
     fn to_i16_array(x: Self, out: &mut [i16; 16]);
@@ -148,6 +152,19 @@ pub trait Operations: Copy + Clone + Repr {
         zeta2: i16,
         zeta3: i16,
     );
+
+    fn ntt_multiply_fill_cache(
+        lhs: &Self,
+        rhs: &Self,
+        out: &mut Self,
+        cache: &mut Self,
+        zeta0: i16,
+        zeta1: i16,
+        zeta2: i16,
+        zeta3: i16,
+    );
+
+    fn ntt_multiply_use_cache(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self);
 
     fn accumulating_ntt_multiply_fill_cache(
         lhs: &Self,

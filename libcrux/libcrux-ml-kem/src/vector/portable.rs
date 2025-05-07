@@ -137,6 +137,13 @@ impl Operations for PortableVector {
     }
 
     #[inline(always)]
+    #[requires(array.len() == 16)]
+    #[ensures(|out| fstar!(r#"impl.f_repr out == $array"#))]
+    fn reducing_from_i32_array(array: &[i32], out: &mut Self) {
+        reducing_from_i32_array(array, out)
+    }
+
+    #[inline(always)]
     #[ensures(|out| fstar!(r#"out == impl.f_repr $x"#))]
     fn to_i16_array(x: Self, out: &mut [i16; 16]) {
         to_i16_array(x, out)
@@ -322,6 +329,25 @@ impl Operations for PortableVector {
         zeta3: i16,
     ) {
         ntt_multiply(lhs, rhs, out, zeta0, zeta1, zeta2, zeta3)
+    }
+
+    #[inline(always)]
+    fn ntt_multiply_fill_cache(
+        lhs: &Self,
+        rhs: &Self,
+        out: &mut Self,
+        cache: &mut Self,
+        zeta0: i16,
+        zeta1: i16,
+        zeta2: i16,
+        zeta3: i16,
+    ) {
+        ntt_multiply_fill_cache(lhs, rhs, out, cache, zeta0, zeta1, zeta2, zeta3)
+    }
+
+    #[inline(always)]
+    fn ntt_multiply_use_cache(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self) {
+        ntt_multiply_use_cache(lhs, rhs, out, cache)
     }
 
     #[inline(always)]

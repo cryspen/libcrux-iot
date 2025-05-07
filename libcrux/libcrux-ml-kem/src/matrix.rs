@@ -1,10 +1,6 @@
 use crate::{
-    hash_functions::Hash,
-    helper::cloop,
-    invert_ntt::invert_ntt_montgomery,
-    polynomial::PolynomialRingElement,
-    sampling::sample_from_xof,
-    vector::{portable::arithmetic::montgomery_reduce_element, Operations},
+    hash_functions::Hash, helper::cloop, invert_ntt::invert_ntt_montgomery,
+    polynomial::PolynomialRingElement, sampling::sample_from_xof, vector::Operations,
 };
 
 #[inline(always)]
@@ -126,17 +122,12 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     result: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
     cache: &[PolynomialRingElement<Vector>],
+    accumulator: &mut [i32; 256],
 ) {
-    let mut accumulator = [0i32; 256];
     for i in 0..K {
-        t_as_ntt[i].accumulating_ntt_multiply_use_cache(&r_as_ntt[i], &mut accumulator, &cache[i]);
-        // result.add_to_ring_element::<K>(&scratch);
+        t_as_ntt[i].accumulating_ntt_multiply_use_cache(&r_as_ntt[i], accumulator, &cache[i]);
     }
-    let mut accumulator_reduced = [0i16; 256];
-    for i in 0..256 {
-        accumulator_reduced[i] = montgomery_reduce_element(accumulator[i]);
-    }
-    PolynomialRingElement::from_i16_array(&accumulator_reduced, result);
+    PolynomialRingElement::reducing_from_i32_array(accumulator, result);
 
     invert_ntt_montgomery::<K, Vector>(result, &mut scratch.coefficients[0]);
     error_2.add_message_error_reduce(message, result, &mut scratch.coefficients[0]);
@@ -168,39 +159,27 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations>(
     debug_assert!(r_as_ntt.len() == K);
     debug_assert!(error_1.len() == K);
 
-    let mut accumulator = [0i32; 256];
     for j in 0..K {
-        entry::<K, Vector>(a_as_ntt, 0, j).accumulating_ntt_multiply_fill_cache(
+        entry::<K, Vector>(a_as_ntt, 0, j).ntt_multiply_fill_cache(
             &r_as_ntt[j],
-            &mut accumulator,
+            scratch,
             &mut cache[j],
         );
-        // result[0].add_to_ring_element::<K>(scratch);
+        result[0].add_to_ring_element::<K>(scratch);
     }
-    let mut accumulator_reduced = [0i16; 256];
-    for i in 0..256 {
-        accumulator_reduced[i] = montgomery_reduce_element(accumulator[i]);
-    }
-    PolynomialRingElement::from_i16_array(&accumulator_reduced, &mut result[0]);
 
     invert_ntt_montgomery::<K, Vector>(&mut result[0], &mut scratch.coefficients[0]);
     result[0].add_error_reduce(&error_1[0]);
 
     for i in 1..K {
-        accumulator = [0i32; 256];
         for j in 0..K {
-            entry::<K, Vector>(a_as_ntt, i, j).accumulating_ntt_multiply_use_cache(
+            entry::<K, Vector>(a_as_ntt, i, j).ntt_multiply_use_cache(
                 &r_as_ntt[j],
-                &mut accumulator,
+                scratch,
                 &cache[j],
             );
             result[i].add_to_ring_element::<K>(scratch);
         }
-        accumulator_reduced = [0i16; 256];
-        for i in 0..256 {
-            accumulator_reduced[i] = montgomery_reduce_element(accumulator[i]);
-        }
-        PolynomialRingElement::from_i16_array(&accumulator_reduced, &mut result[0]);
 
         invert_ntt_montgomery::<K, Vector>(&mut result[i], &mut scratch.coefficients[0]);
         result[i].add_error_reduce(&error_1[i]);
@@ -227,27 +206,22 @@ pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
     matrix_A: &[PolynomialRingElement<Vector>],
     s_as_ntt: &[PolynomialRingElement<Vector>; K],
     error_as_ntt: &[PolynomialRingElement<Vector>; K],
-    scratch: &mut PolynomialRingElement<Vector>,
+    s_cache: &mut [PolynomialRingElement<Vector>; K],
+    accumulator: &mut [i32; 256],
 ) {
     // During the first row of multiplications, we build up the cache
     // of intermediate values.
-    t_as_ntt[0] = PolynomialRingElement::<Vector>::ZERO();
-    let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut accumulator = [0i32; 256];
+    // t_as_ntt[0] = PolynomialRingElement::<Vector>::ZERO();
+    // let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+    // let mut accumulator = [0i32; 256];
     for j in 0..K {
         entry::<K, Vector>(matrix_A, 0, j).accumulating_ntt_multiply_fill_cache(
             &s_as_ntt[j],
-            &mut accumulator,
+            accumulator,
             &mut s_cache[j],
         );
-        // t_as_ntt[0].add_to_ring_element::<K>(scratch);
     }
-
-    let mut accumulator_reduced = [0i16; 256];
-    for i in 0..256 {
-        accumulator_reduced[i] = montgomery_reduce_element(accumulator[i]);
-    }
-    PolynomialRingElement::from_i16_array(&accumulator_reduced, &mut t_as_ntt[0]);
+    PolynomialRingElement::reducing_from_i32_array(accumulator, &mut t_as_ntt[0]);
 
     t_as_ntt[0].add_standard_error_reduce(&error_as_ntt[0]);
 
@@ -255,22 +229,17 @@ pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
     for i in 1..K {
         // This may be externally provided memory. Ensure that `t_as_ntt`
         // is all 0.
-        t_as_ntt[i] = PolynomialRingElement::<Vector>::ZERO();
-        accumulator = [0i32; 256];
+        // t_as_ntt[i] = PolynomialRingElement::<Vector>::ZERO();
+        *accumulator = [0i32; 256];
         for j in 0..K {
             entry::<K, Vector>(matrix_A, i, j).accumulating_ntt_multiply_use_cache(
                 &s_as_ntt[j],
-                &mut accumulator,
+                accumulator,
                 &s_cache[j],
             );
             // t_as_ntt[i].add_to_ring_element::<K>(scratch);
         }
-        accumulator_reduced = [0i16; 256];
-
-        for k in 0..256 {
-            accumulator_reduced[k] = montgomery_reduce_element(accumulator[k]);
-        }
-        PolynomialRingElement::from_i16_array(&accumulator_reduced, &mut t_as_ntt[i]);
+        PolynomialRingElement::reducing_from_i32_array(accumulator, &mut t_as_ntt[i]);
 
         t_as_ntt[i].add_standard_error_reduce(&error_as_ntt[i]);
     }

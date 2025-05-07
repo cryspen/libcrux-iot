@@ -557,6 +557,289 @@ pub(crate) fn accumulating_ntt_multiply_binomials_use_cache(
 }
 
 #[inline(always)]
+pub(crate) fn ntt_multiply_binomials_fill_cache(
+    a: &PortableVector,
+    b: &PortableVector,
+    zeta: FieldElementTimesMontgomeryR,
+    i: usize,
+    out: &mut PortableVector,
+    cache: &mut PortableVector,
+) {
+    let ai = a.elements[2 * i];
+    let bi = b.elements[2 * i];
+    let aj = a.elements[2 * i + 1];
+    let bj = b.elements[2 * i + 1];
+    hax_lib::fstar!(
+        "assert(Spec.Utils.is_i16b 3328 $ai);
+                     assert(Spec.Utils.is_i16b 3328 $bi);
+                     assert(Spec.Utils.is_i16b 3328 $aj);
+                     assert(Spec.Utils.is_i16b 3328 $bj);
+                     assert_norm (3328 * 3328 < pow2 31)"
+    );
+
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 3328 $ai $bi"#);
+    let ai_bi = (ai as i32) * (bi as i32);
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 3328 $aj $bj"#);
+    let bj_zeta_ = (bj as i32) * (zeta as i32);
+    hax_lib::fstar!(r#"assert_norm (3328 * 3328 <= 3328 * pow2 15)"#);
+    let bj_zeta = montgomery_reduce_element(bj_zeta_);
+    cache.elements[i] = bj_zeta;
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 1664 $aj_bj $zeta"#);
+    let aj_bj_zeta = (aj as i32) * (bj_zeta as i32);
+    let ai_bi_aj_bj = ai_bi + aj_bj_zeta;
+    hax_lib::fstar!(r#"assert(Spec.Utils.is_i32b (3328*3328 + 3328*1664) $ai_bi_aj_bj)"#);
+    hax_lib::fstar!(r#"assert_norm (3328 * 3328 + 3328 * 1664 <= 3328 * pow2 15)"#);
+    let o0 = montgomery_reduce_element(ai_bi_aj_bj);
+    hax_lib::fstar!(
+        r#"calc  ( == ) {
+        v $o0 % 3329;
+        ( == ) { () }
+        (v $ai_bi_aj_bj * 169) % 3329;
+        ( == ) { assert(v $ai_bi_aj_bj == v $ai_bi + v $aj_bj_zeta) }
+        ((v $ai_bi + v $aj_bj_zeta) * 169) % 3329;
+        ( == ) { assert (v $ai_bi == v $ai * v $bi) }
+        (((v $ai * v $bi) + v $aj_bj_zeta) * 169) % 3329;
+        ( == ) { assert (v $aj_bj_zeta == v $aj_bj * v $zeta) }
+        (((v $ai * v $bi) + (v $aj_bj * v $zeta)) * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_mul_distr_l ((v ai * v bi) + (v aj_bj * v zeta)) 169 3329 }
+        ((((v $ai * v $bi) + (v $aj_bj * v $zeta)) % 3329) * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_add_distr (v ai * v bi) (v aj_bj * v zeta) 3329 }
+        (((v $ai * v $bi) + ((v $aj_bj * v $zeta) % 3329)) % 3329 * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_mul_distr_l (v aj_bj) (v zeta) 3329 }
+        (((v $ai * v $bi) + ((v $aj_bj % 3329 * v $zeta) % 3329)) % 3329 * 169) % 3329;
+        ( == ) { assert(v aj_bj % 3329 == (v $aj_bj_ * 169) % 3329) }
+        (((v $ai * v $bi) + (((v $aj_bj_ * 169) % 3329 * v $zeta) % 3329)) % 3329 * 169) % 3329;
+        ( == ) { assert(v $aj_bj_ == v $aj * v $bj) }
+        (((v $ai * v $bi) + (((v $aj * v $bj * 169) % 3329 * v $zeta) % 3329)) % 3329 * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_mul_distr_l (v $aj * v $bj * 169) (v $zeta) 3329 }
+        (((v $ai * v $bi) + (((v $aj * v $bj * 169 * v $zeta) % 3329))) % 3329 * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_add_distr (v $ai * v $bi) (v $aj * v $bj * 169 * v $zeta) 3329 }
+        (((v $ai * v $bi) + ((v $aj * v $bj * 169 * v $zeta))) % 3329 * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_mul_distr_l ((v ai * v bi) + ((v aj * v bj * 169 * v zeta))) 169 3329 }
+        (((v $ai * v $bi) + ((v $aj * v $bj * 169 * v $zeta))) * 169) % 3329;
+        }"#
+    );
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 3328 $ai $bj"#);
+    let ai_bj = (ai as i32) * (bj as i32);
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 3328 $aj $bi"#);
+    let aj_bi = (aj as i32) * (bi as i32);
+    let ai_bj_aj_bi = ai_bj + aj_bi;
+    hax_lib::fstar!(r#"assert(Spec.Utils.is_i32b (3328*3328 + 3328*3328) ai_bj_aj_bi) "#);
+    hax_lib::fstar!(r#"assert_norm (3328 * 3328 + 3328 * 3328 <= 3328 * pow2 15)"#);
+    let o1 = montgomery_reduce_element(ai_bj_aj_bi);
+    hax_lib::fstar!(
+        "calc  ( == ) {
+        v $o1 % 3329;
+        ( == ) { () }
+        (v $ai_bj_aj_bi * 169) % 3329;
+        ( == ) { assert(v $ai_bj_aj_bi == v $ai_bj + v $aj_bi) }
+        ((v $ai_bj + v $aj_bi) * 169) % 3329;
+        ( == ) { assert (v ai_bj == v ai * v bj) }
+        ((v ai * v bj + v aj_bi) * 169) % 3329;
+        ( == ) { assert (v aj_bi == v aj * v bi) }
+        ((v ai * v bj + v aj * v bi) * 169) % 3329;
+    }"
+    );
+    let _out0 = out.elements;
+    out.elements[2 * i] = o0;
+    out.elements[2 * i + 1] = o1;
+    hax_lib::fstar!(
+        r#"assert (Seq.index out.f_elements (2 * v i) == o0);
+                     assert (Seq.index out.f_elements (2 * v i + 1) == o1);
+                     assert (Spec.Utils.is_i16b_array 3328 out.f_elements);
+                     assert (forall k. (k <> 2 * v i /\ k <> 2 * v i + 1) ==>
+                                        Seq.index out.f_elements k ==
+                                        Seq.index ${_out0} k)"#
+    );
+}
+
+#[inline(always)]
+pub(crate) fn ntt_multiply_binomials_use_cache(
+    a: &PortableVector,
+    b: &PortableVector,
+    i: usize,
+    out: &mut PortableVector,
+    cache: &PortableVector,
+) {
+    let ai = a.elements[2 * i];
+    let bi = b.elements[2 * i];
+    let aj = a.elements[2 * i + 1];
+    let bj = b.elements[2 * i + 1];
+    hax_lib::fstar!(
+        "assert(Spec.Utils.is_i16b 3328 $ai);
+                     assert(Spec.Utils.is_i16b 3328 $bi);
+                     assert(Spec.Utils.is_i16b 3328 $aj);
+                     assert(Spec.Utils.is_i16b 3328 $bj);
+                     assert_norm (3328 * 3328 < pow2 31)"
+    );
+
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 3328 $ai $bi"#);
+    let ai_bi = (ai as i32) * (bi as i32);
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 3328 $aj $bj"#);
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 1664 $aj_bj $zeta"#);
+    let aj_bj_zeta = (aj as i32) * (cache.elements[i] as i32);
+    let ai_bi_aj_bj = ai_bi + aj_bj_zeta;
+    hax_lib::fstar!(r#"assert(Spec.Utils.is_i32b (3328*3328 + 3328*1664) $ai_bi_aj_bj)"#);
+    hax_lib::fstar!(r#"assert_norm (3328 * 3328 + 3328 * 1664 <= 3328 * pow2 15)"#);
+    let o0 = montgomery_reduce_element(ai_bi_aj_bj);
+    hax_lib::fstar!(
+        r#"calc  ( == ) {
+        v $o0 % 3329;
+        ( == ) { () }
+        (v $ai_bi_aj_bj * 169) % 3329;
+        ( == ) { assert(v $ai_bi_aj_bj == v $ai_bi + v $aj_bj_zeta) }
+        ((v $ai_bi + v $aj_bj_zeta) * 169) % 3329;
+        ( == ) { assert (v $ai_bi == v $ai * v $bi) }
+        (((v $ai * v $bi) + v $aj_bj_zeta) * 169) % 3329;
+        ( == ) { assert (v $aj_bj_zeta == v $aj_bj * v $zeta) }
+        (((v $ai * v $bi) + (v $aj_bj * v $zeta)) * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_mul_distr_l ((v ai * v bi) + (v aj_bj * v zeta)) 169 3329 }
+        ((((v $ai * v $bi) + (v $aj_bj * v $zeta)) % 3329) * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_add_distr (v ai * v bi) (v aj_bj * v zeta) 3329 }
+        (((v $ai * v $bi) + ((v $aj_bj * v $zeta) % 3329)) % 3329 * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_mul_distr_l (v aj_bj) (v zeta) 3329 }
+        (((v $ai * v $bi) + ((v $aj_bj % 3329 * v $zeta) % 3329)) % 3329 * 169) % 3329;
+        ( == ) { assert(v aj_bj % 3329 == (v $aj_bj_ * 169) % 3329) }
+        (((v $ai * v $bi) + (((v $aj_bj_ * 169) % 3329 * v $zeta) % 3329)) % 3329 * 169) % 3329;
+        ( == ) { assert(v $aj_bj_ == v $aj * v $bj) }
+        (((v $ai * v $bi) + (((v $aj * v $bj * 169) % 3329 * v $zeta) % 3329)) % 3329 * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_mul_distr_l (v $aj * v $bj * 169) (v $zeta) 3329 }
+        (((v $ai * v $bi) + (((v $aj * v $bj * 169 * v $zeta) % 3329))) % 3329 * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_add_distr (v $ai * v $bi) (v $aj * v $bj * 169 * v $zeta) 3329 }
+        (((v $ai * v $bi) + ((v $aj * v $bj * 169 * v $zeta))) % 3329 * 169) % 3329;
+        ( == ) { Math.Lemmas.lemma_mod_mul_distr_l ((v ai * v bi) + ((v aj * v bj * 169 * v zeta))) 169 3329 }
+        (((v $ai * v $bi) + ((v $aj * v $bj * 169 * v $zeta))) * 169) % 3329;
+        }"#
+    );
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 3328 $ai $bj"#);
+    let ai_bj = (ai as i32) * (bj as i32);
+    hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b 3328 3328 $aj $bi"#);
+    let aj_bi = (aj as i32) * (bi as i32);
+    let ai_bj_aj_bi = ai_bj + aj_bi;
+    hax_lib::fstar!(r#"assert(Spec.Utils.is_i32b (3328*3328 + 3328*3328) ai_bj_aj_bi) "#);
+    hax_lib::fstar!(r#"assert_norm (3328 * 3328 + 3328 * 3328 <= 3328 * pow2 15)"#);
+    let o1 = montgomery_reduce_element(ai_bj_aj_bi);
+    hax_lib::fstar!(
+        "calc  ( == ) {
+        v $o1 % 3329;
+        ( == ) { () }
+        (v $ai_bj_aj_bi * 169) % 3329;
+        ( == ) { assert(v $ai_bj_aj_bi == v $ai_bj + v $aj_bi) }
+        ((v $ai_bj + v $aj_bi) * 169) % 3329;
+        ( == ) { assert (v ai_bj == v ai * v bj) }
+        ((v ai * v bj + v aj_bi) * 169) % 3329;
+        ( == ) { assert (v aj_bi == v aj * v bi) }
+        ((v ai * v bj + v aj * v bi) * 169) % 3329;
+    }"
+    );
+    let _out0 = out.elements;
+    out.elements[2 * i] = o0;
+    out.elements[2 * i + 1] = o1;
+    hax_lib::fstar!(
+        r#"assert (Seq.index out.f_elements (2 * v i) == o0);
+                     assert (Seq.index out.f_elements (2 * v i + 1) == o1);
+                     assert (Spec.Utils.is_i16b_array 3328 out.f_elements);
+                     assert (forall k. (k <> 2 * v i /\ k <> 2 * v i + 1) ==>
+                                        Seq.index out.f_elements k ==
+                                        Seq.index ${_out0} k)"#
+    );
+}
+
+#[inline(always)]
+pub(crate) fn ntt_multiply(
+    lhs: &PortableVector,
+    rhs: &PortableVector,
+    out: &mut PortableVector,
+    zeta0: i16,
+    zeta1: i16,
+    zeta2: i16,
+    zeta3: i16,
+) {
+    let nzeta0 = -zeta0;
+    let nzeta1 = -zeta1;
+    let nzeta2 = -zeta2;
+    let nzeta3 = -zeta3;
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta0)"#);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta1)"#);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta2)"#);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta3)"#);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials(lhs, rhs, zeta0, 0, out);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials(lhs, rhs, nzeta0, 1, out);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials(lhs, rhs, zeta1, 2, out);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials(lhs, rhs, nzeta1, 3, out);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials(lhs, rhs, zeta2, 4, out);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials(lhs, rhs, nzeta2, 5, out);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials(lhs, rhs, zeta3, 6, out);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials(lhs, rhs, nzeta3, 7, out);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+}
+
+#[inline(always)]
+#[hax_lib::fstar::verification_status(panic_free)]
+#[hax_lib::fstar::options("--z3rlimit 100")]
+#[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 $zeta0 /\
+        Spec.Utils.is_i16b 1664 $zeta1 /\
+        Spec.Utils.is_i16b 1664 $zeta2 /\
+        Spec.Utils.is_i16b 1664 $zeta3 /\
+        Spec.Utils.is_i16b_array 3328 ${lhs}.f_elements /\
+        Spec.Utils.is_i16b_array 3328 ${rhs}.f_elements "#))]
+#[hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array 3328 ${result}.f_elements /\
+          (let zetas = Seq.seq_of_list [v zeta0; - v zeta0; v zeta1; - v zeta1; v zeta2; - v zeta2; v zeta3; - v zeta3] in
+          (forall (i:nat). i < 8 ==>
+           (let ai = Seq.index lhs.f_elements (2 * i) in
+            let aj = Seq.index lhs.f_elements (2 * i + 1) in
+            let bi = Seq.index rhs.f_elements (2 * i) in
+            let bj = Seq.index rhs.f_elements (2 * i + 1) in
+            let oi = Seq.index result.f_elements (2 * i) in
+            let oj = Seq.index result.f_elements (2 * i + 1) in
+            ((v oi % 3329) == (((v ai * v bi + (v aj * v bj * (Seq.index zetas i) * 169)) * 169) % 3329)) /\
+            ((v oj % 3329) == (((v ai * v bj + v aj * v bi) * 169) % 3329)))))"#))]
+pub(crate) fn ntt_multiply_fill_cache(
+    lhs: &PortableVector,
+    rhs: &PortableVector,
+    out: &mut PortableVector,
+    cache: &mut PortableVector,
+    zeta0: i16,
+    zeta1: i16,
+    zeta2: i16,
+    zeta3: i16,
+) {
+    let nzeta0 = -zeta0;
+    let nzeta1 = -zeta1;
+    let nzeta2 = -zeta2;
+    let nzeta3 = -zeta3;
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta0)"#);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta1)"#);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta2)"#);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta3)"#);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials_fill_cache(lhs, rhs, zeta0, 0, out, cache);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials_fill_cache(lhs, rhs, nzeta0, 1, out, cache);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials_fill_cache(lhs, rhs, zeta1, 2, out, cache);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials_fill_cache(lhs, rhs, nzeta1, 3, out, cache);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials_fill_cache(lhs, rhs, zeta2, 4, out, cache);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials_fill_cache(lhs, rhs, nzeta2, 5, out, cache);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials_fill_cache(lhs, rhs, zeta3, 6, out, cache);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+    ntt_multiply_binomials_fill_cache(lhs, rhs, nzeta3, 7, out, cache);
+    hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
+}
+
+#[inline(always)]
 #[hax_lib::fstar::verification_status(panic_free)]
 #[hax_lib::fstar::options("--z3rlimit 100")]
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 $zeta0 /\
@@ -642,39 +925,33 @@ pub(crate) fn accumulating_ntt_multiply_use_cache(
     accumulating_ntt_multiply_binomials_use_cache(lhs, rhs, 7, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
 }
+
 #[inline(always)]
-pub(crate) fn ntt_multiply(
+pub(crate) fn ntt_multiply_use_cache(
     lhs: &PortableVector,
     rhs: &PortableVector,
     out: &mut PortableVector,
-    zeta0: i16,
-    zeta1: i16,
-    zeta2: i16,
-    zeta3: i16,
+    cache: &PortableVector,
 ) {
-    let nzeta0 = -zeta0;
-    let nzeta1 = -zeta1;
-    let nzeta2 = -zeta2;
-    let nzeta3 = -zeta3;
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta0)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta1)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta2)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 1664 nzeta3)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials(lhs, rhs, zeta0, 0, out);
+    ntt_multiply_binomials_use_cache(lhs, rhs, 0, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials(lhs, rhs, nzeta0, 1, out);
+    ntt_multiply_binomials_use_cache(lhs, rhs, 1, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials(lhs, rhs, zeta1, 2, out);
+    ntt_multiply_binomials_use_cache(lhs, rhs, 2, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials(lhs, rhs, nzeta1, 3, out);
+    ntt_multiply_binomials_use_cache(lhs, rhs, 3, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials(lhs, rhs, zeta2, 4, out);
+    ntt_multiply_binomials_use_cache(lhs, rhs, 4, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials(lhs, rhs, nzeta2, 5, out);
+    ntt_multiply_binomials_use_cache(lhs, rhs, 5, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials(lhs, rhs, zeta3, 6, out);
+    ntt_multiply_binomials_use_cache(lhs, rhs, 6, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
-    ntt_multiply_binomials(lhs, rhs, nzeta3, 7, out);
+    ntt_multiply_binomials_use_cache(lhs, rhs, 7, out, cache);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b_array 3328 out.f_elements)"#);
 }
