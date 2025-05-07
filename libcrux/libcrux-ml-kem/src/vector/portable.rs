@@ -314,40 +314,16 @@ impl Operations for PortableVector {
     }
 
     #[inline(always)]
-    #[requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta0 /\ Spec.Utils.is_i16b 1664 zeta1 /\
-                       Spec.Utils.is_i16b 1664 zeta2 /\ Spec.Utils.is_i16b 1664 zeta3 /\
-                       Spec.Utils.is_i16b_array 3328 (impl.f_repr ${lhs}) /\
-                       Spec.Utils.is_i16b_array 3328 (impl.f_repr ${rhs})"#))]
-    #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array 3328 (impl.f_repr $out)"#))]
-    fn ntt_multiply(
+    fn accumulating_ntt_multiply(
         lhs: &Self,
         rhs: &Self,
-        out: &mut Self,
+        out: &mut [i32],
         zeta0: i16,
         zeta1: i16,
         zeta2: i16,
         zeta3: i16,
     ) {
-        ntt_multiply(lhs, rhs, out, zeta0, zeta1, zeta2, zeta3)
-    }
-
-    #[inline(always)]
-    fn ntt_multiply_fill_cache(
-        lhs: &Self,
-        rhs: &Self,
-        out: &mut Self,
-        cache: &mut Self,
-        zeta0: i16,
-        zeta1: i16,
-        zeta2: i16,
-        zeta3: i16,
-    ) {
-        ntt_multiply_fill_cache(lhs, rhs, out, cache, zeta0, zeta1, zeta2, zeta3)
-    }
-
-    #[inline(always)]
-    fn ntt_multiply_use_cache(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self) {
-        ntt_multiply_use_cache(lhs, rhs, out, cache)
+        accumulating_ntt_multiply(lhs, rhs, out, zeta0, zeta1, zeta2, zeta3)
     }
 
     #[inline(always)]

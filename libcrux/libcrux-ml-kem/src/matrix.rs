@@ -90,12 +90,14 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     u_as_ntt: &[PolynomialRingElement<Vector>; K],
     result: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
+    accumulator: &mut [i32; 256],
 ) {
+    *accumulator = [0i32; 256];
     for i in 0..K {
-        secret_as_ntt[i].ntt_multiply(&u_as_ntt[i], scratch);
-        result.add_to_ring_element::<K>(scratch);
+        secret_as_ntt[i].accumulating_ntt_multiply(&u_as_ntt[i], accumulator);
     }
 
+    PolynomialRingElement::reducing_from_i32_array(accumulator, result);
     invert_ntt_montgomery::<K, Vector>(result, &mut scratch.coefficients[0]);
     v.subtract_reduce(result);
 }

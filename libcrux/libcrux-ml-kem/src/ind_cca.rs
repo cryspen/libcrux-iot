@@ -408,6 +408,7 @@ pub(crate) fn decapsulate<
     );
     let mut decrypted = [0u8; 32];
     let mut scratch = PolynomialRingElement::<Vector>::ZERO();
+    let mut accumulator = [0i32; 256];
 
     crate::ind_cpa::decrypt::<
         K,
@@ -421,6 +422,7 @@ pub(crate) fn decapsulate<
         &ciphertext.value,
         &mut decrypted,
         &mut scratch,
+        &mut accumulator,
     );
 
     let mut to_hash: [u8; SHARED_SECRET_SIZE + H_DIGEST_SIZE] = into_padded_array(&decrypted);
@@ -463,7 +465,7 @@ pub(crate) fn decapsulate<
     let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
         core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
     let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-    let mut accumulator = [0i32; 256];
+
     let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
 
     crate::ind_cpa::encrypt::<
@@ -1214,6 +1216,8 @@ pub(crate) mod unpacked {
         let mut decrypted = [0u8; SHARED_SECRET_SIZE];
 
         let mut scratch = PolynomialRingElement::<Vector>::ZERO();
+        let mut accumulator = [0i32; 256];
+
         ind_cpa::decrypt_unpacked::<
             K,
             CIPHERTEXT_SIZE,
@@ -1226,6 +1230,7 @@ pub(crate) mod unpacked {
             &ciphertext.value,
             &mut decrypted,
             &mut scratch,
+            &mut accumulator,
         );
 
         let mut to_hash: [u8; SHARED_SECRET_SIZE + H_DIGEST_SIZE] = into_padded_array(&decrypted);
@@ -1257,7 +1262,7 @@ pub(crate) mod unpacked {
         let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
             from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
         let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-        let mut accumulator = [0i32; 256];
+
         let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
 
         ind_cpa::encrypt_unpacked::<

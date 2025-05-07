@@ -153,19 +153,6 @@ pub(crate) const fn vec_len_bytes<const K: usize, Vector: Operations>() -> usize
     K * PolynomialRingElement::<Vector>::num_bytes()
 }
 
-/// Given two polynomial ring elements `lhs` and `rhs`, compute the pointwise
-/// sum of their constituent coefficients.
-#[inline(always)]
-#[hax_lib::fstar::verification_status(lax)]
-fn add_to_ring_element<Vector: Operations, const K: usize>(
-    myself: &mut PolynomialRingElement<Vector>,
-    rhs: &PolynomialRingElement<Vector>,
-) {
-    for i in 0..myself.coefficients.len() {
-        Vector::add(&mut myself.coefficients[i], &rhs.coefficients[i]);
-    }
-}
-
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
 fn poly_barrett_reduce<Vector: Operations>(myself: &mut PolynomialRingElement<Vector>) {
@@ -292,60 +279,20 @@ fn add_standard_error_reduce<Vector: Operations>(
 //                 result.coefficients[i].abs() <= FIELD_MODULUS
 // ))))]
 #[inline(always)]
-#[hax_lib::fstar::verification_status(lax)]
-fn ntt_multiply<Vector: Operations>(
+fn accumulating_ntt_multiply<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
-    out: &mut PolynomialRingElement<Vector>,
+    accumulator: &mut [i32; 256],
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        Vector::ntt_multiply(
+        Vector::accumulating_ntt_multiply(
             &myself.coefficients[i],
             &rhs.coefficients[i],
-            &mut out.coefficients[i],
+            &mut accumulator[i * 16..(i + 1) * 16],
             zeta(64 + 4 * i),
             zeta(64 + 4 * i + 1),
             zeta(64 + 4 * i + 2),
             zeta(64 + 4 * i + 3),
-        );
-    }
-}
-
-#[inline(always)]
-fn ntt_multiply_fill_cache<Vector: Operations>(
-    myself: &PolynomialRingElement<Vector>,
-    rhs: &PolynomialRingElement<Vector>,
-    out: &mut PolynomialRingElement<Vector>,
-    cache: &mut PolynomialRingElement<Vector>,
-) {
-    for i in 0..VECTORS_IN_RING_ELEMENT {
-        Vector::ntt_multiply_fill_cache(
-            &myself.coefficients[i],
-            &rhs.coefficients[i],
-            &mut out.coefficients[i],
-            &mut cache.coefficients[i],
-            zeta(64 + 4 * i),
-            zeta(64 + 4 * i + 1),
-            zeta(64 + 4 * i + 2),
-            zeta(64 + 4 * i + 3),
-        );
-    }
-}
-
-#[inline(always)]
-#[hax_lib::fstar::verification_status(lax)]
-fn ntt_multiply_use_cache<Vector: Operations>(
-    myself: &PolynomialRingElement<Vector>,
-    rhs: &PolynomialRingElement<Vector>,
-    out: &mut PolynomialRingElement<Vector>,
-    cache: &PolynomialRingElement<Vector>,
-) {
-    for i in 0..VECTORS_IN_RING_ELEMENT {
-        Vector::ntt_multiply_use_cache(
-            &myself.coefficients[i],
-            &rhs.coefficients[i],
-            &mut out.coefficients[i],
-            &cache.coefficients[i],
         );
     }
 }
@@ -442,13 +389,6 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
         to_bytes(self, out)
     }
 
-    /// Given two polynomial ring elements `lhs` and `rhs`, compute the pointwise
-    /// sum of their constituent coefficients.
-    #[inline(always)]
-    pub(crate) fn add_to_ring_element<const K: usize>(&mut self, rhs: &Self) {
-        add_to_ring_element::<Vector, K>(self, rhs);
-    }
-
     #[inline(always)]
     pub(crate) fn poly_barrett_reduce(&mut self) {
         poly_barrett_reduce(self);
@@ -480,18 +420,8 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
-    pub(crate) fn ntt_multiply(&self, rhs: &Self, out: &mut Self) {
-        ntt_multiply(self, rhs, out)
-    }
-
-    #[inline(always)]
-    pub(crate) fn ntt_multiply_fill_cache(&self, rhs: &Self, out: &mut Self, cache: &mut Self) {
-        ntt_multiply_fill_cache(self, rhs, out, cache)
-    }
-
-    #[inline(always)]
-    pub(crate) fn ntt_multiply_use_cache(&self, rhs: &Self, out: &mut Self, cache: &Self) {
-        ntt_multiply_use_cache(self, rhs, out, cache)
+    pub(crate) fn accumulating_ntt_multiply(&self, rhs: &Self, accumulator: &mut [i32; 256]) {
+        accumulating_ntt_multiply(self, rhs, accumulator)
     }
 
     #[inline(always)]

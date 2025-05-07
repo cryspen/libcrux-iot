@@ -143,28 +143,15 @@ pub trait Operations: Copy + Clone + Repr {
                        Spec.Utils.is_i16b_array 3328 (f_repr ${lhs}) /\
                        Spec.Utils.is_i16b_array 3328 (f_repr ${rhs}) "#))]
     #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array 3328 (f_repr $out)"#))]
-    fn ntt_multiply(
+    fn accumulating_ntt_multiply(
         lhs: &Self,
         rhs: &Self,
-        out: &mut Self,
+        out: &mut [i32],
         zeta0: i16,
         zeta1: i16,
         zeta2: i16,
         zeta3: i16,
     );
-
-    fn ntt_multiply_fill_cache(
-        lhs: &Self,
-        rhs: &Self,
-        out: &mut Self,
-        cache: &mut Self,
-        zeta0: i16,
-        zeta1: i16,
-        zeta2: i16,
-        zeta3: i16,
-    );
-
-    fn ntt_multiply_use_cache(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self);
 
     fn accumulating_ntt_multiply_fill_cache(
         lhs: &Self,

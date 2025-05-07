@@ -1227,6 +1227,7 @@ pub(crate) fn decrypt_unpacked<
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     decrypted: &mut [u8],
     scratch: &mut PolynomialRingElement<Vector>,
+    accumulator: &mut [i32; 256],
 ) {
     // u := Decompress_q(Decode_{d_u}(c), d_u)
     let mut u_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
@@ -1251,6 +1252,7 @@ pub(crate) fn decrypt_unpacked<
         &u_as_ntt,
         &mut message,
         scratch,
+        accumulator,
     );
     compress_then_serialize_message(&message, decrypted, &mut scratch.coefficients[0]);
 }
@@ -1278,6 +1280,7 @@ pub(crate) fn decrypt<
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     decrypted: &mut [u8],
     scratch: &mut PolynomialRingElement<Vector>,
+    accumulator: &mut [i32; 256],
 ) {
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_decrypt) Spec.MLKEM.ind_cpa_decrypt"#);
     // sˆ := Decode_12(sk)
@@ -1292,5 +1295,11 @@ pub(crate) fn decrypt<
         U_COMPRESSION_FACTOR,
         V_COMPRESSION_FACTOR,
         Vector,
-    >(&secret_key_unpacked, ciphertext, decrypted, scratch);
+    >(
+        &secret_key_unpacked,
+        ciphertext,
+        decrypted,
+        scratch,
+        accumulator,
+    );
 }
