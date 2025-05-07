@@ -179,14 +179,13 @@ fn subtract_reduce<Vector: Operations>(
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
 fn add_message_error_reduce<Vector: Operations>(
-    myself: &PolynomialRingElement<Vector>,
+    error_2: &PolynomialRingElement<Vector>,
     message: &PolynomialRingElement<Vector>,
-    result: &mut PolynomialRingElement<Vector>,
-    scratch: &mut Vector,
+    v: &mut PolynomialRingElement<Vector>,
 ) {
     // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        Vector::montgomery_multiply_by_constant(&mut result.coefficients[i], 1441);
+        Vector::montgomery_multiply_by_constant(&mut v.coefficients[i], 1441);
 
         // FIXME: Eurydice crashes with:
         //
@@ -203,10 +202,9 @@ fn add_message_error_reduce<Vector: Operations>(
         //     &Vector::add(myself.coefficients[i], &message.coefficients[i]),
         // ));
         // ```
-        *scratch = myself.coefficients[i].clone(); // XXX: Need this?
-        Vector::add(scratch, &message.coefficients[i]);
-        Vector::add(&mut result.coefficients[i], &scratch);
-        Vector::barrett_reduce(&mut result.coefficients[i]);
+        Vector::add(&mut v.coefficients[i], &message.coefficients[i]);
+        Vector::add(&mut v.coefficients[i], &error_2.coefficients[i]);
+        Vector::barrett_reduce(&mut v.coefficients[i]);
     }
 }
 
@@ -400,13 +398,8 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
-    pub(crate) fn add_message_error_reduce(
-        &self,
-        message: &Self,
-        result: &mut Self,
-        scratch: &mut Vector,
-    ) {
-        add_message_error_reduce(self, message, result, scratch);
+    pub(crate) fn add_message_error_reduce(&self, message: &Self, v: &mut Self) {
+        add_message_error_reduce(self, message, v);
     }
 
     #[inline(always)]

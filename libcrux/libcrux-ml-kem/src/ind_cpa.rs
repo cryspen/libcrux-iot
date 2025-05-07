@@ -779,11 +779,9 @@ pub(crate) fn encrypt_unpacked<
     ciphertext: &mut [u8],
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
-    // let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
     encrypt_c1::<
         K,
         K_SQUARED,
@@ -814,7 +812,6 @@ pub(crate) fn encrypt_unpacked<
         &error_2,
         message,
         &mut ciphertext[C1_LEN..],
-        scratch,
         &cache,
         accumulator,
     );
@@ -869,7 +866,7 @@ pub(crate) fn encrypt_c1<
     // end for
     let mut error_1: [PolynomialRingElement<Vector>; K] =
         from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    let mut sampling_buffer = [0i16; 256];
+    let mut sampling_buffer = [0i16; 256]; // XXX: Could reuse accumulator here.
     let domain_separator =
         sample_ring_element_cbd::<K, ETA2_RANDOMNESS_SIZE, ETA2, PRF_OUTPUT_SIZE2, Vector, Hasher>(
             prf_input,
@@ -912,7 +909,6 @@ pub(crate) fn encrypt_c2<
     error_2: &PolynomialRingElement<Vector>,
     message: [u8; SHARED_SECRET_SIZE],
     ciphertext: &mut [u8],
-    scratch: &mut PolynomialRingElement<Vector>,
     cache: &[PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
@@ -926,7 +922,6 @@ pub(crate) fn encrypt_c2<
         error_2,
         &message_as_ring_element,
         &mut v,
-        scratch,
         cache,
         accumulator,
     );
@@ -984,7 +979,6 @@ pub(crate) fn encrypt<
     ciphertext: &mut [u8],
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
@@ -1022,7 +1016,6 @@ pub(crate) fn encrypt<
         ciphertext,
         r_as_ntt,
         error_2,
-        scratch,
         cache,
         accumulator,
     )

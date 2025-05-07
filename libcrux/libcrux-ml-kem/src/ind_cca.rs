@@ -299,7 +299,6 @@ pub(crate) fn encapsulate<
     let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
         core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
     let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
     let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
 
@@ -328,7 +327,6 @@ pub(crate) fn encapsulate<
         &mut ciphertext,
         &mut r_as_ntt,
         &mut error_2,
-        &mut scratch,
         &mut cache,
         &mut accumulator,
     );
@@ -403,7 +401,6 @@ pub(crate) fn decapsulate<
             (length ${private_key}.f_value))"#
     );
     let mut decrypted = [0u8; 32];
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
 
     crate::ind_cpa::decrypt::<
@@ -488,7 +485,6 @@ pub(crate) fn decapsulate<
         &mut expected_ciphertext,
         &mut r_as_ntt,
         &mut error_2,
-        &mut scratch,
         &mut cache,
         &mut accumulator,
     );
@@ -1086,7 +1082,6 @@ pub(crate) mod unpacked {
         let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
             from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
         let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-        let mut scratch = PolynomialRingElement::<Vector>::ZERO();
 
         let mut accumulator = [0i32; 256];
         let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
@@ -1115,7 +1110,6 @@ pub(crate) mod unpacked {
             &mut ciphertext,
             &mut r_as_ntt,
             &mut error_2,
-            &mut scratch,
             &mut cache,
             &mut accumulator,
         );
@@ -1203,8 +1197,6 @@ pub(crate) mod unpacked {
         assert (v (Spec.MLKEM.v_C2_SIZE $K) == 32 * v (Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR $K))"#
         );
         let mut decrypted = [0u8; SHARED_SECRET_SIZE];
-
-        let mut scratch = PolynomialRingElement::<Vector>::ZERO();
         let mut accumulator = [0i32; 256];
 
         ind_cpa::decrypt_unpacked::<
@@ -1278,7 +1270,6 @@ pub(crate) mod unpacked {
             &mut expected_ciphertext,
             &mut r_as_ntt,
             &mut error_2,
-            &mut scratch,
             &mut cache,
             &mut accumulator,
         );

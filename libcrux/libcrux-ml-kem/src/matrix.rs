@@ -120,8 +120,7 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     r_as_ntt: &[PolynomialRingElement<Vector>],
     error_2: &PolynomialRingElement<Vector>,
     message: &PolynomialRingElement<Vector>,
-    result: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
+    v: &mut PolynomialRingElement<Vector>,
     cache: &[PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
@@ -129,10 +128,11 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     for i in 0..K {
         t_as_ntt[i].accumulating_ntt_multiply_use_cache(&r_as_ntt[i], accumulator, &cache[i]);
     }
-    PolynomialRingElement::reducing_from_i32_array(accumulator, result);
+    // XXX: Could possibly reuse part of the cache here.
+    PolynomialRingElement::reducing_from_i32_array(accumulator, v);
 
-    invert_ntt_montgomery::<K, Vector>(result);
-    error_2.add_message_error_reduce(message, result, &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K, Vector>(v);
+    error_2.add_message_error_reduce(message, v);
 }
 
 /// Compute u := InvertNTT(Aᵀ ◦ r̂) + e₁
