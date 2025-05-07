@@ -1,7 +1,7 @@
 use crate::{
     hax_utils::hax_debug_assert,
     polynomial::{zeta, PolynomialRingElement, VECTORS_IN_RING_ELEMENT},
-    vector::{montgomery_multiply_fe, Operations},
+    vector::Operations,
 };
 
 #[inline(always)]
@@ -196,17 +196,8 @@ pub(crate) fn ntt_at_layer_3<Vector: Operations>(
         Spec.Utils.is_intb (pow2 15 - 1)
         (v (Seq.index (Libcrux_ml_kem.Vector.Traits.f_to_i16_array $a) i) +
         v (Seq.index (Libcrux_ml_kem.Vector.Traits.f_to_i16_array t) i))))"#))]
-fn ntt_layer_int_vec_step<Vector: Operations>(
-    a: &mut Vector,
-    b: &mut Vector,
-    scratch: &mut Vector,
-    zeta_r: i16,
-) {
-    *scratch = b.clone(); // XXX: Two copies here may not be necessary.
-    montgomery_multiply_fe::<Vector>(scratch, zeta_r);
-    *b = a.clone();
-    Vector::add(a, scratch);
-    Vector::sub(b, scratch);
+fn ntt_layer_int_vec_step<Vector: Operations>(a: &mut Vector, b: &mut Vector, zeta_r: i16) {
+    Vector::montgomery_butterfly(a, b, zeta_r);
 }
 
 #[inline(always)]
@@ -225,7 +216,6 @@ pub(crate) fn ntt_at_layer_4_plus<Vector: Operations>(
     zeta_i: &mut usize,
     re: &mut PolynomialRingElement<Vector>,
     layer: usize,
-    scratch: &mut Vector,
     _initial_coefficient_bound: usize, // This can be used for specifying the range of values allowed in re
 ) {
     let step = 1 << layer;
@@ -241,7 +231,7 @@ pub(crate) fn ntt_at_layer_4_plus<Vector: Operations>(
         let (b, rest) = rest.split_at_mut(step_vec);
         remaining_elements = rest;
         for j in 0..step_vec {
-            ntt_layer_int_vec_step(&mut a[j], &mut b[j], scratch, zeta(*zeta_i));
+            ntt_layer_int_vec_step(&mut a[j], &mut b[j], zeta(*zeta_i));
         }
     }
 }
@@ -270,10 +260,8 @@ pub(crate) fn ntt_at_layer_4_plus<Vector: Operations>(
 )]
 #[hax_lib::requires(fstar!(r#"forall i. i < 8 ==> ntt_layer_7_pre (${re}.f_coefficients.[ sz i ])
     (${re}.f_coefficients.[ sz i +! sz 8 ])"#))]
-pub(crate) fn ntt_at_layer_7<Vector: Operations>(
-    re: &mut PolynomialRingElement<Vector>,
-    scratch: &mut Vector,
-) {
+pub(crate) fn ntt_at_layer_7<Vector: Operations>(re: &mut PolynomialRingElement<Vector>) {
+    let (a, b) = re.coefficients[..].split_at_mut(VECTORS_IN_RING_ELEMENT / 2);
     let step = VECTORS_IN_RING_ELEMENT / 2;
     hax_lib::fstar!(r#"assert (v $step == 8)"#);
     for j in 0..step {
@@ -285,11 +273,7 @@ pub(crate) fn ntt_at_layer_7<Vector: Operations>(
             )
         });
         hax_lib::fstar!(r#"reveal_opaque (`%ntt_layer_7_pre) (ntt_layer_7_pre #$:Vector)"#);
-        *scratch = re.coefficients[j + step].clone();
-        Vector::multiply_by_constant(scratch, -1600);
-        re.coefficients[j + step] = re.coefficients[j];
-        Vector::add(&mut re.coefficients[j], scratch);
-        Vector::sub(&mut re.coefficients[j + step], scratch);
+        Vector::butterfly(&mut a[j], &mut b[j], -1600);
     }
 }
 
@@ -303,16 +287,15 @@ pub(crate) fn ntt_at_layer_7<Vector: Operations>(
     Libcrux_ml_kem.Serialize.coefficients_field_modulus_range #$:Vector ${re}_future"#))]
 pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
     re: &mut PolynomialRingElement<Vector>,
-    scratch: &mut Vector,
 ) {
     // Due to the small coefficient bound, we can skip the first round of
     // Montgomery reductions.
-    ntt_at_layer_7(re, scratch);
+    ntt_at_layer_7(re);
 
     let mut zeta_i = 1;
-    ntt_at_layer_4_plus(&mut zeta_i, re, 6, scratch, 11207);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 5, scratch, 11207 + 3328);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 4, scratch, 11207 + 2 * 3328);
+    ntt_at_layer_4_plus(&mut zeta_i, re, 6, 11207);
+    ntt_at_layer_4_plus(&mut zeta_i, re, 5, 11207 + 3328);
+    ntt_at_layer_4_plus(&mut zeta_i, re, 4, 11207 + 2 * 3328);
     ntt_at_layer_3(&mut zeta_i, re, 11207 + 3 * 3328);
     ntt_at_layer_2(&mut zeta_i, re, 11207 + 4 * 3328);
     ntt_at_layer_1(&mut zeta_i, re, 11207 + 5 * 3328);
@@ -327,7 +310,6 @@ pub(crate) fn ntt_binomially_sampled_ring_element<Vector: Operations>(
     Spec.MLKEM.poly_ntt (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector $re)"#))]
 pub(crate) fn ntt_vector_u<const VECTOR_U_COMPRESSION_FACTOR: usize, Vector: Operations>(
     re: &mut PolynomialRingElement<Vector>,
-    scratch: &mut Vector,
 ) {
     hax_debug_assert!(to_i16_array(re)
         .into_iter()
@@ -335,10 +317,10 @@ pub(crate) fn ntt_vector_u<const VECTOR_U_COMPRESSION_FACTOR: usize, Vector: Ope
 
     let mut zeta_i = 0;
 
-    ntt_at_layer_4_plus(&mut zeta_i, re, 7, scratch, 3328);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 6, scratch, 2 * 3328);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 5, scratch, 3 * 3328);
-    ntt_at_layer_4_plus(&mut zeta_i, re, 4, scratch, 4 * 3328);
+    ntt_at_layer_4_plus(&mut zeta_i, re, 7, 3328);
+    ntt_at_layer_4_plus(&mut zeta_i, re, 6, 2 * 3328);
+    ntt_at_layer_4_plus(&mut zeta_i, re, 5, 3 * 3328);
+    ntt_at_layer_4_plus(&mut zeta_i, re, 4, 4 * 3328);
     ntt_at_layer_3(&mut zeta_i, re, 5 * 3328);
     ntt_at_layer_2(&mut zeta_i, re, 6 * 3328);
     ntt_at_layer_1(&mut zeta_i, re, 7 * 3328);

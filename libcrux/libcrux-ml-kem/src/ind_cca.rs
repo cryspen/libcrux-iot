@@ -421,7 +421,7 @@ pub(crate) fn decapsulate<
         ind_cpa_secret_key,
         &ciphertext.value,
         &mut decrypted,
-        &mut scratch,
+        &mut scratch.coefficients[0],
         &mut accumulator,
     );
 
@@ -1229,7 +1229,7 @@ pub(crate) mod unpacked {
             &key_pair.private_key.ind_cpa_private_key,
             &ciphertext.value,
             &mut decrypted,
-            &mut scratch,
+            &mut scratch.coefficients[0],
             &mut accumulator,
         );
 

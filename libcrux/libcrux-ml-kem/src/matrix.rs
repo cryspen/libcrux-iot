@@ -89,7 +89,7 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     secret_as_ntt: &[PolynomialRingElement<Vector>; K],
     u_as_ntt: &[PolynomialRingElement<Vector>; K],
     result: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     accumulator: &mut [i32; 256],
 ) {
     *accumulator = [0i32; 256];
@@ -98,7 +98,7 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     }
 
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
-    invert_ntt_montgomery::<K, Vector>(result, &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K, Vector>(result, scratch);
     v.subtract_reduce(result);
 }
 

@@ -228,6 +228,14 @@ impl Operations for PortableVector {
         montgomery_multiply_by_constant(v, r)
     }
 
+    fn montgomery_butterfly(a: &mut Self, b: &mut Self, fer: i16) {
+        montgomery_butterfly(a, b, fer)
+    }
+
+    fn butterfly(a: &mut Self, b: &mut Self, fer: i16) {
+        butterfly(a, b, fer)
+    }
+
     #[inline(always)]
     #[requires(fstar!(r#"forall (i:nat). i < 16 ==> v (Seq.index (impl.f_repr $a) i) >= 0 /\
         v (Seq.index (impl.f_repr $a) i) < 3329"#))]
