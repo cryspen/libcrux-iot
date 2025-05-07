@@ -1,11 +1,11 @@
 #![no_main]
 #![no_std]
-
+use libcrux_nucleo_l4r5zi as board;
 #[cortex_m_rt::entry]
 fn main() -> ! {
     #[cfg(feature = "realtime")]
     {
-        use libcrux_nucleo_l4r5zi::{self as board, init::ClockConfig, real_time::Timer}; // global logger + panicking-behavior + memory layout
+        use libcrux_nucleo_l4r5zi::{init::ClockConfig, real_time::Timer}; // global logger + panicking-behavior + memory layout
 
         // Set up the system clock.
         let clock_config = ClockConfig::Fast;
