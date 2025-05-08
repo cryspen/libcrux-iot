@@ -25,6 +25,10 @@ pub trait Operations: Copy + Clone + Repr {
     #[ensures(|result| fstar!(r#"f_repr $result == $array"#))]
     fn from_i16_array(array: &[i16], out: &mut Self);
 
+    #[requires(array.len() == 16)]
+    #[ensures(|result| fstar!(r#"f_repr $result == $array"#))]
+    fn reducing_from_i32_array(array: &[i32], out: &mut Self);
+
     #[requires(true)]
     #[ensures(|result| fstar!(r#"f_repr $x == $result"#))]
     fn to_i16_array(x: Self, out: &mut [i16; 16]);
@@ -139,20 +143,20 @@ pub trait Operations: Copy + Clone + Repr {
                        Spec.Utils.is_i16b_array 3328 (f_repr ${lhs}) /\
                        Spec.Utils.is_i16b_array 3328 (f_repr ${rhs}) "#))]
     #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array 3328 (f_repr $out)"#))]
-    fn ntt_multiply(
+    fn accumulating_ntt_multiply(
         lhs: &Self,
         rhs: &Self,
-        out: &mut Self,
+        out: &mut [i32],
         zeta0: i16,
         zeta1: i16,
         zeta2: i16,
         zeta3: i16,
     );
 
-    fn ntt_multiply_caching(
+    fn accumulating_ntt_multiply_fill_cache(
         lhs: &Self,
         rhs: &Self,
-        out: &mut Self,
+        accumulator: &mut [i32], // length: 16
         cache: &mut Self,
         zeta0: i16,
         zeta1: i16,
@@ -160,7 +164,12 @@ pub trait Operations: Copy + Clone + Repr {
         zeta3: i16,
     );
 
-    fn ntt_multiply_cached(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self);
+    fn accumulating_ntt_multiply_use_cache(
+        lhs: &Self,
+        rhs: &Self,
+        accumulator: &mut [i32],
+        cache: &Self,
+    );
 
     // Serialization and deserialization
     #[requires(fstar!(r#"Spec.MLKEM.serialize_pre 1 (f_repr $a)"#))]

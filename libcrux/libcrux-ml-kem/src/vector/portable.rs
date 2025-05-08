@@ -1,5 +1,5 @@
 use super::Operations;
-mod arithmetic;
+pub(crate) mod arithmetic;
 mod compress;
 mod ntt;
 mod sampling;
@@ -134,6 +134,13 @@ impl Operations for PortableVector {
     #[ensures(|out| fstar!(r#"impl.f_repr out == $array"#))]
     fn from_i16_array(array: &[i16], out: &mut Self) {
         from_i16_array(array, out)
+    }
+
+    #[inline(always)]
+    #[requires(array.len() == 16)]
+    #[ensures(|out| fstar!(r#"impl.f_repr out == $array"#))]
+    fn reducing_from_i32_array(array: &[i32], out: &mut Self) {
+        reducing_from_i32_array(array, out)
     }
 
     #[inline(always)]
@@ -307,40 +314,35 @@ impl Operations for PortableVector {
     }
 
     #[inline(always)]
-    #[requires(fstar!(r#"Spec.Utils.is_i16b 1664 zeta0 /\ Spec.Utils.is_i16b 1664 zeta1 /\
-                       Spec.Utils.is_i16b 1664 zeta2 /\ Spec.Utils.is_i16b 1664 zeta3 /\
-                       Spec.Utils.is_i16b_array 3328 (impl.f_repr ${lhs}) /\
-                       Spec.Utils.is_i16b_array 3328 (impl.f_repr ${rhs})"#))]
-    #[ensures(|out| fstar!(r#"Spec.Utils.is_i16b_array 3328 (impl.f_repr $out)"#))]
-    fn ntt_multiply(
+    fn accumulating_ntt_multiply(
         lhs: &Self,
         rhs: &Self,
-        out: &mut Self,
+        out: &mut [i32],
         zeta0: i16,
         zeta1: i16,
         zeta2: i16,
         zeta3: i16,
     ) {
-        ntt_multiply(lhs, rhs, out, zeta0, zeta1, zeta2, zeta3)
+        accumulating_ntt_multiply(lhs, rhs, out, zeta0, zeta1, zeta2, zeta3)
     }
 
     #[inline(always)]
-    fn ntt_multiply_caching(
+    fn accumulating_ntt_multiply_fill_cache(
         lhs: &Self,
         rhs: &Self,
-        out: &mut Self,
+        out: &mut [i32],
         cache: &mut Self,
         zeta0: i16,
         zeta1: i16,
         zeta2: i16,
         zeta3: i16,
     ) {
-        ntt_multiply_caching(lhs, rhs, out, cache, zeta0, zeta1, zeta2, zeta3)
+        accumulating_ntt_multiply_fill_cache(lhs, rhs, out, cache, zeta0, zeta1, zeta2, zeta3)
     }
 
     #[inline(always)]
-    fn ntt_multiply_cached(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self) {
-        ntt_multiply_cached(lhs, rhs, out, cache)
+    fn accumulating_ntt_multiply_use_cache(lhs: &Self, rhs: &Self, out: &mut [i32], cache: &Self) {
+        accumulating_ntt_multiply_use_cache(lhs, rhs, out, cache)
     }
 
     #[inline(always)]
