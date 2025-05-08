@@ -21,8 +21,8 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 libcrux-testbench = { path = "../libcrux-testbench" }
-embassy-stm32 = { version = "0.2.0", features = [ "stm32l4r5zi", "defmt", "time", "time-driver-any" ] }
-embassy-time = { version = "0.4", features = ["tick-hz-80_000_000", "generic-queue-8"]}
+embassy-stm32 = { version = "0.2.0", features = [ "stm32l4r5zi", "defmt" ] }
+embassy-time = { version = "0.4", features = ["tick-hz-80_000_000", "generic-queue-8"], optional = true}
 libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem" }
 embedded-alloc = "0.6.0"
 libcrux-pqm4 = { path = "../sys/pqm4" }
@@ -38,6 +38,7 @@ mldsa87 = ["libcrux-testbench/mldsa87"]
 mlkem512 = ["libcrux-testbench/mlkem512"]
 mlkem768 = ["libcrux-testbench/mlkem768"]
 mlkem1024 = ["libcrux-testbench/mlkem1024"]
+realtime = ["dep:embassy-time", "embassy-stm32/time", "embassy-stm32/time-driver-any"] # This allows real time measurements. The clock MUST be run with the `ClockConfig::Fast` configuration, otherwise the device will panic.
 
 # cargo build/run
 [profile.dev]
