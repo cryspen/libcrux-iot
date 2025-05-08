@@ -302,6 +302,46 @@ fn ntt_multiply<Vector: Operations>(
     }
 }
 
+#[inline(always)]
+#[hax_lib::fstar::verification_status(lax)]
+fn ntt_multiply_caching<Vector: Operations>(
+    myself: &PolynomialRingElement<Vector>,
+    rhs: &PolynomialRingElement<Vector>,
+    out: &mut PolynomialRingElement<Vector>,
+    cache: &mut PolynomialRingElement<Vector>,
+) {
+    for i in 0..VECTORS_IN_RING_ELEMENT {
+        Vector::ntt_multiply_caching(
+            &myself.coefficients[i],
+            &rhs.coefficients[i],
+            &mut out.coefficients[i],
+            &mut cache.coefficients[i],
+            zeta(64 + 4 * i),
+            zeta(64 + 4 * i + 1),
+            zeta(64 + 4 * i + 2),
+            zeta(64 + 4 * i + 3),
+        );
+    }
+}
+
+#[inline(always)]
+#[hax_lib::fstar::verification_status(lax)]
+fn ntt_multiply_cached<Vector: Operations>(
+    myself: &PolynomialRingElement<Vector>,
+    rhs: &PolynomialRingElement<Vector>,
+    out: &mut PolynomialRingElement<Vector>,
+    cache: &PolynomialRingElement<Vector>,
+) {
+    for i in 0..VECTORS_IN_RING_ELEMENT {
+        Vector::ntt_multiply_cached(
+            &myself.coefficients[i],
+            &rhs.coefficients[i],
+            &mut out.coefficients[i],
+            &cache.coefficients[i],
+        );
+    }
+}
+
 // FIXME: We pulled out all the items because of https://github.com/hacspec/hax/issues/1183
 // Revisit when that issue is fixed.
 #[hax_lib::attributes]
@@ -388,6 +428,16 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     #[inline(always)]
     pub(crate) fn ntt_multiply(&self, rhs: &Self, out: &mut Self) {
         ntt_multiply(self, rhs, out)
+    }
+
+    #[inline(always)]
+    pub(crate) fn ntt_multiply_caching(&self, rhs: &Self, out: &mut Self, cache: &mut Self) {
+        ntt_multiply_caching(self, rhs, out, cache)
+    }
+
+    #[inline(always)]
+    pub(crate) fn ntt_multiply_cached(&self, rhs: &Self, out: &mut Self, cache: &Self) {
+        ntt_multiply_cached(self, rhs, out, cache)
     }
 }
 

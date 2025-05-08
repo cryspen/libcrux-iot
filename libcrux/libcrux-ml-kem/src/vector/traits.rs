@@ -149,6 +149,19 @@ pub trait Operations: Copy + Clone + Repr {
         zeta3: i16,
     );
 
+    fn ntt_multiply_caching(
+        lhs: &Self,
+        rhs: &Self,
+        out: &mut Self,
+        cache: &mut Self,
+        zeta0: i16,
+        zeta1: i16,
+        zeta2: i16,
+        zeta3: i16,
+    );
+
+    fn ntt_multiply_cached(lhs: &Self, rhs: &Self, out: &mut Self, cache: &Self);
+
     // Serialization and deserialization
     #[requires(fstar!(r#"Spec.MLKEM.serialize_pre 1 (f_repr $a)"#))]
     #[ensures(|result| fstar!(r#"Spec.MLKEM.serialize_pre 1 (f_repr $a) ==> Spec.MLKEM.serialize_post 1 (f_repr $a) $result"#))]

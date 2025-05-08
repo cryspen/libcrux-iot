@@ -28,6 +28,7 @@ fn main() -> ! {
     }
 
     let randomness_gen = [1u8; libcrux_ml_kem::KEY_GENERATION_SEED_SIZE];
+
     let pair = core::hint::black_box(mlkem::generate_key_pair(randomness_gen));
     let randomness_encaps = [2u8; libcrux_ml_kem::ENCAPS_SEED_SIZE];
     let (ciphertext, _shared_secret_initiator) =
