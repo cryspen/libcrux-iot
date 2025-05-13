@@ -194,7 +194,7 @@ def bloop_inner(i, y, zeta):
 
         return [
             f"let a{x} = s.get_with_zeta({y},{x},{zeta_2prime});",
-            f"let d{x} = s.get_with_zeta({y},{x},{zeta_2prime});"
+            f"let d{x} = d[{x}][{zeta_2prime}];"
         ]
 
     def compute(x):
@@ -205,7 +205,7 @@ def bloop_inner(i, y, zeta):
 
         r_ =  rn//2 + 1 if  zeta < rn else rn//2 # // is integer division
         x_plus_2y = (x + 2 * y) % 5
-        print(f"let bx{x_plus_2y} = a{x} ^ d{x}.rotate_left({r_});")
+        print(f"let bx{x_plus_2y} = (a{x} ^ d{x}).rotate_left({r_});")
 
     def compute_expr(x):
         y_2prime = ni_y(i+1, x, y)
@@ -213,9 +213,9 @@ def bloop_inner(i, y, zeta):
         zeta_prime = (zeta - rn) % 2 
         zeta_2prime = (zeta_prime + big_o(i, x, y_2prime)) % 2
 
-        r_ =  rn//2 + 1 if  zeta < rn else rn//2 # // is integer division
+        r_ =  rn//2 + 1 if  zeta < (rn %2) else rn//2 # // is integer division
         x_plus_2y = (x + 2 * y) % 5
-        return f"a{x} ^ d{x}.rotate_left({r_})"
+        return f"(a{x} ^ d{x}).rotate_left({r_})"
 
     def as_tuple_str(exprs):
         out = "("
@@ -287,7 +287,8 @@ def dloop(i):
     def compute(x, zeta):
         x_minus_one = (x - 1) % 5
         x_plus_one = (x + 1) % 5
-        print(f"let {dvar(x, zeta)} = {cvar(x_minus_one, zeta)} ^ {cvar(x_plus_one, 1-zeta)}.rotate_left(1);")
+        rotate_call = "" if zeta == 0 else ".rotate_left(1)"
+        print(f"let {dvar(x, zeta)} = {cvar(x_minus_one, zeta)} ^ {cvar(x_plus_one, 1-zeta)}{rotate_call};")
 
     def store(x, zeta):
         print(f"d[{x}][{zeta}] = {dvar(x, zeta)};") 
