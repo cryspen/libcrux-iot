@@ -296,7 +296,7 @@ def dloop(i):
     def compute(x, zeta):
         x_minus_one = (x - 1) % 5
         x_plus_one = (x + 1) % 5
-        rotate_call = "" if zeta == 0 else ".rotate_left(1)"
+        rotate_call = "" if zeta == 1 else ".rotate_left(1)"
         return f"let {dvar(x, zeta)} = {cvar(x_minus_one, zeta)} ^ {cvar(x_plus_one, 1-zeta)}{rotate_call};\n"
 
     def store(x, zeta):
@@ -387,3 +387,4 @@ for i in range(4):
 #print(defn_4roundfn)
 #print(defn_full())
 
+#print(round(3))

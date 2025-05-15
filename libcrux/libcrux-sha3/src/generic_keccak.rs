@@ -864,15 +864,15 @@ pub(crate) fn keccakf1600_round0(
 
         let c_x4_zeta1 = c[4][1];
 
-        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1;
+        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
         d[0][0] = d_x0_zeta0;
-        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0.rotate_left(1);
+        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
         d[2][1] = d_x2_zeta1;
-        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1;
+        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
         d[4][0] = d_x4_zeta0;
-        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0.rotate_left(1);
+        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
         d[1][1] = d_x1_zeta1;
-        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1;
+        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
         d[3][0] = d_x3_zeta0;
         let c_x1_zeta0 = c[1][0];
 
@@ -882,15 +882,15 @@ pub(crate) fn keccakf1600_round0(
 
         let c_x0_zeta0 = c[0][0];
 
-        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0.rotate_left(1);
+        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
         d[0][1] = d_x0_zeta1;
-        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1;
+        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
         d[2][0] = d_x2_zeta0;
-        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0.rotate_left(1);
+        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
         d[4][1] = d_x4_zeta1;
-        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1;
+        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
         d[1][0] = d_x1_zeta0;
-        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0.rotate_left(1);
+        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         d[3][1] = d_x3_zeta1;
     }
     {
@@ -1319,15 +1319,15 @@ pub(crate) fn keccakf1600_round1(
 
         let c_x4_zeta1 = c[4][1];
 
-        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1;
+        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
         d[0][0] = d_x0_zeta0;
-        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0.rotate_left(1);
+        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
         d[2][1] = d_x2_zeta1;
-        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1;
+        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
         d[4][0] = d_x4_zeta0;
-        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0.rotate_left(1);
+        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
         d[1][1] = d_x1_zeta1;
-        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1;
+        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
         d[3][0] = d_x3_zeta0;
         let c_x1_zeta0 = c[1][0];
 
@@ -1337,15 +1337,15 @@ pub(crate) fn keccakf1600_round1(
 
         let c_x0_zeta0 = c[0][0];
 
-        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0.rotate_left(1);
+        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
         d[0][1] = d_x0_zeta1;
-        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1;
+        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
         d[2][0] = d_x2_zeta0;
-        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0.rotate_left(1);
+        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
         d[4][1] = d_x4_zeta1;
-        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1;
+        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
         d[1][0] = d_x1_zeta0;
-        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0.rotate_left(1);
+        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         d[3][1] = d_x3_zeta1;
     }
     {
@@ -1774,15 +1774,15 @@ pub(crate) fn keccakf1600_round2(
 
         let c_x4_zeta1 = c[4][1];
 
-        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1;
+        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
         d[0][0] = d_x0_zeta0;
-        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0.rotate_left(1);
+        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
         d[2][1] = d_x2_zeta1;
-        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1;
+        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
         d[4][0] = d_x4_zeta0;
-        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0.rotate_left(1);
+        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
         d[1][1] = d_x1_zeta1;
-        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1;
+        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
         d[3][0] = d_x3_zeta0;
         let c_x1_zeta0 = c[1][0];
 
@@ -1792,15 +1792,15 @@ pub(crate) fn keccakf1600_round2(
 
         let c_x0_zeta0 = c[0][0];
 
-        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0.rotate_left(1);
+        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
         d[0][1] = d_x0_zeta1;
-        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1;
+        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
         d[2][0] = d_x2_zeta0;
-        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0.rotate_left(1);
+        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
         d[4][1] = d_x4_zeta1;
-        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1;
+        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
         d[1][0] = d_x1_zeta0;
-        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0.rotate_left(1);
+        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         d[3][1] = d_x3_zeta1;
     }
     {
@@ -2229,15 +2229,15 @@ pub(crate) fn keccakf1600_round3(
 
         let c_x4_zeta1 = c[4][1];
 
-        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1;
+        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
         d[0][0] = d_x0_zeta0;
-        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0.rotate_left(1);
+        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
         d[2][1] = d_x2_zeta1;
-        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1;
+        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
         d[4][0] = d_x4_zeta0;
-        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0.rotate_left(1);
+        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
         d[1][1] = d_x1_zeta1;
-        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1;
+        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
         d[3][0] = d_x3_zeta0;
         let c_x1_zeta0 = c[1][0];
 
@@ -2247,15 +2247,15 @@ pub(crate) fn keccakf1600_round3(
 
         let c_x0_zeta0 = c[0][0];
 
-        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0.rotate_left(1);
+        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
         d[0][1] = d_x0_zeta1;
-        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1;
+        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
         d[2][0] = d_x2_zeta0;
-        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0.rotate_left(1);
+        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
         d[4][1] = d_x4_zeta1;
-        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1;
+        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
         d[1][0] = d_x1_zeta0;
-        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0.rotate_left(1);
+        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         d[3][1] = d_x3_zeta1;
     }
     {
