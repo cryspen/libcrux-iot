@@ -206,7 +206,7 @@ pub mod portable {
     use generic_keccak::KeccakState as GenericState;
 
     /// The Keccak state for the incremental API.
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Debug)]
     pub struct KeccakState {
         state: GenericState<1, [u32; 2]>,
     }
