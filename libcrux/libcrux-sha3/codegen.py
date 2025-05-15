@@ -164,14 +164,17 @@ def cloop(i):
     def zeta_y(zeta, i, x, y):
         return (zeta + big_o(i, x, ni_y(i, x, y))) % 2
 
+    out = ""
     for x in range(5):
         for zeta in range(2):
-            print("{")
+            out += "{\n"
             for y in range(5):
                 zy = zeta_y(zeta, i, x, y)
-                print(f"let ax_{y} = s.get_with_zeta({y}, {x}, {zy});")
-            print(f"c[{x}][{zeta}] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;")
-            print("}")
+                out += f"let ax_{y} = s.get_with_zeta({y}, {x}, {zy});\n"
+            out += f"c[{x}][{zeta}] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;\n"
+            out += "}\n"
+
+    return out
 
 def flatten(iterables):
     return (elem for iterable in iterables for elem in iterable)
@@ -183,8 +186,10 @@ def bloop_inner(i, y, zeta):
         zeta_prime = (zeta - rn) % 2 
         zeta_2prime = (zeta_prime + big_o(i, x, y_2prime)) % 2
 
-        print(f"let a{x} = s.get_with_zeta({y},{x},{zeta_2prime});")
-        print(f"let d{x} = s.get_with_zeta({y},{x},{zeta_2prime});")
+        return f"""
+        let a{x} = s.get_with_zeta({y_2prime},{x},{zeta_2prime});
+        let d{x} = d[{x}][{zeta_2prime}];
+        """
 
     def load_assign_stmt(x):
         y_2prime = ni_y(i+1, x, y)
@@ -193,7 +198,7 @@ def bloop_inner(i, y, zeta):
         zeta_2prime = (zeta_prime + big_o(i, x, y_2prime)) % 2
 
         return [
-            f"let a{x} = s.get_with_zeta({y},{x},{zeta_2prime});",
+            f"let a{x} = s.get_with_zeta({y_2prime},{x},{zeta_2prime});",
             f"let d{x} = d[{x}][{zeta_2prime}];"
         ]
 
@@ -205,7 +210,7 @@ def bloop_inner(i, y, zeta):
 
         r_ =  rn//2 + 1 if  zeta < rn else rn//2 # // is integer division
         x_plus_2y = (x + 2 * y) % 5
-        print(f"let bx{x_plus_2y} = (a{x} ^ d{x}).rotate_left({r_});")
+        return f"let bx{x_plus_2y} = (a{x} ^ d{x}).rotate_left({r_});\n"
 
     def compute_expr(x):
         y_2prime = ni_y(i+1, x, y)
@@ -233,12 +238,10 @@ def bloop_inner(i, y, zeta):
         loads = "\n".join(flatten(map(load_assign_stmt, xrange)))
         comp_tuple = as_tuple_str(map(compute_expr, xrange))
 
-        return f"let {b_names} = {{ {loads} {comp_tuple} }};"        
+        return f"let {b_names} = {{\n {loads}\n {comp_tuple}\n }};\n"
 
     break_at = 2
-
-    print(joint_block(range(break_at)))
-    print(joint_block(range(break_at, 5)))
+    return joint_block(range(break_at)) + joint_block(range(break_at, 5))
 
 
 def aloop_inner(i, y, zeta):
@@ -249,30 +252,36 @@ def aloop_inner(i, y, zeta):
         return f"bx{x}"
 
     def load(x):
-        print(f"let bx{x} = b[{x}];")
+        return f"let bx{x} = b[{x}];\n"
 
     def compute(x):
         x_plus_one = (x + 1) % 5
         x_plus_two = (x + 2) % 5
-        print(f"let {avar(x)} = {bvar(x)} ^ ((! {bvar(x_plus_one)}) & {bvar(x_plus_two)});")
+        return f"let {avar(x)} = {bvar(x)} ^ ((! {bvar(x_plus_one)}) & {bvar(x_plus_two)});\n"
 
     def store(x):
         y_2prime = ni_y(i+1,x, y)
         zeta_plus_o = (zeta + big_o(i+1, x, y_2prime)) % 2
-        print(f"s.set_with_zeta({y_2prime}, {x}, {zeta_plus_o}, {avar(x)});")
+        return f"s.set_with_zeta({y_2prime}, {x}, {zeta_plus_o}, {avar(x)});\n"
 
+    out = ""
     for x in range(5):
-        compute(x)
-        store(x)
+        out += compute(x)
+        out += store(x)
+
+    return out
 
 def abloop(i):
+    out = ""
     break_at = 2
     for y in range(5):
         for zeta in range(2):
-            print("{")
-            bloop_inner(i, y, zeta)
-            aloop_inner(i, y, zeta)
-            print("}")
+            out += "{\n"
+            out += bloop_inner(i, y, zeta)
+            out += aloop_inner(i, y, zeta)
+            out += "}\n"
+
+    return out
 
 def dloop(i):
     def cvar(x, zeta):
@@ -282,80 +291,99 @@ def dloop(i):
         return f"d_x{x}_zeta{zeta}"
 
     def load(x, zeta):
-        print(f"let {cvar(x, zeta)} = c[{x}][{zeta}];")
+        return f"let {cvar(x, zeta)} = c[{x}][{zeta}];\n"
 
     def compute(x, zeta):
         x_minus_one = (x - 1) % 5
         x_plus_one = (x + 1) % 5
         rotate_call = "" if zeta == 0 else ".rotate_left(1)"
-        print(f"let {dvar(x, zeta)} = {cvar(x_minus_one, zeta)} ^ {cvar(x_plus_one, 1-zeta)}{rotate_call};")
+        return f"let {dvar(x, zeta)} = {cvar(x_minus_one, zeta)} ^ {cvar(x_plus_one, 1-zeta)}{rotate_call};\n"
 
     def store(x, zeta):
-        print(f"d[{x}][{zeta}] = {dvar(x, zeta)};") 
+        return f"d[{x}][{zeta}] = {dvar(x, zeta)};\n"
 
     ld_order = [(4,0),(1,1), (3,0), (0,1), (2,0), (4,1), (1,0), (3,1),(2,1), (0,0)];
     comp_order = [(0,0), (2,1), (4,0), (1,1), (3,0), (0,1), (2,0), (4,1 ), (1,0), (3,1)]
 
-    print("{")
+    out = "{\n"
 
     for j in range(6):
         (x, zeta) = ld_order[j]
-        load(x, zeta)
+        out += f"{load(x, zeta)}\n"
 
     for j in range(5):
         (x, zeta) = comp_order[j]
-        compute(x, zeta)
-        store(x, zeta)
+        out += compute(x, zeta)
+        out += store(x, zeta)
 
     for j in range(6, 10):
         (x, zeta) = ld_order[j]
-        load(x, zeta)
+        out += f"{load(x, zeta)}\n"
 
     for j in range(5, 10):
         (x, zeta) = comp_order[j]
-        compute(x, zeta)
-        store(x, zeta)
+        out += compute(x, zeta)
+        out += store(x, zeta)
 
-    print("}")
+    out += "}\n"
+    return out
 
+    
 
 def round(i):
-    cloop(i)
-    dloop(i)
-    abloop(i)
+    out = ""
+    out += cloop(i)
+    out += dloop(i)
+    out += abloop(i)
 
     for zeta in range(2):
         zeta_prime = (zeta  + big_o(i+1, 0,0)) %2
-        print(f"let az{zeta} = s.get_with_zeta(0,0, {zeta_prime});")
+        out += f"let az{zeta} = s.get_with_zeta(0,0, {zeta_prime});\n"
 
-    rc_lo = rc_i(i) & 0xffff_ffff
-    rc_hi = rc_i(i) >> 32
-    rc_z = [rc_lo, rc_hi]
 
+    # TODO: This can be moved to aloop, where we initially set Aba0 and Aba1
     for zeta in range(2):
         zeta_prime = (zeta  + big_o(i+1, 0,0)) %2
-        print(f"s.set_with_zeta(0,0, {zeta_prime}, az{zeta} ^ {rc_z[zeta]});")
+        out += f"s.set_with_zeta(0,0, {zeta_prime}, az{zeta} ^ RC_INTERLEAVED_{zeta}[i]);\n"
+    return out
 
-#abloop(1)
 
-print("#[inline(always)]")
-print("pub(crate) fn keccakf1600(s: &mut KeccakState<1, Lane2U32>) {")
-print("  let mut c = [[0; 2]; 5];")
-print("  let mut d = [[0; 2]; 5];")
+def defn_roundfn(i):
+    return f"""
+#[inline(always)]
+    pub(crate) fn keccakf1600_round{i}(s: &mut KeccakState<1, Lane2U32>, c: &mut [Lane2U32; 5], d: &mut [Lane2U32; 5], i: usize) {{
+        {round(i)}
+    }}
+    """
 
-for i in range(24):
-    round(i)
 
-print("}")
+defn_4roundfn = """
+#[inline(always)]
+pub(crate) fn keccakf1600_4round(s: &mut KeccakState<1, Lane2U32>, mut c: [Lane2U32; 5], mut d: [Lane2U32; 5], i: usize) {
+    keccakf1600_round0(s, c, d, i);
+    keccakf1600_round1(s, c, d, i+1);
+    keccakf1600_round2(s, c, d, i+2);
+    keccakf1600_round3(s, c, d, i+3);
+}
+"""
 
-print("#[inline(always)]")
-print("pub(crate) fn keccakf1600_4rounds(s: &mut KeccakState<1, Lane2U32>) {")
-print("  let mut c = [[0; 2]; 5];")
-print("  let mut d = [[0; 2]; 5];")
+def call_4roundfn(c, d):
+    return lambda i: f"keccakf1600_4round(s, &mut c, &mut d, {i*4});"
+
+def defn_full():
+    call_4roundfn_andmut = call_4roundfn("&mut c", "&mut d")
+    return f"""
+#[inline(always)]
+    pub(crate) fn keccakf1600(s: &mut KeccakState<1, Lane2U32>) {{
+        let mut c: [Lane2U32; 5] = [[0;2];5];
+        let mut d: [Lane2U32; 5] = [[0;2];5];
+        {"\n".join(map(call_4roundfn_andmut, range(6)))}
+    }}
+    """
+
 
 for i in range(4):
-    round(i)
-
-print("}")
-
+    print(defn_roundfn(i))
+#print(defn_4roundfn)
+#print(defn_full())
 
