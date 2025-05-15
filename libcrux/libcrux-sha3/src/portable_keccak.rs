@@ -37,6 +37,68 @@ fn _vbcaxq_u64(a: u64, b: u64, c: u64) -> u64 {
 fn _veorq_n_u64(a: u64, c: u64) -> u64 {
     a ^ c
 }
+#[inline(always)]
+fn to_split(a: u64) -> (u32, u32) {
+    ((a >> 32) as u32, a as u32)
+}
+
+#[inline(always)]
+fn from_split(a: (u32, u32)) -> u64 {
+    (a.0 as u64) << 32 | (a.1 as u64)
+}
+
+///
+/// deinterleave(a) = a_even || a_odd
+#[inline(always)]
+fn interleave(a: u64) -> u64 {
+    let mut even_bits = a & 0x5555_5555_5555_5555;
+    even_bits = (even_bits ^ (even_bits >> 1)) & 0x3333_3333_3333_3333;
+    even_bits = (even_bits ^ (even_bits >> 2)) & 0x0f0f_0f0f_0f0f_0f0f;
+    even_bits = (even_bits ^ (even_bits >> 4)) & 0x00ff_00ff_00ff_00ff;
+    even_bits = (even_bits ^ (even_bits >> 8)) & 0x0000_ffff_0000_ffff;
+    even_bits = (even_bits ^ (even_bits >> 16)) & 0x0000_0000_ffff_ffff;
+
+    let mut odd_bits = (a >> 1) & 0x5555_5555_5555_5555;
+    odd_bits = (odd_bits ^ (odd_bits >> 1)) & 0x3333_3333_3333_3333;
+    odd_bits = (odd_bits ^ (odd_bits >> 2)) & 0x0f0f_0f0f_0f0f_0f0f;
+    odd_bits = (odd_bits ^ (odd_bits >> 4)) & 0x00ff_00ff_00ff_00ff;
+    odd_bits = (odd_bits ^ (odd_bits >> 8)) & 0x0000_ffff_0000_ffff;
+    odd_bits = (odd_bits ^ (odd_bits >> 16)) & 0x0000_0000_ffff_ffff;
+
+    from_split((even_bits as u32, odd_bits as u32))
+}
+fn deinterleave_lane(lane: Lane2U32) -> Lane2U32 {
+    let mut lane_u64 = lane[0] as u64 | (lane[1] as u64) << 32;
+    lane_u64 = deinterleave(lane_u64);
+    [(lane_u64 & 0xffffffff) as u32, (lane_u64 >> 32) as u32]
+}
+
+/// Interleave bits from the top and bottom halves of `input`.
+#[inline(always)]
+fn deinterleave(input: u64) -> u64 {
+    let (even_bits, odd_bits) = to_split(input);
+    let mut even_spaced = even_bits as u64;
+    even_spaced = (even_spaced ^ (even_spaced << 16)) & 0x0000_ffff_0000_ffff;
+    even_spaced = (even_spaced ^ (even_spaced << 8)) & 0x00ff_00ff_00ff_00ff;
+    even_spaced = (even_spaced ^ (even_spaced << 4)) & 0x0f0f_0f0f_0f0f_0f0f;
+    even_spaced = (even_spaced ^ (even_spaced << 2)) & 0x3333_3333_3333_3333;
+    even_spaced = (even_spaced ^ (even_spaced << 1)) & 0x5555_5555_5555_5555;
+
+    let mut odd_spaced = odd_bits as u64;
+    odd_spaced = (odd_spaced ^ (odd_spaced << 16)) & 0x0000_ffff_0000_ffff;
+    odd_spaced = (odd_spaced ^ (odd_spaced << 8)) & 0x00ff_00ff_00ff_00ff;
+    odd_spaced = (odd_spaced ^ (odd_spaced << 4)) & 0x0f0f_0f0f_0f0f_0f0f;
+    odd_spaced = (odd_spaced ^ (odd_spaced << 2)) & 0x3333_3333_3333_3333;
+    odd_spaced = (odd_spaced ^ (odd_spaced << 1)) & 0x5555_5555_5555_5555;
+
+    even_spaced | (odd_spaced << 1)
+}
+
+fn interleave_lane(lane: Lane2U32) -> Lane2U32 {
+    let mut lane_u64 = lane[0] as u64 | (lane[1] as u64) << 32;
+    lane_u64 = interleave(lane_u64);
+    [(lane_u64 & 0xffffffff) as u32, (lane_u64 >> 32) as u32]
+}
 
 #[inline(always)]
 fn shuffle(mut x: u32) -> u32 {
@@ -336,14 +398,14 @@ impl KeccakItem<1> for Lane2U32 {
 
         for i in 0..num_full_blocks {
             let lane = get_ij(state, i / 5, i % 5);
-            let lane = unshuffle_lane(lane);
+            let lane = deinterleave_lane(lane);
             out[0][i * 8..i * 8 + 4].copy_from_slice(&lane[0].to_le_bytes());
             out[0][i * 8 + 4..i * 8 + 8].copy_from_slice(&lane[1].to_le_bytes());
         }
 
         if last_block_len > 4 {
             let lane = get_ij(state, num_full_blocks / 5, num_full_blocks % 5);
-            let lane = unshuffle_lane(lane);
+            let lane = deinterleave_lane(lane);
             let last_half_block_len = last_block_len - 4;
 
             out[0][num_full_blocks * 8..num_full_blocks * 8 + 4]
@@ -352,7 +414,7 @@ impl KeccakItem<1> for Lane2U32 {
                 .copy_from_slice(&lane[1].to_le_bytes()[0..last_half_block_len]);
         } else if last_block_len > 0 {
             let lane = get_ij(state, num_full_blocks / 5, num_full_blocks % 5);
-            let lane = unshuffle_lane(lane);
+            let lane = deinterleave_lane(lane);
 
             out[0][num_full_blocks * 8..num_full_blocks * 8 + last_block_len]
                 .copy_from_slice(&lane[0].to_le_bytes()[0..last_block_len]);
@@ -372,7 +434,7 @@ pub(crate) fn load_block_2u32<const RATE: usize>(
         let offset = start + 8 * i;
         let a = u32::from_le_bytes(blocks[offset..offset + 4].try_into().unwrap());
         let b = u32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
-        state_flat[i] = shuffle_lane([a, b]);
+        state_flat[i] = interleave_lane([a, b]);
     }
     for i in 0..RATE / 8 {
         let got = get_ij(state, i / 5, i % 5);
@@ -398,7 +460,7 @@ pub(crate) fn load_block_full_2u32<const RATE: usize>(
 pub(crate) fn store_block_2u32<const RATE: usize>(s: &[Lane2U32; 25], out: &mut [u8]) {
     for i in 0..RATE / 8 {
         let lane = get_ij(s, i / 5, i % 5);
-        let lane = unshuffle_lane(lane);
+        let lane = deinterleave_lane(lane);
         out[8 * i..8 * i + 4].copy_from_slice(&lane[0].to_le_bytes());
         out[8 * i + 4..8 * i + 8].copy_from_slice(&lane[1].to_le_bytes());
     }

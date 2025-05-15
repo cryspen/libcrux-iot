@@ -4,7 +4,7 @@
 use crate::traits::*;
 
 #[cfg_attr(hax, hax_lib::opaque)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub(crate) struct KeccakState<const N: usize, T: KeccakStateItem<N>> {
     st: [T; 25],
 }
