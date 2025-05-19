@@ -79,3 +79,27 @@ incremental = false
 lto = 'fat'
 opt-level = 3            # <-
 overflow-checks = false  # <-
+
+[[bin]]
+name = "mlkem_stack_keygen"
+required-features = ["stack"]
+
+[[bin]]
+name = "mlkem_stack_encaps"
+required-features = ["stack"]
+
+[[bin]]
+name = "mlkem_stack_decaps"
+required-features = ["stack"]
+
+[[bin]]
+name = "mldsa_stack_keygen"
+required-features = ["stack"]
+
+[[bin]]
+name = "mldsa_stack_sign"
+required-features = ["stack"]
+
+[[bin]]
+name = "mldsa_stack_verify"
+required-features = ["stack"]
