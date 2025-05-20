@@ -40,4 +40,4 @@ jobs:
 
       - name: Build
         working-directory: ${{ matrix.board_directory }}
-        run: cargo build --verbose
+        run: cargo build --release --verbose
