@@ -38,7 +38,7 @@ fn build() {
     {
         panic!("git could not update submodules.")
     }
-    
+
     if !std::process::Command::new("git")
         .arg("-C")
         .arg("pqm4")
@@ -50,7 +50,7 @@ fn build() {
     {
         panic!("git could not checkout submodule branch `origin/pqm4-bindings`.")
     }
-    
+
     if !std::process::Command::new("make")
         .arg("-C")
         .arg("pqm4")
@@ -68,9 +68,10 @@ fn build() {
 
     std::fs::create_dir(lib_path).unwrap();
 
-    
-    let lib_path = lib_path.canonicalize().unwrap_or_else(|_| panic!("Could not canonicalize {lib_path:?}"));
-    
+    let lib_path = lib_path
+        .canonicalize()
+        .unwrap_or_else(|_| panic!("Could not canonicalize {lib_path:?}"));
+
     // Tell cargo to look for shared libraries in the specified directory
     println!("cargo:rustc-link-search={}", lib_path.to_str().unwrap());
 
@@ -112,8 +113,9 @@ pub fn main() {
     // Build the C/ASM files
     build();
 
-    // Set re-run trigger for all of s
-    println!("cargo:rerun-if-changed=pqm4");
+    // XXX: Disabling this, since the `build` process will always
+    // update `pqm4/common/keccakf1600.S` and trigger a rebuild.
+    // println!("cargo:rerun-if-changed=pqm4");
 
     // Generate new bindings. This is a no-op on Windows.
     create_bindings(home_path);

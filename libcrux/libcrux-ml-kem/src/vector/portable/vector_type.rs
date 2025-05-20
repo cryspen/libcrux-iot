@@ -1,5 +1,7 @@
 use crate::vector::traits::FIELD_ELEMENTS_IN_VECTOR;
 
+use super::arithmetic::montgomery_reduce_element;
+
 /// Values having this type hold a representative 'x' of the ML-KEM field.
 /// We use 'fe' as a shorthand for this type.
 pub(crate) type FieldElement = i16;
@@ -28,6 +30,15 @@ pub fn to_i16_array(x: PortableVector, out: &mut [i16; 16]) {
 #[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == $array"#))]
 pub fn from_i16_array(array: &[i16], out: &mut PortableVector) {
     out.elements = array[0..16].try_into().unwrap();
+}
+
+#[inline(always)]
+#[hax_lib::requires(array.len() == 16)]
+#[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == $array"#))]
+pub fn reducing_from_i32_array(array: &[i32], out: &mut PortableVector) {
+    for i in 0..16 {
+        out.elements[i] = montgomery_reduce_element(array[i]);
+    }
 }
 
 #[inline(always)]
