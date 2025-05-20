@@ -1,9 +1,22 @@
-[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+[target.'cfg(all(target_arch = "arm", target_os = "none", not(feature = "stack")))']
 # runner = "probe-rs run --chip STM32L4R5ZITx"
 runner = ["probe-rs", "run", "--chip", "STM32L4R5ZITx", "--log-format", "{s}"]
 
 rustflags = [
-  "-C", "linker=flip-link",
+  # "-C", "linker=flip-link",
+  "-C", "link-arg=-Tlink.x",
+  "-C", "link-arg=-Tdefmt.x",
+  # This is needed if your flash or ram addresses are not aligned to 0x10000 in memory.x
+  # See https://github.com/rust-embedded/cortex-m-quickstart/pull/95
+  "-C", "link-arg=--nmagic",
+]
+
+[target.'cfg(all(target_arch = "arm", target_os = "none", feature = "stack"))']
+# runner = "probe-rs run --chip STM32L4R5ZITx"
+runner = ["probe-rs", "run", "--chip", "STM32L4R5ZITx", "--log-format", "{s}"]
+
+rustflags = [
+  # "-C", "linker=flip-link", # Using flip-link is, a priori, incompatible with `cortex-m-rt` feature `paint-stack`
   "-C", "link-arg=-Tlink.x",
   "-C", "link-arg=-Tdefmt.x",
   # This is needed if your flash or ram addresses are not aligned to 0x10000 in memory.x
