@@ -24,7 +24,7 @@ extern "C" {
 #[cortex_m_rt::entry]
 fn main() -> ! {
     let randomness = [1u8; 32];
-    let pair = core::hint::black_box(mldsa::generate_key_pair(randomness));
+    let _pair = core::hint::black_box(mldsa::generate_key_pair(randomness));
 
     let stack_start = unsafe { &_stack_start as *const u32 };
     board::stack::measure(

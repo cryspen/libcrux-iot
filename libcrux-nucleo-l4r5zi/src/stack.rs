@@ -19,6 +19,7 @@ pub fn measure(name: &str, stack_start: *const u32) {
     defmt::println!("Measurement: {}", name);
     defmt::println!("  Stack begins at: {:?}", stack_start);
 
+    #[allow(unused_assignments)]
     let mut looking_at: u32 = 0;
     // We get the current stack pointer.
     unsafe {

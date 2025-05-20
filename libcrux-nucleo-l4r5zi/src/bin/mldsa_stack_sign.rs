@@ -28,7 +28,7 @@ fn main() -> ! {
     let message = [0u8; 100];
     let pair = mldsa::generate_key_pair(randomness_gen);
 
-    let signature = core::hint::black_box(mldsa::sign(
+    let _signature = core::hint::black_box(mldsa::sign(
         &pair.signing_key,
         &message,
         b"",

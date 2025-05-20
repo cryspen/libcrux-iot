@@ -27,7 +27,7 @@ fn main() -> ! {
     let pair = core::hint::black_box(mlkem::generate_key_pair(randomness_gen));
 
     let randomness_encaps = [2u8; libcrux_ml_kem::ENCAPS_SEED_SIZE];
-    let (ciphertext, _shared_secret_initiator) =
+    let (_ciphertext, _shared_secret_initiator) =
         core::hint::black_box(mlkem::encapsulate(pair.public_key(), randomness_encaps));
     let stack_start = unsafe { &_stack_start as *const u32 };
     board::stack::measure(
