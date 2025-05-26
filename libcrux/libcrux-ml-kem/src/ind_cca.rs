@@ -203,8 +203,10 @@ pub(crate) fn generate_keypair<
     let ind_cpa_keypair_randomness = &randomness[0..CPA_PKE_KEY_GENERATION_SEED_SIZE];
     let implicit_rejection_value = &randomness[CPA_PKE_KEY_GENERATION_SEED_SIZE..];
 
-    let mut ind_cpa_private_key = [0u8; CPA_PRIVATE_KEY_SIZE];
     let mut public_key = [0u8; PUBLIC_KEY_SIZE];
+    let mut secret_key_serialized = [0u8; PRIVATE_KEY_SIZE];
+
+    let mut ind_cpa_private_key = [0u8; CPA_PRIVATE_KEY_SIZE];
     let mut scratch = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
     let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
@@ -229,7 +231,6 @@ pub(crate) fn generate_keypair<
         &mut accumulator,
     );
 
-    let mut secret_key_serialized = [0u8; PRIVATE_KEY_SIZE];
     serialize_kem_secret_key_mut::<K, PRIVATE_KEY_SIZE, Hasher>(
         &ind_cpa_private_key,
         &public_key,
@@ -306,6 +307,8 @@ pub(crate) fn encapsulate<
     let mut scratch = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
     let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut t_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
 
     crate::ind_cpa::encrypt::<
         K,
@@ -330,6 +333,8 @@ pub(crate) fn encapsulate<
         processed_randomness,
         pseudorandomness,
         &mut ciphertext,
+        &mut matrix_entry,
+        &mut t_as_ntt,
         &mut r_as_ntt,
         &mut error_2,
         &mut scratch,
@@ -467,6 +472,9 @@ pub(crate) fn decapsulate<
     let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
 
     let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut t_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
+
+    let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
 
     crate::ind_cpa::encrypt::<
         K,
@@ -491,6 +499,8 @@ pub(crate) fn decapsulate<
         decrypted,
         pseudorandomness,
         &mut expected_ciphertext,
+        &mut matrix_entry,
+        &mut t_as_ntt,
         &mut r_as_ntt,
         &mut error_2,
         &mut scratch,
@@ -1101,6 +1111,7 @@ pub(crate) mod unpacked {
 
         let mut accumulator = [0i32; 256];
         let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+        let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
         ind_cpa::encrypt_unpacked::<
             K,
             K_SQUARED,
@@ -1120,10 +1131,12 @@ pub(crate) mod unpacked {
             Vector,
             Hasher,
         >(
-            &public_key.ind_cpa_public_key,
+            &public_key.ind_cpa_public_key.t_as_ntt,
             randomness,
             pseudorandomness,
             &mut ciphertext,
+            &mut matrix_entry,
+            &public_key.ind_cpa_public_key.seed_for_A,
             &mut r_as_ntt,
             &mut error_2,
             &mut scratch,
@@ -1264,7 +1277,7 @@ pub(crate) mod unpacked {
         let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
 
         let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
-
+        let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
         ind_cpa::encrypt_unpacked::<
             K,
             K_SQUARED,
@@ -1284,10 +1297,12 @@ pub(crate) mod unpacked {
             Vector,
             Hasher,
         >(
-            &key_pair.public_key.ind_cpa_public_key,
+            &key_pair.public_key.ind_cpa_public_key.t_as_ntt,
             decrypted,
             pseudorandomness,
             &mut expected_ciphertext,
+            &mut matrix_entry,
+            &key_pair.public_key.ind_cpa_public_key.seed_for_A,
             &mut r_as_ntt,
             &mut error_2,
             &mut scratch,

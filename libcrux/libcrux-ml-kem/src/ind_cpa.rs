@@ -781,10 +781,12 @@ pub(crate) fn encrypt_unpacked<
     Vector: Operations,
     Hasher: Hash,
 >(
-    public_key: &IndCpaPublicKeyUnpacked<K, K_SQUARED, Vector>,
+    t_as_ntt: &[PolynomialRingElement<Vector>],
     message: [u8; SHARED_SECRET_SIZE],
     randomness: &[u8],
     ciphertext: &mut [u8],
+    matrix_entry: &mut PolynomialRingElement<Vector>,
+    seed_for_a: &[u8],
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
@@ -807,7 +809,8 @@ pub(crate) fn encrypt_unpacked<
         Hasher,
     >(
         randomness,
-        &public_key.A,
+        matrix_entry,
+        seed_for_a,
         &mut ciphertext[0..C1_LEN],
         r_as_ntt,
         error_2,
@@ -817,7 +820,7 @@ pub(crate) fn encrypt_unpacked<
     );
 
     encrypt_c2::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
-        &public_key.t_as_ntt,
+        t_as_ntt,
         r_as_ntt,
         &error_2,
         message,
@@ -845,7 +848,8 @@ pub(crate) fn encrypt_c1<
     Hasher: Hash,
 >(
     randomness: &[u8],
-    matrix: &[PolynomialRingElement<Vector>; K_SQUARED],
+    matrix_entry: &mut PolynomialRingElement<Vector>,
+    seed_for_a: &[u8],
     ciphertext: &mut [u8], // C1_LEN
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
@@ -901,8 +905,9 @@ pub(crate) fn encrypt_c1<
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
     let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
 
-    compute_vector_u::<K, Vector>(
-        matrix,
+    compute_vector_u::<K, Vector, Hasher>(
+        matrix_entry,
+        seed_for_a,
         &r_as_ntt,
         &error_1,
         &mut u,
@@ -926,7 +931,7 @@ pub(crate) fn encrypt_c2<
     const C2_LEN: usize,
     Vector: Operations,
 >(
-    t_as_ntt: &[PolynomialRingElement<Vector>; K],
+    t_as_ntt: &[PolynomialRingElement<Vector>],
     r_as_ntt: &[PolynomialRingElement<Vector>],
     error_2: &PolynomialRingElement<Vector>,
     message: [u8; SHARED_SECRET_SIZE],
@@ -939,7 +944,7 @@ pub(crate) fn encrypt_c2<
     let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
     deserialize_then_decompress_message(message, &mut message_as_ring_element);
     let mut v = PolynomialRingElement::<Vector>::ZERO();
-    compute_ring_element_v(
+    compute_ring_element_v::<K, Vector>(
         t_as_ntt,
         r_as_ntt,
         error_2,
@@ -1003,6 +1008,8 @@ pub(crate) fn encrypt<
     message: [u8; SHARED_SECRET_SIZE],
     randomness: &[u8],
     ciphertext: &mut [u8],
+    matrix_entry: &mut PolynomialRingElement<Vector>,
+    t_as_ntt: &mut [PolynomialRingElement<Vector>],
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
@@ -1010,13 +1017,16 @@ pub(crate) fn encrypt<
     accumulator: &mut [i32; 256],
 ) {
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_encrypt) Spec.MLKEM.ind_cpa_encrypt"#);
-    // XXX: Can we pass this in?
-    let mut unpacked_public_key = IndCpaPublicKeyUnpacked::<K, K_SQUARED, Vector>::default();
-    build_unpacked_public_key_mut::<K, K_SQUARED, T_AS_NTT_ENCODED_SIZE, Vector, Hasher>(
-        public_key,
-        &mut unpacked_public_key,
-    );
+    // // XXX: Can we pass this in?
+    // let mut unpacked_public_key = IndCpaPublicKeyUnpacked::<K, K_SQUARED, Vector>::default();
+    // build_unpacked_public_key_mut::<K, K_SQUARED, T_AS_NTT_ENCODED_SIZE, Vector, Hasher>(
+    //     public_key,
+    //     &mut unpacked_public_key,
+    // );
 
+    deserialize_ring_elements_reduced::<K, Vector>(&public_key[..T_AS_NTT_ENCODED_SIZE], t_as_ntt);
+
+    let seed_for_a = &public_key[T_AS_NTT_ENCODED_SIZE..];
     // After unpacking the public key we can now call the unpacked decryption.
     encrypt_unpacked::<
         K,
@@ -1037,10 +1047,12 @@ pub(crate) fn encrypt<
         Vector,
         Hasher,
     >(
-        &unpacked_public_key,
+        &t_as_ntt,
         message,
         randomness,
         ciphertext,
+        matrix_entry,
+        seed_for_a,
         r_as_ntt,
         error_2,
         scratch,
