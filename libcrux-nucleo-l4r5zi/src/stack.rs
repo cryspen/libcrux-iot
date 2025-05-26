@@ -16,8 +16,8 @@ const STACK_PAINT_VALUE: u32 = 0xcccc_cccc;
 ///  - Reading the stack pointer for the starting point of the search via inline assembly
 ///  - `read_volatile` to reliably scan memory for the paint marker
 pub fn measure(name: &str, stack_start: *const u32) {
-    defmt::println!("Measurement: {}", name);
-    defmt::println!("  Stack begins at: {:?}", stack_start);
+    defmt::println!("l,0,0,{}", name);
+    // defmt::println!("  Stack begins at: {:?}", stack_start);
 
     #[allow(unused_assignments)]
     let mut looking_at: u32 = 0;
@@ -37,10 +37,7 @@ pub fn measure(name: &str, stack_start: *const u32) {
 
     let high_mark = looking_at + 4;
 
-    defmt::println!(
-        "  Found lowest stack address in use at: 0x{=u32:x}",
-        high_mark
-    );
     let usage = stack_start as usize - high_mark as usize;
-    defmt::println!("  Max. stack usage: {} Bytes\n", usage);
+    defmt::println!("b,r,stack,0");
+    defmt::println!("b,d,stack,0,{}", usage);
 }
