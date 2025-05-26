@@ -307,7 +307,6 @@ pub(crate) fn encapsulate<
     let mut scratch = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
     let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut t_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
     let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
 
     crate::ind_cpa::encrypt::<
@@ -334,7 +333,6 @@ pub(crate) fn encapsulate<
         pseudorandomness,
         &mut ciphertext,
         &mut matrix_entry,
-        &mut t_as_ntt,
         &mut r_as_ntt,
         &mut error_2,
         &mut scratch,
@@ -472,7 +470,6 @@ pub(crate) fn decapsulate<
     let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
 
     let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut t_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
 
     let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
 
@@ -500,7 +497,6 @@ pub(crate) fn decapsulate<
         pseudorandomness,
         &mut expected_ciphertext,
         &mut matrix_entry,
-        &mut t_as_ntt,
         &mut r_as_ntt,
         &mut error_2,
         &mut scratch,

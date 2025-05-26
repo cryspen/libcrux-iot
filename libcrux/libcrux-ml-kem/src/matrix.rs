@@ -1,6 +1,7 @@
 use crate::{
-    hash_functions::Hash, helper::cloop, invert_ntt::invert_ntt_montgomery,
-    polynomial::PolynomialRingElement, sampling::sample_from_xof, vector::Operations,
+    constants::BYTES_PER_RING_ELEMENT, hash_functions::Hash, helper::cloop,
+    invert_ntt::invert_ntt_montgomery, polynomial::PolynomialRingElement,
+    sampling::sample_from_xof, serialize::deserialize_to_reduced_ring_element, vector::Operations,
 };
 
 #[inline(always)]
@@ -135,7 +136,8 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
         Libcrux_ml_kem.Serialize.coefficients_field_modulus_range $res"#)
 )]
 pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
-    t_as_ntt: &[PolynomialRingElement<Vector>],
+    public_key: &[u8],
+    t_as_ntt_entry: &mut PolynomialRingElement<Vector>,
     r_as_ntt: &[PolynomialRingElement<Vector>],
     error_2: &PolynomialRingElement<Vector>,
     message: &PolynomialRingElement<Vector>,
@@ -145,8 +147,9 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     accumulator: &mut [i32; 256],
 ) {
     *accumulator = [0i32; 256];
-    for i in 0..K {
-        t_as_ntt[i].accumulating_ntt_multiply_use_cache(&r_as_ntt[i], accumulator, &cache[i]);
+    for (i, ring_element) in public_key.chunks_exact(BYTES_PER_RING_ELEMENT).enumerate() {
+        deserialize_to_reduced_ring_element(ring_element, t_as_ntt_entry);
+        t_as_ntt_entry.accumulating_ntt_multiply_use_cache(&r_as_ntt[i], accumulator, &cache[i]);
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
 
