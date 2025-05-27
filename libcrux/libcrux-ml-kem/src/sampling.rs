@@ -209,7 +209,7 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
 #[hax_lib::fstar::options("--z3rlimit 800")]
 fn sample_from_binomial_distribution_3<Vector: Operations>(
     randomness: &[u8],
-    sampled_i16s: &mut [i16; 256],
+    sampled_i16s: &mut [i16], // length 256
 ) {
     hax_lib::fstar!(
         "assert (v (sz 3 *! sz 64) == 192);
@@ -259,7 +259,7 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
         Spec.MLKEM.sample_poly_cbd $ETA $randomness"#))]
 pub(super) fn sample_from_binomial_distribution<const ETA: usize, Vector: Operations>(
     randomness: &[u8],
-    output: &mut [i16; 256],
+    output: &mut [i16], // length 256
 ) {
     hax_lib::fstar!(
         r#"assert (
