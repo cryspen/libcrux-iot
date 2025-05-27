@@ -93,6 +93,7 @@ pub(crate) mod constants;
 /// Helpers for verification and extraction
 mod helper;
 
+mod arithmetic;
 mod constant_time_ops;
 mod hash_functions;
 mod ind_cca;

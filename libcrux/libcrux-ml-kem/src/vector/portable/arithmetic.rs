@@ -20,6 +20,10 @@ pub(crate) const MONTGOMERY_R: i32 = 1 << MONTGOMERY_SHIFT;
 /// This is calculated as ⌊(BARRETT_R / FIELD_MODULUS) + 1/2⌋
 pub(crate) const BARRETT_MULTIPLIER: i32 = 20159;
 
+/// Values having this type hold a representative 'x' of the ML-KEM field.
+/// We use 'fe' as a shorthand for this type.
+pub(crate) type FieldElement = i16;
+
 #[hax_lib::fstar::options("--z3rlimit 150 --split_queries always")]
 #[cfg_attr(hax, hax_lib::requires(n <= 16))]
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"v result == v value % pow2(v n)"#)))]

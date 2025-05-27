@@ -868,7 +868,7 @@ pub(crate) fn encrypt_c1<
     scratch: &mut PolynomialRingElement<Vector>,
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
-    error_1: &mut [PolynomialRingElement<Vector>], // length k, must be zero
+    error_1: &mut [PolynomialRingElement<Vector>], // length k, need not be zero
     sampling_buffer: &mut [i16],                   // length 256
     u: &mut [PolynomialRingElement<Vector>],       // length k, must be zero
     prf_output: &mut [u8],                         // length ETA2_RANDOMNESS_SIZE
