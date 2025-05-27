@@ -857,12 +857,18 @@ pub(crate) fn encrypt_c1<
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
+    let mut prf_input: [u8; 33] = into_padded_array(randomness);
+    let mut error_1: [PolynomialRingElement<Vector>; K] =
+        from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
+    let mut sampling_buffer = [0i16; 256];
+    let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
+    let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
+
     // for i from 0 to k−1 do
     //     r[i] := CBD{η1}(PRF(r, N))
     //     N := N + 1
     // end for
     // rˆ := NTT(r)
-    let mut prf_input: [u8; 33] = into_padded_array(randomness);
     let domain_separator = sample_vector_cbd_then_ntt::<
         K,
         ETA1,
@@ -880,9 +886,6 @@ pub(crate) fn encrypt_c1<
     //     e1[i] := CBD_{η2}(PRF(r,N))
     //     N := N + 1
     // end for
-    let mut error_1: [PolynomialRingElement<Vector>; K] =
-        from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    let mut sampling_buffer = [0i16; 256];
     let domain_separator =
         sample_ring_element_cbd::<K, ETA2_RANDOMNESS_SIZE, ETA2, PRF_OUTPUT_SIZE2, Vector, Hasher>(
             prf_input,
@@ -897,14 +900,12 @@ pub(crate) fn encrypt_c1<
         "assert (Seq.equal $prf_input (Seq.append $randomness (Seq.create 1 $domain_separator)));
         assert ($prf_input == Seq.append $randomness (Seq.create 1 $domain_separator))"
     );
-    let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
+
     Hasher::PRF::<32>(&prf_input, &mut prf_output);
     sample_from_binomial_distribution::<ETA2, Vector>(&prf_output, &mut sampling_buffer);
     PolynomialRingElement::from_i16_array(&sampling_buffer, error_2);
 
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
-    let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-
     compute_vector_u::<K, Vector, Hasher>(
         matrix_entry,
         seed_for_a,
@@ -941,10 +942,12 @@ pub(crate) fn encrypt_c2<
     cache: &[PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
-    // v := NTT^{−1}(tˆT ◦ rˆ) + e_2 + Decompress_q(Decode_1(m),1)
     let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
-    deserialize_then_decompress_message(message, &mut message_as_ring_element);
     let mut v = PolynomialRingElement::<Vector>::ZERO();
+
+    deserialize_then_decompress_message(message, &mut message_as_ring_element);
+
+    // v := NTT^{−1}(tˆT ◦ rˆ) + e_2 + Decompress_q(Decode_1(m),1)
     compute_ring_element_v::<K, Vector>(
         public_key,
         t_as_ntt_entry,
@@ -1099,8 +1102,11 @@ pub(crate) fn decrypt_unpacked<
     scratch: &mut PolynomialRingElement<Vector>,
     accumulator: &mut [i32; 256],
 ) {
-    // u := Decompress_q(Decode_{d_u}(c), d_u)
+    let mut v = PolynomialRingElement::<Vector>::ZERO();
     let mut u_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
+    let mut message = PolynomialRingElement::<Vector>::ZERO();
+
+    // u := Decompress_q(Decode_{d_u}(c), d_u)
     deserialize_then_decompress_u::<K, CIPHERTEXT_SIZE, U_COMPRESSION_FACTOR, Vector>(
         ciphertext,
         &mut u_as_ntt,
@@ -1108,14 +1114,12 @@ pub(crate) fn decrypt_unpacked<
     );
 
     // v := Decompress_q(Decode_{d_v}(c + d_u·k·n / 8), d_v)
-    let mut v = PolynomialRingElement::<Vector>::ZERO();
     deserialize_then_decompress_ring_element_v::<K, V_COMPRESSION_FACTOR, Vector>(
         &ciphertext[VECTOR_U_ENCODED_SIZE..],
         &mut v,
     );
 
     // m := Encode_1(Compress_q(v − NTT^{−1}(sˆT ◦ NTT(u)) , 1))
-    let mut message = PolynomialRingElement::<Vector>::ZERO();
     compute_message(
         &v,
         &secret_key.secret_as_ntt,
@@ -1124,6 +1128,7 @@ pub(crate) fn decrypt_unpacked<
         scratch,
         accumulator,
     );
+
     compress_then_serialize_message(&message, decrypted, &mut scratch.coefficients[0]);
 }
 
