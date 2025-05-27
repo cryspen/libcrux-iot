@@ -144,7 +144,7 @@ pub(super) fn deserialize_to_uncompressed_ring_element<Vector: Operations>(
 #[hax_lib::requires(
     serialized.len() == BYTES_PER_RING_ELEMENT
 )]
-fn deserialize_to_reduced_ring_element<Vector: Operations>(
+pub(crate) fn deserialize_to_reduced_ring_element<Vector: Operations>(
     serialized: &[u8],
     re: &mut PolynomialRingElement<Vector>,
 ) {
