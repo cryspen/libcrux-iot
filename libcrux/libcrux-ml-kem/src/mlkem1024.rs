@@ -46,7 +46,7 @@ pub type MlKem1024KeyPair = MlKemKeyPair<SECRET_KEY_SIZE, CPA_PKE_PUBLIC_KEY_SIZ
 
 // Instantiate the different functions.
 macro_rules! instantiate {
-    ($modp:ident, $p:path, $vec:path, $doc:expr) => {
+    ($modp:ident, $p:path, $doc:expr) => {
         #[doc = $doc]
         pub mod $modp {
             use super::*;
@@ -241,7 +241,7 @@ macro_rules! instantiate {
 }
 
 // Instantiations
-instantiate! {portable, ind_cca::instantiations::portable, vector::portable::PortableVector, "Portable ML-KEM 1024"}
+instantiate! {portable, ind_cca::instantiations::portable, "Portable ML-KEM 1024"}
 
 /// Validate a public key.
 ///

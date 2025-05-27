@@ -79,8 +79,6 @@ extern crate std;
 #[macro_use]
 mod cfg;
 
-pub(crate) mod hax_utils;
-
 // This module is declared here since otherwise, hax reports the following error:
 //
 // The THIR body of item
@@ -94,6 +92,7 @@ pub(crate) mod constants;
 mod helper;
 
 mod arithmetic;
+mod compress;
 mod constant_time_ops;
 mod hash_functions;
 mod ind_cca;
@@ -107,7 +106,7 @@ mod serialize;
 mod types;
 mod utils;
 mod variant;
-mod vector;
+// mod vector;
 
 #[cfg(feature = "mlkem512")]
 #[cfg_attr(docsrs, doc(cfg(feature = "mlkem512")))]

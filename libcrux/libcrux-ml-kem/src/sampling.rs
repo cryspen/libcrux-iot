@@ -1,5 +1,6 @@
 use crate::{
-    constants::COEFFICIENTS_IN_RING_ELEMENT, hash_functions::*, helper::cloop, vector::Operations,
+    arithmetic::FIELD_MODULUS, constants::COEFFICIENTS_IN_RING_ELEMENT, hash_functions::*,
+    helper::cloop,
 };
 
 /// If `bytes` contains a set of uniformly random bytes, this function
@@ -41,7 +42,7 @@ use crate::{
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
 #[inline(always)]
-fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, const N: usize>(
+fn sample_from_uniform_distribution_next<const K: usize, const N: usize>(
     randomness: &[[u8; N]],
     sampled_coefficients: &mut [usize],
     out: &mut [[i16; 272]],
@@ -50,7 +51,7 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
     for i in 0..K {
         for r in 0..N / 24 {
             if sampled_coefficients[i] < COEFFICIENTS_IN_RING_ELEMENT {
-                let sampled = Vector::rej_sample(
+                let sampled = rej_sample(
                     &randomness[i][r * 24..(r * 24) + 24],
                     &mut out[i][sampled_coefficients[i]..sampled_coefficients[i] + 16],
                 );
@@ -71,7 +72,7 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
-pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
+pub(super) fn sample_from_xof<const K: usize, Hasher: Hash>(
     seeds: &[[u8; 34]],
     sampled_coefficients: &mut [usize],
     out: &mut [[i16; 272]],
@@ -81,7 +82,7 @@ pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
     let mut randomness_blocksize = [[0u8; BLOCK_SIZE]; K];
     xof_state.shake128_squeeze_first_three_blocks(&mut randomness);
 
-    let mut done = sample_from_uniform_distribution_next::<Vector, K, THREE_BLOCKS>(
+    let mut done = sample_from_uniform_distribution_next::<K, THREE_BLOCKS>(
         &randomness,
         sampled_coefficients,
         out,
@@ -94,7 +95,7 @@ pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
     // we have enough.
     while !done {
         xof_state.shake128_squeeze_next_block(&mut randomness_blocksize);
-        done = sample_from_uniform_distribution_next::<Vector, K, BLOCK_SIZE>(
+        done = sample_from_uniform_distribution_next::<K, BLOCK_SIZE>(
             &randomness_blocksize,
             sampled_coefficients,
             out,
@@ -158,10 +159,7 @@ pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
 // ))))]
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 800")]
-fn sample_from_binomial_distribution_2<Vector: Operations>(
-    randomness: &[u8],
-    sampled_i16s: &mut [i16],
-) {
+fn sample_from_binomial_distribution_2(randomness: &[u8], sampled_i16s: &mut [i16]) {
     hax_lib::fstar!(
         "assert (v (sz 2 *! sz 64) == 128);
         assert (Seq.length $randomness == 128)"
@@ -207,7 +205,7 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
 // ))))]
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 800")]
-fn sample_from_binomial_distribution_3<Vector: Operations>(
+fn sample_from_binomial_distribution_3(
     randomness: &[u8],
     sampled_i16s: &mut [i16], // length 256
 ) {
@@ -257,7 +255,7 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
     (${result}.f_coefficients.[ sz i ]) (${result}.f_coefficients.[ sz i +! sz 8 ])) /\
     Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector $result ==
         Spec.MLKEM.sample_poly_cbd $ETA $randomness"#))]
-pub(super) fn sample_from_binomial_distribution<const ETA: usize, Vector: Operations>(
+pub(super) fn sample_from_binomial_distribution<const ETA: usize>(
     randomness: &[u8],
     output: &mut [i16], // length 256
 ) {
@@ -267,8 +265,36 @@ pub(super) fn sample_from_binomial_distribution<const ETA: usize, Vector: Operat
         (v (cast $ETA <: u32) == 3))"#
     );
     match ETA as u32 {
-        2 => sample_from_binomial_distribution_2::<Vector>(randomness, output),
-        3 => sample_from_binomial_distribution_3::<Vector>(randomness, output),
+        2 => sample_from_binomial_distribution_2(randomness, output),
+        3 => sample_from_binomial_distribution_3(randomness, output),
         _ => unreachable!(),
     };
+}
+
+#[inline(always)]
+#[hax_lib::fstar::verification_status(lax)]
+#[hax_lib::requires(a.len() == 24 && result.len() == 16)]
+#[hax_lib::ensures(|res|
+        fstar!(r#"Seq.length $result_future == Seq.length $result /\ v $res <= 16"#)
+    )]
+pub(crate) fn rej_sample(a: &[u8], result: &mut [i16]) -> usize {
+    let mut sampled = 0;
+    for i in 0..a.len() / 3 {
+        let b1 = a[i * 3 + 0] as i16;
+        let b2 = a[i * 3 + 1] as i16;
+        let b3 = a[i * 3 + 2] as i16;
+
+        let d1 = ((b2 & 0xF) << 8) | b1;
+        let d2 = (b3 << 4) | (b2 >> 4);
+
+        if d1 < FIELD_MODULUS && sampled < 16 {
+            result[sampled] = d1;
+            sampled += 1
+        }
+        if d2 < FIELD_MODULUS && sampled < 16 {
+            result[sampled] = d2;
+            sampled += 1
+        }
+    }
+    sampled
 }

@@ -1,5 +1,5 @@
 macro_rules! instantiate {
-    ($modp:ident, $vector:path, $hash:path) => {
+    ($modp:ident, $hash:path) => {
         pub mod $modp {
             use crate::{
                 MlKemCiphertext, MlKemKeyPair, MlKemPrivateKey, MlKemPublicKey, MlKemSharedSecret,
@@ -34,8 +34,7 @@ macro_rules! instantiate {
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
-                    $vector,
-                    $hash,
+                                        $hash,
                     crate::variant::MlKem,
                 >(randomness)
             }
@@ -62,8 +61,7 @@ macro_rules! instantiate {
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
-                    $vector,
-                    $hash,
+                                        $hash,
                     crate::variant::Kyber,
                 >(randomness)
             }
@@ -81,8 +79,7 @@ macro_rules! instantiate {
                 crate::ind_cca::validate_public_key::<
                     K,
                     PUBLIC_KEY_SIZE,
-                    $vector,
-                >(public_key)
+                                    >(public_key)
             }
 
             /// Private key validation
@@ -158,8 +155,7 @@ macro_rules! instantiate {
                     ETA2_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
-                    $vector,
-                    $hash,
+                                        $hash,
                     crate::variant::Kyber,
                 >(public_key, randomness)
             }
@@ -215,8 +211,7 @@ macro_rules! instantiate {
                     ETA2_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
-                    $vector,
-                    $hash,
+                                        $hash,
                     crate::variant::MlKem,
                 >(public_key, randomness)
             }
@@ -267,8 +262,7 @@ macro_rules! instantiate {
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
                     IMPLICIT_REJECTION_HASH_INPUT_SIZE,
-                    $vector,
-                    $hash,
+                                        $hash,
                     crate::variant::Kyber,
                 >(private_key, ciphertext)
             }
@@ -334,7 +328,6 @@ macro_rules! instantiate {
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
                     IMPLICIT_REJECTION_HASH_INPUT_SIZE,
-                    $vector,
                     $hash,
                     crate::variant::MlKem,
                 >(private_key, ciphertext)
@@ -344,4 +337,4 @@ macro_rules! instantiate {
 }
 
 // Portable generic implementations.
-instantiate! {portable, crate::vector::portable::PortableVector, crate::hash_functions::portable::PortableHash}
+instantiate! {portable, crate::hash_functions::portable::PortableHash}

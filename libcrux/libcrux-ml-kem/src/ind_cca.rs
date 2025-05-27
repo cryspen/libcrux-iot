@@ -11,7 +11,6 @@ use crate::{
     types::*,
     utils::into_padded_array,
     variant::*,
-    vector::Operations,
 };
 
 /// Seed size for key generation
@@ -100,26 +99,20 @@ fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize,
 #[inline(always)]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
     $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CCA_PUBLIC_KEY_SIZE $K"#))]
-pub(crate) fn validate_public_key<
-    const K: usize,
-    const PUBLIC_KEY_SIZE: usize,
-    Vector: Operations,
->(
+pub(crate) fn validate_public_key<const K: usize, const PUBLIC_KEY_SIZE: usize>(
     public_key: &[u8; PUBLIC_KEY_SIZE],
 ) -> bool {
-    let mut deserialized_pk: [PolynomialRingElement<Vector>; K] =
-        core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    deserialize_ring_elements_reduced::<K, Vector>(
+    let mut deserialized_pk: [PolynomialRingElement; K] =
+        core::array::from_fn(|_i| PolynomialRingElement::ZERO());
+    deserialize_ring_elements_reduced::<K>(
         &public_key[..ranked_bytes_per_ring_element(K)],
         &mut deserialized_pk,
     );
     let mut public_key_serialized = [0u8; PUBLIC_KEY_SIZE];
-    let mut scratch = Vector::ZERO();
-    serialize_public_key_mut::<K, PUBLIC_KEY_SIZE, Vector>(
+    serialize_public_key_mut::<K, PUBLIC_KEY_SIZE>(
         &deserialized_pk,
         &public_key[ranked_bytes_per_ring_element(K)..],
         &mut public_key_serialized,
-        &mut scratch,
     );
 
     *public_key == public_key_serialized
@@ -194,7 +187,6 @@ pub(crate) fn generate_keypair<
     const ETA1: usize,
     const ETA1_RANDOMNESS_SIZE: usize,
     const PRF_OUTPUT_SIZE1: usize,
-    Vector: Operations,
     Hasher: Hash,
     Scheme: Variant,
 >(
@@ -205,9 +197,8 @@ pub(crate) fn generate_keypair<
     let mut public_key = [0u8; PUBLIC_KEY_SIZE];
     let mut secret_key_serialized = [0u8; PRIVATE_KEY_SIZE];
     let mut ind_cpa_private_key = [0u8; CPA_PRIVATE_KEY_SIZE];
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
-    let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut s_cache = [PolynomialRingElement::ZERO(); K];
 
     crate::ind_cpa::generate_keypair::<
         K,
@@ -217,14 +208,12 @@ pub(crate) fn generate_keypair<
         ETA1,
         ETA1_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
-        Vector,
         Hasher,
         Scheme,
     >(
         ind_cpa_keypair_randomness,
         &mut ind_cpa_private_key,
         &mut public_key,
-        &mut scratch,
         &mut s_cache,
         &mut accumulator,
     );
@@ -275,7 +264,6 @@ pub(crate) fn encapsulate<
     const ETA2_RANDOMNESS_SIZE: usize,
     const PRF_OUTPUT_SIZE1: usize,
     const PRF_OUTPUT_SIZE2: usize,
-    Vector: Operations,
     Hasher: Hash,
     Scheme: Variant,
 >(
@@ -285,20 +273,19 @@ pub(crate) fn encapsulate<
     let mut processed_randomness = [0u8; 32];
     let mut hashed = [0u8; G_DIGEST_SIZE];
     let mut ciphertext = [0u8; CIPHERTEXT_SIZE];
-    let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
-        core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
-    let mut v = PolynomialRingElement::<Vector>::ZERO();
+    let mut r_as_ntt: [PolynomialRingElement; K] =
+        core::array::from_fn(|_i| PolynomialRingElement::ZERO());
+    let mut error_2 = PolynomialRingElement::ZERO();
+    let mut v = PolynomialRingElement::ZERO();
     let mut accumulator = [0i32; 256];
-    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut error_1 = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut u = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
+    let mut cache = [PolynomialRingElement::ZERO(); K];
+    let mut error_1 = [PolynomialRingElement::ZERO(); K];
+    let mut u = [PolynomialRingElement::ZERO(); K];
+    let mut matrix_entry = PolynomialRingElement::ZERO();
     let mut shared_secret_array = [0u8; 32];
     let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
     let mut sampling_buffer = [0i16; 256];
-    let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
+    let mut message_as_ring_element = PolynomialRingElement::ZERO();
     Scheme::entropy_preprocess::<K, Hasher>(&randomness, &mut processed_randomness);
     let mut to_hash: [u8; 2 * H_DIGEST_SIZE] = into_padded_array(&processed_randomness);
 
@@ -330,7 +317,6 @@ pub(crate) fn encapsulate<
         ETA2_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
         PRF_OUTPUT_SIZE2,
-        Vector,
         Hasher,
     >(
         public_key.as_slice(),
@@ -340,7 +326,6 @@ pub(crate) fn encapsulate<
         &mut matrix_entry,
         &mut r_as_ntt,
         &mut error_2,
-        &mut scratch,
         &mut cache,
         &mut accumulator,
         &mut error_1,
@@ -399,7 +384,6 @@ pub(crate) fn decapsulate<
     const PRF_OUTPUT_SIZE1: usize,
     const PRF_OUTPUT_SIZE2: usize,
     const IMPLICIT_REJECTION_HASH_INPUT_SIZE: usize,
-    Vector: Operations,
     Hasher: Hash,
     Scheme: Variant,
 >(
@@ -410,21 +394,20 @@ pub(crate) fn decapsulate<
         r#"assert (v $CIPHERTEXT_SIZE == v $IMPLICIT_REJECTION_HASH_INPUT_SIZE - v $SHARED_SECRET_SIZE)"#
     );
     let mut decrypted = [0u8; 32];
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
-    let mut v = PolynomialRingElement::<Vector>::ZERO();
-    let mut message = PolynomialRingElement::<Vector>::ZERO();
+    let mut v = PolynomialRingElement::ZERO();
+    let mut message = PolynomialRingElement::ZERO();
     let mut accumulator = [0i32; 256];
     let mut hashed = [0u8; G_DIGEST_SIZE];
     let mut implicit_rejection_shared_secret = [0u8; SHARED_SECRET_SIZE];
     let mut expected_ciphertext = [0u8; CIPHERTEXT_SIZE];
-    let mut secret_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut r_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut u_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut error_1 = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut u = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-    let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
+    let mut secret_as_ntt = [PolynomialRingElement::ZERO(); K];
+    let mut r_as_ntt = [PolynomialRingElement::ZERO(); K];
+    let mut u_as_ntt = [PolynomialRingElement::ZERO(); K];
+    let mut cache = [PolynomialRingElement::ZERO(); K];
+    let mut error_1 = [PolynomialRingElement::ZERO(); K];
+    let mut u = [PolynomialRingElement::ZERO(); K];
+    let mut error_2 = PolynomialRingElement::ZERO();
+    let mut matrix_entry = PolynomialRingElement::ZERO();
     let mut implicit_rejection_shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
     let mut shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
     let (ind_cpa_secret_key, ind_cpa_public_key, ind_cpa_public_key_hash, implicit_rejection_value) =
@@ -432,7 +415,7 @@ pub(crate) fn decapsulate<
     let mut shared_secret = [0u8; 32];
     let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
     let mut sampling_buffer = [0i16; 256];
-    let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
+    let mut message_as_ring_element = PolynomialRingElement::ZERO();
 
     hax_lib::fstar!(
         r#"assert ($ind_cpa_secret_key == slice ${private_key}.f_value (sz 0) $CPA_SECRET_KEY_SIZE);
@@ -449,12 +432,10 @@ pub(crate) fn decapsulate<
         C1_SIZE,
         VECTOR_U_COMPRESSION_FACTOR,
         VECTOR_V_COMPRESSION_FACTOR,
-        Vector,
     >(
         ind_cpa_secret_key,
         &ciphertext.value,
         &mut decrypted,
-        &mut scratch,
         &mut accumulator,
         &mut secret_as_ntt,
         &mut v,
@@ -515,7 +496,6 @@ pub(crate) fn decapsulate<
         ETA2_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
         PRF_OUTPUT_SIZE2,
-        Vector,
         Hasher,
     >(
         ind_cpa_public_key,
@@ -525,7 +505,6 @@ pub(crate) fn decapsulate<
         &mut matrix_entry,
         &mut r_as_ntt,
         &mut error_2,
-        &mut scratch,
         &mut cache,
         &mut accumulator,
         &mut error_1,

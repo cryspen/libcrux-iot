@@ -1,9 +1,6 @@
-use crate::{
-    arithmetic::{
-        barrett_reduce_element, montgomery_multiply_fe_by_fer, montgomery_reduce_element,
-        MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS,
-    },
-    vector::{Operations, FIELD_ELEMENTS_IN_VECTOR},
+use crate::arithmetic::{
+    barrett_reduce_element, montgomery_multiply_fe_by_fer, montgomery_reduce_element,
+    FIELD_ELEMENTS_IN_VECTOR, MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS,
 };
 
 use super::constants::COEFFICIENTS_IN_RING_ELEMENT;
@@ -142,7 +139,7 @@ pub(crate) fn vec_from_bytes(bytes: &[u8], out: &mut [PolynomialRingElement]) {
 /// The length of a vector of ring elements in bytes
 #[hax_lib::requires(K <= 4)]
 #[allow(dead_code)]
-pub(crate) const fn vec_len_bytes<const K: usize, Vector: Operations>() -> usize {
+pub(crate) const fn vec_len_bytes<const K: usize>() -> usize {
     K * 512
 }
 

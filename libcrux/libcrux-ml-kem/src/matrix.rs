@@ -1,15 +1,15 @@
 use crate::{
     constants::BYTES_PER_RING_ELEMENT, hash_functions::Hash, helper::cloop,
     invert_ntt::invert_ntt_montgomery, polynomial::PolynomialRingElement,
-    sampling::sample_from_xof, serialize::deserialize_to_reduced_ring_element, vector::Operations,
+    sampling::sample_from_xof, serialize::deserialize_to_reduced_ring_element,
 };
 
 #[inline(always)]
-pub(crate) fn entry<const K: usize, Vector: Operations>(
-    matrix: &[PolynomialRingElement<Vector>],
+pub(crate) fn entry<const K: usize>(
+    matrix: &[PolynomialRingElement],
     i: usize,
     j: usize,
-) -> &PolynomialRingElement<Vector> {
+) -> &PolynomialRingElement {
     debug_assert!(matrix.len() == K * K);
     debug_assert!(i < K);
     debug_assert!(j < K);
@@ -17,11 +17,11 @@ pub(crate) fn entry<const K: usize, Vector: Operations>(
 }
 
 #[inline(always)]
-pub(crate) fn entry_mut<const K: usize, Vector: Operations>(
-    matrix: &mut [PolynomialRingElement<Vector>],
+pub(crate) fn entry_mut<const K: usize>(
+    matrix: &mut [PolynomialRingElement],
     i: usize,
     j: usize,
-) -> &mut PolynomialRingElement<Vector> {
+) -> &mut PolynomialRingElement {
     debug_assert!(matrix.len() == K * K);
     debug_assert!(i < K);
     debug_assert!(j < K);
@@ -29,8 +29,8 @@ pub(crate) fn entry_mut<const K: usize, Vector: Operations>(
 }
 
 #[inline(always)]
-pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
-    out: &mut PolynomialRingElement<Vector>,
+pub(crate) fn sample_matrix_entry<Hasher: Hash>(
+    out: &mut PolynomialRingElement,
     seed: &[u8],
     i: usize,
     j: usize,
@@ -42,7 +42,7 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     seed_ij[33] = j as u8;
     let mut sampled_coefficients = [0usize; 1];
     let mut out_raw = [[0i16; 272]; 1];
-    sample_from_xof::<1, Vector, Hasher>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
+    sample_from_xof::<1, Hasher>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
     PolynomialRingElement::from_i16_array(&out_raw[0], out);
 }
 
@@ -56,8 +56,8 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
         if $transpose then Libcrux_ml_kem.Polynomial.to_spec_matrix_t ${A_transpose}_future == matrix_A
         else Libcrux_ml_kem.Polynomial.to_spec_matrix_t ${A_transpose}_future == Spec.MLKEM.matrix_transpose matrix_A)"#)
 )]
-pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
-    A_transpose: &mut [PolynomialRingElement<Vector>],
+pub(crate) fn sample_matrix_A<const K: usize, Hasher: Hash>(
+    A_transpose: &mut [PolynomialRingElement],
     seed: [u8; 34],
     transpose: bool,
 ) {
@@ -71,14 +71,14 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
         }
         let mut sampled_coefficients = [0usize; K];
         let mut out = [[0i16; 272]; K];
-        sample_from_xof::<K, Vector, Hasher>(&seeds, &mut sampled_coefficients, &mut out);
+        sample_from_xof::<K, Hasher>(&seeds, &mut sampled_coefficients, &mut out);
         cloop! {
             for (j, sample) in out.into_iter().enumerate() {
                 // A[i][j] = A_transpose[j][i]
                 if transpose {
-                    PolynomialRingElement::from_i16_array(&sample[..256], entry_mut::<K, Vector>(A_transpose, j,i));
+                    PolynomialRingElement::from_i16_array(&sample[..256], entry_mut::<K>(A_transpose, j,i));
                 } else {
-                    PolynomialRingElement::from_i16_array(&sample[..256], entry_mut::<K, Vector>(A_transpose, i, j)); // XXX: in this case we might want to copy all of sample at once
+                    PolynomialRingElement::from_i16_array(&sample[..256], entry_mut::<K>(A_transpose, i, j)); // XXX: in this case we might want to copy all of sample at once
                 }
             }
         }
@@ -103,12 +103,11 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
             Spec.MLKEM.(poly_sub v_spec (poly_inv_ntt (vector_dot_product_ntt #$K secret_spec u_spec))) /\
         Libcrux_ml_kem.Serialize.coefficients_field_modulus_range $res"#)
 )]
-pub(crate) fn compute_message<const K: usize, Vector: Operations>(
-    v: &PolynomialRingElement<Vector>,
-    secret_as_ntt: &[PolynomialRingElement<Vector>], // length k
-    u_as_ntt: &[PolynomialRingElement<Vector>],      // length k
-    result: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
+pub(crate) fn compute_message<const K: usize>(
+    v: &PolynomialRingElement,
+    secret_as_ntt: &[PolynomialRingElement], // length k
+    u_as_ntt: &[PolynomialRingElement],      // length k
+    result: &mut PolynomialRingElement,
     accumulator: &mut [i32; 256],
 ) {
     *accumulator = [0i32; 256];
@@ -117,7 +116,7 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     }
 
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
-    invert_ntt_montgomery::<K, Vector>(result, &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K>(result);
     v.subtract_reduce(result);
 }
 
@@ -135,15 +134,14 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
         res_spec == Spec.MLKEM.(poly_add (poly_add (vector_dot_product_ntt #$K tt_spec r_spec) e2_spec) m_spec) /\
         Libcrux_ml_kem.Serialize.coefficients_field_modulus_range $res"#)
 )]
-pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
+pub(crate) fn compute_ring_element_v<const K: usize>(
     public_key: &[u8],
-    t_as_ntt_entry: &mut PolynomialRingElement<Vector>,
-    r_as_ntt: &[PolynomialRingElement<Vector>],
-    error_2: &PolynomialRingElement<Vector>,
-    message: &PolynomialRingElement<Vector>,
-    result: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
-    cache: &[PolynomialRingElement<Vector>],
+    t_as_ntt_entry: &mut PolynomialRingElement,
+    r_as_ntt: &[PolynomialRingElement],
+    error_2: &PolynomialRingElement,
+    message: &PolynomialRingElement,
+    result: &mut PolynomialRingElement,
+    cache: &[PolynomialRingElement],
     accumulator: &mut [i32; 256],
 ) {
     *accumulator = [0i32; 256];
@@ -153,8 +151,8 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
 
-    invert_ntt_montgomery::<K, Vector>(result, &mut scratch.coefficients[0]);
-    error_2.add_message_error_reduce(message, result, &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K>(result);
+    error_2.add_message_error_reduce(message, result);
 }
 
 /// Compute u := InvertNTT(Aᵀ ◦ r̂) + e₁
@@ -171,14 +169,13 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
         (forall (i:nat). i < v $K ==>
             Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index $res i))"#)
 )]
-pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>(
-    matrix_entry: &mut PolynomialRingElement<Vector>,
+pub(crate) fn compute_vector_u<const K: usize, Hasher: Hash>(
+    matrix_entry: &mut PolynomialRingElement,
     seed: &[u8],
-    r_as_ntt: &[PolynomialRingElement<Vector>],
-    error_1: &[PolynomialRingElement<Vector>],
-    result: &mut [PolynomialRingElement<Vector>],
-    scratch: &mut PolynomialRingElement<Vector>,
-    cache: &mut [PolynomialRingElement<Vector>],
+    r_as_ntt: &[PolynomialRingElement],
+    error_1: &[PolynomialRingElement],
+    result: &mut [PolynomialRingElement],
+    cache: &mut [PolynomialRingElement],
     accumulator: &mut [i32; 256],
 ) {
     debug_assert!(r_as_ntt.len() == K);
@@ -186,22 +183,22 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
 
     *accumulator = [0i32; 256];
     for j in 0..K {
-        sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, 0, j);
+        sample_matrix_entry::<Hasher>(matrix_entry, seed, 0, j);
         matrix_entry.accumulating_ntt_multiply_fill_cache(&r_as_ntt[j], accumulator, &mut cache[j]);
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[0]);
-    invert_ntt_montgomery::<K, Vector>(&mut result[0], &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K>(&mut result[0]);
     result[0].add_error_reduce(&error_1[0]);
 
     for i in 1..K {
         *accumulator = [0i32; 256];
         for j in 0..K {
-            sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, i, j);
+            sample_matrix_entry::<Hasher>(matrix_entry, seed, i, j);
             matrix_entry.accumulating_ntt_multiply_use_cache(&r_as_ntt[j], accumulator, &cache[j]);
         }
         PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[i]);
 
-        invert_ntt_montgomery::<K, Vector>(&mut result[i], &mut scratch.coefficients[0]);
+        invert_ntt_montgomery::<K>(&mut result[i]);
         result[i].add_error_reduce(&error_1[i]);
     }
 }
@@ -221,18 +218,18 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
         (forall (i: nat). i < v $K ==>
             Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index ${t_as_ntt}_future i))"#)
 )]
-pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
-    t_as_ntt: &mut [PolynomialRingElement<Vector>; K],
-    matrix_A: &[PolynomialRingElement<Vector>],
-    s_as_ntt: &[PolynomialRingElement<Vector>; K],
-    error_as_ntt: &[PolynomialRingElement<Vector>; K],
-    s_cache: &mut [PolynomialRingElement<Vector>; K],
+pub(crate) fn compute_As_plus_e<const K: usize>(
+    t_as_ntt: &mut [PolynomialRingElement; K],
+    matrix_A: &[PolynomialRingElement],
+    s_as_ntt: &[PolynomialRingElement; K],
+    error_as_ntt: &[PolynomialRingElement; K],
+    s_cache: &mut [PolynomialRingElement; K],
     accumulator: &mut [i32; 256],
 ) {
     // During the first row of multiplications, we build up the cache
     // of intermediate values.
     for j in 0..K {
-        entry::<K, Vector>(matrix_A, 0, j).accumulating_ntt_multiply_fill_cache(
+        entry::<K>(matrix_A, 0, j).accumulating_ntt_multiply_fill_cache(
             &s_as_ntt[j],
             accumulator,
             &mut s_cache[j],
@@ -246,7 +243,7 @@ pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
     for i in 1..K {
         *accumulator = [0i32; 256];
         for j in 0..K {
-            entry::<K, Vector>(matrix_A, i, j).accumulating_ntt_multiply_use_cache(
+            entry::<K>(matrix_A, i, j).accumulating_ntt_multiply_use_cache(
                 &s_as_ntt[j],
                 accumulator,
                 &s_cache[j],
