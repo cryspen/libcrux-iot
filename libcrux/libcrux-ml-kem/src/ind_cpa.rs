@@ -247,8 +247,8 @@ fn sample_ring_element_cbd<
 >(
     prf_input: [u8; 33],
     mut domain_separator: u8,
-    error_1: &mut [PolynomialRingElement<Vector>],
-    sample_buffer: &mut [i16; 256],
+    error_1: &mut [PolynomialRingElement<Vector>], // length k
+    sample_buffer: &mut [i16],                     // length 256
 ) -> u8 {
     let mut prf_inputs = [prf_input; K];
     // See https://github.com/hacspec/hax/issues/1167
@@ -658,7 +658,7 @@ fn compress_then_serialize_u<
     const BLOCK_LEN: usize,
     Vector: Operations,
 >(
-    input: [PolynomialRingElement<Vector>; K],
+    input: &[PolynomialRingElement<Vector>], // length k
     out: &mut [u8],
     scratch: &mut Vector,
 ) {
@@ -791,6 +791,12 @@ pub(crate) fn encrypt<
     scratch: &mut PolynomialRingElement<Vector>,
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
+    error_1: &mut [PolynomialRingElement<Vector>], // length k, must be zero
+    sampling_buffer: &mut [i16],                   // length 256
+    u: &mut [PolynomialRingElement<Vector>],       // length k, must be zero
+    prf_output: &mut [u8],                         // length ETA2_RANDOMNESS_SIZE
+    message_as_ring_element: &mut PolynomialRingElement<Vector>, // must be zero
+    v: &mut PolynomialRingElement<Vector>,         // must be zero
 ) {
     encrypt_c1::<
         K,
@@ -816,6 +822,10 @@ pub(crate) fn encrypt<
         scratch,
         cache,
         accumulator,
+        error_1,
+        sampling_buffer,
+        u,
+        prf_output,
     );
 
     encrypt_c2::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
@@ -828,6 +838,8 @@ pub(crate) fn encrypt<
         scratch,
         &cache,
         accumulator,
+        message_as_ring_element,
+        v,
     );
 }
 
@@ -856,13 +868,12 @@ pub(crate) fn encrypt_c1<
     scratch: &mut PolynomialRingElement<Vector>,
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
+    error_1: &mut [PolynomialRingElement<Vector>], // length k, must be zero
+    sampling_buffer: &mut [i16],                   // length 256
+    u: &mut [PolynomialRingElement<Vector>],       // length k, must be zero
+    prf_output: &mut [u8],                         // length ETA2_RANDOMNESS_SIZE
 ) {
     let mut prf_input: [u8; 33] = into_padded_array(randomness);
-    let mut error_1: [PolynomialRingElement<Vector>; K] =
-        from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    let mut sampling_buffer = [0i16; 256];
-    let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
 
     // for i from 0 to k−1 do
     //     r[i] := CBD{η1}(PRF(r, N))
@@ -890,8 +901,8 @@ pub(crate) fn encrypt_c1<
         sample_ring_element_cbd::<K, ETA2_RANDOMNESS_SIZE, ETA2, PRF_OUTPUT_SIZE2, Vector, Hasher>(
             prf_input,
             domain_separator,
-            &mut error_1,
-            &mut sampling_buffer,
+            error_1,
+            sampling_buffer,
         );
 
     // e_2 := CBD{η2}(PRF(r, N))
@@ -901,8 +912,8 @@ pub(crate) fn encrypt_c1<
         assert ($prf_input == Seq.append $randomness (Seq.create 1 $domain_separator))"
     );
 
-    Hasher::PRF::<32>(&prf_input, &mut prf_output);
-    sample_from_binomial_distribution::<ETA2, Vector>(&prf_output, &mut sampling_buffer);
+    Hasher::PRF::<32>(&prf_input, prf_output);
+    sample_from_binomial_distribution::<ETA2, Vector>(&prf_output, sampling_buffer);
     PolynomialRingElement::from_i16_array(&sampling_buffer, error_2);
 
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
@@ -911,7 +922,7 @@ pub(crate) fn encrypt_c1<
         seed_for_a,
         &r_as_ntt,
         &error_1,
-        &mut u,
+        u,
         scratch,
         cache,
         accumulator,
@@ -919,7 +930,7 @@ pub(crate) fn encrypt_c1<
 
     // c_1 := Encode_{du}(Compress_q(u,d_u))
     compress_then_serialize_u::<K, C1_LEN, U_COMPRESSION_FACTOR, BLOCK_LEN, Vector>(
-        u,
+        &u,
         ciphertext,
         &mut scratch.coefficients[0],
     );
@@ -941,11 +952,10 @@ pub(crate) fn encrypt_c2<
     scratch: &mut PolynomialRingElement<Vector>,
     cache: &[PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
+    message_as_ring_element: &mut PolynomialRingElement<Vector>, // must be zero
+    v: &mut PolynomialRingElement<Vector>,                       // must be zero
 ) {
-    let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
-    let mut v = PolynomialRingElement::<Vector>::ZERO();
-
-    deserialize_then_decompress_message(message, &mut message_as_ring_element);
+    deserialize_then_decompress_message(message, message_as_ring_element);
 
     // v := NTT^{−1}(tˆT ◦ rˆ) + e_2 + Decompress_q(Decode_1(m),1)
     compute_ring_element_v::<K, Vector>(
@@ -954,7 +964,7 @@ pub(crate) fn encrypt_c2<
         r_as_ntt,
         error_2,
         &message_as_ring_element,
-        &mut v,
+        v,
         scratch,
         cache,
         accumulator,
@@ -1029,7 +1039,7 @@ fn deserialize_then_decompress_u<
 )]
 pub(crate) fn deserialize_vector<const K: usize, Vector: Operations>(
     secret_key: &[u8],
-    secret_as_ntt: &mut [PolynomialRingElement<Vector>],
+    secret_as_ntt: &mut [PolynomialRingElement<Vector>], // length k
 ) {
     for i in 0..K {
         hax_lib::loop_invariant!(|i: usize| {
@@ -1096,38 +1106,30 @@ pub(crate) fn decrypt_unpacked<
     const V_COMPRESSION_FACTOR: usize,
     Vector: Operations,
 >(
-    secret_key: &IndCpaPrivateKeyUnpacked<K, Vector>,
+    secret_as_ntt: &[PolynomialRingElement<Vector>], // length k
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     decrypted: &mut [u8],
     scratch: &mut PolynomialRingElement<Vector>,
     accumulator: &mut [i32; 256],
+    v: &mut PolynomialRingElement<Vector>, // needs to be zero
+    u_as_ntt: &mut [PolynomialRingElement<Vector>], // length K, needs to be zero
+    message: &mut PolynomialRingElement<Vector>, // needs to be zero
 ) {
-    let mut v = PolynomialRingElement::<Vector>::ZERO();
-    let mut u_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
-    let mut message = PolynomialRingElement::<Vector>::ZERO();
-
     // u := Decompress_q(Decode_{d_u}(c), d_u)
     deserialize_then_decompress_u::<K, CIPHERTEXT_SIZE, U_COMPRESSION_FACTOR, Vector>(
         ciphertext,
-        &mut u_as_ntt,
+        u_as_ntt,
         &mut scratch.coefficients[0],
     );
 
     // v := Decompress_q(Decode_{d_v}(c + d_u·k·n / 8), d_v)
     deserialize_then_decompress_ring_element_v::<K, V_COMPRESSION_FACTOR, Vector>(
         &ciphertext[VECTOR_U_ENCODED_SIZE..],
-        &mut v,
+        v,
     );
 
     // m := Encode_1(Compress_q(v − NTT^{−1}(sˆT ◦ NTT(u)) , 1))
-    compute_message(
-        &v,
-        &secret_key.secret_as_ntt,
-        &u_as_ntt,
-        &mut message,
-        scratch,
-        accumulator,
-    );
+    compute_message::<K, Vector>(&v, secret_as_ntt, u_as_ntt, message, scratch, accumulator);
 
     compress_then_serialize_message(&message, decrypted, &mut scratch.coefficients[0]);
 }
@@ -1156,12 +1158,14 @@ pub(crate) fn decrypt<
     decrypted: &mut [u8],
     scratch: &mut PolynomialRingElement<Vector>,
     accumulator: &mut [i32; 256],
+    secret_as_ntt: &mut [PolynomialRingElement<Vector>], // length k, needs to be zero
+    v: &mut PolynomialRingElement<Vector>,               // needs to be zero
+    u_as_ntt: &mut [PolynomialRingElement<Vector>],      // length K, needs to be zero
+    message: &mut PolynomialRingElement<Vector>,         // needs to be zero
 ) {
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_decrypt) Spec.MLKEM.ind_cpa_decrypt"#);
     // sˆ := Decode_12(sk)
-    let mut secret_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
-    deserialize_vector::<K, Vector>(secret_key, &mut secret_as_ntt);
-    let secret_key_unpacked = IndCpaPrivateKeyUnpacked { secret_as_ntt };
+    deserialize_vector::<K, Vector>(secret_key, secret_as_ntt);
 
     decrypt_unpacked::<
         K,
@@ -1171,10 +1175,13 @@ pub(crate) fn decrypt<
         V_COMPRESSION_FACTOR,
         Vector,
     >(
-        &secret_key_unpacked,
+        &secret_as_ntt,
         ciphertext,
         decrypted,
         scratch,
         accumulator,
+        v,
+        u_as_ntt,
+        message,
     );
 }

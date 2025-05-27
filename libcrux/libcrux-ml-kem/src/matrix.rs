@@ -105,8 +105,8 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
 )]
 pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     v: &PolynomialRingElement<Vector>,
-    secret_as_ntt: &[PolynomialRingElement<Vector>; K],
-    u_as_ntt: &[PolynomialRingElement<Vector>; K],
+    secret_as_ntt: &[PolynomialRingElement<Vector>], // length k
+    u_as_ntt: &[PolynomialRingElement<Vector>],      // length k
     result: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
     accumulator: &mut [i32; 256],
