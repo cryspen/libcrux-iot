@@ -13,6 +13,8 @@ pub mod cycle_counter;
 pub mod init;
 #[cfg(feature = "realtime")]
 pub mod real_time;
+#[cfg(feature = "stack")]
+pub mod stack;
 
 // same panicking *behavior* as `panic-probe` but doesn't print a panic message
 // this prevents the panic message being printed *twice* when `defmt::panic` is invoked
