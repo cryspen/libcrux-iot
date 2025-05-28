@@ -43,7 +43,7 @@ pub(crate) fn sample_matrix_entry<Hasher: Hash>(
     let mut sampled_coefficients = [0usize; 1];
     let mut out_raw = [[0i16; 272]; 1];
     sample_from_xof::<1, Hasher>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
-    PolynomialRingElement::from_i16_array(&out_raw[0], out);
+    PolynomialRingElement::from_i16_array(&out_raw[0][0..256], out);
 }
 
 #[inline(always)]
