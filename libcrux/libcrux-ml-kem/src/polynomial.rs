@@ -237,7 +237,7 @@ fn accumulating_ntt_multiply(
         let bi = rhs.coefficients[i];
         let bj = rhs.coefficients[i + 1];
 
-        let zeta = if (i / 4) % 2 == 0 {
+        let zeta = if (i / 2) % 2 == 0 {
             zeta(64 + i / 4)
         } else {
             -zeta(64 + i / 4)
@@ -270,7 +270,7 @@ fn accumulating_ntt_multiply_fill_cache(
         let bi = rhs.coefficients[i];
         let bj = rhs.coefficients[i + 1];
 
-        let zeta = if (i / 4) % 2 == 0 {
+        let zeta = if (i / 2) % 2 == 0 {
             zeta(64 + i / 4)
         } else {
             -zeta(64 + i / 4)
