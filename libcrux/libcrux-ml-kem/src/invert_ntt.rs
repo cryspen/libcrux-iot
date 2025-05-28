@@ -7,7 +7,7 @@ use crate::{
 pub(crate) fn invert_ntt_montgomery<const K: usize>(re: &mut PolynomialRingElement) {
     let mut zeta_i = super::constants::COEFFICIENTS_IN_RING_ELEMENT / 2;
 
-    for layer in (1..=7).rev() {
+    for layer in 1..=7 {
         let step = 1 << layer;
 
         // For every round, split off two `step_vec` sized slices from the front.
