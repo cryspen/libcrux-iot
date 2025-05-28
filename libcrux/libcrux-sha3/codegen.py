@@ -170,7 +170,8 @@ def cloop(i):
             out += "{\n"
             for y in range(5):
                 zy = zeta_y(zeta, i, x, y)
-                out += f"let ax_{y} = s.get_with_zeta({y}, {x}, {zy});\n"
+                y_ni = ni_y(i,x, y)
+                out += f"let ax_{y_ni} = s.get_with_zeta({y_ni}, {x}, {zy});\n"
             out += f"c[{x}][{zeta}] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;\n"
             out += "}\n"
 
@@ -199,7 +200,7 @@ def bloop_inner(i, y, zeta):
 
         return [
             f"let a{x} = s.get_with_zeta({y_2prime},{x},{zeta_2prime});",
-            f"let d{x} = d[{x}][{zeta_2prime}];"
+            f"let d{x} = d[{x}][{zeta_prime}];"
         ]
 
     def compute(x):
@@ -281,6 +282,15 @@ def abloop(i):
             out += aloop_inner(i, y, zeta)
             out += "}\n"
 
+    for zeta in range(2):
+        zeta_prime = (zeta  + big_o(i+1, 0,0)) %2
+        out += f"let az{zeta} = s.get_with_zeta(0,0, {zeta_prime});\n"
+
+    # TODO: This can be moved to aloop, where we initially set Aba0 and Aba1
+    for zeta in range(2):
+        zeta_prime = (zeta  + big_o(i+1, 0,0)) %2
+        out += f"s.set_with_zeta(0,0, {zeta_prime}, az{zeta} ^ RC_INTERLEAVED_{zeta}[i]);\n"
+
     return out
 
 def dloop(i):
@@ -309,7 +319,7 @@ def dloop(i):
 
     for j in range(6):
         (x, zeta) = ld_order[j]
-        out += f"{load(x, zeta)}\n"
+        out += load(x, zeta)
 
     for j in range(5):
         (x, zeta) = comp_order[j]
@@ -318,7 +328,7 @@ def dloop(i):
 
     for j in range(6, 10):
         (x, zeta) = ld_order[j]
-        out += f"{load(x, zeta)}\n"
+        out += load(x, zeta)
 
     for j in range(5, 10):
         (x, zeta) = comp_order[j]
@@ -335,16 +345,6 @@ def round(i):
     out += cloop(i)
     out += dloop(i)
     out += abloop(i)
-
-    for zeta in range(2):
-        zeta_prime = (zeta  + big_o(i+1, 0,0)) %2
-        out += f"let az{zeta} = s.get_with_zeta(0,0, {zeta_prime});\n"
-
-
-    # TODO: This can be moved to aloop, where we initially set Aba0 and Aba1
-    for zeta in range(2):
-        zeta_prime = (zeta  + big_o(i+1, 0,0)) %2
-        out += f"s.set_with_zeta(0,0, {zeta_prime}, az{zeta} ^ RC_INTERLEAVED_{zeta}[i]);\n"
     return out
 
 
@@ -382,9 +382,10 @@ def defn_full():
     """
 
 
-for i in range(4):
-    print(defn_roundfn(i))
+#for i in range(4):
+#    print(defn_roundfn(i))
 #print(defn_4roundfn)
 #print(defn_full())
 
-#print(round(3))
+print(round(3))
+

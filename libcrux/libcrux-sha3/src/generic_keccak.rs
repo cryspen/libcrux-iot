@@ -853,17 +853,11 @@ pub(crate) fn keccakf1600_round0(
     }
     {
         let c_x4_zeta0 = c[4][0];
-
         let c_x1_zeta1 = c[1][1];
-
         let c_x3_zeta0 = c[3][0];
-
         let c_x0_zeta1 = c[0][1];
-
         let c_x2_zeta0 = c[2][0];
-
         let c_x4_zeta1 = c[4][1];
-
         let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
         d[0][0] = d_x0_zeta0;
         let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
@@ -875,13 +869,9 @@ pub(crate) fn keccakf1600_round0(
         let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
         d[3][0] = d_x3_zeta0;
         let c_x1_zeta0 = c[1][0];
-
         let c_x3_zeta1 = c[3][1];
-
         let c_x2_zeta1 = c[2][1];
-
         let c_x0_zeta0 = c[0][0];
-
         let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
         d[0][1] = d_x0_zeta1;
         let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
@@ -1228,97 +1218,91 @@ pub(crate) fn keccakf1600_round1(
 ) {
     {
         let ax_0 = s.get_with_zeta(0, 0, 0);
-        let ax_1 = s.get_with_zeta(1, 0, 1);
-        let ax_2 = s.get_with_zeta(2, 0, 0);
-        let ax_3 = s.get_with_zeta(3, 0, 0);
-        let ax_4 = s.get_with_zeta(4, 0, 1);
+        let ax_2 = s.get_with_zeta(2, 0, 1);
+        let ax_4 = s.get_with_zeta(4, 0, 0);
+        let ax_1 = s.get_with_zeta(1, 0, 0);
+        let ax_3 = s.get_with_zeta(3, 0, 1);
         c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 0, 1);
-        let ax_1 = s.get_with_zeta(1, 0, 0);
-        let ax_2 = s.get_with_zeta(2, 0, 1);
-        let ax_3 = s.get_with_zeta(3, 0, 1);
-        let ax_4 = s.get_with_zeta(4, 0, 0);
+        let ax_2 = s.get_with_zeta(2, 0, 0);
+        let ax_4 = s.get_with_zeta(4, 0, 1);
+        let ax_1 = s.get_with_zeta(1, 0, 1);
+        let ax_3 = s.get_with_zeta(3, 0, 0);
         c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 1, 0);
-        let ax_1 = s.get_with_zeta(1, 1, 1);
-        let ax_2 = s.get_with_zeta(2, 1, 1);
-        let ax_3 = s.get_with_zeta(3, 1, 0);
+        let ax_1 = s.get_with_zeta(1, 1, 0);
+        let ax_3 = s.get_with_zeta(3, 1, 1);
+        let ax_0 = s.get_with_zeta(0, 1, 1);
+        let ax_2 = s.get_with_zeta(2, 1, 0);
         let ax_4 = s.get_with_zeta(4, 1, 0);
         c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 1, 1);
-        let ax_1 = s.get_with_zeta(1, 1, 0);
-        let ax_2 = s.get_with_zeta(2, 1, 0);
-        let ax_3 = s.get_with_zeta(3, 1, 1);
+        let ax_1 = s.get_with_zeta(1, 1, 1);
+        let ax_3 = s.get_with_zeta(3, 1, 0);
+        let ax_0 = s.get_with_zeta(0, 1, 0);
+        let ax_2 = s.get_with_zeta(2, 1, 1);
         let ax_4 = s.get_with_zeta(4, 1, 1);
         c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 2, 1);
-        let ax_1 = s.get_with_zeta(1, 2, 1);
-        let ax_2 = s.get_with_zeta(2, 2, 0);
+        let ax_2 = s.get_with_zeta(2, 2, 1);
+        let ax_4 = s.get_with_zeta(4, 2, 1);
+        let ax_1 = s.get_with_zeta(1, 2, 0);
         let ax_3 = s.get_with_zeta(3, 2, 1);
-        let ax_4 = s.get_with_zeta(4, 2, 0);
+        let ax_0 = s.get_with_zeta(0, 2, 0);
         c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 2, 0);
-        let ax_1 = s.get_with_zeta(1, 2, 0);
-        let ax_2 = s.get_with_zeta(2, 2, 1);
+        let ax_2 = s.get_with_zeta(2, 2, 0);
+        let ax_4 = s.get_with_zeta(4, 2, 0);
+        let ax_1 = s.get_with_zeta(1, 2, 1);
         let ax_3 = s.get_with_zeta(3, 2, 0);
-        let ax_4 = s.get_with_zeta(4, 2, 1);
+        let ax_0 = s.get_with_zeta(0, 2, 1);
         c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 3, 1);
-        let ax_1 = s.get_with_zeta(1, 3, 0);
+        let ax_3 = s.get_with_zeta(3, 3, 1);
+        let ax_0 = s.get_with_zeta(0, 3, 0);
         let ax_2 = s.get_with_zeta(2, 3, 1);
-        let ax_3 = s.get_with_zeta(3, 3, 0);
-        let ax_4 = s.get_with_zeta(4, 3, 1);
+        let ax_4 = s.get_with_zeta(4, 3, 0);
+        let ax_1 = s.get_with_zeta(1, 3, 1);
         c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 3, 0);
-        let ax_1 = s.get_with_zeta(1, 3, 1);
+        let ax_3 = s.get_with_zeta(3, 3, 0);
+        let ax_0 = s.get_with_zeta(0, 3, 1);
         let ax_2 = s.get_with_zeta(2, 3, 0);
-        let ax_3 = s.get_with_zeta(3, 3, 1);
-        let ax_4 = s.get_with_zeta(4, 3, 0);
+        let ax_4 = s.get_with_zeta(4, 3, 1);
+        let ax_1 = s.get_with_zeta(1, 3, 0);
         c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 4, 0);
+        let ax_4 = s.get_with_zeta(4, 4, 0);
         let ax_1 = s.get_with_zeta(1, 4, 0);
-        let ax_2 = s.get_with_zeta(2, 4, 0);
-        let ax_3 = s.get_with_zeta(3, 4, 1);
-        let ax_4 = s.get_with_zeta(4, 4, 1);
+        let ax_3 = s.get_with_zeta(3, 4, 0);
+        let ax_0 = s.get_with_zeta(0, 4, 1);
+        let ax_2 = s.get_with_zeta(2, 4, 1);
         c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 4, 1);
+        let ax_4 = s.get_with_zeta(4, 4, 1);
         let ax_1 = s.get_with_zeta(1, 4, 1);
-        let ax_2 = s.get_with_zeta(2, 4, 1);
-        let ax_3 = s.get_with_zeta(3, 4, 0);
-        let ax_4 = s.get_with_zeta(4, 4, 0);
+        let ax_3 = s.get_with_zeta(3, 4, 1);
+        let ax_0 = s.get_with_zeta(0, 4, 0);
+        let ax_2 = s.get_with_zeta(2, 4, 0);
         c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let c_x4_zeta0 = c[4][0];
-
         let c_x1_zeta1 = c[1][1];
-
         let c_x3_zeta0 = c[3][0];
-
         let c_x0_zeta1 = c[0][1];
-
         let c_x2_zeta0 = c[2][0];
-
         let c_x4_zeta1 = c[4][1];
-
         let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
         d[0][0] = d_x0_zeta0;
         let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
@@ -1330,13 +1314,9 @@ pub(crate) fn keccakf1600_round1(
         let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
         d[3][0] = d_x3_zeta0;
         let c_x1_zeta0 = c[1][0];
-
         let c_x3_zeta1 = c[3][1];
-
         let c_x2_zeta1 = c[2][1];
-
         let c_x0_zeta0 = c[0][0];
-
         let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
         d[0][1] = d_x0_zeta1;
         let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
@@ -1353,7 +1333,7 @@ pub(crate) fn keccakf1600_round1(
             let a0 = s.get_with_zeta(0, 0, 0);
             let d0 = d[0][0];
             let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = d[1][1];
+            let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
         };
         let (bx2, bx3, bx4) = {
@@ -1362,7 +1342,7 @@ pub(crate) fn keccakf1600_round1(
             let a3 = s.get_with_zeta(4, 3, 1);
             let d3 = d[3][1];
             let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = d[4][1];
+            let d4 = d[4][0];
             (
                 (a2 ^ d2).rotate_left(22),
                 (a3 ^ d3).rotate_left(11),
@@ -1385,7 +1365,7 @@ pub(crate) fn keccakf1600_round1(
             let a0 = s.get_with_zeta(0, 0, 1);
             let d0 = d[0][1];
             let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = d[1][0];
+            let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
         };
         let (bx2, bx3, bx4) = {
@@ -1394,7 +1374,7 @@ pub(crate) fn keccakf1600_round1(
             let a3 = s.get_with_zeta(4, 3, 0);
             let d3 = d[3][0];
             let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = d[4][0];
+            let d4 = d[4][1];
             (
                 (a2 ^ d2).rotate_left(21),
                 (a3 ^ d3).rotate_left(10),
@@ -1424,7 +1404,7 @@ pub(crate) fn keccakf1600_round1(
             let a2 = s.get_with_zeta(0, 2, 1);
             let d2 = d[2][1];
             let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(1, 4, 0);
             let d4 = d[4][0];
             (
@@ -1456,7 +1436,7 @@ pub(crate) fn keccakf1600_round1(
             let a2 = s.get_with_zeta(0, 2, 0);
             let d2 = d[2][0];
             let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(1, 4, 1);
             let d4 = d[4][1];
             (
@@ -1479,18 +1459,18 @@ pub(crate) fn keccakf1600_round1(
     {
         let (bx4, bx0) = {
             let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = d[0][1];
+            let d0 = d[0][0];
             let a1 = s.get_with_zeta(1, 1, 1);
             let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
         };
         let (bx1, bx2, bx3) = {
             let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = d[4][1];
+            let d4 = d[4][0];
             (
                 (a2 ^ d2).rotate_left(3),
                 (a3 ^ d3).rotate_left(13),
@@ -1511,18 +1491,18 @@ pub(crate) fn keccakf1600_round1(
     {
         let (bx4, bx0) = {
             let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = d[0][0];
+            let d0 = d[0][1];
             let a1 = s.get_with_zeta(1, 1, 0);
             let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
         };
         let (bx1, bx2, bx3) = {
             let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = d[4][0];
+            let d4 = d[4][1];
             (
                 (a2 ^ d2).rotate_left(3),
                 (a3 ^ d3).rotate_left(12),
@@ -1543,16 +1523,16 @@ pub(crate) fn keccakf1600_round1(
     {
         let (bx1, bx2) = {
             let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = d[0][1];
+            let d0 = d[0][0];
             let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = d[1][1];
+            let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
         };
         let (bx3, bx4, bx0) = {
             let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(4, 4, 1);
             let d4 = d[4][1];
             (
@@ -1575,16 +1555,16 @@ pub(crate) fn keccakf1600_round1(
     {
         let (bx1, bx2) = {
             let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = d[0][0];
+            let d0 = d[0][1];
             let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = d[1][0];
+            let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
         };
         let (bx3, bx4, bx0) = {
             let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(4, 4, 0);
             let d4 = d[4][0];
             (
@@ -1614,7 +1594,7 @@ pub(crate) fn keccakf1600_round1(
         };
         let (bx0, bx1, bx2) = {
             let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(0, 3, 1);
             let d3 = d[3][1];
             let a4 = s.get_with_zeta(3, 4, 1);
@@ -1646,7 +1626,7 @@ pub(crate) fn keccakf1600_round1(
         };
         let (bx0, bx1, bx2) = {
             let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(0, 3, 0);
             let d3 = d[3][0];
             let a4 = s.get_with_zeta(3, 4, 0);
@@ -1683,97 +1663,91 @@ pub(crate) fn keccakf1600_round2(
 ) {
     {
         let ax_0 = s.get_with_zeta(0, 0, 0);
-        let ax_1 = s.get_with_zeta(1, 0, 1);
-        let ax_2 = s.get_with_zeta(2, 0, 1);
-        let ax_3 = s.get_with_zeta(3, 0, 1);
         let ax_4 = s.get_with_zeta(4, 0, 1);
+        let ax_3 = s.get_with_zeta(3, 0, 1);
+        let ax_2 = s.get_with_zeta(2, 0, 1);
+        let ax_1 = s.get_with_zeta(1, 0, 1);
         c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 0, 1);
-        let ax_1 = s.get_with_zeta(1, 0, 0);
-        let ax_2 = s.get_with_zeta(2, 0, 0);
-        let ax_3 = s.get_with_zeta(3, 0, 0);
         let ax_4 = s.get_with_zeta(4, 0, 0);
+        let ax_3 = s.get_with_zeta(3, 0, 0);
+        let ax_2 = s.get_with_zeta(2, 0, 0);
+        let ax_1 = s.get_with_zeta(1, 0, 0);
         c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 1, 1);
-        let ax_1 = s.get_with_zeta(1, 1, 1);
-        let ax_2 = s.get_with_zeta(2, 1, 1);
         let ax_3 = s.get_with_zeta(3, 1, 1);
+        let ax_2 = s.get_with_zeta(2, 1, 1);
+        let ax_1 = s.get_with_zeta(1, 1, 1);
+        let ax_0 = s.get_with_zeta(0, 1, 1);
         let ax_4 = s.get_with_zeta(4, 1, 0);
         c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 1, 0);
-        let ax_1 = s.get_with_zeta(1, 1, 0);
-        let ax_2 = s.get_with_zeta(2, 1, 0);
         let ax_3 = s.get_with_zeta(3, 1, 0);
+        let ax_2 = s.get_with_zeta(2, 1, 0);
+        let ax_1 = s.get_with_zeta(1, 1, 0);
+        let ax_0 = s.get_with_zeta(0, 1, 0);
         let ax_4 = s.get_with_zeta(4, 1, 1);
         c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 2, 1);
         let ax_1 = s.get_with_zeta(1, 2, 1);
-        let ax_2 = s.get_with_zeta(2, 2, 1);
-        let ax_3 = s.get_with_zeta(3, 2, 0);
+        let ax_0 = s.get_with_zeta(0, 2, 1);
         let ax_4 = s.get_with_zeta(4, 2, 1);
+        let ax_3 = s.get_with_zeta(3, 2, 0);
+        let ax_2 = s.get_with_zeta(2, 2, 1);
         c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 2, 0);
         let ax_1 = s.get_with_zeta(1, 2, 0);
-        let ax_2 = s.get_with_zeta(2, 2, 0);
-        let ax_3 = s.get_with_zeta(3, 2, 1);
+        let ax_0 = s.get_with_zeta(0, 2, 0);
         let ax_4 = s.get_with_zeta(4, 2, 0);
+        let ax_3 = s.get_with_zeta(3, 2, 1);
+        let ax_2 = s.get_with_zeta(2, 2, 0);
         c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 3, 1);
-        let ax_1 = s.get_with_zeta(1, 3, 1);
-        let ax_2 = s.get_with_zeta(2, 3, 0);
-        let ax_3 = s.get_with_zeta(3, 3, 1);
         let ax_4 = s.get_with_zeta(4, 3, 1);
+        let ax_3 = s.get_with_zeta(3, 3, 1);
+        let ax_2 = s.get_with_zeta(2, 3, 0);
+        let ax_1 = s.get_with_zeta(1, 3, 1);
+        let ax_0 = s.get_with_zeta(0, 3, 1);
         c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 3, 0);
-        let ax_1 = s.get_with_zeta(1, 3, 0);
-        let ax_2 = s.get_with_zeta(2, 3, 1);
-        let ax_3 = s.get_with_zeta(3, 3, 0);
         let ax_4 = s.get_with_zeta(4, 3, 0);
+        let ax_3 = s.get_with_zeta(3, 3, 0);
+        let ax_2 = s.get_with_zeta(2, 3, 1);
+        let ax_1 = s.get_with_zeta(1, 3, 0);
+        let ax_0 = s.get_with_zeta(0, 3, 0);
         c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 4, 1);
-        let ax_1 = s.get_with_zeta(1, 4, 0);
         let ax_2 = s.get_with_zeta(2, 4, 1);
-        let ax_3 = s.get_with_zeta(3, 4, 1);
+        let ax_1 = s.get_with_zeta(1, 4, 0);
+        let ax_0 = s.get_with_zeta(0, 4, 1);
         let ax_4 = s.get_with_zeta(4, 4, 1);
+        let ax_3 = s.get_with_zeta(3, 4, 1);
         c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 4, 0);
-        let ax_1 = s.get_with_zeta(1, 4, 1);
         let ax_2 = s.get_with_zeta(2, 4, 0);
-        let ax_3 = s.get_with_zeta(3, 4, 0);
+        let ax_1 = s.get_with_zeta(1, 4, 1);
+        let ax_0 = s.get_with_zeta(0, 4, 0);
         let ax_4 = s.get_with_zeta(4, 4, 0);
+        let ax_3 = s.get_with_zeta(3, 4, 0);
         c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let c_x4_zeta0 = c[4][0];
-
         let c_x1_zeta1 = c[1][1];
-
         let c_x3_zeta0 = c[3][0];
-
         let c_x0_zeta1 = c[0][1];
-
         let c_x2_zeta0 = c[2][0];
-
         let c_x4_zeta1 = c[4][1];
-
         let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
         d[0][0] = d_x0_zeta0;
         let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
@@ -1785,13 +1759,9 @@ pub(crate) fn keccakf1600_round2(
         let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
         d[3][0] = d_x3_zeta0;
         let c_x1_zeta0 = c[1][0];
-
         let c_x3_zeta1 = c[3][1];
-
         let c_x2_zeta1 = c[2][1];
-
         let c_x0_zeta0 = c[0][0];
-
         let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
         d[0][1] = d_x0_zeta1;
         let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
@@ -1808,16 +1778,16 @@ pub(crate) fn keccakf1600_round2(
             let a0 = s.get_with_zeta(0, 0, 0);
             let d0 = d[0][0];
             let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = d[1][1];
+            let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
         };
         let (bx2, bx3, bx4) = {
             let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = d[4][1];
+            let d4 = d[4][0];
             (
                 (a2 ^ d2).rotate_left(22),
                 (a3 ^ d3).rotate_left(11),
@@ -1840,16 +1810,16 @@ pub(crate) fn keccakf1600_round2(
             let a0 = s.get_with_zeta(0, 0, 1);
             let d0 = d[0][1];
             let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = d[1][0];
+            let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
         };
         let (bx2, bx3, bx4) = {
             let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = d[4][0];
+            let d4 = d[4][1];
             (
                 (a2 ^ d2).rotate_left(21),
                 (a3 ^ d3).rotate_left(10),
@@ -1870,16 +1840,16 @@ pub(crate) fn keccakf1600_round2(
     {
         let (bx2, bx3) = {
             let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = d[0][0];
+            let d0 = d[0][1];
             let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = d[1][0];
+            let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
         };
         let (bx4, bx0, bx1) = {
             let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(1, 4, 0);
             let d4 = d[4][0];
             (
@@ -1902,16 +1872,16 @@ pub(crate) fn keccakf1600_round2(
     {
         let (bx2, bx3) = {
             let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = d[0][1];
+            let d0 = d[0][0];
             let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = d[1][1];
+            let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
         };
         let (bx4, bx0, bx1) = {
             let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(1, 4, 1);
             let d4 = d[4][1];
             (
@@ -1934,18 +1904,18 @@ pub(crate) fn keccakf1600_round2(
     {
         let (bx4, bx0) = {
             let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = d[0][1];
+            let d0 = d[0][0];
             let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = d[1][0];
+            let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
         };
         let (bx1, bx2, bx3) = {
             let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(2, 3, 1);
             let d3 = d[3][1];
             let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = d[4][1];
+            let d4 = d[4][0];
             (
                 (a2 ^ d2).rotate_left(3),
                 (a3 ^ d3).rotate_left(13),
@@ -1966,18 +1936,18 @@ pub(crate) fn keccakf1600_round2(
     {
         let (bx4, bx0) = {
             let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = d[0][0];
+            let d0 = d[0][1];
             let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = d[1][1];
+            let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
         };
         let (bx1, bx2, bx3) = {
             let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(2, 3, 0);
             let d3 = d[3][0];
             let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = d[4][0];
+            let d4 = d[4][1];
             (
                 (a2 ^ d2).rotate_left(3),
                 (a3 ^ d3).rotate_left(12),
@@ -1998,18 +1968,18 @@ pub(crate) fn keccakf1600_round2(
     {
         let (bx1, bx2) = {
             let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = d[0][1];
+            let d0 = d[0][0];
             let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = d[1][1];
+            let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
         };
         let (bx3, bx4, bx0) = {
             let a2 = s.get_with_zeta(3, 2, 1);
             let d2 = d[2][1];
             let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = d[4][0];
+            let d4 = d[4][1];
             (
                 (a2 ^ d2).rotate_left(8),
                 (a3 ^ d3).rotate_left(28),
@@ -2030,18 +2000,18 @@ pub(crate) fn keccakf1600_round2(
     {
         let (bx1, bx2) = {
             let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = d[0][0];
+            let d0 = d[0][1];
             let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = d[1][0];
+            let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
         };
         let (bx3, bx4, bx0) = {
             let a2 = s.get_with_zeta(3, 2, 0);
             let d2 = d[2][0];
             let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = d[4][1];
+            let d4 = d[4][0];
             (
                 (a2 ^ d2).rotate_left(7),
                 (a3 ^ d3).rotate_left(28),
@@ -2062,18 +2032,18 @@ pub(crate) fn keccakf1600_round2(
     {
         let (bx3, bx4) = {
             let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = d[0][0];
+            let d0 = d[0][1];
             let a1 = s.get_with_zeta(4, 1, 0);
             let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
         };
         let (bx0, bx1, bx2) = {
             let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = d[4][0];
+            let d4 = d[4][1];
             (
                 (a2 ^ d2).rotate_left(31),
                 (a3 ^ d3).rotate_left(28),
@@ -2094,18 +2064,18 @@ pub(crate) fn keccakf1600_round2(
     {
         let (bx3, bx4) = {
             let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = d[0][1];
+            let d0 = d[0][0];
             let a1 = s.get_with_zeta(4, 1, 1);
             let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
         };
         let (bx0, bx1, bx2) = {
             let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = d[4][1];
+            let d4 = d[4][0];
             (
                 (a2 ^ d2).rotate_left(31),
                 (a3 ^ d3).rotate_left(27),
@@ -2138,97 +2108,91 @@ pub(crate) fn keccakf1600_round3(
 ) {
     {
         let ax_0 = s.get_with_zeta(0, 0, 0);
-        let ax_1 = s.get_with_zeta(1, 0, 0);
-        let ax_2 = s.get_with_zeta(2, 0, 1);
-        let ax_3 = s.get_with_zeta(3, 0, 1);
-        let ax_4 = s.get_with_zeta(4, 0, 0);
+        let ax_3 = s.get_with_zeta(3, 0, 0);
+        let ax_1 = s.get_with_zeta(1, 0, 1);
+        let ax_4 = s.get_with_zeta(4, 0, 1);
+        let ax_2 = s.get_with_zeta(2, 0, 0);
         c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 0, 1);
-        let ax_1 = s.get_with_zeta(1, 0, 1);
-        let ax_2 = s.get_with_zeta(2, 0, 0);
-        let ax_3 = s.get_with_zeta(3, 0, 0);
-        let ax_4 = s.get_with_zeta(4, 0, 1);
+        let ax_3 = s.get_with_zeta(3, 0, 1);
+        let ax_1 = s.get_with_zeta(1, 0, 0);
+        let ax_4 = s.get_with_zeta(4, 0, 0);
+        let ax_2 = s.get_with_zeta(2, 0, 1);
         c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 1, 1);
-        let ax_1 = s.get_with_zeta(1, 1, 0);
-        let ax_2 = s.get_with_zeta(2, 1, 0);
-        let ax_3 = s.get_with_zeta(3, 1, 1);
+        let ax_2 = s.get_with_zeta(2, 1, 1);
+        let ax_0 = s.get_with_zeta(0, 1, 0);
+        let ax_3 = s.get_with_zeta(3, 1, 0);
+        let ax_1 = s.get_with_zeta(1, 1, 1);
         let ax_4 = s.get_with_zeta(4, 1, 0);
         c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 1, 0);
-        let ax_1 = s.get_with_zeta(1, 1, 1);
-        let ax_2 = s.get_with_zeta(2, 1, 1);
-        let ax_3 = s.get_with_zeta(3, 1, 0);
+        let ax_2 = s.get_with_zeta(2, 1, 0);
+        let ax_0 = s.get_with_zeta(0, 1, 1);
+        let ax_3 = s.get_with_zeta(3, 1, 1);
+        let ax_1 = s.get_with_zeta(1, 1, 0);
         let ax_4 = s.get_with_zeta(4, 1, 1);
         c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 2, 0);
-        let ax_1 = s.get_with_zeta(1, 2, 0);
-        let ax_2 = s.get_with_zeta(2, 2, 1);
+        let ax_4 = s.get_with_zeta(4, 2, 0);
+        let ax_2 = s.get_with_zeta(2, 2, 0);
+        let ax_0 = s.get_with_zeta(0, 2, 1);
         let ax_3 = s.get_with_zeta(3, 2, 1);
-        let ax_4 = s.get_with_zeta(4, 2, 1);
+        let ax_1 = s.get_with_zeta(1, 2, 1);
         c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 2, 1);
-        let ax_1 = s.get_with_zeta(1, 2, 1);
-        let ax_2 = s.get_with_zeta(2, 2, 0);
+        let ax_4 = s.get_with_zeta(4, 2, 1);
+        let ax_2 = s.get_with_zeta(2, 2, 1);
+        let ax_0 = s.get_with_zeta(0, 2, 0);
         let ax_3 = s.get_with_zeta(3, 2, 0);
-        let ax_4 = s.get_with_zeta(4, 2, 0);
+        let ax_1 = s.get_with_zeta(1, 2, 0);
         c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 3, 0);
-        let ax_1 = s.get_with_zeta(1, 3, 1);
+        let ax_1 = s.get_with_zeta(1, 3, 0);
+        let ax_4 = s.get_with_zeta(4, 3, 1);
         let ax_2 = s.get_with_zeta(2, 3, 1);
-        let ax_3 = s.get_with_zeta(3, 3, 1);
-        let ax_4 = s.get_with_zeta(4, 3, 0);
+        let ax_0 = s.get_with_zeta(0, 3, 1);
+        let ax_3 = s.get_with_zeta(3, 3, 0);
         c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 3, 1);
-        let ax_1 = s.get_with_zeta(1, 3, 0);
+        let ax_1 = s.get_with_zeta(1, 3, 1);
+        let ax_4 = s.get_with_zeta(4, 3, 0);
         let ax_2 = s.get_with_zeta(2, 3, 0);
-        let ax_3 = s.get_with_zeta(3, 3, 0);
-        let ax_4 = s.get_with_zeta(4, 3, 1);
+        let ax_0 = s.get_with_zeta(0, 3, 0);
+        let ax_3 = s.get_with_zeta(3, 3, 1);
         c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 4, 1);
+        let ax_3 = s.get_with_zeta(3, 4, 1);
         let ax_1 = s.get_with_zeta(1, 4, 0);
-        let ax_2 = s.get_with_zeta(2, 4, 1);
-        let ax_3 = s.get_with_zeta(3, 4, 0);
-        let ax_4 = s.get_with_zeta(4, 4, 0);
+        let ax_4 = s.get_with_zeta(4, 4, 1);
+        let ax_2 = s.get_with_zeta(2, 4, 0);
+        let ax_0 = s.get_with_zeta(0, 4, 0);
         c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
-        let ax_0 = s.get_with_zeta(0, 4, 0);
+        let ax_3 = s.get_with_zeta(3, 4, 0);
         let ax_1 = s.get_with_zeta(1, 4, 1);
-        let ax_2 = s.get_with_zeta(2, 4, 0);
-        let ax_3 = s.get_with_zeta(3, 4, 1);
-        let ax_4 = s.get_with_zeta(4, 4, 1);
+        let ax_4 = s.get_with_zeta(4, 4, 0);
+        let ax_2 = s.get_with_zeta(2, 4, 1);
+        let ax_0 = s.get_with_zeta(0, 4, 1);
         c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let c_x4_zeta0 = c[4][0];
-
         let c_x1_zeta1 = c[1][1];
-
         let c_x3_zeta0 = c[3][0];
-
         let c_x0_zeta1 = c[0][1];
-
         let c_x2_zeta0 = c[2][0];
-
         let c_x4_zeta1 = c[4][1];
-
         let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
         d[0][0] = d_x0_zeta0;
         let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
@@ -2240,13 +2204,9 @@ pub(crate) fn keccakf1600_round3(
         let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
         d[3][0] = d_x3_zeta0;
         let c_x1_zeta0 = c[1][0];
-
         let c_x3_zeta1 = c[3][1];
-
         let c_x2_zeta1 = c[2][1];
-
         let c_x0_zeta0 = c[0][0];
-
         let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
         d[0][1] = d_x0_zeta1;
         let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
@@ -2268,9 +2228,9 @@ pub(crate) fn keccakf1600_round3(
         };
         let (bx2, bx3, bx4) = {
             let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(0, 4, 0);
             let d4 = d[4][0];
             (
@@ -2300,9 +2260,9 @@ pub(crate) fn keccakf1600_round3(
         };
         let (bx2, bx3, bx4) = {
             let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(0, 4, 1);
             let d4 = d[4][1];
             (
@@ -2325,14 +2285,14 @@ pub(crate) fn keccakf1600_round3(
     {
         let (bx2, bx3) = {
             let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = d[0][0];
+            let d0 = d[0][1];
             let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = d[1][0];
+            let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
         };
         let (bx4, bx0, bx1) = {
             let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(1, 3, 0);
             let d3 = d[3][0];
             let a4 = s.get_with_zeta(1, 4, 0);
@@ -2357,14 +2317,14 @@ pub(crate) fn keccakf1600_round3(
     {
         let (bx2, bx3) = {
             let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = d[0][1];
+            let d0 = d[0][0];
             let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = d[1][1];
+            let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
         };
         let (bx4, bx0, bx1) = {
             let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(1, 3, 1);
             let d3 = d[3][1];
             let a4 = s.get_with_zeta(1, 4, 1);
@@ -2391,14 +2351,14 @@ pub(crate) fn keccakf1600_round3(
             let a0 = s.get_with_zeta(2, 0, 0);
             let d0 = d[0][0];
             let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = d[1][0];
+            let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
         };
         let (bx1, bx2, bx3) = {
             let a2 = s.get_with_zeta(2, 2, 0);
             let d2 = d[2][0];
             let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(2, 4, 0);
             let d4 = d[4][0];
             (
@@ -2423,14 +2383,14 @@ pub(crate) fn keccakf1600_round3(
             let a0 = s.get_with_zeta(2, 0, 1);
             let d0 = d[0][1];
             let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = d[1][1];
+            let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
         };
         let (bx1, bx2, bx3) = {
             let a2 = s.get_with_zeta(2, 2, 1);
             let d2 = d[2][1];
             let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(2, 4, 1);
             let d4 = d[4][1];
             (
@@ -2460,11 +2420,11 @@ pub(crate) fn keccakf1600_round3(
         };
         let (bx3, bx4, bx0) = {
             let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = d[2][0];
+            let d2 = d[2][1];
             let a3 = s.get_with_zeta(3, 3, 0);
             let d3 = d[3][0];
             let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = d[4][0];
+            let d4 = d[4][1];
             (
                 (a2 ^ d2).rotate_left(8),
                 (a3 ^ d3).rotate_left(28),
@@ -2492,11 +2452,11 @@ pub(crate) fn keccakf1600_round3(
         };
         let (bx3, bx4, bx0) = {
             let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = d[2][1];
+            let d2 = d[2][0];
             let a3 = s.get_with_zeta(3, 3, 1);
             let d3 = d[3][1];
             let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = d[4][1];
+            let d4 = d[4][0];
             (
                 (a2 ^ d2).rotate_left(7),
                 (a3 ^ d3).rotate_left(28),
@@ -2517,7 +2477,7 @@ pub(crate) fn keccakf1600_round3(
     {
         let (bx3, bx4) = {
             let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = d[0][0];
+            let d0 = d[0][1];
             let a1 = s.get_with_zeta(4, 1, 0);
             let d1 = d[1][0];
             ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
@@ -2526,9 +2486,9 @@ pub(crate) fn keccakf1600_round3(
             let a2 = s.get_with_zeta(4, 2, 0);
             let d2 = d[2][0];
             let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = d[3][0];
+            let d3 = d[3][1];
             let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = d[4][0];
+            let d4 = d[4][1];
             (
                 (a2 ^ d2).rotate_left(31),
                 (a3 ^ d3).rotate_left(28),
@@ -2549,7 +2509,7 @@ pub(crate) fn keccakf1600_round3(
     {
         let (bx3, bx4) = {
             let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = d[0][1];
+            let d0 = d[0][0];
             let a1 = s.get_with_zeta(4, 1, 1);
             let d1 = d[1][1];
             ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
@@ -2558,9 +2518,9 @@ pub(crate) fn keccakf1600_round3(
             let a2 = s.get_with_zeta(4, 2, 1);
             let d2 = d[2][1];
             let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = d[3][1];
+            let d3 = d[3][0];
             let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = d[4][1];
+            let d4 = d[4][0];
             (
                 (a2 ^ d2).rotate_left(31),
                 (a3 ^ d3).rotate_left(27),
