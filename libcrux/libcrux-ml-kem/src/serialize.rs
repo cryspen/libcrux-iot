@@ -108,7 +108,7 @@ pub(super) fn serialize_uncompressed_ring_element(
             (coefficients_field_modulus_range #$:Vector)"
         );
         for j in 0..16 {
-            tmp[j] = to_unsigned_field_modulus(re.coefficients[i]);
+            tmp[j] = to_unsigned_field_modulus(re.coefficients[i * 16 + j]);
         }
 
         serialize_12(&tmp, &mut serialized[24 * i..24 * i + 24]);
