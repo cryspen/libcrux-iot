@@ -288,7 +288,7 @@ pub(crate) fn encapsulate<
     let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
         core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
     let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
+    let mut scratch = Vector::ZERO();
     let mut v = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
     let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
@@ -410,7 +410,7 @@ pub(crate) fn decapsulate<
         r#"assert (v $CIPHERTEXT_SIZE == v $IMPLICIT_REJECTION_HASH_INPUT_SIZE - v $SHARED_SECRET_SIZE)"#
     );
     let mut decrypted = [0u8; 32];
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
+    let mut scratch = Vector::ZERO();
     let mut v = PolynomialRingElement::<Vector>::ZERO();
     let mut message = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
