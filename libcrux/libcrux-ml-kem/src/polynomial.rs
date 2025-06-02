@@ -182,7 +182,6 @@ fn add_message_error_reduce<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     message: &PolynomialRingElement<Vector>,
     result: &mut PolynomialRingElement<Vector>,
-    scratch: &mut Vector,
 ) {
     // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
     for i in 0..VECTORS_IN_RING_ELEMENT {
@@ -203,9 +202,8 @@ fn add_message_error_reduce<Vector: Operations>(
         //     &Vector::add(myself.coefficients[i], &message.coefficients[i]),
         // ));
         // ```
-        *scratch = myself.coefficients[i].clone(); // XXX: Need this?
-        Vector::add(scratch, &message.coefficients[i]);
-        Vector::add(&mut result.coefficients[i], &scratch);
+        Vector::add(&mut result.coefficients[i], &message.coefficients[i]);
+        Vector::add(&mut result.coefficients[i], &myself.coefficients[i]);
         Vector::barrett_reduce(&mut result.coefficients[i]);
     }
 }
@@ -400,13 +398,8 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
-    pub(crate) fn add_message_error_reduce(
-        &self,
-        message: &Self,
-        result: &mut Self,
-        scratch: &mut Vector,
-    ) {
-        add_message_error_reduce(self, message, result, scratch);
+    pub(crate) fn add_message_error_reduce(&self, message: &Self, result: &mut Self) {
+        add_message_error_reduce(self, message, result);
     }
 
     #[inline(always)]

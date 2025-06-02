@@ -108,7 +108,7 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     secret_as_ntt: &[PolynomialRingElement<Vector>], // length k
     u_as_ntt: &[PolynomialRingElement<Vector>],      // length k
     result: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     accumulator: &mut [i32; 256],
 ) {
     *accumulator = [0i32; 256];
@@ -117,7 +117,7 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     }
 
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
-    invert_ntt_montgomery::<K, Vector>(result, &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K, Vector>(result, scratch);
     v.subtract_reduce(result);
 }
 
@@ -142,7 +142,7 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     error_2: &PolynomialRingElement<Vector>,
     message: &PolynomialRingElement<Vector>,
     result: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     cache: &[PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
@@ -153,8 +153,8 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
 
-    invert_ntt_montgomery::<K, Vector>(result, &mut scratch.coefficients[0]);
-    error_2.add_message_error_reduce(message, result, &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K, Vector>(result, scratch);
+    error_2.add_message_error_reduce(message, result);
 }
 
 /// Compute u := InvertNTT(Aᵀ ◦ r̂) + e₁
@@ -177,7 +177,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
     r_as_ntt: &[PolynomialRingElement<Vector>],
     error_1: &[PolynomialRingElement<Vector>],
     result: &mut [PolynomialRingElement<Vector>],
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
@@ -190,7 +190,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
         matrix_entry.accumulating_ntt_multiply_fill_cache(&r_as_ntt[j], accumulator, &mut cache[j]);
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[0]);
-    invert_ntt_montgomery::<K, Vector>(&mut result[0], &mut scratch.coefficients[0]);
+    invert_ntt_montgomery::<K, Vector>(&mut result[0], scratch);
     result[0].add_error_reduce(&error_1[0]);
 
     for i in 1..K {
@@ -201,7 +201,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
         }
         PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[i]);
 
-        invert_ntt_montgomery::<K, Vector>(&mut result[i], &mut scratch.coefficients[0]);
+        invert_ntt_montgomery::<K, Vector>(&mut result[i], scratch);
         result[i].add_error_reduce(&error_1[i]);
     }
 }

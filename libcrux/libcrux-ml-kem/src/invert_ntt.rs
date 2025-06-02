@@ -205,7 +205,6 @@ pub(crate) fn invert_ntt_at_layer_4_plus<Vector: Operations>(
     for _round in 0..(128 >> layer) {
         *zeta_i -= 1;
 
-        // XXX: split_at_mut this
         let (a, rest) = remaining_elements.split_at_mut(step_vec);
         let (b, rest) = rest.split_at_mut(step_vec);
         remaining_elements = rest;
