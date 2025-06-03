@@ -75,9 +75,9 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
 #[hax_lib::fstar::verification_status(lax)]
 pub(super) fn sample_from_xof<const K: usize, Vector: Operations>(
     seeds: &[[u8; 34]],
-    sampled_coefficients: &mut [usize],
     out: &mut [[i16; 272]],
 ) {
+    let mut sampled_coefficients = [0usize; K];
     for i in 0..K {
         let mut xof_state = PortableHash::shake128_init_absorb_final(&seeds[i]);
         let mut randomness = [0u8; THREE_BLOCKS];

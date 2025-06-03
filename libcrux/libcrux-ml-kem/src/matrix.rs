@@ -46,9 +46,8 @@ pub(crate) fn sample_matrix_entry<Vector: Operations>(
     seed_ij[0..32].copy_from_slice(seed);
     seed_ij[32] = i as u8;
     seed_ij[33] = j as u8;
-    let mut sampled_coefficients = [0usize; 1];
     let mut out_raw = [[0i16; 272]; 1];
-    sample_from_xof::<1, Vector>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
+    sample_from_xof::<1, Vector>(&[seed_ij], &mut out_raw);
     PolynomialRingElement::from_i16_array(&out_raw[0], out);
 }
 
@@ -64,9 +63,8 @@ pub(crate) fn sample_matrix_row<const K: usize, Vector: Operations>(
         seeds[j][32] = i as u8;
         seeds[j][33] = j as u8;
     }
-    let mut sampled_coefficients = [0usize; K];
     let mut samples = [[0i16; 272]; K];
-    sample_from_xof::<K, Vector>(&seeds, &mut sampled_coefficients, &mut samples);
+    sample_from_xof::<K, Vector>(&seeds, &mut samples);
     cloop! {
         for (j, sample) in samples.into_iter().enumerate() {
             PolynomialRingElement::from_i16_array(&sample[..256], &mut out[j]);
@@ -97,9 +95,8 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations>(
             seeds[j][32] = i as u8;
             seeds[j][33] = j as u8;
         }
-        let mut sampled_coefficients = [0usize; K];
         let mut out = [[0i16; 272]; K];
-        sample_from_xof::<K, Vector>(&seeds, &mut sampled_coefficients, &mut out);
+        sample_from_xof::<K, Vector>(&seeds, &mut out);
         cloop! {
             for (j, sample) in out.into_iter().enumerate() {
                 // A[i][j] = A_transpose[j][i]
