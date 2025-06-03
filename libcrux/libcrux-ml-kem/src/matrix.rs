@@ -1,7 +1,13 @@
 use crate::{
-    constants::BYTES_PER_RING_ELEMENT, hash_functions::Hash, helper::cloop,
-    invert_ntt::invert_ntt_montgomery, polynomial::PolynomialRingElement,
-    sampling::sample_from_xof, serialize::deserialize_to_reduced_ring_element, vector::Operations,
+    constants::BYTES_PER_RING_ELEMENT,
+    hash_functions::portable::PortableHash,
+    helper::cloop,
+    ind_cpa::sample_error_coefficients_cbd,
+    invert_ntt::invert_ntt_montgomery,
+    polynomial::PolynomialRingElement,
+    sampling::{sample_from_binomial_distribution, sample_from_xof},
+    serialize::{deserialize_then_decompress_message, deserialize_to_reduced_ring_element},
+    vector::Operations,
 };
 
 #[inline(always)]
@@ -29,7 +35,7 @@ pub(crate) fn entry_mut<const K: usize, Vector: Operations>(
 }
 
 #[inline(always)]
-pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
+pub(crate) fn sample_matrix_entry<Vector: Operations>(
     out: &mut PolynomialRingElement<Vector>,
     seed: &[u8],
     i: usize,
@@ -42,8 +48,30 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     seed_ij[33] = j as u8;
     let mut sampled_coefficients = [0usize; 1];
     let mut out_raw = [[0i16; 272]; 1];
-    sample_from_xof::<1, Vector, Hasher>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
+    sample_from_xof::<1, Vector>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
     PolynomialRingElement::from_i16_array(&out_raw[0], out);
+}
+
+#[inline(always)]
+pub(crate) fn sample_matrix_row<const K: usize, Vector: Operations>(
+    out: &mut [PolynomialRingElement<Vector>],
+    seed: &[u8],
+    i: usize,
+) {
+    let mut seeds = [[0u8; 34]; K];
+    for j in 0..K {
+        seeds[j][0..32].copy_from_slice(seed);
+        seeds[j][32] = i as u8;
+        seeds[j][33] = j as u8;
+    }
+    let mut sampled_coefficients = [0usize; K];
+    let mut samples = [[0i16; 272]; K];
+    sample_from_xof::<K, Vector>(&seeds, &mut sampled_coefficients, &mut samples);
+    cloop! {
+        for (j, sample) in samples.into_iter().enumerate() {
+            PolynomialRingElement::from_i16_array(&sample[..256], &mut out[j]);
+        }
+    }
 }
 
 #[inline(always)]
@@ -56,7 +84,7 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
         if $transpose then Libcrux_ml_kem.Polynomial.to_spec_matrix_t ${A_transpose}_future == matrix_A
         else Libcrux_ml_kem.Polynomial.to_spec_matrix_t ${A_transpose}_future == Spec.MLKEM.matrix_transpose matrix_A)"#)
 )]
-pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
+pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations>(
     A_transpose: &mut [PolynomialRingElement<Vector>],
     seed: [u8; 34],
     transpose: bool,
@@ -71,7 +99,7 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
         }
         let mut sampled_coefficients = [0usize; K];
         let mut out = [[0i16; 272]; K];
-        sample_from_xof::<K, Vector, Hasher>(&seeds, &mut sampled_coefficients, &mut out);
+        sample_from_xof::<K, Vector>(&seeds, &mut sampled_coefficients, &mut out);
         cloop! {
             for (j, sample) in out.into_iter().enumerate() {
                 // A[i][j] = A_transpose[j][i]
@@ -135,17 +163,23 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
         res_spec == Spec.MLKEM.(poly_add (poly_add (vector_dot_product_ntt #$K tt_spec r_spec) e2_spec) m_spec) /\
         Libcrux_ml_kem.Serialize.coefficients_field_modulus_range $res"#)
 )]
-pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
+pub(crate) fn compute_ring_element_v<const K: usize, const ETA2: usize, Vector: Operations>(
     public_key: &[u8],
     t_as_ntt_entry: &mut PolynomialRingElement<Vector>,
     r_as_ntt: &[PolynomialRingElement<Vector>],
-    error_2: &PolynomialRingElement<Vector>,
-    message: &PolynomialRingElement<Vector>,
+    prf_input: &mut [u8; 33],
+    prf_output: &mut [u8], // length ETA2_RANDOMNESS_SIZE
+    sampling_buffer: &mut [i16],
+    message: &[u8],
     result: &mut PolynomialRingElement<Vector>,
     scratch: &mut Vector,
-    cache: &[PolynomialRingElement<Vector>],
+    cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
+    // After all things have been accumulated, no more need for cache
+    // -> deserialize message and add
+    // -> sample error and add
+    // -> reduce
     *accumulator = [0i32; 256];
     for (i, ring_element) in public_key.chunks_exact(BYTES_PER_RING_ELEMENT).enumerate() {
         deserialize_to_reduced_ring_element(ring_element, t_as_ntt_entry);
@@ -154,7 +188,16 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
 
     invert_ntt_montgomery::<K, Vector>(result, scratch);
-    error_2.add_message_error_reduce(message, result);
+
+    deserialize_then_decompress_message(message, &mut cache[0]);
+    result.add_message(&cache[0]);
+
+    // e_2 := CBD{η2}(PRF(r, N))
+    prf_input[32] = (2 * K) as u8;
+    PortableHash::PRF::<32>(&prf_input[..], prf_output);
+    sample_from_binomial_distribution::<ETA2, Vector>(&prf_output, sampling_buffer);
+    PolynomialRingElement::from_i16_array(&sampling_buffer, &mut cache[0]);
+    result.add_error_reduce_(&cache[0]);
 }
 
 /// Compute u := InvertNTT(Aᵀ ◦ r̂) + e₁
@@ -171,38 +214,70 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
         (forall (i:nat). i < v $K ==>
             Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index $res i))"#)
 )]
-pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>(
-    matrix_entry: &mut PolynomialRingElement<Vector>,
-    seed: &[u8],
+pub(crate) fn compute_vector_u<
+    const K: usize,
+    const ETA2: usize,
+    const ETA2_RANDOMNESS_SIZE: usize,
+    Vector: Operations,
+>(
+    re_slot: &mut PolynomialRingElement<Vector>,
+    matrix_seed: &[u8],
+    encryption_randomness: &mut [u8],
+    sample_buffer: &mut [i16],
     r_as_ntt: &[PolynomialRingElement<Vector>],
-    error_1: &[PolynomialRingElement<Vector>],
     result: &mut [PolynomialRingElement<Vector>],
     scratch: &mut Vector,
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
     debug_assert!(r_as_ntt.len() == K);
-    debug_assert!(error_1.len() == K);
+    // debug_assert!(error_1.len() == K);
+    let mut expanded_randomness = [0u8; ETA2_RANDOMNESS_SIZE];
 
     *accumulator = [0i32; 256];
+    let mut domain_separator = K as u8;
+    let mut matrix_row = [PolynomialRingElement::ZERO(); K];
+    sample_matrix_row::<K, Vector>(&mut matrix_row, matrix_seed, 0);
     for j in 0..K {
-        sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, 0, j);
-        matrix_entry.accumulating_ntt_multiply_fill_cache(&r_as_ntt[j], accumulator, &mut cache[j]);
+        // sample_matrix_entry::<Vector>(re_slot, matrix_seed, 0, j);
+        matrix_row[j].accumulating_ntt_multiply_fill_cache(
+            &r_as_ntt[j],
+            accumulator,
+            &mut cache[j],
+        );
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[0]);
     invert_ntt_montgomery::<K, Vector>(&mut result[0], scratch);
-    result[0].add_error_reduce(&error_1[0]);
+
+    sample_error_coefficients_cbd::<ETA2, ETA2_RANDOMNESS_SIZE, Vector>(
+        encryption_randomness,
+        &mut expanded_randomness,
+        domain_separator,
+        re_slot,
+        sample_buffer,
+    );
+    result[0].montgomery_add_error_reduce(&re_slot);
 
     for i in 1..K {
         *accumulator = [0i32; 256];
+        domain_separator += 1;
+        sample_matrix_row::<K, Vector>(&mut matrix_row, matrix_seed, i);
         for j in 0..K {
-            sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, i, j);
-            matrix_entry.accumulating_ntt_multiply_use_cache(&r_as_ntt[j], accumulator, &cache[j]);
+            // sample_matrix_entry::<Vector>(re_slot, matrix_seed, i, j);
+            matrix_row[j].accumulating_ntt_multiply_use_cache(&r_as_ntt[j], accumulator, &cache[j]);
         }
         PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[i]);
 
         invert_ntt_montgomery::<K, Vector>(&mut result[i], scratch);
-        result[i].add_error_reduce(&error_1[i]);
+
+        sample_error_coefficients_cbd::<ETA2, ETA2_RANDOMNESS_SIZE, Vector>(
+            encryption_randomness,
+            &mut expanded_randomness,
+            domain_separator,
+            re_slot,
+            sample_buffer,
+        );
+        result[i].montgomery_add_error_reduce(re_slot);
     }
 }
 

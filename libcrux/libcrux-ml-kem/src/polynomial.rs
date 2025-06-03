@@ -186,22 +186,6 @@ fn add_message_error_reduce<Vector: Operations>(
     // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
     for i in 0..VECTORS_IN_RING_ELEMENT {
         Vector::montgomery_multiply_by_constant(&mut result.coefficients[i], 1441);
-
-        // FIXME: Eurydice crashes with:
-        //
-        // Warning 11: in top-level declaration libcrux_ml_kem.polynomial.{libcrux_ml_kem::polynomial::PolynomialRingElement<Vector>[TraitClause@0]}.add_message_error_reduce__libcrux_ml_kem_libcrux_polynomials_PortableVector: this expression is not Low*; the enclosing function cannot be translated into C*: let mutable ret(Mark.Present,(Mark.AtMost 2), ): int16_t[16size_t] = $any in
-        // libcrux_ml_kem.libcrux_polynomials.{(libcrux_ml_kem::libcrux_polynomials::libcrux_traits::Operations␣for␣libcrux_ml_kem::libcrux_polynomials::PortableVector)}.add ((@9: libcrux_ml_kem_libcrux_polynomials_PortableVector[16size_t]*)[0uint32_t]:int16_t[16size_t][16size_t])[@4] &(((@8: libcrux_ml_kem_libcrux_polynomials_PortableVector[16size_t]*)[0uint32_t]:libcrux_ml_kem_libcrux_polynomials_PortableVector[16size_t])[@4]) @0;
-        // @0
-        // Warning 11 is fatal, exiting.
-        //
-        // On the following code:
-
-        // ```rust
-        // result.coefficients[i] = Vector::barrett_reduce(Vector::add(
-        //     coefficient_normal_form,
-        //     &Vector::add(myself.coefficients[i], &message.coefficients[i]),
-        // ));
-        // ```
         Vector::add(&mut result.coefficients[i], &message.coefficients[i]);
         Vector::add(&mut result.coefficients[i], &myself.coefficients[i]);
         Vector::barrett_reduce(&mut result.coefficients[i]);
@@ -210,7 +194,33 @@ fn add_message_error_reduce<Vector: Operations>(
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
-fn add_error_reduce<Vector: Operations>(
+fn add_error_reduce_<Vector: Operations>(
+    result: &mut PolynomialRingElement<Vector>,
+    error: &PolynomialRingElement<Vector>,
+) {
+    // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
+    for i in 0..VECTORS_IN_RING_ELEMENT {
+        Vector::add(&mut result.coefficients[i], &error.coefficients[i]);
+        Vector::barrett_reduce(&mut result.coefficients[i]);
+    }
+}
+
+#[inline(always)]
+#[hax_lib::fstar::verification_status(lax)]
+pub(crate) fn add_message<Vector: Operations>(
+    result: &mut PolynomialRingElement<Vector>,
+    message: &PolynomialRingElement<Vector>,
+) {
+    // Using `hax_lib::fstar::verification_status(lax)` works but produces an error while extracting
+    for i in 0..VECTORS_IN_RING_ELEMENT {
+        Vector::montgomery_multiply_by_constant(&mut result.coefficients[i], 1441);
+        Vector::add(&mut result.coefficients[i], &message.coefficients[i]);
+    }
+}
+
+#[inline(always)]
+#[hax_lib::fstar::verification_status(lax)]
+fn montgomery_add_error_reduce<Vector: Operations>(
     myself: &mut PolynomialRingElement<Vector>,
     error: &PolynomialRingElement<Vector>,
 ) {
@@ -403,8 +413,18 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
-    pub(crate) fn add_error_reduce(&mut self, error: &Self) {
-        add_error_reduce(self, error);
+    pub(crate) fn add_error_reduce_(&mut self, error: &Self) {
+        add_error_reduce_(self, error);
+    }
+
+    #[inline(always)]
+    pub(crate) fn add_message(&mut self, message: &Self) {
+        add_message(self, message);
+    }
+
+    #[inline(always)]
+    pub(crate) fn montgomery_add_error_reduce(&mut self, error: &Self) {
+        montgomery_add_error_reduce(self, error);
     }
 
     #[inline(always)]
