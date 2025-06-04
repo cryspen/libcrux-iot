@@ -4,6 +4,8 @@ use crate::lane::Lane2U32;
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct KeccakState {
     pub(super) st: [Lane2U32; 25],
+    pub(super) c: [Lane2U32; 5],
+    pub(super) d: [Lane2U32; 5],
 }
 
 impl KeccakState {
@@ -11,6 +13,8 @@ impl KeccakState {
     pub(crate) fn new() -> Self {
         Self {
             st: [Lane2U32::zero(); 25],
+            c: [Lane2U32::zero(); 5],
+            d: [Lane2U32::zero(); 5],
         }
     }
 
