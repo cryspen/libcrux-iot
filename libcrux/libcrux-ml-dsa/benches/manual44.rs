@@ -14,19 +14,5 @@ fn main() {
         MLDSA44KeyPair,
         MLDSA44Signature
     );
-    #[cfg(feature = "simd128")]
-    bench_group_libcrux!(
-        "44 sim1d28",
-        ml_dsa_44::neon,
-        MLDSA44KeyPair,
-        MLDSA44Signature
-    );
-    #[cfg(feature = "simd256")]
-    bench_group_libcrux!(
-        "44 simd256",
-        ml_dsa_44::avx2,
-        MLDSA44KeyPair,
-        MLDSA44Signature
-    );
     bench_group_pqclean!("44", dilithium2);
 }

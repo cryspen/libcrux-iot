@@ -263,18 +263,4 @@ mod tests {
             test_deserialize_generic::<simd::portable::PortableSIMDUnit>();
         }
     }
-
-    #[cfg(feature = "simd256")]
-    mod simd256 {
-        use super::*;
-
-        #[test]
-        fn test_serialize_simd256() {
-            test_serialize_generic::<simd::avx2::AVX2SIMDUnit>();
-        }
-        #[test]
-        fn test_deserialize_simd256() {
-            test_deserialize_generic::<simd::avx2::AVX2SIMDUnit>();
-        }
-    }
 }

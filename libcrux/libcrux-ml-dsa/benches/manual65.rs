@@ -14,19 +14,5 @@ fn main() {
         MLDSA65KeyPair,
         MLDSA65Signature
     );
-    #[cfg(feature = "simd128")]
-    bench_group_libcrux!(
-        "65 sim1d28",
-        ml_dsa_65::neon,
-        MLDSA65KeyPair,
-        MLDSA65Signature
-    );
-    #[cfg(feature = "simd256")]
-    bench_group_libcrux!(
-        "65 simd256",
-        ml_dsa_65::avx2,
-        MLDSA65KeyPair,
-        MLDSA65Signature
-    );
     bench_group_pqclean!("65", dilithium3);
 }
