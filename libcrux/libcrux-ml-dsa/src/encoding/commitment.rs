@@ -113,10 +113,4 @@ mod tests {
     fn test_serialize_portable() {
         test_serialize_generic::<simd::portable::PortableSIMDUnit>();
     }
-
-    #[cfg(feature = "simd256")]
-    #[test]
-    fn test_serialize_simd256() {
-        test_serialize_generic::<simd::avx2::AVX2SIMDUnit>();
-    }
 }

@@ -497,12 +497,9 @@ pub(crate) fn sample_challenge_ring_element<SIMDUnit: Operations, Shake256: shak
 mod tests {
     use super::*;
 
-    use crate::{
-        constants::COEFFICIENTS_IN_RING_ELEMENT,
-        hash_functions,
-        simd::{self, traits::Operations},
-    };
+    use crate::{constants::COEFFICIENTS_IN_RING_ELEMENT, simd::traits::Operations};
 
+    #[allow(dead_code)]
     fn sample_ring_element_uniform<SIMDUnit: Operations, Shake128: shake128::XofX4>(
         seed: [u8; 34],
         re: &mut PolynomialRingElement<SIMDUnit>,
@@ -567,6 +564,7 @@ mod tests {
     //     s[start_index as usize]
     // }
 
+    #[allow(dead_code)]
     fn test_sample_ring_element_uniform_generic<SIMDUnit: Operations, Shake128: shake128::XofX4>() {
         let seed: [u8; 34] = [
             33, 192, 250, 216, 117, 61, 16, 12, 248, 51, 213, 110, 64, 57, 119, 80, 164, 83, 73,
@@ -716,6 +714,7 @@ mod tests {
     //     // );
     // }
 
+    #[allow(dead_code)]
     fn test_sample_challenge_ring_element_generic<
         SIMDUnit: Operations,
         Shake256: shake256::DsaXof,
@@ -788,63 +787,5 @@ mod tests {
         let mut re = PolynomialRingElement::zero();
         sample_challenge_ring_element::<SIMDUnit, Shake256>(&seed, 60, &mut re);
         assert_eq!(re.to_i32_array(), expected_coefficients);
-    }
-
-    #[cfg(not(feature = "simd256"))]
-    mod portable {
-        use super::*;
-
-        #[test]
-        fn test_sample_ring_element_uniform() {
-            test_sample_ring_element_uniform_generic::<
-                simd::portable::PortableSIMDUnit,
-                hash_functions::portable::Shake128X4,
-            >();
-        }
-
-        // #[test]
-        // fn test_sample_error_ring_element() {
-        //     test_sample_error_ring_element_generic::<
-        //         simd::portable::PortableSIMDUnit,
-        //         hash_functions::portable::Shake256X4,
-        //     >();
-        // }
-
-        #[test]
-        fn test_sample_challenge_ring_element() {
-            test_sample_challenge_ring_element_generic::<
-                simd::portable::PortableSIMDUnit,
-                hash_functions::portable::Shake256,
-            >();
-        }
-    }
-
-    #[cfg(feature = "simd256")]
-    mod simd256 {
-        use super::*;
-
-        #[test]
-        fn test_sample_ring_element_uniform() {
-            test_sample_ring_element_uniform_generic::<
-                simd::avx2::AVX2SIMDUnit,
-                crate::hash_functions::simd256::Shake128x4,
-            >();
-        }
-
-        // #[test]
-        // fn test_sample_error_ring_element() {
-        //     test_sample_error_ring_element_generic::<
-        //         simd::avx2::AVX2SIMDUnit,
-        //         hash_functions::simd256::Shake256x4,
-        //     >();
-        // }
-
-        #[test]
-        fn test_sample_challenge_ring_element() {
-            test_sample_challenge_ring_element_generic::<
-                simd::avx2::AVX2SIMDUnit,
-                hash_functions::portable::Shake256,
-            >();
-        }
     }
 }

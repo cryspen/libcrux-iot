@@ -168,10 +168,6 @@ macro_rules! instantiate {
 
 // Instantiations
 instantiate! {portable, "Portable ML-DSA 44"}
-#[cfg(feature = "simd256")]
-instantiate! {avx2, "AVX2 Optimised ML-DSA 44"}
-#[cfg(feature = "simd128")]
-instantiate! {neon, "Neon Optimised ML-DSA 44"}
 
 /// Generate an ML-DSA 44 Key Pair
 ///

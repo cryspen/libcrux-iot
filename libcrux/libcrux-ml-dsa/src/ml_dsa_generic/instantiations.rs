@@ -194,19 +194,3 @@ instantiate! {portable,
     crate::hash_functions::portable::Shake256X4,
     crate::samplex4::portable::PortableSampler
 }
-
-// AVX2 generic implementation.
-#[cfg(feature = "simd256")]
-pub mod avx2;
-
-// NEON generic implementation.
-#[cfg(feature = "simd128")]
-instantiate! {neon,
-    crate::simd::portable::PortableSIMDUnit,
-    crate::hash_functions::portable::Shake128,
-    crate::hash_functions::neon::Shake128x4,
-    crate::hash_functions::portable::Shake256,
-    crate::hash_functions::portable::Shake256Xof,
-    crate::hash_functions::neon::Shake256x4,
-    crate::samplex4::neon::NeonSampler
-}
