@@ -244,37 +244,19 @@ fn sample_ring_element_cbd<
     const PRF_OUTPUT_SIZE: usize,
     Vector: Operations,
 >(
-    prf_input: [u8; 33],
-    mut domain_separator: u8,
+    prf_input: &mut [u8; 33],
+    start: u8,
     error_1: &mut [PolynomialRingElement<Vector>], // length k
     sample_buffer: &mut [i16],                     // length 256
-) -> u8 {
-    let mut prf_inputs = [prf_input; K];
-    // See https://github.com/hacspec/hax/issues/1167
-    let _domain_separator_init = domain_separator;
-    domain_separator = prf_input_inc::<K>(&mut prf_inputs, domain_separator);
-    hax_lib::fstar!(
-        "sample_ring_element_cbd_helper_1 $K $prf_inputs $prf_input $_domain_separator_init"
-    );
-    let mut prf_outputs = [0u8; PRF_OUTPUT_SIZE];
-    PortableHash::PRFxN(&prf_inputs, &mut prf_outputs, ETA2_RANDOMNESS_SIZE);
+) {
+    let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
     for i in 0..K {
-        hax_lib::loop_invariant!(|i: usize| {
-            fstar!(
-                "forall (j:nat). j < v $i ==>
-            Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector ${error_1}.[ sz j ] ==
-              Spec.MLKEM.sample_poly_cbd $ETA2 ${prf_outputs}.[ sz j ]"
-            )
-        });
-        let randomness = &prf_outputs[i * ETA2_RANDOMNESS_SIZE..(i + 1) * ETA2_RANDOMNESS_SIZE];
-        sample_from_binomial_distribution::<ETA2, Vector>(randomness, sample_buffer);
-        PolynomialRingElement::from_i16_array(sample_buffer, &mut error_1[i]);
+        prf_input[32] = i as u8 + start;
+        PortableHash::PRF::<ETA2_RANDOMNESS_SIZE>(prf_input, &mut prf_output);
+        let mut sample_buffer = [0i16; 256];
+        sample_from_binomial_distribution::<ETA2, Vector>(&prf_output, &mut sample_buffer);
+        PolynomialRingElement::from_i16_array(&sample_buffer, &mut error_1[i]);
     }
-    hax_lib::fstar!(
-        "sample_ring_element_cbd_helper_2
-        $K $ETA2 $ETA2_RANDOMNESS_SIZE #$:Vector error_1_ $prf_input $_domain_separator_init"
-    );
-    domain_separator
 }
 
 /// Sample a vector of ring elements from a centered binomial distribution and
@@ -860,7 +842,7 @@ pub(crate) fn encrypt_c1<
         ETA2,
         PRF_OUTPUT_SIZE2,
         Vector,
-    >(prf_input, K as u8, error_1, sampling_buffer);
+    >(&mut prf_input, K as u8, error_1, sampling_buffer);
 
     // e_2 := CBD{η2}(PRF(r, N))
     prf_input[32] = 2 * K as u8;
