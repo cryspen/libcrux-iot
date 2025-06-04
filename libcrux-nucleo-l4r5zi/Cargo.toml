@@ -26,7 +26,7 @@ embassy-time = { version = "0.4", features = ["tick-hz-80_000_000", "generic-que
 libcrux-ml-kem = { path = "../libcrux/libcrux-ml-kem" }
 libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" } 
 embedded-alloc = "0.6.0"
-libcrux-pqm4 = { path = "../sys/pqm4" }
+libcrux-pqm4 = { path = "../sys/pqm4", optional = true }
 
 [dev-dependencies]
 defmt-test = "0.3"
@@ -41,6 +41,7 @@ mlkem768 = ["libcrux-testbench/mlkem768"]
 mlkem1024 = ["libcrux-testbench/mlkem1024"]
 realtime = ["dep:embassy-time", "embassy-stm32/time", "embassy-stm32/time-driver-any"] # This allows real time measurements. The clock MUST be run with the `ClockConfig::Fast` configuration, otherwise the device will panic.
 stack = ["cortex-m-rt/paint-stack"]
+pqm4 = ["dep:libcrux-pqm4"]
 
 # cargo build/run
 [profile.dev]
@@ -103,3 +104,11 @@ required-features = ["stack"]
 [[bin]]
 name = "mldsa_stack_verify"
 required-features = ["stack"]
+
+[[bin]]
+name = "pqm4_cycles"
+required-features = ["pqm4"]
+
+[[bin]]
+name = "pqm4_rt"
+required-features = ["pqm4"]
