@@ -4,7 +4,7 @@ use crate::{
         ranked_bytes_per_ring_element, CPA_PKE_KEY_GENERATION_SEED_SIZE, G_DIGEST_SIZE,
         H_DIGEST_SIZE, SHARED_SECRET_SIZE,
     },
-    hash_functions::Hash,
+    hash_functions::portable::PortableHash,
     ind_cpa::serialize_public_key_mut,
     polynomial::PolynomialRingElement,
     serialize::deserialize_ring_elements_reduced,
@@ -50,7 +50,7 @@ pub(crate) mod instantiations;
                                               Seq.append $public_key (
                                               Seq.append (Spec.Utils.v_H $public_key) 
                                                   $implicit_rejection_value))"#))]
-fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize, Hasher: Hash>(
+fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize>(
     private_key: &[u8],
     public_key: &[u8],
     implicit_rejection_value: &[u8],
@@ -61,7 +61,7 @@ fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize,
     pointer += private_key.len();
     serialized[pointer..pointer + public_key.len()].copy_from_slice(public_key);
     pointer += public_key.len();
-    Hasher::H(
+    PortableHash::H(
         public_key,
         &mut serialized[pointer..pointer + H_DIGEST_SIZE],
     );
@@ -139,12 +139,11 @@ pub(crate) fn validate_private_key<
     const K: usize,
     const SECRET_KEY_SIZE: usize,
     const CIPHERTEXT_SIZE: usize,
-    Hasher: Hash,
 >(
     private_key: &MlKemPrivateKey<SECRET_KEY_SIZE>,
     _ciphertext: &MlKemCiphertext<CIPHERTEXT_SIZE>,
 ) -> bool {
-    validate_private_key_only::<K, SECRET_KEY_SIZE, Hasher>(private_key)
+    validate_private_key_only::<K, SECRET_KEY_SIZE>(private_key)
 }
 
 /// Validate an ML-KEM private key.
@@ -154,17 +153,13 @@ pub(crate) fn validate_private_key<
 #[hax_lib::fstar::options("--z3rlimit 300")]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
     $SECRET_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K"#))]
-pub(crate) fn validate_private_key_only<
-    const K: usize,
-    const SECRET_KEY_SIZE: usize,
-    Hasher: Hash,
->(
+pub(crate) fn validate_private_key_only<const K: usize, const SECRET_KEY_SIZE: usize>(
     private_key: &MlKemPrivateKey<SECRET_KEY_SIZE>,
 ) -> bool {
     // Eurydice can't access values directly on the types. We need to go to the
     // `value` directly.
     let mut t = [0u8; H_DIGEST_SIZE];
-    Hasher::H(&private_key.value[384 * K..768 * K + 32], &mut t);
+    PortableHash::H(&private_key.value[384 * K..768 * K + 32], &mut t);
     let expected = &private_key.value[768 * K + 32..768 * K + 64];
     t == expected
 }
@@ -195,17 +190,14 @@ pub(crate) fn generate_keypair<
     const ETA1_RANDOMNESS_SIZE: usize,
     const PRF_OUTPUT_SIZE1: usize,
     Vector: Operations,
-    Hasher: Hash,
     Scheme: Variant,
 >(
     randomness: [u8; KEY_GENERATION_SEED_SIZE],
 ) -> MlKemKeyPair<PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE> {
     let ind_cpa_keypair_randomness = &randomness[0..CPA_PKE_KEY_GENERATION_SEED_SIZE];
     let implicit_rejection_value = &randomness[CPA_PKE_KEY_GENERATION_SEED_SIZE..];
-
     let mut public_key = [0u8; PUBLIC_KEY_SIZE];
     let mut secret_key_serialized = [0u8; PRIVATE_KEY_SIZE];
-
     let mut ind_cpa_private_key = [0u8; CPA_PRIVATE_KEY_SIZE];
     let mut scratch = PolynomialRingElement::<Vector>::ZERO();
     let mut accumulator = [0i32; 256];
@@ -220,7 +212,6 @@ pub(crate) fn generate_keypair<
         ETA1_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
         Vector,
-        Hasher,
         Scheme,
     >(
         ind_cpa_keypair_randomness,
@@ -231,7 +222,7 @@ pub(crate) fn generate_keypair<
         &mut accumulator,
     );
 
-    serialize_kem_secret_key_mut::<K, PRIVATE_KEY_SIZE, Hasher>(
+    serialize_kem_secret_key_mut::<K, PRIVATE_KEY_SIZE>(
         &ind_cpa_private_key,
         &public_key,
         implicit_rejection_value,
@@ -278,36 +269,42 @@ pub(crate) fn encapsulate<
     const PRF_OUTPUT_SIZE1: usize,
     const PRF_OUTPUT_SIZE2: usize,
     Vector: Operations,
-    Hasher: Hash,
     Scheme: Variant,
 >(
     public_key: &MlKemPublicKey<PUBLIC_KEY_SIZE>,
     randomness: [u8; SHARED_SECRET_SIZE],
 ) -> (MlKemCiphertext<CIPHERTEXT_SIZE>, MlKemSharedSecret) {
     let mut processed_randomness = [0u8; 32];
-    Scheme::entropy_preprocess::<K, Hasher>(&randomness, &mut processed_randomness);
+    let mut hashed = [0u8; G_DIGEST_SIZE];
+    let mut ciphertext = [0u8; CIPHERTEXT_SIZE];
+    let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
+        core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
+    let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
+    let mut scratch = Vector::ZERO();
+    let mut v = PolynomialRingElement::<Vector>::ZERO();
+    let mut accumulator = [0i32; 256];
+    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut error_1 = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut u = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
+    let mut shared_secret_array = [0u8; 32];
+    let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
+    let mut sampling_buffer = [0i16; 256];
+    let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
+    Scheme::entropy_preprocess::<K>(&randomness, &mut processed_randomness);
     let mut to_hash: [u8; 2 * H_DIGEST_SIZE] = into_padded_array(&processed_randomness);
 
     hax_lib::fstar!(r#"eq_intro (Seq.slice $to_hash 0 32) $randomness"#);
-    Hasher::H(public_key.as_slice(), &mut to_hash[H_DIGEST_SIZE..]);
+    PortableHash::H(public_key.as_slice(), &mut to_hash[H_DIGEST_SIZE..]);
 
     hax_lib::fstar!(
         "assert (Seq.slice to_hash 0 (v $H_DIGEST_SIZE) == $randomness);
         lemma_slice_append $to_hash $randomness (Spec.Utils.v_H ${public_key}.f_value);
         assert ($to_hash == concat $randomness (Spec.Utils.v_H ${public_key}.f_value))"
     );
-    let mut hashed = [0u8; G_DIGEST_SIZE];
-    Hasher::G(&to_hash, &mut hashed);
-    let (shared_secret, pseudorandomness) = hashed.split_at(SHARED_SECRET_SIZE);
 
-    let mut ciphertext = [0u8; CIPHERTEXT_SIZE];
-    let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
-        core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
-    let mut accumulator = [0i32; 256];
-    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
-    let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
+    PortableHash::G(&to_hash, &mut hashed);
+    let (shared_secret, pseudorandomness) = hashed.split_at(SHARED_SECRET_SIZE);
 
     crate::ind_cpa::encrypt::<
         K,
@@ -326,7 +323,6 @@ pub(crate) fn encapsulate<
         PRF_OUTPUT_SIZE1,
         PRF_OUTPUT_SIZE2,
         Vector,
-        Hasher,
     >(
         public_key.as_slice(),
         processed_randomness,
@@ -338,11 +334,17 @@ pub(crate) fn encapsulate<
         &mut scratch,
         &mut cache,
         &mut accumulator,
+        &mut error_1,
+        &mut sampling_buffer,
+        &mut u,
+        &mut prf_output,
+        &mut message_as_ring_element,
+        &mut v,
     );
 
     let ciphertext = MlKemCiphertext::from(ciphertext);
-    let mut shared_secret_array = [0u8; 32];
-    Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(shared_secret, &ciphertext, &mut shared_secret_array);
+
+    Scheme::kdf::<K, CIPHERTEXT_SIZE>(shared_secret, &ciphertext, &mut shared_secret_array);
     (ciphertext, shared_secret_array)
 }
 
@@ -389,7 +391,6 @@ pub(crate) fn decapsulate<
     const PRF_OUTPUT_SIZE2: usize,
     const IMPLICIT_REJECTION_HASH_INPUT_SIZE: usize,
     Vector: Operations,
-    Hasher: Hash,
     Scheme: Variant,
 >(
     private_key: &MlKemPrivateKey<SECRET_KEY_SIZE>,
@@ -398,8 +399,30 @@ pub(crate) fn decapsulate<
     hax_lib::fstar!(
         r#"assert (v $CIPHERTEXT_SIZE == v $IMPLICIT_REJECTION_HASH_INPUT_SIZE - v $SHARED_SECRET_SIZE)"#
     );
+    let mut decrypted = [0u8; 32];
+    let mut scratch = Vector::ZERO();
+    let mut v = PolynomialRingElement::<Vector>::ZERO();
+    let mut message = PolynomialRingElement::<Vector>::ZERO();
+    let mut accumulator = [0i32; 256];
+    let mut hashed = [0u8; G_DIGEST_SIZE];
+    let mut implicit_rejection_shared_secret = [0u8; SHARED_SECRET_SIZE];
+    let mut expected_ciphertext = [0u8; CIPHERTEXT_SIZE];
+    let mut secret_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut r_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut u_as_ntt = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut error_1 = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut u = [PolynomialRingElement::<Vector>::ZERO(); K];
+    let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
+    let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
+    let mut implicit_rejection_shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
+    let mut shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
     let (ind_cpa_secret_key, ind_cpa_public_key, ind_cpa_public_key_hash, implicit_rejection_value) =
         unpack_private_key::<CPA_SECRET_KEY_SIZE, PUBLIC_KEY_SIZE>(&private_key.value);
+    let mut shared_secret = [0u8; 32];
+    let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
+    let mut sampling_buffer = [0i16; 256];
+    let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
 
     hax_lib::fstar!(
         r#"assert ($ind_cpa_secret_key == slice ${private_key}.f_value (sz 0) $CPA_SECRET_KEY_SIZE);
@@ -409,9 +432,6 @@ pub(crate) fn decapsulate<
         assert ($implicit_rejection_value == slice ${private_key}.f_value ($CPA_SECRET_KEY_SIZE +! $PUBLIC_KEY_SIZE +! Spec.MLKEM.v_H_DIGEST_SIZE)
             (length ${private_key}.f_value))"#
     );
-    let mut decrypted = [0u8; 32];
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
-    let mut accumulator = [0i32; 256];
 
     crate::ind_cpa::decrypt::<
         K,
@@ -426,6 +446,10 @@ pub(crate) fn decapsulate<
         &mut decrypted,
         &mut scratch,
         &mut accumulator,
+        &mut secret_as_ntt,
+        &mut v,
+        &mut u_as_ntt,
+        &mut message,
     );
 
     let mut to_hash: [u8; SHARED_SECRET_SIZE + H_DIGEST_SIZE] = into_padded_array(&decrypted);
@@ -437,9 +461,9 @@ pub(crate) fn decapsulate<
         assert ($decrypted == Spec.MLKEM.ind_cpa_decrypt $K $ind_cpa_secret_key ${ciphertext}.f_value);
         assert ($to_hash == concat $decrypted $ind_cpa_public_key_hash)"#
     );
-    let mut hashed = [0u8; G_DIGEST_SIZE];
-    Hasher::G(&to_hash, &mut hashed);
-    let (shared_secret, pseudorandomness) = hashed.split_at(SHARED_SECRET_SIZE);
+
+    PortableHash::G(&to_hash, &mut hashed);
+    let (shared_secret_prime, derived_randomness) = hashed.split_at(SHARED_SECRET_SIZE);
 
     hax_lib::fstar!(
         r#"assert (($shared_secret , $pseudorandomness) == split $hashed $SHARED_SECRET_SIZE);
@@ -457,21 +481,13 @@ pub(crate) fn decapsulate<
         assert (i4.f_PRF_pre (sz 32) $to_hash);
         lemma_slice_append $to_hash $implicit_rejection_value ${ciphertext}.f_value"
     );
-    let mut implicit_rejection_shared_secret = [0u8; SHARED_SECRET_SIZE];
-    Hasher::PRF::<32>(&to_hash, &mut implicit_rejection_shared_secret);
+
+    PortableHash::PRF::<32>(&to_hash, &mut implicit_rejection_shared_secret);
 
     hax_lib::fstar!(
         "assert ($implicit_rejection_shared_secret == Spec.Utils.v_PRF (sz 32) $to_hash);
         assert (Seq.length $ind_cpa_public_key == v $PUBLIC_KEY_SIZE)"
     );
-    let mut expected_ciphertext = [0u8; CIPHERTEXT_SIZE];
-    let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
-        core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-
-    let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
-
-    let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
 
     crate::ind_cpa::encrypt::<
         K,
@@ -490,11 +506,10 @@ pub(crate) fn decapsulate<
         PRF_OUTPUT_SIZE1,
         PRF_OUTPUT_SIZE2,
         Vector,
-        Hasher,
     >(
         ind_cpa_public_key,
         decrypted,
-        pseudorandomness,
+        derived_randomness,
         &mut expected_ciphertext,
         &mut matrix_entry,
         &mut r_as_ntt,
@@ -502,18 +517,22 @@ pub(crate) fn decapsulate<
         &mut scratch,
         &mut cache,
         &mut accumulator,
+        &mut error_1,
+        &mut sampling_buffer,
+        &mut u,
+        &mut prf_output,
+        &mut message_as_ring_element,
+        &mut v,
     );
 
-    let mut implicit_rejection_shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
-    Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(
+    Scheme::kdf::<K, CIPHERTEXT_SIZE>(
         &implicit_rejection_shared_secret,
         ciphertext,
         &mut implicit_rejection_shared_secret_kdf,
     );
-    let mut shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
-    Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(shared_secret, ciphertext, &mut shared_secret_kdf);
 
-    let mut shared_secret = [0u8; 32];
+    Scheme::kdf::<K, CIPHERTEXT_SIZE>(shared_secret_prime, ciphertext, &mut shared_secret_kdf);
+
     compare_ciphertexts_select_shared_secret_in_constant_time(
         ciphertext.as_ref(),
         &expected_ciphertext,

@@ -269,7 +269,7 @@ pub(super) fn compress_then_serialize_ring_element_u<
     fstar!(r#"${serialized_future.len()} == ${serialized.len()}"#)
 )]
 fn compress_then_serialize_4<Vector: Operations>(
-    re: PolynomialRingElement<Vector>,
+    re: &PolynomialRingElement<Vector>,
     serialized: &mut [u8],
     scratch: &mut Vector,
 ) {
@@ -303,7 +303,7 @@ fn compress_then_serialize_4<Vector: Operations>(
     fstar!(r#"${serialized_future.len()} == ${serialized.len()}"#)
 )]
 fn compress_then_serialize_5<Vector: Operations>(
-    re: PolynomialRingElement<Vector>,
+    re: &PolynomialRingElement<Vector>,
     serialized: &mut [u8],
     scratch: &mut Vector,
 ) {
@@ -332,7 +332,7 @@ pub(super) fn compress_then_serialize_ring_element_v<
     const OUT_LEN: usize,
     Vector: Operations,
 >(
-    re: PolynomialRingElement<Vector>,
+    re: &PolynomialRingElement<Vector>,
     out: &mut [u8],
     scratch: &mut Vector,
 ) {
