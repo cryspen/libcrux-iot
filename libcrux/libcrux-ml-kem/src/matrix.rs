@@ -1,7 +1,7 @@
 use crate::{
-    constants::BYTES_PER_RING_ELEMENT, hash_functions::Hash, helper::cloop,
-    invert_ntt::invert_ntt_montgomery, polynomial::PolynomialRingElement,
-    sampling::sample_from_xof, serialize::deserialize_to_reduced_ring_element, vector::Operations,
+    constants::BYTES_PER_RING_ELEMENT, helper::cloop, invert_ntt::invert_ntt_montgomery,
+    polynomial::PolynomialRingElement, sampling::sample_from_xof,
+    serialize::deserialize_to_reduced_ring_element, vector::Operations,
 };
 
 #[inline(always)]
@@ -29,7 +29,7 @@ pub(crate) fn entry_mut<const K: usize, Vector: Operations>(
 }
 
 #[inline(always)]
-pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
+pub(crate) fn sample_matrix_entry<Vector: Operations>(
     out: &mut PolynomialRingElement<Vector>,
     seed: &[u8],
     i: usize,
@@ -42,7 +42,7 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     seed_ij[33] = j as u8;
     let mut sampled_coefficients = [0usize; 1];
     let mut out_raw = [[0i16; 272]; 1];
-    sample_from_xof::<1, Vector, Hasher>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
+    sample_from_xof::<1, Vector>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
     PolynomialRingElement::from_i16_array(&out_raw[0], out);
 }
 
@@ -56,7 +56,7 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
         if $transpose then Libcrux_ml_kem.Polynomial.to_spec_matrix_t ${A_transpose}_future == matrix_A
         else Libcrux_ml_kem.Polynomial.to_spec_matrix_t ${A_transpose}_future == Spec.MLKEM.matrix_transpose matrix_A)"#)
 )]
-pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
+pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations>(
     A_transpose: &mut [PolynomialRingElement<Vector>],
     seed: [u8; 34],
     transpose: bool,
@@ -71,7 +71,7 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
         }
         let mut sampled_coefficients = [0usize; K];
         let mut out = [[0i16; 272]; K];
-        sample_from_xof::<K, Vector, Hasher>(&seeds, &mut sampled_coefficients, &mut out);
+        sample_from_xof::<K, Vector>(&seeds, &mut sampled_coefficients, &mut out);
         cloop! {
             for (j, sample) in out.into_iter().enumerate() {
                 // A[i][j] = A_transpose[j][i]
@@ -171,7 +171,7 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
         (forall (i:nat). i < v $K ==>
             Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index $res i))"#)
 )]
-pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>(
+pub(crate) fn compute_vector_u<const K: usize, Vector: Operations>(
     matrix_entry: &mut PolynomialRingElement<Vector>,
     seed: &[u8],
     r_as_ntt: &[PolynomialRingElement<Vector>],
@@ -186,7 +186,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
 
     *accumulator = [0i32; 256];
     for j in 0..K {
-        sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, 0, j);
+        sample_matrix_entry::<Vector>(matrix_entry, seed, 0, j);
         matrix_entry.accumulating_ntt_multiply_fill_cache(&r_as_ntt[j], accumulator, &mut cache[j]);
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[0]);
@@ -196,7 +196,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
     for i in 1..K {
         *accumulator = [0i32; 256];
         for j in 0..K {
-            sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, i, j);
+            sample_matrix_entry::<Vector>(matrix_entry, seed, i, j);
             matrix_entry.accumulating_ntt_multiply_use_cache(&r_as_ntt[j], accumulator, &cache[j]);
         }
         PolynomialRingElement::reducing_from_i32_array(accumulator, &mut result[i]);

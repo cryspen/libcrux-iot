@@ -5,7 +5,7 @@ use crate::{
         ranked_bytes_per_ring_element, BYTES_PER_RING_ELEMENT, COEFFICIENTS_IN_RING_ELEMENT,
         SHARED_SECRET_SIZE,
     },
-    hash_functions::Hash,
+    hash_functions::portable::PortableHash,
     helper::cloop,
     matrix::*,
     ntt::{ntt_binomially_sampled_ring_element, ntt_vector_u},
@@ -243,7 +243,6 @@ fn sample_ring_element_cbd<
     const ETA2: usize,
     const PRF_OUTPUT_SIZE: usize,
     Vector: Operations,
-    Hasher: Hash,
 >(
     prf_input: [u8; 33],
     mut domain_separator: u8,
@@ -258,7 +257,7 @@ fn sample_ring_element_cbd<
         "sample_ring_element_cbd_helper_1 $K $prf_inputs $prf_input $_domain_separator_init"
     );
     let mut prf_outputs = [0u8; PRF_OUTPUT_SIZE];
-    Hasher::PRFxN(&prf_inputs, &mut prf_outputs, ETA2_RANDOMNESS_SIZE);
+    PortableHash::PRFxN(&prf_inputs, &mut prf_outputs, ETA2_RANDOMNESS_SIZE);
     for i in 0..K {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
@@ -358,7 +357,6 @@ fn sample_vector_cbd_then_ntt<
     const ETA_RANDOMNESS_SIZE: usize,
     const PRF_OUTPUT_SIZE: usize,
     Vector: Operations,
-    Hasher: Hash,
 >(
     re_as_ntt: &mut [PolynomialRingElement<Vector>],
     prf_input: [u8; 33],
@@ -372,7 +370,7 @@ fn sample_vector_cbd_then_ntt<
         "sample_vector_cbd_then_ntt_helper_1 $K $prf_inputs $prf_input $_domain_separator_init"
     );
     let mut prf_outputs = [0u8; PRF_OUTPUT_SIZE];
-    Hasher::PRFxN(&prf_inputs, &mut prf_outputs, ETA_RANDOMNESS_SIZE);
+    PortableHash::PRFxN(&prf_inputs, &mut prf_outputs, ETA_RANDOMNESS_SIZE);
     for i in 0..K {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
@@ -460,7 +458,6 @@ pub(crate) fn generate_keypair_unpacked<
     const ETA1_RANDOMNESS_SIZE: usize,
     const PRF_OUTPUT_SIZE1: usize,
     Vector: Operations,
-    Hasher: Hash,
     Scheme: Variant,
 >(
     key_generation_seed: &[u8],
@@ -472,14 +469,14 @@ pub(crate) fn generate_keypair_unpacked<
 ) {
     // (ρ,σ) := G(d) for Kyber, (ρ,σ) := G(d || K) for ML-KEM
     let mut hashed = [0u8; 64];
-    Scheme::cpa_keygen_seed::<K, Hasher>(key_generation_seed, &mut hashed);
+    Scheme::cpa_keygen_seed::<K>(key_generation_seed, &mut hashed);
     let (seed_for_A, seed_for_secret_and_error) = hashed.split_at(32);
 
     hax_lib::fstar!(
         "Lib.Sequence.eq_intro #u8 #32 $seed_for_A
         (Seq.slice (Libcrux_ml_kem.Utils.into_padded_array (sz 34) $seed_for_A) 0 32)"
     );
-    sample_matrix_A::<K, Vector, Hasher>(&mut public_key.A, into_padded_array(seed_for_A), true);
+    sample_matrix_A::<K, Vector>(&mut public_key.A, into_padded_array(seed_for_A), true);
 
     hax_lib::fstar!(
         r#"let (matrix_A_as_ntt, valid) = Spec.MLKEM.sample_matrix_A_ntt #$K $seed_for_A in
@@ -489,28 +486,15 @@ pub(crate) fn generate_keypair_unpacked<
     hax_lib::fstar!(
         "Lib.Sequence.eq_intro #u8 #32 $seed_for_secret_and_error (Seq.slice $prf_input 0 32)"
     );
-    let domain_separator = sample_vector_cbd_then_ntt::<
-        K,
-        ETA1,
-        ETA1_RANDOMNESS_SIZE,
-        PRF_OUTPUT_SIZE1,
-        Vector,
-        Hasher,
-    >(
-        &mut private_key.secret_as_ntt,
-        prf_input,
-        0,
-        &mut scratch.coefficients[0],
-    );
+    let domain_separator =
+        sample_vector_cbd_then_ntt::<K, ETA1, ETA1_RANDOMNESS_SIZE, PRF_OUTPUT_SIZE1, Vector>(
+            &mut private_key.secret_as_ntt,
+            prf_input,
+            0,
+            &mut scratch.coefficients[0],
+        );
     let mut error_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
-    let _ = sample_vector_cbd_then_ntt::<
-        K,
-        ETA1,
-        ETA1_RANDOMNESS_SIZE,
-        PRF_OUTPUT_SIZE1,
-        Vector,
-        Hasher,
-    >(
+    let _ = sample_vector_cbd_then_ntt::<K, ETA1, ETA1_RANDOMNESS_SIZE, PRF_OUTPUT_SIZE1, Vector>(
         &mut error_as_ntt,
         prf_input,
         domain_separator,
@@ -568,7 +552,6 @@ pub(crate) fn generate_keypair<
     const ETA1_RANDOMNESS_SIZE: usize,
     const PRF_OUTPUT_SIZE1: usize,
     Vector: Operations,
-    Hasher: Hash,
     Scheme: Variant,
 >(
     key_generation_seed: &[u8],
@@ -589,7 +572,6 @@ pub(crate) fn generate_keypair<
         ETA1_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
         Vector,
-        Hasher,
         Scheme,
     >(
         key_generation_seed,
@@ -779,7 +761,6 @@ pub(crate) fn encrypt<
     const PRF_OUTPUT_SIZE1: usize,
     const PRF_OUTPUT_SIZE2: usize,
     Vector: Operations,
-    Hasher: Hash,
 >(
     public_key: &[u8],
     message: [u8; SHARED_SECRET_SIZE],
@@ -811,7 +792,6 @@ pub(crate) fn encrypt<
         PRF_OUTPUT_SIZE1,
         PRF_OUTPUT_SIZE2,
         Vector,
-        Hasher,
     >(
         randomness,
         matrix_entry,
@@ -857,7 +837,6 @@ pub(crate) fn encrypt_c1<
     const PRF_OUTPUT_SIZE1: usize,
     const PRF_OUTPUT_SIZE2: usize,
     Vector: Operations,
-    Hasher: Hash,
 >(
     randomness: &[u8],
     matrix_entry: &mut PolynomialRingElement<Vector>,
@@ -880,14 +859,10 @@ pub(crate) fn encrypt_c1<
     //     N := N + 1
     // end for
     // rˆ := NTT(r)
-    let domain_separator = sample_vector_cbd_then_ntt::<
-        K,
-        ETA1,
-        ETA1_RANDOMNESS_SIZE,
-        PRF_OUTPUT_SIZE1,
-        Vector,
-        Hasher,
-    >(r_as_ntt, prf_input, 0, scratch);
+    let domain_separator =
+        sample_vector_cbd_then_ntt::<K, ETA1, ETA1_RANDOMNESS_SIZE, PRF_OUTPUT_SIZE1, Vector>(
+            r_as_ntt, prf_input, 0, scratch,
+        );
     hax_lib::fstar!(
         "Lib.Sequence.eq_intro #u8 #32 $randomness (Seq.slice $prf_input 0 32);
         assert (v $domain_separator == v $K)"
@@ -897,13 +872,13 @@ pub(crate) fn encrypt_c1<
     //     e1[i] := CBD_{η2}(PRF(r,N))
     //     N := N + 1
     // end for
-    let domain_separator =
-        sample_ring_element_cbd::<K, ETA2_RANDOMNESS_SIZE, ETA2, PRF_OUTPUT_SIZE2, Vector, Hasher>(
-            prf_input,
-            domain_separator,
-            error_1,
-            sampling_buffer,
-        );
+    let domain_separator = sample_ring_element_cbd::<
+        K,
+        ETA2_RANDOMNESS_SIZE,
+        ETA2,
+        PRF_OUTPUT_SIZE2,
+        Vector,
+    >(prf_input, domain_separator, error_1, sampling_buffer);
 
     // e_2 := CBD{η2}(PRF(r, N))
     prf_input[32] = domain_separator;
@@ -912,12 +887,12 @@ pub(crate) fn encrypt_c1<
         assert ($prf_input == Seq.append $randomness (Seq.create 1 $domain_separator))"
     );
 
-    Hasher::PRF::<32>(&prf_input, prf_output);
+    PortableHash::PRF::<32>(&prf_input, prf_output);
     sample_from_binomial_distribution::<ETA2, Vector>(&prf_output, sampling_buffer);
     PolynomialRingElement::from_i16_array(&sampling_buffer, error_2);
 
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
-    compute_vector_u::<K, Vector, Hasher>(
+    compute_vector_u::<K, Vector>(
         matrix_entry,
         seed_for_a,
         &r_as_ntt,
