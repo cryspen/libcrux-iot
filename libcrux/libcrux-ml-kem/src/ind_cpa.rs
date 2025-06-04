@@ -17,7 +17,7 @@ use crate::{
         deserialize_then_decompress_ring_element_u, deserialize_then_decompress_ring_element_v,
         deserialize_to_uncompressed_ring_element, serialize_uncompressed_ring_element,
     },
-    utils::{into_padded_array, prf_input_inc},
+    utils::into_padded_array,
     variant::Variant,
     vector::Operations,
 };
@@ -247,7 +247,6 @@ fn sample_ring_element_cbd<
     prf_input: &mut [u8; 33],
     start: u8,
     error_1: &mut [PolynomialRingElement<Vector>], // length k
-    sample_buffer: &mut [i16],                     // length 256
 ) {
     let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
     for i in 0..K {
@@ -836,13 +835,12 @@ pub(crate) fn encrypt_c1<
     //     e1[i] := CBD_{η2}(PRF(r,N))
     //     N := N + 1
     // end for
-    let _domain_separator = sample_ring_element_cbd::<
-        K,
-        ETA2_RANDOMNESS_SIZE,
-        ETA2,
-        PRF_OUTPUT_SIZE2,
-        Vector,
-    >(&mut prf_input, K as u8, error_1, sampling_buffer);
+    let _domain_separator =
+        sample_ring_element_cbd::<K, ETA2_RANDOMNESS_SIZE, ETA2, PRF_OUTPUT_SIZE2, Vector>(
+            &mut prf_input,
+            K as u8,
+            error_1,
+        );
 
     // e_2 := CBD{η2}(PRF(r, N))
     prf_input[32] = 2 * K as u8;
