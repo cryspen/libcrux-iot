@@ -53,17 +53,6 @@ pub(crate) mod portable {
         portable::shake256(out, input);
     }
 
-    #[hax_lib::requires(fstar!(r#"v $LEN < pow2 32 /\ (v $K == 2 \/ v $K == 3 \/ v $K == 4)"#))]
-    #[hax_lib::ensures(|result|
-        fstar!(r#"$result == Spec.Utils.v_PRFxN $K $LEN $input"#))
-    ]
-    #[inline(always)]
-    fn PRFxN(input: &[[u8; 33]], outputs: &mut [u8], out_len: usize) {
-        for i in 0..input.len() {
-            portable::shake256(&mut outputs[i * out_len..(i + 1) * out_len], &input[i]);
-        }
-    }
-
     #[inline(always)]
     fn shake128_init_absorb_final(input: &[u8; 34]) -> PortableHash {
         let mut shake128_state = incremental::shake128_init();
@@ -107,16 +96,6 @@ pub(crate) mod portable {
         #[inline(always)]
         pub(crate) fn PRF<const LEN: usize>(input: &[u8], out: &mut [u8]) {
             PRF::<LEN>(input, out)
-        }
-
-        #[requires(fstar!(r#"v $LEN < pow2 32 /\ (v $K == 2 \/ v $K == 3 \/ v $K == 4)"#))]
-        #[ensures(|out|
-            fstar!(r#"(v $LEN < pow2 32 /\ (v $K == 2 \/ v $K == 3 \/ v $K == 4)) ==>
-                $out == Spec.Utils.v_PRFxN $K $LEN $input"#))
-        ]
-        #[inline(always)]
-        pub(crate) fn PRFxN(input: &[[u8; 33]], outputs: &mut [u8], out_len: usize) {
-            PRFxN(input, outputs, out_len)
         }
 
         #[inline(always)]
