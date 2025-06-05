@@ -90,7 +90,6 @@ pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[u8]) -> [u8; LEN]
 pub use hash as sha3;
 
 /// SHA3 224
-#[inline(always)]
 pub fn sha224(data: &[u8]) -> Sha3_224Digest {
     let mut out = [0u8; 28];
     sha224_ema(&mut out, data);
@@ -101,7 +100,6 @@ pub fn sha224(data: &[u8]) -> Sha3_224Digest {
 ///
 /// Preconditions:
 /// - `digest.len() == 28`
-#[inline(always)]
 pub fn sha224_ema(digest: &mut [u8], payload: &[u8]) {
     debug_assert!(payload.len() <= u32::MAX as usize);
     debug_assert!(digest.len() == 28);
@@ -110,7 +108,6 @@ pub fn sha224_ema(digest: &mut [u8], payload: &[u8]) {
 }
 
 /// SHA3 256
-#[inline(always)]
 pub fn sha256(data: &[u8]) -> Sha3_256Digest {
     let mut out = [0u8; 32];
     sha256_ema(&mut out, data);
@@ -118,7 +115,6 @@ pub fn sha256(data: &[u8]) -> Sha3_256Digest {
 }
 
 /// SHA3 256
-#[inline(always)]
 pub fn sha256_ema(digest: &mut [u8], payload: &[u8]) {
     debug_assert!(payload.len() <= u32::MAX as usize);
     debug_assert!(digest.len() == 32);
@@ -127,7 +123,6 @@ pub fn sha256_ema(digest: &mut [u8], payload: &[u8]) {
 }
 
 /// SHA3 384
-#[inline(always)]
 pub fn sha384(data: &[u8]) -> Sha3_384Digest {
     let mut out = [0u8; 48];
     sha384_ema(&mut out, data);
@@ -135,7 +130,6 @@ pub fn sha384(data: &[u8]) -> Sha3_384Digest {
 }
 
 /// SHA3 384
-#[inline(always)]
 pub fn sha384_ema(digest: &mut [u8], payload: &[u8]) {
     debug_assert!(payload.len() <= u32::MAX as usize);
     debug_assert!(digest.len() == 48);
@@ -144,7 +138,6 @@ pub fn sha384_ema(digest: &mut [u8], payload: &[u8]) {
 }
 
 /// SHA3 512
-#[inline(always)]
 pub fn sha512(data: &[u8]) -> Sha3_512Digest {
     let mut out = [0u8; 64];
     sha512_ema(&mut out, data);
@@ -152,7 +145,6 @@ pub fn sha512(data: &[u8]) -> Sha3_512Digest {
 }
 
 /// SHA3 512
-#[inline(always)]
 pub fn sha512_ema(digest: &mut [u8], payload: &[u8]) {
     debug_assert!(payload.len() <= u32::MAX as usize);
     debug_assert!(digest.len() == 64);
@@ -164,7 +156,6 @@ pub fn sha512_ema(digest: &mut [u8], payload: &[u8]) {
 ///
 /// Note that the output length `BYTES` must fit into 32 bit. If it is longer,
 /// the output will only return `u32::MAX` bytes.
-#[inline(always)]
 pub fn shake128<const BYTES: usize>(data: &[u8]) -> [u8; BYTES] {
     let mut out = [0u8; BYTES];
     portable::keccakx1::<168, 0x1fu8>(data, &mut out);
@@ -174,7 +165,6 @@ pub fn shake128<const BYTES: usize>(data: &[u8]) -> [u8; BYTES] {
 /// SHAKE 128
 ///
 /// Writes `out.len()` bytes.
-#[inline(always)]
 pub fn shake128_ema(out: &mut [u8], data: &[u8]) {
     portable::keccakx1::<168, 0x1fu8>(data, out);
 }
@@ -183,7 +173,6 @@ pub fn shake128_ema(out: &mut [u8], data: &[u8]) {
 ///
 /// Note that the output length `BYTES` must fit into 32 bit. If it is longer,
 /// the output will only return `u32::MAX` bytes.
-#[inline(always)]
 pub fn shake256<const BYTES: usize>(data: &[u8]) -> [u8; BYTES] {
     let mut out = [0u8; BYTES];
     portable::keccakx1::<136, 0x1fu8>(data, &mut out);
@@ -193,7 +182,6 @@ pub fn shake256<const BYTES: usize>(data: &[u8]) -> [u8; BYTES] {
 /// SHAKE 256
 ///
 /// Writes `out.len()` bytes.
-#[inline(always)]
 pub fn shake256_ema(out: &mut [u8], data: &[u8]) {
     portable::keccakx1::<136, 0x1fu8>(data, out);
 }
@@ -210,7 +198,6 @@ pub mod portable {
         state: state::KeccakState,
     }
 
-    #[inline(always)]
     pub(crate) fn keccakx1<const RATE: usize, const DELIM: u8>(data: &[u8], out: &mut [u8]) {
         // generic_keccak::keccak_xof::<1, u64, RATE, DELIM>(data, out);
         // or
