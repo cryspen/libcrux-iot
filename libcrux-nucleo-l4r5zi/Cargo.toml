@@ -117,3 +117,7 @@ required-features = ["pqm4"]
 [[bin]]
 name = "pqm4_rt"
 required-features = ["pqm4"]
+
+[[bin]]
+name = "sha3_cycles"
+required-features = ["pqm4"]
