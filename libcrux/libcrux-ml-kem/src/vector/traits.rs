@@ -10,6 +10,7 @@ pub const BARRETT_R: i32 = 1 << BARRETT_SHIFT;
 #[hax_lib::attributes]
 pub trait Repr: Copy + Clone {
     #[requires(true)]
+    #[allow(dead_code)]
     fn repr(x: Self) -> [i16; 16];
 }
 

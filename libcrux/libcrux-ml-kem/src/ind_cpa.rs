@@ -13,10 +13,9 @@ use crate::{
     sampling::sample_from_binomial_distribution,
     serialize::{
         compress_then_serialize_message, compress_then_serialize_ring_element_u,
-        compress_then_serialize_ring_element_v, deserialize_ring_elements_reduced,
-        deserialize_then_decompress_message, deserialize_then_decompress_ring_element_u,
-        deserialize_then_decompress_ring_element_v, deserialize_to_uncompressed_ring_element,
-        serialize_uncompressed_ring_element,
+        compress_then_serialize_ring_element_v, deserialize_then_decompress_message,
+        deserialize_then_decompress_ring_element_u, deserialize_then_decompress_ring_element_v,
+        deserialize_to_uncompressed_ring_element, serialize_uncompressed_ring_element,
     },
     utils::{into_padded_array, prf_input_inc},
     variant::Variant,
@@ -24,6 +23,7 @@ use crate::{
 };
 
 /// Types for the unpacked API.
+// We keep this, because key generation still depends on unpacked types.
 #[allow(non_snake_case)]
 pub(crate) mod unpacked {
     use crate::{polynomial::PolynomialRingElement, vector::traits::Operations};
@@ -762,7 +762,7 @@ fn compress_then_serialize_u<
         (Libcrux_ml_kem.Polynomial.to_spec_matrix_t #$K #$:Vector ${public_key.A})"#)
 )]
 #[inline(always)]
-pub(crate) fn encrypt_unpacked<
+pub(crate) fn encrypt<
     const K: usize,
     const K_SQUARED: usize,
     const CIPHERTEXT_SIZE: usize,
@@ -781,10 +781,11 @@ pub(crate) fn encrypt_unpacked<
     Vector: Operations,
     Hasher: Hash,
 >(
-    public_key: &IndCpaPublicKeyUnpacked<K, K_SQUARED, Vector>,
+    public_key: &[u8],
     message: [u8; SHARED_SECRET_SIZE],
     randomness: &[u8],
     ciphertext: &mut [u8],
+    matrix_entry: &mut PolynomialRingElement<Vector>,
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
@@ -807,7 +808,8 @@ pub(crate) fn encrypt_unpacked<
         Hasher,
     >(
         randomness,
-        &public_key.A,
+        matrix_entry,
+        &public_key[T_AS_NTT_ENCODED_SIZE..],
         &mut ciphertext[0..C1_LEN],
         r_as_ntt,
         error_2,
@@ -817,7 +819,8 @@ pub(crate) fn encrypt_unpacked<
     );
 
     encrypt_c2::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
-        &public_key.t_as_ntt,
+        &public_key[..T_AS_NTT_ENCODED_SIZE],
+        matrix_entry,
         r_as_ntt,
         &error_2,
         message,
@@ -845,7 +848,8 @@ pub(crate) fn encrypt_c1<
     Hasher: Hash,
 >(
     randomness: &[u8],
-    matrix: &[PolynomialRingElement<Vector>; K_SQUARED],
+    matrix_entry: &mut PolynomialRingElement<Vector>,
+    seed_for_a: &[u8],
     ciphertext: &mut [u8], // C1_LEN
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
@@ -901,8 +905,9 @@ pub(crate) fn encrypt_c1<
     // u := NTT^{-1}(AˆT ◦ rˆ) + e_1
     let mut u = from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
 
-    compute_vector_u::<K, Vector>(
-        matrix,
+    compute_vector_u::<K, Vector, Hasher>(
+        matrix_entry,
+        seed_for_a,
         &r_as_ntt,
         &error_1,
         &mut u,
@@ -926,7 +931,8 @@ pub(crate) fn encrypt_c2<
     const C2_LEN: usize,
     Vector: Operations,
 >(
-    t_as_ntt: &[PolynomialRingElement<Vector>; K],
+    public_key: &[u8],
+    t_as_ntt_entry: &mut PolynomialRingElement<Vector>,
     r_as_ntt: &[PolynomialRingElement<Vector>],
     error_2: &PolynomialRingElement<Vector>,
     message: [u8; SHARED_SECRET_SIZE],
@@ -939,8 +945,9 @@ pub(crate) fn encrypt_c2<
     let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
     deserialize_then_decompress_message(message, &mut message_as_ring_element);
     let mut v = PolynomialRingElement::<Vector>::ZERO();
-    compute_ring_element_v(
-        t_as_ntt,
+    compute_ring_element_v::<K, Vector>(
+        public_key,
+        t_as_ntt_entry,
         r_as_ntt,
         error_2,
         &message_as_ring_element,
@@ -956,142 +963,6 @@ pub(crate) fn encrypt_c2<
         v,
         ciphertext,
         &mut scratch.coefficients[0],
-    );
-}
-
-#[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 500 --ext context_pruning")]
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    $ETA1 = Spec.MLKEM.v_ETA1 $K /\
-    $ETA1_RANDOMNESS_SIZE = Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
-    $ETA2 = Spec.MLKEM.v_ETA2 $K /\
-    $BLOCK_LEN == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
-    $ETA2_RANDOMNESS_SIZE = Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K /\
-    $U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR $K /\
-    $V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR $K /\
-    length $public_key == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
-    length $randomness == Spec.MLKEM.v_SHARED_SECRET_SIZE /\
-    $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
-    $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
-    $C1_LEN == Spec.MLKEM.v_C1_SIZE $K /\
-    $C2_LEN == Spec.MLKEM.v_C2_SIZE $K"#))]
-#[hax_lib::ensures(|result|
-    fstar!(r#"let (expected, valid) = Spec.MLKEM.ind_cpa_encrypt $K $public_key $message $randomness in
-            valid ==> $result == expected"#)
-)]
-#[inline(always)]
-pub(crate) fn encrypt<
-    const K: usize,
-    const K_SQUARED: usize,
-    const CIPHERTEXT_SIZE: usize,
-    const T_AS_NTT_ENCODED_SIZE: usize,
-    const C1_LEN: usize,
-    const C2_LEN: usize,
-    const U_COMPRESSION_FACTOR: usize,
-    const V_COMPRESSION_FACTOR: usize,
-    const BLOCK_LEN: usize,
-    const ETA1: usize,
-    const ETA1_RANDOMNESS_SIZE: usize,
-    const ETA2: usize,
-    const ETA2_RANDOMNESS_SIZE: usize,
-    const PRF_OUTPUT_SIZE1: usize,
-    const PRF_OUTPUT_SIZE2: usize,
-    Vector: Operations,
-    Hasher: Hash,
->(
-    public_key: &[u8],
-    message: [u8; SHARED_SECRET_SIZE],
-    randomness: &[u8],
-    ciphertext: &mut [u8],
-    r_as_ntt: &mut [PolynomialRingElement<Vector>],
-    error_2: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
-    cache: &mut [PolynomialRingElement<Vector>],
-    accumulator: &mut [i32; 256],
-) {
-    hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_encrypt) Spec.MLKEM.ind_cpa_encrypt"#);
-    // XXX: Can we pass this in?
-    let mut unpacked_public_key = IndCpaPublicKeyUnpacked::<K, K_SQUARED, Vector>::default();
-    build_unpacked_public_key_mut::<K, K_SQUARED, T_AS_NTT_ENCODED_SIZE, Vector, Hasher>(
-        public_key,
-        &mut unpacked_public_key,
-    );
-
-    // After unpacking the public key we can now call the unpacked decryption.
-    encrypt_unpacked::<
-        K,
-        K_SQUARED,
-        CIPHERTEXT_SIZE,
-        T_AS_NTT_ENCODED_SIZE,
-        C1_LEN,
-        C2_LEN,
-        U_COMPRESSION_FACTOR,
-        V_COMPRESSION_FACTOR,
-        BLOCK_LEN,
-        ETA1,
-        ETA1_RANDOMNESS_SIZE,
-        ETA2,
-        ETA2_RANDOMNESS_SIZE,
-        PRF_OUTPUT_SIZE1,
-        PRF_OUTPUT_SIZE2,
-        Vector,
-        Hasher,
-    >(
-        &unpacked_public_key,
-        message,
-        randomness,
-        ciphertext,
-        r_as_ntt,
-        error_2,
-        scratch,
-        cache,
-        accumulator,
-    )
-}
-
-#[inline(always)]
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
-    length $public_key == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K"#))]
-#[hax_lib::ensures(|_| {
-    let unpacked_public_key_future = future(unpacked_public_key);
-    {fstar!(r#"
-    let (t_as_ntt_bytes, seed_for_A) = split public_key $T_AS_NTT_ENCODED_SIZE in
-    let t_as_ntt = Spec.MLKEM.vector_decode_12 #$K t_as_ntt_bytes in 
-    let matrix_A_as_ntt, valid = Spec.MLKEM.sample_matrix_A_ntt #$K seed_for_A in
-    (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${unpacked_public_key_future.t_as_ntt} == t_as_ntt /\
-    valid ==> Libcrux_ml_kem.Polynomial.to_spec_matrix_t #$K #$:Vector ${unpacked_public_key_future.A} == Spec.MLKEM.matrix_transpose matrix_A_as_ntt)"#)}})]
-pub(crate) fn build_unpacked_public_key_mut<
-    const K: usize,
-    const K_SQUARED: usize,
-    const T_AS_NTT_ENCODED_SIZE: usize,
-    Vector: Operations,
-    Hasher: Hash,
->(
-    public_key: &[u8],
-    unpacked_public_key: &mut IndCpaPublicKeyUnpacked<K, K_SQUARED, Vector>,
-) {
-    // tˆ := Decode_12(pk)
-    deserialize_ring_elements_reduced::<K, Vector>(
-        &public_key[..T_AS_NTT_ENCODED_SIZE],
-        &mut unpacked_public_key.t_as_ntt,
-    );
-
-    // ρ := pk + 12·k·n / 8
-    // for i from 0 to k−1 do
-    //     for j from 0 to k − 1 do
-    //         AˆT[i][j] := Parse(XOF(ρ, i, j))
-    //     end for
-    // end for
-    let seed = &public_key[T_AS_NTT_ENCODED_SIZE..];
-    hax_lib::fstar!(
-        "Lib.Sequence.eq_intro #u8 #32 $seed
-      (Seq.slice (Libcrux_ml_kem.Utils.into_padded_array (sz 34) $seed) 0 32)"
-    );
-    sample_matrix_A::<K, Vector, Hasher>(
-        &mut unpacked_public_key.A,
-        into_padded_array(seed),
-        false,
     );
 }
 

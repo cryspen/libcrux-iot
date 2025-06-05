@@ -144,8 +144,6 @@ pub(crate) mod portable {
 
     #[inline(always)]
     fn shake128_squeeze_next_block(st: &mut PortableHash, outputs: &mut [[u8; BLOCK_SIZE]]) {
-        debug_assert!(outputs.len() == 2 || outputs.len() == 3 || outputs.len() == 4);
-
         for i in 0..outputs.len() {
             incremental::shake128_squeeze_next_block(&mut st.shake128_state[i], &mut outputs[i]);
         }
