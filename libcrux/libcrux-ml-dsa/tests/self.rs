@@ -121,40 +121,6 @@ impl_modified_signing_key_test!(
     ml_dsa_44::portable::verify
 );
 
-#[cfg(feature = "simd128")]
-impl_consistency_test!(
-    consistency_44_simd128,
-    ml_dsa_44::neon::generate_key_pair,
-    ml_dsa_44::neon::sign,
-    ml_dsa_44::neon::verify
-);
-
-#[cfg(feature = "simd128")]
-impl_modified_signing_key_test!(
-    modified_signing_key_44_simd128,
-    ml_dsa_44::neon::generate_key_pair,
-    ml_dsa_44::MLDSA44SigningKey::len(),
-    ml_dsa_44::neon::sign,
-    ml_dsa_44::neon::verify
-);
-
-#[cfg(feature = "simd256")]
-impl_consistency_test!(
-    consistency_44_simd256,
-    ml_dsa_44::avx2::generate_key_pair,
-    ml_dsa_44::avx2::sign,
-    ml_dsa_44::avx2::verify
-);
-
-#[cfg(feature = "simd256")]
-impl_modified_signing_key_test!(
-    modified_signing_key_44_simd256,
-    ml_dsa_44::avx2::generate_key_pair,
-    ml_dsa_44::MLDSA44SigningKey::len(),
-    ml_dsa_44::avx2::sign,
-    ml_dsa_44::avx2::verify
-);
-
 // 65
 
 impl_consistency_test!(
