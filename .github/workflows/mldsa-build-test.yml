@@ -26,7 +26,6 @@ jobs:
         # etc
         os:
           - ubuntu-24.04-arm
-          - windows-11-arm
           - macos-latest
 
     runs-on:  ${{ matrix.os }}
