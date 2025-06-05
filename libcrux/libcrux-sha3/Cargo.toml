@@ -23,8 +23,8 @@ libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" 
 hax-lib = { version = "0.3.0", git = "https://github.com/hacspec/hax/" }
 
 [features]
-simd128 = []
-simd256 = []
+full-unroll = []
+
 
 [[bench]]
 name = "sha3"

@@ -367,6 +367,8 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         s.d[3][1] = d_x3_zeta1;
     }
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
     {
         let (bx0, bx1) = {
             let a0 = s.get_with_zeta(0, 0, 0);
@@ -388,7 +390,10 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
+        #[cfg(feature = "full-unroll")]
         let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND];
+        #[cfg(not(feature = "full-unroll"))]
+        let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
         s.set_with_zeta(0, 0, 0, ax0);
         let ax1 = bx1 ^ ((!bx2) & bx3);
         s.set_with_zeta(1, 1, 0, ax1);
@@ -420,7 +425,16 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND];
+        let ax0;
+        #[cfg(feature = "full-unroll")]
+        {
+            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND];
+        }
+        #[cfg(not(feature = "full-unroll"))]
+        {
+            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
+            s.i = i + 1;
+        };
         s.set_with_zeta(0, 0, 1, ax0);
         let ax1 = bx1 ^ ((!bx2) & bx3);
         s.set_with_zeta(1, 1, 1, ax1);
@@ -803,6 +817,8 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         s.d[3][1] = d_x3_zeta1;
     }
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
     {
         let (bx0, bx1) = {
             let a0 = s.get_with_zeta(0, 0, 0);
@@ -824,7 +840,11 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
+
+        #[cfg(feature = "full-unroll")]
         let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 1];
+        #[cfg(not(feature = "full-unroll"))]
+        let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
         s.set_with_zeta(0, 0, 0, ax0);
         let ax1 = bx1 ^ ((!bx2) & bx3);
         s.set_with_zeta(3, 1, 1, ax1);
@@ -856,7 +876,16 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 1];
+        let ax0;
+        #[cfg(feature = "full-unroll")]
+        {
+            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 1];
+        }
+        #[cfg(not(feature = "full-unroll"))]
+        {
+            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
+            s.i = i + 1;
+        };
         s.set_with_zeta(0, 0, 1, ax0);
         let ax1 = bx1 ^ ((!bx2) & bx3);
         s.set_with_zeta(3, 1, 0, ax1);
@@ -1239,6 +1268,8 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         s.d[3][1] = d_x3_zeta1;
     }
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
     {
         let (bx0, bx1) = {
             let a0 = s.get_with_zeta(0, 0, 0);
@@ -1260,7 +1291,10 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
+        #[cfg(feature = "full-unroll")]
         let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 2];
+        #[cfg(not(feature = "full-unroll"))]
+        let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
         s.set_with_zeta(0, 0, 0, ax0);
         let ax1 = bx1 ^ ((!bx2) & bx3);
         s.set_with_zeta(2, 1, 1, ax1);
@@ -1292,7 +1326,16 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 2];
+        let ax0;
+        #[cfg(feature = "full-unroll")]
+        {
+            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 2];
+        }
+        #[cfg(not(feature = "full-unroll"))]
+        {
+            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
+            s.i = i + 1;
+        };
         s.set_with_zeta(0, 0, 1, ax0);
         let ax1 = bx1 ^ ((!bx2) & bx3);
         s.set_with_zeta(2, 1, 0, ax1);
@@ -1675,6 +1718,8 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         s.d[3][1] = d_x3_zeta1;
     }
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
     {
         let (bx0, bx1) = {
             let a0 = s.get_with_zeta(0, 0, 0);
@@ -1696,7 +1741,10 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
+        #[cfg(feature = "full-unroll")]
         let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 3];
+        #[cfg(not(feature = "full-unroll"))]
+        let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
         s.set_with_zeta(0, 0, 0, ax0);
         let ax1 = bx1 ^ ((!bx2) & bx3);
         s.set_with_zeta(0, 1, 0, ax1);
@@ -1728,7 +1776,16 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 3];
+        let ax0;
+        #[cfg(feature = "full-unroll")]
+        {
+            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 3];
+        }
+        #[cfg(not(feature = "full-unroll"))]
+        {
+            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
+            s.i = i + 1;
+        };
         s.set_with_zeta(0, 0, 1, ax0);
         let ax1 = bx1 ^ ((!bx2) & bx3);
         s.set_with_zeta(0, 1, 1, ax1);
@@ -1997,14 +2054,13 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
     }
 }
 
-// We only inline for release builds because otherwise we blow up the stack in testing.
 // What is interesting is that I assumed that not inlining here should be relatively cheap, because
 // it's just 6 calls more per permutation, but commenting out the inline here gives a 10%
 // performance hit, e.g.
 //   [CYCLE_MEASUREMENT libcrux SHAKE256 (PRF_ETA1_RANDOMNESS_1024)] : + 21535 cycles
 // vs
 //   [CYCLE_MEASUREMENT libcrux SHAKE256 (PRF_ETA1_RANDOMNESS_1024)] : + 19139 cycles
-#[cfg_attr(not(debug_assertions), inline(always))]
+#[inline(always)]
 pub(crate) fn keccakf1600_4rounds<const BASE_ROUND: usize>(s: &mut KeccakState) {
     keccakf1600_round0::<BASE_ROUND>(s);
     keccakf1600_round1::<BASE_ROUND>(s);
@@ -2014,12 +2070,21 @@ pub(crate) fn keccakf1600_4rounds<const BASE_ROUND: usize>(s: &mut KeccakState) 
 
 #[inline(always)]
 pub(crate) fn keccakf1600(s: &mut KeccakState) {
-    keccakf1600_4rounds::<0>(s);
-    keccakf1600_4rounds::<4>(s);
-    keccakf1600_4rounds::<8>(s);
-    keccakf1600_4rounds::<12>(s);
-    keccakf1600_4rounds::<16>(s);
-    keccakf1600_4rounds::<20>(s);
+    #[cfg(not(feature = "full-unroll"))]
+    for _ in 0..6 {
+        // dummy base round, is ignored if we don't unroll
+        keccakf1600_4rounds::<0>(s);
+    }
+    #[cfg(feature = "full-unroll")]
+    {
+        keccakf1600_4rounds::<0>(s);
+        keccakf1600_4rounds::<4>(s);
+        keccakf1600_4rounds::<8>(s);
+        keccakf1600_4rounds::<12>(s);
+        keccakf1600_4rounds::<16>(s);
+        keccakf1600_4rounds::<20>(s);
+    }
+    s.i = 0;
 }
 
 #[inline(always)]

@@ -6,6 +6,7 @@ pub(crate) struct KeccakState {
     pub(super) st: [Lane2U32; 25],
     pub(super) c: [Lane2U32; 5],
     pub(super) d: [Lane2U32; 5],
+    pub(super) i: usize,
 }
 
 impl KeccakState {
@@ -15,6 +16,7 @@ impl KeccakState {
             st: [Lane2U32::zero(); 25],
             c: [Lane2U32::zero(); 5],
             d: [Lane2U32::zero(); 5],
+            i: 0,
         }
     }
 
