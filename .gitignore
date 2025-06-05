@@ -1,4 +1,5 @@
-/target
+**/target
+**/Cargo.lock
 .vscode
 .DS_Store
 benches/boringssl/build
@@ -15,9 +16,4 @@ kyber-crate/
 
 # When using sed
 *.bak
-/libcrux/libcrux-ml-dsa/target/
-/libcrux/libcrux-ml-kem/target/
-/libcrux/libcrux-sha3/Cargo.lock
-/libcrux/libcrux-sha3/target/
-/libcrux/libcrux-intrinsics/target/
 *.lock

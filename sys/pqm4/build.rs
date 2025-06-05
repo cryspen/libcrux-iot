@@ -2,12 +2,16 @@ use std::{env, path::Path};
 
 #[cfg(not(windows))]
 fn create_bindings(home_dir: &Path) {
-    let c_dir = home_dir.join("pqm4/crypto_kem/ml-kem-1024/m4fspeed/api.h");
-    let clang_args = vec![format!("-I{}", c_dir.display())];
+    let mlkem_dir = home_dir.join("pqm4/crypto_kem/ml-kem-1024/m4fspeed/api.h");
+    let fips202_dir = home_dir.join("pqm4/mupq/common/fips202.h");
+    let clang_args = vec![
+        format!("-I{}", mlkem_dir.display()),
+        format!("-I{}", fips202_dir.display()),
+    ];
 
     let bindings = bindgen::Builder::default()
         // Header to wrap headers
-        .header("pqm4/crypto_kem/ml-kem-1024/m4fspeed/api.h")
+        .header("wrapper.h")
         // Set include paths for headers
         .clang_args(clang_args)
         // Generate bindings
@@ -27,30 +31,6 @@ fn create_bindings(_: &Path) {}
 
 // This triggers the mupq build system.
 fn build() {
-    if !std::process::Command::new("git")
-        .arg("submodule")
-        .arg("update")
-        .arg("--init")
-        .arg("--recursive")
-        .status()
-        .expect("could not run git")
-        .success()
-    {
-        panic!("git could not update submodules.")
-    }
-
-    if !std::process::Command::new("git")
-        .arg("-C")
-        .arg("pqm4")
-        .arg("checkout")
-        .arg("ca48f77f3a7e474c9e8076debf7ae3e23c1323e8")
-        .status()
-        .expect("could not run git")
-        .success()
-    {
-        panic!("git could not checkout submodule branch `origin/pqm4-bindings`.")
-    }
-
     if !std::process::Command::new("make")
         .arg("-C")
         .arg("pqm4")

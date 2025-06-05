@@ -25,6 +25,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install GNU ARM Toolchain
         uses: carlosperate/arm-none-eabi-gcc-action@v1.8.0
