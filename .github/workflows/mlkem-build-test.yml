@@ -37,6 +37,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: Update dependencies
         run: cargo update
@@ -79,8 +80,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Successful
-        if: ${{ !(contains(needs.*.result, 'failure')) }} 
-        run: exit 0 
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
       - name: Failing
-        if: ${{ (contains(needs.*.result, 'failure')) }} 
-        run: exit 1 
+        if: ${{ (contains(needs.*.result, 'failure')) }}
+        run: exit 1
