@@ -199,10 +199,6 @@ pub mod portable {
     }
 
     pub(crate) fn keccakx1<const RATE: usize, const DELIM: u8>(data: &[u8], out: &mut [u8]) {
-        // generic_keccak::keccak_xof::<1, u64, RATE, DELIM>(data, out);
-        // or
-        // generic_keccak::keccak::<1, u64, RATE, DELIM>(data, out);
-        // or
         keccak::keccak::<RATE, DELIM>(data, out);
     }
 

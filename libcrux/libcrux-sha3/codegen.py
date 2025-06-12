@@ -176,7 +176,7 @@ def cloop(i):
                 zy = zeta_y(zeta, i, x, y)
                 y_ni = ni_y(i,x, y)
                 out += f"let ax_{y_ni} = s.get_with_zeta({y_ni}, {x}, {zy});\n"
-            out += f"c[{x}][{zeta}] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;\n"
+            out += f"s.c[{x}][{zeta}] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;\n"
             out += "}\n"
 
     return out
@@ -193,7 +193,7 @@ def bloop_inner(i, y, zeta):
 
         return f"""
         let a{x} = s.get_with_zeta({y_2prime},{x},{zeta_2prime});
-        let d{x} = d[{x}][{zeta_2prime}];
+        let d{x} = s.d[{x}][{zeta_2prime}];
         """
 
     def load_assign_stmt(x):
@@ -204,7 +204,7 @@ def bloop_inner(i, y, zeta):
 
         return [
             f"let a{x} = s.get_with_zeta({y_2prime},{x},{zeta_2prime});",
-            f"let d{x} = d[{x}][{zeta_prime}];"
+            f"let d{x} = s.d[{x}][{zeta_prime}];"
         ]
 
     def compute(x):
@@ -262,7 +262,37 @@ def aloop_inner(i, y, zeta):
     def compute(x):
         x_plus_one = (x + 1) % 5
         x_plus_two = (x + 2) % 5
-        return f"let {avar(x)} = {bvar(x)} ^ ((! {bvar(x_plus_one)}) & {bvar(x_plus_two)});\n"
+        y_2prime = ni_y(i+1,x, y)
+
+        # This is the actual expresion, but sometimes we want to also xor round
+        # constants to it.
+        base_expr = f"{bvar(x)} ^ ((! {bvar(x_plus_one)}) & {bvar(x_plus_two)})"
+
+        # In this case we'll need to add the round constants. In the algorithm
+        # it is done at the very end, but it is more efficient to do it now,
+        # because we don't need to load and store again.
+        if y_2prime == 0 and x == 0:
+            zeta_plus_o = (zeta + big_o(i+1, x, y_2prime)) % 2
+            rc_name = f"RC_INTERLEAVED_{zeta_plus_o}"
+
+            # if zeta is one, which is always the second and last time we
+            # access the round constants and need i, update the i stored in
+            # the state.
+            maybe_update_i = "s.i = i + 1;" if zeta_plus_o == 1 else ""
+
+            return f"""let {avar(x)};
+            #[cfg(feature = "full-unroll")]
+            {{
+                {avar(x)} = {base_expr} ^ {rc_name}[BASE_ROUND + {i}];
+            }};
+            #[cfg(not(feature = "full-unroll"))]
+            {{
+                {avar(x)} = {base_expr} ^ {rc_name}[i];
+                {maybe_update_i}
+            }};
+            """
+        else:
+            return f"let {avar(x)} = {base_expr};\n"
 
     def store(x):
         y_2prime = ni_y(i+1,x, y)
@@ -286,14 +316,6 @@ def abloop(i):
             out += aloop_inner(i, y, zeta)
             out += "}\n"
 
-    for zeta in range(2):
-        zeta_prime = (zeta  + big_o(i+1, 0,0)) %2
-        out += f"let az{zeta} = s.get_with_zeta(0,0, {zeta_prime});\n"
-
-    # TODO: This can be moved to aloop, where we initially set Aba0 and Aba1
-    for zeta in range(2):
-        zeta_prime = (zeta  + big_o(i+1, 0,0)) %2
-        out += f"s.set_with_zeta(0,0, {zeta_prime}, az{zeta} ^ RC_INTERLEAVED_{zeta}[i]);\n"
 
     return out
 
@@ -305,7 +327,7 @@ def dloop(i):
         return f"d_x{x}_zeta{zeta}"
 
     def load(x, zeta):
-        return f"let {cvar(x, zeta)} = c[{x}][{zeta}];\n"
+        return f"let {cvar(x, zeta)} = s.c[{x}][{zeta}];\n"
 
     def compute(x, zeta):
         x_minus_one = (x - 1) % 5
@@ -314,7 +336,7 @@ def dloop(i):
         return f"let {dvar(x, zeta)} = {cvar(x_minus_one, zeta)} ^ {cvar(x_plus_one, 1-zeta)}{rotate_call};\n"
 
     def store(x, zeta):
-        return f"d[{x}][{zeta}] = {dvar(x, zeta)};\n"
+        return f"s.d[{x}][{zeta}] = {dvar(x, zeta)};\n"
 
     ld_order = [(4,0),(1,1), (3,0), (0,1), (2,0), (4,1), (1,0), (3,1),(2,1), (0,0)];
     comp_order = [(0,0), (2,1), (4,0), (1,1), (3,0), (0,1), (2,0), (4,1 ), (1,0), (3,1)]
@@ -348,6 +370,9 @@ def round(i):
     out = ""
     out += cloop(i)
     out += dloop(i)
+    out += """#[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
+    """
     out += abloop(i)
     return out
 
@@ -355,7 +380,7 @@ def round(i):
 def defn_roundfn(i):
     return f"""
 #[inline(always)]
-    pub(crate) fn keccakf1600_round{i}(s: &mut KeccakState<1, Lane2U32>, c: &mut [Lane2U32; 5], d: &mut [Lane2U32; 5], i: usize) {{
+    pub(crate) fn keccakf1600_round{i}<const BASE_ROUND: usize>(s: &mut KeccakState) {{
         {round(i)}
     }}
     """

@@ -25,11 +25,6 @@ hax-lib = { version = "0.3.0", git = "https://github.com/hacspec/hax/" }
 [features]
 full-unroll = []
 
-
-[[bench]]
-name = "sha3"
-harness = false
-
 [dev-dependencies]
 criterion = "0.5.1"
 hex = "0.4.3"
