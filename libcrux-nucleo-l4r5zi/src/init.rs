@@ -50,7 +50,7 @@ impl ClockConfig {
 ///
 /// For reference:
 /// https://github.com/mupq/pqm4/blob/1a04a91573096aa79e6e8f1394bf804c9a89a1a5/common/hal-opencm3.c#L177
-pub fn setup_clock(c: ClockConfig) {
+pub fn setup_clock(c: ClockConfig) -> embassy_stm32::Peripherals {
     let mut config = embassy_stm32::Config::default();
     use embassy_stm32::rcc::*;
 
@@ -86,5 +86,16 @@ pub fn setup_clock(c: ClockConfig) {
         }
     }
 
-    let _p = embassy_stm32::init(config);
+    embassy_stm32::init(config)
+}
+
+use embassy_stm32::rng::Rng;
+use embassy_stm32::{bind_interrupts, peripherals, rng, Peripherals};
+
+bind_interrupts!(struct Irqs {
+    RNG => rng::InterruptHandler<peripherals::RNG>;
+});
+
+pub fn init_rng(p: Peripherals) -> Rng<'static, embassy_stm32::peripherals::RNG> {
+    Rng::new(p.RNG, Irqs)
 }
