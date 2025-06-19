@@ -43,14 +43,13 @@ macro_rules! impl_nist_known_answer_tests {
             for kat in nist_kats {
                 let key_pair = $key_gen(kat.key_generation_seed);
 
-                let verification_key_hash =
-                    libcrux_sha3::sha256(key_pair.verification_key.as_ref());
+                let verification_key_hash = libcrux_sha3::sha256(&key_pair.verification_key.0);
                 assert_eq!(
                     verification_key_hash, kat.sha3_256_hash_of_verification_key,
                     "verification_key_hash != kat.sha3_256_hash_of_verification_key"
                 );
 
-                let signing_key_hash = libcrux_sha3::sha256(key_pair.signing_key.as_ref());
+                let signing_key_hash = libcrux_sha3::sha256(&key_pair.signing_key.0);
                 assert_eq!(
                     signing_key_hash, kat.sha3_256_hash_of_signing_key,
                     "signing_key_hash != kat.sha3_256_hash_of_signing_key"
@@ -61,7 +60,7 @@ macro_rules! impl_nist_known_answer_tests {
                 let signature = $sign(&key_pair.signing_key, &message, b"", kat.signing_randomness)
                     .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
 
-                let signature_hash = libcrux_sha3::sha256(signature.as_ref());
+                let signature_hash = libcrux_sha3::sha256(&signature.0);
                 assert_eq!(
                     signature_hash, kat.sha3_256_hash_of_signature,
                     "signature_hash != kat.sha3_256_hash_of_signature"
@@ -86,14 +85,13 @@ macro_rules! impl_nist_known_answer_tests {
             for kat in nist_kats {
                 let key_pair = $key_gen(kat.key_generation_seed);
 
-                let verification_key_hash =
-                    libcrux_sha3::sha256(key_pair.verification_key.as_ref());
+                let verification_key_hash = libcrux_sha3::sha256(&key_pair.verification_key.0);
                 assert_eq!(
                     verification_key_hash, kat.sha3_256_hash_of_verification_key,
                     "verification_key_hash != kat.sha3_256_hash_of_verification_key"
                 );
 
-                let signing_key_hash = libcrux_sha3::sha256(key_pair.signing_key.as_ref());
+                let signing_key_hash = libcrux_sha3::sha256(&key_pair.signing_key.0);
                 assert_eq!(
                     signing_key_hash, kat.sha3_256_hash_of_signing_key,
                     "signing_key_hash != kat.sha3_256_hash_of_signing_key"
@@ -105,7 +103,7 @@ macro_rules! impl_nist_known_answer_tests {
                     $sign_pre_hashed(&key_pair.signing_key, &message, b"", kat.signing_randomness)
                         .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
 
-                let signature_hash = libcrux_sha3::sha256(signature.as_ref());
+                let signature_hash = libcrux_sha3::sha256(&signature.0);
                 assert_eq!(
                     signature_hash, kat.sha3_256_hash_of_signature,
                     "signature_hash != kat.sha3_256_hash_of_signature"
@@ -120,7 +118,6 @@ macro_rules! impl_nist_known_answer_tests {
 
 // 44
 
-#[cfg(feature = "mldsa44")]
 impl_nist_known_answer_tests!(
     nist_known_answer_tests_44,
     nist_known_answer_tests_pre_hashed_44,
@@ -132,7 +129,6 @@ impl_nist_known_answer_tests!(
     libcrux_ml_dsa::ml_dsa_44::verify_pre_hashed_shake128
 );
 
-#[cfg(feature = "mldsa44")]
 impl_nist_known_answer_tests!(
     nist_known_answer_tests_44_portable,
     nist_known_answer_tests_pre_hashed_44_portable,
@@ -144,7 +140,7 @@ impl_nist_known_answer_tests!(
     libcrux_ml_dsa::ml_dsa_44::verify_pre_hashed_shake128
 );
 
-#[cfg(all(feature = "simd128", feature = "mldsa44"))]
+#[cfg(feature = "simd128")]
 impl_nist_known_answer_tests!(
     nist_known_answer_tests_44_simd128,
     nist_known_answer_tests_pre_hashed_44_simd128,
@@ -156,7 +152,7 @@ impl_nist_known_answer_tests!(
     libcrux_ml_dsa::ml_dsa_44::verify_pre_hashed_shake128
 );
 
-#[cfg(all(feature = "simd256", feature = "mldsa44"))]
+#[cfg(feature = "simd256")]
 impl_nist_known_answer_tests!(
     nist_known_answer_tests_44_simd256,
     nist_known_answer_tests_pre_hashed_44_simd256,
@@ -169,7 +165,7 @@ impl_nist_known_answer_tests!(
 );
 
 // 65
-#[cfg(feature = "mldsa65")]
+
 impl_nist_known_answer_tests!(
     nist_known_answer_tests_65,
     nist_known_answer_tests_pre_hashed_65,
@@ -182,7 +178,7 @@ impl_nist_known_answer_tests!(
 );
 
 // 87
-#[cfg(feature = "mldsa87")]
+
 impl_nist_known_answer_tests!(
     nist_known_answer_tests_87,
     nist_known_answer_tests_pre_hashed_87,

@@ -1,11 +1,13 @@
 use libcrux_intrinsics::avx2::*;
 
 #[inline(always)]
-fn serialize_when_gamma1_is_2_pow_17(simd_unit: &Vec256, out: &mut [u8]) {
+fn serialize_when_gamma1_is_2_pow_17<const OUTPUT_SIZE: usize>(
+    simd_unit: Vec256,
+) -> [u8; OUTPUT_SIZE] {
     let mut serialized = [0u8; 32];
 
     const GAMMA1: i32 = 1 << 17;
-    let simd_unit_shifted = mm256_sub_epi32(mm256_set1_epi32(GAMMA1), *simd_unit);
+    let simd_unit_shifted = mm256_sub_epi32(mm256_set1_epi32(GAMMA1), simd_unit);
 
     let adjacent_2_combined = mm256_sllv_epi32(
         simd_unit_shifted,
@@ -25,15 +27,17 @@ fn serialize_when_gamma1_is_2_pow_17(simd_unit: &Vec256, out: &mut [u8]) {
     let upper_4 = mm256_extracti128_si256::<1>(adjacent_4_combined);
     mm_storeu_bytes_si128(&mut serialized[9..25], upper_4);
 
-    out.copy_from_slice(&serialized[0..18]);
+    serialized[0..18].try_into().unwrap()
 }
 
 #[inline(always)]
-fn serialize_when_gamma1_is_2_pow_19(simd_unit: &Vec256, out: &mut [u8]) {
+fn serialize_when_gamma1_is_2_pow_19<const OUTPUT_SIZE: usize>(
+    simd_unit: Vec256,
+) -> [u8; OUTPUT_SIZE] {
     let mut serialized = [0u8; 32];
 
     const GAMMA1: i32 = 1 << 19;
-    let simd_unit_shifted = mm256_sub_epi32(mm256_set1_epi32(GAMMA1), *simd_unit);
+    let simd_unit_shifted = mm256_sub_epi32(mm256_set1_epi32(GAMMA1), simd_unit);
 
     let adjacent_2_combined = mm256_sllv_epi32(
         simd_unit_shifted,
@@ -57,20 +61,20 @@ fn serialize_when_gamma1_is_2_pow_19(simd_unit: &Vec256, out: &mut [u8]) {
     let upper_4 = mm256_extracti128_si256::<1>(adjacent_4_combined);
     mm_storeu_bytes_si128(&mut serialized[10..26], upper_4);
 
-    out.copy_from_slice(&serialized[0..20])
+    serialized[0..20].try_into().unwrap()
 }
 
 #[inline(always)]
-pub(crate) fn serialize(simd_unit: &Vec256, serialized: &mut [u8], gamma1_exponent: usize) {
-    match gamma1_exponent as u8 {
-        17 => serialize_when_gamma1_is_2_pow_17(simd_unit, serialized),
-        19 => serialize_when_gamma1_is_2_pow_19(simd_unit, serialized),
+pub(crate) fn serialize<const OUTPUT_SIZE: usize>(simd_unit: Vec256) -> [u8; OUTPUT_SIZE] {
+    match OUTPUT_SIZE as u8 {
+        18 => serialize_when_gamma1_is_2_pow_17::<OUTPUT_SIZE>(simd_unit),
+        20 => serialize_when_gamma1_is_2_pow_19::<OUTPUT_SIZE>(simd_unit),
         _ => unreachable!(),
     }
 }
 
 #[inline(always)]
-fn deserialize_when_gamma1_is_2_pow_17(serialized: &[u8], out: &mut Vec256) {
+fn deserialize_when_gamma1_is_2_pow_17(serialized: &[u8]) -> Vec256 {
     debug_assert!(serialized.len() == 18);
 
     const GAMMA1: i32 = 1 << 17;
@@ -81,7 +85,6 @@ fn deserialize_when_gamma1_is_2_pow_17(serialized: &[u8], out: &mut Vec256) {
 
     let serialized = mm256_set_m128i(serialized_upper, serialized_lower);
 
-    // XXX: use out here
     let coefficients = mm256_shuffle_epi8(
         serialized,
         mm256_set_epi8(
@@ -93,11 +96,11 @@ fn deserialize_when_gamma1_is_2_pow_17(serialized: &[u8], out: &mut Vec256) {
     let coefficients = mm256_srlv_epi32(coefficients, mm256_set_epi32(6, 4, 2, 0, 6, 4, 2, 0));
     let coefficients = mm256_and_si256(coefficients, mm256_set1_epi32(GAMMA1_TIMES_2_MASK));
 
-    *out = mm256_sub_epi32(mm256_set1_epi32(GAMMA1), coefficients);
+    mm256_sub_epi32(mm256_set1_epi32(GAMMA1), coefficients)
 }
 
 #[inline(always)]
-fn deserialize_when_gamma1_is_2_pow_19(serialized: &[u8], out: &mut Vec256) {
+fn deserialize_when_gamma1_is_2_pow_19(serialized: &[u8]) -> Vec256 {
     // Each set of 5 bytes deserializes to 2 coefficients, and since each Vec256
     // can hold 8 such coefficients, we process 5 * (8 / 2) = 20 bytes in this
     // function.
@@ -122,14 +125,14 @@ fn deserialize_when_gamma1_is_2_pow_19(serialized: &[u8], out: &mut Vec256) {
     let coefficients = mm256_srlv_epi32(coefficients, mm256_set_epi32(4, 0, 4, 0, 4, 0, 4, 0));
     let coefficients = mm256_and_si256(coefficients, mm256_set1_epi32(GAMMA1_TIMES_2_MASK));
 
-    *out = mm256_sub_epi32(mm256_set1_epi32(GAMMA1), coefficients)
+    mm256_sub_epi32(mm256_set1_epi32(GAMMA1), coefficients)
 }
 
 #[inline(always)]
-pub(crate) fn deserialize(serialized: &[u8], out: &mut Vec256, gamma1_exponent: usize) {
-    match gamma1_exponent as u8 {
-        17 => deserialize_when_gamma1_is_2_pow_17(serialized, out),
-        19 => deserialize_when_gamma1_is_2_pow_19(serialized, out),
+pub(crate) fn deserialize<const GAMMA1_EXPONENT: usize>(serialized: &[u8]) -> Vec256 {
+    match GAMMA1_EXPONENT as u8 {
+        17 => deserialize_when_gamma1_is_2_pow_17(serialized),
+        19 => deserialize_when_gamma1_is_2_pow_19(serialized),
         _ => unreachable!(),
     }
 }

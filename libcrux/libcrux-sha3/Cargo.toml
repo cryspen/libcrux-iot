@@ -20,10 +20,15 @@ libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" 
 # This is only required for verification.
 # The hax config is set by the hax toolchain.
 [target.'cfg(hax)'.dependencies]
-hax-lib = { version = "0.3.0", git = "https://github.com/hacspec/hax/" }
+hax-lib = { version = "0.3", git = "https://github.com/hacspec/hax/" }
 
 [features]
-full-unroll = []
+simd128 = []
+simd256 = []
+
+[[bench]]
+name = "sha3"
+harness = false
 
 [dev-dependencies]
 criterion = "0.5.1"

@@ -10,7 +10,6 @@ description = "Libcrux-IoT intrinsics crate"
 exclude = ["/proofs"]
 
 [dependencies]
-hax-lib = { version = "0.3", git = "https://github.com/hacspec/hax/" }
 
 [features]
 simd128 = []
