@@ -13,4 +13,7 @@ echo "$REV" >> "$FILE"
 echo "Starting measurements"
 echo "[ML-KEM]"
 DEFMT_LOG=info cargo rrb mlkem --quiet >> "$FILE"
+
+echo "[ML-DSA]"
+DEFMT_LOG=info cargo rrb mldsa --quiet >> "$FILE"
 echo "Done"

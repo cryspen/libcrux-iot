@@ -1,0 +1,18 @@
+Repository at commit: d2bad6d4d16a70b41f46c37f7b4ba2e5f1858427
+l,0,0,ML-KEM 768 Key Generation
+b,r,stack,0
+b,d,stack,0,23956
+b,r,stack,0
+b,d,stack,0,25108
+l,0,0,ML-KEM 768 Decapsulation
+b,r,stack,0
+b,d,stack,0,26196
+l,0,0,ML-DSA 65 Key Generation
+b,r,stack,0
+b,d,stack,0,13092
+l,0,0,ML-DSA 65 Signing
+b,r,stack,0
+b,d,stack,0,116880
+l,0,0,ML-DSA 65 Verification
+b,r,stack,0
+b,d,stack,0,118240
