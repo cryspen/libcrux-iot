@@ -499,7 +499,6 @@ mod tests {
 
     use crate::{constants::COEFFICIENTS_IN_RING_ELEMENT, simd::traits::Operations};
 
-    #[allow(dead_code)]
     fn sample_ring_element_uniform<SIMDUnit: Operations, Shake128: shake128::XofX4>(
         seed: [u8; 34],
         re: &mut PolynomialRingElement<SIMDUnit>,
@@ -552,19 +551,28 @@ mod tests {
     //     seed: &[u8],
     //     start_index: u16,
     // ) -> PolynomialRingElement<SIMDUnit> {
-    //     let mut s = [PolynomialRingElement::ZERO(); 6];
+    //     let mut s = [PolynomialRingElement::zero(); 6];
     //     // let start_index = ((seed[65] as u16) << 8) | (seed[64] as u16);
     //     // std::eprintln!("start_index: {start_index}");
-    //     sample_four_error_ring_elements::<SIMDUnit, Shake256X4, ETA>(&seed, start_index, &mut s);
-
-    //     for i in 0..s.len() {
-    //         std::eprintln!("{:?}", s[i].to_i32_array());
+    //     match ETA {
+    //         2 => sample_four_error_ring_elements::<SIMDUnit, Shake256X4>(
+    //             Eta::Two,
+    //             &seed,
+    //             start_index,
+    //             &mut s,
+    //         ),
+    //         4 => sample_four_error_ring_elements::<SIMDUnit, Shake256X4>(
+    //             Eta::Four,
+    //             &seed,
+    //             start_index,
+    //             &mut s,
+    //         ),
+    //         _ => panic!(),
     //     }
 
     //     s[start_index as usize]
     // }
 
-    #[allow(dead_code)]
     fn test_sample_ring_element_uniform_generic<SIMDUnit: Operations, Shake128: shake128::XofX4>() {
         let seed: [u8; 34] = [
             33, 192, 250, 216, 117, 61, 16, 12, 248, 51, 213, 110, 64, 57, 119, 80, 164, 83, 73,
@@ -664,7 +672,7 @@ mod tests {
     //         49, 202, 94, 27, 249, 200, 186, 175, 198, 169, 116, 244, 227, 133, 111, 205, 140, 233,
     //         110, 227, 67, 35, 226, 194, 75, 130, 105,
     //     ];
-    //     let start_index = 5;
+    //     let start_index = 0;
 
     //     let expected_coefficients: [i32; COEFFICIENTS_IN_RING_ELEMENT] = [
     //         1, 0, -1, 0, 1, -2, -1, 0, -2, 2, -1, -2, 1, -2, 1, -2, 1, 2, -2, 2, -2, -1, 0, -2, -1,
@@ -680,6 +688,7 @@ mod tests {
     //         2, 0,
     //     ];
 
+    //     // FIXME: I'm unable to find the source of these values.
     //     assert_eq!(
     //         sample_error_ring_element::<SIMDUnit, Shake256, 2>(&seed, start_index).to_i32_array(),
     //         expected_coefficients
@@ -707,14 +716,13 @@ mod tests {
     //         2, -4, -1, 1,
     //     ];
 
-    //     // FIXME
-    //     // assert_eq!(
-    //     //     sample_error_ring_element::<SIMDUnit, Shake256, 4>(seed).to_i32_array(),
-    //     //     expected_coefficients
-    //     // );
+    //     // FIXME: I'm unable to find the source of these values.
+    //     assert_eq!(
+    //         sample_error_ring_element::<SIMDUnit, Shake256, 4>(&seed, start_index).to_i32_array(),
+    //         expected_coefficients
+    //     );
     // }
 
-    #[allow(dead_code)]
     fn test_sample_challenge_ring_element_generic<
         SIMDUnit: Operations,
         Shake256: shake256::DsaXof,
@@ -787,5 +795,35 @@ mod tests {
         let mut re = PolynomialRingElement::zero();
         sample_challenge_ring_element::<SIMDUnit, Shake256>(&seed, 60, &mut re);
         assert_eq!(re.to_i32_array(), expected_coefficients);
+    }
+
+    mod portable {
+        use crate::{hash_functions, simd};
+
+        use super::*;
+
+        #[test]
+        fn test_sample_ring_element_uniform() {
+            test_sample_ring_element_uniform_generic::<
+                simd::portable::PortableSIMDUnit,
+                hash_functions::portable::Shake128X4,
+            >();
+        }
+
+        // #[test]
+        // fn test_sample_error_ring_element() {
+        //     test_sample_error_ring_element_generic::<
+        //         simd::portable::PortableSIMDUnit,
+        //         hash_functions::portable::Shake256X4,
+        //     >();
+        // }
+
+        #[test]
+        fn test_sample_challenge_ring_element() {
+            test_sample_challenge_ring_element_generic::<
+                simd::portable::PortableSIMDUnit,
+                hash_functions::portable::Shake256,
+            >();
+        }
     }
 }

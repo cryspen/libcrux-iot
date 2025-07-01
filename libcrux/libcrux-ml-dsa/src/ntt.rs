@@ -30,7 +30,6 @@ mod tests {
 
     use crate::{polynomial::PolynomialRingElement, simd::traits::Operations};
 
-    #[allow(dead_code)]
     fn test_ntt_generic<SIMDUnit: Operations>() {
         let coefficients = [
             245230, -429681, -35753, 256940, 138755, -82158, -453212, -296769, 106884, -496329,
@@ -98,7 +97,6 @@ mod tests {
         assert_eq!(re.to_i32_array(), expected_coefficients);
     }
 
-    #[allow(dead_code)]
     fn test_invert_ntt_montgomery_generic<SIMDUnit: Operations>() {
         let coefficients = [
             -1799977, -2102152, -2642101, -635466, -1853482, 642462, 1199623, -2231752, -3968977,
@@ -167,5 +165,18 @@ mod tests {
 
         invert_ntt_montgomery(&mut re);
         assert_eq!(re.to_i32_array(), expected_coefficients);
+    }
+
+    mod portable {
+        use super::{test_invert_ntt_montgomery_generic, test_ntt_generic};
+
+        #[test]
+        fn test_ntt() {
+            test_ntt_generic::<crate::simd::portable::PortableSIMDUnit>();
+        }
+        #[test]
+        fn test_invert_ntt_montgomery() {
+            test_invert_ntt_montgomery_generic::<crate::simd::portable::PortableSIMDUnit>();
+        }
     }
 }

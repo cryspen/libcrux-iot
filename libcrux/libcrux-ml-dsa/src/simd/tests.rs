@@ -2,7 +2,7 @@ use crate::{
     constants::{GAMMA2_V261_888, GAMMA2_V95_232},
     simd::traits::*,
 };
-#[allow(dead_code)]
+
 fn test_decompose_generic<SIMDUnit: Operations>() {
     // When GAMMA2 = 95,232
     let mut input = SIMDUnit::zero();
@@ -52,7 +52,6 @@ fn test_decompose_generic<SIMDUnit: Operations>() {
     assert_eq!(out, expected_high);
 }
 
-#[allow(dead_code)]
 fn test_power2round_generic<SIMDUnit: Operations>() {
     let mut input = SIMDUnit::zero();
     SIMDUnit::from_coefficient_array(
@@ -77,4 +76,17 @@ fn test_power2round_generic<SIMDUnit: Operations>() {
     let mut out = [0i32; COEFFICIENTS_IN_SIMD_UNIT];
     SIMDUnit::to_coefficient_array(&high, &mut out);
     assert_eq!(out, expected_high);
+}
+
+mod portable {
+    use super::{test_decompose_generic, test_power2round_generic};
+
+    #[test]
+    fn test_decompose() {
+        test_decompose_generic::<crate::simd::portable::PortableSIMDUnit>();
+    }
+    #[test]
+    fn test_power2round() {
+        test_power2round_generic::<crate::simd::portable::PortableSIMDUnit>();
+    }
 }
