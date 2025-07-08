@@ -1,8 +1,10 @@
 use crate::{
     arithmetic::shift_left_then_reduce,
     constants::BITS_IN_LOWER_PART_OF_T,
+    hash_functions::shake128,
     ntt::{invert_ntt_montgomery, ntt, ntt_multiply_montgomery},
     polynomial::PolynomialRingElement,
+    sample::sample_ring_element,
     simd::traits::Operations,
 };
 
@@ -96,7 +98,11 @@ pub(crate) fn subtract_vectors<SIMDUnit: Operations>(
 pub(crate) fn compute_w_approx<SIMDUnit: Operations>(
     rows_in_a: usize,
     columns_in_a: usize,
-    matrix: &[PolynomialRingElement<SIMDUnit>],
+    seed: &[u8],
+    rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
+    rand_block: &mut [u8; shake128::BLOCK_SIZE],
+    tmp_stack: &mut [i32; 263],
+    poly_slot: &mut PolynomialRingElement<SIMDUnit>,
     signer_response: &[PolynomialRingElement<SIMDUnit>],
     verifier_challenge_as_ntt: &PolynomialRingElement<SIMDUnit>,
     t1: &mut [PolynomialRingElement<SIMDUnit>],
@@ -104,9 +110,16 @@ pub(crate) fn compute_w_approx<SIMDUnit: Operations>(
     for i in 0..rows_in_a {
         let mut inner_result = PolynomialRingElement::<SIMDUnit>::zero();
         for j in 0..columns_in_a {
-            let mut product = matrix[i * columns_in_a + j];
-            ntt_multiply_montgomery(&mut product, &signer_response[j]);
-            PolynomialRingElement::<SIMDUnit>::add(&mut inner_result, &product);
+            sample_ring_element(
+                seed,
+                (i as u8, j as u8),
+                poly_slot,
+                rand_stack,
+                rand_block,
+                tmp_stack,
+            );
+            ntt_multiply_montgomery(poly_slot, &signer_response[j]);
+            PolynomialRingElement::<SIMDUnit>::add(&mut inner_result, &poly_slot);
         }
 
         shift_left_then_reduce::<SIMDUnit, { BITS_IN_LOWER_PART_OF_T as i32 }>(&mut t1[i]);
