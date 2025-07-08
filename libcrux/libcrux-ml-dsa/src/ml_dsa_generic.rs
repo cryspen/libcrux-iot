@@ -366,6 +366,11 @@ pub(crate) mod generic {
         domain_separation_context: Option<DomainSeparationContext>,
         signature_serialized: &[u8; SIGNATURE_SIZE],
     ) -> Result<(), VerificationError> {
+        let mut rand_stack = [0u8; shake128::FIVE_BLOCKS_SIZE];
+        let mut rand_block = [0u8; shake128::BLOCK_SIZE];
+        let mut tmp_stack = [0i32; 263];
+        let mut poly_slot = PolynomialRingElement::<SIMDUnit>::zero();
+
         let (seed_for_a, t1_serialized) = verification_key.split_at(SEED_FOR_A_SIZE);
         let mut t1 = [PolynomialRingElement::<SIMDUnit>::zero(); ROWS_IN_A];
         encoding::verification_key::deserialize::<SIMDUnit>(
@@ -403,8 +408,6 @@ pub(crate) mod generic {
         ) {
             return Err(VerificationError::SignerResponseExceedsBoundError);
         }
-        let mut matrix = [PolynomialRingElement::<SIMDUnit>::zero(); ROW_X_COLUMN];
-        Sampler::matrix_flat::<SIMDUnit>(COLUMNS_IN_A, seed_for_a, &mut matrix);
 
         let mut verification_key_hash = [0; BYTES_FOR_VERIFICATION_KEY_HASH];
         Shake256::shake256(verification_key, &mut verification_key_hash);
@@ -432,7 +435,11 @@ pub(crate) mod generic {
         compute_w_approx::<SIMDUnit>(
             ROWS_IN_A,
             COLUMNS_IN_A,
-            &matrix,
+            seed_for_a,
+            &mut rand_stack,
+            &mut rand_block,
+            &mut tmp_stack,
+            &mut poly_slot,
             &deserialized_signer_response,
             &verifier_challenge,
             &mut t1,
