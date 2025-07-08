@@ -1,7 +1,7 @@
 use crate::{
     constants::{Eta, COEFFICIENTS_IN_RING_ELEMENT},
     encoding,
-    hash_functions::{shake128, shake256},
+    hash_functions::{portable::Shake128, shake128, shake256},
     helper::cloop,
     polynomial::PolynomialRingElement,
     simd::traits::Operations,
@@ -50,6 +50,39 @@ pub(crate) fn add_domain_separator(slice: &[u8], indices: (u8, u8)) -> [u8; 34] 
     out[33] = (domain_separator >> 8) as u8;
 
     out
+}
+
+#[inline]
+pub(crate) fn sample_ring_element<SIMDUnit: Operations>(
+    seed: &[u8],
+    indices: (u8, u8),
+    out: &mut PolynomialRingElement<SIMDUnit>,
+    rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
+    rand_block: &mut [u8; shake128::BLOCK_SIZE],
+    tmp_stack: &mut [i32; 263],
+) {
+    let domain_separated_seed = add_domain_separator(seed, indices);
+
+    let mut state = Shake128::shake128_init_absorb(&domain_separated_seed);
+    state.shake128_squeeze_first_five_blocks(rand_stack);
+
+    let mut sampled = 0;
+
+    let mut done =
+        rejection_sample_less_than_field_modulus::<SIMDUnit>(rand_stack, &mut sampled, tmp_stack);
+
+    while !done {
+        state.shake128_squeeze_next_block(rand_block);
+        if !done {
+            done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
+                rand_block,
+                &mut sampled,
+                tmp_stack,
+            );
+        }
+    }
+
+    PolynomialRingElement::<SIMDUnit>::from_i32_array(tmp_stack, out)
 }
 
 /// Sample and write out up to four ring elements.
