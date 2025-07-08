@@ -78,7 +78,6 @@ fn test_power2round_generic<SIMDUnit: Operations>() {
     assert_eq!(out, expected_high);
 }
 
-#[cfg(not(feature = "simd256"))]
 mod portable {
     use super::{test_decompose_generic, test_power2round_generic};
 
@@ -89,19 +88,5 @@ mod portable {
     #[test]
     fn test_power2round() {
         test_power2round_generic::<crate::simd::portable::PortableSIMDUnit>();
-    }
-}
-
-#[cfg(feature = "simd256")]
-mod avx2 {
-    use super::{test_decompose_generic, test_power2round_generic};
-
-    #[test]
-    fn test_decompose() {
-        test_decompose_generic::<crate::simd::avx2::AVX2SIMDUnit>();
-    }
-    #[test]
-    fn test_power2round() {
-        test_power2round_generic::<crate::simd::avx2::AVX2SIMDUnit>();
     }
 }

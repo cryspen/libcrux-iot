@@ -94,24 +94,6 @@ wycheproof_verify_test!(
     ml_dsa_44::portable::verify
 );
 
-#[cfg(feature = "simd128")]
-wycheproof_verify_test!(
-    wycheproof_verify_44_simd128,
-    44,
-    ml_dsa_44::MLDSA44VerificationKey,
-    ml_dsa_44::MLDSA44Signature,
-    ml_dsa_44::neon::verify
-);
-
-#[cfg(feature = "simd256")]
-wycheproof_verify_test!(
-    wycheproof_verify_44_simd256,
-    44,
-    ml_dsa_44::MLDSA44VerificationKey,
-    ml_dsa_44::MLDSA44Signature,
-    ml_dsa_44::avx2::verify
-);
-
 // 65
 
 wycheproof_verify_test!(
@@ -130,24 +112,6 @@ wycheproof_verify_test!(
     ml_dsa_65::portable::verify
 );
 
-#[cfg(feature = "simd128")]
-wycheproof_verify_test!(
-    wycheproof_verify_65_simd128,
-    65,
-    ml_dsa_65::MLDSA65VerificationKey,
-    ml_dsa_65::MLDSA65Signature,
-    ml_dsa_65::neon::verify
-);
-
-#[cfg(feature = "simd256")]
-wycheproof_verify_test!(
-    wycheproof_verify_65_simd256,
-    65,
-    ml_dsa_65::MLDSA65VerificationKey,
-    ml_dsa_65::MLDSA65Signature,
-    ml_dsa_65::avx2::verify
-);
-
 // 87
 
 wycheproof_verify_test!(
@@ -164,22 +128,4 @@ wycheproof_verify_test!(
     ml_dsa_87::MLDSA87VerificationKey,
     ml_dsa_87::MLDSA87Signature,
     ml_dsa_87::portable::verify
-);
-
-#[cfg(feature = "simd128")]
-wycheproof_verify_test!(
-    wycheproof_verify_87_simd128,
-    87,
-    ml_dsa_87::MLDSA87VerificationKey,
-    ml_dsa_87::MLDSA87Signature,
-    ml_dsa_87::neon::verify
-);
-
-#[cfg(feature = "simd256")]
-wycheproof_verify_test!(
-    wycheproof_verify_87_simd256,
-    87,
-    ml_dsa_87::MLDSA87VerificationKey,
-    ml_dsa_87::MLDSA87Signature,
-    ml_dsa_87::avx2::verify
 );

@@ -90,22 +90,6 @@ wycheproof_sign_test!(
     ml_dsa_44::portable::sign
 );
 
-#[cfg(feature = "simd128")]
-wycheproof_sign_test!(
-    wycheproof_sign_44_simd128,
-    44,
-    MLDSA44SigningKey,
-    ml_dsa_44::neon::sign
-);
-
-#[cfg(feature = "simd256")]
-wycheproof_sign_test!(
-    wycheproof_sign_44_simd256,
-    44,
-    MLDSA44SigningKey,
-    ml_dsa_44::avx2::sign
-);
-
 // 65
 
 wycheproof_sign_test!(wycheproof_sign_65, 65, MLDSA65SigningKey, ml_dsa_65::sign);
@@ -117,22 +101,6 @@ wycheproof_sign_test!(
     ml_dsa_65::portable::sign
 );
 
-#[cfg(feature = "simd128")]
-wycheproof_sign_test!(
-    wycheproof_sign_65_simd128,
-    65,
-    MLDSA65SigningKey,
-    ml_dsa_65::neon::sign
-);
-
-#[cfg(feature = "simd256")]
-wycheproof_sign_test!(
-    wycheproof_sign_65_simd256,
-    65,
-    MLDSA65SigningKey,
-    ml_dsa_65::avx2::sign
-);
-
 // 87
 
 wycheproof_sign_test!(wycheproof_sign_87, 87, MLDSA87SigningKey, ml_dsa_87::sign);
@@ -142,20 +110,4 @@ wycheproof_sign_test!(
     87,
     MLDSA87SigningKey,
     ml_dsa_87::portable::sign
-);
-
-#[cfg(feature = "simd128")]
-wycheproof_sign_test!(
-    wycheproof_sign_87_simd128,
-    87,
-    MLDSA87SigningKey,
-    ml_dsa_87::neon::sign
-);
-
-#[cfg(feature = "simd256")]
-wycheproof_sign_test!(
-    wycheproof_sign_87_simd256,
-    87,
-    MLDSA87SigningKey,
-    ml_dsa_87::avx2::sign
 );

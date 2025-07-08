@@ -118,7 +118,7 @@ pub(crate) mod portable {
 
     #[inline(always)]
     fn shake128_init_absorb_final(input: &[[u8; 34]]) -> PortableHash {
-        debug_assert!(input.len() == 2 || input.len() == 3 || input.len() == 4);
+        debug_assert!(input.len() == 1 || input.len() == 2 || input.len() == 3 || input.len() == 4);
 
         let mut shake128_state = [incremental::shake128_init(); 4];
         for i in 0..input.len() {
@@ -132,7 +132,9 @@ pub(crate) mod portable {
         st: &mut PortableHash,
         outputs: &mut [[u8; THREE_BLOCKS]],
     ) {
-        debug_assert!(outputs.len() == 2 || outputs.len() == 3 || outputs.len() == 4);
+        debug_assert!(
+            outputs.len() == 1 || outputs.len() == 2 || outputs.len() == 3 || outputs.len() == 4
+        );
 
         for i in 0..outputs.len() {
             incremental::shake128_squeeze_first_three_blocks(

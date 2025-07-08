@@ -73,53 +73,6 @@ pub(crate) mod portable {
     }
 }
 
-/// Neon sampling
-#[cfg(feature = "simd128")]
-pub(crate) mod neon {
-    use super::*;
-
-    pub(crate) struct NeonSampler {}
-    impl X4Sampler for NeonSampler {
-        #[inline(always)]
-        fn matrix_flat<SIMDUnit: Operations>(
-            columns: usize,
-            seed: &[u8],
-            matrix: &mut [PolynomialRingElement<SIMDUnit>],
-        ) {
-            matrix_flat::<SIMDUnit, crate::hash_functions::neon::Shake128x4>(columns, seed, matrix)
-        }
-    }
-}
-
-/// AVX2 sampling
-#[cfg(feature = "simd256")]
-pub(crate) mod avx2 {
-    use super::*;
-
-    pub(crate) struct AVX2Sampler {}
-    impl X4Sampler for AVX2Sampler {
-        #[allow(unsafe_code)]
-        fn matrix_flat<SIMDUnit: Operations>(
-            columns: usize,
-            seed: &[u8],
-            matrix: &mut [PolynomialRingElement<SIMDUnit>],
-        ) {
-            #[cfg_attr(not(hax), target_feature(enable = "avx2"))]
-            #[allow(unsafe_code)]
-            unsafe fn inner<SIMDUnit: Operations>(
-                columns: usize,
-                seed: &[u8],
-                matrix: &mut [PolynomialRingElement<SIMDUnit>],
-            ) {
-                matrix_flat::<SIMDUnit, crate::hash_functions::simd256::Shake128x4>(
-                    columns, seed, matrix,
-                )
-            }
-            unsafe { inner(columns, seed, matrix) };
-        }
-    }
-}
-
 // Not inling this causes a 10x slow-down
 #[inline(always)]
 pub(crate) fn sample_s1_and_s2<SIMDUnit: Operations, Shake256X4: shake256::XofX4>(
