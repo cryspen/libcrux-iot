@@ -95,6 +95,7 @@ pub(crate) mod shake128 {
 /// A portable implementation of [`shake128::Xof`] and [`shake256::Xof`].
 pub(crate) mod portable {
     use super::{shake128, shake256};
+    use libcrux_secrets::ClassifyRefMut;
     use libcrux_sha3::portable::{
         incremental::{self, Xof},
         KeccakState,
@@ -141,10 +142,10 @@ pub(crate) mod portable {
         out2: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
         out3: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
     ) {
-        incremental::shake128_squeeze_first_five_blocks(&mut state.state0, out0);
-        incremental::shake128_squeeze_first_five_blocks(&mut state.state1, out1);
-        incremental::shake128_squeeze_first_five_blocks(&mut state.state2, out2);
-        incremental::shake128_squeeze_first_five_blocks(&mut state.state3, out3);
+        incremental::shake128_squeeze_first_five_blocks(&mut state.state0, out0.classify_ref_mut());
+        incremental::shake128_squeeze_first_five_blocks(&mut state.state1, out1.classify_ref_mut());
+        incremental::shake128_squeeze_first_five_blocks(&mut state.state2, out2.classify_ref_mut());
+        incremental::shake128_squeeze_first_five_blocks(&mut state.state3, out3.classify_ref_mut());
     }
 
     #[inline(always)]
@@ -157,13 +158,13 @@ pub(crate) mod portable {
         [u8; shake128::BLOCK_SIZE],
     ) {
         let mut out0 = [0u8; shake128::BLOCK_SIZE];
-        incremental::shake128_squeeze_next_block(&mut state.state0, &mut out0);
+        incremental::shake128_squeeze_next_block(&mut state.state0, out0.classify_ref_mut());
         let mut out1 = [0u8; shake128::BLOCK_SIZE];
-        incremental::shake128_squeeze_next_block(&mut state.state1, &mut out1);
+        incremental::shake128_squeeze_next_block(&mut state.state1, out1.classify_ref_mut());
         let mut out2 = [0u8; shake128::BLOCK_SIZE];
-        incremental::shake128_squeeze_next_block(&mut state.state2, &mut out2);
+        incremental::shake128_squeeze_next_block(&mut state.state2, out2.classify_ref_mut());
         let mut out3 = [0u8; shake128::BLOCK_SIZE];
-        incremental::shake128_squeeze_next_block(&mut state.state3, &mut out3);
+        incremental::shake128_squeeze_next_block(&mut state.state3, out3.classify_ref_mut());
 
         (out0, out1, out2, out3)
     }
@@ -204,7 +205,7 @@ pub(crate) mod portable {
 
     #[inline(always)]
     fn shake128(input: &[u8], out: &mut [u8]) {
-        libcrux_sha3::portable::shake128(out, input);
+        libcrux_sha3::portable::shake128(out.classify_ref_mut(), input);
     }
 
     impl shake128::Xof for Shake128 {
@@ -222,7 +223,7 @@ pub(crate) mod portable {
 
     #[inline(always)]
     fn shake256<const OUTPUT_LENGTH: usize>(input: &[u8], out: &mut [u8; OUTPUT_LENGTH]) {
-        libcrux_sha3::portable::shake256(out, input);
+        libcrux_sha3::portable::shake256(out.classify_ref_mut(), input);
     }
 
     #[inline(always)]
@@ -235,14 +236,14 @@ pub(crate) mod portable {
     #[inline(always)]
     fn squeeze_first_block_shake256(state: &mut Shake256) -> [u8; shake256::BLOCK_SIZE] {
         let mut out = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_first_block(&mut state.state, &mut out);
+        incremental::shake256_squeeze_first_block(&mut state.state, out.classify_ref_mut());
         out
     }
 
     #[inline(always)]
     fn squeeze_next_block_shake256(state: &mut Shake256) -> [u8; shake256::BLOCK_SIZE] {
         let mut out = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_next_block(&mut state.state, &mut out);
+        incremental::shake256_squeeze_next_block(&mut state.state, out.classify_ref_mut());
         out
     }
 
@@ -311,13 +312,13 @@ pub(crate) mod portable {
         [u8; shake256::BLOCK_SIZE],
     ) {
         let mut out0 = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_first_block(&mut state.state0, &mut out0);
+        incremental::shake256_squeeze_first_block(&mut state.state0, out0.classify_ref_mut());
         let mut out1 = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_first_block(&mut state.state1, &mut out1);
+        incremental::shake256_squeeze_first_block(&mut state.state1, out1.classify_ref_mut());
         let mut out2 = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_first_block(&mut state.state2, &mut out2);
+        incremental::shake256_squeeze_first_block(&mut state.state2, out2.classify_ref_mut());
         let mut out3 = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_first_block(&mut state.state3, &mut out3);
+        incremental::shake256_squeeze_first_block(&mut state.state3, out3.classify_ref_mut());
 
         (out0, out1, out2, out3)
     }
@@ -332,13 +333,13 @@ pub(crate) mod portable {
         [u8; shake256::BLOCK_SIZE],
     ) {
         let mut out0 = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_next_block(&mut state.state0, &mut out0);
+        incremental::shake256_squeeze_next_block(&mut state.state0, out0.classify_ref_mut());
         let mut out1 = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_next_block(&mut state.state1, &mut out1);
+        incremental::shake256_squeeze_next_block(&mut state.state1, out1.classify_ref_mut());
         let mut out2 = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_next_block(&mut state.state2, &mut out2);
+        incremental::shake256_squeeze_next_block(&mut state.state2, out2.classify_ref_mut());
         let mut out3 = [0u8; shake256::BLOCK_SIZE];
-        incremental::shake256_squeeze_next_block(&mut state.state3, &mut out3);
+        incremental::shake256_squeeze_next_block(&mut state.state3, out3.classify_ref_mut());
 
         (out0, out1, out2, out3)
     }
@@ -412,7 +413,7 @@ pub(crate) mod portable {
         }
 
         fn squeeze(&mut self, out: &mut [u8]) {
-            self.state.squeeze(out)
+            self.state.squeeze(out.classify_ref_mut())
         }
     }
 }
