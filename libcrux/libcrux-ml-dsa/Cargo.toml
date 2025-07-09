@@ -19,7 +19,6 @@ libcrux-sha3 = { version = "0.0.2-beta.2", path = "../libcrux-sha3" }
 libcrux-intrinsics = { version = "0.0.2-beta.2", path = "../libcrux-intrinsics" }
 libcrux-macros = { version = "0.0.2-beta.2", path = "../macros" }
 libcrux-platform = { version = "0.0.2-beta.2", path = "../libcrux-platform" }
-libcrux-secrets = { version = "0.0.3" }
 
 [dev-dependencies]
 rand = { version = "0.8" }
