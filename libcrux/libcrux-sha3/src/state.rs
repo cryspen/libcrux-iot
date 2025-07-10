@@ -1,4 +1,10 @@
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::{Classify, Declassify};
+use libcrux_secrets::{U32, U8};
+
 use crate::lane::Lane2U32;
+#[cfg(feature = "check-secret-independence")]
+use crate::{FromLeBytes, ToLeBytes};
 
 #[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy, Debug)]
@@ -21,12 +27,12 @@ impl KeccakState {
     }
 
     #[inline(always)]
-    pub(crate) fn get_with_zeta(&self, i: usize, j: usize, zeta: usize) -> u32 {
+    pub(crate) fn get_with_zeta(&self, i: usize, j: usize, zeta: usize) -> U32 {
         self.st[5 * j + i][zeta]
     }
 
     #[inline(always)]
-    pub(crate) fn set_with_zeta(&mut self, i: usize, j: usize, zeta: usize, v: u32) {
+    pub(crate) fn set_with_zeta(&mut self, i: usize, j: usize, zeta: usize, v: U32) {
         self.st[5 * j + i][zeta] = v
     }
 
@@ -41,28 +47,28 @@ impl KeccakState {
     }
 
     #[inline(always)]
-    pub(crate) fn load_block<const RATE: usize>(&mut self, blocks: &[u8], start: usize) {
+    pub(crate) fn load_block<const RATE: usize>(&mut self, blocks: &[U8], start: usize) {
         load_block_2u32::<RATE>(self, blocks, start)
     }
 
     #[inline(always)]
-    pub(crate) fn store_block<const RATE: usize>(&self, out: &mut [u8]) {
+    pub(crate) fn store_block<const RATE: usize>(&self, out: &mut [U8]) {
         store_block_2u32::<RATE>(self, out)
     }
 
     #[inline(always)]
-    pub(crate) fn load_block_full<const RATE: usize>(&mut self, blocks: &[u8; 200], start: usize) {
+    pub(crate) fn load_block_full<const RATE: usize>(&mut self, blocks: &[U8; 200], start: usize) {
         load_block_full_2u32::<RATE>(self, blocks, start)
     }
 
     #[inline(always)]
-    pub(crate) fn store_block_full<const RATE: usize>(&self, out: &mut [u8; 200]) {
+    pub(crate) fn store_block_full<const RATE: usize>(&self, out: &mut [U8; 200]) {
         store_block_full_2u32::<RATE>(self, out);
     }
 
     /// `out` has the exact size we want here. It must be less than or equal to `RATE`.
     #[inline(always)]
-    pub(crate) fn store<const RATE: usize>(self, out: &mut [u8]) {
+    pub(crate) fn store<const RATE: usize>(self, out: &mut [U8]) {
         debug_assert!(out.len() <= RATE, "{} > {}", out.len(), RATE);
 
         let num_full_blocks = out.len() / 8;
@@ -96,13 +102,13 @@ impl KeccakState {
 }
 
 #[inline(always)]
-fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[u8], start: usize) {
+fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], start: usize) {
     debug_assert!(RATE <= blocks.len() && RATE % 8 == 0);
     let mut state_flat = [Lane2U32::zero(); 25];
     for i in 0..RATE / 8 {
         let offset = start + 8 * i;
-        let a = u32::from_le_bytes(blocks[offset..offset + 4].try_into().unwrap());
-        let b = u32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
+        let a = U32::from_le_bytes(blocks[offset..offset + 4].try_into().unwrap());
+        let b = U32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
         state_flat[i] = Lane2U32::from([a, b]).interleave();
     }
     for i in 0..RATE / 8 {
@@ -118,14 +124,14 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[u8], st
 #[inline(always)]
 fn load_block_full_2u32<const RATE: usize>(
     state: &mut KeccakState,
-    blocks: &[u8; 200],
+    blocks: &[U8; 200],
     start: usize,
 ) {
     load_block_2u32::<RATE>(state, blocks, start);
 }
 
 #[inline(always)]
-fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [u8]) {
+fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     for i in 0..RATE / 8 {
         let lane = s.get_lane(i / 5, i % 5).deinterleave();
         out[8 * i..8 * i + 4].copy_from_slice(&lane[0].to_le_bytes());
@@ -134,6 +140,20 @@ fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [u8]) {
 }
 
 #[inline(always)]
-fn store_block_full_2u32<const RATE: usize>(s: &KeccakState, out: &mut [u8; 200]) {
+fn store_block_full_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8; 200]) {
     store_block_2u32::<RATE>(s, out);
+}
+
+#[cfg(feature = "check-secret-independence")]
+impl ToLeBytes<4> for U32 {
+    fn to_le_bytes(self) -> [U8; 4] {
+        self.declassify().to_le_bytes().classify()
+    }
+}
+
+#[cfg(feature = "check-secret-independence")]
+impl FromLeBytes<4> for U32 {
+    fn from_le_bytes(bytes: [U8; 4]) -> Self {
+        u32::from_le_bytes(bytes.declassify()).classify()
+    }
 }
