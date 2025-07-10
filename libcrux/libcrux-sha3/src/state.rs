@@ -1,6 +1,6 @@
 use libcrux_secrets::{Classify, Declassify, U32, U8};
 
-use crate::lane::Lane2U32;
+use crate::{lane::Lane2U32, FromLeBytes, ToLeBytes};
 
 #[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy, Debug)]
@@ -72,9 +72,8 @@ impl KeccakState {
 
         for i in 0..num_full_blocks {
             let lane = self.get_lane(i / 5, i % 5).deinterleave();
-            out[i * 8..i * 8 + 4].copy_from_slice(&lane[0].declassify().to_le_bytes().classify());
-            out[i * 8 + 4..i * 8 + 8]
-                .copy_from_slice(&lane[1].declassify().to_le_bytes().classify());
+            out[i * 8..i * 8 + 4].copy_from_slice(&lane[0].to_le_bytes());
+            out[i * 8 + 4..i * 8 + 8].copy_from_slice(&lane[1].to_le_bytes());
         }
 
         if last_block_len > 4 {
@@ -84,17 +83,16 @@ impl KeccakState {
             let last_half_block_len = last_block_len - 4;
 
             out[num_full_blocks * 8..num_full_blocks * 8 + 4]
-                .copy_from_slice(&lane[0].declassify().to_le_bytes().classify());
-            out[num_full_blocks * 8 + 4..num_full_blocks * 8 + last_block_len].copy_from_slice(
-                &lane[1].declassify().to_le_bytes().classify()[0..last_half_block_len],
-            );
+                .copy_from_slice(&lane[0].to_le_bytes());
+            out[num_full_blocks * 8 + 4..num_full_blocks * 8 + last_block_len]
+                .copy_from_slice(&lane[1].to_le_bytes()[0..last_half_block_len]);
         } else if last_block_len > 0 {
             let lane = self
                 .get_lane(num_full_blocks / 5, num_full_blocks % 5)
                 .deinterleave();
 
             out[num_full_blocks * 8..num_full_blocks * 8 + last_block_len]
-                .copy_from_slice(&lane[0].declassify().to_le_bytes().classify()[0..last_block_len]);
+                .copy_from_slice(&lane[0].to_le_bytes()[0..last_block_len]);
         }
     }
 }
@@ -132,8 +130,8 @@ fn load_block_full_2u32<const RATE: usize>(
 fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     for i in 0..RATE / 8 {
         let lane = s.get_lane(i / 5, i % 5).deinterleave();
-        out[8 * i..8 * i + 4].copy_from_slice(&lane[0].declassify().to_le_bytes().classify());
-        out[8 * i + 4..8 * i + 8].copy_from_slice(&lane[1].declassify().to_le_bytes().classify());
+        out[8 * i..8 * i + 4].copy_from_slice(&lane[0].to_le_bytes());
+        out[8 * i + 4..8 * i + 8].copy_from_slice(&lane[1].to_le_bytes());
     }
 }
 
@@ -143,8 +141,10 @@ fn store_block_full_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8; 200]
 }
 
 #[cfg(feature = "check-secret-independence")]
-trait FromLeBytes<const N: usize>: Sized {
-    fn from_le_bytes(bytes: [U8; N]) -> Self;
+impl ToLeBytes<4> for U32 {
+    fn to_le_bytes(self) -> [U8; 4] {
+        self.declassify().to_le_bytes().classify()
+    }
 }
 
 #[cfg(feature = "check-secret-independence")]

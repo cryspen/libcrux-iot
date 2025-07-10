@@ -1,6 +1,6 @@
 use core::ops::{Index, IndexMut};
 
-use libcrux_secrets::{Classify, Declassify, U32};
+use libcrux_secrets::{CastOps, Classify, Declassify, U32};
 
 /// A lane of the Keccak state,
 #[derive(Clone, Copy)]
@@ -21,7 +21,7 @@ impl Lane2U32 {
     // noninterleaved representation
     #[inline(always)]
     pub(crate) fn interleave(self) -> Self {
-        let lane_u64 = self[0].declassify() as u64 | (self[1].declassify() as u64) << 32;
+        let lane_u64 = self[0].as_u64() | (self[1].as_u64()) << 32;
         let mut even_bits = lane_u64 & 0x5555_5555_5555_5555;
         even_bits = (even_bits ^ (even_bits >> 1)) & 0x3333_3333_3333_3333;
         even_bits = (even_bits ^ (even_bits >> 2)) & 0x0f0f_0f0f_0f0f_0f0f;
@@ -36,7 +36,7 @@ impl Lane2U32 {
         odd_bits = (odd_bits ^ (odd_bits >> 8)) & 0x0000_ffff_0000_ffff;
         odd_bits = (odd_bits ^ (odd_bits >> 16)) & 0x0000_0000_ffff_ffff;
 
-        [even_bits as u32, odd_bits as u32].classify().into()
+        [even_bits.as_u32(), odd_bits.as_u32()].into()
     }
 
     #[inline(always)]
