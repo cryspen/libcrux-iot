@@ -272,6 +272,7 @@ pub fn verify_internal(
 /// Returns `Ok` when the `signature` is valid for the `message` and
 /// `verification_key`, and a [`VerificationError`] otherwise.
 #[cfg(not(eurydice))]
+#[inline(never)]
 pub fn verify(
     verification_key: &MLDSA65VerificationKey,
     message: &[u8],
