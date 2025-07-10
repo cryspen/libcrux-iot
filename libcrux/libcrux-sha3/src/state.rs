@@ -1,6 +1,10 @@
-use libcrux_secrets::{Classify, Declassify, U32, U8};
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::{Classify, Declassify};
+use libcrux_secrets::{U32, U8};
 
-use crate::{lane::Lane2U32, FromLeBytes, ToLeBytes};
+use crate::lane::Lane2U32;
+#[cfg(feature = "check-secret-independence")]
+use crate::{FromLeBytes, ToLeBytes};
 
 #[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy, Debug)]
