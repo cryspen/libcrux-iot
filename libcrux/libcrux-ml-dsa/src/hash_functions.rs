@@ -112,12 +112,7 @@ pub(crate) mod portable {
     }
 
     #[inline(always)]
-    fn shake128_init_absorb_x4(
-        input0: &[u8],
-        input1: &[u8],
-        input2: &[u8],
-        input3: &[u8],
-    ) -> Shake128X4 {
+    fn init_absorb(input0: &[u8], input1: &[u8], input2: &[u8], input3: &[u8]) -> Shake128X4 {
         let mut state0 = incremental::shake128_init();
         incremental::shake128_absorb_final(&mut state0, input0);
 
@@ -138,31 +133,8 @@ pub(crate) mod portable {
         }
     }
 
-    impl Shake128 {
-        #[inline(always)]
-        pub(crate) fn shake128_init_absorb(input: &[u8]) -> Self {
-            let mut state = incremental::shake128_init();
-            incremental::shake128_absorb_final(&mut state, input);
-
-            Shake128 { state }
-        }
-
-        #[inline(always)]
-        pub(crate) fn shake128_squeeze_first_five_blocks(
-            &mut self,
-            out: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-        ) {
-            incremental::shake128_squeeze_first_five_blocks(&mut self.state, out);
-        }
-
-        #[inline(always)]
-        pub(crate) fn shake128_squeeze_next_block(&mut self, out: &mut [u8; shake128::BLOCK_SIZE]) {
-            incremental::shake128_squeeze_next_block(&mut self.state, out);
-        }
-    }
-
     #[inline(always)]
-    fn shake128_squeeze_first_five_blocks_x4(
+    fn squeeze_first_five_blocks(
         state: &mut Shake128X4,
         out0: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
         out1: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
@@ -176,7 +148,7 @@ pub(crate) mod portable {
     }
 
     #[inline(always)]
-    fn shake128_squeeze_next_block_x4(
+    fn squeeze_next_block(
         state: &mut Shake128X4,
     ) -> (
         [u8; shake128::BLOCK_SIZE],
@@ -199,7 +171,7 @@ pub(crate) mod portable {
     impl shake128::XofX4 for Shake128X4 {
         #[inline(always)]
         fn init_absorb(input0: &[u8], input1: &[u8], input2: &[u8], input3: &[u8]) -> Self {
-            shake128_init_absorb_x4(input0, input1, input2, input3)
+            init_absorb(input0, input1, input2, input3)
         }
 
         #[inline(always)]
@@ -210,7 +182,7 @@ pub(crate) mod portable {
             out2: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
             out3: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
         ) {
-            shake128_squeeze_first_five_blocks_x4(self, out0, out1, out2, out3);
+            squeeze_first_five_blocks(self, out0, out1, out2, out3);
         }
 
         #[inline(always)]
@@ -222,15 +194,13 @@ pub(crate) mod portable {
             [u8; shake128::BLOCK_SIZE],
             [u8; shake128::BLOCK_SIZE],
         ) {
-            shake128_squeeze_next_block_x4(self)
+            squeeze_next_block(self)
         }
     }
 
     /// Portable SHAKE 128 state
     #[cfg_attr(hax, hax_lib::opaque)]
-    pub(crate) struct Shake128 {
-        state: KeccakState,
-    }
+    pub(crate) struct Shake128 {}
 
     #[inline(always)]
     fn shake128(input: &[u8], out: &mut [u8]) {
@@ -310,12 +280,7 @@ pub(crate) mod portable {
     }
 
     #[inline(always)]
-    fn shake256_init_absorb_x4(
-        input0: &[u8],
-        input1: &[u8],
-        input2: &[u8],
-        input3: &[u8],
-    ) -> Shake256X4 {
+    fn init_absorb_x4(input0: &[u8], input1: &[u8], input2: &[u8], input3: &[u8]) -> Shake256X4 {
         let mut state0 = incremental::shake256_init();
         incremental::shake256_absorb_final(&mut state0, input0);
 
@@ -337,7 +302,7 @@ pub(crate) mod portable {
     }
 
     #[inline(always)]
-    fn shake256_squeeze_first_block_x4(
+    fn squeeze_first_block_x4(
         state: &mut Shake256X4,
     ) -> (
         [u8; shake256::BLOCK_SIZE],
@@ -358,7 +323,7 @@ pub(crate) mod portable {
     }
 
     #[inline(always)]
-    fn shake256_squeeze_next_block_x4(
+    fn squeeze_next_block_x4(
         state: &mut Shake256X4,
     ) -> (
         [u8; shake256::BLOCK_SIZE],
@@ -381,7 +346,7 @@ pub(crate) mod portable {
     impl shake256::XofX4 for Shake256X4 {
         #[inline(always)]
         fn init_absorb_x4(input0: &[u8], input1: &[u8], input2: &[u8], input3: &[u8]) -> Self {
-            shake256_init_absorb_x4(input0, input1, input2, input3)
+            init_absorb_x4(input0, input1, input2, input3)
         }
 
         #[inline(always)]
@@ -393,7 +358,7 @@ pub(crate) mod portable {
             [u8; shake256::BLOCK_SIZE],
             [u8; shake256::BLOCK_SIZE],
         ) {
-            shake256_squeeze_first_block_x4(self)
+            squeeze_first_block_x4(self)
         }
 
         #[inline(always)]
@@ -405,7 +370,7 @@ pub(crate) mod portable {
             [u8; shake256::BLOCK_SIZE],
             [u8; shake256::BLOCK_SIZE],
         ) {
-            shake256_squeeze_next_block_x4(self)
+            squeeze_next_block_x4(self)
         }
 
         #[inline(always)]
