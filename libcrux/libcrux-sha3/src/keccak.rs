@@ -1,7 +1,9 @@
 //! The generic SHA3 implementation that uses portable or platform specific
 //! sub-routines.
 
-use libcrux_secrets::{Classify, Declassify, U32, U8};
+use libcrux_secrets::{Classify, U8};
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::{Declassify, U32};
 
 use crate::{lane::Lane2U32, state::KeccakState};
 
@@ -348,7 +350,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let c_x0_zeta1 = s.c[0][1];
         let c_x2_zeta0 = s.c[2][0];
         let c_x4_zeta1 = s.c[4][1];
-        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.declassify().rotate_left(1);
+        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
         s.d[0][0] = d_x0_zeta0;
         let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
         s.d[2][1] = d_x2_zeta1;
@@ -2224,10 +2226,12 @@ pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut 
     }
 }
 
+#[cfg(feature = "check-secret-independence")]
 trait RotateLeft {
     fn rotate_left(self, n: u32) -> Self;
 }
 
+#[cfg(feature = "check-secret-independence")]
 impl RotateLeft for U32 {
     fn rotate_left(self, n: u32) -> Self {
         self.declassify().rotate_left(n).classify()
