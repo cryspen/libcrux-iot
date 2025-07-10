@@ -142,10 +142,12 @@ fn store_block_full_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8; 200]
     store_block_2u32::<RATE>(s, out);
 }
 
+#[cfg(feature = "check-secret-independence")]
 trait FromLeBytes<const N: usize>: Sized {
     fn from_le_bytes(bytes: [U8; N]) -> Self;
 }
 
+#[cfg(feature = "check-secret-independence")]
 impl FromLeBytes<4> for U32 {
     fn from_le_bytes(bytes: [U8; 4]) -> Self {
         u32::from_le_bytes(bytes.declassify()).classify()
