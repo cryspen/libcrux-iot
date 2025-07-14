@@ -46,7 +46,7 @@ macro_rules! shake_test {
             for test in &tv.tests {
                 eprintln!("test {c}");
                 c += 1;
-                let mut my_digest = vec![0u8; test.digest.len()].classify();
+                let mut my_digest = vec![0u8.classify(); test.digest.len()];
                 $shake(&mut my_digest, &test.msg[0..test.msg_length / 8]);
                 assert_eq!(my_digest.declassify_ref(), &test.digest[..]);
             }
@@ -74,7 +74,7 @@ macro_rules! shake_vo_test {
             for test in &tv.tests {
                 eprintln!("test {c}");
                 c += 1;
-                let mut my_digest = vec![0u8; test.digest.len()].classify();
+                let mut my_digest = vec![0u8.classify(); test.digest.len()];
                 $shake(&mut my_digest, &test.msg[0..tv.header.input_length / 8]);
                 assert_eq!(my_digest.declassify_ref(), &test.digest[..]);
             }
