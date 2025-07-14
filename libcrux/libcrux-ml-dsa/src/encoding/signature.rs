@@ -53,6 +53,32 @@ pub(crate) fn serialize<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
+pub(crate) fn deserialize_signer_response_j<SIMDUnit: Operations>(
+    columns_in_a: usize,
+    commitment_hash_size: usize,
+    gamma1_exponent: usize,
+    gamma1_ring_element_size: usize,
+    signature_size: usize,
+    serialized: &[u8],
+    out_signer_response: &mut PolynomialRingElement<SIMDUnit>,
+    j: usize,
+) {
+    // [eurydice] generates an unused variable pointing to out_hint here.
+    debug_assert!(serialized.len() == signature_size);
+
+    let (_commitment_hash, rest_of_serialized) = serialized.split_at(commitment_hash_size);
+    let (signer_response_serialized, _hint_serialized) =
+        rest_of_serialized.split_at(gamma1_ring_element_size * columns_in_a);
+
+    encoding::gamma1::deserialize::<SIMDUnit>(
+        gamma1_exponent,
+        &signer_response_serialized
+            [j * gamma1_ring_element_size..(j + 1) * gamma1_ring_element_size],
+        out_signer_response,
+    );
+}
+
+#[inline(always)]
 pub(crate) fn deserialize<SIMDUnit: Operations>(
     columns_in_a: usize,
     rows_in_a: usize,

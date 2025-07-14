@@ -113,3 +113,27 @@ pub(crate) fn use_hint<SIMDUnit: Operations>(
     // [hax] https://github.com/hacspec/hax/issues/720
     ()
 }
+
+#[inline(always)]
+pub(crate) fn use_hint_i<SIMDUnit: Operations>(
+    gamma2: Gamma2,
+    hint: &[[i32; COEFFICIENTS_IN_RING_ELEMENT]],
+    re_vector: &mut PolynomialRingElement<SIMDUnit>,
+    poly_slot_a: &mut PolynomialRingElement<SIMDUnit>,
+    i: usize,
+) {
+    // TODO: Deserialize hint[i] into poly_slot_a
+    PolynomialRingElement::<SIMDUnit>::from_i32_array(&hint[i], poly_slot_a);
+
+    for j in 0..re_vector.simd_units.len() {
+        SIMDUnit::use_hint(
+            gamma2,
+            &re_vector.simd_units[j],
+            &mut poly_slot_a.simd_units[j],
+        );
+    }
+    *re_vector = *poly_slot_a;
+
+    // [hax] https://github.com/hacspec/hax/issues/720
+    ()
+}
