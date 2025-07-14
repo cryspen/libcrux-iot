@@ -8,7 +8,7 @@
 
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
-use libcrux_ml_dsa::ml_dsa_65 as mldsa;
+use libcrux_ml_dsa::ml_dsa_87 as mldsa;
 
 extern crate alloc;
 
@@ -28,7 +28,7 @@ fn main() -> ! {
 
     let stack_start = unsafe { &_stack_start as *const u32 };
     board::stack::measure(
-        "ML-DSA 65 Key Generation",
+        "ML-DSA 87 Key Generation",
         core::hint::black_box(stack_start),
     );
 

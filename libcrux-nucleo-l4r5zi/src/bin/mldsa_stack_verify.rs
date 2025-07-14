@@ -8,7 +8,7 @@
 
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
-use libcrux_ml_dsa::ml_dsa_65 as mldsa;
+use libcrux_ml_dsa::ml_dsa_87 as mldsa;
 
 extern crate alloc;
 
@@ -28,8 +28,13 @@ fn main() -> ! {
     let message = [0u8; 100];
     let pair = mldsa::generate_key_pair(randomness_gen);
 
-    let signature =
-        core::hint::black_box(mldsa::sign(&pair.signing_key, &message, b"", randomness_sign)).unwrap();
+    let signature = core::hint::black_box(mldsa::sign(
+        &pair.signing_key,
+        &message,
+        b"",
+        randomness_sign,
+    ))
+    .unwrap();
 
     let _ = core::hint::black_box(mldsa::verify(
         &pair.verification_key,
@@ -38,7 +43,7 @@ fn main() -> ! {
         &signature,
     ));
     let stack_start = unsafe { &_stack_start as *const u32 };
-    board::stack::measure("ML-DSA 65 Verification", core::hint::black_box(stack_start));
+    board::stack::measure("ML-DSA 87 Verification", core::hint::black_box(stack_start));
 
     board::exit()
 }

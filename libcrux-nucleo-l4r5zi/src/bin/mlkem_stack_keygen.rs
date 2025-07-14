@@ -8,7 +8,7 @@
 
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
-use libcrux_ml_kem::mlkem768 as mlkem;
+use libcrux_ml_kem::mlkem1024 as mlkem;
 
 extern crate alloc;
 
@@ -27,7 +27,10 @@ fn main() -> ! {
     let _pair = core::hint::black_box(mlkem::generate_key_pair(randomness_gen));
 
     let stack_start = unsafe { &_stack_start as *const u32 };
-    board::stack::measure("ML-KEM 768 Key Generation", core::hint::black_box(stack_start));
+    board::stack::measure(
+        "ML-KEM 1024 Key Generation",
+        core::hint::black_box(stack_start),
+    );
 
     board::exit()
 }
