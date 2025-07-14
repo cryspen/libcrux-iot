@@ -60,6 +60,11 @@ jobs:
           cargo clean
           cargo test --verbose
 
+      - name: 🏃🏻‍♀️ Test with -F check-secret-independence
+        run: |
+          cargo clean
+          cargo test --verbose -F check-secret-independence
+
       - name: 🏃🏻‍♀️ Test Release
         run: |
           cargo clean
