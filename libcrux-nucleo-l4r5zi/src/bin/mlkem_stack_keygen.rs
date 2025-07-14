@@ -8,7 +8,8 @@
 
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
-use libcrux_ml_kem::mlkem768 as mlkem;
+use board::assets::mlkem::mlkem1024 as assets;
+use libcrux_ml_kem::mlkem1024 as mlkem;
 
 extern crate alloc;
 
@@ -19,15 +20,21 @@ static HEAP: Heap = Heap::empty();
 
 extern "C" {
     static _stack_start: u32;
+    static _stack_end: u32;
 }
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    let randomness_gen = [1u8; libcrux_ml_kem::KEY_GENERATION_SEED_SIZE];
-    let _pair = core::hint::black_box(mlkem::generate_key_pair(randomness_gen));
+    let _pair = core::hint::black_box(mlkem::generate_key_pair(assets::KEYGEN_SEED));
 
-    let stack_start = unsafe { &_stack_start as *const u32 };
-    board::stack::measure("ML-KEM 768 Key Generation", core::hint::black_box(stack_start));
+    let stack_start = core::hint::black_box(unsafe { &_stack_start as *const u32 });
+    let stack_end = core::hint::black_box(unsafe { &_stack_end as *const u32 });
+
+    board::stack::measure(
+        assets::STR_KEYGEN,
+        core::hint::black_box(stack_start),
+        core::hint::black_box(stack_end),
+    );
 
     board::exit()
 }

@@ -337,6 +337,3 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub fn KeccakF1600_StatePermute(state: *mut u64);
 }
-unsafe extern "C" {
-    pub fn KeccakF1600_StatePermute_4Rounds(state: *mut u64);
-}
