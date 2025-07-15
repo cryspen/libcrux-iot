@@ -97,64 +97,22 @@ pub(crate) fn subtract_vectors<SIMDUnit: Operations>(
 
 /// Compute InvertNTT(Â ◦ ẑ - ĉ ◦ NTT(t₁2ᵈ))
 #[inline(always)]
-pub(crate) fn compute_w_approx<SIMDUnit: Operations>(
-    rows_in_a: usize,
-    columns_in_a: usize,
-    seed: &[u8],
-    rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_block: &mut [u8; shake128::BLOCK_SIZE],
-    tmp_stack: &mut [i32; 263],
-    poly_slot: &mut PolynomialRingElement<SIMDUnit>,
-    signer_response: &[PolynomialRingElement<SIMDUnit>],
-    verifier_challenge_as_ntt: &PolynomialRingElement<SIMDUnit>,
-    t1: &mut [PolynomialRingElement<SIMDUnit>],
-) {
-    for i in 0..rows_in_a {
-        let mut inner_result = PolynomialRingElement::<SIMDUnit>::zero();
-        for j in 0..columns_in_a {
-            sample_ring_element(
-                seed,
-                (i as u8, j as u8),
-                poly_slot,
-                rand_stack,
-                rand_block,
-                tmp_stack,
-            );
-            ntt_multiply_montgomery(poly_slot, &signer_response[j]);
-            PolynomialRingElement::<SIMDUnit>::add(&mut inner_result, &poly_slot);
-        }
-
-        shift_left_then_reduce::<SIMDUnit, { BITS_IN_LOWER_PART_OF_T as i32 }>(&mut t1[i]);
-        ntt(&mut t1[i]);
-        ntt_multiply_montgomery(&mut t1[i], verifier_challenge_as_ntt);
-        PolynomialRingElement::<SIMDUnit>::subtract(&mut inner_result, &t1[i]);
-        t1[i] = inner_result;
-        invert_ntt_montgomery(&mut t1[i]);
-    }
-    // [hax] https://github.com/hacspec/hax/issues/720
-    ()
-}
-
-/// Compute InvertNTT(Â ◦ ẑ - ĉ ◦ NTT(t₁2ᵈ))
-#[inline(always)]
 pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
     columns_in_a: usize,
-    commitment_hash_size: usize,
     gamma1_exponent: usize,
     gamma1_ring_element_size: usize,
-    signature_size: usize,
+    beta: i32,
     seed: &[u8],
+    verifier_challenge_as_ntt: &PolynomialRingElement<SIMDUnit>,
+    t1_serialized: &[u8],
+    signer_response_serialized: &[u8],
+    i: usize,
     rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
     rand_block: &mut [u8; shake128::BLOCK_SIZE],
     tmp_stack: &mut [i32; 263],
     poly_slot_a: &mut PolynomialRingElement<SIMDUnit>,
     poly_slot_b: &mut PolynomialRingElement<SIMDUnit>,
     poly_slot_c: &mut PolynomialRingElement<SIMDUnit>, // Must be zero
-    verifier_challenge_as_ntt: &PolynomialRingElement<SIMDUnit>,
-    t1_serialized: &[u8],
-    signature_serialized: &[u8],
-    i: usize,
-    bound: i32,
 ) -> Result<(), VerificationError> {
     for j in 0..columns_in_a {
         // Sample A[i,j] into slot A
@@ -167,22 +125,15 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
             tmp_stack,
         );
 
-        // Deserialize and NTT signer_response[j] into slot B
+        // Deserialize signer_response[j] into slot B, then transform to NTT domain
         deserialize_signer_response_j(
-            columns_in_a,
-            commitment_hash_size,
             gamma1_exponent,
             gamma1_ring_element_size,
-            signature_size,
-            signature_serialized,
-            poly_slot_b,
+            beta,
+            signer_response_serialized,
             j,
-        );
-
-        if poly_slot_b.infinity_norm_exceeds(bound) {
-            return Err(VerificationError::SignerResponseExceedsBoundError);
-        }
-
+            poly_slot_b,
+        )?;
         ntt(poly_slot_b);
 
         ntt_multiply_montgomery(poly_slot_a, poly_slot_b);
@@ -191,11 +142,11 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
         PolynomialRingElement::<SIMDUnit>::add(poly_slot_c, &poly_slot_a);
     }
 
+    // Deserialize t1[i] into slot A
     t1::deserialize::<SIMDUnit>(
         &t1_serialized[i * RING_ELEMENT_OF_T1S_SIZE..(i + 1) * RING_ELEMENT_OF_T1S_SIZE],
         poly_slot_a,
     );
-
     shift_left_then_reduce::<SIMDUnit, { BITS_IN_LOWER_PART_OF_T as i32 }>(poly_slot_a);
     ntt(poly_slot_a);
     ntt_multiply_montgomery(poly_slot_a, verifier_challenge_as_ntt);

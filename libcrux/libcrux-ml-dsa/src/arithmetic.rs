@@ -1,8 +1,10 @@
 use crate::{
     constants::{Gamma2, COEFFICIENTS_IN_RING_ELEMENT},
+    encoding::signature::deserialize_hint,
     helper::cloop,
     polynomial::PolynomialRingElement,
     simd::traits::Operations,
+    VerificationError,
 };
 
 #[inline(always)]
@@ -96,34 +98,26 @@ pub(crate) fn make_hint<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
-pub(crate) fn use_hint<SIMDUnit: Operations>(
-    gamma2: Gamma2,
-    hint: &[[i32; COEFFICIENTS_IN_RING_ELEMENT]],
-    re_vector: &mut [PolynomialRingElement<SIMDUnit>],
-) {
-    for i in 0..re_vector.len() {
-        let mut tmp = PolynomialRingElement::zero();
-        PolynomialRingElement::<SIMDUnit>::from_i32_array(&hint[i], &mut tmp);
-
-        for j in 0..re_vector[0].simd_units.len() {
-            SIMDUnit::use_hint(gamma2, &re_vector[i].simd_units[j], &mut tmp.simd_units[j]);
-        }
-        re_vector[i] = tmp;
-    }
-    // [hax] https://github.com/hacspec/hax/issues/720
-    ()
-}
-
-#[inline(always)]
 pub(crate) fn use_hint_i<SIMDUnit: Operations>(
+    max_ones_in_hint: usize,
+    rows_in_a: usize,
     gamma2: Gamma2,
-    hint: &[[i32; COEFFICIENTS_IN_RING_ELEMENT]],
+    hint_serialized: &[u8],
+    i: usize,
+    previous_true_hints_seen: &mut usize,
     re_vector: &mut PolynomialRingElement<SIMDUnit>,
     poly_slot_a: &mut PolynomialRingElement<SIMDUnit>,
-    i: usize,
-) {
-    // TODO: Deserialize hint[i] into poly_slot_a
-    PolynomialRingElement::<SIMDUnit>::from_i32_array(&hint[i], poly_slot_a);
+) -> Result<(), VerificationError> {
+    let mut hint_deserialized = [0i32; COEFFICIENTS_IN_RING_ELEMENT];
+    deserialize_hint(
+        rows_in_a,
+        max_ones_in_hint,
+        hint_serialized,
+        i,
+        &mut hint_deserialized,
+        previous_true_hints_seen,
+    )?;
+    PolynomialRingElement::<SIMDUnit>::from_i32_array(&hint_deserialized, poly_slot_a);
 
     for j in 0..re_vector.simd_units.len() {
         SIMDUnit::use_hint(
@@ -135,5 +129,5 @@ pub(crate) fn use_hint_i<SIMDUnit: Operations>(
     *re_vector = *poly_slot_a;
 
     // [hax] https://github.com/hacspec/hax/issues/720
-    ()
+    Ok(())
 }
