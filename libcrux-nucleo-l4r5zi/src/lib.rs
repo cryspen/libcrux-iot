@@ -9,6 +9,8 @@ use embassy_stm32 as _; // memory layout
 
 use panic_probe as _;
 
+#[cfg(feature = "stack")]
+pub mod assets;
 pub mod cycle_counter;
 pub mod init;
 #[cfg(feature = "realtime")]

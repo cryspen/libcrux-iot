@@ -8,7 +8,8 @@
 
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
-use libcrux_ml_dsa::ml_dsa_65 as mldsa;
+use board::assets::mldsa::mldsa87 as assets;
+use libcrux_ml_dsa::ml_dsa_87 as mldsa;
 
 extern crate alloc;
 
@@ -19,24 +20,26 @@ static HEAP: Heap = Heap::empty();
 
 extern "C" {
     static _stack_start: u32;
+    static _stack_end: u32;
 }
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    let randomness_gen = [1u8; 32];
-    let randomness_sign = [1u8; 32];
-    let message = [0u8; 100];
-    let pair = mldsa::generate_key_pair(randomness_gen);
-
     let _signature = core::hint::black_box(mldsa::sign(
-        &pair.signing_key,
-        &message,
+        &libcrux_ml_dsa::MLDSASigningKey::new(assets::SK),
+        &assets::MSG,
         b"",
-        randomness_sign,
+        assets::SIGNING_SEED,
     ));
 
-    let stack_start = unsafe { &_stack_start as *const u32 };
-    board::stack::measure("ML-DSA 65 Signing", core::hint::black_box(stack_start));
+    let stack_start = core::hint::black_box(unsafe { &_stack_start as *const u32 });
+    let stack_end = core::hint::black_box(unsafe { &_stack_end as *const u32 });
+
+    board::stack::measure(
+        assets::STR_SIGN,
+        core::hint::black_box(stack_start),
+        core::hint::black_box(stack_end),
+    );
 
     board::exit()
 }

@@ -11,7 +11,6 @@ pub trait Platform {
 pub struct CortexM;
 
 impl Platform for CortexM {
-    
     fn init(&self) {
         use cortex_m::peripheral::Peripherals;
         let mut peripherals = Peripherals::take().unwrap();

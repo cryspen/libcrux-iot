@@ -58,10 +58,7 @@ impl Variant for Kyber {
     }
 
     #[inline(always)]
-    fn cpa_keygen_seed<const K: usize, Hasher: Hash>(
-        key_generation_seed: &[u8],
-        out: &mut [u8],
-    ) {
+    fn cpa_keygen_seed<const K: usize, Hasher: Hash>(key_generation_seed: &[u8], out: &mut [u8]) {
         Hasher::G(key_generation_seed, out)
     }
 }
