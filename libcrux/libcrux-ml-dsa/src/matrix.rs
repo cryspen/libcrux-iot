@@ -195,6 +195,7 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
         &t1_serialized[i * RING_ELEMENT_OF_T1S_SIZE..(i + 1) * RING_ELEMENT_OF_T1S_SIZE],
         poly_slot_a,
     );
+
     shift_left_then_reduce::<SIMDUnit, { BITS_IN_LOWER_PART_OF_T as i32 }>(poly_slot_a);
     ntt(poly_slot_a);
     ntt_multiply_montgomery(poly_slot_a, verifier_challenge_as_ntt);

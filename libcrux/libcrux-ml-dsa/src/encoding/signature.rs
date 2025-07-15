@@ -96,19 +96,19 @@ pub(crate) fn deserialize<SIMDUnit: Operations>(
     debug_assert!(serialized.len() == signature_size);
 
     let (commitment_hash, rest_of_serialized) = serialized.split_at(commitment_hash_size);
-    out_commitment_hash[0..commitment_hash_size].copy_from_slice(commitment_hash);
+    // out_commitment_hash[0..commitment_hash_size].copy_from_slice(commitment_hash);
 
     let (signer_response_serialized, hint_serialized) =
         rest_of_serialized.split_at(gamma1_ring_element_size * columns_in_a);
 
-    for i in 0..columns_in_a {
-        encoding::gamma1::deserialize::<SIMDUnit>(
-            gamma1_exponent,
-            &signer_response_serialized
-                [i * gamma1_ring_element_size..(i + 1) * gamma1_ring_element_size],
-            &mut out_signer_response[i],
-        );
-    }
+    // for i in 0..columns_in_a {
+    //     encoding::gamma1::deserialize::<SIMDUnit>(
+    //         gamma1_exponent,
+    //         &signer_response_serialized
+    //             [i * gamma1_ring_element_size..(i + 1) * gamma1_ring_element_size],
+    //         &mut out_signer_response[i],
+    //     );
+    // }
 
     // While there are several ways to encode the same hint vector, we
     // allow only one such encoding, to ensure strong unforgeability.
