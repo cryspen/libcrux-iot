@@ -1,6 +1,10 @@
 //! The generic SHA3 implementation that uses portable or platform specific
 //! sub-routines.
 
+use libcrux_secrets::{Classify, U8};
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::{Declassify, U32};
+
 use crate::{lane::Lane2U32, state::KeccakState};
 
 /// The internal keccak state that can also buffer inputs to absorb.
@@ -10,7 +14,7 @@ pub(crate) struct KeccakXofState<const RATE: usize> {
     inner: KeccakState,
 
     // Buffer inputs on absorb.
-    buf: [u8; RATE],
+    buf: [U8; RATE],
 
     // Buffered length.
     buf_len: usize,
@@ -21,8 +25,8 @@ pub(crate) struct KeccakXofState<const RATE: usize> {
 
 impl<const RATE: usize> KeccakXofState<RATE> {
     /// An all zero block
-    pub(crate) const fn zero_block() -> [u8; RATE] {
-        [0u8; RATE]
+    pub(crate) const fn zero_block() -> [U8; RATE] {
+        [libcrux_secrets::secret(0); RATE]
     }
 
     /// Generate a new keccak xof state.
@@ -45,7 +49,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     ///
     /// This works best with relatively small `inputs`.
     #[inline(always)]
-    pub(crate) fn absorb(&mut self, inputs: &[u8]) {
+    pub(crate) fn absorb(&mut self, inputs: &[U8]) {
         let input_remainder_len = self.absorb_full(inputs);
 
         // ... buffer the rest if there's not enough input (left).
@@ -62,7 +66,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
         }
     }
 
-    fn absorb_full(&mut self, inputs: &[u8]) -> usize {
+    fn absorb_full(&mut self, inputs: &[U8]) -> usize {
         debug_assert!(self.buf_len < RATE);
         // Check if there are buffered bytes to absorb first and consume them.
         let input_consumed = self.fill_buffer(inputs);
@@ -98,7 +102,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     /// content to consume, and `0` otherwise.
     /// If `consumed > 0` is returned, `self.buf` contains a full block to be
     /// loaded.
-    fn fill_buffer(&mut self, inputs: &[u8]) -> usize {
+    fn fill_buffer(&mut self, inputs: &[U8]) -> usize {
         let input_len = inputs.len();
         let mut consumed = 0;
         if self.buf_len > 0 {
@@ -119,13 +123,13 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     /// The `inputs` block may be empty. Everything in the `inputs` block beyond
     /// `RATE` bytes is ignored.
     #[inline(always)]
-    pub(crate) fn absorb_final<const DELIMITER: u8>(&mut self, inputs: &[u8]) {
+    pub(crate) fn absorb_final<const DELIMITER: u8>(&mut self, inputs: &[U8]) {
         let input_remainder_len = self.absorb_full(inputs);
 
         // Consume the remaining bytes.
         // This may be in the local buffer or in the input.
         let input_len = inputs.len();
-        let mut blocks = [0u8; 200];
+        let mut blocks = [0u8; 200].classify();
         if self.buf_len > 0 {
             blocks[0..self.buf_len].copy_from_slice(&self.buf[0..self.buf_len]);
         }
@@ -133,7 +137,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
             blocks[self.buf_len..self.buf_len + input_remainder_len]
                 .copy_from_slice(&inputs[input_len - input_remainder_len..]);
         }
-        blocks[self.buf_len + input_remainder_len] = DELIMITER;
+        blocks[self.buf_len + input_remainder_len] = DELIMITER.classify();
         blocks[RATE - 1] |= 0x80;
 
         self.inner.load_block_full::<RATE>(&blocks, 0);
@@ -142,7 +146,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
 
     /// Squeeze `N` x `LEN` bytes.
     #[inline(always)]
-    pub(crate) fn squeeze(&mut self, out: &mut [u8]) {
+    pub(crate) fn squeeze(&mut self, out: &mut [U8]) {
         if self.sponge {
             // If we called `squeeze` before, call f1600 first.
             // We do it this way around so that we don't call f1600 at the end
@@ -2111,7 +2115,7 @@ pub(crate) fn keccakf1600(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-pub(crate) fn absorb_block<const RATE: usize>(s: &mut KeccakState, blocks: &[u8], start: usize) {
+pub(crate) fn absorb_block<const RATE: usize>(s: &mut KeccakState, blocks: &[U8], start: usize) {
     s.load_block::<RATE>(blocks, start);
     keccakf1600(s)
 }
@@ -2119,35 +2123,35 @@ pub(crate) fn absorb_block<const RATE: usize>(s: &mut KeccakState, blocks: &[u8]
 #[inline(always)]
 pub(crate) fn absorb_final<const RATE: usize, const DELIM: u8>(
     s: &mut KeccakState,
-    last: &[u8],
+    last: &[U8],
     start: usize,
     len: usize,
 ) {
     debug_assert!(len < RATE); // && last[0].len() < RATE
 
-    let mut blocks = [0u8; WIDTH];
+    let mut blocks = [0u8; WIDTH].classify();
     if len > 0 {
         blocks[0..len].copy_from_slice(&last[start..start + len]);
     }
-    blocks[len] = DELIM;
+    blocks[len] = DELIM.classify();
     blocks[RATE - 1] |= 0x80;
     s.load_block_full::<RATE>(&blocks, 0);
     keccakf1600(s)
 }
 
 #[inline(always)]
-pub(crate) fn squeeze_first_block<const RATE: usize>(s: &KeccakState, out: &mut [u8]) {
+pub(crate) fn squeeze_first_block<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     s.store_block::<RATE>(out)
 }
 
 #[inline(always)]
-pub(crate) fn squeeze_next_block<const RATE: usize>(s: &mut KeccakState, out: &mut [u8]) {
+pub(crate) fn squeeze_next_block<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     keccakf1600(s);
     s.store_block::<RATE>(out)
 }
 
 #[inline(always)]
-pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [u8]) {
+pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     let (mut o0, o1) = Lane2U32::split_at_mut_n(out, RATE);
     squeeze_first_block::<RATE>(s, &mut o0);
     let (mut o1, mut o2) = Lane2U32::split_at_mut_n(o1, RATE);
@@ -2156,7 +2160,7 @@ pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState,
 }
 
 #[inline(always)]
-pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [u8]) {
+pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     let (mut o0, o1) = Lane2U32::split_at_mut_n(out, RATE);
     squeeze_first_block::<RATE>(s, &mut o0);
     let (mut o1, o2) = Lane2U32::split_at_mut_n(o1, RATE);
@@ -2172,16 +2176,16 @@ pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, 
 }
 
 #[inline(always)]
-pub(crate) fn squeeze_last<const RATE: usize>(mut s: KeccakState, out: &mut [u8]) {
+pub(crate) fn squeeze_last<const RATE: usize>(mut s: KeccakState, out: &mut [U8]) {
     keccakf1600(&mut s);
-    let mut b = [0u8; 200];
+    let mut b = [0u8; 200].classify();
     s.store_block_full::<RATE>(&mut b);
     out.copy_from_slice(&b[0..out.len()]);
 }
 
 #[inline(always)]
-pub(crate) fn squeeze_first_and_last<const RATE: usize>(s: &KeccakState, out: &mut [u8]) {
-    let mut b = [0u8; 200];
+pub(crate) fn squeeze_first_and_last<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
+    let mut b = [0u8; 200].classify();
     s.store_block_full::<RATE>(&mut b);
     out.copy_from_slice(&b[0..out.len()]);
 }
@@ -2190,7 +2194,7 @@ pub(crate) fn squeeze_first_and_last<const RATE: usize>(s: &KeccakState, out: &m
 const WIDTH: usize = 200;
 
 #[inline(always)]
-pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[u8], out: &mut [u8]) {
+pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut [U8]) {
     let n = data.len() / RATE;
     let rem = data.len() % RATE;
 
@@ -2219,5 +2223,17 @@ pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[u8], out: &mut 
         if last < outlen {
             squeeze_last::<RATE>(s, o1)
         }
+    }
+}
+
+#[cfg(feature = "check-secret-independence")]
+trait RotateLeft {
+    fn rotate_left(self, n: u32) -> Self;
+}
+
+#[cfg(feature = "check-secret-independence")]
+impl RotateLeft for U32 {
+    fn rotate_left(self, n: u32) -> Self {
+        self.declassify().rotate_left(n).classify()
     }
 }
