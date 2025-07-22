@@ -53,6 +53,94 @@ pub(crate) fn serialize<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
+#[cfg(not(feature = "stack"))]
+pub(crate) fn deserialize<SIMDUnit: Operations>(
+    columns_in_a: usize,
+    rows_in_a: usize,
+    commitment_hash_size: usize,
+    gamma1_exponent: usize,
+    gamma1_ring_element_size: usize,
+    max_ones_in_hint: usize,
+    signature_size: usize,
+    serialized: &[u8],
+    out_commitment_hash: &mut [u8],
+    out_signer_response: &mut [PolynomialRingElement<SIMDUnit>],
+    out_hint: &mut [[i32; COEFFICIENTS_IN_RING_ELEMENT]],
+) -> Result<(), VerificationError> {
+    // [eurydice] generates an unused variable pointing to out_hint here.
+    debug_assert!(serialized.len() == signature_size);
+
+    let (commitment_hash, rest_of_serialized) = serialized.split_at(commitment_hash_size);
+    out_commitment_hash[0..commitment_hash_size].copy_from_slice(commitment_hash);
+
+    let (signer_response_serialized, hint_serialized) =
+        rest_of_serialized.split_at(gamma1_ring_element_size * columns_in_a);
+
+    for i in 0..columns_in_a {
+        encoding::gamma1::deserialize::<SIMDUnit>(
+            gamma1_exponent,
+            &signer_response_serialized
+                [i * gamma1_ring_element_size..(i + 1) * gamma1_ring_element_size],
+            &mut out_signer_response[i],
+        );
+    }
+
+    // While there are several ways to encode the same hint vector, we
+    // allow only one such encoding, to ensure strong unforgeability.
+    let mut previous_true_hints_seen = 0usize;
+
+    let mut i = 0;
+    let mut malformed_hint = false;
+
+    while !malformed_hint && i < rows_in_a {
+        let current_true_hints_seen = hint_serialized[max_ones_in_hint + i] as usize;
+
+        if (current_true_hints_seen < previous_true_hints_seen)
+            || (previous_true_hints_seen > max_ones_in_hint)
+        {
+            // the true hints seen should be increasing
+            malformed_hint = true;
+        }
+
+        let mut j = previous_true_hints_seen;
+        while !malformed_hint && j < current_true_hints_seen {
+            if j > previous_true_hints_seen && hint_serialized[j] <= hint_serialized[j - 1] {
+                // indices of true hints for a specific polynomial should be
+                // increasing
+                malformed_hint = true;
+            }
+
+            if !malformed_hint {
+                set_hint(out_hint, i, hint_serialized[j] as usize);
+                j += 1;
+            }
+        }
+
+        if !malformed_hint {
+            previous_true_hints_seen = current_true_hints_seen;
+            i += 1;
+        }
+    }
+
+    i = previous_true_hints_seen;
+
+    for j in i..max_ones_in_hint {
+        if hint_serialized[j] != 0 {
+            // ensures padding indices are zero
+            malformed_hint = true;
+            break;
+        }
+    }
+
+    if malformed_hint {
+        return Err(VerificationError::MalformedHintError);
+    }
+
+    Ok(())
+}
+
+#[inline(always)]
+#[cfg(feature = "stack")]
 pub(crate) fn deserialize_signer_response_j<SIMDUnit: Operations>(
     gamma1_exponent: usize,
     gamma1_ring_element_size: usize,
@@ -74,6 +162,7 @@ pub(crate) fn deserialize_signer_response_j<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
+#[cfg(feature = "stack")]
 pub(crate) fn deserialize_hint(
     rows_in_a: usize,
     max_ones_in_hint: usize,
@@ -112,6 +201,7 @@ pub(crate) fn deserialize_hint(
 }
 
 #[inline(always)]
+#[cfg(feature = "stack")]
 pub(crate) fn hints_check_zero_padding(
     max_ones_in_hint: usize,
     previous_true_hints_seen: usize,
@@ -124,4 +214,10 @@ pub(crate) fn hints_check_zero_padding(
     }
 
     Ok(())
+}
+
+#[inline(always)]
+#[cfg(not(feature = "stack"))]
+fn set_hint(out_hint: &mut [[i32; 256]], i: usize, j: usize) {
+    out_hint[i][j] = 1
 }

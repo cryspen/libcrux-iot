@@ -52,7 +52,7 @@ pub(crate) fn add_domain_separator(slice: &[u8], indices: (u8, u8)) -> [u8; 34] 
     out
 }
 
-#[inline]
+#[inline(always)]
 pub(crate) fn sample_ring_element<SIMDUnit: Operations>(
     seed: &[u8],
     indices: (u8, u8),

@@ -1,13 +1,11 @@
 use crate::{
     arithmetic::shift_left_then_reduce,
-    constants::{BITS_IN_LOWER_PART_OF_T, RING_ELEMENT_OF_T1S_SIZE},
-    encoding::{signature::deserialize_signer_response_j, t1},
+    constants::BITS_IN_LOWER_PART_OF_T,
     hash_functions::shake128,
     ntt::{invert_ntt_montgomery, ntt, ntt_multiply_montgomery},
     polynomial::PolynomialRingElement,
     sample::sample_ring_element,
     simd::traits::Operations,
-    VerificationError,
 };
 
 /// Compute InvertNTT(Â ◦ ŝ₁) + s₂
@@ -97,6 +95,48 @@ pub(crate) fn subtract_vectors<SIMDUnit: Operations>(
 
 /// Compute InvertNTT(Â ◦ ẑ - ĉ ◦ NTT(t₁2ᵈ))
 #[inline(always)]
+#[cfg(not(feature = "stack"))]
+pub(crate) fn compute_w_approx<SIMDUnit: Operations>(
+    rows_in_a: usize,
+    columns_in_a: usize,
+    seed: &[u8],
+    rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
+    rand_block: &mut [u8; shake128::BLOCK_SIZE],
+    tmp_stack: &mut [i32; 263],
+    poly_slot: &mut PolynomialRingElement<SIMDUnit>,
+    signer_response: &[PolynomialRingElement<SIMDUnit>],
+    verifier_challenge_as_ntt: &PolynomialRingElement<SIMDUnit>,
+    t1: &mut [PolynomialRingElement<SIMDUnit>],
+) {
+    for i in 0..rows_in_a {
+        let mut inner_result = PolynomialRingElement::<SIMDUnit>::zero();
+        for j in 0..columns_in_a {
+            sample_ring_element(
+                seed,
+                (i as u8, j as u8),
+                poly_slot,
+                rand_stack,
+                rand_block,
+                tmp_stack,
+            );
+            ntt_multiply_montgomery(poly_slot, &signer_response[j]);
+            PolynomialRingElement::<SIMDUnit>::add(&mut inner_result, &poly_slot);
+        }
+
+        shift_left_then_reduce::<SIMDUnit, { BITS_IN_LOWER_PART_OF_T as i32 }>(&mut t1[i]);
+        ntt(&mut t1[i]);
+        ntt_multiply_montgomery(&mut t1[i], verifier_challenge_as_ntt);
+        PolynomialRingElement::<SIMDUnit>::subtract(&mut inner_result, &t1[i]);
+        t1[i] = inner_result;
+        invert_ntt_montgomery(&mut t1[i]);
+    }
+    // [hax] https://github.com/hacspec/hax/issues/720
+    ()
+}
+
+/// Compute InvertNTT(Â ◦ ẑ - ĉ ◦ NTT(t₁2ᵈ))
+#[inline(always)]
+#[cfg(feature = "stack")]
 pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
     columns_in_a: usize,
     gamma1_exponent: usize,
@@ -113,7 +153,7 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
     poly_slot_a: &mut PolynomialRingElement<SIMDUnit>,
     poly_slot_b: &mut PolynomialRingElement<SIMDUnit>,
     poly_slot_c: &mut PolynomialRingElement<SIMDUnit>, // Must be zero
-) -> Result<(), VerificationError> {
+) -> Result<(), crate::VerificationError> {
     for j in 0..columns_in_a {
         // Sample A[i,j] into slot A
         sample_ring_element(
@@ -126,7 +166,7 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
         );
 
         // Deserialize signer_response[j] into slot B, then transform to NTT domain
-        deserialize_signer_response_j(
+        crate::encoding::signature::deserialize_signer_response_j(
             gamma1_exponent,
             gamma1_ring_element_size,
             beta,
@@ -143,8 +183,9 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
     }
 
     // Deserialize t1[i] into slot A
-    t1::deserialize::<SIMDUnit>(
-        &t1_serialized[i * RING_ELEMENT_OF_T1S_SIZE..(i + 1) * RING_ELEMENT_OF_T1S_SIZE],
+    crate::encoding::t1::deserialize::<SIMDUnit>(
+        &t1_serialized[i * crate::constants::RING_ELEMENT_OF_T1S_SIZE
+            ..(i + 1) * crate::constants::RING_ELEMENT_OF_T1S_SIZE],
         poly_slot_a,
     );
     shift_left_then_reduce::<SIMDUnit, { BITS_IN_LOWER_PART_OF_T as i32 }>(poly_slot_a);

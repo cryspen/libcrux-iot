@@ -1,10 +1,8 @@
 use crate::{
     constants::{Gamma2, COEFFICIENTS_IN_RING_ELEMENT},
-    encoding::signature::deserialize_hint,
     helper::cloop,
     polynomial::PolynomialRingElement,
     simd::traits::Operations,
-    VerificationError,
 };
 
 #[inline(always)]
@@ -98,6 +96,7 @@ pub(crate) fn make_hint<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
+#[cfg(feature = "stack")]
 pub(crate) fn use_hint_i<SIMDUnit: Operations>(
     max_ones_in_hint: usize,
     rows_in_a: usize,
@@ -107,9 +106,9 @@ pub(crate) fn use_hint_i<SIMDUnit: Operations>(
     previous_true_hints_seen: &mut usize,
     re_vector: &mut PolynomialRingElement<SIMDUnit>,
     poly_slot_a: &mut PolynomialRingElement<SIMDUnit>,
-) -> Result<(), VerificationError> {
+) -> Result<(), crate::VerificationError> {
     let mut hint_deserialized = [0i32; COEFFICIENTS_IN_RING_ELEMENT];
-    deserialize_hint(
+    crate::encoding::signature::deserialize_hint(
         rows_in_a,
         max_ones_in_hint,
         hint_serialized,
@@ -130,4 +129,24 @@ pub(crate) fn use_hint_i<SIMDUnit: Operations>(
 
     // [hax] https://github.com/hacspec/hax/issues/720
     Ok(())
+}
+
+#[inline(always)]
+#[cfg(not(feature = "stack"))]
+pub(crate) fn use_hint<SIMDUnit: Operations>(
+    gamma2: Gamma2,
+    hint: &[[i32; COEFFICIENTS_IN_RING_ELEMENT]],
+    re_vector: &mut [PolynomialRingElement<SIMDUnit>],
+) {
+    for i in 0..re_vector.len() {
+        let mut tmp = PolynomialRingElement::zero();
+        PolynomialRingElement::<SIMDUnit>::from_i32_array(&hint[i], &mut tmp);
+
+        for j in 0..re_vector[0].simd_units.len() {
+            SIMDUnit::use_hint(gamma2, &re_vector[i].simd_units[j], &mut tmp.simd_units[j]);
+        }
+        re_vector[i] = tmp;
+    }
+    // [hax] https://github.com/hacspec/hax/issues/720
+    ()
 }
