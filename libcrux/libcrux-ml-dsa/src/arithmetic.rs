@@ -104,8 +104,8 @@ pub(crate) fn use_hint_i<SIMDUnit: Operations>(
     hint_serialized: &[u8],
     i: usize,
     previous_true_hints_seen: &mut usize,
-    re_vector: &mut PolynomialRingElement<SIMDUnit>,
-    poly_slot_a: &mut PolynomialRingElement<SIMDUnit>,
+    re_vector: &mut PolynomialRingElement<SIMDUnit>, // precondition: should hold w'_approx[i], postcondition: holds w'_1[i]
+    poly_slot_a: &mut PolynomialRingElement<SIMDUnit>, // no precondition, will be clobbered
 ) -> Result<(), crate::VerificationError> {
     let mut hint_deserialized = [0i32; COEFFICIENTS_IN_RING_ELEMENT];
     crate::encoding::signature::deserialize_hint(

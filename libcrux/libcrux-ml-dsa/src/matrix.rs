@@ -138,9 +138,9 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
     rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
     rand_block: &mut [u8; shake128::BLOCK_SIZE],
     tmp_stack: &mut [i32; 263],
-    poly_slot_a: &mut PolynomialRingElement<SIMDUnit>,
-    poly_slot_b: &mut PolynomialRingElement<SIMDUnit>,
-    poly_slot_c: &mut PolynomialRingElement<SIMDUnit>, // Must be zero
+    poly_slot_a: &mut PolynomialRingElement<SIMDUnit>, // no precondition, will be clobbered
+    poly_slot_b: &mut PolynomialRingElement<SIMDUnit>, // no precondition, will be clobbered
+    poly_slot_c: &mut PolynomialRingElement<SIMDUnit>, // precondition: must be zero, postcondition: holds w'_approx[i]
 ) -> Result<(), crate::VerificationError> {
     debug_assert_eq!(poly_slot_c.to_i32_array(), [0i32; 256]);
 
