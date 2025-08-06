@@ -142,6 +142,8 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
     poly_slot_b: &mut PolynomialRingElement<SIMDUnit>,
     poly_slot_c: &mut PolynomialRingElement<SIMDUnit>, // Must be zero
 ) -> Result<(), crate::VerificationError> {
+    debug_assert_eq!(poly_slot_c.to_i32_array(), [0i32; 256]);
+
     for j in 0..columns_in_a {
         // Sample A[i,j] into slot A
         sample_ring_element(
