@@ -127,7 +127,6 @@ pub(crate) fn use_hint_i<SIMDUnit: Operations>(
     }
     *re_vector = *poly_slot_a;
 
-    // [hax] https://github.com/hacspec/hax/issues/720
     Ok(())
 }
 
