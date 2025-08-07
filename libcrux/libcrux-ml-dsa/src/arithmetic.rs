@@ -96,6 +96,42 @@ pub(crate) fn make_hint<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
+#[cfg(feature = "stack")]
+pub(crate) fn use_hint_i<SIMDUnit: Operations>(
+    max_ones_in_hint: usize,
+    rows_in_a: usize,
+    gamma2: Gamma2,
+    hint_serialized: &[u8],
+    i: usize,
+    previous_true_hints_seen: &mut usize,
+    re_vector: &mut PolynomialRingElement<SIMDUnit>, // precondition: should hold w'_approx[i], postcondition: holds w'_1[i]
+    poly_slot_a: &mut PolynomialRingElement<SIMDUnit>, // no precondition, will be clobbered
+) -> Result<(), crate::VerificationError> {
+    let mut hint_deserialized = [0i32; COEFFICIENTS_IN_RING_ELEMENT];
+    crate::encoding::signature::deserialize_hint(
+        rows_in_a,
+        max_ones_in_hint,
+        hint_serialized,
+        i,
+        &mut hint_deserialized,
+        previous_true_hints_seen,
+    )?;
+    PolynomialRingElement::<SIMDUnit>::from_i32_array(&hint_deserialized, poly_slot_a);
+
+    for j in 0..re_vector.simd_units.len() {
+        SIMDUnit::use_hint(
+            gamma2,
+            &re_vector.simd_units[j],
+            &mut poly_slot_a.simd_units[j],
+        );
+    }
+    *re_vector = *poly_slot_a;
+
+    Ok(())
+}
+
+#[inline(always)]
+#[cfg(not(feature = "stack"))]
 pub(crate) fn use_hint<SIMDUnit: Operations>(
     gamma2: Gamma2,
     hint: &[[i32; COEFFICIENTS_IN_RING_ELEMENT]],

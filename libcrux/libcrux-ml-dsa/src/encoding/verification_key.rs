@@ -28,6 +28,7 @@ pub(crate) fn generate_serialized<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
+#[cfg(not(feature = "stack"))]
 pub(crate) fn deserialize<SIMDUnit: Operations>(
     rows_in_a: usize,
     verification_key_size: usize,

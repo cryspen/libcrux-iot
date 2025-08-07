@@ -53,6 +53,7 @@ pub(crate) fn serialize<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
+#[cfg(not(feature = "stack"))]
 pub(crate) fn deserialize<SIMDUnit: Operations>(
     columns_in_a: usize,
     rows_in_a: usize,
@@ -139,6 +140,82 @@ pub(crate) fn deserialize<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
+#[cfg(feature = "stack")]
+pub(crate) fn deserialize_signer_response_j<SIMDUnit: Operations>(
+    gamma1_exponent: usize,
+    gamma1_ring_element_size: usize,
+    beta: i32,
+    signer_response_serialized: &[u8],
+    j: usize,
+    out_signer_response: &mut PolynomialRingElement<SIMDUnit>,
+) -> Result<(), VerificationError> {
+    encoding::gamma1::deserialize::<SIMDUnit>(
+        gamma1_exponent,
+        &signer_response_serialized
+            [j * gamma1_ring_element_size..(j + 1) * gamma1_ring_element_size],
+        out_signer_response,
+    );
+    if out_signer_response.infinity_norm_exceeds((2 << gamma1_exponent) - beta) {
+        return Err(VerificationError::SignerResponseExceedsBoundError);
+    }
+    Ok(())
+}
+
+#[inline(always)]
+#[cfg(feature = "stack")]
+pub(crate) fn deserialize_hint(
+    rows_in_a: usize,
+    max_ones_in_hint: usize,
+    hint_serialized: &[u8],
+    i: usize,
+    out_hint: &mut [i32; COEFFICIENTS_IN_RING_ELEMENT],
+    previous_true_hints_seen: &mut usize, // initialize to 0
+) -> Result<(), VerificationError> {
+    let current_true_hints_seen = hint_serialized[max_ones_in_hint + i] as usize;
+
+    let mut j = *previous_true_hints_seen;
+    if (current_true_hints_seen < j) || (j > max_ones_in_hint) {
+        // the true hints seen should be increasing
+        return Err(VerificationError::MalformedHintError);
+    }
+
+    while j < current_true_hints_seen {
+        if j > *previous_true_hints_seen && hint_serialized[j] <= hint_serialized[j - 1] {
+            // indices of true hints for a specific polynomial should be
+            // increasing
+            return Err(VerificationError::MalformedHintError);
+        }
+
+        out_hint[hint_serialized[j] as usize] = 1;
+        j += 1;
+    }
+    *previous_true_hints_seen = current_true_hints_seen;
+
+    // ensures padding indices are zero
+    if i == rows_in_a - 1 {
+        hints_check_zero_padding(max_ones_in_hint, *previous_true_hints_seen, hint_serialized)?
+    }
+    Ok(())
+}
+
+#[inline(always)]
+#[cfg(feature = "stack")]
+pub(crate) fn hints_check_zero_padding(
+    max_ones_in_hint: usize,
+    previous_true_hints_seen: usize,
+    hint_serialized: &[u8],
+) -> Result<(), VerificationError> {
+    for j in previous_true_hints_seen..max_ones_in_hint {
+        if hint_serialized[j] != 0 {
+            return Err(VerificationError::MalformedHintError);
+        }
+    }
+
+    Ok(())
+}
+
+#[inline(always)]
+#[cfg(not(feature = "stack"))]
 fn set_hint(out_hint: &mut [[i32; 256]], i: usize, j: usize) {
     out_hint[i][j] = 1
 }

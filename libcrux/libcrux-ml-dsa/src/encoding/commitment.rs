@@ -1,7 +1,10 @@
 use crate::{helper::cloop, polynomial::PolynomialRingElement, simd::traits::Operations};
 
 #[inline(always)]
-fn serialize<SIMDUnit: Operations>(re: &PolynomialRingElement<SIMDUnit>, serialized: &mut [u8]) {
+pub(crate) fn serialize<SIMDUnit: Operations>(
+    re: &PolynomialRingElement<SIMDUnit>, // precondition: should hold w'_1[i]
+    serialized: &mut [u8],
+) {
     let output_bytes_per_simd_unit = serialized.len() / (8 * 4);
 
     cloop! {

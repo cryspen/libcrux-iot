@@ -1,13 +1,11 @@
 use crate::{
-    arithmetic::{
-        decompose_vector, make_hint, power2round_vector, use_hint, vector_infinity_norm_exceeds,
-    },
+    arithmetic::{decompose_vector, make_hint, power2round_vector, vector_infinity_norm_exceeds},
     constants::*,
     encoding::{self},
     hash_functions::{shake128, shake256},
     matrix::{
-        add_vectors, compute_as1_plus_s2, compute_matrix_x_mask, compute_w_approx,
-        subtract_vectors, vector_times_ring_element,
+        add_vectors, compute_as1_plus_s2, compute_matrix_x_mask, subtract_vectors,
+        vector_times_ring_element,
     },
     ntt::ntt,
     polynomial::PolynomialRingElement,
@@ -354,6 +352,7 @@ pub(crate) mod generic {
     /// `message` already contains the domain separation.
     #[allow(non_snake_case)]
     #[inline(always)]
+    #[cfg(not(feature = "stack"))]
     pub(crate) fn verify_internal<
         SIMDUnit: Operations,
         Sampler: X4Sampler,
@@ -432,7 +431,7 @@ pub(crate) mod generic {
         for i in 0..deserialized_signer_response.len() {
             ntt(&mut deserialized_signer_response[i]);
         }
-        compute_w_approx::<SIMDUnit>(
+        crate::matrix::compute_w_approx::<SIMDUnit>(
             ROWS_IN_A,
             COLUMNS_IN_A,
             seed_for_a,
@@ -448,7 +447,7 @@ pub(crate) mod generic {
         // Compute the commitment hash again to validate the signature.
         let mut recomputed_commitment_hash = [0; COMMITMENT_HASH_SIZE];
         {
-            use_hint::<SIMDUnit>(GAMMA2, &deserialized_hint, &mut t1);
+            crate::arithmetic::use_hint::<SIMDUnit>(GAMMA2, &deserialized_hint, &mut t1);
             let mut commitment_serialized = [0u8; COMMITMENT_VECTOR_SIZE];
             encoding::commitment::serialize_vector::<SIMDUnit>(
                 COMMITMENT_RING_ELEMENT_SIZE,
@@ -465,6 +464,130 @@ pub(crate) mod generic {
 
         // Check if this is a valid signature by comparing the hashes.
         if deserialized_commitment_hash == recomputed_commitment_hash {
+            return Ok(());
+        }
+
+        return Err(VerificationError::CommitmentHashesDontMatchError);
+    }
+
+    /// The internal verification API.
+    ///
+    /// If no `domain_separation_context` is supplied, it is assumed that
+    /// `message` already contains the domain separation.
+    #[allow(non_snake_case)]
+    #[inline(always)]
+    #[cfg(feature = "stack")]
+    pub(crate) fn verify_internal<
+        SIMDUnit: Operations,
+        Sampler: X4Sampler,
+        Shake128X4: shake128::XofX4,
+        Shake256: shake256::DsaXof,
+        Shake256Xof: shake256::Xof,
+    >(
+        verification_key: &[u8; VERIFICATION_KEY_SIZE],
+        message: &[u8],
+        domain_separation_context: Option<DomainSeparationContext>,
+        signature_serialized: &[u8; SIGNATURE_SIZE],
+    ) -> Result<(), VerificationError> {
+        let mut rand_stack = [0u8; shake128::FIVE_BLOCKS_SIZE];
+        let mut rand_block = [0u8; shake128::BLOCK_SIZE];
+        let mut tmp_stack = [0i32; 263];
+        let mut poly_slot_a = PolynomialRingElement::<SIMDUnit>::zero();
+        let mut poly_slot_b = PolynomialRingElement::<SIMDUnit>::zero();
+
+        let (seed_for_a, t1_serialized) = verification_key.split_at(SEED_FOR_A_SIZE);
+
+        let (commitment_hash, rest_of_serialized) =
+            signature_serialized.split_at(COMMITMENT_HASH_SIZE);
+        let (signer_response_serialized, hint_serialized) =
+            rest_of_serialized.split_at(GAMMA1_RING_ELEMENT_SIZE * COLUMNS_IN_A);
+
+        let mut verification_key_hash = [0; BYTES_FOR_VERIFICATION_KEY_HASH];
+        Shake256::shake256(verification_key, &mut verification_key_hash);
+
+        let mut message_representative = [0; MESSAGE_REPRESENTATIVE_SIZE];
+        derive_message_representative::<Shake256Xof>(
+            &verification_key_hash,
+            &domain_separation_context,
+            message,
+            &mut message_representative,
+        );
+
+        // We sample sample and transform to NTT domain once, since we
+        // need `verifier_challenge` in every iteration of the loop
+        // below.
+        let mut verifier_challenge = PolynomialRingElement::zero();
+        sample_challenge_ring_element::<SIMDUnit, Shake256>(
+            commitment_hash,
+            ONES_IN_VERIFIER_CHALLENGE,
+            &mut verifier_challenge,
+        );
+        ntt(&mut verifier_challenge);
+
+        // Compute the commitment hash again to validate the signature.
+        let mut recomputed_commitment_hash = [0; COMMITMENT_HASH_SIZE];
+
+        // `recomputed_commitment_hash` = H(`message_representative` || w1Encode(w'_1))
+        let mut shake = Shake256Xof::init();
+        shake.absorb(&message_representative);
+
+        // We compute w_approx ring element-wise in the loop below.
+        //
+        //   w'_approx = invNTT(A * NTT(signer_response) - NTT(c) * NTT(t1 * 2^d))
+        //   w'_1 = UseHint(hint_deserialized, w'_approx)
+        let mut previous_true_hints_seen = 0;
+        for i in 0..ROWS_IN_A {
+            let mut poly_slot_c = PolynomialRingElement::<SIMDUnit>::zero();
+
+            // Write w'_approx[i] into slot C
+            crate::matrix::compute_w_approx_i::<SIMDUnit>(
+                COLUMNS_IN_A,
+                GAMMA1_EXPONENT,
+                GAMMA1_RING_ELEMENT_SIZE,
+                BETA,
+                seed_for_a,
+                &verifier_challenge,
+                t1_serialized,
+                signer_response_serialized,
+                i,
+                &mut rand_stack,
+                &mut rand_block,
+                &mut tmp_stack,
+                &mut poly_slot_a,
+                &mut poly_slot_b,
+                &mut poly_slot_c,
+            )?;
+
+            // Write w'_1[i] into slot C
+            crate::arithmetic::use_hint_i(
+                MAX_ONES_IN_HINT,
+                ROWS_IN_A,
+                GAMMA2,
+                hint_serialized,
+                i,
+                &mut previous_true_hints_seen,
+                &mut poly_slot_c,
+                &mut poly_slot_a,
+            )?;
+
+            // Serialize w'_1[i] into `serialized_w1_i`
+            let mut serialized_w1_i = [0u8; COMMITMENT_RING_ELEMENT_SIZE];
+            crate::encoding::commitment::serialize::<SIMDUnit>(
+                &mut poly_slot_c,
+                &mut serialized_w1_i,
+            );
+
+            if i == ROWS_IN_A - 1 {
+                shake.absorb_final(&serialized_w1_i);
+            } else {
+                shake.absorb(&serialized_w1_i);
+            }
+        }
+
+        shake.squeeze(&mut recomputed_commitment_hash);
+
+        // Check if this is a valid signature by comparing the hashes.
+        if commitment_hash == recomputed_commitment_hash {
             return Ok(());
         }
 
@@ -692,9 +815,9 @@ fn derive_message_representative<Shake256Xof: shake256::Xof>(
     message: &[u8],
     message_representative: &mut [u8; 64],
 ) {
+    let mut shake = Shake256Xof::init();
     debug_assert!(verification_key_hash.len() == 64);
 
-    let mut shake = Shake256Xof::init();
     shake.absorb(verification_key_hash);
     if let Some(domain_separation_context) = domain_separation_context {
         shake.absorb(&[domain_separation_context.pre_hash_oid().is_some() as u8]);

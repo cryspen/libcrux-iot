@@ -38,6 +38,9 @@ mldsa44 = []
 mldsa65 = []
 mldsa87 = []
 
+# use stack-optimized verification
+stack = []
+
 # std support
 std = []
 

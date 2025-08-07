@@ -45,7 +45,7 @@ mlkem512 = ["libcrux-testbench/mlkem512"]
 mlkem768 = ["libcrux-testbench/mlkem768"]
 mlkem1024 = ["libcrux-testbench/mlkem1024"]
 realtime = ["dep:embassy-time", "embassy-stm32/time", "embassy-stm32/time-driver-any"] # This allows real time measurements. The clock MUST be run with the `ClockConfig::Fast` configuration, otherwise the device will panic.
-stack = ["cortex-m-rt/paint-stack"]
+stack = ["cortex-m-rt/paint-stack", "libcrux-ml-dsa/stack"]
 pqm4 = ["dep:libcrux-pqm4"]
 
 # cargo build/run
