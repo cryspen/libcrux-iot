@@ -173,14 +173,12 @@ pub(crate) fn deserialize_hint(
 ) -> Result<(), VerificationError> {
     let current_true_hints_seen = hint_serialized[max_ones_in_hint + i] as usize;
 
-    if (current_true_hints_seen < *previous_true_hints_seen)
-        || (*previous_true_hints_seen > max_ones_in_hint)
-    {
+    let mut j = *previous_true_hints_seen;
+    if (current_true_hints_seen < j) || (j > max_ones_in_hint) {
         // the true hints seen should be increasing
         return Err(VerificationError::MalformedHintError);
     }
 
-    let mut j = *previous_true_hints_seen;
     while j < current_true_hints_seen {
         if j > *previous_true_hints_seen && hint_serialized[j] <= hint_serialized[j - 1] {
             // indices of true hints for a specific polynomial should be
