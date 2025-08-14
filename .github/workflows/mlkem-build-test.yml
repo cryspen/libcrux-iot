@@ -32,7 +32,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: libcrux/libcrux-ml-kem
+        working-directory: libcrux-iot/ml-kem
 
     steps:
       - uses: actions/checkout@v4

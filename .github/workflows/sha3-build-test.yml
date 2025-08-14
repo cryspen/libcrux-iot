@@ -32,7 +32,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: libcrux/libcrux-sha3
+        working-directory: libcrux-iot/sha3
 
     steps:
       - uses: actions/checkout@v4
