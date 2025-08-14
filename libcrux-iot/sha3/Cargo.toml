@@ -16,8 +16,6 @@ authors.workspace = true
 bench = false # so libtest doesn't eat the arguments to criterion
 
 [dependencies]
-libcrux-platform.workspace = true
-libcrux-intrinsics.workspace = true
 libcrux-secrets.workspace = true
 
 # This is only required for verification.
