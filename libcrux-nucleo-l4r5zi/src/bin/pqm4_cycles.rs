@@ -55,11 +55,13 @@ fn main() -> ! {
     }
     CycleCounter::end_measurement("pqm4: KeccakF1600_StatePermute_4Rounds", start);
 
-    let mut sha3_state = libcrux_sha3::portable::incremental::shake128_init();
+    let mut sha3_state = libcrux_iot_sha3::portable::incremental::shake128_init();
     let start = CycleCounter::start_measurement();
-    core::hint::black_box(libcrux_sha3::portable::incremental::keccakf1660_4rounds(
-        core::hint::black_box(&mut sha3_state),
-    ));
+    core::hint::black_box(
+        libcrux_iot_sha3::portable::incremental::keccakf1660_4rounds(core::hint::black_box(
+            &mut sha3_state,
+        )),
+    );
     CycleCounter::end_measurement("libcrux: keccakf1600_4rounds", start);
 
     assert_eq!(ss_enc, ss_dec);

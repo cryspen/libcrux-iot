@@ -4,7 +4,7 @@
 
 use libcrux_nrf52810 as board; // global logger + panicking-behavior + memory layout
 
-use libcrux_ml_dsa::ml_dsa_87 as mldsa;
+use libcrux_iot_ml_dsa::ml_dsa_87 as mldsa;
 
 static SK: [u8; 4896] = [
     158, 41, 234, 146, 185, 41, 27, 225, 46, 178, 46, 248, 151, 40, 73, 59, 147, 27, 116, 81, 248,
@@ -245,7 +245,7 @@ static SK: [u8; 4896] = [
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    use libcrux_ml_dsa::MLDSASigningKey;
+    use libcrux_iot_ml_dsa::MLDSASigningKey;
     let signing_randomness = [4u8; 32];
     let message = [5u8; 2];
     let _signature =

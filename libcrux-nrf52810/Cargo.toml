@@ -21,7 +21,7 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
 libcrux-testbench = { path = "../libcrux-testbench" }
-libcrux-ml-dsa = { path = "../libcrux/libcrux-ml-dsa" }
+libcrux-iot-ml-dsa = { path = "../libcrux-iot/ml-dsa" }
 embassy-nrf = { version = "0.3", features = [ "nrf52810", "defmt", ] }
 embedded-alloc = "0.6.0"
 

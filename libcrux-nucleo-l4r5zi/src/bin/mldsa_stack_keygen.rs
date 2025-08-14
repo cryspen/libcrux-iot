@@ -9,7 +9,7 @@
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
 use board::assets::mldsa::mldsa87 as assets;
-use libcrux_ml_dsa::ml_dsa_87 as mldsa;
+use libcrux_iot_ml_dsa::ml_dsa_87 as mldsa;
 
 extern crate alloc;
 

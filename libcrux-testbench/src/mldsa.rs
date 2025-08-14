@@ -4,21 +4,21 @@ extern crate alloc;
 use alloc::string::String;
 
 #[cfg(feature = "mldsa44")]
-use libcrux_ml_dsa::ml_dsa_44 as mldsa;
+use libcrux_iot_ml_dsa::ml_dsa_44 as mldsa;
 #[cfg(feature = "mldsa44")]
 type MLDSASignature = mldsa::MLDSA44Signature;
 #[cfg(feature = "mldsa44")]
 type MLDSAKeyPair = mldsa::MLDSA44KeyPair;
 
 #[cfg(feature = "mldsa65")]
-use libcrux_ml_dsa::ml_dsa_65 as mldsa;
+use libcrux_iot_ml_dsa::ml_dsa_65 as mldsa;
 #[cfg(feature = "mldsa65")]
 type MLDSASignature = mldsa::MLDSA65Signature;
 #[cfg(feature = "mldsa65")]
 type MLDSAKeyPair = mldsa::MLDSA65KeyPair;
 
 #[cfg(feature = "mldsa87")]
-use libcrux_ml_dsa::ml_dsa_87 as mldsa;
+use libcrux_iot_ml_dsa::ml_dsa_87 as mldsa;
 #[cfg(feature = "mldsa87")]
 type MLDSASignature = mldsa::MLDSA87Signature;
 #[cfg(feature = "mldsa87")]

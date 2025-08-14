@@ -68,7 +68,10 @@ fn main() -> ! {
         let mut g_input_1 = [0u8; G_INPUT_SIZE_1];
         rng.fill_bytes(&mut g_input_1);
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::sha512(&mut g_digest, &g_input_1));
+        core::hint::black_box(libcrux_iot_sha3::portable::sha512(
+            &mut g_digest,
+            &g_input_1,
+        ));
         CycleCounter::end_measurement("libcrux SHA3-512 (G_INPUT_SIZE_1)", start);
 
         let start = CycleCounter::start_measurement();
@@ -86,7 +89,10 @@ fn main() -> ! {
         let mut g_input_2 = [0u8; G_INPUT_SIZE_2];
         rng.fill_bytes(&mut g_input_2);
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::sha512(&mut g_digest, &g_input_2));
+        core::hint::black_box(libcrux_iot_sha3::portable::sha512(
+            &mut g_digest,
+            &g_input_2,
+        ));
         CycleCounter::end_measurement("libcrux SHA3-512 (G_INPUT_SIZE_2)", start);
 
         let start = CycleCounter::start_measurement();
@@ -106,7 +112,7 @@ fn main() -> ! {
         let mut h_input = [0u8; H_INPUT_RANDOMNESS_SIZE];
         rng.fill_bytes(&mut h_input);
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::sha256(&mut h_digest, &h_input));
+        core::hint::black_box(libcrux_iot_sha3::portable::sha256(&mut h_digest, &h_input));
         CycleCounter::end_measurement("libcrux SHA3-256 (H_INPUT_RANDOMNESS_SIZE)", start);
 
         let start = CycleCounter::start_measurement();
@@ -123,7 +129,7 @@ fn main() -> ! {
         let mut h_input = [0u8; H_INPUT_CIPHERTEXT_SIZE_512];
         rng.fill_bytes(&mut h_input);
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::sha256(&mut h_digest, &h_input));
+        core::hint::black_box(libcrux_iot_sha3::portable::sha256(&mut h_digest, &h_input));
         CycleCounter::end_measurement("libcrux SHA3-256 (H_INPUT_CIPHERTEXT_SIZE_512)", start);
 
         let start = CycleCounter::start_measurement();
@@ -140,7 +146,7 @@ fn main() -> ! {
         let mut h_input = [0u8; H_INPUT_CIPHERTEXT_SIZE_768];
         rng.fill_bytes(&mut h_input);
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::sha256(&mut h_digest, &h_input));
+        core::hint::black_box(libcrux_iot_sha3::portable::sha256(&mut h_digest, &h_input));
         CycleCounter::end_measurement("libcrux SHA3-256 (H_INPUT_CIPHERTEXT_SIZE_768)", start);
 
         let start = CycleCounter::start_measurement();
@@ -157,7 +163,7 @@ fn main() -> ! {
         let mut h_input = [0u8; H_INPUT_CIPHERTEXT_SIZE_1024];
         rng.fill_bytes(&mut h_input);
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::sha256(&mut h_digest, &h_input));
+        core::hint::black_box(libcrux_iot_sha3::portable::sha256(&mut h_digest, &h_input));
         CycleCounter::end_measurement("libcrux SHA3-256 (H_INPUT_CIPHERTEXT_SIZE_1024)", start);
 
         let start = CycleCounter::start_measurement();
@@ -175,7 +181,7 @@ fn main() -> ! {
         let mut h_input = [0u8; H_INPUT_PUBLIC_KEY_SIZE_512];
         rng.fill_bytes(&mut h_input);
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::sha256(&mut h_digest, &h_input));
+        core::hint::black_box(libcrux_iot_sha3::portable::sha256(&mut h_digest, &h_input));
         CycleCounter::end_measurement("libcrux SHA3-256 (H_INPUT_PUBLIC_KEY_SIZE_512)", start);
 
         let start = CycleCounter::start_measurement();
@@ -193,7 +199,7 @@ fn main() -> ! {
         let mut h_input = [0u8; H_INPUT_PUBLIC_KEY_SIZE_768];
         rng.fill_bytes(&mut h_input);
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::sha256(&mut h_digest, &h_input));
+        core::hint::black_box(libcrux_iot_sha3::portable::sha256(&mut h_digest, &h_input));
         CycleCounter::end_measurement("libcrux SHA3-256 (H_INPUT_PUBLIC_KEY_SIZE_768)", start);
 
         let start = CycleCounter::start_measurement();
@@ -211,7 +217,7 @@ fn main() -> ! {
         let mut h_input = [0u8; H_INPUT_PUBLIC_KEY_SIZE_1024];
         rng.fill_bytes(&mut h_input);
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::sha256(&mut h_digest, &h_input));
+        core::hint::black_box(libcrux_iot_sha3::portable::sha256(&mut h_digest, &h_input));
         CycleCounter::end_measurement("libcrux SHA3-256 (H_INPUT_PUBLIC_KEY_SIZE_1024)", start);
 
         let start = CycleCounter::start_measurement();
@@ -231,7 +237,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_KDF.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -253,7 +259,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_IMPLICIT_REJECTION_SHARED_SECRET_512.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -281,7 +287,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_IMPLICIT_REJECTION_SHARED_SECRET_768.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -309,7 +315,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_IMPLICIT_REJECTION_SHARED_SECRET_1024.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -324,7 +330,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_ETA2_RANDOMNESS_512.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -346,7 +352,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_ETA2_RANDOMNESS_768.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -368,7 +374,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_ETA2_RANDOMNESS_1024.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -390,7 +396,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_ETA1_RANDOMNESS_512.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -412,7 +418,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_ETA1_RANDOMNESS_768.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -434,7 +440,7 @@ fn main() -> ! {
         rng.fill_bytes(&mut prf_input);
         let mut prf_output = [0u8; PRF_ETA1_RANDOMNESS_1024.1];
         let start = CycleCounter::start_measurement();
-        core::hint::black_box(libcrux_sha3::portable::shake256(
+        core::hint::black_box(libcrux_iot_sha3::portable::shake256(
             &mut prf_output,
             &prf_input,
         ));
@@ -456,7 +462,7 @@ fn main() -> ! {
     {
         let start = CycleCounter::start_measurement();
         let mut shake128_state =
-            core::hint::black_box(libcrux_sha3::portable::incremental::shake128_init());
+            core::hint::black_box(libcrux_iot_sha3::portable::incremental::shake128_init());
         CycleCounter::end_measurement("libcrux SHAKE128 Init", start);
 
         let mut shake128_state_pqm4 = libcrux_pqm4::shake128incctx { ctx: [0u64; 26] };
@@ -469,10 +475,12 @@ fn main() -> ! {
             let mut init_absorb_final_input = [0u8; INIT_ABSORB_FINAL_INPUT_SIZE];
             rng.fill_bytes(&mut init_absorb_final_input);
             let start = CycleCounter::start_measurement();
-            core::hint::black_box(libcrux_sha3::portable::incremental::shake128_absorb_final(
-                &mut shake128_state,
-                &init_absorb_final_input,
-            ));
+            core::hint::black_box(
+                libcrux_iot_sha3::portable::incremental::shake128_absorb_final(
+                    &mut shake128_state,
+                    &init_absorb_final_input,
+                ),
+            );
             CycleCounter::end_measurement("libcrux SHAKE128 Absorb final", start);
 
             let start = CycleCounter::start_measurement();
@@ -494,7 +502,7 @@ fn main() -> ! {
             rng.fill_bytes(&mut one_block);
             let start = CycleCounter::start_measurement();
             core::hint::black_box(
-                libcrux_sha3::portable::incremental::shake128_squeeze_next_block(
+                libcrux_iot_sha3::portable::incremental::shake128_squeeze_next_block(
                     &mut shake128_state,
                     &mut one_block,
                 ),
@@ -517,7 +525,7 @@ fn main() -> ! {
             rng.fill_bytes(&mut three_blocks);
             let start = CycleCounter::start_measurement();
             core::hint::black_box(
-                libcrux_sha3::portable::incremental::shake128_squeeze_first_three_blocks(
+                libcrux_iot_sha3::portable::incremental::shake128_squeeze_first_three_blocks(
                     &mut shake128_state,
                     &mut three_blocks,
                 ),

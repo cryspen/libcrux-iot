@@ -9,7 +9,7 @@
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
 use board::assets::mlkem::mlkem1024 as assets;
-use libcrux_ml_kem::mlkem1024 as mlkem;
+use libcrux_iot_ml_kem::mlkem1024 as mlkem;
 
 extern crate alloc;
 
