@@ -1,0 +1,80 @@
+[package]
+name = "libcrux-iot-ml-kem"
+description = "Libcrux ML-KEM & Kyber implementations"
+publish = false
+
+readme.workspace = true
+version.workspace = true
+repository.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+authors.workspace = true
+
+exclude = [
+    "/tests",
+    "/implementation_notes.pdf",
+    "/c",
+    "/proofs",
+    "/c.sh",
+    "/c.yaml",
+    "/hax.py",
+]
+
+[lib]
+bench = false # so libtest doesn't eat the arguments to criterion
+
+[dependencies]
+rand = { version = "0.9", optional = true }
+libcrux-iot-sha3 = { path = "../sha3" , features = [
+    "full-unroll",
+] }
+hax-lib.workspace = true
+
+[features]
+# By default all variants and std are enabled.
+default = ["mlkem512", "mlkem768", "mlkem1024"]
+
+# Features for the different key sizes of ML-KEM
+mlkem512 = []
+mlkem768 = []
+mlkem1024 = []
+
+# Enable Round 3 Kyber in addition to ML-KEM
+kyber = []
+
+# APIs that sample their own randomness
+rand = ["dep:rand"]
+
+# std support
+std = []
+
+[dev-dependencies]
+rand = { version = "0.9" }
+serde_json = { version = "1.0" }
+serde = { version = "1.0", features = ["derive"] }
+hex = { version = "0.4.3", features = ["serde"] }
+criterion = "0.5"
+
+[[bench]]
+name = "ml-kem"
+harness = false
+
+[[example]]
+name = "encapsulate"
+required-features = ["mlkem768"]
+
+[[example]]
+name = "decapsulate"
+required-features = ["mlkem768"]
+
+[[example]]
+name = "keygen"
+required-features = ["mlkem768"]
+
+[package.metadata."docs.rs"]
+features = ["pre-verification", "kyber"]
+rustdoc-args = ["--cfg", "doc_cfg"]
+
+[lints]
+workspace = true

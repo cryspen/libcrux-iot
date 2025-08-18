@@ -9,7 +9,7 @@
 use libcrux_nucleo_l4r5zi as board; // global logger + panicking-behavior + memory layout
 
 use board::assets::mlkem::mlkem1024 as assets;
-use libcrux_ml_kem::mlkem1024 as mlkem;
+use libcrux_iot_ml_kem::mlkem1024 as mlkem;
 
 extern crate alloc;
 
@@ -26,8 +26,8 @@ extern "C" {
 #[cortex_m_rt::entry]
 fn main() -> ! {
     let _shared_secret_responder = core::hint::black_box(mlkem::decapsulate(
-        &libcrux_ml_kem::MlKemPrivateKey::from(assets::DK),
-        &libcrux_ml_kem::MlKemCiphertext::from(assets::CT),
+        &libcrux_iot_ml_kem::MlKemPrivateKey::from(assets::DK),
+        &libcrux_iot_ml_kem::MlKemCiphertext::from(assets::CT),
     ));
 
     let stack_start = core::hint::black_box(unsafe { &_stack_start as *const u32 });

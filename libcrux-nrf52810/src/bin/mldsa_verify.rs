@@ -2,7 +2,7 @@
 #![no_std]
 #![cfg(feature = "mldsa87")]
 
-use libcrux_ml_dsa::ml_dsa_87 as mldsa;
+use libcrux_iot_ml_dsa::ml_dsa_87 as mldsa;
 use libcrux_nrf52810 as board; // global logger + panicking-behavior + memory layout
 
 static SIGNATURE: [u8; 4627] = [
@@ -364,7 +364,7 @@ static VK: [u8; 2592] = [
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    use libcrux_ml_dsa::{MLDSASignature, MLDSAVerificationKey};
+    use libcrux_iot_ml_dsa::{MLDSASignature, MLDSAVerificationKey};
     let message = [5u8; 2];
     let _ = mldsa::verify(
         &MLDSAVerificationKey::new(VK),
