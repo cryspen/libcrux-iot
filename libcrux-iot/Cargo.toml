@@ -19,4 +19,4 @@ hax-lib = { version = "0.3.2" }
 
 
 [workspace.lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(hax)', 'cfg(eurydice)', 'cfg(doc_cfg)',] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(hax)', 'cfg(eurydice)', 'cfg(doc_cfg)'] }
