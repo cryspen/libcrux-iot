@@ -1,6 +1,7 @@
 use core::ops::{Index, IndexMut};
 
-use libcrux_secrets::{CastOps, Classify, Declassify, U32};
+use crate::secrets::*;
+use libcrux_secrets::{CastOps, U32};
 
 /// A lane of the Keccak state,
 #[derive(Clone, Copy)]
@@ -8,8 +9,13 @@ pub struct Lane2U32([U32; 2]);
 
 impl Lane2U32 {
     #[inline(always)]
+    pub(crate) fn from_ints(value: [U32; 2]) -> Self {
+        Self(value)
+    }
+
+    #[inline(always)]
     pub(crate) fn zero() -> Self {
-        [0, 0].classify().into()
+        Self::from_ints(classify!([0, 0]))
     }
 
     #[inline(always)]
@@ -36,7 +42,7 @@ impl Lane2U32 {
         odd_bits = (odd_bits ^ (odd_bits >> 8)) & 0x0000_ffff_0000_ffff;
         odd_bits = (odd_bits ^ (odd_bits >> 16)) & 0x0000_0000_ffff_ffff;
 
-        [even_bits.as_u32(), odd_bits.as_u32()].into()
+        Self::from_ints([even_bits.as_u32(), odd_bits.as_u32()])
     }
 
     #[inline(always)]
@@ -100,8 +106,10 @@ impl From<[U32; 2]> for Lane2U32 {
     }
 }
 
+#[cfg(not(eurydice))]
 impl core::fmt::Debug for Lane2U32 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        use libcrux_secrets::Declassify;
         f.debug_tuple("Lane2U32")
             .field(&self.0.declassify())
             .finish()
@@ -113,13 +121,14 @@ fn split_at_mut_1<T>(out: &mut [T], mid: usize) -> (&mut [T], &mut [T]) {
     out.split_at_mut(mid)
 }
 
-#[cfg(test)]
+#[cfg(all(not(eurydice), test))]
 mod interleave_tests {
     use super::*;
+    use libcrux_secrets::Declassify;
 
     #[test]
     fn identity() {
-        let lanes: [Lane2U32; 1] = [[0x800001, 43].classify().into()];
+        let lanes: [Lane2U32; 1] = [classify!([0x800001, 43]).into()];
 
         for lane in lanes {
             let lane_ = lane.interleave().deinterleave();

@@ -1,9 +1,11 @@
 //! The generic SHA3 implementation that uses portable or platform specific
 //! sub-routines.
 
-use libcrux_secrets::{Classify, U8};
+use libcrux_secrets::U8;
 #[cfg(feature = "check-secret-independence")]
 use libcrux_secrets::{Declassify, U32};
+
+use crate::secrets::classify;
 
 use crate::{lane::Lane2U32, state::KeccakState};
 
@@ -26,7 +28,7 @@ pub(crate) struct KeccakXofState<const RATE: usize> {
 impl<const RATE: usize> KeccakXofState<RATE> {
     /// An all zero block
     pub(crate) const fn zero_block() -> [U8; RATE] {
-        [libcrux_secrets::secret(0); RATE]
+        classify!([0; RATE])
     }
 
     /// Generate a new keccak xof state.
@@ -129,7 +131,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
         // Consume the remaining bytes.
         // This may be in the local buffer or in the input.
         let input_len = inputs.len();
-        let mut blocks = [0u8; 200].classify();
+        let mut blocks = classify!([0u8; 200]);
         if self.buf_len > 0 {
             blocks[0..self.buf_len].copy_from_slice(&self.buf[0..self.buf_len]);
         }
@@ -137,7 +139,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
             blocks[self.buf_len..self.buf_len + input_remainder_len]
                 .copy_from_slice(&inputs[input_len - input_remainder_len..]);
         }
-        blocks[self.buf_len + input_remainder_len] = DELIMITER.classify();
+        blocks[self.buf_len + input_remainder_len] = classify!([DELIMITER])[0];
         blocks[RATE - 1] |= 0x80;
 
         self.inner.load_block_full::<RATE>(&blocks, 0);
@@ -2129,11 +2131,11 @@ pub(crate) fn absorb_final<const RATE: usize, const DELIM: u8>(
 ) {
     debug_assert!(len < RATE); // && last[0].len() < RATE
 
-    let mut blocks = [0u8; WIDTH].classify();
+    let mut blocks = classify!([0u8; WIDTH]);
     if len > 0 {
         blocks[0..len].copy_from_slice(&last[start..start + len]);
     }
-    blocks[len] = DELIM.classify();
+    blocks[len] = classify!([DELIM])[0];
     blocks[RATE - 1] |= 0x80;
     s.load_block_full::<RATE>(&blocks, 0);
     keccakf1600(s)
@@ -2178,14 +2180,14 @@ pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, 
 #[inline(always)]
 pub(crate) fn squeeze_last<const RATE: usize>(mut s: KeccakState, out: &mut [U8]) {
     keccakf1600(&mut s);
-    let mut b = [0u8; 200].classify();
+    let mut b = classify!([0u8; 200]);
     s.store_block_full::<RATE>(&mut b);
     out.copy_from_slice(&b[0..out.len()]);
 }
 
 #[inline(always)]
 pub(crate) fn squeeze_first_and_last<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
-    let mut b = [0u8; 200].classify();
+    let mut b = classify!([0u8; 200]);
     s.store_block_full::<RATE>(&mut b);
     out.copy_from_slice(&b[0..out.len()]);
 }
