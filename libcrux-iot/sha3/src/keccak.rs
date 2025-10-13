@@ -1,11 +1,13 @@
 //! The generic SHA3 implementation that uses portable or platform specific
 //! sub-routines.
 
-use libcrux_secrets::U8;
 #[cfg(feature = "check-secret-independence")]
-use libcrux_secrets::{Declassify, U32};
+use libcrux_secrets::U32;
+use libcrux_secrets::U8;
 
 use crate::secrets::classify;
+#[cfg(feature = "check-secret-independence")]
+use crate::secrets::declassify;
 
 use crate::{lane::Lane2U32, state::KeccakState};
 
@@ -27,7 +29,7 @@ pub(crate) struct KeccakXofState<const RATE: usize> {
 
 impl<const RATE: usize> KeccakXofState<RATE> {
     /// An all zero block
-    pub(crate) const fn zero_block() -> [U8; RATE] {
+    pub(crate) fn zero_block() -> [U8; RATE] {
         classify!([0; RATE])
     }
 
@@ -2236,6 +2238,6 @@ trait RotateLeft {
 #[cfg(feature = "check-secret-independence")]
 impl RotateLeft for U32 {
     fn rotate_left(self, n: u32) -> Self {
-        self.declassify().rotate_left(n).classify()
+        classify!(declassify!(self).rotate_left(n))
     }
 }

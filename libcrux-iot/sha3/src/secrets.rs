@@ -17,12 +17,21 @@ macro_rules! classify_ref {
 }
 
 #[macro_export]
+#[cfg(any(eurydice, not(feature = "check-secret-independence")))]
+/// wrapper for declassification
+macro_rules! declassify {
+    ($v:expr) => {
+        $v
+    };
+}
+
+#[macro_export]
 #[cfg(all(not(eurydice), feature = "check-secret-independence"))]
 /// wrapper for classification
 macro_rules! classify {
     ($v:expr) => {{
         use libcrux_secrets::Classify;
-        thing.classify()
+        $v.classify()
     }};
 }
 
@@ -32,10 +41,21 @@ macro_rules! classify {
 macro_rules! classify_ref {
     ($v:expr) => {{
         use libcrux_secrets::ClassifyRef;
-        thing.classify_ref()
+        $v.classify_ref()
+    }};
+}
+
+#[macro_export]
+#[cfg(all(not(eurydice), feature = "check-secret-independence"))]
+/// wrapper for declassification
+macro_rules! declassify {
+    ($v:expr) => {{
+        use libcrux_secrets::Declassify;
+        $v.declassify()
     }};
 }
 
 pub(crate) use classify;
-// So far classify_ref is only used in lib.rs, where it is in scope by default due to the way
-// macro_export works. That is why we don't export it here.
+
+#[cfg(all(not(eurydice), feature = "check-secret-independence"))]
+pub(crate) use declassify;
