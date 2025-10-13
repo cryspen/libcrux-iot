@@ -16,6 +16,7 @@ macro_rules! classify_ref {
     };
 }
 
+#[macro_export]
 #[cfg(all(not(eurydice), feature = "check-secret-independence"))]
 /// wrapper for classification
 macro_rules! classify {
@@ -25,6 +26,7 @@ macro_rules! classify {
     }};
 }
 
+#[macro_export]
 #[cfg(all(not(eurydice), feature = "check-secret-independence"))]
 /// wrapper for reference classification
 macro_rules! classify_ref {
