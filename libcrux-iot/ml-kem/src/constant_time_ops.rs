@@ -118,8 +118,8 @@ fn compare(lhs: &[u8], rhs: &[u8]) -> u8 {
     lhs.len() == rhs.len() &&
     lhs.len() == SHARED_SECRET_SIZE
 )]
-#[hax_lib::ensures(|result| fstar!(r#"($selector == (mk_u8 0) ==> $result == $lhs) /\
-        ($selector =!= (mk_u8 0) ==> $result == $rhs)"#))]
+#[hax_lib::ensures(|_| fstar!(r#"($selector == (mk_u8 0) ==> ${out}_future == $lhs) /\
+        ($selector =!= (mk_u8 0) ==> ${out}_future == $rhs)"#))]
 #[hax_lib::fstar::options("--ifuel 0 --z3rlimit 50")]
 fn select_ct(lhs: &[u8], rhs: &[u8], selector: u8, out: &mut [u8]) {
     let mask = is_non_zero(selector).wrapping_sub(1);
@@ -194,8 +194,8 @@ pub(crate) fn compare_ciphertexts_in_constant_time(lhs: &[u8], rhs: &[u8]) -> u8
     lhs.len() == rhs.len() &&
     lhs.len() == SHARED_SECRET_SIZE
 )]
-#[hax_lib::ensures(|result| fstar!(r#"($selector == (mk_u8 0) ==> $result == $lhs) /\
-       ($selector =!= (mk_u8 0) ==> $result == $rhs)"#))]
+#[hax_lib::ensures(|_| fstar!(r#"($selector == (mk_u8 0) ==> ${out}_future == $lhs) /\
+       ($selector =!= (mk_u8 0) ==> ${out}_future == $rhs)"#))]
 pub(crate) fn select_shared_secret_in_constant_time(
     lhs: &[u8],
     rhs: &[u8],
@@ -214,9 +214,9 @@ pub(crate) fn select_shared_secret_in_constant_time(
     lhs_s.len() == rhs_s.len() &&
     lhs_s.len() == SHARED_SECRET_SIZE
 )]
-#[hax_lib::ensures(|result| fstar!(r#"if $lhs_c =. $rhs_c 
-    then $result == $lhs_s
-    else $result == $rhs_s"#))]
+#[hax_lib::ensures(|_| fstar!(r#"if $lhs_c =. $rhs_c 
+    then ${out}_future == $lhs_s
+    else ${out}_future == $rhs_s"#))]
 pub(crate) fn compare_ciphertexts_select_shared_secret_in_constant_time(
     lhs_c: &[u8],
     rhs_c: &[u8],

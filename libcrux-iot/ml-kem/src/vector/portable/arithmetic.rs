@@ -48,8 +48,8 @@ pub(crate) fn get_n_least_significant_bits(n: u8, value: u32) -> u32 {
 #[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(fstar!(r#"forall i. i < 16 ==> 
     Spec.Utils.is_intb (pow2 15 - 1) (v (Seq.index ${lhs}.f_elements i) + v (Seq.index ${rhs}.f_elements i))"#))]
-#[hax_lib::ensures(|result| fstar!(r#"forall i. i < 16 ==> 
-    (v (Seq.index ${result}.f_elements i) == 
+#[hax_lib::ensures(|_| fstar!(r#"forall i. i < 16 ==> 
+    (v (Seq.index ${lhs}_future.f_elements i) == 
      v (Seq.index ${lhs}.f_elements i) + v (Seq.index ${rhs}.f_elements i))"#))]
 pub fn add(lhs: &mut PortableVector, rhs: &PortableVector) {
     #[cfg(hax)]
@@ -74,8 +74,8 @@ pub fn add(lhs: &mut PortableVector, rhs: &PortableVector) {
 #[inline(always)]
 #[hax_lib::requires(fstar!(r#"forall i. i < 16 ==> 
     Spec.Utils.is_intb (pow2 15 - 1) (v (Seq.index ${lhs}.f_elements i) - v (Seq.index ${rhs}.f_elements i))"#))]
-#[hax_lib::ensures(|result| fstar!(r#"forall i. i < 16 ==> 
-    (v (Seq.index ${result}.f_elements i) == 
+#[hax_lib::ensures(|_| fstar!(r#"forall i. i < 16 ==> 
+    (v (Seq.index ${lhs}_future.f_elements i) == 
      v (Seq.index ${lhs}.f_elements i) - v (Seq.index ${rhs}.f_elements i))"#))]
 pub fn sub(lhs: &mut PortableVector, rhs: &PortableVector) {
     #[cfg(hax)]
@@ -106,8 +106,8 @@ pub fn negate(vec: &mut PortableVector) {
 #[inline(always)]
 #[hax_lib::requires(fstar!(r#"forall i. i < 16 ==> 
     Spec.Utils.is_intb (pow2 15 - 1) (v (Seq.index ${vec}.f_elements i) * v c)"#))]
-#[hax_lib::ensures(|result| fstar!(r#"forall i. i < 16 ==> 
-    (v (Seq.index ${result}.f_elements i) == 
+#[hax_lib::ensures(|_| fstar!(r#"forall i. i < 16 ==> 
+    (v (Seq.index ${vec}_future.f_elements i) == 
      v (Seq.index ${vec}.f_elements i) * v c)"#))]
 pub fn multiply_by_constant(vec: &mut PortableVector, c: i16) {
     #[cfg(hax)]
@@ -130,7 +130,7 @@ pub fn multiply_by_constant(vec: &mut PortableVector, c: i16) {
 }
 
 #[inline(always)]
-#[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == Spec.Utils.map_array (fun x -> x &. c) (${vec}.f_elements)"#))]
+#[hax_lib::ensures(|_| fstar!(r#"${vec}_future.f_elements == Spec.Utils.map_array (fun x -> x &. c) (${vec}.f_elements)"#))]
 pub fn bitwise_and_with_constant(vec: &mut PortableVector, c: i16) {
     #[cfg(hax)]
     let _vec0 = (*vec).clone();
@@ -152,8 +152,8 @@ pub fn bitwise_and_with_constant(vec: &mut PortableVector, c: i16) {
 
 #[inline(always)]
 #[hax_lib::requires(SHIFT_BY >= 0 && SHIFT_BY < 16)]
-#[hax_lib::ensures(|result| fstar!(r#"(v_SHIFT_BY >=. (mk_i32 0) /\ v_SHIFT_BY <. (mk_i32 16)) ==> 
-        ${result}.f_elements == Spec.Utils.map_array (fun x -> x >>! ${SHIFT_BY}) (${vec}.f_elements)"#))]
+#[hax_lib::ensures(|_| fstar!(r#"(v_SHIFT_BY >=. (mk_i32 0) /\ v_SHIFT_BY <. (mk_i32 16)) ==> 
+        ${vec}_future.f_elements == Spec.Utils.map_array (fun x -> x >>! ${SHIFT_BY}) (${vec}.f_elements)"#))]
 pub fn shift_right<const SHIFT_BY: i32>(vec: &mut PortableVector) {
     #[cfg(hax)]
     let _vec0 = (*vec).clone();
@@ -178,11 +178,11 @@ pub fn shift_right<const SHIFT_BY: i32>(vec: &mut PortableVector) {
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 300")]
 #[hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b_array (pow2 12 - 1) ${vec}.f_elements"#))]
-#[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == Spec.Utils.map_array 
+#[hax_lib::ensures(|_| fstar!(r#"${vec}_future.f_elements == Spec.Utils.map_array 
                 (fun x -> if x >=. (mk_i16 3329) then x -! (mk_i16 3329) else x) (${vec}.f_elements)"#))]
 pub fn cond_subtract_3329(vec: &mut PortableVector) {
     #[cfg(hax)]
-    let _vec0 = *(vec).clone();
+    let _vec0 = vec.clone();
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
@@ -217,7 +217,7 @@ pub fn cond_subtract_3329(vec: &mut PortableVector) {
 ///
 #[hax_lib::fstar::options("--z3rlimit 150 --ext context_pruning")]
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 28296 value"#)))]
-#[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
+#[cfg_attr(hax, hax_lib::ensures(|_| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
                 v result % 3329 == v value % 3329"#)))]
 #[inline(always)]
 pub(crate) fn barrett_reduce_element(value: FieldElement) -> FieldElement {
@@ -251,8 +251,8 @@ pub(crate) fn barrett_reduce_element(value: FieldElement) -> FieldElement {
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 150")]
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b_array 28296 ${vec}.f_elements"#)))]
-#[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b_array 3328 ${result}.f_elements /\
-                (forall i. (v (Seq.index ${result}.f_elements i) % 3329) == 
+#[cfg_attr(hax, hax_lib::ensures(|_| fstar!(r#"Spec.Utils.is_i16b_array 3328 ${vec}_future.f_elements /\
+                (forall i. (v (Seq.index ${vec}_future.f_elements i) % 3329) == 
                            (v (Seq.index ${vec}.f_elements i) % 3329))"#)))]
 pub(crate) fn barrett_reduce(vec: &mut PortableVector) {
     #[cfg(hax)]
@@ -295,7 +295,7 @@ pub(crate) fn barrett_reduce(vec: &mut PortableVector) {
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 500 --split_queries always")]
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i32b (3328 * pow2 16) value "#)))]
-#[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b (3328 + 1665) result /\
+#[cfg_attr(hax, hax_lib::ensures(|_| fstar!(r#"Spec.Utils.is_i16b (3328 + 1665) result /\
                 (Spec.Utils.is_i32b (3328 * pow2 15) value ==> Spec.Utils.is_i16b 3328 result) /\
                 v result % 3329 == (v value * 169) % 3329"#)))]
 pub(crate) fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
@@ -393,7 +393,7 @@ pub(crate) fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 300")]
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 fer"#)))]
-#[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
+#[cfg_attr(hax, hax_lib::ensures(|_| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
                 v result % 3329 == (v fe * v fer * 169) % 3329"#)))]
 pub(crate) fn montgomery_multiply_fe_by_fer(
     fe: FieldElement,
@@ -407,10 +407,10 @@ pub(crate) fn montgomery_multiply_fe_by_fer(
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 150")]
 #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 1664 c"#)))]
-#[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"
-Spec.Utils.is_i16b_array 3328 ${result}.f_elements /\
+#[cfg_attr(hax, hax_lib::ensures(|_| fstar!(r#"
+Spec.Utils.is_i16b_array 3328 ${vec}_future.f_elements /\
 (forall i. i < 16 ==> 
-    (v (Seq.index ${result}.f_elements i) % 3329 == 
+    (v (Seq.index ${vec}_future.f_elements i) % 3329 == 
        (v (Seq.index ${vec}.f_elements i) * v c * 169) %3329))"#)))]
 pub(crate) fn montgomery_multiply_by_constant(vec: &mut PortableVector, c: i16) {
     #[cfg(hax)]

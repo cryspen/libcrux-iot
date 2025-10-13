@@ -12,17 +12,17 @@ use crate::{constants::CPA_PKE_KEY_GENERATION_SEED_SIZE, hash_functions::Hash, M
 #[hax_lib::attributes]
 pub(crate) trait Variant {
     #[requires(shared_secret.len() == 32)]
-    #[ensures(|res| fstar!(r#"$res == $shared_secret"#))] // We only have post-conditions for ML-KEM, not Kyber
+    #[ensures(|_| fstar!(r#"${out}_future == $shared_secret"#))] // We only have post-conditions for ML-KEM, not Kyber
     fn kdf<const K: usize, const CIPHERTEXT_SIZE: usize, Hasher: Hash>(
         shared_secret: &[u8],
         ciphertext: &MlKemCiphertext<CIPHERTEXT_SIZE>,
         out: &mut [u8],
     );
     #[requires(randomness.len() == 32)]
-    #[ensures(|res| fstar!(r#"$res == $randomness"#))] // We only have post-conditions for ML-KEM, not Kyber
+    #[ensures(|_| fstar!(r#"${out}_future == $randomness"#))] // We only have post-conditions for ML-KEM, not Kyber
     fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &[u8], out: &mut [u8]);
     #[requires(seed.len() == 32)]
-    #[ensures(|res| fstar!(r#"Seq.length $seed == 32 ==> $res == Spec.Utils.v_G
+    #[ensures(|_| fstar!(r#"Seq.length $seed == 32 ==> ${out}_future == Spec.Utils.v_G
         (Seq.append $seed (Seq.create 1 (cast $K <: u8)))"#)
     )]
     fn cpa_keygen_seed<const K: usize, Hasher: Hash>(seed: &[u8], out: &mut [u8]);
@@ -75,7 +75,7 @@ pub(crate) struct MlKem {}
 impl Variant for MlKem {
     #[inline(always)]
     #[requires(shared_secret.len() == 32)]
-    #[ensures(|res| fstar!(r#"$res == $shared_secret"#))]
+    #[ensures(|_| fstar!(r#"${out}_future == $shared_secret"#))]
     fn kdf<const K: usize, const CIPHERTEXT_SIZE: usize, Hasher: Hash>(
         shared_secret: &[u8],
         _: &MlKemCiphertext<CIPHERTEXT_SIZE>,
@@ -86,14 +86,14 @@ impl Variant for MlKem {
 
     #[inline(always)]
     #[requires(randomness.len() == 32)]
-    #[ensures(|res| fstar!(r#"$res == $randomness"#))]
+    #[ensures(|_| fstar!(r#"${out}_future == $randomness"#))]
     fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &[u8], out: &mut [u8]) {
         out.copy_from_slice(randomness);
     }
 
     #[inline(always)]
     #[requires(key_generation_seed.len() == 32)]
-    #[ensures(|res| fstar!(r#"Seq.length $key_generation_seed == 32 ==> $res == Spec.Utils.v_G
+    #[ensures(|_| fstar!(r#"Seq.length $key_generation_seed == 32 ==> ${out}_future == Spec.Utils.v_G
         (Seq.append $key_generation_seed (Seq.create 1 (cast $K <: u8)))"#)
     )]
     fn cpa_keygen_seed<const K: usize, Hasher: Hash>(key_generation_seed: &[u8], out: &mut [u8]) {
