@@ -822,11 +822,11 @@ pub(crate) fn encrypt<
         &public_key[..T_AS_NTT_ENCODED_SIZE],
         matrix_entry,
         r_as_ntt,
-        &error_2,
+        error_2,
         message,
         &mut ciphertext[C1_LEN..],
         scratch,
-        &cache,
+        cache,
         accumulator,
     );
 }
@@ -908,7 +908,7 @@ pub(crate) fn encrypt_c1<
     compute_vector_u::<K, Vector, Hasher>(
         matrix_entry,
         seed_for_a,
-        &r_as_ntt,
+        r_as_ntt,
         &error_1,
         &mut u,
         scratch,

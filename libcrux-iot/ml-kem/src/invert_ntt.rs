@@ -181,7 +181,7 @@ pub(crate) fn inv_ntt_layer_int_vec_step_reduce<Vector: Operations>(
     zeta_r: i16,
 ) {
     *scratch = b.clone();
-    Vector::sub(scratch, &a);
+    Vector::sub(scratch, a);
     Vector::add(a, b);
     Vector::barrett_reduce(a);
     montgomery_multiply_fe::<Vector>(scratch, zeta_r);
