@@ -45,7 +45,7 @@ jobs:
           fstar: v2025.03.25
 
       - name: 🏃 Extract ML-DSA crate
-        working-directory: libcrux-ml-dsa
+        working-directory: libcrux-iot/ml-dsa
         run: ./hax.sh extract
 
       - name: ↑ Upload F* extraction
