@@ -788,7 +788,7 @@ pub(crate) fn encrypt<
     matrix_entry: &mut PolynomialRingElement<Vector>,
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
@@ -853,7 +853,7 @@ pub(crate) fn encrypt_c1<
     ciphertext: &mut [u8], // C1_LEN
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
@@ -870,7 +870,7 @@ pub(crate) fn encrypt_c1<
         PRF_OUTPUT_SIZE1,
         Vector,
         Hasher,
-    >(r_as_ntt, prf_input, 0, &mut scratch.coefficients[0]);
+    >(r_as_ntt, prf_input, 0, scratch);
     hax_lib::fstar!(
         "Lib.Sequence.eq_intro #u8 #32 $randomness (Seq.slice $prf_input 0 32);
         assert (v $domain_separator == v $K)"
@@ -918,9 +918,7 @@ pub(crate) fn encrypt_c1<
 
     // c_1 := Encode_{du}(Compress_q(u,d_u))
     compress_then_serialize_u::<K, C1_LEN, U_COMPRESSION_FACTOR, BLOCK_LEN, Vector>(
-        u,
-        ciphertext,
-        &mut scratch.coefficients[0],
+        u, ciphertext, scratch,
     );
 }
 
@@ -937,7 +935,7 @@ pub(crate) fn encrypt_c2<
     error_2: &PolynomialRingElement<Vector>,
     message: [u8; SHARED_SECRET_SIZE],
     ciphertext: &mut [u8],
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     cache: &[PolynomialRingElement<Vector>],
     accumulator: &mut [i32; 256],
 ) {
@@ -960,9 +958,7 @@ pub(crate) fn encrypt_c2<
 
     // c_2 := Encode_{dv}(Compress_q(v,d_v))
     compress_then_serialize_ring_element_v::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
-        v,
-        ciphertext,
-        &mut scratch.coefficients[0],
+        v, ciphertext, scratch,
     );
 }
 
@@ -1096,7 +1092,7 @@ pub(crate) fn decrypt_unpacked<
     secret_key: &IndCpaPrivateKeyUnpacked<K, Vector>,
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     decrypted: &mut [u8],
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     accumulator: &mut [i32; 256],
 ) {
     // u := Decompress_q(Decode_{d_u}(c), d_u)
@@ -1104,7 +1100,7 @@ pub(crate) fn decrypt_unpacked<
     deserialize_then_decompress_u::<K, CIPHERTEXT_SIZE, U_COMPRESSION_FACTOR, Vector>(
         ciphertext,
         &mut u_as_ntt,
-        &mut scratch.coefficients[0],
+        scratch,
     );
 
     // v := Decompress_q(Decode_{d_v}(c + d_u·k·n / 8), d_v)
@@ -1124,7 +1120,7 @@ pub(crate) fn decrypt_unpacked<
         scratch,
         accumulator,
     );
-    compress_then_serialize_message(&message, decrypted, &mut scratch.coefficients[0]);
+    compress_then_serialize_message(&message, decrypted, scratch);
 }
 
 #[allow(non_snake_case)]
@@ -1149,7 +1145,7 @@ pub(crate) fn decrypt<
     secret_key: &[u8],
     ciphertext: &[u8; CIPHERTEXT_SIZE],
     decrypted: &mut [u8],
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     accumulator: &mut [i32; 256],
 ) {
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_decrypt) Spec.MLKEM.ind_cpa_decrypt"#);
