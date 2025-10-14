@@ -112,7 +112,8 @@ fn compute_implicit_rejection_shared_secret<const CLEN: usize, const LEN: usize>
     ciphertext: MlKemCiphertext<CLEN>,
     secret_key: MlKemPrivateKey<LEN>,
 ) -> [u8; SHARED_SECRET_SIZE] {
-    let mut to_hash = secret_key[MlKemPrivateKey::<LEN>::len() - SHARED_SECRET_SIZE..].to_vec();
+    let mut to_hash =
+        secret_key.as_ref()[MlKemPrivateKey::<LEN>::len() - SHARED_SECRET_SIZE..].to_vec();
     to_hash.extend_from_slice(ciphertext.as_ref());
 
     shake256(&to_hash)

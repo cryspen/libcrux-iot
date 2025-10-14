@@ -74,77 +74,10 @@ macro_rules! impl_generic_struct {
         }
     };
 }
-macro_rules! impl_index_impls_for_generic_struct {
-    ($name:ident) => {
-        impl<const SIZE: usize> core::ops::Index<usize> for $name<SIZE> {
-            type Output = u8;
-
-            fn index(&self, index: usize) -> &Self::Output {
-                &self.value[index]
-            }
-        }
-
-        impl<const SIZE: usize> core::ops::IndexMut<usize> for $name<SIZE> {
-            fn index_mut(&mut self, range: usize) -> &mut Self::Output {
-                &mut self.value[range]
-            }
-        }
-
-        impl<const SIZE: usize> core::ops::Index<core::ops::Range<usize>> for $name<SIZE> {
-            type Output = [u8];
-
-            fn index(&self, range: core::ops::Range<usize>) -> &Self::Output {
-                &self.value[range]
-            }
-        }
-
-        impl<const SIZE: usize> core::ops::IndexMut<core::ops::Range<usize>> for $name<SIZE> {
-            fn index_mut(&mut self, range: core::ops::Range<usize>) -> &mut Self::Output {
-                &mut self.value[range]
-            }
-        }
-
-        impl<const SIZE: usize> core::ops::Index<core::ops::RangeTo<usize>> for $name<SIZE> {
-            type Output = [u8];
-
-            fn index(&self, range: core::ops::RangeTo<usize>) -> &Self::Output {
-                &self.value[range]
-            }
-        }
-
-        impl<const SIZE: usize> core::ops::IndexMut<core::ops::RangeTo<usize>> for $name<SIZE> {
-            fn index_mut(&mut self, range: core::ops::RangeTo<usize>) -> &mut Self::Output {
-                &mut self.value[range]
-            }
-        }
-
-        impl<const SIZE: usize> core::ops::Index<core::ops::RangeFrom<usize>> for $name<SIZE> {
-            type Output = [u8];
-
-            fn index(&self, range: core::ops::RangeFrom<usize>) -> &Self::Output {
-                &self.value[range]
-            }
-        }
-
-        impl<const SIZE: usize> core::ops::IndexMut<core::ops::RangeFrom<usize>> for $name<SIZE> {
-            fn index_mut(&mut self, range: core::ops::RangeFrom<usize>) -> &mut Self::Output {
-                &mut self.value[range]
-            }
-        }
-    };
-}
 
 impl_generic_struct!(MlKemCiphertext, "An ML-KEM Ciphertext");
 impl_generic_struct!(MlKemPrivateKey, "An ML-KEM Private key");
 impl_generic_struct!(MlKemPublicKey, "An ML-KEM Public key");
-
-// These traits are used only in `ind_cpa` for kyber cipher text.
-mod index_impls {
-    use super::*;
-    impl_index_impls_for_generic_struct!(MlKemCiphertext);
-    impl_index_impls_for_generic_struct!(MlKemPrivateKey);
-    impl_index_impls_for_generic_struct!(MlKemPublicKey);
-}
 
 /// An ML-KEM key pair
 pub struct MlKemKeyPair<const PRIVATE_KEY_SIZE: usize, const PUBLIC_KEY_SIZE: usize> {
