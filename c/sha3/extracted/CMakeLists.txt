@@ -106,14 +106,14 @@ FetchContent_MakeAvailable(json)
 #    nlohmann_json::nlohmann_json
 #)
 
-#add_executable(sha3_test
-#    ${PROJECT_SOURCE_DIR}/tests/sha3.cc
-#)
-#target_link_libraries(sha3_test PRIVATE
-#    ml_kem_static
-#    gtest_main
-#    nlohmann_json::nlohmann_json
-#)
+add_executable(sha3_test
+    ${PROJECT_SOURCE_DIR}/tests/sha3.cc
+)
+target_link_libraries(sha3_test PRIVATE
+    sha3_static
+    gtest_main
+    nlohmann_json::nlohmann_json
+)
 
 # --- Benchmarks
 if(DEFINED ENV{LIBCRUX_BENCHMARKS})

@@ -242,8 +242,11 @@ fi
 if [[ "$format" = 1 ]]; then
     find . -type f -name '*.c' -and -not -path '*_deps*' -exec clang-format-18 --style=Google -i "{}" \;
     find . -type f -name '*.h' -and -not -path '*_deps*' -exec clang-format-18 --style=Google -i "{}" \;
-    if [ -d "internal" ]; then
+
+    if [[ -d internal ]]; then
         clang-format-18 --style=Google -i internal/*.h
     fi
-    clang-format-18 --style=Google -i intrinsics/*.h
+    if [[ -d intrinsics ]]; then
+      clang-format-18 --style=Google -i intrinsics/*.h
+    fi
 fi

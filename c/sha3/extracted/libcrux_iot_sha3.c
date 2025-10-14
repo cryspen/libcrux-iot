@@ -8,13 +8,13 @@
  * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
  * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
  * F*: 5643e656b989aca7629723653a2570c7df6252b9-dirty
- * Libcrux: d9eca8f974e7674039ae93714a8d3123efc52846
+ * Libcrux: 5fed550023fdaff092d3fe309e9a1fe2516d1295
  */
 
 #include "libcrux_iot_sha3.h"
 
-#include "internal/librux_iot_core.h"
-#include "librux_iot_core.h"
+#include "internal/libcrux_iot_core.h"
+#include "libcrux_iot_core.h"
 
 /**
  Returns the output size of a digest.
@@ -116,14 +116,9 @@ This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
 */
 KRML_MUSTINLINE libcrux_iot_sha3_lane_Lane2U32
 libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_Lane2U32 self) {
-  uint64_t uu____0 =
-      libcrux_secrets_int__libcrux_secrets__int__CastOps_for_u32__as_u64(
-          libcrux_iot_sha3_lane_index_cc(&self, (size_t)0U)[0U]);
   uint64_t lane_u64 =
-      uu____0 |
-      libcrux_secrets_int__libcrux_secrets__int__CastOps_for_u32__as_u64(
-          libcrux_iot_sha3_lane_index_cc(&self, (size_t)1U)[0U])
-          << 32U;
+      (uint64_t)libcrux_iot_sha3_lane_index_cc(&self, (size_t)0U)[0U] |
+      (uint64_t)libcrux_iot_sha3_lane_index_cc(&self, (size_t)1U)[0U] << 32U;
   uint64_t even_bits = lane_u64 & 6148914691236517205ULL;
   even_bits = (even_bits ^ even_bits >> 1U) & 3689348814741910323ULL;
   even_bits = (even_bits ^ even_bits >> 2U) & 1085102592571150095ULL;
@@ -136,13 +131,7 @@ libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_Lane2U32 self) {
   odd_bits = (odd_bits ^ odd_bits >> 4U) & 71777214294589695ULL;
   odd_bits = (odd_bits ^ odd_bits >> 8U) & 281470681808895ULL;
   odd_bits = (odd_bits ^ odd_bits >> 16U) & 4294967295ULL;
-  uint32_t uu____1 =
-      libcrux_secrets_int__libcrux_secrets__int__CastOps_for_u64__as_u32(
-          even_bits);
-  uint32_t buf[2U] = {
-      uu____1,
-      libcrux_secrets_int__libcrux_secrets__int__CastOps_for_u64__as_u32(
-          odd_bits)};
+  uint32_t buf[2U] = {(uint32_t)even_bits, (uint32_t)odd_bits};
   return libcrux_iot_sha3_lane_from_ints_8d(buf);
 }
 

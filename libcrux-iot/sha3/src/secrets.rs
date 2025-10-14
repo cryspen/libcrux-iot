@@ -26,6 +26,24 @@ macro_rules! declassify {
 }
 
 #[macro_export]
+#[cfg(any(eurydice, not(feature = "check-secret-independence")))]
+/// wrapper for integer conversion
+macro_rules! as_u64 {
+    ($v:expr) => {
+        $v as u64
+    };
+}
+
+#[macro_export]
+#[cfg(any(eurydice, not(feature = "check-secret-independence")))]
+/// wrapper for integer conversion
+macro_rules! as_u32 {
+    ($v:expr) => {
+        $v as u32
+    };
+}
+
+#[macro_export]
 #[cfg(all(not(eurydice), feature = "check-secret-independence"))]
 /// wrapper for classification
 macro_rules! classify {
@@ -55,6 +73,28 @@ macro_rules! declassify {
     }};
 }
 
+#[macro_export]
+#[cfg(all(not(eurydice), feature = "check-secret-independence"))]
+/// wrapper for declassification
+macro_rules! as_u64 {
+    ($v:expr) => {{
+        use libcrux_secrets::CastOps;
+        $v.as_u64()
+    }};
+}
+
+#[macro_export]
+#[cfg(all(not(eurydice), feature = "check-secret-independence"))]
+/// wrapper for declassification
+macro_rules! as_u32 {
+    ($v:expr) => {{
+        use libcrux_secrets::CastOps;
+        $v.as_u32()
+    }};
+}
+
+pub(crate) use as_u32;
+pub(crate) use as_u64;
 pub(crate) use classify;
 
 #[cfg(all(not(eurydice), feature = "check-secret-independence"))]
