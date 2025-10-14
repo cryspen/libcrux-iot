@@ -8,11 +8,11 @@
  * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
  * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
  * F*: 5643e656b989aca7629723653a2570c7df6252b9-dirty
- * Libcrux: d9eca8f974e7674039ae93714a8d3123efc52846
+ * Libcrux: 5fed550023fdaff092d3fe309e9a1fe2516d1295
  */
 
-#ifndef librux_iot_core_H
-#define librux_iot_core_H
+#ifndef libcrux_iot_core_H
+#define libcrux_iot_core_H
 
 #include "eurydice_glue.h"
 
@@ -29,5 +29,5 @@ typedef struct Eurydice_slice_uint8_t_x2_s {
 }
 #endif
 
-#define librux_iot_core_H_DEFINED
-#endif /* librux_iot_core_H */
+#define libcrux_iot_core_H_DEFINED
+#endif /* libcrux_iot_core_H */

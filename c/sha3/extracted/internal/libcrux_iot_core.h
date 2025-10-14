@@ -8,11 +8,11 @@
  * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
  * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
  * F*: 5643e656b989aca7629723653a2570c7df6252b9-dirty
- * Libcrux: d9eca8f974e7674039ae93714a8d3123efc52846
+ * Libcrux: 5fed550023fdaff092d3fe309e9a1fe2516d1295
  */
 
-#ifndef internal_librux_iot_core_H
-#define internal_librux_iot_core_H
+#ifndef internal_libcrux_iot_core_H
+#define internal_libcrux_iot_core_H
 
 #include "eurydice_glue.h"
 
@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#include "../librux_iot_core.h"
+#include "../libcrux_iot_core.h"
 
 /**
 A monomorphic instance of core.ops.range.Range
@@ -42,12 +42,6 @@ static inline uint32_t core_num__u32__from_le_bytes(uint8_t x0[4U]);
 static inline uint32_t core_num__u32__rotate_left(uint32_t x0, uint32_t x1);
 
 static inline void core_num__u32__to_le_bytes(uint32_t x0, uint8_t x1[4U]);
-
-extern uint64_t
-libcrux_secrets_int__libcrux_secrets__int__CastOps_for_u32__as_u64(uint32_t x0);
-
-extern uint32_t
-libcrux_secrets_int__libcrux_secrets__int__CastOps_for_u64__as_u32(uint64_t x0);
 
 /**
 A monomorphic instance of core.result.Result
@@ -77,5 +71,5 @@ void core_result_unwrap_26_0a(core_result_Result_12 self, uint8_t ret[4U]);
 }
 #endif
 
-#define internal_librux_iot_core_H_DEFINED
-#endif /* internal_librux_iot_core_H */
+#define internal_libcrux_iot_core_H_DEFINED
+#endif /* internal_libcrux_iot_core_H */

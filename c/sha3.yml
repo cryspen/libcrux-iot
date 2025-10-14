@@ -18,27 +18,10 @@ files:
         - [ "libcrux_iot_sha3", "portable", "incremental", "*"]
         - [ "libcrux_iot_sha3", "keccak", "*"]
 
-  - name: librux_iot_core
+  - name: libcrux_iot_core
     private:
-      monomorphizations_of:
-        - [ "core", "*" ]
-        - [ "core", "convert", "From" ]
-        - [ "core", "convert", "Into" ]
-        - [ "libcrux_iot_sha3", "secrets", "*"]
-        - [ "libcrux_iot_sha3", "portable", "keccakx1"]
-        - [ "libcrux_iot_sha3", "portable", "incremental", "Xof"]
-        - [ "libcrux_iot_sha3", "keccak", "KeccakXofState"]
       monomorphizations_using:
         - [ "Eurydice", "*"]
-      patterns:
-        - [ "libcrux_iot_sha3", "secrets", "*"]
-        - [ "core", "*" ]
-        - [ "core", "convert", "From" ]
-        - [ "core", "convert", "Into" ]
-        - [ "libcrux_secrets", "*" ]
-        - [ "libcrux_iot_sha3", "portable", "keccakx1"]
-        - [ "libcrux_iot_sha3", "keccak", "KeccakXofState"]
-        - [ "libcrux_iot_sha3", "portable", "incremental", "Xof"]
     api:
       patterns:
         - [ "Eurydice", "*"]
