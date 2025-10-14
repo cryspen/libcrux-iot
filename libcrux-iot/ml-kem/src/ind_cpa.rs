@@ -555,7 +555,9 @@ pub(crate) fn generate_keypair_unpacked<
     $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
     $ETA1 == Spec.MLKEM.v_ETA1 $K /\
     $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
-    length $key_generation_seed == Spec.MLKEM.v_CPA_KEY_GENERATION_SEED_SIZE"#))]
+    length $key_generation_seed == Spec.MLKEM.v_CPA_KEY_GENERATION_SEED_SIZE /\
+    length $serialized_ind_cpa_private_key == $PRIVATE_KEY_SIZE /\
+    length $serialized_public_key == $PUBLIC_KEY_SIZE"#))]
 // #[hax_lib::ensures(|result| fstar!(r#"let (expected, valid) = Spec.MLKEM.ind_cpa_generate_keypair $K $key_generation_seed in
 //                                     valid ==> $result == expected"#))]
 #[inline(always)]
@@ -743,24 +745,27 @@ fn compress_then_serialize_u<
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 800 --ext context_pruning --z3refresh")]
+#[hax_lib::fstar::options("--z3rlimit 500 --ext context_pruning --z3refresh")]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-      $ETA1 == Spec.MLKEM.v_ETA1 $K /\
-      $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
-      $ETA2 == Spec.MLKEM.v_ETA2 $K /\
-      $ETA2_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K /\
-      $C1_LEN == Spec.MLKEM.v_C1_SIZE $K /\
-      $C2_LEN == Spec.MLKEM.v_C2_SIZE $K /\
-      $U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR $K /\
-      $V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR $K /\
-      $BLOCK_LEN == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
-      $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
-      length $randomness == Spec.MLKEM.v_SHARED_SECRET_SIZE"#))]
-// #[hax_lib::ensures(|_|
-//     fstar!(r#"${ciphertext}_future == Spec.MLKEM.ind_cpa_encrypt_unpacked $K $message $randomness
-//         (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${public_key.t_as_ntt})
-//         (Libcrux_ml_kem.Polynomial.to_spec_matrix_t #$K #$:Vector ${public_key.A})"#)
-// )]
+    $ETA1 = Spec.MLKEM.v_ETA1 $K /\
+    $ETA1_RANDOMNESS_SIZE = Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
+    $ETA2 = Spec.MLKEM.v_ETA2 $K /\
+    $BLOCK_LEN == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
+    $ETA2_RANDOMNESS_SIZE = Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K /\
+    $U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR $K /\
+    $V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR $K /\
+    length $public_key == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
+    length $randomness == Spec.MLKEM.v_SHARED_SECRET_SIZE /\
+    $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
+    $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
+    $C1_LEN == Spec.MLKEM.v_C1_SIZE $K /\
+    $C2_LEN == Spec.MLKEM.v_C2_SIZE $K /\
+    length $ciphertext == $CIPHERTEXT_SIZE /\
+    length $r_as_ntt == $K"#))]
+#[hax_lib::ensures(|_|
+    fstar!(r#"let (expected, valid) = Spec.MLKEM.ind_cpa_encrypt $K $public_key $message $randomness in
+            valid ==> ${ciphertext}_future == expected /\ length ${ciphertext}_future == length $ciphertext"#)
+)]
 #[inline(always)]
 pub(crate) fn encrypt<
     const K: usize,

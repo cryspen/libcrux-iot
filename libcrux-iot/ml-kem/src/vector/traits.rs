@@ -293,24 +293,21 @@ pub fn to_unsigned_representative<T: Operations>(a: &T, out: &mut T) {
                                       (x == mk_i16 0 \/ x == mk_i16 1)"#))]
 #[inline(always)]
 pub fn decompress_1<T: Operations>(vec: &mut T) {
-    // hax_lib::fstar!(
-    //     "assert(forall i. Seq.index (i1._super_12682756204189288427.f_repr ${z}) i == mk_i16 0)"
-    // );
-    // hax_lib::fstar!(
-    //     r#"assert(forall i. let x = Seq.index (i1._super_12682756204189288427.f_repr ${vec}) i in
-    //                                   ((0 - v x) == 0 \/ (0 - v x) == -1))"#
-    // );
-    // hax_lib::fstar!(
-    //     r#"assert(forall i. i < 16 ==>
-    //                                   Spec.Utils.is_intb (pow2 15 - 1)
-    //                                     (0 - v (Seq.index (i1._super_12682756204189288427.f_repr ${vec}) i)))"#
-    // );
+    hax_lib::fstar!(
+        r#"assert(forall i. let x = Seq.index (i0._super_6081346371236564305.f_repr ${vec}) i in
+                                      ((0 - v x) == 0 \/ (0 - v x) == -1))"#
+    );
+    hax_lib::fstar!(
+        r#"assert(forall i. i < 16 ==>
+                                      Spec.Utils.is_intb (pow2 15 - 1)
+                                        (0 - v (Seq.index (i0._super_6081346371236564305.f_repr ${vec}) i)))"#
+    );
 
     T::negate(vec);
-    // hax_lib::fstar!(
-    //     r#"assert(forall i. Seq.index (i1._super_12682756204189288427.f_repr ${s}) i == mk_i16 0 \/
-    //                                   Seq.index (i1._super_12682756204189288427.f_repr ${s}) i == mk_i16 (-1))"#
-    // );
-    // hax_lib::fstar!(r#"assert (i1.f_bitwise_and_with_constant_pre ${s} (mk_i16 1665))"#);
+    hax_lib::fstar!(
+        r#"assert(forall i. Seq.index (i0._super_6081346371236564305.f_repr ${vec}) i == mk_i16 0 \/
+                                      Seq.index (i0._super_6081346371236564305.f_repr ${vec}) i == mk_i16 (-1))"#
+    );
+    hax_lib::fstar!(r#"assert (i0.f_bitwise_and_with_constant_pre ${vec} (mk_i16 1665))"#);
     T::bitwise_and_with_constant(vec, 1665);
 }
