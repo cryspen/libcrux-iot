@@ -79,6 +79,7 @@ fn reducing_from_i32_array<Vector: Operations>(
     for i in 0..VECTORS_IN_RING_ELEMENT {
         Vector::reducing_from_i32_array(&a[i * 16..(i + 1) * 16], &mut result.coefficients[i]);
     }
+    ()
 }
 
 #[allow(dead_code)]
