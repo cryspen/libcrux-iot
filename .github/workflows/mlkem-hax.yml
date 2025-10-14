@@ -44,7 +44,7 @@ jobs:
           fstar: v2025.02.17
 
       - name: 🏃 Extract ML-KEM crate
-        working-directory: libcrux-ml-kem
+        working-directory: libcrux-iot/ml-kem
         run: ./hax.py extract
 
 # XXX: Disable laxing and proving for now

@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - id: step1
+        working-directory: libcrux-iot
         run: |
           # use hax from the commit at which hax-lib is pinned in the Cargo.toml of libcrux.
           HAX_VERSION="$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name=="hax-lib") | .version')"
