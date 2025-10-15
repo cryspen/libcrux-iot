@@ -3,16 +3,17 @@ use crate::vector::traits::{
     BARRETT_R, BARRETT_SHIFT, FIELD_ELEMENTS_IN_VECTOR, FIELD_MODULUS,
     INVERSE_OF_MODULUS_MOD_MONTGOMERY_R,
 };
+use libcrux_secrets::*;
 
 /// If 'x' denotes a value of type `fe`, values having this type hold a
 /// representative y ≡ x·MONTGOMERY_R^(-1) (mod FIELD_MODULUS).
 /// We use 'mfe' as a shorthand for this type
-pub type MontgomeryFieldElement = i16;
+pub type MontgomeryFieldElement = I16;
 
 /// If 'x' denotes a value of type `fe`, values having this type hold a
 /// representative y ≡ x·MONTGOMERY_R (mod FIELD_MODULUS).
 /// We use 'fer' as a shorthand for this type.
-pub type FieldElementTimesMontgomeryR = i16;
+pub type FieldElementTimesMontgomeryR = I16;
 
 pub(crate) const MONTGOMERY_SHIFT: u8 = 16;
 
@@ -26,7 +27,7 @@ pub(crate) const BARRETT_MULTIPLIER: i32 = 20159;
 #[cfg_attr(hax, hax_lib::requires(n <= 16))]
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"v result == v value % pow2(v n)"#)))]
 #[inline(always)]
-pub(crate) fn get_n_least_significant_bits(n: u8, value: u32) -> u32 {
+pub(crate) fn get_n_least_significant_bits(n: u8, value: U32) -> U32 {
     let res = value & ((1 << n) - 1);
 
     hax_lib::fstar!(
@@ -126,7 +127,9 @@ pub(crate) fn negate(vec: &mut PortableVector) {
             )
         });
 
-        vec.elements[i] = -vec.elements[i];
+        // XXX: secret integers don't implement `std::ops::Neg`
+        // see https://github.com/cryspen/libcrux/issues/1089
+        vec.elements[i] = 0.classify() - vec.elements[i];
     }
     hax_lib::fstar!(
         "assert (forall i. v (Seq.index ${vec}.f_elements i) ==
@@ -230,7 +233,7 @@ pub(crate) fn cond_subtract_3329(vec: &mut PortableVector) {
               (forall j. j >= v i ==> Seq.index ${vec}.f_elements j == Seq.index ${_vec0}.f_elements j)"#
             )
         });
-        if vec.elements[i] >= 3329 {
+        if vec.elements[i].declassify() >= 3329 {
             vec.elements[i] -= 3329
         }
     }
@@ -259,7 +262,7 @@ pub(crate) fn cond_subtract_3329(vec: &mut PortableVector) {
                 v result % 3329 == v value % 3329"#)))]
 #[inline(always)]
 pub(crate) fn barrett_reduce_element(value: FieldElement) -> FieldElement {
-    let t = (i32::from(value) * BARRETT_MULTIPLIER) + (BARRETT_R >> 1);
+    let t = (value.as_i32() * BARRETT_MULTIPLIER) + (BARRETT_R >> 1);
     hax_lib::fstar!(
         r#"
         assert_norm (v v_BARRETT_MULTIPLIER == (pow2 27 + 3329) / (2*3329));
@@ -269,7 +272,9 @@ pub(crate) fn barrett_reduce_element(value: FieldElement) -> FieldElement {
     );
     hax_lib::fstar!(r#"assert (v t / pow2 26 < 9)"#);
     hax_lib::fstar!(r#"assert (v t / pow2 26 > - 9)"#);
-    let quotient = (t >> BARRETT_SHIFT) as i16;
+
+    let quotient = (t >> BARRETT_SHIFT).as_i16();
+
     hax_lib::fstar!(r#"assert (v quotient = v t / pow2 26)"#);
     hax_lib::fstar!(r#"assert (Spec.Utils.is_i16b 9 quotient)"#);
 
@@ -343,14 +348,15 @@ pub(crate) fn barrett_reduce(vec: &mut PortableVector) {
 #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b (3328 + 1665) result /\
                 (Spec.Utils.is_i32b (3328 * pow2 15) value ==> Spec.Utils.is_i16b 3328 result) /\
                 v result % 3329 == (v value * 169) % 3329"#)))]
-pub(crate) fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
+pub(crate) fn montgomery_reduce_element(value: I32) -> MontgomeryFieldElement {
     // This forces hax to extract code for MONTGOMERY_R before it extracts code
     // for this function. The removal of this line is being tracked in:
     // https://github.com/cryspen/libcrux/issues/134
     #[cfg(hax)]
     let _ = MONTGOMERY_R;
 
-    let k = (value as i16) as i32 * (INVERSE_OF_MODULUS_MOD_MONTGOMERY_R as i32);
+    let k = (value.as_i16()).as_i32() * (INVERSE_OF_MODULUS_MOD_MONTGOMERY_R.classify().as_i32());
+
     hax_lib::fstar!(
         r#"assert(v (cast (cast (value <: i32) <: i16) <: i32) == v value @% pow2 16);
                      assert(v k == (v value @% pow2 16) * 62209);
@@ -359,13 +365,17 @@ pub(crate) fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
                      assert(v (cast (cast (k <: i32) <: i16) <: i32) >= -pow2 15);
                      assert(v (cast (Libcrux_ml_kem.Vector.Traits.v_FIELD_MODULUS <: i16) <: i32) == 3329)"#
     );
-    let k_times_modulus = (k as i16 as i32) * (FIELD_MODULUS as i32);
+
+    let k_times_modulus = (k.as_i16().as_i32()) * (FIELD_MODULUS.classify().as_i32());
+
     hax_lib::fstar!(
         r#"assert_norm (pow2 15 * 3329 < pow2 31);
            Spec.Utils.lemma_mul_i16b (pow2 15) (3329) (cast (k <: i32) <: i16) Libcrux_ml_kem.Vector.Traits.v_FIELD_MODULUS;
                      assert (Spec.Utils.is_i32b (pow2 15 * 3329) k_times_modulus)"#
     );
-    let c = (k_times_modulus >> MONTGOMERY_SHIFT) as i16;
+
+    let c = (k_times_modulus >> MONTGOMERY_SHIFT).as_i16();
+
     hax_lib::fstar!(
         "assert (v k_times_modulus < pow2 31);
                      assert (v k_times_modulus / pow2 16 < pow2 15);
@@ -373,7 +383,9 @@ pub(crate) fn montgomery_reduce_element(value: i32) -> MontgomeryFieldElement {
                      assert(v c == v k_times_modulus / pow2 16);
                      assert(Spec.Utils.is_i16b 1665 c)"
     );
-    let value_high = (value >> MONTGOMERY_SHIFT) as i16;
+
+    let value_high = (value >> MONTGOMERY_SHIFT).as_i16();
+
     hax_lib::fstar!(
         r#"assert (v value < pow2 31);
                      assert (v value / pow2 16 < pow2 15);
@@ -456,7 +468,8 @@ pub(crate) fn montgomery_multiply_fe_by_fer(
     fer: FieldElementTimesMontgomeryR,
 ) -> FieldElement {
     hax_lib::fstar!(r#"Spec.Utils.lemma_mul_i16b (pow2 15) (1664) fe fer"#);
-    let product = (fe as i32) * (fer as i32);
+
+    let product = (fe.as_i32()) * (fer.as_i32());
     montgomery_reduce_element(product)
 }
 
@@ -468,7 +481,7 @@ Spec.Utils.is_i16b_array 3328 ${vec}_future.f_elements /\
 (forall i. i < 16 ==>
     (v (Seq.index ${vec}_future.f_elements i) % 3329 ==
        (v (Seq.index ${vec}.f_elements i) * v c * 169) %3329))"#)))]
-pub(crate) fn montgomery_multiply_by_constant(vec: &mut PortableVector, c: i16) {
+pub(crate) fn montgomery_multiply_by_constant(vec: &mut PortableVector, c: I16) {
     #[cfg(hax)]
     let _vec0 = (*vec).clone();
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {

@@ -8,6 +8,8 @@
 // them to be properly abstracted in F*. We would like hax to do this automatically.
 // Related Issue: https://github.com/hacspec/hax/issues/616
 
+use libcrux_secrets::U8;
+
 /// The SHA3 block size.
 pub(crate) const BLOCK_SIZE: usize = 168;
 
@@ -29,7 +31,7 @@ pub(crate) trait Hash {
         fstar!(r#"Seq.length ${output}_future == Seq.length ${output} /\
             ${output}_future == Spec.Utils.v_G $input"#))
     ]
-    fn G(input: &[u8], output: &mut [u8]);
+    fn G(input: &[U8], output: &mut [U8]);
 
     /// H aka SHA3 256
     #[requires(true)]
@@ -38,7 +40,7 @@ pub(crate) trait Hash {
         fstar!(r#"Seq.length ${output}_future == Seq.length ${output} /\
             ${output}_future == Spec.Utils.v_H $input"#))
     ]
-    fn H(input: &[u8], output: &mut [u8]);
+    fn H(input: &[U8], output: &mut [U8]);
 
     /// PRF aka SHAKE256
     #[requires(fstar!(r#"v $LEN < pow2 32 /\ 
@@ -49,7 +51,7 @@ pub(crate) trait Hash {
             (v $LEN < pow2 32 ==> 
              ${out}_future == Spec.Utils.v_PRF $LEN $input)"#))
     ]
-    fn PRF<const LEN: usize>(input: &[u8], out: &mut [u8]);
+    fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]);
 
     /// PRFxN aka N SHAKE256
     #[requires(fstar!(r#"let k = Seq.length $input in
@@ -61,7 +63,7 @@ pub(crate) trait Hash {
          (4 * v $out_len < pow2 32) /\
          Seq.length ${outputs}_future == Seq.length ${outputs} /\
          ${outputs}_future == Spec.Utils.v_PRFxN (sz k) $out_len $input)"#))]
-    fn PRFxN(input: &[[u8; 33]], outputs: &mut [u8], out_len: usize);
+    fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize);
 
     /// Create a SHAKE128 state and absorb the input.
     #[requires(true)]
@@ -80,6 +82,7 @@ pub(crate) trait Hash {
 pub(crate) mod portable {
     use super::*;
     use libcrux_iot_sha3::portable::{self, incremental, KeccakState};
+    use libcrux_secrets::{ClassifyRefMut as _, DeclassifyRef as _};
 
     /// The state.
     ///
@@ -96,8 +99,9 @@ pub(crate) mod portable {
             ${output}_future == Spec.Utils.v_G $input"#))
     ]
     #[inline(always)]
-    fn G(input: &[u8], output: &mut [u8]) {
-        portable::sha512(output, input);
+    fn G(input: &[U8], output: &mut [U8]) {
+        // Declassification: XXX This is the API offered by SHA-3.
+        portable::sha512(output, input.declassify_ref());
     }
 
     #[hax_lib::requires(output.len() == 32)]
@@ -106,8 +110,9 @@ pub(crate) mod portable {
             ${output}_future == Spec.Utils.v_H $input"#))
     ]
     #[inline(always)]
-    fn H(input: &[u8], output: &mut [u8]) {
-        portable::sha256(output, input);
+    fn H(input: &[U8], output: &mut [U8]) {
+        // Declassification: XXX This is the API offered by SHA-3.
+        portable::sha256(output, input.declassify_ref());
     }
 
     #[hax_lib::requires(fstar!(r#"v $LEN < pow2 32 /\
@@ -117,9 +122,10 @@ pub(crate) mod portable {
             ${out}_future == Spec.Utils.v_PRF $LEN $input"#))
     ]
     #[inline(always)]
-    fn PRF<const LEN: usize>(input: &[u8], out: &mut [u8]) {
+    fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]) {
         debug_assert!(out.len() == LEN);
-        portable::shake256(out, input);
+        // Declassification: XXX This is the API offered by SHA-3.
+        portable::shake256(out, input.declassify_ref());
     }
 
     #[hax_lib::requires(fstar!(r#"let k = Seq.length $input in
@@ -132,9 +138,12 @@ pub(crate) mod portable {
          Seq.length ${outputs}_future == Seq.length ${outputs} /\
          ${outputs}_future == Spec.Utils.v_PRFxN (sz k) $out_len $input)"#))]
     #[inline]
-    fn PRFxN(input: &[[u8; 33]], outputs: &mut [u8], out_len: usize) {
+    fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize) {
         for i in 0..input.len() {
-            portable::shake256(&mut outputs[i * out_len..(i + 1) * out_len], &input[i]);
+            portable::shake256(
+                &mut outputs[i * out_len..(i + 1) * out_len],
+                input[i].declassify_ref(),
+            );
         }
     }
 
@@ -162,7 +171,7 @@ pub(crate) mod portable {
         for i in 0..outputs.len() {
             incremental::shake128_squeeze_first_three_blocks(
                 &mut st.shake128_state[i],
-                &mut outputs[i],
+                outputs[i].as_slice().classify_ref_mut(),
             );
         }
     }
@@ -170,7 +179,10 @@ pub(crate) mod portable {
     #[inline(always)]
     fn shake128_squeeze_next_block(st: &mut PortableHash, outputs: &mut [[u8; BLOCK_SIZE]]) {
         for i in 0..outputs.len() {
-            incremental::shake128_squeeze_next_block(&mut st.shake128_state[i], &mut outputs[i]);
+            incremental::shake128_squeeze_next_block(
+                &mut st.shake128_state[i],
+                outputs[i].classify_ref_mut(),
+            );
         }
     }
 
@@ -181,7 +193,7 @@ pub(crate) mod portable {
             fstar!(r#"${output}_future == Spec.Utils.v_G $input"#))
         ]
         #[inline(always)]
-        fn G(input: &[u8], output: &mut [u8]) {
+        fn G(input: &[U8], output: &mut [U8]) {
             G(input, output)
         }
 
@@ -190,7 +202,7 @@ pub(crate) mod portable {
             fstar!(r#"${output}_future == Spec.Utils.v_H $input"#))
         ]
         #[inline(always)]
-        fn H(input: &[u8], output: &mut [u8]) {
+        fn H(input: &[U8], output: &mut [U8]) {
             H(input, output)
         }
 
@@ -200,7 +212,7 @@ pub(crate) mod portable {
             fstar!(r#"v $LEN < pow2 32 ==> ${out}_future == Spec.Utils.v_PRF $LEN $input"#))
         ]
         #[inline(always)]
-        fn PRF<const LEN: usize>(input: &[u8], out: &mut [u8]) {
+        fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]) {
             PRF::<LEN>(input, out)
         }
 
@@ -214,7 +226,7 @@ pub(crate) mod portable {
              Seq.length ${outputs}_future == Seq.length ${outputs} /\
              ${outputs}_future == Spec.Utils.v_PRFxN (sz k) $out_len $input)"#))]
         #[inline]
-        fn PRFxN(input: &[[u8; 33]], outputs: &mut [u8], out_len: usize) {
+        fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize) {
             PRFxN(input, outputs, out_len)
         }
 

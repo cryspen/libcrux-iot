@@ -8,15 +8,21 @@
 //
 // XXX: We have to disable this for C extraction for now. See eurydice/issues#37
 
+use libcrux_secrets::{CastOps as _, Classify as _, Declassify as _, U8};
+
 /// Return 1 if `value` is not zero and 0 otherwise.
 #[inline(never)] // Don't inline this to avoid that the compiler optimizes this out.
 #[hax_lib::ensures(|result| if value == 0 {result == 0} else {result == 1})]
-fn inz(value: u8) -> u8 {
+fn inz(value: U8) -> U8 {
     #[cfg(hax)]
     let _orig_value = value; // copy original value for proofs
 
-    let value = value as u16;
-    let result = ((!value).wrapping_add(1) >> 8) as u8;
+    let value = value.as_u16();
+    // Declassification: XXX no wrapping_add for secret integers
+    let result = core::hint::black_box(
+        ((!(core::hint::black_box(value.declassify()) as u8)).wrapping_add(1) >> 8) & 1,
+    )
+    .classify();
     let res = result & 1;
 
     hax_lib::fstar!(
@@ -28,7 +34,7 @@ fn inz(value: u8) -> u8 {
 
 #[inline(never)] // Don't inline this to avoid that the compiler optimizes this out.
 #[hax_lib::ensures(|result| if value == 0 {result == 0} else {result == 1})]
-fn is_non_zero(value: u8) -> u8 {
+fn is_non_zero(value: U8) -> U8 {
     #[cfg(eurydice)]
     return inz(value);
 
@@ -41,8 +47,8 @@ fn is_non_zero(value: u8) -> u8 {
 #[inline(never)] // Don't inline this to avoid that the compiler optimizes this out.
 #[hax_lib::requires(lhs.len() == rhs.len())]
 #[hax_lib::ensures(|result| if lhs == rhs {result == 0} else {result == 1})]
-fn compare(lhs: &[u8], rhs: &[u8]) -> u8 {
-    let mut r: u8 = 0;
+fn compare(lhs: &[U8], rhs: &[U8]) -> U8 {
+    let mut r: U8 = 0.classify();
     for i in 0..lhs.len() {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
@@ -95,7 +101,7 @@ fn compare(lhs: &[u8], rhs: &[u8]) -> u8 {
 #[inline(never)] // Don't inline this to avoid that the compiler optimizes this out.
 #[hax_lib::requires(lhs.len() == rhs.len())]
 #[hax_lib::ensures(|result| if lhs == rhs {result == 0} else {result == 1})]
-pub(crate) fn compare_ciphertexts_in_constant_time(lhs: &[u8], rhs: &[u8]) -> u8 {
+pub(crate) fn compare_ciphertexts_in_constant_time(lhs: &[U8], rhs: &[U8]) -> U8 {
     #[cfg(eurydice)]
     return compare(lhs, rhs);
 
@@ -112,11 +118,15 @@ pub(crate) fn compare_ciphertexts_in_constant_time(lhs: &[u8], rhs: &[u8]) -> u8
     out.len() == lhs.len()
 )]
 #[hax_lib::ensures(|()| if selector == 0 {future(out) == lhs} else {future(out) == rhs})]
-fn select_ct(lhs: &[u8], rhs: &[u8], selector: u8, out: &mut [u8]) {
+fn select_ct(lhs: &[U8], rhs: &[U8], selector: U8, out: &mut [U8]) {
     #[cfg(hax)]
     let out_orig: std::vec::Vec<u8> = out.to_vec();
 
-    let mask = is_non_zero(selector).wrapping_sub(1);
+    // Declassification: XXX no `wrapping_sub` for secret integers
+    let mask = is_non_zero(selector)
+        .declassify()
+        .wrapping_sub(1)
+        .classify();
     hax_lib::fstar!(
         "assert (if $selector = (mk_u8 0) then $mask = ones else $mask = zero);
         lognot_lemma $mask;
@@ -175,10 +185,10 @@ fn select_ct(lhs: &[u8], rhs: &[u8], selector: u8, out: &mut [u8]) {
 )]
 #[hax_lib::ensures(|()| if selector == 0 {future(out) == lhs} else {future(out) == rhs})]
 pub(crate) fn select_shared_secret_in_constant_time(
-    lhs: &[u8],
-    rhs: &[u8],
-    selector: u8,
-    out: &mut [u8],
+    lhs: &[U8],
+    rhs: &[U8],
+    selector: U8,
+    out: &mut [U8],
 ) {
     #[cfg(eurydice)]
     return select_ct(lhs, rhs, selector, out);
@@ -195,11 +205,11 @@ pub(crate) fn select_shared_secret_in_constant_time(
 )]
 #[hax_lib::ensures(|()| if lhs_c == rhs_c {future(out) == lhs_s} else {future(out) == rhs_s})]
 pub(crate) fn compare_ciphertexts_select_shared_secret_in_constant_time(
-    lhs_c: &[u8],
-    rhs_c: &[u8],
-    lhs_s: &[u8],
-    rhs_s: &[u8],
-    out: &mut [u8],
+    lhs_c: &[U8],
+    rhs_c: &[U8],
+    lhs_s: &[U8],
+    rhs_s: &[U8],
+    out: &mut [U8],
 ) {
     let selector = compare_ciphertexts_in_constant_time(lhs_c, rhs_c);
 
