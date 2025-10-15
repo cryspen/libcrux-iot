@@ -6,9 +6,10 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+use libcrux_secrets::{Classify, ClassifyRef, U8};
+
 mod keccak;
 mod lane;
-mod secrets;
 mod state;
 
 /// A SHA3 224 Digest
@@ -77,7 +78,7 @@ pub const fn digest_size(mode: Algorithm) -> usize {
 pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[u8]) -> [U8; LEN] {
     debug_assert!(payload.len() <= u32::MAX as usize);
 
-    let mut out = classify!([0u8; LEN]);
+    let mut out = [0u8; LEN].classify();
     match algorithm {
         Algorithm::Sha224 => portable::sha224(&mut out, payload),
         Algorithm::Sha256 => portable::sha256(&mut out, payload),
@@ -89,11 +90,10 @@ pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[u8]) -> [U8; LEN]
 
 /// SHA3
 pub use hash as sha3;
-use libcrux_secrets::U8;
 
 /// SHA3 224
 pub fn sha224(data: &[u8]) -> Sha3_224Digest {
-    let mut out = classify!([0u8; 28]);
+    let mut out = [0u8; 28].classify();
     sha224_ema(&mut out, data);
     out
 }
@@ -111,7 +111,7 @@ pub fn sha224_ema(digest: &mut [U8], payload: &[u8]) {
 
 /// SHA3 256
 pub fn sha256(data: &[u8]) -> Sha3_256Digest {
-    let mut out = classify!([0u8; 32]);
+    let mut out = [0u8; 32].classify();
     sha256_ema(&mut out, data);
     out
 }
@@ -126,7 +126,7 @@ pub fn sha256_ema(digest: &mut [U8], payload: &[u8]) {
 
 /// SHA3 384
 pub fn sha384(data: &[u8]) -> Sha3_384Digest {
-    let mut out = classify!([0u8; 48]);
+    let mut out = [0u8; 48].classify();
     sha384_ema(&mut out, data);
     out
 }
@@ -141,7 +141,7 @@ pub fn sha384_ema(digest: &mut [U8], payload: &[u8]) {
 
 /// SHA3 512
 pub fn sha512(data: &[u8]) -> Sha3_512Digest {
-    let mut out = classify!([0u8; 64]);
+    let mut out = [0u8; 64].classify();
     sha512_ema(&mut out, data);
     out
 }
@@ -159,7 +159,7 @@ pub fn sha512_ema(digest: &mut [U8], payload: &[u8]) {
 /// Note that the output length `BYTES` must fit into 32 bit. If it is longer,
 /// the output will only return `u32::MAX` bytes.
 pub fn shake128<const BYTES: usize>(data: &[u8]) -> [U8; BYTES] {
-    let mut out = classify!([0u8; BYTES]);
+    let mut out = [0u8; BYTES].classify();
     portable::keccakx1::<168, 0x1fu8>(data, &mut out);
     out
 }
@@ -176,7 +176,7 @@ pub fn shake128_ema(out: &mut [U8], data: &[u8]) {
 /// Note that the output length `BYTES` must fit into 32 bit. If it is longer,
 /// the output will only return `u32::MAX` bytes.
 pub fn shake256<const BYTES: usize>(data: &[u8]) -> [U8; BYTES] {
-    let mut out = classify!([0u8; BYTES]);
+    let mut out = [0u8; BYTES].classify();
     portable::keccakx1::<136, 0x1fu8>(data, &mut out);
     out
 }
@@ -204,7 +204,7 @@ pub mod portable {
     }
 
     pub(crate) fn keccakx1<const RATE: usize, const DELIM: u8>(data: &[u8], out: &mut [U8]) {
-        keccak::keccak::<RATE, DELIM>(classify_ref!(data), out)
+        keccak::keccak::<RATE, DELIM>(data.classify_ref(), out)
     }
 
     /// A portable SHA3 224 implementation.
@@ -285,11 +285,11 @@ pub mod portable {
             }
 
             fn absorb(&mut self, input: &[u8]) {
-                self.state.absorb(classify_ref!(input));
+                self.state.absorb(input.classify_ref());
             }
 
             fn absorb_final(&mut self, input: &[u8]) {
-                self.state.absorb_final::<0x1fu8>(classify_ref!(input));
+                self.state.absorb_final::<0x1fu8>(input.classify_ref());
             }
 
             /// Shake128 squeeze
@@ -309,12 +309,12 @@ pub mod portable {
 
             /// Shake256 absorb
             fn absorb(&mut self, input: &[u8]) {
-                self.state.absorb(classify_ref!(input));
+                self.state.absorb(input.classify_ref());
             }
 
             /// Shake256 absorb final
             fn absorb_final(&mut self, input: &[u8]) {
-                self.state.absorb_final::<0x1fu8>(classify_ref!(input));
+                self.state.absorb_final::<0x1fu8>(input.classify_ref());
             }
 
             /// Shake256 squeeze
@@ -333,7 +333,7 @@ pub mod portable {
 
         /// Absorb
         pub fn shake128_absorb_final(s: &mut KeccakState, data0: &[u8]) {
-            absorb_final::<168, 0x1fu8>(&mut s.state, classify_ref!(data0), 0, data0.len());
+            absorb_final::<168, 0x1fu8>(&mut s.state, data0.classify_ref(), 0, data0.len());
         }
 
         /// Perform four rounds of the keccak permutation functions
@@ -366,7 +366,7 @@ pub mod portable {
 
         /// Absorb some data for SHAKE-256 for the last time
         pub fn shake256_absorb_final(s: &mut KeccakState, data: &[u8]) {
-            absorb_final::<136, 0x1fu8>(&mut s.state, classify_ref!(data), 0, data.len());
+            absorb_final::<136, 0x1fu8>(&mut s.state, data.classify_ref(), 0, data.len());
         }
 
         /// Squeeze the first SHAKE-256 block
