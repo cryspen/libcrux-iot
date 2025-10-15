@@ -3,6 +3,24 @@ naming:
     - ["libcrux-iot-sha3"]
 
 files:
+  - name: libcrux_iot_core
+    private:
+      monomorphizations_of:
+        - [core, '*']
+        - ["libcrux_secrets", "public_integers", classify]
+        - ["libcrux_secrets", "public_integers", classify_ref]
+        - ["libcrux_secrets", "public_integers", declassify]
+      monomorphizations_using:
+        - [ "Eurydice", "*"]
+      patterns:
+        - [core, '*']
+        - ["libcrux_secrets", "public_integers", classify]
+        - ["libcrux_secrets", "public_integers", classify_ref]
+        - ["libcrux_secrets", "public_integers", declassify]
+    api:
+      patterns:
+        - [ "Eurydice", "*"]
+
   - name: libcrux_iot_sha3
     api:
       patterns:
@@ -17,11 +35,3 @@ files:
         - [ "libcrux_iot_sha3", "portable", "*"]
         - [ "libcrux_iot_sha3", "portable", "incremental", "*"]
         - [ "libcrux_iot_sha3", "keccak", "*"]
-
-  - name: libcrux_iot_core
-    private:
-      monomorphizations_using:
-        - [ "Eurydice", "*"]
-    api:
-      patterns:
-        - [ "Eurydice", "*"]
