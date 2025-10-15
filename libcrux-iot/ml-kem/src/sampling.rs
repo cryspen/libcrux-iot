@@ -50,11 +50,30 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
     for i in 0..K {
         for r in 0..N / 24 {
             if sampled_coefficients[i] < COEFFICIENTS_IN_RING_ELEMENT {
-                let sampled = Vector::rej_sample(
-                    &randomness[i][r * 24..(r * 24) + 24],
-                    &mut out[i][sampled_coefficients[i]..sampled_coefficients[i] + 16],
-                );
-                sampled_coefficients[i] += sampled;
+                #[cfg(eurydice)]
+                {
+                    // XXX: We need to use these temporaries to work around a Eurydice
+                    //      bug. (see https://github.com/AeneasVerif/eurydice/issues/285)
+                    let randomness_i = &randomness[i];
+                    let out_i = &mut out[i];
+                    let sampled_coefficients_i = sampled_coefficients[i];
+
+                    let sampled = Vector::rej_sample(
+                        &randomness_i[r * 24..(r * 24) + 24],
+                        &mut out_i[sampled_coefficients_i..sampled_coefficients_i + 16],
+                    );
+                    sampled_coefficients[i] += sampled;
+                }
+                #[cfg(not(eurydice))]
+                {
+                    // XXX: We need a separate code path for hax to
+                    // avoid `DirectAndMut` issues.
+                    let sampled = Vector::rej_sample(
+                        &randomness[i][r * 24..(r * 24) + 24],
+                        &mut out[i][sampled_coefficients[i]..sampled_coefficients[i] + 16],
+                    );
+                    sampled_coefficients[i] += sampled;
+                }
             }
         }
     }
@@ -71,6 +90,8 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
+#[hax_lib::requires(sampled_coefficients.len() == K && out.len() == K)]
+#[hax_lib::ensures(|_| future(sampled_coefficients).len() == K && future(out).len() == K)]
 pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
     seeds: &[[u8; 34]],
     sampled_coefficients: &mut [usize],
@@ -180,7 +201,7 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
             let coin_toss_outcomes = even_bits + odd_bits;
 
             cloop! {
-                for outcome_set in (0..u32::BITS).step_by(4) {
+                for outcome_set in (0..32u32).step_by(4) { // u32::BITS
                     let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x3) as i16;
                     let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 2)) & 0x3) as i16;
                     hax_lib::fstar!(r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) (mk_u32 3);
@@ -253,10 +274,10 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
 #[inline(always)]
 #[hax_lib::fstar::verification_status(panic_free)]
 #[hax_lib::requires((ETA == 2 || ETA == 3) && randomness.len() == ETA * 64)]
-#[hax_lib::ensures(|_| fstar!(r#"(forall (i:nat). i < 8 ==> Libcrux_ml_kem.Ntt.ntt_layer_7_pre
-    (${output}_future.f_coefficients.[ sz i ]) (${output}_future.f_coefficients.[ sz i +! sz 8 ])) /\
-    Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector ${output}_future ==
-        Spec.MLKEM.sample_poly_cbd $ETA $randomness"#))]
+#[hax_lib::ensures(|_| fstar!(r#"
+    Spec.Utils.is_i16b_array 7 ${output}_future /\
+    createi (sz 256) (fun i -> Spec.MLKEM.Math.to_spec_fe (Seq.index ${output}_future (v i))) == 
+    Spec.MLKEM.sample_poly_cbd $ETA $randomness"#))]
 pub(super) fn sample_from_binomial_distribution<const ETA: usize, Vector: Operations>(
     randomness: &[u8],
     output: &mut [i16; 256],

@@ -17,7 +17,7 @@ pub(crate) use vector_type::PortableVector;
 impl crate::vector::traits::Repr for PortableVector {
     fn repr(x: Self) -> [i16; 16] {
         let mut out = [0i16; 16];
-        to_i16_array(x, &mut out);
+        to_i16_array(&x, &mut out);
         out
     }
 }
@@ -145,7 +145,7 @@ impl Operations for PortableVector {
 
     #[inline(always)]
     #[ensures(|_| fstar!(r#"out == impl.f_repr $x"#))]
-    fn to_i16_array(x: Self, out: &mut [i16; 16]) {
+    fn to_i16_array(x: &Self, out: &mut [i16]) {
         to_i16_array(x, out)
     }
 

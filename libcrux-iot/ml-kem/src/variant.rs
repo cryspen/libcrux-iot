@@ -2,7 +2,7 @@
 //! differences between the NIST standard FIPS 203 (ML-KEM) and the
 //! Round 3 CRYSTALS-Kyber submissions in the NIST PQ competition.
 
-use crate::{constants::CPA_PKE_KEY_GENERATION_SEED_SIZE, hash_functions::Hash, MlKemCiphertext};
+use crate::{constants::CPA_PKE_KEY_GENERATION_SEED_SIZE, hash_functions::Hash};
 
 /// This trait collects differences in specification between ML-KEM
 /// (FIPS 203) and the Round 3 CRYSTALS-Kyber submission in the
@@ -15,7 +15,7 @@ pub(crate) trait Variant {
     #[ensures(|_| fstar!(r#"${out}_future == $shared_secret"#))] // We only have post-conditions for ML-KEM, not Kyber
     fn kdf<const K: usize, const CIPHERTEXT_SIZE: usize, Hasher: Hash>(
         shared_secret: &[u8],
-        ciphertext: &MlKemCiphertext<CIPHERTEXT_SIZE>,
+        ciphertext: &[u8; CIPHERTEXT_SIZE],
         out: &mut [u8],
     );
     #[requires(randomness.len() == 32)]
@@ -42,7 +42,7 @@ impl Variant for Kyber {
     #[inline(always)]
     fn kdf<const K: usize, const CIPHERTEXT_SIZE: usize, Hasher: Hash>(
         shared_secret: &[u8],
-        ciphertext: &MlKemCiphertext<CIPHERTEXT_SIZE>,
+        ciphertext: &[u8; CIPHERTEXT_SIZE],
         out: &mut [u8],
     ) {
         use crate::{constants::H_DIGEST_SIZE, utils::into_padded_array};
@@ -78,7 +78,7 @@ impl Variant for MlKem {
     #[ensures(|_| fstar!(r#"${out}_future == $shared_secret"#))]
     fn kdf<const K: usize, const CIPHERTEXT_SIZE: usize, Hasher: Hash>(
         shared_secret: &[u8],
-        _: &MlKemCiphertext<CIPHERTEXT_SIZE>,
+        _: &[u8; CIPHERTEXT_SIZE],
         out: &mut [u8],
     ) {
         out.copy_from_slice(shared_secret);

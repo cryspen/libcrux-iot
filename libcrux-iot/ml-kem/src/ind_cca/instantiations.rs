@@ -37,7 +37,7 @@ macro_rules! instantiate {
                     $vector,
                     $hash,
                     crate::variant::MlKem,
-                >(randomness)
+                >(&randomness)
             }
 
             #[cfg(feature = "kyber")]
@@ -65,7 +65,7 @@ macro_rules! instantiate {
                     $vector,
                     $hash,
                     crate::variant::Kyber,
-                >(randomness)
+                >(&randomness)
             }
 
             /// Public key validation
@@ -161,7 +161,7 @@ macro_rules! instantiate {
                     $vector,
                     $hash,
                     crate::variant::Kyber,
-                >(public_key, randomness)
+                >(public_key, &randomness)
             }
 
             #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
@@ -218,7 +218,7 @@ macro_rules! instantiate {
                     $vector,
                     $hash,
                     crate::variant::MlKem,
-                >(public_key, randomness)
+                >(public_key, &randomness)
             }
 
             /// Portable decapsulate

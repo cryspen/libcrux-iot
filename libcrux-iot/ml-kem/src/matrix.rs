@@ -48,20 +48,20 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
 )]
 pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
     A_transpose: &mut [PolynomialRingElement<Vector>],
-    seed: [u8; 34],
+    seed: &[u8; 34],
     transpose: bool,
 ) {
     debug_assert!(A_transpose.len() == K * K);
 
     for i in 0..K {
-        let mut seeds = [seed; K];
+        let mut seeds = [seed.clone(); K];
         for j in 0..K {
             seeds[j][32] = i as u8;
             seeds[j][33] = j as u8;
         }
         let mut sampled_coefficients = [0usize; K];
         let mut out = [[0i16; 272]; K];
-        sample_from_xof::<K, Vector, Hasher>(&seeds, &mut sampled_coefficients, &mut out);
+        sample_from_xof::<K, Vector, Hasher>(seeds.as_slice(), &mut sampled_coefficients, &mut out);
         cloop! {
             for (j, sample) in out.into_iter().enumerate() {
                 // A[i][j] = A_transpose[j][i]

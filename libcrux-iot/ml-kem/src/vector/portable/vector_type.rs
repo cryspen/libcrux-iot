@@ -21,8 +21,8 @@ pub fn zero() -> PortableVector {
 
 #[inline(always)]
 #[hax_lib::ensures(|_| fstar!(r#"${out}_future == ${x}.f_elements"#))]
-pub fn to_i16_array(x: PortableVector, out: &mut [i16; 16]) {
-    *out = x.elements;
+pub fn to_i16_array(x: &PortableVector, out: &mut [i16]) {
+    out.copy_from_slice(x.elements.as_slice());
 }
 
 #[inline(always)]
