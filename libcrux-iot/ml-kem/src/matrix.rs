@@ -4,7 +4,10 @@ use crate::{
     sampling::sample_from_xof, serialize::deserialize_to_reduced_ring_element, vector::Operations,
 };
 
-#[inline(always)]
+#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                              v i < v $K /\ v j < v $K /\
+                              Seq.length $matrix == v $K * v $K"#))]
+#[hax_lib::ensures(|result| fstar!(r#"result == Seq.index matrix (v $i *  v $K + v $j)"#))]
 pub(crate) fn entry<const K: usize, Vector: Operations>(
     matrix: &[PolynomialRingElement<Vector>],
     i: usize,

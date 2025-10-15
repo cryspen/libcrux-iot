@@ -100,7 +100,7 @@ pub(crate) fn serialize_public_key_mut<
 
     serialized[ranked_bytes_per_ring_element(K)..].copy_from_slice(seed_for_a);
     hax_lib::fstar!(
-        "Lib.Sequence.eq_intro #u8 #(v $PUBLIC_KEY_SIZE) serialized
+        "eq_intro serialized
         (Seq.append (Spec.MLKEM.vector_encode_12 #$K (Libcrux_ml_kem.Polynomial.to_spec_vector_t
             #$K #$:Vector $t_as_ntt)) $seed_for_a)"
     );
@@ -108,7 +108,7 @@ pub(crate) fn serialize_public_key_mut<
 
 /// Call [`serialize_uncompressed_ring_element`] for each ring element.
 #[inline(always)]
-#[hax_lib::fstar::options("--z3rlimit 1000 --ext context_pruning --z3refresh")]
+#[hax_lib::fstar::options("--z3rlimit 1000 --ext context_pruning")]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
     ${out.len()} == Spec.MLKEM.v_RANKED_BYTES_PER_RING_ELEMENT $K /\
     (forall (i:nat). i < v $K ==>
@@ -258,6 +258,7 @@ fn sample_ring_element_cbd<
     // See https://github.com/hacspec/hax/issues/1167
     #[cfg(hax)]
     let _domain_separator_init = domain_separator;
+
     domain_separator = prf_input_inc::<K>(&mut prf_inputs, domain_separator);
     hax_lib::fstar!(
         "sample_ring_element_cbd_helper_1 $K $prf_inputs $prf_input $_domain_separator_init"
@@ -382,6 +383,7 @@ fn sample_vector_cbd_then_ntt<
 
     #[cfg(hax)]
     let _domain_separator_init = domain_separator;
+
     domain_separator = prf_input_inc::<K>(&mut prf_inputs, domain_separator);
     hax_lib::fstar!(
         "sample_vector_cbd_then_ntt_helper_1 $K $prf_inputs $prf_input $_domain_separator_init"
@@ -627,8 +629,6 @@ pub(crate) fn generate_keypair<
 }
 
 /// Serialize the secret key from the unpacked key pair generation.
-#[hax_lib::fstar::verification_status(lax)]
-#[inline(always)]
 pub(crate) fn serialize_unpacked_secret_key<
     const K: usize,
     const K_SQUARED: usize,

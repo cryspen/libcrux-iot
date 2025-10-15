@@ -122,6 +122,7 @@ pub(crate) fn vec_to_bytes<Vector: Operations>(
     re: &[PolynomialRingElement<Vector>],
     out: &mut [u8],
 ) {
+    #[cfg(hax)]
     let _out_len = out.len();
     let re_bytes = PolynomialRingElement::<Vector>::num_bytes();
     for i in 0..re.len() {
@@ -328,7 +329,6 @@ fn add_message_error_reduce<Vector: Operations>(
         "#
         );
     }
-    ()
 }
 
 #[inline(always)]
@@ -446,7 +446,6 @@ fn add_standard_error_reduce<Vector: Operations>(
         "#
         );
     }
-    ()
 }
 
 /// Given two `KyberPolynomialRingElement`s in their NTT representations,

@@ -94,7 +94,7 @@ macro_rules! instantiate {
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
-                >(randomness)
+                >(&randomness)
             }
 
             /// Generate Kyber 768 Key Pair
@@ -112,7 +112,7 @@ macro_rules! instantiate {
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
-                >(randomness)
+                >(&randomness)
             }
 
             /// Encapsulate ML-KEM 768
@@ -141,7 +141,7 @@ macro_rules! instantiate {
                     ETA2_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
-                >(public_key, randomness)
+                >(public_key, &randomness)
             }
 
             /// Encapsulate Kyber 768
@@ -172,7 +172,7 @@ macro_rules! instantiate {
                     ETA2_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
-                >(public_key, randomness)
+                >(public_key, &randomness)
             }
 
             /// Decapsulate ML-KEM 768
@@ -275,11 +275,6 @@ pub fn validate_private_key(
 ///
 /// This function returns an [`MlKem768KeyPair`].
 #[cfg(not(eurydice))]
-#[hax_lib::fstar::verification_status(panic_free)]
-#[hax_lib::ensures(|res|
-    fstar!(r#"let ((secret_key, public_key), valid) = Spec.MLKEM.Instances.mlkem768_generate_keypair $randomness in
-        valid ==> (${res}.f_sk.f_value == secret_key /\ ${res}.f_pk.f_value == public_key)"#)
-)]
 pub fn generate_key_pair(randomness: [u8; KEY_GENERATION_SEED_SIZE]) -> MlKem768KeyPair {
     multiplexing::generate_keypair::<
         RANK,
@@ -290,7 +285,7 @@ pub fn generate_key_pair(randomness: [u8; KEY_GENERATION_SEED_SIZE]) -> MlKem768
         ETA1,
         ETA1_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
-    >(randomness)
+    >(&randomness)
 }
 
 /// Encapsulate ML-KEM 768
@@ -299,12 +294,6 @@ pub fn generate_key_pair(randomness: [u8; KEY_GENERATION_SEED_SIZE]) -> MlKem768
 /// The input is a reference to an [`MlKem768PublicKey`] and [`SHARED_SECRET_SIZE`]
 /// bytes of `randomness`.
 #[cfg(not(eurydice))]
-#[hax_lib::fstar::verification_status(panic_free)]
-#[hax_lib::ensures(|res|
-    fstar!(r#"let ((ciphertext, shared_secret), valid) = Spec.MLKEM.Instances.mlkem768_encapsulate ${public_key}.f_value $randomness in
-        let (res_ciphertext, res_shared_secret) = $res in
-        valid ==> (res_ciphertext.f_value == ciphertext /\ res_shared_secret == shared_secret)"#)
-)]
 pub fn encapsulate(
     public_key: &MlKem768PublicKey,
     randomness: [u8; SHARED_SECRET_SIZE],
@@ -326,7 +315,7 @@ pub fn encapsulate(
         ETA2_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
         PRF_OUTPUT_SIZE2,
-    >(public_key, randomness)
+    >(public_key, &randomness)
 }
 
 /// Decapsulate ML-KEM 768
@@ -334,11 +323,6 @@ pub fn encapsulate(
 /// Generates an [`MlKemSharedSecret`].
 /// The input is a reference to an [`MlKem768PrivateKey`] and an [`MlKem768Ciphertext`].
 #[cfg(not(eurydice))]
-#[hax_lib::fstar::verification_status(panic_free)]
-#[hax_lib::ensures(|res|
-    fstar!(r#"let (shared_secret, valid) = Spec.MLKEM.Instances.mlkem768_decapsulate ${private_key}.f_value ${ciphertext}.f_value in
-        valid ==> $res == shared_secret"#)
-)]
 pub fn decapsulate(
     private_key: &MlKem768PrivateKey,
     ciphertext: &MlKem768Ciphertext,
@@ -431,7 +415,7 @@ pub(crate) mod kyber {
             ETA1,
             ETA1_RANDOMNESS_SIZE,
             PRF_OUTPUT_SIZE1,
-        >(randomness)
+        >(&randomness)
     }
 
     /// Encapsulate Kyber 768
@@ -460,7 +444,7 @@ pub(crate) mod kyber {
             ETA2_RANDOMNESS_SIZE,
             PRF_OUTPUT_SIZE1,
             PRF_OUTPUT_SIZE2,
-        >(public_key, randomness)
+        >(public_key, &randomness)
     }
 
     /// Decapsulate ML-KEM 768

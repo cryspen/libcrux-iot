@@ -18,6 +18,7 @@ fn inz(value: u8) -> u8 {
     let value = value as u16;
     let result = ((!value).wrapping_add(1) >> 8) as u8;
     let res = result & 1;
+
     hax_lib::fstar!(
         r#"lognot_lemma $value;
            logand_lemma (mk_u8 1) $result"#
@@ -51,7 +52,9 @@ fn compare(lhs: &[u8], rhs: &[u8]) -> u8 {
                 else ~ ($r == (mk_u8 0)))"#
             )
         });
+
         let nr = r | (lhs[i] ^ rhs[i]);
+
         hax_lib::fstar!(
             r#"if $r =. (mk_u8 0) then (
             if (Seq.index $lhs (v $i) = Seq.index $rhs (v $i)) then (
@@ -82,6 +85,7 @@ fn compare(lhs: &[u8], rhs: &[u8]) -> u8 {
                assert(False))
           )"#
         );
+
         r = nr;
     }
 
@@ -183,6 +187,7 @@ pub(crate) fn select_shared_secret_in_constant_time(
     core::hint::black_box(select_ct(lhs, rhs, selector, out))
 }
 
+#[inline(never)] // Don't inline this to avoid that the compiler optimizes this out.
 #[hax_lib::requires(
     lhs_c.len() == rhs_c.len() &&
     lhs_s.len() == rhs_s.len() &&

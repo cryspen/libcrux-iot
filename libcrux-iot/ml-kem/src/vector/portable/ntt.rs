@@ -2,7 +2,7 @@ use super::arithmetic::*;
 use super::vector_type::*;
 
 #[inline(always)]
-#[hax_lib::fstar::before(interface, "[@@ \"opaque_to_smt\"]")]
+#[hax_lib::fstar::before("[@@ \"opaque_to_smt\"]")]
 #[hax_lib::requires(fstar!(r#"v i < 16 /\ v j < 16 /\ v i <> v j /\ 
                             Spec.Utils.is_i16b 1664 $zeta  /\
                             Spec.Utils.is_i16b_array (11207 + 6 * 3328) vec.f_elements /\
@@ -114,7 +114,7 @@ pub(crate) fn ntt_layer_3_step(vec: &mut PortableVector, zeta: i16) {
 }
 
 #[inline(always)]
-#[hax_lib::fstar::before(interface, "[@@ \"opaque_to_smt\"]")]
+#[hax_lib::fstar::before("[@@ \"opaque_to_smt\"]")]
 #[hax_lib::requires(fstar!(r#"v i < 16 /\ v j < 16 /\  v i <> v j /\ 
                         Spec.Utils.is_i16b 1664 $zeta /\
                         Spec.Utils.is_i16b_array (4*3328) ${vec}.f_elements"#))]
@@ -253,7 +253,6 @@ pub(crate) fn inv_ntt_layer_3_step(vec: &mut PortableVector, zeta: i16) {
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
 #[inline(always)]
-#[hax_lib::fstar::verification_status(panic_free)]
 #[hax_lib::fstar::options(
     "--z3rlimit 250 --split_queries always --query_stats --ext context_prune"
 )]

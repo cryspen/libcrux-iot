@@ -8,6 +8,7 @@ macro_rules! instantiate {
 
             /// Portable generate key pair.
             #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                v $K_SQUARED == v $K * v $K /\
                 $CPA_PRIVATE_KEY_SIZE == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K /\
                 $PRIVATE_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
                 $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
@@ -23,7 +24,7 @@ macro_rules! instantiate {
                 const ETA1_RANDOMNESS_SIZE: usize,
                 const PRF_OUTPUT_SIZE1: usize,
             >(
-                randomness: [u8; KEY_GENERATION_SEED_SIZE],
+                randomness: &[u8; KEY_GENERATION_SEED_SIZE],
             ) -> MlKemKeyPair<PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE> {
                 crate::ind_cca::generate_keypair::<
                     K,
@@ -37,7 +38,7 @@ macro_rules! instantiate {
                     $vector,
                     $hash,
                     crate::variant::MlKem,
-                >(&randomness)
+                >(randomness)
             }
 
             #[cfg(feature = "kyber")]
@@ -51,7 +52,7 @@ macro_rules! instantiate {
                 const ETA1_RANDOMNESS_SIZE: usize,
                 const PRF_OUTPUT_SIZE1: usize,
             >(
-                randomness: [u8; KEY_GENERATION_SEED_SIZE],
+                randomness: &[u8; KEY_GENERATION_SEED_SIZE],
             ) -> MlKemKeyPair<PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE> {
                 crate::ind_cca::generate_keypair::<
                     K,
@@ -65,7 +66,7 @@ macro_rules! instantiate {
                     $vector,
                     $hash,
                     crate::variant::Kyber,
-                >(&randomness)
+                >(randomness)
             }
 
             /// Public key validation
@@ -136,10 +137,9 @@ macro_rules! instantiate {
                 const ETA2_RANDOMNESS_SIZE: usize,
                 const PRF_OUTPUT_SIZE1: usize,
                 const PRF_OUTPUT_SIZE2: usize,
-
             >(
                 public_key: &MlKemPublicKey<PUBLIC_KEY_SIZE>,
-                randomness: [u8; SHARED_SECRET_SIZE],
+                randomness: &[u8; SHARED_SECRET_SIZE],
             ) -> (MlKemCiphertext<CIPHERTEXT_SIZE>, MlKemSharedSecret) {
                 crate::ind_cca::encapsulate::<
                     K,
@@ -161,10 +161,11 @@ macro_rules! instantiate {
                     $vector,
                     $hash,
                     crate::variant::Kyber,
-                >(public_key, &randomness)
+                >(public_key, randomness)
             }
 
             #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                v $K_SQUARED == v $K * v $K /\
                 $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
                 $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
                 $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
@@ -196,7 +197,7 @@ macro_rules! instantiate {
                 const PRF_OUTPUT_SIZE2: usize,
             >(
                 public_key: &MlKemPublicKey<PUBLIC_KEY_SIZE>,
-                randomness: [u8; SHARED_SECRET_SIZE],
+                randomness: &[u8; SHARED_SECRET_SIZE],
             ) -> (MlKemCiphertext<CIPHERTEXT_SIZE>, MlKemSharedSecret) {
                 crate::ind_cca::encapsulate::<
                     K,
@@ -218,7 +219,7 @@ macro_rules! instantiate {
                     $vector,
                     $hash,
                     crate::variant::MlKem,
-                >(public_key, &randomness)
+                >(public_key, randomness)
             }
 
             /// Portable decapsulate
@@ -275,6 +276,7 @@ macro_rules! instantiate {
 
             /// Portable decapsulate
             #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+                v $K_SQUARED == v $K * v $K /\
                 $SECRET_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
                 $CPA_SECRET_KEY_SIZE == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K /\
                 $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
