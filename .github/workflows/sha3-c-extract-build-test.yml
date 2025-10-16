@@ -26,11 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Load Libcrux
+        run: git submodule update --init libcrux
+
       - name: Extract C
         run: |
           export HOME=/home/user
-          pwd
-          ls
           cd libcrux-iot
           ../c/extract-sha3.sh
 
