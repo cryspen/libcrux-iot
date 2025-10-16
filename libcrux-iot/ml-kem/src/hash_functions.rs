@@ -83,7 +83,6 @@ pub(crate) mod portable {
     use super::*;
     use libcrux_iot_sha3::portable::{self, incremental, KeccakState};
     use libcrux_secrets::{ClassifyRefMut as _, DeclassifyRef as _};
-
     /// The state.
     ///
     /// It's only used for SHAKE128.
@@ -171,7 +170,7 @@ pub(crate) mod portable {
         for i in 0..outputs.len() {
             incremental::shake128_squeeze_first_three_blocks(
                 &mut st.shake128_state[i],
-                outputs[i].as_slice().classify_ref_mut(),
+                outputs[i].classify_ref_mut(),
             );
         }
     }

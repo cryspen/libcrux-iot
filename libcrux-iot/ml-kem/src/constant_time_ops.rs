@@ -8,7 +8,9 @@
 //
 // XXX: We have to disable this for C extraction for now. See eurydice/issues#37
 
-use libcrux_secrets::{CastOps as _, Classify as _, Declassify as _, U8};
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::IntOps as _;
+use libcrux_secrets::{CastOps as _, Classify as _, U8};
 
 /// Return 1 if `value` is not zero and 0 otherwise.
 #[inline(never)] // Don't inline this to avoid that the compiler optimizes this out.
@@ -18,12 +20,10 @@ fn inz(value: U8) -> U8 {
     let _orig_value = value; // copy original value for proofs
 
     let value = value.as_u16();
-    // Declassification: XXX no wrapping_add for secret integers
     let result = core::hint::black_box(
-        ((!(core::hint::black_box(value.declassify()) as u8)).wrapping_add(1) >> 8) & 1,
-    )
-    .classify();
-    let res = result & 1;
+        ((!(core::hint::black_box(value).as_u32())).wrapping_add(1) >> 31) & 1,
+    );
+    let res = result.as_u8() & 1;
 
     hax_lib::fstar!(
         r#"lognot_lemma $value;
@@ -122,11 +122,8 @@ fn select_ct(lhs: &[U8], rhs: &[U8], selector: U8, out: &mut [U8]) {
     #[cfg(hax)]
     let out_orig: std::vec::Vec<u8> = out.to_vec();
 
-    // Declassification: XXX no `wrapping_sub` for secret integers
-    let mask = is_non_zero(selector)
-        .declassify()
-        .wrapping_sub(1)
-        .classify();
+    let mask = is_non_zero(selector).wrapping_sub(1);
+
     hax_lib::fstar!(
         "assert (if $selector = (mk_u8 0) then $mask = ones else $mask = zero);
         lognot_lemma $mask;

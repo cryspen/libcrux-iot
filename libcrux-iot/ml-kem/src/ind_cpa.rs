@@ -95,7 +95,7 @@ pub(crate) fn serialize_public_key_mut<
 ) {
     serialize_vector::<K, Vector>(
         t_as_ntt,
-        &mut serialized[0..ranked_bytes_per_ring_element(K)].classify_ref_mut(),
+        (&mut serialized[0..ranked_bytes_per_ring_element(K)]).classify_ref_mut(),
         scratch,
     );
 
