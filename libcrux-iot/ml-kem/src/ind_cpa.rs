@@ -67,7 +67,9 @@ pub(crate) mod unpacked {
         }
     }
 }
-use libcrux_secrets::{Classify as _, ClassifyRefMut as _, DeclassifyRef as _, I16, I32, U8};
+#[cfg(not(hax))]
+use libcrux_secrets::ClassifyRefMut as _;
+use libcrux_secrets::{Classify as _, DeclassifyRef as _, I16, I32, U8};
 use unpacked::*;
 
 /// Concatenate `t` and `ρ` into the public key.
