@@ -177,7 +177,7 @@ cd $out
 # Clean only when requesting it.
 # Note that we can not extract for all platforms on any platform right now.
 # Make sure to keep files from other platforms.
-if [[ "$clean_cfiles" = 1 ]]; then
+if [[ $clean_cfiles = 1 ]]; then
     rm -rf libcrux_*.c libcrux_*.h
     rm -rf internal/*.h
 fi

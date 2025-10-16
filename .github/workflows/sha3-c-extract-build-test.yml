@@ -31,8 +31,8 @@ jobs:
           export HOME=/home/user
           pwd
           ls
-          cd c
-          ./extract-sha3.sh
+          cd libcrux-iot
+          ../c/extract-sha3.sh
 
       - name: Upload C extraction
         uses: actions/upload-artifact@v4
