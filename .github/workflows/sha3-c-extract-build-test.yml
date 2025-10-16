@@ -22,7 +22,7 @@ jobs:
       image: ghcr.io/cryspen/libcrux-c:latest
     defaults:
       run:
-        working-directory: c/sha3
+        working-directory: c
         shell: bash
     steps:
       - uses: actions/checkout@v5
