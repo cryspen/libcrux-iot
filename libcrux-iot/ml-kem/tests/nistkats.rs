@@ -3,6 +3,7 @@ use serde_json;
 use std::{fs::File, io::BufReader, path::Path};
 
 use libcrux_iot_sha3::*;
+use libcrux_secrets::{Classify, Declassify, DeclassifyRef as _};
 
 #[derive(Deserialize)]
 struct MlKemNISTKAT {
@@ -41,30 +42,30 @@ macro_rules! impl_nist_known_answer_tests {
                 serde_json::from_reader(reader).expect("Could not deserialize KAT file.");
 
             for kat in nist_kats {
-                let key_pair = generate_key_pair(kat.key_generation_seed);
+                let key_pair = generate_key_pair(kat.key_generation_seed.classify());
 
                 assert!(validate_public_key(key_pair.public_key()));
 
-                let public_key_hash = sha256(key_pair.pk());
+                let public_key_hash = sha256(key_pair.pk()).declassify();
                 eprintln!("pk hash: {}", hex::encode(public_key_hash));
-                let secret_key_hash = sha256(key_pair.sk());
+                let secret_key_hash = sha256(key_pair.sk().declassify_ref()).declassify();
 
                 assert_eq!(public_key_hash, kat.sha3_256_hash_of_public_key, "lhs: computed public key hash, rhs: hash from kat");
                 assert_eq!(secret_key_hash, kat.sha3_256_hash_of_secret_key, "lhs: computed secret key hash, rhs: hash from kat");
 
                 let (ciphertext, shared_secret) =
-                encapsulate(key_pair.public_key(), kat.encapsulation_seed);
-                let ciphertext_hash = sha256(ciphertext.as_ref());
+                encapsulate(key_pair.public_key(), kat.encapsulation_seed.classify());
+                let ciphertext_hash = sha256(ciphertext.as_ref()).declassify();
 
                 assert_eq!(ciphertext_hash, kat.sha3_256_hash_of_ciphertext, "lhs: computed ciphertext hash, rhs: hash from akt");
-                assert_eq!(shared_secret.as_ref(), kat.shared_secret, "lhs: computed shared secret from encapsulate, rhs: shared secret from kat");
+                assert_eq!(shared_secret.declassify().as_ref(), kat.shared_secret, "lhs: computed shared secret from encapsulate, rhs: shared secret from kat");
 
 
                 assert!(validate_private_key(key_pair.private_key(), &ciphertext));
 
                 let shared_secret_from_decapsulate =
                 decapsulate(key_pair.private_key(), &ciphertext);
-                assert_eq!(shared_secret_from_decapsulate, shared_secret.as_ref(), "lhs: shared secret computed via decapsulation, rhs: shared secret computed via encapsulation");
+                assert_eq!(shared_secret_from_decapsulate.declassify(), shared_secret.declassify().as_ref(), "lhs: shared secret computed via decapsulation, rhs: shared secret computed via encapsulation");
             }
         }
     };
@@ -136,30 +137,30 @@ macro_rules! impl_kats {
                 serde_json::from_reader(reader).expect("Could not deserialize KAT file.");
 
             for kat in nist_kats {
-                let key_pair = generate_key_pair(kat.key_generation_seed);
+                let key_pair = generate_key_pair(kat.key_generation_seed.classify());
 
                 assert!(validate_public_key(key_pair.public_key()));
 
-                let public_key_hash = sha256(key_pair.pk());
-                let secret_key_hash = sha256(key_pair.sk());
+                let public_key_hash = sha256(key_pair.pk()).declassify();
+                let secret_key_hash = sha256(key_pair.sk().declassify_ref()).declassify();
 
                 assert_eq!(public_key_hash, kat.sha3_256_hash_of_public_key, "lhs: computed public key hash, rhs: hash from kat");
                 assert_eq!(secret_key_hash, kat.sha3_256_hash_of_secret_key, "lhs: computed secret key hash, rhs: hash from kat");
 
                 // Encapsulate
                 let (ciphertext, shared_secret) =
-                encapsulate(key_pair.public_key(), kat.encapsulation_seed);
-                let ciphertext_hash = sha256(ciphertext.as_ref());
+                encapsulate(key_pair.public_key(), kat.encapsulation_seed.classify());
+                let ciphertext_hash = sha256(ciphertext.as_ref()).declassify();
 
                 assert_eq!(ciphertext_hash, kat.sha3_256_hash_of_ciphertext, "lhs: computed ciphertext hash, rhs: hash from akt");
-                assert_eq!(shared_secret.as_ref(), kat.shared_secret, "lhs: computed shared secret from encapsulate, rhs: shared secret from kat");
+                assert_eq!(shared_secret.declassify().as_ref(), kat.shared_secret, "lhs: computed shared secret from encapsulate, rhs: shared secret from kat");
 
                 // Decapsulate
                 assert!(validate_private_key(key_pair.private_key(), &ciphertext));
 
                 let shared_secret_from_decapsulate =
                 decapsulate(key_pair.private_key(), &ciphertext);
-                assert_eq!(shared_secret_from_decapsulate, shared_secret.as_ref(), "lhs: shared secret computed via decapsulation, rhs: shared secret computed via encapsulation");
+                assert_eq!(shared_secret_from_decapsulate.declassify(), shared_secret.declassify().as_ref(), "lhs: shared secret computed via decapsulation, rhs: shared secret computed via encapsulation");
             }
         }
     };
