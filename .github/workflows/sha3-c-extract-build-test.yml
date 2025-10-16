@@ -22,7 +22,6 @@ jobs:
       image: ghcr.io/cryspen/libcrux-c:latest
     defaults:
       run:
-        working-directory: c
         shell: bash
     steps:
       - uses: actions/checkout@v5
@@ -30,6 +29,9 @@ jobs:
       - name: Extract C
         run: |
           export HOME=/home/user
+          pwd
+          ls
+          cd c
           ./extract-sha3.sh
 
       - name: Upload C extraction
