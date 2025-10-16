@@ -82,7 +82,9 @@ pub(crate) trait Hash {
 pub(crate) mod portable {
     use super::*;
     use libcrux_iot_sha3::portable::{self, incremental, KeccakState};
-    use libcrux_secrets::{ClassifyRefMut as _, DeclassifyRef as _};
+    #[cfg(not(hax))]
+    use libcrux_secrets::ClassifyRefMut as _;
+    use libcrux_secrets::DeclassifyRef as _;
     /// The state.
     ///
     /// It's only used for SHAKE128.
@@ -168,9 +170,19 @@ pub(crate) mod portable {
         );
 
         for i in 0..outputs.len() {
+            // XXX: We need a separate version for hax, entirely without
+            // classification. The reason is that hax does not support for
+            // `&mut`-returning functions.
+            // (see https://github.com/cryspen/hax/issues/420)
+            #[cfg(not(hax))]
             incremental::shake128_squeeze_first_three_blocks(
                 &mut st.shake128_state[i],
                 outputs[i].classify_ref_mut(),
+            );
+            #[cfg(hax)]
+            incremental::shake128_squeeze_first_three_blocks(
+                &mut st.shake128_state[i],
+                &mut outputs[i],
             );
         }
     }
@@ -178,10 +190,17 @@ pub(crate) mod portable {
     #[inline(always)]
     fn shake128_squeeze_next_block(st: &mut PortableHash, outputs: &mut [[u8; BLOCK_SIZE]]) {
         for i in 0..outputs.len() {
+            // XXX: We need a separate version for hax, entirely without
+            // classification. The reason is that hax does not support for
+            // `&mut`-returning functions.
+            // (see https://github.com/cryspen/hax/issues/420)
+            #[cfg(not(hax))]
             incremental::shake128_squeeze_next_block(
                 &mut st.shake128_state[i],
                 outputs[i].classify_ref_mut(),
             );
+            #[cfg(hax)]
+            incremental::shake128_squeeze_next_block(&mut st.shake128_state[i], &mut outputs[i]);
         }
     }
 

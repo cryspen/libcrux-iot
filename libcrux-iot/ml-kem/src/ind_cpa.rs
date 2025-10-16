@@ -93,9 +93,20 @@ pub(crate) fn serialize_public_key_mut<
     serialized: &mut [u8],
     scratch: &mut Vector,
 ) {
+    // XXX: We need a separate version for hax, entirely without
+    // classification. The reason is that hax does not support for
+    // `&mut`-returning functions.
+    // (see https://github.com/cryspen/hax/issues/420)
+    #[cfg(not(hax))]
     serialize_vector::<K, Vector>(
         t_as_ntt,
         (&mut serialized[0..ranked_bytes_per_ring_element(K)]).classify_ref_mut(),
+        scratch,
+    );
+    #[cfg(hax)]
+    serialize_vector::<K, Vector>(
+        t_as_ntt,
+        &mut serialized[0..ranked_bytes_per_ring_element(K)],
         scratch,
     );
 
