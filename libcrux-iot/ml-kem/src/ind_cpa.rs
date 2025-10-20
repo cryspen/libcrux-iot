@@ -75,7 +75,7 @@ use unpacked::*;
     $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
     length $seed_for_a == sz 32 /\
     (forall (i:nat). i < v $K ==>
-        Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index $t_as_ntt i))"#))]
+        Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index $t_as_ntt i))"#))]
 #[hax_lib::ensures(|res|
     fstar!(r#"${serialized}_future == 
                         Seq.append (Spec.MLKEM.vector_encode_12 #$K
