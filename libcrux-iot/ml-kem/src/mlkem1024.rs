@@ -29,6 +29,17 @@ const PRF_OUTPUT_SIZE2: usize = ETA2_RANDOMNESS_SIZE * RANK;
 
 const IMPLICIT_REJECTION_HASH_INPUT_SIZE: usize = SHARED_SECRET_SIZE + CPA_PKE_CIPHERTEXT_SIZE;
 
+/// The ML-KEM 1024 algorithms
+pub struct MlKem1024;
+
+#[cfg(not(any(hax, eurydice)))]
+crate::impl_kem_trait!(
+    MlKem1024,
+    MlKem1024PublicKey,
+    MlKem1024PrivateKey,
+    MlKem1024Ciphertext
+);
+
 /// An ML-KEM 1024 Ciphertext
 pub type MlKem1024Ciphertext = MlKemCiphertext<CPA_PKE_CIPHERTEXT_SIZE>;
 /// An ML-KEM 1024 Private key
@@ -409,6 +420,16 @@ pub mod rand {
 pub(crate) mod kyber {
 
     use super::*;
+
+    /// The Kyber 1024 algorithms
+    pub struct Kyber1024;
+
+    crate::impl_kem_trait!(
+        Kyber1024,
+        MlKem1024PublicKey,
+        MlKem1024PrivateKey,
+        MlKem1024Ciphertext
+    );
 
     /// Generate Kyber 1024 Key Pair
     ///

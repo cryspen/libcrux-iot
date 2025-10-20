@@ -31,6 +31,7 @@ libcrux-iot-sha3 = { path = "../sha3" , features = [
 ] }
 hax-lib.workspace = true
 libcrux-secrets.workspace = true
+libcrux-traits = { git = "https://github.com/cryspen/libcrux/", version = "0.0.3", features = ["generic-tests"]}
 tls_codec = { version = "0.4.2", features = [
     "derive",
 ], default-features = false, optional = true }
@@ -57,7 +58,13 @@ rand = ["dep:rand"]
 std = ["alloc", "rand/std", "tls_codec/std"]
 alloc = []
 
-check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-iot-sha3/check-secret-independence"]
+
+check-secret-independence = [
+                          "libcrux-secrets/check-secret-independence",
+                          "libcrux-iot-sha3/check-secret-independence",
+                          "libcrux-traits/check-secret-independence"
+                          ]
+
 
 [dev-dependencies]
 rand = { version = "0.9" }
