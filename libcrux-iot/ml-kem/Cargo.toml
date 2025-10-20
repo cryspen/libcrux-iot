@@ -65,6 +65,8 @@ check-secret-independence = [
                           "libcrux-traits/check-secret-independence"
                           ]
 
+# PQCP Common APIs
+pqcp = []
 
 [dev-dependencies]
 rand = { version = "0.9" }

@@ -49,6 +49,10 @@ crate::impl_kem_trait!(
     MlKem768Ciphertext
 );
 
+// Provide the (packed) PQCP APIs
+#[cfg(feature = "pqcp")]
+crate::pqcp::pqcp_api!("use libcrux_ml_kem::mlkem768::pqcp::*;", MlKem768, " 768 ");
+
 /// An ML-KEM 768 Ciphertext
 pub type MlKem768Ciphertext = MlKemCiphertext<CPA_PKE_CIPHERTEXT_SIZE>;
 /// An ML-KEM 768 Private key

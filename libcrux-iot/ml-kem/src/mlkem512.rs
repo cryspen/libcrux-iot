@@ -42,6 +42,10 @@ crate::impl_kem_trait!(
     MlKem512Ciphertext
 );
 
+// Provide the (packed) PQCP APIs
+#[cfg(feature = "pqcp")]
+crate::pqcp::pqcp_api!("use libcrux_ml_kem::mlkem512::pqcp::*;", MlKem512, " 512 ");
+
 /// An ML-KEM 512 Ciphertext
 pub type MlKem512Ciphertext = MlKemCiphertext<CPA_PKE_CIPHERTEXT_SIZE>;
 /// An ML-KEM 512 Private key
