@@ -31,10 +31,16 @@ libcrux-iot-sha3 = { path = "../sha3" , features = [
 ] }
 hax-lib.workspace = true
 libcrux-secrets.workspace = true
+tls_codec = { version = "0.4.2", features = [
+    "derive",
+], default-features = false, optional = true }
 
 [features]
 # By default all variants and std are enabled.
 default = ["mlkem512", "mlkem768", "mlkem1024"]
+
+# Serialization & Deserialization using tls_codec
+codec = ["dep:tls_codec"]
 
 # Features for the different key sizes of ML-KEM
 mlkem512 = []
@@ -48,7 +54,8 @@ kyber = []
 rand = ["dep:rand"]
 
 # std support
-std = []
+std = ["alloc", "rand/std", "tls_codec/std"]
+alloc = []
 
 check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-iot-sha3/check-secret-independence"]
 
