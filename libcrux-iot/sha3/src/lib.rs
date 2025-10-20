@@ -10,6 +10,10 @@ mod keccak;
 mod lane;
 mod state;
 
+#[cfg(not(any(hax, eurydice)))]
+mod impl_digest_trait;
+#[cfg(not(any(hax, eurydice)))]
+pub use impl_digest_trait::*;
 /// A SHA3 224 Digest
 pub type Sha3_224Digest = [U8; 28];
 
