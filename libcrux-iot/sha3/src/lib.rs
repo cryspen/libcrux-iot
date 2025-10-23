@@ -78,7 +78,7 @@ pub const fn digest_size(mode: Algorithm) -> usize {
 pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[u8]) -> [U8; LEN] {
     debug_assert!(payload.len() <= u32::MAX as usize);
 
-    let mut out = [0u8.classify(); LEN];
+    let mut out = [0u8; LEN].classify();
     match algorithm {
         Algorithm::Sha224 => portable::sha224(&mut out, payload),
         Algorithm::Sha256 => portable::sha256(&mut out, payload),
@@ -93,7 +93,7 @@ pub use hash as sha3;
 
 /// SHA3 224
 pub fn sha224(data: &[u8]) -> Sha3_224Digest {
-    let mut out = [0u8.classify(); 28];
+    let mut out = [0u8; 28].classify();
     sha224_ema(&mut out, data);
     out
 }
@@ -111,7 +111,7 @@ pub fn sha224_ema(digest: &mut [U8], payload: &[u8]) {
 
 /// SHA3 256
 pub fn sha256(data: &[u8]) -> Sha3_256Digest {
-    let mut out = [0u8.classify(); 32];
+    let mut out = [0u8; 32].classify();
     sha256_ema(&mut out, data);
     out
 }
@@ -126,7 +126,7 @@ pub fn sha256_ema(digest: &mut [U8], payload: &[u8]) {
 
 /// SHA3 384
 pub fn sha384(data: &[u8]) -> Sha3_384Digest {
-    let mut out = [0u8.classify(); 48];
+    let mut out = [0u8; 48].classify();
     sha384_ema(&mut out, data);
     out
 }
@@ -141,7 +141,7 @@ pub fn sha384_ema(digest: &mut [U8], payload: &[u8]) {
 
 /// SHA3 512
 pub fn sha512(data: &[u8]) -> Sha3_512Digest {
-    let mut out = [0u8.classify(); 64];
+    let mut out = [0u8; 64].classify();
     sha512_ema(&mut out, data);
     out
 }
@@ -159,7 +159,7 @@ pub fn sha512_ema(digest: &mut [U8], payload: &[u8]) {
 /// Note that the output length `BYTES` must fit into 32 bit. If it is longer,
 /// the output will only return `u32::MAX` bytes.
 pub fn shake128<const BYTES: usize>(data: &[u8]) -> [U8; BYTES] {
-    let mut out = [0u8.classify(); BYTES];
+    let mut out = [0u8; BYTES].classify();
     portable::keccakx1::<168, 0x1fu8>(data, &mut out);
     out
 }
@@ -176,7 +176,7 @@ pub fn shake128_ema(out: &mut [U8], data: &[u8]) {
 /// Note that the output length `BYTES` must fit into 32 bit. If it is longer,
 /// the output will only return `u32::MAX` bytes.
 pub fn shake256<const BYTES: usize>(data: &[u8]) -> [U8; BYTES] {
-    let mut out = [0u8.classify(); BYTES];
+    let mut out = [0u8; BYTES].classify();
     portable::keccakx1::<136, 0x1fu8>(data, &mut out);
     out
 }
