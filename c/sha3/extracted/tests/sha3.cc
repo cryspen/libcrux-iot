@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 
-#include "libcrux_iot_sha3.h"
+#include "libcrux_iot_sha3_portable.h"
 
 using namespace std;
 
