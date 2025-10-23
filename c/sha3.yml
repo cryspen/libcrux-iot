@@ -25,33 +25,6 @@ files:
         - [libcrux_iot_sha3, state, "*"]
         - [libcrux_iot_sha3, lane, "*"]
 
-  # Public API header for SHA3
-  - name: libcrux_iot_sha3
-    inline_static: true
-    api:
-      exact:
-        - [libcrux_iot_sha3, hash]
-        - [libcrux_iot_sha3, sha224]
-        - [libcrux_iot_sha3, sha256]
-        - [libcrux_iot_sha3, sha384]
-        - [libcrux_iot_sha3, sha512]
-        - [libcrux_iot_sha3, keccakx1]
-        - [libcrux_iot_sha3, shake128]
-        - [libcrux_iot_sha3, shake256]
-        - [libcrux_iot_sha3, shake128_ema]
-        - [libcrux_iot_sha3, shake256_ema]
-        - [libcrux_iot_sha3, sha224_ema]
-        - [libcrux_iot_sha3, sha256_ema]
-        - [libcrux_iot_sha3, sha384_ema]
-        - [libcrux_iot_sha3, sha512_ema]
-        - [libcrux_iot_sha3, portable, sha224]
-        - [libcrux_iot_sha3, portable, sha256]
-        - [libcrux_iot_sha3, portable, sha384]
-        - [libcrux_iot_sha3, portable, sha512]
-        - [libcrux_iot_sha3, portable, keccakx1]
-        - [libcrux_iot_sha3, portable, shake128]
-        - [libcrux_iot_sha3, portable, shake256]
-
   # Common parts of SHA3 (this catches stuff that hasn't matched above). Must
   # come after the (more precise) patterns above concerning platform-specific hash_functions
   - name: libcrux_iot_sha3_internal
@@ -67,17 +40,36 @@ files:
   - name: libcrux_iot_core
     private:
       monomorphizations_of:
-        - [ "*" ]
         - [ core, "*"]
         - [ libcrux_secrets, "*"]
       monomorphizations_using:
         - [ Eurydice, "*" ]
       patterns:
-        - [ "*" ]      
         - [ core, "*"]
         - [ libcrux_secrets, "*"]
     api:
       - [Eurydice, "*"]
+      
+  # - name: libcrux_iot_core
+  #   private:
+  #     monomorphizations_of:
+  #       - [ "*" ]
+  #       # - [ core, "*"]
+  #       # - [ libcrux_secrets, "*"]
+  #     monomorphizations_using:
+  #       - [ "*" ]
+  #       # - [ Eurydice, "*" ]
+  #       # - [ libcrux_secrets, "*"]
+  #     patterns:
+  #       - [ "*" ]      
+  #       # - [ core, "*"]
+  #       # - [ libcrux_secrets, "*"]
+  #   # api:
+  #   #   patterns:
+  #   #     - [Eurydice, "*"]
+  #   #   monomorphizations_using:
+  #   #     - [ Eurydice, "*" ]
+  #   #     - [ libcrux_secrets, "*"]
 
 #   - name: libcrux_iot_core
 #     library: true
