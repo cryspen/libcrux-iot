@@ -14,7 +14,7 @@ impl Lane2U32 {
 
     #[inline(always)]
     pub(crate) fn zero() -> Self {
-        Self::from_ints([0.classify(), 0.classify()])
+        Self::from_ints([0, 0].classify())
     }
 
     #[inline(always)]

@@ -104,26 +104,13 @@ impl KeccakState {
 
 #[inline(always)]
 fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], start: usize) {
-    use libcrux_secrets::{Classify, Declassify};
     debug_assert!(RATE <= blocks.len() && RATE % 8 == 0);
     let mut state_flat = [Lane2U32::zero(); 25];
     for i in 0..RATE / 8 {
         let offset = start + 8 * i;
-        let blocka0 = blocks[offset].declassify();
-        let blocka1 = blocks[offset + 1].declassify();
-        let blocka2 = blocks[offset + 2].declassify();
-        let blocka3 = blocks[offset + 3].declassify();
-        let a = u32::from_le_bytes([blocka0, blocka1, blocka2, blocka3]).classify();
-
-        let blockb0 = blocks[offset + 4].declassify();
-        let blockb1 = blocks[offset + 5].declassify();
-        let blockb2 = blocks[offset + 6].declassify();
-        let blockb3 = blocks[offset + 7].declassify();
-        let b = u32::from_le_bytes([blockb0, blockb1, blockb2, blockb3]).classify();
-
-        // let a = U32::from_le_bytes(blocks[offset..offset + 4].try_into().unwrap());
-        // let b = U32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
-        state_flat[i] = Lane2U32::from_ints([a, b]).interleave();
+        let a = U32::from_le_bytes(blocks[offset..offset + 4].try_into().unwrap());
+        let b = U32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
+        state_flat[i] = Lane2U32::from([a, b]).interleave();
     }
     for i in 0..RATE / 8 {
         let got = state.get_lane(i / 5, i % 5);
