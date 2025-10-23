@@ -587,23 +587,6 @@ typedef struct {
   size_t capacity; /* the size of the allocation, in number of elements */
 } Eurydice_vec, alloc_vec_Vec;
 
-// This is a helper that Eurydice has special knowledge about. Essentially,
-// allocation functions return a result type that has been monomorphized, say,
-// Result_XY; this means we need to do something like:
-//   Eurydice_vec v = try_with_capacity(len, sz);
-//   Result_XY r = v.ptr == NULL ? (Result_XY) { .tag = core_result_Ok, .case_Ok
-//   = v }
-//     : (Result_XY) { .tag = core_result_Error, .case_Error = ... };
-// but with a macro (since we don't have templates).
-// However, unless we allow statement-expressions (GCC extension), we cannot do
-// the above with an expression, since we need to name the result of
-// try_with_capacity to avoid evaluating it twice.
-static inline Eurydice_vec Eurydice_vec_alloc2(size_t len, size_t element_sz) {
-  return ((Eurydice_vec){.ptr = (char *)EURYDICE_MALLOC(len * element_sz),
-                         .len = len,
-                         .capacity = len});
-}
-
 #define Eurydice_vec_alloc(len, t, _) (Eurydice_vec_alloc2((len), sizeof(t)))
 #define Eurydice_vec_overflows(len, t, _) (!((len) <= SIZE_MAX / (sizeof(t))))
 #define Eurydice_vec_failed(v, _, _1) ((v).ptr == NULL)
