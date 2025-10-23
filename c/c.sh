@@ -197,7 +197,7 @@ rm -f code_gen.txt
 echo "This code was generated with the following revisions:" >> code_gen.txt
 echo -n "Charon: " >> code_gen.txt
 echo "$CHARON_REV" >> code_gen.txt
-echo -n "Eurydice: " >> code_gen.txta
+echo -n "Eurydice: " >> code_gen.txt
 echo "$EURYDICE_REV" >> code_gen.txt
 echo -n "Karamel: " >> code_gen.txt
 echo "$KRML_REV" >> code_gen.txt

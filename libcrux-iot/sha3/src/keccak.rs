@@ -26,7 +26,7 @@ pub(crate) struct KeccakXofState<const RATE: usize> {
 impl<const RATE: usize> KeccakXofState<RATE> {
     /// An all zero block
     pub(crate) fn zero_block() -> [U8; RATE] {
-        [0; RATE].classify()
+        [0.classify(); RATE]
     }
 
     /// Generate a new keccak xof state.
@@ -129,7 +129,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
         // Consume the remaining bytes.
         // This may be in the local buffer or in the input.
         let input_len = inputs.len();
-        let mut blocks = [0u8; 200].classify();
+        let mut blocks = [0u8.classify(); 200];
         if self.buf_len > 0 {
             blocks[0..self.buf_len].copy_from_slice(&self.buf[0..self.buf_len]);
         }
@@ -2129,7 +2129,7 @@ pub(crate) fn absorb_final<const RATE: usize, const DELIM: u8>(
 ) {
     debug_assert!(len < RATE); // && last[0].len() < RATE
 
-    let mut blocks = [0u8; WIDTH].classify();
+    let mut blocks = [0u8.classify(); WIDTH];
     if len > 0 {
         blocks[0..len].copy_from_slice(&last[start..start + len]);
     }
@@ -2178,14 +2178,14 @@ pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, 
 #[inline(always)]
 pub(crate) fn squeeze_last<const RATE: usize>(mut s: KeccakState, out: &mut [U8]) {
     keccakf1600(&mut s);
-    let mut b = [0u8; 200].classify();
+    let mut b = [0u8.classify(); 200];
     s.store_block_full::<RATE>(&mut b);
     out.copy_from_slice(&b[0..out.len()]);
 }
 
 #[inline(always)]
 pub(crate) fn squeeze_first_and_last<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
-    let mut b = [0u8; 200].classify();
+    let mut b = [0u8.classify(); 200];
     s.store_block_full::<RATE>(&mut b);
     out.copy_from_slice(&b[0..out.len()]);
 }

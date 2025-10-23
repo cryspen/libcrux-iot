@@ -1,37 +1,131 @@
-naming:
-  skip_prefix:
-    - ["libcrux-iot-sha3"]
+# naming:
+#   skip_prefix:
+#     - ["libcrux-iot-sha3"]
 
 files:
+  # Portable SHA3
+  - name: libcrux_iot_sha3_portable
+    api:
+      patterns:
+        - [libcrux_iot_sha3, "*"]
+        - [libcrux_iot_sha3, portable, "*"]
+        - [libcrux_iot_sha3, keccak, "*"]
+        - [libcrux_iot_sha3, state, "*"]
+        - [libcrux_iot_sha3, lane, "*"]
+      monomorphizations_of:
+        - [libcrux_iot_sha3, "*"]
+        - [libcrux_iot_sha3, portable, "*"]
+        - [libcrux_iot_sha3, keccak, "*"]
+        - [libcrux_iot_sha3, state, "*"]
+        - [libcrux_iot_sha3, lane, "*"]
+      monomorphizations_using:
+        - [libcrux_iot_sha3, "*"]
+        - [libcrux_iot_sha3, portable, "*"]
+        - [libcrux_iot_sha3, keccak, "*"]
+        - [libcrux_iot_sha3, state, "*"]
+        - [libcrux_iot_sha3, lane, "*"]
+
+  # Public API header for SHA3
+  - name: libcrux_iot_sha3
+    inline_static: true
+    api:
+      exact:
+        - [libcrux_iot_sha3, hash]
+        - [libcrux_iot_sha3, sha224]
+        - [libcrux_iot_sha3, sha256]
+        - [libcrux_iot_sha3, sha384]
+        - [libcrux_iot_sha3, sha512]
+        - [libcrux_iot_sha3, keccakx1]
+        - [libcrux_iot_sha3, shake128]
+        - [libcrux_iot_sha3, shake256]
+        - [libcrux_iot_sha3, shake128_ema]
+        - [libcrux_iot_sha3, shake256_ema]
+        - [libcrux_iot_sha3, sha224_ema]
+        - [libcrux_iot_sha3, sha256_ema]
+        - [libcrux_iot_sha3, sha384_ema]
+        - [libcrux_iot_sha3, sha512_ema]
+        - [libcrux_iot_sha3, portable, sha224]
+        - [libcrux_iot_sha3, portable, sha256]
+        - [libcrux_iot_sha3, portable, sha384]
+        - [libcrux_iot_sha3, portable, sha512]
+        - [libcrux_iot_sha3, portable, keccakx1]
+        - [libcrux_iot_sha3, portable, shake128]
+        - [libcrux_iot_sha3, portable, shake256]
+
+  # Common parts of SHA3 (this catches stuff that hasn't matched above). Must
+  # come after the (more precise) patterns above concerning platform-specific hash_functions
+  - name: libcrux_iot_sha3_internal
+    internal:
+      patterns:
+        - [libcrux_iot_sha3, "*"]
+      monomorphizations_of:
+        - [libcrux_iot_sha3, "*"]
+      monomorphizations_using:
+        - [libcrux_iot_sha3, "*"]
+    inline_static: true
+
   - name: libcrux_iot_core
     private:
       monomorphizations_of:
-        - [core, '*']
-        - ["libcrux_secrets", "public_integers", classify]
-        - ["libcrux_secrets", "public_integers", classify_ref]
-        - ["libcrux_secrets", "public_integers", declassify]
+        - [ "*" ]
+        - [ core, "*"]
+        - [ libcrux_secrets, "*"]
       monomorphizations_using:
-        - [ "Eurydice", "*"]
+        - [ Eurydice, "*" ]
       patterns:
-        - [core, '*']
-        - ["libcrux_secrets", "public_integers", classify]
-        - ["libcrux_secrets", "public_integers", classify_ref]
-        - ["libcrux_secrets", "public_integers", declassify]
+        - [ "*" ]      
+        - [ core, "*"]
+        - [ libcrux_secrets, "*"]
     api:
-      patterns:
-        - [ "Eurydice", "*"]
+      - [Eurydice, "*"]
 
-  - name: libcrux_iot_sha3
-    api:
-      patterns:
-        - ["libcrux_iot_sha3", "*"]
-        - [ "libcrux_iot_sha3", "portable", "*" ]
-        - [ "libcrux_iot_sha3", "portable", "incremental", "*" ]
-      monomorphizations_of:
-        - [ "libcrux_iot_sha3", "portable", "keccakx1"]
-        - [ "libcrux_iot_sha3", "portable", "incremental", "Xof"]
-        - [ "libcrux_iot_sha3", "keccak", "KeccakXofState"]
-      monomorphizations_using:
-        - [ "libcrux_iot_sha3", "portable", "*"]
-        - [ "libcrux_iot_sha3", "portable", "incremental", "*"]
-        - [ "libcrux_iot_sha3", "keccak", "*"]
+#   - name: libcrux_iot_core
+#     library: true
+#     inline_static: true
+#     private:
+#       monomorphizations_of:
+#         - ["core", "*"]
+#         - ["libcrux_secrets", "public_integers", "classify"]
+#         - ["libcrux_secrets", "public_integers", "classify_ref"]
+#         - ["libcrux_secrets", "public_integers", "declassify"]
+#       monomorphizations_using:
+#         - [ "Eurydice", "*"]
+#       patterns:
+#         - ["core", "*"]
+#         - ["libcrux_secrets", "public_integers", "classify"]
+#         - ["libcrux_secrets", "public_integers", "classify_ref"]
+#         - ["libcrux_secrets", "public_integers", "declassify"]
+#     api:
+#       patterns:
+#         - [ "Eurydice", "*"]
+
+#   - name: libcrux_iot_sha3
+#     api:
+#       - [libcrux_iot_sha3]
+#     private:
+#       patterns:
+#         - [libcrux_iot_sha3, portable, "*"]
+#         - [libcrux_iot_sha3, keccak, "*"]
+#       monomorphizations_of:
+#         - [libcrux_iot_sha3]
+#         - [libcrux_iot_sha3, portable, "*"]
+#       monomorhpizations_using:
+#         - [libcrux_iot_sha3]
+#         - [libcrux_iot_sha3, portable, "*"]
+#     #   patterns:
+#     #     - ["libcrux_iot_sha3", "*"]
+#     #     - [ "libcrux_iot_sha3", "portable", "*" ]
+#     #     - [ "libcrux_iot_sha3", "portable", "incremental", "*" ]
+#     #   monomorphizations_of:
+#     #     - [ "libcrux_iot_sha3", "portable", "keccakx1"]
+#     #     - [ "libcrux_iot_sha3", "portable", "incremental", "Xof"]
+#     #     - [ "libcrux_iot_sha3", "keccak", "KeccakXofState"]
+#     #   monomorphizations_using:
+#     #     - [ "libcrux_iot_sha3", "portable", "*"]
+#     #     - [ "libcrux_iot_sha3", "portable", "incremental", "*"]
+#     #     - [ "libcrux_iot_sha3", "keccak", "*"]
+#     # internal:
+#     #   monomorphizations_of:
+#     #     - ["libcrux_iot_sha3", "*"]
+
+#catch-all for things that have not matched earlier
