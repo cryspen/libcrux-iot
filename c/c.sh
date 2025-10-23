@@ -105,13 +105,13 @@ for dep in "${deps[@]}"; do
   dep_crate="libcrux-iot-$dep"
   dep_crate_=$(sed s/-/_/g <<<$dep_crate)
   dep_llbc_path=$workspace_root/${dep_crate_}.llbc
-  dep_llbs+=("$dep_llbc_path")
+  dep_llbcs+=("$dep_llbc_path")
 done
 for dep in "${libcrux_deps[@]}"; do
   dep_crate="libcrux-$dep"
   dep_crate_=$(sed s/-/_/g <<<$dep_crate)
-  dep_llbc_path=$workspace_root/libcrux/${dep_crate_}.llbc
-  dep_llbs+=("$dep_llbc_path")
+  dep_llbc_path=$libcrux_workspace_root/${dep_crate_}.llbc
+  dep_llbcs+=("$dep_llbc_path")
 done
 
 if [[ "$no_charon" = 0 ]]; then
