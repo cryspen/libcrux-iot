@@ -8,7 +8,7 @@
  * Eurydice:
  * Karamel:
  * F*: unset
- * Libcrux: 9b433af082b22712567a1ff8812d83a0e110625b
+ * Libcrux: ff6b1583cfa91b1fb03fffe855308b44e2728708
  */
 
 #include "libcrux_iot_sha3_portable.h"
@@ -60,9 +60,10 @@ This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
 */
 KRML_MUSTINLINE libcrux_iot_sha3_lane_Lane2U32
 libcrux_iot_sha3_lane_zero_8d(void) {
-  uint32_t buf[2U] = {libcrux_secrets_int_public_integers_classify_27_df(0U),
-                      libcrux_secrets_int_public_integers_classify_27_df(0U)};
-  return libcrux_iot_sha3_lane_from_ints_8d(buf);
+  uint32_t ret[2U];
+  uint32_t buf[2U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_93(buf, ret);
+  return libcrux_iot_sha3_lane_from_ints_8d(ret);
 }
 
 /**
@@ -86,6 +87,20 @@ libcrux_iot_sha3_state_new_18(void) {
   memcpy(lit.d, repeat_expression,
          (size_t)5U * sizeof(libcrux_iot_sha3_lane_Lane2U32));
   lit.i = (size_t)0U;
+  return lit;
+}
+
+/**
+This function found in impl {core::convert::From<@Array<u32, 2usize>> for
+libcrux_iot_sha3::lane::Lane2U32}
+*/
+KRML_MUSTINLINE libcrux_iot_sha3_lane_Lane2U32
+libcrux_iot_sha3_lane_from_47(uint32_t value[2U]) {
+  /* Passing arrays by value in Rust generates a copy in C */
+  uint32_t copy_of_value[2U];
+  memcpy(copy_of_value, value, (size_t)2U * sizeof(uint32_t));
+  libcrux_iot_sha3_lane_Lane2U32 lit;
+  memcpy(lit.fst, copy_of_value, (size_t)2U * sizeof(uint32_t));
   return lit;
 }
 
@@ -2608,32 +2623,27 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_2c(
   for (size_t i = (size_t)0U; i < (size_t)144U / (size_t)8U; i++) {
     size_t i0 = i;
     size_t offset = start + (size_t)8U * i0;
-    uint8_t blocka0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset, uint8_t, uint8_t *));
-    uint8_t blocka1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)1U, uint8_t, uint8_t *));
-    uint8_t blocka2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)2U, uint8_t, uint8_t *));
-    uint8_t blocka3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)3U, uint8_t, uint8_t *));
-    uint8_t buf[4U] = {blocka0, blocka1, blocka2, blocka3};
-    uint32_t a = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf));
-    uint8_t blockb0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)4U, uint8_t, uint8_t *));
-    uint8_t blockb1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)5U, uint8_t, uint8_t *));
-    uint8_t blockb2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)6U, uint8_t, uint8_t *));
-    uint8_t blockb3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)7U, uint8_t, uint8_t *));
-    uint8_t buf0[4U] = {blockb0, blockb1, blockb2, blockb3};
-    uint32_t b = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf0));
-    uint32_t buf1[2U] = {a, b};
+    uint8_t ret0[4U];
+    core_result_Result_12 dst0;
+    Eurydice_slice_to_array2(
+        &dst0,
+        Eurydice_slice_subslice3(blocks, offset, offset + (size_t)4U,
+                                 uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst0, ret0);
+    uint32_t a = core_num__u32__from_le_bytes(ret0);
+    uint8_t ret[4U];
+    core_result_Result_12 dst;
+    Eurydice_slice_to_array2(
+        &dst,
+        Eurydice_slice_subslice3(blocks, offset + (size_t)4U,
+                                 offset + (size_t)8U, uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst, ret);
+    uint32_t b = core_num__u32__from_le_bytes(ret);
+    uint32_t buf[2U] = {a, b};
     libcrux_iot_sha3_lane_Lane2U32 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(
-            libcrux_iot_sha3_lane_from_ints_8d(buf1));
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(buf));
     state_flat[i0] = uu____0;
   }
   for (size_t i = (size_t)0U; i < (size_t)144U / (size_t)8U; i++) {
@@ -2713,9 +2723,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_1e(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice last, size_t start,
     size_t len) {
   uint8_t blocks[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    blocks[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, blocks);
   if (len > (size_t)0U) {
     Eurydice_slice_copy(
         Eurydice_array_to_subslice3(blocks, (size_t)0U, len, uint8_t *),
@@ -2790,9 +2799,8 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_2c(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice out) {
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_2c(s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -2870,9 +2878,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_2c(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_2c(&s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -2962,32 +2969,27 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_5b(
   for (size_t i = (size_t)0U; i < (size_t)136U / (size_t)8U; i++) {
     size_t i0 = i;
     size_t offset = start + (size_t)8U * i0;
-    uint8_t blocka0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset, uint8_t, uint8_t *));
-    uint8_t blocka1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)1U, uint8_t, uint8_t *));
-    uint8_t blocka2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)2U, uint8_t, uint8_t *));
-    uint8_t blocka3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)3U, uint8_t, uint8_t *));
-    uint8_t buf[4U] = {blocka0, blocka1, blocka2, blocka3};
-    uint32_t a = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf));
-    uint8_t blockb0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)4U, uint8_t, uint8_t *));
-    uint8_t blockb1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)5U, uint8_t, uint8_t *));
-    uint8_t blockb2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)6U, uint8_t, uint8_t *));
-    uint8_t blockb3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)7U, uint8_t, uint8_t *));
-    uint8_t buf0[4U] = {blockb0, blockb1, blockb2, blockb3};
-    uint32_t b = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf0));
-    uint32_t buf1[2U] = {a, b};
+    uint8_t ret0[4U];
+    core_result_Result_12 dst0;
+    Eurydice_slice_to_array2(
+        &dst0,
+        Eurydice_slice_subslice3(blocks, offset, offset + (size_t)4U,
+                                 uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst0, ret0);
+    uint32_t a = core_num__u32__from_le_bytes(ret0);
+    uint8_t ret[4U];
+    core_result_Result_12 dst;
+    Eurydice_slice_to_array2(
+        &dst,
+        Eurydice_slice_subslice3(blocks, offset + (size_t)4U,
+                                 offset + (size_t)8U, uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst, ret);
+    uint32_t b = core_num__u32__from_le_bytes(ret);
+    uint32_t buf[2U] = {a, b};
     libcrux_iot_sha3_lane_Lane2U32 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(
-            libcrux_iot_sha3_lane_from_ints_8d(buf1));
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(buf));
     state_flat[i0] = uu____0;
   }
   for (size_t i = (size_t)0U; i < (size_t)136U / (size_t)8U; i++) {
@@ -3067,9 +3069,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_ad(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice last, size_t start,
     size_t len) {
   uint8_t blocks[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    blocks[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, blocks);
   if (len > (size_t)0U) {
     Eurydice_slice_copy(
         Eurydice_array_to_subslice3(blocks, (size_t)0U, len, uint8_t *),
@@ -3144,9 +3145,8 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice out) {
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_5b(s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -3200,9 +3200,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_5b(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_5b(&s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -3292,32 +3291,27 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_7a(
   for (size_t i = (size_t)0U; i < (size_t)104U / (size_t)8U; i++) {
     size_t i0 = i;
     size_t offset = start + (size_t)8U * i0;
-    uint8_t blocka0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset, uint8_t, uint8_t *));
-    uint8_t blocka1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)1U, uint8_t, uint8_t *));
-    uint8_t blocka2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)2U, uint8_t, uint8_t *));
-    uint8_t blocka3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)3U, uint8_t, uint8_t *));
-    uint8_t buf[4U] = {blocka0, blocka1, blocka2, blocka3};
-    uint32_t a = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf));
-    uint8_t blockb0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)4U, uint8_t, uint8_t *));
-    uint8_t blockb1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)5U, uint8_t, uint8_t *));
-    uint8_t blockb2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)6U, uint8_t, uint8_t *));
-    uint8_t blockb3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)7U, uint8_t, uint8_t *));
-    uint8_t buf0[4U] = {blockb0, blockb1, blockb2, blockb3};
-    uint32_t b = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf0));
-    uint32_t buf1[2U] = {a, b};
+    uint8_t ret0[4U];
+    core_result_Result_12 dst0;
+    Eurydice_slice_to_array2(
+        &dst0,
+        Eurydice_slice_subslice3(blocks, offset, offset + (size_t)4U,
+                                 uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst0, ret0);
+    uint32_t a = core_num__u32__from_le_bytes(ret0);
+    uint8_t ret[4U];
+    core_result_Result_12 dst;
+    Eurydice_slice_to_array2(
+        &dst,
+        Eurydice_slice_subslice3(blocks, offset + (size_t)4U,
+                                 offset + (size_t)8U, uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst, ret);
+    uint32_t b = core_num__u32__from_le_bytes(ret);
+    uint32_t buf[2U] = {a, b};
     libcrux_iot_sha3_lane_Lane2U32 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(
-            libcrux_iot_sha3_lane_from_ints_8d(buf1));
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(buf));
     state_flat[i0] = uu____0;
   }
   for (size_t i = (size_t)0U; i < (size_t)104U / (size_t)8U; i++) {
@@ -3397,9 +3391,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_7c(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice last, size_t start,
     size_t len) {
   uint8_t blocks[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    blocks[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, blocks);
   if (len > (size_t)0U) {
     Eurydice_slice_copy(
         Eurydice_array_to_subslice3(blocks, (size_t)0U, len, uint8_t *),
@@ -3474,9 +3467,8 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_7a(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice out) {
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_7a(s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -3530,9 +3522,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_7a(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_7a(&s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -3622,32 +3613,27 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_f8(
   for (size_t i = (size_t)0U; i < (size_t)72U / (size_t)8U; i++) {
     size_t i0 = i;
     size_t offset = start + (size_t)8U * i0;
-    uint8_t blocka0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset, uint8_t, uint8_t *));
-    uint8_t blocka1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)1U, uint8_t, uint8_t *));
-    uint8_t blocka2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)2U, uint8_t, uint8_t *));
-    uint8_t blocka3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)3U, uint8_t, uint8_t *));
-    uint8_t buf[4U] = {blocka0, blocka1, blocka2, blocka3};
-    uint32_t a = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf));
-    uint8_t blockb0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)4U, uint8_t, uint8_t *));
-    uint8_t blockb1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)5U, uint8_t, uint8_t *));
-    uint8_t blockb2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)6U, uint8_t, uint8_t *));
-    uint8_t blockb3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)7U, uint8_t, uint8_t *));
-    uint8_t buf0[4U] = {blockb0, blockb1, blockb2, blockb3};
-    uint32_t b = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf0));
-    uint32_t buf1[2U] = {a, b};
+    uint8_t ret0[4U];
+    core_result_Result_12 dst0;
+    Eurydice_slice_to_array2(
+        &dst0,
+        Eurydice_slice_subslice3(blocks, offset, offset + (size_t)4U,
+                                 uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst0, ret0);
+    uint32_t a = core_num__u32__from_le_bytes(ret0);
+    uint8_t ret[4U];
+    core_result_Result_12 dst;
+    Eurydice_slice_to_array2(
+        &dst,
+        Eurydice_slice_subslice3(blocks, offset + (size_t)4U,
+                                 offset + (size_t)8U, uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst, ret);
+    uint32_t b = core_num__u32__from_le_bytes(ret);
+    uint32_t buf[2U] = {a, b};
     libcrux_iot_sha3_lane_Lane2U32 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(
-            libcrux_iot_sha3_lane_from_ints_8d(buf1));
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(buf));
     state_flat[i0] = uu____0;
   }
   for (size_t i = (size_t)0U; i < (size_t)72U / (size_t)8U; i++) {
@@ -3727,9 +3713,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_96(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice last, size_t start,
     size_t len) {
   uint8_t blocks[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    blocks[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, blocks);
   if (len > (size_t)0U) {
     Eurydice_slice_copy(
         Eurydice_array_to_subslice3(blocks, (size_t)0U, len, uint8_t *),
@@ -3804,9 +3789,8 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_f8(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice out) {
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_f8(s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -3860,9 +3844,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_f8(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_f8(&s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -3953,9 +3936,8 @@ void libcrux_iot_sha3_sha224_ema(Eurydice_slice digest,
 */
 void libcrux_iot_sha3_sha224(Eurydice_slice data, uint8_t ret[28U]) {
   uint8_t out[28U];
-  for (size_t i = (size_t)0U; i < (size_t)28U; i++) {
-    out[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[28U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_ae(buf, out);
   libcrux_iot_sha3_sha224_ema(
       Eurydice_array_to_slice((size_t)28U, out, uint8_t), data);
   memcpy(ret, out, (size_t)28U * sizeof(uint8_t));
@@ -3974,9 +3956,8 @@ void libcrux_iot_sha3_sha256_ema(Eurydice_slice digest,
 */
 void libcrux_iot_sha3_sha256(Eurydice_slice data, uint8_t ret[32U]) {
   uint8_t out[32U];
-  for (size_t i = (size_t)0U; i < (size_t)32U; i++) {
-    out[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[32U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_ee0(buf, out);
   libcrux_iot_sha3_sha256_ema(
       Eurydice_array_to_slice((size_t)32U, out, uint8_t), data);
   memcpy(ret, out, (size_t)32U * sizeof(uint8_t));
@@ -3995,9 +3976,8 @@ void libcrux_iot_sha3_sha384_ema(Eurydice_slice digest,
 */
 void libcrux_iot_sha3_sha384(Eurydice_slice data, uint8_t ret[48U]) {
   uint8_t out[48U];
-  for (size_t i = (size_t)0U; i < (size_t)48U; i++) {
-    out[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[48U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_4d(buf, out);
   libcrux_iot_sha3_sha384_ema(
       Eurydice_array_to_slice((size_t)48U, out, uint8_t), data);
   memcpy(ret, out, (size_t)48U * sizeof(uint8_t));
@@ -4016,9 +3996,8 @@ void libcrux_iot_sha3_sha512_ema(Eurydice_slice digest,
 */
 void libcrux_iot_sha3_sha512(Eurydice_slice data, uint8_t ret[64U]) {
   uint8_t out[64U];
-  for (size_t i = (size_t)0U; i < (size_t)64U; i++) {
-    out[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[64U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_7b(buf, out);
   libcrux_iot_sha3_sha512_ema(
       Eurydice_array_to_slice((size_t)64U, out, uint8_t), data);
   memcpy(ret, out, (size_t)64U * sizeof(uint8_t));
@@ -4039,32 +4018,27 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_3a(
   for (size_t i = (size_t)0U; i < (size_t)168U / (size_t)8U; i++) {
     size_t i0 = i;
     size_t offset = start + (size_t)8U * i0;
-    uint8_t blocka0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset, uint8_t, uint8_t *));
-    uint8_t blocka1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)1U, uint8_t, uint8_t *));
-    uint8_t blocka2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)2U, uint8_t, uint8_t *));
-    uint8_t blocka3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)3U, uint8_t, uint8_t *));
-    uint8_t buf[4U] = {blocka0, blocka1, blocka2, blocka3};
-    uint32_t a = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf));
-    uint8_t blockb0 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)4U, uint8_t, uint8_t *));
-    uint8_t blockb1 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)5U, uint8_t, uint8_t *));
-    uint8_t blockb2 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)6U, uint8_t, uint8_t *));
-    uint8_t blockb3 = libcrux_secrets_int_public_integers_declassify_d8_90(
-        Eurydice_slice_index(blocks, offset + (size_t)7U, uint8_t, uint8_t *));
-    uint8_t buf0[4U] = {blockb0, blockb1, blockb2, blockb3};
-    uint32_t b = libcrux_secrets_int_public_integers_classify_27_df(
-        core_num__u32__from_le_bytes(buf0));
-    uint32_t buf1[2U] = {a, b};
+    uint8_t ret0[4U];
+    core_result_Result_12 dst0;
+    Eurydice_slice_to_array2(
+        &dst0,
+        Eurydice_slice_subslice3(blocks, offset, offset + (size_t)4U,
+                                 uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst0, ret0);
+    uint32_t a = core_num__u32__from_le_bytes(ret0);
+    uint8_t ret[4U];
+    core_result_Result_12 dst;
+    Eurydice_slice_to_array2(
+        &dst,
+        Eurydice_slice_subslice3(blocks, offset + (size_t)4U,
+                                 offset + (size_t)8U, uint8_t *),
+        Eurydice_slice, uint8_t[4U], core_array_TryFromSliceError);
+    core_result_unwrap_26_0a(dst, ret);
+    uint32_t b = core_num__u32__from_le_bytes(ret);
+    uint32_t buf[2U] = {a, b};
     libcrux_iot_sha3_lane_Lane2U32 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(
-            libcrux_iot_sha3_lane_from_ints_8d(buf1));
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(buf));
     state_flat[i0] = uu____0;
   }
   for (size_t i = (size_t)0U; i < (size_t)168U / (size_t)8U; i++) {
@@ -4144,9 +4118,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_c6(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice last, size_t start,
     size_t len) {
   uint8_t blocks[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    blocks[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, blocks);
   if (len > (size_t)0U) {
     Eurydice_slice_copy(
         Eurydice_array_to_subslice3(blocks, (size_t)0U, len, uint8_t *),
@@ -4221,9 +4194,8 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_3a(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice out) {
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_3a(s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -4277,9 +4249,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_3a(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
   uint8_t b[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    b[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, b);
   libcrux_iot_sha3_state_store_block_full_18_3a(&s, b);
   Eurydice_slice uu____0 = out;
   uint8_t *uu____1 = b;
@@ -4365,9 +4336,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_ad0(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice last, size_t start,
     size_t len) {
   uint8_t blocks[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    blocks[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, blocks);
   if (len > (size_t)0U) {
     Eurydice_slice_copy(
         Eurydice_array_to_subslice3(blocks, (size_t)0U, len, uint8_t *),
@@ -4452,20 +4422,6 @@ libcrux_iot_sha3::lane::Lane2U32}
 inline libcrux_iot_sha3_lane_Lane2U32 libcrux_iot_sha3_lane_clone_f6(
     libcrux_iot_sha3_lane_Lane2U32 *self) {
   return self[0U];
-}
-
-/**
-This function found in impl {core::convert::From<@Array<u32, 2usize>> for
-libcrux_iot_sha3::lane::Lane2U32}
-*/
-KRML_MUSTINLINE libcrux_iot_sha3_lane_Lane2U32
-libcrux_iot_sha3_lane_from_47(uint32_t value[2U]) {
-  /* Passing arrays by value in Rust generates a copy in C */
-  uint32_t copy_of_value[2U];
-  memcpy(copy_of_value, value, (size_t)2U * sizeof(uint32_t));
-  libcrux_iot_sha3_lane_Lane2U32 lit;
-  memcpy(lit.fst, copy_of_value, (size_t)2U * sizeof(uint32_t));
-  return lit;
 }
 
 /**
@@ -4762,9 +4718,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_f0_ad(
       libcrux_iot_sha3_keccak_absorb_full_f0_5b(self, inputs);
   size_t input_len = Eurydice_slice_len(inputs, uint8_t);
   uint8_t blocks[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    blocks[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, blocks);
   if (self->buf_len > (size_t)0U) {
     Eurydice_slice_copy(Eurydice_array_to_subslice3(blocks, (size_t)0U,
                                                     self->buf_len, uint8_t *),
@@ -4816,12 +4771,8 @@ with const generics
 - RATE= 136
 */
 void libcrux_iot_sha3_keccak_zero_block_f0_5b(uint8_t ret[136U]) {
-  uint8_t repeat_expression[136U];
-  for (size_t i = (size_t)0U; i < (size_t)136U; i++) {
-    repeat_expression[i] =
-        libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
-  memcpy(ret, repeat_expression, (size_t)136U * sizeof(uint8_t));
+  uint8_t buf[136U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_3f(buf, ret);
 }
 
 /**
@@ -5132,9 +5083,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_f0_c6(
       libcrux_iot_sha3_keccak_absorb_full_f0_3a(self, inputs);
   size_t input_len = Eurydice_slice_len(inputs, uint8_t);
   uint8_t blocks[200U];
-  for (size_t i = (size_t)0U; i < (size_t)200U; i++) {
-    blocks[i] = libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
+  uint8_t buf[200U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_e7(buf, blocks);
   if (self->buf_len > (size_t)0U) {
     Eurydice_slice_copy(Eurydice_array_to_subslice3(blocks, (size_t)0U,
                                                     self->buf_len, uint8_t *),
@@ -5183,12 +5133,8 @@ with const generics
 - RATE= 168
 */
 void libcrux_iot_sha3_keccak_zero_block_f0_3a(uint8_t ret[168U]) {
-  uint8_t repeat_expression[168U];
-  for (size_t i = (size_t)0U; i < (size_t)168U; i++) {
-    repeat_expression[i] =
-        libcrux_secrets_int_public_integers_classify_27_90(0U);
-  }
-  memcpy(ret, repeat_expression, (size_t)168U * sizeof(uint8_t));
+  uint8_t buf[168U] = {0U};
+  libcrux_secrets_int_public_integers_classify_27_09(buf, ret);
 }
 
 /**

@@ -8,7 +8,7 @@
  * Eurydice:
  * Karamel:
  * F*: unset
- * Libcrux: 9b433af082b22712567a1ff8812d83a0e110625b
+ * Libcrux: ff6b1583cfa91b1fb03fffe855308b44e2728708
  */
 
 #ifndef libcrux_iot_sha3_portable_H
@@ -60,6 +60,13 @@ typedef struct libcrux_iot_sha3_state_KeccakState_s {
 This function found in impl {libcrux_iot_sha3::state::KeccakState}
 */
 libcrux_iot_sha3_state_KeccakState libcrux_iot_sha3_state_new_18(void);
+
+/**
+This function found in impl {core::convert::From<@Array<u32, 2usize>> for
+libcrux_iot_sha3::lane::Lane2U32}
+*/
+libcrux_iot_sha3_lane_Lane2U32 libcrux_iot_sha3_lane_from_47(
+    uint32_t value[2U]);
 
 /**
 This function found in impl {core::ops::index::Index<usize, u32> for
@@ -1020,13 +1027,6 @@ libcrux_iot_sha3::lane::Lane2U32}
 */
 libcrux_iot_sha3_lane_Lane2U32 libcrux_iot_sha3_lane_clone_f6(
     libcrux_iot_sha3_lane_Lane2U32 *self);
-
-/**
-This function found in impl {core::convert::From<@Array<u32, 2usize>> for
-libcrux_iot_sha3::lane::Lane2U32}
-*/
-libcrux_iot_sha3_lane_Lane2U32 libcrux_iot_sha3_lane_from_47(
-    uint32_t value[2U]);
 
 /**
  A portable SHAKE128 implementation.
