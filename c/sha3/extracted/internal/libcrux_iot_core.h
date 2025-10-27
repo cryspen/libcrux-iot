@@ -7,8 +7,8 @@
  * Charon:
  * Eurydice:
  * Karamel:
- * F*: unset
- * Libcrux: ff6b1583cfa91b1fb03fffe855308b44e2728708
+ * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
+ * Libcrux: 77a80e3eb2196754d31058d237c0052000775d2c
  */
 
 #ifndef internal_libcrux_iot_core_H
@@ -19,8 +19,6 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
-#include "../libcrux_iot_core.h"
 
 /**
 A monomorphic instance of core.ops.range.Range
@@ -140,6 +138,11 @@ with types Eurydice_slice uint8_t
 */
 Eurydice_slice *libcrux_secrets_int_public_integers_classify_ref_c5_ba(
     Eurydice_slice *self);
+
+typedef struct Eurydice_slice_uint8_t_x2_s {
+  Eurydice_slice fst;
+  Eurydice_slice snd;
+} Eurydice_slice_uint8_t_x2;
 
 /**
 This function found in impl {libcrux_secrets::traits::Classify<T> for T}

@@ -39,7 +39,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/karamel/include
 )
 file(GLOB SOURCES
-  ${PROJECT_SOURCE_DIR}/libcrux_iot_sha3_portable.c
+  ${PROJECT_SOURCE_DIR}/libcrux_iot_sha3.c
   ${PROJECT_SOURCE_DIR}/libcrux_iot_core.c
 )
 

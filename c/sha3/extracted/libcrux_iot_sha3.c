@@ -7,19 +7,18 @@
  * Charon:
  * Eurydice:
  * Karamel:
- * F*: unset
- * Libcrux: ff6b1583cfa91b1fb03fffe855308b44e2728708
+ * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
+ * Libcrux: 77a80e3eb2196754d31058d237c0052000775d2c
  */
 
-#include "libcrux_iot_sha3_portable.h"
+#include "internal/libcrux_iot_sha3.h"
 
 #include "internal/libcrux_iot_core.h"
-#include "libcrux_iot_core.h"
 
 /**
  Returns the output size of a digest.
 */
-size_t libcrux_iot_sha3_digest_size(libcrux_iot_sha3_Algorithm mode) {
+size_t digest_size(Algorithm mode) {
   switch (mode) {
     case libcrux_iot_sha3_Algorithm_Sha224: {
       break;
@@ -3926,80 +3925,72 @@ void libcrux_iot_sha3_portable_sha512(Eurydice_slice digest,
  Preconditions:
  - `digest.len() == 28`
 */
-void libcrux_iot_sha3_sha224_ema(Eurydice_slice digest,
-                                 Eurydice_slice payload) {
+void sha224_ema(Eurydice_slice digest, Eurydice_slice payload) {
   libcrux_iot_sha3_portable_keccakx1_1e(payload, digest);
 }
 
 /**
  SHA3 224
 */
-void libcrux_iot_sha3_sha224(Eurydice_slice data, uint8_t ret[28U]) {
+void sha224(Eurydice_slice data, uint8_t ret[28U]) {
   uint8_t out[28U];
   uint8_t buf[28U] = {0U};
   libcrux_secrets_int_public_integers_classify_27_ae(buf, out);
-  libcrux_iot_sha3_sha224_ema(
-      Eurydice_array_to_slice((size_t)28U, out, uint8_t), data);
+  sha224_ema(Eurydice_array_to_slice((size_t)28U, out, uint8_t), data);
   memcpy(ret, out, (size_t)28U * sizeof(uint8_t));
 }
 
 /**
  SHA3 256
 */
-void libcrux_iot_sha3_sha256_ema(Eurydice_slice digest,
-                                 Eurydice_slice payload) {
+void sha256_ema(Eurydice_slice digest, Eurydice_slice payload) {
   libcrux_iot_sha3_portable_keccakx1_ad(payload, digest);
 }
 
 /**
  SHA3 256
 */
-void libcrux_iot_sha3_sha256(Eurydice_slice data, uint8_t ret[32U]) {
+void sha256(Eurydice_slice data, uint8_t ret[32U]) {
   uint8_t out[32U];
   uint8_t buf[32U] = {0U};
   libcrux_secrets_int_public_integers_classify_27_ee0(buf, out);
-  libcrux_iot_sha3_sha256_ema(
-      Eurydice_array_to_slice((size_t)32U, out, uint8_t), data);
+  sha256_ema(Eurydice_array_to_slice((size_t)32U, out, uint8_t), data);
   memcpy(ret, out, (size_t)32U * sizeof(uint8_t));
 }
 
 /**
  SHA3 384
 */
-void libcrux_iot_sha3_sha384_ema(Eurydice_slice digest,
-                                 Eurydice_slice payload) {
+void sha384_ema(Eurydice_slice digest, Eurydice_slice payload) {
   libcrux_iot_sha3_portable_keccakx1_7c(payload, digest);
 }
 
 /**
  SHA3 384
 */
-void libcrux_iot_sha3_sha384(Eurydice_slice data, uint8_t ret[48U]) {
+void sha384(Eurydice_slice data, uint8_t ret[48U]) {
   uint8_t out[48U];
   uint8_t buf[48U] = {0U};
   libcrux_secrets_int_public_integers_classify_27_4d(buf, out);
-  libcrux_iot_sha3_sha384_ema(
-      Eurydice_array_to_slice((size_t)48U, out, uint8_t), data);
+  sha384_ema(Eurydice_array_to_slice((size_t)48U, out, uint8_t), data);
   memcpy(ret, out, (size_t)48U * sizeof(uint8_t));
 }
 
 /**
  SHA3 512
 */
-void libcrux_iot_sha3_sha512_ema(Eurydice_slice digest,
-                                 Eurydice_slice payload) {
+void sha512_ema(Eurydice_slice digest, Eurydice_slice payload) {
   libcrux_iot_sha3_portable_keccakx1_96(payload, digest);
 }
 
 /**
  SHA3 512
 */
-void libcrux_iot_sha3_sha512(Eurydice_slice data, uint8_t ret[64U]) {
+void sha512(Eurydice_slice data, uint8_t ret[64U]) {
   uint8_t out[64U];
   uint8_t buf[64U] = {0U};
   libcrux_secrets_int_public_integers_classify_27_7b(buf, out);
-  libcrux_iot_sha3_sha512_ema(
-      Eurydice_array_to_slice((size_t)64U, out, uint8_t), data);
+  sha512_ema(Eurydice_array_to_slice((size_t)64U, out, uint8_t), data);
   memcpy(ret, out, (size_t)64U * sizeof(uint8_t));
 }
 
@@ -4322,7 +4313,7 @@ void libcrux_iot_sha3_portable_keccakx1_c6(Eurydice_slice data,
 
  Writes `out.len()` bytes.
 */
-void libcrux_iot_sha3_shake128_ema(Eurydice_slice out, Eurydice_slice data) {
+void shake128_ema(Eurydice_slice out, Eurydice_slice data) {
   libcrux_iot_sha3_portable_keccakx1_c6(data, out);
 }
 
@@ -4411,7 +4402,7 @@ void libcrux_iot_sha3_portable_keccakx1_ad0(Eurydice_slice data,
 
  Writes `out.len()` bytes.
 */
-void libcrux_iot_sha3_shake256_ema(Eurydice_slice out, Eurydice_slice data) {
+void shake256_ema(Eurydice_slice out, Eurydice_slice data) {
   libcrux_iot_sha3_portable_keccakx1_ad0(data, out);
 }
 
@@ -5327,7 +5318,7 @@ inline libcrux_iot_sha3_state_KeccakState libcrux_iot_sha3_state_clone_0f(
 This function found in impl {core::convert::From<libcrux_iot_sha3::Algorithm>
 for u32}
 */
-uint32_t libcrux_iot_sha3_from_c3(libcrux_iot_sha3_Algorithm v) {
+uint32_t from_c3(Algorithm v) {
   switch (v) {
     case libcrux_iot_sha3_Algorithm_Sha224: {
       break;
@@ -5354,7 +5345,7 @@ uint32_t libcrux_iot_sha3_from_c3(libcrux_iot_sha3_Algorithm v) {
 This function found in impl {core::convert::From<u32> for
 libcrux_iot_sha3::Algorithm}
 */
-libcrux_iot_sha3_Algorithm libcrux_iot_sha3_from_c2(uint32_t v) {
+Algorithm from_c2(uint32_t v) {
   switch (v) {
     case 1U: {
       break;
