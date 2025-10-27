@@ -1,0 +1,125 @@
+naming:
+  skip_prefix:
+    - ["libcrux_iot_sha3"]
+
+files:
+  # Portable SHA3
+  - name: libcrux_iot_sha3
+    api:
+      exact:
+        - [libcrux_iot_sha3, sha224]
+        - [libcrux_iot_sha3, sha256]
+        - [libcrux_iot_sha3, sha384]
+        - [libcrux_iot_sha3, sha512]
+        - [libcrux_iot_sha3, sha224_ema]
+        - [libcrux_iot_sha3, sha256_ema]
+        - [libcrux_iot_sha3, sha384_ema]
+        - [libcrux_iot_sha3, sha512_ema]
+        - [libcrux_iot_sha3, shake128_ema]
+        - [libcrux_iot_sha3, shake256_ema]
+    internal:
+      patterns:
+        - [libcrux_iot_sha3, "*"]
+        - [libcrux_iot_sha3, portable, "*"]
+        - [libcrux_iot_sha3, keccak, "*"]
+        - [libcrux_iot_sha3, state, "*"]
+        - [libcrux_iot_sha3, lane, "*"]
+      monomorphizations_of:
+        - [libcrux_iot_sha3, "*"]
+        - [libcrux_iot_sha3, portable, "*"]
+        - [libcrux_iot_sha3, keccak, "*"]
+        - [libcrux_iot_sha3, state, "*"]
+        - [libcrux_iot_sha3, lane, "*"]
+      monomorphizations_using:
+        - [libcrux_iot_sha3, "*"]
+        - [libcrux_iot_sha3, portable, "*"]
+        - [libcrux_iot_sha3, keccak, "*"]
+        - [libcrux_iot_sha3, state, "*"]
+        - [libcrux_iot_sha3, lane, "*"]
+
+  # Common parts of SHA3 (this catches stuff that hasn't matched above). Must
+  # come after the (more precise) patterns above concerning platform-specific hash_functions
+  - name: libcrux_iot_sha3_internal
+    internal:
+      patterns:
+        - [libcrux_iot_sha3, "*"]
+      monomorphizations_of:
+        - [libcrux_iot_sha3, "*"]
+      monomorphizations_using:
+        - [libcrux_iot_sha3, "*"]
+    inline_static: true
+
+  # This covers slightly more than the two bundles above, but this greatly
+  # simplifies our lives.
+  - name: libcrux_mlkem_iot
+    api:
+      - [libcrux_iot_ml_kem, vector, "*"]
+      - [libcrux_iot_ml_kem, hash_functions, portable, "*"]
+    private:
+      patterns:
+        - [ libcrux_iot_ml_kem, polynomial, "*" ]
+      monomorphizations_using:
+        - [ libcrux_iot_ml_kem, polynomial, "*" ]
+        - [ libcrux_iot_ml_kem, vector, "*"]
+        - [ libcrux_iot_ml_kem, hash_functions, portable, "*"]
+      monomorphizations_of:
+        - [ libcrux_iot_ml_kem, polynomial, "*" ]
+        - [ libcrux_iot_ml_kem, vector, "*"]
+        - [ libcrux_iot_ml_kem, hash_functions, portable, "*"]
+
+  # MLKEM: MISC NON-ARCHITECTURE SPECIFIC HEADERS
+  - name: libcrux_core
+    private:
+      monomorphizations_of:
+        - [ core, "*"]
+        - [ libcrux_secrets, "*"]
+        - [ libcrux_iot_ml_kem, types, "*"]
+        - [ libcrux_iot_ml_kem, constant_time_ops, "*"]
+        - [ libcrux_iot_ml_kem, utils, "*" ]
+      monomorphizations_using:
+        - [ Eurydice, "*" ]
+        - [ libcrux_iot_ml_kem, types, "*"]
+      patterns:
+        - [ core, "*"]
+        - [ libcrux_secrets, "*"]
+        - [ libcrux_iot_ml_kem, types ]
+        - [ libcrux_iot_ml_kem, constants ]
+        - [ libcrux_iot_ml_kem, constant_time_ops, "*"]
+        - [ libcrux_iot_ml_kem, utils, "*" ]
+    api:
+      - [Eurydice, "*"]
+
+  # MLKEM-768
+
+  - name: libcrux_mlkem768_portable
+    api:
+      - [libcrux_iot_ml_kem, mlkem768, portable]
+
+  # This one contains common definitions like types, etc.
+  - name: libcrux_mlkem768
+    api:
+      - [libcrux_iot_ml_kem, mlkem768]
+
+  # MLKEM-1024
+
+  - name: libcrux_mlkem1024_portable
+    api:
+      - [libcrux_iot_ml_kem, mlkem1024, portable]
+
+  # This one contains common definitions like types, etc.
+  - name: libcrux_mlkem1024
+    api:
+      - [libcrux_iot_ml_kem, mlkem1024]
+
+  # We let monomorphization insert things at the right place in each one of the
+  # 9 variants above. Helpers that have not been assigned into any of the
+  # individual libcrux_mlkemXXX files end up in a catch-all.
+  - name: libcrux_mlkem_common
+    private:
+      - [libcrux_iot_ml_kem, "*"]
+    inline_static: true
+
+naming:
+  skip_prefix:
+    - [ core, core_arch, x86 ]
+    - [libcrux_intrinsics, arm64]
