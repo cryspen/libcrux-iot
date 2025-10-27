@@ -203,7 +203,7 @@ fn add_message_error_reduce<Vector: Operations>(
         //     &Vector::add(myself.coefficients[i], &message.coefficients[i]),
         // ));
         // ```
-        *scratch = myself.coefficients[i].clone(); // XXX: Need this?
+        *scratch = myself.coefficients[i]; // XXX: Need this?
         Vector::add(scratch, &message.coefficients[i]);
         Vector::add(&mut result.coefficients[i], &scratch);
         Vector::barrett_reduce(&mut result.coefficients[i]);
