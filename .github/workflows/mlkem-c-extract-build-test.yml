@@ -36,7 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: c-extraction-mlkem-iot
-          path: c/mlkem/extracted
+          path: c/ml-kem/extracted
           include-hidden-files: true
           if-no-files-found: error
 
