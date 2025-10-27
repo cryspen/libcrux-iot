@@ -1,6 +1,3 @@
 [submodule "sys/pqm4/pqm4"]
 	path = sys/pqm4/pqm4
 	url = https://github.com/cryspen/pqm4.git
-[submodule "libcrux"]
-	path = libcrux
-	url = https://github.com/cryspen/libcrux.git
