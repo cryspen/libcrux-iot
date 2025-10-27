@@ -20,21 +20,22 @@ pub fn zero() -> PortableVector {
 }
 
 #[inline(always)]
-#[hax_lib::ensures(|result| fstar!(r#"${result} == ${x}.f_elements"#))]
-pub fn to_i16_array(x: PortableVector, out: &mut [i16; 16]) {
-    *out = x.elements;
+#[hax_lib::requires(fstar!(r#"Seq.length ${out} == 16"#))]
+#[hax_lib::ensures(|_| fstar!(r#"${out}_future == ${x}.f_elements"#))]
+pub fn to_i16_array(x: &PortableVector, out: &mut [i16]) {
+    out.copy_from_slice(x.elements.as_slice());
 }
 
 #[inline(always)]
 #[hax_lib::requires(array.len() == 16)]
-#[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == $array"#))]
+#[hax_lib::ensures(|_| fstar!(r#"${out}_future.f_elements == $array"#))]
 pub fn from_i16_array(array: &[i16], out: &mut PortableVector) {
     out.elements = array[0..16].try_into().unwrap();
 }
 
 #[inline(always)]
 #[hax_lib::requires(array.len() == 16)]
-#[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == $array"#))]
+#[hax_lib::ensures(|_| fstar!(r#"${out}_future.f_elements == $array"#))]
 pub fn reducing_from_i32_array(array: &[i32], out: &mut PortableVector) {
     for i in 0..16 {
         out.elements[i] = montgomery_reduce_element(array[i]);
@@ -51,8 +52,11 @@ pub(super) fn from_bytes(array: &[u8], out: &mut PortableVector) {
 
 #[inline(always)]
 #[hax_lib::requires(bytes.len() >= 32)]
+#[hax_lib::ensures(|_| future(bytes).len() == bytes.len())]
 pub(super) fn to_bytes(x: PortableVector, bytes: &mut [u8]) {
+    #[cfg(hax)]
     let _bytes_len = bytes.len();
+
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|_i: usize| bytes.len() == _bytes_len);
         bytes[2 * i] = (x.elements[i] >> 8) as u8;
