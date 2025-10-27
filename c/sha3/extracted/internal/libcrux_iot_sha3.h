@@ -7,12 +7,12 @@
  * Charon:
  * Eurydice:
  * Karamel:
- * F*: unset
- * Libcrux: ff6b1583cfa91b1fb03fffe855308b44e2728708
+ * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
+ * Libcrux: 77a80e3eb2196754d31058d237c0052000775d2c
  */
 
-#ifndef libcrux_iot_sha3_portable_H
-#define libcrux_iot_sha3_portable_H
+#ifndef internal_libcrux_iot_sha3_H
+#define internal_libcrux_iot_sha3_H
 
 #include "eurydice_glue.h"
 
@@ -20,19 +20,20 @@
 extern "C" {
 #endif
 
-#include "libcrux_iot_core.h"
+#include "../libcrux_iot_sha3.h"
+#include "internal/libcrux_iot_core.h"
 
 #define libcrux_iot_sha3_Algorithm_Sha224 1
 #define libcrux_iot_sha3_Algorithm_Sha256 2
 #define libcrux_iot_sha3_Algorithm_Sha384 3
 #define libcrux_iot_sha3_Algorithm_Sha512 4
 
-typedef uint8_t libcrux_iot_sha3_Algorithm;
+typedef uint8_t Algorithm;
 
 /**
  Returns the output size of a digest.
 */
-size_t libcrux_iot_sha3_digest_size(libcrux_iot_sha3_Algorithm mode);
+size_t digest_size(Algorithm mode);
 
 typedef struct libcrux_iot_sha3_lane_Lane2U32_s {
   uint32_t fst[2U];
@@ -790,49 +791,6 @@ void libcrux_iot_sha3_portable_sha512(Eurydice_slice digest,
                                       Eurydice_slice data);
 
 /**
- SHA3 224
-
- Preconditions:
- - `digest.len() == 28`
-*/
-void libcrux_iot_sha3_sha224_ema(Eurydice_slice digest, Eurydice_slice payload);
-
-/**
- SHA3 224
-*/
-void libcrux_iot_sha3_sha224(Eurydice_slice data, uint8_t ret[28U]);
-
-/**
- SHA3 256
-*/
-void libcrux_iot_sha3_sha256_ema(Eurydice_slice digest, Eurydice_slice payload);
-
-/**
- SHA3 256
-*/
-void libcrux_iot_sha3_sha256(Eurydice_slice data, uint8_t ret[32U]);
-
-/**
- SHA3 384
-*/
-void libcrux_iot_sha3_sha384_ema(Eurydice_slice digest, Eurydice_slice payload);
-
-/**
- SHA3 384
-*/
-void libcrux_iot_sha3_sha384(Eurydice_slice data, uint8_t ret[48U]);
-
-/**
- SHA3 512
-*/
-void libcrux_iot_sha3_sha512_ema(Eurydice_slice digest, Eurydice_slice payload);
-
-/**
- SHA3 512
-*/
-void libcrux_iot_sha3_sha512(Eurydice_slice data, uint8_t ret[64U]);
-
-/**
 A monomorphic instance of libcrux_iot_sha3.state.load_block_2u32
 with const generics
 - RATE= 168
@@ -978,13 +936,6 @@ void libcrux_iot_sha3_portable_keccakx1_c6(Eurydice_slice data,
                                            Eurydice_slice out);
 
 /**
- SHAKE 128
-
- Writes `out.len()` bytes.
-*/
-void libcrux_iot_sha3_shake128_ema(Eurydice_slice out, Eurydice_slice data);
-
-/**
 A monomorphic instance of libcrux_iot_sha3.keccak.absorb_final
 with const generics
 - RATE= 136
@@ -1011,13 +962,6 @@ with const generics
 */
 void libcrux_iot_sha3_portable_keccakx1_ad0(Eurydice_slice data,
                                             Eurydice_slice out);
-
-/**
- SHAKE 256
-
- Writes `out.len()` bytes.
-*/
-void libcrux_iot_sha3_shake256_ema(Eurydice_slice out, Eurydice_slice data);
 
 #define LIBCRUX_IOT_SHA3_KECCAK_WIDTH ((size_t)200U)
 
@@ -1500,25 +1444,25 @@ libcrux_iot_sha3_state_KeccakState libcrux_iot_sha3_state_clone_0f(
 This function found in impl {core::convert::From<libcrux_iot_sha3::Algorithm>
 for u32}
 */
-uint32_t libcrux_iot_sha3_from_c3(libcrux_iot_sha3_Algorithm v);
+uint32_t from_c3(Algorithm v);
 
 /**
 This function found in impl {core::convert::From<u32> for
 libcrux_iot_sha3::Algorithm}
 */
-libcrux_iot_sha3_Algorithm libcrux_iot_sha3_from_c2(uint32_t v);
+Algorithm from_c2(uint32_t v);
 
-typedef uint8_t libcrux_iot_sha3_Sha3_512Digest[64U];
+typedef uint8_t Sha3_512Digest[64U];
 
-typedef uint8_t libcrux_iot_sha3_Sha3_384Digest[48U];
+typedef uint8_t Sha3_384Digest[48U];
 
-typedef uint8_t libcrux_iot_sha3_Sha3_256Digest[32U];
+typedef uint8_t Sha3_256Digest[32U];
 
-typedef uint8_t libcrux_iot_sha3_Sha3_224Digest[28U];
+typedef uint8_t Sha3_224Digest[28U];
 
 #if defined(__cplusplus)
 }
 #endif
 
-#define libcrux_iot_sha3_portable_H_DEFINED
-#endif /* libcrux_iot_sha3_portable_H */
+#define internal_libcrux_iot_sha3_H_DEFINED
+#endif /* internal_libcrux_iot_sha3_H */

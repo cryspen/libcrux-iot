@@ -7,6 +7,6 @@
  * Charon: 
  * Eurydice: 
  * Karamel: 
- * F*: unset
- * Libcrux: 270f5c4204c9ab6f11d5d54194dfb8c2f4695c42
+ * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
+ * Libcrux: 77a80e3eb2196754d31058d237c0052000775d2c
  */

@@ -7,8 +7,8 @@
  * Charon:
  * Eurydice:
  * Karamel:
- * F*: unset
- * Libcrux: ff6b1583cfa91b1fb03fffe855308b44e2728708
+ * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
+ * Libcrux: 77a80e3eb2196754d31058d237c0052000775d2c
  */
 
 #include "internal/libcrux_iot_core.h"
