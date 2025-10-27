@@ -59,14 +59,14 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
     debug_assert!(A_transpose.len() == K * K);
 
     for i in 0..K {
-        let mut seeds = [seed.clone(); K];
+        let mut seeds = [*seed; K];
         for j in 0..K {
             seeds[j][32] = i as u8;
             seeds[j][33] = j as u8;
         }
         let mut sampled_coefficients = [0usize; K];
         let mut out = [[0i16; 272]; K];
-        sample_from_xof::<K, Vector, Hasher>(seeds.as_slice(), &mut sampled_coefficients, &mut out);
+        sample_from_xof::<K, Vector, Hasher>(&seeds, &mut sampled_coefficients, &mut out);
         cloop! {
             for (j, sample) in out.into_iter().enumerate() {
                 // A[i][j] = A_transpose[j][i]
@@ -132,9 +132,11 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     accumulator: &mut [I32; 256],
 ) {
     *accumulator = [0i32.classify(); 256];
-    for (i, ring_element) in public_key.chunks_exact(BYTES_PER_RING_ELEMENT).enumerate() {
-        deserialize_to_reduced_ring_element(ring_element.classify_ref(), t_as_ntt_entry);
-        t_as_ntt_entry.accumulating_ntt_multiply_use_cache(&r_as_ntt[i], accumulator, &cache[i]);
+    cloop! {
+        for (i, ring_element) in public_key.chunks_exact(BYTES_PER_RING_ELEMENT).enumerate() {
+            deserialize_to_reduced_ring_element(ring_element.classify_ref(), t_as_ntt_entry);
+            t_as_ntt_entry.accumulating_ntt_multiply_use_cache(&r_as_ntt[i], accumulator, &cache[i]);
+        }
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
 
