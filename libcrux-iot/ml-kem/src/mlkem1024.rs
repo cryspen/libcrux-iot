@@ -8,15 +8,9 @@ const RANKED_BYTES_PER_RING_ELEMENT: usize = RANK * BITS_PER_RING_ELEMENT / 8;
 const T_AS_NTT_ENCODED_SIZE: usize =
     (RANK * COEFFICIENTS_IN_RING_ELEMENT * BITS_PER_COEFFICIENT) / 8;
 const VECTOR_U_COMPRESSION_FACTOR: usize = 11;
-// [hax]: hacspec/hacspec-v2#27 stealing error
-// block_len::<VECTOR_U_COMPRESSION_FACTOR>();
 const C1_BLOCK_SIZE: usize = (COEFFICIENTS_IN_RING_ELEMENT * VECTOR_U_COMPRESSION_FACTOR) / 8;
-// [hax]: hacspec/hacspec-v2#27 stealing error
-// serialized_len::<RANK, C1_BLOCK_SIZE>();
 const C1_SIZE: usize = C1_BLOCK_SIZE * RANK;
 const VECTOR_V_COMPRESSION_FACTOR: usize = 5;
-// [hax]: hacspec/hacspec-v2#27 stealing error
-// block_len::<VECTOR_V_COMPRESSION_FACTOR>()
 const C2_SIZE: usize = (COEFFICIENTS_IN_RING_ELEMENT * VECTOR_V_COMPRESSION_FACTOR) / 8;
 const CPA_PKE_SECRET_KEY_SIZE: usize =
     (RANK * COEFFICIENTS_IN_RING_ELEMENT * BITS_PER_COEFFICIENT) / 8;
@@ -94,7 +88,7 @@ macro_rules! instantiate {
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
-                >(randomness)
+                >(&randomness)
             }
 
             /// Generate ML-KEM 1024 Key Pair
@@ -110,7 +104,7 @@ macro_rules! instantiate {
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
-                >(randomness)
+                >(&randomness)
             }
 
             /// Encapsulate ML-KEM 1024
@@ -139,7 +133,7 @@ macro_rules! instantiate {
                     ETA2_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
-                >(public_key, randomness)
+                >(public_key, &randomness)
             }
 
             /// Encapsulate Kyber 1024
@@ -170,7 +164,7 @@ macro_rules! instantiate {
                     ETA2_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
-                >(public_key, randomness)
+                >(public_key, &randomness)
             }
 
             /// Decapsulate ML-KEM 1024
@@ -289,7 +283,7 @@ pub fn generate_key_pair(
         ETA1,
         ETA1_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
-    >(randomness)
+    >(&randomness)
 }
 
 /// Encapsulate ML-KEM 1024
@@ -325,7 +319,7 @@ pub fn encapsulate(
         ETA2_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
         PRF_OUTPUT_SIZE2,
-    >(public_key, randomness)
+    >(public_key, &randomness)
 }
 
 /// Decapsulate ML-KEM 1024
@@ -432,7 +426,7 @@ pub(crate) mod kyber {
             ETA1,
             ETA1_RANDOMNESS_SIZE,
             PRF_OUTPUT_SIZE1,
-        >(randomness)
+        >(&randomness)
     }
 
     /// Encapsulate Kyber 1024
@@ -461,7 +455,7 @@ pub(crate) mod kyber {
             ETA2_RANDOMNESS_SIZE,
             PRF_OUTPUT_SIZE1,
             PRF_OUTPUT_SIZE2,
-        >(public_key, randomness)
+        >(public_key, &randomness)
     }
 
     /// Decapsulate Kyber 1024
