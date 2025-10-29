@@ -7298,12 +7298,12 @@ core_result_Result_ba
 libcrux_iot_ml_dsa_ml_dsa_44_portable_sign_pre_hashed_shake128(
     libcrux_iot_ml_dsa_types_MLDSASigningKey_b8 *signing_key,
     Eurydice_slice message, Eurydice_slice context, uint8_t randomness[32U]) {
-  uint8_t pre_hash_buffer[256U] = {0U};
+  uint8_t pre_hash_buffer[32U] = {0U};
   uint8_t *uu____0 = libcrux_iot_ml_dsa_types_as_ref_f8_ff(signing_key);
   Eurydice_slice uu____1 = message;
   Eurydice_slice uu____2 = context;
   Eurydice_slice uu____3 =
-      Eurydice_array_to_slice((size_t)256U, pre_hash_buffer, uint8_t);
+      Eurydice_array_to_slice((size_t)32U, pre_hash_buffer, uint8_t);
   /* Passing arrays by value in Rust generates a copy in C */
   uint8_t copy_of_randomness[32U];
   memcpy(copy_of_randomness, randomness, (size_t)32U * sizeof(uint8_t));
@@ -7951,10 +7951,10 @@ libcrux_iot_ml_dsa_ml_dsa_44_portable_verify_pre_hashed_shake128(
     libcrux_iot_ml_dsa_types_MLDSAVerificationKey_4c *verification_key,
     Eurydice_slice message, Eurydice_slice context,
     libcrux_iot_ml_dsa_types_MLDSASignature_64 *signature) {
-  uint8_t pre_hash_buffer[256U] = {0U};
+  uint8_t pre_hash_buffer[32U] = {0U};
   return libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_verify_pre_hashed_shake128(
       libcrux_iot_ml_dsa_types_as_ref_e9_db(verification_key), message, context,
-      Eurydice_array_to_slice((size_t)256U, pre_hash_buffer, uint8_t),
+      Eurydice_array_to_slice((size_t)32U, pre_hash_buffer, uint8_t),
       libcrux_iot_ml_dsa_types_as_ref_ad_1a(signature));
 }
 
@@ -8792,12 +8792,12 @@ core_result_Result_3e
 libcrux_iot_ml_dsa_ml_dsa_65_portable_sign_pre_hashed_shake128(
     libcrux_iot_ml_dsa_types_MLDSASigningKey_22 *signing_key,
     Eurydice_slice message, Eurydice_slice context, uint8_t randomness[32U]) {
-  uint8_t pre_hash_buffer[256U] = {0U};
+  uint8_t pre_hash_buffer[32U] = {0U};
   uint8_t *uu____0 = libcrux_iot_ml_dsa_types_as_ref_f8_09(signing_key);
   Eurydice_slice uu____1 = message;
   Eurydice_slice uu____2 = context;
   Eurydice_slice uu____3 =
-      Eurydice_array_to_slice((size_t)256U, pre_hash_buffer, uint8_t);
+      Eurydice_array_to_slice((size_t)32U, pre_hash_buffer, uint8_t);
   /* Passing arrays by value in Rust generates a copy in C */
   uint8_t copy_of_randomness[32U];
   memcpy(copy_of_randomness, randomness, (size_t)32U * sizeof(uint8_t));
@@ -9083,10 +9083,10 @@ libcrux_iot_ml_dsa_ml_dsa_65_portable_verify_pre_hashed_shake128(
     libcrux_iot_ml_dsa_types_MLDSAVerificationKey_ea *verification_key,
     Eurydice_slice message, Eurydice_slice context,
     libcrux_iot_ml_dsa_types_MLDSASignature_8f *signature) {
-  uint8_t pre_hash_buffer[256U] = {0U};
+  uint8_t pre_hash_buffer[32U] = {0U};
   return libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_verify_pre_hashed_shake128(
       libcrux_iot_ml_dsa_types_as_ref_e9_97(verification_key), message, context,
-      Eurydice_array_to_slice((size_t)256U, pre_hash_buffer, uint8_t),
+      Eurydice_array_to_slice((size_t)32U, pre_hash_buffer, uint8_t),
       libcrux_iot_ml_dsa_types_as_ref_ad_fa(signature));
 }
 
@@ -9913,12 +9913,12 @@ core_result_Result_f2
 libcrux_iot_ml_dsa_ml_dsa_87_portable_sign_pre_hashed_shake128(
     libcrux_iot_ml_dsa_types_MLDSASigningKey_a3 *signing_key,
     Eurydice_slice message, Eurydice_slice context, uint8_t randomness[32U]) {
-  uint8_t pre_hash_buffer[256U] = {0U};
+  uint8_t pre_hash_buffer[32U] = {0U};
   uint8_t *uu____0 = libcrux_iot_ml_dsa_types_as_ref_f8_32(signing_key);
   Eurydice_slice uu____1 = message;
   Eurydice_slice uu____2 = context;
   Eurydice_slice uu____3 =
-      Eurydice_array_to_slice((size_t)256U, pre_hash_buffer, uint8_t);
+      Eurydice_array_to_slice((size_t)32U, pre_hash_buffer, uint8_t);
   /* Passing arrays by value in Rust generates a copy in C */
   uint8_t copy_of_randomness[32U];
   memcpy(copy_of_randomness, randomness, (size_t)32U * sizeof(uint8_t));
@@ -10204,10 +10204,10 @@ libcrux_iot_ml_dsa_ml_dsa_87_portable_verify_pre_hashed_shake128(
     libcrux_iot_ml_dsa_types_MLDSAVerificationKey_fe *verification_key,
     Eurydice_slice message, Eurydice_slice context,
     libcrux_iot_ml_dsa_types_MLDSASignature_9b *signature) {
-  uint8_t pre_hash_buffer[256U] = {0U};
+  uint8_t pre_hash_buffer[32U] = {0U};
   return libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_verify_pre_hashed_shake128(
       libcrux_iot_ml_dsa_types_as_ref_e9_d8(verification_key), message, context,
-      Eurydice_array_to_slice((size_t)256U, pre_hash_buffer, uint8_t),
+      Eurydice_array_to_slice((size_t)32U, pre_hash_buffer, uint8_t),
       libcrux_iot_ml_dsa_types_as_ref_ad_c2(signature));
 }
 

@@ -545,11 +545,11 @@ This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
 */
 /**
 A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
-with types Eurydice_derefed_slice uint8_t
+with types Eurydice_slice uint8_t
 
 */
-uint8_t (*libcrux_secrets_int_public_integers_classify_ref_c5_45(
-    uint8_t (*self)[]))[] {
+Eurydice_slice *libcrux_secrets_int_public_integers_classify_ref_c5_ba(
+    Eurydice_slice *self) {
   return self;
 }
 
