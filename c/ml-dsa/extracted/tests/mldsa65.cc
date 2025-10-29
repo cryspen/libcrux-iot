@@ -102,7 +102,7 @@ TEST(MlDsa65TestAvx2, ConsistencyTest)
         &key_pair.signing_key, msg_slice,
         context_slice,
         randomness);
-    EXPECT_EQ(signature_result.tag, Ok);
+    EXPECT_EQ(signature_result.tag, core_result_Ok);
     auto signature = signature_result.val.case_Ok;
 
     // Verify
@@ -112,6 +112,6 @@ TEST(MlDsa65TestAvx2, ConsistencyTest)
         context_slice,
         &signature);
 
-    EXPECT_EQ(result.tag, Ok);
+    EXPECT_EQ(result.tag, core_result_Ok);
 }
 #endif // LIBCRUX_X64
