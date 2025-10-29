@@ -57,7 +57,7 @@ TEST(MlDsa65TestPortable, ConsistencyTest)
         context_slice,
         randomness,
         signature.data());
-    EXPECT_EQ(signature_result.tag, Ok);
+    EXPECT_EQ(signature_result.tag, core_result_Ok);
 
     // Verify
     // XXX: Make better APIs so we don't have to copy the values here.
@@ -72,7 +72,7 @@ TEST(MlDsa65TestPortable, ConsistencyTest)
         context_slice,
         &signature_struct);
 
-    EXPECT_EQ(result.tag, Ok);
+    EXPECT_EQ(result.tag, core_result_Ok);
 }
 
 #ifdef LIBCRUX_X64
