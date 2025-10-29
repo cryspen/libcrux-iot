@@ -33,9 +33,9 @@ TEST(MlDsa65TestPortable, ConsistencyTest)
         randomness[i] = 13;
     }
 
-    bytes signing_key(LIBCRUX_ML_DSA_ML_DSA_GENERIC_ML_DSA_65_SIGNING_KEY_SIZE);
-    bytes verification_key(LIBCRUX_ML_DSA_ML_DSA_GENERIC_ML_DSA_65_VERIFICATION_KEY_SIZE);
-    libcrux_ml_dsa_ml_dsa_65_portable_generate_key_pair_mut(
+    bytes signing_key(LIBCRUX_IOT_MLDSA_ML_DSA_GENERIC_ML_DSA_65_SIGNING_KEY_SIZE);
+    bytes verification_key(LIBCRUX_IOT_MLDSA_ML_DSA_GENERIC_ML_DSA_65_VERIFICATION_KEY_SIZE);
+    libcrux_iot_mldsa_ml_dsa_65_portable_generate_key_pair_mut(
         randomness,
         signing_key.data(),
         verification_key.data());
@@ -50,8 +50,8 @@ TEST(MlDsa65TestPortable, ConsistencyTest)
 
     auto msg_slice = mk_slice(&msg, 79);
     auto context_slice = mk_slice(&context, 3);
-    bytes signature(LIBCRUX_ML_DSA_ML_DSA_GENERIC_ML_DSA_65_SIGNATURE_SIZE);
-    auto signature_result = libcrux_ml_dsa_ml_dsa_65_portable_sign_mut(
+    bytes signature(LIBCRUX_IOT_MLDSA_ML_DSA_GENERIC_ML_DSA_65_SIGNATURE_SIZE);
+    auto signature_result = libcrux_iot_mldsa_ml_dsa_65_portable_sign_mut(
         signing_key.data(),
         msg_slice,
         context_slice,
@@ -61,12 +61,12 @@ TEST(MlDsa65TestPortable, ConsistencyTest)
 
     // Verify
     // XXX: Make better APIs so we don't have to copy the values here.
-    libcrux_ml_dsa_ml_dsa_generic_ml_dsa_65_MLDSA65VerificationKey verification_key_struct;
+    libcrux_iot_mldsa_ml_dsa_generic_ml_dsa_65_MLDSA65VerificationKey verification_key_struct;
     memcpy(verification_key_struct.value, verification_key.data(), verification_key.size());
-    libcrux_ml_dsa_ml_dsa_generic_ml_dsa_65_MLDSA65Signature signature_struct;
+    libcrux_iot_mldsa_ml_dsa_generic_ml_dsa_65_MLDSA65Signature signature_struct;
     memcpy(signature_struct.value, signature.data(), signature.size());
 
-    auto result = libcrux_ml_dsa_ml_dsa_65_portable_verify(
+    auto result = libcrux_iot_mldsa_ml_dsa_65_portable_verify(
         &verification_key_struct,
         msg_slice,
         context_slice,
@@ -86,7 +86,7 @@ TEST(MlDsa65TestAvx2, ConsistencyTest)
     {
         randomness[i] = 13;
     }
-    auto key_pair = libcrux_ml_dsa_ml_dsa_65_avx2_generate_key_pair(randomness);
+    auto key_pair = libcrux_iot_mldsa_ml_dsa_65_avx2_generate_key_pair(randomness);
 
     // Sign
     uint8_t msg[79] = {0};
@@ -98,7 +98,7 @@ TEST(MlDsa65TestAvx2, ConsistencyTest)
 
     auto msg_slice = mk_slice(&msg, 79);
     auto context_slice = mk_slice(&context, 3);
-    auto signature_result = libcrux_ml_dsa_ml_dsa_65_avx2_sign(
+    auto signature_result = libcrux_iot_mldsa_ml_dsa_65_avx2_sign(
         &key_pair.signing_key, msg_slice,
         context_slice,
         randomness);
@@ -106,7 +106,7 @@ TEST(MlDsa65TestAvx2, ConsistencyTest)
     auto signature = signature_result.val.case_Ok;
 
     // Verify
-    auto result = libcrux_ml_dsa_ml_dsa_65_avx2_verify(
+    auto result = libcrux_iot_mldsa_ml_dsa_65_avx2_verify(
         &key_pair.verification_key,
         msg_slice,
         context_slice,
