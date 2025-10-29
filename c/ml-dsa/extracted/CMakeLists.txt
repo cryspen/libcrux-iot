@@ -39,7 +39,9 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/karamel/include
 )
 file(GLOB SOURCES
-    ${PROJECT_SOURCE_DIR}/libcrux_iot_sha3.c
+  ${PROJECT_SOURCE_DIR}/libcrux_core.c
+  ${PROJECT_SOURCE_DIR}/libcrux_iot_sha3.c
+  ${PROJECT_SOURCE_DIR}/libcrux_mldsa65_portable.c
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES Linux)
