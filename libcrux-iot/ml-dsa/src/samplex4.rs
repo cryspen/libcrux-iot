@@ -1,7 +1,6 @@
 use crate::{
     constants::Eta,
     hash_functions::{shake128, shake256},
-    helper::cloop,
     polynomial::PolynomialRingElement,
     sample::{sample_four_error_ring_elements, sample_up_to_four_ring_elements_flat},
     simd::traits::Operations,
