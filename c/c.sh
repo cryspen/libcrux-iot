@@ -129,7 +129,7 @@ if [[ "$no_charon" = 0 ]]; then
     (cd $dep_src_root ; cargo clean -p $dep_crate)
     echo "Running charon (libcrux - $dep) ..."
     ( cd $dep_src_root &&
-      RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon \
+      RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon cargo \
         --remove-associated-types '*' \
         --rustc-arg=-Cdebug-assertions=no \
         --dest-file=$dep_llbc_path)
@@ -152,7 +152,7 @@ if [[ "$no_charon" = 0 ]]; then
     (cd $workspace_root ; cargo clean -p $dep_crate)
     echo "Running charon ($dep) ..."
     ( cd $dep_pkg_root &&
-      RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon \
+      RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon cargo \
         --remove-associated-types '*' \
         --rustc-arg=-Cdebug-assertions=no )
     if ! [[ -f $dep_llbc_path ]]; then
@@ -166,7 +166,7 @@ if [[ "$no_charon" = 0 ]]; then
 
   echo "Running charon ($extract) ..."
     ( cd $pkg_root &&
-      RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon \
+      RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon cargo \
         --remove-associated-types '*' \
         --rustc-arg=-Cdebug-assertions=no \
         $features )
