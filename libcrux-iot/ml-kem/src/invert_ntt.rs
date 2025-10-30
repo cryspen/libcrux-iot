@@ -187,16 +187,16 @@ pub(crate) fn inv_ntt_layer_int_vec_step_reduce<Vector: Operations>(
     scratch: &mut Vector,
     zeta_r: i16,
 ) {
-    *scratch = coefficients[a].clone();
+    *scratch = coefficients[a];
     Vector::add(scratch, &coefficients[b]);
     Vector::barrett_reduce(scratch);
-    coefficients[a] = scratch.clone();
+    coefficients[a] = *scratch;
 
     Vector::negate(scratch);
     Vector::add(scratch, &coefficients[b]);
     Vector::add(scratch, &coefficients[b]);
     montgomery_multiply_fe::<Vector>(scratch, zeta_r);
-    coefficients[b] = scratch.clone();
+    coefficients[b] = *scratch;
 }
 
 #[inline(always)]

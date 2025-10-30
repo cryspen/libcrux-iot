@@ -697,43 +697,67 @@ pub trait Operations: Copy + Clone + Repr {
 // This is needed because of this issue: https://github.com/AeneasVerif/eurydice/issues/111
 #[cfg(eurydice)]
 pub trait Operations: Copy + Clone {
-    #[allow(non_snake_case)]
     fn ZERO() -> Self;
-    fn from_i16_array(array: &[i16]) -> Self;
-    fn to_i16_array(x: Self) -> [i16; 16];
-    fn from_bytes(array: &[u8]) -> Self;
+    fn from_i16_array(array: &[i16], out: &mut Self);
+    fn reducing_from_i32_array(array: &[i32], out: &mut Self);
+    fn to_i16_array(x: Self, out: &mut [i16; 16]);
+    fn from_bytes(array: &[u8], out: &mut Self);
     fn to_bytes(x: Self, bytes: &mut [u8]);
-    fn add(lhs: Self, rhs: &Self) -> Self;
-    fn sub(lhs: Self, rhs: &Self) -> Self;
-    fn multiply_by_constant(v: Self, c: i16) -> Self;
-    fn bitwise_and_with_constant(v: Self, c: i16) -> Self;
-    fn shift_right<const SHIFT_BY: i32>(v: Self) -> Self;
-    fn cond_subtract_3329(v: Self) -> Self;
-    fn barrett_reduce(vector: Self) -> Self;
-    fn montgomery_multiply_by_constant(v: Self, c: i16) -> Self;
-    fn compress_1(v: Self) -> Self;
-    fn compress<const COEFFICIENT_BITS: i32>(v: Self) -> Self;
-    fn decompress_ciphertext_coefficient<const COEFFICIENT_BITS: i32>(a: Self) -> Self;
-    fn ntt_layer_1_step(a: Self, zeta0: i16, zeta1: i16, zeta2: i16, zeta3: i16) -> Self;
-    fn ntt_layer_2_step(a: Self, zeta0: i16, zeta1: i16) -> Self;
-    fn ntt_layer_3_step(a: Self, zeta: i16) -> Self;
-    fn inv_ntt_layer_1_step(a: Self, zeta0: i16, zeta1: i16, zeta2: i16, zeta3: i16) -> Self;
-    fn inv_ntt_layer_2_step(a: Self, zeta0: i16, zeta1: i16) -> Self;
-    fn inv_ntt_layer_3_step(a: Self, zeta: i16) -> Self;
-    fn ntt_multiply(lhs: &Self, rhs: &Self, zeta0: i16, zeta1: i16, zeta2: i16, zeta3: i16)
-        -> Self;
-    fn serialize_1(a: Self) -> [u8; 2];
-    fn deserialize_1(a: &[u8]) -> Self;
-    fn serialize_4(a: Self) -> [u8; 8];
-    fn deserialize_4(a: &[u8]) -> Self;
-    fn serialize_5(a: Self) -> [u8; 10];
-    fn deserialize_5(a: &[u8]) -> Self;
-    fn serialize_10(a: Self) -> [u8; 20];
-    fn deserialize_10(a: &[u8]) -> Self;
-    fn serialize_11(a: Self) -> [u8; 22];
-    fn deserialize_11(a: &[u8]) -> Self;
-    fn serialize_12(a: Self) -> [u8; 24];
-    fn deserialize_12(a: &[u8]) -> Self;
+    fn add(lhs: &mut Self, rhs: &Self);
+    fn sub(lhs: &mut Self, rhs: &Self);
+    fn negate(vec: &mut Self);
+    fn multiply_by_constant(vec: &mut Self, c: i16);
+    fn bitwise_and_with_constant(v: &mut Self, c: i16);
+    fn shift_right<const SHIFT_BY: i32>(v: &mut Self);
+    fn cond_subtract_3329(v: &mut Self);
+    fn barrett_reduce(vector: &mut Self);
+    fn montgomery_multiply_by_constant(v: &mut Self, c: i16);
+    fn compress_1(a: &mut Self);
+    fn compress<const COEFFICIENT_BITS: i32>(a: &mut Self);
+    fn decompress_ciphertext_coefficient<const COEFFICIENT_BITS: i32>(a: &mut Self);
+    fn ntt_layer_1_step(a: &mut Self, zeta0: i16, zeta1: i16, zeta2: i16, zeta3: i16);
+    fn ntt_layer_2_step(a: &mut Self, zeta0: i16, zeta1: i16);
+    fn ntt_layer_3_step(a: &mut Self, zeta: i16);
+    fn inv_ntt_layer_1_step(a: &mut Self, zeta0: i16, zeta1: i16, zeta2: i16, zeta3: i16);
+    fn inv_ntt_layer_2_step(a: &mut Self, zeta0: i16, zeta1: i16);
+    fn inv_ntt_layer_3_step(a: &mut Self, zeta: i16);
+    fn accumulating_ntt_multiply(
+        lhs: &Self,
+        rhs: &Self,
+        out: &mut [i32],
+        zeta0: i16,
+        zeta1: i16,
+        zeta2: i16,
+        zeta3: i16,
+    );
+    fn accumulating_ntt_multiply_fill_cache(
+        lhs: &Self,
+        rhs: &Self,
+        accumulator: &mut [i32], // length: 16
+        cache: &mut Self,
+        zeta0: i16,
+        zeta1: i16,
+        zeta2: i16,
+        zeta3: i16,
+    );
+    fn accumulating_ntt_multiply_use_cache(
+        lhs: &Self,
+        rhs: &Self,
+        accumulator: &mut [i32],
+        cache: &Self,
+    );
+    fn serialize_1(a: Self, out: &mut [u8]);
+    fn deserialize_1(a: &[u8], out: &mut Self);
+    fn serialize_4(a: Self, out: &mut [u8]);
+    fn deserialize_4(a: &[u8], out: &mut Self);
+    fn serialize_5(a: Self, out: &mut [u8]);
+    fn deserialize_5(a: &[u8], out: &mut Self);
+    fn serialize_10(a: Self, out: &mut [u8]);
+    fn deserialize_10(a: &[u8], out: &mut Self);
+    fn serialize_11(a: Self, out: &mut [u8]);
+    fn deserialize_11(a: &[u8], out: &mut Self);
+    fn serialize_12(a: Self, out: &mut [u8]);
+    fn deserialize_12(a: &[u8], out: &mut Self);
     fn rej_sample(a: &[u8], out: &mut [i16]) -> usize;
 }
 
@@ -757,9 +781,9 @@ pub fn to_standard_domain<T: Operations>(v: &mut T) {
                                         (v y >= 0 /\ v y <= 3328 /\ (v y % 3329 == v x % 3329)))"#))]
 #[inline(always)]
 pub fn to_unsigned_representative<T: Operations>(a: &T, out: &mut T) {
-    *out = a.clone(); // XXX: We need a copy of `a` here. At least
-                      // the allocation becomes apparent on the
-                      // outside.
+    *out = *a; // XXX: We need a copy of `a` here. At least
+               // the allocation becomes apparent on the
+               // outside.
     T::shift_right::<15>(out);
     T::bitwise_and_with_constant(out, FIELD_MODULUS);
     T::add(out, a)
