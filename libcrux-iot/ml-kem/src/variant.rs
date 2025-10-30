@@ -2,6 +2,8 @@
 //! differences between the NIST standard FIPS 203 (ML-KEM) and the
 //! Round 3 CRYSTALS-Kyber submissions in the NIST PQ competition.
 
+use libcrux_secrets::{Classify as _, U8};
+
 use crate::{constants::CPA_PKE_KEY_GENERATION_SEED_SIZE, hash_functions::Hash};
 
 /// This trait collects differences in specification between ML-KEM
@@ -14,20 +16,20 @@ pub(crate) trait Variant {
     #[requires(hax_lib::Prop::from(shared_secret.len() == 32) & hax_lib::Prop::from(out.len() == 32))]
     #[ensures(|_| fstar!(r#"${out}_future == $shared_secret /\ Seq.length ${out}_future == Seq.length $out"#))] // We only have post-conditions for ML-KEM, not Kyber
     fn kdf<const K: usize, const CIPHERTEXT_SIZE: usize, Hasher: Hash>(
-        shared_secret: &[u8],
+        shared_secret: &[U8],
         ciphertext: &[u8; CIPHERTEXT_SIZE],
-        out: &mut [u8],
+        out: &mut [U8],
     );
 
     #[requires(hax_lib::Prop::from(randomness.len() == 32) & hax_lib::Prop::from(out.len() == 32))]
     #[ensures(|_| fstar!(r#"${out}_future == $randomness /\ Seq.length ${out}_future == Seq.length $out"#))] // We only have post-conditions for ML-KEM, not Kyber
-    fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &[u8], out: &mut [u8]);
+    fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &[U8], out: &mut [U8]);
 
     #[requires(hax_lib::Prop::from(seed.len() == 32) & hax_lib::Prop::from(out.len() == 64))]
     #[ensures(|_| fstar!(r#"(Seq.length $seed == 32 ==> ${out}_future == Spec.Utils.v_G
         (Seq.append $seed (Seq.create 1 (cast $K <: u8))))  /\ Seq.length ${out}_future == Seq.length $out"#)
     )]
-    fn cpa_keygen_seed<const K: usize, Hasher: Hash>(seed: &[u8], out: &mut [u8]);
+    fn cpa_keygen_seed<const K: usize, Hasher: Hash>(seed: &[U8], out: &mut [U8]);
 }
 
 /// Implements [`Variant`], to perform the Kyber-specific actions
@@ -43,24 +45,29 @@ pub(crate) struct Kyber {}
 impl Variant for Kyber {
     #[inline(always)]
     fn kdf<const K: usize, const CIPHERTEXT_SIZE: usize, Hasher: Hash>(
-        shared_secret: &[u8],
+        shared_secret: &[U8],
         ciphertext: &[u8; CIPHERTEXT_SIZE],
-        out: &mut [u8],
+        out: &mut [U8],
     ) {
+        use libcrux_secrets::ClassifyRef as _;
+
         use crate::{constants::H_DIGEST_SIZE, utils::into_padded_array};
 
-        let mut kdf_input: [u8; 2 * H_DIGEST_SIZE] = into_padded_array(&shared_secret);
-        Hasher::H(ciphertext.as_slice(), &mut kdf_input[H_DIGEST_SIZE..]);
+        let mut kdf_input: [U8; 2 * H_DIGEST_SIZE] = into_padded_array(&shared_secret);
+        Hasher::H(
+            ciphertext.as_slice().classify_ref(),
+            &mut kdf_input[H_DIGEST_SIZE..],
+        );
         Hasher::PRF::<32>(&kdf_input, out)
     }
 
     #[inline(always)]
-    fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &[u8], out: &mut [u8]) {
+    fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &[U8], out: &mut [U8]) {
         Hasher::H(&randomness, out)
     }
 
     #[inline(always)]
-    fn cpa_keygen_seed<const K: usize, Hasher: Hash>(key_generation_seed: &[u8], out: &mut [u8]) {
+    fn cpa_keygen_seed<const K: usize, Hasher: Hash>(key_generation_seed: &[U8], out: &mut [U8]) {
         Hasher::G(key_generation_seed, out)
     }
 }
@@ -79,9 +86,9 @@ impl Variant for MlKem {
     #[requires(hax_lib::Prop::from(shared_secret.len() == 32) & hax_lib::Prop::from(out.len() == 32))]
     #[ensures(|_| fstar!(r#"${out}_future == $shared_secret /\ Seq.length ${out}_future == Seq.length $out"#))] // We only have post-conditions for ML-KEM, not Kyber
     fn kdf<const K: usize, const CIPHERTEXT_SIZE: usize, Hasher: Hash>(
-        shared_secret: &[u8],
+        shared_secret: &[U8],
         _: &[u8; CIPHERTEXT_SIZE],
-        out: &mut [u8],
+        out: &mut [U8],
     ) {
         out.copy_from_slice(shared_secret);
     }
@@ -89,7 +96,7 @@ impl Variant for MlKem {
     #[inline(always)]
     #[requires(hax_lib::Prop::from(randomness.len() == 32) & hax_lib::Prop::from(out.len() == 32))]
     #[ensures(|_| fstar!(r#"${out}_future == $randomness /\ Seq.length ${out}_future == Seq.length $out"#))] // We only have post-conditions for ML-KEM, not
-    fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &[u8], out: &mut [u8]) {
+    fn entropy_preprocess<const K: usize, Hasher: Hash>(randomness: &[U8], out: &mut [U8]) {
         out.copy_from_slice(randomness);
     }
 
@@ -98,10 +105,10 @@ impl Variant for MlKem {
     #[ensures(|_| fstar!(r#"(Seq.length $key_generation_seed == 32 ==> ${out}_future == Spec.Utils.v_G
         (Seq.append $key_generation_seed (Seq.create 1 (cast $K <: u8))))  /\ Seq.length ${out}_future == Seq.length $out"#)
     )]
-    fn cpa_keygen_seed<const K: usize, Hasher: Hash>(key_generation_seed: &[u8], out: &mut [u8]) {
-        let mut seed = [0u8; CPA_PKE_KEY_GENERATION_SEED_SIZE + 1];
+    fn cpa_keygen_seed<const K: usize, Hasher: Hash>(key_generation_seed: &[U8], out: &mut [U8]) {
+        let mut seed = [0u8.classify(); CPA_PKE_KEY_GENERATION_SEED_SIZE + 1];
         seed[0..CPA_PKE_KEY_GENERATION_SEED_SIZE].copy_from_slice(key_generation_seed);
-        seed[CPA_PKE_KEY_GENERATION_SEED_SIZE] = K as u8;
+        seed[CPA_PKE_KEY_GENERATION_SEED_SIZE] = (K as u8).classify();
         hax_lib::fstar!(
             "eq_intro $seed
             (Seq.append $key_generation_seed (Seq.create 1 (cast $K <: u8)))"

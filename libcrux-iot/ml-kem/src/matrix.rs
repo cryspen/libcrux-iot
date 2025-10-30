@@ -1,3 +1,5 @@
+use libcrux_secrets::{Classify as _, ClassifyRef as _, I32};
+
 use crate::{
     constants::BYTES_PER_RING_ELEMENT, hash_functions::Hash, helper::cloop,
     invert_ntt::invert_ntt_montgomery, polynomial::PolynomialRingElement,
@@ -34,7 +36,7 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     let mut sampled_coefficients = [0usize; 1];
     let mut out_raw = [[0i16; 272]; 1];
     sample_from_xof::<1, Vector, Hasher>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
-    PolynomialRingElement::from_i16_array(&out_raw[0], out);
+    PolynomialRingElement::from_i16_array(out_raw[0].classify_ref(), out);
 }
 
 #[inline(always)]
@@ -69,9 +71,9 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
             for (j, sample) in out.into_iter().enumerate() {
                 // A[i][j] = A_transpose[j][i]
                 if transpose {
-                    PolynomialRingElement::from_i16_array(&sample[..256], &mut A_transpose[j * K + i]);
+                    PolynomialRingElement::from_i16_array(sample[..256].classify_ref(), &mut A_transpose[j * K + i]);
                 } else {
-                    PolynomialRingElement::from_i16_array(&sample[..256], &mut A_transpose[i * K + j]); // XXX: in this case we might want to copy all of sample at once
+                    PolynomialRingElement::from_i16_array(sample[..256].classify_ref(), &mut A_transpose[i * K + j]); // XXX: in this case we might want to copy all of sample at once
                 }
             }
         }
@@ -101,9 +103,9 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     u_as_ntt: &[PolynomialRingElement<Vector>; K],
     result: &mut PolynomialRingElement<Vector>,
     scratch: &mut Vector,
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
-    *accumulator = [0i32; 256];
+    *accumulator = [0i32.classify(); 256];
     for i in 0..K {
         secret_as_ntt[i].accumulating_ntt_multiply(&u_as_ntt[i], accumulator);
     }
@@ -127,11 +129,11 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     result: &mut PolynomialRingElement<Vector>,
     scratch: &mut Vector,
     cache: &[PolynomialRingElement<Vector>],
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
-    *accumulator = [0i32; 256];
+    *accumulator = [0i32.classify(); 256];
     for (i, ring_element) in public_key.chunks_exact(BYTES_PER_RING_ELEMENT).enumerate() {
-        deserialize_to_reduced_ring_element(ring_element, t_as_ntt_entry);
+        deserialize_to_reduced_ring_element(ring_element.classify_ref(), t_as_ntt_entry);
         t_as_ntt_entry.accumulating_ntt_multiply_use_cache(&r_as_ntt[i], accumulator, &cache[i]);
     }
     PolynomialRingElement::reducing_from_i32_array(accumulator, result);
@@ -150,12 +152,12 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
     result: &mut [PolynomialRingElement<Vector>],
     scratch: &mut Vector,
     cache: &mut [PolynomialRingElement<Vector>],
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
     debug_assert!(r_as_ntt.len() == K);
     debug_assert!(error_1.len() == K);
 
-    *accumulator = [0i32; 256];
+    *accumulator = [0i32.classify(); 256];
     for j in 0..K {
         sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, 0, j);
         matrix_entry.accumulating_ntt_multiply_fill_cache(&r_as_ntt[j], accumulator, &mut cache[j]);
@@ -165,7 +167,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
     result[0].add_error_reduce(&error_1[0]);
 
     for i in 1..K {
-        *accumulator = [0i32; 256];
+        *accumulator = [0i32.classify(); 256];
         for j in 0..K {
             sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, i, j);
             matrix_entry.accumulating_ntt_multiply_use_cache(&r_as_ntt[j], accumulator, &cache[j]);
@@ -198,7 +200,7 @@ pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
     s_as_ntt: &[PolynomialRingElement<Vector>; K],
     error_as_ntt: &[PolynomialRingElement<Vector>; K],
     s_cache: &mut [PolynomialRingElement<Vector>; K],
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
     // During the first row of multiplications, we build up the cache
     // of intermediate values.
@@ -215,7 +217,7 @@ pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
 
     // The remaining rows can re-use the cached intermediate values.
     for i in 1..K {
-        *accumulator = [0i32; 256];
+        *accumulator = [0i32.classify(); 256];
         for j in 0..K {
             entry::<K, Vector>(matrix_A, i, j).accumulating_ntt_multiply_use_cache(
                 &s_as_ntt[j],

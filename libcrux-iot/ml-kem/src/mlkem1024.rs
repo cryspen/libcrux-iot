@@ -1,6 +1,6 @@
 //! ML-KEM 1024
 use super::{constants::*, ind_cca::*, types::*, *};
-
+use libcrux_secrets::U8;
 const RANK: usize = 4;
 const RANK_SQUARED: usize = RANK * RANK;
 #[cfg(eurydice)]
@@ -77,7 +77,7 @@ macro_rules! instantiate {
             #[cfg(feature = "kyber")]
             #[cfg_attr(docsrs, doc(cfg(feature = "kyber")))]
             pub fn kyber_generate_key_pair(
-                randomness: [u8; KEY_GENERATION_SEED_SIZE],
+                randomness: [U8; KEY_GENERATION_SEED_SIZE],
             ) -> MlKem1024KeyPair {
                 p::kyber_generate_keypair::<
                     RANK,
@@ -93,7 +93,7 @@ macro_rules! instantiate {
 
             /// Generate ML-KEM 1024 Key Pair
             pub fn generate_key_pair(
-                randomness: [u8; KEY_GENERATION_SEED_SIZE],
+                randomness: [U8; KEY_GENERATION_SEED_SIZE],
             ) -> MlKem1024KeyPair {
                 p::generate_keypair::<
                     RANK,
@@ -114,7 +114,7 @@ macro_rules! instantiate {
             /// bytes of `randomness`.
             pub fn encapsulate(
                 public_key: &MlKem1024PublicKey,
-                randomness: [u8; SHARED_SECRET_SIZE],
+                randomness: [U8; SHARED_SECRET_SIZE],
             ) -> (MlKem1024Ciphertext, MlKemSharedSecret) {
                 p::encapsulate::<
                     RANK,
@@ -145,7 +145,7 @@ macro_rules! instantiate {
             #[cfg_attr(docsrs, doc(cfg(feature = "kyber")))]
             pub fn kyber_encapsulate(
                 public_key: &MlKem1024PublicKey,
-                randomness: [u8; SHARED_SECRET_SIZE],
+                randomness: [U8; SHARED_SECRET_SIZE],
             ) -> (MlKem1024Ciphertext, MlKemSharedSecret) {
                 p::kyber_encapsulate::<
                     RANK,
@@ -272,7 +272,7 @@ pub fn validate_private_key(
         valid ==> (${res}.f_sk.f_value == secret_key /\ ${res}.f_pk.f_value == public_key)"#)
 )]
 pub fn generate_key_pair(
-    randomness: [u8; KEY_GENERATION_SEED_SIZE],
+    randomness: [U8; KEY_GENERATION_SEED_SIZE],
 ) -> MlKemKeyPair<SECRET_KEY_SIZE, CPA_PKE_PUBLIC_KEY_SIZE> {
     multiplexing::generate_keypair::<
         RANK,
@@ -300,7 +300,7 @@ pub fn generate_key_pair(
 )]
 pub fn encapsulate(
     public_key: &MlKem1024PublicKey,
-    randomness: [u8; SHARED_SECRET_SIZE],
+    randomness: [U8; SHARED_SECRET_SIZE],
 ) -> (MlKem1024Ciphertext, MlKemSharedSecret) {
     multiplexing::encapsulate::<
         RANK,
@@ -373,6 +373,7 @@ pub mod rand {
         KEY_GENERATION_SEED_SIZE, SHARED_SECRET_SIZE,
     };
     use ::rand::CryptoRng;
+    use libcrux_secrets::{Classify as _, DeclassifyRefMut as _};
 
     /// Generate ML-KEM 1024 Key Pair
     ///
@@ -381,8 +382,8 @@ pub mod rand {
     ///
     /// This function returns an [`MlKem1024KeyPair`].
     pub fn generate_key_pair(rng: &mut impl CryptoRng) -> MlKem1024KeyPair {
-        let mut randomness = [0u8; KEY_GENERATION_SEED_SIZE];
-        rng.fill_bytes(&mut randomness);
+        let mut randomness = [0u8.classify(); KEY_GENERATION_SEED_SIZE];
+        rng.fill_bytes(randomness.declassify_ref_mut());
 
         super::generate_key_pair(randomness)
     }
@@ -397,8 +398,8 @@ pub mod rand {
         public_key: &MlKem1024PublicKey,
         rng: &mut impl CryptoRng,
     ) -> (MlKem1024Ciphertext, MlKemSharedSecret) {
-        let mut randomness = [0u8; SHARED_SECRET_SIZE];
-        rng.fill_bytes(&mut randomness);
+        let mut randomness = [0u8.classify(); SHARED_SECRET_SIZE];
+        rng.fill_bytes(randomness.declassify_ref_mut());
 
         super::encapsulate(public_key, randomness)
     }
@@ -406,6 +407,7 @@ pub mod rand {
 
 #[cfg(all(not(eurydice), feature = "kyber"))]
 pub(crate) mod kyber {
+
     use super::*;
 
     /// Generate Kyber 1024 Key Pair
@@ -415,7 +417,7 @@ pub(crate) mod kyber {
     ///
     /// This function returns an [`MlKem1024KeyPair`].
     pub fn generate_key_pair(
-        randomness: [u8; KEY_GENERATION_SEED_SIZE],
+        randomness: [U8; KEY_GENERATION_SEED_SIZE],
     ) -> MlKemKeyPair<SECRET_KEY_SIZE, CPA_PKE_PUBLIC_KEY_SIZE> {
         multiplexing::kyber_generate_keypair::<
             RANK,
@@ -436,7 +438,7 @@ pub(crate) mod kyber {
     /// bytes of `randomness`.
     pub fn encapsulate(
         public_key: &MlKem1024PublicKey,
-        randomness: [u8; SHARED_SECRET_SIZE],
+        randomness: [U8; SHARED_SECRET_SIZE],
     ) -> (MlKem1024Ciphertext, MlKemSharedSecret) {
         multiplexing::kyber_encapsulate::<
             RANK,

@@ -30,6 +30,7 @@ libcrux-iot-sha3 = { path = "../sha3" , features = [
     "full-unroll",
 ] }
 hax-lib.workspace = true
+libcrux-secrets.workspace = true
 
 [features]
 # By default all variants and std are enabled.
@@ -48,6 +49,8 @@ rand = ["dep:rand"]
 
 # std support
 std = []
+
+check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-iot-sha3/check-secret-independence"]
 
 [dev-dependencies]
 rand = { version = "0.9" }

@@ -1,3 +1,5 @@
+use libcrux_secrets::{I16, I32};
+
 use crate::vector::{to_standard_domain, Operations, FIELD_ELEMENTS_IN_VECTOR};
 
 pub(crate) const ZETAS_TIMES_MONTGOMERY_R: [i16; 128] = {
@@ -66,14 +68,14 @@ pub(crate) struct PolynomialRingElement<Vector: Operations> {
 
 #[inline(always)]
 #[hax_lib::requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
-fn from_i16_array<Vector: Operations>(a: &[i16], result: &mut PolynomialRingElement<Vector>) {
+fn from_i16_array<Vector: Operations>(a: &[I16], result: &mut PolynomialRingElement<Vector>) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
         Vector::from_i16_array(&a[i * 16..(i + 1) * 16], &mut result.coefficients[i]);
     }
 }
 
 fn reducing_from_i32_array<Vector: Operations>(
-    a: &[i32],
+    a: &[I32],
     result: &mut PolynomialRingElement<Vector>,
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
@@ -490,7 +492,7 @@ fn add_standard_error_reduce<Vector: Operations>(
 fn accumulating_ntt_multiply<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
         Vector::accumulating_ntt_multiply(
@@ -511,7 +513,7 @@ fn accumulating_ntt_multiply<Vector: Operations>(
 fn accumulating_ntt_multiply_fill_cache<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
     cache: &mut PolynomialRingElement<Vector>,
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
@@ -533,7 +535,7 @@ fn accumulating_ntt_multiply_fill_cache<Vector: Operations>(
 fn accumulating_ntt_multiply_use_cache<Vector: Operations>(
     myself: &PolynomialRingElement<Vector>,
     rhs: &PolynomialRingElement<Vector>,
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
     cache: &PolynomialRingElement<Vector>,
 ) {
     for i in 0..VECTORS_IN_RING_ELEMENT {
@@ -567,13 +569,13 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
 
     #[inline(always)]
     #[requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
-    pub(crate) fn from_i16_array(a: &[i16], out: &mut Self) {
+    pub(crate) fn from_i16_array(a: &[I16], out: &mut Self) {
         from_i16_array(a, out)
     }
 
     #[inline(always)]
     #[requires(VECTORS_IN_RING_ELEMENT * 16 <= a.len())]
-    pub(crate) fn reducing_from_i32_array(a: &[i32], out: &mut Self) {
+    pub(crate) fn reducing_from_i32_array(a: &[I32], out: &mut Self) {
         reducing_from_i32_array(a, out)
     }
 
@@ -638,7 +640,7 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
-    pub(crate) fn accumulating_ntt_multiply(&self, rhs: &Self, accumulator: &mut [i32; 256]) {
+    pub(crate) fn accumulating_ntt_multiply(&self, rhs: &Self, accumulator: &mut [I32; 256]) {
         accumulating_ntt_multiply(self, rhs, accumulator)
     }
 
@@ -646,7 +648,7 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     pub(crate) fn accumulating_ntt_multiply_fill_cache(
         &self,
         rhs: &Self,
-        accumulator: &mut [i32; 256],
+        accumulator: &mut [I32; 256],
         cache: &mut Self,
     ) {
         accumulating_ntt_multiply_fill_cache(self, rhs, accumulator, cache)
@@ -656,7 +658,7 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     pub(crate) fn accumulating_ntt_multiply_use_cache(
         &self,
         rhs: &Self,
-        accumulator: &mut [i32; 256],
+        accumulator: &mut [I32; 256],
         cache: &Self,
     ) {
         accumulating_ntt_multiply_use_cache(self, rhs, accumulator, cache)
@@ -671,10 +673,11 @@ mod tests {
 
     #[test]
     fn encoding_portable() {
+        use libcrux_secrets::*;
         type RingElement = PolynomialRingElement<PortableVector>;
         let mut re = RingElement::ZERO();
-        re.coefficients[0].elements = [0xAB; 16];
-        re.coefficients[15].elements = [0xCD; 16];
+        re.coefficients[0].elements = [0xAB.classify(); 16];
+        re.coefficients[15].elements = [0xCD.classify(); 16];
 
         let mut bytes = [0u8; RingElement::num_bytes()];
         re.to_bytes(&mut bytes);

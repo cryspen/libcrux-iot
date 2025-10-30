@@ -1,3 +1,5 @@
+use libcrux_secrets::{I16, I32, U8};
+
 pub const MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS: i16 = 1353;
 pub const FIELD_MODULUS: i16 = 3329;
 pub const FIELD_ELEMENTS_IN_VECTOR: usize = 16;
@@ -517,11 +519,11 @@ pub trait Operations: Copy + Clone + Repr {
 
     #[requires(array.len() == 16)]
     #[ensures(|_| future(out).repr() == array)]
-    fn from_i16_array(array: &[i16], out: &mut Self);
+    fn from_i16_array(array: &[I16], out: &mut Self);
 
     #[requires(array.len() == 16)]
     #[ensures(|_| fstar!(r#"f_repr ${out}_future == $array"#))]
-    fn reducing_from_i32_array(array: &[i32], out: &mut Self);
+    fn reducing_from_i32_array(array: &[I32], out: &mut Self);
 
     #[requires(out.len() == 16)]
     #[ensures(|_| future(out) == x.repr())]
@@ -622,7 +624,7 @@ pub trait Operations: Copy + Clone + Repr {
     fn accumulating_ntt_multiply(
         lhs: &Self,
         rhs: &Self,
-        out: &mut [i32],
+        out: &mut [I32],
         zeta0: i16,
         zeta1: i16,
         zeta2: i16,
@@ -632,7 +634,7 @@ pub trait Operations: Copy + Clone + Repr {
     fn accumulating_ntt_multiply_fill_cache(
         lhs: &Self,
         rhs: &Self,
-        accumulator: &mut [i32], // length: 16
+        accumulator: &mut [I32], // length: 16
         cache: &mut Self,
         zeta0: i16,
         zeta1: i16,
@@ -643,17 +645,17 @@ pub trait Operations: Copy + Clone + Repr {
     fn accumulating_ntt_multiply_use_cache(
         lhs: &Self,
         rhs: &Self,
-        accumulator: &mut [i32],
+        accumulator: &mut [I32],
         cache: &Self,
     );
 
     // Serialization and deserialization
     #[requires(fstar!(r#"Spec.MLKEM.serialize_pre 1 (f_repr $a)"#))]
     #[ensures(|_| fstar!(r#"Spec.MLKEM.serialize_pre 1 (f_repr $a) ==> Spec.MLKEM.serialize_post 1 (f_repr $a) ${out}_future"#))]
-    fn serialize_1(a: &Self, out: &mut [u8]);
+    fn serialize_1(a: &Self, out: &mut [U8]);
     #[requires(a.len() == 2)]
     #[ensures(|_| fstar!(r#"sz (Seq.length $a) =. sz 2 ==> Spec.MLKEM.deserialize_post 1 $a (f_repr ${out}_future)"#))]
-    fn deserialize_1(a: &[u8], out: &mut Self);
+    fn deserialize_1(a: &[U8], out: &mut Self);
 
     #[requires(fstar!(r#"Spec.MLKEM.serialize_pre 4 (f_repr $a)"#))]
     #[ensures(|_| fstar!(r#"Spec.MLKEM.serialize_pre 4 (f_repr $a) ==> Spec.MLKEM.serialize_post 4 (f_repr $a) ${out}_future"#))]
@@ -679,10 +681,10 @@ pub trait Operations: Copy + Clone + Repr {
 
     #[requires(fstar!(r#"Spec.MLKEM.serialize_pre 12 (f_repr $a)"#))]
     #[ensures(|_| fstar!(r#"Spec.MLKEM.serialize_pre 12 (f_repr $a) ==> Spec.MLKEM.serialize_post 12 (f_repr $a) ${out}_future"#))]
-    fn serialize_12(a: &Self, out: &mut [u8]);
+    fn serialize_12(a: &Self, out: &mut [U8]);
     #[requires(a.len() == 24)]
     #[ensures(|_| fstar!(r#"sz (Seq.length $a) =. sz 24 ==> Spec.MLKEM.deserialize_post 12 $a (f_repr ${out}_future)"#))]
-    fn deserialize_12(a: &[u8], out: &mut Self);
+    fn deserialize_12(a: &[U8], out: &mut Self);
 
     #[requires(a.len() == 24 && out.len() == 16)]
     #[ensures(|result|

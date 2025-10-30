@@ -1,3 +1,5 @@
+use libcrux_secrets::{ClassifyRef as _, U8};
+
 use crate::{
     constants::{BYTES_PER_RING_ELEMENT, SHARED_SECRET_SIZE},
     helper::cloop,
@@ -27,7 +29,7 @@ pub(super) fn to_unsigned_field_modulus<Vector: Operations>(a: &Vector, out: &mu
 )]
 pub(super) fn compress_then_serialize_message<Vector: Operations>(
     re: &PolynomialRingElement<Vector>,
-    serialized: &mut [u8],
+    serialized: &mut [U8],
     scratch: &mut Vector,
 ) {
     for i in 0..16 {
@@ -49,7 +51,7 @@ pub(super) fn compress_then_serialize_message<Vector: Operations>(
         Spec.MLKEM.decode_then_decompress_message $serialized"#)
 )]
 pub(super) fn deserialize_then_decompress_message<Vector: Operations>(
-    serialized: &[u8; SHARED_SECRET_SIZE],
+    serialized: &[U8; SHARED_SECRET_SIZE],
     re: &mut PolynomialRingElement<Vector>,
 ) {
     for i in 0..16 {
@@ -71,7 +73,7 @@ pub(super) fn deserialize_then_decompress_message<Vector: Operations>(
 pub(super) fn serialize_uncompressed_ring_element<Vector: Operations>(
     re: &PolynomialRingElement<Vector>,
     scratch: &mut Vector,
-    serialized: &mut [u8],
+    serialized: &mut [U8],
 ) {
     debug_assert!(serialized.len() == BYTES_PER_RING_ELEMENT);
     hax_lib::fstar!(r#"assert_norm (pow2 12 == 4096)"#);
@@ -97,7 +99,7 @@ pub(super) fn serialize_uncompressed_ring_element<Vector: Operations>(
         Spec.MLKEM.byte_decode 12 $serialized"#)
 )]
 pub(super) fn deserialize_to_uncompressed_ring_element<Vector: Operations>(
-    serialized: &[u8],
+    serialized: &[U8],
     re: &mut PolynomialRingElement<Vector>,
 ) {
     hax_lib::fstar!(r#"assert (v $BYTES_PER_RING_ELEMENT / 24 == 16)"#);
@@ -117,7 +119,7 @@ pub(super) fn deserialize_to_uncompressed_ring_element<Vector: Operations>(
     serialized.len() == BYTES_PER_RING_ELEMENT
 )]
 pub(crate) fn deserialize_to_reduced_ring_element<Vector: Operations>(
-    serialized: &[u8],
+    serialized: &[U8],
     re: &mut PolynomialRingElement<Vector>,
 ) {
     hax_lib::fstar!(r#"assert (v $BYTES_PER_RING_ELEMENT / 24 == 16)"#);
@@ -160,7 +162,7 @@ pub(super) fn deserialize_ring_elements_reduced<const K: usize, Vector: Operatio
                 )
             });
 
-            deserialize_to_reduced_ring_element(ring_element, &mut deserialized_pk[i]);
+            deserialize_to_reduced_ring_element(ring_element.classify_ref(), &mut deserialized_pk[i]);
         }
     };
     ()

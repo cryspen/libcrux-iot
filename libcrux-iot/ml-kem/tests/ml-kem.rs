@@ -1,4 +1,5 @@
 //! Tests for ML-KEM
+use libcrux_secrets::ClassifyRef as _;
 
 /// These tests are from https://github.com/C2SP/CCTV/
 #[allow(dead_code)]
@@ -87,17 +88,17 @@ fn test_invalid_dk(p: &str) {
         match p {
             #[cfg(feature = "mlkem512")]
             "512" => assert!(!libcrux_iot_ml_kem::mlkem512::validate_private_key(
-                &dk.try_into().unwrap(),
+                &dk.classify_ref().try_into().unwrap(),
                 &ct.try_into().unwrap(),
             )),
             #[cfg(feature = "mlkem768")]
             "768" => assert!(!libcrux_iot_ml_kem::mlkem768::validate_private_key(
-                &dk.try_into().unwrap(),
+                &dk.classify_ref().try_into().unwrap(),
                 &ct.try_into().unwrap(),
             )),
             #[cfg(feature = "mlkem1024")]
             "1024" => assert!(!libcrux_iot_ml_kem::mlkem1024::validate_private_key(
-                &dk.try_into().unwrap(),
+                &dk.classify_ref().try_into().unwrap(),
                 &ct.try_into().unwrap(),
             )),
             _ => unreachable!(),

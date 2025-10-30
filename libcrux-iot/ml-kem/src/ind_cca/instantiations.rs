@@ -5,6 +5,7 @@ macro_rules! instantiate {
                 MlKemCiphertext, MlKemKeyPair, MlKemPrivateKey, MlKemPublicKey, MlKemSharedSecret,
                 KEY_GENERATION_SEED_SIZE, SHARED_SECRET_SIZE,
             };
+            use libcrux_secrets::U8;
 
             /// Portable generate key pair.
             #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
@@ -24,7 +25,7 @@ macro_rules! instantiate {
                 const ETA1_RANDOMNESS_SIZE: usize,
                 const PRF_OUTPUT_SIZE1: usize,
             >(
-                randomness: &[u8; KEY_GENERATION_SEED_SIZE],
+                randomness: &[U8; KEY_GENERATION_SEED_SIZE],
             ) -> MlKemKeyPair<PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE> {
                 crate::ind_cca::generate_keypair::<
                     K,
@@ -52,7 +53,7 @@ macro_rules! instantiate {
                 const ETA1_RANDOMNESS_SIZE: usize,
                 const PRF_OUTPUT_SIZE1: usize,
             >(
-                randomness: &[u8; KEY_GENERATION_SEED_SIZE],
+                randomness: &[U8; KEY_GENERATION_SEED_SIZE],
             ) -> MlKemKeyPair<PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE> {
                 crate::ind_cca::generate_keypair::<
                     K,
@@ -139,7 +140,7 @@ macro_rules! instantiate {
                 const PRF_OUTPUT_SIZE2: usize,
             >(
                 public_key: &MlKemPublicKey<PUBLIC_KEY_SIZE>,
-                randomness: &[u8; SHARED_SECRET_SIZE],
+                randomness: &[U8; SHARED_SECRET_SIZE],
             ) -> (MlKemCiphertext<CIPHERTEXT_SIZE>, MlKemSharedSecret) {
                 crate::ind_cca::encapsulate::<
                     K,
@@ -197,7 +198,7 @@ macro_rules! instantiate {
                 const PRF_OUTPUT_SIZE2: usize,
             >(
                 public_key: &MlKemPublicKey<PUBLIC_KEY_SIZE>,
-                randomness: &[u8; SHARED_SECRET_SIZE],
+                randomness: &[U8; SHARED_SECRET_SIZE],
             ) -> (MlKemCiphertext<CIPHERTEXT_SIZE>, MlKemSharedSecret) {
                 crate::ind_cca::encapsulate::<
                     K,
