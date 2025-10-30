@@ -7,7 +7,8 @@ use crate::lane::Lane2U32;
 use crate::{FromLeBytes, ToLeBytes};
 
 #[cfg_attr(hax, hax_lib::opaque)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
+#[cfg_attr(not(eurydice), derive(Debug))]
 pub(crate) struct KeccakState {
     pub(super) st: [Lane2U32; 25],
     pub(super) c: [Lane2U32; 5],
@@ -116,7 +117,7 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
         state.set_lane(
             i / 5,
             i % 5,
-            [got[0] ^ state_flat[i][0], got[1] ^ state_flat[i][1]].into(),
+            Lane2U32::from_ints([got[0] ^ state_flat[i][0], got[1] ^ state_flat[i][1]]),
         );
     }
 }

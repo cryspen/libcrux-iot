@@ -25,8 +25,8 @@ pub(crate) struct KeccakXofState<const RATE: usize> {
 
 impl<const RATE: usize> KeccakXofState<RATE> {
     /// An all zero block
-    pub(crate) const fn zero_block() -> [U8; RATE] {
-        [libcrux_secrets::secret(0); RATE]
+    pub(crate) fn zero_block() -> [U8; RATE] {
+        [0; RATE].classify()
     }
 
     /// Generate a new keccak xof state.
