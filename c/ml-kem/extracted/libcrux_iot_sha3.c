@@ -8,7 +8,7 @@
  * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
  * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
  * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: 3613334610aa951d9320aba05c143b366adfe599
+ * Libcrux: 05bdc0e603c669df888620fb36bfe347e811d91e
  */
 
 #include "internal/libcrux_iot_sha3.h"
@@ -2917,7 +2917,7 @@ with const generics
 void libcrux_iot_sha3_portable_keccakx1_96(Eurydice_slice data,
                                            Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccak_96(
-      libcrux_secrets_int_public_integers_classify_ref_c5_ba(&data)[0U], out);
+      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
 }
 
 /**
@@ -3239,7 +3239,7 @@ with const generics
 void libcrux_iot_sha3_portable_keccakx1_ad(Eurydice_slice data,
                                            Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccak_ad(
-      libcrux_secrets_int_public_integers_classify_ref_c5_ba(&data)[0U], out);
+      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
 }
 
 /**
@@ -3327,7 +3327,7 @@ with const generics
 void libcrux_iot_sha3_portable_keccakx1_ad0(Eurydice_slice data,
                                             Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccak_ad0(
-      libcrux_secrets_int_public_integers_classify_ref_c5_ba(&data)[0U], out);
+      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
 }
 
 /**
@@ -3456,7 +3456,7 @@ void libcrux_iot_sha3_portable_incremental_shake128_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice data0) {
   libcrux_iot_sha3_state_KeccakState *uu____0 = s;
   Eurydice_slice uu____1 =
-      libcrux_secrets_int_public_integers_classify_ref_c5_ba(&data0)[0U];
+      libcrux_secrets_int_classify_public_classify_ref_9b_90(data0);
   libcrux_iot_sha3_keccak_absorb_final_c6(uu____0, uu____1, (size_t)0U,
                                           Eurydice_slice_len(data0, uint8_t));
 }
@@ -3898,7 +3898,7 @@ with const generics
 void libcrux_iot_sha3_portable_keccakx1_1e(Eurydice_slice data,
                                            Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccak_1e(
-      libcrux_secrets_int_public_integers_classify_ref_c5_ba(&data)[0U], out);
+      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
 }
 
 /**
@@ -4220,7 +4220,7 @@ with const generics
 void libcrux_iot_sha3_portable_keccakx1_7c(Eurydice_slice data,
                                            Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccak_7c(
-      libcrux_secrets_int_public_integers_classify_ref_c5_ba(&data)[0U], out);
+      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
 }
 
 /**
@@ -4450,7 +4450,7 @@ with const generics
 void libcrux_iot_sha3_portable_keccakx1_c6(Eurydice_slice data,
                                            Eurydice_slice out) {
   libcrux_iot_sha3_keccak_keccak_c6(
-      libcrux_secrets_int_public_integers_classify_ref_c5_ba(&data)[0U], out);
+      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
 }
 
 /**
@@ -4541,7 +4541,7 @@ void libcrux_iot_sha3_portable_incremental_shake256_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_slice data) {
   libcrux_iot_sha3_state_KeccakState *uu____0 = s;
   Eurydice_slice uu____1 =
-      libcrux_secrets_int_public_integers_classify_ref_c5_ba(&data)[0U];
+      libcrux_secrets_int_classify_public_classify_ref_9b_90(data);
   libcrux_iot_sha3_keccak_absorb_final_ad0(uu____0, uu____1, (size_t)0U,
                                            Eurydice_slice_len(data, uint8_t));
 }
@@ -4686,7 +4686,7 @@ libcrux_iot_sha3::portable::incremental::Shake256Xof}
 void libcrux_iot_sha3_portable_incremental_absorb_a5(
     libcrux_iot_sha3_keccak_KeccakXofState_c7 *self, Eurydice_slice input) {
   libcrux_iot_sha3_keccak_absorb_f0_5b(
-      self, libcrux_secrets_int_public_integers_classify_ref_c5_ba(&input)[0U]);
+      self, libcrux_secrets_int_classify_public_classify_ref_9b_90(input));
 }
 
 /**
@@ -4748,7 +4748,7 @@ libcrux_iot_sha3::portable::incremental::Shake256Xof}
 void libcrux_iot_sha3_portable_incremental_absorb_final_a5(
     libcrux_iot_sha3_keccak_KeccakXofState_c7 *self, Eurydice_slice input) {
   libcrux_iot_sha3_keccak_absorb_final_f0_ad(
-      self, libcrux_secrets_int_public_integers_classify_ref_c5_ba(&input)[0U]);
+      self, libcrux_secrets_int_classify_public_classify_ref_9b_90(input));
 }
 
 /**
@@ -5051,7 +5051,7 @@ libcrux_iot_sha3::portable::incremental::Shake128Xof}
 void libcrux_iot_sha3_portable_incremental_absorb_7b(
     libcrux_iot_sha3_keccak_KeccakXofState_49 *self, Eurydice_slice input) {
   libcrux_iot_sha3_keccak_absorb_f0_3a(
-      self, libcrux_secrets_int_public_integers_classify_ref_c5_ba(&input)[0U]);
+      self, libcrux_secrets_int_classify_public_classify_ref_9b_90(input));
 }
 
 /**
@@ -5110,7 +5110,7 @@ libcrux_iot_sha3::portable::incremental::Shake128Xof}
 void libcrux_iot_sha3_portable_incremental_absorb_final_7b(
     libcrux_iot_sha3_keccak_KeccakXofState_49 *self, Eurydice_slice input) {
   libcrux_iot_sha3_keccak_absorb_final_f0_c6(
-      self, libcrux_secrets_int_public_integers_classify_ref_c5_ba(&input)[0U]);
+      self, libcrux_secrets_int_classify_public_classify_ref_9b_90(input));
 }
 
 /**
