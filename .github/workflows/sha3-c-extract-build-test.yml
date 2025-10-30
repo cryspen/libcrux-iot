@@ -1,0 +1,87 @@
+name: SHA3 C - Extract, Build & Test
+
+on:
+  merge_group:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main", "*"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  extract-c:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cryspen/libcrux-c:latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Extract C
+        run: |
+          export HOME=/home/user
+          cd libcrux-iot
+          ../c/extract-sha3.sh
+
+      - name: Upload C extraction
+        uses: actions/upload-artifact@v4
+        with:
+          name: c-extraction-sha3
+          path: c/sha3/extracted
+          include-hidden-files: true
+          if-no-files-found: error
+
+  build-c:
+    needs: [extract-c]
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: c-extraction-sha3
+
+      - name: Set CC and CXX to Clang on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+
+      - name: 🔨 Build
+        run: |
+          cmake -B build
+          cmake --build build
+
+      - name: 🏃🏻‍♀️ Test
+        run: ./build/sha3_test
+        if: ${{ matrix.os != 'windows-latest' }}
+
+
+  sha3-build-test-status:
+    if: ${{ always() }}
+    needs: [build-c]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Successful
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+      - name: Failing
+        if: ${{ (contains(needs.*.result, 'failure')) }}
+        run: exit 1

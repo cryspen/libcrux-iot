@@ -1,4 +1,5 @@
 **/target
+c/*/extracted/build
 **/Cargo.lock
 .vscode
 .DS_Store

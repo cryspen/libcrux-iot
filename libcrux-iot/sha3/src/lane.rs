@@ -1,6 +1,6 @@
 use core::ops::{Index, IndexMut};
 
-use libcrux_secrets::{CastOps, Classify, Declassify, U32};
+use libcrux_secrets::{CastOps, Classify as _, U32};
 
 /// A lane of the Keccak state,
 #[derive(Clone, Copy)]
@@ -8,8 +8,13 @@ pub struct Lane2U32([U32; 2]);
 
 impl Lane2U32 {
     #[inline(always)]
+    pub(crate) fn from_ints(value: [U32; 2]) -> Self {
+        Self(value)
+    }
+
+    #[inline(always)]
     pub(crate) fn zero() -> Self {
-        [0, 0].classify().into()
+        Self::from_ints([0, 0].classify())
     }
 
     #[inline(always)]
@@ -36,7 +41,7 @@ impl Lane2U32 {
         odd_bits = (odd_bits ^ (odd_bits >> 8)) & 0x0000_ffff_0000_ffff;
         odd_bits = (odd_bits ^ (odd_bits >> 16)) & 0x0000_0000_ffff_ffff;
 
-        [even_bits.as_u32(), odd_bits.as_u32()].into()
+        Self::from_ints([even_bits.as_u32(), odd_bits.as_u32()])
     }
 
     #[inline(always)]
@@ -100,8 +105,12 @@ impl From<[U32; 2]> for Lane2U32 {
     }
 }
 
+// XXX: This impl will panic Charon at rev 667d2fc98984ff7f3df989c2367e6c1fa4a000e7, so the derivations of
+//      `Debug` which build on it have to be switched off for Eurydice.
+#[cfg(not(eurydice))]
 impl core::fmt::Debug for Lane2U32 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        use libcrux_secrets::Declassify;
         f.debug_tuple("Lane2U32")
             .field(&self.0.declassify())
             .finish()
@@ -113,9 +122,10 @@ fn split_at_mut_1<T>(out: &mut [T], mid: usize) -> (&mut [T], &mut [T]) {
     out.split_at_mut(mid)
 }
 
-#[cfg(test)]
+#[cfg(all(not(eurydice), test))]
 mod interleave_tests {
     use super::*;
+    use libcrux_secrets::Declassify;
 
     #[test]
     fn identity() {

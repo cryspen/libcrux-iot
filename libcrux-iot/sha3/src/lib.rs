@@ -6,6 +6,8 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+use libcrux_secrets::{Classify, ClassifyRef, U8};
+
 mod keccak;
 mod lane;
 mod state;
@@ -88,7 +90,6 @@ pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[u8]) -> [U8; LEN]
 
 /// SHA3
 pub use hash as sha3;
-use libcrux_secrets::{Classify, U8};
 
 /// SHA3 224
 pub fn sha224(data: &[u8]) -> Sha3_224Digest {
@@ -191,12 +192,13 @@ pub fn shake256_ema(out: &mut [U8], data: &[u8]) {
 
 /// A portable SHA3 implementation
 pub mod portable {
-    use libcrux_secrets::{ClassifyRef, U8};
+    use libcrux_secrets::U8;
 
     use super::*;
 
     /// The Keccak state for the incremental API.
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy)]
+    #[cfg_attr(not(eurydice), derive(Debug))]
     pub struct KeccakState {
         state: state::KeccakState,
     }
