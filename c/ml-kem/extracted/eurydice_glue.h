@@ -318,6 +318,11 @@ static inline size_t core_cmp_impls___core__cmp__Ord_for_usize___min(size_t a,
 static inline uint16_t core_num__u16__wrapping_add(uint16_t x, uint16_t y) {
   return x + y;
 }
+// unsigned overflow wraparound semantics in C
+static inline uint16_t core_num__u32__wrapping_add(uint32_t x, uint32_t y) {
+  return x + y;
+}
+
 static inline uint8_t core_num__u8__wrapping_sub(uint8_t x, uint8_t y) {
   return x - y;
 }
