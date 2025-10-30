@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon:
- * Eurydice:
- * Karamel:
+ * Charon: 667d2fc98984ff7f3df989c2367e6c1fa4a000e7
+ * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
+ * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
  * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: ded8c0f46a4ee8f93a6474c5aec0b9f13c3501c5
+ * Libcrux: 3613334610aa951d9320aba05c143b366adfe599
  */
 
 #include "internal/libcrux_mlkem_iot.h"
