@@ -105,6 +105,8 @@ impl From<[U32; 2]> for Lane2U32 {
     }
 }
 
+// XXX: This impl will panic Charon at rev 667d2fc98984ff7f3df989c2367e6c1fa4a000e7, so the derivations of
+//      `Debug` which build on it have to be switched off for Eurydice.
 #[cfg(not(eurydice))]
 impl core::fmt::Debug for Lane2U32 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
