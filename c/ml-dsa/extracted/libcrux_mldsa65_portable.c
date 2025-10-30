@@ -4652,31 +4652,34 @@ KRML_MUSTINLINE void libcrux_iot_ml_dsa_samplex4_matrix_flat_15(
   uint8_t rand_stack2[840U] = {0U};
   uint8_t rand_stack3[840U] = {0U};
   int32_t tmp_stack[4U][263U] = {{0U}};
-  for (size_t i = (size_t)0U;
-       i < Eurydice_slice_len(
-               matrix, libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d) /
-               (size_t)4U;
-       i++) {
+  size_t full_quartets =
+      Eurydice_slice_len(
+          matrix, libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d) /
+      (size_t)4U;
+  for (size_t i = (size_t)0U; i < full_quartets; i++) {
     size_t start_index = i;
-    size_t start_index0 = start_index * (size_t)4U;
-    size_t uu____0 = start_index0 + (size_t)4U;
-    size_t elements_requested;
-    if (uu____0 <=
-        Eurydice_slice_len(
-            matrix, libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d)) {
-      elements_requested = (size_t)4U;
-    } else {
-      elements_requested =
-          Eurydice_slice_len(
-              matrix, libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d) -
-          start_index0;
-    }
     libcrux_iot_ml_dsa_sample_sample_up_to_four_ring_elements_flat_15(
         columns, seed, matrix, rand_stack0, rand_stack1, rand_stack2,
         rand_stack3,
         Eurydice_array_to_slice((size_t)4U, tmp_stack, int32_t[263U]),
-        start_index0, elements_requested);
+        start_index * (size_t)4U, (size_t)4U);
   }
+  size_t uu____0 = columns;
+  Eurydice_slice uu____1 = seed;
+  Eurydice_slice uu____2 = matrix;
+  uint8_t *uu____3 = rand_stack0;
+  uint8_t *uu____4 = rand_stack1;
+  uint8_t *uu____5 = rand_stack2;
+  uint8_t *uu____6 = rand_stack3;
+  Eurydice_slice uu____7 =
+      Eurydice_array_to_slice((size_t)4U, tmp_stack, int32_t[263U]);
+  size_t uu____8 = full_quartets * (size_t)4U;
+  libcrux_iot_ml_dsa_sample_sample_up_to_four_ring_elements_flat_15(
+      uu____0, uu____1, uu____2, uu____3, uu____4, uu____5, uu____6, uu____7,
+      uu____8,
+      Eurydice_slice_len(
+          matrix, libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d) %
+          (size_t)4U);
 }
 
 /**
