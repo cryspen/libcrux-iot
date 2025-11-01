@@ -143,7 +143,7 @@ pub(crate) mod portable {
         for i in 0..input.len() {
             portable::shake256(
                 &mut outputs[i * out_len..(i + 1) * out_len],
-                input[i].declassify_ref(),
+                input[i].as_slice().declassify_ref(),
             );
         }
     }
@@ -177,7 +177,7 @@ pub(crate) mod portable {
             #[cfg(not(hax))]
             incremental::shake128_squeeze_first_three_blocks(
                 &mut st.shake128_state[i],
-                outputs[i].classify_ref_mut(),
+                outputs[i].as_mut_slice().classify_ref_mut(),
             );
             #[cfg(hax)]
             incremental::shake128_squeeze_first_three_blocks(
@@ -197,7 +197,7 @@ pub(crate) mod portable {
             #[cfg(not(hax))]
             incremental::shake128_squeeze_next_block(
                 &mut st.shake128_state[i],
-                outputs[i].classify_ref_mut(),
+                outputs[i].as_mut_slice().classify_ref_mut(),
             );
             #[cfg(hax)]
             incremental::shake128_squeeze_next_block(&mut st.shake128_state[i], &mut outputs[i]);

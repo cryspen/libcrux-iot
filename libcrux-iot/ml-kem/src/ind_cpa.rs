@@ -69,7 +69,7 @@ pub(crate) mod unpacked {
 }
 #[cfg(not(hax))]
 use libcrux_secrets::ClassifyRefMut as _;
-use libcrux_secrets::{Classify as _, DeclassifyRef as _, I16, I32, U8};
+use libcrux_secrets::{Classify as _, Declassify as _, DeclassifyRef as _, I16, I32, U8};
 use unpacked::*;
 
 /// Concatenate `t` and `ρ` into the public key.
@@ -516,7 +516,7 @@ pub(crate) fn generate_keypair_unpacked<
     // Declassification: The seed for matrix A, like matrix A is part of the public key.
     sample_matrix_A::<K, Vector, Hasher>(
         &mut public_key.A,
-        &into_padded_array(seed_for_A).declassify_ref(),
+        &(into_padded_array(seed_for_A).declassify()),
         true,
     );
 

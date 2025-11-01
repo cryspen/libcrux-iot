@@ -176,7 +176,8 @@ pub(crate) fn validate_private_key_only<
     let expected = private_key.value[768 * K + 32..768 * K + 64].declassify_ref();
     // Declassification: There are no secret values in this
     // comparison, see above.
-    t.declassify_ref() == expected
+    // XXX: We need `.as_slice()` here for Eurydice.
+    t.as_slice().declassify_ref() == expected
 }
 
 /// Packed API
@@ -300,7 +301,8 @@ pub(crate) fn encapsulate<
 
     hax_lib::fstar!(r#"eq_intro (Seq.slice $to_hash 0 32) $randomness"#);
     Hasher::H(
-        public_key.as_slice().classify_ref(),
+        // XXX: The more reasonable `public_key.as_slice().classify_ref()` does not go through Eurydice.
+        public_key.value.classify().as_slice(),
         &mut to_hash[H_DIGEST_SIZE..],
     );
 
@@ -467,7 +469,8 @@ pub(crate) fn decapsulate<
     let mut to_hash: [U8; IMPLICIT_REJECTION_HASH_INPUT_SIZE] =
         into_padded_array(implicit_rejection_value);
     hax_lib::fstar!(r#"eq_intro (Seq.slice $to_hash 0 32) $implicit_rejection_value"#);
-    to_hash[SHARED_SECRET_SIZE..].copy_from_slice(ciphertext.value.classify_ref());
+    // XXX: The more reasonable `ciphertext.as_slice().classify_ref()` does not go through Eurydice.
+    to_hash[SHARED_SECRET_SIZE..].copy_from_slice(ciphertext.value.classify().as_slice());
     hax_lib::fstar!(
         "assert_norm (pow2 32 == 0x100000000);
         assert (v (sz 32) < pow2 32);
@@ -535,8 +538,9 @@ pub(crate) fn decapsulate<
 
     let mut shared_secret = [0u8.classify(); 32];
     compare_ciphertexts_select_shared_secret_in_constant_time(
-        ciphertext.value.classify_ref(),
-        expected_ciphertext.classify_ref(),
+        // XXX: The more reasonable `ciphertext.as_slice().classify_ref()` does not go through Eurydice.
+        ciphertext.value.classify().as_slice(),
+        expected_ciphertext.classify().as_slice(),
         &shared_secret_kdf,
         &implicit_rejection_shared_secret_kdf,
         &mut shared_secret,
