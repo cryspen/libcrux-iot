@@ -1,3 +1,5 @@
+use libcrux_secrets::{Classify as _, DeclassifyRef as _, U8};
+
 macro_rules! impl_generic_struct {
     ($name:ident, $doc:expr) => {
         #[doc = $doc]
@@ -75,8 +77,66 @@ macro_rules! impl_generic_struct {
     };
 }
 
+/// An ML-KEM Private key
+pub struct MlKemPrivateKey<const SIZE: usize> {
+    pub(crate) value: [U8; SIZE],
+}
+impl<const SIZE: usize> Default for MlKemPrivateKey<SIZE> {
+    fn default() -> Self {
+        Self {
+            value: [0u8.classify(); SIZE],
+        }
+    }
+}
+#[hax_lib::attributes]
+impl<const SIZE: usize> AsRef<[U8]> for MlKemPrivateKey<SIZE> {
+    #[ensures(|result|fstar!(r#"$result = ${self_}.f_value"#))]
+    fn as_ref(&self) -> &[U8] {
+        &self.value
+    }
+}
+#[hax_lib::attributes]
+impl<const SIZE: usize> From<[U8; SIZE]> for MlKemPrivateKey<SIZE> {
+    #[ensures(|result|fstar!(r#"${result}.f_value = $value"#))]
+    fn from(value: [U8; SIZE]) -> Self {
+        Self { value }
+    }
+}
+impl<const SIZE: usize> From<&[U8; SIZE]> for MlKemPrivateKey<SIZE> {
+    fn from(value: &[U8; SIZE]) -> Self {
+        Self {
+            value: value.clone(),
+        }
+    }
+}
+impl<const SIZE: usize> From<MlKemPrivateKey<SIZE>> for [U8; SIZE] {
+    fn from(value: MlKemPrivateKey<SIZE>) -> Self {
+        value.value
+    }
+}
+impl<const SIZE: usize> TryFrom<&[U8]> for MlKemPrivateKey<SIZE> {
+    type Error = core::array::TryFromSliceError;
+    fn try_from(value: &[U8]) -> Result<Self, Self::Error> {
+        match value.try_into() {
+            Ok(value) => Ok(Self { value }),
+            Err(e) => Err(e),
+        }
+    }
+}
+#[hax_lib::attributes]
+impl<const SIZE: usize> MlKemPrivateKey<SIZE> {
+    #[doc = r" A reference to the raw byte slice."]
+    #[ensures(|result|fstar!(r#"$result == self.f_value"#))]
+    pub fn as_slice(&self) -> &[U8; SIZE] {
+        &self.value
+    }
+    #[doc = r" The number of bytes"]
+    pub const fn len() -> usize {
+        SIZE
+    }
+}
+
 impl_generic_struct!(MlKemCiphertext, "An ML-KEM Ciphertext");
-impl_generic_struct!(MlKemPrivateKey, "An ML-KEM Private key");
 impl_generic_struct!(MlKemPublicKey, "An ML-KEM Public key");
 
 /// An ML-KEM key pair
@@ -90,7 +150,7 @@ impl<const PRIVATE_KEY_SIZE: usize, const PUBLIC_KEY_SIZE: usize>
     MlKemKeyPair<PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE>
 {
     /// Creates a new [`MlKemKeyPair`].
-    pub fn new(sk: [u8; PRIVATE_KEY_SIZE], pk: [u8; PUBLIC_KEY_SIZE]) -> Self {
+    pub fn new(sk: [U8; PRIVATE_KEY_SIZE], pk: [u8; PUBLIC_KEY_SIZE]) -> Self {
         Self {
             sk: sk.into(),
             pk: pk.into(),
@@ -122,7 +182,7 @@ impl<const PRIVATE_KEY_SIZE: usize, const PUBLIC_KEY_SIZE: usize>
     }
 
     /// Get a reference to the raw private key bytes.
-    pub fn sk(&self) -> &[u8; PRIVATE_KEY_SIZE] {
+    pub fn sk(&self) -> &[U8; PRIVATE_KEY_SIZE] {
         self.sk.as_slice()
     }
 
@@ -161,16 +221,22 @@ impl<const PRIVATE_KEY_SIZE: usize, const PUBLIC_KEY_SIZE: usize>
              (v v_CPA_SECRET_KEY_SIZE + v v_PUBLIC_KEY_SIZE + v Libcrux_ml_kem.Constants.v_H_DIGEST_SIZE)
            "#))]
 pub(crate) fn unpack_private_key<const CPA_SECRET_KEY_SIZE: usize, const PUBLIC_KEY_SIZE: usize>(
-    private_key: &[u8], // len: SECRET_KEY_SIZE
-) -> (&[u8], &[u8], &[u8], &[u8]) {
+    private_key: &[U8], // len: SECRET_KEY_SIZE
+) -> (&[U8], &[u8], &[u8], &[U8]) {
     let (ind_cpa_secret_key, secret_key) = private_key.split_at(CPA_SECRET_KEY_SIZE);
     let (ind_cpa_public_key, secret_key) = secret_key.split_at(PUBLIC_KEY_SIZE);
     let (ind_cpa_public_key_hash, implicit_rejection_value) =
         secret_key.split_at(crate::constants::H_DIGEST_SIZE);
     (
         ind_cpa_secret_key,
-        ind_cpa_public_key,
-        ind_cpa_public_key_hash,
+        // Declassification: This slice of the ML-KEM private key is the ML-KEM
+        // public key (see FIPS203, Algorithm 16, line 3), and thus public
+        // information.
+        ind_cpa_public_key.declassify_ref(),
+        // Declassification: This slice of the ML-KEM private key is the
+        // hash of the ML-KEM public key (see FIPS203, Algorithm 16, line
+        // 3), and thus public information
+        ind_cpa_public_key_hash.declassify_ref(),
         implicit_rejection_value,
     )
 }
