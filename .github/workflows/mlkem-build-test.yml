@@ -70,6 +70,11 @@ jobs:
           cargo clean
           cargo test -F kyber --verbose
 
+      - name: 🏃🏻‍♀️ Check Secret-Independence
+        run: |
+          cargo clean
+          cargo check -F kyber,check-secret-independence --verbose
+
   mlkem-build-test-status:
     if: ${{ always() }}
     needs: [build]
