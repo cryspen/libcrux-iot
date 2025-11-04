@@ -68,7 +68,7 @@ jobs:
       - name: 🏃🏻‍♀️ Test Kyber
         run: |
           cargo clean
-          cargo test ,kyber --verbose
+          cargo test -F kyber --verbose
 
   mlkem-build-test-status:
     if: ${{ always() }}
