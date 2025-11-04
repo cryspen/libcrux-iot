@@ -36,7 +36,7 @@ pub(crate) fn compress_message_coefficient(fe: U16) -> U8 {
 
     // If 833 <= fe <= 2496,
     // then -832 <= shifted <= 831
-    let shifted = 1664.classify() - (fe.as_i16());
+    let shifted = 1664.classify() - fe.as_i16();
     hax_lib::fstar!(r#"assert (v $shifted == 1664 - v $fe)"#);
 
     // If shifted < 0, then
@@ -118,7 +118,7 @@ pub(crate) fn compress_ciphertext_coefficient(coefficient_bits: u8, fe: U16) -> 
 
     // This has to be constant time due to:
     // https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/ldX0ThYJuBo/m/ovODsdY7AwAJ
-    let mut compressed = (fe.as_u64()) << coefficient_bits;
+    let mut compressed = fe.as_u64() << coefficient_bits;
     compressed += 1664;
 
     compressed *= 10_321_340;
