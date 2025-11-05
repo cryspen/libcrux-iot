@@ -8,7 +8,7 @@
  * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
  * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
  * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: 05bdc0e603c669df888620fb36bfe347e811d91e
+ * Libcrux: e6fef680120a4e50cd5b638b7d0ccfb2961d1139
  */
 
 #include "internal/libcrux_core.h"
@@ -48,10 +48,10 @@ This function found in impl {libcrux_secrets::traits::Classify<T> for T}
 */
 /**
 A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
-with types uint32_t
+with types uint8_t
 
 */
-uint32_t libcrux_secrets_int_public_integers_classify_27_df(uint32_t self) {
+uint8_t libcrux_secrets_int_public_integers_classify_27_90(uint8_t self) {
   return self;
 }
 
@@ -68,39 +68,9 @@ static KRML_MUSTINLINE uint16_t declassify_d8_de(uint16_t self) { return self; }
 /**
 This function found in impl {libcrux_secrets::int::CastOps for u16}
 */
-static KRML_MUSTINLINE uint32_t as_u32_ca(uint16_t self) {
-  return libcrux_secrets_int_public_integers_classify_27_df(
-      (uint32_t)declassify_d8_de(self));
-}
-
-/**
-This function found in impl {libcrux_secrets::traits::Classify<T> for T}
-*/
-/**
-A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
-with types uint8_t
-
-*/
-uint8_t libcrux_secrets_int_public_integers_classify_27_90(uint8_t self) {
-  return self;
-}
-
-/**
-This function found in impl {libcrux_secrets::traits::Declassify<T> for T}
-*/
-/**
-A monomorphic instance of libcrux_secrets.int.public_integers.declassify_d8
-with types uint32_t
-
-*/
-static KRML_MUSTINLINE uint32_t declassify_d8_df(uint32_t self) { return self; }
-
-/**
-This function found in impl {libcrux_secrets::int::CastOps for u32}
-*/
-static KRML_MUSTINLINE uint8_t as_u8_b8(uint32_t self) {
+static KRML_MUSTINLINE uint8_t as_u8_ca(uint16_t self) {
   return libcrux_secrets_int_public_integers_classify_27_90(
-      (uint8_t)declassify_d8_df(self));
+      (uint8_t)declassify_d8_de(self));
 }
 
 /**
@@ -108,9 +78,9 @@ static KRML_MUSTINLINE uint8_t as_u8_b8(uint32_t self) {
 */
 static KRML_NOINLINE uint8_t inz(uint8_t value) {
   uint16_t value0 = as_u16_59(value);
-  uint32_t result =
-      core_num__u32__wrapping_add(~as_u32_ca(value0), 1U) >> 31U & 1U;
-  return (uint32_t)as_u8_b8(result) & 1U;
+  uint8_t result =
+      as_u8_ca((uint32_t)core_num__u16__wrapping_add(~value0, 1U) >> 8U);
+  return (uint32_t)result & 1U;
 }
 
 static KRML_NOINLINE uint8_t is_non_zero(uint8_t value) { return inz(value); }
@@ -189,10 +159,32 @@ with types uint64_t
 static KRML_MUSTINLINE uint64_t classify_27_49(uint64_t self) { return self; }
 
 /**
+This function found in impl {libcrux_secrets::traits::Declassify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.declassify_d8
+with types uint32_t
+
+*/
+static KRML_MUSTINLINE uint32_t declassify_d8_df(uint32_t self) { return self; }
+
+/**
 This function found in impl {libcrux_secrets::int::CastOps for u32}
 */
 uint64_t libcrux_secrets_int_as_u64_b8(uint32_t self) {
   return classify_27_49((uint64_t)declassify_d8_df(self));
+}
+
+/**
+This function found in impl {libcrux_secrets::traits::Classify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
+with types uint32_t
+
+*/
+uint32_t libcrux_secrets_int_public_integers_classify_27_df(uint32_t self) {
+  return self;
 }
 
 /**

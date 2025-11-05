@@ -8,7 +8,7 @@
  * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
  * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
  * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: 05bdc0e603c669df888620fb36bfe347e811d91e
+ * Libcrux: e6fef680120a4e50cd5b638b7d0ccfb2961d1139
  */
 
 #ifndef internal_libcrux_core_H
@@ -58,16 +58,6 @@ This function found in impl {libcrux_secrets::traits::Classify<T> for T}
 */
 /**
 A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
-with types uint32_t
-
-*/
-uint32_t libcrux_secrets_int_public_integers_classify_27_df(uint32_t self);
-
-/**
-This function found in impl {libcrux_secrets::traits::Classify<T> for T}
-*/
-/**
-A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
 with types uint8_t
 
 */
@@ -106,6 +96,16 @@ size_t libcrux_iot_ml_kem_constants_ranked_bytes_per_ring_element(size_t rank);
 This function found in impl {libcrux_secrets::int::CastOps for u32}
 */
 uint64_t libcrux_secrets_int_as_u64_b8(uint32_t self);
+
+/**
+This function found in impl {libcrux_secrets::traits::Classify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
+with types uint32_t
+
+*/
+uint32_t libcrux_secrets_int_public_integers_classify_27_df(uint32_t self);
 
 /**
 This function found in impl {libcrux_secrets::int::CastOps for u64}
