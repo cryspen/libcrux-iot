@@ -20,14 +20,12 @@ fn inz(value: U8) -> U8 {
     let _orig_value = value; // copy original value for proofs
 
     let value = value.as_u16();
-
-    #[cfg(not(eurydice))]
-    let result = core::hint::black_box(
-        ((!(core::hint::black_box(value).as_u32())).wrapping_add(1) >> 31) & 1,
-    );
     #[cfg(eurydice)]
-    let result = ((!(value.as_u32())).wrapping_add(1) >> 31) & 1;
-    let res = result.as_u8() & 1;
+    let result = ((!value).wrapping_add(1) >> 8).as_u8();
+    #[cfg(not(eurydice))]
+    let result =
+        core::hint::black_box(((!core::hint::black_box(value)).wrapping_add(1) >> 8).as_u8());
+    let res = result & 1;
 
     hax_lib::fstar!(
         r#"lognot_lemma $value;
