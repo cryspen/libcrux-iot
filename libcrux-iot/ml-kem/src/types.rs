@@ -77,87 +77,66 @@ macro_rules! impl_generic_struct {
     };
 }
 
-macro_rules! impl_generic_secret_struct {
-    ($name:ident, $doc:expr) => {
-        #[doc = $doc]
-        pub struct $name<const SIZE: usize> {
-            pub(crate) value: [U8; SIZE],
+/// An ML-KEM Private key
+pub struct MlKemPrivateKey<const SIZE: usize> {
+    pub(crate) value: [U8; SIZE],
+}
+impl<const SIZE: usize> Default for MlKemPrivateKey<SIZE> {
+    fn default() -> Self {
+        Self {
+            value: [0u8.classify(); SIZE],
         }
-
-        impl<const SIZE: usize> Default for $name<SIZE> {
-            fn default() -> Self {
-                Self {
-                    value: [0u8.classify(); SIZE],
-                }
-            }
+    }
+}
+#[hax_lib::attributes]
+impl<const SIZE: usize> AsRef<[U8]> for MlKemPrivateKey<SIZE> {
+    #[ensures(|result|fstar!(r#"$result = ${self_}.f_value"#))]
+    fn as_ref(&self) -> &[U8] {
+        &self.value
+    }
+}
+#[hax_lib::attributes]
+impl<const SIZE: usize> From<[U8; SIZE]> for MlKemPrivateKey<SIZE> {
+    #[ensures(|result|fstar!(r#"${result}.f_value = $value"#))]
+    fn from(value: [U8; SIZE]) -> Self {
+        Self { value }
+    }
+}
+impl<const SIZE: usize> From<&[U8; SIZE]> for MlKemPrivateKey<SIZE> {
+    fn from(value: &[U8; SIZE]) -> Self {
+        Self {
+            value: value.clone(),
         }
-
-        #[hax_lib::attributes]
-        impl<const SIZE: usize> AsRef<[U8]> for $name<SIZE> {
-            #[ensures(|result| fstar!(r#"$result = ${self_}.f_value"#))]
-            fn as_ref(&self) -> &[U8] {
-                &self.value
-            }
+    }
+}
+impl<const SIZE: usize> From<MlKemPrivateKey<SIZE>> for [U8; SIZE] {
+    fn from(value: MlKemPrivateKey<SIZE>) -> Self {
+        value.value
+    }
+}
+impl<const SIZE: usize> TryFrom<&[U8]> for MlKemPrivateKey<SIZE> {
+    type Error = core::array::TryFromSliceError;
+    fn try_from(value: &[U8]) -> Result<Self, Self::Error> {
+        match value.try_into() {
+            Ok(value) => Ok(Self { value }),
+            Err(e) => Err(e),
         }
-
-        #[hax_lib::attributes]
-        impl<const SIZE: usize> From<[U8; SIZE]> for $name<SIZE> {
-            #[ensures(|result| fstar!(r#"${result}.f_value = $value"#))]
-            fn from(value: [U8; SIZE]) -> Self {
-                Self { value }
-            }
-        }
-
-        impl<const SIZE: usize> From<&[U8; SIZE]> for $name<SIZE> {
-            fn from(value: &[U8; SIZE]) -> Self {
-                Self {
-                    value: value.clone(),
-                }
-            }
-        }
-
-        impl<const SIZE: usize> From<$name<SIZE>> for [U8; SIZE] {
-            fn from(value: $name<SIZE>) -> Self {
-                value.value
-            }
-        }
-
-        impl<const SIZE: usize> TryFrom<&[U8]> for $name<SIZE> {
-            type Error = core::array::TryFromSliceError;
-
-            fn try_from(value: &[U8]) -> Result<Self, Self::Error> {
-                match value.try_into() {
-                    Ok(value) => Ok(Self { value }),
-                    Err(e) => Err(e),
-                }
-            }
-        }
-
-        #[hax_lib::attributes]
-        impl<const SIZE: usize> $name<SIZE> {
-            /// A reference to the raw byte slice.
-            #[ensures(|result| fstar!(r#"$result == self.f_value"#))]
-            pub fn as_slice(&self) -> &[U8; SIZE] {
-                &self.value
-            }
-
-            // This is only used for some of the macro callers.
-            // #[allow(dead_code)]
-            // /// Split this value and return the raw byte slices.
-            // pub(crate) fn split_at(&self, mid: usize) -> (&[u8], &[u8]) {
-            //     self.value.split_at(mid)
-            // }
-
-            /// The number of bytes
-            pub const fn len() -> usize {
-                SIZE
-            }
-        }
-    };
+    }
+}
+#[hax_lib::attributes]
+impl<const SIZE: usize> MlKemPrivateKey<SIZE> {
+    #[doc = r" A reference to the raw byte slice."]
+    #[ensures(|result|fstar!(r#"$result == self.f_value"#))]
+    pub fn as_slice(&self) -> &[U8; SIZE] {
+        &self.value
+    }
+    #[doc = r" The number of bytes"]
+    pub const fn len() -> usize {
+        SIZE
+    }
 }
 
 impl_generic_struct!(MlKemCiphertext, "An ML-KEM Ciphertext");
-impl_generic_secret_struct!(MlKemPrivateKey, "An ML-KEM Private key");
 impl_generic_struct!(MlKemPublicKey, "An ML-KEM Public key");
 
 /// An ML-KEM key pair

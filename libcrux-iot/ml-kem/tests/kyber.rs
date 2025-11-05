@@ -5,7 +5,7 @@
 fn kyber768_single_kat() {
     use libcrux_iot_ml_kem::kyber768;
     use libcrux_secrets::{ClassifyRef as _, Declassify};
-    let key_pair = kyber768::generate_key_pair(hex::decode("7c9935a0b07694aa0c6d10e4db6b1add2fd81a25ccb148032dcd739936737f2d8626ed79d451140800e03b59b956f8210e556067407d13dc90fa9e8b872bfb8f").unwrap().classify_ref().try_into().unwrap());
+    let key_pair = kyber768::generate_key_pair(hex::decode("7c9935a0b07694aa0c6d10e4db6b1add2fd81a25ccb148032dcd739936737f2d8626ed79d451140800e03b59b956f8210e556067407d13dc90fa9e8b872bfb8f").unwrap().as_slice().classify_ref().try_into().unwrap());
 
     let public_key = key_pair.pk();
     let secret_key = key_pair.sk();
@@ -25,6 +25,7 @@ fn kyber768_single_kat() {
         key_pair.public_key(),
         hex::decode("147c03f7a5bebba406c8fae1874d7f13c80efe79a3a9a874cc09fe76f6997615")
             .unwrap()
+            .as_slice()
             .classify_ref()
             .try_into()
             .unwrap(),
