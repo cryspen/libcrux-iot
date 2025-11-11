@@ -155,6 +155,9 @@ typedef struct {
 #define core_array___Array_T__N___as_slice(len_, ptr_, t, _ret_t) \
   KRML_CLITERAL(Eurydice_slice) { ptr_, len_ }
 
+#define core_array___Array_T__N___as_mut_slice(len_, ptr_, t, _ret_t) \
+  KRML_CLITERAL(Eurydice_slice) { ptr_, len_ }
+
 #define core_array__core__clone__Clone_for__Array_T__N___clone( \
     len, src, dst, elem_type, _ret_t)                           \
   (memcpy(dst, src, len * sizeof(elem_type)))
@@ -166,6 +169,10 @@ typedef struct {
 // core::cmp::PartialEq<&0 (@Slice<U>)> for @Array<T, N>
 #define Eurydice_array_eq_slice(sz, a1, s2, t, _) \
   (memcmp(a1, (s2)->ptr, sz * sizeof(t)) == 0)
+
+#define Eurydice_slice_eq(src1, src2, t, _) \
+  ((src1)->len == (src2)->len &&            \
+   !memcmp((src1)->ptr, (src2)->ptr, (src1)->len * sizeof(t)))
 
 #define core_array_equality___core__cmp__PartialEq__Array_U__N___for__Array_T__N____eq( \
     sz, a1, a2, t, _, _ret_t)                                                           \
@@ -318,6 +325,7 @@ static inline size_t core_cmp_impls___core__cmp__Ord_for_usize___min(size_t a,
 static inline uint16_t core_num__u16__wrapping_add(uint16_t x, uint16_t y) {
   return x + y;
 }
+
 static inline uint8_t core_num__u8__wrapping_sub(uint8_t x, uint8_t y) {
   return x - y;
 }

@@ -3,6 +3,8 @@
 // libcrux_core.{c,h}, so if you need something that has to be shared across multiple mlkem
 // instances / implementations, it can go in here.
 
+use libcrux_secrets::{Classify as _, U8};
+
 /// Pad the `slice` with `0`s at the end.
 #[inline(always)]
 #[cfg_attr(hax, hax_lib::requires(
@@ -10,8 +12,8 @@
 ))]
 #[cfg_attr(hax, hax_lib::ensures(|result|
     fstar!(r#"$result == Seq.append $slice (Seq.create (v $LEN - v (${slice.len()})) (mk_u8 0))"#)))]
-pub(crate) fn into_padded_array<const LEN: usize>(slice: &[u8]) -> [u8; LEN] {
-    let mut out = [0u8; LEN];
+pub(crate) fn into_padded_array<const LEN: usize>(slice: &[U8]) -> [U8; LEN] {
+    let mut out = [0u8.classify(); LEN];
     out[0..slice.len()].copy_from_slice(slice);
     hax_lib::fstar!(r#"assert (Seq.slice out 0 (Seq.length slice) == slice)"#);
     hax_lib::fstar!(
@@ -39,13 +41,14 @@ pub(crate) fn into_padded_array<const LEN: usize>(slice: &[u8]) -> [u8; LEN] {
                 Seq.slice (Seq.index ${prf_inputs}_future i) 0 32 == Seq.slice (Seq.index $prf_inputs i) 0 32)"#)
 )]
 pub(crate) fn prf_input_inc<const K: usize>(
-    prf_inputs: &mut [[u8; 33]; K],
+    prf_inputs: &mut [[U8; 33]; K],
     mut domain_separator: u8,
 ) -> u8 {
     #[cfg(hax)]
     let _domain_separator_init = domain_separator;
     #[cfg(hax)]
     let _prf_inputs_init = prf_inputs.clone();
+
     for i in 0..K {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
@@ -56,7 +59,7 @@ pub(crate) fn prf_input_inc<const K: usize>(
             Seq.slice (Seq.index prf_inputs j) 0 32 == Seq.slice (Seq.index $_prf_inputs_init j) 0 32)"#
             )
         });
-        prf_inputs[i][32] = domain_separator;
+        prf_inputs[i][32] = domain_separator.classify();
         domain_separator += 1;
     }
     domain_separator

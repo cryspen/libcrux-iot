@@ -1,6 +1,7 @@
 use libcrux_iot_ml_kem::{MlKemCiphertext, MlKemPrivateKey};
 
 use libcrux_iot_sha3::shake256;
+use libcrux_secrets::{Classify, ClassifyRef as _, Declassify, DeclassifyRef as _};
 use rand::{rng, rngs::OsRng, TryRngCore};
 
 const SHARED_SECRET_SIZE: usize = 32;
@@ -18,12 +19,13 @@ macro_rules! impl_consistency {
         #[test]
         fn $name() {
             let randomness = random_array();
-            let key_pair = $key_gen(randomness);
+            let key_pair = $key_gen(randomness.classify());
             let randomness = random_array();
-            let (ciphertext, shared_secret) = $encaps(key_pair.public_key(), randomness);
+            let (ciphertext, shared_secret) = $encaps(key_pair.public_key(), randomness.classify());
             let shared_secret_decapsulated = $decaps(key_pair.private_key(), &ciphertext);
             assert_eq!(
-                shared_secret, shared_secret_decapsulated,
+                shared_secret.declassify(),
+                shared_secret_decapsulated.declassify(),
                 "lhs: shared_secret, rhs: shared_secret_decapsulated"
             );
 
@@ -62,14 +64,17 @@ macro_rules! impl_modified_ciphertext {
         #[test]
         fn $name() {
             let randomness = random_array();
-            let key_pair = $key_gen(randomness);
+            let key_pair = $key_gen(randomness.classify());
             let randomness = random_array();
-            let (ciphertext, shared_secret) = $encaps(key_pair.public_key(), randomness);
+            let (ciphertext, shared_secret) = $encaps(key_pair.public_key(), randomness.classify());
 
             let ciphertext = modify_ciphertext(ciphertext);
             let shared_secret_decapsulated = $decaps(key_pair.private_key(), &ciphertext);
 
-            assert_ne!(shared_secret, shared_secret_decapsulated);
+            assert_ne!(
+                shared_secret.declassify(),
+                shared_secret_decapsulated.declassify()
+            );
 
             // if the randomness was not enough for the rejection sampling step
             // in key-generation and encapsulation, simply return without
@@ -83,7 +88,7 @@ fn modify_secret_key<const LEN: usize>(
     modify_implicit_rejection_value: bool,
 ) -> MlKemPrivateKey<LEN> {
     let mut raw_secret_key = [0u8; LEN];
-    raw_secret_key.copy_from_slice(secret_key.as_slice());
+    raw_secret_key.copy_from_slice(secret_key.as_slice().declassify_ref());
 
     let mut random_u32: usize = rng().try_next_u32().unwrap().try_into().unwrap();
 
@@ -105,7 +110,7 @@ fn modify_secret_key<const LEN: usize>(
         .try_into()
         .unwrap();
 
-    secret_key.into()
+    secret_key.classify().into()
 }
 
 fn compute_implicit_rejection_shared_secret<const CLEN: usize, const LEN: usize>(
@@ -114,9 +119,9 @@ fn compute_implicit_rejection_shared_secret<const CLEN: usize, const LEN: usize>
 ) -> [u8; SHARED_SECRET_SIZE] {
     let mut to_hash =
         secret_key.as_ref()[MlKemPrivateKey::<LEN>::len() - SHARED_SECRET_SIZE..].to_vec();
-    to_hash.extend_from_slice(ciphertext.as_ref());
+    to_hash.extend_from_slice(ciphertext.as_ref().classify_ref());
 
-    shake256(&to_hash)
+    shake256(&to_hash.declassify_ref()).declassify()
 }
 
 macro_rules! impl_modified_secret_key {
@@ -125,15 +130,15 @@ macro_rules! impl_modified_secret_key {
         #[test]
         fn $name() {
             let randomness = random_array();
-            let key_pair = $key_gen(randomness);
+            let key_pair = $key_gen(randomness.classify());
             let randomness = random_array();
-            let (ciphertext, _) = $encaps(key_pair.public_key(), randomness);
+            let (ciphertext, _) = $encaps(key_pair.public_key(), randomness.classify());
 
             let secret_key = modify_secret_key(key_pair.private_key(), false);
             let shared_secret_decapsulated = $decaps(&secret_key, &ciphertext);
 
             assert_eq!(
-                shared_secret_decapsulated,
+                shared_secret_decapsulated.declassify(),
                 compute_implicit_rejection_shared_secret(ciphertext, secret_key)
             );
 
@@ -150,9 +155,9 @@ macro_rules! impl_modified_ciphertext_and_implicit_rejection_value {
         #[test]
         fn $name() {
             let randomness = random_array();
-            let key_pair = $key_gen(randomness);
+            let key_pair = $key_gen(randomness.classify());
             let randomness = random_array();
-            let (ciphertext, _) = $encaps(key_pair.public_key(), randomness);
+            let (ciphertext, _) = $encaps(key_pair.public_key(), randomness.classify());
 
             let ciphertext = modify_ciphertext(ciphertext);
             let shared_secret_decapsulated = $decaps(key_pair.private_key(), &ciphertext);
@@ -160,10 +165,13 @@ macro_rules! impl_modified_ciphertext_and_implicit_rejection_value {
             let secret_key = modify_secret_key(key_pair.private_key(), true);
             let shared_secret_decapsulated_ms = $decaps(&secret_key, &ciphertext);
 
-            assert_ne!(shared_secret_decapsulated, shared_secret_decapsulated_ms);
+            assert_ne!(
+                shared_secret_decapsulated.declassify(),
+                shared_secret_decapsulated_ms.declassify()
+            );
 
             assert_eq!(
-                shared_secret_decapsulated_ms,
+                shared_secret_decapsulated_ms.declassify(),
                 compute_implicit_rejection_shared_secret(ciphertext, secret_key)
             );
 
