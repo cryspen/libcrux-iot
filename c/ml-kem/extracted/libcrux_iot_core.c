@@ -8,7 +8,7 @@
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
  * F*: unset
- * Libcrux: ef9b31aaac0a2120341b8ac2739f1e1613fe5b7a
+ * Libcrux: 16d98a42e1e298c86bf8eea4d92d3c82eb349f70
  */
 
 #include "internal/libcrux_iot_core.h"
@@ -644,11 +644,12 @@ with const generics
 */
 uint8_t libcrux_iot_ml_kem_utils_prf_input_inc_ac(Eurydice_arr_65 *prf_inputs,
                                                   uint8_t domain_separator) {
-  KRML_MAYBE_FOR4(
-      i, (size_t)0U, (size_t)4U, (size_t)1U, size_t i0 = i;
-      prf_inputs->data[i0].data[32U] =
-          libcrux_secrets_int_public_integers_classify_27_90(domain_separator);
-      domain_separator = (uint32_t)domain_separator + 1U;);
+  for (size_t i = (size_t)0U; i < (size_t)4U; i++) {
+    size_t i0 = i;
+    prf_inputs->data[i0].data[32U] =
+        libcrux_secrets_int_public_integers_classify_27_90(domain_separator);
+    domain_separator = (uint32_t)domain_separator + 1U;
+  }
   return domain_separator;
 }
 
@@ -1165,11 +1166,12 @@ with const generics
 */
 uint8_t libcrux_iot_ml_kem_utils_prf_input_inc_e0(Eurydice_arr_46 *prf_inputs,
                                                   uint8_t domain_separator) {
-  KRML_MAYBE_FOR3(
-      i, (size_t)0U, (size_t)3U, (size_t)1U, size_t i0 = i;
-      prf_inputs->data[i0].data[32U] =
-          libcrux_secrets_int_public_integers_classify_27_90(domain_separator);
-      domain_separator = (uint32_t)domain_separator + 1U;);
+  for (size_t i = (size_t)0U; i < (size_t)3U; i++) {
+    size_t i0 = i;
+    prf_inputs->data[i0].data[32U] =
+        libcrux_secrets_int_public_integers_classify_27_90(domain_separator);
+    domain_separator = (uint32_t)domain_separator + 1U;
+  }
   return domain_separator;
 }
 

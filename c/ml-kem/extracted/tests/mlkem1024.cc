@@ -11,9 +11,9 @@
 #include <nlohmann/json.hpp>
 
 #include "libcrux_iot_sha3.h"
-#include "libcrux_mlkem1024.h"
-#include "libcrux_mlkem1024_portable.h"
-#include "internal/libcrux_core.h"
+#include "libcrux_iot_mlkem1024.h"
+#include "libcrux_iot_mlkem1024_portable.h"
+#include "internal/libcrux_iot_core.h"
 
 using namespace std;
 

@@ -35,7 +35,7 @@ glue=$EURYDICE_HOME/include/eurydice_glue.h
 features=""
 eurydice_glue=1
 karamel_include=1
-unrolling=16
+unrolling=0
 format=1
 cpp17=
 

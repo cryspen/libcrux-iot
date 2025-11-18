@@ -107,6 +107,10 @@ typedef struct Eurydice_dst_ref_9a_s {
 #define EURYDICE_SLICE(x, start, end) \
   (KRML_CLITERAL(Eurydice_slice){(void *)(x + start), end - start})
 
+#define Eurydice_slice_eq_shared(s1, s2, t, _) \
+  ((s1)->meta == (s2)->meta &&                 \
+   memcmp((s1)->ptr, (s2)->ptr, (s1)->meta * sizeof(t)) == 0)
+
 // Slice length
 #define EURYDICE_SLICE_LEN(s, _) (s).meta
 #define Eurydice_slice_len(s, _) (s).meta
@@ -160,18 +164,18 @@ typedef struct Eurydice_dst_ref_9a_s {
 #define Eurydice_slice_copy(dst, src, t) \
   memcpy(dst.ptr, src.ptr, dst.meta * sizeof(t))
 
-#define core_array___Array_T__N___as_slice(len_, ptr_, t, ret_t)               \
-  (KRML_CLITERAL(ret_t){EURYDICE_CFIELD(.ptr =)(ptr_)->data,                   \
+#define core_array___Array_T__N___as_slice(len_, ptr_, t, ret_t) \
+  (KRML_CLITERAL(ret_t){EURYDICE_CFIELD(.ptr =)(ptr_)->data,     \
                         EURYDICE_CFIELD(.meta =) len_})
 
-#define core_array___Array_T__N___as_mut_slice(len_, ptr_, t, ret_t)           \
-  (KRML_CLITERAL(ret_t){EURYDICE_CFIELD(.ptr =)(ptr_)->data,                   \
+#define core_array___Array_T__N___as_mut_slice(len_, ptr_, t, ret_t) \
+  (KRML_CLITERAL(ret_t){EURYDICE_CFIELD(.ptr =)(ptr_)->data,         \
                         EURYDICE_CFIELD(.meta =) len_})
 
+#define core_array__core__clone__Clone_for__Array_T__N___clone(                \
+    len, src, elem_type, _ret_t)                                               \
+  (*(src))
 
-#define core_array__core__clone__Clone_for__Array_T__N___clone( \
-    len, src, dst, elem_type, _ret_t)                           \
-  (memcpy(dst, src, len * sizeof(elem_type)))
 #define TryFromSliceError uint8_t
 #define core_array_TryFromSliceError uint8_t
 

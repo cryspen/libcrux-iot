@@ -145,8 +145,7 @@ uint8_t *compute_implicit_rejection_shared_secret(uint8_t *ciphertext,
             hashInput);
   std::copy(ciphertext, ciphertext + ciphertext_size, hashInput + 32);
 
-  shake256_ema(
-      ss, mk_borrow_slice_u8(hashInput, 32 + ciphertext_size));
+  shake256_ema(ss, mk_borrow_slice_u8(hashInput, 32 + ciphertext_size));
 
   delete[] hashInput;
   return sharedSecret;

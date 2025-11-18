@@ -8,7 +8,7 @@
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
  * F*: unset
- * Libcrux: ef9b31aaac0a2120341b8ac2739f1e1613fe5b7a
+ * Libcrux: 16d98a42e1e298c86bf8eea4d92d3c82eb349f70
  */
 
 #include "internal/libcrux_iot_sha3.h"
@@ -47,16 +47,18 @@ libcrux_iot_sha3_state_new_18(void) {
          (size_t)25U * sizeof(Eurydice_arr_b2));
   Eurydice_arr_6c uu____1;
   Eurydice_arr_b2 repeat_expression1[5U];
-  KRML_MAYBE_FOR5(i, (size_t)0U, (size_t)5U, (size_t)1U,
-                  repeat_expression1[i] = libcrux_iot_sha3_lane_zero_8d(););
+  for (size_t i = (size_t)0U; i < (size_t)5U; i++) {
+    repeat_expression1[i] = libcrux_iot_sha3_lane_zero_8d();
+  }
   memcpy(uu____1.data, repeat_expression1,
          (size_t)5U * sizeof(Eurydice_arr_b2));
   libcrux_iot_sha3_state_KeccakState lit;
   lit.st = uu____0;
   lit.c = uu____1;
   Eurydice_arr_b2 repeat_expression[5U];
-  KRML_MAYBE_FOR5(i, (size_t)0U, (size_t)5U, (size_t)1U,
-                  repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d(););
+  for (size_t i = (size_t)0U; i < (size_t)5U; i++) {
+    repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
+  }
   memcpy(lit.d.data, repeat_expression, (size_t)5U * sizeof(Eurydice_arr_b2));
   lit.i = (size_t)0U;
   return lit;
