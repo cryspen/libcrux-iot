@@ -1,0 +1,263 @@
++ set -o pipefail
++ assert_test 'Please set CHARON_HOME to the Charon directory' '!' -z /home/jonas/extraction-prime/eurydice/charon
++ msg='Please set CHARON_HOME to the Charon directory'
++ shift
++ test '!' -z /home/jonas/extraction-prime/eurydice/charon
++ true
++ assert_test 'Please set EURYDICE_HOME to the Eurydice directory' '!' -z /home/jonas/extraction-prime/eurydice
++ msg='Please set EURYDICE_HOME to the Eurydice directory'
++ shift
++ test '!' -z /home/jonas/extraction-prime/eurydice
++ true
++ assert_test 'Please set KRML_HOME to the KaRaMeL directory' '!' -z /home/jonas/extraction-prime/eurydice/karamel
++ msg='Please set KRML_HOME to the KaRaMeL directory'
++ shift
++ test '!' -z /home/jonas/extraction-prime/eurydice/karamel
++ true
++ deps=()
++ libcrux_deps=()
++ no_hacl=0
++ no_charon=0
++ clean_cargo=0
++ clean_cfiles=0
++ extract=
++ glue=/home/jonas/extraction-prime/eurydice/include/eurydice_glue.h
++ features=
++ eurydice_glue=1
++ karamel_include=1
++ unrolling=16
++ format=1
++ cpp17=
++ all_args=("$@")
++ '[' 12 -gt 0 ']'
++ case "$1" in
++ extract=ml-kem
++ shift
++ shift
++ '[' 10 -gt 0 ']'
++ case "$1" in
++ config=/home/jonas/wt/iot/wip/c/mlkem.yml
++ shift
++ shift
++ '[' 8 -gt 0 ']'
++ case "$1" in
++ eurydice_glue=0
++ shift
++ '[' 7 -gt 0 ']'
++ case "$1" in
++ karamel_include=0
++ shift
++ '[' 6 -gt 0 ']'
++ case "$1" in
++ deps+=("libcrux_iot_$2")
++ shift
++ shift
++ '[' 4 -gt 0 ']'
++ case "$1" in
++ libcrux_deps+=("libcrux_$2")
++ shift
++ shift
++ '[' 2 -gt 0 ']'
++ case "$1" in
++ case "$2" in
++ clean_cfiles=1
++ shift
++ shift
++ '[' 0 -gt 0 ']'
++ assert_test 'Need to provide --extract parameter' '!' -z ml-kem
++ msg='Need to provide --extract parameter'
++ shift
++ test '!' -z ml-kem
++ true
+++ git rev-parse --show-toplevel
++ repo_root=/home/jonas/wt/iot/wip
++ workspace_root=/home/jonas/wt/iot/wip/libcrux-iot
++ libcrux_workspace_root=/home/jonas/wt/iot/wip/libcrux
++ extract_root=/home/jonas/wt/iot/wip/c/ml-kem
++ extract_crate=libcrux-iot-ml-kem
+++ sed s/-/_/g
++ extract_crate_=libcrux_iot_ml_kem
++ extract_llbc_path=/home/jonas/wt/iot/wip/libcrux-iot/libcrux_iot_ml_kem.llbc
++ pkg_root=/home/jonas/wt/iot/wip/libcrux-iot/ml-kem
+++ realpath /home/jonas/extraction-prime/eurydice/include/eurydice_glue.h
++ glue=/home/jonas/extraction-prime/eurydice/include/eurydice_glue.h
+++ realpath /home/jonas/wt/iot/wip/c/mlkem.yml
++ config=/home/jonas/wt/iot/wip/c/mlkem.yml
++ [[ -z /home/jonas/wt/iot/wip/c/mlkem.yml ]]
++ [[ -z '' ]]
++ out=/home/jonas/wt/iot/wip/c/ml-kem/extracted
++ [[ 0 = 1 ]]
++ dep_args=("--include $extract_crate_ --start-from $extract_crate_")
++ for dep in "${deps[@]}"
++ dep_arg='--include libcrux_iot_sha3 --start-from libcrux_iot_sha3'
++ dep_args+=("$dep_arg")
++ for dep in "${libcrux_deps[@]}"
++ dep_arg='--include libcrux_secrets --start-from libcrux_secrets'
++ dep_args+=("$dep_arg")
++ [[ 0 = 0 ]]
++ rm -rf
++ echo 'Running charon (ml-kem) ...'
+Running charon (ml-kem) ...
++ cd /home/jonas/wt/iot/wip/libcrux-iot/ml-kem
++ RUSTFLAGS='--cfg eurydice'
++ /home/jonas/extraction-prime/eurydice/charon/bin/charon cargo --preset eurydice --include libcrux_iot_ml_kem --start-from libcrux_iot_ml_kem --include libcrux_iot_sha3 --start-from libcrux_iot_sha3 --include libcrux_secrets --start-from libcrux_secrets --remove-associated-types '*' --rustc-arg=-Cdebug-assertions=no
+   Compiling libcrux-iot-sha3 v0.0.3 (/home/jonas/wt/iot/wip/libcrux-iot/sha3)
+   Compiling libcrux-iot-ml-kem v0.0.3 (/home/jonas/wt/iot/wip/libcrux-iot/ml-kem)
+warning: type alias `Keypair512` is never used
+  --> ml-kem/src/utils.rs:83:10
+   |
+83 |     type Keypair512 = ([u8; 768], [u8; 800]);
+   |          ^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: type alias `Keypair768` is never used
+  --> ml-kem/src/utils.rs:84:10
+   |
+84 |     type Keypair768 = ([u8; 1152], [u8; 1184]);
+   |          ^^^^^^^^^^
+
+warning: type alias `Keypair1024` is never used
+  --> ml-kem/src/utils.rs:85:10
+   |
+85 |     type Keypair1024 = ([u8; 1536], [u8; 1568]);
+   |          ^^^^^^^^^^^
+
+warning: constant `RANKED_BYTES_PER_RING_ELEMENT` is never used
+ --> ml-kem/src/mlkem512.rs:8:7
+  |
+8 | const RANKED_BYTES_PER_RING_ELEMENT: usize = RANK * BITS_PER_RING_ELEMENT / 8;
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `RANKED_BYTES_PER_RING_ELEMENT` is never used
+ --> ml-kem/src/mlkem768.rs:9:7
+  |
+9 | const RANKED_BYTES_PER_RING_ELEMENT: usize = RANK * BITS_PER_RING_ELEMENT / 8;
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `RANKED_BYTES_PER_RING_ELEMENT` is never used
+ --> ml-kem/src/mlkem1024.rs:7:7
+  |
+7 | const RANKED_BYTES_PER_RING_ELEMENT: usize = RANK * BITS_PER_RING_ELEMENT / 8;
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `libcrux-iot-ml-kem` (lib) generated 6 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 9.98s
++ mkdir -p /home/jonas/wt/iot/wip/c/ml-kem/extracted
++ cd /home/jonas/wt/iot/wip/c/ml-kem/extracted
++ [[ 1 = 1 ]]
++ rm -rf libcrux_iot_core.c libcrux_iot_mlkem1024_portable.c libcrux_iot_mlkem768_portable.c libcrux_iot_mlkem_portable.c libcrux_iot_sha3.c libcrux_iot_core.h libcrux_iot_mlkem1024.h libcrux_iot_mlkem1024_portable.h libcrux_iot_mlkem768.h libcrux_iot_mlkem768_portable.h libcrux_iot_mlkem_portable.h libcrux_iot_sha3.h
++ rm -rf internal/libcrux_iot_core.h internal/libcrux_iot_mlkem_portable.h internal/libcrux_iot_sha3.h
++ [[ -z 146b7dce58cb11ca8010b1c947c3437a959dcd88 ]]
++ [[ -z cdf02f9d8ed0d73f88c0a495c5b79359a51398fc ]]
++ [[ -z 8e7262955105599e91f3a99c9ab3d3387f7046f2 ]]
++ [[ -z '' ]]
+++ git rev-parse HEAD
++ export LIBCRUX_REV=ef9b31aaac0a2120341b8ac2739f1e1613fe5b7a
++ LIBCRUX_REV=ef9b31aaac0a2120341b8ac2739f1e1613fe5b7a
++ [[ -z '' ]]
++ [[ -d /home/jonas/extraction/fstar/.git ]]
+++ fstar.exe --version
+++ grep commit
+++ sed 's/commit=\(.*\)/\1/'
++ export FSTAR_REV=unset
++ FSTAR_REV=unset
++ rm -f code_gen.txt
++ echo 'This code was generated with the following revisions:'
++ echo -n 'Charon: '
++ echo 146b7dce58cb11ca8010b1c947c3437a959dcd88
++ echo -n 'Eurydice: '
++ echo cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
++ echo -n 'Karamel: '
++ echo 8e7262955105599e91f3a99c9ab3d3387f7046f2
++ echo -n 'F*: '
++ echo unset
++ echo -n 'Libcrux: '
++ echo ef9b31aaac0a2120341b8ac2739f1e1613fe5b7a
++ cat
++ sed -e 's/^/ * /' code_gen.txt
++ echo ' */'
++ echo 'Running eurydice ...'
+Running eurydice ...
++ echo /home/jonas/extraction-prime/eurydice/eurydice --config /home/jonas/wt/iot/wip/c/mlkem.yml -funroll-loops 16 --header header.txt /home/jonas/wt/iot/wip/libcrux-iot/libcrux_iot_ml_kem.llbc
+/home/jonas/extraction-prime/eurydice/eurydice --config /home/jonas/wt/iot/wip/c/mlkem.yml -funroll-loops 16 --header header.txt /home/jonas/wt/iot/wip/libcrux-iot/libcrux_iot_ml_kem.llbc
++ /home/jonas/extraction-prime/eurydice/eurydice --config /home/jonas/wt/iot/wip/c/mlkem.yml -funroll-loops 16 --header header.txt /home/jonas/wt/iot/wip/libcrux-iot/libcrux_iot_ml_kem.llbc
+1️⃣ LLBC ➡️  AST
+2️⃣ Cleanup
+LowStar.Ignore.ignore doesn't go anywhere
+Prims.string doesn't go anywhere
+File order after topological sort: Eurydice, LowStar_Ignore, libcrux_iot_core, libcrux_iot_sha3, libcrux_iot_mlkem_portable, libcrux_iot_mlkem_common, libcrux_iot_mlkem768_portable, libcrux_iot_mlkem1024_portable, libcrux_iot_mlkem1024, libcrux_iot_mlkem768
+3️⃣ Monomorphization, datatypes
+Warning 8: After inlining, libcrux_iot_sha3.lane.zero_8d (going into libcrux_iot_sha3) calls libcrux_secrets.int.public_integers.classify_27_54 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_54 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_54 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_sha3.lane.interleave_8d (going into libcrux_iot_sha3) calls libcrux_secrets.int.as_u64_b8 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_u64_b8 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_u64_b8 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_sha3.lane.interleave_8d (going into libcrux_iot_sha3) calls libcrux_secrets.int.as_u32_a3 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_u32_a3 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_u32_a3 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_sha3.keccak.absorb_final_96 (going into libcrux_iot_sha3) calls libcrux_secrets.int.public_integers.classify_27_c1 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_c1 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_c1 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_sha3.keccak.absorb_final_96 (going into libcrux_iot_sha3) calls libcrux_secrets.int.public_integers.classify_27_90 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_90 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_90 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_sha3.portable.keccakx1_96 (going into libcrux_iot_sha3) calls libcrux_secrets.int.classify_public.classify_ref_9b_90 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.classify_public.classify_ref_9b_90 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.classify_public.classify_ref_9b_90 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_sha3.sha224 (going into libcrux_iot_sha3) calls libcrux_secrets.int.public_integers.classify_27_4b (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_4b has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_4b from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_sha3.sha256 (going into libcrux_iot_sha3) calls libcrux_secrets.int.public_integers.classify_27_62 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_62 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_62 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_sha3.sha384 (going into libcrux_iot_sha3) calls libcrux_secrets.int.public_integers.classify_27_7d (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_7d has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_7d from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_sha3.sha512 (going into libcrux_iot_sha3) calls libcrux_secrets.int.public_integers.classify_27_490 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_490 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_490 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.hash_functions.portable.G (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.classify_public.declassify_ref_7f_90 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.classify_public.declassify_ref_7f_90 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.classify_public.declassify_ref_7f_90 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.hash_functions.portable.shake128_init_absorb_final (going into libcrux_iot_mlkem_portable) calls libcrux_iot_sha3.portable.incremental.shake128_init (going into libcrux_iot_sha3). This is a call across translation units but libcrux_iot_sha3.portable.incremental.shake128_init has a C "inline" qualifier. The C standard allows removing libcrux_iot_sha3.portable.incremental.shake128_init from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.hash_functions.portable.shake128_squeeze_first_three_blocks (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.classify_public.classify_ref_mut_a1_47 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.classify_public.classify_ref_mut_a1_47 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.classify_public.classify_ref_mut_a1_47 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.vector_type.zero (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.classify_27_3a (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_3a has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_3a from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_i32_f5 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_i32_f5 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_i32_f5 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_i16_36 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_i16_36 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_i16_36 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_i32_b8 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_i32_b8 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_i32_b8 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.classify_27_df (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_df has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_df from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.classify_27_39 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_39 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_39 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.vector_type.to_i16_array (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.declassify_d8_3a (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.declassify_d8_3a has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.declassify_d8_3a from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.vector_type.from_bytes (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_i16_59 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_i16_59 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_i16_59 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.vector_type.to_bytes (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_u8_f5 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_u8_f5 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_u8_f5 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.to_bytes_4e (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.classify_mut_slice_47 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_mut_slice_47 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_mut_slice_47 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.declassify_d8_39 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.declassify_d8_39 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.declassify_d8_39 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.compress.compress_message_coefficient (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_i16_ca (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_i16_ca has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_i16_ca from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.compress.compress_1 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_u16_f5 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_u16_f5 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_u16_f5 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.compress.compress_ciphertext_coefficient (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_u64_ca (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_u64_ca has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_u64_ca from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.compress.compress_ciphertext_coefficient (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_i16_b8 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_i16_b8 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_i16_b8 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.serialize.serialize_4_int (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.declassify_d8_90 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.declassify_d8_90 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.declassify_d8_90 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.vector.portable.serialize.deserialize_10_int (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_i16_f5 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_i16_f5 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_i16_f5 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.matrix.sample_matrix_A_c91 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.classify_public.classify_ref_9b_39 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.classify_public.classify_ref_9b_39 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.classify_public.classify_ref_9b_39 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.sampling.sample_from_binomial_distribution_2_a7 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.as_u32_59 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.as_u32_59 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.as_u32_59 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cpa.sample_vector_cbd_then_ntt_141 (going into libcrux_iot_mlkem_portable) calls libcrux_iot_ml_kem.utils.prf_input_inc_ac (going into libcrux_iot_core). This is a call across translation units but libcrux_iot_ml_kem.utils.prf_input_inc_ac has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.utils.prf_input_inc_ac from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.matrix.compute_As_plus_e_e1 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.classify_27_a8 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_a8 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_a8 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cpa.generate_keypair_unpacked_161 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.declassify_d8_2c (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.declassify_d8_2c has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.declassify_d8_2c from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cpa.generate_keypair_unpacked_161 (going into libcrux_iot_mlkem_portable) calls libcrux_iot_ml_kem.utils.into_padded_array_b6 (going into libcrux_iot_core). This is a call across translation units but libcrux_iot_ml_kem.utils.into_padded_array_b6 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.utils.into_padded_array_b6 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cpa.generate_keypair_unpacked_161 (going into libcrux_iot_mlkem_portable) calls libcrux_iot_ml_kem.utils.into_padded_array_c8 (going into libcrux_iot_core). This is a call across translation units but libcrux_iot_ml_kem.utils.into_padded_array_c8 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.utils.into_padded_array_c8 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.matrix.sample_matrix_entry_36 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.classify_27_9a (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_9a has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_9a from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.encapsulate_351 (going into libcrux_iot_mlkem_portable) calls libcrux_iot_ml_kem.utils.into_padded_array_24 (going into libcrux_iot_core). This is a call across translation units but libcrux_iot_ml_kem.utils.into_padded_array_24 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.utils.into_padded_array_24 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.encapsulate_351 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.classify_27_b7 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_b7 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_b7 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.decapsulate_1b1 (going into libcrux_iot_mlkem_portable) calls libcrux_iot_ml_kem.utils.into_padded_array_7f (going into libcrux_iot_core). This is a call across translation units but libcrux_iot_ml_kem.utils.into_padded_array_7f has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.utils.into_padded_array_7f from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cpa.sample_vector_cbd_then_ntt_140 (going into libcrux_iot_mlkem_portable) calls libcrux_iot_ml_kem.utils.prf_input_inc_e0 (going into libcrux_iot_core). This is a call across translation units but libcrux_iot_ml_kem.utils.prf_input_inc_e0 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.utils.prf_input_inc_e0 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.encapsulate_350 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.classify_27_aa (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_aa has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_aa from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.decapsulate_1b0 (going into libcrux_iot_mlkem_portable) calls libcrux_iot_ml_kem.utils.into_padded_array_15 (going into libcrux_iot_core). This is a call across translation units but libcrux_iot_ml_kem.utils.into_padded_array_15 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.utils.into_padded_array_15 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.decapsulate_1b0 (going into libcrux_iot_mlkem_portable) calls libcrux_secrets.int.public_integers.classify_27_33 (going into libcrux_iot_core). This is a call across translation units but libcrux_secrets.int.public_integers.classify_27_33 has a C "inline" qualifier. The C standard allows removing libcrux_secrets.int.public_integers.classify_27_33 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.decapsulate_f3 (going into libcrux_iot_mlkem1024_portable) calls libcrux_iot_ml_kem.ind_cca.decapsulate_1b1 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.decapsulate_1b1 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.decapsulate_1b1 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.encapsulate_e0 (going into libcrux_iot_mlkem1024_portable) calls libcrux_iot_ml_kem.ind_cca.encapsulate_351 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.encapsulate_351 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.encapsulate_351 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.generate_keypair_86 (going into libcrux_iot_mlkem1024_portable) calls libcrux_iot_ml_kem.ind_cca.generate_keypair_b71 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.generate_keypair_b71 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.generate_keypair_b71 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.validate_private_key_6b (going into libcrux_iot_mlkem1024_portable) calls libcrux_iot_ml_kem.ind_cca.validate_private_key_7b (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.validate_private_key_7b has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.validate_private_key_7b from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.validate_private_key_only_44 (going into libcrux_iot_mlkem1024_portable) calls libcrux_iot_ml_kem.ind_cca.validate_private_key_only_8a (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.validate_private_key_only_8a has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.validate_private_key_only_8a from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.validate_public_key_44 (going into libcrux_iot_mlkem1024_portable) calls libcrux_iot_ml_kem.ind_cca.validate_public_key_c5 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.validate_public_key_c5 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.validate_public_key_c5 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.decapsulate_54 (going into libcrux_iot_mlkem768_portable) calls libcrux_iot_ml_kem.ind_cca.decapsulate_1b0 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.decapsulate_1b0 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.decapsulate_1b0 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.encapsulate_35 (going into libcrux_iot_mlkem768_portable) calls libcrux_iot_ml_kem.ind_cca.encapsulate_350 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.encapsulate_350 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.encapsulate_350 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.generate_keypair_06 (going into libcrux_iot_mlkem768_portable) calls libcrux_iot_ml_kem.ind_cca.generate_keypair_b70 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.generate_keypair_b70 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.generate_keypair_b70 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.validate_private_key_31 (going into libcrux_iot_mlkem768_portable) calls libcrux_iot_ml_kem.ind_cca.validate_private_key_b3 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.validate_private_key_b3 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.validate_private_key_b3 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.validate_private_key_only_41 (going into libcrux_iot_mlkem768_portable) calls libcrux_iot_ml_kem.ind_cca.validate_private_key_only_39 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.validate_private_key_only_39 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.validate_private_key_only_39 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
+Warning: core.array.{@Array<T,␣N>}.as_mut_slice is a type/const-polymorphic assumed function, must be implemented with a macro, dropping it
+Warning: core.array.{@Array<T,␣N>}.as_slice is a type/const-polymorphic assumed function, must be implemented with a macro, dropping it
+Warning: core.array.{core::clone::Clone␣for␣@Array<T,␣N>}.clone is a type/const-polymorphic assumed function, must be implemented with a macro, dropping it
+[38;5;81m⚙ KaRaMeL auto-detecting tools.[0m Here's what we found:
+[4mreadlink is:[0m readlink
+[4mKaRaMeL called via:[0m /home/jonas/extraction-prime/eurydice/eurydice
+[4mKaRaMeL home is:[0m /home/jonas/extraction-prime/eurydice/karamel
+✅ Done
+Warning 8: After inlining, libcrux_iot_ml_kem.ind_cca.instantiations.portable.validate_public_key_41 (going into libcrux_iot_mlkem768_portable) calls libcrux_iot_ml_kem.ind_cca.validate_public_key_64 (going into libcrux_iot_mlkem_portable). This is a call across translation units but libcrux_iot_ml_kem.ind_cca.validate_public_key_64 has a C "inline" qualifier. The C standard allows removing libcrux_iot_ml_kem.ind_cca.validate_public_key_64 from its translation unit (see C11 6.7.3 §5), and CompCert will do it. 
++ [[ 0 = 1 ]]
++ [[ 0 = 1 ]]
++ [[ 1 = 1 ]]
++ find . -type f -name '*.c' -and -not -path '*_deps*' -exec clang-format-18 --style=Google -i '{}' ';'
++ find . -type f -name '*.h' -and -not -path '*_deps*' -exec clang-format-18 --style=Google -i '{}' ';'
++ [[ -d internal ]]
++ clang-format-18 --style=Google -i internal/libcrux_iot_core.h internal/libcrux_iot_mlkem_portable.h internal/libcrux_iot_sha3.h
++ [[ -d intrinsics ]]

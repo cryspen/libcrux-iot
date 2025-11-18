@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 667d2fc98984ff7f3df989c2367e6c1fa4a000e7
- * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
- * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: e6fef680120a4e50cd5b638b7d0ccfb2961d1139
+ * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
+ * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
+ * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * F*: unset
+ * Libcrux: ef9b31aaac0a2120341b8ac2739f1e1613fe5b7a
  */
 
-#ifndef internal_libcrux_mlkem_iot_H
-#define internal_libcrux_mlkem_iot_H
+#ifndef internal_libcrux_iot_mlkem_portable_H
+#define internal_libcrux_iot_mlkem_portable_H
 
 #include "eurydice_glue.h"
 
@@ -20,18 +20,40 @@
 extern "C" {
 #endif
 
-#include "../libcrux_mlkem_iot.h"
-#include "libcrux_core.h"
+#include "../libcrux_iot_mlkem_portable.h"
+#include "libcrux_iot_core.h"
 
 /**
-A monomorphic instance of libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+A monomorphic instance of Eurydice.arr
 with types libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector
+with const generics
+- $16size_t
+*/
+typedef struct Eurydice_arr_3d0_s {
+  Eurydice_arr_e2 data[16U];
+} Eurydice_arr_3d0;
+
+/**
+A monomorphic instance of Eurydice.dst_ref_mut
+with types libcrux_iot_ml_kem_polynomial_PolynomialRingElement
+libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector, size_t
 
 */
-typedef struct libcrux_iot_ml_kem_polynomial_PolynomialRingElement_12_s {
-  libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector
-      coefficients[16U];
-} libcrux_iot_ml_kem_polynomial_PolynomialRingElement_12;
+typedef struct Eurydice_dst_ref_mut_64_s {
+  Eurydice_arr_3d0 *ptr;
+  size_t meta;
+} Eurydice_dst_ref_mut_64;
+
+/**
+A monomorphic instance of Eurydice.dst_ref_shared
+with types libcrux_iot_ml_kem_polynomial_PolynomialRingElement
+libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector, size_t
+
+*/
+typedef struct Eurydice_dst_ref_shared_64_s {
+  const Eurydice_arr_3d0 *ptr;
+  size_t meta;
+} Eurydice_dst_ref_shared_64;
 
 /**
  Validate an ML-KEM public key.
@@ -47,7 +69,8 @@ with const generics
 - K= 4
 - PUBLIC_KEY_SIZE= 1568
 */
-bool libcrux_iot_ml_kem_ind_cca_validate_public_key_c5(uint8_t *public_key);
+bool libcrux_iot_ml_kem_ind_cca_validate_public_key_c5(
+    const Eurydice_arr_00 *public_key);
 
 /**
  Validate an ML-KEM private key.
@@ -62,7 +85,7 @@ with const generics
 - SECRET_KEY_SIZE= 3168
 */
 bool libcrux_iot_ml_kem_ind_cca_validate_private_key_only_8a(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key);
+    const Eurydice_arr_17 *private_key);
 
 /**
  Validate an ML-KEM private key.
@@ -80,8 +103,7 @@ with const generics
 - CIPHERTEXT_SIZE= 1568
 */
 bool libcrux_iot_ml_kem_ind_cca_validate_private_key_7b(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key,
-    libcrux_iot_ml_kem_mlkem1024_MlKem1024Ciphertext *_ciphertext);
+    const Eurydice_arr_17 *private_key, const Eurydice_arr_00 *_ciphertext);
 
 /**
  Packed API
@@ -105,8 +127,9 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - ETA1_RANDOMNESS_SIZE= 128
 - PRF_OUTPUT_SIZE1= 512
 */
-libcrux_iot_ml_kem_mlkem1024_MlKem1024KeyPair
-libcrux_iot_ml_kem_ind_cca_generate_keypair_b71(uint8_t *randomness);
+libcrux_iot_ml_kem_types_MlKemKeyPair_f7
+libcrux_iot_ml_kem_ind_cca_generate_keypair_b71(
+    const Eurydice_arr_06 *randomness);
 
 /**
 A monomorphic instance of libcrux_iot_ml_kem.ind_cca.encapsulate
@@ -130,9 +153,8 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - PRF_OUTPUT_SIZE1= 512
 - PRF_OUTPUT_SIZE2= 512
 */
-tuple_d1 libcrux_iot_ml_kem_ind_cca_encapsulate_351(
-    libcrux_iot_ml_kem_types_MlKemPublicKey_64 *public_key,
-    uint8_t *randomness);
+tuple_32 libcrux_iot_ml_kem_ind_cca_encapsulate_351(
+    const Eurydice_arr_00 *public_key, const Eurydice_arr_600 *randomness);
 
 /**
  This code verifies on some machines, runs out of memory on others
@@ -162,10 +184,8 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - PRF_OUTPUT_SIZE2= 512
 - IMPLICIT_REJECTION_HASH_INPUT_SIZE= 1600
 */
-void libcrux_iot_ml_kem_ind_cca_decapsulate_1b1(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key,
-    libcrux_iot_ml_kem_mlkem1024_MlKem1024Ciphertext *ciphertext,
-    uint8_t ret[32U]);
+Eurydice_arr_600 libcrux_iot_ml_kem_ind_cca_decapsulate_1b1(
+    const Eurydice_arr_17 *private_key, const Eurydice_arr_00 *ciphertext);
 
 /**
  Validate an ML-KEM public key.
@@ -181,7 +201,8 @@ with const generics
 - K= 3
 - PUBLIC_KEY_SIZE= 1184
 */
-bool libcrux_iot_ml_kem_ind_cca_validate_public_key_64(uint8_t *public_key);
+bool libcrux_iot_ml_kem_ind_cca_validate_public_key_64(
+    const Eurydice_arr_74 *public_key);
 
 /**
  Validate an ML-KEM private key.
@@ -196,7 +217,7 @@ with const generics
 - SECRET_KEY_SIZE= 2400
 */
 bool libcrux_iot_ml_kem_ind_cca_validate_private_key_only_39(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_d9 *private_key);
+    const Eurydice_arr_ea *private_key);
 
 /**
  Validate an ML-KEM private key.
@@ -214,8 +235,7 @@ with const generics
 - CIPHERTEXT_SIZE= 1088
 */
 bool libcrux_iot_ml_kem_ind_cca_validate_private_key_b3(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_d9 *private_key,
-    libcrux_iot_ml_kem_mlkem768_MlKem768Ciphertext *_ciphertext);
+    const Eurydice_arr_ea *private_key, const Eurydice_arr_2c *_ciphertext);
 
 /**
  Packed API
@@ -239,8 +259,9 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - ETA1_RANDOMNESS_SIZE= 128
 - PRF_OUTPUT_SIZE1= 384
 */
-libcrux_iot_ml_kem_mlkem768_MlKem768KeyPair
-libcrux_iot_ml_kem_ind_cca_generate_keypair_b70(uint8_t *randomness);
+libcrux_iot_ml_kem_types_MlKemKeyPair_5f
+libcrux_iot_ml_kem_ind_cca_generate_keypair_b70(
+    const Eurydice_arr_06 *randomness);
 
 /**
 A monomorphic instance of libcrux_iot_ml_kem.ind_cca.encapsulate
@@ -264,9 +285,8 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - PRF_OUTPUT_SIZE1= 384
 - PRF_OUTPUT_SIZE2= 384
 */
-tuple_f4 libcrux_iot_ml_kem_ind_cca_encapsulate_350(
-    libcrux_iot_ml_kem_types_MlKemPublicKey_30 *public_key,
-    uint8_t *randomness);
+tuple_50 libcrux_iot_ml_kem_ind_cca_encapsulate_350(
+    const Eurydice_arr_74 *public_key, const Eurydice_arr_600 *randomness);
 
 /**
  This code verifies on some machines, runs out of memory on others
@@ -296,14 +316,12 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - PRF_OUTPUT_SIZE2= 384
 - IMPLICIT_REJECTION_HASH_INPUT_SIZE= 1120
 */
-void libcrux_iot_ml_kem_ind_cca_decapsulate_1b0(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_d9 *private_key,
-    libcrux_iot_ml_kem_mlkem768_MlKem768Ciphertext *ciphertext,
-    uint8_t ret[32U]);
+Eurydice_arr_600 libcrux_iot_ml_kem_ind_cca_decapsulate_1b0(
+    const Eurydice_arr_ea *private_key, const Eurydice_arr_2c *ciphertext);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#define internal_libcrux_mlkem_iot_H_DEFINED
-#endif /* internal_libcrux_mlkem_iot_H */
+#define internal_libcrux_iot_mlkem_portable_H_DEFINED
+#endif /* internal_libcrux_iot_mlkem_portable_H */

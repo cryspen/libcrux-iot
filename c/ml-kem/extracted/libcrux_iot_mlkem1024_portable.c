@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 667d2fc98984ff7f3df989c2367e6c1fa4a000e7
- * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
- * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: e6fef680120a4e50cd5b638b7d0ccfb2961d1139
+ * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
+ * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
+ * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * F*: unset
+ * Libcrux: ef9b31aaac0a2120341b8ac2739f1e1613fe5b7a
  */
 
-#include "libcrux_mlkem1024_portable.h"
+#include "libcrux_iot_mlkem1024_portable.h"
 
-#include "internal/libcrux_mlkem_iot.h"
-#include "libcrux_core.h"
+#include "internal/libcrux_iot_mlkem_portable.h"
+#include "libcrux_iot_core.h"
 
 /**
  Portable decapsulate
@@ -43,11 +43,9 @@ generics
 - PRF_OUTPUT_SIZE2= 512
 - IMPLICIT_REJECTION_HASH_INPUT_SIZE= 1600
 */
-static void decapsulate_f3(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key,
-    libcrux_iot_ml_kem_mlkem1024_MlKem1024Ciphertext *ciphertext,
-    uint8_t ret[32U]) {
-  libcrux_iot_ml_kem_ind_cca_decapsulate_1b1(private_key, ciphertext, ret);
+static Eurydice_arr_600 decapsulate_f3(const Eurydice_arr_17 *private_key,
+                                       const Eurydice_arr_00 *ciphertext) {
+  return libcrux_iot_ml_kem_ind_cca_decapsulate_1b1(private_key, ciphertext);
 }
 
 /**
@@ -57,11 +55,9 @@ static void decapsulate_f3(
  The input is a reference to an [`MlKem1024PrivateKey`] and an
  [`MlKem1024Ciphertext`].
 */
-void libcrux_iot_ml_kem_mlkem1024_portable_decapsulate(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key,
-    libcrux_iot_ml_kem_mlkem1024_MlKem1024Ciphertext *ciphertext,
-    uint8_t ret[32U]) {
-  decapsulate_f3(private_key, ciphertext, ret);
+Eurydice_arr_600 libcrux_iot_ml_kem_mlkem1024_portable_decapsulate(
+    const Eurydice_arr_17 *private_key, const Eurydice_arr_00 *ciphertext) {
+  return decapsulate_f3(private_key, ciphertext);
 }
 
 /**
@@ -85,9 +81,8 @@ generics
 - PRF_OUTPUT_SIZE1= 512
 - PRF_OUTPUT_SIZE2= 512
 */
-static tuple_d1 encapsulate_e0(
-    libcrux_iot_ml_kem_types_MlKemPublicKey_64 *public_key,
-    uint8_t *randomness) {
+static tuple_32 encapsulate_e0(const Eurydice_arr_00 *public_key,
+                               const Eurydice_arr_600 *randomness) {
   return libcrux_iot_ml_kem_ind_cca_encapsulate_351(public_key, randomness);
 }
 
@@ -98,10 +93,9 @@ static tuple_d1 encapsulate_e0(
  The input is a reference to an [`MlKem1024PublicKey`] and
  [`SHARED_SECRET_SIZE`] bytes of `randomness`.
 */
-tuple_d1 libcrux_iot_ml_kem_mlkem1024_portable_encapsulate(
-    libcrux_iot_ml_kem_types_MlKemPublicKey_64 *public_key,
-    uint8_t randomness[32U]) {
-  return encapsulate_e0(public_key, randomness);
+tuple_32 libcrux_iot_ml_kem_mlkem1024_portable_encapsulate(
+    const Eurydice_arr_00 *public_key, Eurydice_arr_600 randomness) {
+  return encapsulate_e0(public_key, &randomness);
 }
 
 /**
@@ -120,18 +114,18 @@ generics
 - ETA1_RANDOMNESS_SIZE= 128
 - PRF_OUTPUT_SIZE1= 512
 */
-static libcrux_iot_ml_kem_mlkem1024_MlKem1024KeyPair generate_keypair_86(
-    uint8_t *randomness) {
+static libcrux_iot_ml_kem_types_MlKemKeyPair_f7 generate_keypair_86(
+    const Eurydice_arr_06 *randomness) {
   return libcrux_iot_ml_kem_ind_cca_generate_keypair_b71(randomness);
 }
 
 /**
  Generate ML-KEM 1024 Key Pair
 */
-libcrux_iot_ml_kem_mlkem1024_MlKem1024KeyPair
+libcrux_iot_ml_kem_types_MlKemKeyPair_f7
 libcrux_iot_ml_kem_mlkem1024_portable_generate_key_pair(
-    uint8_t randomness[64U]) {
-  return generate_keypair_86(randomness);
+    Eurydice_arr_06 randomness) {
+  return generate_keypair_86(&randomness);
 }
 
 /**
@@ -146,8 +140,7 @@ const generics
 - CIPHERTEXT_SIZE= 1568
 */
 static KRML_MUSTINLINE bool validate_private_key_6b(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key,
-    libcrux_iot_ml_kem_mlkem1024_MlKem1024Ciphertext *ciphertext) {
+    const Eurydice_arr_17 *private_key, const Eurydice_arr_00 *ciphertext) {
   return libcrux_iot_ml_kem_ind_cca_validate_private_key_7b(private_key,
                                                             ciphertext);
 }
@@ -158,8 +151,7 @@ static KRML_MUSTINLINE bool validate_private_key_6b(
  Returns `true` if valid, and `false` otherwise.
 */
 bool libcrux_iot_ml_kem_mlkem1024_portable_validate_private_key(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key,
-    libcrux_iot_ml_kem_mlkem1024_MlKem1024Ciphertext *ciphertext) {
+    const Eurydice_arr_17 *private_key, const Eurydice_arr_00 *ciphertext) {
   return validate_private_key_6b(private_key, ciphertext);
 }
 
@@ -174,7 +166,7 @@ with const generics
 - SECRET_KEY_SIZE= 3168
 */
 static KRML_MUSTINLINE bool validate_private_key_only_44(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key) {
+    const Eurydice_arr_17 *private_key) {
   return libcrux_iot_ml_kem_ind_cca_validate_private_key_only_8a(private_key);
 }
 
@@ -184,7 +176,7 @@ static KRML_MUSTINLINE bool validate_private_key_only_44(
  Returns `true` if valid, and `false` otherwise.
 */
 bool libcrux_iot_ml_kem_mlkem1024_portable_validate_private_key_only(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key) {
+    const Eurydice_arr_17 *private_key) {
   return validate_private_key_only_44(private_key);
 }
 
@@ -198,7 +190,8 @@ const generics
 - K= 4
 - PUBLIC_KEY_SIZE= 1568
 */
-static KRML_MUSTINLINE bool validate_public_key_44(uint8_t *public_key) {
+static KRML_MUSTINLINE bool validate_public_key_44(
+    const Eurydice_arr_00 *public_key) {
   return libcrux_iot_ml_kem_ind_cca_validate_public_key_c5(public_key);
 }
 
@@ -208,6 +201,6 @@ static KRML_MUSTINLINE bool validate_public_key_44(uint8_t *public_key) {
  Returns `true` if valid, and `false` otherwise.
 */
 bool libcrux_iot_ml_kem_mlkem1024_portable_validate_public_key(
-    libcrux_iot_ml_kem_types_MlKemPublicKey_64 *public_key) {
-  return validate_public_key_44(public_key->value);
+    const Eurydice_arr_00 *public_key) {
+  return validate_public_key_44(public_key);
 }
