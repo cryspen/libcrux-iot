@@ -7,8 +7,8 @@
  * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: unset
- * Libcrux: 16d98a42e1e298c86bf8eea4d92d3c82eb349f70
+ * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
+ * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
  */
 
 #include "internal/libcrux_iot_mlkem_portable.h"
@@ -3751,29 +3751,29 @@ static KRML_MUSTINLINE void compute_As_plus_e_e1(
     Eurydice_arr_c3 *accumulator) {
   for (size_t i = (size_t)0U; i < (size_t)4U; i++) {
     size_t j = i;
-    const Eurydice_arr_3d0 *uu____0 = entry_e1(matrix_A, (size_t)0U, j);
-    accumulating_ntt_multiply_fill_cache_64_a7(uu____0, &s_as_ntt->data[j],
-                                               accumulator, &s_cache->data[j]);
+    accumulating_ntt_multiply_fill_cache_64_a7(
+        entry_e1(matrix_A, (size_t)0U, j), &s_as_ntt->data[j], accumulator,
+        &s_cache->data[j]);
   }
   reducing_from_i32_array_64_a7(Eurydice_array_to_slice_shared_20(accumulator),
                                 t_as_ntt->data);
   add_standard_error_reduce_64_a7(t_as_ntt->data, error_as_ntt->data);
   for (size_t i0 = (size_t)1U; i0 < (size_t)4U; i0++) {
     size_t i1 = i0;
-    int32_t uu____1 =
+    int32_t uu____0 =
         libcrux_secrets_int_public_integers_classify_27_a8((int32_t)0);
     Eurydice_arr_c3 lit;
     int32_t repeat_expression[256U];
     for (size_t i = (size_t)0U; i < (size_t)256U; i++) {
-      repeat_expression[i] = uu____1;
+      repeat_expression[i] = uu____0;
     }
     memcpy(lit.data, repeat_expression, (size_t)256U * sizeof(int32_t));
     accumulator[0U] = lit;
     for (size_t i = (size_t)0U; i < (size_t)4U; i++) {
       size_t j = i;
-      const Eurydice_arr_3d0 *uu____2 = entry_e1(matrix_A, i1, j);
-      accumulating_ntt_multiply_use_cache_64_a7(uu____2, &s_as_ntt->data[j],
-                                                accumulator, &s_cache->data[j]);
+      accumulating_ntt_multiply_use_cache_64_a7(entry_e1(matrix_A, i1, j),
+                                                &s_as_ntt->data[j], accumulator,
+                                                &s_cache->data[j]);
     }
     reducing_from_i32_array_64_a7(
         Eurydice_array_to_slice_shared_20(accumulator), &t_as_ntt->data[i1]);
@@ -7111,29 +7111,29 @@ static KRML_MUSTINLINE void compute_As_plus_e_60(
     Eurydice_arr_c3 *accumulator) {
   for (size_t i = (size_t)0U; i < (size_t)3U; i++) {
     size_t j = i;
-    const Eurydice_arr_3d0 *uu____0 = entry_60(matrix_A, (size_t)0U, j);
-    accumulating_ntt_multiply_fill_cache_64_a7(uu____0, &s_as_ntt->data[j],
-                                               accumulator, &s_cache->data[j]);
+    accumulating_ntt_multiply_fill_cache_64_a7(
+        entry_60(matrix_A, (size_t)0U, j), &s_as_ntt->data[j], accumulator,
+        &s_cache->data[j]);
   }
   reducing_from_i32_array_64_a7(Eurydice_array_to_slice_shared_20(accumulator),
                                 t_as_ntt->data);
   add_standard_error_reduce_64_a7(t_as_ntt->data, error_as_ntt->data);
   for (size_t i0 = (size_t)1U; i0 < (size_t)3U; i0++) {
     size_t i1 = i0;
-    int32_t uu____1 =
+    int32_t uu____0 =
         libcrux_secrets_int_public_integers_classify_27_a8((int32_t)0);
     Eurydice_arr_c3 lit;
     int32_t repeat_expression[256U];
     for (size_t i = (size_t)0U; i < (size_t)256U; i++) {
-      repeat_expression[i] = uu____1;
+      repeat_expression[i] = uu____0;
     }
     memcpy(lit.data, repeat_expression, (size_t)256U * sizeof(int32_t));
     accumulator[0U] = lit;
     for (size_t i = (size_t)0U; i < (size_t)3U; i++) {
       size_t j = i;
-      const Eurydice_arr_3d0 *uu____2 = entry_60(matrix_A, i1, j);
-      accumulating_ntt_multiply_use_cache_64_a7(uu____2, &s_as_ntt->data[j],
-                                                accumulator, &s_cache->data[j]);
+      accumulating_ntt_multiply_use_cache_64_a7(entry_60(matrix_A, i1, j),
+                                                &s_as_ntt->data[j], accumulator,
+                                                &s_cache->data[j]);
     }
     reducing_from_i32_array_64_a7(
         Eurydice_array_to_slice_shared_20(accumulator), &t_as_ntt->data[i1]);

@@ -7,8 +7,8 @@
  * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: unset
- * Libcrux: 16d98a42e1e298c86bf8eea4d92d3c82eb349f70
+ * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
+ * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
  */
 
 #include "internal/libcrux_iot_sha3.h"
@@ -14244,10 +14244,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_f8(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_slice_len(blocks, uint8_t);
-  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
-                    "panic!");
-  KRML_HOST_EXIT(255U);
   Eurydice_arr_f8 state_flat;
   Eurydice_arr_b2 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
@@ -14361,7 +14357,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_96(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  EURYDICE_ASSERT(len < (size_t)72U, "panic!");
   Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   if (len > (size_t)0U) {
@@ -14624,10 +14619,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_5b(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_slice_len(blocks, uint8_t);
-  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
-                    "panic!");
-  KRML_HOST_EXIT(255U);
   Eurydice_arr_f8 state_flat;
   Eurydice_arr_b2 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
@@ -14741,7 +14732,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_ad(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  EURYDICE_ASSERT(len < (size_t)136U, "panic!");
   Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   if (len > (size_t)0U) {
@@ -14979,7 +14969,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_ad0(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  EURYDICE_ASSERT(len < (size_t)136U, "panic!");
   Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   if (len > (size_t)0U) {
@@ -15080,10 +15069,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_3a(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_slice_len(blocks, uint8_t);
-  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
-                    "panic!");
-  KRML_HOST_EXIT(255U);
   Eurydice_arr_f8 state_flat;
   Eurydice_arr_b2 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
@@ -15171,7 +15156,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_c6(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  EURYDICE_ASSERT(len < (size_t)168U, "panic!");
   Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   if (len > (size_t)0U) {
@@ -15342,10 +15326,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_2c(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_slice_len(blocks, uint8_t);
-  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
-                    "panic!");
-  KRML_HOST_EXIT(255U);
   Eurydice_arr_f8 state_flat;
   Eurydice_arr_b2 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
@@ -15459,7 +15439,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_1e(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  EURYDICE_ASSERT(len < (size_t)144U, "panic!");
   Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   if (len > (size_t)0U) {
@@ -15696,10 +15675,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_7a(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_slice_len(blocks, uint8_t);
-  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
-                    "panic!");
-  KRML_HOST_EXIT(255U);
   Eurydice_arr_f8 state_flat;
   Eurydice_arr_b2 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
@@ -15813,7 +15788,6 @@ with const generics
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_7c(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  EURYDICE_ASSERT(len < (size_t)104U, "panic!");
   Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   if (len > (size_t)0U) {
@@ -16050,14 +16024,6 @@ void libcrux_iot_sha3_portable_sha384(Eurydice_mut_borrow_slice_u8 digest,
 */
 void sha224_ema(Eurydice_mut_borrow_slice_u8 digest,
                 Eurydice_borrow_slice_u8 payload) {
-  EURYDICE_ASSERT(
-      Eurydice_slice_len(payload, uint8_t) <= (size_t)core_num__u32__MAX,
-      "panic!");
-  EURYDICE_ASSERT(
-      Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                             .ptr = digest.ptr, .meta = digest.meta}),
-                         uint8_t) == (size_t)28U,
-      "panic!");
   libcrux_iot_sha3_portable_keccakx1_1e(payload, digest);
 }
 
@@ -16076,14 +16042,6 @@ Eurydice_arr_f1 sha224(Eurydice_borrow_slice_u8 data) {
 */
 void sha256_ema(Eurydice_mut_borrow_slice_u8 digest,
                 Eurydice_borrow_slice_u8 payload) {
-  EURYDICE_ASSERT(
-      Eurydice_slice_len(payload, uint8_t) <= (size_t)core_num__u32__MAX,
-      "panic!");
-  EURYDICE_ASSERT(
-      Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                             .ptr = digest.ptr, .meta = digest.meta}),
-                         uint8_t) == (size_t)32U,
-      "panic!");
   libcrux_iot_sha3_portable_keccakx1_ad(payload, digest);
 }
 
@@ -16102,14 +16060,6 @@ Eurydice_arr_600 sha256(Eurydice_borrow_slice_u8 data) {
 */
 void sha384_ema(Eurydice_mut_borrow_slice_u8 digest,
                 Eurydice_borrow_slice_u8 payload) {
-  EURYDICE_ASSERT(
-      Eurydice_slice_len(payload, uint8_t) <= (size_t)core_num__u32__MAX,
-      "panic!");
-  EURYDICE_ASSERT(
-      Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                             .ptr = digest.ptr, .meta = digest.meta}),
-                         uint8_t) == (size_t)48U,
-      "panic!");
   libcrux_iot_sha3_portable_keccakx1_7c(payload, digest);
 }
 
@@ -16128,14 +16078,6 @@ Eurydice_arr_5f sha384(Eurydice_borrow_slice_u8 data) {
 */
 void sha512_ema(Eurydice_mut_borrow_slice_u8 digest,
                 Eurydice_borrow_slice_u8 payload) {
-  EURYDICE_ASSERT(
-      Eurydice_slice_len(payload, uint8_t) <= (size_t)core_num__u32__MAX,
-      "panic!");
-  EURYDICE_ASSERT(
-      Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                             .ptr = digest.ptr, .meta = digest.meta}),
-                         uint8_t) == (size_t)64U,
-      "panic!");
   libcrux_iot_sha3_portable_keccakx1_96(payload, digest);
 }
 
