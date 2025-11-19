@@ -124,6 +124,7 @@ pub(crate) mod portable {
     ]
     #[inline(always)]
     fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]) {
+        #[cfg(not(eurydice))]
         debug_assert!(out.len() == LEN);
         // Declassification: XXX This is the API offered by SHA-3.
         portable::shake256(out, input.declassify_ref());
@@ -150,6 +151,7 @@ pub(crate) mod portable {
 
     #[inline(always)]
     fn shake128_init_absorb_final(input: &[[u8; 34]]) -> PortableHash {
+        #[cfg(not(eurydice))]
         debug_assert!(input.len() == 1 || input.len() == 2 || input.len() == 3 || input.len() == 4);
 
         let mut shake128_state = [incremental::shake128_init(); 4];
@@ -165,6 +167,7 @@ pub(crate) mod portable {
         st: &mut PortableHash,
         outputs: &mut [[u8; THREE_BLOCKS]],
     ) {
+        #[cfg(not(eurydice))]
         debug_assert!(
             outputs.len() == 1 || outputs.len() == 2 || outputs.len() == 3 || outputs.len() == 4
         );

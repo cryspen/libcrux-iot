@@ -73,6 +73,7 @@ pub const fn digest_size(mode: Algorithm) -> usize {
 
 /// SHA3
 pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[u8]) -> [U8; LEN] {
+    #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
 
     let mut out = [0u8; LEN].classify();
@@ -100,7 +101,9 @@ pub fn sha224(data: &[u8]) -> [U8; SHA3_224_DIGEST_SIZE] {
 /// Preconditions:
 /// - `digest.len() == 28`
 pub fn sha224_ema(digest: &mut [U8], payload: &[u8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
+    #[cfg(not(eurydice))]
     debug_assert!(digest.len() == 28);
 
     portable::keccakx1::<144, 0x06u8>(payload, digest);
@@ -115,7 +118,9 @@ pub fn sha256(data: &[u8]) -> [U8; SHA3_256_DIGEST_SIZE] {
 
 /// SHA3 256
 pub fn sha256_ema(digest: &mut [U8], payload: &[u8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
+    #[cfg(not(eurydice))]
     debug_assert!(digest.len() == 32);
 
     portable::keccakx1::<136, 0x06u8>(payload, digest);
@@ -130,7 +135,9 @@ pub fn sha384(data: &[u8]) -> [U8; SHA3_384_DIGEST_SIZE] {
 
 /// SHA3 384
 pub fn sha384_ema(digest: &mut [U8], payload: &[u8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
+    #[cfg(not(eurydice))]
     debug_assert!(digest.len() == 48);
 
     portable::keccakx1::<104, 0x06u8>(payload, digest);
@@ -145,7 +152,9 @@ pub fn sha512(data: &[u8]) -> [U8; SHA3_512_DIGEST_SIZE] {
 
 /// SHA3 512
 pub fn sha512_ema(digest: &mut [U8], payload: &[u8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
+    #[cfg(not(eurydice))]
     debug_assert!(digest.len() == 64);
 
     portable::keccakx1::<72, 0x06u8>(payload, digest);

@@ -15,8 +15,11 @@ pub(crate) fn entry<const K: usize, Vector: Operations>(
     i: usize,
     j: usize,
 ) -> &PolynomialRingElement<Vector> {
+    #[cfg(not(eurydice))]
     debug_assert!(matrix.len() == K * K);
+    #[cfg(not(eurydice))]
     debug_assert!(i < K);
+    #[cfg(not(eurydice))]
     debug_assert!(j < K);
     &matrix[i * K + j]
 }
@@ -28,6 +31,7 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     i: usize,
     j: usize,
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(seed.len() == 32);
     let mut seed_ij = [0u8; 34];
     seed_ij[0..32].copy_from_slice(seed);
@@ -56,6 +60,7 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
     seed: &[u8; 34],
     transpose: bool,
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(A_transpose.len() == K * K);
 
     for i in 0..K {
@@ -156,7 +161,9 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [I32; 256],
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(r_as_ntt.len() == K);
+    #[cfg(not(eurydice))]
     debug_assert!(error_1.len() == K);
 
     *accumulator = [0i32.classify(); 256];

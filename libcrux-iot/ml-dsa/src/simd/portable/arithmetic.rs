@@ -86,6 +86,7 @@ pub(crate) fn montgomery_multiply(lhs: &mut Coefficients, rhs: &Coefficients) {
 #[inline(always)]
 fn power2round_element(t: i32) -> (i32, i32) {
     // Hax issue: https://github.com/hacspec/hax/issues/1082
+    #[cfg(not(eurydice))]
     debug_assert!(t > -FIELD_MODULUS && t < FIELD_MODULUS);
 
     // Convert the signed representative to the standard unsigned one.
@@ -122,6 +123,7 @@ pub(super) fn infinity_norm_exceeds(simd_unit: &Coefficients, bound: i32) -> boo
     // data but we must not leak the sign of the centralized representative.
     for i in 0..simd_unit.values.len() {
         let coefficient = simd_unit.values[i];
+        #[cfg(not(eurydice))]
         debug_assert!(coefficient > -FIELD_MODULUS && coefficient < FIELD_MODULUS);
         // This norm is calculated using the absolute value of the
         // signed representative in the range:
@@ -200,6 +202,7 @@ pub(super) fn compute_hint(
 // Note that 0 ≤ r₁ < (q-1)/α.
 #[inline(always)]
 fn decompose_element(gamma2: Gamma2, r: i32) -> (i32, i32) {
+    #[cfg(not(eurydice))]
     debug_assert!(r > -FIELD_MODULUS && r < FIELD_MODULUS);
 
     // Convert the signed representative to the standard unsigned one.
