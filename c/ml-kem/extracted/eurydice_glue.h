@@ -172,8 +172,8 @@ typedef struct Eurydice_dst_ref_9a_s {
   (KRML_CLITERAL(ret_t){EURYDICE_CFIELD(.ptr =)(ptr_)->data,         \
                         EURYDICE_CFIELD(.meta =) len_})
 
-#define core_array__core__clone__Clone_for__Array_T__N___clone(                \
-    len, src, elem_type, _ret_t)                                               \
+#define core_array__core__clone__Clone_for__Array_T__N___clone( \
+    len, src, elem_type, _ret_t)                                \
   (*(src))
 
 #define TryFromSliceError uint8_t
@@ -313,7 +313,7 @@ static inline void core_num__u32__to_be_bytes(uint32_t src, uint8_t dst[4]) {
 
 static inline Eurydice_array_u8x4 core_num__u32__to_le_bytes(uint32_t src) {
   Eurydice_array_u8x4 a;
-  store64_le(a.data, src);
+  store32_le(a.data, src);
   return a;
 }
 
