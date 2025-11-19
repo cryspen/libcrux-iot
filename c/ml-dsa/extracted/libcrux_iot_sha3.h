@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon:
- * Eurydice:
- * Karamel:
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: 4c0c9248a551dd42901dc5208f62cc9e92e7e0c3
+ * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
+ * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
+ * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * F*: unset
+ * Libcrux: 0c7d13eb4d0117dce1ec2ef42fdb87d10cf78e2b
  */
 
 #ifndef libcrux_iot_sha3_H
@@ -20,14 +20,32 @@
 extern "C" {
 #endif
 
-typedef struct libcrux_iot_sha3_lane_Lane2U32_s {
-  uint32_t fst[2U];
-} libcrux_iot_sha3_lane_Lane2U32;
+#include "libcrux_iot_mldsa_core.h"
+
+/**
+A monomorphic instance of Eurydice.arr
+with types libcrux_iot_sha3_lane_Lane2U32
+with const generics
+- $25size_t
+*/
+typedef struct Eurydice_arr_f8_s {
+  Eurydice_arr_b2 data[25U];
+} Eurydice_arr_f8;
+
+/**
+A monomorphic instance of Eurydice.arr
+with types libcrux_iot_sha3_lane_Lane2U32
+with const generics
+- $5size_t
+*/
+typedef struct Eurydice_arr_6c_s {
+  Eurydice_arr_b2 data[5U];
+} Eurydice_arr_6c;
 
 typedef struct libcrux_iot_sha3_state_KeccakState_s {
-  libcrux_iot_sha3_lane_Lane2U32 st[25U];
-  libcrux_iot_sha3_lane_Lane2U32 c[5U];
-  libcrux_iot_sha3_lane_Lane2U32 d[5U];
+  Eurydice_arr_f8 st;
+  Eurydice_arr_6c c;
+  Eurydice_arr_6c d;
   size_t i;
 } libcrux_iot_sha3_state_KeccakState;
 
@@ -41,7 +59,7 @@ with const generics
 */
 typedef struct libcrux_iot_sha3_keccak_KeccakXofState_c7_s {
   libcrux_iot_sha3_state_KeccakState inner;
-  uint8_t buf[136U];
+  Eurydice_arr_3d buf;
   size_t buf_len;
   bool sponge;
 } libcrux_iot_sha3_keccak_KeccakXofState_c7;
@@ -55,56 +73,62 @@ typedef libcrux_iot_sha3_keccak_KeccakXofState_c7
  Preconditions:
  - `digest.len() == 28`
 */
-void libcrux_iot_sha3_sha224_ema(Eurydice_slice digest, Eurydice_slice payload);
+void libcrux_iot_sha3_sha224_ema(Eurydice_mut_borrow_slice_u8 digest,
+                                 Eurydice_borrow_slice_u8 payload);
 
 /**
  SHA3 224
 */
-void libcrux_iot_sha3_sha224(Eurydice_slice data, uint8_t ret[28U]);
+Eurydice_arr_f1 libcrux_iot_sha3_sha224(Eurydice_borrow_slice_u8 data);
 
 /**
  SHA3 256
 */
-void libcrux_iot_sha3_sha256_ema(Eurydice_slice digest, Eurydice_slice payload);
+void libcrux_iot_sha3_sha256_ema(Eurydice_mut_borrow_slice_u8 digest,
+                                 Eurydice_borrow_slice_u8 payload);
 
 /**
  SHA3 256
 */
-void libcrux_iot_sha3_sha256(Eurydice_slice data, uint8_t ret[32U]);
+Eurydice_arr_60 libcrux_iot_sha3_sha256(Eurydice_borrow_slice_u8 data);
 
 /**
  SHA3 384
 */
-void libcrux_iot_sha3_sha384_ema(Eurydice_slice digest, Eurydice_slice payload);
+void libcrux_iot_sha3_sha384_ema(Eurydice_mut_borrow_slice_u8 digest,
+                                 Eurydice_borrow_slice_u8 payload);
 
 /**
  SHA3 384
 */
-void libcrux_iot_sha3_sha384(Eurydice_slice data, uint8_t ret[48U]);
+Eurydice_arr_5f libcrux_iot_sha3_sha384(Eurydice_borrow_slice_u8 data);
 
 /**
  SHA3 512
 */
-void libcrux_iot_sha3_sha512_ema(Eurydice_slice digest, Eurydice_slice payload);
+void libcrux_iot_sha3_sha512_ema(Eurydice_mut_borrow_slice_u8 digest,
+                                 Eurydice_borrow_slice_u8 payload);
 
 /**
  SHA3 512
 */
-void libcrux_iot_sha3_sha512(Eurydice_slice data, uint8_t ret[64U]);
+Eurydice_arr_06 libcrux_iot_sha3_sha512(Eurydice_borrow_slice_u8 data);
 
 /**
  SHAKE 128
 
  Writes `out.len()` bytes.
 */
-void libcrux_iot_sha3_shake128_ema(Eurydice_slice out, Eurydice_slice data);
+void libcrux_iot_sha3_shake128_ema(Eurydice_mut_borrow_slice_u8 out,
+                                   Eurydice_borrow_slice_u8 data);
 
 /**
  SHAKE 256
 
  Writes `out.len()` bytes.
 */
-void libcrux_iot_sha3_shake256_ema(Eurydice_slice out, Eurydice_slice data);
+void libcrux_iot_sha3_shake256_ema(Eurydice_mut_borrow_slice_u8 out,
+                                   Eurydice_borrow_slice_u8 data);
 
 #if defined(__cplusplus)
 }
