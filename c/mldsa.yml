@@ -1,4 +1,29 @@
 files:
+  # MLDSA: MISC NON-ARCHITECTURE SPECIFIC HEADERS
+  - name: libcrux_iot_mldsa_core
+    private:
+      monomorphizations_of:
+        - [libcrux_iot_ml_dsa, types, "*"]
+        - [libcrux_secrets, "*"]
+      patterns:
+        - [core, "*"]
+        - [libcrux_iot_ml_dsa, types, "*" ]
+        - [libcrux_secrets, "*"]
+      monomorphizations_exact:
+        - [ Eurydice_dst_ref_shared uint8_t size_t_x4]
+        - [ Eurydice_dst_ref_shared uint8_t size_t_x2]
+        - [ Eurydice_dst_ref uint8_t size_t_x4]
+        - [ Eurydice_dst_ref uint8_t size_t_x2]
+        - [ "Eurydice_slice uint8_t_x4" ]
+        - [ "Eurydice_slice uint8_t_x2" ]
+        - [ Eurydice, arr_88]
+        - [ Eurydice, arr_910]
+        - [ Eurydice, arr_6d]
+        - [ core, result, unwrap_26_ab ]
+        - [ core, result, Result_a4 ]
+    api:
+      - [Eurydice, "*"]
+      
   # SHA3
   - name: libcrux_iot_sha3
     api:
@@ -45,10 +70,7 @@ files:
         - [libcrux_iot_sha3, "*"]
     inline_static: true
 
-
-      
-# MLDSA-65
-  - name: libcrux_mldsa65_portable
+  - name: libcrux_iot_mldsa65_portable
     api:
       patterns:
         - [libcrux_iot_ml_dsa, "*"]
@@ -57,53 +79,33 @@ files:
         - [libcrux_iot_ml_dsa, hash_functions, portable, "*"]
         - [libcrux_iot_ml_dsa, ml_dsa_65, portable, "*"]
         - [libcrux_iot_ml_dsa, ml_dsa_generic, instantiations, portable, "*"]
-        # - [libcrux_iot_ml_dsa, pre_hash, PreHashResult]
-        # - [core, option, Option_84]
       monomorphizations_of:
         - [libcrux_iot_ml_dsa, polynomial, "*" ]
         - [libcrux_iot_ml_dsa, simd, "*"]
         - [libcrux_iot_ml_dsa, hash_functions, portable, "*"]
         - [libcrux_iot_ml_dsa, ml_dsa_65, portable]
         - [libcrux_iot_ml_dsa, ml_dsa_generic, instantiations, portable, "*"]
-        # - [libcrux_iot_ml_dsa, pre_hash, PreHashResult]
-        # - [core, option, Option_84]
       monomorphizations_using:
         - [libcrux_iot_ml_dsa, polynomial, "*" ]
         - [libcrux_iot_ml_dsa, simd, "*"]
         - [libcrux_iot_ml_dsa, hash_functions, portable, "*"]
         - [libcrux_iot_ml_dsa, ml_dsa_generic, instantiations, portable, "*"]
-        - [libcrux_iot_ml_dsa, pre_hash, "*"]
-        # - [libcrux_iot_ml_dsa, pre_hash, PreHashResult]
-      # monomorphizations_exact:
-        # - [libcrux_iot_ml_dsa, pre_hash, PreHashResult]
-        # - [core, result, Result_a8]
-        # - [core, option, Option_84]
+      monomorphizations_exact:
+        - [libcrux_iot_ml_dsa, pre_hash, PreHashResult]
+        - [core, result, Result_a8]
+        - [core, option, Option_84]
 
-  # MLKEM: MISC NON-ARCHITECTURE SPECIFIC HEADERS
-  - name: libcrux_core
+  # MLDSA: catch-all for things that have not matched earlier
+  - name: libcrux_iot_mldsa_core
     private:
       monomorphizations_of:
-        - [core, "*"]
-        - [ libcrux_secrets, "*"]
-        - [libcrux_iot_ml_dsa, types, "*"]
-        - [libcrux_iot_ml_dsa, utils, "*" ]
-      monomorphizations_using:
         - [Eurydice, "*" ]
-        - [libcrux_iot_ml_dsa, types, "*"]
       patterns:
-        - [core, "*"]
-        - [ libcrux_secrets, "*"]
-        - [libcrux_iot_ml_dsa, types ]
-        - [libcrux_iot_ml_dsa, constants ]
-        - [libcrux_iot_ml_dsa, utils, "*" ]
-        # - [libcrux_iot_ml_dsa, simd, traits ]
-    api:
-      - [Eurydice, "*"]
-
-  # We let monomorphization insert things at the right place in each one of the
-  # 9 variants above. Helpers that have not been assigned into any of the
-  # individual libcrux_mlkemXXX files end up in a catch-all.
-  - name: libcrux_mldsa_common
-    private:
-      - [libcrux_iot_ml_dsa, "*"]
-    inline_static: true
+        - [Eurydice, "*" ]
+naming:
+  skip_prefix:
+    - [ core, core_arch, arm_shared, neon ]
+    - [ core, core_arch, x86 ]
+    - [ core, option ]
+    - [ core, result ]
+    - [ core, array ]
