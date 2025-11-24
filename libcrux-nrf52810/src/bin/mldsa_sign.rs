@@ -4,7 +4,11 @@
 
 use libcrux_nrf52810 as board; // global logger + panicking-behavior + memory layout
 
+use embedded_alloc::LlffHeap as Heap;
 use libcrux_iot_ml_dsa::ml_dsa_87 as mldsa;
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
 
 static SK: [u8; 4896] = [
     158, 41, 234, 146, 185, 41, 27, 225, 46, 178, 46, 248, 151, 40, 73, 59, 147, 27, 116, 81, 248,
