@@ -14,7 +14,7 @@ readme = "README.md"
 [workspace.dependencies]
 libcrux-secrets = { version = "0.0.4" }
 libcrux-macros = { version = "0.0.3" }
-libcrux-traits = { git = "https://github.com/cryspen/libcrux" }
+libcrux-traits = { version = "0.0.4" }
 
 cavp = { version = "0.0.2" }
 hax-lib = { version = "0.3.2" }
