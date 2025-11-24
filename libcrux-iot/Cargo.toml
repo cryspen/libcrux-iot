@@ -12,15 +12,11 @@ repository = "https://github.com/cryspen/libcrux-iot"
 readme = "README.md"
 
 [workspace.dependencies]
-# XXX: We need the git dependency for two reasons:
-# - https://github.com/cryspen/libcrux/pull/1135, which implements (de-)classification for public slices is not in a released version, yet.
-# - https://github.com/cryspen/libcrux/pull/1210, which makes the impls for `(De)ClassifyRef` visible to hax, is not yet merged.
-libcrux-secrets = { git = "https://github.com/cryspen/libcrux", branch = "jonas/secrets-hax-slices" }
-# libcrux-secrets = { version = "0.0.3" }
+libcrux-secrets = { version = "0.0.4" }
 libcrux-macros = { version = "0.0.3" }
 cavp = { version = "0.0.2" }
 hax-lib = { version = "0.3.2" }
 
 
 [workspace.lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(hax)', 'cfg(eurydice)', 'cfg(doc_cfg)',] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(hax)', 'cfg(eurydice)', 'cfg(doc_cfg)'] }

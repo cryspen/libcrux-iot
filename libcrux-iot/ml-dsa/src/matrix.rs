@@ -110,7 +110,7 @@ pub(crate) fn compute_w_approx<SIMDUnit: Operations>(
                 tmp_stack,
             );
             ntt_multiply_montgomery(poly_slot, &signer_response[j]);
-            PolynomialRingElement::<SIMDUnit>::add(&mut inner_result, &poly_slot);
+            PolynomialRingElement::<SIMDUnit>::add(&mut inner_result, poly_slot);
         }
 
         shift_left_then_reduce::<SIMDUnit, { BITS_IN_LOWER_PART_OF_T as i32 }>(&mut t1[i]);
@@ -169,7 +169,7 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
         ntt_multiply_montgomery(poly_slot_a, poly_slot_b);
 
         // Accumulate into slot C
-        PolynomialRingElement::<SIMDUnit>::add(poly_slot_c, &poly_slot_a);
+        PolynomialRingElement::<SIMDUnit>::add(poly_slot_c, poly_slot_a);
     }
 
     // Deserialize t1[i] into slot A

@@ -1,0 +1,63 @@
+naming:
+  skip_prefix:
+    - ["libcrux_iot_sha3"]
+
+files:
+  # Portable SHA3
+  - name: libcrux_iot_sha3
+    api:
+      exact:
+        - [libcrux_iot_sha3, sha224]
+        - [libcrux_iot_sha3, sha256]
+        - [libcrux_iot_sha3, sha384]
+        - [libcrux_iot_sha3, sha512]
+        - [libcrux_iot_sha3, sha224_ema]
+        - [libcrux_iot_sha3, sha256_ema]
+        - [libcrux_iot_sha3, sha384_ema]
+        - [libcrux_iot_sha3, sha512_ema]
+        - [libcrux_iot_sha3, shake128_ema]
+        - [libcrux_iot_sha3, shake256_ema]
+    internal:
+      patterns:
+        - [libcrux_iot_sha3, "*"]
+        - [libcrux_iot_sha3, portable, "*"]
+        - [libcrux_iot_sha3, keccak, "*"]
+        - [libcrux_iot_sha3, state, "*"]
+        - [libcrux_iot_sha3, lane, "*"]
+      monomorphizations_of:
+        - [libcrux_iot_sha3, "*"]
+        - [libcrux_iot_sha3, portable, "*"]
+        - [libcrux_iot_sha3, keccak, "*"]
+        - [libcrux_iot_sha3, state, "*"]
+        - [libcrux_iot_sha3, lane, "*"]
+      monomorphizations_using:
+        - [libcrux_iot_sha3, "*"]
+        - [libcrux_iot_sha3, portable, "*"]
+        - [libcrux_iot_sha3, keccak, "*"]
+        - [libcrux_iot_sha3, state, "*"]
+        - [libcrux_iot_sha3, lane, "*"]
+
+  # Common parts of SHA3 (this catches stuff that hasn't matched above). Must
+  # come after the (more precise) patterns above concerning platform-specific hash_functions
+  - name: libcrux_iot_sha3_internal
+    internal:
+      patterns:
+        - [libcrux_iot_sha3, "*"]
+      monomorphizations_of:
+        - [libcrux_iot_sha3, "*"]
+      monomorphizations_using:
+        - [libcrux_iot_sha3, "*"]
+    inline_static: true
+
+  - name: libcrux_iot_core
+    private:
+      monomorphizations_of:
+        - [ core, "*"]
+        - [ libcrux_secrets, "*"]
+      monomorphizations_using:
+        - [ Eurydice, "*" ]
+      patterns:
+        - [ core, "*"]
+        - [ libcrux_secrets, "*"]
+    api:
+      - [Eurydice, "*"]

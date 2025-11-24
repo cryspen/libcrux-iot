@@ -36,7 +36,7 @@ pub(crate) fn compress_message_coefficient(fe: U16) -> U8 {
 
     // If 833 <= fe <= 2496,
     // then -832 <= shifted <= 831
-    let shifted: I16 = 1664.classify() - (fe.as_i16());
+    let shifted = 1664.classify() - fe.as_i16();
     hax_lib::fstar!(r#"assert (v $shifted == 1664 - v $fe)"#);
 
     // If shifted < 0, then
@@ -53,7 +53,7 @@ pub(crate) fn compress_message_coefficient(fe: U16) -> U8 {
         assert (if v $shifted < 0 then $mask = ones else $mask = zero)"
     );
 
-    let shifted_to_positive: I16 = mask ^ shifted;
+    let shifted_to_positive = mask ^ shifted;
 
     hax_lib::fstar!(
         "logxor_lemma $shifted $mask;
@@ -67,7 +67,7 @@ pub(crate) fn compress_message_coefficient(fe: U16) -> U8 {
         assert ($shifted_to_positive >=. mk_i16 0)"
     );
 
-    let shifted_positive_in_range: I16 = shifted_to_positive - 832;
+    let shifted_positive_in_range = shifted_to_positive - 832;
 
     hax_lib::fstar!(
         "assert (1664 - v $fe >= 0 ==> v $shifted_positive_in_range == 832 - v $fe);
@@ -76,8 +76,8 @@ pub(crate) fn compress_message_coefficient(fe: U16) -> U8 {
 
     // If x <= 831, then x - 832 <= -1, and so x - 832 < 0, which means
     // the most significant bit of shifted_positive_in_range will be 1.
-    let r0: I16 = shifted_positive_in_range >> 15;
-    let r1: I16 = r0 & 1i16;
+    let r0 = shifted_positive_in_range >> 15;
+    let r1 = r0 & 1i16;
     let res = r1.as_u8();
 
     hax_lib::fstar!(
@@ -118,8 +118,8 @@ pub(crate) fn compress_ciphertext_coefficient(coefficient_bits: u8, fe: U16) -> 
 
     // This has to be constant time due to:
     // https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/ldX0ThYJuBo/m/ovODsdY7AwAJ
-    let mut compressed = (fe.as_u64()) << coefficient_bits;
-    compressed += 1664 as u64;
+    let mut compressed = fe.as_u64() << coefficient_bits;
+    compressed += 1664;
 
     compressed *= 10_321_340;
     compressed >>= 35;
