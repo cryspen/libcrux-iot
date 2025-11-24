@@ -72,7 +72,7 @@
 // Enable doc cfg feature for doc builds. They use nightly.
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", hax))]
 extern crate std;
 
 /// Feature gating helper macros
