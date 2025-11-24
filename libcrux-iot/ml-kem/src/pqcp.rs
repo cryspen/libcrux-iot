@@ -62,6 +62,7 @@ macro_rules! pqcp_api {
         #[cfg(all(not(eurydice), feature = "pqcp"))]
         pub mod pqcp {
             use crate::pqcp::PQCPError;
+            use libcrux_secrets::{Classify, ClassifyRefMut};
             use libcrux_traits::kem::arrayref::Kem;
 
             #[cfg(feature = "rand")]
@@ -92,7 +93,8 @@ macro_rules! pqcp_api {
                 sk: &mut [u8; SK_LEN],
                 coins: [u8; KEYGEN_SEED_LEN],
             ) -> Result<(), PQCPError> {
-                <$trait_implementer>::keygen(pk, sk, &coins).map_err(|_| PQCPError::KeyGeneration)
+                <$trait_implementer>::keygen(pk, sk.classify_ref_mut(), &coins.classify())
+                    .map_err(|_| PQCPError::KeyGeneration)
             }
 
             #[doc = "Generate ML-KEM "]
@@ -106,7 +108,8 @@ macro_rules! pqcp_api {
             ) -> Result<(), PQCPError> {
                 let mut rand = [0u8; KEYGEN_SEED_LEN];
                 rng.fill_bytes(&mut rand);
-                <$trait_implementer>::keygen(pk, sk, &rand).map_err(|_| PQCPError::KeyGeneration)
+                <$trait_implementer>::keygen(pk, sk.classify_ref_mut(), &rand.classify())
+                    .map_err(|_| PQCPError::KeyGeneration)
             }
 
             /// Encapsulate ML-KEM
@@ -120,7 +123,7 @@ macro_rules! pqcp_api {
                 pk: &[u8; PK_LEN],
                 coins: [u8; ENCAPS_SEED_LEN],
             ) -> Result<(), PQCPError> {
-                <$trait_implementer>::encaps(ct, ss, pk, &coins)
+                <$trait_implementer>::encaps(ct, ss.classify_ref_mut(), pk, &coins.classify())
                     .map_err(|_| PQCPError::Encapsulation)
             }
 
@@ -138,7 +141,7 @@ macro_rules! pqcp_api {
             ) -> Result<(), PQCPError> {
                 let mut rand = [0u8; ENCAPS_SEED_LEN];
                 rng.fill_bytes(&mut rand);
-                <$trait_implementer>::encaps(ct, ss, pk, &rand)
+                <$trait_implementer>::encaps(ct, ss.classify_ref_mut(), pk, &rand.classify())
                     .map_err(|_| PQCPError::Encapsulation)
             }
 
@@ -152,7 +155,8 @@ macro_rules! pqcp_api {
                 ct: &[u8; CT_LEN],
                 sk: &[u8; SK_LEN],
             ) -> Result<(), PQCPError> {
-                <$trait_implementer>::decaps(ss, ct, sk).map_err(|_| PQCPError::Decapsulation)
+                <$trait_implementer>::decaps(ss.classify_ref_mut(), ct, &sk.classify())
+                    .map_err(|_| PQCPError::Decapsulation)
             }
         }
     };
