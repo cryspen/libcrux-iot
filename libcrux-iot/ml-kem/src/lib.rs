@@ -13,7 +13,7 @@
 //!
 //! analogously for encapsulation and decapsulation."
 #![cfg_attr(
-    feature = "mlkem768",
+    all(feature = "mlkem768", not(feature = "check-secret-independence")),
     doc = r##"
 ```
  use rand::{rngs::OsRng, TryRngCore};

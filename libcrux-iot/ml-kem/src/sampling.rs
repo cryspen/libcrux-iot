@@ -1,3 +1,5 @@
+use libcrux_secrets::{CastOps as _, Classify as _, I16, U32, U8};
+
 use crate::{
     constants::COEFFICIENTS_IN_RING_ELEMENT, hash_functions::*, helper::cloop, vector::Operations,
 };
@@ -50,11 +52,30 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
     for i in 0..K {
         for r in 0..N / 24 {
             if sampled_coefficients[i] < COEFFICIENTS_IN_RING_ELEMENT {
-                let sampled = Vector::rej_sample(
-                    &randomness[i][r * 24..(r * 24) + 24],
-                    &mut out[i][sampled_coefficients[i]..sampled_coefficients[i] + 16],
-                );
-                sampled_coefficients[i] += sampled;
+                #[cfg(eurydice)]
+                {
+                    // XXX: We need to use these temporaries to work around a Eurydice
+                    //      bug. (see https://github.com/AeneasVerif/eurydice/issues/285)
+                    let randomness_i = &randomness[i];
+                    let out_i = &mut out[i];
+                    let sampled_coefficients_i = sampled_coefficients[i];
+
+                    let sampled = Vector::rej_sample(
+                        &randomness_i[r * 24..(r * 24) + 24],
+                        &mut out_i[sampled_coefficients_i..sampled_coefficients_i + 16],
+                    );
+                    sampled_coefficients[i] += sampled;
+                }
+                #[cfg(not(eurydice))]
+                {
+                    // XXX: We need a separate code path for hax to
+                    // avoid `DirectAndMut` issues.
+                    let sampled = Vector::rej_sample(
+                        &randomness[i][r * 24..(r * 24) + 24],
+                        &mut out[i][sampled_coefficients[i]..sampled_coefficients[i] + 16],
+                    );
+                    sampled_coefficients[i] += sampled;
+                }
             }
         }
     }
@@ -71,6 +92,8 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
 
 #[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
+#[hax_lib::requires(sampled_coefficients.len() == K && out.len() == K)]
+#[hax_lib::ensures(|_| future(sampled_coefficients).len() == K && future(out).len() == K)]
 pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
     seeds: &[[u8; 34]],
     sampled_coefficients: &mut [usize],
@@ -159,8 +182,8 @@ pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 800")]
 fn sample_from_binomial_distribution_2<Vector: Operations>(
-    randomness: &[u8],
-    sampled_i16s: &mut [i16],
+    randomness: &[U8],
+    sampled_i16s: &mut [I16],
 ) {
     hax_lib::fstar!(
         "assert (v (sz 2 *! sz 64) == 128);
@@ -168,21 +191,21 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
     );
     cloop! {
         for (chunk_number, byte_chunk) in randomness.chunks_exact(4).enumerate() {
-            let random_bits_as_u32: u32 = (byte_chunk[0] as u32)
-                | (byte_chunk[1] as u32) << 8
-                | (byte_chunk[2] as u32) << 16
-                | (byte_chunk[3] as u32) << 24;
+            let random_bits_as_u32: U32 = (byte_chunk[0].as_u32())
+                | (byte_chunk[1].as_u32()) << 8
+                | (byte_chunk[2].as_u32()) << 16
+                | (byte_chunk[3].as_u32()) << 24;
 
-            let even_bits = random_bits_as_u32 & 0x55555555;
-            let odd_bits = (random_bits_as_u32 >> 1) & 0x55555555;
+            let even_bits = random_bits_as_u32 & 0x55555555.classify();
+            let odd_bits = (random_bits_as_u32 >> 1) & 0x55555555.classify();
             hax_lib::fstar!(r#"logand_lemma $random_bits_as_u32 (mk_u32 1431655765);
                 logand_lemma ($random_bits_as_u32 >>! (mk_i32 1)) (mk_u32 1431655765)"#);
             let coin_toss_outcomes = even_bits + odd_bits;
 
             cloop! {
-                for outcome_set in (0..u32::BITS).step_by(4) {
-                    let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x3) as i16;
-                    let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 2)) & 0x3) as i16;
+                for outcome_set in (0..32u32).step_by(4) { // u32::BITS
+                    let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x3.classify()).as_i16();
+                    let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 2)) & 0x3.classify()).as_i16();
                     hax_lib::fstar!(r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) (mk_u32 3);
                         logand_lemma ($coin_toss_outcomes >>! ($outcome_set +! (mk_u32 2) <: u32) <: u32) (mk_u32 3);
                         assert (v $outcome_1 >= 0 /\ v $outcome_1 <= 3);
@@ -208,8 +231,8 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 800")]
 fn sample_from_binomial_distribution_3<Vector: Operations>(
-    randomness: &[u8],
-    sampled_i16s: &mut [i16; 256],
+    randomness: &[U8],
+    sampled_i16s: &mut [I16; 256],
 ) {
     hax_lib::fstar!(
         "assert (v (sz 3 *! sz 64) == 192);
@@ -218,12 +241,12 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
 
     cloop! {
         for (chunk_number, byte_chunk) in randomness.chunks_exact(3).enumerate() {
-            let random_bits_as_u24: u32 =
-                (byte_chunk[0] as u32) | (byte_chunk[1] as u32) << 8 | (byte_chunk[2] as u32) << 16;
+            let random_bits_as_u24: U32 =
+            (byte_chunk[0].as_u32()) | (byte_chunk[1].as_u32()) << 8 | (byte_chunk[2].as_u32()) << 16;
 
-            let first_bits = random_bits_as_u24 & 0x00249249;
-            let second_bits = (random_bits_as_u24 >> 1) & 0x00249249;
-            let third_bits = (random_bits_as_u24 >> 2) & 0x00249249;
+            let first_bits = random_bits_as_u24 & 0x00249249.classify();
+            let second_bits = (random_bits_as_u24 >> 1) & 0x00249249.classify();
+            let third_bits = (random_bits_as_u24 >> 2) & 0x00249249.classify();
             hax_lib::fstar!(r#"logand_lemma $random_bits_as_u24 (mk_u32 2396745);
                 logand_lemma ($random_bits_as_u24 >>! (mk_i32 1) <: u32) (mk_u32 2396745);
                 logand_lemma ($random_bits_as_u24 >>! (mk_i32 2) <: u32) (mk_u32 2396745)"#);
@@ -232,8 +255,8 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
 
             cloop! {
                 for outcome_set in (0..24).step_by(6) {
-                    let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x7) as i16;
-                    let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 3)) & 0x7) as i16;
+                    let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x7.classify()).as_i16();
+                    let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 3)) & 0x7.classify()).as_i16();
                     hax_lib::fstar!(r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) (mk_u32 7);
                         logand_lemma ($coin_toss_outcomes >>! ($outcome_set +! (mk_i32 3) <: i32) <: u32) (mk_u32 7);
                         assert (v $outcome_1 >= 0 /\ v $outcome_1 <= 7);
@@ -253,13 +276,13 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
 #[inline(always)]
 #[hax_lib::fstar::verification_status(panic_free)]
 #[hax_lib::requires((ETA == 2 || ETA == 3) && randomness.len() == ETA * 64)]
-#[hax_lib::ensures(|result| fstar!(r#"(forall (i:nat). i < 8 ==> Libcrux_ml_kem.Ntt.ntt_layer_7_pre
-    (${result}.f_coefficients.[ sz i ]) (${result}.f_coefficients.[ sz i +! sz 8 ])) /\
-    Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector $result ==
-        Spec.MLKEM.sample_poly_cbd $ETA $randomness"#))]
+#[hax_lib::ensures(|_| fstar!(r#"
+    Spec.Utils.is_i16b_array 7 ${output}_future /\
+    createi (sz 256) (fun i -> Spec.MLKEM.Math.to_spec_fe (Seq.index ${output}_future (v i))) == 
+    Spec.MLKEM.sample_poly_cbd $ETA $randomness"#))]
 pub(super) fn sample_from_binomial_distribution<const ETA: usize, Vector: Operations>(
-    randomness: &[u8],
-    output: &mut [i16; 256],
+    randomness: &[U8],
+    output: &mut [I16; 256],
 ) {
     hax_lib::fstar!(
         r#"assert (

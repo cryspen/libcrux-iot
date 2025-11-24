@@ -67,6 +67,9 @@ pub(crate) mod unpacked {
         }
     }
 }
+#[cfg(not(hax))]
+use libcrux_secrets::ClassifyRefMut as _;
+use libcrux_secrets::{Classify as _, Declassify as _, DeclassifyRef as _, I16, I32, U8};
 use unpacked::*;
 
 /// Concatenate `t` and `ρ` into the public key.
@@ -75,7 +78,7 @@ use unpacked::*;
     $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
     length $seed_for_a == sz 32 /\
     (forall (i:nat). i < v $K ==>
-        Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index $t_as_ntt i))"#))]
+        Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index $t_as_ntt i))"#))]
 #[hax_lib::ensures(|res|
     fstar!(r#"${serialized}_future == 
                         Seq.append (Spec.MLKEM.vector_encode_12 #$K
@@ -92,6 +95,17 @@ pub(crate) fn serialize_public_key_mut<
     serialized: &mut [u8],
     scratch: &mut Vector,
 ) {
+    // XXX: We need a separate version for hax, entirely without
+    // classification. The reason is that hax does not support for
+    // `&mut`-returning functions.
+    // (see https://github.com/cryspen/hax/issues/420)
+    #[cfg(not(hax))]
+    serialize_vector::<K, Vector>(
+        t_as_ntt,
+        (&mut serialized[0..ranked_bytes_per_ring_element(K)]).classify_ref_mut(),
+        scratch,
+    );
+    #[cfg(hax)]
     serialize_vector::<K, Vector>(
         t_as_ntt,
         &mut serialized[0..ranked_bytes_per_ring_element(K)],
@@ -100,7 +114,7 @@ pub(crate) fn serialize_public_key_mut<
 
     serialized[ranked_bytes_per_ring_element(K)..].copy_from_slice(seed_for_a);
     hax_lib::fstar!(
-        "Lib.Sequence.eq_intro #u8 #(v $PUBLIC_KEY_SIZE) serialized
+        "eq_intro serialized
         (Seq.append (Spec.MLKEM.vector_encode_12 #$K (Libcrux_ml_kem.Polynomial.to_spec_vector_t
             #$K #$:Vector $t_as_ntt)) $seed_for_a)"
     );
@@ -108,18 +122,18 @@ pub(crate) fn serialize_public_key_mut<
 
 /// Call [`serialize_uncompressed_ring_element`] for each ring element.
 #[inline(always)]
-#[hax_lib::fstar::options("--z3rlimit 1000 --ext context_pruning --z3refresh")]
+#[hax_lib::fstar::options("--z3rlimit 1000 --ext context_pruning")]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    ${out.len()} == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
+    ${out.len()} == Spec.MLKEM.v_RANKED_BYTES_PER_RING_ELEMENT $K /\
     (forall (i:nat). i < v $K ==>
-        Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index $key i))"#))]
+        Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index $key i))"#))]
 #[hax_lib::ensures(|()|
     fstar!(r#"$out == Spec.MLKEM.vector_encode_12 #$K
             (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $key)"#)
 )]
 pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
     key: &[PolynomialRingElement<Vector>; K],
-    out: &mut [u8],
+    out: &mut [U8],
     scratch: &mut Vector,
 ) {
     hax_lib::fstar!(r#"assert_norm (Spec.MLKEM.polynomial_d 12 == Spec.MLKEM.polynomial)"#);
@@ -127,9 +141,9 @@ pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
     cloop! {
         for (i, re) in key.into_iter().enumerate() {
             hax_lib::loop_invariant!(|i: usize| {
-                fstar!(r#"
+                fstar!(r#"${out.len()} == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
                     (v $i < v $K ==>
-                    Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index $key (v $i))) /\
+                    Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index $key (v $i))) /\
                     (forall (j: nat). j < v $i ==>
                     (j + 1) * v $BYTES_PER_RING_ELEMENT <= Seq.length $out /\
                     (Seq.slice $out (j * v $BYTES_PER_RING_ELEMENT) ((j + 1) * v $BYTES_PER_RING_ELEMENT) ==
@@ -144,8 +158,7 @@ pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
                 let lemma_aux (j: nat{ j < v $i }) : Lemma
                 (Seq.slice out (j * v $BYTES_PER_RING_ELEMENT) ((j + 1) * v $BYTES_PER_RING_ELEMENT) ==
                     Spec.MLKEM.byte_encode 12 (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector (Seq.index $key j))) =
-                Lib.Sequence.eq_intro #u8 #(v $BYTES_PER_RING_ELEMENT)
-                (Seq.slice out (j * v $BYTES_PER_RING_ELEMENT) ((j + 1) * v $BYTES_PER_RING_ELEMENT))
+                eq_intro (Seq.slice out (j * v $BYTES_PER_RING_ELEMENT) ((j + 1) * v $BYTES_PER_RING_ELEMENT))
                 (Spec.MLKEM.byte_encode 12 (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector (Seq.index $key j)))
                 in
                 Classical.forall_intro lemma_aux"#
@@ -157,7 +170,7 @@ pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
         r#"assert (Spec.MLKEM.coerce_vector_12 (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $key) ==
         Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $key);
         reveal_opaque (`%Spec.MLKEM.vector_encode_12) (Spec.MLKEM.vector_encode_12 #$K);
-        Lib.Sequence.eq_intro #u8 #(v (Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K)) $out
+        eq_intro $out
           (Spec.MLKEM.vector_encode_12 #$K
             (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $key))"#
     );
@@ -166,7 +179,7 @@ pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
 /// Sample a vector of ring elements from a centered binomial distribution.
 #[inline(always)]
 #[hax_lib::fstar::options(
-    "--max_fuel 15 --z3rlimit 1500 --ext context_pruning --z3refresh --split_queries always"
+    "--max_fuel 15 --z3rlimit 1500 --ext context_pruning --split_queries always"
 )]
 #[cfg_attr(
     hax,
@@ -193,7 +206,7 @@ pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
           (Spec.MLKEM.sample_vector_cbd2 #v_K
             (Seq.slice prf_input 0 32) (sz (v domain_separator))))
     =
-    Lib.Sequence.eq_intro #(Spec.MLKEM.polynomial) #(v v_K)
+    eq_intro
     (Libcrux_ml_kem.Polynomial.to_spec_vector_t #v_K #v_Vector error_1) 
     (Spec.MLKEM.sample_vector_cbd2 #v_K (Seq.slice prf_input 0 32) (sz (v domain_separator)))"#
     )
@@ -217,12 +230,12 @@ pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
     let lemma_aux (i: nat{i < v v_K}) : Lemma
         (prf_inputs.[ sz i ] == (Seq.append (Seq.slice prf_input 0 32) (Seq.create 1
           (mk_int #u8_inttype (v (domain_separator +! (mk_int #u8_inttype i))))))) =
-      Lib.Sequence.eq_intro #u8 #33 prf_inputs.[ sz i ]
+      eq_intro prf_inputs.[ sz i ]
         (Seq.append (Seq.slice prf_input 0 32)
           (Seq.create 1 (mk_int #u8_inttype (v domain_separator + i))))
     in
     Classical.forall_intro lemma_aux;
-    Lib.Sequence.eq_intro #(t_Array u8 (sz 33)) #(v v_K) prf_inputs
+    eq_intro prf_inputs
       (createi v_K (Spec.MLKEM.sample_vector_cbd2_prf_input #v_K
         (Seq.slice prf_input 0 32) (sz (v domain_separator))))"#
     )
@@ -231,11 +244,16 @@ pub(crate) fn serialize_vector<const K: usize, Vector: Operations>(
     $ETA2_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K /\
     $ETA2 == Spec.MLKEM.v_ETA2 $K /\
     v $domain_separator < 2 * v $K /\
+    Seq.length ${error_1} == v $K /\
     range (v $domain_separator + v $K) u8_inttype"#))]
-#[hax_lib::ensures(|(err1,ds)|
+#[hax_lib::ensures(|ds| {
+    let error_1_future = future(error_1);
     fstar!(r#"v $ds == v $domain_separator + v $K /\
-                Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $err1 ==
-                Spec.MLKEM.sample_vector_cbd2 #$K (Seq.slice $prf_input 0 32) (sz (v $domain_separator))"#)
+              Seq.length ${error_1_future} == v $K /\
+              (forall i. i < v $K ==> 
+                Libcrux_ml_kem.Polynomial.is_bounded_poly 7 (Seq.index ${error_1_future} i))/\
+               Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${error_1_future} ==
+               Spec.MLKEM.sample_vector_cbd2 #$K (Seq.slice $prf_input 0 32) (sz (v $domain_separator))"#)}
 )]
 fn sample_ring_element_cbd<
     const K: usize,
@@ -245,26 +263,34 @@ fn sample_ring_element_cbd<
     Vector: Operations,
     Hasher: Hash,
 >(
-    prf_input: [u8; 33],
+    prf_input: &[U8; 33],
     mut domain_separator: u8,
     error_1: &mut [PolynomialRingElement<Vector>],
-    sample_buffer: &mut [i16; 256],
+    sample_buffer: &mut [I16; 256],
 ) -> u8 {
-    let mut prf_inputs = [prf_input; K];
+    let mut prf_inputs = [prf_input.clone(); K];
     // See https://github.com/hacspec/hax/issues/1167
+    #[cfg(hax)]
     let _domain_separator_init = domain_separator;
+
     domain_separator = prf_input_inc::<K>(&mut prf_inputs, domain_separator);
     hax_lib::fstar!(
         "sample_ring_element_cbd_helper_1 $K $prf_inputs $prf_input $_domain_separator_init"
     );
-    let mut prf_outputs = [0u8; PRF_OUTPUT_SIZE];
-    Hasher::PRFxN(&prf_inputs, &mut prf_outputs, ETA2_RANDOMNESS_SIZE);
+    let mut prf_outputs = [0u8.classify(); PRF_OUTPUT_SIZE];
+    Hasher::PRFxN(
+        prf_inputs.as_slice(),
+        &mut prf_outputs,
+        ETA2_RANDOMNESS_SIZE,
+    );
     for i in 0..K {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
-                "forall (j:nat). j < v $i ==>
-            Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector ${error_1}.[ sz j ] ==
-              Spec.MLKEM.sample_poly_cbd $ETA2 ${prf_outputs}.[ sz j ]"
+                r#"
+                forall (j:nat). j < v $i ==>
+                    (Libcrux_ml_kem.Polynomial.is_bounded_poly 7 (Seq.index ${error_1} j) /\
+                     Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector ${error_1}.[ sz j ] ==
+                     Spec.MLKEM.sample_poly_cbd $ETA2 ${prf_outputs}.[ sz j ])"#
             )
         });
         let randomness = &prf_outputs[i * ETA2_RANDOMNESS_SIZE..(i + 1) * ETA2_RANDOMNESS_SIZE];
@@ -282,7 +308,7 @@ fn sample_ring_element_cbd<
 /// convert them into their NTT representations.
 #[inline(always)]
 #[hax_lib::fstar::options(
-    "--max_fuel 25 --z3rlimit 2500 --ext context_pruning --z3refresh --split_queries always"
+    "--max_fuel 25 --z3rlimit 2500 --ext context_pruning --split_queries always"
 )]
 #[cfg_attr(hax, hax_lib::fstar::before(r#"let sample_vector_cbd_then_ntt_helper_2
       (v_K v_ETA v_ETA_RANDOMNESS_SIZE: usize)
@@ -307,7 +333,7 @@ fn sample_ring_element_cbd<
             (Seq.slice prf_input 0 32) (sz (v domain_separator))))
     =
     reveal_opaque (`%Spec.MLKEM.sample_vector_cbd_then_ntt) (Spec.MLKEM.sample_vector_cbd_then_ntt #v_K);
-    Lib.Sequence.eq_intro #(Spec.MLKEM.polynomial) #(v v_K)
+    eq_intro
       (Libcrux_ml_kem.Polynomial.to_spec_vector_t #v_K #v_Vector re_as_ntt)
       (Spec.MLKEM.sample_vector_cbd_then_ntt #v_K
         (Seq.slice prf_input 0 32) (sz (v domain_separator)))"#))]
@@ -330,27 +356,29 @@ fn sample_ring_element_cbd<
     let lemma_aux (i: nat{i < v v_K}) : Lemma
         (prf_inputs.[ sz i ] == (Seq.append (Seq.slice prf_input 0 32) (Seq.create 1
           (mk_int #u8_inttype (v (domain_separator +! (mk_int #u8_inttype i))))))) =
-      Lib.Sequence.eq_intro #u8 #33 prf_inputs.[ sz i ]
+      eq_intro prf_inputs.[ sz i ]
         (Seq.append (Seq.slice prf_input 0 32)
           (Seq.create 1 (mk_int #u8_inttype (v domain_separator + i))))
     in
     Classical.forall_intro lemma_aux;
-    Lib.Sequence.eq_intro #(t_Array u8 (sz 33)) #(v v_K) prf_inputs
+    eq_intro prf_inputs
       (createi v_K (Spec.MLKEM.sample_vector_cbd1_prf_input #v_K
         (Seq.slice prf_input 0 32) (sz (v domain_separator))))"#
     )
 )]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+    Seq.length ${re_as_ntt} == v $K /\
     $ETA_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
     $ETA == Spec.MLKEM.v_ETA1 $K /\
     v $domain_separator < 2 * v $K /\
     range (v $domain_separator + v $K) u8_inttype"#))]
 #[hax_lib::ensures(|ds|
     fstar!(r#"v $ds == v $domain_separator + v $K /\
+            Seq.length ${re_as_ntt}_future == v $K /\
             Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${re_as_ntt}_future ==
             Spec.MLKEM.sample_vector_cbd_then_ntt #$K (Seq.slice $prf_input 0 32) (sz (v $domain_separator)) /\
             (forall (i: nat). i < v $K ==>
-              Libcrux_ml_kem.Serialize.coefficients_field_modulus_range #$:Vector (Seq.index ${re_as_ntt}_future i))"#)
+              Libcrux_ml_kem.Polynomial.is_bounded_poly #$:Vector 3328 (Seq.index ${re_as_ntt}_future i))"#)
 )]
 fn sample_vector_cbd_then_ntt<
     const K: usize,
@@ -361,17 +389,20 @@ fn sample_vector_cbd_then_ntt<
     Hasher: Hash,
 >(
     re_as_ntt: &mut [PolynomialRingElement<Vector>],
-    prf_input: [u8; 33],
+    prf_input: &[U8; 33],
     mut domain_separator: u8,
     scratch: &mut Vector,
 ) -> u8 {
-    let mut prf_inputs = [prf_input; K];
+    let mut prf_inputs = [prf_input.clone(); K];
+
+    #[cfg(hax)]
     let _domain_separator_init = domain_separator;
+
     domain_separator = prf_input_inc::<K>(&mut prf_inputs, domain_separator);
     hax_lib::fstar!(
         "sample_vector_cbd_then_ntt_helper_1 $K $prf_inputs $prf_input $_domain_separator_init"
     );
-    let mut prf_outputs = [0u8; PRF_OUTPUT_SIZE];
+    let mut prf_outputs = [0u8.classify(); PRF_OUTPUT_SIZE];
     Hasher::PRFxN(&prf_inputs, &mut prf_outputs, ETA_RANDOMNESS_SIZE);
     for i in 0..K {
         hax_lib::loop_invariant!(|i: usize| {
@@ -379,11 +410,11 @@ fn sample_vector_cbd_then_ntt<
                 r#"forall (j:nat). j < v $i ==>
             Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector re_as_ntt.[ sz j ] ==
               Spec.MLKEM.poly_ntt (Spec.MLKEM.sample_poly_cbd $ETA ${prf_outputs}.[ sz j ]) /\
-            Libcrux_ml_kem.Serialize.coefficients_field_modulus_range #$:Vector re_as_ntt.[ sz j ]"#
+            Libcrux_ml_kem.Polynomial.is_bounded_poly #$:Vector 3328 re_as_ntt.[ sz j ]"#
             )
         });
         let randomness = &prf_outputs[i * ETA_RANDOMNESS_SIZE..(i + 1) * ETA_RANDOMNESS_SIZE];
-        let mut sample_buffer = [0i16; 256];
+        let mut sample_buffer = [0i16.classify(); 256];
         sample_from_binomial_distribution::<ETA, Vector>(randomness, &mut sample_buffer);
         PolynomialRingElement::from_i16_array(&sample_buffer, &mut re_as_ntt[i]);
         ntt_binomially_sampled_ring_element(&mut re_as_ntt[i], scratch);
@@ -434,8 +465,10 @@ fn sample_vector_cbd_then_ntt<
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 500 --ext context_pruning --z3refresh")]
+#[hax_lib::fstar::before(r#"[@ "opaque_to_smt"]"#)]
+#[hax_lib::fstar::options("--z3rlimit 500 --ext context_pruning")]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+    v $K_SQUARED = v $K * v $K /\
     $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
     $ETA1 == Spec.MLKEM.v_ETA1 $K /\
     length $key_generation_seed == Spec.MLKEM.v_CPA_KEY_GENERATION_SEED_SIZE"#))]
@@ -448,9 +481,9 @@ fn sample_vector_cbd_then_ntt<
         (Libcrux_ml_kem.Polynomial.to_spec_matrix_t #$K #$:Vector ${public_key}_future.f_A == matrix_A_as_ntt) /\
         (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${private_key}_future.f_secret_as_ntt == secret_as_ntt)) /\
     (forall (i:nat). i < v $K ==>
-        Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index ${private_key}_future.f_secret_as_ntt i)) /\
+        Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index ${private_key}_future.f_secret_as_ntt i)) /\
     (forall (i:nat). i < v $K ==>
-        Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index ${public_key_future.t_as_ntt} i))
+        Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index ${public_key_future.t_as_ntt} i))
 "#)}})]
 #[inline(always)]
 pub(crate) fn generate_keypair_unpacked<
@@ -463,32 +496,36 @@ pub(crate) fn generate_keypair_unpacked<
     Hasher: Hash,
     Scheme: Variant,
 >(
-    key_generation_seed: &[u8],
+    key_generation_seed: &[U8],
     private_key: &mut IndCpaPrivateKeyUnpacked<K, Vector>,
     public_key: &mut IndCpaPublicKeyUnpacked<K, K_SQUARED, Vector>,
     scratch: &mut PolynomialRingElement<Vector>,
     s_cache: &mut [PolynomialRingElement<Vector>; K],
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
     // (ρ,σ) := G(d) for Kyber, (ρ,σ) := G(d || K) for ML-KEM
-    let mut hashed = [0u8; 64];
+    let mut hashed = [0u8.classify(); 64];
     Scheme::cpa_keygen_seed::<K, Hasher>(key_generation_seed, &mut hashed);
     let (seed_for_A, seed_for_secret_and_error) = hashed.split_at(32);
 
     hax_lib::fstar!(
-        "Lib.Sequence.eq_intro #u8 #32 $seed_for_A
+        "eq_intro $seed_for_A
         (Seq.slice (Libcrux_ml_kem.Utils.into_padded_array (sz 34) $seed_for_A) 0 32)"
     );
-    sample_matrix_A::<K, Vector, Hasher>(&mut public_key.A, into_padded_array(seed_for_A), true);
+
+    // Declassification: The seed for matrix A, like matrix A is part of the public key.
+    sample_matrix_A::<K, Vector, Hasher>(
+        &mut public_key.A,
+        &(into_padded_array(seed_for_A).declassify()),
+        true,
+    );
 
     hax_lib::fstar!(
         r#"let (matrix_A_as_ntt, valid) = Spec.MLKEM.sample_matrix_A_ntt #$K $seed_for_A in
         assert (valid ==> matrix_A_as_ntt == Libcrux_ml_kem.Polynomial.to_spec_matrix_t public_key.f_A)"#
     );
-    let prf_input: [u8; 33] = into_padded_array(seed_for_secret_and_error);
-    hax_lib::fstar!(
-        "Lib.Sequence.eq_intro #u8 #32 $seed_for_secret_and_error (Seq.slice $prf_input 0 32)"
-    );
+    let prf_input: [U8; 33] = into_padded_array(seed_for_secret_and_error);
+    hax_lib::fstar!("eq_intro $seed_for_secret_and_error (Seq.slice $prf_input 0 32)");
     let domain_separator = sample_vector_cbd_then_ntt::<
         K,
         ETA1,
@@ -498,7 +535,7 @@ pub(crate) fn generate_keypair_unpacked<
         Hasher,
     >(
         &mut private_key.secret_as_ntt,
-        prf_input,
+        &prf_input,
         0,
         &mut scratch.coefficients[0],
     );
@@ -512,7 +549,7 @@ pub(crate) fn generate_keypair_unpacked<
         Hasher,
     >(
         &mut error_as_ntt,
-        prf_input,
+        &prf_input,
         domain_separator,
         &mut scratch.coefficients[0],
     );
@@ -527,7 +564,10 @@ pub(crate) fn generate_keypair_unpacked<
         accumulator,
     );
 
-    public_key.seed_for_A = seed_for_A.try_into().unwrap();
+    // Declassification: Writing out part of the public key.
+    public_key
+        .seed_for_A
+        .copy_from_slice(seed_for_A.declassify_ref());
 
     hax_lib::fstar!(
         r#"let (((t_as_ntt,seed_for_A), matrix_A_as_ntt), secret_as_ntt), valid =
@@ -539,9 +579,9 @@ pub(crate) fn generate_keypair_unpacked<
             ((Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${private_key.secret_as_ntt}) ==
               secret_as_ntt));
         assert ((forall (i: nat). i < v $K ==>
-              Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index ${private_key.secret_as_ntt} i)) /\
+              Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index ${private_key.secret_as_ntt} i)) /\
           (forall (i: nat). i < v $K ==>
-              Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index ${public_key.t_as_ntt} i)))"#
+              Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index ${public_key.t_as_ntt} i)))"#
     );
 
     // For encapsulation, we need to store A not Aˆ, and so we untranspose A
@@ -555,9 +595,11 @@ pub(crate) fn generate_keypair_unpacked<
     $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
     $ETA1 == Spec.MLKEM.v_ETA1 $K /\
     $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
-    length $key_generation_seed == Spec.MLKEM.v_CPA_KEY_GENERATION_SEED_SIZE"#))]
-#[hax_lib::ensures(|result| fstar!(r#"let (expected, valid) = Spec.MLKEM.ind_cpa_generate_keypair $K $key_generation_seed in 
-                                    valid ==> $result == expected"#))]
+    length $key_generation_seed == Spec.MLKEM.v_CPA_KEY_GENERATION_SEED_SIZE /\
+    length $serialized_ind_cpa_private_key == $PRIVATE_KEY_SIZE /\
+    length $serialized_public_key == $PUBLIC_KEY_SIZE"#))]
+// #[hax_lib::ensures(|result| fstar!(r#"let (expected, valid) = Spec.MLKEM.ind_cpa_generate_keypair $K $key_generation_seed in
+//                                     valid ==> $result == expected"#))]
 #[inline(always)]
 pub(crate) fn generate_keypair<
     const K: usize,
@@ -571,12 +613,12 @@ pub(crate) fn generate_keypair<
     Hasher: Hash,
     Scheme: Variant,
 >(
-    key_generation_seed: &[u8],
-    serialized_ind_cpa_private_key: &mut [u8],
+    key_generation_seed: &[U8],
+    serialized_ind_cpa_private_key: &mut [U8],
     serialized_public_key: &mut [u8],
     scratch: &mut PolynomialRingElement<Vector>,
     s_cache: &mut [PolynomialRingElement<Vector>; K],
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
     // XXX: Can Eurydice handle these when passind in as &mut from outside?
     let mut private_key = IndCpaPrivateKeyUnpacked::default();
@@ -610,8 +652,6 @@ pub(crate) fn generate_keypair<
 }
 
 /// Serialize the secret key from the unpacked key pair generation.
-#[hax_lib::fstar::verification_status(lax)]
-#[inline(always)]
 pub(crate) fn serialize_unpacked_secret_key<
     const K: usize,
     const K_SQUARED: usize,
@@ -621,7 +661,7 @@ pub(crate) fn serialize_unpacked_secret_key<
 >(
     public_key: &IndCpaPublicKeyUnpacked<K, K_SQUARED, Vector>,
     private_key: &IndCpaPrivateKeyUnpacked<K, Vector>,
-    serialized_private_key: &mut [u8],
+    serialized_private_key: &mut [U8],
     serialized_public_key: &mut [u8],
     scratch: &mut Vector,
 ) {
@@ -638,14 +678,14 @@ pub(crate) fn serialize_unpacked_secret_key<
 }
 
 /// Call [`compress_then_serialize_ring_element_u`] on each ring element.
-#[hax_lib::fstar::options("--z3rlimit 1500 --ext context_pruning --z3refresh")]
+#[hax_lib::fstar::options("--z3rlimit 1500 --ext context_pruning")]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
     $OUT_LEN == Spec.MLKEM.v_C1_SIZE $K /\
     $COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR $K /\
     $BLOCK_LEN == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
     ${out.len()} == $OUT_LEN /\
     (forall (i:nat). i < v $K ==>
-        Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index $input i))"#))]
+        Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index $input i))"#))]
 #[hax_lib::ensures(|_|
     fstar!(r#"$out_future == Spec.MLKEM.compress_then_encode_u #$K
                (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $input)"#)
@@ -670,7 +710,7 @@ fn compress_then_serialize_u<
     cloop! {
         for (i, re) in input.into_iter().enumerate() {
             hax_lib::loop_invariant!(|i: usize| { fstar!(r#"(v $i < v $K ==> Seq.length out == v $OUT_LEN /\
-                Libcrux_ml_kem.Serialize.coefficients_field_modulus_range (Seq.index $input (v $i))) /\
+                Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index $input (v $i))) /\
             (forall (j: nat). j < v $i ==>
                 Seq.length out == v $OUT_LEN /\
                 (j + 1) * (v $OUT_LEN / v $K) <= Seq.length out /\
@@ -688,7 +728,7 @@ fn compress_then_serialize_u<
                 (Seq.slice out (j * (v $OUT_LEN / v $K)) (((j + 1)) * (v $OUT_LEN / v $K)) ==
                 Spec.MLKEM.compress_then_byte_encode (v $COMPRESSION_FACTOR)
                     (Libcrux_ml_kem.Polynomial.to_spec_poly_t #v_Vector (Seq.index $input j))) =
-                Lib.Sequence.eq_intro #u8 #(v $OUT_LEN / v $K) 
+                eq_intro 
                 (Seq.slice out (j * (v $OUT_LEN / v $K)) (((j + 1)) * (v $OUT_LEN / v $K)))
                 (Spec.MLKEM.compress_then_byte_encode (v $COMPRESSION_FACTOR)
                     (Libcrux_ml_kem.Polynomial.to_spec_poly_t #$:Vector (Seq.index $input j)))
@@ -697,7 +737,7 @@ fn compress_then_serialize_u<
         }
     };
     hax_lib::fstar!(
-        "Lib.Sequence.eq_intro #u8 #(v $OUT_LEN) out
+        "eq_intro out
         (Spec.MLKEM.compress_then_encode_u #$K
             (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $input))"
     )
@@ -743,8 +783,9 @@ fn compress_then_serialize_u<
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 800 --ext context_pruning --z3refresh")]
+#[hax_lib::fstar::options("--z3rlimit 800 --ext context_pruning")]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+      v $K_SQUARED = v $K * v $K /\
       $ETA1 == Spec.MLKEM.v_ETA1 $K /\
       $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
       $ETA2 == Spec.MLKEM.v_ETA2 $K /\
@@ -755,11 +796,12 @@ fn compress_then_serialize_u<
       $V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR $K /\
       $BLOCK_LEN == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
       $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
-      length $randomness == Spec.MLKEM.v_SHARED_SECRET_SIZE"#))]
-#[hax_lib::ensures(|result|
-    fstar!(r#"$result == Spec.MLKEM.ind_cpa_encrypt_unpacked $K $message $randomness
-        (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${public_key.t_as_ntt})
-        (Libcrux_ml_kem.Polynomial.to_spec_matrix_t #$K #$:Vector ${public_key.A})"#)
+      length $randomness == Spec.MLKEM.v_SHARED_SECRET_SIZE /\
+      length $ciphertext == $CIPHERTEXT_SIZE /\
+      length $r_as_ntt == $K"#))]
+#[hax_lib::ensures(|_|
+    fstar!(r#"let (expected, valid) = Spec.MLKEM.ind_cpa_encrypt $K $public_key $message $randomness in
+            valid ==> ${ciphertext}_future == expected /\ length ${ciphertext}_future == length $ciphertext"#)
 )]
 #[inline(always)]
 pub(crate) fn encrypt<
@@ -782,15 +824,15 @@ pub(crate) fn encrypt<
     Hasher: Hash,
 >(
     public_key: &[u8],
-    message: [u8; SHARED_SECRET_SIZE],
-    randomness: &[u8],
+    message: &[U8; SHARED_SECRET_SIZE],
+    randomness: &[U8],
     ciphertext: &mut [u8],
     matrix_entry: &mut PolynomialRingElement<Vector>,
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     cache: &mut [PolynomialRingElement<Vector>],
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
     encrypt_c1::<
         K,
@@ -822,11 +864,11 @@ pub(crate) fn encrypt<
         &public_key[..T_AS_NTT_ENCODED_SIZE],
         matrix_entry,
         r_as_ntt,
-        &error_2,
+        error_2,
         message,
         &mut ciphertext[C1_LEN..],
         scratch,
-        &cache,
+        cache,
         accumulator,
     );
 }
@@ -847,22 +889,22 @@ pub(crate) fn encrypt_c1<
     Vector: Operations,
     Hasher: Hash,
 >(
-    randomness: &[u8],
+    randomness: &[U8],
     matrix_entry: &mut PolynomialRingElement<Vector>,
     seed_for_a: &[u8],
     ciphertext: &mut [u8], // C1_LEN
     r_as_ntt: &mut [PolynomialRingElement<Vector>],
     error_2: &mut PolynomialRingElement<Vector>,
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     cache: &mut [PolynomialRingElement<Vector>],
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
     // for i from 0 to k−1 do
     //     r[i] := CBD{η1}(PRF(r, N))
     //     N := N + 1
     // end for
     // rˆ := NTT(r)
-    let mut prf_input: [u8; 33] = into_padded_array(randomness);
+    let mut prf_input: [U8; 33] = into_padded_array(randomness);
     let domain_separator = sample_vector_cbd_then_ntt::<
         K,
         ETA1,
@@ -870,9 +912,9 @@ pub(crate) fn encrypt_c1<
         PRF_OUTPUT_SIZE1,
         Vector,
         Hasher,
-    >(r_as_ntt, prf_input, 0, &mut scratch.coefficients[0]);
+    >(r_as_ntt, &prf_input, 0, scratch);
     hax_lib::fstar!(
-        "Lib.Sequence.eq_intro #u8 #32 $randomness (Seq.slice $prf_input 0 32);
+        "eq_intro $randomness (Seq.slice $prf_input 0 32);
         assert (v $domain_separator == v $K)"
     );
 
@@ -882,23 +924,23 @@ pub(crate) fn encrypt_c1<
     // end for
     let mut error_1: [PolynomialRingElement<Vector>; K] =
         from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
-    let mut sampling_buffer = [0i16; 256];
+    let mut sampling_buffer = [0i16.classify(); 256];
     let domain_separator =
         sample_ring_element_cbd::<K, ETA2_RANDOMNESS_SIZE, ETA2, PRF_OUTPUT_SIZE2, Vector, Hasher>(
-            prf_input,
+            &prf_input,
             domain_separator,
             &mut error_1,
             &mut sampling_buffer,
         );
 
     // e_2 := CBD{η2}(PRF(r, N))
-    prf_input[32] = domain_separator;
+    prf_input[32] = domain_separator.classify();
     hax_lib::fstar!(
         "assert (Seq.equal $prf_input (Seq.append $randomness (Seq.create 1 $domain_separator)));
         assert ($prf_input == Seq.append $randomness (Seq.create 1 $domain_separator))"
     );
-    let mut prf_output = [0u8; ETA2_RANDOMNESS_SIZE];
-    Hasher::PRF::<32>(&prf_input, &mut prf_output);
+    let mut prf_output = [0u8.classify(); ETA2_RANDOMNESS_SIZE];
+    Hasher::PRF::<ETA2_RANDOMNESS_SIZE>(&prf_input, &mut prf_output);
     sample_from_binomial_distribution::<ETA2, Vector>(&prf_output, &mut sampling_buffer);
     PolynomialRingElement::from_i16_array(&sampling_buffer, error_2);
 
@@ -908,7 +950,7 @@ pub(crate) fn encrypt_c1<
     compute_vector_u::<K, Vector, Hasher>(
         matrix_entry,
         seed_for_a,
-        &r_as_ntt,
+        r_as_ntt,
         &error_1,
         &mut u,
         scratch,
@@ -918,9 +960,7 @@ pub(crate) fn encrypt_c1<
 
     // c_1 := Encode_{du}(Compress_q(u,d_u))
     compress_then_serialize_u::<K, C1_LEN, U_COMPRESSION_FACTOR, BLOCK_LEN, Vector>(
-        u,
-        ciphertext,
-        &mut scratch.coefficients[0],
+        u, ciphertext, scratch,
     );
 }
 
@@ -935,11 +975,11 @@ pub(crate) fn encrypt_c2<
     t_as_ntt_entry: &mut PolynomialRingElement<Vector>,
     r_as_ntt: &[PolynomialRingElement<Vector>],
     error_2: &PolynomialRingElement<Vector>,
-    message: [u8; SHARED_SECRET_SIZE],
+    message: &[U8; SHARED_SECRET_SIZE],
     ciphertext: &mut [u8],
-    scratch: &mut PolynomialRingElement<Vector>,
+    scratch: &mut Vector,
     cache: &[PolynomialRingElement<Vector>],
-    accumulator: &mut [i32; 256],
+    accumulator: &mut [I32; 256],
 ) {
     // v := NTT^{−1}(tˆT ◦ rˆ) + e_2 + Decompress_q(Decode_1(m),1)
     let mut message_as_ring_element = PolynomialRingElement::<Vector>::ZERO();
@@ -960,9 +1000,7 @@ pub(crate) fn encrypt_c2<
 
     // c_2 := Encode_{dv}(Compress_q(v,d_v))
     compress_then_serialize_ring_element_v::<K, V_COMPRESSION_FACTOR, C2_LEN, Vector>(
-        v,
-        ciphertext,
-        &mut scratch.coefficients[0],
+        v, ciphertext, scratch,
     );
 }
 
@@ -972,9 +1010,11 @@ pub(crate) fn encrypt_c2<
 #[hax_lib::fstar::options("--z3rlimit 800 --ext context_pruning")]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
     $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
-    $U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR $K"#))]
-#[hax_lib::ensures(|res|
-    fstar!(r#"Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $res ==
+    $U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR $K /\
+    length $u_as_ntt == $K"#))]
+#[hax_lib::ensures(|_|
+    fstar!(r#"Seq.length ${u_as_ntt}_future == v $K /\
+        Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${u_as_ntt}_future ==
         Spec.MLKEM.(vector_ntt (decode_then_decompress_u #$K (Seq.slice $ciphertext 0 (v (Spec.MLKEM.v_C1_SIZE $K)))))"#)
 )]
 fn deserialize_then_decompress_u<
@@ -1007,7 +1047,7 @@ fn deserialize_then_decompress_u<
         }
     }
     hax_lib::fstar!(
-        "Lib.Sequence.eq_intro #Spec.MLKEM.polynomial #(v $K)
+        "eq_intro
         (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $u_as_ntt)
         (Spec.MLKEM.(vector_ntt (decode_then_decompress_u #$K
         (Seq.slice $ciphertext 0 (v (Spec.MLKEM.v_C1_SIZE $K))))))"
@@ -1018,16 +1058,20 @@ fn deserialize_then_decompress_u<
 #[inline(always)]
 #[hax_lib::fstar::options("--z3rlimit 800 --ext context_pruning")]
 #[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
+    Seq.length $secret_as_ntt == v $K /\
     length $secret_key == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K /\
     v (${secret_key.len()}) / v $BYTES_PER_RING_ELEMENT <= v $K"#))]
-#[hax_lib::ensures(|res|
-    fstar!(r#"Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $res ==
+#[hax_lib::ensures(|()|
+    fstar!(r#"Seq.length ${secret_as_ntt}_future == v $K /\ 
+        Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $secret_as_ntt ==
          Spec.MLKEM.vector_decode_12 #$K $secret_key"#)
 )]
 pub(crate) fn deserialize_vector<const K: usize, Vector: Operations>(
-    secret_key: &[u8],
+    secret_key: &[U8],
     secret_as_ntt: &mut [PolynomialRingElement<Vector>],
 ) {
+    hax_lib::fstar!(r#"assert_norm (Spec.MLKEM.polynomial_d 12 == Spec.MLKEM.polynomial)"#);
+
     for i in 0..K {
         hax_lib::loop_invariant!(|i: usize| {
             fstar!(
@@ -1046,7 +1090,7 @@ pub(crate) fn deserialize_vector<const K: usize, Vector: Operations>(
         );
     }
     hax_lib::fstar!(
-        "Lib.Sequence.eq_intro #Spec.MLKEM.polynomial #(v $K)
+        "eq_intro
         (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector $secret_as_ntt)
         (Spec.MLKEM.vector_decode_12 #$K $secret_key)"
     );
@@ -1079,10 +1123,11 @@ pub(crate) fn deserialize_vector<const K: usize, Vector: Operations>(
     $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
     $U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR $K /\
     $V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR $K /\
-    $VECTOR_U_ENCODED_SIZE == Spec.MLKEM.v_C1_SIZE $K"#))]
-#[hax_lib::ensures(|result|
-    fstar!(r#"$result == Spec.MLKEM.ind_cpa_decrypt_unpacked $K $ciphertext
-        (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${secret_key}.f_secret_as_ntt)"#)
+    $VECTOR_U_ENCODED_SIZE == Spec.MLKEM.v_C1_SIZE $K /\
+    length $decrypted == ${crate::constants::SHARED_SECRET_SIZE}"#))]
+#[hax_lib::ensures(|_|
+    fstar!(r#"${decrypted}_future == Spec.MLKEM.ind_cpa_decrypt_unpacked $K $ciphertext
+        (Libcrux_ml_kem.Polynomial.to_spec_vector_t #$K #$:Vector ${secret_key}.f_secret_as_ntt) /\ length ${decrypted}_future == length $decrypted"#)
 )]
 #[inline(always)]
 pub(crate) fn decrypt_unpacked<
@@ -1095,16 +1140,16 @@ pub(crate) fn decrypt_unpacked<
 >(
     secret_key: &IndCpaPrivateKeyUnpacked<K, Vector>,
     ciphertext: &[u8; CIPHERTEXT_SIZE],
-    decrypted: &mut [u8],
-    scratch: &mut PolynomialRingElement<Vector>,
-    accumulator: &mut [i32; 256],
+    decrypted: &mut [U8],
+    scratch: &mut Vector,
+    accumulator: &mut [I32; 256],
 ) {
     // u := Decompress_q(Decode_{d_u}(c), d_u)
     let mut u_as_ntt = from_fn(|_| PolynomialRingElement::<Vector>::ZERO());
     deserialize_then_decompress_u::<K, CIPHERTEXT_SIZE, U_COMPRESSION_FACTOR, Vector>(
         ciphertext,
         &mut u_as_ntt,
-        &mut scratch.coefficients[0],
+        scratch,
     );
 
     // v := Decompress_q(Decode_{d_v}(c + d_u·k·n / 8), d_v)
@@ -1124,7 +1169,7 @@ pub(crate) fn decrypt_unpacked<
         scratch,
         accumulator,
     );
-    compress_then_serialize_message(&message, decrypted, &mut scratch.coefficients[0]);
+    compress_then_serialize_message(&message, decrypted, scratch);
 }
 
 #[allow(non_snake_case)]
@@ -1133,9 +1178,10 @@ pub(crate) fn decrypt_unpacked<
     $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
     $VECTOR_U_ENCODED_SIZE == Spec.MLKEM.v_C1_SIZE $K /\
     $U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR $K /\
-    $V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR $K"#))]
-#[hax_lib::ensures(|result|
-    fstar!(r#"$result == Spec.MLKEM.ind_cpa_decrypt $K $secret_key $ciphertext"#)
+    $V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR $K /\
+    length $decrypted == ${crate::constants::SHARED_SECRET_SIZE}"#))]
+#[hax_lib::ensures(|_|
+    fstar!(r#"${decrypted}_future == Spec.MLKEM.ind_cpa_decrypt $K $secret_key $ciphertext /\ length ${decrypted}_future == length $decrypted"#)
 )]
 #[inline(always)]
 pub(crate) fn decrypt<
@@ -1146,11 +1192,11 @@ pub(crate) fn decrypt<
     const V_COMPRESSION_FACTOR: usize,
     Vector: Operations,
 >(
-    secret_key: &[u8],
+    secret_key: &[U8],
     ciphertext: &[u8; CIPHERTEXT_SIZE],
-    decrypted: &mut [u8],
-    scratch: &mut PolynomialRingElement<Vector>,
-    accumulator: &mut [i32; 256],
+    decrypted: &mut [U8],
+    scratch: &mut Vector,
+    accumulator: &mut [I32; 256],
 ) {
     hax_lib::fstar!(r#"reveal_opaque (`%Spec.MLKEM.ind_cpa_decrypt) Spec.MLKEM.ind_cpa_decrypt"#);
     // sˆ := Decode_12(sk)

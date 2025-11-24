@@ -1,3 +1,5 @@
+use libcrux_secrets::{Classify as _, ClassifyRef as _, DeclassifyRef, U8};
+
 use crate::{
     constant_time_ops::compare_ciphertexts_select_shared_secret_in_constant_time,
     constants::{
@@ -26,7 +28,7 @@ pub const ENCAPS_SEED_SIZE: usize = SHARED_SECRET_SIZE;
 /// An ML-KEM shared secret.
 ///
 /// A byte array of size [`SHARED_SECRET_SIZE`].
-pub type MlKemSharedSecret = [u8; SHARED_SECRET_SIZE];
+pub type MlKemSharedSecret = [U8; SHARED_SECRET_SIZE];
 
 /// This module instantiates the functions in this file and multiplexes between
 /// different implementations at runtime.
@@ -51,18 +53,18 @@ pub(crate) mod instantiations;
                                               Seq.append (Spec.Utils.v_H $public_key) 
                                                   $implicit_rejection_value))"#))]
 fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize, Hasher: Hash>(
-    private_key: &[u8],
+    private_key: &[U8],
     public_key: &[u8],
-    implicit_rejection_value: &[u8],
-    serialized: &mut [u8; SERIALIZED_KEY_LEN],
+    implicit_rejection_value: &[U8],
+    serialized: &mut [U8; SERIALIZED_KEY_LEN],
 ) {
     let mut pointer = 0;
     serialized[pointer..pointer + private_key.len()].copy_from_slice(private_key);
     pointer += private_key.len();
-    serialized[pointer..pointer + public_key.len()].copy_from_slice(public_key);
+    serialized[pointer..pointer + public_key.len()].copy_from_slice(public_key.classify_ref());
     pointer += public_key.len();
     Hasher::H(
-        public_key,
+        public_key.classify_ref(),
         &mut serialized[pointer..pointer + H_DIGEST_SIZE],
     );
     pointer += H_DIGEST_SIZE;
@@ -79,7 +81,7 @@ fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize,
                             (v #usize_inttype (Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K +!
                                             Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K +!
                                             Libcrux_ml_kem.Constants.v_H_DIGEST_SIZE))
-            `Seq.equal` Libcrux_ml_kem.Hash_functions.f_H #$:Hasher #$K $public_key);
+            `Seq.equal` Spec.Utils.v_H $public_key);
     assert (Seq.slice serialized (v #usize_inttype (Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K +!
                                             Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K +!
                                             Libcrux_ml_kem.Constants.v_H_DIGEST_SIZE))
@@ -88,7 +90,7 @@ fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize,
                                             Libcrux_ml_kem.Constants.v_H_DIGEST_SIZE +!
                                             Spec.MLKEM.v_SHARED_SECRET_SIZE))
             == $implicit_rejection_value);
-    lemma_slice_append_4 serialized $private_key $public_key (Libcrux_ml_kem.Hash_functions.f_H #$:Hasher #$K $public_key) $implicit_rejection_value"
+    lemma_slice_append_4 serialized $private_key $public_key (Spec.Utils.v_H $public_key) $implicit_rejection_value"
     );
 }
 
@@ -163,10 +165,19 @@ pub(crate) fn validate_private_key_only<
 ) -> bool {
     // Eurydice can't access values directly on the types. We need to go to the
     // `value` directly.
-    let mut t = [0u8; H_DIGEST_SIZE];
+    let mut t = [0u8.classify(); H_DIGEST_SIZE];
+    // This slice of the ML-KEM private key is the ML-KEM
+    // public key (see FIPS203, Algorithm 16, line 3), and thus public
+    // information.
     Hasher::H(&private_key.value[384 * K..768 * K + 32], &mut t);
-    let expected = &private_key.value[768 * K + 32..768 * K + 64];
-    t == expected
+    // Declassification: This slice of the ML-KEM private key is the
+    // hash of the ML-KEM public key (see FIPS203, Algorithm 16, line
+    // 3), and thus public information
+    let expected = private_key.value[768 * K + 32..768 * K + 64].declassify_ref();
+    // Declassification: There are no secret values in this
+    // comparison, see above.
+    // XXX: We need `.as_slice()` here for Eurydice.
+    t.as_slice().declassify_ref() == expected
 }
 
 /// Packed API
@@ -198,17 +209,17 @@ pub(crate) fn generate_keypair<
     Hasher: Hash,
     Scheme: Variant,
 >(
-    randomness: [u8; KEY_GENERATION_SEED_SIZE],
+    randomness: &[U8; KEY_GENERATION_SEED_SIZE],
 ) -> MlKemKeyPair<PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE> {
     let ind_cpa_keypair_randomness = &randomness[0..CPA_PKE_KEY_GENERATION_SEED_SIZE];
     let implicit_rejection_value = &randomness[CPA_PKE_KEY_GENERATION_SEED_SIZE..];
 
     let mut public_key = [0u8; PUBLIC_KEY_SIZE];
-    let mut secret_key_serialized = [0u8; PRIVATE_KEY_SIZE];
+    let mut secret_key_serialized = [0u8.classify(); PRIVATE_KEY_SIZE];
 
-    let mut ind_cpa_private_key = [0u8; CPA_PRIVATE_KEY_SIZE];
+    let mut ind_cpa_private_key = [0u8.classify(); CPA_PRIVATE_KEY_SIZE];
     let mut scratch = PolynomialRingElement::<Vector>::ZERO();
-    let mut accumulator = [0i32; 256];
+    let mut accumulator = [0i32.classify(); 256];
     let mut s_cache = [PolynomialRingElement::<Vector>::ZERO(); K];
 
     crate::ind_cpa::generate_keypair::<
@@ -282,21 +293,25 @@ pub(crate) fn encapsulate<
     Scheme: Variant,
 >(
     public_key: &MlKemPublicKey<PUBLIC_KEY_SIZE>,
-    randomness: [u8; SHARED_SECRET_SIZE],
+    randomness: &[U8; SHARED_SECRET_SIZE],
 ) -> (MlKemCiphertext<CIPHERTEXT_SIZE>, MlKemSharedSecret) {
-    let mut processed_randomness = [0u8; 32];
-    Scheme::entropy_preprocess::<K, Hasher>(&randomness, &mut processed_randomness);
-    let mut to_hash: [u8; 2 * H_DIGEST_SIZE] = into_padded_array(&processed_randomness);
+    let mut processed_randomness = [0u8.classify(); 32];
+    Scheme::entropy_preprocess::<K, Hasher>(randomness, &mut processed_randomness);
+    let mut to_hash: [U8; 2 * H_DIGEST_SIZE] = into_padded_array(&processed_randomness);
 
     hax_lib::fstar!(r#"eq_intro (Seq.slice $to_hash 0 32) $randomness"#);
-    Hasher::H(public_key.as_slice(), &mut to_hash[H_DIGEST_SIZE..]);
+    Hasher::H(
+        // XXX: The more reasonable `public_key.as_slice().classify_ref()` does not go through Eurydice.
+        public_key.value.classify().as_slice(),
+        &mut to_hash[H_DIGEST_SIZE..],
+    );
 
     hax_lib::fstar!(
         "assert (Seq.slice to_hash 0 (v $H_DIGEST_SIZE) == $randomness);
         lemma_slice_append $to_hash $randomness (Spec.Utils.v_H ${public_key}.f_value);
         assert ($to_hash == concat $randomness (Spec.Utils.v_H ${public_key}.f_value))"
     );
-    let mut hashed = [0u8; G_DIGEST_SIZE];
+    let mut hashed = [0u8.classify(); G_DIGEST_SIZE];
     Hasher::G(&to_hash, &mut hashed);
     let (shared_secret, pseudorandomness) = hashed.split_at(SHARED_SECRET_SIZE);
 
@@ -304,8 +319,8 @@ pub(crate) fn encapsulate<
     let mut r_as_ntt: [PolynomialRingElement<Vector>; K] =
         core::array::from_fn(|_i| PolynomialRingElement::<Vector>::ZERO());
     let mut error_2 = PolynomialRingElement::<Vector>::ZERO();
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
-    let mut accumulator = [0i32; 256];
+    let mut scratch = Vector::ZERO();
+    let mut accumulator = [0i32.classify(); 256];
     let mut cache = [PolynomialRingElement::<Vector>::ZERO(); K];
     let mut matrix_entry = PolynomialRingElement::<Vector>::ZERO();
 
@@ -329,7 +344,7 @@ pub(crate) fn encapsulate<
         Hasher,
     >(
         public_key.as_slice(),
-        processed_randomness,
+        &processed_randomness,
         pseudorandomness,
         &mut ciphertext,
         &mut matrix_entry,
@@ -341,8 +356,12 @@ pub(crate) fn encapsulate<
     );
 
     let ciphertext = MlKemCiphertext::from(ciphertext);
-    let mut shared_secret_array = [0u8; 32];
-    Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(shared_secret, &ciphertext, &mut shared_secret_array);
+    let mut shared_secret_array = [0u8.classify(); 32];
+    Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(
+        shared_secret,
+        &ciphertext.value,
+        &mut shared_secret_array,
+    );
     (ciphertext, shared_secret_array)
 }
 
@@ -409,9 +428,9 @@ pub(crate) fn decapsulate<
         assert ($implicit_rejection_value == slice ${private_key}.f_value ($CPA_SECRET_KEY_SIZE +! $PUBLIC_KEY_SIZE +! Spec.MLKEM.v_H_DIGEST_SIZE)
             (length ${private_key}.f_value))"#
     );
-    let mut decrypted = [0u8; 32];
-    let mut scratch = PolynomialRingElement::<Vector>::ZERO();
-    let mut accumulator = [0i32; 256];
+    let mut decrypted = [0u8.classify(); 32];
+    let mut scratch = Vector::ZERO();
+    let mut accumulator = [0i32.classify(); 256];
 
     crate::ind_cpa::decrypt::<
         K,
@@ -428,16 +447,16 @@ pub(crate) fn decapsulate<
         &mut accumulator,
     );
 
-    let mut to_hash: [u8; SHARED_SECRET_SIZE + H_DIGEST_SIZE] = into_padded_array(&decrypted);
+    let mut to_hash: [U8; SHARED_SECRET_SIZE + H_DIGEST_SIZE] = into_padded_array(&decrypted);
     hax_lib::fstar!(r#"eq_intro (Seq.slice $to_hash 0 32) $decrypted"#);
-    to_hash[SHARED_SECRET_SIZE..].copy_from_slice(ind_cpa_public_key_hash);
+    to_hash[SHARED_SECRET_SIZE..].copy_from_slice(ind_cpa_public_key_hash.classify_ref());
 
     hax_lib::fstar!(
         r#"lemma_slice_append to_hash $decrypted $ind_cpa_public_key_hash;
         assert ($decrypted == Spec.MLKEM.ind_cpa_decrypt $K $ind_cpa_secret_key ${ciphertext}.f_value);
         assert ($to_hash == concat $decrypted $ind_cpa_public_key_hash)"#
     );
-    let mut hashed = [0u8; G_DIGEST_SIZE];
+    let mut hashed = [0u8.classify(); G_DIGEST_SIZE];
     Hasher::G(&to_hash, &mut hashed);
     let (shared_secret, pseudorandomness) = hashed.split_at(SHARED_SECRET_SIZE);
 
@@ -447,18 +466,18 @@ pub(crate) fn decapsulate<
         assert (length $implicit_rejection_value = Spec.MLKEM.v_SHARED_SECRET_SIZE);
         assert (Spec.MLKEM.v_SHARED_SECRET_SIZE <=. Spec.MLKEM.v_IMPLICIT_REJECTION_HASH_INPUT_SIZE $K)"#
     );
-    let mut to_hash: [u8; IMPLICIT_REJECTION_HASH_INPUT_SIZE] =
+    let mut to_hash: [U8; IMPLICIT_REJECTION_HASH_INPUT_SIZE] =
         into_padded_array(implicit_rejection_value);
     hax_lib::fstar!(r#"eq_intro (Seq.slice $to_hash 0 32) $implicit_rejection_value"#);
-    to_hash[SHARED_SECRET_SIZE..].copy_from_slice(ciphertext.as_ref());
+    // XXX: The more reasonable `ciphertext.as_slice().classify_ref()` does not go through Eurydice.
+    to_hash[SHARED_SECRET_SIZE..].copy_from_slice(ciphertext.value.classify().as_slice());
     hax_lib::fstar!(
         "assert_norm (pow2 32 == 0x100000000);
         assert (v (sz 32) < pow2 32);
-        assert (i4.f_PRF_pre (sz 32) $to_hash);
         lemma_slice_append $to_hash $implicit_rejection_value ${ciphertext}.f_value"
     );
-    let mut implicit_rejection_shared_secret = [0u8; SHARED_SECRET_SIZE];
-    Hasher::PRF::<32>(&to_hash, &mut implicit_rejection_shared_secret);
+    let mut implicit_rejection_shared_secret = [0u8.classify(); SHARED_SECRET_SIZE];
+    Hasher::PRF::<SHARED_SECRET_SIZE>(&to_hash, &mut implicit_rejection_shared_secret);
 
     hax_lib::fstar!(
         "assert ($implicit_rejection_shared_secret == Spec.Utils.v_PRF (sz 32) $to_hash);
@@ -493,7 +512,7 @@ pub(crate) fn decapsulate<
         Hasher,
     >(
         ind_cpa_public_key,
-        decrypted,
+        &decrypted,
         pseudorandomness,
         &mut expected_ciphertext,
         &mut matrix_entry,
@@ -504,19 +523,24 @@ pub(crate) fn decapsulate<
         &mut accumulator,
     );
 
-    let mut implicit_rejection_shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
+    let mut implicit_rejection_shared_secret_kdf = [0u8.classify(); SHARED_SECRET_SIZE];
     Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(
         &implicit_rejection_shared_secret,
-        ciphertext,
+        &ciphertext.value,
         &mut implicit_rejection_shared_secret_kdf,
     );
-    let mut shared_secret_kdf = [0u8; SHARED_SECRET_SIZE];
-    Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(shared_secret, ciphertext, &mut shared_secret_kdf);
+    let mut shared_secret_kdf = [0u8.classify(); SHARED_SECRET_SIZE];
+    Scheme::kdf::<K, CIPHERTEXT_SIZE, Hasher>(
+        shared_secret,
+        &ciphertext.value,
+        &mut shared_secret_kdf,
+    );
 
-    let mut shared_secret = [0u8; 32];
+    let mut shared_secret = [0u8.classify(); 32];
     compare_ciphertexts_select_shared_secret_in_constant_time(
-        ciphertext.as_ref(),
-        &expected_ciphertext,
+        // XXX: The more reasonable `ciphertext.as_slice().classify_ref()` does not go through Eurydice.
+        ciphertext.value.classify().as_slice(),
+        expected_ciphertext.classify().as_slice(),
         &shared_secret_kdf,
         &implicit_rejection_shared_secret_kdf,
         &mut shared_secret,

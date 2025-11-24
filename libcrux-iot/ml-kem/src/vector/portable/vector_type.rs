@@ -1,10 +1,11 @@
-use crate::vector::traits::FIELD_ELEMENTS_IN_VECTOR;
-
-use super::arithmetic::montgomery_reduce_element;
+use crate::vector::{
+    portable::arithmetic::montgomery_reduce_element, traits::FIELD_ELEMENTS_IN_VECTOR,
+};
+use libcrux_secrets::*;
 
 /// Values having this type hold a representative 'x' of the ML-KEM field.
 /// We use 'fe' as a shorthand for this type.
-pub(crate) type FieldElement = i16;
+pub(crate) type FieldElement = I16;
 
 #[derive(Clone, Copy)]
 pub struct PortableVector {
@@ -15,27 +16,30 @@ pub struct PortableVector {
 #[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == Seq.create 16 (mk_i16 0)"#))]
 pub fn zero() -> PortableVector {
     PortableVector {
-        elements: [0i16; FIELD_ELEMENTS_IN_VECTOR],
+        elements: [0i16; FIELD_ELEMENTS_IN_VECTOR].classify(),
     }
 }
 
 #[inline(always)]
-#[hax_lib::ensures(|result| fstar!(r#"${result} == ${x}.f_elements"#))]
-pub fn to_i16_array(x: PortableVector, out: &mut [i16; 16]) {
-    *out = x.elements;
+#[hax_lib::requires(fstar!(r#"Seq.length ${out} == 16"#))]
+#[hax_lib::ensures(|_| fstar!(r#"${out}_future == ${x}.f_elements"#))]
+pub fn to_i16_array(x: &PortableVector, out: &mut [i16]) {
+    debug_assert!(out.len() >= 16);
+
+    out[0..16].copy_from_slice(&x.elements.declassify());
 }
 
 #[inline(always)]
 #[hax_lib::requires(array.len() == 16)]
-#[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == $array"#))]
-pub fn from_i16_array(array: &[i16], out: &mut PortableVector) {
-    out.elements = array[0..16].try_into().unwrap();
+#[hax_lib::ensures(|_| fstar!(r#"${out}_future.f_elements == $array"#))]
+pub fn from_i16_array(array: &[I16], out: &mut PortableVector) {
+    out.elements.copy_from_slice(&array[0..16]);
 }
 
 #[inline(always)]
 #[hax_lib::requires(array.len() == 16)]
-#[hax_lib::ensures(|result| fstar!(r#"${result}.f_elements == $array"#))]
-pub fn reducing_from_i32_array(array: &[i32], out: &mut PortableVector) {
+#[hax_lib::ensures(|_| fstar!(r#"${out}_future.f_elements == $array"#))]
+pub fn reducing_from_i32_array(array: &[I32], out: &mut PortableVector) {
     for i in 0..16 {
         out.elements[i] = montgomery_reduce_element(array[i]);
     }
@@ -43,19 +47,22 @@ pub fn reducing_from_i32_array(array: &[i32], out: &mut PortableVector) {
 
 #[inline(always)]
 #[hax_lib::requires(array.len() >= 32)]
-pub(super) fn from_bytes(array: &[u8], out: &mut PortableVector) {
+pub(super) fn from_bytes(array: &[U8], out: &mut PortableVector) {
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
-        out.elements[i] = (array[2 * i] as i16) << 8 | array[2 * i + 1] as i16;
+        out.elements[i] = (array[2 * i].as_i16()) << 8 | array[2 * i + 1].as_i16();
     }
 }
 
 #[inline(always)]
 #[hax_lib::requires(bytes.len() >= 32)]
-pub(super) fn to_bytes(x: PortableVector, bytes: &mut [u8]) {
+#[hax_lib::ensures(|_| future(bytes).len() == bytes.len())]
+pub(super) fn to_bytes(x: PortableVector, bytes: &mut [U8]) {
+    #[cfg(hax)]
     let _bytes_len = bytes.len();
+
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
         hax_lib::loop_invariant!(|_i: usize| bytes.len() == _bytes_len);
-        bytes[2 * i] = (x.elements[i] >> 8) as u8;
-        bytes[2 * i + 1] = x.elements[i] as u8;
+        bytes[2 * i] = (x.elements[i] >> 8).as_u8();
+        bytes[2 * i + 1] = x.elements[i].as_u8();
     }
 }

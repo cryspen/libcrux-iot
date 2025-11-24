@@ -1,6 +1,7 @@
 //! ML-KEM 768
 
 use super::{constants::*, ind_cca::*, types::*, *};
+use libcrux_secrets::U8;
 
 const RANK: usize = 3;
 const RANK_SQUARED: usize = RANK * RANK;
@@ -83,7 +84,7 @@ macro_rules! instantiate {
 
             /// Generate ML-KEM 768 Key Pair
             pub fn generate_key_pair(
-                randomness: [u8; KEY_GENERATION_SEED_SIZE],
+                randomness: [U8; KEY_GENERATION_SEED_SIZE],
             ) -> MlKem768KeyPair {
                 p::generate_keypair::<
                     RANK,
@@ -94,14 +95,14 @@ macro_rules! instantiate {
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
-                >(randomness)
+                >(&randomness)
             }
 
             /// Generate Kyber 768 Key Pair
             #[cfg(feature = "kyber")]
             #[cfg_attr(docsrs, doc(cfg(feature = "kyber")))]
             pub fn kyber_generate_key_pair(
-                randomness: [u8; KEY_GENERATION_SEED_SIZE],
+                randomness: [U8; KEY_GENERATION_SEED_SIZE],
             ) -> MlKem768KeyPair {
                 p::kyber_generate_keypair::<
                     RANK,
@@ -112,7 +113,7 @@ macro_rules! instantiate {
                     ETA1,
                     ETA1_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
-                >(randomness)
+                >(&randomness)
             }
 
             /// Encapsulate ML-KEM 768
@@ -122,7 +123,7 @@ macro_rules! instantiate {
             /// bytes of `randomness`.
             pub fn encapsulate(
                 public_key: &MlKem768PublicKey,
-                randomness: [u8; SHARED_SECRET_SIZE],
+                randomness: [U8; SHARED_SECRET_SIZE],
             ) -> (MlKem768Ciphertext, MlKemSharedSecret) {
                 p::encapsulate::<
                     RANK,
@@ -141,7 +142,7 @@ macro_rules! instantiate {
                     ETA2_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
-                >(public_key, randomness)
+                >(public_key, &randomness)
             }
 
             /// Encapsulate Kyber 768
@@ -153,7 +154,7 @@ macro_rules! instantiate {
             #[cfg_attr(docsrs, doc(cfg(feature = "kyber")))]
             pub fn kyber_encapsulate(
                 public_key: &MlKem768PublicKey,
-                randomness: [u8; SHARED_SECRET_SIZE],
+                randomness: [U8; SHARED_SECRET_SIZE],
             ) -> (MlKem768Ciphertext, MlKemSharedSecret) {
                 p::kyber_encapsulate::<
                     RANK,
@@ -172,7 +173,7 @@ macro_rules! instantiate {
                     ETA2_RANDOMNESS_SIZE,
                     PRF_OUTPUT_SIZE1,
                     PRF_OUTPUT_SIZE2,
-                >(public_key, randomness)
+                >(public_key, &randomness)
             }
 
             /// Decapsulate ML-KEM 768
@@ -275,12 +276,7 @@ pub fn validate_private_key(
 ///
 /// This function returns an [`MlKem768KeyPair`].
 #[cfg(not(eurydice))]
-#[hax_lib::fstar::verification_status(panic_free)]
-#[hax_lib::ensures(|res|
-    fstar!(r#"let ((secret_key, public_key), valid) = Spec.MLKEM.Instances.mlkem768_generate_keypair $randomness in
-        valid ==> (${res}.f_sk.f_value == secret_key /\ ${res}.f_pk.f_value == public_key)"#)
-)]
-pub fn generate_key_pair(randomness: [u8; KEY_GENERATION_SEED_SIZE]) -> MlKem768KeyPair {
+pub fn generate_key_pair(randomness: [U8; KEY_GENERATION_SEED_SIZE]) -> MlKem768KeyPair {
     multiplexing::generate_keypair::<
         RANK,
         RANK_SQUARED,
@@ -290,7 +286,7 @@ pub fn generate_key_pair(randomness: [u8; KEY_GENERATION_SEED_SIZE]) -> MlKem768
         ETA1,
         ETA1_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
-    >(randomness)
+    >(&randomness)
 }
 
 /// Encapsulate ML-KEM 768
@@ -299,15 +295,9 @@ pub fn generate_key_pair(randomness: [u8; KEY_GENERATION_SEED_SIZE]) -> MlKem768
 /// The input is a reference to an [`MlKem768PublicKey`] and [`SHARED_SECRET_SIZE`]
 /// bytes of `randomness`.
 #[cfg(not(eurydice))]
-#[hax_lib::fstar::verification_status(panic_free)]
-#[hax_lib::ensures(|res|
-    fstar!(r#"let ((ciphertext, shared_secret), valid) = Spec.MLKEM.Instances.mlkem768_encapsulate ${public_key}.f_value $randomness in
-        let (res_ciphertext, res_shared_secret) = $res in
-        valid ==> (res_ciphertext.f_value == ciphertext /\ res_shared_secret == shared_secret)"#)
-)]
 pub fn encapsulate(
     public_key: &MlKem768PublicKey,
-    randomness: [u8; SHARED_SECRET_SIZE],
+    randomness: [U8; SHARED_SECRET_SIZE],
 ) -> (MlKem768Ciphertext, MlKemSharedSecret) {
     multiplexing::encapsulate::<
         RANK,
@@ -326,7 +316,7 @@ pub fn encapsulate(
         ETA2_RANDOMNESS_SIZE,
         PRF_OUTPUT_SIZE1,
         PRF_OUTPUT_SIZE2,
-    >(public_key, randomness)
+    >(public_key, &randomness)
 }
 
 /// Decapsulate ML-KEM 768
@@ -334,11 +324,6 @@ pub fn encapsulate(
 /// Generates an [`MlKemSharedSecret`].
 /// The input is a reference to an [`MlKem768PrivateKey`] and an [`MlKem768Ciphertext`].
 #[cfg(not(eurydice))]
-#[hax_lib::fstar::verification_status(panic_free)]
-#[hax_lib::ensures(|res|
-    fstar!(r#"let (shared_secret, valid) = Spec.MLKEM.Instances.mlkem768_decapsulate ${private_key}.f_value ${ciphertext}.f_value in
-        valid ==> $res == shared_secret"#)
-)]
 pub fn decapsulate(
     private_key: &MlKem768PrivateKey,
     ciphertext: &MlKem768Ciphertext,
@@ -380,6 +365,7 @@ pub mod rand {
         KEY_GENERATION_SEED_SIZE, SHARED_SECRET_SIZE,
     };
     use ::rand::CryptoRng;
+    use libcrux_secrets::{Classify as _, DeclassifyRefMut as _};
 
     /// Generate ML-KEM 768 Key Pair
     ///
@@ -388,8 +374,8 @@ pub mod rand {
     ///
     /// This function returns an [`MlKem768KeyPair`].
     pub fn generate_key_pair(rng: &mut impl CryptoRng) -> MlKem768KeyPair {
-        let mut randomness = [0u8; KEY_GENERATION_SEED_SIZE];
-        rng.fill_bytes(&mut randomness);
+        let mut randomness = [0u8.classify(); KEY_GENERATION_SEED_SIZE];
+        rng.fill_bytes(randomness.declassify_ref_mut());
 
         super::generate_key_pair(randomness)
     }
@@ -404,8 +390,8 @@ pub mod rand {
         public_key: &MlKem768PublicKey,
         rng: &mut impl CryptoRng,
     ) -> (MlKem768Ciphertext, MlKemSharedSecret) {
-        let mut randomness = [0u8; SHARED_SECRET_SIZE];
-        rng.fill_bytes(&mut randomness);
+        let mut randomness = [0u8.classify(); SHARED_SECRET_SIZE];
+        rng.fill_bytes(randomness.declassify_ref_mut());
 
         super::encapsulate(public_key, randomness)
     }
@@ -421,7 +407,7 @@ pub(crate) mod kyber {
     /// [`KEY_GENERATION_SEED_SIZE`].
     ///
     /// This function returns an [`MlKem768KeyPair`].
-    pub fn generate_key_pair(randomness: [u8; KEY_GENERATION_SEED_SIZE]) -> MlKem768KeyPair {
+    pub fn generate_key_pair(randomness: [U8; KEY_GENERATION_SEED_SIZE]) -> MlKem768KeyPair {
         multiplexing::kyber_generate_keypair::<
             RANK,
             RANK_SQUARED,
@@ -431,7 +417,7 @@ pub(crate) mod kyber {
             ETA1,
             ETA1_RANDOMNESS_SIZE,
             PRF_OUTPUT_SIZE1,
-        >(randomness)
+        >(&randomness)
     }
 
     /// Encapsulate Kyber 768
@@ -441,7 +427,7 @@ pub(crate) mod kyber {
     /// bytes of `randomness`.
     pub fn encapsulate(
         public_key: &MlKem768PublicKey,
-        randomness: [u8; SHARED_SECRET_SIZE],
+        randomness: [U8; SHARED_SECRET_SIZE],
     ) -> (MlKem768Ciphertext, MlKemSharedSecret) {
         multiplexing::kyber_encapsulate::<
             RANK,
@@ -460,7 +446,7 @@ pub(crate) mod kyber {
             ETA2_RANDOMNESS_SIZE,
             PRF_OUTPUT_SIZE1,
             PRF_OUTPUT_SIZE2,
-        >(public_key, randomness)
+        >(public_key, &randomness)
     }
 
     /// Decapsulate ML-KEM 768
@@ -497,6 +483,7 @@ pub(crate) mod kyber {
 
 #[cfg(test)]
 mod tests {
+    use libcrux_secrets::{Classify as _, DeclassifyRefMut as _};
     use rand::{rngs::OsRng, TryRngCore};
 
     use super::{
@@ -506,8 +493,10 @@ mod tests {
 
     #[test]
     fn pk_validation() {
-        let mut randomness = [0u8; KEY_GENERATION_SEED_SIZE];
-        OsRng.try_fill_bytes(&mut randomness).unwrap();
+        let mut randomness = [0u8.classify(); KEY_GENERATION_SEED_SIZE];
+        OsRng
+            .try_fill_bytes(randomness.declassify_ref_mut())
+            .unwrap();
 
         let key_pair = generate_key_pair(randomness);
         assert!(validate_public_key(&key_pair.pk));
