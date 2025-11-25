@@ -105,76 +105,15 @@ dep_args=("--include $extract_crate_ --start-from $extract_crate_")
 for dep in "${deps[@]}"; do
     dep_arg="--include $dep --start-from $dep"
     dep_args+=("$dep_arg")
-  # dep_crate="libcrux-iot-$dep"
-  # dep_crate_=$(sed s/-/_/g <<<$dep_crate)
-  # dep_llbc_path=$workspace_root/${dep_crate_}.llbc
-  # dep_llbcs+=("$dep_llbc_path")
 done
 
 for dep in "${libcrux_deps[@]}"; do
     dep_arg="--include $dep --start-from $dep"
     dep_args+=("$dep_arg")
-  # dep_crate="libcrux-iot-$dep"
-  # dep_crate_=$(sed s/-/_/g <<<$dep_crate)
-  # dep_llbc_path=$workspace_root/${dep_crate_}.llbc
-  # dep_llbcs+=("$dep_llbc_path")
 done
-# for dep in "${libcrux_deps[@]}"; do
-#   dep_crate="libcrux-$dep"
-#   dep_crate_=$(sed s/-/_/g <<<$dep_crate)
-#   dep_llbc_path=$workspace_root/${dep_crate_}.llbc
-#   dep_llbcs+=("$dep_llbc_path")
-# done
 
 if [[ "$no_charon" = 0 ]]; then
   rm -rf "${dep_llbcs[@]}"
-
-  # for dep in ${libcrux_deps[@]}; do
-  #     dep_crate="libcrux-$dep"
-  #     dep_src=$(cargo metadata --format-version=1 --manifest-path=$pkg_root/Cargo.toml | jq -r ".packages[] | select(.name==\"$dep_crate\") | .targets[].src_path")
-  #     dep_src_root=$(dirname $(dirname $dep_src))
-  #     dep_crate_=$(sed s/-/_/g <<<$dep_crate)
-  #   # dep_pkg_root="$libcrux_workspace_root/$dep"
-  #   dep_llbc_path=$workspace_root/${dep_crate_}.llbc
-
-  #   # Because of a Charon bug we have to clean the dep crate.
-  #   (cd $dep_src_root ; cargo clean -p $dep_crate)
-  #   echo "Running charon (libcrux - $dep) ..."
-  #   ( cd $dep_src_root &&
-  #     RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon cargo \
-  #       --remove-associated-types '*' \
-  #       --rustc-arg=-Cdebug-assertions=no \
-  #       --dest-file=$dep_llbc_path)
-  #   if ! [[ -f $dep_llbc_path ]]; then
-  #       echo "😱😱😱 You are the victim of this bug: https://hacspec.zulipchat.com/#narrow/stream/433829-Circus/topic/charon.20declines.20to.20generate.20an.20llbc.20file"
-  #       echo "Suggestion: rm -rf $workspace_root/target or cargo clean"
-  #       echo "failed for libcrux dependency $dep: file $dep_llbc_path does not exist"
-  #       file $dep_llbc_path
-  #       exit 1
-  #   fi
-  # done
-
-  # for dep in ${deps[@]}; do
-  #   dep_crate="libcrux-iot-$dep"
-  #   dep_crate_=$(sed s/-/_/g <<<$dep_crate)
-  #   dep_pkg_root="$workspace_root/$dep"
-  #   dep_llbc_path=$workspace_root/${dep_crate_}.llbc
-
-  #   # Because of a Charon bug we have to clean the dep crate.
-  #   (cd $workspace_root ; cargo clean -p $dep_crate)
-  #   echo "Running charon ($dep) ..."
-  #   ( cd $dep_pkg_root &&
-  #     RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon cargo \
-  #       --remove-associated-types '*' \
-  #       --rustc-arg=-Cdebug-assertions=no )
-  #   if ! [[ -f $dep_llbc_path ]]; then
-  #       echo "😱😱😱 You are the victim of this bug: https://hacspec.zulipchat.com/#narrow/stream/433829-Circus/topic/charon.20declines.20to.20generate.20an.20llbc.20file"
-  #       echo "Suggestion: rm -rf $workspace_root/target or cargo clean"
-  #       echo "failed for dependency $dep: file $dep_llbc_path does not exist"
-  #       file $dep_llbc_path
-  #       exit 1
-  #   fi
-  # done
 
   echo "Running charon ($extract) ..."
     ( cd $pkg_root &&
