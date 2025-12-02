@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * Charon: 637a6bc8a4c2a79875af5aa4e413c7ef3aa7f391
+ * Eurydice: 5ca42bdb4309a18e332321ca9ae66607824428eb
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
  * F*: unset
- * Libcrux: aa80212cfced7e9670ad3009b45254c3160a4ed5
+ * Libcrux: b9e3a3518649180d169e38504bad3739d37bd429
  */
 
 #include "internal/libcrux_iot_core.h"
@@ -472,7 +472,7 @@ A monomorphic instance of core.result.unwrap_26
 with types Eurydice_arr uint8_t[[$4size_t]], core_array_TryFromSliceError
 
 */
-Eurydice_array_u8x4 core_result_unwrap_26_84(core_result_Result_44 self) {
+Eurydice_array_u8x4 core_result_unwrap_26_84(core_result_Result_c7 self) {
   if (self.tag == core_result_Ok) {
     return self.val.case_Ok;
   } else {

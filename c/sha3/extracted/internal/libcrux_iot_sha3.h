@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * Charon: 637a6bc8a4c2a79875af5aa4e413c7ef3aa7f391
+ * Eurydice: 5ca42bdb4309a18e332321ca9ae66607824428eb
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
  * F*: unset
- * Libcrux: aa80212cfced7e9670ad3009b45254c3160a4ed5
+ * Libcrux: b9e3a3518649180d169e38504bad3739d37bd429
  */
 
 #ifndef internal_libcrux_iot_sha3_H
 #define internal_libcrux_iot_sha3_H
-
-#include "eurydice_glue.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -22,6 +20,13 @@ extern "C" {
 
 #include "../libcrux_iot_sha3.h"
 #include "internal/libcrux_iot_core.h"
+
+#define libcrux_iot_sha3_Algorithm_Sha224 1
+#define libcrux_iot_sha3_Algorithm_Sha256 2
+#define libcrux_iot_sha3_Algorithm_Sha384 3
+#define libcrux_iot_sha3_Algorithm_Sha512 4
+
+typedef uint8_t Algorithm;
 
 #define SHA3_224_DIGEST_SIZE ((size_t)28U)
 
@@ -31,29 +36,12 @@ extern "C" {
 
 #define SHA3_512_DIGEST_SIZE ((size_t)64U)
 
-#define libcrux_iot_sha3_Algorithm_Sha224 1
-#define libcrux_iot_sha3_Algorithm_Sha256 2
-#define libcrux_iot_sha3_Algorithm_Sha384 3
-#define libcrux_iot_sha3_Algorithm_Sha512 4
-
-typedef uint8_t Algorithm;
-
 /**
  Returns the output size of a digest.
 */
 size_t digest_size(Algorithm mode);
 
 typedef Eurydice_arr_b2 libcrux_iot_sha3_lane_Lane2U32;
-
-/**
-This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
-*/
-Eurydice_arr_b2 libcrux_iot_sha3_lane_from_ints_8d(Eurydice_arr_b2 value);
-
-/**
-This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
-*/
-Eurydice_arr_b2 libcrux_iot_sha3_lane_zero_8d(void);
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -81,6 +69,16 @@ typedef struct libcrux_iot_sha3_state_KeccakState_s {
   Eurydice_arr_6c d;
   size_t i;
 } libcrux_iot_sha3_state_KeccakState;
+
+/**
+This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
+*/
+Eurydice_arr_b2 libcrux_iot_sha3_lane_from_ints_8d(Eurydice_arr_b2 value);
+
+/**
+This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
+*/
+Eurydice_arr_b2 libcrux_iot_sha3_lane_zero_8d(void);
 
 /**
 This function found in impl {libcrux_iot_sha3::state::KeccakState}
@@ -363,7 +361,7 @@ A monomorphic instance of libcrux_iot_sha3.lane.split_at_mut_1
 with types uint8_t
 
 */
-Eurydice_dst_ref_mut_uint8_t_size_t_x2 libcrux_iot_sha3_lane_split_at_mut_1_90(
+Eurydice_mut_borrow_slice_u8_x2 libcrux_iot_sha3_lane_split_at_mut_1_90(
     Eurydice_mut_borrow_slice_u8 out, size_t mid);
 
 /**
@@ -374,9 +372,8 @@ A monomorphic instance of libcrux_iot_sha3.lane.split_at_mut_n_8d
 with types uint8_t
 
 */
-Eurydice_dst_ref_mut_uint8_t_size_t_x2
-libcrux_iot_sha3_lane_split_at_mut_n_8d_90(Eurydice_mut_borrow_slice_u8 a,
-                                           size_t mid);
+Eurydice_mut_borrow_slice_u8_x2 libcrux_iot_sha3_lane_split_at_mut_n_8d_90(
+    Eurydice_mut_borrow_slice_u8 a, size_t mid);
 
 /**
 This function found in impl {libcrux_iot_sha3::state::KeccakState}
@@ -1105,6 +1102,9 @@ libcrux_iot_sha3::lane::Lane2U32}
 */
 Eurydice_arr_b2 libcrux_iot_sha3_lane_clone_f6(const Eurydice_arr_b2 *self);
 
+typedef libcrux_iot_sha3_state_KeccakState
+    libcrux_iot_sha3_portable_KeccakState;
+
 /**
  A portable SHAKE128 implementation.
 */
@@ -1117,8 +1117,35 @@ void libcrux_iot_sha3_portable_shake128(Eurydice_mut_borrow_slice_u8 digest,
 void libcrux_iot_sha3_portable_shake256(Eurydice_mut_borrow_slice_u8 digest,
                                         Eurydice_borrow_slice_u8 data);
 
-typedef libcrux_iot_sha3_state_KeccakState
-    libcrux_iot_sha3_portable_KeccakState;
+/**
+A monomorphic instance of libcrux_iot_sha3.keccak.KeccakXofState
+with const generics
+- $168size_t
+*/
+typedef struct libcrux_iot_sha3_keccak_KeccakXofState_49_s {
+  libcrux_iot_sha3_state_KeccakState inner;
+  Eurydice_arr_27 buf;
+  size_t buf_len;
+  bool sponge;
+} libcrux_iot_sha3_keccak_KeccakXofState_49;
+
+typedef libcrux_iot_sha3_keccak_KeccakXofState_49
+    libcrux_iot_sha3_portable_incremental_Shake128Xof;
+
+/**
+A monomorphic instance of libcrux_iot_sha3.keccak.KeccakXofState
+with const generics
+- $136size_t
+*/
+typedef struct libcrux_iot_sha3_keccak_KeccakXofState_c7_s {
+  libcrux_iot_sha3_state_KeccakState inner;
+  Eurydice_arr_3d buf;
+  size_t buf_len;
+  bool sponge;
+} libcrux_iot_sha3_keccak_KeccakXofState_c7;
+
+typedef libcrux_iot_sha3_keccak_KeccakXofState_c7
+    libcrux_iot_sha3_portable_incremental_Shake256Xof;
 
 /**
  Perform four rounds of the keccak permutation functions
@@ -1195,21 +1222,6 @@ void libcrux_iot_sha3_portable_incremental_shake256_squeeze_first_block(
 */
 void libcrux_iot_sha3_portable_incremental_shake256_squeeze_next_block(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out);
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.KeccakXofState
-with const generics
-- $136size_t
-*/
-typedef struct libcrux_iot_sha3_keccak_KeccakXofState_c7_s {
-  libcrux_iot_sha3_state_KeccakState inner;
-  Eurydice_arr_3d buf;
-  size_t buf_len;
-  bool sponge;
-} libcrux_iot_sha3_keccak_KeccakXofState_c7;
-
-typedef libcrux_iot_sha3_keccak_KeccakXofState_c7
-    libcrux_iot_sha3_portable_incremental_Shake256Xof;
 
 /**
  Consume the internal buffer and the required amount of the input to pad to
@@ -1389,21 +1401,6 @@ libcrux_iot_sha3::portable::incremental::Shake256Xof}
 void libcrux_iot_sha3_portable_incremental_squeeze_a5(
     libcrux_iot_sha3_keccak_KeccakXofState_c7 *self,
     Eurydice_mut_borrow_slice_u8 out);
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.KeccakXofState
-with const generics
-- $168size_t
-*/
-typedef struct libcrux_iot_sha3_keccak_KeccakXofState_49_s {
-  libcrux_iot_sha3_state_KeccakState inner;
-  Eurydice_arr_27 buf;
-  size_t buf_len;
-  bool sponge;
-} libcrux_iot_sha3_keccak_KeccakXofState_49;
-
-typedef libcrux_iot_sha3_keccak_KeccakXofState_49
-    libcrux_iot_sha3_portable_incremental_Shake128Xof;
 
 /**
  Consume the internal buffer and the required amount of the input to pad to

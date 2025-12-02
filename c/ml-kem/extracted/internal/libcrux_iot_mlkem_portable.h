@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
+ * Charon: 637a6bc8a4c2a79875af5aa4e413c7ef3aa7f391
+ * Eurydice: 5ca42bdb4309a18e332321ca9ae66607824428eb
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
+ * F*: unset
+ * Libcrux: 1bf38a701c22669699956643df22dd9ff22c0456
  */
 
 #ifndef internal_libcrux_iot_mlkem_portable_H
 #define internal_libcrux_iot_mlkem_portable_H
-
-#include "eurydice_glue.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -22,38 +20,6 @@ extern "C" {
 
 #include "../libcrux_iot_mlkem_portable.h"
 #include "libcrux_iot_core.h"
-
-/**
-A monomorphic instance of Eurydice.arr
-with types libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector
-with const generics
-- $16size_t
-*/
-typedef struct Eurydice_arr_3d0_s {
-  Eurydice_arr_e2 data[16U];
-} Eurydice_arr_3d0;
-
-/**
-A monomorphic instance of Eurydice.dst_ref_mut
-with types libcrux_iot_ml_kem_polynomial_PolynomialRingElement
-libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector, size_t
-
-*/
-typedef struct Eurydice_dst_ref_mut_64_s {
-  Eurydice_arr_3d0 *ptr;
-  size_t meta;
-} Eurydice_dst_ref_mut_64;
-
-/**
-A monomorphic instance of Eurydice.dst_ref_shared
-with types libcrux_iot_ml_kem_polynomial_PolynomialRingElement
-libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector, size_t
-
-*/
-typedef struct Eurydice_dst_ref_shared_64_s {
-  const Eurydice_arr_3d0 *ptr;
-  size_t meta;
-} Eurydice_dst_ref_shared_64;
 
 /**
  Validate an ML-KEM public key.
@@ -153,7 +119,7 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - PRF_OUTPUT_SIZE1= 512
 - PRF_OUTPUT_SIZE2= 512
 */
-tuple_32 libcrux_iot_ml_kem_ind_cca_encapsulate_351(
+tuple_62 libcrux_iot_ml_kem_ind_cca_encapsulate_351(
     const Eurydice_arr_00 *public_key, const Eurydice_arr_600 *randomness);
 
 /**
@@ -285,7 +251,7 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - PRF_OUTPUT_SIZE1= 384
 - PRF_OUTPUT_SIZE2= 384
 */
-tuple_50 libcrux_iot_ml_kem_ind_cca_encapsulate_350(
+tuple_e9 libcrux_iot_ml_kem_ind_cca_encapsulate_350(
     const Eurydice_arr_74 *public_key, const Eurydice_arr_600 *randomness);
 
 /**

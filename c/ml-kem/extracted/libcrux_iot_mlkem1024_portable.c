@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
+ * Charon: 637a6bc8a4c2a79875af5aa4e413c7ef3aa7f391
+ * Eurydice: 5ca42bdb4309a18e332321ca9ae66607824428eb
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
+ * F*: unset
+ * Libcrux: 1bf38a701c22669699956643df22dd9ff22c0456
  */
 
 #include "libcrux_iot_mlkem1024_portable.h"
@@ -81,7 +81,7 @@ generics
 - PRF_OUTPUT_SIZE1= 512
 - PRF_OUTPUT_SIZE2= 512
 */
-static tuple_32 encapsulate_e0(const Eurydice_arr_00 *public_key,
+static tuple_62 encapsulate_e0(const Eurydice_arr_00 *public_key,
                                const Eurydice_arr_600 *randomness) {
   return libcrux_iot_ml_kem_ind_cca_encapsulate_351(public_key, randomness);
 }
@@ -93,7 +93,7 @@ static tuple_32 encapsulate_e0(const Eurydice_arr_00 *public_key,
  The input is a reference to an [`MlKem1024PublicKey`] and
  [`SHARED_SECRET_SIZE`] bytes of `randomness`.
 */
-tuple_32 libcrux_iot_ml_kem_mlkem1024_portable_encapsulate(
+tuple_62 libcrux_iot_ml_kem_mlkem1024_portable_encapsulate(
     const Eurydice_arr_00 *public_key, Eurydice_arr_600 randomness) {
   return encapsulate_e0(public_key, &randomness);
 }

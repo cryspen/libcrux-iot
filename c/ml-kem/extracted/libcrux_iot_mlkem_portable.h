@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
+ * Charon: 637a6bc8a4c2a79875af5aa4e413c7ef3aa7f391
+ * Eurydice: 5ca42bdb4309a18e332321ca9ae66607824428eb
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
+ * F*: unset
+ * Libcrux: 1bf38a701c22669699956643df22dd9ff22c0456
  */
 
 #ifndef libcrux_iot_mlkem_portable_H
 #define libcrux_iot_mlkem_portable_H
-
-#include "eurydice_glue.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -30,18 +28,20 @@ void libcrux_iot_ml_kem_hash_functions_portable_H(
     Eurydice_borrow_slice_u8 input, Eurydice_mut_borrow_slice_u8 output);
 
 void libcrux_iot_ml_kem_hash_functions_portable_PRFxN(
-    Eurydice_dst_ref_shared_d2 input, Eurydice_mut_borrow_slice_u8 outputs,
+    Eurydice_dst_ref_shared_de input, Eurydice_mut_borrow_slice_u8 outputs,
     size_t out_len);
+
+typedef Eurydice_arr_5e libcrux_iot_ml_kem_hash_functions_portable_PortableHash;
 
 Eurydice_arr_5e
 libcrux_iot_ml_kem_hash_functions_portable_shake128_init_absorb_final(
-    Eurydice_dst_ref_shared_60 input);
+    Eurydice_dst_ref_shared_cc input);
 
 void libcrux_iot_ml_kem_hash_functions_portable_shake128_squeeze_first_three_blocks(
-    Eurydice_arr_5e *st, Eurydice_dst_ref_mut_ea outputs);
+    Eurydice_arr_5e *st, Eurydice_dst_ref_mut_1a outputs);
 
 void libcrux_iot_ml_kem_hash_functions_portable_shake128_squeeze_next_block(
-    Eurydice_arr_5e *st, Eurydice_dst_ref_mut_36 outputs);
+    Eurydice_arr_5e *st, Eurydice_dst_ref_mut_a1 outputs);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::hash_functions::Hash for
@@ -62,7 +62,7 @@ This function found in impl {libcrux_iot_ml_kem::hash_functions::Hash for
 libcrux_iot_ml_kem::hash_functions::portable::PortableHash}
 */
 void libcrux_iot_ml_kem_hash_functions_portable_PRFxN_07(
-    Eurydice_dst_ref_shared_d2 input, Eurydice_mut_borrow_slice_u8 outputs,
+    Eurydice_dst_ref_shared_de input, Eurydice_mut_borrow_slice_u8 outputs,
     size_t out_len);
 
 /**
@@ -71,21 +71,21 @@ libcrux_iot_ml_kem::hash_functions::portable::PortableHash}
 */
 Eurydice_arr_5e
 libcrux_iot_ml_kem_hash_functions_portable_shake128_init_absorb_final_07(
-    Eurydice_dst_ref_shared_60 input);
+    Eurydice_dst_ref_shared_cc input);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::hash_functions::Hash for
 libcrux_iot_ml_kem::hash_functions::portable::PortableHash}
 */
 void libcrux_iot_ml_kem_hash_functions_portable_shake128_squeeze_first_three_blocks_07(
-    Eurydice_arr_5e *self, Eurydice_dst_ref_mut_ea output);
+    Eurydice_arr_5e *self, Eurydice_dst_ref_mut_1a output);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::hash_functions::Hash for
 libcrux_iot_ml_kem::hash_functions::portable::PortableHash}
 */
 void libcrux_iot_ml_kem_hash_functions_portable_shake128_squeeze_next_block_07(
-    Eurydice_arr_5e *self, Eurydice_dst_ref_mut_36 output);
+    Eurydice_arr_5e *self, Eurydice_dst_ref_mut_a1 output);
 
 #define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_FIELD_ELEMENTS_IN_VECTOR ((size_t)16U)
 
@@ -93,6 +93,9 @@ void libcrux_iot_ml_kem_hash_functions_portable_shake128_squeeze_next_block_07(
 
 #define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS \
   ((int16_t)1353)
+
+typedef Eurydice_arr_e2
+    libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector;
 
 Eurydice_arr_e2 libcrux_iot_ml_kem_vector_portable_vector_type_zero(void);
 
@@ -735,6 +738,14 @@ libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 size_t libcrux_iot_ml_kem_vector_portable_rej_sample_4e(
     Eurydice_borrow_slice_u8 a, Eurydice_mut_borrow_slice_i16 out);
+
+typedef int16_t
+    libcrux_iot_ml_kem_vector_portable_arithmetic_FieldElementTimesMontgomeryR;
+
+typedef int16_t
+    libcrux_iot_ml_kem_vector_portable_arithmetic_MontgomeryFieldElement;
+
+typedef int16_t libcrux_iot_ml_kem_vector_portable_vector_type_FieldElement;
 
 /**
 This function found in impl {core::clone::Clone for

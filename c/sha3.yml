@@ -7,6 +7,11 @@ files:
     private:
       monomorphizations_exact:
         - [Eurydice, arr_b2]
+    include_in_h:
+        - '"eurydice-include/eurydice/base.h"'
+        - '"eurydice-include/eurydice/core.h"'
+        - '"eurydice-include/eurydice/slice.h"'
+        - '"internal/custom_glue.h"'
 
   # Portable SHA3
   - name: libcrux_iot_sha3

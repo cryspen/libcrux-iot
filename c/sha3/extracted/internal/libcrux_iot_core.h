@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * Charon: 637a6bc8a4c2a79875af5aa4e413c7ef3aa7f391
+ * Eurydice: 5ca42bdb4309a18e332321ca9ae66607824428eb
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
  * F*: unset
- * Libcrux: aa80212cfced7e9670ad3009b45254c3160a4ed5
+ * Libcrux: b9e3a3518649180d169e38504bad3739d37bd429
  */
 
 #ifndef internal_libcrux_iot_core_H
 #define internal_libcrux_iot_core_H
-
-#include "eurydice_glue.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -287,10 +285,10 @@ with types uint8_t
 Eurydice_borrow_slice_u8 libcrux_secrets_int_classify_public_classify_ref_9b_90(
     Eurydice_borrow_slice_u8 self);
 
-typedef struct Eurydice_dst_ref_mut_uint8_t_size_t_x2_s {
+typedef struct Eurydice_mut_borrow_slice_u8_x2_s {
   Eurydice_mut_borrow_slice_u8 fst;
   Eurydice_mut_borrow_slice_u8 snd;
-} Eurydice_dst_ref_mut_uint8_t_size_t_x2;
+} Eurydice_mut_borrow_slice_u8_x2;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -376,20 +374,20 @@ Eurydice_borrow_slice_u8 Eurydice_slice_subslice_shared_7e(
 #define core_result_Ok 0
 #define core_result_Err 1
 
-typedef uint8_t core_result_Result_44_tags;
+typedef uint8_t core_result_Result_c7_tags;
 
 /**
 A monomorphic instance of core.result.Result
-with types Eurydice_arr uint8_t[[$4size_t]], core_array_TryFromSliceError
+with types Eurydice_array_u8x4, core_array_TryFromSliceError
 
 */
-typedef struct core_result_Result_44_s {
-  core_result_Result_44_tags tag;
+typedef struct core_result_Result_c7_s {
+  core_result_Result_c7_tags tag;
   union {
     Eurydice_array_u8x4 case_Ok;
     core_array_TryFromSliceError case_Err;
   } val;
-} core_result_Result_44;
+} core_result_Result_c7;
 
 /**
 This function found in impl {core::result::Result<T, E>[TraitClause@0,
@@ -400,7 +398,7 @@ A monomorphic instance of core.result.unwrap_26
 with types Eurydice_arr uint8_t[[$4size_t]], core_array_TryFromSliceError
 
 */
-Eurydice_array_u8x4 core_result_unwrap_26_84(core_result_Result_44 self);
+Eurydice_array_u8x4 core_result_unwrap_26_84(core_result_Result_c7 self);
 
 /**
 A monomorphic instance of Eurydice.arr

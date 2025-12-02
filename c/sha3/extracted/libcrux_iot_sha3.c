@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * Charon: 637a6bc8a4c2a79875af5aa4e413c7ef3aa7f391
+ * Eurydice: 5ca42bdb4309a18e332321ca9ae66607824428eb
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
  * F*: unset
- * Libcrux: aa80212cfced7e9670ad3009b45254c3160a4ed5
+ * Libcrux: b9e3a3518649180d169e38504bad3739d37bd429
  */
 
 #include "internal/libcrux_iot_sha3.h"
@@ -2600,7 +2600,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_2c(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -2611,7 +2611,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_2c(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -2782,18 +2782,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_2c(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_2c(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -2801,11 +2794,11 @@ A monomorphic instance of libcrux_iot_sha3.lane.split_at_mut_1
 with types uint8_t
 
 */
-KRML_MUSTINLINE Eurydice_dst_ref_mut_uint8_t_size_t_x2
+KRML_MUSTINLINE Eurydice_mut_borrow_slice_u8_x2
 libcrux_iot_sha3_lane_split_at_mut_1_90(Eurydice_mut_borrow_slice_u8 out,
                                         size_t mid) {
   return Eurydice_slice_split_at_mut(out, mid, uint8_t,
-                                     Eurydice_dst_ref_mut_uint8_t_size_t_x2);
+                                     Eurydice_mut_borrow_slice_u8_x2);
 }
 
 /**
@@ -2816,7 +2809,7 @@ A monomorphic instance of libcrux_iot_sha3.lane.split_at_mut_n_8d
 with types uint8_t
 
 */
-KRML_MUSTINLINE Eurydice_dst_ref_mut_uint8_t_size_t_x2
+KRML_MUSTINLINE Eurydice_mut_borrow_slice_u8_x2
 libcrux_iot_sha3_lane_split_at_mut_n_8d_90(Eurydice_mut_borrow_slice_u8 a,
                                            size_t mid) {
   return libcrux_iot_sha3_lane_split_at_mut_1_90(a, mid);
@@ -2869,18 +2862,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_2c(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_2c(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -2891,11 +2877,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_1e(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)144U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)144U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)144U;
+  size_t rem = data.meta % (size_t)144U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)144U;
   size_t last = outlen - outlen % (size_t)144U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -2903,23 +2887,20 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_1e(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_2c(&s, data, i0 * (size_t)144U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_1e(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_1e(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_2c(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
+    Eurydice_mut_borrow_slice_u8_x2 uu____0 =
         libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)144U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
+    Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
+    Eurydice_mut_borrow_slice_u8 o1 = uu____0.snd;
     libcrux_iot_sha3_keccak_squeeze_first_block_2c(&s, o0);
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
+      Eurydice_mut_borrow_slice_u8_x2 uu____1 =
           libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)144U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
+      Eurydice_mut_borrow_slice_u8 o = uu____1.fst;
+      Eurydice_mut_borrow_slice_u8 orest = uu____1.snd;
       libcrux_iot_sha3_keccak_squeeze_next_block_2c(&s, o);
       o1 = orest;
     }
@@ -2975,7 +2956,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_5b(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -2986,7 +2967,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_5b(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -3157,18 +3138,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_5b(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -3218,18 +3192,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_5b(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_5b(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -3240,11 +3207,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)136U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)136U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)136U;
+  size_t rem = data.meta % (size_t)136U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)136U;
   size_t last = outlen - outlen % (size_t)136U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -3252,23 +3217,20 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_5b(&s, data, i0 * (size_t)136U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_ad(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_ad(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
+    Eurydice_mut_borrow_slice_u8_x2 uu____0 =
         libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)136U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
+    Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
+    Eurydice_mut_borrow_slice_u8 o1 = uu____0.snd;
     libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s, o0);
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
+      Eurydice_mut_borrow_slice_u8_x2 uu____1 =
           libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)136U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
+      Eurydice_mut_borrow_slice_u8 o = uu____1.fst;
+      Eurydice_mut_borrow_slice_u8 orest = uu____1.snd;
       libcrux_iot_sha3_keccak_squeeze_next_block_5b(&s, o);
       o1 = orest;
     }
@@ -3324,7 +3286,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_7a(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -3335,7 +3297,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_7a(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -3506,18 +3468,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_7a(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_7a(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -3567,18 +3522,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_7a(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_7a(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -3589,11 +3537,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_7c(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)104U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)104U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)104U;
+  size_t rem = data.meta % (size_t)104U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)104U;
   size_t last = outlen - outlen % (size_t)104U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -3601,23 +3547,20 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_7c(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_7a(&s, data, i0 * (size_t)104U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_7c(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_7c(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_7a(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
+    Eurydice_mut_borrow_slice_u8_x2 uu____0 =
         libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)104U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
+    Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
+    Eurydice_mut_borrow_slice_u8 o1 = uu____0.snd;
     libcrux_iot_sha3_keccak_squeeze_first_block_7a(&s, o0);
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
+      Eurydice_mut_borrow_slice_u8_x2 uu____1 =
           libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)104U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
+      Eurydice_mut_borrow_slice_u8 o = uu____1.fst;
+      Eurydice_mut_borrow_slice_u8 orest = uu____1.snd;
       libcrux_iot_sha3_keccak_squeeze_next_block_7a(&s, o);
       o1 = orest;
     }
@@ -3673,7 +3616,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_f8(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -3684,7 +3627,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_f8(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -3855,18 +3798,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_f8(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_f8(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -3916,18 +3852,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_f8(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_f8(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -3938,11 +3867,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_96(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)72U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)72U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)72U;
+  size_t rem = data.meta % (size_t)72U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)72U;
   size_t last = outlen - outlen % (size_t)72U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -3950,23 +3877,20 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_96(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_f8(&s, data, i0 * (size_t)72U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_96(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_96(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_f8(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
+    Eurydice_mut_borrow_slice_u8_x2 uu____0 =
         libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)72U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
+    Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
+    Eurydice_mut_borrow_slice_u8 o1 = uu____0.snd;
     libcrux_iot_sha3_keccak_squeeze_first_block_f8(&s, o0);
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
+      Eurydice_mut_borrow_slice_u8_x2 uu____1 =
           libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)72U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
+      Eurydice_mut_borrow_slice_u8 o = uu____1.fst;
+      Eurydice_mut_borrow_slice_u8 orest = uu____1.snd;
       libcrux_iot_sha3_keccak_squeeze_next_block_f8(&s, o);
       o1 = orest;
     }
@@ -4097,7 +4021,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_3a(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -4108,7 +4032,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_3a(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -4279,18 +4203,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_3a(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_3a(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -4340,18 +4257,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_3a(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_3a(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -4362,11 +4272,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_c6(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)168U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)168U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)168U;
+  size_t rem = data.meta % (size_t)168U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)168U;
   size_t last = outlen - outlen % (size_t)168U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -4374,23 +4282,20 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_c6(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_3a(&s, data, i0 * (size_t)168U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_c6(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_c6(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_3a(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
+    Eurydice_mut_borrow_slice_u8_x2 uu____0 =
         libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)168U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
+    Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
+    Eurydice_mut_borrow_slice_u8 o1 = uu____0.snd;
     libcrux_iot_sha3_keccak_squeeze_first_block_3a(&s, o0);
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
+      Eurydice_mut_borrow_slice_u8_x2 uu____1 =
           libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)168U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
+      Eurydice_mut_borrow_slice_u8 o = uu____1.fst;
+      Eurydice_mut_borrow_slice_u8 orest = uu____1.snd;
       libcrux_iot_sha3_keccak_squeeze_next_block_3a(&s, o);
       o1 = orest;
     }
@@ -4457,11 +4362,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad0(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)136U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)136U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)136U;
+  size_t rem = data.meta % (size_t)136U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)136U;
   size_t last = outlen - outlen % (size_t)136U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -4469,23 +4372,20 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad0(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_5b(&s, data, i0 * (size_t)136U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_ad0(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_ad0(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
+    Eurydice_mut_borrow_slice_u8_x2 uu____0 =
         libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)136U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
+    Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
+    Eurydice_mut_borrow_slice_u8 o1 = uu____0.snd;
     libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s, o0);
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
+      Eurydice_mut_borrow_slice_u8_x2 uu____1 =
           libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)136U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
+      Eurydice_mut_borrow_slice_u8 o = uu____1.fst;
+      Eurydice_mut_borrow_slice_u8 orest = uu____1.snd;
       libcrux_iot_sha3_keccak_squeeze_next_block_5b(&s, o);
       o1 = orest;
     }
@@ -4555,11 +4455,9 @@ void libcrux_iot_sha3_portable_incremental_keccakf1660_4rounds(
 */
 void libcrux_iot_sha3_portable_incremental_shake128_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 data0) {
-  libcrux_iot_sha3_state_KeccakState *uu____0 = s;
-  Eurydice_borrow_slice_u8 uu____1 =
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data0);
-  libcrux_iot_sha3_keccak_absorb_final_c6(uu____0, uu____1, (size_t)0U,
-                                          Eurydice_slice_len(data0, uint8_t));
+  libcrux_iot_sha3_keccak_absorb_final_c6(
+      s, libcrux_secrets_int_classify_public_classify_ref_9b_90(data0),
+      (size_t)0U, data0.meta);
 }
 
 /**
@@ -4577,22 +4475,22 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_five_blocks_3a(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____0 =
+  Eurydice_mut_borrow_slice_u8_x2 uu____0 =
       libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)168U);
   Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
   Eurydice_mut_borrow_slice_u8 o10 = uu____0.snd;
   libcrux_iot_sha3_keccak_squeeze_first_block_3a(s, o0);
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____1 =
+  Eurydice_mut_borrow_slice_u8_x2 uu____1 =
       libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o10, (size_t)168U);
   Eurydice_mut_borrow_slice_u8 o1 = uu____1.fst;
   Eurydice_mut_borrow_slice_u8 o20 = uu____1.snd;
   libcrux_iot_sha3_keccak_squeeze_next_block_3a(s, o1);
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
+  Eurydice_mut_borrow_slice_u8_x2 uu____2 =
       libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o20, (size_t)168U);
   Eurydice_mut_borrow_slice_u8 o2 = uu____2.fst;
   Eurydice_mut_borrow_slice_u8 o30 = uu____2.snd;
   libcrux_iot_sha3_keccak_squeeze_next_block_3a(s, o2);
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
+  Eurydice_mut_borrow_slice_u8_x2 uu____3 =
       libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o30, (size_t)168U);
   Eurydice_mut_borrow_slice_u8 o3 = uu____3.fst;
   Eurydice_mut_borrow_slice_u8 o4 = uu____3.snd;
@@ -4615,12 +4513,12 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_three_blocks_3a(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____0 =
+  Eurydice_mut_borrow_slice_u8_x2 uu____0 =
       libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)168U);
   Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
   Eurydice_mut_borrow_slice_u8 o10 = uu____0.snd;
   libcrux_iot_sha3_keccak_squeeze_first_block_3a(s, o0);
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____1 =
+  Eurydice_mut_borrow_slice_u8_x2 uu____1 =
       libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o10, (size_t)168U);
   Eurydice_mut_borrow_slice_u8 o1 = uu____1.fst;
   Eurydice_mut_borrow_slice_u8 o2 = uu____1.snd;
@@ -4649,11 +4547,9 @@ void libcrux_iot_sha3_portable_incremental_shake128_squeeze_next_block(
 */
 void libcrux_iot_sha3_portable_incremental_shake256_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_state_KeccakState *uu____0 = s;
-  Eurydice_borrow_slice_u8 uu____1 =
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data);
-  libcrux_iot_sha3_keccak_absorb_final_ad0(uu____0, uu____1, (size_t)0U,
-                                           Eurydice_slice_len(data, uint8_t));
+  libcrux_iot_sha3_keccak_absorb_final_ad0(
+      s, libcrux_secrets_int_classify_public_classify_ref_9b_90(data),
+      (size_t)0U, data.meta);
 }
 
 /**
@@ -4700,7 +4596,7 @@ with const generics
 size_t libcrux_iot_sha3_keccak_fill_buffer_f0_5b(
     libcrux_iot_sha3_keccak_KeccakXofState_c7 *self,
     Eurydice_borrow_slice_u8 inputs) {
-  size_t input_len = Eurydice_slice_len(inputs, uint8_t);
+  size_t input_len = inputs.meta;
   size_t consumed = (size_t)0U;
   if (self->buf_len > (size_t)0U) {
     if (self->buf_len + input_len >= (size_t)136U) {
@@ -4734,8 +4630,7 @@ size_t libcrux_iot_sha3_keccak_absorb_full_f0_5b(
     libcrux_iot_sha3_keccak_keccakf1600(&self->inner);
     self->buf_len = (size_t)0U;
   }
-  size_t input_to_consume =
-      Eurydice_slice_len(inputs, uint8_t) - input_consumed;
+  size_t input_to_consume = inputs.meta - input_consumed;
   size_t num_blocks = input_to_consume / (size_t)136U;
   size_t remainder = input_to_consume % (size_t)136U;
   for (size_t i = (size_t)0U; i < num_blocks; i++) {
@@ -4773,7 +4668,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_f0_5b(
   size_t input_remainder_len =
       libcrux_iot_sha3_keccak_absorb_full_f0_5b(self, inputs);
   if (input_remainder_len > (size_t)0U) {
-    size_t input_len = Eurydice_slice_len(inputs, uint8_t);
+    size_t input_len = inputs.meta;
     Eurydice_slice_copy(
         Eurydice_array_to_subslice_mut_360(
             &self->buf, (KRML_CLITERAL(core_ops_range_Range_08){
@@ -4821,7 +4716,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_f0_ad(
     Eurydice_borrow_slice_u8 inputs) {
   size_t input_remainder_len =
       libcrux_iot_sha3_keccak_absorb_full_f0_5b(self, inputs);
-  size_t input_len = Eurydice_slice_len(inputs, uint8_t);
+  size_t input_len = inputs.meta;
   Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   if (self->buf_len > (size_t)0U) {
@@ -4931,16 +4826,8 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_state_store_18_5b(
     libcrux_iot_sha3_state_KeccakState self, Eurydice_mut_borrow_slice_u8 out) {
-  size_t num_full_blocks =
-      Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                             .ptr = out.ptr, .meta = out.meta}),
-                         uint8_t) /
-      (size_t)8U;
-  size_t last_block_len =
-      Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                             .ptr = out.ptr, .meta = out.meta}),
-                         uint8_t) %
-      (size_t)8U;
+  size_t num_full_blocks = out.meta / (size_t)8U;
+  size_t last_block_len = out.meta % (size_t)8U;
   for (size_t i = (size_t)0U; i < num_full_blocks; i++) {
     size_t i0 = i;
     Eurydice_arr_b2 lane = libcrux_iot_sha3_lane_deinterleave_8d(
@@ -5029,9 +4916,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_f0_5b(
   if (self->sponge) {
     libcrux_iot_sha3_keccak_keccakf1600(&self->inner);
   }
-  size_t out_len = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                          .ptr = out.ptr, .meta = out.meta}),
-                                      uint8_t);
+  size_t out_len = out.meta;
   size_t blocks = out_len / (size_t)136U;
   size_t last = out_len - out_len % (size_t)136U;
   size_t mid;
@@ -5040,13 +4925,13 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_f0_5b(
   } else {
     mid = (size_t)136U;
   }
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____0 =
+  Eurydice_mut_borrow_slice_u8_x2 uu____0 =
       libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, mid);
   Eurydice_mut_borrow_slice_u8 out00 = uu____0.fst;
   Eurydice_mut_borrow_slice_u8 out_rest = uu____0.snd;
   libcrux_iot_sha3_state_store_18_5b(self->inner, out00);
   for (size_t i = (size_t)1U; i < blocks; i++) {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____1 =
+    Eurydice_mut_borrow_slice_u8_x2 uu____1 =
         libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out_rest, (size_t)136U);
     Eurydice_mut_borrow_slice_u8 out0 = uu____1.fst;
     Eurydice_mut_borrow_slice_u8 tmp = uu____1.snd;
@@ -5095,7 +4980,7 @@ with const generics
 size_t libcrux_iot_sha3_keccak_fill_buffer_f0_3a(
     libcrux_iot_sha3_keccak_KeccakXofState_49 *self,
     Eurydice_borrow_slice_u8 inputs) {
-  size_t input_len = Eurydice_slice_len(inputs, uint8_t);
+  size_t input_len = inputs.meta;
   size_t consumed = (size_t)0U;
   if (self->buf_len > (size_t)0U) {
     if (self->buf_len + input_len >= (size_t)168U) {
@@ -5129,8 +5014,7 @@ size_t libcrux_iot_sha3_keccak_absorb_full_f0_3a(
     libcrux_iot_sha3_keccak_keccakf1600(&self->inner);
     self->buf_len = (size_t)0U;
   }
-  size_t input_to_consume =
-      Eurydice_slice_len(inputs, uint8_t) - input_consumed;
+  size_t input_to_consume = inputs.meta - input_consumed;
   size_t num_blocks = input_to_consume / (size_t)168U;
   size_t remainder = input_to_consume % (size_t)168U;
   for (size_t i = (size_t)0U; i < num_blocks; i++) {
@@ -5168,7 +5052,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_f0_3a(
   size_t input_remainder_len =
       libcrux_iot_sha3_keccak_absorb_full_f0_3a(self, inputs);
   if (input_remainder_len > (size_t)0U) {
-    size_t input_len = Eurydice_slice_len(inputs, uint8_t);
+    size_t input_len = inputs.meta;
     Eurydice_slice_copy(
         Eurydice_array_to_subslice_mut_361(
             &self->buf, (KRML_CLITERAL(core_ops_range_Range_08){
@@ -5213,7 +5097,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_f0_c6(
     Eurydice_borrow_slice_u8 inputs) {
   size_t input_remainder_len =
       libcrux_iot_sha3_keccak_absorb_full_f0_3a(self, inputs);
-  size_t input_len = Eurydice_slice_len(inputs, uint8_t);
+  size_t input_len = inputs.meta;
   Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   if (self->buf_len > (size_t)0U) {
@@ -5317,16 +5201,8 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_state_store_18_3a(
     libcrux_iot_sha3_state_KeccakState self, Eurydice_mut_borrow_slice_u8 out) {
-  size_t num_full_blocks =
-      Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                             .ptr = out.ptr, .meta = out.meta}),
-                         uint8_t) /
-      (size_t)8U;
-  size_t last_block_len =
-      Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                             .ptr = out.ptr, .meta = out.meta}),
-                         uint8_t) %
-      (size_t)8U;
+  size_t num_full_blocks = out.meta / (size_t)8U;
+  size_t last_block_len = out.meta % (size_t)8U;
   for (size_t i = (size_t)0U; i < num_full_blocks; i++) {
     size_t i0 = i;
     Eurydice_arr_b2 lane = libcrux_iot_sha3_lane_deinterleave_8d(
@@ -5415,9 +5291,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_f0_3a(
   if (self->sponge) {
     libcrux_iot_sha3_keccak_keccakf1600(&self->inner);
   }
-  size_t out_len = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                          .ptr = out.ptr, .meta = out.meta}),
-                                      uint8_t);
+  size_t out_len = out.meta;
   size_t blocks = out_len / (size_t)168U;
   size_t last = out_len - out_len % (size_t)168U;
   size_t mid;
@@ -5426,13 +5300,13 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_f0_3a(
   } else {
     mid = (size_t)168U;
   }
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____0 =
+  Eurydice_mut_borrow_slice_u8_x2 uu____0 =
       libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, mid);
   Eurydice_mut_borrow_slice_u8 out00 = uu____0.fst;
   Eurydice_mut_borrow_slice_u8 out_rest = uu____0.snd;
   libcrux_iot_sha3_state_store_18_3a(self->inner, out00);
   for (size_t i = (size_t)1U; i < blocks; i++) {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____1 =
+    Eurydice_mut_borrow_slice_u8_x2 uu____1 =
         libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out_rest, (size_t)168U);
     Eurydice_mut_borrow_slice_u8 out0 = uu____1.fst;
     Eurydice_mut_borrow_slice_u8 tmp = uu____1.snd;

@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
+ * Charon: 637a6bc8a4c2a79875af5aa4e413c7ef3aa7f391
+ * Eurydice: 5ca42bdb4309a18e332321ca9ae66607824428eb
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
+ * F*: unset
+ * Libcrux: 1bf38a701c22669699956643df22dd9ff22c0456
  */
 
 #ifndef internal_libcrux_iot_sha3_H
 #define internal_libcrux_iot_sha3_H
-
-#include "eurydice_glue.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -517,7 +515,7 @@ A monomorphic instance of libcrux_iot_sha3.lane.split_at_mut_1
 with types uint8_t
 
 */
-Eurydice_dst_ref_mut_uint8_t_size_t_x2 libcrux_iot_sha3_lane_split_at_mut_1_90(
+Eurydice_mut_borrow_slice_u8_x2 libcrux_iot_sha3_lane_split_at_mut_1_90(
     Eurydice_mut_borrow_slice_u8 out, size_t mid);
 
 /**
@@ -528,9 +526,8 @@ A monomorphic instance of libcrux_iot_sha3.lane.split_at_mut_n_8d
 with types uint8_t
 
 */
-Eurydice_dst_ref_mut_uint8_t_size_t_x2
-libcrux_iot_sha3_lane_split_at_mut_n_8d_90(Eurydice_mut_borrow_slice_u8 a,
-                                           size_t mid);
+Eurydice_mut_borrow_slice_u8_x2 libcrux_iot_sha3_lane_split_at_mut_n_8d_90(
+    Eurydice_mut_borrow_slice_u8 a, size_t mid);
 
 /**
 This function found in impl {libcrux_iot_sha3::state::KeccakState}
@@ -899,6 +896,13 @@ void libcrux_iot_sha3_portable_incremental_shake128_squeeze_first_three_blocks(
 void libcrux_iot_sha3_portable_incremental_shake128_squeeze_next_block(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out0);
 
+#define libcrux_iot_sha3_Algorithm_Sha224 1
+#define libcrux_iot_sha3_Algorithm_Sha256 2
+#define libcrux_iot_sha3_Algorithm_Sha384 3
+#define libcrux_iot_sha3_Algorithm_Sha512 4
+
+typedef uint8_t Algorithm;
+
 #define SHA3_224_DIGEST_SIZE ((size_t)28U)
 
 #define SHA3_256_DIGEST_SIZE ((size_t)32U)
@@ -906,13 +910,6 @@ void libcrux_iot_sha3_portable_incremental_shake128_squeeze_next_block(
 #define SHA3_384_DIGEST_SIZE ((size_t)48U)
 
 #define SHA3_512_DIGEST_SIZE ((size_t)64U)
-
-#define libcrux_iot_sha3_Algorithm_Sha224 1
-#define libcrux_iot_sha3_Algorithm_Sha256 2
-#define libcrux_iot_sha3_Algorithm_Sha384 3
-#define libcrux_iot_sha3_Algorithm_Sha512 4
-
-typedef uint8_t Algorithm;
 
 /**
  Returns the output size of a digest.
@@ -1321,6 +1318,36 @@ void libcrux_iot_sha3_portable_shake128(Eurydice_mut_borrow_slice_u8 digest,
                                         Eurydice_borrow_slice_u8 data);
 
 /**
+A monomorphic instance of libcrux_iot_sha3.keccak.KeccakXofState
+with const generics
+- $168size_t
+*/
+typedef struct libcrux_iot_sha3_keccak_KeccakXofState_49_s {
+  libcrux_iot_sha3_state_KeccakState inner;
+  Eurydice_arr_27 buf;
+  size_t buf_len;
+  bool sponge;
+} libcrux_iot_sha3_keccak_KeccakXofState_49;
+
+typedef libcrux_iot_sha3_keccak_KeccakXofState_49
+    libcrux_iot_sha3_portable_incremental_Shake128Xof;
+
+/**
+A monomorphic instance of libcrux_iot_sha3.keccak.KeccakXofState
+with const generics
+- $136size_t
+*/
+typedef struct libcrux_iot_sha3_keccak_KeccakXofState_c7_s {
+  libcrux_iot_sha3_state_KeccakState inner;
+  Eurydice_arr_3d buf;
+  size_t buf_len;
+  bool sponge;
+} libcrux_iot_sha3_keccak_KeccakXofState_c7;
+
+typedef libcrux_iot_sha3_keccak_KeccakXofState_c7
+    libcrux_iot_sha3_portable_incremental_Shake256Xof;
+
+/**
  Perform four rounds of the keccak permutation functions
 */
 void libcrux_iot_sha3_portable_incremental_keccakf1660_4rounds(
@@ -1363,36 +1390,6 @@ void libcrux_iot_sha3_portable_incremental_shake256_squeeze_first_block(
 */
 void libcrux_iot_sha3_portable_incremental_shake256_squeeze_next_block(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out);
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.KeccakXofState
-with const generics
-- $136size_t
-*/
-typedef struct libcrux_iot_sha3_keccak_KeccakXofState_c7_s {
-  libcrux_iot_sha3_state_KeccakState inner;
-  Eurydice_arr_3d buf;
-  size_t buf_len;
-  bool sponge;
-} libcrux_iot_sha3_keccak_KeccakXofState_c7;
-
-typedef libcrux_iot_sha3_keccak_KeccakXofState_c7
-    libcrux_iot_sha3_portable_incremental_Shake256Xof;
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.KeccakXofState
-with const generics
-- $168size_t
-*/
-typedef struct libcrux_iot_sha3_keccak_KeccakXofState_49_s {
-  libcrux_iot_sha3_state_KeccakState inner;
-  Eurydice_arr_27 buf;
-  size_t buf_len;
-  bool sponge;
-} libcrux_iot_sha3_keccak_KeccakXofState_49;
-
-typedef libcrux_iot_sha3_keccak_KeccakXofState_49
-    libcrux_iot_sha3_portable_incremental_Shake128Xof;
 
 #if defined(__cplusplus)
 }

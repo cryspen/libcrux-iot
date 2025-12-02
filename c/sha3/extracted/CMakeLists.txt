@@ -36,6 +36,8 @@ include_directories(
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/internal
     ${PROJECT_SOURCE_DIR}/karamel/include
+    ${PROJECT_SOURCE_DIR}/eurydice-include/
+    ${PROJECT_SOURCE_DIR}/eurydice-include/eurydice
 )
 file(GLOB SOURCES
   ${PROJECT_SOURCE_DIR}/libcrux_iot_sha3.c
