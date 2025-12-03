@@ -18,3 +18,4 @@ kyber-crate/
 # When using sed
 *.bak
 *.lock
+**/eurydice-include
