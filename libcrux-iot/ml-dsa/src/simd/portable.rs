@@ -12,6 +12,7 @@ mod invntt;
 mod ntt;
 mod sample;
 
+use libcrux_secrets::{I32, U8};
 /// Portable SIMD coefficients
 pub(crate) use vector_type::Coefficients as PortableSIMDUnit;
 use vector_type::Coefficients;
@@ -21,7 +22,7 @@ impl Operations for Coefficients {
         vector_type::zero()
     }
 
-    fn from_coefficient_array(array: &[i32], out: &mut Coefficients) {
+    fn from_coefficient_array(array: &[I32], out: &mut Coefficients) {
         vector_type::from_coefficient_array(array, out)
     }
 
@@ -74,11 +75,11 @@ impl Operations for Coefficients {
         sample::rejection_sample_less_than_field_modulus(randomness, out)
     }
 
-    fn rejection_sample_less_than_eta_equals_2(randomness: &[u8], out: &mut [i32]) -> usize {
+    fn rejection_sample_less_than_eta_equals_2(randomness: &[U8], out: &mut [I32]) -> usize {
         sample::rejection_sample_less_than_eta_equals_2(randomness, out)
     }
 
-    fn rejection_sample_less_than_eta_equals_4(randomness: &[u8], out: &mut [i32]) -> usize {
+    fn rejection_sample_less_than_eta_equals_4(randomness: &[U8], out: &mut [I32]) -> usize {
         sample::rejection_sample_less_than_eta_equals_4(randomness, out)
     }
 
@@ -86,27 +87,27 @@ impl Operations for Coefficients {
         encoding::gamma1::serialize(simd_unit, serialized, gamma1_exponent)
     }
 
-    fn gamma1_deserialize(serialized: &[u8], out: &mut Coefficients, gamma1_exponent: usize) {
+    fn gamma1_deserialize(serialized: &[U8], out: &mut Coefficients, gamma1_exponent: usize) {
         encoding::gamma1::deserialize(serialized, out, gamma1_exponent)
     }
 
-    fn commitment_serialize(simd_unit: &Coefficients, serialized: &mut [u8]) {
+    fn commitment_serialize(simd_unit: &Coefficients, serialized: &mut [U8]) {
         encoding::commitment::serialize(simd_unit, serialized)
     }
 
-    fn error_serialize(eta: Eta, simd_unit: &Coefficients, serialized: &mut [u8]) {
+    fn error_serialize(eta: Eta, simd_unit: &Coefficients, serialized: &mut [U8]) {
         encoding::error::serialize(eta, simd_unit, serialized)
     }
 
-    fn error_deserialize(eta: Eta, serialized: &[u8], out: &mut Coefficients) {
+    fn error_deserialize(eta: Eta, serialized: &[U8], out: &mut Coefficients) {
         encoding::error::deserialize(eta, serialized, out);
     }
 
-    fn t0_serialize(simd_unit: &Coefficients, out: &mut [u8]) {
+    fn t0_serialize(simd_unit: &Coefficients, out: &mut [U8]) {
         encoding::t0::serialize(simd_unit, out)
     }
 
-    fn t0_deserialize(serialized: &[u8], out: &mut Coefficients) {
+    fn t0_deserialize(serialized: &[U8], out: &mut Coefficients) {
         encoding::t0::deserialize(serialized, out)
     }
 

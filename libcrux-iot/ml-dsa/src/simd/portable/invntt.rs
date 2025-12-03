@@ -1,3 +1,5 @@
+use libcrux_secrets::Classify as _;
+
 use super::arithmetic::{self, montgomery_multiply_fe_by_fer};
 use super::vector_type::Coefficients;
 use crate::simd::traits::{COEFFICIENTS_IN_SIMD_UNIT, SIMD_UNITS_IN_RING_ELEMENT};
@@ -12,57 +14,57 @@ pub fn simd_unit_invert_ntt_at_layer_0(
 ) {
     let a_minus_b = simd_unit.values[1] - simd_unit.values[0];
     simd_unit.values[0] = simd_unit.values[0] + simd_unit.values[1];
-    simd_unit.values[1] = montgomery_multiply_fe_by_fer(a_minus_b, zeta0);
+    simd_unit.values[1] = montgomery_multiply_fe_by_fer(a_minus_b, zeta0.classify());
 
     let a_minus_b = simd_unit.values[3] - simd_unit.values[2];
     simd_unit.values[2] = simd_unit.values[2] + simd_unit.values[3];
-    simd_unit.values[3] = montgomery_multiply_fe_by_fer(a_minus_b, zeta1);
+    simd_unit.values[3] = montgomery_multiply_fe_by_fer(a_minus_b, zeta1.classify());
 
     let a_minus_b = simd_unit.values[5] - simd_unit.values[4];
     simd_unit.values[4] = simd_unit.values[4] + simd_unit.values[5];
-    simd_unit.values[5] = montgomery_multiply_fe_by_fer(a_minus_b, zeta2);
+    simd_unit.values[5] = montgomery_multiply_fe_by_fer(a_minus_b, zeta2.classify());
 
     let a_minus_b = simd_unit.values[7] - simd_unit.values[6];
     simd_unit.values[6] = simd_unit.values[6] + simd_unit.values[7];
-    simd_unit.values[7] = montgomery_multiply_fe_by_fer(a_minus_b, zeta3);
+    simd_unit.values[7] = montgomery_multiply_fe_by_fer(a_minus_b, zeta3.classify());
 }
 
 #[inline(always)]
 pub fn simd_unit_invert_ntt_at_layer_1(simd_unit: &mut Coefficients, zeta0: i32, zeta1: i32) {
     let a_minus_b = simd_unit.values[2] - simd_unit.values[0];
     simd_unit.values[0] = simd_unit.values[0] + simd_unit.values[2];
-    simd_unit.values[2] = montgomery_multiply_fe_by_fer(a_minus_b, zeta0);
+    simd_unit.values[2] = montgomery_multiply_fe_by_fer(a_minus_b, zeta0.classify());
 
     let a_minus_b = simd_unit.values[3] - simd_unit.values[1];
     simd_unit.values[1] = simd_unit.values[1] + simd_unit.values[3];
-    simd_unit.values[3] = montgomery_multiply_fe_by_fer(a_minus_b, zeta0);
+    simd_unit.values[3] = montgomery_multiply_fe_by_fer(a_minus_b, zeta0.classify());
 
     let a_minus_b = simd_unit.values[6] - simd_unit.values[4];
     simd_unit.values[4] = simd_unit.values[4] + simd_unit.values[6];
-    simd_unit.values[6] = montgomery_multiply_fe_by_fer(a_minus_b, zeta1);
+    simd_unit.values[6] = montgomery_multiply_fe_by_fer(a_minus_b, zeta1.classify());
 
     let a_minus_b = simd_unit.values[7] - simd_unit.values[5];
     simd_unit.values[5] = simd_unit.values[5] + simd_unit.values[7];
-    simd_unit.values[7] = montgomery_multiply_fe_by_fer(a_minus_b, zeta1);
+    simd_unit.values[7] = montgomery_multiply_fe_by_fer(a_minus_b, zeta1.classify());
 }
 
 #[inline(always)]
 pub fn simd_unit_invert_ntt_at_layer_2(simd_unit: &mut Coefficients, zeta: i32) {
     let a_minus_b = simd_unit.values[4] - simd_unit.values[0];
     simd_unit.values[0] = simd_unit.values[0] + simd_unit.values[4];
-    simd_unit.values[4] = montgomery_multiply_fe_by_fer(a_minus_b, zeta);
+    simd_unit.values[4] = montgomery_multiply_fe_by_fer(a_minus_b, zeta.classify());
 
     let a_minus_b = simd_unit.values[5] - simd_unit.values[1];
     simd_unit.values[1] = simd_unit.values[1] + simd_unit.values[5];
-    simd_unit.values[5] = montgomery_multiply_fe_by_fer(a_minus_b, zeta);
+    simd_unit.values[5] = montgomery_multiply_fe_by_fer(a_minus_b, zeta.classify());
 
     let a_minus_b = simd_unit.values[6] - simd_unit.values[2];
     simd_unit.values[2] = simd_unit.values[2] + simd_unit.values[6];
-    simd_unit.values[6] = montgomery_multiply_fe_by_fer(a_minus_b, zeta);
+    simd_unit.values[6] = montgomery_multiply_fe_by_fer(a_minus_b, zeta.classify());
 
     let a_minus_b = simd_unit.values[7] - simd_unit.values[3];
     simd_unit.values[3] = simd_unit.values[3] + simd_unit.values[7];
-    simd_unit.values[7] = montgomery_multiply_fe_by_fer(a_minus_b, zeta);
+    simd_unit.values[7] = montgomery_multiply_fe_by_fer(a_minus_b, zeta.classify());
 }
 
 #[inline(always)]
@@ -210,7 +212,7 @@ fn outer_3_plus<const OFFSET: usize, const STEP_BY: usize, const ZETA: i32>(
         arithmetic::subtract(&mut a_minus_b, &re[j]);
         arithmetic::add(&mut re[j], &rejs);
         re[j + STEP_BY] = a_minus_b;
-        arithmetic::montgomery_multiply_by_constant(&mut re[j + STEP_BY], ZETA);
+        arithmetic::montgomery_multiply_by_constant(&mut re[j + STEP_BY], ZETA.classify());
     }
 
     // [hax] https://github.com/hacspec/hax/issues/720
@@ -299,7 +301,7 @@ pub(crate) fn invert_ntt_montgomery(re: &mut [Coefficients; SIMD_UNITS_IN_RING_E
         //
         // - Divide the elements by 256 and
         // - Convert the elements form montgomery domain to the standard domain.
-        arithmetic::montgomery_multiply_by_constant(&mut re[i], 41_978);
+        arithmetic::montgomery_multiply_by_constant(&mut re[i], 41_978.classify());
     }
 
     // [hax] https://github.com/hacspec/hax/issues/720

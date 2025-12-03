@@ -16,6 +16,7 @@ macro_rules! instantiate {
                 types::*,
                 types::{SigningError, VerificationError},
             };
+            use libcrux_secrets::U8;
 
             macro_rules! parameter_set {
                 ($parameter_module:ident, $feature:literal) => {
@@ -28,8 +29,8 @@ macro_rules! instantiate {
 
                         /// Generate key pair.
                         pub fn generate_key_pair(
-                            randomness: [u8; KEY_GENERATION_RANDOMNESS_SIZE],
-                            signing_key: &mut [u8; SIGNING_KEY_SIZE],
+                            randomness: [U8; KEY_GENERATION_RANDOMNESS_SIZE],
+                            signing_key: &mut [U8; SIGNING_KEY_SIZE],
                             verification_key: &mut [u8; VERIFICATION_KEY_SIZE],
                         ) {
                             crate::ml_dsa_generic::$parameter_module::generate_key_pair::<
@@ -44,10 +45,10 @@ macro_rules! instantiate {
 
                         /// Sign.
                         pub fn sign(
-                            signing_key: &[u8; SIGNING_KEY_SIZE],
+                            signing_key: &[U8; SIGNING_KEY_SIZE],
                             message: &[u8],
                             context: &[u8],
-                            randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                            randomness: [U8; SIGNING_RANDOMNESS_SIZE],
                         ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
                             crate::ml_dsa_generic::$parameter_module::sign::<
                                 $simdunit,
@@ -61,10 +62,10 @@ macro_rules! instantiate {
 
                         /// Sign.
                         pub fn sign_mut(
-                            signing_key: &[u8; SIGNING_KEY_SIZE],
+                            signing_key: &[U8; SIGNING_KEY_SIZE],
                             message: &[u8],
                             context: &[u8],
-                            randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                            randomness: [U8; SIGNING_RANDOMNESS_SIZE],
                             signature: &mut [u8; SIGNATURE_SIZE],
                         ) -> Result<(), SigningError> {
                             crate::ml_dsa_generic::$parameter_module::sign_mut::<
@@ -79,9 +80,9 @@ macro_rules! instantiate {
 
                         #[cfg(feature = "acvp")]
                         pub fn sign_internal(
-                            signing_key: &[u8; SIGNING_KEY_SIZE],
+                            signing_key: &[U8; SIGNING_KEY_SIZE],
                             message: &[u8],
-                            randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                            randomness: [U8; SIGNING_RANDOMNESS_SIZE],
                         ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
                             let mut signature = MLDSASignature::zero();
 
@@ -99,11 +100,11 @@ macro_rules! instantiate {
 
                         /// Sign (pre-hashed).
                         pub(crate) fn sign_pre_hashed_shake128(
-                            signing_key: &[u8; SIGNING_KEY_SIZE],
+                            signing_key: &[U8; SIGNING_KEY_SIZE],
                             message: &[u8],
                             context: &[u8],
-                            pre_hash_buffer: &mut [u8],
-                            randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                            pre_hash_buffer: &mut [U8],
+                            randomness: [U8; SIGNING_RANDOMNESS_SIZE],
                         ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
                             crate::ml_dsa_generic::$parameter_module::sign_pre_hashed::<
                                 $simdunit,
@@ -154,7 +155,7 @@ macro_rules! instantiate {
                             verification_key: &[u8; VERIFICATION_KEY_SIZE],
                             message: &[u8],
                             context: &[u8],
-                            pre_hash_buffer: &mut [u8],
+                            pre_hash_buffer: &mut [U8],
                             signature: &[u8; SIGNATURE_SIZE],
                         ) -> Result<(), VerificationError> {
                             crate::ml_dsa_generic::$parameter_module::verify_pre_hashed::<

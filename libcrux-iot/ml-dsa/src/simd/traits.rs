@@ -1,3 +1,5 @@
+use libcrux_secrets::{I32, U8};
+
 use crate::constants::{Eta, Gamma2};
 
 // Each field element occupies 32 bits and the size of a simd_unit is 256 bits.
@@ -14,12 +16,12 @@ pub const INVERSE_OF_MODULUS_MOD_MONTGOMERY_R: u64 = 58_728_449;
 /// If 'x' denotes a value of type `fe`, values having this type hold a
 /// representative y ≡ x·MONTGOMERY_R (mod FIELD_MODULUS).
 /// We use 'fer' as a shorthand for this type.
-pub(crate) type FieldElementTimesMontgomeryR = i32;
+pub(crate) type FieldElementTimesMontgomeryR = I32;
 
 pub(crate) trait Operations: Copy + Clone {
     fn zero() -> Self;
 
-    fn from_coefficient_array(array: &[i32], out: &mut Self);
+    fn from_coefficient_array(array: &[I32], out: &mut Self);
     fn to_coefficient_array(value: &Self, out: &mut [i32]);
 
     // Arithmetic
@@ -48,25 +50,25 @@ pub(crate) trait Operations: Copy + Clone {
 
     // Since each coefficient could potentially be sampled with half a byte,
     // we expect `randomness` to hold 4 bytes.
-    fn rejection_sample_less_than_eta_equals_2(randomness: &[u8], out: &mut [i32]) -> usize;
-    fn rejection_sample_less_than_eta_equals_4(randomness: &[u8], out: &mut [i32]) -> usize;
+    fn rejection_sample_less_than_eta_equals_2(randomness: &[U8], out: &mut [I32]) -> usize;
+    fn rejection_sample_less_than_eta_equals_4(randomness: &[U8], out: &mut [I32]) -> usize;
 
     // Encoding operations
 
     // Gamma1
     fn gamma1_serialize(simd_unit: &Self, serialized: &mut [u8], gamma1_exponent: usize);
-    fn gamma1_deserialize(serialized: &[u8], out: &mut Self, gamma1_exponent: usize);
+    fn gamma1_deserialize(serialized: &[U8], out: &mut Self, gamma1_exponent: usize);
 
     // Commitment
-    fn commitment_serialize(simd_unit: &Self, serialized: &mut [u8]);
+    fn commitment_serialize(simd_unit: &Self, serialized: &mut [U8]);
 
     // Error
-    fn error_serialize(eta: Eta, simd_unit: &Self, serialized: &mut [u8]);
-    fn error_deserialize(eta: Eta, serialized: &[u8], out: &mut Self);
+    fn error_serialize(eta: Eta, simd_unit: &Self, serialized: &mut [U8]);
+    fn error_deserialize(eta: Eta, serialized: &[U8], out: &mut Self);
 
     // t0
-    fn t0_serialize(simd_unit: &Self, out: &mut [u8]); // out len 13
-    fn t0_deserialize(serialized: &[u8], out: &mut Self);
+    fn t0_serialize(simd_unit: &Self, out: &mut [U8]); // out len 13
+    fn t0_deserialize(serialized: &[U8], out: &mut Self);
 
     // t1
     fn t1_serialize(simd_unit: &Self, out: &mut [u8]); // out len 10

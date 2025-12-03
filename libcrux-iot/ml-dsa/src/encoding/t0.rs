@@ -2,6 +2,8 @@
 // Functions for serializing and deserializing the ring element t0.
 // ---------------------------------------------------------------------------
 
+use libcrux_secrets::U8;
+
 use crate::{
     constants::RING_ELEMENT_OF_T0S_SIZE, helper::cloop, ntt::ntt,
     polynomial::PolynomialRingElement, simd::traits::Operations,
@@ -12,7 +14,7 @@ const OUTPUT_BYTES_PER_SIMD_UNIT: usize = 13;
 #[inline(always)]
 pub(crate) fn serialize<SIMDUnit: Operations>(
     re: &PolynomialRingElement<SIMDUnit>,
-    serialized: &mut [u8], // RING_ELEMENT_OF_T0S_SIZE
+    serialized: &mut [U8], // RING_ELEMENT_OF_T0S_SIZE
 ) {
     cloop! {
         for (i, simd_unit) in re.simd_units.iter().enumerate() {
@@ -25,7 +27,7 @@ pub(crate) fn serialize<SIMDUnit: Operations>(
 
 #[inline(always)]
 fn deserialize<SIMDUnit: Operations>(
-    serialized: &[u8],
+    serialized: &[U8],
     result: &mut PolynomialRingElement<SIMDUnit>,
 ) {
     for i in 0..result.simd_units.len() {
@@ -40,7 +42,7 @@ fn deserialize<SIMDUnit: Operations>(
 
 #[inline(always)]
 pub(crate) fn deserialize_to_vector_then_ntt<SIMDUnit: Operations>(
-    serialized: &[u8],
+    serialized: &[U8],
     ring_elements: &mut [PolynomialRingElement<SIMDUnit>],
 ) {
     cloop! {
