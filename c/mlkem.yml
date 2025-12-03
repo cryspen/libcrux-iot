@@ -90,6 +90,11 @@ files:
         - [Eurydice, arr_e2]
     api:
       - [Eurydice, "*"]
+    include_in_h:
+        - '"eurydice-include/eurydice/base.h"'
+        - '"eurydice-include/eurydice/core.h"'
+        - '"eurydice-include/eurydice/slice.h"'
+        - '"custom_glue/custom_glue.h"'      
 
   # MLKEM-768
 

@@ -32,8 +32,6 @@ clean_cargo=0
 clean_cfiles=0
 extract=""
 glue=$EURYDICE_HOME/include/
-use_custom_glue=1
-custom_glue=""
 features=""
 eurydice_glue=1
 karamel_include=1
@@ -87,12 +85,10 @@ extract_crate="libcrux-iot-$extract"
 extract_crate_=$(sed s/-/_/g <<<$extract_crate)
 extract_llbc_path=$workspace_root/${extract_crate_}.llbc
 pkg_root=$workspace_root/$extract
-custom_glue="$c_root/custom_glue.h"
 
 # we will cd to a subdirectory later. We need to resolve paths, because relative paths won't bw valid anymore.
 glue=$(realpath "$glue")
 config=$(realpath "$config")
-custom_glue=$(realpath "$custom_glue")
 
 # We can't set the default value at the top, because `extract_root` depends on the arguments.
 if [[ -z $config ]]; then
@@ -191,12 +187,10 @@ $EURYDICE_HOME/eurydice \
     --no-default-include \
     $extract_llbc_path
 
+# Symlink upstream glue
 if [[ "$eurydice_glue" = 1 ]]; then
+    rm -f eurydice-include
     ln -s "$glue" eurydice-include
-fi
-
-if [[ "$use_custom_glue" = 1 ]]; then
-    ln -s "$custom_glue" internal/custom_glue.h
 fi
 
 if [[ "$karamel_include" = 1 ]]; then

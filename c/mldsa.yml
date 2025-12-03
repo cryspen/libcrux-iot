@@ -1,6 +1,7 @@
 files:
   # MLDSA: MISC NON-ARCHITECTURE SPECIFIC HEADERS
   - name: libcrux_iot_mldsa_core
+    inline_static: true
     private:
       monomorphizations_of:
         - [libcrux_iot_ml_dsa, types, "*"]
@@ -23,9 +24,15 @@ files:
         - [ core, result, Result_8e ]
     api:
       - [Eurydice, "*"]
+    include_in_h:
+        - '"eurydice-include/eurydice/base.h"'
+        - '"eurydice-include/eurydice/slice.h"'
+        - '"custom_glue/custom_glue.h"'
+        - '"custom_glue/core.h"'
       
   # SHA3
   - name: libcrux_iot_sha3
+    inline_static: true
     api:
       exact:
         - [libcrux_iot_sha3, sha224]
@@ -57,7 +64,9 @@ files:
         - [libcrux_iot_sha3, keccak, "*"]
         - [libcrux_iot_sha3, state, "*"]
         - [libcrux_iot_sha3, lane, "*"]
-
+      monomorphizations_exact:
+        - [ core, result, unwrap_26_84 ]
+        
   # Common parts of SHA3 (this catches stuff that hasn't matched above). Must
   # come after the (more precise) patterns above concerning platform-specific hash_functions
   - name: libcrux_iot_sha3_internal
@@ -71,6 +80,7 @@ files:
     inline_static: true
 
   - name: libcrux_iot_mldsa65_portable
+    inline_static: true
     api:
       patterns:
         - [libcrux_iot_ml_dsa, "*"]
@@ -97,6 +107,7 @@ files:
 
   # MLDSA: catch-all for things that have not matched earlier
   - name: libcrux_iot_mldsa_core
+    inline_static: true
     private:
       monomorphizations_of:
         - [Eurydice, "*" ]

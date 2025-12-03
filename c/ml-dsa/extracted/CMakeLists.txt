@@ -36,12 +36,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 include_directories(
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/internal
+    ${PROJECT_SOURCE_DIR}/custom_glue/
     ${PROJECT_SOURCE_DIR}/karamel/include
-)
-file(GLOB SOURCES
-  ${PROJECT_SOURCE_DIR}/libcrux_iot_mldsa_core.c
-  ${PROJECT_SOURCE_DIR}/libcrux_iot_sha3.c
-  ${PROJECT_SOURCE_DIR}/libcrux_iot_mldsa65_portable.c
+    ${PROJECT_SOURCE_DIR}/eurydice-include/
+    ${PROJECT_SOURCE_DIR}/eurydice-include/eurydice
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES Linux)
@@ -56,9 +54,6 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES Linux)
 #     )
 #     add_link_options(-flto)
 # endif(${CMAKE_SYSTEM_NAME} MATCHES Linux AND CMAKE_BUILD_TYPE MATCHES "Release")
-
-add_library(ml_dsa SHARED ${SOURCES})
-add_library(ml_dsa_static STATIC ${SOURCES})
 
 # --- Tests
 if(DEFINED ENV{LIBCRUX_UNPACKED})
@@ -87,7 +82,6 @@ add_executable(ml_dsa_test65
     ${PROJECT_SOURCE_DIR}/tests/mldsa65.cc
 )
 target_link_libraries(ml_dsa_test65 PRIVATE
-    ml_dsa_static
     gtest_main
     nlohmann_json::nlohmann_json
 )

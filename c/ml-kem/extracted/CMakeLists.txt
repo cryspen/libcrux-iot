@@ -36,6 +36,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 include_directories(
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/internal
+    ${PROJECT_SOURCE_DIR}/custom_glue
     ${PROJECT_SOURCE_DIR}/karamel/include
     ${PROJECT_SOURCE_DIR}/eurydice-include/
     ${PROJECT_SOURCE_DIR}/eurydice-include/eurydice
