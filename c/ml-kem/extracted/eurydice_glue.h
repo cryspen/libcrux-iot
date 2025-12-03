@@ -77,16 +77,6 @@ typedef struct {
   size_t len;
 } Eurydice_slice;
 
-typedef struct Eurydice_dst_ref_87_s {
-  uint8_t *ptr;
-  size_t meta;
-} Eurydice_dst_ref_87;
-
-typedef struct Eurydice_dst_ref_9a_s {
-  int16_t *ptr;
-  size_t meta;
-} Eurydice_dst_ref_9a;
-
 #if defined(__cplusplus)
 #define KRML_CLITERAL(type) type
 #else
@@ -117,8 +107,6 @@ typedef struct Eurydice_dst_ref_9a_s {
 
 #define Eurydice_slice_index_mut(s, i, t) ((s).ptr[i])
 #define Eurydice_slice_index_shared(s, i, t) ((s).ptr[i])
-
-#define Eurydice_slice_index(s, i, t) ((s).ptr[i])
 
 // The following functions get sub slices from a slice.
 

@@ -59,34 +59,6 @@ using std::type_identity_t;
   } while (0)
 
 // SLICES, ARRAYS, ETC.
-
-// We represent a slice as a pair of an (untyped) pointer, along with the length
-// of the slice, i.e. the number of elements in the slice (this is NOT the
-// number of bytes). This design choice has two important consequences.
-// - if you need to use `ptr`, you MUST cast it to a proper type *before*
-//   performing pointer arithmetic on it (remember that C desugars pointer
-//   arithmetic based on the type of the address)
-// - if you need to use `len` for a C style function (e.g. memcpy, memcmp), you
-//   need to multiply it by sizeof t, where t is the type of the elements.
-//
-// Empty slices have `len == 0` and `ptr` always needs to be a valid pointer
-// that is not NULL (otherwise the construction in EURYDICE_SLICE computes `NULL
-// + start`).
-typedef struct {
-  void *ptr;
-  size_t len;
-} Eurydice_slice;
-
-typedef struct Eurydice_dst_ref_87_s {
-  uint8_t *ptr;
-  size_t meta;
-} Eurydice_dst_ref_87;
-
-typedef struct Eurydice_dst_ref_9a_s {
-  int16_t *ptr;
-  size_t meta;
-} Eurydice_dst_ref_9a;
-
 #if defined(__cplusplus)
 #define KRML_CLITERAL(type) type
 #else
@@ -99,13 +71,6 @@ typedef struct Eurydice_dst_ref_9a_s {
 #else
 #define EURYDICE_CFIELD(X)
 #endif
-
-// Helper macro to create a slice out of a pointer x, a start index in x
-// (included), and an end index in x (excluded). The argument x must be suitably
-// cast to something that can decay (see remark above about how pointer
-// arithmetic works in C), meaning either pointer or array type.
-#define EURYDICE_SLICE(x, start, end) \
-  (KRML_CLITERAL(Eurydice_slice){(void *)(x + start), end - start})
 
 #define Eurydice_slice_eq_shared(s1, s2, t, _) \
   ((s1)->meta == (s2)->meta &&                 \
@@ -219,11 +184,6 @@ typedef struct Eurydice_dst_ref_9a_s {
   Eurydice_slice_to_array3(&(dst)->tag, (char *)&(dst)->val.case_Ok, src, \
                            sizeof(t_arr))
 
-static inline void Eurydice_slice_to_array3(uint8_t *dst_tag, char *dst_ok,
-                                            Eurydice_slice src, size_t sz) {
-  *dst_tag = 0;
-  memcpy(dst_ok, src.ptr, sz);
-}
 
 // SUPPORT FOR DSTs (Dynamically-Sized Types)
 
@@ -400,7 +360,7 @@ static inline uint8_t Eurydice_bitand_pv_u8(const uint8_t *p, uint8_t v) {
 static inline uint8_t Eurydice_shr_pv_u8(const uint8_t *p, int32_t v) {
   return (*p) >> v;
 }
-  
+
 static inline uint32_t Eurydice_min_u32(uint32_t x, uint32_t y) {
   return x < y ? x : y;
 }
@@ -445,27 +405,6 @@ core_num_nonzero_private___core__clone__Clone_for_core__num__nonzero__private__N
 #define core_iter_traits_collect___core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__1__into_iter \
   Eurydice_into_iter
 
-typedef struct {
-  Eurydice_slice slice;
-  size_t chunk_size;
-} Eurydice_chunks;
-
-// Can't use macros Eurydice_slice_subslice_{to,from} because they require a
-// type, and this static inline function cannot receive a type as an argument.
-// Instead, we receive the element size and use it to peform manual offset
-// computations rather than going through the macros.
-static inline Eurydice_slice chunk_next(Eurydice_chunks *chunks,
-                                        size_t element_size) {
-  size_t chunk_size = chunks->slice.len >= chunks->chunk_size
-                          ? chunks->chunk_size
-                          : chunks->slice.len;
-  Eurydice_slice curr_chunk;
-  curr_chunk.ptr = chunks->slice.ptr;
-  curr_chunk.len = chunk_size;
-  chunks->slice.ptr = (char *)(chunks->slice.ptr) + chunk_size * element_size;
-  chunks->slice.len = chunks->slice.len - chunk_size;
-  return curr_chunk;
-}
 
 // using it anyway??
 #define Eurydice_slice_subslice3(s, start, end, t_ptr) \
@@ -492,103 +431,12 @@ static inline Eurydice_slice chunk_next(Eurydice_chunks *chunks,
     iter, t, _ret_t)                                                     \
   core_slice_iter__core__slice__iter__Chunks__a__T__70__next(iter, t)
 
-typedef struct {
-  Eurydice_slice s;
-  size_t index;
-} Eurydice_slice_iterator;
-
-#define core_slice___Slice_T___iter(x, t, _ret_t) \
-  ((Eurydice_slice_iterator){.s = x, .index = 0})
-#define core_slice_iter_Iter Eurydice_slice_iterator
-#define core_slice_iter__core__slice__iter__Iter__a__T__181__next(iter, t, \
-                                                                  ret_t)   \
-  (((iter)->index == (iter)->s.len)                                        \
-       ? (KRML_CLITERAL(ret_t){.tag = core_option_None})                   \
-       : (KRML_CLITERAL(ret_t){                                            \
-             .tag = core_option_Some,                                      \
-             .f0 = ((iter)->index++,                                       \
-                    &((t *)((iter)->s.ptr))[(iter)->index - 1])}))
 #define core_option__core__option__Option_T__TraitClause_0___is_some(X, _0, \
                                                                      _1)    \
   ((X)->tag == 1)
 // STRINGS
 
-typedef const char *Prims_string;
+typedef char Eurydice_c_char_t;
+typedef const Eurydice_c_char_t *Prims_string;
+typedef void Eurydice_c_void_t;
 
-// MISC (UNTESTED)
-
-typedef void *core_fmt_Formatter;
-typedef void *core_fmt_Arguments;
-typedef void *core_fmt_rt_Argument;
-#define core_fmt_rt__core__fmt__rt__Argument__a__1__new_display(x1, x2, x3, \
-                                                                x4)         \
-  NULL
-
-// BOXES
-
-// Crimes.
-static inline char *malloc_and_init(size_t sz, char *init) {
-  char *ptr = (char *)malloc(sz);
-  memcpy(ptr, init, sz);
-  return ptr;
-}
-
-#define Eurydice_box_new(init, t, t_dst) \
-  ((t_dst)(malloc_and_init(sizeof(t), (char *)(&init))))
-
-#define Eurydice_box_new_array(len, ptr, t, t_dst) \
-  ((t_dst)(malloc_and_init(len * sizeof(t), (char *)(ptr))))
-
-// VECTORS (ANCIENT, POSSIBLY UNTESTED)
-
-/* For now these are passed by value -- three words. We could conceivably change
- * the representation to heap-allocate this struct and only pass around the
- * pointer (one word). */
-typedef struct {
-  void *ptr;
-  size_t len;        /* the number of elements */
-  size_t alloc_size; /* the size of the allocation, in number of BYTES */
-} Eurydice_vec_s, *Eurydice_vec;
-
-/* Here, we set everything to zero rather than use a non-standard GCC
- * statement-expression -- this suitably initializes ptr to NULL and len and
- * size to 0. */
-#define EURYDICE_VEC_NEW(_) calloc(1, sizeof(Eurydice_vec_s))
-#define EURYDICE_VEC_PUSH(v, x, t)                                        \
-  do {                                                                    \
-    /* Grow the vector if capacity has been reached. */                   \
-    if (v->len == v->alloc_size / sizeof(t)) {                            \
-      /* Assuming that this does not exceed SIZE_MAX, because code proven \
-       * correct by Aeneas. Would this even happen in practice? */        \
-      size_t new_size;                                                    \
-      if (v->alloc_size == 0)                                             \
-        new_size = 8 * sizeof(t);                                         \
-      else if (v->alloc_size <= SIZE_MAX / 2)                             \
-        /* TODO: discuss growth policy */                                 \
-        new_size = 2 * v->alloc_size;                                     \
-      else                                                                \
-        new_size = (SIZE_MAX / sizeof(t)) * sizeof(t);                    \
-      v->ptr = realloc(v->ptr, new_size);                                 \
-      v->alloc_size = new_size;                                           \
-    }                                                                     \
-    ((t *)v->ptr)[v->len] = x;                                            \
-    v->len++;                                                             \
-  } while (0)
-
-#define EURYDICE_VEC_DROP(v, t) \
-  do {                          \
-    free(v->ptr);               \
-    free(v);                    \
-  } while (0)
-
-#define EURYDICE_VEC_INDEX(v, i, t) &((t *)v->ptr)[i]
-#define EURYDICE_VEC_LEN(v, t) (v)->len
-
-/* TODO: remove GCC-isms */
-
-#define EURYDICE_REPLACE(ptr, new_v, t) \
-  ({                                    \
-    t old_v = *ptr;                     \
-    *ptr = new_v;                       \
-    old_v;                              \
-  })
