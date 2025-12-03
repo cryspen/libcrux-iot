@@ -83,48 +83,6 @@ using std::type_identity_t;
 #define Eurydice_slice_index_mut(s, i, t) ((s).ptr[i])
 #define Eurydice_slice_index_shared(s, i, t) ((s).ptr[i])
 
-#define Eurydice_slice_index(s, i, t) ((s).ptr[i])
-
-// The following functions get sub slices from a slice.
-
-#define Eurydice_slice_subslice(s, r, t, _0, _1) \
-  EURYDICE_SLICE((t *)s.ptr, r.start, r.end)
-
-// Variant for when the start and end indices are statically known (i.e., the
-// range argument `r` is a literal).
-#define Eurydice_slice_subslice2(s, start, end, t) \
-  EURYDICE_SLICE((t *)s.ptr, (start), (end))
-
-#define Eurydice_slice_subslice_to(s, subslice_end_pos, t, _0, _1) \
-  EURYDICE_SLICE((t *)s.ptr, 0, subslice_end_pos)
-
-#define Eurydice_slice_subslice_from(s, subslice_start_pos, t, _0, _1) \
-  EURYDICE_SLICE((t *)s.ptr, subslice_start_pos, s.len)
-
-#define Eurydice_array_to_slice(end, x, t) \
-  EURYDICE_SLICE(x, 0,                     \
-                 end) /* x is already at an array type, no need for cast */
-#define Eurydice_array_to_subslice(_arraylen, x, r, t, _0, _1) \
-  EURYDICE_SLICE((t *)x, r.start, r.end)
-
-// Same as above, variant for when start and end are statically known
-#define Eurydice_array_to_subslice2(x, start, end, t) \
-  EURYDICE_SLICE((t *)x, (start), (end))
-
-// Same as above, variant for when start and end are statically known
-#define Eurydice_array_to_subslice3(x, start, end, t_ptr) \
-  EURYDICE_SLICE((t_ptr)x, (start), (end))
-
-#define Eurydice_array_repeat(dst, len, init, t) \
-  ERROR "should've been desugared"
-
-// The following functions convert an array into a slice.
-
-#define Eurydice_array_to_subslice_to(_size, x, r, t, _range_t, _0) \
-  EURYDICE_SLICE((t *)x, 0, r)
-#define Eurydice_array_to_subslice_from(size, x, r, t, _range_t, _0) \
-  EURYDICE_SLICE((t *)x, r, size)
-
 // Copy a slice with memcopy
 #define Eurydice_slice_copy(dst, src, t) \
   memcpy(dst.ptr, src.ptr, dst.meta * sizeof(t))
@@ -184,37 +142,6 @@ using std::type_identity_t;
   Eurydice_slice_to_array3(&(dst)->tag, (char *)&(dst)->val.case_Ok, src, \
                            sizeof(t_arr))
 
-
-// SUPPORT FOR DSTs (Dynamically-Sized Types)
-
-// A DST is a fat pointer that keeps tracks of the size of it flexible array
-// member. Slices are a specific case of DSTs, where [T; N] implements
-// Unsize<[T]>, meaning an array of statically known size can be converted to a
-// fat pointer, i.e. a slice.
-//
-// Unlike slices, DSTs have a built-in definition that gets monomorphized, of
-// the form:
-//
-// typedef struct {
-//   T *ptr;
-//   size_t len; // number of elements
-// } Eurydice_dst;
-//
-// Furthermore, T = T0<[U0]> where `struct T0<U: ?Sized>`, where the `U` is the
-// last field. This means that there are two monomorphizations of T0 in the
-// program. One is `T0<[V; N]>`
-// -- this is directly converted to a Eurydice_dst via suitable codegen (no
-// macro). The other is `T = T0<[U]>`, where `[U]` gets emitted to
-// `Eurydice_derefed_slice`, a type that only appears in that precise situation
-// and is thus defined to give rise to a flexible array member.
-
-typedef char Eurydice_derefed_slice[];
-
-#define Eurydice_slice_of_dst(fam_ptr, len_, t, _) \
-  ((Eurydice_slice){.ptr = (void *)(fam_ptr), .len = len_})
-
-#define Eurydice_slice_of_boxed_array(ptr_, len_, t, _) \
-  ((Eurydice_slice){.ptr = (void *)(ptr_), .len = len_})
 
 // CORE STUFF (conversions, endianness, ...)
 
