@@ -5,10 +5,10 @@
  *
  * This code was generated with the following revisions:
  * Charon: 637a6bc8a4c2a79875af5aa4e413c7ef3aa7f391
- * Eurydice: 5ca42bdb4309a18e332321ca9ae66607824428eb
+ * Eurydice: 788f967cfd9eaff503d3785f64072f851945c726
  * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
  * F*: unset
- * Libcrux: 936916cddc98fa7c87698a18d08336862d718614
+ * Libcrux: 34a7778be03e250fff932df62147cec2b85ec54b
  */
 
 #ifndef internal_libcrux_iot_core_H

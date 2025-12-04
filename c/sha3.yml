@@ -11,7 +11,7 @@ files:
         - '"eurydice-include/eurydice/base.h"'
         - '"eurydice-include/eurydice/core.h"'
         - '"eurydice-include/eurydice/slice.h"'
-        - '"custom_glue/custom_glue.h"'
+        # - '"custom_glue/custom_glue.h"'
 
   # Portable SHA3
   - name: libcrux_iot_sha3

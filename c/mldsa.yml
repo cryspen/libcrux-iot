@@ -27,8 +27,9 @@ files:
     include_in_h:
         - '"eurydice-include/eurydice/base.h"'
         - '"eurydice-include/eurydice/slice.h"'
-        - '"custom_glue/custom_glue.h"'
-        - '"custom_glue/core.h"'
+        - '"eurydice-include/eurydice/core.h"'
+        # - '"custom_glue/custom_glue.h"'
+        
       
   # SHA3
   - name: libcrux_iot_sha3

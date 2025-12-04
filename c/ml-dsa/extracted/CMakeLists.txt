@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.10..4.0)
 
-project(libcrux-ml-dsa
+project(libcrux-iot-ml-dsa
     VERSION 0.1.0
     LANGUAGES C CXX
 )
@@ -36,7 +36,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 include_directories(
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/internal
-    ${PROJECT_SOURCE_DIR}/custom_glue/
     ${PROJECT_SOURCE_DIR}/karamel/include
     ${PROJECT_SOURCE_DIR}/eurydice-include/
     ${PROJECT_SOURCE_DIR}/eurydice-include/eurydice
