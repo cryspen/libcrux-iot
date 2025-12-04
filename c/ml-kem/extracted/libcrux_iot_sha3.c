@@ -7,8 +7,8 @@
  * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
+ * F*: unset
+ * Libcrux: 1ad7c25705450131b575043e252c944035898962
  */
 
 #include "internal/libcrux_iot_sha3.h"
@@ -14599,8 +14599,7 @@ with const generics
 */
 void libcrux_iot_sha3_portable_keccakx1_96(Eurydice_borrow_slice_u8 data,
                                            Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_96(
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
+  libcrux_iot_sha3_keccak_keccak_96(data, out);
 }
 
 /**
@@ -14948,8 +14947,7 @@ with const generics
 */
 void libcrux_iot_sha3_portable_keccakx1_ad(Eurydice_borrow_slice_u8 data,
                                            Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_ad(
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
+  libcrux_iot_sha3_keccak_keccak_ad(data, out);
 }
 
 /**
@@ -15041,8 +15039,7 @@ with const generics
 */
 void libcrux_iot_sha3_portable_keccakx1_ad0(Eurydice_borrow_slice_u8 data,
                                             Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_ad0(
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
+  libcrux_iot_sha3_keccak_keccak_ad0(data, out);
 }
 
 /**
@@ -15180,8 +15177,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_c6(
 void libcrux_iot_sha3_portable_incremental_shake128_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 data0) {
   libcrux_iot_sha3_state_KeccakState *uu____0 = s;
-  Eurydice_borrow_slice_u8 uu____1 =
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data0);
+  Eurydice_borrow_slice_u8 uu____1 = data0;
   libcrux_iot_sha3_keccak_absorb_final_c6(uu____0, uu____1, (size_t)0U,
                                           Eurydice_slice_len(data0, uint8_t));
 }
@@ -15655,8 +15651,7 @@ with const generics
 */
 void libcrux_iot_sha3_portable_keccakx1_1e(Eurydice_borrow_slice_u8 data,
                                            Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_1e(
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
+  libcrux_iot_sha3_keccak_keccak_1e(data, out);
 }
 
 /**
@@ -16004,8 +15999,7 @@ with const generics
 */
 void libcrux_iot_sha3_portable_keccakx1_7c(Eurydice_borrow_slice_u8 data,
                                            Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_7c(
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
+  libcrux_iot_sha3_keccak_keccak_7c(data, out);
 }
 
 /**
@@ -16245,8 +16239,7 @@ with const generics
 */
 void libcrux_iot_sha3_portable_keccakx1_c6(Eurydice_borrow_slice_u8 data,
                                            Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_c6(
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data), out);
+  libcrux_iot_sha3_keccak_keccak_c6(data, out);
 }
 
 /**
@@ -16329,8 +16322,7 @@ void libcrux_iot_sha3_portable_incremental_shake128_squeeze_first_five_blocks(
 void libcrux_iot_sha3_portable_incremental_shake256_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 data) {
   libcrux_iot_sha3_state_KeccakState *uu____0 = s;
-  Eurydice_borrow_slice_u8 uu____1 =
-      libcrux_secrets_int_classify_public_classify_ref_9b_90(data);
+  Eurydice_borrow_slice_u8 uu____1 = data;
   libcrux_iot_sha3_keccak_absorb_final_ad0(uu____0, uu____1, (size_t)0U,
                                            Eurydice_slice_len(data, uint8_t));
 }

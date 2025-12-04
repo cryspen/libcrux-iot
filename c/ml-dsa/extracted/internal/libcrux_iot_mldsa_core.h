@@ -8,7 +8,7 @@
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
  * F*: unset
- * Libcrux: 0c7d13eb4d0117dce1ec2ef42fdb87d10cf78e2b
+ * Libcrux: 1ad7c25705450131b575043e252c944035898962
  */
 
 #ifndef internal_libcrux_iot_mldsa_core_H
@@ -1200,18 +1200,6 @@ with types Eurydice_arr uint8_t[[$200size_t]]
 */
 Eurydice_arr_88 libcrux_secrets_int_public_integers_classify_27_c1(
     Eurydice_arr_88 self);
-
-/**
-This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a
-(@Slice<T>)> for &'a (@Slice<T>)}
-*/
-/**
-A monomorphic instance of libcrux_secrets.int.classify_public.classify_ref_9b
-with types uint8_t
-
-*/
-Eurydice_borrow_slice_u8 libcrux_secrets_int_classify_public_classify_ref_9b_90(
-    Eurydice_borrow_slice_u8 self);
 
 /**
 A monomorphic instance of Eurydice.arr
