@@ -29,6 +29,7 @@ impl<SIMDUnit: Operations> PolynomialRingElement<SIMDUnit> {
     }
 
     pub(crate) fn from_i32_array(array: &[i32], result: &mut Self) {
+        #[cfg(not(eurydice))]
         debug_assert!(array.len() >= 256);
         for i in 0..SIMD_UNITS_IN_RING_ELEMENT {
             SIMDUnit::from_coefficient_array(

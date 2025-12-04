@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 667d2fc98984ff7f3df989c2367e6c1fa4a000e7
- * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
- * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
+ * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
+ * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
+ * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
  * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: e6fef680120a4e50cd5b638b7d0ccfb2961d1139
+ * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
  */
 
-#ifndef libcrux_mlkem1024_portable_H
-#define libcrux_mlkem1024_portable_H
+#ifndef libcrux_iot_mlkem1024_portable_H
+#define libcrux_iot_mlkem1024_portable_H
 
 #include "eurydice_glue.h"
 
@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#include "libcrux_core.h"
+#include "libcrux_iot_core.h"
 
 /**
  Decapsulate ML-KEM 1024
@@ -29,10 +29,8 @@ extern "C" {
  The input is a reference to an [`MlKem1024PrivateKey`] and an
  [`MlKem1024Ciphertext`].
 */
-void libcrux_iot_ml_kem_mlkem1024_portable_decapsulate(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key,
-    libcrux_iot_ml_kem_mlkem1024_MlKem1024Ciphertext *ciphertext,
-    uint8_t ret[32U]);
+Eurydice_arr_600 libcrux_iot_ml_kem_mlkem1024_portable_decapsulate(
+    const Eurydice_arr_17 *private_key, const Eurydice_arr_00 *ciphertext);
 
 /**
  Encapsulate ML-KEM 1024
@@ -41,16 +39,15 @@ void libcrux_iot_ml_kem_mlkem1024_portable_decapsulate(
  The input is a reference to an [`MlKem1024PublicKey`] and
  [`SHARED_SECRET_SIZE`] bytes of `randomness`.
 */
-tuple_d1 libcrux_iot_ml_kem_mlkem1024_portable_encapsulate(
-    libcrux_iot_ml_kem_types_MlKemPublicKey_64 *public_key,
-    uint8_t randomness[32U]);
+tuple_32 libcrux_iot_ml_kem_mlkem1024_portable_encapsulate(
+    const Eurydice_arr_00 *public_key, Eurydice_arr_600 randomness);
 
 /**
  Generate ML-KEM 1024 Key Pair
 */
-libcrux_iot_ml_kem_mlkem1024_MlKem1024KeyPair
+libcrux_iot_ml_kem_types_MlKemKeyPair_f7
 libcrux_iot_ml_kem_mlkem1024_portable_generate_key_pair(
-    uint8_t randomness[64U]);
+    Eurydice_arr_06 randomness);
 
 /**
  Validate a private key.
@@ -58,8 +55,7 @@ libcrux_iot_ml_kem_mlkem1024_portable_generate_key_pair(
  Returns `true` if valid, and `false` otherwise.
 */
 bool libcrux_iot_ml_kem_mlkem1024_portable_validate_private_key(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key,
-    libcrux_iot_ml_kem_mlkem1024_MlKem1024Ciphertext *ciphertext);
+    const Eurydice_arr_17 *private_key, const Eurydice_arr_00 *ciphertext);
 
 /**
  Validate the private key only.
@@ -67,7 +63,7 @@ bool libcrux_iot_ml_kem_mlkem1024_portable_validate_private_key(
  Returns `true` if valid, and `false` otherwise.
 */
 bool libcrux_iot_ml_kem_mlkem1024_portable_validate_private_key_only(
-    libcrux_iot_ml_kem_types_MlKemPrivateKey_83 *private_key);
+    const Eurydice_arr_17 *private_key);
 
 /**
  Validate a public key.
@@ -75,11 +71,11 @@ bool libcrux_iot_ml_kem_mlkem1024_portable_validate_private_key_only(
  Returns `true` if valid, and `false` otherwise.
 */
 bool libcrux_iot_ml_kem_mlkem1024_portable_validate_public_key(
-    libcrux_iot_ml_kem_types_MlKemPublicKey_64 *public_key);
+    const Eurydice_arr_00 *public_key);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#define libcrux_mlkem1024_portable_H_DEFINED
-#endif /* libcrux_mlkem1024_portable_H */
+#define libcrux_iot_mlkem1024_portable_H_DEFINED
+#endif /* libcrux_iot_mlkem1024_portable_H */

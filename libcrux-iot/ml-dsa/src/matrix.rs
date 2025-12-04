@@ -142,6 +142,7 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
     poly_slot_b: &mut PolynomialRingElement<SIMDUnit>, // no precondition, will be clobbered
     poly_slot_c: &mut PolynomialRingElement<SIMDUnit>, // precondition: must be zero, postcondition: holds w'_approx[i]
 ) -> Result<(), crate::VerificationError> {
+    #[cfg(not(eurydice))]
     debug_assert_eq!(poly_slot_c.to_i32_array(), [0i32; 256]);
 
     for j in 0..columns_in_a {

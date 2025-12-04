@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 667d2fc98984ff7f3df989c2367e6c1fa4a000e7
- * Eurydice: 2381cbc416ef2ad0b561c362c500bc84f36b6785
- * Karamel: 80f5435f2fc505973c469a4afcc8d875cddd0d8b
+ * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
+ * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
+ * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
  * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: e6fef680120a4e50cd5b638b7d0ccfb2961d1139
+ * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
  */
 
-#ifndef libcrux_mlkem768_H
-#define libcrux_mlkem768_H
+#ifndef libcrux_iot_mlkem768_H
+#define libcrux_iot_mlkem768_H
 
 #include "eurydice_glue.h"
 
@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#include "libcrux_core.h"
+#include "libcrux_iot_core.h"
 
 #define LIBCRUX_IOT_ML_KEM_MLKEM768_VECTOR_U_COMPRESSION_FACTOR ((size_t)10U)
 
@@ -69,11 +69,14 @@ extern "C" {
   (LIBCRUX_IOT_ML_KEM_CONSTANTS_SHARED_SECRET_SIZE +                   \
    LIBCRUX_IOT_ML_KEM_MLKEM768_CPA_PKE_CIPHERTEXT_SIZE)
 
-typedef libcrux_iot_ml_kem_types_MlKemPrivateKey_d9
-    libcrux_iot_ml_kem_mlkem768_MlKem768PrivateKey;
+typedef Eurydice_arr_2c libcrux_iot_ml_kem_mlkem768_MlKem768Ciphertext;
 
-typedef libcrux_iot_ml_kem_types_MlKemPublicKey_30
-    libcrux_iot_ml_kem_mlkem768_MlKem768PublicKey;
+typedef libcrux_iot_ml_kem_types_MlKemKeyPair_5f
+    libcrux_iot_ml_kem_mlkem768_MlKem768KeyPair;
+
+typedef Eurydice_arr_ea libcrux_iot_ml_kem_mlkem768_MlKem768PrivateKey;
+
+typedef Eurydice_arr_74 libcrux_iot_ml_kem_mlkem768_MlKem768PublicKey;
 
 #define LIBCRUX_IOT_ML_KEM_MLKEM768_PRF_OUTPUT_SIZE1  \
   (LIBCRUX_IOT_ML_KEM_MLKEM768_ETA1_RANDOMNESS_SIZE * \
@@ -100,5 +103,5 @@ typedef libcrux_iot_ml_kem_types_MlKemPublicKey_30
 }
 #endif
 
-#define libcrux_mlkem768_H_DEFINED
-#endif /* libcrux_mlkem768_H */
+#define libcrux_iot_mlkem768_H_DEFINED
+#endif /* libcrux_iot_mlkem768_H */

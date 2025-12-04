@@ -1,7 +1,3 @@
-naming:
-  skip_prefix:
-    - ["libcrux_iot_sha3"]
-
 files:
   # Portable SHA3
   - name: libcrux_iot_sha3
@@ -49,9 +45,12 @@ files:
         - [libcrux_iot_sha3, "*"]
     inline_static: true
 
+
+  # MLKEM: HASH FUNCTIONS (as used by mlkem)
+
   # This covers slightly more than the two bundles above, but this greatly
   # simplifies our lives.
-  - name: libcrux_mlkem_iot
+  - name: libcrux_iot_mlkem_portable
     api:
       - [libcrux_iot_ml_kem, vector, "*"]
       - [libcrux_iot_ml_kem, hash_functions, portable, "*"]
@@ -68,9 +67,10 @@ files:
         - [ libcrux_iot_ml_kem, hash_functions, portable, "*"]
 
   # MLKEM: MISC NON-ARCHITECTURE SPECIFIC HEADERS
-  - name: libcrux_core
+  - name: libcrux_iot_core
     private:
       monomorphizations_of:
+        - [ Eurydice, "*" ]
         - [ core, "*"]
         - [ libcrux_secrets, "*"]
         - [ libcrux_iot_ml_kem, types, "*"]
@@ -86,35 +86,41 @@ files:
         - [ libcrux_iot_ml_kem, constants ]
         - [ libcrux_iot_ml_kem, constant_time_ops, "*"]
         - [ libcrux_iot_ml_kem, utils, "*" ]
+      monomorphizations_exact:
+        - [Eurydice, arr_e2]
     api:
       - [Eurydice, "*"]
 
   # MLKEM-768
 
-  - name: libcrux_mlkem768_portable
+  - name: libcrux_iot_mlkem768_portable
     api:
       - [libcrux_iot_ml_kem, mlkem768, portable]
+    internal:
+      - [libcrux_iot_ml_kem, mlkem768, portable, unpacked]
 
   # This one contains common definitions like types, etc.
-  - name: libcrux_mlkem768
+  - name: libcrux_iot_mlkem768
     api:
       - [libcrux_iot_ml_kem, mlkem768]
 
   # MLKEM-1024
 
-  - name: libcrux_mlkem1024_portable
+  - name: libcrux_iot_mlkem1024_portable
     api:
       - [libcrux_iot_ml_kem, mlkem1024, portable]
+    internal:
+      - [libcrux_iot_ml_kem, mlkem1024, portable, unpacked]
 
   # This one contains common definitions like types, etc.
-  - name: libcrux_mlkem1024
+  - name: libcrux_iot_mlkem1024
     api:
       - [libcrux_iot_ml_kem, mlkem1024]
 
   # We let monomorphization insert things at the right place in each one of the
   # 9 variants above. Helpers that have not been assigned into any of the
-  # individual libcrux_mlkemXXX files end up in a catch-all.
-  - name: libcrux_mlkem_common
+  # individual libcrux_iot_mlkemXXX files end up in a catch-all.
+  - name: libcrux_iot_mlkem_common
     private:
       - [libcrux_iot_ml_kem, "*"]
     inline_static: true
@@ -123,3 +129,4 @@ naming:
   skip_prefix:
     - [ core, core_arch, x86 ]
     - [libcrux_intrinsics, arm64]
+    - ["libcrux_iot_sha3"]

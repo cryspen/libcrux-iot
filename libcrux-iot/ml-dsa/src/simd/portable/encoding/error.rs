@@ -2,6 +2,7 @@ use crate::{constants::Eta, helper::cloop, simd::portable::vector_type::Coeffici
 
 #[inline(always)]
 fn serialize_when_eta_is_2(simd_unit: &Coefficients, serialized: &mut [u8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(serialized.len() == 3);
 
     const ETA: i32 = 2;
@@ -49,6 +50,7 @@ pub(crate) fn serialize(eta: Eta, simd_unit: &Coefficients, serialized: &mut [u8
 
 #[inline(always)]
 fn deserialize_when_eta_is_2(serialized: &[u8], simd_unit: &mut Coefficients) {
+    #[cfg(not(eurydice))]
     debug_assert!(serialized.len() == 3);
 
     const ETA: i32 = 2;
@@ -69,6 +71,7 @@ fn deserialize_when_eta_is_2(serialized: &[u8], simd_unit: &mut Coefficients) {
 
 #[inline(always)]
 fn deserialize_when_eta_is_4(serialized: &[u8], simd_units: &mut Coefficients) {
+    #[cfg(not(eurydice))]
     debug_assert!(serialized.len() == 4);
 
     const ETA: i32 = 4;
