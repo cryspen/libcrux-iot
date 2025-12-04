@@ -3,7 +3,7 @@ use serde_json;
 use std::{fs::File, io::BufReader, path::Path};
 
 use libcrux_iot_sha3::*;
-use libcrux_secrets::{Classify, Declassify, DeclassifyRef as _};
+use libcrux_secrets::{Classify, ClassifyRef as _, Declassify};
 
 #[derive(Deserialize)]
 struct MlKemNISTKAT {
@@ -46,16 +46,16 @@ macro_rules! impl_nist_known_answer_tests {
 
                 assert!(validate_public_key(key_pair.public_key()));
 
-                let public_key_hash = sha256(key_pair.pk()).declassify();
+                let public_key_hash = sha256(key_pair.pk().classify_ref()).declassify();
                 eprintln!("pk hash: {}", hex::encode(public_key_hash));
-                let secret_key_hash = sha256(key_pair.sk().declassify_ref()).declassify();
+                let secret_key_hash = sha256(key_pair.sk()).declassify();
 
                 assert_eq!(public_key_hash, kat.sha3_256_hash_of_public_key, "lhs: computed public key hash, rhs: hash from kat");
                 assert_eq!(secret_key_hash, kat.sha3_256_hash_of_secret_key, "lhs: computed secret key hash, rhs: hash from kat");
 
                 let (ciphertext, shared_secret) =
                 encapsulate(key_pair.public_key(), kat.encapsulation_seed.classify());
-                let ciphertext_hash = sha256(ciphertext.as_ref()).declassify();
+                let ciphertext_hash = sha256(ciphertext.as_ref().classify_ref()).declassify();
 
                 assert_eq!(ciphertext_hash, kat.sha3_256_hash_of_ciphertext, "lhs: computed ciphertext hash, rhs: hash from akt");
                 assert_eq!(shared_secret.declassify().as_ref(), kat.shared_secret, "lhs: computed shared secret from encapsulate, rhs: shared secret from kat");
@@ -141,8 +141,8 @@ macro_rules! impl_kats {
 
                 assert!(validate_public_key(key_pair.public_key()));
 
-                let public_key_hash = sha256(key_pair.pk()).declassify();
-                let secret_key_hash = sha256(key_pair.sk().declassify_ref()).declassify();
+                let public_key_hash = sha256(key_pair.pk().classify_ref()).declassify();
+                let secret_key_hash = sha256(key_pair.sk()).declassify();
 
                 assert_eq!(public_key_hash, kat.sha3_256_hash_of_public_key, "lhs: computed public key hash, rhs: hash from kat");
                 assert_eq!(secret_key_hash, kat.sha3_256_hash_of_secret_key, "lhs: computed secret key hash, rhs: hash from kat");
@@ -150,7 +150,7 @@ macro_rules! impl_kats {
                 // Encapsulate
                 let (ciphertext, shared_secret) =
                 encapsulate(key_pair.public_key(), kat.encapsulation_seed.classify());
-                let ciphertext_hash = sha256(ciphertext.as_ref()).declassify();
+                let ciphertext_hash = sha256(ciphertext.as_ref().classify_ref()).declassify();
 
                 assert_eq!(ciphertext_hash, kat.sha3_256_hash_of_ciphertext, "lhs: computed ciphertext hash, rhs: hash from akt");
                 assert_eq!(shared_secret.declassify().as_ref(), kat.shared_secret, "lhs: computed shared secret from encapsulate, rhs: shared secret from kat");
