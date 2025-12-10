@@ -66,8 +66,7 @@ pub(crate) trait Hash {
     fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize);
 
     /// Create a SHAKE128 state and absorb the input.
-    // We only use this in sampling the public matrix A from the
-    // public seeds as input.
+    // We only use this in sampling the public matrix A from the public seeds as input.
     #[requires(true)]
     fn shake128_init_absorb_final(input: &[[u8; 34]]) -> Self;
 
@@ -86,9 +85,9 @@ pub(crate) trait Hash {
 pub(crate) mod portable {
     use super::*;
     use libcrux_iot_sha3::portable::{self, incremental, KeccakState};
+    use libcrux_secrets::Classify as _;
     #[cfg(not(hax))]
     use libcrux_secrets::ClassifyRefMut as _;
-    use libcrux_secrets::Classify as _;
 
     /// The state.
     ///
