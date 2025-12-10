@@ -142,7 +142,6 @@ using std::type_identity_t;
   Eurydice_slice_to_array3(&(dst)->tag, (char *)&(dst)->val.case_Ok, src, \
                            sizeof(t_arr))
 
-
 // CORE STUFF (conversions, endianness, ...)
 
 // We slap extern "C" on declarations that intend to implement a prototype
@@ -332,7 +331,6 @@ core_num_nonzero_private___core__clone__Clone_for_core__num__nonzero__private__N
 #define core_iter_traits_collect___core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__1__into_iter \
   Eurydice_into_iter
 
-
 // using it anyway??
 #define Eurydice_slice_subslice3(s, start, end, t_ptr) \
   EURYDICE_SLICE((t_ptr)s.ptr, (start), (end))
@@ -366,4 +364,3 @@ core_num_nonzero_private___core__clone__Clone_for_core__num__nonzero__private__N
 typedef char Eurydice_c_char_t;
 typedef const Eurydice_c_char_t *Prims_string;
 typedef void Eurydice_c_void_t;
-

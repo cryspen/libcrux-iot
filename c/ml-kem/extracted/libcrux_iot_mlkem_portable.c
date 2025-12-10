@@ -7,8 +7,8 @@
  * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
+ * F*: unset
+ * Libcrux: 1ad7c25705450131b575043e252c944035898962
  */
 
 #include "internal/libcrux_iot_mlkem_portable.h"
@@ -20,14 +20,12 @@
 
 KRML_MUSTINLINE void libcrux_iot_ml_kem_hash_functions_portable_G(
     Eurydice_borrow_slice_u8 input, Eurydice_mut_borrow_slice_u8 output) {
-  libcrux_iot_sha3_portable_sha512(
-      output, libcrux_secrets_int_classify_public_declassify_ref_7f_90(input));
+  libcrux_iot_sha3_portable_sha512(output, input);
 }
 
 KRML_MUSTINLINE void libcrux_iot_ml_kem_hash_functions_portable_H(
     Eurydice_borrow_slice_u8 input, Eurydice_mut_borrow_slice_u8 output) {
-  libcrux_iot_sha3_portable_sha256(
-      output, libcrux_secrets_int_classify_public_declassify_ref_7f_90(input));
+  libcrux_iot_sha3_portable_sha256(output, input);
 }
 
 inline void libcrux_iot_ml_kem_hash_functions_portable_PRFxN(
@@ -41,12 +39,10 @@ inline void libcrux_iot_ml_kem_hash_functions_portable_PRFxN(
         (KRML_CLITERAL(core_ops_range_Range_08){
             .start = i0 * out_len, .end = (i0 + (size_t)1U) * out_len}));
     libcrux_iot_sha3_portable_shake256(
-        uu____0,
-        libcrux_secrets_int_classify_public_declassify_ref_7f_90(
-            core_array___Array_T__N___as_slice(
-                (size_t)33U,
-                &Eurydice_slice_index_shared(input, i0, Eurydice_arr_3e),
-                uint8_t, Eurydice_borrow_slice_u8)));
+        uu____0, core_array___Array_T__N___as_slice(
+                     (size_t)33U,
+                     &Eurydice_slice_index_shared(input, i0, Eurydice_arr_3e),
+                     uint8_t, Eurydice_borrow_slice_u8));
   }
 }
 
@@ -64,10 +60,12 @@ libcrux_iot_ml_kem_hash_functions_portable_shake128_init_absorb_final(
   for (size_t i = (size_t)0U; i < Eurydice_slice_len(input, Eurydice_arr_48);
        i++) {
     size_t i0 = i;
+    libcrux_iot_sha3_state_KeccakState *uu____0 = &shake128_state.data[i0];
+    /* original Rust expression is not an lvalue in C */
+    Eurydice_arr_48 lvalue = libcrux_secrets_int_public_integers_classify_27_2c(
+        Eurydice_slice_index_shared(input, i0, Eurydice_arr_48));
     libcrux_iot_sha3_portable_incremental_shake128_absorb_final(
-        &shake128_state.data[i0],
-        Eurydice_array_to_slice_shared_8d(
-            &Eurydice_slice_index_shared(input, i0, Eurydice_arr_48)));
+        uu____0, Eurydice_array_to_slice_shared_8d(&lvalue));
   }
   return shake128_state;
 }
@@ -4223,8 +4221,7 @@ with const generics
 */
 static KRML_MUSTINLINE void PRF_a6(Eurydice_borrow_slice_u8 input,
                                    Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_portable_shake256(
-      out, libcrux_secrets_int_classify_public_declassify_ref_7f_90(input));
+  libcrux_iot_sha3_portable_shake256(out, input);
 }
 
 /**
@@ -6096,8 +6093,7 @@ with const generics
 */
 static KRML_MUSTINLINE void PRF_9e(Eurydice_borrow_slice_u8 input,
                                    Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_portable_shake256(
-      out, libcrux_secrets_int_classify_public_declassify_ref_7f_90(input));
+  libcrux_iot_sha3_portable_shake256(out, input);
 }
 
 /**

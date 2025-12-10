@@ -27,7 +27,7 @@ pub(crate) fn entry<const K: usize, Vector: Operations>(
 #[inline(always)]
 pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     out: &mut PolynomialRingElement<Vector>,
-    seed: &[u8],
+    seed: &[u8], // The seed for sampling public matrix A is public itself.
     i: usize,
     j: usize,
 ) {
@@ -40,6 +40,7 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     let mut sampled_coefficients = [0usize; 1];
     let mut out_raw = [[0i16; 272]; 1];
     sample_from_xof::<1, Vector, Hasher>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
+    // We classify the matrix entry here to use it in classified arithmetic.
     PolynomialRingElement::from_i16_array(out_raw[0].classify().as_slice(), out);
 }
 
@@ -57,7 +58,7 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
 )]
 pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
     A_transpose: &mut [PolynomialRingElement<Vector>],
-    seed: &[u8; 34],
+    seed: &[u8; 34], // The seed for sampling public matrix A is public itself.
     transpose: bool,
 ) {
     #[cfg(not(eurydice))]
@@ -153,7 +154,7 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
 #[inline(always)]
 pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>(
     matrix_entry: &mut PolynomialRingElement<Vector>,
-    seed: &[u8],
+    seed: &[u8], // The seed for sampling public matrix A is public itself.
     r_as_ntt: &[PolynomialRingElement<Vector>],
     error_1: &[PolynomialRingElement<Vector>],
     result: &mut [PolynomialRingElement<Vector>],

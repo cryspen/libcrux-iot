@@ -7,8 +7,8 @@
  * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: f5a2e8205f49b35cb3e6b03aa25e16c26318ad09
+ * F*: unset
+ * Libcrux: 1ad7c25705450131b575043e252c944035898962
  */
 
 #include "internal/libcrux_iot_core.h"
@@ -1918,6 +1918,20 @@ libcrux_secrets_int_public_integers_classify_mut_slice_47(
 }
 
 /**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a
+(@Slice<T>)> for &'a (@Slice<T>)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.classify_public.classify_ref_9b
+with types uint8_t
+
+*/
+Eurydice_borrow_slice_u8 libcrux_secrets_int_classify_public_classify_ref_9b_90(
+    Eurydice_borrow_slice_u8 self) {
+  return self;
+}
+
+/**
 This function found in impl {libcrux_secrets::traits::Declassify<T> for T}
 */
 /**
@@ -2006,6 +2020,19 @@ Eurydice_dst_ref_mut uint8_t size_t
 Eurydice_mut_borrow_slice_u8 *
 libcrux_secrets_int_classify_public_classify_ref_mut_a1_47(
     Eurydice_mut_borrow_slice_u8 *self) {
+  return self;
+}
+
+/**
+This function found in impl {libcrux_secrets::traits::Classify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
+with types Eurydice_arr uint8_t[[$34size_t]]
+
+*/
+Eurydice_arr_48 libcrux_secrets_int_public_integers_classify_27_2c(
+    Eurydice_arr_48 self) {
   return self;
 }
 
@@ -2128,20 +2155,6 @@ with types Eurydice_arr uint8_t[[$28size_t]]
 */
 Eurydice_arr_f1 libcrux_secrets_int_public_integers_classify_27_4b(
     Eurydice_arr_f1 self) {
-  return self;
-}
-
-/**
-This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a
-(@Slice<T>)> for &'a (@Slice<T>)}
-*/
-/**
-A monomorphic instance of libcrux_secrets.int.classify_public.classify_ref_9b
-with types uint8_t
-
-*/
-Eurydice_borrow_slice_u8 libcrux_secrets_int_classify_public_classify_ref_9b_90(
-    Eurydice_borrow_slice_u8 self) {
   return self;
 }
 

@@ -66,15 +66,18 @@ pub(crate) trait Hash {
     fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize);
 
     /// Create a SHAKE128 state and absorb the input.
+    // We only use this in sampling the public matrix A from the public seeds as input.
     #[requires(true)]
     fn shake128_init_absorb_final(input: &[[u8; 34]]) -> Self;
 
     /// Squeeze 3 blocks out of the SHAKE128 state.
     #[requires(true)]
+    // We only use this to sample entries of the public matrix A, from the public seeds.
     fn shake128_squeeze_first_three_blocks(&mut self, output: &mut [[u8; THREE_BLOCKS]]);
 
     /// Squeeze 1 block out of the SHAKE128 state.
     #[requires(true)]
+    // We only use this to sample entries of the public matrix A, from the public seeds.
     fn shake128_squeeze_next_block(&mut self, output: &mut [[u8; BLOCK_SIZE]]);
 }
 
@@ -82,9 +85,10 @@ pub(crate) trait Hash {
 pub(crate) mod portable {
     use super::*;
     use libcrux_iot_sha3::portable::{self, incremental, KeccakState};
+    use libcrux_secrets::Classify as _;
     #[cfg(not(hax))]
     use libcrux_secrets::ClassifyRefMut as _;
-    use libcrux_secrets::DeclassifyRef as _;
+
     /// The state.
     ///
     /// It's only used for SHAKE128.
@@ -101,8 +105,7 @@ pub(crate) mod portable {
     ]
     #[inline(always)]
     fn G(input: &[U8], output: &mut [U8]) {
-        // Declassification: XXX This is the API offered by SHA-3.
-        portable::sha512(output, input.declassify_ref());
+        portable::sha512(output, input);
     }
 
     #[hax_lib::requires(output.len() == 32)]
@@ -112,8 +115,7 @@ pub(crate) mod portable {
     ]
     #[inline(always)]
     fn H(input: &[U8], output: &mut [U8]) {
-        // Declassification: XXX This is the API offered by SHA-3.
-        portable::sha256(output, input.declassify_ref());
+        portable::sha256(output, input);
     }
 
     #[hax_lib::requires(fstar!(r#"v $LEN < pow2 32 /\
@@ -126,8 +128,7 @@ pub(crate) mod portable {
     fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]) {
         #[cfg(not(eurydice))]
         debug_assert!(out.len() == LEN);
-        // Declassification: XXX This is the API offered by SHA-3.
-        portable::shake256(out, input.declassify_ref());
+        portable::shake256(out, input);
     }
 
     #[hax_lib::requires(fstar!(r#"let k = Seq.length $input in
@@ -144,7 +145,7 @@ pub(crate) mod portable {
         for i in 0..input.len() {
             portable::shake256(
                 &mut outputs[i * out_len..(i + 1) * out_len],
-                input[i].as_slice().declassify_ref(),
+                input[i].as_slice(),
             );
         }
     }
@@ -156,13 +157,14 @@ pub(crate) mod portable {
 
         let mut shake128_state = [incremental::shake128_init(); 4];
         for i in 0..input.len() {
-            incremental::shake128_absorb_final(&mut shake128_state[i], &input[i]);
+            incremental::shake128_absorb_final(&mut shake128_state[i], &input[i].classify());
         }
 
         PortableHash { shake128_state }
     }
 
     #[inline(always)]
+    // We only use this to sample entries of the public matrix A, from the public seeds.
     fn shake128_squeeze_first_three_blocks(
         st: &mut PortableHash,
         outputs: &mut [[u8; THREE_BLOCKS]],
@@ -191,6 +193,7 @@ pub(crate) mod portable {
     }
 
     #[inline(always)]
+    // We only use this to sample entries of the public matrix A, from the public seeds.
     fn shake128_squeeze_next_block(st: &mut PortableHash, outputs: &mut [[u8; BLOCK_SIZE]]) {
         for i in 0..outputs.len() {
             // XXX: We need a separate version for hax, entirely without
@@ -257,11 +260,13 @@ pub(crate) mod portable {
         }
 
         #[inline(always)]
+        // We only use this to sample entries of the public matrix A, from the public seeds.
         fn shake128_squeeze_first_three_blocks(&mut self, output: &mut [[u8; THREE_BLOCKS]]) {
             shake128_squeeze_first_three_blocks(self, output)
         }
 
         #[inline(always)]
+        // We only use this to sample entries of the public matrix A, from the public seeds.
         fn shake128_squeeze_next_block(&mut self, output: &mut [[u8; BLOCK_SIZE]]) {
             shake128_squeeze_next_block(self, output)
         }
