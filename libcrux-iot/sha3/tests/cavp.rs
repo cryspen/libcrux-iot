@@ -1,6 +1,6 @@
 use cavp::*;
 use libcrux_iot_sha3::*;
-use libcrux_secrets::{Classify as _, ClassifyRef as _, DeclassifyRef as _};
+use libcrux_secrets::{Classify as _, ClassifyRef as _, DeclassifyRef as _, U8};
 
 macro_rules! sha3_test {
     ($file:ident, $digest_len:expr, $algorithm:expr) => {
@@ -15,7 +15,7 @@ macro_rules! sha3_test {
             for test in &tv.tests {
                 eprintln!("test {c}");
                 c += 1;
-                let my_digest: $digest =
+                let my_digest: [U8; $digest_len] =
                     sha3($algorithm, &test.msg[0..test.msg_length / 8].classify_ref());
                 assert_eq!(my_digest.declassify_ref(), &test.digest[..]);
             }
