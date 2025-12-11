@@ -130,10 +130,10 @@ pub(super) fn infinity_norm_exceeds(simd_unit: &Coefficients, bound: i32) -> boo
     // data but we must not leak the sign of the centralized representative.
     for i in 0..simd_unit.values.len() {
         let coefficient = simd_unit.values[i];
-        #[cfg(not(eurydice))]
         // XXX: Below debug assert violates the classification regime
         // in Debug mode. It should be a precondition for hax
         // instead.
+        // #[cfg(not(eurydice))]
         // debug_assert!(
         //     coefficient > -FIELD_MODULUS && coefficient < FIELD_MODULUS
         // );
