@@ -143,7 +143,7 @@ pub(crate) mod generic {
         Shake256X4: shake256::XofX4,
     >(
         signing_key: &[U8],
-        message: &[u8],
+        message: &[U8],
         domain_separation_context: Option<DomainSeparationContext>,
         randomness: [U8; SIGNING_RANDOMNESS_SIZE],
         signature: &mut [u8; SIGNATURE_SIZE],
@@ -191,7 +191,10 @@ pub(crate) mod generic {
         derive_message_representative::<Shake256Xof>(
             verification_key_hash.declassify_ref(),
             &domain_separation_context,
-            message,
+            // Declassification: The message is public, but treated as
+            // secret by default to sidestep hax issues with
+            // `declassify_ref` on a mutable reference.
+            message.declassify_ref(),
             &mut message_representative,
         );
 
@@ -662,7 +665,7 @@ pub(crate) mod generic {
         // treated as such to make hashing easier.
         sign_internal::<SIMDUnit, Sampler, Shake128X4, Shake256, Shake256Xof, Shake256X4>(
             signing_key,
-            pre_hash_buffer.declassify_ref(),
+            pre_hash_buffer,
             Some(domain_separation_context),
             randomness,
             signature,
@@ -733,7 +736,7 @@ pub(crate) mod generic {
         };
         sign_internal::<SIMDUnit, Sampler, Shake128X4, Shake256, Shake256Xof, Shake256X4>(
             signing_key,
-            message,
+            message.classify_ref(),
             Some(domain_separation_context),
             randomness,
             signature,
