@@ -1,3 +1,5 @@
+use libcrux_secrets::U8;
+
 use crate::{helper::cloop, polynomial::PolynomialRingElement, simd::traits::Operations};
 
 #[inline(always)]
@@ -21,7 +23,7 @@ pub(crate) fn serialize<SIMDUnit: Operations>(
 #[inline(always)]
 pub(crate) fn deserialize<SIMDUnit: Operations>(
     gamma1_exponent: usize,
-    serialized: &[u8],
+    serialized: &[U8],
     result: &mut PolynomialRingElement<SIMDUnit>,
 ) {
     for i in 0..result.simd_units.len() {
@@ -36,6 +38,8 @@ pub(crate) fn deserialize<SIMDUnit: Operations>(
 
 #[cfg(test)]
 mod tests {
+    use libcrux_secrets::ClassifyRef as _;
+
     use super::*;
 
     use crate::simd::{self, traits::Operations};
@@ -70,7 +74,8 @@ mod tests {
             302917, 307866, -446103, 225168, -438314, 393602, 409392, 155141, 43252, -178437,
             -248017, 250774, 33014,
         ];
-        let re = PolynomialRingElement::<SIMDUnit>::from_i32_array_test(&coefficients);
+        let re =
+            PolynomialRingElement::<SIMDUnit>::from_i32_array_test(coefficients.classify_ref());
 
         let expected_bytes = [
             191, 20, 228, 197, 78, 59, 42, 5, 166, 19, 40, 225, 25, 56, 6, 144, 123, 201, 223, 58,
@@ -177,7 +182,7 @@ mod tests {
         ];
 
         let mut result = PolynomialRingElement::<SIMDUnit>::zero();
-        deserialize::<SIMDUnit>(17, &bytes, &mut result);
+        deserialize::<SIMDUnit>(17, bytes.classify_ref(), &mut result);
         assert_eq!(result.to_i32_array(), expected_coefficients);
 
         let bytes: [u8; 640] = [
@@ -247,7 +252,7 @@ mod tests {
         ];
 
         let mut result = PolynomialRingElement::<SIMDUnit>::zero();
-        deserialize::<SIMDUnit>(19, &bytes, &mut result);
+        deserialize::<SIMDUnit>(19, bytes.classify_ref(), &mut result);
         assert_eq!(result.to_i32_array(), expected_coefficients);
     }
 

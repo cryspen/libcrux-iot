@@ -1,3 +1,5 @@
+use libcrux_secrets::I32;
+
 use crate::{
     helper::cloop,
     simd::traits::{Operations, COEFFICIENTS_IN_SIMD_UNIT, SIMD_UNITS_IN_RING_ELEMENT},
@@ -28,7 +30,7 @@ impl<SIMDUnit: Operations> PolynomialRingElement<SIMDUnit> {
         result
     }
 
-    pub(crate) fn from_i32_array(array: &[i32], result: &mut Self) {
+    pub(crate) fn from_i32_array(array: &[I32], result: &mut Self) {
         #[cfg(not(eurydice))]
         debug_assert!(array.len() >= 256);
         for i in 0..SIMD_UNITS_IN_RING_ELEMENT {
@@ -42,7 +44,7 @@ impl<SIMDUnit: Operations> PolynomialRingElement<SIMDUnit> {
     }
 
     #[cfg(test)]
-    pub(crate) fn from_i32_array_test(array: &[i32]) -> Self {
+    pub(crate) fn from_i32_array_test(array: &[I32]) -> Self {
         let mut result = PolynomialRingElement::zero();
         Self::from_i32_array(array, &mut result);
         result

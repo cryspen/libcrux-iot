@@ -1,3 +1,5 @@
+use libcrux_secrets::{CastOps as _, Classify as _, Declassify as _, I32, I64, U64};
+
 use super::vector_type::{Coefficients, FieldElement};
 use crate::{
     constants::{Gamma2, BITS_IN_LOWER_PART_OF_T, GAMMA2_V261_888, GAMMA2_V95_232},
@@ -29,20 +31,20 @@ pub fn subtract(lhs: &mut Coefficients, rhs: &Coefficients) {
 }
 
 #[inline(always)]
-pub(crate) fn get_n_least_significant_bits(n: u8, value: u64) -> u64 {
+pub(crate) fn get_n_least_significant_bits(n: u8, value: U64) -> U64 {
     value & ((1 << n) - 1)
 }
 
 #[inline(always)]
-pub(crate) fn montgomery_reduce_element(value: i64) -> FieldElementTimesMontgomeryR {
-    let t = get_n_least_significant_bits(MONTGOMERY_SHIFT, value as u64)
+pub(crate) fn montgomery_reduce_element(value: I64) -> FieldElementTimesMontgomeryR {
+    let t = get_n_least_significant_bits(MONTGOMERY_SHIFT, value.as_u64())
         * INVERSE_OF_MODULUS_MOD_MONTGOMERY_R;
-    let k = get_n_least_significant_bits(MONTGOMERY_SHIFT, t) as i32;
+    let k = get_n_least_significant_bits(MONTGOMERY_SHIFT, t).as_i32();
 
-    let k_times_modulus = (k as i64) * (FIELD_MODULUS as i64);
+    let k_times_modulus = (k.as_i64()) * (FIELD_MODULUS as i64).classify();
 
-    let c = (k_times_modulus >> MONTGOMERY_SHIFT) as i32;
-    let value_high = (value >> MONTGOMERY_SHIFT) as i32;
+    let c = (k_times_modulus >> MONTGOMERY_SHIFT).as_i32();
+    let value_high = (value >> MONTGOMERY_SHIFT).as_i32();
 
     value_high - c
 }
@@ -52,13 +54,14 @@ pub(crate) fn montgomery_multiply_fe_by_fer(
     fe: FieldElement,
     fer: FieldElementTimesMontgomeryR,
 ) -> FieldElement {
-    montgomery_reduce_element((fe as i64) * (fer as i64))
+    montgomery_reduce_element((fe.as_i64()) * (fer.as_i64()))
 }
 
 #[inline(always)]
-pub(crate) fn montgomery_multiply_by_constant(simd_unit: &mut Coefficients, c: i32) {
+pub(crate) fn montgomery_multiply_by_constant(simd_unit: &mut Coefficients, c: I32) {
     for i in 0..simd_unit.values.len() {
-        simd_unit.values[i] = montgomery_reduce_element((simd_unit.values[i] as i64) * (c as i64))
+        simd_unit.values[i] =
+            montgomery_reduce_element((simd_unit.values[i].as_i64()) * (c.as_i64()))
     }
 
     // [hax] https://github.com/hacspec/hax/issues/720
@@ -68,7 +71,8 @@ pub(crate) fn montgomery_multiply_by_constant(simd_unit: &mut Coefficients, c: i
 #[inline(always)]
 pub(crate) fn montgomery_multiply(lhs: &mut Coefficients, rhs: &Coefficients) {
     for i in 0..lhs.values.len() {
-        lhs.values[i] = montgomery_reduce_element((lhs.values[i] as i64) * (rhs.values[i] as i64))
+        lhs.values[i] =
+            montgomery_reduce_element((lhs.values[i].as_i64()) * (rhs.values[i].as_i64()))
     }
 
     // [hax] https://github.com/hacspec/hax/issues/720
@@ -84,10 +88,13 @@ pub(crate) fn montgomery_multiply(lhs: &mut Coefficients, rhs: &Coefficients) {
 // We assume the input t is in the signed representative range and convert it
 // to the standard unsigned range.
 #[inline(always)]
-fn power2round_element(t: i32) -> (i32, i32) {
+fn power2round_element(t: I32) -> (I32, I32) {
     // Hax issue: https://github.com/hacspec/hax/issues/1082
-    #[cfg(not(eurydice))]
-    debug_assert!(t > -FIELD_MODULUS && t < FIELD_MODULUS);
+    // XXX: Below debug assert violates the classification regime
+    // in Debug mode. It should be a precondition for hax
+    // instead.
+    // #[cfg(not(eurydice))]
+    // debug_assert!(t > -FIELD_MODULUS && t < FIELD_MODULUS);
 
     // Convert the signed representative to the standard unsigned one.
     let t = t + ((t >> 31) & FIELD_MODULUS);
@@ -118,13 +125,19 @@ pub(super) fn power2round(t0: &mut Coefficients, t1: &mut Coefficients) {
 #[inline(always)]
 pub(super) fn infinity_norm_exceeds(simd_unit: &Coefficients, bound: i32) -> bool {
     let mut result = false;
-    // It is ok to leak which coefficient violates the bound since
+    // Declassification: It is ok to leak which coefficient violates the bound since
     // the probability for each coefficient is independent of secret
     // data but we must not leak the sign of the centralized representative.
     for i in 0..simd_unit.values.len() {
         let coefficient = simd_unit.values[i];
-        #[cfg(not(eurydice))]
-        debug_assert!(coefficient > -FIELD_MODULUS && coefficient < FIELD_MODULUS);
+        // XXX: Below debug assert violates the classification regime
+        // in Debug mode. It should be a precondition for hax
+        // instead.
+        // #[cfg(not(eurydice))]
+        // debug_assert!(
+        //     coefficient > -FIELD_MODULUS && coefficient < FIELD_MODULUS
+        // );
+
         // This norm is calculated using the absolute value of the
         // signed representative in the range:
         //
@@ -133,11 +146,11 @@ pub(super) fn infinity_norm_exceeds(simd_unit: &Coefficients, bound: i32) -> boo
         // So if the coefficient is negative, get its absolute value, but
         // don't convert it into a different representation.
         let sign = coefficient >> 31;
-        let normalized = coefficient - (sign & (2 * coefficient));
+        let normalized = coefficient - (sign & (2.classify() * coefficient));
 
         // FIXME: return
         // [hax] https://github.com/hacspec/hax/issues/1204
-        result = result || normalized >= bound;
+        result = result || normalized.declassify() >= bound;
     }
 
     result
@@ -178,9 +191,17 @@ pub(super) fn compute_hint(
 ) -> usize {
     let mut one_hints_count = 0;
 
+    // Declassifications: The hint values are not secret, but we store
+    // them in `Coefficients` structs which treat their elements as
+    // secret by default.
     for i in 0..hint.values.len() {
-        hint.values[i] = compute_one_hint(low.values[i], high.values[i], gamma2);
-        one_hints_count += hint.values[i] as usize;
+        hint.values[i] = compute_one_hint(
+            low.values[i].declassify(),
+            high.values[i].declassify(),
+            gamma2,
+        )
+        .classify();
+        one_hints_count += hint.values[i].declassify() as usize;
     }
 
     one_hints_count
@@ -201,9 +222,12 @@ pub(super) fn compute_hint(
 //
 // Note that 0 ≤ r₁ < (q-1)/α.
 #[inline(always)]
-fn decompose_element(gamma2: Gamma2, r: i32) -> (i32, i32) {
-    #[cfg(not(eurydice))]
-    debug_assert!(r > -FIELD_MODULUS && r < FIELD_MODULUS);
+fn decompose_element(gamma2: Gamma2, r: I32) -> (I32, I32) {
+    // #[cfg(not(eurydice))]
+    // // XXX: Below debug assert violates the classification regime
+    // // in Debug mode. It should be a precondition for hax
+    // // instead.
+    // debug_assert!(r > -FIELD_MODULUS && r < FIELD_MODULUS);
 
     // Convert the signed representative to the standard unsigned one.
     let r = r + ((r >> 31) & FIELD_MODULUS);
@@ -219,7 +243,7 @@ fn decompose_element(gamma2: Gamma2, r: i32) -> (i32, i32) {
                 let result = ((ceil_of_r_by_128 * 11_275) + (1 << 23)) >> 24;
 
                 // For the corner-case a₁ = (q-1)/α = 44, we have to set a₁=0.
-                (result ^ (43 - result) >> 31) & result
+                (result ^ (43.classify() - result) >> 31) & result
             }
             GAMMA2_V261_888 => {
                 // We approximate 1 / 4092 as:
@@ -240,15 +264,17 @@ fn decompose_element(gamma2: Gamma2, r: i32) -> (i32, i32) {
     // In the corner-case, when we set a₁=0, we will incorrectly
     // have a₀ > (q-1)/2 and we'll need to subtract q.  As we
     // return a₀ + q, that comes down to adding q if a₀ < (q-1)/2.
-    r0 -= (((FIELD_MODULUS - 1) / 2 - r0) >> 31) & FIELD_MODULUS;
+    r0 -= ((((FIELD_MODULUS - 1) / 2).classify() - r0) >> 31) & FIELD_MODULUS;
 
     (r0, r1)
 }
 
 #[inline(always)]
 pub(crate) fn use_one_hint(gamma2: Gamma2, r: i32, hint: i32) -> i32 {
-    let (r0, r1) = decompose_element(gamma2, r);
+    let (r0, r1) = decompose_element(gamma2, r.classify());
 
+    // Declassification: Hint values are not secret.
+    let (r0, r1) = (r0.declassify(), r1.declassify());
     if hint == 0 {
         return r1;
     }
@@ -298,7 +324,15 @@ pub fn decompose(
 #[inline(always)]
 pub fn use_hint(gamma2: Gamma2, simd_unit: &Coefficients, hint: &mut Coefficients) {
     for i in 0..hint.values.len() {
-        hint.values[i] = use_one_hint(gamma2, simd_unit.values[i], hint.values[i]);
+        // Declassifications: The hint values themselves are not
+        // secret, but we classify them to store them in a
+        // `Coefficients` struct.
+        hint.values[i] = use_one_hint(
+            gamma2,
+            simd_unit.values[i].declassify(),
+            hint.values[i].declassify(),
+        )
+        .classify();
     }
 
     // [hax] https://github.com/hacspec/hax/issues/720
@@ -311,10 +345,22 @@ mod tests {
 
     #[test]
     fn test_montgomery_reduce_element() {
-        assert_eq!(montgomery_reduce_element(10933346042510), -1553279);
-        assert_eq!(montgomery_reduce_element(-20392060523118), 1331779);
-        assert_eq!(montgomery_reduce_element(13704140696092), -1231016);
-        assert_eq!(montgomery_reduce_element(-631922212176), -2580954);
+        assert_eq!(
+            montgomery_reduce_element(10933346042510.classify()).declassify(),
+            -1553279
+        );
+        assert_eq!(
+            montgomery_reduce_element((-20392060523118).classify()).declassify(),
+            1331779
+        );
+        assert_eq!(
+            montgomery_reduce_element(13704140696092.classify()).declassify(),
+            -1231016
+        );
+        assert_eq!(
+            montgomery_reduce_element((-631922212176).classify()).declassify(),
+            -2580954
+        );
     }
 
     #[test]

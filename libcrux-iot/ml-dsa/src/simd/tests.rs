@@ -1,3 +1,5 @@
+use libcrux_secrets::Classify as _;
+
 use crate::{
     constants::{GAMMA2_V261_888, GAMMA2_V95_232},
     simd::traits::*,
@@ -9,7 +11,8 @@ fn test_decompose_generic<SIMDUnit: Operations>() {
     SIMDUnit::from_coefficient_array(
         &[
             5520769, 5416853, 180455, 8127421, 5159850, 5553986, 3391280, 3968290,
-        ],
+        ]
+        .classify(),
         &mut input,
     );
 
@@ -32,7 +35,8 @@ fn test_decompose_generic<SIMDUnit: Operations>() {
     SIMDUnit::from_coefficient_array(
         &[
             2108939, 7162128, 6506792, 7957464, 2350341, 8333084, 496214, 2168929,
-        ],
+        ]
+        .classify(),
         &mut input,
     );
 
@@ -57,7 +61,8 @@ fn test_power2round_generic<SIMDUnit: Operations>() {
     SIMDUnit::from_coefficient_array(
         &[
             6950677, 3362411, 5783989, 5909314, 6459529, 5751812, 864332, 3667708,
-        ],
+        ]
+        .classify(),
         &mut input,
     );
 
@@ -65,7 +70,7 @@ fn test_power2round_generic<SIMDUnit: Operations>() {
     let expected_high = [848, 410, 706, 721, 789, 702, 106, 448];
 
     let mut high = SIMDUnit::zero();
-    SIMDUnit::from_coefficient_array(&[0; 8], &mut high);
+    SIMDUnit::from_coefficient_array(&[0; 8].classify(), &mut high);
     SIMDUnit::power2round(&mut input, &mut high);
     let low = input;
 

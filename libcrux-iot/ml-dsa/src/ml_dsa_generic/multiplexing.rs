@@ -8,10 +8,10 @@ macro_rules! parameter_set {
             use crate::ml_dsa_generic::$parameter_module::{
                 SIGNATURE_SIZE, SIGNING_KEY_SIZE, VERIFICATION_KEY_SIZE,
             };
-
+            use libcrux_secrets::U8;
             pub(crate) fn generate_key_pair(
-                randomness: [u8; KEY_GENERATION_RANDOMNESS_SIZE],
-                signing_key: &mut [u8; SIGNING_KEY_SIZE],
+                randomness: [U8; KEY_GENERATION_RANDOMNESS_SIZE],
+                signing_key: &mut [U8; SIGNING_KEY_SIZE],
                 verification_key: &mut [u8; VERIFICATION_KEY_SIZE],
             ) {
                 instantiations::portable::$parameter_module::generate_key_pair(
@@ -23,9 +23,9 @@ macro_rules! parameter_set {
 
             #[cfg(feature = "acvp")]
             pub(crate) fn sign_internal(
-                signing_key: &[u8; SIGNING_KEY_SIZE],
+                signing_key: &[U8; SIGNING_KEY_SIZE],
                 message: &[u8],
-                randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                randomness: [U8; SIGNING_RANDOMNESS_SIZE],
             ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
                 instantiations::portable::$parameter_module::sign_internal(
                     signing_key,
@@ -35,10 +35,10 @@ macro_rules! parameter_set {
             }
 
             pub(crate) fn sign(
-                signing_key: &[u8; SIGNING_KEY_SIZE],
+                signing_key: &[U8; SIGNING_KEY_SIZE],
                 message: &[u8],
                 context: &[u8],
-                randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                randomness: [U8; SIGNING_RANDOMNESS_SIZE],
             ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
                 instantiations::portable::$parameter_module::sign(
                     signing_key,
@@ -49,11 +49,11 @@ macro_rules! parameter_set {
             }
 
             pub(crate) fn sign_pre_hashed_shake128(
-                signing_key: &[u8; SIGNING_KEY_SIZE],
+                signing_key: &[U8; SIGNING_KEY_SIZE],
                 message: &[u8],
                 context: &[u8],
-                pre_hash_buffer: &mut [u8],
-                randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                pre_hash_buffer: &mut [U8],
+                randomness: [U8; SIGNING_RANDOMNESS_SIZE],
             ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
                 instantiations::portable::$parameter_module::sign_pre_hashed_shake128(
                     signing_key,
@@ -95,7 +95,7 @@ macro_rules! parameter_set {
                 verification_key_serialized: &[u8; VERIFICATION_KEY_SIZE],
                 message: &[u8],
                 context: &[u8],
-                pre_hash_buffer: &mut [u8],
+                pre_hash_buffer: &mut [U8],
                 signature_serialized: &[u8; SIGNATURE_SIZE],
             ) -> Result<(), VerificationError> {
                 instantiations::portable::$parameter_module::verify_pre_hashed_shake128(

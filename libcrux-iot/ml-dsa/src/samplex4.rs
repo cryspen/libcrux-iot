@@ -1,3 +1,5 @@
+use libcrux_secrets::{Classify as _, U8};
+
 use crate::{
     constants::Eta,
     hash_functions::{shake128, shake256},
@@ -9,6 +11,7 @@ use crate::{
 /// The x4 sampling implementation that is selected during multiplexing.
 pub(crate) trait X4Sampler {
     /// Sample the matrix A using platform specific implementation.
+    // The seed for matrix A is public.
     fn matrix_flat<SIMDUnit: Operations>(
         columns: usize,
         seed: &[u8],
@@ -17,15 +20,16 @@ pub(crate) trait X4Sampler {
 }
 
 #[inline(always)]
+// The seed for matrix A is public.
 pub(crate) fn matrix_flat<SIMDUnit: Operations, Shake128: shake128::XofX4>(
     columns: usize,
     seed: &[u8],
     matrix: &mut [PolynomialRingElement<SIMDUnit>],
 ) {
-    let mut rand_stack0 = [0u8; shake128::FIVE_BLOCKS_SIZE];
-    let mut rand_stack1 = [0u8; shake128::FIVE_BLOCKS_SIZE];
-    let mut rand_stack2 = [0u8; shake128::FIVE_BLOCKS_SIZE];
-    let mut rand_stack3 = [0u8; shake128::FIVE_BLOCKS_SIZE];
+    let mut rand_stack0 = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+    let mut rand_stack1 = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+    let mut rand_stack2 = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+    let mut rand_stack3 = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
     let mut tmp_stack = [[0i32; 263], [0i32; 263], [0i32; 263], [0i32; 263]];
 
     let full_quartets = matrix.len() / 4;
@@ -84,7 +88,7 @@ pub(crate) mod portable {
 #[inline(always)]
 pub(crate) fn sample_s1_and_s2<SIMDUnit: Operations, Shake256X4: shake256::XofX4>(
     eta: Eta,
-    seed: &[u8],
+    seed: &[U8],
     s1_s2: &mut [PolynomialRingElement<SIMDUnit>],
 ) {
     let len = s1_s2.len();

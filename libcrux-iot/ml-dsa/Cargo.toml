@@ -20,6 +20,7 @@ bench = false # so libtest doesn't eat the arguments to criterion
 libcrux-iot-sha3 = { path = "../sha3" }
 libcrux-macros.workspace = true
 hax-lib.workspace = true
+libcrux-secrets.workspace = true
 
 [dev-dependencies]
 rand = { version = "0.8" }
@@ -44,6 +45,8 @@ stack = []
 
 # std support
 std = []
+
+check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-iot-sha3/check-secret-independence"]
 
 [[bench]]
 name = "manual44"

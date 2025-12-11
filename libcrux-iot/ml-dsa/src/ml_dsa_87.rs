@@ -5,6 +5,9 @@ pub use crate::ml_dsa_generic::ml_dsa_87::{
     MLDSA87KeyPair, MLDSA87Signature, MLDSA87SigningKey, MLDSA87VerificationKey,
 };
 
+use libcrux_secrets::Classify as _;
+use libcrux_secrets::U8;
+
 // Instantiate the different functions.
 macro_rules! instantiate {
     ($modp:ident, $doc:expr) => {
@@ -14,9 +17,9 @@ macro_rules! instantiate {
 
             /// Generate an ML-DSA-87 Key Pair
             pub fn generate_key_pair(
-                randomness: [u8; KEY_GENERATION_RANDOMNESS_SIZE],
+                randomness: [U8; KEY_GENERATION_RANDOMNESS_SIZE],
             ) -> MLDSA87KeyPair {
-                let mut signing_key = [0u8; SIGNING_KEY_SIZE];
+                let mut signing_key = [0u8.classify(); SIGNING_KEY_SIZE];
                 let mut verification_key = [0u8; VERIFICATION_KEY_SIZE];
                 crate::ml_dsa_generic::instantiations::$modp::ml_dsa_87::generate_key_pair(
                     randomness,
@@ -39,7 +42,7 @@ macro_rules! instantiate {
                 signing_key: &MLDSA87SigningKey,
                 message: &[u8],
                 context: &[u8],
-                randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                randomness: [U8; SIGNING_RANDOMNESS_SIZE],
             ) -> Result<MLDSA87Signature, SigningError> {
                 crate::ml_dsa_generic::instantiations::$modp::ml_dsa_87::sign(
                     signing_key.as_ref(),
@@ -58,7 +61,7 @@ macro_rules! instantiate {
                 signing_key: &MLDSA87SigningKey,
                 message: &[u8],
                 context: &[u8],
-                randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                randomness: [U8; SIGNING_RANDOMNESS_SIZE],
                 signature: &mut [u8; SIGNATURE_SIZE],
             ) -> Result<(), SigningError> {
                 crate::ml_dsa_generic::instantiations::$modp::ml_dsa_87::sign_mut(
@@ -77,7 +80,7 @@ macro_rules! instantiate {
             pub fn sign_internal(
                 signing_key: &MLDSA87SigningKey,
                 message: &[u8],
-                randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                randomness: [U8; SIGNING_RANDOMNESS_SIZE],
             ) -> Result<MLDSA87Signature, SigningError> {
                 crate::ml_dsa_generic::instantiations::$modp::ml_dsa_87::sign_internal(
                     signing_key.as_ref(),
@@ -111,9 +114,9 @@ macro_rules! instantiate {
                 signing_key: &MLDSA87SigningKey,
                 message: &[u8],
                 context: &[u8],
-                randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+                randomness: [U8; SIGNING_RANDOMNESS_SIZE],
             ) -> Result<MLDSA87Signature, SigningError> {
-                let mut pre_hash_buffer = [0u8; 32];
+                let mut pre_hash_buffer = [0u8.classify(); 32];
                 crate::ml_dsa_generic::instantiations::$modp::ml_dsa_87::sign_pre_hashed_shake128(
                     signing_key.as_ref(),
                     message,
@@ -153,7 +156,7 @@ macro_rules! instantiate {
                 context: &[u8],
                 signature: &MLDSA87Signature,
             ) -> Result<(), VerificationError> {
-                let mut pre_hash_buffer = [0u8; 32];
+                let mut pre_hash_buffer = [0u8.classify(); 32];
                 crate::ml_dsa_generic::instantiations::$modp::ml_dsa_87::verify_pre_hashed_shake128(
                     verification_key.as_ref(),
                     message,
@@ -176,8 +179,8 @@ instantiate! {portable, "Portable ML-DSA 87"}
 ///
 /// This function returns an [`MLDSA87KeyPair`].
 #[cfg(not(eurydice))]
-pub fn generate_key_pair(randomness: [u8; KEY_GENERATION_RANDOMNESS_SIZE]) -> MLDSA87KeyPair {
-    let mut signing_key = [0u8; SIGNING_KEY_SIZE];
+pub fn generate_key_pair(randomness: [U8; KEY_GENERATION_RANDOMNESS_SIZE]) -> MLDSA87KeyPair {
+    let mut signing_key = [0u8.classify(); SIGNING_KEY_SIZE];
     let mut verification_key = [0u8; VERIFICATION_KEY_SIZE];
     crate::ml_dsa_generic::multiplexing::ml_dsa_87::generate_key_pair(
         randomness,
@@ -205,7 +208,7 @@ pub fn sign(
     signing_key: &MLDSA87SigningKey,
     message: &[u8],
     context: &[u8],
-    randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+    randomness: [U8; SIGNING_RANDOMNESS_SIZE],
 ) -> Result<MLDSA87Signature, SigningError> {
     crate::ml_dsa_generic::multiplexing::ml_dsa_87::sign(
         signing_key.as_ref(),
@@ -224,7 +227,7 @@ pub fn sign(
 pub fn sign_internal(
     signing_key: &MLDSA87SigningKey,
     message: &[u8],
-    randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+    randomness: [U8; SIGNING_RANDOMNESS_SIZE],
 ) -> Result<MLDSA87Signature, SigningError> {
     crate::ml_dsa_generic::multiplexing::ml_dsa_87::sign_internal(
         signing_key.as_ref(),
@@ -288,9 +291,9 @@ pub fn sign_pre_hashed_shake128(
     signing_key: &MLDSA87SigningKey,
     message: &[u8],
     context: &[u8],
-    randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+    randomness: [U8; SIGNING_RANDOMNESS_SIZE],
 ) -> Result<MLDSA87Signature, SigningError> {
-    let mut pre_hash_buffer = [0u8; 32];
+    let mut pre_hash_buffer = [0u8.classify(); 32];
     crate::ml_dsa_generic::multiplexing::ml_dsa_87::sign_pre_hashed_shake128(
         signing_key.as_ref(),
         message,
@@ -315,7 +318,7 @@ pub fn verify_pre_hashed_shake128(
     context: &[u8],
     signature: &MLDSA87Signature,
 ) -> Result<(), VerificationError> {
-    let mut pre_hash_buffer = [0u8; 32];
+    let mut pre_hash_buffer = [0u8.classify(); 32];
     crate::ml_dsa_generic::multiplexing::ml_dsa_87::verify_pre_hashed_shake128(
         verification_key.as_ref(),
         message,

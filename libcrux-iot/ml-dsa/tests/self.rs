@@ -1,6 +1,6 @@
 use libcrux_iot_ml_dsa::{ml_dsa_44, ml_dsa_65, ml_dsa_87};
+use libcrux_secrets::{Classify as _, U8};
 use rand::{rngs::OsRng, Rng, RngCore};
-
 fn random_array<const L: usize>() -> [u8; L] {
     let mut rng = OsRng;
     let mut seed = [0; L];
@@ -20,7 +20,7 @@ fn random_message() -> Vec<u8> {
     message
 }
 
-fn modify_signing_key<const SIGNING_KEY_SIZE: usize>(signing_key: &mut [u8; SIGNING_KEY_SIZE]) {
+fn modify_signing_key<const SIGNING_KEY_SIZE: usize>(signing_key: &mut [U8; SIGNING_KEY_SIZE]) {
     let option = rand::thread_rng().gen_range(0..2);
 
     let position = match option {
@@ -57,10 +57,15 @@ macro_rules! impl_consistency_test {
 
             let message = random_message();
 
-            let key_pair = $key_gen(key_generation_seed);
+            let key_pair = $key_gen(key_generation_seed.classify());
 
-            let signature = $sign(&key_pair.signing_key, &message, b"", signing_randomness)
-                .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
+            let signature = $sign(
+                &key_pair.signing_key,
+                &message,
+                b"",
+                signing_randomness.classify(),
+            )
+            .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
 
             $verify(&key_pair.verification_key, &message, b"", &signature)
                 .expect("Verification should pass since the signature was honestly generated");
@@ -77,12 +82,17 @@ macro_rules! impl_modified_signing_key_test {
 
             let message = random_message();
 
-            let mut key_pair = $key_gen(key_generation_seed);
+            let mut key_pair = $key_gen(key_generation_seed.classify());
 
             modify_signing_key::<{ $signing_key_size }>(key_pair.signing_key.as_ref_mut());
 
-            let signature = $sign(&key_pair.signing_key, &message, b"", signing_randomness)
-                .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
+            let signature = $sign(
+                &key_pair.signing_key,
+                &message,
+                b"",
+                signing_randomness.classify(),
+            )
+            .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
 
             assert!($verify(&key_pair.verification_key, &message, b"", &signature).is_err());
         }

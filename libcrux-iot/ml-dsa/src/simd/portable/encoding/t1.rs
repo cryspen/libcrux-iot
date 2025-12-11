@@ -1,3 +1,5 @@
+use libcrux_secrets::{Classify as _, Declassify as _};
+
 use crate::{
     constants::BITS_IN_UPPER_PART_OF_T, helper::cloop, simd::portable::vector_type::Coefficients,
 };
@@ -8,15 +10,16 @@ pub fn serialize(simd_unit: &Coefficients, serialized: &mut [u8]) {
     debug_assert!(serialized.len() == 10);
 
     cloop! {
+        // Declassifications: Here, the value t1 is being serialized into the public key.
         for (i, coefficients) in simd_unit.values.chunks_exact(4).enumerate() {
-            serialized[5 * i] = (coefficients[0] & 0xFF) as u8;
+            serialized[5 * i] = (coefficients[0].declassify() & 0xFF) as u8;
             serialized[5 * i + 1] =
-                ((coefficients[1] & 0x3F) as u8) << 2 | ((coefficients[0] >> 8) & 0x03) as u8;
+                ((coefficients[1].declassify() & 0x3F) as u8) << 2 | ((coefficients[0].declassify() >> 8) & 0x03) as u8;
             serialized[5 * i + 2] =
-                ((coefficients[2] & 0x0F) as u8) << 4 | ((coefficients[1] >> 6) & 0x0F) as u8;
+                ((coefficients[2].declassify() & 0x0F) as u8) << 4 | ((coefficients[1].declassify() >> 6) & 0x0F) as u8;
             serialized[5 * i + 3] =
-                ((coefficients[3] & 0x03) as u8) << 6 | ((coefficients[2] >> 4) & 0x3F) as u8;
-            serialized[5 * i + 4] = ((coefficients[3] >> 2) & 0xFF) as u8;
+                ((coefficients[3].declassify() & 0x03) as u8) << 6 | ((coefficients[2].declassify() >> 4) & 0x3F) as u8;
+            serialized[5 * i + 4] = ((coefficients[3].declassify() >> 2) & 0xFF) as u8;
         }
     }
 
@@ -39,10 +42,10 @@ pub fn deserialize(serialized: &[u8], simd_unit: &mut Coefficients) {
             let byte3 = bytes[3] as i32;
             let byte4 = bytes[4] as i32;
 
-            simd_unit.values[4 * i] = (byte0 | (byte1 << 8)) & mask;
-            simd_unit.values[4 * i + 1] = ((byte1 >> 2) | (byte2 << 6)) & mask;
-            simd_unit.values[4 * i + 2] = ((byte2 >> 4) | (byte3 << 4)) & mask;
-            simd_unit.values[4 * i + 3] = ((byte3 >> 6) | (byte4 << 2)) & mask;
+            simd_unit.values[4 * i] = ((byte0 | (byte1 << 8)) & mask).classify();
+            simd_unit.values[4 * i + 1] = (((byte1 >> 2) | (byte2 << 6)) & mask).classify();
+            simd_unit.values[4 * i + 2] = (((byte2 >> 4) | (byte3 << 4)) & mask).classify();
+            simd_unit.values[4 * i + 3] = (((byte3 >> 6) | (byte4 << 2)) & mask).classify();
         }
     }
 

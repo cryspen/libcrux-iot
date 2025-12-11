@@ -37,6 +37,8 @@ pub(crate) fn deserialize<SIMDUnit: Operations>(
 
 #[cfg(test)]
 mod tests {
+    use libcrux_secrets::ClassifyRef as _;
+
     use super::*;
 
     use crate::{
@@ -62,7 +64,8 @@ mod tests {
             53, 346, 392, 710, 434, 72, 899, 610, 543, 937, 501, 41, 615, 97, 557, 168, 105, 665,
             179, 708, 137, 849, 508, 742, 512, 879, 534, 490,
         ];
-        let re = PolynomialRingElement::<SIMDUnit>::from_i32_array_test(&coefficients);
+        let re =
+            PolynomialRingElement::<SIMDUnit>::from_i32_array_test(coefficients.classify_ref());
 
         let expected_bytes = [
             127, 204, 105, 133, 208, 207, 165, 130, 49, 2, 83, 82, 115, 127, 53, 65, 213, 119, 93,
