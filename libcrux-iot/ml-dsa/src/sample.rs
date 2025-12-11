@@ -78,7 +78,7 @@ pub(crate) fn sample_ring_element<SIMDUnit: Operations>(
     let mut sampled = 0;
 
     let mut done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack.declassify_ref(),
+        rand_stack.as_slice().declassify_ref(),
         &mut sampled,
         tmp_stack,
     );
@@ -87,7 +87,7 @@ pub(crate) fn sample_ring_element<SIMDUnit: Operations>(
         state.shake128_squeeze_next_block(rand_block);
         if !done {
             done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-                rand_block.declassify_ref(),
+                rand_block.as_slice().declassify_ref(),
                 &mut sampled,
                 tmp_stack,
             );
@@ -158,22 +158,22 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
     let mut sampled3 = 0;
 
     let mut done0 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack0.declassify_ref(),
+        rand_stack0.as_slice().declassify_ref(),
         &mut sampled0,
         &mut tmp_stack[0],
     );
     let mut done1 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack1.declassify_ref(),
+        rand_stack1.as_slice().declassify_ref(),
         &mut sampled1,
         &mut tmp_stack[1],
     );
     let mut done2 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack2.declassify_ref(),
+        rand_stack2.as_slice().declassify_ref(),
         &mut sampled2,
         &mut tmp_stack[2],
     );
     let mut done3 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack3.declassify_ref(),
+        rand_stack3.as_slice().declassify_ref(),
         &mut sampled3,
         &mut tmp_stack[3],
     );
