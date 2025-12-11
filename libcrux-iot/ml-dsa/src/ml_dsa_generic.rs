@@ -386,8 +386,8 @@ pub(crate) mod generic {
         signature_serialized: &[u8; SIGNATURE_SIZE],
     ) -> Result<(), VerificationError> {
         use libcrux_secrets::ClassifyRef as _;
-        let mut rand_stack = [0u8; shake128::FIVE_BLOCKS_SIZE];
-        let mut rand_block = [0u8; shake128::BLOCK_SIZE];
+        let mut rand_stack = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+        let mut rand_block = [0u8.classify(); shake128::BLOCK_SIZE];
         let mut tmp_stack = [0i32; 263];
         let mut poly_slot = PolynomialRingElement::<SIMDUnit>::zero();
 

@@ -1,4 +1,3 @@
-#[cfg(feature = "stack")]
 use libcrux_secrets::U8;
 
 use crate::{
@@ -93,8 +92,8 @@ pub(crate) fn compute_w_approx<SIMDUnit: Operations>(
     rows_in_a: usize,
     columns_in_a: usize,
     seed: &[u8],
-    rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_block: &mut [u8; shake128::BLOCK_SIZE],
+    rand_stack: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_block: &mut [U8; shake128::BLOCK_SIZE],
     tmp_stack: &mut [i32; 263],
     poly_slot: &mut PolynomialRingElement<SIMDUnit>,
     signer_response: &[PolynomialRingElement<SIMDUnit>],
