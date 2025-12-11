@@ -16,7 +16,7 @@ use crate::{
     types::*,
     MLDSASignature,
 };
-use libcrux_secrets::{Classify as _, ClassifyRef as _, ClassifyRefMut, U8};
+use libcrux_secrets::{Classify as _, ClassifyRef as _, U8};
 pub(crate) mod instantiations;
 
 #[cfg(not(eurydice))]
@@ -185,7 +185,7 @@ pub(crate) mod generic {
         // Declassification: The seed for matrix A is public.
         Sampler::matrix_flat::<SIMDUnit>(COLUMNS_IN_A, seed_for_a.declassify_ref(), &mut matrix);
 
-        let mut message_representative = [0; MESSAGE_REPRESENTATIVE_SIZE];
+        let mut message_representative = [0u8.classify(); MESSAGE_REPRESENTATIVE_SIZE];
         // Declassification: The verification key hash is public, as
         // is the message representative.
         derive_message_representative::<Shake256Xof>(
@@ -200,7 +200,7 @@ pub(crate) mod generic {
             let mut shake = Shake256Xof::init();
             shake.absorb(seed_for_signing);
             shake.absorb(&randomness);
-            shake.absorb_final(message_representative.classify_ref());
+            shake.absorb_final(&message_representative);
 
             shake.squeeze(&mut mask_seed);
         }
@@ -267,7 +267,7 @@ pub(crate) mod generic {
                 );
 
                 let mut shake = Shake256Xof::init();
-                shake.absorb(message_representative.classify_ref());
+                shake.absorb(&message_representative);
                 shake.absorb_final(&commitment_serialized);
 
                 shake.squeeze(&mut commitment_hash_candidate);
@@ -429,12 +429,14 @@ pub(crate) mod generic {
             return Err(VerificationError::SignerResponseExceedsBoundError);
         }
 
-        let mut verification_key_hash = [0.classify(); BYTES_FOR_VERIFICATION_KEY_HASH];
+        let mut verification_key_hash = [0u8.classify(); BYTES_FOR_VERIFICATION_KEY_HASH];
         Shake256::shake256(verification_key.classify_ref(), &mut verification_key_hash);
 
-        let mut message_representative = [0; MESSAGE_REPRESENTATIVE_SIZE];
+        let mut message_representative = [0u8.classify(); MESSAGE_REPRESENTATIVE_SIZE];
         derive_message_representative::<Shake256Xof>(
-            // Declassification: The verification key hash is public.
+            // Declassification: The verification key hash is public
+            // but treated as secret by default to sidestep hax issues
+            // with `classify_ref_mut` when hashing into the buffer.
             verification_key_hash.declassify_ref(),
             &domain_separation_context,
             message,
@@ -479,7 +481,7 @@ pub(crate) mod generic {
             );
 
             let mut shake = Shake256Xof::init();
-            shake.absorb(message_representative.classify_ref());
+            shake.absorb(&message_representative);
             shake.absorb_final(&commitment_serialized);
 
             shake.squeeze(&mut recomputed_commitment_hash);
@@ -512,10 +514,8 @@ pub(crate) mod generic {
         domain_separation_context: Option<DomainSeparationContext>,
         signature_serialized: &[u8; SIGNATURE_SIZE],
     ) -> Result<(), VerificationError> {
-        use libcrux_secrets::ClassifyRefMut;
-
-        let mut rand_stack = [0u8; shake128::FIVE_BLOCKS_SIZE];
-        let mut rand_block = [0u8; shake128::BLOCK_SIZE];
+        let mut rand_stack = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+        let mut rand_block = [0u8.classify(); shake128::BLOCK_SIZE];
         let mut tmp_stack = [0i32; 263];
         let mut poly_slot_a = PolynomialRingElement::<SIMDUnit>::zero();
         let mut poly_slot_b = PolynomialRingElement::<SIMDUnit>::zero();
@@ -527,15 +527,15 @@ pub(crate) mod generic {
         let (signer_response_serialized, hint_serialized) =
             rest_of_serialized.split_at(GAMMA1_RING_ELEMENT_SIZE * COLUMNS_IN_A);
 
-        let mut verification_key_hash = [0; BYTES_FOR_VERIFICATION_KEY_HASH];
-        Shake256::shake256(
-            verification_key.classify_ref(),
-            verification_key_hash.classify_ref_mut(),
-        );
+        let mut verification_key_hash = [0.classify(); BYTES_FOR_VERIFICATION_KEY_HASH];
+        Shake256::shake256(verification_key.classify_ref(), &mut verification_key_hash);
 
-        let mut message_representative = [0; MESSAGE_REPRESENTATIVE_SIZE];
+        let mut message_representative = [0u8.classify(); MESSAGE_REPRESENTATIVE_SIZE];
         derive_message_representative::<Shake256Xof>(
-            &verification_key_hash,
+            // Declassification: This value is public, but treated as
+            // secret by default to sidestep hax issues with
+            // `classify_ref_mut` when hashing into the buffer.
+            verification_key_hash.declassify_ref(),
             &domain_separation_context,
             message,
             &mut message_representative,
@@ -553,11 +553,11 @@ pub(crate) mod generic {
         ntt(&mut verifier_challenge);
 
         // Compute the commitment hash again to validate the signature.
-        let mut recomputed_commitment_hash = [0; COMMITMENT_HASH_SIZE];
+        let mut recomputed_commitment_hash = [0u8.classify(); COMMITMENT_HASH_SIZE];
 
         // `recomputed_commitment_hash` = H(`message_representative` || w1Encode(w'_1))
         let mut shake = Shake256Xof::init();
-        shake.absorb(message_representative.classify_ref());
+        shake.absorb(&message_representative);
 
         // We compute w_approx ring element-wise in the loop below.
         //
@@ -612,10 +612,13 @@ pub(crate) mod generic {
             }
         }
 
-        shake.squeeze(recomputed_commitment_hash.classify_ref_mut());
+        shake.squeeze(&mut recomputed_commitment_hash);
 
         // Check if this is a valid signature by comparing the hashes.
-        if commitment_hash == recomputed_commitment_hash {
+        // Declassification: This value is public, but treated as
+        // secret by default to sidestep hax issues with
+        // `classify_ref_mut` when hashing into the buffer.
+        if commitment_hash == recomputed_commitment_hash.declassify_ref() {
             return Ok(());
         }
 
@@ -846,7 +849,7 @@ fn derive_message_representative<Shake256Xof: shake256::Xof>(
     verification_key_hash: &[u8],
     domain_separation_context: &Option<DomainSeparationContext>,
     message: &[u8],
-    message_representative: &mut [u8; 64],
+    message_representative: &mut [U8; 64],
 ) {
     let mut shake = Shake256Xof::init();
     #[cfg(not(eurydice))]
@@ -863,5 +866,5 @@ fn derive_message_representative<Shake256Xof: shake256::Xof>(
     }
 
     shake.absorb_final(message.classify_ref());
-    shake.squeeze(message_representative.classify_ref_mut());
+    shake.squeeze(message_representative);
 }

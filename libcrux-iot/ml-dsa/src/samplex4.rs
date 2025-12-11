@@ -1,4 +1,4 @@
-use libcrux_secrets::U8;
+use libcrux_secrets::{Classify as _, U8};
 
 use crate::{
     constants::Eta,
@@ -26,10 +26,10 @@ pub(crate) fn matrix_flat<SIMDUnit: Operations, Shake128: shake128::XofX4>(
     seed: &[u8],
     matrix: &mut [PolynomialRingElement<SIMDUnit>],
 ) {
-    let mut rand_stack0 = [0u8; shake128::FIVE_BLOCKS_SIZE];
-    let mut rand_stack1 = [0u8; shake128::FIVE_BLOCKS_SIZE];
-    let mut rand_stack2 = [0u8; shake128::FIVE_BLOCKS_SIZE];
-    let mut rand_stack3 = [0u8; shake128::FIVE_BLOCKS_SIZE];
+    let mut rand_stack0 = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+    let mut rand_stack1 = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+    let mut rand_stack2 = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+    let mut rand_stack3 = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
     let mut tmp_stack = [[0i32; 263], [0i32; 263], [0i32; 263], [0i32; 263]];
 
     let full_quartets = matrix.len() / 4;

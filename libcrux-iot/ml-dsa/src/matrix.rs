@@ -1,3 +1,6 @@
+#[cfg(feature = "stack")]
+use libcrux_secrets::U8;
+
 use crate::{
     arithmetic::shift_left_then_reduce,
     constants::BITS_IN_LOWER_PART_OF_T,
@@ -135,8 +138,8 @@ pub(crate) fn compute_w_approx_i<SIMDUnit: Operations>(
     t1_serialized: &[u8],
     signer_response_serialized: &[u8],
     i: usize,
-    rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_block: &mut [u8; shake128::BLOCK_SIZE],
+    rand_stack: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_block: &mut [U8; shake128::BLOCK_SIZE],
     tmp_stack: &mut [i32; 263],
     poly_slot_a: &mut PolynomialRingElement<SIMDUnit>, // no precondition, will be clobbered
     poly_slot_b: &mut PolynomialRingElement<SIMDUnit>, // no precondition, will be clobbered

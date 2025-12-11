@@ -1,8 +1,8 @@
 #[cfg(feature = "check-secret-independence")]
 use libcrux_secrets::EncodeOps as _;
 use libcrux_secrets::{
-    CastOps as _, Classify as _, ClassifyRef as _, ClassifyRefMut, Declassify as _,
-    DeclassifyRef as _, I32, U64, U8,
+    CastOps as _, Classify as _, ClassifyRef as _, Declassify as _, DeclassifyRef as _, I32, U64,
+    U8,
 };
 
 use crate::{
@@ -66,25 +66,28 @@ pub(crate) fn sample_ring_element<SIMDUnit: Operations>(
     seed: &[u8],
     indices: (u8, u8),
     out: &mut PolynomialRingElement<SIMDUnit>,
-    rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_block: &mut [u8; shake128::BLOCK_SIZE],
+    rand_stack: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_block: &mut [U8; shake128::BLOCK_SIZE],
     tmp_stack: &mut [i32; 263],
 ) {
     let domain_separated_seed = add_domain_separator(seed, indices);
 
     let mut state = Shake128::shake128_init_absorb(&domain_separated_seed.classify());
-    state.shake128_squeeze_first_five_blocks(rand_stack.classify_ref_mut());
+    state.shake128_squeeze_first_five_blocks(rand_stack);
 
     let mut sampled = 0;
 
-    let mut done =
-        rejection_sample_less_than_field_modulus::<SIMDUnit>(rand_stack, &mut sampled, tmp_stack);
+    let mut done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
+        rand_stack.declassify_ref(),
+        &mut sampled,
+        tmp_stack,
+    );
 
     while !done {
-        state.shake128_squeeze_next_block(rand_block.classify_ref_mut());
+        state.shake128_squeeze_next_block(rand_block);
         if !done {
             done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-                rand_block,
+                rand_block.declassify_ref(),
                 &mut sampled,
                 tmp_stack,
             );
@@ -111,10 +114,10 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
     columns: usize,
     seed: &[u8],
     matrix: &mut [PolynomialRingElement<SIMDUnit>],
-    rand_stack0: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_stack1: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_stack2: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_stack3: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
+    rand_stack0: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_stack1: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_stack2: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_stack3: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
     tmp_stack: &mut [[i32; 263]],
     start_index: usize,
     elements_requested: usize,
@@ -139,12 +142,7 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
         seed3.classify_ref(),
     );
 
-    state.squeeze_first_five_blocks(
-        rand_stack0.classify_ref_mut(),
-        rand_stack1.classify_ref_mut(),
-        rand_stack2.classify_ref_mut(),
-        rand_stack3.classify_ref_mut(),
-    );
+    state.squeeze_first_five_blocks(rand_stack0, rand_stack1, rand_stack2, rand_stack3);
 
     // Every call to |rejection_sample_less_than_field_modulus|
     // will result in a call to |PortableSIMDUnit::rejection_sample_less_than_field_modulus|;
@@ -160,22 +158,22 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
     let mut sampled3 = 0;
 
     let mut done0 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack0,
+        rand_stack0.declassify_ref(),
         &mut sampled0,
         &mut tmp_stack[0],
     );
     let mut done1 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack1,
+        rand_stack1.declassify_ref(),
         &mut sampled1,
         &mut tmp_stack[1],
     );
     let mut done2 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack2,
+        rand_stack2.declassify_ref(),
         &mut sampled2,
         &mut tmp_stack[2],
     );
     let mut done3 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack3,
+        rand_stack3.declassify_ref(),
         &mut sampled3,
         &mut tmp_stack[3],
     );
@@ -520,8 +518,10 @@ fn inside_out_shuffle(
     cloop! {
         for byte in randomness.iter() {
             if !done {
-                // Declassification: The rejection sampling here is
-                // inherently not constant-time. (XXX)
+                // Declassification: This may leak the index of the
+                // coefficient being sampled, which is safe to do
+                // according to the NIST submission.
+                // (cf. Section 5.5 in https://pq-crystals.org/dilithium/data/dilithium-specification-round3-20210208.pdf)
                 let sample_at = (*byte).declassify() as usize;
                 if sample_at <= *out_index {
                     result[*out_index] = result[sample_at];
@@ -597,6 +597,9 @@ mod tests {
         let mut tmp_stack = [[0i32; 263], [0i32; 263], [0i32; 263], [0i32; 263]];
         let mut sampled = 0;
 
+        // Declassifications: These values are public but are treated
+        // as secret by default to sidestep hax issues with
+        // `classify_ref_mut` when hashing into the buffer.
         let mut done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
             rand_stack.0.declassify_ref(),
             &mut sampled,
