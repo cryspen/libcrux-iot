@@ -81,7 +81,7 @@ jobs:
       - name: 🏃🏻‍♀️ Check Secret-Independence
         run: |
           cargo clean
-          cargo check -F check-secret-independence --verbose,stack
+          cargo check -F check-secret-independence,stack --verbose
           
       # Benchmarks
       - name: 🔨 Build Benchmarks
