@@ -16,14 +16,14 @@ use libcrux_iot_ml_dsa::{
     ml_dsa_44::{self, MLDSA44SigningKey},
     ml_dsa_65::{self, MLDSA65SigningKey},
     ml_dsa_87::{self, MLDSA87SigningKey},
-    MLDSASigningKey, SigningError,
+    SigningError,
 };
 
-use libcrux_secrets::{Classify as _, ClassifyRef as _};
+use libcrux_secrets::Classify as _;
 include!("wycheproof/sign_schema.rs");
 
 macro_rules! wycheproof_sign_test {
-    ($name:ident, $parameter_set:literal, $signing_key_type:ty, $sign:expr) => {
+    ($name:ident, $parameter_set:literal, $signing_key_type:ty, $signing_key_size:expr, $sign:expr) => {
         #[test]
         fn $name() {
             let katfile_path = Path::new("tests")
@@ -39,7 +39,7 @@ macro_rules! wycheproof_sign_test {
 
             for test_group in katfile_serialized.test_groups {
                 let signing_key_bytes = hex::decode(test_group.private_key).unwrap();
-                if signing_key_bytes.len() != <$signing_key_type>::len() {
+                if signing_key_bytes.len() != $signing_key_size {
                     // If the signing key size in the KAT does not match the
                     // signing key size in our implementation, ensure that the KAT
                     // key has a corresponding flag set staring that its length is incorrect.
@@ -52,8 +52,11 @@ macro_rules! wycheproof_sign_test {
 
                     continue;
                 }
-                let signing_key =
-                    MLDSASigningKey::new(signing_key_bytes.classify_ref().try_into().unwrap());
+                let signing_key = <$signing_key_type>::new(
+                    <Vec<u8> as TryInto<[u8; $signing_key_size]>>::try_into(signing_key_bytes)
+                        .unwrap()
+                        .classify(),
+                );
 
                 for test in test_group.tests {
                     let message = hex::decode(test.msg).unwrap();
@@ -88,33 +91,54 @@ macro_rules! wycheproof_sign_test {
 
 // 44
 
-wycheproof_sign_test!(wycheproof_sign_44, 44, MLDSA44SigningKey, ml_dsa_44::sign);
+wycheproof_sign_test!(
+    wycheproof_sign_44,
+    44,
+    MLDSA44SigningKey,
+    MLDSA44SigningKey::len(),
+    ml_dsa_44::sign
+);
 
 wycheproof_sign_test!(
     wycheproof_sign_44_portable,
     44,
     MLDSA44SigningKey,
+    MLDSA44SigningKey::len(),
     ml_dsa_44::portable::sign
 );
 
 // 65
 
-wycheproof_sign_test!(wycheproof_sign_65, 65, MLDSA65SigningKey, ml_dsa_65::sign);
+wycheproof_sign_test!(
+    wycheproof_sign_65,
+    65,
+    MLDSA65SigningKey,
+    MLDSA65SigningKey::len(),
+    ml_dsa_65::sign
+);
 
 wycheproof_sign_test!(
     wycheproof_sign_65_portable,
     65,
     MLDSA65SigningKey,
+    MLDSA65SigningKey::len(),
     ml_dsa_65::portable::sign
 );
 
 // 87
 
-wycheproof_sign_test!(wycheproof_sign_87, 87, MLDSA87SigningKey, ml_dsa_87::sign);
+wycheproof_sign_test!(
+    wycheproof_sign_87,
+    87,
+    MLDSA87SigningKey,
+    MLDSA87SigningKey::len(),
+    ml_dsa_87::sign
+);
 
 wycheproof_sign_test!(
     wycheproof_sign_87_portable,
     87,
     MLDSA87SigningKey,
+    MLDSA87SigningKey::len(),
     ml_dsa_87::portable::sign
 );
