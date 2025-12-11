@@ -19,6 +19,7 @@ use libcrux_iot_ml_dsa::{
     MLDSASigningKey, SigningError,
 };
 
+use libcrux_secrets::{Classify as _, ClassifyRef as _};
 include!("wycheproof/sign_schema.rs");
 
 macro_rules! wycheproof_sign_test {
@@ -51,13 +52,19 @@ macro_rules! wycheproof_sign_test {
 
                     continue;
                 }
-                let signing_key = MLDSASigningKey::new(signing_key_bytes.try_into().unwrap());
+                let signing_key =
+                    MLDSASigningKey::new(signing_key_bytes.classify_ref().try_into().unwrap());
 
                 for test in test_group.tests {
                     let message = hex::decode(test.msg).unwrap();
                     let context = hex::decode(test.ctx).unwrap();
 
-                    let signature = $sign(&signing_key, &message, &context, signing_randomness);
+                    let signature = $sign(
+                        &signing_key,
+                        &message,
+                        &context,
+                        signing_randomness.classify(),
+                    );
 
                     if let Err(SigningError::ContextTooLongError) = signature {
                         assert!(test.result == Result::Invalid)

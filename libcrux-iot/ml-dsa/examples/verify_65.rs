@@ -1,4 +1,5 @@
 use libcrux_iot_ml_dsa::ml_dsa_65;
+use libcrux_secrets::Classify as _;
 use rand::{rngs::OsRng, RngCore};
 
 fn random_array<const L: usize>() -> [u8; L] {
@@ -14,9 +15,14 @@ fn main() {
     let message = random_array::<1023>();
     let context = b"";
 
-    let keypair = ml_dsa_65::generate_key_pair(key_generation_seed);
-    let signature = ml_dsa_65::sign(&keypair.signing_key, &message, context, signing_randomness)
-        .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
+    let keypair = ml_dsa_65::generate_key_pair(key_generation_seed.classify());
+    let signature = ml_dsa_65::sign(
+        &keypair.signing_key,
+        &message,
+        context,
+        signing_randomness.classify(),
+    )
+    .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
 
     for _i in 0..100_000 {
         let _ = ml_dsa_65::verify(&keypair.verification_key, &message, context, &signature);

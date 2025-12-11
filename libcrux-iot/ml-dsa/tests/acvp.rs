@@ -1,7 +1,7 @@
 #![cfg(feature = "acvp")]
+use libcrux_secrets::{Classify as _, DeclassifyRef as _};
 use serde::{de::DeserializeOwned, Deserialize};
 use std::{fs::File, io::BufReader, path::Path};
-
 #[derive(Deserialize)]
 #[allow(non_snake_case, dead_code)]
 struct Prompts<TG> {
@@ -102,7 +102,7 @@ fn keygen_inner(
         result: &KeyGenResult,
     ) {
         assert_eq!(result.pk, keys.verification_key.as_slice());
-        assert_eq!(result.sk, keys.signing_key.as_slice());
+        assert_eq!(result.sk, keys.signing_key.as_slice().declassify_ref());
     }
 
     let expected_result = results
@@ -116,11 +116,20 @@ fn keygen_inner(
         .unwrap();
 
     match parameter_set.as_str() {
-        "ML-DSA-44" => check(ml_dsa_44::generate_key_pair(test.seed), expected_result),
+        "ML-DSA-44" => check(
+            ml_dsa_44::generate_key_pair(test.seed.classify()),
+            expected_result,
+        ),
 
-        "ML-DSA-65" => check(ml_dsa_65::generate_key_pair(test.seed), expected_result),
+        "ML-DSA-65" => check(
+            ml_dsa_65::generate_key_pair(test.seed.classify()),
+            expected_result,
+        ),
 
-        "ML-DSA-87" => check(ml_dsa_87::generate_key_pair(test.seed), expected_result),
+        "ML-DSA-87" => check(
+            ml_dsa_87::generate_key_pair(test.seed.classify()),
+            expected_result,
+        ),
         _ => unimplemented!(),
     }
 }
@@ -187,9 +196,13 @@ fn siggen_inner(
     match parameter_set.as_str() {
         "ML-DSA-44" => {
             let signature = ml_dsa_44::sign_internal(
-                &MLDSASigningKey::new(test.sk.try_into().unwrap()),
+                &MLDSASigningKey::new(
+                    <Vec<u8> as TryInto<[u8; 2560]>>::try_into(test.sk)
+                        .unwrap()
+                        .classify(),
+                ),
                 &test.message,
-                rnd,
+                rnd.classify(),
             )
             .unwrap();
             assert_eq!(signature.as_slice(), expected_result.signature);
@@ -197,9 +210,13 @@ fn siggen_inner(
 
         "ML-DSA-65" => {
             let signature = ml_dsa_65::sign_internal(
-                &MLDSASigningKey::new(test.sk.try_into().unwrap()),
+                &MLDSASigningKey::new(
+                    <Vec<u8> as TryInto<[u8; 4032]>>::try_into(test.sk)
+                        .unwrap()
+                        .classify(),
+                ),
                 &test.message,
-                rnd,
+                rnd.classify(),
             )
             .unwrap();
             assert_eq!(signature.as_slice(), expected_result.signature);
@@ -207,9 +224,13 @@ fn siggen_inner(
 
         "ML-DSA-87" => {
             let signature = ml_dsa_87::sign_internal(
-                &MLDSASigningKey::new(test.sk.try_into().unwrap()),
+                &MLDSASigningKey::new(
+                    <Vec<u8> as TryInto<[u8; 4896]>>::try_into(test.sk)
+                        .unwrap()
+                        .classify(),
+                ),
                 &test.message,
-                rnd,
+                rnd.classify(),
             )
             .unwrap();
             assert_eq!(signature.as_slice(), expected_result.signature);

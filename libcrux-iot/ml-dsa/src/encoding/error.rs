@@ -75,6 +75,8 @@ pub(crate) fn deserialize_to_vector_then_ntt<SIMDUnit: Operations>(
 
 #[cfg(test)]
 mod tests {
+    use libcrux_secrets::ClassifyRef as _;
+
     use super::*;
 
     use crate::simd::{self, traits::Operations};
@@ -103,7 +105,7 @@ mod tests {
         ];
 
         let mut deserialized = PolynomialRingElement::<SIMDUnit>::zero();
-        deserialize::<SIMDUnit>(Eta::Two, &serialized, &mut deserialized);
+        deserialize::<SIMDUnit>(Eta::Two, serialized.classify_ref(), &mut deserialized);
         assert_eq!(deserialized.to_i32_array(), expected_coefficients);
 
         let serialized = [
@@ -131,7 +133,7 @@ mod tests {
         ];
 
         let mut deserialized = PolynomialRingElement::<SIMDUnit>::zero();
-        deserialize::<SIMDUnit>(Eta::Four, &serialized, &mut deserialized);
+        deserialize::<SIMDUnit>(Eta::Four, serialized.classify_ref(), &mut deserialized);
         assert_eq!(deserialized.to_i32_array(), expected_coefficients);
     }
 
