@@ -34,7 +34,7 @@ static_cell = "2"
 micromath = "2.0.0"
 
 libcrux-iot-ml-dsa = { path = "../libcrux-iot/ml-dsa" }
-
+libcrux-iot-ml-kem = { path = "../libcrux-iot/ml-kem" }
 
 [profile.release]
 debug = 2
