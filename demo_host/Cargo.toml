@@ -5,4 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 clap = { version = "4.5.53", features = ["derive"] }
+libcrux-ml-dsa = { version = "0.0.4" }
+libcrux-ml-kem = { version = "0.0.4" , features = ["rand"]}
+rand = { version = "0.9"}
 serialport = "4.8.1"
