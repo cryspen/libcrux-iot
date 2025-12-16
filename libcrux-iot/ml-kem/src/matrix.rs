@@ -15,8 +15,11 @@ pub(crate) fn entry<const K: usize, Vector: Operations>(
     i: usize,
     j: usize,
 ) -> &PolynomialRingElement<Vector> {
+    #[cfg(not(eurydice))]
     debug_assert!(matrix.len() == K * K);
+    #[cfg(not(eurydice))]
     debug_assert!(i < K);
+    #[cfg(not(eurydice))]
     debug_assert!(j < K);
     &matrix[i * K + j]
 }
@@ -24,10 +27,11 @@ pub(crate) fn entry<const K: usize, Vector: Operations>(
 #[inline(always)]
 pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     out: &mut PolynomialRingElement<Vector>,
-    seed: &[u8],
+    seed: &[u8], // The seed for sampling public matrix A is public itself.
     i: usize,
     j: usize,
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(seed.len() == 32);
     let mut seed_ij = [0u8; 34];
     seed_ij[0..32].copy_from_slice(seed);
@@ -36,6 +40,7 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     let mut sampled_coefficients = [0usize; 1];
     let mut out_raw = [[0i16; 272]; 1];
     sample_from_xof::<1, Vector, Hasher>(&[seed_ij], &mut sampled_coefficients, &mut out_raw);
+    // We classify the matrix entry here to use it in classified arithmetic.
     PolynomialRingElement::from_i16_array(out_raw[0].classify().as_slice(), out);
 }
 
@@ -53,9 +58,10 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
 )]
 pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
     A_transpose: &mut [PolynomialRingElement<Vector>],
-    seed: &[u8; 34],
+    seed: &[u8; 34], // The seed for sampling public matrix A is public itself.
     transpose: bool,
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(A_transpose.len() == K * K);
 
     for i in 0..K {
@@ -148,7 +154,7 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
 #[inline(always)]
 pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>(
     matrix_entry: &mut PolynomialRingElement<Vector>,
-    seed: &[u8],
+    seed: &[u8], // The seed for sampling public matrix A is public itself.
     r_as_ntt: &[PolynomialRingElement<Vector>],
     error_1: &[PolynomialRingElement<Vector>],
     result: &mut [PolynomialRingElement<Vector>],
@@ -156,7 +162,9 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
     cache: &mut [PolynomialRingElement<Vector>],
     accumulator: &mut [I32; 256],
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(r_as_ntt.len() == K);
+    #[cfg(not(eurydice))]
     debug_assert!(error_1.len() == K);
 
     *accumulator = [0i32.classify(); 256];
