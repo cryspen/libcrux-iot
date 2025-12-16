@@ -53,7 +53,7 @@ macro_rules! wycheproof_sign_test {
                     continue;
                 }
                 let signing_key = <$signing_key_type>::new(
-                    <Vec<u8> as TryInto<[u8; $signing_key_size]>>::try_into(signing_key_bytes)
+                    <[u8; $signing_key_size]>::try_from(signing_key_bytes)
                         .unwrap()
                         .classify(),
                 );

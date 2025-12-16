@@ -196,11 +196,7 @@ fn siggen_inner(
     match parameter_set.as_str() {
         "ML-DSA-44" => {
             let signature = ml_dsa_44::sign_internal(
-                &MLDSASigningKey::new(
-                    <Vec<u8> as TryInto<[u8; 2560]>>::try_into(test.sk)
-                        .unwrap()
-                        .classify(),
-                ),
+                &MLDSASigningKey::new(<[u8; 2560]>::try_from(test.sk).unwrap().classify()),
                 &test.message,
                 rnd.classify(),
             )
@@ -210,11 +206,7 @@ fn siggen_inner(
 
         "ML-DSA-65" => {
             let signature = ml_dsa_65::sign_internal(
-                &MLDSASigningKey::new(
-                    <Vec<u8> as TryInto<[u8; 4032]>>::try_into(test.sk)
-                        .unwrap()
-                        .classify(),
-                ),
+                &MLDSASigningKey::new(<[u8; 4032]>::try_from(test.sk).unwrap().classify()),
                 &test.message,
                 rnd.classify(),
             )
@@ -224,11 +216,7 @@ fn siggen_inner(
 
         "ML-DSA-87" => {
             let signature = ml_dsa_87::sign_internal(
-                &MLDSASigningKey::new(
-                    <Vec<u8> as TryInto<[u8; 4896]>>::try_into(test.sk)
-                        .unwrap()
-                        .classify(),
-                ),
+                &MLDSASigningKey::new(<[u8; 4896]>::try_from(test.sk).unwrap().classify()),
                 &test.message,
                 rnd.classify(),
             )
