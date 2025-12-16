@@ -24,7 +24,7 @@ macro_rules! parameter_set {
             #[cfg(feature = "acvp")]
             pub(crate) fn sign_internal(
                 signing_key: &[U8; SIGNING_KEY_SIZE],
-                message: &[u8],
+                message: &[U8],
                 randomness: [U8; SIGNING_RANDOMNESS_SIZE],
             ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
                 instantiations::portable::$parameter_module::sign_internal(
@@ -67,7 +67,7 @@ macro_rules! parameter_set {
             #[cfg(feature = "acvp")]
             pub(crate) fn verify_internal(
                 verification_key_serialized: &[u8; VERIFICATION_KEY_SIZE],
-                message: &[u8],
+                message: &[U8],
                 signature_serialized: &[u8; SIGNATURE_SIZE],
             ) -> Result<(), VerificationError> {
                 instantiations::portable::$parameter_module::verify_internal(

@@ -81,7 +81,7 @@ macro_rules! instantiate {
                         #[cfg(feature = "acvp")]
                         pub fn sign_internal(
                             signing_key: &[U8; SIGNING_KEY_SIZE],
-                            message: &[u8],
+                            message: &[U8],
                             randomness: [U8; SIGNING_RANDOMNESS_SIZE],
                         ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
                             let mut signature = MLDSASignature::zero();
@@ -138,7 +138,7 @@ macro_rules! instantiate {
                         #[cfg(feature = "acvp")]
                         pub(crate) fn verify_internal(
                             verification_key: &[u8; VERIFICATION_KEY_SIZE],
-                            message: &[u8],
+                            message: &[U8],
                             signature: &[u8; SIGNATURE_SIZE],
                         ) -> Result<(), VerificationError> {
                             crate::ml_dsa_generic::$parameter_module::verify_internal::<

@@ -6,6 +6,8 @@ pub use crate::ml_dsa_generic::ml_dsa_44::{
 };
 
 use libcrux_secrets::Classify as _;
+#[cfg(feature = "acvp")]
+use libcrux_secrets::ClassifyRef as _;
 use libcrux_secrets::U8;
 
 // Instantiate the different functions.
@@ -84,7 +86,7 @@ macro_rules! instantiate {
             ) -> Result<MLDSA44Signature, SigningError> {
                 crate::ml_dsa_generic::instantiations::$modp::ml_dsa_44::sign_internal(
                     signing_key.as_ref(),
-                    message,
+                    message.classify_ref(),
                     randomness,
                 )
             }
@@ -100,7 +102,7 @@ macro_rules! instantiate {
             ) -> Result<(), VerificationError> {
                 crate::ml_dsa_generic::instantiations::$modp::ml_dsa_44::verify_internal(
                     verification_key.as_ref(),
-                    message,
+                    message.classify_ref(),
                     signature.as_ref(),
                 )
             }
@@ -231,7 +233,7 @@ pub fn sign_internal(
 ) -> Result<MLDSA44Signature, SigningError> {
     crate::ml_dsa_generic::multiplexing::ml_dsa_44::sign_internal(
         signing_key.as_ref(),
-        message,
+        message.classify_ref(),
         randomness,
     )
 }
@@ -248,7 +250,7 @@ pub fn verify_internal(
 ) -> Result<(), VerificationError> {
     crate::ml_dsa_generic::multiplexing::ml_dsa_44::verify_internal(
         verification_key.as_ref(),
-        message,
+        message.classify_ref(),
         signature.as_ref(),
     )
 }
