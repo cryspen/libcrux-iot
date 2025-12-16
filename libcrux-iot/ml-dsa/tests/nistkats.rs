@@ -1,7 +1,7 @@
+use hex;
+use libcrux_secrets::{Classify as _, ClassifyRef as _, Declassify as _};
 use serde::Deserialize;
 use serde_json;
-
-use hex;
 
 use std::{fs::File, io::BufReader, path::Path};
 
@@ -41,29 +41,37 @@ macro_rules! impl_nist_known_answer_tests {
                 serde_json::from_reader(reader).expect("Could not deserialize KAT file.");
 
             for kat in nist_kats {
-                let key_pair = $key_gen(kat.key_generation_seed);
+                let key_pair = $key_gen(kat.key_generation_seed.classify());
 
                 let verification_key_hash =
-                    libcrux_iot_sha3::sha256(key_pair.verification_key.as_ref());
+                    libcrux_iot_sha3::sha256(key_pair.verification_key.as_ref().classify_ref());
                 assert_eq!(
-                    verification_key_hash, kat.sha3_256_hash_of_verification_key,
+                    verification_key_hash.declassify(),
+                    kat.sha3_256_hash_of_verification_key,
                     "verification_key_hash != kat.sha3_256_hash_of_verification_key"
                 );
 
                 let signing_key_hash = libcrux_iot_sha3::sha256(key_pair.signing_key.as_ref());
                 assert_eq!(
-                    signing_key_hash, kat.sha3_256_hash_of_signing_key,
+                    signing_key_hash.declassify(),
+                    kat.sha3_256_hash_of_signing_key,
                     "signing_key_hash != kat.sha3_256_hash_of_signing_key"
                 );
 
                 let message = hex::decode(kat.message).expect("Hex-decoding the message failed.");
 
-                let signature = $sign(&key_pair.signing_key, &message, b"", kat.signing_randomness)
-                    .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
+                let signature = $sign(
+                    &key_pair.signing_key,
+                    &message,
+                    b"",
+                    kat.signing_randomness.classify(),
+                )
+                .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
 
-                let signature_hash = libcrux_iot_sha3::sha256(signature.as_ref());
+                let signature_hash = libcrux_iot_sha3::sha256(signature.as_ref().classify_ref());
                 assert_eq!(
-                    signature_hash, kat.sha3_256_hash_of_signature,
+                    signature_hash.declassify(),
+                    kat.sha3_256_hash_of_signature,
                     "signature_hash != kat.sha3_256_hash_of_signature"
                 );
 
@@ -84,30 +92,37 @@ macro_rules! impl_nist_known_answer_tests {
                 serde_json::from_reader(reader).expect("Could not deserialize KAT file.");
 
             for kat in nist_kats {
-                let key_pair = $key_gen(kat.key_generation_seed);
+                let key_pair = $key_gen(kat.key_generation_seed.classify());
 
                 let verification_key_hash =
-                    libcrux_iot_sha3::sha256(key_pair.verification_key.as_ref());
+                    libcrux_iot_sha3::sha256(key_pair.verification_key.as_ref().classify_ref());
                 assert_eq!(
-                    verification_key_hash, kat.sha3_256_hash_of_verification_key,
+                    verification_key_hash.declassify(),
+                    kat.sha3_256_hash_of_verification_key,
                     "verification_key_hash != kat.sha3_256_hash_of_verification_key"
                 );
 
                 let signing_key_hash = libcrux_iot_sha3::sha256(key_pair.signing_key.as_ref());
                 assert_eq!(
-                    signing_key_hash, kat.sha3_256_hash_of_signing_key,
+                    signing_key_hash.declassify(),
+                    kat.sha3_256_hash_of_signing_key,
                     "signing_key_hash != kat.sha3_256_hash_of_signing_key"
                 );
 
                 let message = hex::decode(kat.message).expect("Hex-decoding the message failed.");
 
-                let signature =
-                    $sign_pre_hashed(&key_pair.signing_key, &message, b"", kat.signing_randomness)
-                        .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
+                let signature = $sign_pre_hashed(
+                    &key_pair.signing_key,
+                    &message,
+                    b"",
+                    kat.signing_randomness.classify(),
+                )
+                .expect("Rejection sampling failure probability is < 2⁻¹²⁸");
 
-                let signature_hash = libcrux_iot_sha3::sha256(signature.as_ref());
+                let signature_hash = libcrux_iot_sha3::sha256(signature.as_ref().classify_ref());
                 assert_eq!(
-                    signature_hash, kat.sha3_256_hash_of_signature,
+                    signature_hash.declassify(),
+                    kat.sha3_256_hash_of_signature,
                     "signature_hash != kat.sha3_256_hash_of_signature"
                 );
 

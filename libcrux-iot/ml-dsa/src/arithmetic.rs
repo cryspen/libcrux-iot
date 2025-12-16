@@ -5,6 +5,9 @@ use crate::{
     simd::traits::Operations,
 };
 
+#[cfg(not(feature = "stack"))]
+use libcrux_secrets::Classify as _;
+
 #[inline(always)]
 pub(crate) fn vector_infinity_norm_exceeds<SIMDUnit: Operations>(
     vector: &[PolynomialRingElement<SIMDUnit>],
@@ -33,12 +36,12 @@ pub(crate) fn shift_left_then_reduce<SIMDUnit: Operations, const SHIFT_BY: i32>(
 
 #[inline(always)]
 pub(crate) fn power2round_vector<SIMDUnit: Operations>(
-    t: &mut [PolynomialRingElement<SIMDUnit>],
+    t0: &mut [PolynomialRingElement<SIMDUnit>],
     t1: &mut [PolynomialRingElement<SIMDUnit>],
 ) {
-    for i in 0..t.len() {
-        for j in 0..t[i].simd_units.len() {
-            SIMDUnit::power2round(&mut t[i].simd_units[j], &mut t1[i].simd_units[j]);
+    for i in 0..t0.len() {
+        for j in 0..t0[i].simd_units.len() {
+            SIMDUnit::power2round(&mut t0[i].simd_units[j], &mut t1[i].simd_units[j]);
         }
     }
     // [hax] https://github.com/hacspec/hax/issues/720
@@ -107,6 +110,8 @@ pub(crate) fn use_hint_i<SIMDUnit: Operations>(
     re_vector: &mut PolynomialRingElement<SIMDUnit>, // precondition: should hold w'_approx[i], postcondition: holds w'_1[i]
     poly_slot_a: &mut PolynomialRingElement<SIMDUnit>, // no precondition, will be clobbered
 ) -> Result<(), crate::VerificationError> {
+    use libcrux_secrets::ClassifyRef;
+
     let mut hint_deserialized = [0i32; COEFFICIENTS_IN_RING_ELEMENT];
     crate::encoding::signature::deserialize_hint(
         rows_in_a,
@@ -116,7 +121,10 @@ pub(crate) fn use_hint_i<SIMDUnit: Operations>(
         &mut hint_deserialized,
         previous_true_hints_seen,
     )?;
-    PolynomialRingElement::<SIMDUnit>::from_i32_array(&hint_deserialized, poly_slot_a);
+    PolynomialRingElement::<SIMDUnit>::from_i32_array(
+        hint_deserialized.classify_ref(),
+        poly_slot_a,
+    );
 
     for j in 0..re_vector.simd_units.len() {
         SIMDUnit::use_hint(
@@ -139,7 +147,7 @@ pub(crate) fn use_hint<SIMDUnit: Operations>(
 ) {
     for i in 0..re_vector.len() {
         let mut tmp = PolynomialRingElement::zero();
-        PolynomialRingElement::<SIMDUnit>::from_i32_array(&hint[i], &mut tmp);
+        PolynomialRingElement::<SIMDUnit>::from_i32_array(&hint[i].classify(), &mut tmp);
 
         for j in 0..re_vector[0].simd_units.len() {
             SIMDUnit::use_hint(gamma2, &re_vector[i].simd_units[j], &mut tmp.simd_units[j]);
