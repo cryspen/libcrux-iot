@@ -76,6 +76,7 @@ val serialize_1_lemma (inputs: Libcrux_ml_kem.Vector.Portable.Vector_type.t_Port
 #[hax_lib::ensures(|_| future(out).len() == 2)]
 #[inline(always)]
 pub(crate) fn serialize_1(v: &PortableVector, out: &mut [U8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(out.len() == 2);
 
     out[0] = (v.elements[0].as_u8())
@@ -229,6 +230,7 @@ val serialize_4_lemma (inputs: Libcrux_ml_kem.Vector.Portable.Vector_type.t_Port
 #[hax_lib::ensures(|_| future(out).len() == 8)]
 #[inline(always)]
 pub(crate) fn serialize_4(v: &PortableVector, out: &mut [u8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(out.len() == 8);
     (out[0], out[1], out[2], out[3]) = serialize_4_int(&v.elements[0..8]);
     (out[4], out[5], out[6], out[7]) = serialize_4_int(&v.elements[8..16]);
@@ -354,6 +356,7 @@ pub(crate) fn serialize_5_int(v: &[I16]) -> (u8, u8, u8, u8, u8) {
 
 #[inline(always)]
 pub(crate) fn serialize_5(v: &PortableVector, out: &mut [u8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(out.len() == 10);
     (out[0], out[1], out[2], out[3], out[4]) = serialize_5_int(&v.elements[0..8]);
     (out[5], out[6], out[7], out[8], out[9]) = serialize_5_int(&v.elements[8..16]);
@@ -464,6 +467,7 @@ let serialize_10_lemma inputs out =
 #[hax_lib::ensures(|_| future(out).len() == 20)]
 #[inline(always)]
 pub(crate) fn serialize_10(v: &PortableVector, out: &mut [u8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(out.len() == 20);
     (out[0], out[1], out[2], out[3], out[4]) = serialize_10_int(&v.elements[0..4]);
     (out[5], out[6], out[7], out[8], out[9]) = serialize_10_int(&v.elements[4..8]);
@@ -604,6 +608,7 @@ pub(crate) fn serialize_11_int(v: &[I16]) -> (u8, u8, u8, u8, u8, u8, u8, u8, u8
 
 #[inline(always)]
 pub(crate) fn serialize_11(v: &PortableVector, out: &mut [u8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(out.len() == 22);
     (
         out[0], out[1], out[2], out[3], out[4], out[5], out[6], out[7], out[8], out[9], out[10],
@@ -713,6 +718,7 @@ let serialize_12_lemma inputs out =
 #[hax_lib::ensures(|_| future(out).len() == 24)]
 #[inline(always)]
 pub(crate) fn serialize_12(v: &PortableVector, out: &mut [U8]) {
+    #[cfg(not(eurydice))]
     debug_assert!(out.len() == 24);
     (out[0], out[1], out[2]) = serialize_12_int(&v.elements[0..2]);
     (out[3], out[4], out[5]) = serialize_12_int(&v.elements[2..4]);

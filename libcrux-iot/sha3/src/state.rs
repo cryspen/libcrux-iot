@@ -70,6 +70,7 @@ impl KeccakState {
     /// `out` has the exact size we want here. It must be less than or equal to `RATE`.
     #[inline(always)]
     pub(crate) fn store<const RATE: usize>(self, out: &mut [U8]) {
+        #[cfg(not(eurydice))]
         debug_assert!(out.len() <= RATE, "{} > {}", out.len(), RATE);
 
         let num_full_blocks = out.len() / 8;
@@ -104,6 +105,7 @@ impl KeccakState {
 
 #[inline(always)]
 fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], start: usize) {
+    #[cfg(not(eurydice))]
     debug_assert!(RATE <= blocks.len() && RATE % 8 == 0);
     let mut state_flat = [Lane2U32::zero(); 25];
     for i in 0..RATE / 8 {

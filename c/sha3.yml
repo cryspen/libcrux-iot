@@ -3,6 +3,11 @@ naming:
     - ["libcrux_iot_sha3"]
 
 files:
+  - name: libcrux_iot_core
+    private:
+      monomorphizations_exact:
+        - [Eurydice, arr_b2]
+
   # Portable SHA3
   - name: libcrux_iot_sha3
     api:
@@ -52,6 +57,7 @@ files:
   - name: libcrux_iot_core
     private:
       monomorphizations_of:
+        - [ Eurydice, "*" ]
         - [ core, "*"]
         - [ libcrux_secrets, "*"]
       monomorphizations_using:

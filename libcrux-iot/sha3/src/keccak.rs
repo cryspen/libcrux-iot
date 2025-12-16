@@ -54,6 +54,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
 
         // ... buffer the rest if there's not enough input (left).
         if input_remainder_len > 0 {
+            #[cfg(not(eurydice))]
             debug_assert!(
                 self.buf_len == 0  // We consumed everything (or it was empty all along).
                  || self.buf_len + input_remainder_len <= RATE
@@ -67,6 +68,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     }
 
     fn absorb_full(&mut self, inputs: &[U8]) -> usize {
+        #[cfg(not(eurydice))]
         debug_assert!(self.buf_len < RATE);
         // Check if there are buffered bytes to absorb first and consume them.
         let input_consumed = self.fill_buffer(inputs);
@@ -2127,6 +2129,7 @@ pub(crate) fn absorb_final<const RATE: usize, const DELIM: u8>(
     start: usize,
     len: usize,
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(len < RATE); // && last[0].len() < RATE
 
     let mut blocks = [0u8; WIDTH].classify();

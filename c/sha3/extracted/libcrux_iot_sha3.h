@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon:
- * Eurydice:
- * Karamel:
- * F*: 4b3fc11774003a6ff7c09500ecb5f0145ca6d862
- * Libcrux: 77a80e3eb2196754d31058d237c0052000775d2c
+ * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
+ * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
+ * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * F*: unset
+ * Libcrux: 1ad7c25705450131b575043e252c944035898962
  */
 
 #ifndef libcrux_iot_sha3_H
@@ -20,62 +20,70 @@
 extern "C" {
 #endif
 
+#include "libcrux_iot_core.h"
+
 /**
  SHA3 224
 
  Preconditions:
  - `digest.len() == 28`
 */
-void sha224_ema(Eurydice_slice digest, Eurydice_slice payload);
+void sha224_ema(Eurydice_mut_borrow_slice_u8 digest,
+                Eurydice_borrow_slice_u8 payload);
 
 /**
  SHA3 224
 */
-void sha224(Eurydice_slice data, uint8_t ret[28U]);
+Eurydice_arr_f1 sha224(Eurydice_borrow_slice_u8 data);
 
 /**
  SHA3 256
 */
-void sha256_ema(Eurydice_slice digest, Eurydice_slice payload);
+void sha256_ema(Eurydice_mut_borrow_slice_u8 digest,
+                Eurydice_borrow_slice_u8 payload);
 
 /**
  SHA3 256
 */
-void sha256(Eurydice_slice data, uint8_t ret[32U]);
+Eurydice_arr_60 sha256(Eurydice_borrow_slice_u8 data);
 
 /**
  SHA3 384
 */
-void sha384_ema(Eurydice_slice digest, Eurydice_slice payload);
+void sha384_ema(Eurydice_mut_borrow_slice_u8 digest,
+                Eurydice_borrow_slice_u8 payload);
 
 /**
  SHA3 384
 */
-void sha384(Eurydice_slice data, uint8_t ret[48U]);
+Eurydice_arr_5f sha384(Eurydice_borrow_slice_u8 data);
 
 /**
  SHA3 512
 */
-void sha512_ema(Eurydice_slice digest, Eurydice_slice payload);
+void sha512_ema(Eurydice_mut_borrow_slice_u8 digest,
+                Eurydice_borrow_slice_u8 payload);
 
 /**
  SHA3 512
 */
-void sha512(Eurydice_slice data, uint8_t ret[64U]);
+Eurydice_arr_06 sha512(Eurydice_borrow_slice_u8 data);
 
 /**
  SHAKE 128
 
  Writes `out.len()` bytes.
 */
-void shake128_ema(Eurydice_slice out, Eurydice_slice data);
+void shake128_ema(Eurydice_mut_borrow_slice_u8 out,
+                  Eurydice_borrow_slice_u8 data);
 
 /**
  SHAKE 256
 
  Writes `out.len()` bytes.
 */
-void shake256_ema(Eurydice_slice out, Eurydice_slice data);
+void shake256_ema(Eurydice_mut_borrow_slice_u8 out,
+                  Eurydice_borrow_slice_u8 data);
 
 #if defined(__cplusplus)
 }

@@ -121,7 +121,7 @@ fn compute_implicit_rejection_shared_secret<const CLEN: usize, const LEN: usize>
         secret_key.as_ref()[MlKemPrivateKey::<LEN>::len() - SHARED_SECRET_SIZE..].to_vec();
     to_hash.extend_from_slice(ciphertext.as_ref().classify_ref());
 
-    shake256(&to_hash.declassify_ref()).declassify()
+    shake256(&to_hash).declassify()
 }
 
 macro_rules! impl_modified_secret_key {

@@ -513,10 +513,10 @@ pub(crate) fn generate_keypair_unpacked<
         (Seq.slice (Libcrux_ml_kem.Utils.into_padded_array (sz 34) $seed_for_A) 0 32)"
     );
 
-    // Declassification: The seed for matrix A, like matrix A is part of the public key.
+    // Declassification: The seed for A is part of the public key
     sample_matrix_A::<K, Vector, Hasher>(
         &mut public_key.A,
-        &(into_padded_array(seed_for_A).declassify()),
+        &(into_padded_array(seed_for_A)).declassify(),
         true,
     );
 

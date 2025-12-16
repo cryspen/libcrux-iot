@@ -43,6 +43,7 @@ use crate::{
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
 #[inline(always)]
+// We only use this to sample entries of the public matrix A, from the public seeds.
 fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, const N: usize>(
     randomness: &[[u8; N]],
     sampled_coefficients: &mut [usize],
@@ -94,6 +95,7 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
 #[hax_lib::fstar::verification_status(lax)]
 #[hax_lib::requires(sampled_coefficients.len() == K && out.len() == K)]
 #[hax_lib::ensures(|_| future(sampled_coefficients).len() == K && future(out).len() == K)]
+// We only use this to sample entries of the public matrix A, from the public seeds.
 pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
     seeds: &[[u8; 34]],
     sampled_coefficients: &mut [usize],

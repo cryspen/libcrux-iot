@@ -75,6 +75,7 @@ pub(super) fn serialize_uncompressed_ring_element<Vector: Operations>(
     scratch: &mut Vector,
     serialized: &mut [U8],
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(serialized.len() == BYTES_PER_RING_ELEMENT);
     hax_lib::fstar!(r#"assert_norm (pow2 12 == 4096)"#);
     for i in 0..VECTORS_IN_RING_ELEMENT {
@@ -178,6 +179,7 @@ fn compress_then_serialize_10<const OUT_LEN: usize, Vector: Operations>(
     serialized: &mut [u8],
     scratch: &mut Vector,
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(serialized.len() == OUT_LEN);
     hax_lib::fstar!(r#"assert_norm (pow2 10 == 1024)"#);
     for i in 0..VECTORS_IN_RING_ELEMENT {
@@ -197,6 +199,7 @@ fn compress_then_serialize_11<const OUT_LEN: usize, Vector: Operations>(
     serialized: &mut [u8],
     scratch: &mut Vector,
 ) {
+    #[cfg(not(eurydice))]
     debug_assert!(serialized.len() == OUT_LEN);
 
     for i in 0..VECTORS_IN_RING_ELEMENT {
