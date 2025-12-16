@@ -33,8 +33,10 @@ pub fn rejection_sample_less_than_eta_equals_2(randomness: &[U8], out: &mut [I32
             let try_0 = *byte & 0xF;
             let try_1 = *byte >> 4;
 
-            // Declassification: This reveals only the index of the
-            // coefficient that was sampled.
+            // Declassification: This may leak the index of the
+            // coefficient being sampled, which is safe to do
+            // according to the NIST submission.
+            // (cf. Section 5.5 in https://pq-crystals.org/dilithium/data/dilithium-specification-round3-20210208.pdf)
             if try_0.declassify() < 15 {
                 let try_0 = try_0.as_i32();
 
@@ -45,9 +47,10 @@ pub fn rejection_sample_less_than_eta_equals_2(randomness: &[U8], out: &mut [I32
 
                 sampled += 1;
             }
-
-            // Declassification: This reveals only the index of the
-            // coefficient that was sampled.
+            // Declassification: This may leak the index of the
+            // coefficient being sampled, which is safe to do
+            // according to the NIST submission.
+            // (cf. Section 5.5 in https://pq-crystals.org/dilithium/data/dilithium-specification-round3-20210208.pdf)
             if try_1.declassify() < 15 {
                 let try_1 = try_1.as_i32();
                 let try_1_mod_5 = try_1 - ((try_1 * 26) >> 7) * 5;
@@ -71,15 +74,19 @@ pub fn rejection_sample_less_than_eta_equals_4(randomness: &[U8], out: &mut [I32
             let try_0 = *byte & 0xF;
             let try_1 = *byte >> 4;
 
-            // Declassification: This reveals only the index of the
-            // coefficient that was sampled.
+            // Declassification: This may leak the index of the
+            // coefficient being sampled, which is safe to do
+            // according to the NIST submission.
+            // (cf. Section 5.5 in https://pq-crystals.org/dilithium/data/dilithium-specification-round3-20210208.pdf)
             if try_0.declassify() < 9 {
                 out[sampled] = 4.classify() - (try_0.as_i32());
                 sampled += 1;
             }
 
-            // Declassification: This reveals only the index of the
-            // coefficient that was sampled.
+            // Declassification: This may leak the index of the
+            // coefficient being sampled, which is safe to do
+            // according to the NIST submission.
+            // (cf. Section 5.5 in https://pq-crystals.org/dilithium/data/dilithium-specification-round3-20210208.pdf)
             if try_1.declassify() < 9 {
                 out[sampled] = 4.classify() - (try_1.as_i32());
                 sampled += 1;
