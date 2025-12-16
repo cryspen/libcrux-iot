@@ -21,13 +21,16 @@ macro_rules! impl_hash_traits {
                 digest: &mut [u8; $len],
                 payload: &[u8],
             ) -> Result<(), libcrux_traits::digest::arrayref::HashError> {
-                use libcrux_traits::libcrux_secrets::ClassifyRefMut;
+                use libcrux_traits::libcrux_secrets::{ClassifyRef, ClassifyRefMut};
 
                 if payload.len() > u32::MAX as usize {
                     return Err(libcrux_traits::digest::arrayref::HashError::InvalidPayloadLength);
                 }
 
-                $method(digest.as_mut_slice().classify_ref_mut(), payload);
+                $method(
+                    digest.as_mut_slice().classify_ref_mut(),
+                    payload.classify_ref(),
+                );
 
                 Ok(())
             }
