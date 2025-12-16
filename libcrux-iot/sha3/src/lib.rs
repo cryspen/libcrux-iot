@@ -12,6 +12,10 @@ mod keccak;
 mod lane;
 mod state;
 
+#[cfg(not(any(hax, eurydice)))]
+mod impl_digest_trait;
+#[cfg(not(any(hax, eurydice)))]
+pub use impl_digest_trait::*;
 /// Size in bytes of a SHA3 244 digest.
 pub const SHA3_224_DIGEST_SIZE: usize = 28;
 /// Size in bytes of a SHA3 256 digest.

@@ -17,6 +17,7 @@ bench = false # so libtest doesn't eat the arguments to criterion
 
 [dependencies]
 libcrux-secrets.workspace = true
+libcrux-traits.workspace = true
 
 # This is only required for verification.
 # The hax config is set by the hax toolchain.
@@ -25,7 +26,7 @@ hax-lib = { version = "0.3.0", git = "https://github.com/hacspec/hax/" }
 
 [features]
 full-unroll = []
-check-secret-independence = ["libcrux-secrets/check-secret-independence"]
+check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-traits/check-secret-independence"]
 
 [dev-dependencies]
 criterion = "0.5.1"
