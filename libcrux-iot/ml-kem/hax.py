@@ -52,12 +52,11 @@ class extractAction(argparse.Action):
         # Extract ml-kem
         includes = [
             "+**",
-            "-libcrux_ml_kem::kem::**",
-            "-libcrux_ml_kem::hash_functions::portable::*",
-            "+:libcrux_ml_kem::hash_functions::*::*",
+            "-libcrux_iot_ml_kem::hash_functions::portable::*",
+            "+:libcrux_iot_ml_kem::hash_functions::*::*",
         ]
         include_str = " ".join(includes)
-        interface_include = "+** -libcrux_ml_kem::vector::traits -libcrux_ml_kem::types -libcrux_ml_kem::constants"
+        interface_include = "+** -libcrux_iot_ml_kem::vector::traits -libcrux_iot_ml_kem::types -libcrux_iot_ml_kem::constants"
         cargo_hax_into = [
             "cargo",
             "hax",
