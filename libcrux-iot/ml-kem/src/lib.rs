@@ -167,3 +167,6 @@ cfg_kyber! {
         }
     }
 }
+
+#[cfg(hax)]
+mod spec;
