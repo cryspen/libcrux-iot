@@ -15,7 +15,7 @@ readme = "README.md"
 libcrux-secrets = { version = "0.0.4" }
 libcrux-macros = { version = "0.0.3" }
 cavp = { version = "0.0.2" }
-hax-lib = { version = "0.3.2" }
+hax-lib = { version = "0.3.5" }
 
 
 [workspace.lints.rust]
