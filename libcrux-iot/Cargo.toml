@@ -20,3 +20,7 @@ hax-lib = { version = "0.3.5" }
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(hax)', 'cfg(eurydice)', 'cfg(doc_cfg)'] }
+
+[patch.crates-io]
+hax-lib = { git = "https://github.com/cryspen/hax", branch = "jonas/fstar-wrapping" }
+libcrux-secrets = { git = "https://github.com/cryspen/libcrux", branch = "jonas/secrets-wrapping" }

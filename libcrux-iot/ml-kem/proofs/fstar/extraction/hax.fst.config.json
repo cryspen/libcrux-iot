@@ -1,0 +1,14 @@
+{
+  "fstar_exe": "fstar.exe",
+  "include_dirs": [
+    "../spec",
+    "/home/jonas/wt/iot/wip/fstar-helpers/fstar-bitvec",
+    "",
+    "/home/jonas/.cargo/git/checkouts/hax-580ebeee043cdea1/397292c/hax-lib/proof-libs/fstar/core",
+    "/home/jonas/.cargo/git/checkouts/hax-580ebeee043cdea1/397292c/hax-lib/proof-libs/fstar/rust_primitives",
+    "/home/jonas/.cargo/git/checkouts/hax-580ebeee043cdea1/397292c/hax-lib/proofs/fstar/extraction",
+    "/home/jonas/.cargo/git/checkouts/libcrux-c3a2e0b268f26fe2/e64e513/secrets/proofs/fstar/extraction",
+    "/home/jonas/wt/iot/wip/libcrux-iot/ml-dsa/proofs/fstar/extraction",
+    "/home/jonas/wt/iot/wip/libcrux-iot/ml-kem/proofs/fstar/extraction"
+  ]
+}
