@@ -20,7 +20,7 @@ let v_MONTGOMERY_R: i32 = mk_i32 1 <<! v_MONTGOMERY_SHIFT
 let v_BARRETT_MULTIPLIER: i32 = mk_i32 20159
 
 val get_n_least_significant_bits (n: u8) (value: u32)
-    : Prims.Pure u32 Prims.l_True (fun _ -> Prims.l_True)
+    : Prims.Pure u32 (requires n <=. mk_u8 16) (fun _ -> Prims.l_True)
 
 val add (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
     : Prims.Pure Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector

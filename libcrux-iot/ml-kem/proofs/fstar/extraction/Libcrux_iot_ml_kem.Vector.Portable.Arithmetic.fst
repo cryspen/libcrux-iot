@@ -13,14 +13,7 @@ let _ =
   ()
 
 let get_n_least_significant_bits (n: u8) (value: u32) =
-  value &.
-  (Core.Num.impl_u32__wrapping_sub (Core.Num.impl_u32__wrapping_shl (mk_u32 1)
-          (cast (n <: u8) <: u32)
-        <:
-        u32)
-      (mk_u32 1)
-    <:
-    u32)
+  value &. (Core.Num.impl_u32__wrapping_sub (mk_u32 1 <<! n <: u32) (mk_u32 1) <: u32)
 
 let add (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
   let e_lhs0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
@@ -245,11 +238,8 @@ let shift_right
             Rust_primitives.Hax.Monomorphized_update_at.update_at_usize vec
                 .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements
               i
-              (Core.Num.impl_i16__wrapping_shr (vec
-                      .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ]
-                    <:
-                    i16)
-                  (cast (v_SHIFT_BY <: i32) <: u32)
+              ((vec.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ] <: i16) >>!
+                (cast (v_SHIFT_BY <: i32) <: u32)
                 <:
                 i16)
             <:
@@ -326,10 +316,7 @@ let barrett_reduce_element (value: i16) =
   let quotient:i16 =
     Libcrux_secrets.Int.f_as_i16 #i32
       #FStar.Tactics.Typeclasses.solve
-      (Core.Num.impl_i32__wrapping_shr t
-          (cast (Libcrux_iot_ml_kem.Vector.Traits.v_BARRETT_SHIFT <: i32) <: u32)
-        <:
-        i32)
+      (t >>! (cast (Libcrux_iot_ml_kem.Vector.Traits.v_BARRETT_SHIFT <: i32) <: u32) <: i32)
   in
   Core.Num.impl_i16__wrapping_sub value
     (Core.Num.impl_i16__wrapping_mul quotient Libcrux_iot_ml_kem.Vector.Traits.v_FIELD_MODULUS
@@ -412,14 +399,12 @@ let montgomery_reduce_element (value: i32) =
   let c:i16 =
     Libcrux_secrets.Int.f_as_i16 #i32
       #FStar.Tactics.Typeclasses.solve
-      (Core.Num.impl_i32__wrapping_shr k_times_modulus (cast (v_MONTGOMERY_SHIFT <: u8) <: u32)
-        <:
-        i32)
+      (k_times_modulus >>! (cast (v_MONTGOMERY_SHIFT <: u8) <: u32) <: i32)
   in
   let value_high:i16 =
     Libcrux_secrets.Int.f_as_i16 #i32
       #FStar.Tactics.Typeclasses.solve
-      (Core.Num.impl_i32__wrapping_shr value (cast (v_MONTGOMERY_SHIFT <: u8) <: u32) <: i32)
+      (value >>! (cast (v_MONTGOMERY_SHIFT <: u8) <: u32) <: i32)
   in
   Core.Num.impl_i16__wrapping_sub value_high c
 
