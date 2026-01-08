@@ -23,13 +23,10 @@ pub(crate) const MONTGOMERY_R: i32 = 1 << MONTGOMERY_SHIFT;
 /// This is calculated as ⌊(BARRETT_R / FIELD_MODULUS) + 1/2⌋
 pub(crate) const BARRETT_MULTIPLIER: i32 = 20159;
 
-// XXX: Could get rid of this if we had `wrapping_shl` in proof lib.
-// #[hax_lib::requires(n <= 16)]
+#[hax_lib::requires(n <= 16)]
 #[inline(always)]
 pub(crate) fn get_n_least_significant_bits(n: u8, value: U32) -> U32 {
-    // let res = value & (1u32 << n).wrapping_sub(1);
-    // XXX: No `wrapping_shl` in proof lib.
-    let res = value & 1u32.wrapping_shl(n as u32).wrapping_sub(1);
+    let res = value & (1u32 << n).wrapping_sub(1);
 
     res
 }
@@ -58,8 +55,6 @@ pub(crate) fn negate(vec: &mut PortableVector) {
     let _vec0 = (*vec).clone();
 
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
-        // vec.elements[i] = -vec.elements[i];
-        // XXX: No .wrapping_neg() for secret integers.
         vec.elements[i] = vec.elements[i].wrapping_neg();
     }
 }
@@ -82,15 +77,13 @@ pub(crate) fn bitwise_and_with_constant(vec: &mut PortableVector, c: i16) {
     }
 }
 
-#[inline(always)]
 #[hax_lib::requires(SHIFT_BY >= 0 && SHIFT_BY < 16)]
+#[inline(always)]
 pub(crate) fn shift_right<const SHIFT_BY: i32>(vec: &mut PortableVector) {
     #[cfg(hax)]
     let _vec0 = (*vec).clone();
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
-        // vec.elements[i] = vec.elements[i] >> SHIFT_BY;
-        // XXX: No .wrapping_shr() for secret integers.
-        vec.elements[i] = vec.elements[i].wrapping_shr(SHIFT_BY as u32);
+        vec.elements[i] >>= SHIFT_BY as u32;
     }
 }
 
@@ -119,16 +112,10 @@ pub(crate) fn cond_subtract_3329(vec: &mut PortableVector) {
 ///
 /// Note: The input bound is 28296 to prevent overflow in the multiplication of quotient by FIELD_MODULUS
 ///
-// #[hax_lib::fstar::options("--z3rlimit 150 --ext context_pruning")]
-// #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i16b 28296 value"#)))]
-// #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b 3328 result /\
-//                 v result % 3329 == v value % 3329"#)))]
 #[inline(always)]
 pub(crate) fn barrett_reduce_element(value: FieldElement) -> FieldElement {
     let t = (value.as_i32().wrapping_mul(BARRETT_MULTIPLIER)).wrapping_add(BARRETT_R >> 1);
-    // let quotient = (t >> BARRETT_SHIFT).as_i16();
-    // XXX: No .wrapping_shr() for secret integers.
-    let quotient = (t.wrapping_shr(BARRETT_SHIFT as u32)).as_i16();
+    let quotient = (t >> (BARRETT_SHIFT as u32)).as_i16();
 
     let result = value.wrapping_sub(quotient.wrapping_mul(FIELD_MODULUS));
 
@@ -158,11 +145,6 @@ pub(crate) fn barrett_reduce(vec: &mut PortableVector) {
 /// In particular, if `|value| ≤ FIELD_MODULUS-1 * FIELD_MODULUS-1`, then `|o| <= FIELD_MODULUS-1`.
 /// And, if `|value| ≤ pow2 16 * FIELD_MODULUS-1`, then `|o| <= FIELD_MODULUS + 1664
 ///
-// #[hax_lib::fstar::options("--z3rlimit 300")]
-// #[cfg_attr(hax, hax_lib::requires(fstar!(r#"Spec.Utils.is_i32b (3328 * pow2 16) value "#)))]
-// #[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"Spec.Utils.is_i16b (3328 + 1665) result /\
-//                 (Spec.Utils.is_i32b (3328 * pow2 15) value ==> Spec.Utils.is_i16b 3328 result) /\
-//                 v result % 3329 == (v value * 169) % 3329"#)))]
 pub(crate) fn montgomery_reduce_element(value: I32) -> MontgomeryFieldElement {
     let k = (value.as_i16())
         .as_i32()
@@ -170,15 +152,9 @@ pub(crate) fn montgomery_reduce_element(value: I32) -> MontgomeryFieldElement {
 
     let k_times_modulus = (k.as_i16().as_i32()).wrapping_mul(FIELD_MODULUS.classify().as_i32());
 
-    // let c = (k_times_modulus >> MONTGOMERY_SHIFT).as_i16();
-    // XXX: No .wrapping_shr() for secret integers.
-    let c = k_times_modulus
-        .wrapping_shr(MONTGOMERY_SHIFT as u32)
-        .as_i16();
+    let c = (k_times_modulus >> (MONTGOMERY_SHIFT as u32)).as_i16();
 
-    // let value_high = (value >> MONTGOMERY_SHIFT).as_i16();
-    // XXX: No .wrapping_shr() for secret integers.
-    let value_high = value.wrapping_shr(MONTGOMERY_SHIFT as u32).as_i16();
+    let value_high = (value >> (MONTGOMERY_SHIFT as u32)).as_i16();
 
     let res = value_high.wrapping_sub(c);
 
