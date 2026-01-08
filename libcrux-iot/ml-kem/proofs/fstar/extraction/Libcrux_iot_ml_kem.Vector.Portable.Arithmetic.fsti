@@ -89,6 +89,13 @@ val barrett_reduce (vec: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_Portab
 /// And, if `|value| ≤ pow2 16 * FIELD_MODULUS-1`, then `|o| <= FIELD_MODULUS + 1664
 val montgomery_reduce_element (value: i32) : Prims.Pure i16 Prims.l_True (fun _ -> Prims.l_True)
 
+val reducing_from_i32_array
+      (array: t_Slice i32)
+      (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
+    : Prims.Pure Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+      (requires (Core.Slice.impl__len #i32 array <: usize) =. mk_usize 16)
+      (fun _ -> Prims.l_True)
+
 /// If `fe` is some field element 'x' of the Kyber field and `fer` is congruent to
 /// `y · MONTGOMERY_R`, this procedure outputs a value that is congruent to
 /// `x · y`, as follows:
