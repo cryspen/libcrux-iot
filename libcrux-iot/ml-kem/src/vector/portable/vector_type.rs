@@ -1,6 +1,4 @@
-use crate::vector::{
-    portable::arithmetic::montgomery_reduce_element, traits::FIELD_ELEMENTS_IN_VECTOR,
-};
+use crate::vector::traits::FIELD_ELEMENTS_IN_VECTOR;
 use libcrux_secrets::*;
 
 /// Values having this type hold a representative 'x' of the ML-KEM field.
@@ -32,14 +30,6 @@ pub fn to_i16_array(x: &PortableVector, out: &mut [i16]) {
 #[inline(always)]
 pub fn from_i16_array(array: &[I16], out: &mut PortableVector) {
     out.elements.copy_from_slice(&array[0..16]);
-}
-
-#[hax_lib::requires(array.len() == 16)]
-#[inline(always)]
-pub fn reducing_from_i32_array(array: &[I32], out: &mut PortableVector) {
-    for i in 0..16 {
-        out.elements[i] = montgomery_reduce_element(array[i]);
-    }
 }
 
 #[hax_lib::requires(array.len() >= 32)]
