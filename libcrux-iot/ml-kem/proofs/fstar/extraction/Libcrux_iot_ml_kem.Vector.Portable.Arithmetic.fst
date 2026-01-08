@@ -408,6 +408,37 @@ let montgomery_reduce_element (value: i32) =
   in
   Core.Num.impl_i16__wrapping_sub value_high c
 
+let reducing_from_i32_array
+      (array: t_Slice i32)
+      (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
+     =
+  let out:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
+    Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
+      (mk_usize 16)
+      (fun out temp_1_ ->
+          let out:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector = out in
+          let _:usize = temp_1_ in
+          true)
+      out
+      (fun out i ->
+          let out:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector = out in
+          let i:usize = i in
+          {
+            out with
+            Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements
+            =
+            Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out
+                .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements
+              i
+              (montgomery_reduce_element (array.[ i ] <: i32) <: i16)
+            <:
+            t_Array i16 (mk_usize 16)
+          }
+          <:
+          Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
+  in
+  out
+
 let montgomery_multiply_fe_by_fer (fe fer: i16) =
   let product:i32 =
     Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
