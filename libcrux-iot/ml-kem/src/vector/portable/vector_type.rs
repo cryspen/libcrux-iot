@@ -18,6 +18,7 @@ pub fn zero() -> PortableVector {
 }
 
 #[hax_lib::requires(out.len() == 16)]
+#[hax_lib::ensures(|_| future(out).len() == 16)]
 #[inline(always)]
 pub fn to_i16_array(x: &PortableVector, out: &mut [i16]) {
     #[cfg(not(eurydice))]
