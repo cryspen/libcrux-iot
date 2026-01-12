@@ -4,7 +4,7 @@ import os
 import argparse
 import subprocess
 import sys
-
+from glob import glob
 
 def shell(command, expect=0, cwd=None, env={}):
     subprocess_stdout = subprocess.DEVNULL
@@ -110,6 +110,12 @@ class proveAction(argparse.Action):
         shell(["make", "-j4", "-C", "proofs/fstar/extraction/"], env=admit_env)
         return None
 
+class cleanAction(argparse.Action):
+
+    def __call__(self, parser, args, values, option_string=None) -> None:
+        shell(["rm"] + glob("./proofs/fstar/extraction/*.fst"))
+        shell(["rm"] + glob("./proofs/fstar/extraction/*.fsti"))
+        return None    
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -142,6 +148,11 @@ def parse_arguments():
         nargs="*",
         action=proveAction,
     )
+
+    clean_parser = subparsers.add_parser(
+        "clean", help="Remove generated F* code."
+    )
+    clean_parser.add_argument("clean", nargs="*", action=cleanAction)    
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
