@@ -610,6 +610,7 @@ pub trait Operations: Copy + Clone + Repr {
     fn inv_ntt_layer_3_step(a: &mut Self, zeta: i16);
 
     #[requires(out.len() >= 16)]
+    #[ensures(|_| future(out).len() == out.len())]
     fn accumulating_ntt_multiply(
         lhs: &Self,
         rhs: &Self,
@@ -621,6 +622,7 @@ pub trait Operations: Copy + Clone + Repr {
     );
 
     #[requires(out.len() >= 16)]
+    #[ensures(|_| future(out).len() == out.len())]
     fn accumulating_ntt_multiply_fill_cache(
         lhs: &Self,
         rhs: &Self,
@@ -633,6 +635,7 @@ pub trait Operations: Copy + Clone + Repr {
     );
 
     #[requires(out.len() >= 16)]
+    #[ensures(|_| future(out).len() == out.len())]
     fn accumulating_ntt_multiply_use_cache(lhs: &Self, rhs: &Self, out: &mut [I32], cache: &Self);
 
     // Serialization and deserialization

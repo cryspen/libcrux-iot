@@ -120,6 +120,7 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
     }
 
     #[inline(always)]
+    #[requires(accumulator.len() >= 16 * VECTORS_IN_RING_ELEMENT)]
     pub(crate) fn accumulating_ntt_multiply(&self, rhs: &Self, accumulator: &mut [I32; 256]) {
         for i in 0..VECTORS_IN_RING_ELEMENT {
             Vector::accumulating_ntt_multiply(

@@ -166,6 +166,7 @@ impl Operations for PortableVector {
     }
 
     #[requires(out.len() >= 16)]
+    #[ensures(|_| future(out).len() == out.len())]
     #[inline(always)]
     fn accumulating_ntt_multiply(
         lhs: &Self,
@@ -180,6 +181,7 @@ impl Operations for PortableVector {
     }
 
     #[requires(out.len() >= 16)]
+    #[ensures(|_| future(out).len() == out.len())]
     #[inline(always)]
     fn accumulating_ntt_multiply_fill_cache(
         lhs: &Self,
@@ -195,6 +197,7 @@ impl Operations for PortableVector {
     }
 
     #[requires(out.len() >= 16)]
+    #[ensures(|_| future(out).len() == out.len())]
     #[inline(always)]
     fn accumulating_ntt_multiply_use_cache(lhs: &Self, rhs: &Self, out: &mut [I32], cache: &Self) {
         accumulating_ntt_multiply_use_cache(lhs, rhs, out, cache)

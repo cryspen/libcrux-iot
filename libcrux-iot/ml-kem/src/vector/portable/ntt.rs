@@ -132,6 +132,7 @@ pub(crate) fn inv_ntt_layer_3_step(vec: &mut PortableVector, zeta: i16) {
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
 #[hax_lib::requires(i < 8 && out.len() >= 16)]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 #[inline(always)]
 pub(crate) fn accumulating_ntt_multiply_binomials_fill_cache(
     a: &PortableVector,
@@ -164,6 +165,7 @@ pub(crate) fn accumulating_ntt_multiply_binomials_fill_cache(
 }
 
 #[hax_lib::requires(i < 8 && out.len() >= 16)]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 #[inline(always)]
 pub(crate) fn accumulating_ntt_multiply_binomials_use_cache(
     a: &PortableVector,
@@ -192,6 +194,7 @@ pub(crate) fn accumulating_ntt_multiply_binomials_use_cache(
 }
 
 #[hax_lib::requires(i < 8 && out.len() >= 16)]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 #[inline(always)]
 pub(crate) fn accumulating_ntt_multiply_binomials(
     a: &PortableVector,
@@ -222,6 +225,7 @@ pub(crate) fn accumulating_ntt_multiply_binomials(
 }
 
 #[hax_lib::requires(out.len() >= 16)]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 #[inline(always)]
 pub(crate) fn accumulating_ntt_multiply(
     lhs: &PortableVector,
@@ -247,6 +251,7 @@ pub(crate) fn accumulating_ntt_multiply(
 }
 
 #[hax_lib::requires(out.len() >= 16)]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 #[inline(always)]
 pub(crate) fn accumulating_ntt_multiply_fill_cache(
     lhs: &PortableVector,
@@ -273,6 +278,7 @@ pub(crate) fn accumulating_ntt_multiply_fill_cache(
 }
 
 #[hax_lib::requires(out.len() >= 16)]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 #[inline(always)]
 pub(crate) fn accumulating_ntt_multiply_use_cache(
     lhs: &PortableVector,
