@@ -93,7 +93,14 @@ val accumulating_ntt_multiply_binomials_fill_cache
       (cache: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
     : Prims.Pure (t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
       (requires i <. mk_usize 8 && (Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16)
-      (fun _ -> Prims.l_True)
+      (ensures
+        fun temp_0_ ->
+          let out_future, cache_future:(t_Slice i32 &
+            Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+            temp_0_
+          in
+          (Core.Slice.impl__len #i32 out_future <: usize) =.
+          (Core.Slice.impl__len #i32 out <: usize))
 
 val accumulating_ntt_multiply_binomials_use_cache
       (a b: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
@@ -102,7 +109,11 @@ val accumulating_ntt_multiply_binomials_use_cache
       (cache: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
     : Prims.Pure (t_Slice i32)
       (requires i <. mk_usize 8 && (Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16)
-      (fun _ -> Prims.l_True)
+      (ensures
+        fun out_future ->
+          let out_future:t_Slice i32 = out_future in
+          (Core.Slice.impl__len #i32 out_future <: usize) =.
+          (Core.Slice.impl__len #i32 out <: usize))
 
 val accumulating_ntt_multiply_binomials
       (a b: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
@@ -111,7 +122,11 @@ val accumulating_ntt_multiply_binomials
       (out: t_Slice i32)
     : Prims.Pure (t_Slice i32)
       (requires i <. mk_usize 8 && (Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16)
-      (fun _ -> Prims.l_True)
+      (ensures
+        fun out_future ->
+          let out_future:t_Slice i32 = out_future in
+          (Core.Slice.impl__len #i32 out_future <: usize) =.
+          (Core.Slice.impl__len #i32 out <: usize))
 
 val accumulating_ntt_multiply
       (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
@@ -119,7 +134,11 @@ val accumulating_ntt_multiply
       (zeta0 zeta1 zeta2 zeta3: i16)
     : Prims.Pure (t_Slice i32)
       (requires (Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16)
-      (fun _ -> Prims.l_True)
+      (ensures
+        fun out_future ->
+          let out_future:t_Slice i32 = out_future in
+          (Core.Slice.impl__len #i32 out_future <: usize) =.
+          (Core.Slice.impl__len #i32 out <: usize))
 
 val accumulating_ntt_multiply_fill_cache
       (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
@@ -128,7 +147,14 @@ val accumulating_ntt_multiply_fill_cache
       (zeta0 zeta1 zeta2 zeta3: i16)
     : Prims.Pure (t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
       (requires (Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16)
-      (fun _ -> Prims.l_True)
+      (ensures
+        fun temp_0_ ->
+          let out_future, cache_future:(t_Slice i32 &
+            Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+            temp_0_
+          in
+          (Core.Slice.impl__len #i32 out_future <: usize) =.
+          (Core.Slice.impl__len #i32 out <: usize))
 
 val accumulating_ntt_multiply_use_cache
       (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
@@ -136,4 +162,8 @@ val accumulating_ntt_multiply_use_cache
       (cache: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
     : Prims.Pure (t_Slice i32)
       (requires (Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16)
-      (fun _ -> Prims.l_True)
+      (ensures
+        fun out_future ->
+          let out_future:t_Slice i32 = out_future in
+          (Core.Slice.impl__len #i32 out_future <: usize) =.
+          (Core.Slice.impl__len #i32 out <: usize))

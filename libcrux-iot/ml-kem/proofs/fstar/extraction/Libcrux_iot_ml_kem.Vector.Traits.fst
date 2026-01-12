@@ -190,15 +190,19 @@ class t_Operations (v_Self: Type0) = {
       zeta3: i16
     -> pred: Type0{(Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16 ==> pred};
   f_accumulating_ntt_multiply_post:
-      v_Self ->
-      v_Self ->
-      t_Slice i32 ->
-      i16 ->
-      i16 ->
-      i16 ->
-      i16 ->
-      t_Slice i32
-    -> Type0;
+      lhs: v_Self ->
+      rhs: v_Self ->
+      out: t_Slice i32 ->
+      zeta0: i16 ->
+      zeta1: i16 ->
+      zeta2: i16 ->
+      zeta3: i16 ->
+      out_future: t_Slice i32
+    -> pred:
+      Type0
+        { pred ==>
+          (Core.Slice.impl__len #i32 out_future <: usize) =.
+          (Core.Slice.impl__len #i32 out <: usize) };
   f_accumulating_ntt_multiply:
       x0: v_Self ->
       x1: v_Self ->
@@ -221,16 +225,21 @@ class t_Operations (v_Self: Type0) = {
       zeta3: i16
     -> pred: Type0{(Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16 ==> pred};
   f_accumulating_ntt_multiply_fill_cache_post:
-      v_Self ->
-      v_Self ->
-      t_Slice i32 ->
-      v_Self ->
-      i16 ->
-      i16 ->
-      i16 ->
-      i16 ->
-      (t_Slice i32 & v_Self)
-    -> Type0;
+      lhs: v_Self ->
+      rhs: v_Self ->
+      out: t_Slice i32 ->
+      cache: v_Self ->
+      zeta0: i16 ->
+      zeta1: i16 ->
+      zeta2: i16 ->
+      zeta3: i16 ->
+      x: (t_Slice i32 & v_Self)
+    -> pred:
+      Type0
+        { pred ==>
+          (let out_future, cache_future:(t_Slice i32 & v_Self) = x in
+            (Core.Slice.impl__len #i32 out_future <: usize) =.
+            (Core.Slice.impl__len #i32 out <: usize)) };
   f_accumulating_ntt_multiply_fill_cache:
       x0: v_Self ->
       x1: v_Self ->
@@ -250,12 +259,16 @@ class t_Operations (v_Self: Type0) = {
       cache: v_Self
     -> pred: Type0{(Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16 ==> pred};
   f_accumulating_ntt_multiply_use_cache_post:
-      v_Self ->
-      v_Self ->
-      t_Slice i32 ->
-      v_Self ->
-      t_Slice i32
-    -> Type0;
+      lhs: v_Self ->
+      rhs: v_Self ->
+      out: t_Slice i32 ->
+      cache: v_Self ->
+      out_future: t_Slice i32
+    -> pred:
+      Type0
+        { pred ==>
+          (Core.Slice.impl__len #i32 out_future <: usize) =.
+          (Core.Slice.impl__len #i32 out <: usize) };
   f_accumulating_ntt_multiply_use_cache:x0: v_Self -> x1: v_Self -> x2: t_Slice i32 -> x3: v_Self
     -> Prims.Pure (t_Slice i32)
         (f_accumulating_ntt_multiply_use_cache_pre x0 x1 x2 x3)

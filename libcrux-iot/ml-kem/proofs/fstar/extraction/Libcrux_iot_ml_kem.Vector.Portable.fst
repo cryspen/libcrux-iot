@@ -593,9 +593,9 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (zeta1: i16)
         (zeta2: i16)
         (zeta3: i16)
-        (out1: t_Slice i32)
+        (out_future: t_Slice i32)
         ->
-        true);
+        (Core.Slice.impl__len #i32 out_future <: usize) =. (Core.Slice.impl__len #i32 out <: usize));
     f_accumulating_ntt_multiply
     =
     (fun
@@ -641,9 +641,10 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (zeta1: i16)
         (zeta2: i16)
         (zeta3: i16)
-        (out1: (t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector))
+        (out_future, cache_future:
+          (t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector))
         ->
-        true);
+        (Core.Slice.impl__len #i32 out_future <: usize) =. (Core.Slice.impl__len #i32 out <: usize));
     f_accumulating_ntt_multiply_fill_cache
     =
     (fun
@@ -689,9 +690,9 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
         (out: t_Slice i32)
         (cache: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
-        (out1: t_Slice i32)
+        (out_future: t_Slice i32)
         ->
-        true);
+        (Core.Slice.impl__len #i32 out_future <: usize) =. (Core.Slice.impl__len #i32 out <: usize));
     f_accumulating_ntt_multiply_use_cache
     =
     (fun
