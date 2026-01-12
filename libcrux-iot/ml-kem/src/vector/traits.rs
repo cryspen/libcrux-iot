@@ -512,6 +512,7 @@ pub(crate) mod spec {
 
 #[hax_lib::attributes]
 pub trait Operations: Copy + Clone + Repr {
+    #[requires(true)]
     #[allow(non_snake_case)]
     fn ZERO() -> Self;
 
@@ -534,23 +535,28 @@ pub trait Operations: Copy + Clone + Repr {
     // Basic arithmetic
     // #[requires(spec::add_pre(&lhs.repr(), &rhs.repr()))]
     // #[ensures(|_| spec::add_post(&lhs.repr(), &rhs.repr(), &future(lhs).repr()))]
+    #[requires(true)]
     fn add(lhs: &mut Self, rhs: &Self);
 
     // #[requires(spec::sub_pre(&lhs.repr(), &rhs.repr()))]
     // #[ensures(|_| spec::sub_post(&lhs.repr(), &rhs.repr(), &future(lhs).repr()))]
+    #[requires(true)]
     fn sub(lhs: &mut Self, rhs: &Self);
 
     // #[requires(spec::negate_pre(&vec.repr()))]
     // #[ensures(|_| spec::negate_post(&vec.repr(), &future(vec).repr()))]
+    #[requires(true)]
     fn negate(vec: &mut Self);
 
     // #[requires(spec::multiply_by_constant_pre(&vec.repr(), c))]
     // #[ensures(|_| spec::multiply_by_constant_post(&vec.repr(), c, &future(vec).repr()))]
+    #[requires(true)]
     fn multiply_by_constant(vec: &mut Self, c: i16);
 
     // Bitwise operations
     // #[requires(true)]
     // #[ensures(|_| spec::bitwise_and_with_constant_constant_post(&vec.repr(), c, &future(vec).repr()))]
+    #[requires(true)]
     fn bitwise_and_with_constant(vec: &mut Self, c: i16);
 
     #[requires(SHIFT_BY >= 0 && SHIFT_BY < 16)]
@@ -560,19 +566,23 @@ pub trait Operations: Copy + Clone + Repr {
     // Modular operations
     // #[requires(spec::cond_subtract_3329_pre(&vec.repr()))]
     // #[ensures(|_| spec::cond_subtract_3329_post(&vec.repr(), &future(vec).repr()))]
+    #[requires(true)]
     fn cond_subtract_3329(vec: &mut Self);
 
     // #[requires(spec::barrett_reduce_pre(&vec.repr()))]
     // #[ensures(|_| spec::barrett_reduce_post(&vec.repr(), &future(vec).repr()))]
+    #[requires(true)]
     fn barrett_reduce(vec: &mut Self);
 
     // #[requires(spec::montgomery_multiply_by_constant_pre(&vec.repr(), c))]
     // #[ensures(|_| spec::montgomery_multiply_by_constant_post(&vec.repr(), c, &future(vec).repr()))]
+    #[requires(true)]
     fn montgomery_multiply_by_constant(vec: &mut Self, c: i16);
 
     // Compression
     // #[requires(spec::compress_1_pre(&vec.repr()))]
     // #[ensures(|_| spec::compress_1_post(&vec.repr(), &future(vec).repr()))]
+    #[requires(true)]
     fn compress_1(vec: &mut Self);
 
     // #[requires(spec::compress_pre(&vec.repr(), COEFFICIENT_BITS))]
@@ -585,12 +595,18 @@ pub trait Operations: Copy + Clone + Repr {
     fn decompress_ciphertext_coefficient<const COEFFICIENT_BITS: i32>(vec: &mut Self);
 
     // NTT
+    #[requires(true)]
     fn ntt_layer_1_step(a: &mut Self, zeta0: i16, zeta1: i16, zeta2: i16, zeta3: i16);
+    #[requires(true)]
     fn ntt_layer_2_step(a: &mut Self, zeta0: i16, zeta1: i16);
+    #[requires(true)]
     fn ntt_layer_3_step(a: &mut Self, zeta: i16);
 
+    #[requires(true)]
     fn inv_ntt_layer_1_step(a: &mut Self, zeta0: i16, zeta1: i16, zeta2: i16, zeta3: i16);
+    #[requires(true)]
     fn inv_ntt_layer_2_step(a: &mut Self, zeta0: i16, zeta1: i16);
+    #[requires(true)]
     fn inv_ntt_layer_3_step(a: &mut Self, zeta: i16);
 
     #[requires(out.len() >= 16)]
