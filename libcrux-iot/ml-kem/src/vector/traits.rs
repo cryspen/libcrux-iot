@@ -7,20 +7,19 @@ pub const INVERSE_OF_MODULUS_MOD_MONTGOMERY_R: u32 = 62209; // FIELD_MODULUS^{-1
 pub const BARRETT_SHIFT: i32 = 26;
 pub const BARRETT_R: i32 = 1 << BARRETT_SHIFT;
 
-// XXX: Is this trait necessary still?
 // We define a trait that allows us to talk about the contents of a vector.
 // This is used extensively in pre- and post-conditions to reason about the code.
 // The trait is duplicated for Eurydice to avoid the trait inheritance between Operations and Repr
 // This is needed because of this issue: https://github.com/AeneasVerif/eurydice/issues/111
-// #[cfg(hax)]
-// #[hax_lib::attributes]
-// pub trait Repr: Copy + Clone {
-//     #[requires(true)]
-//     fn repr(&self) -> [i16; 16];
-// }
+#[cfg(hax)]
+#[hax_lib::attributes]
+pub trait Repr: Copy + Clone {
+    #[requires(true)]
+    fn repr(&self) -> [i16; 16];
+}
 
-// #[cfg(any(eurydice, not(hax)))]
-// pub trait Repr {}
+#[cfg(any(eurydice, not(hax)))]
+pub trait Repr {}
 
 #[cfg(hax)]
 pub(crate) mod spec {
@@ -512,8 +511,7 @@ pub(crate) mod spec {
 }
 
 #[hax_lib::attributes]
-pub trait Operations: Copy + Clone {
-    // #[requires(true)]
+pub trait Operations: Copy + Clone + Repr {
     #[allow(non_snake_case)]
     fn ZERO() -> Self;
 

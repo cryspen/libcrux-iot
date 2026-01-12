@@ -17,17 +17,17 @@ use vector_type::*;
 
 pub(crate) use vector_type::PortableVector;
 
-// #[cfg(hax)]
-// impl crate::vector::traits::Repr for PortableVector {
-//     fn repr(&self) -> [i16; 16] {
-//         let mut out = [0i16; 16];
-//         to_i16_array(self, &mut out);
-//         out
-//     }
-// }
+#[cfg(hax)]
+impl crate::vector::traits::Repr for PortableVector {
+    fn repr(&self) -> [i16; 16] {
+        let mut out = [0i16; 16];
+        to_i16_array(self, &mut out);
+        out
+    }
+}
 
-// #[cfg(any(eurydice, not(hax)))]
-// impl crate::vector::traits::Repr for PortableVector {}
+#[cfg(any(eurydice, not(hax)))]
+impl crate::vector::traits::Repr for PortableVector {}
 
 #[hax_lib::attributes]
 impl Operations for PortableVector {
