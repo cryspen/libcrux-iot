@@ -70,7 +70,9 @@ class extractAction(argparse.Action):
         includes = [
             "-**",
             # "+libcrux_iot_ml_kem::spec::*",
-            "+libcrux_iot_ml_kem::vector::portable::**",
+            # "+libcrux_iot_ml_kem::vector::**",
+            "+libcrux_iot_ml_kem::vector::**",
+            # "+libcrux_iot_ml_kem::polynomial::**"
             # "+libcrux_iot_ml_kem::vector::portable::arithmetic::**",
             # "+libcrux_iot_ml_kem::vector::portable::ntt::**",
             # "+libcrux_iot_ml_kem::vector::portable::sampling::**",

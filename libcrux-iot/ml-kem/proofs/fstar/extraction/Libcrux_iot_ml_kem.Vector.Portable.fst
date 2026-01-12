@@ -7,17 +7,45 @@ let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
   (* The implicit dependencies arise from typeclasses instances. *)
   let open Libcrux_iot_ml_kem.Vector.Portable.Vector_type in
+  let open Libcrux_iot_ml_kem.Vector.Traits in
   let open Libcrux_secrets.Int.Classify_public in
   let open Libcrux_secrets.Int.Public_integers in
   let open Libcrux_secrets.Traits in
   ()
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl: Libcrux_iot_ml_kem.Vector.Traits.t_Operations
+let impl: Libcrux_iot_ml_kem.Vector.Traits.t_Repr
 Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
   {
     _super_250177790225314374 = FStar.Tactics.Typeclasses.solve;
     _super_14156401398203956914 = FStar.Tactics.Typeclasses.solve;
+    f_repr_pre
+    =
+    (fun (self: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) -> true);
+    f_repr_post
+    =
+    (fun
+        (self: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
+        (out1: t_Array i16 (mk_usize 16))
+        ->
+        true);
+    f_repr
+    =
+    fun (self: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) ->
+      let out:t_Array i16 (mk_usize 16) = Rust_primitives.Hax.repeat (mk_i16 0) (mk_usize 16) in
+      let out:t_Array i16 (mk_usize 16) =
+        Libcrux_iot_ml_kem.Vector.Portable.Vector_type.to_i16_array self out
+      in
+      out
+  }
+
+[@@ FStar.Tactics.Typeclasses.tcinstance]
+let impl_1: Libcrux_iot_ml_kem.Vector.Traits.t_Operations
+Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
+  {
+    _super_250177790225314374 = FStar.Tactics.Typeclasses.solve;
+    _super_14156401398203956914 = FStar.Tactics.Typeclasses.solve;
+    _super_13976135183713343918 = FStar.Tactics.Typeclasses.solve;
     f_ZERO_pre = (fun (_: Prims.unit) -> true);
     f_ZERO_post
     =

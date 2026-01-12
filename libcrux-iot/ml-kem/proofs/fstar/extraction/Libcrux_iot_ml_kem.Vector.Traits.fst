@@ -3,6 +3,8 @@ module Libcrux_iot_ml_kem.Vector.Traits
 open Core
 open FStar.Mul
 
+let v_MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS: i16 = mk_i16 1353
+
 let v_FIELD_MODULUS: i16 = mk_i16 3329
 
 let v_FIELD_ELEMENTS_IN_VECTOR: usize = mk_usize 16
@@ -13,10 +15,31 @@ let v_BARRETT_SHIFT: i32 = mk_i32 26
 
 let v_BARRETT_R: i32 = mk_i32 1 <<! v_BARRETT_SHIFT
 
+class t_Repr (v_Self: Type0) = {
+  [@@@ FStar.Tactics.Typeclasses.no_method]_super_250177790225314374:Core.Marker.t_Copy v_Self;
+  [@@@ FStar.Tactics.Typeclasses.no_method]_super_14156401398203956914:Core.Clone.t_Clone v_Self;
+  f_repr_pre:self_: v_Self -> pred: Type0{true ==> pred};
+  f_repr_post:v_Self -> t_Array i16 (mk_usize 16) -> Type0;
+  f_repr:x0: v_Self
+    -> Prims.Pure (t_Array i16 (mk_usize 16)) (f_repr_pre x0) (fun result -> f_repr_post x0 result)
+}
+
+[@@ FStar.Tactics.Typeclasses.tcinstance]
+let _ = fun (v_Self:Type0) {|i: t_Repr v_Self|} -> i._super_250177790225314374
+
+[@@ FStar.Tactics.Typeclasses.tcinstance]
+let _ = fun (v_Self:Type0) {|i: t_Repr v_Self|} -> i._super_14156401398203956914
+
 class t_Operations (v_Self: Type0) = {
   [@@@ FStar.Tactics.Typeclasses.no_method]_super_250177790225314374:Core.Marker.t_Copy v_Self;
   [@@@ FStar.Tactics.Typeclasses.no_method]_super_14156401398203956914:Core.Clone.t_Clone v_Self;
-  f_ZERO_pre:Prims.unit -> Type0;
+  [@@@ FStar.Tactics.Typeclasses.no_method]_super_13976135183713343918:t_Repr v_Self;
+  f_ZERO_pre:x: Prims.unit
+    -> pred:
+      Type0
+        { (let _:Prims.unit = x in
+            true) ==>
+          pred };
   f_ZERO_post:Prims.unit -> v_Self -> Type0;
   f_ZERO:x0: Prims.unit -> Prims.Pure v_Self (f_ZERO_pre x0) (fun result -> f_ZERO_post x0 result);
   f_from_i16_array_pre:array: t_Slice i16 -> out: v_Self
@@ -55,24 +78,24 @@ class t_Operations (v_Self: Type0) = {
           (Core.Slice.impl__len #u8 bytes <: usize) };
   f_to_bytes:x0: v_Self -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8) (f_to_bytes_pre x0 x1) (fun result -> f_to_bytes_post x0 x1 result);
-  f_add_pre:v_Self -> v_Self -> Type0;
+  f_add_pre:lhs: v_Self -> rhs: v_Self -> pred: Type0{true ==> pred};
   f_add_post:v_Self -> v_Self -> v_Self -> Type0;
   f_add:x0: v_Self -> x1: v_Self
     -> Prims.Pure v_Self (f_add_pre x0 x1) (fun result -> f_add_post x0 x1 result);
-  f_sub_pre:v_Self -> v_Self -> Type0;
+  f_sub_pre:lhs: v_Self -> rhs: v_Self -> pred: Type0{true ==> pred};
   f_sub_post:v_Self -> v_Self -> v_Self -> Type0;
   f_sub:x0: v_Self -> x1: v_Self
     -> Prims.Pure v_Self (f_sub_pre x0 x1) (fun result -> f_sub_post x0 x1 result);
-  f_negate_pre:v_Self -> Type0;
+  f_negate_pre:vec: v_Self -> pred: Type0{true ==> pred};
   f_negate_post:v_Self -> v_Self -> Type0;
   f_negate:x0: v_Self -> Prims.Pure v_Self (f_negate_pre x0) (fun result -> f_negate_post x0 result);
-  f_multiply_by_constant_pre:v_Self -> i16 -> Type0;
+  f_multiply_by_constant_pre:vec: v_Self -> c: i16 -> pred: Type0{true ==> pred};
   f_multiply_by_constant_post:v_Self -> i16 -> v_Self -> Type0;
   f_multiply_by_constant:x0: v_Self -> x1: i16
     -> Prims.Pure v_Self
         (f_multiply_by_constant_pre x0 x1)
         (fun result -> f_multiply_by_constant_post x0 x1 result);
-  f_bitwise_and_with_constant_pre:v_Self -> i16 -> Type0;
+  f_bitwise_and_with_constant_pre:vec: v_Self -> c: i16 -> pred: Type0{true ==> pred};
   f_bitwise_and_with_constant_post:v_Self -> i16 -> v_Self -> Type0;
   f_bitwise_and_with_constant:x0: v_Self -> x1: i16
     -> Prims.Pure v_Self
@@ -85,23 +108,23 @@ class t_Operations (v_Self: Type0) = {
     -> Prims.Pure v_Self
         (f_shift_right_pre v_SHIFT_BY x0)
         (fun result -> f_shift_right_post v_SHIFT_BY x0 result);
-  f_cond_subtract_3329__pre:v_Self -> Type0;
+  f_cond_subtract_3329__pre:vec: v_Self -> pred: Type0{true ==> pred};
   f_cond_subtract_3329__post:v_Self -> v_Self -> Type0;
   f_cond_subtract_3329_:x0: v_Self
     -> Prims.Pure v_Self
         (f_cond_subtract_3329__pre x0)
         (fun result -> f_cond_subtract_3329__post x0 result);
-  f_barrett_reduce_pre:v_Self -> Type0;
+  f_barrett_reduce_pre:vec: v_Self -> pred: Type0{true ==> pred};
   f_barrett_reduce_post:v_Self -> v_Self -> Type0;
   f_barrett_reduce:x0: v_Self
     -> Prims.Pure v_Self (f_barrett_reduce_pre x0) (fun result -> f_barrett_reduce_post x0 result);
-  f_montgomery_multiply_by_constant_pre:v_Self -> i16 -> Type0;
+  f_montgomery_multiply_by_constant_pre:vec: v_Self -> c: i16 -> pred: Type0{true ==> pred};
   f_montgomery_multiply_by_constant_post:v_Self -> i16 -> v_Self -> Type0;
   f_montgomery_multiply_by_constant:x0: v_Self -> x1: i16
     -> Prims.Pure v_Self
         (f_montgomery_multiply_by_constant_pre x0 x1)
         (fun result -> f_montgomery_multiply_by_constant_post x0 x1 result);
-  f_compress_1__pre:v_Self -> Type0;
+  f_compress_1__pre:vec: v_Self -> pred: Type0{true ==> pred};
   f_compress_1__post:v_Self -> v_Self -> Type0;
   f_compress_1_:x0: v_Self
     -> Prims.Pure v_Self (f_compress_1__pre x0) (fun result -> f_compress_1__post x0 result);
@@ -119,37 +142,39 @@ class t_Operations (v_Self: Type0) = {
     -> Prims.Pure v_Self
         (f_decompress_ciphertext_coefficient_pre v_COEFFICIENT_BITS x0)
         (fun result -> f_decompress_ciphertext_coefficient_post v_COEFFICIENT_BITS x0 result);
-  f_ntt_layer_1_step_pre:v_Self -> i16 -> i16 -> i16 -> i16 -> Type0;
+  f_ntt_layer_1_step_pre:a: v_Self -> zeta0: i16 -> zeta1: i16 -> zeta2: i16 -> zeta3: i16
+    -> pred: Type0{true ==> pred};
   f_ntt_layer_1_step_post:v_Self -> i16 -> i16 -> i16 -> i16 -> v_Self -> Type0;
   f_ntt_layer_1_step:x0: v_Self -> x1: i16 -> x2: i16 -> x3: i16 -> x4: i16
     -> Prims.Pure v_Self
         (f_ntt_layer_1_step_pre x0 x1 x2 x3 x4)
         (fun result -> f_ntt_layer_1_step_post x0 x1 x2 x3 x4 result);
-  f_ntt_layer_2_step_pre:v_Self -> i16 -> i16 -> Type0;
+  f_ntt_layer_2_step_pre:a: v_Self -> zeta0: i16 -> zeta1: i16 -> pred: Type0{true ==> pred};
   f_ntt_layer_2_step_post:v_Self -> i16 -> i16 -> v_Self -> Type0;
   f_ntt_layer_2_step:x0: v_Self -> x1: i16 -> x2: i16
     -> Prims.Pure v_Self
         (f_ntt_layer_2_step_pre x0 x1 x2)
         (fun result -> f_ntt_layer_2_step_post x0 x1 x2 result);
-  f_ntt_layer_3_step_pre:v_Self -> i16 -> Type0;
+  f_ntt_layer_3_step_pre:a: v_Self -> zeta: i16 -> pred: Type0{true ==> pred};
   f_ntt_layer_3_step_post:v_Self -> i16 -> v_Self -> Type0;
   f_ntt_layer_3_step:x0: v_Self -> x1: i16
     -> Prims.Pure v_Self
         (f_ntt_layer_3_step_pre x0 x1)
         (fun result -> f_ntt_layer_3_step_post x0 x1 result);
-  f_inv_ntt_layer_1_step_pre:v_Self -> i16 -> i16 -> i16 -> i16 -> Type0;
+  f_inv_ntt_layer_1_step_pre:a: v_Self -> zeta0: i16 -> zeta1: i16 -> zeta2: i16 -> zeta3: i16
+    -> pred: Type0{true ==> pred};
   f_inv_ntt_layer_1_step_post:v_Self -> i16 -> i16 -> i16 -> i16 -> v_Self -> Type0;
   f_inv_ntt_layer_1_step:x0: v_Self -> x1: i16 -> x2: i16 -> x3: i16 -> x4: i16
     -> Prims.Pure v_Self
         (f_inv_ntt_layer_1_step_pre x0 x1 x2 x3 x4)
         (fun result -> f_inv_ntt_layer_1_step_post x0 x1 x2 x3 x4 result);
-  f_inv_ntt_layer_2_step_pre:v_Self -> i16 -> i16 -> Type0;
+  f_inv_ntt_layer_2_step_pre:a: v_Self -> zeta0: i16 -> zeta1: i16 -> pred: Type0{true ==> pred};
   f_inv_ntt_layer_2_step_post:v_Self -> i16 -> i16 -> v_Self -> Type0;
   f_inv_ntt_layer_2_step:x0: v_Self -> x1: i16 -> x2: i16
     -> Prims.Pure v_Self
         (f_inv_ntt_layer_2_step_pre x0 x1 x2)
         (fun result -> f_inv_ntt_layer_2_step_post x0 x1 x2 result);
-  f_inv_ntt_layer_3_step_pre:v_Self -> i16 -> Type0;
+  f_inv_ntt_layer_3_step_pre:a: v_Self -> zeta: i16 -> pred: Type0{true ==> pred};
   f_inv_ntt_layer_3_step_post:v_Self -> i16 -> v_Self -> Type0;
   f_inv_ntt_layer_3_step:x0: v_Self -> x1: i16
     -> Prims.Pure v_Self
@@ -349,3 +374,52 @@ let _ = fun (v_Self:Type0) {|i: t_Operations v_Self|} -> i._super_25017779022531
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
 let _ = fun (v_Self:Type0) {|i: t_Operations v_Self|} -> i._super_14156401398203956914
+
+[@@ FStar.Tactics.Typeclasses.tcinstance]
+let _ = fun (v_Self:Type0) {|i: t_Operations v_Self|} -> i._super_13976135183713343918
+
+let montgomery_multiply_fe
+      (#v_T: Type0)
+      (#[FStar.Tactics.Typeclasses.tcresolve ()] i0: t_Operations v_T)
+      (v: v_T)
+      (fer: i16)
+    : v_T =
+  let v:v_T = f_montgomery_multiply_by_constant #v_T #FStar.Tactics.Typeclasses.solve v fer in
+  v
+
+let to_standard_domain
+      (#v_T: Type0)
+      (#[FStar.Tactics.Typeclasses.tcresolve ()] i0: t_Operations v_T)
+      (v: v_T)
+    : v_T =
+  let v:v_T =
+    f_montgomery_multiply_by_constant #v_T
+      #FStar.Tactics.Typeclasses.solve
+      v
+      v_MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS
+  in
+  v
+
+let to_unsigned_representative
+      (#v_T: Type0)
+      (#[FStar.Tactics.Typeclasses.tcresolve ()] i0: t_Operations v_T)
+      (a out: v_T)
+    : v_T =
+  let out:v_T = a in
+  let out:v_T = f_shift_right #v_T #FStar.Tactics.Typeclasses.solve (mk_i32 15) out in
+  let out:v_T =
+    f_bitwise_and_with_constant #v_T #FStar.Tactics.Typeclasses.solve out v_FIELD_MODULUS
+  in
+  let out:v_T = f_add #v_T #FStar.Tactics.Typeclasses.solve out a in
+  out
+
+let decompress_1_
+      (#v_T: Type0)
+      (#[FStar.Tactics.Typeclasses.tcresolve ()] i0: t_Operations v_T)
+      (vec: v_T)
+    : v_T =
+  let vec:v_T = f_negate #v_T #FStar.Tactics.Typeclasses.solve vec in
+  let vec:v_T =
+    f_bitwise_and_with_constant #v_T #FStar.Tactics.Typeclasses.solve vec (mk_i16 1665)
+  in
+  vec
