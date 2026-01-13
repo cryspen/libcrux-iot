@@ -494,6 +494,9 @@ pub(crate) mod generic {
         }
 
         // Check if this is a valid signature by comparing the hashes.
+        // Declassification: This value is public, but treated as
+        // secret by default to sidestep hax issues with
+        // `classify_ref_mut` when hashing into the buffer.
         if deserialized_commitment_hash == *recomputed_commitment_hash.declassify_ref() {
             return Ok(());
         }
