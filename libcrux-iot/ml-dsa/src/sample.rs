@@ -144,8 +144,8 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
 
     state.squeeze_first_five_blocks(rand_stack0, rand_stack1, rand_stack2, rand_stack3);
 
-    // Every call to |rejection_sample_less_than_field_modulus|
-    // will result in a call to |PortableSIMDUnit::rejection_sample_less_than_field_modulus|;
+    // Every call to `rejection_sample_less_than_field_modulus`
+    // will result in a call to `PortableSIMDUnit::rejection_sample_less_than_field_modulus`;
     // this latter function performs no bounds checking and can write up to 8
     // elements to its output. It is therefore possible that 255 elements have
     // already been sampled and we call the function again.
@@ -331,8 +331,8 @@ pub(crate) fn sample_four_error_ring_elements<SIMDUnit: Operations, Shake256: sh
     let mut state = Shake256::init_absorb_x4(&seed0, &seed1, &seed2, &seed3);
     let randomnesses = state.squeeze_first_block_x4();
 
-    // Every call to |rejection_sample_less_than_eta|
-    // will result in a call to |SIMDUnit::rejection_sample_less_than_eta|;
+    // Every call to `rejection_sample_less_than_eta`
+    // will result in a call to `SIMDUnit::rejection_sample_less_than_eta`;
     // this latter function performs no bounds checking and can write up to 8
     // elements to its output. It is therefore possible that 255 elements have
     // already been sampled and we call the function again.
