@@ -62,6 +62,27 @@ jobs:
           cargo clean
           cargo test --verbose --release --features acvp
 
+      - name: 🏃🏻‍♀️ Check Secret-Independence
+        run: |
+          cargo clean
+          cargo check -F check-secret-independence --verbose
+
+      # Test ML-DSA (stack optimized)
+      - name: 🏃🏻‍♀️ Test
+        run: |
+          cargo clean
+          cargo test --verbose --features acvp,stack
+
+      - name: 🏃🏻‍♀️ Test Release
+        run: |
+          cargo clean
+          cargo test --verbose --release --features acvp,stack
+
+      - name: 🏃🏻‍♀️ Check Secret-Independence
+        run: |
+          cargo clean
+          cargo check -F check-secret-independence,stack --verbose
+          
       # Benchmarks
       - name: 🔨 Build Benchmarks
         run: |

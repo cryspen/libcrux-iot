@@ -1,3 +1,10 @@
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::EncodeOps as _;
+use libcrux_secrets::{
+    CastOps as _, Classify as _, ClassifyRef as _, Declassify as _, DeclassifyRef as _, I32, U64,
+    U8,
+};
+
 use crate::{
     constants::{Eta, COEFFICIENTS_IN_RING_ELEMENT},
     encoding,
@@ -8,6 +15,7 @@ use crate::{
 };
 
 #[inline(always)]
+// We only use this for sampling entries of public matrix A.
 fn rejection_sample_less_than_field_modulus<SIMDUnit: Operations>(
     randomness: &[u8],
     sampled_coefficients: &mut usize,
@@ -53,36 +61,40 @@ pub(crate) fn add_domain_separator(slice: &[u8], indices: (u8, u8)) -> [u8; 34] 
 }
 
 #[inline(always)]
+// We only use this to sample entries in the matrix A.
 pub(crate) fn sample_ring_element<SIMDUnit: Operations>(
     seed: &[u8],
     indices: (u8, u8),
     out: &mut PolynomialRingElement<SIMDUnit>,
-    rand_stack: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_block: &mut [u8; shake128::BLOCK_SIZE],
+    rand_stack: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_block: &mut [U8; shake128::BLOCK_SIZE],
     tmp_stack: &mut [i32; 263],
 ) {
     let domain_separated_seed = add_domain_separator(seed, indices);
 
-    let mut state = Shake128::shake128_init_absorb(&domain_separated_seed);
+    let mut state = Shake128::shake128_init_absorb(&domain_separated_seed.classify());
     state.shake128_squeeze_first_five_blocks(rand_stack);
 
     let mut sampled = 0;
 
-    let mut done =
-        rejection_sample_less_than_field_modulus::<SIMDUnit>(rand_stack, &mut sampled, tmp_stack);
+    let mut done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
+        rand_stack.as_slice().declassify_ref(),
+        &mut sampled,
+        tmp_stack,
+    );
 
     while !done {
         state.shake128_squeeze_next_block(rand_block);
         if !done {
             done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-                rand_block,
+                rand_block.as_slice().declassify_ref(),
                 &mut sampled,
                 tmp_stack,
             );
         }
     }
 
-    PolynomialRingElement::<SIMDUnit>::from_i32_array(tmp_stack, out)
+    PolynomialRingElement::<SIMDUnit>::from_i32_array(&tmp_stack[..256].classify_ref(), out)
 }
 
 /// Sample and write out up to four ring elements.
@@ -94,6 +106,7 @@ pub(crate) fn sample_ring_element<SIMDUnit: Operations>(
 /// provided index in `indices[i]`.
 /// `rand_stack` is a working buffer that holds initial Shake output.
 #[inline(always)]
+// We only use this to sample elements in public matrix A.
 pub(crate) fn sample_up_to_four_ring_elements_flat<
     SIMDUnit: Operations,
     Shake128: shake128::XofX4,
@@ -101,10 +114,10 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
     columns: usize,
     seed: &[u8],
     matrix: &mut [PolynomialRingElement<SIMDUnit>],
-    rand_stack0: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_stack1: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_stack2: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
-    rand_stack3: &mut [u8; shake128::FIVE_BLOCKS_SIZE],
+    rand_stack0: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_stack1: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_stack2: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
+    rand_stack3: &mut [U8; shake128::FIVE_BLOCKS_SIZE],
     tmp_stack: &mut [[i32; 263]],
     start_index: usize,
     elements_requested: usize,
@@ -122,12 +135,17 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
     let seed2 = add_domain_separator(seed, xy(start_index + 2, columns));
     let seed3 = add_domain_separator(seed, xy(start_index + 3, columns));
 
-    let mut state = Shake128::init_absorb(&seed0, &seed1, &seed2, &seed3);
+    let mut state = Shake128::init_absorb(
+        seed0.classify_ref(),
+        seed1.classify_ref(),
+        seed2.classify_ref(),
+        seed3.classify_ref(),
+    );
 
     state.squeeze_first_five_blocks(rand_stack0, rand_stack1, rand_stack2, rand_stack3);
 
-    // Every call to |rejection_sample_less_than_field_modulus|
-    // will result in a call to |PortableSIMDUnit::rejection_sample_less_than_field_modulus|;
+    // Every call to `rejection_sample_less_than_field_modulus`
+    // will result in a call to `PortableSIMDUnit::rejection_sample_less_than_field_modulus`;
     // this latter function performs no bounds checking and can write up to 8
     // elements to its output. It is therefore possible that 255 elements have
     // already been sampled and we call the function again.
@@ -140,22 +158,22 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
     let mut sampled3 = 0;
 
     let mut done0 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack0,
+        rand_stack0.as_slice().declassify_ref(),
         &mut sampled0,
         &mut tmp_stack[0],
     );
     let mut done1 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack1,
+        rand_stack1.as_slice().declassify_ref(),
         &mut sampled1,
         &mut tmp_stack[1],
     );
     let mut done2 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack2,
+        rand_stack2.as_slice().declassify_ref(),
         &mut sampled2,
         &mut tmp_stack[2],
     );
     let mut done3 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-        rand_stack3,
+        rand_stack3.as_slice().declassify_ref(),
         &mut sampled3,
         &mut tmp_stack[3],
     );
@@ -164,28 +182,40 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
         let randomnesses = state.squeeze_next_block();
         if !done0 {
             done0 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-                &randomnesses.0,
+                // Declassification: The randomness here is completely
+                // derived from public inputs and is used to sample
+                // entries of the public matrix A.
+                randomnesses.0.declassify_ref(),
                 &mut sampled0,
                 &mut tmp_stack[0],
             );
         }
         if !done1 {
             done1 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-                &randomnesses.1,
+                // Declassification: The randomness here is completely
+                // derived from public inputs and is used to sample
+                // entries of the public matrix A.
+                randomnesses.1.declassify_ref(),
                 &mut sampled1,
                 &mut tmp_stack[1],
             );
         }
         if !done2 {
             done2 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-                &randomnesses.2,
+                // Declassification: The randomness here is completely
+                // derived from public inputs and is used to sample
+                // entries of the public matrix A.
+                randomnesses.2.declassify_ref(),
                 &mut sampled2,
                 &mut tmp_stack[2],
             );
         }
         if !done3 {
             done3 = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-                &randomnesses.3,
+                // Declassification: The randomness here is completely
+                // derived from public inputs and is used to sample
+                // entries of the public matrix A.
+                randomnesses.3.declassify_ref(),
                 &mut sampled3,
                 &mut tmp_stack[3],
             );
@@ -194,7 +224,7 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
 
     for k in 0..elements_requested {
         PolynomialRingElement::<SIMDUnit>::from_i32_array(
-            &tmp_stack[k],
+            tmp_stack[k].classify_ref(),
             &mut matrix[start_index + k],
         );
     }
@@ -205,9 +235,9 @@ pub(crate) fn sample_up_to_four_ring_elements_flat<
 
 #[inline(always)]
 fn rejection_sample_less_than_eta_equals_2<SIMDUnit: Operations>(
-    randomness: &[u8],
+    randomness: &[U8],
     sampled_coefficients: &mut usize,
-    out: &mut [i32; 263],
+    out: &mut [I32; 263],
 ) -> bool {
     let mut done = false;
 
@@ -234,9 +264,9 @@ fn rejection_sample_less_than_eta_equals_2<SIMDUnit: Operations>(
 
 #[inline(always)]
 fn rejection_sample_less_than_eta_equals_4<SIMDUnit: Operations>(
-    randomness: &[u8],
+    randomness: &[U8],
     sampled_coefficients: &mut usize,
-    out: &mut [i32; 263],
+    out: &mut [I32; 263],
 ) -> bool {
     let mut done = false;
 
@@ -264,9 +294,9 @@ fn rejection_sample_less_than_eta_equals_4<SIMDUnit: Operations>(
 #[inline(always)]
 pub(crate) fn rejection_sample_less_than_eta<SIMDUnit: Operations>(
     eta: Eta,
-    randomness: &[u8],
+    randomness: &[U8],
     sampled: &mut usize,
-    out: &mut [i32; 263],
+    out: &mut [I32; 263],
 ) -> bool {
     match eta {
         Eta::Two => rejection_sample_less_than_eta_equals_2::<SIMDUnit>(randomness, sampled, out),
@@ -275,12 +305,12 @@ pub(crate) fn rejection_sample_less_than_eta<SIMDUnit: Operations>(
 }
 
 #[inline(always)]
-pub(crate) fn add_error_domain_separator(slice: &[u8], domain_separator: u16) -> [u8; 66] {
-    let mut out = [0u8; 66];
+pub(crate) fn add_error_domain_separator(slice: &[U8], domain_separator: u16) -> [U8; 66] {
+    let mut out = [0u8.classify(); 66];
 
     out[0..slice.len()].copy_from_slice(slice);
-    out[64] = domain_separator as u8;
-    out[65] = (domain_separator >> 8) as u8;
+    out[64] = (domain_separator as u8).classify();
+    out[65] = ((domain_separator >> 8) as u8).classify();
 
     out
 }
@@ -288,7 +318,7 @@ pub(crate) fn add_error_domain_separator(slice: &[u8], domain_separator: u16) ->
 #[inline(always)]
 pub(crate) fn sample_four_error_ring_elements<SIMDUnit: Operations, Shake256: shake256::XofX4>(
     eta: Eta,
-    seed: &[u8],
+    seed: &[U8],
     start_index: u16,
     re: &mut [PolynomialRingElement<SIMDUnit>],
 ) {
@@ -301,15 +331,15 @@ pub(crate) fn sample_four_error_ring_elements<SIMDUnit: Operations, Shake256: sh
     let mut state = Shake256::init_absorb_x4(&seed0, &seed1, &seed2, &seed3);
     let randomnesses = state.squeeze_first_block_x4();
 
-    // Every call to |rejection_sample_less_than_field_modulus|
-    // will result in a call to |SIMDUnit::rejection_sample_less_than_field_modulus|;
+    // Every call to `rejection_sample_less_than_eta`
+    // will result in a call to `SIMDUnit::rejection_sample_less_than_eta`;
     // this latter function performs no bounds checking and can write up to 8
     // elements to its output. It is therefore possible that 255 elements have
     // already been sampled and we call the function again.
     //
     // To ensure we don't overflow the buffer in this case, we allocate 255 + 8
     // = 263 elements.
-    let mut out = [[0i32; 263]; 4];
+    let mut out = [[0i32.classify(); 263]; 4];
 
     let mut sampled0 = 0;
     let mut sampled1 = 0;
@@ -391,18 +421,18 @@ pub(crate) fn sample_four_error_ring_elements<SIMDUnit: Operations, Shake256: sh
 
 #[inline(always)]
 fn sample_mask_ring_element<SIMDUnit: Operations, Shake256: shake256::DsaXof>(
-    seed: &[u8; 66],
+    seed: &[U8; 66],
     result: &mut PolynomialRingElement<SIMDUnit>,
     gamma1_exponent: usize,
 ) {
     match gamma1_exponent as u8 {
         17 => {
-            let mut out = [0u8; 576];
+            let mut out = [0u8.classify(); 576];
             Shake256::shake256::<576>(seed, &mut out);
             encoding::gamma1::deserialize::<SIMDUnit>(gamma1_exponent, &out, result);
         }
         19 => {
-            let mut out = [0u8; 640];
+            let mut out = [0u8.classify(); 640];
             Shake256::shake256::<640>(seed, &mut out);
             encoding::gamma1::deserialize::<SIMDUnit>(gamma1_exponent, &out, result);
         }
@@ -418,7 +448,7 @@ pub(crate) fn sample_mask_vector<
 >(
     dimension: usize,
     gamma1_exponent: usize,
-    seed: &[u8; 64],
+    seed: &[U8; 64],
     domain_separator: &mut u16,
     mask: &mut [PolynomialRingElement<SIMDUnit>],
 ) {
@@ -435,10 +465,10 @@ pub(crate) fn sample_mask_vector<
 
     match gamma1_exponent as u8 {
         17 => {
-            let mut out0 = [0; 576];
-            let mut out1 = [0; 576];
-            let mut out2 = [0; 576];
-            let mut out3 = [0; 576];
+            let mut out0 = [0.classify(); 576];
+            let mut out1 = [0.classify(); 576];
+            let mut out2 = [0.classify(); 576];
+            let mut out3 = [0.classify(); 576];
             Shake256X4::shake256_x4(
                 &seed0, &seed1, &seed2, &seed3, &mut out0, &mut out1, &mut out2, &mut out3,
             );
@@ -448,10 +478,10 @@ pub(crate) fn sample_mask_vector<
             encoding::gamma1::deserialize::<SIMDUnit>(gamma1_exponent, &out3, &mut mask[3]);
         }
         19 => {
-            let mut out0 = [0; 640];
-            let mut out1 = [0; 640];
-            let mut out2 = [0; 640];
-            let mut out3 = [0; 640];
+            let mut out0 = [0.classify(); 640];
+            let mut out1 = [0.classify(); 640];
+            let mut out2 = [0.classify(); 640];
+            let mut out3 = [0.classify(); 640];
             Shake256X4::shake256_x4(
                 &seed0, &seed1, &seed2, &seed3, &mut out0, &mut out1, &mut out2, &mut out3,
             );
@@ -478,22 +508,26 @@ pub(crate) fn sample_mask_vector<
 
 #[inline(always)]
 fn inside_out_shuffle(
-    randomness: &[u8],
+    randomness: &[U8],
     out_index: &mut usize,
-    signs: &mut u64,
-    result: &mut [i32; 256],
+    signs: &mut U64,
+    result: &mut [I32; 256],
 ) -> bool {
     let mut done = false;
 
     cloop! {
         for byte in randomness.iter() {
             if !done {
-                let sample_at = *byte as usize;
+                // Declassification: This may leak the index of the
+                // coefficient being sampled, which is safe to do
+                // according to the NIST submission.
+                // (cf. Section 5.5 in https://pq-crystals.org/dilithium/data/dilithium-specification-round3-20210208.pdf)
+                let sample_at = (*byte).declassify() as usize;
                 if sample_at <= *out_index {
                     result[*out_index] = result[sample_at];
                     *out_index += 1;
 
-                    result[sample_at] = 1 - 2 * ((*signs & 1) as i32);
+                    result[sample_at] = 1.classify() - 2.classify() * ((*signs & 1).as_i32());
                     *signs >>= 1;
                 }
 
@@ -507,15 +541,15 @@ fn inside_out_shuffle(
 
 #[inline(always)]
 pub(crate) fn sample_challenge_ring_element<SIMDUnit: Operations, Shake256: shake256::DsaXof>(
-    seed: &[u8],
+    seed: &[U8],
     number_of_ones: usize,
     re: &mut PolynomialRingElement<SIMDUnit>,
 ) {
     let mut state = Shake256::init_absorb_final(seed);
     let randomness = state.squeeze_first_block();
 
-    let mut signs = u64::from_le_bytes(randomness[0..8].try_into().unwrap());
-    let mut result = [0i32; 256];
+    let mut signs = U64::from_le_bytes(randomness[0..8].try_into().unwrap());
+    let mut result = [0i32.classify(); 256];
 
     let mut out_index = result.len() - number_of_ones;
     let mut done = inside_out_shuffle(&randomness[8..], &mut out_index, &mut signs, &mut result);
@@ -530,6 +564,8 @@ pub(crate) fn sample_challenge_ring_element<SIMDUnit: Operations, Shake256: shak
 
 #[cfg(test)]
 mod tests {
+    use libcrux_secrets::ClassifyRef as _;
+
     use super::*;
 
     use crate::{constants::COEFFICIENTS_IN_RING_ELEMENT, simd::traits::Operations};
@@ -539,14 +575,19 @@ mod tests {
         re: &mut PolynomialRingElement<SIMDUnit>,
     ) {
         let mut rand_stack = (
-            [0u8; shake128::FIVE_BLOCKS_SIZE],
-            [0u8; shake128::FIVE_BLOCKS_SIZE],
-            [0u8; shake128::FIVE_BLOCKS_SIZE],
-            [0u8; shake128::FIVE_BLOCKS_SIZE],
+            [0u8.classify(); shake128::FIVE_BLOCKS_SIZE],
+            [0u8.classify(); shake128::FIVE_BLOCKS_SIZE],
+            [0u8.classify(); shake128::FIVE_BLOCKS_SIZE],
+            [0u8.classify(); shake128::FIVE_BLOCKS_SIZE],
         );
 
-        let dummy_input = [0u8; 34];
-        let mut state = Shake128::init_absorb(&seed, &dummy_input, &dummy_input, &dummy_input);
+        let dummy_input = [0u8.classify(); 34];
+        let mut state = Shake128::init_absorb(
+            seed.classify_ref(),
+            &dummy_input,
+            &dummy_input,
+            &dummy_input,
+        );
         state.squeeze_first_five_blocks(
             &mut rand_stack.0,
             &mut rand_stack.1,
@@ -556,8 +597,11 @@ mod tests {
         let mut tmp_stack = [[0i32; 263], [0i32; 263], [0i32; 263], [0i32; 263]];
         let mut sampled = 0;
 
+        // Declassifications: These values are public but are treated
+        // as secret by default to sidestep hax issues with
+        // `classify_ref_mut` when hashing into the buffer.
         let mut done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-            &mut rand_stack.0,
+            rand_stack.0.declassify_ref(),
             &mut sampled,
             &mut tmp_stack[0],
         );
@@ -566,14 +610,14 @@ mod tests {
             let randomnesses = state.squeeze_next_block();
             if !done {
                 done = rejection_sample_less_than_field_modulus::<SIMDUnit>(
-                    &randomnesses.0,
+                    randomnesses.0.declassify_ref(),
                     &mut sampled,
                     &mut tmp_stack[0],
                 );
             }
         }
 
-        PolynomialRingElement::<SIMDUnit>::from_i32_array(&tmp_stack[0], re);
+        PolynomialRingElement::<SIMDUnit>::from_i32_array(tmp_stack[0].classify_ref(), re);
     }
 
     // // This is just a wrapper around sample_four_ring_elements, for testing
@@ -782,7 +826,7 @@ mod tests {
         ];
 
         let mut re = PolynomialRingElement::zero();
-        sample_challenge_ring_element::<SIMDUnit, Shake256>(&seed, 39, &mut re);
+        sample_challenge_ring_element::<SIMDUnit, Shake256>(seed.classify_ref(), 39, &mut re);
         assert_eq!(re.to_i32_array(), expected_coefficients);
 
         // When TAU = 49
@@ -805,7 +849,7 @@ mod tests {
         ];
 
         let mut re = PolynomialRingElement::zero();
-        sample_challenge_ring_element::<SIMDUnit, Shake256>(&seed, 49, &mut re);
+        sample_challenge_ring_element::<SIMDUnit, Shake256>(seed.classify_ref(), 49, &mut re);
         assert_eq!(re.to_i32_array(), expected_coefficients);
 
         // When TAU = 60
@@ -828,7 +872,7 @@ mod tests {
         ];
 
         let mut re = PolynomialRingElement::zero();
-        sample_challenge_ring_element::<SIMDUnit, Shake256>(&seed, 60, &mut re);
+        sample_challenge_ring_element::<SIMDUnit, Shake256>(seed.classify_ref(), 60, &mut re);
         assert_eq!(re.to_i32_array(), expected_coefficients);
     }
 

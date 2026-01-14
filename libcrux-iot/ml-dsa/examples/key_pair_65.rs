@@ -1,4 +1,5 @@
 use libcrux_iot_ml_dsa::ml_dsa_65;
+use libcrux_secrets::Classify as _;
 use rand::{rngs::OsRng, RngCore};
 
 fn random_array<const L: usize>() -> [u8; L] {
@@ -12,6 +13,6 @@ fn main() {
     let key_generation_seed = random_array();
 
     for _i in 0..100_000 {
-        let _ = ml_dsa_65::generate_key_pair(key_generation_seed);
+        let _ = ml_dsa_65::generate_key_pair(key_generation_seed.classify());
     }
 }

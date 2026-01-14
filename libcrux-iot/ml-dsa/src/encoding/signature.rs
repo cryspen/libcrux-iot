@@ -2,7 +2,7 @@ use crate::{
     constants::COEFFICIENTS_IN_RING_ELEMENT, encoding, polynomial::PolynomialRingElement,
     simd::traits::Operations, VerificationError,
 };
-
+use libcrux_secrets::ClassifyRef as _;
 #[inline(always)]
 pub(crate) fn serialize<SIMDUnit: Operations>(
     commitment_hash: &[u8],
@@ -81,7 +81,8 @@ pub(crate) fn deserialize<SIMDUnit: Operations>(
         encoding::gamma1::deserialize::<SIMDUnit>(
             gamma1_exponent,
             &signer_response_serialized
-                [i * gamma1_ring_element_size..(i + 1) * gamma1_ring_element_size],
+                [i * gamma1_ring_element_size..(i + 1) * gamma1_ring_element_size]
+                .classify_ref(),
             &mut out_signer_response[i],
         );
     }
@@ -153,7 +154,8 @@ pub(crate) fn deserialize_signer_response_j<SIMDUnit: Operations>(
     encoding::gamma1::deserialize::<SIMDUnit>(
         gamma1_exponent,
         &signer_response_serialized
-            [j * gamma1_ring_element_size..(j + 1) * gamma1_ring_element_size],
+            [j * gamma1_ring_element_size..(j + 1) * gamma1_ring_element_size]
+            .classify_ref(),
         out_signer_response,
     );
     if out_signer_response.infinity_norm_exceeds((2 << gamma1_exponent) - beta) {

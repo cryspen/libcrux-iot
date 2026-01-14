@@ -1,5 +1,7 @@
 //! Common types
 
+use libcrux_secrets::{Classify as _, U8};
+
 macro_rules! impl_struct {
     ($name:ident, $doc:expr) => {
         #[doc = $doc]
@@ -37,9 +39,42 @@ macro_rules! impl_struct {
     };
 }
 
-impl_struct!(MLDSASigningKey, "An ML-DSA signature key.");
 impl_struct!(MLDSAVerificationKey, "An ML-DSA verification key.");
 impl_struct!(MLDSASignature, "An ML-DSA signature.");
+
+/// An ML-DSA signing key.
+pub struct MLDSASigningKey<const SIZE: usize> {
+    pub(crate) value: [U8; SIZE],
+}
+
+impl<const SIZE: usize> MLDSASigningKey<SIZE> {
+    /// Init with zero
+    pub fn zero() -> Self {
+        Self {
+            value: [0u8.classify(); SIZE],
+        }
+    }
+
+    /// Build
+    pub fn new(value: [U8; SIZE]) -> Self {
+        Self { value }
+    }
+
+    /// A reference to the raw byte slice.
+    pub fn as_slice(&self) -> &[U8] {
+        &self.value
+    }
+
+    /// A reference to the raw byte array.
+    pub fn as_ref(&self) -> &[U8; SIZE] {
+        &self.value
+    }
+
+    /// The number of bytes
+    pub const fn len() -> usize {
+        SIZE
+    }
+}
 
 macro_rules! impl_non_hax_types {
     ($name:ident) => {
@@ -60,7 +95,17 @@ macro_rules! impl_non_hax_types {
 // Hax can't handle these.
 mod non_hax_impls {
     use super::*;
-    impl_non_hax_types!(MLDSASigningKey);
+    impl<const SIZE: usize> MLDSASigningKey<SIZE> {
+        /// A mutable reference to the raw byte slice.
+        pub fn as_mut_slice(&mut self) -> &mut [U8] {
+            &mut self.value
+        }
+
+        /// A mutable reference to the raw byte array.
+        pub fn as_ref_mut(&mut self) -> &mut [U8; SIZE] {
+            &mut self.value
+        }
+    }
     impl_non_hax_types!(MLDSAVerificationKey);
     impl_non_hax_types!(MLDSASignature);
 }

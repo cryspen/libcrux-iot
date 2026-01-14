@@ -1,5 +1,7 @@
 // Functions for serializing and deserializing an error ring element.
 
+use libcrux_secrets::U8;
+
 use crate::{
     constants::Eta, helper::cloop, ntt::ntt, polynomial::PolynomialRingElement,
     simd::traits::Operations,
@@ -9,7 +11,7 @@ use crate::{
 pub(crate) fn serialize<SIMDUnit: Operations>(
     eta: Eta,
     re: &PolynomialRingElement<SIMDUnit>,
-    serialized: &mut [u8], // OUTPUT_SIZE
+    serialized: &mut [U8], // OUTPUT_SIZE
 ) {
     let output_bytes_per_simd_unit = chunk_size(eta);
 
@@ -37,7 +39,7 @@ fn chunk_size(eta: Eta) -> usize {
 #[inline(always)]
 fn deserialize<SIMDUnit: Operations>(
     eta: Eta,
-    serialized: &[u8],
+    serialized: &[U8],
     result: &mut PolynomialRingElement<SIMDUnit>,
 ) {
     let chunk_size = chunk_size(eta);
@@ -58,7 +60,7 @@ fn deserialize<SIMDUnit: Operations>(
 pub(crate) fn deserialize_to_vector_then_ntt<SIMDUnit: Operations>(
     eta: Eta,
     ring_element_size: usize,
-    serialized: &[u8],
+    serialized: &[U8],
     ring_elements: &mut [PolynomialRingElement<SIMDUnit>],
 ) {
     cloop! {
@@ -73,6 +75,8 @@ pub(crate) fn deserialize_to_vector_then_ntt<SIMDUnit: Operations>(
 
 #[cfg(test)]
 mod tests {
+    use libcrux_secrets::ClassifyRef as _;
+
     use super::*;
 
     use crate::simd::{self, traits::Operations};
@@ -101,7 +105,7 @@ mod tests {
         ];
 
         let mut deserialized = PolynomialRingElement::<SIMDUnit>::zero();
-        deserialize::<SIMDUnit>(Eta::Two, &serialized, &mut deserialized);
+        deserialize::<SIMDUnit>(Eta::Two, serialized.classify_ref(), &mut deserialized);
         assert_eq!(deserialized.to_i32_array(), expected_coefficients);
 
         let serialized = [
@@ -129,7 +133,7 @@ mod tests {
         ];
 
         let mut deserialized = PolynomialRingElement::<SIMDUnit>::zero();
-        deserialize::<SIMDUnit>(Eta::Four, &serialized, &mut deserialized);
+        deserialize::<SIMDUnit>(Eta::Four, serialized.classify_ref(), &mut deserialized);
         assert_eq!(deserialized.to_i32_array(), expected_coefficients);
     }
 

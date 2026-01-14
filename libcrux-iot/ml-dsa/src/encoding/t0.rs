@@ -2,6 +2,8 @@
 // Functions for serializing and deserializing the ring element t0.
 // ---------------------------------------------------------------------------
 
+use libcrux_secrets::U8;
+
 use crate::{
     constants::RING_ELEMENT_OF_T0S_SIZE, helper::cloop, ntt::ntt,
     polynomial::PolynomialRingElement, simd::traits::Operations,
@@ -12,7 +14,7 @@ const OUTPUT_BYTES_PER_SIMD_UNIT: usize = 13;
 #[inline(always)]
 pub(crate) fn serialize<SIMDUnit: Operations>(
     re: &PolynomialRingElement<SIMDUnit>,
-    serialized: &mut [u8], // RING_ELEMENT_OF_T0S_SIZE
+    serialized: &mut [U8], // RING_ELEMENT_OF_T0S_SIZE
 ) {
     cloop! {
         for (i, simd_unit) in re.simd_units.iter().enumerate() {
@@ -25,7 +27,7 @@ pub(crate) fn serialize<SIMDUnit: Operations>(
 
 #[inline(always)]
 fn deserialize<SIMDUnit: Operations>(
-    serialized: &[u8],
+    serialized: &[U8],
     result: &mut PolynomialRingElement<SIMDUnit>,
 ) {
     for i in 0..result.simd_units.len() {
@@ -40,7 +42,7 @@ fn deserialize<SIMDUnit: Operations>(
 
 #[inline(always)]
 pub(crate) fn deserialize_to_vector_then_ntt<SIMDUnit: Operations>(
-    serialized: &[u8],
+    serialized: &[U8],
     ring_elements: &mut [PolynomialRingElement<SIMDUnit>],
 ) {
     cloop! {
@@ -55,6 +57,8 @@ pub(crate) fn deserialize_to_vector_then_ntt<SIMDUnit: Operations>(
 
 #[cfg(test)]
 mod tests {
+    use libcrux_secrets::{Classify as _, ClassifyRef as _, Declassify as _};
+
     use super::*;
 
     use crate::simd::{self, traits::Operations};
@@ -81,7 +85,8 @@ mod tests {
             2683, 2743, 2888, -2104, 874, -1150, -2453, -125, -2561, -2011, -2384, 2259, -10, 836,
             -2773, 2487, -2292, -201, -3235, 1232, -3197,
         ];
-        let re = PolynomialRingElement::<SIMDUnit>::from_i32_array_test(&coefficients);
+        let re =
+            PolynomialRingElement::<SIMDUnit>::from_i32_array_test(coefficients.classify_ref());
 
         let expected_bytes = [
             48, 20, 208, 127, 245, 13, 88, 131, 180, 130, 230, 20, 9, 204, 230, 36, 180, 218, 74,
@@ -108,9 +113,9 @@ mod tests {
             114, 203, 81, 128, 188, 172, 90, 39, 25, 122, 156, 12, 71, 57, 204, 234, 227,
         ];
 
-        let mut result = [0u8; RING_ELEMENT_OF_T0S_SIZE];
+        let mut result = [0u8.classify(); RING_ELEMENT_OF_T0S_SIZE];
         serialize::<SIMDUnit>(&re, &mut result);
-        assert_eq!(result, expected_bytes);
+        assert_eq!(result.declassify(), expected_bytes);
     }
     fn test_deserialize_generic<SIMDUnit: Operations>() {
         let serialized = [
@@ -161,7 +166,7 @@ mod tests {
         ];
 
         let mut deserialized = PolynomialRingElement::<SIMDUnit>::zero();
-        deserialize::<SIMDUnit>(&serialized, &mut deserialized);
+        deserialize::<SIMDUnit>(serialized.classify_ref(), &mut deserialized);
         assert_eq!(deserialized.to_i32_array(), expected_coefficients);
     }
 

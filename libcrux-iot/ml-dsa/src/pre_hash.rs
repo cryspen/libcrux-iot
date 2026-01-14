@@ -4,6 +4,8 @@
 //! of FIPS 204, any NIST-approved hash function or XOF can be used to
 //!/perform the pre-hash of the message. This module implements the
 //! pre-hash trait for SHAKE-128, with a digest length of 256 bytes.
+use libcrux_secrets::U8;
+
 use crate::{constants::CONTEXT_MAX_LEN, hash_functions, SigningError, VerificationError};
 
 pub(crate) const PRE_HASH_OID_LEN: usize = 11;
@@ -15,7 +17,7 @@ pub(crate) trait PreHash {
     fn oid() -> PreHashOID;
 
     /// Used to derive the pre-hash PH of the message before signing.
-    fn hash<Shake128: hash_functions::shake128::Xof>(message: &[u8], output: &mut [u8]);
+    fn hash<Shake128: hash_functions::shake128::Xof>(message: &[U8], output: &mut [U8]);
 }
 
 #[allow(non_camel_case_types)]
@@ -33,7 +35,7 @@ impl PreHash for SHAKE128_PH {
     }
 
     #[inline(always)]
-    fn hash<Shake128: hash_functions::shake128::Xof>(message: &[u8], output: &mut [u8]) {
+    fn hash<Shake128: hash_functions::shake128::Xof>(message: &[U8], output: &mut [U8]) {
         #[cfg(not(eurydice))]
         debug_assert_eq!(output.len(), 32);
         Shake128::shake128(message, output);

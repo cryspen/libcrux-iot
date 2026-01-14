@@ -1,3 +1,5 @@
+use libcrux_secrets::Classify as _;
+
 use super::arithmetic::{self, montgomery_multiply_by_constant, montgomery_multiply_fe_by_fer};
 use super::vector_type::Coefficients;
 use crate::simd::traits::{COEFFICIENTS_IN_SIMD_UNIT, SIMD_UNITS_IN_RING_ELEMENT};
@@ -10,57 +12,57 @@ pub fn simd_unit_ntt_at_layer_0(
     zeta2: i32,
     zeta3: i32,
 ) {
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[1], zeta0);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[1], zeta0.classify());
     simd_unit.values[1] = simd_unit.values[0] - t;
     simd_unit.values[0] = simd_unit.values[0] + t;
 
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[3], zeta1);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[3], zeta1.classify());
     simd_unit.values[3] = simd_unit.values[2] - t;
     simd_unit.values[2] = simd_unit.values[2] + t;
 
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[5], zeta2);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[5], zeta2.classify());
     simd_unit.values[5] = simd_unit.values[4] - t;
     simd_unit.values[4] = simd_unit.values[4] + t;
 
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[7], zeta3);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[7], zeta3.classify());
     simd_unit.values[7] = simd_unit.values[6] - t;
     simd_unit.values[6] = simd_unit.values[6] + t;
 }
 
 #[inline(always)]
 pub fn simd_unit_ntt_at_layer_1(simd_unit: &mut Coefficients, zeta1: i32, zeta2: i32) {
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[2], zeta1);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[2], zeta1.classify());
     simd_unit.values[2] = simd_unit.values[0] - t;
     simd_unit.values[0] = simd_unit.values[0] + t;
 
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[3], zeta1);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[3], zeta1.classify());
     simd_unit.values[3] = simd_unit.values[1] - t;
     simd_unit.values[1] = simd_unit.values[1] + t;
 
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[6], zeta2);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[6], zeta2.classify());
     simd_unit.values[6] = simd_unit.values[4] - t;
     simd_unit.values[4] = simd_unit.values[4] + t;
 
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[7], zeta2);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[7], zeta2.classify());
     simd_unit.values[7] = simd_unit.values[5] - t;
     simd_unit.values[5] = simd_unit.values[5] + t;
 }
 
 #[inline(always)]
 pub fn simd_unit_ntt_at_layer_2(simd_unit: &mut Coefficients, zeta: i32) {
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[4], zeta);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[4], zeta.classify());
     simd_unit.values[4] = simd_unit.values[0] - t;
     simd_unit.values[0] = simd_unit.values[0] + t;
 
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[5], zeta);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[5], zeta.classify());
     simd_unit.values[5] = simd_unit.values[1] - t;
     simd_unit.values[1] = simd_unit.values[1] + t;
 
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[6], zeta);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[6], zeta.classify());
     simd_unit.values[6] = simd_unit.values[2] - t;
     simd_unit.values[2] = simd_unit.values[2] + t;
 
-    let t = montgomery_multiply_fe_by_fer(simd_unit.values[7], zeta);
+    let t = montgomery_multiply_fe_by_fer(simd_unit.values[7], zeta.classify());
     simd_unit.values[7] = simd_unit.values[3] - t;
     simd_unit.values[3] = simd_unit.values[3] + t;
 }
@@ -206,7 +208,7 @@ fn outer_3_plus<const OFFSET: usize, const STEP_BY: usize, const ZETA: i32>(
 ) {
     for j in OFFSET..OFFSET + STEP_BY {
         let mut tmp = re[j + STEP_BY];
-        montgomery_multiply_by_constant(&mut tmp, ZETA);
+        montgomery_multiply_by_constant(&mut tmp, ZETA.classify());
 
         re[j + STEP_BY] = re[j];
         arithmetic::subtract(&mut re[j + STEP_BY], &tmp);

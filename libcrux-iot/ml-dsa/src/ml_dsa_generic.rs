@@ -16,7 +16,7 @@ use crate::{
     types::*,
     MLDSASignature,
 };
-
+use libcrux_secrets::{Classify as _, ClassifyRef as _, U8};
 pub(crate) mod instantiations;
 
 #[cfg(not(eurydice))]
@@ -24,11 +24,13 @@ pub(crate) mod multiplexing;
 
 #[libcrux_macros::ml_dsa_parameter_sets(44, 65, 87)]
 pub(crate) mod generic {
+    use libcrux_secrets::{Classify as _, ClassifyRef as _, DeclassifyRef as _};
+
     use super::*;
 
     // Derived constants
-    const ROW_COLUMN: usize = ROWS_IN_A + COLUMNS_IN_A;
-    const ROW_X_COLUMN: usize = ROWS_IN_A * COLUMNS_IN_A;
+    const ROWS_PLUS_COLUMNS: usize = ROWS_IN_A + COLUMNS_IN_A;
+    const ROWS_TIMES_COLUMNS: usize = ROWS_IN_A * COLUMNS_IN_A;
     const ERROR_RING_ELEMENT_SIZE: usize = error_ring_element_size(BITS_PER_ERROR_COEFFICIENT);
     const GAMMA1_RING_ELEMENT_SIZE: usize = gamma1_ring_element_size(BITS_PER_GAMMA1_COEFFICIENT);
     const COMMITMENT_RING_ELEMENT_SIZE: usize =
@@ -57,8 +59,8 @@ pub(crate) mod generic {
         Shake256Xof: shake256::Xof,
         Shake256X4: shake256::XofX4,
     >(
-        randomness: [u8; KEY_GENERATION_RANDOMNESS_SIZE],
-        signing_key: &mut [u8],
+        randomness: [U8; KEY_GENERATION_RANDOMNESS_SIZE],
+        signing_key: &mut [U8],
         verification_key: &mut [u8],
     ) {
         // Check key sizes
@@ -68,11 +70,14 @@ pub(crate) mod generic {
         debug_assert!(verification_key.len() == VERIFICATION_KEY_SIZE);
 
         // 128 = SEED_FOR_A_SIZE + SEED_FOR_ERROR_VECTORS_SIZE + SEED_FOR_SIGNING_SIZE
-        let mut seed_expanded = [0; 128];
+        let mut seed_expanded = [0.classify(); 128];
         {
             let mut shake = Shake256Xof::init();
             shake.absorb(&randomness);
-            shake.absorb_final(&[ROWS_IN_A as u8, COLUMNS_IN_A as u8]);
+            shake.absorb_final(&[
+                (ROWS_IN_A as u8).classify(),
+                (COLUMNS_IN_A as u8).classify(),
+            ]);
             shake.squeeze(&mut seed_expanded);
         }
 
@@ -80,10 +85,12 @@ pub(crate) mod generic {
         let (seed_for_error_vectors, seed_for_signing) =
             seed_expanded.split_at(SEED_FOR_ERROR_VECTORS_SIZE);
 
-        let mut a_as_ntt = [PolynomialRingElement::<SIMDUnit>::zero(); ROW_X_COLUMN];
-        Sampler::matrix_flat::<SIMDUnit>(COLUMNS_IN_A, seed_for_a, &mut a_as_ntt);
+        let mut a_as_ntt = [PolynomialRingElement::<SIMDUnit>::zero(); ROWS_TIMES_COLUMNS];
 
-        let mut s1_s2 = [PolynomialRingElement::<SIMDUnit>::zero(); ROW_COLUMN];
+        // Declassification: The seed for matrix A is public.
+        Sampler::matrix_flat::<SIMDUnit>(COLUMNS_IN_A, seed_for_a.declassify_ref(), &mut a_as_ntt);
+
+        let mut s1_s2 = [PolynomialRingElement::<SIMDUnit>::zero(); ROWS_PLUS_COLUMNS];
         samplex4::sample_s1_and_s2::<SIMDUnit, Shake256X4>(ETA, seed_for_error_vectors, &mut s1_s2);
 
         let mut t0 = [PolynomialRingElement::<SIMDUnit>::zero(); ROWS_IN_A];
@@ -107,11 +114,13 @@ pub(crate) mod generic {
         power2round_vector::<SIMDUnit>(&mut t0, &mut t1);
 
         // Write out the keys
+        // Declassification: The seed for matrix A is public and will be written out to the public key.
         encoding::verification_key::generate_serialized::<SIMDUnit>(
-            seed_for_a,
+            seed_for_a.declassify_ref(),
             &t1,
             verification_key,
         );
+
         encoding::signing_key::generate_serialized::<SIMDUnit, Shake256>(
             ETA,
             ERROR_RING_ELEMENT_SIZE,
@@ -133,10 +142,10 @@ pub(crate) mod generic {
         Shake256Xof: shake256::Xof,
         Shake256X4: shake256::XofX4,
     >(
-        signing_key: &[u8],
-        message: &[u8],
+        signing_key: &[U8],
+        message: &[U8],
         domain_separation_context: Option<DomainSeparationContext>,
-        randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+        randomness: [U8; SIGNING_RANDOMNESS_SIZE],
         signature: &mut [u8; SIGNATURE_SIZE],
     ) -> Result<(), SigningError> {
         // Split the signing key into its parts.
@@ -171,18 +180,25 @@ pub(crate) mod generic {
         encoding::t0::deserialize_to_vector_then_ntt::<SIMDUnit>(t0_serialized, &mut t0_as_ntt);
 
         // Sample matrix A.
-        let mut matrix = [PolynomialRingElement::<SIMDUnit>::zero(); ROW_X_COLUMN];
-        Sampler::matrix_flat::<SIMDUnit>(COLUMNS_IN_A, seed_for_a, &mut matrix);
+        let mut matrix = [PolynomialRingElement::<SIMDUnit>::zero(); ROWS_TIMES_COLUMNS];
 
-        let mut message_representative = [0; MESSAGE_REPRESENTATIVE_SIZE];
+        // Declassification: The seed for matrix A is public.
+        Sampler::matrix_flat::<SIMDUnit>(COLUMNS_IN_A, seed_for_a.declassify_ref(), &mut matrix);
+
+        let mut message_representative = [0u8.classify(); MESSAGE_REPRESENTATIVE_SIZE];
+        // Declassification: The verification key hash is public, as
+        // is the message representative.
         derive_message_representative::<Shake256Xof>(
-            verification_key_hash,
+            verification_key_hash.declassify_ref(),
             &domain_separation_context,
-            message,
+            // Declassification: The message is public, but treated as
+            // secret by default to sidestep hax issues with
+            // `declassify_ref` on a mutable reference.
+            message.declassify_ref(),
             &mut message_representative,
         );
 
-        let mut mask_seed = [0; MASK_SEED_SIZE];
+        let mut mask_seed = [0u8.classify(); MASK_SEED_SIZE];
         {
             let mut shake = Shake256Xof::init();
             shake.absorb(seed_for_signing);
@@ -244,9 +260,9 @@ pub(crate) mod generic {
                 );
             }
 
-            let mut commitment_hash_candidate = [0; COMMITMENT_HASH_SIZE];
+            let mut commitment_hash_candidate = [0u8.classify(); COMMITMENT_HASH_SIZE];
             {
-                let mut commitment_serialized = [0u8; COMMITMENT_VECTOR_SIZE];
+                let mut commitment_serialized = [0u8.classify(); COMMITMENT_VECTOR_SIZE];
                 encoding::commitment::serialize_vector::<SIMDUnit>(
                     COMMITMENT_RING_ELEMENT_SIZE,
                     &commitment,
@@ -298,6 +314,9 @@ pub(crate) mod generic {
                         // XXX: https://github.com/hacspec/hax/issues/1171
                         // continue;
                     } else {
+                        // At this point the signature is safe to
+                        // serialize, and we just need to find a hint
+                        // for public key compression.
                         add_vectors::<SIMDUnit>(ROWS_IN_A, &mut w0, &challenge_times_t0);
                         let mut hint_candidate = [[0; COEFFICIENTS_IN_RING_ELEMENT]; ROWS_IN_A];
                         let ones_in_hint =
@@ -332,8 +351,10 @@ pub(crate) mod generic {
             None => return Err(SigningError::RejectionSamplingError),
         };
 
+        // Declassification: At this point the commitment hash is
+        // written out into the signature.
         encoding::signature::serialize::<SIMDUnit>(
-            &commitment_hash,
+            commitment_hash.declassify_ref(),
             &signer_response,
             &hint,
             COMMITMENT_HASH_SIZE,
@@ -363,12 +384,13 @@ pub(crate) mod generic {
         Shake256Xof: shake256::Xof,
     >(
         verification_key: &[u8; VERIFICATION_KEY_SIZE],
-        message: &[u8],
+        message: &[U8],
         domain_separation_context: Option<DomainSeparationContext>,
         signature_serialized: &[u8; SIGNATURE_SIZE],
     ) -> Result<(), VerificationError> {
-        let mut rand_stack = [0u8; shake128::FIVE_BLOCKS_SIZE];
-        let mut rand_block = [0u8; shake128::BLOCK_SIZE];
+        use libcrux_secrets::ClassifyRef as _;
+        let mut rand_stack = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+        let mut rand_block = [0u8.classify(); shake128::BLOCK_SIZE];
         let mut tmp_stack = [0i32; 263];
         let mut poly_slot = PolynomialRingElement::<SIMDUnit>::zero();
 
@@ -410,20 +432,27 @@ pub(crate) mod generic {
             return Err(VerificationError::SignerResponseExceedsBoundError);
         }
 
-        let mut verification_key_hash = [0; BYTES_FOR_VERIFICATION_KEY_HASH];
-        Shake256::shake256(verification_key, &mut verification_key_hash);
+        let mut verification_key_hash = [0u8.classify(); BYTES_FOR_VERIFICATION_KEY_HASH];
+        Shake256::shake256(verification_key.classify_ref(), &mut verification_key_hash);
 
-        let mut message_representative = [0; MESSAGE_REPRESENTATIVE_SIZE];
+        let mut message_representative = [0u8.classify(); MESSAGE_REPRESENTATIVE_SIZE];
         derive_message_representative::<Shake256Xof>(
-            &verification_key_hash,
+            // Declassification: The verification key hash is public
+            // but treated as secret by default to sidestep hax issues
+            // with `classify_ref_mut` when hashing into the buffer.
+            verification_key_hash.declassify_ref(),
             &domain_separation_context,
-            message,
+            // Declassification: The message is public, but treated as
+            // secret by default to sidestep hax issues with
+            // `declassify_ref` on a mutable reference.
+            message.declassify_ref(),
             &mut message_representative,
         );
 
         let mut verifier_challenge = PolynomialRingElement::zero();
         sample_challenge_ring_element::<SIMDUnit, Shake256>(
-            &deserialized_commitment_hash,
+            // Declassification: This value is deserialized from the signature itself.
+            deserialized_commitment_hash.classify_ref(),
             ONES_IN_VERIFIER_CHALLENGE,
             &mut verifier_challenge,
         );
@@ -447,10 +476,10 @@ pub(crate) mod generic {
         );
 
         // Compute the commitment hash again to validate the signature.
-        let mut recomputed_commitment_hash = [0; COMMITMENT_HASH_SIZE];
+        let mut recomputed_commitment_hash = [0u8.classify(); COMMITMENT_HASH_SIZE];
         {
             crate::arithmetic::use_hint::<SIMDUnit>(GAMMA2, &deserialized_hint, &mut t1);
-            let mut commitment_serialized = [0u8; COMMITMENT_VECTOR_SIZE];
+            let mut commitment_serialized = [0u8.classify(); COMMITMENT_VECTOR_SIZE];
             encoding::commitment::serialize_vector::<SIMDUnit>(
                 COMMITMENT_RING_ELEMENT_SIZE,
                 &t1,
@@ -465,7 +494,10 @@ pub(crate) mod generic {
         }
 
         // Check if this is a valid signature by comparing the hashes.
-        if deserialized_commitment_hash == recomputed_commitment_hash {
+        // Declassification: This value is public, but treated as
+        // secret by default to sidestep hax issues with
+        // `classify_ref_mut` when hashing into the buffer.
+        if deserialized_commitment_hash == *recomputed_commitment_hash.declassify_ref() {
             return Ok(());
         }
 
@@ -487,12 +519,12 @@ pub(crate) mod generic {
         Shake256Xof: shake256::Xof,
     >(
         verification_key: &[u8; VERIFICATION_KEY_SIZE],
-        message: &[u8],
+        message: &[U8],
         domain_separation_context: Option<DomainSeparationContext>,
         signature_serialized: &[u8; SIGNATURE_SIZE],
     ) -> Result<(), VerificationError> {
-        let mut rand_stack = [0u8; shake128::FIVE_BLOCKS_SIZE];
-        let mut rand_block = [0u8; shake128::BLOCK_SIZE];
+        let mut rand_stack = [0u8.classify(); shake128::FIVE_BLOCKS_SIZE];
+        let mut rand_block = [0u8.classify(); shake128::BLOCK_SIZE];
         let mut tmp_stack = [0i32; 263];
         let mut poly_slot_a = PolynomialRingElement::<SIMDUnit>::zero();
         let mut poly_slot_b = PolynomialRingElement::<SIMDUnit>::zero();
@@ -504,14 +536,20 @@ pub(crate) mod generic {
         let (signer_response_serialized, hint_serialized) =
             rest_of_serialized.split_at(GAMMA1_RING_ELEMENT_SIZE * COLUMNS_IN_A);
 
-        let mut verification_key_hash = [0; BYTES_FOR_VERIFICATION_KEY_HASH];
-        Shake256::shake256(verification_key, &mut verification_key_hash);
+        let mut verification_key_hash = [0.classify(); BYTES_FOR_VERIFICATION_KEY_HASH];
+        Shake256::shake256(verification_key.classify_ref(), &mut verification_key_hash);
 
-        let mut message_representative = [0; MESSAGE_REPRESENTATIVE_SIZE];
+        let mut message_representative = [0u8.classify(); MESSAGE_REPRESENTATIVE_SIZE];
         derive_message_representative::<Shake256Xof>(
-            &verification_key_hash,
+            // Declassification: This value is public, but treated as
+            // secret by default to sidestep hax issues with
+            // `classify_ref_mut` when hashing into the buffer.
+            verification_key_hash.declassify_ref(),
             &domain_separation_context,
-            message,
+            // Declassification: The message is public, but treated as
+            // secret by default to sidestep hax issues with
+            // `declassify_ref` on a mutable reference.
+            message.declassify_ref(),
             &mut message_representative,
         );
 
@@ -520,14 +558,14 @@ pub(crate) mod generic {
         // below.
         let mut verifier_challenge = PolynomialRingElement::zero();
         sample_challenge_ring_element::<SIMDUnit, Shake256>(
-            commitment_hash,
+            commitment_hash.classify_ref(),
             ONES_IN_VERIFIER_CHALLENGE,
             &mut verifier_challenge,
         );
         ntt(&mut verifier_challenge);
 
         // Compute the commitment hash again to validate the signature.
-        let mut recomputed_commitment_hash = [0; COMMITMENT_HASH_SIZE];
+        let mut recomputed_commitment_hash = [0u8.classify(); COMMITMENT_HASH_SIZE];
 
         // `recomputed_commitment_hash` = H(`message_representative` || w1Encode(w'_1))
         let mut shake = Shake256Xof::init();
@@ -573,7 +611,7 @@ pub(crate) mod generic {
             )?;
 
             // Serialize w'_1[i] into `serialized_w1_i`
-            let mut serialized_w1_i = [0u8; COMMITMENT_RING_ELEMENT_SIZE];
+            let mut serialized_w1_i = [0u8.classify(); COMMITMENT_RING_ELEMENT_SIZE];
             crate::encoding::commitment::serialize::<SIMDUnit>(
                 &mut poly_slot_c,
                 &mut serialized_w1_i,
@@ -589,7 +627,10 @@ pub(crate) mod generic {
         shake.squeeze(&mut recomputed_commitment_hash);
 
         // Check if this is a valid signature by comparing the hashes.
-        if commitment_hash == recomputed_commitment_hash {
+        // Declassification: This value is public, but treated as
+        // secret by default to sidestep hax issues with
+        // `classify_ref_mut` when hashing into the buffer.
+        if commitment_hash == recomputed_commitment_hash.declassify_ref() {
             return Ok(());
         }
 
@@ -607,22 +648,24 @@ pub(crate) mod generic {
         Shake256X4: shake256::XofX4,
         PH: PreHash,
     >(
-        signing_key: &[u8],
+        signing_key: &[U8],
         message: &[u8],
         context: &[u8],
-        pre_hash_buffer: &mut [u8],
-        randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+        pre_hash_buffer: &mut [U8],
+        randomness: [U8; SIGNING_RANDOMNESS_SIZE],
         signature: &mut [u8; SIGNATURE_SIZE],
     ) -> Result<(), SigningError> {
         if context.len() > CONTEXT_MAX_LEN {
             return Err(SigningError::ContextTooLongError);
         }
-        PH::hash::<Shake128>(message, pre_hash_buffer);
+        PH::hash::<Shake128>(message.classify_ref(), pre_hash_buffer);
         let domain_separation_context = match DomainSeparationContext::new(context, Some(PH::oid()))
         {
             Ok(dsc) => dsc,
             Err(_) => return Err(SigningError::ContextTooLongError),
         };
+        // Declassification: The message hash is not secret, just
+        // treated as such to make hashing easier.
         sign_internal::<SIMDUnit, Sampler, Shake128X4, Shake256, Shake256Xof, Shake256X4>(
             signing_key,
             pre_hash_buffer,
@@ -643,11 +686,11 @@ pub(crate) mod generic {
         Shake256X4: shake256::XofX4,
         PH: PreHash,
     >(
-        signing_key: &[u8],
+        signing_key: &[U8],
         message: &[u8],
         context: &[u8],
-        pre_hash_buffer: &mut [u8],
-        randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+        pre_hash_buffer: &mut [U8],
+        randomness: [U8; SIGNING_RANDOMNESS_SIZE],
     ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
         let mut signature = MLDSASignature::zero();
 
@@ -684,10 +727,10 @@ pub(crate) mod generic {
         Shake256Xof: shake256::Xof,
         Shake256X4: shake256::XofX4,
     >(
-        signing_key: &[u8],
+        signing_key: &[U8],
         message: &[u8],
         context: &[u8],
-        randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+        randomness: [U8; SIGNING_RANDOMNESS_SIZE],
         signature: &mut [u8; SIGNATURE_SIZE],
     ) -> Result<(), SigningError> {
         let domain_separation_context = match DomainSeparationContext::new(context, None) {
@@ -696,7 +739,7 @@ pub(crate) mod generic {
         };
         sign_internal::<SIMDUnit, Sampler, Shake128X4, Shake256, Shake256Xof, Shake256X4>(
             signing_key,
-            message,
+            message.classify_ref(),
             Some(domain_separation_context),
             randomness,
             signature,
@@ -712,10 +755,10 @@ pub(crate) mod generic {
         Shake256Xof: shake256::Xof,
         Shake256X4: shake256::XofX4,
     >(
-        signing_key: &[u8],
+        signing_key: &[U8],
         message: &[u8],
         context: &[u8],
-        randomness: [u8; SIGNING_RANDOMNESS_SIZE],
+        randomness: [U8; SIGNING_RANDOMNESS_SIZE],
     ) -> Result<MLDSASignature<SIGNATURE_SIZE>, SigningError> {
         let mut signature = MLDSASignature::zero();
 
@@ -753,7 +796,7 @@ pub(crate) mod generic {
         };
         verify_internal::<SIMDUnit, Sampler, Shake128X4, Shake256, Shake256Xof>(
             verification_key_serialized,
-            message,
+            message.classify_ref(),
             Some(domain_separation_context),
             signature_serialized,
         )
@@ -772,10 +815,10 @@ pub(crate) mod generic {
         verification_key_serialized: &[u8; VERIFICATION_KEY_SIZE],
         message: &[u8],
         context: &[u8],
-        pre_hash_buffer: &mut [u8],
+        pre_hash_buffer: &mut [U8],
         signature_serialized: &[u8; SIGNATURE_SIZE],
     ) -> Result<(), VerificationError> {
-        PH::hash::<Shake128>(message, pre_hash_buffer);
+        PH::hash::<Shake128>(message.classify_ref(), pre_hash_buffer);
         let domain_separation_context = match DomainSeparationContext::new(context, Some(PH::oid()))
         {
             Ok(dsc) => dsc,
@@ -811,26 +854,27 @@ pub(crate) mod generic {
 /// 23 of Algorithm 4 (and line 18 of Algorithm 5,resp.) describe domain separation for the HashMl-DSA
 /// variant.
 #[inline(always)]
+// All inputs and outputs here are public.
 fn derive_message_representative<Shake256Xof: shake256::Xof>(
     verification_key_hash: &[u8],
     domain_separation_context: &Option<DomainSeparationContext>,
     message: &[u8],
-    message_representative: &mut [u8; 64],
+    message_representative: &mut [U8; 64],
 ) {
     let mut shake = Shake256Xof::init();
     #[cfg(not(eurydice))]
     debug_assert!(verification_key_hash.len() == 64);
 
-    shake.absorb(verification_key_hash);
+    shake.absorb(verification_key_hash.classify_ref());
     if let Some(domain_separation_context) = domain_separation_context {
-        shake.absorb(&[domain_separation_context.pre_hash_oid().is_some() as u8]);
-        shake.absorb(&[domain_separation_context.context().len() as u8]);
-        shake.absorb(domain_separation_context.context());
+        shake.absorb(&[(domain_separation_context.pre_hash_oid().is_some() as u8).classify()]);
+        shake.absorb(&[(domain_separation_context.context().len() as u8).classify()]);
+        shake.absorb(domain_separation_context.context().classify_ref());
         if let Some(pre_hash_oid) = domain_separation_context.pre_hash_oid() {
-            shake.absorb(pre_hash_oid)
+            shake.absorb(pre_hash_oid.classify_ref())
         }
     }
 
-    shake.absorb_final(message);
+    shake.absorb_final(message.classify_ref());
     shake.squeeze(message_representative);
 }
