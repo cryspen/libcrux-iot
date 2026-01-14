@@ -61,10 +61,6 @@ class extractAction(argparse.Action):
         cargo_hax_into = [
             "cargo",
             "hax",
-            "-C",
-            "--features",
-            "std",
-            ";",
             "into",
             "-i",
             include_str,
