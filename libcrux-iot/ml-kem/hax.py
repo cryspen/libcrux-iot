@@ -72,7 +72,9 @@ class extractAction(argparse.Action):
             # "+libcrux_iot_ml_kem::spec::*",
             # "+libcrux_iot_ml_kem::vector::**",
             "+libcrux_iot_ml_kem::vector::**",
-            "+libcrux_iot_ml_kem::polynomial::**"
+            "+libcrux_iot_ml_kem::polynomial::**",
+            "+libcrux_iot_ml_kem::serialize::**"
+            # "+libcrux_iot_ml_kem::ntt::**"
             # "+libcrux_iot_ml_kem::vector::portable::arithmetic::**",
             # "+libcrux_iot_ml_kem::vector::portable::ntt::**",
             # "+libcrux_iot_ml_kem::vector::portable::sampling::**",

@@ -91,14 +91,6 @@ class t_IntOps (v_Self: Type0) = {
     -> Prims.Pure v_Self
         (f_wrapping_mul_pre #v_T #i0 x0 x1)
         (fun result -> f_wrapping_mul_post #v_T #i0 x0 x1 result);
-  f_wrapping_shl_pre:v_Self -> u32 -> Type0;
-  f_wrapping_shl_post:v_Self -> u32 -> v_Self -> Type0;
-  f_wrapping_shl:x0: v_Self -> x1: u32
-    -> Prims.Pure v_Self (f_wrapping_shl_pre x0 x1) (fun result -> f_wrapping_shl_post x0 x1 result);
-  f_wrapping_shr_pre:v_Self -> u32 -> Type0;
-  f_wrapping_shr_post:v_Self -> u32 -> v_Self -> Type0;
-  f_wrapping_shr:x0: v_Self -> x1: u32
-    -> Prims.Pure v_Self (f_wrapping_shr_pre x0 x1) (fun result -> f_wrapping_shr_post x0 x1 result);
   f_wrapping_neg_pre:v_Self -> Type0;
   f_wrapping_neg_post:v_Self -> v_Self -> Type0;
   f_wrapping_neg:x0: v_Self
