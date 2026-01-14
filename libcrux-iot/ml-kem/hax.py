@@ -45,7 +45,7 @@ class extractAction(argparse.Action):
 
     def __call__(self, parser, args, values, option_string=None) -> None:
         # Extract libcrux-secrets
-        # I did this once, for libcrux-secrets-0.0.4, and copied the resulting F* files to /proofs/fstar/secrets.
+        # I did this once, and copied the resulting F* files to /proofs/fstar/secrets.
         #
         # include_str = "+**"
         # interface_include = ""
