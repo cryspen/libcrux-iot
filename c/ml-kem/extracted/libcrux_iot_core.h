@@ -7,8 +7,8 @@
  * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: unset
- * Libcrux: 1ad7c25705450131b575043e252c944035898962
+ * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
+ * Libcrux: 2259f47ca2a2a060c9fd147ccc78ed3588bfd288
  */
 
 #ifndef libcrux_iot_core_H
