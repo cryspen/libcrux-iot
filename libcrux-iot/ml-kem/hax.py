@@ -68,19 +68,14 @@ class extractAction(argparse.Action):
         # Extract ml-kem
         includes = [
             "-**",
-            # "+libcrux_iot_ml_kem::spec::*",
-            # "+libcrux_iot_ml_kem::vector::**",
             "+libcrux_iot_ml_kem::vector::**",
             "+libcrux_iot_ml_kem::polynomial::**",
             "+libcrux_iot_ml_kem::serialize::**",
             "+libcrux_iot_ml_kem::ntt::**",
             "+libcrux_iot_ml_kem::invert_ntt::**",
-            "+libcrux_iot_ml_kem::sampling::**"
-            # "+libcrux_iot_ml_kem::vector::portable::arithmetic::**",
-            # "+libcrux_iot_ml_kem::vector::portable::ntt::**",
-            # "+libcrux_iot_ml_kem::vector::portable::sampling::**",
-            # "+libcrux_iot_ml_kem::vector::portable::compress::**",
-            # "+libcrux_iot_ml_kem::vector::portable::serialize::**",
+            "+libcrux_iot_ml_kem::sampling::**",
+            "+libcrux_iot_ml_kem::hash_functions::**",
+            "-libcrux_iot_ml_kem::hash_functions::portable::**" # we can include this again once we have panic freedom in SHA3
         ]
         include_str = " ".join(includes)
         # interface_include = "+** -libcrux_iot_ml_kem::types -libcrux_iot_ml_kem::constants"
