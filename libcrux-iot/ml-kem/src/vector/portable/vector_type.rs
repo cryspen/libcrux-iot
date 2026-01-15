@@ -17,40 +17,8 @@ pub fn zero() -> PortableVector {
     }
 }
 
-#[hax_lib::requires(out.len() == 16)]
-#[hax_lib::ensures(|_| future(out).len() == 16)]
-#[inline(always)]
-pub fn to_i16_array(x: &PortableVector, out: &mut [i16]) {
-    #[cfg(not(eurydice))]
-    debug_assert!(out.len() >= 16);
-
-    out[0..16].copy_from_slice(&x.elements.declassify());
-}
-
 #[hax_lib::requires(array.len() == 16)]
 #[inline(always)]
 pub fn from_i16_array(array: &[I16], out: &mut PortableVector) {
     out.elements.copy_from_slice(&array[0..16]);
-}
-
-#[hax_lib::requires(array.len() >= 32)]
-#[inline(always)]
-pub(super) fn from_bytes(array: &[U8], out: &mut PortableVector) {
-    for i in 0..FIELD_ELEMENTS_IN_VECTOR {
-        out.elements[i] = (array[2 * i].as_i16()) << 8 | array[2 * i + 1].as_i16();
-    }
-}
-
-#[hax_lib::requires(bytes.len() >= 32)]
-#[hax_lib::ensures(|_| future(bytes).len() == bytes.len())]
-#[inline(always)]
-pub(super) fn to_bytes(x: PortableVector, bytes: &mut [U8]) {
-    #[cfg(hax)]
-    let _bytes_len = bytes.len();
-
-    for i in 0..FIELD_ELEMENTS_IN_VECTOR {
-        hax_lib::loop_invariant!(|_i: usize| bytes.len() == _bytes_len);
-        bytes[2 * i] = (x.elements[i] >> 8).as_u8();
-        bytes[2 * i + 1] = x.elements[i].as_u8();
-    }
 }

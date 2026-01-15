@@ -48,30 +48,6 @@ impl Operations for PortableVector {
         reducing_from_i32_array(array, out)
     }
 
-    #[requires(out.len() == 16)]
-    #[inline(always)]
-    fn to_i16_array(x: &Self, out: &mut [i16]) {
-        to_i16_array(x, out)
-    }
-
-    #[requires(array.len() >= 32)]
-    #[inline(always)]
-    fn from_bytes(array: &[u8], out: &mut Self) {
-        from_bytes(array.classify_ref(), out)
-    }
-
-    #[requires(bytes.len() >= 32)]
-    #[ensures(|_| future(bytes).len() == bytes.len())]
-    #[inline(always)]
-    fn to_bytes(x: Self, bytes: &mut [u8]) {
-        #[cfg(not(hax))]
-        to_bytes(x, classify_mut_slice(bytes));
-
-        // hax does not support &mut returning functions like `classify_mut_slice`
-        #[cfg(hax)]
-        to_bytes(x, bytes);
-    }
-
     #[inline(always)]
     fn add(lhs: &mut Self, rhs: &Self) {
         add(lhs, rhs)

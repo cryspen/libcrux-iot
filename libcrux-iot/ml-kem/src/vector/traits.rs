@@ -522,16 +522,6 @@ pub trait Operations: Copy + Clone + Repr {
     #[requires(array.len() == 16)]
     fn reducing_from_i32_array(array: &[I32], out: &mut Self);
 
-    #[requires(out.len() == 16)]
-    fn to_i16_array(x: &Self, out: &mut [i16]);
-
-    #[requires(array.len() >= 32)]
-    fn from_bytes(array: &[u8], out: &mut Self);
-
-    #[requires(bytes.len() >= 32)]
-    #[ensures(|_| future(bytes).len() == bytes.len())]
-    fn to_bytes(x: Self, bytes: &mut [u8]);
-
     // Basic arithmetic
     // #[requires(spec::add_pre(&lhs.repr(), &rhs.repr()))]
     // #[ensures(|_| spec::add_post(&lhs.repr(), &rhs.repr(), &future(lhs).repr()))]
