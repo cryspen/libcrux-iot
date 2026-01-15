@@ -1,4 +1,4 @@
-use libcrux_secrets::{CastOps as _, Classify as _, I16, U32, U8};
+use libcrux_secrets::{CastOps as _, Classify as _, IntOps, I16, U32, U8};
 
 use crate::{
     constants::COEFFICIENTS_IN_RING_ELEMENT, hash_functions::*, helper::cloop, vector::Operations,
@@ -42,6 +42,8 @@ use crate::{
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
+#[hax_lib::requires(randomness.len() == K && sampled_coefficients.len() == K && out.len() == K)]
+#[hax_lib::ensures(|_| future(sampled_coefficients).len() == sampled_coefficients.len() && future(out).len() == out.len())]
 #[inline(always)]
 // We only use this to sample entries of the public matrix A, from the public seeds.
 fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, const N: usize>(
@@ -51,7 +53,9 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
 ) -> bool {
     // Would be great to trigger auto-vectorization or at least loop unrolling here
     for i in 0..K {
+        hax_lib::loop_invariant!(|_: usize| sampled_coefficients.len() == K && out.len() == K);
         for r in 0..N / 24 {
+            hax_lib::loop_invariant!(|_: usize| sampled_coefficients.len() == K && out.len() == K);
             if sampled_coefficients[i] < COEFFICIENTS_IN_RING_ELEMENT {
                 #[cfg(eurydice)]
                 {
@@ -65,23 +69,22 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
                         &randomness_i[r * 24..(r * 24) + 24],
                         &mut out_i[sampled_coefficients_i..sampled_coefficients_i + 16],
                     );
-                    sampled_coefficients[i] += sampled;
+                    sampled_coefficients[i] = sampled_coefficients[i].wrapping_add(sampled);
                 }
                 #[cfg(not(eurydice))]
                 {
-                    // XXX: We need a separate code path for hax to
-                    // avoid `DirectAndMut` issues.
                     let sampled = Vector::rej_sample(
                         &randomness[i][r * 24..(r * 24) + 24],
                         &mut out[i][sampled_coefficients[i]..sampled_coefficients[i] + 16],
                     );
-                    sampled_coefficients[i] += sampled;
+                    sampled_coefficients[i] = sampled_coefficients[i].wrapping_add(sampled);
                 }
             }
         }
     }
     let mut done = true;
     for i in 0..K {
+        hax_lib::loop_invariant!(|_: usize| sampled_coefficients.len() == K);
         if sampled_coefficients[i] >= COEFFICIENTS_IN_RING_ELEMENT {
             sampled_coefficients[i] = COEFFICIENTS_IN_RING_ELEMENT;
         } else {
@@ -91,11 +94,11 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
     done
 }
 
-#[inline(always)]
 #[hax_lib::fstar::verification_status(lax)]
 #[hax_lib::requires(sampled_coefficients.len() == K && out.len() == K)]
 #[hax_lib::ensures(|_| future(sampled_coefficients).len() == K && future(out).len() == K)]
 // We only use this to sample entries of the public matrix A, from the public seeds.
+#[inline(always)]
 pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
     seeds: &[[u8; 34]],
     sampled_coefficients: &mut [usize],
@@ -118,6 +121,7 @@ pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
     // To avoid failing here, we squeeze more blocks out of the state until
     // we have enough.
     while !done {
+        hax_lib::loop_invariant!(|_: usize| sampled_coefficients.len() == K && out.len() == K);
         xof_state.shake128_squeeze_next_block(&mut randomness_blocksize);
         done = sample_from_uniform_distribution_next::<Vector, K, BLOCK_SIZE>(
             &randomness_blocksize,
@@ -175,22 +179,12 @@ pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
-#[hax_lib::requires(randomness.len() == 2 * 64)]
-// TODO: Remove or replace with something that works and is useful for the proof.
-// #[cfg_attr(hax, hax_lib::ensures(|result|
-//     hax_lib::forall(|i:usize|
-//         hax_lib::implies(i < result.coefficients.len(), || result.coefficients[i].abs() <= 2
-// ))))]
+#[hax_lib::requires(randomness.len() == 128)]
 #[inline(always)]
-#[hax_lib::fstar::options("--z3rlimit 800")]
 fn sample_from_binomial_distribution_2<Vector: Operations>(
     randomness: &[U8],
-    sampled_i16s: &mut [I16],
+    sampled_i16s: &mut [I16; 256],
 ) {
-    hax_lib::fstar!(
-        "assert (v (sz 2 *! sz 64) == 128);
-        assert (Seq.length $randomness == 128)"
-    );
     cloop! {
         for (chunk_number, byte_chunk) in randomness.chunks_exact(4).enumerate() {
             let random_bits_as_u32: U32 = (byte_chunk[0].as_u32())
@@ -200,24 +194,16 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
 
             let even_bits = random_bits_as_u32 & 0x55555555.classify();
             let odd_bits = (random_bits_as_u32 >> 1) & 0x55555555.classify();
-            hax_lib::fstar!(r#"logand_lemma $random_bits_as_u32 (mk_u32 1431655765);
-                logand_lemma ($random_bits_as_u32 >>! (mk_i32 1)) (mk_u32 1431655765)"#);
-            let coin_toss_outcomes = even_bits + odd_bits;
+
+            let coin_toss_outcomes = even_bits.wrapping_add(odd_bits);
 
             cloop! {
                 for outcome_set in (0..32u32).step_by(4) { // u32::BITS
                     let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x3.classify()).as_i16();
-                    let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 2)) & 0x3.classify()).as_i16();
-                    hax_lib::fstar!(r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) (mk_u32 3);
-                        logand_lemma ($coin_toss_outcomes >>! ($outcome_set +! (mk_u32 2) <: u32) <: u32) (mk_u32 3);
-                        assert (v $outcome_1 >= 0 /\ v $outcome_1 <= 3);
-                        assert (v $outcome_2 >= 0 /\ v $outcome_2 <= 3);
-                        assert (v $chunk_number <= 31);
-                        assert (v (sz 8 *! $chunk_number <: usize) <= 248);
-                        assert (v (cast ($outcome_set >>! (mk_i32 2) <: u32) <: usize) <= 7)"#);
+                    let outcome_2 = ((coin_toss_outcomes >> (outcome_set.wrapping_add(2))) & 0x3.classify()).as_i16();
 
                     let offset = (outcome_set >> 2) as usize;
-                    sampled_i16s[8 * chunk_number + offset] = outcome_1 - outcome_2;
+                    sampled_i16s[8 * chunk_number + offset] = outcome_1.wrapping_sub(outcome_2);
                 }
             }
         }
@@ -225,22 +211,11 @@ fn sample_from_binomial_distribution_2<Vector: Operations>(
 }
 
 #[hax_lib::requires(randomness.len() == 3 * 64)]
-// TODO: Remove or replace with something that works and is useful for the proof.
-// #[cfg_attr(hax, hax_lib::ensures(|result|
-//     hax_lib::forall(|i:usize|
-//         hax_lib::implies(i < result.coefficients.len(), || result.coefficients[i].abs() <= 3
-// ))))]
 #[inline(always)]
-#[hax_lib::fstar::options("--z3rlimit 800")]
 fn sample_from_binomial_distribution_3<Vector: Operations>(
     randomness: &[U8],
     sampled_i16s: &mut [I16; 256],
 ) {
-    hax_lib::fstar!(
-        "assert (v (sz 3 *! sz 64) == 192);
-        assert (Seq.length $randomness == 192)"
-    );
-
     cloop! {
         for (chunk_number, byte_chunk) in randomness.chunks_exact(3).enumerate() {
             let random_bits_as_u24: U32 =
@@ -249,39 +224,24 @@ fn sample_from_binomial_distribution_3<Vector: Operations>(
             let first_bits = random_bits_as_u24 & 0x00249249.classify();
             let second_bits = (random_bits_as_u24 >> 1) & 0x00249249.classify();
             let third_bits = (random_bits_as_u24 >> 2) & 0x00249249.classify();
-            hax_lib::fstar!(r#"logand_lemma $random_bits_as_u24 (mk_u32 2396745);
-                logand_lemma ($random_bits_as_u24 >>! (mk_i32 1) <: u32) (mk_u32 2396745);
-                logand_lemma ($random_bits_as_u24 >>! (mk_i32 2) <: u32) (mk_u32 2396745)"#);
 
-            let coin_toss_outcomes = first_bits + second_bits + third_bits;
+            let coin_toss_outcomes = first_bits.wrapping_add(second_bits.wrapping_add(third_bits));
 
             cloop! {
-                for outcome_set in (0..24).step_by(6) {
+                for outcome_set in (0u8..24).step_by(6) {
                     let outcome_1 = ((coin_toss_outcomes >> outcome_set) & 0x7.classify()).as_i16();
-                    let outcome_2 = ((coin_toss_outcomes >> (outcome_set + 3)) & 0x7.classify()).as_i16();
-                    hax_lib::fstar!(r#"logand_lemma ($coin_toss_outcomes >>! $outcome_set <: u32) (mk_u32 7);
-                        logand_lemma ($coin_toss_outcomes >>! ($outcome_set +! (mk_i32 3) <: i32) <: u32) (mk_u32 7);
-                        assert (v $outcome_1 >= 0 /\ v $outcome_1 <= 7);
-                        assert (v $outcome_2 >= 0 /\ v $outcome_2 <= 7);
-                        assert (v $chunk_number <= 63);
-                        assert (v (sz 4 *! $chunk_number <: usize) <= 252);
-                        assert (v (cast ($outcome_set /! (mk_i32 6) <: i32) <: usize) <= 3)"#);
+                    let outcome_2 = ((coin_toss_outcomes >> (outcome_set.wrapping_add(3))) & 0x7.classify()).as_i16();
 
                     let offset = (outcome_set / 6) as usize;
-                    sampled_i16s[4 * chunk_number + offset] = outcome_1 - outcome_2;
+                    sampled_i16s[4 * chunk_number + offset] = outcome_1.wrapping_sub(outcome_2);
                 }
             }
         }
     }
 }
 
-#[inline(always)]
-#[hax_lib::fstar::verification_status(panic_free)]
 #[hax_lib::requires((ETA == 2 || ETA == 3) && randomness.len() == ETA * 64)]
-#[hax_lib::ensures(|_| fstar!(r#"
-    Spec.Utils.is_i16b_array 7 ${output}_future /\
-    createi (sz 256) (fun i -> Spec.MLKEM.Math.to_spec_fe (Seq.index ${output}_future (v i))) == 
-    Spec.MLKEM.sample_poly_cbd $ETA $randomness"#))]
+#[inline(always)]
 pub(super) fn sample_from_binomial_distribution<const ETA: usize, Vector: Operations>(
     randomness: &[U8],
     output: &mut [I16; 256],
