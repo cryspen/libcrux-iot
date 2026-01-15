@@ -1,4 +1,7 @@
-use libcrux_secrets::{CastOps as _, Classify as _, IntOps, I16, U32, U8};
+use libcrux_secrets::{CastOps as _, Classify as _, I16, U32, U8};
+
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::IntOps;
 
 use crate::{
     constants::COEFFICIENTS_IN_RING_ELEMENT, hash_functions::*, helper::cloop, vector::Operations,
