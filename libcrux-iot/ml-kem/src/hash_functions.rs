@@ -27,42 +27,25 @@ pub(crate) trait Hash {
     /// G aka SHA3 512
     #[requires(true)]
     #[requires(output.len() == 64)]
-    #[ensures(|result|
-        fstar!(r#"Seq.length ${output}_future == Seq.length ${output} /\
-            ${output}_future == Spec.Utils.v_G $input"#))
-    ]
+    #[ensures(|_| future(output).len() == output.len())]
     fn G(input: &[U8], output: &mut [U8]);
 
     /// H aka SHA3 256
     #[requires(true)]
     #[requires(output.len() == 32)]
-    #[ensures(|result|
-        fstar!(r#"Seq.length ${output}_future == Seq.length ${output} /\
-            ${output}_future == Spec.Utils.v_H $input"#))
-    ]
+    #[ensures(|_| future(output).len() == output.len())]
     fn H(input: &[U8], output: &mut [U8]);
 
     /// PRF aka SHAKE256
-    #[requires(fstar!(r#"v $LEN < pow2 32 /\ 
-        Seq.length ${out} == v $LEN"#))]
-    #[ensures(|result|
-        // We need to repeat the pre-condition here because of https://github.com/hacspec/hax/issues/784
-        fstar!(r#"Seq.length ${out}_future == Seq.length ${out} /\
-            (v $LEN < pow2 32 ==> 
-             ${out}_future == Spec.Utils.v_PRF $LEN $input)"#))
-    ]
+    #[requires(LEN <= u32::MAX as usize && out.len() == LEN)]
+    #[ensures(|_| future(out).len() == out.len())]
     fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]);
 
     /// PRFxN aka N SHAKE256
-    #[requires(fstar!(r#"let k = Seq.length $input in
-        ((k == 2 \/ k == 3 \/ k == 4) /\
-         (4 * v $out_len < pow2 32) /\
-         Seq.length $outputs == k * v $out_len)"#))]
-    #[ensures(|result| fstar!(r#"let k = Seq.length $input in
-        ((k == 2 \/ k == 3 \/ k == 4) /\
-         (4 * v $out_len < pow2 32) /\
-         Seq.length ${outputs}_future == Seq.length ${outputs} /\
-         ${outputs}_future == Spec.Utils.v_PRFxN (sz k) $out_len $input)"#))]
+    #[requires((input.len() == 2 || input.len() == 3 || input.len() == 4) &&
+        out_len <= (u32::MAX / 4) as usize &&
+               outputs.len() == input.len() * out_len)]
+    #[ensures(|_| future(outputs).len() == outputs.len())]
     fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize);
 
     /// Create a SHAKE128 state and absorb the input.
@@ -98,177 +81,106 @@ pub(crate) mod portable {
         shake128_state: [KeccakState; 4],
     }
 
-    #[hax_lib::requires(output.len() == 64)]
-    #[hax_lib::ensures(|result|
-        fstar!(r#"Seq.length ${output}_future == Seq.length ${output} /\
-            ${output}_future == Spec.Utils.v_G $input"#))
-    ]
-    #[inline(always)]
-    fn G(input: &[U8], output: &mut [U8]) {
-        portable::sha512(output, input);
-    }
-
-    #[hax_lib::requires(output.len() == 32)]
-    #[hax_lib::ensures(|result|
-        fstar!(r#"Seq.length ${output}_future == Seq.length ${output} /\
-            ${output}_future == Spec.Utils.v_H $input"#))
-    ]
-    #[inline(always)]
-    fn H(input: &[U8], output: &mut [U8]) {
-        portable::sha256(output, input);
-    }
-
-    #[hax_lib::requires(fstar!(r#"v $LEN < pow2 32 /\
-        Seq.length ${out} == v $LEN"#))]
-    #[hax_lib::ensures(|result|
-        fstar!(r#"Seq.length ${out}_future == Seq.length ${out} /\
-            ${out}_future == Spec.Utils.v_PRF $LEN $input"#))
-    ]
-    #[inline(always)]
-    fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]) {
-        #[cfg(not(eurydice))]
-        debug_assert!(out.len() == LEN);
-        portable::shake256(out, input);
-    }
-
-    #[hax_lib::requires(fstar!(r#"let k = Seq.length $input in
-        ((k == 2 \/ k == 3 \/ k == 4) /\
-         (4 * v $out_len < pow2 32) /\
-         Seq.length $outputs == k * v $out_len)"#))]
-    #[hax_lib::ensures(|result| fstar!(r#"let k = Seq.length $input in
-        ((k == 2 \/ k == 3 \/ k == 4) /\
-         (4 * v $out_len < pow2 32) /\
-         Seq.length ${outputs}_future == Seq.length ${outputs} /\
-         ${outputs}_future == Spec.Utils.v_PRFxN (sz k) $out_len $input)"#))]
-    #[inline]
-    fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize) {
-        for i in 0..input.len() {
-            portable::shake256(
-                &mut outputs[i * out_len..(i + 1) * out_len],
-                input[i].as_slice(),
-            );
-        }
-    }
-
-    #[inline(always)]
-    fn shake128_init_absorb_final(input: &[[u8; 34]]) -> PortableHash {
-        #[cfg(not(eurydice))]
-        debug_assert!(input.len() == 1 || input.len() == 2 || input.len() == 3 || input.len() == 4);
-
-        let mut shake128_state = [incremental::shake128_init(); 4];
-        for i in 0..input.len() {
-            incremental::shake128_absorb_final(&mut shake128_state[i], &input[i].classify());
-        }
-
-        PortableHash { shake128_state }
-    }
-
-    #[inline(always)]
-    // We only use this to sample entries of the public matrix A, from the public seeds.
-    fn shake128_squeeze_first_three_blocks(
-        st: &mut PortableHash,
-        outputs: &mut [[u8; THREE_BLOCKS]],
-    ) {
-        #[cfg(not(eurydice))]
-        debug_assert!(
-            outputs.len() == 1 || outputs.len() == 2 || outputs.len() == 3 || outputs.len() == 4
-        );
-
-        for i in 0..outputs.len() {
-            // XXX: We need a separate version for hax, entirely without
-            // classification. The reason is that hax does not support for
-            // `&mut`-returning functions.
-            // (see https://github.com/cryspen/hax/issues/420)
-            #[cfg(not(hax))]
-            incremental::shake128_squeeze_first_three_blocks(
-                &mut st.shake128_state[i],
-                outputs[i].as_mut_slice().classify_ref_mut(),
-            );
-            #[cfg(hax)]
-            incremental::shake128_squeeze_first_three_blocks(
-                &mut st.shake128_state[i],
-                &mut outputs[i],
-            );
-        }
-    }
-
-    #[inline(always)]
-    // We only use this to sample entries of the public matrix A, from the public seeds.
-    fn shake128_squeeze_next_block(st: &mut PortableHash, outputs: &mut [[u8; BLOCK_SIZE]]) {
-        for i in 0..outputs.len() {
-            // XXX: We need a separate version for hax, entirely without
-            // classification. The reason is that hax does not support for
-            // `&mut`-returning functions.
-            // (see https://github.com/cryspen/hax/issues/420)
-            #[cfg(not(hax))]
-            incremental::shake128_squeeze_next_block(
-                &mut st.shake128_state[i],
-                outputs[i].as_mut_slice().classify_ref_mut(),
-            );
-            #[cfg(hax)]
-            incremental::shake128_squeeze_next_block(&mut st.shake128_state[i], &mut outputs[i]);
-        }
-    }
-
     #[hax_lib::attributes]
     impl Hash for PortableHash {
-        #[requires(output.len() == 64)]
-        #[ensures(|_|
-            fstar!(r#"${output}_future == Spec.Utils.v_G $input"#))
-        ]
+        #[hax_lib::requires(output.len() == 64)]
+        #[hax_lib::ensures(|_| future(output).len() == output.len())]
         #[inline(always)]
         fn G(input: &[U8], output: &mut [U8]) {
-            G(input, output)
+            portable::sha512(output, input);
         }
 
-        #[requires(output.len() == 32)]
-        #[ensures(|_|
-            fstar!(r#"${output}_future == Spec.Utils.v_H $input"#))
-        ]
+        #[hax_lib::requires(output.len() == 32)]
+        #[hax_lib::ensures(|_| future(output).len() == output.len())]
         #[inline(always)]
         fn H(input: &[U8], output: &mut [U8]) {
-            H(input, output)
+            portable::sha256(output, input);
         }
 
-        #[requires(fstar!(r#"v $LEN < pow2 32"#))]
-        #[ensures(|_|
-            // We need to repeat the pre-condition here because of https://github.com/hacspec/hax/issues/784
-            fstar!(r#"v $LEN < pow2 32 ==> ${out}_future == Spec.Utils.v_PRF $LEN $input"#))
-        ]
+        #[hax_lib::requires(LEN <= u32::MAX as usize && out.len() == LEN)]
+        #[hax_lib::ensures(|_| future(out).len() == out.len())]
         #[inline(always)]
         fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]) {
-            PRF::<LEN>(input, out)
+            #[cfg(not(eurydice))]
+            debug_assert!(out.len() == LEN);
+            portable::shake256(out, input);
         }
 
-        #[requires(fstar!(r#"let k = Seq.length $input in
-            ((k == 2 \/ k == 3 \/ k == 4) /\
-            (4 * v $out_len < pow2 32) /\
-            Seq.length $outputs == k * v $out_len)"#))]
-        #[ensures(|result| fstar!(r#"let k = Seq.length $input in
-            ((k == 2 \/ k == 3 \/ k == 4) /\
-             (4 * v $out_len < pow2 32) /\
-             Seq.length ${outputs}_future == Seq.length ${outputs} /\
-             ${outputs}_future == Spec.Utils.v_PRFxN (sz k) $out_len $input)"#))]
+        #[hax_lib::requires((input.len() == 2 || input.len() == 3 || input.len() == 4) &&
+             out_len <= (u32::MAX / 4) as usize &&
+        outputs.len() == input.len() * out_len)]
+        #[hax_lib::ensures(|_| future(outputs).len() == outputs.len())]
         #[inline]
         fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize) {
-            PRFxN(input, outputs, out_len)
+            for i in 0..input.len() {
+                hax_lib::loop_invariant!(|_: usize| outputs.len() == input.len() * out_len);
+                portable::shake256(
+                    &mut outputs[i * out_len..(i + 1) * out_len],
+                    input[i].as_slice(),
+                );
+            }
         }
 
         #[inline(always)]
         fn shake128_init_absorb_final(input: &[[u8; 34]]) -> Self {
-            shake128_init_absorb_final(input)
+            #[cfg(not(eurydice))]
+            debug_assert!(
+                input.len() == 1 || input.len() == 2 || input.len() == 3 || input.len() == 4
+            );
+
+            let mut shake128_state = [incremental::shake128_init(); 4];
+            for i in 0..input.len() {
+                incremental::shake128_absorb_final(&mut shake128_state[i], &input[i].classify());
+            }
+
+            PortableHash { shake128_state }
         }
 
         #[inline(always)]
         // We only use this to sample entries of the public matrix A, from the public seeds.
         fn shake128_squeeze_first_three_blocks(&mut self, output: &mut [[u8; THREE_BLOCKS]]) {
-            shake128_squeeze_first_three_blocks(self, output)
+            #[cfg(not(eurydice))]
+            debug_assert!(
+                output.len() == 1 || output.len() == 2 || output.len() == 3 || output.len() == 4
+            );
+
+            for i in 0..output.len() {
+                // XXX: We need a separate version for hax, entirely without
+                // classification. The reason is that hax does not support for
+                // `&mut`-returning functions.
+                // (see https://github.com/cryspen/hax/issues/420)
+                #[cfg(not(hax))]
+                incremental::shake128_squeeze_first_three_blocks(
+                    &mut self.shake128_state[i],
+                    output[i].as_mut_slice().classify_ref_mut(),
+                );
+                #[cfg(hax)]
+                incremental::shake128_squeeze_first_three_blocks(
+                    &mut self.shake128_state[i],
+                    &mut output[i],
+                );
+            }
         }
 
         #[inline(always)]
         // We only use this to sample entries of the public matrix A, from the public seeds.
         fn shake128_squeeze_next_block(&mut self, output: &mut [[u8; BLOCK_SIZE]]) {
-            shake128_squeeze_next_block(self, output)
+            for i in 0..output.len() {
+                // XXX: We need a separate version for hax, entirely without
+                // classification. The reason is that hax does not support for
+                // `&mut`-returning functions.
+                // (see https://github.com/cryspen/hax/issues/420)
+                #[cfg(not(hax))]
+                incremental::shake128_squeeze_next_block(
+                    &mut self.shake128_state[i],
+                    output[i].as_mut_slice().classify_ref_mut(),
+                );
+                #[cfg(hax)]
+                incremental::shake128_squeeze_next_block(
+                    &mut self.shake128_state[i],
+                    &mut output[i],
+                );
+            }
         }
     }
 }
