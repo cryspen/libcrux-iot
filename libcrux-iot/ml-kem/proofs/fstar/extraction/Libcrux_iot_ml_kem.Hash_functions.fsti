@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Hash_functions
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 /// The SHA3 block size.
 let v_BLOCK_SIZE: usize = mk_usize 168
@@ -20,8 +20,8 @@ class t_Hash (v_Self: Type0) = {
     -> pred:
       Type0
         { pred ==>
-          (Core.Slice.impl__len #u8 output_future <: usize) =.
-          (Core.Slice.impl__len #u8 output <: usize) };
+          (Core_models.Slice.impl__len #u8 output_future <: usize) =.
+          (Core_models.Slice.impl__len #u8 output <: usize) };
   f_G:x0: t_Slice u8 -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8) (f_G_pre x0 x1) (fun result -> f_G_post x0 x1 result);
   f_H_pre:input: t_Slice u8 -> output: t_Slice u8 -> pred: Type0{true ==> pred};
@@ -29,33 +29,35 @@ class t_Hash (v_Self: Type0) = {
     -> pred:
       Type0
         { pred ==>
-          (Core.Slice.impl__len #u8 output_future <: usize) =.
-          (Core.Slice.impl__len #u8 output <: usize) };
+          (Core_models.Slice.impl__len #u8 output_future <: usize) =.
+          (Core_models.Slice.impl__len #u8 output <: usize) };
   f_H:x0: t_Slice u8 -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8) (f_H_pre x0 x1) (fun result -> f_H_post x0 x1 result);
   f_PRF_pre:v_LEN: usize -> input: t_Slice u8 -> out: t_Slice u8
     -> pred:
       Type0
-        { v_LEN <=. (cast (Core.Num.impl_u32__MAX <: u32) <: usize) &&
-          (Core.Slice.impl__len #u8 out <: usize) =. v_LEN ==>
+        { v_LEN <=. (cast (Core_models.Num.impl_u32__MAX <: u32) <: usize) &&
+          (Core_models.Slice.impl__len #u8 out <: usize) =. v_LEN ==>
           pred };
   f_PRF_post:v_LEN: usize -> input: t_Slice u8 -> out: t_Slice u8 -> out_future: t_Slice u8
     -> pred:
       Type0
         { pred ==>
-          (Core.Slice.impl__len #u8 out_future <: usize) =. (Core.Slice.impl__len #u8 out <: usize)
-        };
+          (Core_models.Slice.impl__len #u8 out_future <: usize) =.
+          (Core_models.Slice.impl__len #u8 out <: usize) };
   f_PRF:v_LEN: usize -> x0: t_Slice u8 -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8) (f_PRF_pre v_LEN x0 x1) (fun result -> f_PRF_post v_LEN x0 x1 result);
   f_PRFxN_pre:input: t_Slice (t_Array u8 (mk_usize 33)) -> outputs: t_Slice u8 -> out_len: usize
     -> pred:
       Type0
-        { ((Core.Slice.impl__len #(t_Array u8 (mk_usize 33)) input <: usize) =. mk_usize 2 ||
-          (Core.Slice.impl__len #(t_Array u8 (mk_usize 33)) input <: usize) =. mk_usize 3 ||
-          (Core.Slice.impl__len #(t_Array u8 (mk_usize 33)) input <: usize) =. mk_usize 4) &&
-          out_len <=. (cast (Core.Num.impl_u32__MAX /! mk_u32 4 <: u32) <: usize) &&
-          (Core.Slice.impl__len #u8 outputs <: usize) =.
-          ((Core.Slice.impl__len #(t_Array u8 (mk_usize 33)) input <: usize) *! out_len <: usize) ==>
+        { ((Core_models.Slice.impl__len #(t_Array u8 (mk_usize 33)) input <: usize) =. mk_usize 2 ||
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 33)) input <: usize) =. mk_usize 3 ||
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 33)) input <: usize) =. mk_usize 4) &&
+          out_len <=. (cast (Core_models.Num.impl_u32__MAX /! mk_u32 4 <: u32) <: usize) &&
+          (Core_models.Slice.impl__len #u8 outputs <: usize) =.
+          ((Core_models.Slice.impl__len #(t_Array u8 (mk_usize 33)) input <: usize) *! out_len
+            <:
+            usize) ==>
           pred };
   f_PRFxN_post:
       input: t_Slice (t_Array u8 (mk_usize 33)) ->
@@ -65,8 +67,8 @@ class t_Hash (v_Self: Type0) = {
     -> pred:
       Type0
         { pred ==>
-          (Core.Slice.impl__len #u8 outputs_future <: usize) =.
-          (Core.Slice.impl__len #u8 outputs <: usize) };
+          (Core_models.Slice.impl__len #u8 outputs_future <: usize) =.
+          (Core_models.Slice.impl__len #u8 outputs <: usize) };
   f_PRFxN:x0: t_Slice (t_Array u8 (mk_usize 33)) -> x1: t_Slice u8 -> x2: usize
     -> Prims.Pure (t_Slice u8) (f_PRFxN_pre x0 x1 x2) (fun result -> f_PRFxN_post x0 x1 x2 result);
   f_shake128_init_absorb_final_pre:input: t_Slice (t_Array u8 (mk_usize 34))

@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Sampling
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -55,20 +55,21 @@ val sample_from_uniform_distribution_next
       (out: t_Slice (t_Array i16 (mk_usize 272)))
     : Prims.Pure (t_Slice usize & t_Slice (t_Array i16 (mk_usize 272)) & bool)
       (requires
-        (Core.Slice.impl__len #(t_Array u8 v_N) randomness <: usize) =. v_K &&
-        (Core.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K &&
-        (Core.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize) =. v_K)
+        (Core_models.Slice.impl__len #(t_Array u8 v_N) randomness <: usize) =. v_K &&
+        (Core_models.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K &&
+        (Core_models.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize) =. v_K)
       (ensures
         fun temp_0_ ->
-          let sampled_coefficients_future, out_future, _:(t_Slice usize &
-            t_Slice (t_Array i16 (mk_usize 272)) &
-            bool) =
+          let
+          (sampled_coefficients_future: t_Slice usize),
+          (out_future: t_Slice (t_Array i16 (mk_usize 272))),
+          (_: bool) =
             temp_0_
           in
-          (Core.Slice.impl__len #usize sampled_coefficients_future <: usize) =.
-          (Core.Slice.impl__len #usize sampled_coefficients <: usize) &&
-          (Core.Slice.impl__len #(t_Array i16 (mk_usize 272)) out_future <: usize) =.
-          (Core.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize))
+          (Core_models.Slice.impl__len #usize sampled_coefficients_future <: usize) =.
+          (Core_models.Slice.impl__len #usize sampled_coefficients <: usize) &&
+          (Core_models.Slice.impl__len #(t_Array i16 (mk_usize 272)) out_future <: usize) =.
+          (Core_models.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize))
 
 val sample_from_xof
       (v_K: usize)
@@ -80,16 +81,17 @@ val sample_from_xof
       (out: t_Slice (t_Array i16 (mk_usize 272)))
     : Prims.Pure (t_Slice usize & t_Slice (t_Array i16 (mk_usize 272)))
       (requires
-        (Core.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K &&
-        (Core.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize) =. v_K)
+        (Core_models.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K &&
+        (Core_models.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize) =. v_K)
       (ensures
         fun temp_0_ ->
-          let sampled_coefficients_future, out_future:(t_Slice usize &
-            t_Slice (t_Array i16 (mk_usize 272))) =
+          let
+          (sampled_coefficients_future: t_Slice usize),
+          (out_future: t_Slice (t_Array i16 (mk_usize 272))) =
             temp_0_
           in
-          (Core.Slice.impl__len #usize sampled_coefficients_future <: usize) =. v_K &&
-          (Core.Slice.impl__len #(t_Array i16 (mk_usize 272)) out_future <: usize) =. v_K)
+          (Core_models.Slice.impl__len #usize sampled_coefficients_future <: usize) =. v_K &&
+          (Core_models.Slice.impl__len #(t_Array i16 (mk_usize 272)) out_future <: usize) =. v_K)
 
 /// Given a series of uniformly random bytes in `randomness`, for some number `eta`,
 /// the `sample_from_binomial_distribution_{eta}` functions sample
@@ -135,7 +137,7 @@ val sample_from_binomial_distribution_2_
       (randomness: t_Slice u8)
       (sampled_i16s: t_Array i16 (mk_usize 256))
     : Prims.Pure (t_Array i16 (mk_usize 256))
-      (requires (Core.Slice.impl__len #u8 randomness <: usize) =. mk_usize 128)
+      (requires (Core_models.Slice.impl__len #u8 randomness <: usize) =. mk_usize 128)
       (fun _ -> Prims.l_True)
 
 val sample_from_binomial_distribution_3_
@@ -145,7 +147,8 @@ val sample_from_binomial_distribution_3_
       (sampled_i16s: t_Array i16 (mk_usize 256))
     : Prims.Pure (t_Array i16 (mk_usize 256))
       (requires
-        (Core.Slice.impl__len #u8 randomness <: usize) =. (mk_usize 3 *! mk_usize 64 <: usize))
+        (Core_models.Slice.impl__len #u8 randomness <: usize) =.
+        (mk_usize 3 *! mk_usize 64 <: usize))
       (fun _ -> Prims.l_True)
 
 val sample_from_binomial_distribution
@@ -157,5 +160,5 @@ val sample_from_binomial_distribution
     : Prims.Pure (t_Array i16 (mk_usize 256))
       (requires
         (v_ETA =. mk_usize 2 || v_ETA =. mk_usize 3) &&
-        (Core.Slice.impl__len #u8 randomness <: usize) =. (v_ETA *! mk_usize 64 <: usize))
+        (Core_models.Slice.impl__len #u8 randomness <: usize) =. (v_ETA *! mk_usize 64 <: usize))
       (fun _ -> Prims.l_True)

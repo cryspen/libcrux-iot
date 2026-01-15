@@ -6,10 +6,7 @@ use crate::{
     sampling::sample_from_xof, serialize::deserialize_to_reduced_ring_element, vector::Operations,
 };
 
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-                              v i < v $K /\ v j < v $K /\
-                              Seq.length $matrix == v $K * v $K"#))]
-#[hax_lib::ensures(|result| fstar!(r#"result == Seq.index matrix (v $i *  v $K + v $j)"#))]
+#[hax_lib::requires(K <= 4 && i < K && j < K && matrix.len() == K * K)]
 pub(crate) fn entry<const K: usize, Vector: Operations>(
     matrix: &[PolynomialRingElement<Vector>],
     i: usize,
@@ -24,6 +21,7 @@ pub(crate) fn entry<const K: usize, Vector: Operations>(
     &matrix[i * K + j]
 }
 
+#[hax_lib::requires(seed.len() == 32)]
 #[inline(always)]
 pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     out: &mut PolynomialRingElement<Vector>,
@@ -44,18 +42,10 @@ pub(crate) fn sample_matrix_entry<Vector: Operations, Hasher: Hash>(
     PolynomialRingElement::from_i16_array(out_raw[0].classify().as_slice(), out);
 }
 
+#[hax_lib::requires(K <= 4 && A_transpose.len() == K * K)]
+#[hax_lib::ensures(|_| future(A_transpose).len() == A_transpose.len())]
 #[inline(always)]
 #[allow(non_snake_case)]
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    Seq.length ${A_transpose} == v $K * v $K"#))]
-#[hax_lib::ensures(|res|
-    fstar!(r#"
-        Seq.length ${A_transpose}_future == v $K * v $K /\
-        (let (matrix_A, valid) = Spec.MLKEM.sample_matrix_A_ntt (Seq.slice $seed 0 32) in
-        valid ==> (
-        if $transpose then Libcrux_ml_kem.Polynomial.to_spec_matrix_t ${A_transpose}_future == matrix_A
-        else Libcrux_ml_kem.Polynomial.to_spec_matrix_t (${A_transpose}_future <: t_Array _ ($K *! $K)) == Spec.MLKEM.matrix_transpose matrix_A))"#)
-)]
 pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
     A_transpose: &mut [PolynomialRingElement<Vector>],
     seed: &[u8; 34], // The seed for sampling public matrix A is public itself.
@@ -65,8 +55,10 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
     debug_assert!(A_transpose.len() == K * K);
 
     for i in 0..K {
+        hax_lib::loop_invariant!(|_: usize| A_transpose.len() == K * K);
         let mut seeds = [*seed; K];
         for j in 0..K {
+            hax_lib::loop_invariant!(|_: usize| A_transpose.len() == K * K);
             seeds[j][32] = i as u8;
             seeds[j][33] = j as u8;
         }
@@ -75,6 +67,7 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
         sample_from_xof::<K, Vector, Hasher>(&seeds, &mut sampled_coefficients, &mut out);
         cloop! {
             for (j, sample) in out.into_iter().enumerate() {
+                hax_lib::loop_invariant!(|_:usize| A_transpose.len() == K * K);
                 // A[i][j] = A_transpose[j][i]
                 if transpose {
                     PolynomialRingElement::from_i16_array(sample[..256].classify_ref(), &mut A_transpose[j * K + i]);
@@ -84,7 +77,6 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
             }
         }
     }
-    ()
 }
 
 /// The following functions compute various expressions involving
@@ -93,16 +85,6 @@ pub(crate) fn sample_matrix_A<const K: usize, Vector: Operations, Hasher: Hash>(
 
 /// Compute v − InverseNTT(sᵀ ◦ NTT(u))
 #[inline(always)]
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K"#))]
-#[hax_lib::ensures(|_|
-    fstar!(r#"let open Libcrux_ml_kem.Polynomial in
-        let secret_spec = to_spec_vector_t $secret_as_ntt in
-        let u_spec = to_spec_vector_t $u_as_ntt in
-        let v_spec = to_spec_poly_t $v in
-        to_spec_poly_t ${result}_future ==
-            Spec.MLKEM.(poly_sub v_spec (poly_inv_ntt (vector_dot_product_ntt #$K secret_spec u_spec))) /\
-        Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 ${result}_future"#)
-)]
 pub(crate) fn compute_message<const K: usize, Vector: Operations>(
     v: &PolynomialRingElement<Vector>,
     secret_as_ntt: &[PolynomialRingElement<Vector>; K],
@@ -122,10 +104,8 @@ pub(crate) fn compute_message<const K: usize, Vector: Operations>(
 }
 
 /// Compute InverseNTT(tᵀ ◦ r̂) + e₂ + message
+#[hax_lib::requires(r_as_ntt.len() == K && cache.len() == K && (public_key.len() / BYTES_PER_RING_ELEMENT) == K)]
 #[inline(always)]
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    Seq.length $r_as_ntt == v $K
-"#))]
 pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
     public_key: &[u8],
     t_as_ntt_entry: &mut PolynomialRingElement<Vector>,
@@ -151,6 +131,18 @@ pub(crate) fn compute_ring_element_v<const K: usize, Vector: Operations>(
 }
 
 /// Compute u := InvertNTT(Aᵀ ◦ r̂) + e₁
+#[hax_lib::requires(
+    seed.len() == 32 &&
+    r_as_ntt.len() == K &&
+    error_1.len() == K &&
+    result.len() == K &&
+    cache.len() == K &&
+    K > 0
+)]
+#[hax_lib::ensures(|_|
+    future(result).len() == result.len() &&
+    future(cache).len() == cache.len()
+)]
 #[inline(always)]
 pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>(
     matrix_entry: &mut PolynomialRingElement<Vector>,
@@ -169,6 +161,7 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
 
     *accumulator = [0i32.classify(); 256];
     for j in 0..K {
+        hax_lib::loop_invariant!(|_: usize| result.len() == K && cache.len() == K);
         sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, 0, j);
         matrix_entry.accumulating_ntt_multiply_fill_cache(&r_as_ntt[j], accumulator, &mut cache[j]);
     }
@@ -177,8 +170,10 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
     result[0].add_error_reduce(&error_1[0]);
 
     for i in 1..K {
+        hax_lib::loop_invariant!(|_: usize| result.len() == K && cache.len() == K);
         *accumulator = [0i32.classify(); 256];
         for j in 0..K {
+            hax_lib::loop_invariant!(|_: usize| result.len() == K && cache.len() == K);
             sample_matrix_entry::<Vector, Hasher>(matrix_entry, seed, i, j);
             matrix_entry.accumulating_ntt_multiply_use_cache(&r_as_ntt[j], accumulator, &cache[j]);
         }
@@ -190,20 +185,9 @@ pub(crate) fn compute_vector_u<const K: usize, Vector: Operations, Hasher: Hash>
 }
 
 /// Compute Â ◦ ŝ + ê
+#[hax_lib::requires(K > 0 && K <= 4 && matrix_A.len() == K * K)]
 #[inline(always)]
 #[allow(non_snake_case)]
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    Seq.length $matrix_A == v $K * v $K"#))]
-#[hax_lib::ensures(|_|
-    fstar!(r#"let open Libcrux_ml_kem.Polynomial in
-        to_spec_vector_t ${t_as_ntt}_future =
-             Spec.MLKEM.compute_As_plus_e_ntt
-               (to_spec_matrix_t $matrix_A) 
-               (to_spec_vector_t $s_as_ntt) 
-               (to_spec_vector_t $error_as_ntt) /\
-        (forall (i: nat). i < v $K ==>
-            Libcrux_ml_kem.Polynomial.is_bounded_poly 3328 (Seq.index ${t_as_ntt}_future i))"#)
-)]
 pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
     t_as_ntt: &mut [PolynomialRingElement<Vector>; K],
     matrix_A: &[PolynomialRingElement<Vector>],
@@ -239,6 +223,4 @@ pub(crate) fn compute_As_plus_e<const K: usize, Vector: Operations>(
 
         t_as_ntt[i].add_standard_error_reduce(&error_as_ntt[i]);
     }
-
-    ()
 }

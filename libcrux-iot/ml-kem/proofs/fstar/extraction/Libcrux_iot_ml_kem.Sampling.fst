@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Sampling
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -23,36 +23,38 @@ let sample_from_uniform_distribution_next
       (sampled_coefficients: t_Slice usize)
       (out: t_Slice (t_Array i16 (mk_usize 272)))
      =
-  let out, sampled_coefficients:(t_Slice (t_Array i16 (mk_usize 272)) & t_Slice usize) =
+  let (out: t_Slice (t_Array i16 (mk_usize 272))), (sampled_coefficients: t_Slice usize) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       v_K
       (fun temp_0_ temp_1_ ->
-          let out, sampled_coefficients:(t_Slice (t_Array i16 (mk_usize 272)) & t_Slice usize) =
+          let (out: t_Slice (t_Array i16 (mk_usize 272))), (sampled_coefficients: t_Slice usize) =
             temp_0_
           in
           let _:usize = temp_1_ in
-          ((Core.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K <: bool) &&
-          ((Core.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize) =. v_K <: bool))
+          ((Core_models.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K <: bool) &&
+          ((Core_models.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize) =. v_K <: bool))
       (out, sampled_coefficients <: (t_Slice (t_Array i16 (mk_usize 272)) & t_Slice usize))
       (fun temp_0_ i ->
-          let out, sampled_coefficients:(t_Slice (t_Array i16 (mk_usize 272)) & t_Slice usize) =
+          let (out: t_Slice (t_Array i16 (mk_usize 272))), (sampled_coefficients: t_Slice usize) =
             temp_0_
           in
           let i:usize = i in
           Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
             (v_N /! mk_usize 24 <: usize)
             (fun temp_0_ temp_1_ ->
-                let out, sampled_coefficients:(t_Slice (t_Array i16 (mk_usize 272)) & t_Slice usize)
-                =
+                let
+                (out: t_Slice (t_Array i16 (mk_usize 272))), (sampled_coefficients: t_Slice usize) =
                   temp_0_
                 in
                 let _:usize = temp_1_ in
-                ((Core.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K <: bool) &&
-                ((Core.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize) =. v_K <: bool))
+                ((Core_models.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K <: bool) &&
+                ((Core_models.Slice.impl__len #(t_Array i16 (mk_usize 272)) out <: usize) =. v_K
+                  <:
+                  bool))
             (out, sampled_coefficients <: (t_Slice (t_Array i16 (mk_usize 272)) & t_Slice usize))
             (fun temp_0_ r ->
-                let out, sampled_coefficients:(t_Slice (t_Array i16 (mk_usize 272)) & t_Slice usize)
-                =
+                let
+                (out: t_Slice (t_Array i16 (mk_usize 272))), (sampled_coefficients: t_Slice usize) =
                   temp_0_
                 in
                 let r:usize = r in
@@ -62,27 +64,27 @@ let sample_from_uniform_distribution_next
                   <:
                   bool
                 then
-                  let tmp0, out1:(t_Slice i16 & usize) =
+                  let (tmp0: t_Slice i16), (out1: usize) =
                     Libcrux_iot_ml_kem.Vector.Traits.f_rej_sample #v_Vector
                       #FStar.Tactics.Typeclasses.solve
                       ((randomness.[ i ] <: t_Array u8 v_N).[ {
-                            Core.Ops.Range.f_start = r *! mk_usize 24 <: usize;
-                            Core.Ops.Range.f_end
+                            Core_models.Ops.Range.f_start = r *! mk_usize 24 <: usize;
+                            Core_models.Ops.Range.f_end
                             =
                             (r *! mk_usize 24 <: usize) +! mk_usize 24 <: usize
                           }
                           <:
-                          Core.Ops.Range.t_Range usize ]
+                          Core_models.Ops.Range.t_Range usize ]
                         <:
                         t_Slice u8)
                       ((out.[ i ] <: t_Array i16 (mk_usize 272)).[ {
-                            Core.Ops.Range.f_start = sampled_coefficients.[ i ] <: usize;
-                            Core.Ops.Range.f_end
+                            Core_models.Ops.Range.f_start = sampled_coefficients.[ i ] <: usize;
+                            Core_models.Ops.Range.f_end
                             =
                             (sampled_coefficients.[ i ] <: usize) +! mk_usize 16 <: usize
                           }
                           <:
-                          Core.Ops.Range.t_Range usize ]
+                          Core_models.Ops.Range.t_Range usize ]
                         <:
                         t_Slice i16)
                   in
@@ -93,13 +95,13 @@ let sample_from_uniform_distribution_next
                             <:
                             t_Array i16 (mk_usize 272))
                           ({
-                              Core.Ops.Range.f_start = sampled_coefficients.[ i ] <: usize;
-                              Core.Ops.Range.f_end
+                              Core_models.Ops.Range.f_start = sampled_coefficients.[ i ] <: usize;
+                              Core_models.Ops.Range.f_end
                               =
                               (sampled_coefficients.[ i ] <: usize) +! mk_usize 16 <: usize
                             }
                             <:
-                            Core.Ops.Range.t_Range usize)
+                            Core_models.Ops.Range.t_Range usize)
                           tmp0
                         <:
                         t_Array i16 (mk_usize 272))
@@ -108,7 +110,8 @@ let sample_from_uniform_distribution_next
                   let sampled_coefficients:t_Slice usize =
                     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize sampled_coefficients
                       i
-                      (Core.Num.impl_usize__wrapping_add (sampled_coefficients.[ i ] <: usize)
+                      (Core_models.Num.impl_usize__wrapping_add (sampled_coefficients.[ i ] <: usize
+                          )
                           sampled
                         <:
                         usize)
@@ -124,16 +127,16 @@ let sample_from_uniform_distribution_next
           (t_Slice (t_Array i16 (mk_usize 272)) & t_Slice usize))
   in
   let done:bool = true in
-  let done, sampled_coefficients:(bool & t_Slice usize) =
+  let (done: bool), (sampled_coefficients: t_Slice usize) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       v_K
       (fun temp_0_ temp_1_ ->
-          let done, sampled_coefficients:(bool & t_Slice usize) = temp_0_ in
+          let (done: bool), (sampled_coefficients: t_Slice usize) = temp_0_ in
           let _:usize = temp_1_ in
-          (Core.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K <: bool)
+          (Core_models.Slice.impl__len #usize sampled_coefficients <: usize) =. v_K <: bool)
       (done, sampled_coefficients <: (bool & t_Slice usize))
       (fun temp_0_ i ->
-          let done, sampled_coefficients:(bool & t_Slice usize) = temp_0_ in
+          let (done: bool), (sampled_coefficients: t_Slice usize) = temp_0_ in
           let i:usize = i in
           if
             (sampled_coefficients.[ i ] <: usize) >=.
@@ -186,7 +189,7 @@ let sample_from_xof
         t_Array u8 (mk_usize 168))
       v_K
   in
-  let tmp0, tmp1:(v_Hasher & t_Array (t_Array u8 (mk_usize 504)) v_K) =
+  let (tmp0: v_Hasher), (tmp1: t_Array (t_Array u8 (mk_usize 504)) v_K) =
     Libcrux_iot_ml_kem.Hash_functions.f_shake128_squeeze_first_three_blocks #v_Hasher
       #FStar.Tactics.Typeclasses.solve
       xof_state
@@ -195,7 +198,7 @@ let sample_from_xof
   let xof_state:v_Hasher = tmp0 in
   let randomness:t_Array (t_Array u8 (mk_usize 504)) v_K = tmp1 in
   let _:Prims.unit = () in
-  let tmp0, tmp1, out1:(t_Slice usize & t_Slice (t_Array i16 (mk_usize 272)) & bool) =
+  let (tmp0: t_Slice usize), (tmp1: t_Slice (t_Array i16 (mk_usize 272))), (out1: bool) =
     sample_from_uniform_distribution_next #v_Vector
       v_K
       (mk_usize 504)
@@ -206,35 +209,39 @@ let sample_from_xof
   let sampled_coefficients:t_Slice usize = tmp0 in
   let out:t_Slice (t_Array i16 (mk_usize 272)) = tmp1 in
   let done:bool = out1 in
-  let done, out, randomness_blocksize, sampled_coefficients, xof_state:(bool &
-    t_Slice (t_Array i16 (mk_usize 272)) &
-    t_Array (t_Array u8 (mk_usize 168)) v_K &
-    t_Slice usize &
-    v_Hasher) =
+  let
+  (done: bool),
+  (out: t_Slice (t_Array i16 (mk_usize 272))),
+  (randomness_blocksize: t_Array (t_Array u8 (mk_usize 168)) v_K),
+  (sampled_coefficients: t_Slice usize),
+  (xof_state: v_Hasher) =
     Rust_primitives.Hax.while_loop (fun temp_0_ ->
-          let done, out, randomness_blocksize, sampled_coefficients, xof_state:(bool &
-            t_Slice (t_Array i16 (mk_usize 272)) &
-            t_Array (t_Array u8 (mk_usize 168)) v_K &
-            t_Slice usize &
-            v_Hasher) =
-            temp_0_
-          in
-          ~.done <: bool)
-      (fun temp_0_ ->
-          let done, out, randomness_blocksize, sampled_coefficients, xof_state:(bool &
-            t_Slice (t_Array i16 (mk_usize 272)) &
-            t_Array (t_Array u8 (mk_usize 168)) v_K &
-            t_Slice usize &
-            v_Hasher) =
+          let
+          (done: bool),
+          (out: t_Slice (t_Array i16 (mk_usize 272))),
+          (randomness_blocksize: t_Array (t_Array u8 (mk_usize 168)) v_K),
+          (sampled_coefficients: t_Slice usize),
+          (xof_state: v_Hasher) =
             temp_0_
           in
           true)
       (fun temp_0_ ->
-          let done, out, randomness_blocksize, sampled_coefficients, xof_state:(bool &
-            t_Slice (t_Array i16 (mk_usize 272)) &
-            t_Array (t_Array u8 (mk_usize 168)) v_K &
-            t_Slice usize &
-            v_Hasher) =
+          let
+          (done: bool),
+          (out: t_Slice (t_Array i16 (mk_usize 272))),
+          (randomness_blocksize: t_Array (t_Array u8 (mk_usize 168)) v_K),
+          (sampled_coefficients: t_Slice usize),
+          (xof_state: v_Hasher) =
+            temp_0_
+          in
+          ~.done <: bool)
+      (fun temp_0_ ->
+          let
+          (done: bool),
+          (out: t_Slice (t_Array i16 (mk_usize 272))),
+          (randomness_blocksize: t_Array (t_Array u8 (mk_usize 168)) v_K),
+          (sampled_coefficients: t_Slice usize),
+          (xof_state: v_Hasher) =
             temp_0_
           in
           Rust_primitives.Hax.Int.from_machine (mk_u32 0) <: Hax_lib.Int.t_Int)
@@ -244,14 +251,15 @@ let sample_from_xof
           t_Slice usize &
           v_Hasher))
       (fun temp_0_ ->
-          let done, out, randomness_blocksize, sampled_coefficients, xof_state:(bool &
-            t_Slice (t_Array i16 (mk_usize 272)) &
-            t_Array (t_Array u8 (mk_usize 168)) v_K &
-            t_Slice usize &
-            v_Hasher) =
+          let
+          (done: bool),
+          (out: t_Slice (t_Array i16 (mk_usize 272))),
+          (randomness_blocksize: t_Array (t_Array u8 (mk_usize 168)) v_K),
+          (sampled_coefficients: t_Slice usize),
+          (xof_state: v_Hasher) =
             temp_0_
           in
-          let tmp0, tmp1:(v_Hasher & t_Array (t_Array u8 (mk_usize 168)) v_K) =
+          let (tmp0: v_Hasher), (tmp1: t_Array (t_Array u8 (mk_usize 168)) v_K) =
             Libcrux_iot_ml_kem.Hash_functions.f_shake128_squeeze_next_block #v_Hasher
               #FStar.Tactics.Typeclasses.solve
               xof_state
@@ -260,7 +268,7 @@ let sample_from_xof
           let xof_state:v_Hasher = tmp0 in
           let randomness_blocksize:t_Array (t_Array u8 (mk_usize 168)) v_K = tmp1 in
           let _:Prims.unit = () in
-          let tmp0, tmp1, out1:(t_Slice usize & t_Slice (t_Array i16 (mk_usize 272)) & bool) =
+          let (tmp0: t_Slice usize), (tmp1: t_Slice (t_Array i16 (mk_usize 272))), (out1: bool) =
             sample_from_uniform_distribution_next #v_Vector
               v_K
               (mk_usize 168)
@@ -299,7 +307,7 @@ let sample_from_binomial_distribution_2_
       sampled_i16s
       (fun sampled_i16s temp_1_ ->
           let sampled_i16s:t_Array i16 (mk_usize 256) = sampled_i16s in
-          let chunk_number, byte_chunk:(usize & t_Slice u8) = temp_1_ in
+          let (chunk_number: usize), (byte_chunk: t_Slice u8) = temp_1_ in
           let (random_bits_as_u32: u32):u32 =
             (((Libcrux_secrets.Int.f_as_u32 #u8
                     #FStar.Tactics.Typeclasses.solve
@@ -351,7 +359,7 @@ let sample_from_binomial_distribution_2_
               <:
               u32)
           in
-          let coin_toss_outcomes:u32 = Core.Num.impl_u32__wrapping_add even_bits odd_bits in
+          let coin_toss_outcomes:u32 = Core_models.Num.impl_u32__wrapping_add even_bits odd_bits in
           Rust_primitives.Hax.Folds.fold_range_step_by (mk_u32 0)
             (mk_u32 32)
             (mk_usize 4)
@@ -379,7 +387,7 @@ let sample_from_binomial_distribution_2_
                   Libcrux_secrets.Int.f_as_i16 #u32
                     #FStar.Tactics.Typeclasses.solve
                     ((coin_toss_outcomes >>!
-                        (Core.Num.impl_u32__wrapping_add outcome_set (mk_u32 2) <: u32)
+                        (Core_models.Num.impl_u32__wrapping_add outcome_set (mk_u32 2) <: u32)
                         <:
                         u32) &.
                       (Libcrux_secrets.Traits.f_classify #u32
@@ -394,7 +402,7 @@ let sample_from_binomial_distribution_2_
                 let sampled_i16s:t_Array i16 (mk_usize 256) =
                   Rust_primitives.Hax.Monomorphized_update_at.update_at_usize sampled_i16s
                     ((mk_usize 8 *! chunk_number <: usize) +! offset <: usize)
-                    (Core.Num.impl_i16__wrapping_sub outcome_1_ outcome_2_ <: i16)
+                    (Core_models.Num.impl_i16__wrapping_sub outcome_1_ outcome_2_ <: i16)
                 in
                 sampled_i16s))
   in
@@ -418,7 +426,7 @@ let sample_from_binomial_distribution_3_
       sampled_i16s
       (fun sampled_i16s temp_1_ ->
           let sampled_i16s:t_Array i16 (mk_usize 256) = sampled_i16s in
-          let chunk_number, byte_chunk:(usize & t_Slice u8) = temp_1_ in
+          let (chunk_number: usize), (byte_chunk: t_Slice u8) = temp_1_ in
           let (random_bits_as_u24: u32):u32 =
             ((Libcrux_secrets.Int.f_as_u32 #u8
                   #FStar.Tactics.Typeclasses.solve
@@ -469,8 +477,8 @@ let sample_from_binomial_distribution_3_
               u32)
           in
           let coin_toss_outcomes:u32 =
-            Core.Num.impl_u32__wrapping_add first_bits
-              (Core.Num.impl_u32__wrapping_add second_bits third_bits <: u32)
+            Core_models.Num.impl_u32__wrapping_add first_bits
+              (Core_models.Num.impl_u32__wrapping_add second_bits third_bits <: u32)
           in
           Rust_primitives.Hax.Folds.fold_range_step_by (mk_u8 0)
             (mk_u8 24)
@@ -499,7 +507,7 @@ let sample_from_binomial_distribution_3_
                   Libcrux_secrets.Int.f_as_i16 #u32
                     #FStar.Tactics.Typeclasses.solve
                     ((coin_toss_outcomes >>!
-                        (Core.Num.impl_u8__wrapping_add outcome_set (mk_u8 3) <: u8)
+                        (Core_models.Num.impl_u8__wrapping_add outcome_set (mk_u8 3) <: u8)
                         <:
                         u32) &.
                       (Libcrux_secrets.Traits.f_classify #u32
@@ -514,7 +522,7 @@ let sample_from_binomial_distribution_3_
                 let sampled_i16s:t_Array i16 (mk_usize 256) =
                   Rust_primitives.Hax.Monomorphized_update_at.update_at_usize sampled_i16s
                     ((mk_usize 4 *! chunk_number <: usize) +! offset <: usize)
-                    (Core.Num.impl_i16__wrapping_sub outcome_1_ outcome_2_ <: i16)
+                    (Core_models.Num.impl_i16__wrapping_sub outcome_1_ outcome_2_ <: i16)
                 in
                 sampled_i16s))
   in
