@@ -363,18 +363,62 @@ static inline size_t core_cmp_impls___core__cmp__Ord_for_usize___min(size_t a,
     return b;
 }
 
+// TODO: We prove that this will never overflow.
+static inline int16_t core_num__i16__wrapping_mul(int16_t x0, int16_t x1) {
+  return x0 * x1;
+}
+
+// TODO: We prove that this will never overflow.
+static inline int32_t core_num__i32__wrapping_mul(int32_t x0, int32_t x1) {
+  return x0 * x1;
+}
+
+// TODO: We prove that this will never overflow.
+static inline int32_t core_num__i32__wrapping_add(int32_t x0, int32_t x1) {
+  return x0 + x1;
+}
+
+// TODO: We prove that this will never overflow.
+static inline int16_t core_num__i16__wrapping_sub(int16_t x0, int16_t x1) {
+  return x0 - x1;
+}
+
+// TODO: We prove that this will never overflow.
+static inline int16_t core_num__i16__wrapping_add(int16_t x0, int16_t x1) {
+  return x0 + x1;
+}
+
+// TODO: We prove that this will never overflow.
+static inline int16_t core_num__i16__wrapping_neg(int16_t x0) { return -x0; }
+
 // unsigned overflow wraparound semantics in C
 static inline uint16_t core_num__u16__wrapping_add(uint16_t x, uint16_t y) {
+  return x + y;
+}
+
+// unsigned overflow wraparound semantics in C
+static inline uint64_t core_num__u64__wrapping_add(uint64_t x, uint64_t y) {
   return x + y;
 }
 static inline uint8_t core_num__u8__wrapping_sub(uint8_t x, uint8_t y) {
   return x - y;
 }
+
+static inline uint32_t core_num__u32__wrapping_sub(uint32_t x0, uint32_t x1) {
+  return x0 - x1;
+}
+
+static inline uint64_t core_num__u64__wrapping_mul(uint64_t x0, uint64_t x1) {
+  return x0 * x1;
+}
+  
 static inline uint64_t core_num__u64__rotate_left(uint64_t x0, uint32_t x1) {
-  return (x0 << x1 | x0 >> (64 - x1));
+  assert(x1 < 64);
+  return (x0 << x1 | x0 >> ((-x1) & 63));
 }
 
 static inline uint32_t core_num__u32__rotate_left(uint32_t x0, uint32_t x1) {
+  assert(x1 < 32);
   return (x0 << x1) | (x0 >> ((-x1) & 31));
 }
 
