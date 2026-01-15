@@ -519,6 +519,10 @@ pub trait Operations: Copy + Clone + Repr {
     #[requires(array.len() == 16)]
     fn from_i16_array(array: &[I16], out: &mut Self);
 
+    #[requires(out.len() == 16)]
+    #[cfg(hax)]
+    fn to_i16_array(x: &Self, out: &mut [i16]);
+
     #[requires(array.len() == 16)]
     fn reducing_from_i32_array(array: &[I32], out: &mut Self);
 

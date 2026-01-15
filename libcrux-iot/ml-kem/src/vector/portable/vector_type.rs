@@ -22,3 +22,14 @@ pub fn zero() -> PortableVector {
 pub fn from_i16_array(array: &[I16], out: &mut PortableVector) {
     out.elements.copy_from_slice(&array[0..16]);
 }
+
+#[hax_lib::requires(out.len() == 16)]
+#[hax_lib::ensures(|_| future(out).len() == 16)]
+#[cfg(hax)]
+#[inline(always)]
+pub fn to_i16_array(x: &PortableVector, out: &mut [i16]) {
+    #[cfg(not(eurydice))]
+    debug_assert!(out.len() >= 16);
+
+    out[0..16].copy_from_slice(&x.elements.declassify());
+}

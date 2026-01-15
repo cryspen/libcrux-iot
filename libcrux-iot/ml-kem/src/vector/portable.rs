@@ -42,6 +42,13 @@ impl Operations for PortableVector {
         from_i16_array(array, out)
     }
 
+    #[requires(out.len() == 16)]
+    #[cfg(hax)]
+    #[inline(always)]
+    fn to_i16_array(x: &Self, out: &mut [i16]) {
+        to_i16_array(x, out)
+    }
+
     #[requires(array.len() == 16)]
     #[inline(always)]
     fn reducing_from_i32_array(array: &[I32], out: &mut Self) {
