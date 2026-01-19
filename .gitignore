@@ -1,6 +1,7 @@
 **/target
 c/*/extracted/build
 **/Cargo.lock
+**/hax.fst.config.json
 .vscode
 .DS_Store
 benches/boringssl/build
@@ -18,3 +19,4 @@ kyber-crate/
 # When using sed
 *.bak
 *.lock
+/.fstar-cache/
