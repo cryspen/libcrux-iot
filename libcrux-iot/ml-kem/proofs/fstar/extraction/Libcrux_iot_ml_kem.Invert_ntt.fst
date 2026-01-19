@@ -201,8 +201,6 @@ let inv_ntt_layer_int_vec_step_reduce
   in
   coefficients, scratch <: (t_Array v_Vector (mk_usize 16) & v_Vector)
 
-#push-options "--admit_smt_queries true"
-
 let invert_ntt_at_layer_4_plus
       (#v_Vector: Type0)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]
@@ -219,14 +217,16 @@ let invert_ntt_at_layer_4_plus
     usize) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       (mk_usize 128 >>! layer <: usize)
-      (fun temp_0_ temp_1_ ->
+      (fun temp_0_ round ->
           let re, scratch, zeta_i:(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector &
             v_Vector &
             usize) =
             temp_0_
           in
-          let _:usize = temp_1_ in
-          true)
+          let round:usize = round in
+          zeta_i =. ((mk_usize 1 <<! (mk_usize 8 -! layer <: usize) <: usize) -! round <: usize)
+          <:
+          bool)
       (re, scratch, zeta_i
         <:
         (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector & usize))
@@ -250,7 +250,13 @@ let invert_ntt_at_layer_4_plus
                     temp_0_
                   in
                   let _:usize = temp_1_ in
-                  true)
+                  zeta_i =.
+                  (((mk_usize 1 <<! (mk_usize 8 -! layer <: usize) <: usize) -! round <: usize) -!
+                    mk_usize 1
+                    <:
+                    usize)
+                  <:
+                  bool)
               (re, scratch
                 <:
                 (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector))
@@ -274,6 +280,7 @@ let invert_ntt_at_layer_4_plus
                     Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector
                   in
                   let scratch:v_Vector = tmp1 in
+                  let _:Prims.unit = () in
                   re, scratch
                   <:
                   (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector))
@@ -285,8 +292,6 @@ let invert_ntt_at_layer_4_plus
   zeta_i, re, scratch
   <:
   (usize & Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector)
-
-#pop-options
 
 let invert_ntt_montgomery
       (v_K: usize)

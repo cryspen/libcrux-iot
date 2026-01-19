@@ -73,7 +73,9 @@ val invert_ntt_at_layer_4_plus
       (layer: usize)
       (scratch: v_Vector)
     : Prims.Pure (usize & Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector)
-      (requires layer >=. mk_usize 4 && layer <=. mk_usize 7)
+      (requires
+        layer >=. mk_usize 4 && layer <=. mk_usize 7 &&
+        zeta_i =. (mk_usize 1 <<! (mk_usize 8 -! layer <: usize) <: usize))
       (fun _ -> Prims.l_True)
 
 val invert_ntt_montgomery

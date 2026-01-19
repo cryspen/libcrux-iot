@@ -84,10 +84,9 @@ pub(crate) fn inv_ntt_layer_int_vec_step_reduce<Vector: Operations>(
 }
 
 #[hax_lib::requires(
-    layer >= 4 && layer <= 7 
+    layer >= 4 && layer <= 7 && *zeta_i == (1 << (8 - layer))
 )]
 #[inline(always)]
-#[hax_lib::fstar::verification_status(lax)]
 pub(crate) fn invert_ntt_at_layer_4_plus<Vector: Operations>(
     zeta_i: &mut usize,
     re: &mut PolynomialRingElement<Vector>,
@@ -98,12 +97,14 @@ pub(crate) fn invert_ntt_at_layer_4_plus<Vector: Operations>(
     let step_vec = step / FIELD_ELEMENTS_IN_VECTOR;
 
     for round in 0..(128 >> layer) {
+        hax_lib::loop_invariant!(|round: usize| *zeta_i == (1 << (8 - layer)) - round);
         *zeta_i -= 1;
 
         let a_offset = round * 2 * step_vec;
         let b_offset = a_offset + step_vec;
 
         for j in 0..step_vec {
+            hax_lib::loop_invariant!(|_: usize| *zeta_i == (1 << (8 - layer)) - round - 1);
             inv_ntt_layer_int_vec_step_reduce(
                 &mut re.coefficients,
                 a_offset + j,
@@ -130,10 +131,10 @@ pub(crate) fn invert_ntt_montgomery<const K: usize, Vector: Operations>(
     invert_ntt_at_layer_1(&mut zeta_i, re);
     invert_ntt_at_layer_2(&mut zeta_i, re);
     invert_ntt_at_layer_3(&mut zeta_i, re);
-    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 4, scratch);
-    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 5, scratch);
-    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 6, scratch);
-    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 7, scratch);
+    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 4, scratch); // 16
+    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 5, scratch); // 8
+    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 6, scratch); // 4
+    invert_ntt_at_layer_4_plus(&mut zeta_i, re, 7, scratch); // 2
 
     hax_debug_assert!(
         to_i16_array(re)[0].abs() < 128 * (K as i16) * FIELD_MODULUS
