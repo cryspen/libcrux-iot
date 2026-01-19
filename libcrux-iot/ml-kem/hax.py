@@ -118,8 +118,11 @@ class proveAction(argparse.Action):
 class cleanAction(argparse.Action):
 
     def __call__(self, parser, args, values, option_string=None) -> None:
-        shell(["rm"] + glob("./proofs/fstar/extraction/*.fst"))
-        shell(["rm"] + glob("./proofs/fstar/extraction/*.fsti"))
+        shell(["rm"] + glob("./proofs/fstar/extraction/Libcrux_iot_ml_kem*.fst"))
+        shell(["rm"] + glob("./proofs/fstar/extraction/Libcrux_iot_ml_kem*.fsti"))
+        if args.all:
+            shell(["rm"] + glob("./proofs/fstar/extraction/*.fst"))
+            shell(["rm"] + glob("./proofs/fstar/extraction/*.fsti"))
         return None    
 
 def parse_arguments():
@@ -155,10 +158,10 @@ def parse_arguments():
     )
 
     clean_parser = subparsers.add_parser(
-        "clean", help="Remove generated F* code."
+        "clean", help="Remove generated F* code for this crate, excluding extracted dependencies (unless `--all` is passed)`."
     )
     clean_parser.add_argument("clean", nargs="*", action=cleanAction)    
-
+    clean_parser.add_argument("--all", help="Remove all extracted F*, including dependencies.", action="store_true")
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
