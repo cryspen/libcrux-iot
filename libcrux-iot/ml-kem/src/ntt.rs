@@ -95,7 +95,7 @@ pub(crate) fn ntt_at_layer_4_plus<Vector: Operations>(
         let a_offset = round * 2 * step_vec;
         let b_offset = a_offset + step_vec;
         for j in 0..step_vec {
-            hax_lib::loop_invariant!(|_: usize| *zeta_i == (1 << (7 - layer)) - 1 + round);
+            hax_lib::loop_invariant!(|_: usize| *zeta_i == (1 << (7 - layer)) + round);
             ntt_layer_int_vec_step(
                 &mut re.coefficients,
                 a_offset + j,

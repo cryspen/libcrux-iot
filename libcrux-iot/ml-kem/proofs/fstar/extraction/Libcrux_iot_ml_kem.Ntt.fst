@@ -252,10 +252,7 @@ let ntt_at_layer_4_plus
                   in
                   let _:usize = temp_1_ in
                   zeta_i =.
-                  (((mk_usize 1 <<! (mk_usize 7 -! layer <: usize) <: usize) -! mk_usize 1 <: usize) +!
-                    round
-                    <:
-                    usize)
+                  ((mk_usize 1 <<! (mk_usize 7 -! layer <: usize) <: usize) +! round <: usize)
                   <:
                   bool)
               (re, scratch
