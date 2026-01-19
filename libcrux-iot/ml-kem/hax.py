@@ -46,7 +46,6 @@ class extractAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None) -> None:
         # Extract libcrux-secrets
         # I did this once, and copied the resulting F* files to /proofs/fstar/secrets.
-        #
         # include_str = "+**"
         # interface_include = ""
         # cargo_hax_into = [
@@ -75,7 +74,8 @@ class extractAction(argparse.Action):
             "+libcrux_iot_ml_kem::polynomial::**",
             "+libcrux_iot_ml_kem::serialize::**",
             "+libcrux_iot_ml_kem::ntt::**",
-            "+libcrux_iot_ml_kem::invert_ntt::**"
+            "+libcrux_iot_ml_kem::invert_ntt::**",
+            "+libcrux_iot_ml_kem::sampling::**"
             # "+libcrux_iot_ml_kem::vector::portable::arithmetic::**",
             # "+libcrux_iot_ml_kem::vector::portable::ntt::**",
             # "+libcrux_iot_ml_kem::vector::portable::sampling::**",
