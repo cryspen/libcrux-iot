@@ -118,11 +118,11 @@ class proveAction(argparse.Action):
 class cleanAction(argparse.Action):
 
     def __call__(self, parser, args, values, option_string=None) -> None:
-        shell(["rm"] + glob("./proofs/fstar/extraction/Libcrux_iot_ml_kem*.fst"))
-        shell(["rm"] + glob("./proofs/fstar/extraction/Libcrux_iot_ml_kem*.fsti"))
+        shell(["rm"] + glob("./proofs/fstar/extraction/*.fst"))
+        shell(["rm"] + glob("./proofs/fstar/extraction/*.fsti"))
         if args.all:
-            shell(["rm"] + glob("./proofs/fstar/extraction/*.fst"))
-            shell(["rm"] + glob("./proofs/fstar/extraction/*.fsti"))
+            shell(["rm"] + glob("./proofs/fstar/secrets/*.fst"))
+            shell(["rm"] + glob("./proofs/fstar/secrets/*.fsti"))
         return None    
 
 def parse_arguments():
