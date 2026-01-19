@@ -197,34 +197,102 @@ let ntt_layer_int_vec_step
   in
   coefficients, scratch <: (t_Array v_Vector (mk_usize 16) & v_Vector)
 
-assume
-val ntt_at_layer_4_plus':
-    #v_Vector: Type0 ->
-    {| i0: Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector |} ->
-    zeta_i: usize ->
-    re: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector ->
-    layer: usize ->
-    scratch: v_Vector ->
-    e_initial_coefficient_bound: usize
-  -> Prims.Pure (usize & Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector)
-      (requires
-        layer >=. mk_usize 4 && layer <=. mk_usize 7 &&
-        zeta_i =. ((mk_usize 1 <<! (mk_usize 7 -! layer <: usize) <: usize) -! mk_usize 1 <: usize))
-      (ensures
-        fun temp_0_ ->
-          let zeta_i_future, re_future, scratch_future:(usize &
-            Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector &
-            v_Vector) =
-            temp_0_
-          in
-          zeta_i =. mk_usize 15)
-
 let ntt_at_layer_4_plus
       (#v_Vector: Type0)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]
           i0:
           Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector)
-     = ntt_at_layer_4_plus' #v_Vector #i0
+      (zeta_i: usize)
+      (re: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
+      (layer: usize)
+      (scratch: v_Vector)
+      (e_initial_coefficient_bound: usize)
+     =
+  let step:usize = mk_usize 1 <<! layer in
+  let step_vec:usize = step /! mk_usize 16 in
+  let re, scratch, zeta_i:(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector &
+    usize) =
+    Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
+      (mk_usize 128 >>! layer <: usize)
+      (fun temp_0_ round ->
+          let re, scratch, zeta_i:(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector &
+            v_Vector &
+            usize) =
+            temp_0_
+          in
+          let round:usize = round in
+          zeta_i =.
+          (((mk_usize 1 <<! (mk_usize 7 -! layer <: usize) <: usize) -! mk_usize 1 <: usize) +!
+            round
+            <:
+            usize)
+          <:
+          bool)
+      (re, scratch, zeta_i
+        <:
+        (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector & usize))
+      (fun temp_0_ round ->
+          let re, scratch, zeta_i:(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector &
+            v_Vector &
+            usize) =
+            temp_0_
+          in
+          let round:usize = round in
+          let zeta_i:usize = zeta_i +! mk_usize 1 in
+          let a_offset:usize = (round *! mk_usize 2 <: usize) *! step_vec in
+          let b_offset:usize = a_offset +! step_vec in
+          let re, scratch:(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector
+          ) =
+            Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
+              step_vec
+              (fun temp_0_ temp_1_ ->
+                  let re, scratch:(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector &
+                    v_Vector) =
+                    temp_0_
+                  in
+                  let _:usize = temp_1_ in
+                  zeta_i =.
+                  (((mk_usize 1 <<! (mk_usize 7 -! layer <: usize) <: usize) -! mk_usize 1 <: usize) +!
+                    round
+                    <:
+                    usize)
+                  <:
+                  bool)
+              (re, scratch
+                <:
+                (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector))
+              (fun temp_0_ j ->
+                  let re, scratch:(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector &
+                    v_Vector) =
+                    temp_0_
+                  in
+                  let j:usize = j in
+                  let tmp0, tmp1:(t_Array v_Vector (mk_usize 16) & v_Vector) =
+                    ntt_layer_int_vec_step #v_Vector
+                      re.Libcrux_iot_ml_kem.Polynomial.f_coefficients
+                      (a_offset +! j <: usize)
+                      (b_offset +! j <: usize)
+                      scratch
+                      (Libcrux_iot_ml_kem.Polynomial.zeta zeta_i <: i16)
+                  in
+                  let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector =
+                    { re with Libcrux_iot_ml_kem.Polynomial.f_coefficients = tmp0 }
+                    <:
+                    Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector
+                  in
+                  let scratch:v_Vector = tmp1 in
+                  let _:Prims.unit = () in
+                  re, scratch
+                  <:
+                  (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector))
+          in
+          re, scratch, zeta_i
+          <:
+          (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector & usize))
+  in
+  zeta_i, re, scratch
+  <:
+  (usize & Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector)
 
 let ntt_at_layer_7_
       (#v_Vector: Type0)

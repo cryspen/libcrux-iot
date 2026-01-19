@@ -49,13 +49,6 @@ class t_Operations (v_Self: Type0) = {
     -> Prims.Pure v_Self
         (f_from_i16_array_pre x0 x1)
         (fun result -> f_from_i16_array_post x0 x1 result);
-  f_reducing_from_i32_array_pre:array: t_Slice i32 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #i32 array <: usize) =. mk_usize 16 ==> pred};
-  f_reducing_from_i32_array_post:t_Slice i32 -> v_Self -> v_Self -> Type0;
-  f_reducing_from_i32_array:x0: t_Slice i32 -> x1: v_Self
-    -> Prims.Pure v_Self
-        (f_reducing_from_i32_array_pre x0 x1)
-        (fun result -> f_reducing_from_i32_array_post x0 x1 result);
   f_to_i16_array_pre:x: v_Self -> out: t_Slice i16
     -> pred: Type0{(Core.Slice.impl__len #i16 out <: usize) =. mk_usize 16 ==> pred};
   f_to_i16_array_post:v_Self -> t_Slice i16 -> t_Slice i16 -> Type0;
@@ -63,21 +56,13 @@ class t_Operations (v_Self: Type0) = {
     -> Prims.Pure (t_Slice i16)
         (f_to_i16_array_pre x0 x1)
         (fun result -> f_to_i16_array_post x0 x1 result);
-  f_from_bytes_pre:array: t_Slice u8 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #u8 array <: usize) >=. mk_usize 32 ==> pred};
-  f_from_bytes_post:t_Slice u8 -> v_Self -> v_Self -> Type0;
-  f_from_bytes:x0: t_Slice u8 -> x1: v_Self
-    -> Prims.Pure v_Self (f_from_bytes_pre x0 x1) (fun result -> f_from_bytes_post x0 x1 result);
-  f_to_bytes_pre:x: v_Self -> bytes: t_Slice u8
-    -> pred: Type0{(Core.Slice.impl__len #u8 bytes <: usize) >=. mk_usize 32 ==> pred};
-  f_to_bytes_post:x: v_Self -> bytes: t_Slice u8 -> bytes_future: t_Slice u8
-    -> pred:
-      Type0
-        { pred ==>
-          (Core.Slice.impl__len #u8 bytes_future <: usize) =.
-          (Core.Slice.impl__len #u8 bytes <: usize) };
-  f_to_bytes:x0: v_Self -> x1: t_Slice u8
-    -> Prims.Pure (t_Slice u8) (f_to_bytes_pre x0 x1) (fun result -> f_to_bytes_post x0 x1 result);
+  f_reducing_from_i32_array_pre:array: t_Slice i32 -> out: v_Self
+    -> pred: Type0{(Core.Slice.impl__len #i32 array <: usize) =. mk_usize 16 ==> pred};
+  f_reducing_from_i32_array_post:t_Slice i32 -> v_Self -> v_Self -> Type0;
+  f_reducing_from_i32_array:x0: t_Slice i32 -> x1: v_Self
+    -> Prims.Pure v_Self
+        (f_reducing_from_i32_array_pre x0 x1)
+        (fun result -> f_reducing_from_i32_array_post x0 x1 result);
   f_add_pre:lhs: v_Self -> rhs: v_Self -> pred: Type0{true ==> pred};
   f_add_post:v_Self -> v_Self -> v_Self -> Type0;
   f_add:x0: v_Self -> x1: v_Self

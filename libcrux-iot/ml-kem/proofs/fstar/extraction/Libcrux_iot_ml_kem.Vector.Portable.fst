@@ -77,6 +77,23 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
           Libcrux_iot_ml_kem.Vector.Portable.Vector_type.from_i16_array array out
         in
         out);
+    f_to_i16_array_pre
+    =
+    (fun (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice i16) ->
+        (Core.Slice.impl__len #i16 out <: usize) =. mk_usize 16);
+    f_to_i16_array_post
+    =
+    (fun
+        (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
+        (out: t_Slice i16)
+        (out1: t_Slice i16)
+        ->
+        true);
+    f_to_i16_array
+    =
+    (fun (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice i16) ->
+        let out:t_Slice i16 = Libcrux_iot_ml_kem.Vector.Portable.Vector_type.to_i16_array x out in
+        out);
     f_reducing_from_i32_array_pre
     =
     (fun
@@ -102,72 +119,6 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
           Libcrux_iot_ml_kem.Vector.Portable.Arithmetic.reducing_from_i32_array array out
         in
         out);
-    f_to_i16_array_pre
-    =
-    (fun (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice i16) ->
-        (Core.Slice.impl__len #i16 out <: usize) =. mk_usize 16);
-    f_to_i16_array_post
-    =
-    (fun
-        (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
-        (out: t_Slice i16)
-        (out1: t_Slice i16)
-        ->
-        true);
-    f_to_i16_array
-    =
-    (fun (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice i16) ->
-        let out:t_Slice i16 = Libcrux_iot_ml_kem.Vector.Portable.Vector_type.to_i16_array x out in
-        out);
-    f_from_bytes_pre
-    =
-    (fun
-        (array: t_Slice u8)
-        (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
-        ->
-        (Core.Slice.impl__len #u8 array <: usize) >=. mk_usize 32);
-    f_from_bytes_post
-    =
-    (fun
-        (array: t_Slice u8)
-        (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
-        (out1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
-        ->
-        true);
-    f_from_bytes
-    =
-    (fun
-        (array: t_Slice u8)
-        (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
-        ->
-        let out:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-          Libcrux_iot_ml_kem.Vector.Portable.Vector_type.from_bytes (Libcrux_secrets.Traits.f_classify_ref
-                #(t_Slice u8)
-                #FStar.Tactics.Typeclasses.solve
-                array
-              <:
-              t_Slice u8)
-            out
-        in
-        out);
-    f_to_bytes_pre
-    =
-    (fun (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (bytes: t_Slice u8) ->
-        (Core.Slice.impl__len #u8 bytes <: usize) >=. mk_usize 32);
-    f_to_bytes_post
-    =
-    (fun
-        (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
-        (bytes: t_Slice u8)
-        (bytes_future: t_Slice u8)
-        ->
-        (Core.Slice.impl__len #u8 bytes_future <: usize) =.
-        (Core.Slice.impl__len #u8 bytes <: usize));
-    f_to_bytes
-    =
-    (fun (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (bytes: t_Slice u8) ->
-        let bytes:t_Slice u8 = Libcrux_iot_ml_kem.Vector.Portable.Vector_type.to_bytes x bytes in
-        bytes);
     f_add_pre
     =
     (fun

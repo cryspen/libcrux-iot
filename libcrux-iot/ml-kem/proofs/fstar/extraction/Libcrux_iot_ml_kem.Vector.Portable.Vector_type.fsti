@@ -6,7 +6,6 @@ open FStar.Mul
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
   (* The implicit dependencies arise from typeclasses instances. *)
-  let open Libcrux_secrets.Int in
   let open Libcrux_secrets.Int.Public_integers in
   let open Libcrux_secrets.Traits in
   ()
@@ -21,6 +20,11 @@ val impl_1:Core.Marker.t_Copy t_PortableVector
 
 val zero: Prims.unit -> Prims.Pure t_PortableVector Prims.l_True (fun _ -> Prims.l_True)
 
+val from_i16_array (array: t_Slice i16) (out: t_PortableVector)
+    : Prims.Pure t_PortableVector
+      (requires (Core.Slice.impl__len #i16 array <: usize) =. mk_usize 16)
+      (fun _ -> Prims.l_True)
+
 val to_i16_array (x: t_PortableVector) (out: t_Slice i16)
     : Prims.Pure (t_Slice i16)
       (requires (Core.Slice.impl__len #i16 out <: usize) =. mk_usize 16)
@@ -28,22 +32,3 @@ val to_i16_array (x: t_PortableVector) (out: t_Slice i16)
         fun out_future ->
           let out_future:t_Slice i16 = out_future in
           (Core.Slice.impl__len #i16 out_future <: usize) =. mk_usize 16)
-
-val from_i16_array (array: t_Slice i16) (out: t_PortableVector)
-    : Prims.Pure t_PortableVector
-      (requires (Core.Slice.impl__len #i16 array <: usize) =. mk_usize 16)
-      (fun _ -> Prims.l_True)
-
-val from_bytes (array: t_Slice u8) (out: t_PortableVector)
-    : Prims.Pure t_PortableVector
-      (requires (Core.Slice.impl__len #u8 array <: usize) >=. mk_usize 32)
-      (fun _ -> Prims.l_True)
-
-val to_bytes (x: t_PortableVector) (bytes: t_Slice u8)
-    : Prims.Pure (t_Slice u8)
-      (requires (Core.Slice.impl__len #u8 bytes <: usize) >=. mk_usize 32)
-      (ensures
-        fun bytes_future ->
-          let bytes_future:t_Slice u8 = bytes_future in
-          (Core.Slice.impl__len #u8 bytes_future <: usize) =.
-          (Core.Slice.impl__len #u8 bytes <: usize))

@@ -62,14 +62,7 @@ val ntt_at_layer_4_plus
       (requires
         layer >=. mk_usize 4 && layer <=. mk_usize 7 &&
         zeta_i =. ((mk_usize 1 <<! (mk_usize 7 -! layer <: usize) <: usize) -! mk_usize 1 <: usize))
-      (ensures
-        fun temp_0_ ->
-          let zeta_i_future, re_future, scratch_future:(usize &
-            Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector &
-            v_Vector) =
-            temp_0_
-          in
-          zeta_i =. mk_usize 15)
+      (fun _ -> Prims.l_True)
 
 val ntt_at_layer_7_
       (#v_Vector: Type0)

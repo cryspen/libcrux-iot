@@ -77,9 +77,7 @@ fn ntt_layer_int_vec_step<Vector: Operations>(
 #[hax_lib::requires(
     layer >= 4 && layer <= 7 && *zeta_i == (1 << (7 - layer)) - 1 
 )]
-#[hax_lib::ensures(|_| *zeta_i == 15)]
 #[inline(always)]
-#[hax_lib::opaque]
 pub(crate) fn ntt_at_layer_4_plus<Vector: Operations>(
     zeta_i: &mut usize,
     re: &mut PolynomialRingElement<Vector>,
