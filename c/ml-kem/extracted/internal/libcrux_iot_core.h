@@ -7,8 +7,8 @@
  * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: unset
- * Libcrux: 1ad7c25705450131b575043e252c944035898962
+ * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
+ * Libcrux: 2259f47ca2a2a060c9fd147ccc78ed3588bfd288
  */
 
 #ifndef internal_libcrux_iot_core_H
@@ -22,11 +22,29 @@ extern "C" {
 
 #include "../libcrux_iot_core.h"
 
+static inline int16_t core_num__i16__wrapping_add(int16_t x0, int16_t x1);
+
+static inline int16_t core_num__i16__wrapping_mul(int16_t x0, int16_t x1);
+
+static inline int16_t core_num__i16__wrapping_neg(int16_t x0);
+
+static inline int16_t core_num__i16__wrapping_sub(int16_t x0, int16_t x1);
+
+static inline int32_t core_num__i32__wrapping_add(int32_t x0, int32_t x1);
+
+static inline int32_t core_num__i32__wrapping_mul(int32_t x0, int32_t x1);
+
 static inline uint32_t core_num__u32__from_le_bytes(Eurydice_array_u8x4 x0);
 
 static inline uint32_t core_num__u32__rotate_left(uint32_t x0, uint32_t x1);
 
 static inline Eurydice_array_u8x4 core_num__u32__to_le_bytes(uint32_t x0);
+
+static inline uint32_t core_num__u32__wrapping_sub(uint32_t x0, uint32_t x1);
+
+static inline uint64_t core_num__u64__wrapping_add(uint64_t x0, uint64_t x1);
+
+static inline uint64_t core_num__u64__wrapping_mul(uint64_t x0, uint64_t x1);
 
 /**
 A monomorphic instance of core.ops.range.Range
@@ -164,16 +182,6 @@ This function found in impl {libcrux_secrets::int::CastOps for u32}
 int32_t libcrux_secrets_int_as_i32_b8(uint32_t self);
 
 /**
-This function found in impl {libcrux_secrets::int::CastOps for u8}
-*/
-int16_t libcrux_secrets_int_as_i16_59(uint8_t self);
-
-/**
-This function found in impl {libcrux_secrets::int::CastOps for i16}
-*/
-uint8_t libcrux_secrets_int_as_u8_f5(int16_t self);
-
-/**
 This function found in impl {libcrux_secrets::int::CastOps for i16}
 */
 uint16_t libcrux_secrets_int_as_u16_f5(int16_t self);
@@ -182,6 +190,16 @@ uint16_t libcrux_secrets_int_as_u16_f5(int16_t self);
 This function found in impl {libcrux_secrets::int::CastOps for u16}
 */
 int16_t libcrux_secrets_int_as_i16_ca(uint16_t self);
+
+/**
+This function found in impl {libcrux_secrets::int::CastOps for i16}
+*/
+uint8_t libcrux_secrets_int_as_u8_f5(int16_t self);
+
+/**
+This function found in impl {libcrux_secrets::int::CastOps for u8}
+*/
+int16_t libcrux_secrets_int_as_i16_59(uint8_t self);
 
 /**
 This function found in impl {libcrux_secrets::int::CastOps for u16}
@@ -1522,29 +1540,6 @@ Eurydice_dst_ref_mut_fc Eurydice_array_to_subslice_mut_7f(
     Eurydice_arr_c3 *a, core_ops_range_Range_08 r);
 
 /**
-A monomorphic instance of Eurydice.array_to_subslice_shared
-with types int16_t, core_ops_range_Range size_t, Eurydice_derefed_slice int16_t
-with const generics
-- N= 16
-*/
-Eurydice_borrow_slice_i16 Eurydice_array_to_subslice_shared_85(
-    const Eurydice_arr_e2 *a, core_ops_range_Range_08 r);
-
-/**
- Classify a mutable slice (identity)
- We define a separate function for this because hax has limited support for
- &mut-returning functions
-*/
-/**
-A monomorphic instance of libcrux_secrets.int.public_integers.classify_mut_slice
-with types Eurydice_dst_ref_mut uint8_t size_t
-
-*/
-Eurydice_mut_borrow_slice_u8
-libcrux_secrets_int_public_integers_classify_mut_slice_47(
-    Eurydice_mut_borrow_slice_u8 x);
-
-/**
 This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a
 (@Slice<T>)> for &'a (@Slice<T>)}
 */
@@ -1557,32 +1552,13 @@ Eurydice_borrow_slice_u8 libcrux_secrets_int_classify_public_classify_ref_9b_90(
     Eurydice_borrow_slice_u8 self);
 
 /**
-This function found in impl {libcrux_secrets::traits::Declassify<T> for T}
-*/
-/**
-A monomorphic instance of libcrux_secrets.int.public_integers.declassify_d8
-with types Eurydice_arr int16_t[[$16size_t]]
-
-*/
-Eurydice_arr_e2 libcrux_secrets_int_public_integers_declassify_d8_3a(
-    Eurydice_arr_e2 self);
-
-/**
-A monomorphic instance of Eurydice.array_to_slice_shared
-with types int16_t
+A monomorphic instance of Eurydice.array_to_subslice_shared
+with types int16_t, core_ops_range_Range size_t, Eurydice_derefed_slice int16_t
 with const generics
 - N= 16
 */
-Eurydice_borrow_slice_i16 Eurydice_array_to_slice_shared_b4(
-    const Eurydice_arr_e2 *a);
-
-/**
-A monomorphic instance of Eurydice.slice_subslice_mut
-with types int16_t, core_ops_range_Range size_t, Eurydice_derefed_slice int16_t
-
-*/
-Eurydice_mut_borrow_slice_i16 Eurydice_slice_subslice_mut_76(
-    Eurydice_mut_borrow_slice_i16 s, core_ops_range_Range_08 r);
+Eurydice_borrow_slice_i16 Eurydice_array_to_subslice_shared_85(
+    const Eurydice_arr_e2 *a, core_ops_range_Range_08 r);
 
 /**
 A monomorphic instance of Eurydice.slice_subslice_shared
