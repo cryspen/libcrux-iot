@@ -271,7 +271,7 @@ fn deserialize_then_decompress_11<Vector: Operations>(
 }
 
 #[hax_lib::requires(
-    (U_COMPRESSION_FACTOR == 4 || U_COMPRESSION_FACTOR == 5) &&
+    (U_COMPRESSION_FACTOR == 10 || U_COMPRESSION_FACTOR == 11) &&
     serialized.len() == 32 * U_COMPRESSION_FACTOR
 )]
 #[inline(always)]

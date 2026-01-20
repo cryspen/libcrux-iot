@@ -537,7 +537,6 @@ let sample_from_binomial_distribution
       (randomness: t_Slice u8)
       (output: t_Array i16 (mk_usize 256))
      =
-  let _:Prims.unit = assert ((v (cast v_ETA <: u32) == 2) \/ (v (cast v_ETA <: u32) == 3)) in
   let output:t_Array i16 (mk_usize 256) =
     match cast (v_ETA <: usize) <: u32 with
     | Rust_primitives.Integers.MkInt 2 ->
