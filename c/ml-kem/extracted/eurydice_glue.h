@@ -363,52 +363,38 @@ static inline size_t core_cmp_impls___core__cmp__Ord_for_usize___min(size_t a,
     return b;
 }
 
-// XXX: Not checked for secret-independence.
 static inline int16_t core_num__i16__wrapping_mul(int16_t x0, int16_t x1) {
   int32_t tmp = (int32_t)x0 * (int32_t)x1;
-  tmp = tmp % (((uint32_t) 1)<<16);
   
   return (int16_t) tmp;
 }
 
-// XXX: Not checked for secret-independence.
 static inline int32_t core_num__i32__wrapping_mul(int32_t x0, int32_t x1) {
   int64_t tmp = (int64_t)x0 * (int64_t)x1;
-  tmp = tmp % (((uint64_t) 1)<<32);
   
   return (int32_t) tmp;
 }
 
-// XXX: Not checked for secret-independence.
 static inline int32_t core_num__i32__wrapping_add(int32_t x0, int32_t x1) {
   int64_t tmp = (int64_t)x0 + (int64_t)x1;
-  tmp = tmp % (((uint64_t) 1)<<32);
   
   return (int32_t) tmp;
 }
 
-// XXX: Not checked for secret-independence.
 static inline int16_t core_num__i16__wrapping_add(int16_t x0, int16_t x1) {
   int32_t tmp = (int32_t)x0 + (int32_t)x1;
-  tmp = tmp % (((uint32_t) 1)<<16);
   
   return (int16_t) tmp;
 }
 
-// XXX: Not checked for secret-independence.
 static inline int16_t core_num__i16__wrapping_sub(int16_t x0, int16_t x1) {
   int32_t tmp = (int32_t)x0 - (int32_t)x1;
-  tmp = tmp % (((uint32_t) 1)<<16);
   
   return (int16_t) tmp;
 }
 
-// XXX: Not secret-independent.
 static inline int16_t core_num__i16__wrapping_neg(int16_t x0) {
-  if (x0 == INT16_MIN)
-    return x0;
-  else
-    return -x0;
+  return ~x0 + 1;
 }
 
 // unsigned overflow wraparound semantics in C
