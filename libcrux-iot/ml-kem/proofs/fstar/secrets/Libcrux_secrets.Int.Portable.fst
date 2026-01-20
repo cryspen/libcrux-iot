@@ -1,7 +1,7 @@
 module Libcrux_secrets.Int.Portable
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 15"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -11,8 +11,12 @@ let _ =
   ()
 
 let is_non_zero_32_ (selector: u8) : u32 =
-  Core.Hint.black_box #u32
-    (((Core.Num.impl_u32__wrapping_add (~.(cast (Core.Hint.black_box #u8 selector <: u8) <: u32)
+  Core_models.Hint.black_box #u32
+    (((Core_models.Num.impl_u32__wrapping_add (~.(cast (Core_models.Hint.black_box #u8 selector
+                    <:
+                    u8)
+                <:
+                u32)
               <:
               u32)
             (mk_u32 1)
@@ -26,8 +30,12 @@ let is_non_zero_32_ (selector: u8) : u32 =
       u32)
 
 let is_non_zero_64_ (selector: u8) : u64 =
-  Core.Hint.black_box #u64
-    (((Core.Num.impl_u64__wrapping_add (~.(cast (Core.Hint.black_box #u8 selector <: u8) <: u64)
+  Core_models.Hint.black_box #u64
+    (((Core_models.Num.impl_u64__wrapping_add (~.(cast (Core_models.Hint.black_box #u8 selector
+                    <:
+                    u8)
+                <:
+                u64)
               <:
               u64)
             (mk_u64 1)
@@ -51,7 +59,8 @@ let impl: Libcrux_secrets.Int.t_Select (t_Slice u8) =
     =
     fun (self: t_Slice u8) (other: t_Slice u8) (selector: u8) ->
       let mask:u8 =
-        Core.Num.impl_u8__wrapping_sub (cast (is_non_zero_32_ (Libcrux_secrets.Traits.f_declassify #u8
+        Core_models.Num.impl_u8__wrapping_sub (cast (is_non_zero_32_ (Libcrux_secrets.Traits.f_declassify
+                      #u8
                       #FStar.Tactics.Typeclasses.solve
                       selector
                     <:
@@ -64,7 +73,7 @@ let impl: Libcrux_secrets.Int.t_Select (t_Slice u8) =
       in
       let self:t_Slice u8 =
         Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-          (Core.Slice.impl__len #u8 self <: usize)
+          (Core_models.Slice.impl__len #u8 self <: usize)
           (fun self temp_1_ ->
               let self:t_Slice u8 = self in
               let _:usize = temp_1_ in
@@ -95,7 +104,8 @@ let impl_1: Libcrux_secrets.Int.t_Select (t_Slice u16) =
     =
     fun (self: t_Slice u16) (other: t_Slice u16) (selector: u8) ->
       let mask:u16 =
-        Core.Num.impl_u16__wrapping_sub (cast (is_non_zero_32_ (Libcrux_secrets.Traits.f_declassify #u8
+        Core_models.Num.impl_u16__wrapping_sub (cast (is_non_zero_32_ (Libcrux_secrets.Traits.f_declassify
+                      #u8
                       #FStar.Tactics.Typeclasses.solve
                       selector
                     <:
@@ -108,7 +118,7 @@ let impl_1: Libcrux_secrets.Int.t_Select (t_Slice u16) =
       in
       let self:t_Slice u16 =
         Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-          (Core.Slice.impl__len #u16 self <: usize)
+          (Core_models.Slice.impl__len #u16 self <: usize)
           (fun self temp_1_ ->
               let self:t_Slice u16 = self in
               let _:usize = temp_1_ in
@@ -140,7 +150,8 @@ let impl_2: Libcrux_secrets.Int.t_Select (t_Slice u32) =
     =
     fun (self: t_Slice u32) (other: t_Slice u32) (selector: u8) ->
       let mask:u32 =
-        Core.Num.impl_u32__wrapping_sub (is_non_zero_32_ (Libcrux_secrets.Traits.f_declassify #u8
+        Core_models.Num.impl_u32__wrapping_sub (is_non_zero_32_ (Libcrux_secrets.Traits.f_declassify
+                  #u8
                   #FStar.Tactics.Typeclasses.solve
                   selector
                 <:
@@ -151,7 +162,7 @@ let impl_2: Libcrux_secrets.Int.t_Select (t_Slice u32) =
       in
       let self:t_Slice u32 =
         Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-          (Core.Slice.impl__len #u32 self <: usize)
+          (Core_models.Slice.impl__len #u32 self <: usize)
           (fun self temp_1_ ->
               let self:t_Slice u32 = self in
               let _:usize = temp_1_ in
@@ -183,7 +194,8 @@ let impl_3: Libcrux_secrets.Int.t_Select (t_Slice u64) =
     =
     fun (self: t_Slice u64) (other: t_Slice u64) (selector: u8) ->
       let mask:u64 =
-        Core.Num.impl_u64__wrapping_sub (is_non_zero_64_ (Libcrux_secrets.Traits.f_declassify #u8
+        Core_models.Num.impl_u64__wrapping_sub (is_non_zero_64_ (Libcrux_secrets.Traits.f_declassify
+                  #u8
                   #FStar.Tactics.Typeclasses.solve
                   selector
                 <:
@@ -194,7 +206,7 @@ let impl_3: Libcrux_secrets.Int.t_Select (t_Slice u64) =
       in
       let self:t_Slice u64 =
         Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-          (Core.Slice.impl__len #u64 self <: usize)
+          (Core_models.Slice.impl__len #u64 self <: usize)
           (fun self temp_1_ ->
               let self:t_Slice u64 = self in
               let _:usize = temp_1_ in
@@ -231,16 +243,18 @@ let impl_4: Libcrux_secrets.Int.t_Swap (t_Slice u8) =
         then
           let _:Prims.unit =
             match
-              Core.Slice.impl__len #u8 self, Core.Slice.impl__len #u8 other <: (usize & usize)
+              Core_models.Slice.impl__len #u8 self, Core_models.Slice.impl__len #u8 other
+              <:
+              (usize & usize)
             with
             | left_val, right_val -> Hax_lib.v_assert (left_val =. right_val <: bool)
           in
           ()
       in
       let mask:u8 =
-        Core.Hint.black_box #u8
-          (Core.Num.impl_u8__wrapping_sub (cast (((Core.Num.impl_u32__wrapping_add (~.(cast (Core.Hint.black_box
-                                    #u8
+        Core_models.Hint.black_box #u8
+          (Core_models.Num.impl_u8__wrapping_sub (cast (((Core_models.Num.impl_u32__wrapping_add (~.(
+                              cast (Core_models.Hint.black_box #u8
                                     (Libcrux_secrets.Traits.f_declassify #u8
                                         #FStar.Tactics.Typeclasses.solve
                                         selector
@@ -267,16 +281,16 @@ let impl_4: Libcrux_secrets.Int.t_Swap (t_Slice u8) =
             <:
             u8)
       in
-      let other, self:(t_Slice u8 & t_Slice u8) =
+      let (other: t_Slice u8), (self: t_Slice u8) =
         Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-          (Core.Slice.impl__len #u8 self <: usize)
+          (Core_models.Slice.impl__len #u8 self <: usize)
           (fun temp_0_ temp_1_ ->
-              let other, self:(t_Slice u8 & t_Slice u8) = temp_0_ in
+              let (other: t_Slice u8), (self: t_Slice u8) = temp_0_ in
               let _:usize = temp_1_ in
               true)
           (other, self <: (t_Slice u8 & t_Slice u8))
           (fun temp_0_ i ->
-              let other, self:(t_Slice u8 & t_Slice u8) = temp_0_ in
+              let (other: t_Slice u8), (self: t_Slice u8) = temp_0_ in
               let i:usize = i in
               let dummy:u8 = (~.mask <: u8) &. ((self.[ i ] <: u8) ^. (other.[ i ] <: u8) <: u8) in
               let self:t_Slice u8 =
@@ -315,16 +329,18 @@ let impl_5: Libcrux_secrets.Int.t_Swap (t_Slice u16) =
         then
           let _:Prims.unit =
             match
-              Core.Slice.impl__len #u16 self, Core.Slice.impl__len #u16 other <: (usize & usize)
+              Core_models.Slice.impl__len #u16 self, Core_models.Slice.impl__len #u16 other
+              <:
+              (usize & usize)
             with
             | left_val, right_val -> Hax_lib.v_assert (left_val =. right_val <: bool)
           in
           ()
       in
       let mask:u16 =
-        Core.Hint.black_box #u16
-          (Core.Num.impl_u16__wrapping_sub (cast (((Core.Num.impl_u32__wrapping_add (~.(cast (Core.Hint.black_box
-                                    #u8
+        Core_models.Hint.black_box #u16
+          (Core_models.Num.impl_u16__wrapping_sub (cast (((Core_models.Num.impl_u32__wrapping_add (~.(
+                              cast (Core_models.Hint.black_box #u8
                                     (Libcrux_secrets.Traits.f_declassify #u8
                                         #FStar.Tactics.Typeclasses.solve
                                         selector
@@ -351,16 +367,16 @@ let impl_5: Libcrux_secrets.Int.t_Swap (t_Slice u16) =
             <:
             u16)
       in
-      let other, self:(t_Slice u16 & t_Slice u16) =
+      let (other: t_Slice u16), (self: t_Slice u16) =
         Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-          (Core.Slice.impl__len #u16 self <: usize)
+          (Core_models.Slice.impl__len #u16 self <: usize)
           (fun temp_0_ temp_1_ ->
-              let other, self:(t_Slice u16 & t_Slice u16) = temp_0_ in
+              let (other: t_Slice u16), (self: t_Slice u16) = temp_0_ in
               let _:usize = temp_1_ in
               true)
           (other, self <: (t_Slice u16 & t_Slice u16))
           (fun temp_0_ i ->
-              let other, self:(t_Slice u16 & t_Slice u16) = temp_0_ in
+              let (other: t_Slice u16), (self: t_Slice u16) = temp_0_ in
               let i:usize = i in
               let dummy:u16 =
                 (~.mask <: u16) &. ((self.[ i ] <: u16) ^. (other.[ i ] <: u16) <: u16)
@@ -401,16 +417,18 @@ let impl_6: Libcrux_secrets.Int.t_Swap (t_Slice u32) =
         then
           let _:Prims.unit =
             match
-              Core.Slice.impl__len #u32 self, Core.Slice.impl__len #u32 other <: (usize & usize)
+              Core_models.Slice.impl__len #u32 self, Core_models.Slice.impl__len #u32 other
+              <:
+              (usize & usize)
             with
             | left_val, right_val -> Hax_lib.v_assert (left_val =. right_val <: bool)
           in
           ()
       in
       let mask:u32 =
-        Core.Hint.black_box #u32
-          (Core.Num.impl_u32__wrapping_sub (((Core.Num.impl_u32__wrapping_add (~.(cast (Core.Hint.black_box
-                                #u8
+        Core_models.Hint.black_box #u32
+          (Core_models.Num.impl_u32__wrapping_sub (((Core_models.Num.impl_u32__wrapping_add (~.(cast
+                            (Core_models.Hint.black_box #u8
                                 (Libcrux_secrets.Traits.f_declassify #u8
                                     #FStar.Tactics.Typeclasses.solve
                                     selector
@@ -435,16 +453,16 @@ let impl_6: Libcrux_secrets.Int.t_Swap (t_Slice u32) =
             <:
             u32)
       in
-      let other, self:(t_Slice u32 & t_Slice u32) =
+      let (other: t_Slice u32), (self: t_Slice u32) =
         Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-          (Core.Slice.impl__len #u32 self <: usize)
+          (Core_models.Slice.impl__len #u32 self <: usize)
           (fun temp_0_ temp_1_ ->
-              let other, self:(t_Slice u32 & t_Slice u32) = temp_0_ in
+              let (other: t_Slice u32), (self: t_Slice u32) = temp_0_ in
               let _:usize = temp_1_ in
               true)
           (other, self <: (t_Slice u32 & t_Slice u32))
           (fun temp_0_ i ->
-              let other, self:(t_Slice u32 & t_Slice u32) = temp_0_ in
+              let (other: t_Slice u32), (self: t_Slice u32) = temp_0_ in
               let i:usize = i in
               let dummy:u32 =
                 (~.mask <: u32) &. ((self.[ i ] <: u32) ^. (other.[ i ] <: u32) <: u32)
@@ -485,16 +503,18 @@ let impl_7: Libcrux_secrets.Int.t_Swap (t_Slice u64) =
         then
           let _:Prims.unit =
             match
-              Core.Slice.impl__len #u64 self, Core.Slice.impl__len #u64 other <: (usize & usize)
+              Core_models.Slice.impl__len #u64 self, Core_models.Slice.impl__len #u64 other
+              <:
+              (usize & usize)
             with
             | left_val, right_val -> Hax_lib.v_assert (left_val =. right_val <: bool)
           in
           ()
       in
       let mask:u64 =
-        Core.Hint.black_box #u64
-          (Core.Num.impl_u64__wrapping_sub (((Core.Num.impl_u64__wrapping_add (~.(cast (Libcrux_secrets.Traits.f_declassify
-                                #u8
+        Core_models.Hint.black_box #u64
+          (Core_models.Num.impl_u64__wrapping_sub (((Core_models.Num.impl_u64__wrapping_add (~.(cast
+                            (Libcrux_secrets.Traits.f_declassify #u8
                                 #FStar.Tactics.Typeclasses.solve
                                 selector
                               <:
@@ -516,16 +536,16 @@ let impl_7: Libcrux_secrets.Int.t_Swap (t_Slice u64) =
             <:
             u64)
       in
-      let other, self:(t_Slice u64 & t_Slice u64) =
+      let (other: t_Slice u64), (self: t_Slice u64) =
         Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-          (Core.Slice.impl__len #u64 self <: usize)
+          (Core_models.Slice.impl__len #u64 self <: usize)
           (fun temp_0_ temp_1_ ->
-              let other, self:(t_Slice u64 & t_Slice u64) = temp_0_ in
+              let (other: t_Slice u64), (self: t_Slice u64) = temp_0_ in
               let _:usize = temp_1_ in
               true)
           (other, self <: (t_Slice u64 & t_Slice u64))
           (fun temp_0_ i ->
-              let other, self:(t_Slice u64 & t_Slice u64) = temp_0_ in
+              let (other: t_Slice u64), (self: t_Slice u64) = temp_0_ in
               let i:usize = i in
               let dummy:u64 =
                 (~.mask <: u64) &. ((self.[ i ] <: u64) ^. (other.[ i ] <: u64) <: u64)

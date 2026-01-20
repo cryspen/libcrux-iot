@@ -1,7 +1,7 @@
 module Libcrux_secrets.Int.Public_integers
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 15"
-open Core
 open FStar.Mul
+open Core_models
 
 /// Construct a public integer (identity)
 let secret (#v_T: Type0) (x: v_T) : v_T = x

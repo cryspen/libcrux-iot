@@ -1,93 +1,96 @@
 module Libcrux_secrets.Traits
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 15"
-open Core
 open FStar.Mul
+open Core_models
 
 /// Marker trait for scalar types (machine integers)
 class t_Scalar (v_Self: Type0) = {
-  [@@@ FStar.Tactics.Typeclasses.no_method]_super_250177790225314374:Core.Marker.t_Copy v_Self
+  [@@@ FStar.Tactics.Typeclasses.no_method]_super_i0:Core_models.Marker.t_Copy v_Self
 }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let _ = fun (v_Self:Type0) {|i: t_Scalar v_Self|} -> i._super_250177790225314374
+let _ = fun (v_Self:Type0) {|i: t_Scalar v_Self|} -> i._super_i0
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl: t_Scalar u8 = { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl: t_Scalar u8 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_Scalar_for_u16: t_Scalar u16 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_Scalar_for_u16: t_Scalar u16 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_Scalar_for_u32: t_Scalar u32 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_Scalar_for_u32: t_Scalar u32 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_Scalar_for_u64: t_Scalar u64 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_Scalar_for_u64: t_Scalar u64 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_Scalar_for_u128: t_Scalar u128 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_Scalar_for_u128: t_Scalar u128 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_Scalar_for_i8: t_Scalar i8 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_Scalar_for_i8: t_Scalar i8 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_Scalar_for_i16: t_Scalar i16 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_Scalar_for_i16: t_Scalar i16 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_Scalar_for_i32: t_Scalar i32 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_Scalar_for_i32: t_Scalar i32 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_Scalar_for_i64: t_Scalar i64 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_Scalar_for_i64: t_Scalar i64 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_Scalar_for_i128: t_Scalar i128 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_Scalar_for_i128: t_Scalar i128 = { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 /// A trait for integer operations provided by Rust for machine integers
 class t_IntOps (v_Self: Type0) = {
-  f_wrapping_add_pre:#v_T: Type0 -> {| i0: Core.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
+  f_wrapping_add_pre:#v_T: Type0 -> {| i0: Core_models.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
     -> Type0;
   f_wrapping_add_post:
       #v_T: Type0 ->
-      {| i0: Core.Convert.t_Into v_T v_Self |} ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
       v_Self ->
       v_T ->
       v_Self
     -> Type0;
-  f_wrapping_add:#v_T: Type0 -> {| i0: Core.Convert.t_Into v_T v_Self |} -> x0: v_Self -> x1: v_T
+  f_wrapping_add:
+      #v_T: Type0 ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
+      x0: v_Self ->
+      x1: v_T
     -> Prims.Pure v_Self
         (f_wrapping_add_pre #v_T #i0 x0 x1)
         (fun result -> f_wrapping_add_post #v_T #i0 x0 x1 result);
-  f_wrapping_sub_pre:#v_T: Type0 -> {| i0: Core.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
+  f_wrapping_sub_pre:#v_T: Type0 -> {| i0: Core_models.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
     -> Type0;
   f_wrapping_sub_post:
       #v_T: Type0 ->
-      {| i0: Core.Convert.t_Into v_T v_Self |} ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
       v_Self ->
       v_T ->
       v_Self
     -> Type0;
-  f_wrapping_sub:#v_T: Type0 -> {| i0: Core.Convert.t_Into v_T v_Self |} -> x0: v_Self -> x1: v_T
+  f_wrapping_sub:
+      #v_T: Type0 ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
+      x0: v_Self ->
+      x1: v_T
     -> Prims.Pure v_Self
         (f_wrapping_sub_pre #v_T #i0 x0 x1)
         (fun result -> f_wrapping_sub_post #v_T #i0 x0 x1 result);
-  f_wrapping_mul_pre:#v_T: Type0 -> {| i0: Core.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
+  f_wrapping_mul_pre:#v_T: Type0 -> {| i0: Core_models.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
     -> Type0;
   f_wrapping_mul_post:
       #v_T: Type0 ->
-      {| i0: Core.Convert.t_Into v_T v_Self |} ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
       v_Self ->
       v_T ->
       v_Self
     -> Type0;
-  f_wrapping_mul:#v_T: Type0 -> {| i0: Core.Convert.t_Into v_T v_Self |} -> x0: v_Self -> x1: v_T
+  f_wrapping_mul:
+      #v_T: Type0 ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
+      x0: v_Self ->
+      x1: v_T
     -> Prims.Pure v_Self
         (f_wrapping_mul_pre #v_T #i0 x0 x1)
         (fun result -> f_wrapping_mul_post #v_T #i0 x0 x1 result);
@@ -130,16 +133,16 @@ class t_EncodeOps (v_Self: Type0) (v_T: Type0) (v_N: usize) = {
 }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_10: t_Scalar Core.Core_arch.X86.t_e_ee_m128i =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_10: t_Scalar Core_models.Core_arch.X86.t_e_ee_m128i =
+  { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_11: t_Scalar Core.Core_arch.X86.t_e_ee_m256i =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_11: t_Scalar Core_models.Core_arch.X86.t_e_ee_m256i =
+  { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let impl_12: t_Scalar Core.Core_arch.X86.t_e_ee_m256 =
-  { _super_250177790225314374 = FStar.Tactics.Typeclasses.solve }
+let impl_12: t_Scalar Core_models.Core_arch.X86.t_e_ee_m256 =
+  { _super_i0 = FStar.Tactics.Typeclasses.solve }
 
 /// A trait for public types that can be classified into secret types
 class t_Classify (v_Self: Type0) = {
