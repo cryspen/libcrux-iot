@@ -25,19 +25,13 @@ use libcrux_secrets::*;
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
 #[inline(always)]
-#[hax_lib::fstar::options("--z3rlimit 200 --ext context_pruning")]
-#[hax_lib::fstar::before(r#"[@ "opaque_to_smt"]"#)]
-#[cfg_attr(hax, hax_lib::requires(fe < (FIELD_MODULUS as u16)))]
-#[cfg_attr(hax, hax_lib::ensures(|result| fstar!(r#"((833 <= v fe && v fe <= 2496) ==> v result == 1) /\
-						    (~(833 <=  v fe && v fe <= 2496) ==> v result == 0)"#)))]
 pub(crate) fn compress_message_coefficient(fe: U16) -> U8 {
     // The approach used here is inspired by:
     // https://github.com/cloudflare/circl/blob/main/pke/kyber/internal/common/poly.go#L150
 
     // If 833 <= fe <= 2496,
     // then -832 <= shifted <= 831
-    let shifted = 1664.classify() - fe.as_i16();
-    hax_lib::fstar!(r#"assert (v $shifted == 1664 - v $fe)"#);
+    let shifted = 1664i16.classify().wrapping_sub(fe.as_i16());
 
     // If shifted < 0, then
     // (shifted >> 15) ^ shifted = flip_bits(shifted) = -shifted - 1, and so
@@ -48,31 +42,9 @@ pub(crate) fn compress_message_coefficient(fe: U16) -> U8 {
     // if 0 <= shifted <= 831 then 0 <= shifted_positive <= 831
     let mask = shifted >> 15;
 
-    hax_lib::fstar!(
-        "assert (v $mask = v $shifted / pow2 15);
-        assert (if v $shifted < 0 then $mask = ones else $mask = zero)"
-    );
-
     let shifted_to_positive = mask ^ shifted;
 
-    hax_lib::fstar!(
-        "logxor_lemma $shifted $mask;
-        assert (v $shifted < 0 ==> v $shifted_to_positive = v (lognot $shifted));
-        neg_equiv_lemma $shifted;
-        assert (v (lognot $shifted) = -(v $shifted) -1);
-        assert (v $shifted >= 0 ==> v $shifted_to_positive = v ($mask `logxor` $shifted));
-        assert (v $shifted >= 0 ==> $mask = zero);
-        assert (v $shifted >= 0 ==> $mask ^. $shifted = $shifted);
-        assert (v $shifted >= 0 ==> v $shifted_to_positive = v $shifted);
-        assert ($shifted_to_positive >=. mk_i16 0)"
-    );
-
-    let shifted_positive_in_range = shifted_to_positive - 832;
-
-    hax_lib::fstar!(
-        "assert (1664 - v $fe >= 0 ==> v $shifted_positive_in_range == 832 - v $fe);
-        assert (1664 - v $fe < 0 ==> v $shifted_positive_in_range == -2497 + v $fe)"
-    );
+    let shifted_positive_in_range = shifted_to_positive.wrapping_sub(832);
 
     // If x <= 831, then x - 832 <= -1, and so x - 832 < 0, which means
     // the most significant bit of shifted_positive_in_range will be 1.
@@ -80,223 +52,53 @@ pub(crate) fn compress_message_coefficient(fe: U16) -> U8 {
     let r1 = r0 & 1i16;
     let res = r1.as_u8();
 
-    hax_lib::fstar!(
-        r#"assert (v $r0 = v $shifted_positive_in_range / pow2 15);
-        assert (if v $shifted_positive_in_range < 0 then $r0 = ones else $r0 = zero);
-        logand_lemma (mk_i16 1) $r0; 
-        assert (if v $shifted_positive_in_range < 0 then $r1 = mk_i16 1 else $r1 = mk_i16 0);
-        assert ((v $fe >= 833 && v $fe <= 2496) ==> $r1 = mk_i16 1);
-        assert (v $fe < 833 ==> $r1 = mk_i16 0);
-        assert (v $fe > 2496 ==> $r1 = mk_i16 0);
-        assert (v $res = v $r1)"#
-    );
-
     res
 }
 
+#[hax_lib::requires(coefficient_bits <= 16)]
 #[inline(always)]
-#[hax_lib::fstar::options("--z3rlimit 200 --ext context_pruning")]
-#[hax_lib::fstar::before(r#"[@ "opaque_to_smt"]"#)]
-#[cfg_attr(hax,
-    hax_lib::requires(
-        (coefficient_bits == 4 ||
-         coefficient_bits == 5 ||
-         coefficient_bits == 10 ||
-         coefficient_bits == 11) &&
-         fe < (FIELD_MODULUS as u16)))]
-#[cfg_attr(hax,
-     hax_lib::ensures(
-     |result| fstar!(r#"v result >= 0 && v result < pow2 (v $coefficient_bits)"#)))]
 pub(crate) fn compress_ciphertext_coefficient(coefficient_bits: u8, fe: U16) -> FieldElement {
-    // hax_debug_assert!(
-    //     coefficient_bits == 4
-    //         || coefficient_bits == 5
-    //         || coefficient_bits == 10
-    //         || coefficient_bits == 11
-    // );
-    // hax_debug_assert!(fe <= (FIELD_MODULUS as u16));
-
     // This has to be constant time due to:
     // https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/ldX0ThYJuBo/m/ovODsdY7AwAJ
     let mut compressed = fe.as_u64() << coefficient_bits;
-    compressed += 1664;
+    compressed = compressed.wrapping_add(1664);
 
-    compressed *= 10_321_340;
+    compressed = compressed.wrapping_mul(10_321_340);
     compressed >>= 35;
 
     get_n_least_significant_bits(coefficient_bits, compressed.as_u32()).as_i16()
 }
 
 #[inline(always)]
-#[cfg_attr(
-    hax,
-    hax_lib::fstar::before(
-        r#"
-let compress_message_coefficient_range_helper (fe: u16) : Lemma
-  (requires fe <. (cast (Libcrux_ml_kem.Vector.Traits.v_FIELD_MODULUS) <: u16))
-  (ensures v (cast (compress_message_coefficient fe) <: i16) >= 0 /\
-    v (cast (compress_message_coefficient fe) <: i16) < 2) =
-  assert (v (cast (compress_message_coefficient fe) <: i16) >= 0 /\
-    v (cast (compress_message_coefficient fe) <: i16) < 2)
-"#
-    )
-)]
-#[hax_lib::fstar::options("--fuel 0 --ifuel 0 --z3rlimit 200")]
-#[hax_lib::requires(fstar!(r#"forall (i:nat). i < 16 ==> v (Seq.index ${a}.f_elements i) >= 0 /\
-    v (Seq.index ${a}.f_elements i) < 3329"#))]
-#[hax_lib::ensures(|_| fstar!(r#"forall (i:nat). i < 16 ==> 
-    v (${a}_future.f_elements.[ sz i ] <: i16) >= 0 /\
-    v (${a}_future.f_elements.[ sz i ] <: i16) < 2"#))]
 pub(crate) fn compress_1(a: &mut PortableVector) {
-    hax_lib::fstar!(
-        "assert (forall (i:nat). i < 16 ==> (cast (${a}.f_elements.[ sz i ]) <: u16) <.
-        (cast ($FIELD_MODULUS) <: u16))"
-    );
-
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
-        hax_lib::loop_invariant!(|i: usize| {
-            fstar!(
-                r#"(v $i < 16 ==> (forall (j:nat). (j >= v $i /\ j < 16) ==>
-            v (cast (${a}.f_elements.[ sz j ]) <: u16) < v (cast ($FIELD_MODULUS) <: u16))) /\
-            (forall (j:nat). j < v $i ==> v (${a}.f_elements.[ sz j ] <: i16) >= 0 /\
-                v (${a}.f_elements.[ sz j ] <: i16) < 2)"#
-            )
-        });
-
-        hax_lib::fstar!(
-            "compress_message_coefficient_range_helper (cast (${a}.f_elements.[ $i ]) <: u16)"
-        );
-
         a.elements[i] = compress_message_coefficient(a.elements[i].as_u16()).as_i16();
-
-        hax_lib::fstar!(
-            r#"assert (v (${a}.f_elements.[ $i ] <: i16) >= 0 /\
-            v (${a}.f_elements.[ $i ] <: i16) < 2)"#
-        );
     }
-
-    hax_lib::fstar!(
-        r#"assert (forall (i:nat). i < 16 ==> v (${a}.f_elements.[ sz i ] <: i16) >= 0 /\
-        v (${a}.f_elements.[ sz i ] <: i16) < 2)"#
-    );
 }
 
+#[hax_lib::requires(COEFFICIENT_BITS >= 0 && COEFFICIENT_BITS <= 16)]
 #[inline(always)]
-#[hax_lib::fstar::options("--fuel 0 --ifuel 0 --z3rlimit 500")]
-#[hax_lib::requires(fstar!(r#"(v $COEFFICIENT_BITS == 4 \/
-        v $COEFFICIENT_BITS == 5 \/
-        v $COEFFICIENT_BITS == 10 \/
-        v $COEFFICIENT_BITS == 11) /\
-    (forall (i:nat). i < 16 ==>
-        v (Seq.index ${a}.f_elements i) >= 0 /\
-        v (Seq.index ${a}.f_elements i) < 3329)"#))]
-#[hax_lib::ensures(|_| fstar!(r#"forall (i:nat). i < 16 ==> 
-    v (${a}_future.f_elements.[ sz i ] <: i16) >= 0 /\
-    v (${a}_future.f_elements.[ sz i ] <: i16) < pow2 (v $COEFFICIENT_BITS))"#))]
 pub(crate) fn compress<const COEFFICIENT_BITS: i32>(a: &mut PortableVector) {
-    hax_lib::fstar!(
-        "assert (v (cast ($COEFFICIENT_BITS) <: u8) == v $COEFFICIENT_BITS);
-        assert (v (cast ($COEFFICIENT_BITS) <: u32) == v $COEFFICIENT_BITS);
-        assert (v (cast ($FIELD_MODULUS) <: u16) == 3329)"
-    );
-    hax_lib::fstar!(
-        "assert (forall (i:nat). i < 16 ==> 
-            (cast (${a}.f_elements.[ sz i ]) <: u16) <.
-            (cast ($FIELD_MODULUS) <: u16))"
-    );
-
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
-        hax_lib::loop_invariant!(|i: usize| {
-            fstar!(
-                r#"((forall (j:nat). (j >= v $i /\ j < 16) ==>
-                      v (cast (${a}.f_elements.[ sz j ]) <: u16) < v (cast ($FIELD_MODULUS) <: u16))) /\
-                    (forall (j:nat). j < v $i ==> v (${a}.f_elements.[ sz j ] <: i16) >= 0 /\
-                     v (${a}.f_elements.[ sz j ] <: i16) < pow2 (v $COEFFICIENT_BITS)))"#
-            )
-        });
-
         a.elements[i] =
             compress_ciphertext_coefficient(COEFFICIENT_BITS as u8, a.elements[i].as_u16())
                 .as_i16();
-
-        hax_lib::fstar!(
-            r#"assert (v (${a}.f_elements.[ $i ] <: i16) >= 0 /\
-            v (${a}.f_elements.[ $i ] <: i16) < pow2 (v $COEFFICIENT_BITS))"#
-        );
     }
-    hax_lib::fstar!(
-        r#"assert (forall (i:nat). i < 16 ==> 
-                    (v (${a}.f_elements.[ sz i ] <: i16) >= 0 /\
-                     v (${a}.f_elements.[ sz i ] <: i16) < pow2 (v $COEFFICIENT_BITS)))"#
-    );
 }
 
+#[hax_lib::requires(0 <= COEFFICIENT_BITS && COEFFICIENT_BITS < 31)]
 #[inline(always)]
-#[hax_lib::fstar::options("--z3rlimit 300 --ext context_pruning")]
-#[hax_lib::requires(fstar!(r#"(v $COEFFICIENT_BITS == 4 \/
-        v $COEFFICIENT_BITS == 5 \/
-        v $COEFFICIENT_BITS == 10 \/
-        v $COEFFICIENT_BITS == 11) /\
-    (forall (i:nat). i < 16 ==> v (Seq.index ${a}.f_elements i) >= 0 /\
-        v (Seq.index ${a}.f_elements i) < pow2 (v $COEFFICIENT_BITS))"#))]
-#[hax_lib::ensures(|_| fstar!(r#"forall (i:nat). i < 16 ==> 
-        (let res_i = v (Seq.index ${a}_future.f_elements i) in
-         res_i >= 0 /\ res_i < v $FIELD_MODULUS)"#))]
 pub(crate) fn decompress_ciphertext_coefficient<const COEFFICIENT_BITS: i32>(
     a: &mut PortableVector,
 ) {
-    hax_lib::fstar!(
-        "assert_norm (pow2 1 == 2);
-        assert_norm (pow2 4 == 16);
-        assert_norm (pow2 5 == 32);
-        assert_norm (pow2 10 == 1024);
-        assert_norm (pow2 11 == 2048)"
-    );
-
     for i in 0..FIELD_ELEMENTS_IN_VECTOR {
-        hax_lib::loop_invariant!(|i: usize| {
-            fstar!(
-                r#"(v $i < 16 ==> (forall (j:nat). (j >= v $i /\ j < 16) ==>
-            v (Seq.index ${a}.f_elements j) >= 0 /\  v (Seq.index ${a}.f_elements j) < pow2 (v $COEFFICIENT_BITS))) /\
-            (forall (j:nat). j < v $i ==>
-                (v (Seq.index ${a}.f_elements j) >= 0 /\ v (Seq.index ${a}.f_elements j) < v $FIELD_MODULUS))"#
-            )
-        });
-        hax_lib::fstar!(
-            "assert (v (${a}.f_elements.[ $i ] <: i16) < pow2 11);
-          assert (v (${a}.f_elements.[ $i ] <: i16) ==
-            v (cast (${a}.f_elements.[ $i ] <: i16) <: i32));
-          assert (v ($FIELD_MODULUS <: i16) ==
-            v (cast ($FIELD_MODULUS <: i16) <: i32));
-          assert (v ((cast (${a}.f_elements.[ $i ] <: i16) <: i32) *!
-            (cast ($FIELD_MODULUS <: i16) <: i32)) ==
-              v (cast (${a}.f_elements.[ $i ] <: i16) <: i32) *
-                v (cast ($FIELD_MODULUS <: i16) <: i32))"
-        );
+        let mut decompressed = a.elements[i]
+            .as_i32()
+            .wrapping_mul(FIELD_MODULUS.classify().as_i32());
 
-        let mut decompressed = a.elements[i].as_i32() * FIELD_MODULUS.classify().as_i32();
-
-        hax_lib::fstar!(
-            "assert (v ($decompressed <<! mk_i32 1) == v $decompressed * 2);
-          assert (v (mk_i32 1 <<! $COEFFICIENT_BITS) == pow2 (v $COEFFICIENT_BITS));
-          assert (v (($decompressed <<! mk_i32 1) +! (mk_i32 1 <<! $COEFFICIENT_BITS)) ==
-            v ($decompressed <<! mk_i32 1) + v (mk_i32 1 <<! $COEFFICIENT_BITS))"
-        );
-
-        decompressed = (decompressed << 1) + (1i32 << COEFFICIENT_BITS);
-
-        hax_lib::fstar!(
-            "assert (v ($COEFFICIENT_BITS +! mk_i32 1) == v $COEFFICIENT_BITS + 1);
-          assert (v ($decompressed >>! ($COEFFICIENT_BITS +! mk_i32 1 <: i32)) ==
-            v $decompressed / pow2 (v $COEFFICIENT_BITS + 1))"
-        );
+        decompressed = (decompressed << 1).wrapping_add(1i32 << COEFFICIENT_BITS);
 
         decompressed = decompressed >> (COEFFICIENT_BITS + 1);
-
-        hax_lib::fstar!(
-            "assert (v $decompressed < v $FIELD_MODULUS);
-          assert (v (cast $decompressed <: i16) < v $FIELD_MODULUS)"
-        );
 
         a.elements[i] = decompressed.as_i16();
     }

@@ -47,14 +47,13 @@ jobs:
         working-directory: libcrux-iot/ml-kem
         run: ./hax.py extract
 
-# XXX: Disable laxing and proving for now
-  #     - name: ↑ Upload F* extraction
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: fstar-extractions
-  #         path: "**/proofs/fstar"
-  #         include-hidden-files: true
-  #         if-no-files-found: error
+      - name: ↑ Upload F* extraction
+        uses: actions/upload-artifact@v4
+        with:
+          name: fstar-extractions
+          path: "**/proofs/fstar"
+          include-hidden-files: true
+          if-no-files-found: error
 
   # lax:
   #   runs-on: ubuntu-latest
@@ -78,33 +77,30 @@ jobs:
   #       working-directory: libcrux-ml-kem
   #       run: ./hax.py prove --admit
 
-  # prove:
-  #   runs-on: self-hosted
-  #   if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-  #   needs:
-  #     - get-hax-ref
-  #     - extract
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - uses: actions/checkout@v5
-  #       with:
-  #         repository: cryspen/hax
-  #         path: hax
-  #         ref: ${{ github.event.inputs.hax_ref || needs.get-hax-ref.outputs.hax_ref }}
-  #     - name: ⤵ Install hax
-  #       run: |
-  #         nix profile install ./hax
-  #     - name: ⤵ Install FStar
-  #       run: nix profile install github:FStarLang/FStar/v2025.02.17
+  ## We may need to run this as a nightly job, or on a self-hosted
+  ## runner, once functional correctness proofs are added. Panic
+  ## freedom proofs on their own seem lightweight enough to run on a
+  ## PR.
+  panic-freedom:
+    runs-on: ubuntu-latest
+    needs:
+      - get-hax-ref
+      - extract
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hacspec/hax-actions@main
+        with:
+          hax_reference: ${{ github.event.inputs.hax_ref || needs.get-hax-ref.outputs.hax_ref }}
+          fstar: v2025.02.17
 
-  #     - uses: actions/download-artifact@v5
-  #       with:
-  #         name: fstar-extractions
-  #         path: .
+      - uses: actions/download-artifact@v7
+        with:
+          name: fstar-extractions
+          path: .
 
-  #     - name: 🏃 Prove ML-KEM crate
-  #       working-directory: libcrux-ml-kem
-  #       run: FSTAR_HOME=~/.nix-profile ./hax.py prove
+      - name: 🏃 Panic Freedom in ML-KEM
+        working-directory: libcrux-iot/ml-kem
+        run: ./hax.py prove 
   
   mlkem-extract-hax-status:
     if: ${{ always() }}
@@ -118,14 +114,14 @@ jobs:
         if: ${{ (contains(needs.*.result, 'failure')) }} 
         run: exit 1 
   
-  # mlkem-lax-hax-status:
-  #   if: ${{ always() }}
-  #   needs: [get-hax-ref, lax]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Successful
-  #       if: ${{ !(contains(needs.*.result, 'failure')) }} 
-  #       run: exit 0 
-  #     - name: Failing
-  #       if: ${{ (contains(needs.*.result, 'failure')) }} 
-  #       run: exit 1 
+  mlkem-panic-freedom-status:
+    if: ${{ always() }}
+    needs: [get-hax-ref, panic-freedom]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Successful
+        if: ${{ !(contains(needs.*.result, 'failure')) }} 
+        run: exit 0 
+      - name: Failing
+        if: ${{ (contains(needs.*.result, 'failure')) }} 
+        run: exit 1 

@@ -239,3 +239,5 @@ macro_rules! impl_kem_trait {
 
 #[cfg(not(hax))]
 use impl_kem_trait;
+#[cfg(hax)]
+mod spec;

@@ -7,8 +7,8 @@
  * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
  * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
  * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: unset
- * Libcrux: 1ad7c25705450131b575043e252c944035898962
+ * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
+ * Libcrux: 2259f47ca2a2a060c9fd147ccc78ed3588bfd288
  */
 
 #include "internal/libcrux_iot_core.h"
@@ -295,22 +295,6 @@ int32_t libcrux_secrets_int_as_i32_b8(uint32_t self) {
 }
 
 /**
-This function found in impl {libcrux_secrets::int::CastOps for u8}
-*/
-int16_t libcrux_secrets_int_as_i16_59(uint8_t self) {
-  return libcrux_secrets_int_public_integers_classify_27_39(
-      (int16_t)libcrux_secrets_int_public_integers_declassify_d8_90(self));
-}
-
-/**
-This function found in impl {libcrux_secrets::int::CastOps for i16}
-*/
-uint8_t libcrux_secrets_int_as_u8_f5(int16_t self) {
-  return libcrux_secrets_int_public_integers_classify_27_90(
-      (uint8_t)libcrux_secrets_int_public_integers_declassify_d8_39(self));
-}
-
-/**
 This function found in impl {libcrux_secrets::int::CastOps for i16}
 */
 uint16_t libcrux_secrets_int_as_u16_f5(int16_t self) {
@@ -324,6 +308,22 @@ This function found in impl {libcrux_secrets::int::CastOps for u16}
 int16_t libcrux_secrets_int_as_i16_ca(uint16_t self) {
   return libcrux_secrets_int_public_integers_classify_27_39(
       (int16_t)declassify_d8_de(self));
+}
+
+/**
+This function found in impl {libcrux_secrets::int::CastOps for i16}
+*/
+uint8_t libcrux_secrets_int_as_u8_f5(int16_t self) {
+  return libcrux_secrets_int_public_integers_classify_27_90(
+      (uint8_t)libcrux_secrets_int_public_integers_declassify_d8_39(self));
+}
+
+/**
+This function found in impl {libcrux_secrets::int::CastOps for u8}
+*/
+int16_t libcrux_secrets_int_as_i16_59(uint8_t self) {
+  return libcrux_secrets_int_public_integers_classify_27_39(
+      (int16_t)libcrux_secrets_int_public_integers_declassify_d8_90(self));
 }
 
 /**
@@ -1890,34 +1890,6 @@ Eurydice_dst_ref_mut_fc Eurydice_array_to_subslice_mut_7f(
 }
 
 /**
-A monomorphic instance of Eurydice.array_to_subslice_shared
-with types int16_t, core_ops_range_Range size_t, Eurydice_derefed_slice int16_t
-with const generics
-- N= 16
-*/
-Eurydice_borrow_slice_i16 Eurydice_array_to_subslice_shared_85(
-    const Eurydice_arr_e2 *a, core_ops_range_Range_08 r) {
-  return (KRML_CLITERAL(Eurydice_borrow_slice_i16){.ptr = a->data + r.start,
-                                                   .meta = r.end - r.start});
-}
-
-/**
- Classify a mutable slice (identity)
- We define a separate function for this because hax has limited support for
- &mut-returning functions
-*/
-/**
-A monomorphic instance of libcrux_secrets.int.public_integers.classify_mut_slice
-with types Eurydice_dst_ref_mut uint8_t size_t
-
-*/
-Eurydice_mut_borrow_slice_u8
-libcrux_secrets_int_public_integers_classify_mut_slice_47(
-    Eurydice_mut_borrow_slice_u8 x) {
-  return x;
-}
-
-/**
 This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a
 (@Slice<T>)> for &'a (@Slice<T>)}
 */
@@ -1932,41 +1904,15 @@ Eurydice_borrow_slice_u8 libcrux_secrets_int_classify_public_classify_ref_9b_90(
 }
 
 /**
-This function found in impl {libcrux_secrets::traits::Declassify<T> for T}
-*/
-/**
-A monomorphic instance of libcrux_secrets.int.public_integers.declassify_d8
-with types Eurydice_arr int16_t[[$16size_t]]
-
-*/
-Eurydice_arr_e2 libcrux_secrets_int_public_integers_declassify_d8_3a(
-    Eurydice_arr_e2 self) {
-  return self;
-}
-
-/**
-A monomorphic instance of Eurydice.array_to_slice_shared
-with types int16_t
+A monomorphic instance of Eurydice.array_to_subslice_shared
+with types int16_t, core_ops_range_Range size_t, Eurydice_derefed_slice int16_t
 with const generics
 - N= 16
 */
-Eurydice_borrow_slice_i16 Eurydice_array_to_slice_shared_b4(
-    const Eurydice_arr_e2 *a) {
-  Eurydice_borrow_slice_i16 lit;
-  lit.ptr = a->data;
-  lit.meta = (size_t)16U;
-  return lit;
-}
-
-/**
-A monomorphic instance of Eurydice.slice_subslice_mut
-with types int16_t, core_ops_range_Range size_t, Eurydice_derefed_slice int16_t
-
-*/
-Eurydice_mut_borrow_slice_i16 Eurydice_slice_subslice_mut_76(
-    Eurydice_mut_borrow_slice_i16 s, core_ops_range_Range_08 r) {
-  return (KRML_CLITERAL(Eurydice_mut_borrow_slice_i16){
-      .ptr = s.ptr + r.start, .meta = r.end - r.start});
+Eurydice_borrow_slice_i16 Eurydice_array_to_subslice_shared_85(
+    const Eurydice_arr_e2 *a, core_ops_range_Range_08 r) {
+  return (KRML_CLITERAL(Eurydice_borrow_slice_i16){.ptr = a->data + r.start,
+                                                   .meta = r.end - r.start});
 }
 
 /**
