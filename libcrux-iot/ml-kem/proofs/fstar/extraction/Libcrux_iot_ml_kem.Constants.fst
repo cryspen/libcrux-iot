@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Constants
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 /// Coefficients per ring element
 let v_COEFFICIENTS_IN_RING_ELEMENT: usize = mk_usize 256

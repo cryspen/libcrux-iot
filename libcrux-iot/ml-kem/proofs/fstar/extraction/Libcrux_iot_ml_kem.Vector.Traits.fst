@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Vector.Traits
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let v_MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS: i16 = mk_i16 1353
 
@@ -16,8 +16,8 @@ let v_BARRETT_SHIFT: i32 = mk_i32 26
 let v_BARRETT_R: i32 = mk_i32 1 <<! v_BARRETT_SHIFT
 
 class t_Repr (v_Self: Type0) = {
-  [@@@ FStar.Tactics.Typeclasses.no_method]_super_250177790225314374:Core.Marker.t_Copy v_Self;
-  [@@@ FStar.Tactics.Typeclasses.no_method]_super_14156401398203956914:Core.Clone.t_Clone v_Self;
+  [@@@ FStar.Tactics.Typeclasses.no_method]_super_i0:Core_models.Marker.t_Copy v_Self;
+  [@@@ FStar.Tactics.Typeclasses.no_method]_super_i1:Core_models.Clone.t_Clone v_Self;
   f_repr_pre:self_: v_Self -> pred: Type0{true ==> pred};
   f_repr_post:v_Self -> t_Array i16 (mk_usize 16) -> Type0;
   f_repr:x0: v_Self
@@ -25,15 +25,15 @@ class t_Repr (v_Self: Type0) = {
 }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let _ = fun (v_Self:Type0) {|i: t_Repr v_Self|} -> i._super_250177790225314374
+let _ = fun (v_Self:Type0) {|i: t_Repr v_Self|} -> i._super_i0
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let _ = fun (v_Self:Type0) {|i: t_Repr v_Self|} -> i._super_14156401398203956914
+let _ = fun (v_Self:Type0) {|i: t_Repr v_Self|} -> i._super_i1
 
 class t_Operations (v_Self: Type0) = {
-  [@@@ FStar.Tactics.Typeclasses.no_method]_super_250177790225314374:Core.Marker.t_Copy v_Self;
-  [@@@ FStar.Tactics.Typeclasses.no_method]_super_14156401398203956914:Core.Clone.t_Clone v_Self;
-  [@@@ FStar.Tactics.Typeclasses.no_method]_super_13976135183713343918:t_Repr v_Self;
+  [@@@ FStar.Tactics.Typeclasses.no_method]_super_i0:Core_models.Marker.t_Copy v_Self;
+  [@@@ FStar.Tactics.Typeclasses.no_method]_super_i1:Core_models.Clone.t_Clone v_Self;
+  [@@@ FStar.Tactics.Typeclasses.no_method]_super_i2:t_Repr v_Self;
   f_ZERO_pre:x: Prims.unit
     -> pred:
       Type0
@@ -43,21 +43,21 @@ class t_Operations (v_Self: Type0) = {
   f_ZERO_post:Prims.unit -> v_Self -> Type0;
   f_ZERO:x0: Prims.unit -> Prims.Pure v_Self (f_ZERO_pre x0) (fun result -> f_ZERO_post x0 result);
   f_from_i16_array_pre:array: t_Slice i16 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #i16 array <: usize) =. mk_usize 16 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #i16 array <: usize) =. mk_usize 16 ==> pred};
   f_from_i16_array_post:t_Slice i16 -> v_Self -> v_Self -> Type0;
   f_from_i16_array:x0: t_Slice i16 -> x1: v_Self
     -> Prims.Pure v_Self
         (f_from_i16_array_pre x0 x1)
         (fun result -> f_from_i16_array_post x0 x1 result);
   f_to_i16_array_pre:x: v_Self -> out: t_Slice i16
-    -> pred: Type0{(Core.Slice.impl__len #i16 out <: usize) =. mk_usize 16 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #i16 out <: usize) =. mk_usize 16 ==> pred};
   f_to_i16_array_post:v_Self -> t_Slice i16 -> t_Slice i16 -> Type0;
   f_to_i16_array:x0: v_Self -> x1: t_Slice i16
     -> Prims.Pure (t_Slice i16)
         (f_to_i16_array_pre x0 x1)
         (fun result -> f_to_i16_array_post x0 x1 result);
   f_reducing_from_i32_array_pre:array: t_Slice i32 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #i32 array <: usize) =. mk_usize 16 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #i32 array <: usize) =. mk_usize 16 ==> pred};
   f_reducing_from_i32_array_post:t_Slice i32 -> v_Self -> v_Self -> Type0;
   f_reducing_from_i32_array:x0: t_Slice i32 -> x1: v_Self
     -> Prims.Pure v_Self
@@ -173,7 +173,7 @@ class t_Operations (v_Self: Type0) = {
       zeta1: i16 ->
       zeta2: i16 ->
       zeta3: i16
-    -> pred: Type0{(Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #i32 out <: usize) >=. mk_usize 16 ==> pred};
   f_accumulating_ntt_multiply_post:
       lhs: v_Self ->
       rhs: v_Self ->
@@ -186,8 +186,8 @@ class t_Operations (v_Self: Type0) = {
     -> pred:
       Type0
         { pred ==>
-          (Core.Slice.impl__len #i32 out_future <: usize) =.
-          (Core.Slice.impl__len #i32 out <: usize) };
+          (Core_models.Slice.impl__len #i32 out_future <: usize) =.
+          (Core_models.Slice.impl__len #i32 out <: usize) };
   f_accumulating_ntt_multiply:
       x0: v_Self ->
       x1: v_Self ->
@@ -208,7 +208,7 @@ class t_Operations (v_Self: Type0) = {
       zeta1: i16 ->
       zeta2: i16 ->
       zeta3: i16
-    -> pred: Type0{(Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #i32 out <: usize) >=. mk_usize 16 ==> pred};
   f_accumulating_ntt_multiply_fill_cache_post:
       lhs: v_Self ->
       rhs: v_Self ->
@@ -222,9 +222,9 @@ class t_Operations (v_Self: Type0) = {
     -> pred:
       Type0
         { pred ==>
-          (let out_future, cache_future:(t_Slice i32 & v_Self) = x in
-            (Core.Slice.impl__len #i32 out_future <: usize) =.
-            (Core.Slice.impl__len #i32 out <: usize)) };
+          (let (out_future: t_Slice i32), (cache_future: v_Self) = x in
+            (Core_models.Slice.impl__len #i32 out_future <: usize) =.
+            (Core_models.Slice.impl__len #i32 out <: usize)) };
   f_accumulating_ntt_multiply_fill_cache:
       x0: v_Self ->
       x1: v_Self ->
@@ -242,7 +242,7 @@ class t_Operations (v_Self: Type0) = {
       rhs: v_Self ->
       out: t_Slice i32 ->
       cache: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #i32 out <: usize) >=. mk_usize 16 ==> pred};
   f_accumulating_ntt_multiply_use_cache_post:
       lhs: v_Self ->
       rhs: v_Self ->
@@ -252,97 +252,97 @@ class t_Operations (v_Self: Type0) = {
     -> pred:
       Type0
         { pred ==>
-          (Core.Slice.impl__len #i32 out_future <: usize) =.
-          (Core.Slice.impl__len #i32 out <: usize) };
+          (Core_models.Slice.impl__len #i32 out_future <: usize) =.
+          (Core_models.Slice.impl__len #i32 out <: usize) };
   f_accumulating_ntt_multiply_use_cache:x0: v_Self -> x1: v_Self -> x2: t_Slice i32 -> x3: v_Self
     -> Prims.Pure (t_Slice i32)
         (f_accumulating_ntt_multiply_use_cache_pre x0 x1 x2 x3)
         (fun result -> f_accumulating_ntt_multiply_use_cache_post x0 x1 x2 x3 result);
   f_serialize_1__pre:a: v_Self -> out: t_Slice u8
-    -> pred: Type0{(Core.Slice.impl__len #u8 out <: usize) =. mk_usize 2 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 2 ==> pred};
   f_serialize_1__post:a: v_Self -> out: t_Slice u8 -> out_future: t_Slice u8
-    -> pred: Type0{pred ==> (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 2};
+    -> pred: Type0{pred ==> (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 2};
   f_serialize_1_:x0: v_Self -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8)
         (f_serialize_1__pre x0 x1)
         (fun result -> f_serialize_1__post x0 x1 result);
   f_deserialize_1__pre:a: t_Slice u8 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #u8 a <: usize) =. mk_usize 2 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 2 ==> pred};
   f_deserialize_1__post:t_Slice u8 -> v_Self -> v_Self -> Type0;
   f_deserialize_1_:x0: t_Slice u8 -> x1: v_Self
     -> Prims.Pure v_Self
         (f_deserialize_1__pre x0 x1)
         (fun result -> f_deserialize_1__post x0 x1 result);
   f_serialize_4__pre:a: v_Self -> out: t_Slice u8
-    -> pred: Type0{(Core.Slice.impl__len #u8 out <: usize) =. mk_usize 8 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 8 ==> pred};
   f_serialize_4__post:a: v_Self -> out: t_Slice u8 -> out_future: t_Slice u8
-    -> pred: Type0{pred ==> (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 8};
+    -> pred: Type0{pred ==> (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 8};
   f_serialize_4_:x0: v_Self -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8)
         (f_serialize_4__pre x0 x1)
         (fun result -> f_serialize_4__post x0 x1 result);
   f_deserialize_4__pre:a: t_Slice u8 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #u8 a <: usize) =. mk_usize 8 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 8 ==> pred};
   f_deserialize_4__post:t_Slice u8 -> v_Self -> v_Self -> Type0;
   f_deserialize_4_:x0: t_Slice u8 -> x1: v_Self
     -> Prims.Pure v_Self
         (f_deserialize_4__pre x0 x1)
         (fun result -> f_deserialize_4__post x0 x1 result);
   f_serialize_5__pre:a: v_Self -> out: t_Slice u8
-    -> pred: Type0{(Core.Slice.impl__len #u8 out <: usize) =. mk_usize 10 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 10 ==> pred};
   f_serialize_5__post:a: v_Self -> out: t_Slice u8 -> out_future: t_Slice u8
-    -> pred: Type0{pred ==> (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 10};
+    -> pred: Type0{pred ==> (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 10};
   f_serialize_5_:x0: v_Self -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8)
         (f_serialize_5__pre x0 x1)
         (fun result -> f_serialize_5__post x0 x1 result);
   f_deserialize_5__pre:a: t_Slice u8 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #u8 a <: usize) =. mk_usize 10 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 10 ==> pred};
   f_deserialize_5__post:t_Slice u8 -> v_Self -> v_Self -> Type0;
   f_deserialize_5_:x0: t_Slice u8 -> x1: v_Self
     -> Prims.Pure v_Self
         (f_deserialize_5__pre x0 x1)
         (fun result -> f_deserialize_5__post x0 x1 result);
   f_serialize_10__pre:a: v_Self -> out: t_Slice u8
-    -> pred: Type0{(Core.Slice.impl__len #u8 out <: usize) =. mk_usize 20 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 20 ==> pred};
   f_serialize_10__post:a: v_Self -> out: t_Slice u8 -> out_future: t_Slice u8
-    -> pred: Type0{pred ==> (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 20};
+    -> pred: Type0{pred ==> (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 20};
   f_serialize_10_:x0: v_Self -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8)
         (f_serialize_10__pre x0 x1)
         (fun result -> f_serialize_10__post x0 x1 result);
   f_deserialize_10__pre:a: t_Slice u8 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #u8 a <: usize) =. mk_usize 20 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 20 ==> pred};
   f_deserialize_10__post:t_Slice u8 -> v_Self -> v_Self -> Type0;
   f_deserialize_10_:x0: t_Slice u8 -> x1: v_Self
     -> Prims.Pure v_Self
         (f_deserialize_10__pre x0 x1)
         (fun result -> f_deserialize_10__post x0 x1 result);
   f_serialize_11__pre:a: v_Self -> out: t_Slice u8
-    -> pred: Type0{(Core.Slice.impl__len #u8 out <: usize) =. mk_usize 22 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 22 ==> pred};
   f_serialize_11__post:a: v_Self -> out: t_Slice u8 -> out_future: t_Slice u8
-    -> pred: Type0{pred ==> (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 22};
+    -> pred: Type0{pred ==> (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 22};
   f_serialize_11_:x0: v_Self -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8)
         (f_serialize_11__pre x0 x1)
         (fun result -> f_serialize_11__post x0 x1 result);
   f_deserialize_11__pre:a: t_Slice u8 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #u8 a <: usize) =. mk_usize 22 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 22 ==> pred};
   f_deserialize_11__post:t_Slice u8 -> v_Self -> v_Self -> Type0;
   f_deserialize_11_:x0: t_Slice u8 -> x1: v_Self
     -> Prims.Pure v_Self
         (f_deserialize_11__pre x0 x1)
         (fun result -> f_deserialize_11__post x0 x1 result);
   f_serialize_12__pre:a: v_Self -> out: t_Slice u8
-    -> pred: Type0{(Core.Slice.impl__len #u8 out <: usize) =. mk_usize 24 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 24 ==> pred};
   f_serialize_12__post:a: v_Self -> out: t_Slice u8 -> out_future: t_Slice u8
-    -> pred: Type0{pred ==> (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 24};
+    -> pred: Type0{pred ==> (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 24};
   f_serialize_12_:x0: v_Self -> x1: t_Slice u8
     -> Prims.Pure (t_Slice u8)
         (f_serialize_12__pre x0 x1)
         (fun result -> f_serialize_12__post x0 x1 result);
   f_deserialize_12__pre:a: t_Slice u8 -> out: v_Self
-    -> pred: Type0{(Core.Slice.impl__len #u8 a <: usize) =. mk_usize 24 ==> pred};
+    -> pred: Type0{(Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 24 ==> pred};
   f_deserialize_12__post:t_Slice u8 -> v_Self -> v_Self -> Type0;
   f_deserialize_12_:x0: t_Slice u8 -> x1: v_Self
     -> Prims.Pure v_Self
@@ -351,16 +351,16 @@ class t_Operations (v_Self: Type0) = {
   f_rej_sample_pre:a: t_Slice u8 -> out: t_Slice i16
     -> pred:
       Type0
-        { (Core.Slice.impl__len #u8 a <: usize) =. mk_usize 24 &&
-          (Core.Slice.impl__len #i16 out <: usize) =. mk_usize 16 ==>
+        { (Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 24 &&
+          (Core_models.Slice.impl__len #i16 out <: usize) =. mk_usize 16 ==>
           pred };
   f_rej_sample_post:a: t_Slice u8 -> out: t_Slice i16 -> x: (t_Slice i16 & usize)
     -> pred:
       Type0
         { pred ==>
-          (let out_future, result:(t_Slice i16 & usize) = x in
-            result <=. mk_usize 16 && (Core.Slice.impl__len #i16 out_future <: usize) =. mk_usize 16
-          ) };
+          (let (out_future: t_Slice i16), (result: usize) = x in
+            result <=. mk_usize 16 &&
+            (Core_models.Slice.impl__len #i16 out_future <: usize) =. mk_usize 16) };
   f_rej_sample:x0: t_Slice u8 -> x1: t_Slice i16
     -> Prims.Pure (t_Slice i16 & usize)
         (f_rej_sample_pre x0 x1)
@@ -368,13 +368,13 @@ class t_Operations (v_Self: Type0) = {
 }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let _ = fun (v_Self:Type0) {|i: t_Operations v_Self|} -> i._super_250177790225314374
+let _ = fun (v_Self:Type0) {|i: t_Operations v_Self|} -> i._super_i0
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let _ = fun (v_Self:Type0) {|i: t_Operations v_Self|} -> i._super_14156401398203956914
+let _ = fun (v_Self:Type0) {|i: t_Operations v_Self|} -> i._super_i1
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
-let _ = fun (v_Self:Type0) {|i: t_Operations v_Self|} -> i._super_13976135183713343918
+let _ = fun (v_Self:Type0) {|i: t_Operations v_Self|} -> i._super_i2
 
 let montgomery_multiply_fe
       (#v_T: Type0)

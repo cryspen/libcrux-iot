@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Vector.Portable
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -17,8 +17,8 @@ let _ =
 let impl: Libcrux_iot_ml_kem.Vector.Traits.t_Repr
 Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
   {
-    _super_250177790225314374 = FStar.Tactics.Typeclasses.solve;
-    _super_14156401398203956914 = FStar.Tactics.Typeclasses.solve;
+    _super_i0 = FStar.Tactics.Typeclasses.solve;
+    _super_i1 = FStar.Tactics.Typeclasses.solve;
     f_repr_pre
     =
     (fun (self: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) -> true);
@@ -43,9 +43,9 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
 let impl_1: Libcrux_iot_ml_kem.Vector.Traits.t_Operations
 Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
   {
-    _super_250177790225314374 = FStar.Tactics.Typeclasses.solve;
-    _super_14156401398203956914 = FStar.Tactics.Typeclasses.solve;
-    _super_13976135183713343918 = FStar.Tactics.Typeclasses.solve;
+    _super_i0 = FStar.Tactics.Typeclasses.solve;
+    _super_i1 = FStar.Tactics.Typeclasses.solve;
+    _super_i2 = FStar.Tactics.Typeclasses.solve;
     f_ZERO_pre = (fun (_: Prims.unit) -> true);
     f_ZERO_post
     =
@@ -58,7 +58,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (array: t_Slice i16)
         (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
         ->
-        (Core.Slice.impl__len #i16 array <: usize) =. mk_usize 16);
+        (Core_models.Slice.impl__len #i16 array <: usize) =. mk_usize 16);
     f_from_i16_array_post
     =
     (fun
@@ -80,7 +80,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_to_i16_array_pre
     =
     (fun (x: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice i16) ->
-        (Core.Slice.impl__len #i16 out <: usize) =. mk_usize 16);
+        (Core_models.Slice.impl__len #i16 out <: usize) =. mk_usize 16);
     f_to_i16_array_post
     =
     (fun
@@ -100,7 +100,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (array: t_Slice i32)
         (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
         ->
-        (Core.Slice.impl__len #i32 array <: usize) =. mk_usize 16);
+        (Core_models.Slice.impl__len #i32 array <: usize) =. mk_usize 16);
     f_reducing_from_i32_array_post
     =
     (fun
@@ -533,7 +533,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (zeta2: i16)
         (zeta3: i16)
         ->
-        (Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16);
+        (Core_models.Slice.impl__len #i32 out <: usize) >=. mk_usize 16);
     f_accumulating_ntt_multiply_post
     =
     (fun
@@ -546,7 +546,8 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (zeta3: i16)
         (out_future: t_Slice i32)
         ->
-        (Core.Slice.impl__len #i32 out_future <: usize) =. (Core.Slice.impl__len #i32 out <: usize));
+        (Core_models.Slice.impl__len #i32 out_future <: usize) =.
+        (Core_models.Slice.impl__len #i32 out <: usize));
     f_accumulating_ntt_multiply
     =
     (fun
@@ -580,7 +581,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (zeta2: i16)
         (zeta3: i16)
         ->
-        (Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16);
+        (Core_models.Slice.impl__len #i32 out <: usize) >=. mk_usize 16);
     f_accumulating_ntt_multiply_fill_cache_post
     =
     (fun
@@ -595,7 +596,8 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (out_future, cache_future:
           (t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector))
         ->
-        (Core.Slice.impl__len #i32 out_future <: usize) =. (Core.Slice.impl__len #i32 out <: usize));
+        (Core_models.Slice.impl__len #i32 out_future <: usize) =.
+        (Core_models.Slice.impl__len #i32 out <: usize));
     f_accumulating_ntt_multiply_fill_cache
     =
     (fun
@@ -608,8 +610,9 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (zeta2: i16)
         (zeta3: i16)
         ->
-        let tmp0, tmp1:(t_Slice i32 &
-          Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+        let
+        (tmp0: t_Slice i32), (tmp1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
+        =
           Libcrux_iot_ml_kem.Vector.Portable.Ntt.accumulating_ntt_multiply_fill_cache lhs
             rhs
             out
@@ -633,7 +636,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (out: t_Slice i32)
         (cache: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
         ->
-        (Core.Slice.impl__len #i32 out <: usize) >=. mk_usize 16);
+        (Core_models.Slice.impl__len #i32 out <: usize) >=. mk_usize 16);
     f_accumulating_ntt_multiply_use_cache_post
     =
     (fun
@@ -643,7 +646,8 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (cache: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
         (out_future: t_Slice i32)
         ->
-        (Core.Slice.impl__len #i32 out_future <: usize) =. (Core.Slice.impl__len #i32 out <: usize));
+        (Core_models.Slice.impl__len #i32 out_future <: usize) =.
+        (Core_models.Slice.impl__len #i32 out <: usize));
     f_accumulating_ntt_multiply_use_cache
     =
     (fun
@@ -662,7 +666,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_serialize_1__pre
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
-        (Core.Slice.impl__len #u8 out <: usize) =. mk_usize 2);
+        (Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 2);
     f_serialize_1__post
     =
     (fun
@@ -670,7 +674,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (out: t_Slice u8)
         (out_future: t_Slice u8)
         ->
-        (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 2);
+        (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 2);
     f_serialize_1_
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
@@ -679,7 +683,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_deserialize_1__pre
     =
     (fun (a: t_Slice u8) (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) ->
-        (Core.Slice.impl__len #u8 a <: usize) =. mk_usize 2);
+        (Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 2);
     f_deserialize_1__post
     =
     (fun
@@ -698,7 +702,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_serialize_4__pre
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
-        (Core.Slice.impl__len #u8 out <: usize) =. mk_usize 8);
+        (Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 8);
     f_serialize_4__post
     =
     (fun
@@ -706,7 +710,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (out: t_Slice u8)
         (out_future: t_Slice u8)
         ->
-        (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 8);
+        (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 8);
     f_serialize_4_
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
@@ -715,7 +719,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_deserialize_4__pre
     =
     (fun (a: t_Slice u8) (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) ->
-        (Core.Slice.impl__len #u8 a <: usize) =. mk_usize 8);
+        (Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 8);
     f_deserialize_4__post
     =
     (fun
@@ -740,7 +744,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_serialize_5__pre
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
-        (Core.Slice.impl__len #u8 out <: usize) =. mk_usize 10);
+        (Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 10);
     f_serialize_5__post
     =
     (fun
@@ -748,7 +752,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (out: t_Slice u8)
         (out_future: t_Slice u8)
         ->
-        (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 10);
+        (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 10);
     f_serialize_5_
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
@@ -757,7 +761,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_deserialize_5__pre
     =
     (fun (a: t_Slice u8) (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) ->
-        (Core.Slice.impl__len #u8 a <: usize) =. mk_usize 10);
+        (Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 10);
     f_deserialize_5__post
     =
     (fun
@@ -782,7 +786,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_serialize_10__pre
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
-        (Core.Slice.impl__len #u8 out <: usize) =. mk_usize 20);
+        (Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 20);
     f_serialize_10__post
     =
     (fun
@@ -790,7 +794,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (out: t_Slice u8)
         (out_future: t_Slice u8)
         ->
-        (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 20);
+        (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 20);
     f_serialize_10_
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
@@ -799,7 +803,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_deserialize_10__pre
     =
     (fun (a: t_Slice u8) (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) ->
-        (Core.Slice.impl__len #u8 a <: usize) =. mk_usize 20);
+        (Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 20);
     f_deserialize_10__post
     =
     (fun
@@ -824,7 +828,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_serialize_11__pre
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
-        (Core.Slice.impl__len #u8 out <: usize) =. mk_usize 22);
+        (Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 22);
     f_serialize_11__post
     =
     (fun
@@ -832,7 +836,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (out: t_Slice u8)
         (out_future: t_Slice u8)
         ->
-        (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 22);
+        (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 22);
     f_serialize_11_
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
@@ -841,7 +845,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_deserialize_11__pre
     =
     (fun (a: t_Slice u8) (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) ->
-        (Core.Slice.impl__len #u8 a <: usize) =. mk_usize 22);
+        (Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 22);
     f_deserialize_11__post
     =
     (fun
@@ -866,7 +870,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_serialize_12__pre
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
-        (Core.Slice.impl__len #u8 out <: usize) =. mk_usize 24);
+        (Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 24);
     f_serialize_12__post
     =
     (fun
@@ -874,7 +878,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
         (out: t_Slice u8)
         (out_future: t_Slice u8)
         ->
-        (Core.Slice.impl__len #u8 out_future <: usize) =. mk_usize 24);
+        (Core_models.Slice.impl__len #u8 out_future <: usize) =. mk_usize 24);
     f_serialize_12_
     =
     (fun (a: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) (out: t_Slice u8) ->
@@ -883,7 +887,7 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_deserialize_12__pre
     =
     (fun (a: t_Slice u8) (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) ->
-        (Core.Slice.impl__len #u8 a <: usize) =. mk_usize 24);
+        (Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 24);
     f_deserialize_12__post
     =
     (fun
@@ -902,16 +906,17 @@ Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
     f_rej_sample_pre
     =
     (fun (a: t_Slice u8) (out: t_Slice i16) ->
-        (Core.Slice.impl__len #u8 a <: usize) =. mk_usize 24 &&
-        (Core.Slice.impl__len #i16 out <: usize) =. mk_usize 16);
+        (Core_models.Slice.impl__len #u8 a <: usize) =. mk_usize 24 &&
+        (Core_models.Slice.impl__len #i16 out <: usize) =. mk_usize 16);
     f_rej_sample_post
     =
     (fun (a: t_Slice u8) (out: t_Slice i16) (out_future, result: (t_Slice i16 & usize)) ->
-        result <=. mk_usize 16 && (Core.Slice.impl__len #i16 out_future <: usize) =. mk_usize 16);
+        result <=. mk_usize 16 &&
+        (Core_models.Slice.impl__len #i16 out_future <: usize) =. mk_usize 16);
     f_rej_sample
     =
     fun (a: t_Slice u8) (out: t_Slice i16) ->
-      let tmp0, out1:(t_Slice i16 & usize) =
+      let (tmp0: t_Slice i16), (out1: usize) =
         Libcrux_iot_ml_kem.Vector.Portable.Sampling.rej_sample a out
       in
       let out:t_Slice i16 = tmp0 in

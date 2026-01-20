@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Vector.Portable.Vector_type
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -12,7 +12,7 @@ let _ =
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
 assume
-val impl_1': Core.Marker.t_Copy t_PortableVector
+val impl_1': Core_models.Marker.t_Copy t_PortableVector
 
 let impl_1 = impl_1'
 
@@ -33,11 +33,14 @@ let from_i16_array (array: t_Slice i16) (out: t_PortableVector) =
       out with
       f_elements
       =
-      Core.Slice.impl__copy_from_slice #i16
+      Core_models.Slice.impl__copy_from_slice #i16
         out.f_elements
-        (array.[ { Core.Ops.Range.f_start = mk_usize 0; Core.Ops.Range.f_end = mk_usize 16 }
+        (array.[ {
+              Core_models.Ops.Range.f_start = mk_usize 0;
+              Core_models.Ops.Range.f_end = mk_usize 16
+            }
             <:
-            Core.Ops.Range.t_Range usize ]
+            Core_models.Ops.Range.t_Range usize ]
           <:
           t_Slice i16)
     }
@@ -51,19 +54,22 @@ let to_i16_array (x: t_PortableVector) (out: t_Slice i16) =
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #i16 out <: usize) >=. mk_usize 16 <: bool)
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #i16 out <: usize) >=. mk_usize 16 <: bool)
       in
       ()
   in
   let out:t_Slice i16 =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_range out
-      ({ Core.Ops.Range.f_start = mk_usize 0; Core.Ops.Range.f_end = mk_usize 16 }
+      ({ Core_models.Ops.Range.f_start = mk_usize 0; Core_models.Ops.Range.f_end = mk_usize 16 }
         <:
-        Core.Ops.Range.t_Range usize)
-      (Core.Slice.impl__copy_from_slice #i16
-          (out.[ { Core.Ops.Range.f_start = mk_usize 0; Core.Ops.Range.f_end = mk_usize 16 }
+        Core_models.Ops.Range.t_Range usize)
+      (Core_models.Slice.impl__copy_from_slice #i16
+          (out.[ {
+                Core_models.Ops.Range.f_start = mk_usize 0;
+                Core_models.Ops.Range.f_end = mk_usize 16
+              }
               <:
-              Core.Ops.Range.t_Range usize ]
+              Core_models.Ops.Range.t_Range usize ]
             <:
             t_Slice i16)
           (Libcrux_secrets.Traits.f_declassify #(t_Array i16 (mk_usize 16))

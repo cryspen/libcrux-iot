@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Vector.Portable.Arithmetic
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -93,7 +93,7 @@ val reducing_from_i32_array
       (array: t_Slice i32)
       (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
     : Prims.Pure Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
-      (requires (Core.Slice.impl__len #i32 array <: usize) =. mk_usize 16)
+      (requires (Core_models.Slice.impl__len #i32 array <: usize) =. mk_usize 16)
       (fun _ -> Prims.l_True)
 
 /// If `fe` is some field element 'x' of the Kyber field and `fer` is congruent to

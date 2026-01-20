@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Polynomial
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -49,19 +49,19 @@ type t_PolynomialRingElement
 
 let impl
       (#v_Vector: Type0)
-      (#[FStar.Tactics.Typeclasses.tcresolve ()] i0: Core.Clone.t_Clone v_Vector)
+      (#[FStar.Tactics.Typeclasses.tcresolve ()] i0: Core_models.Clone.t_Clone v_Vector)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]
           i1:
           Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector)
-    : Core.Clone.t_Clone (t_PolynomialRingElement v_Vector) =
+    : Core_models.Clone.t_Clone (t_PolynomialRingElement v_Vector) =
   { f_clone = (fun x -> x); f_clone_pre = (fun _ -> True); f_clone_post = (fun _ _ -> True) }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
 val impl_1
       (#v_Vector: Type0)
-      {| i0: Core.Marker.t_Copy v_Vector |}
+      {| i0: Core_models.Marker.t_Copy v_Vector |}
       {| i1: Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector |}
-    : Core.Marker.t_Copy (t_PolynomialRingElement v_Vector)
+    : Core_models.Marker.t_Copy (t_PolynomialRingElement v_Vector)
 
 val impl_2__ZERO:
     #v_Vector: Type0 ->
@@ -126,7 +126,7 @@ val impl_2__from_i16_array
     : Prims.Pure (t_PolynomialRingElement v_Vector)
       (requires
         (v_VECTORS_IN_RING_ELEMENT *! mk_usize 16 <: usize) <=.
-        (Core.Slice.impl__len #i16 a <: usize))
+        (Core_models.Slice.impl__len #i16 a <: usize))
       (fun _ -> Prims.l_True)
 
 val impl_2__reducing_from_i32_array
@@ -137,7 +137,7 @@ val impl_2__reducing_from_i32_array
     : Prims.Pure (t_PolynomialRingElement v_Vector)
       (requires
         (v_VECTORS_IN_RING_ELEMENT *! mk_usize 16 <: usize) <=.
-        (Core.Slice.impl__len #i32 a <: usize))
+        (Core_models.Slice.impl__len #i32 a <: usize))
       (fun _ -> Prims.l_True)
 
 val impl_2__accumulating_ntt_multiply
@@ -147,6 +147,6 @@ val impl_2__accumulating_ntt_multiply
       (accumulator: t_Array i32 (mk_usize 256))
     : Prims.Pure (t_Array i32 (mk_usize 256))
       (requires
-        (Core.Slice.impl__len #i32 (accumulator <: t_Slice i32) <: usize) >=.
+        (Core_models.Slice.impl__len #i32 (accumulator <: t_Slice i32) <: usize) >=.
         (mk_usize 16 *! v_VECTORS_IN_RING_ELEMENT <: usize))
       (fun _ -> Prims.l_True)

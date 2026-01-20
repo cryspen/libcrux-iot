@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Vector.Portable
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)

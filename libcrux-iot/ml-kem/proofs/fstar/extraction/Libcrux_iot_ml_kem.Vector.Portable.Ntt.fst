@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Vector.Portable.Ntt
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -24,15 +24,15 @@ let ntt_step
       (Libcrux_secrets.Traits.f_classify #i16 #FStar.Tactics.Typeclasses.solve zeta <: i16)
   in
   let a_minus_t:i16 =
-    Core.Num.impl_i16__wrapping_sub (vec.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[
-          i ]
+    Core_models.Num.impl_i16__wrapping_sub (vec
+          .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ]
         <:
         i16)
       t
   in
   let a_plus_t:i16 =
-    Core.Num.impl_i16__wrapping_add (vec.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[
-          i ]
+    Core_models.Num.impl_i16__wrapping_add (vec
+          .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ]
         <:
         i16)
       t
@@ -161,15 +161,15 @@ let inv_ntt_step
       (i j: usize)
      =
   let a_minus_b:i16 =
-    Core.Num.impl_i16__wrapping_sub (vec.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[
-          j ]
+    Core_models.Num.impl_i16__wrapping_sub (vec
+          .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ j ]
         <:
         i16)
       (vec.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ] <: i16)
   in
   let a_plus_b:i16 =
-    Core.Num.impl_i16__wrapping_add (vec.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[
-          j ]
+    Core_models.Num.impl_i16__wrapping_add (vec
+          .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ j ]
         <:
         i16)
       (vec.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ] <: i16)
@@ -323,7 +323,7 @@ let accumulating_ntt_multiply_binomials_fill_cache
       usize ]
   in
   let ai_bi:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           ai
         <:
@@ -331,7 +331,7 @@ let accumulating_ntt_multiply_binomials_fill_cache
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bi <: i32)
   in
   let bj_zeta_:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           bj
         <:
@@ -355,17 +355,17 @@ let accumulating_ntt_multiply_binomials_fill_cache
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let aj_bj_zeta:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           aj
         <:
         i32)
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bj_zeta <: i32)
   in
-  let ai_bi_aj_bj:i32 = Core.Num.impl_i32__wrapping_add ai_bi aj_bj_zeta in
+  let ai_bi_aj_bj:i32 = Core_models.Num.impl_i32__wrapping_add ai_bi aj_bj_zeta in
   let o0:i32 = ai_bi_aj_bj in
   let ai_bj:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           ai
         <:
@@ -373,24 +373,26 @@ let accumulating_ntt_multiply_binomials_fill_cache
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bj <: i32)
   in
   let aj_bi:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           aj
         <:
         i32)
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bi <: i32)
   in
-  let ai_bj_aj_bi:i32 = Core.Num.impl_i32__wrapping_add ai_bj aj_bi in
+  let ai_bj_aj_bi:i32 = Core_models.Num.impl_i32__wrapping_add ai_bj aj_bi in
   let o1:i32 = ai_bj_aj_bi in
   let out:t_Slice i32 =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out
       (mk_usize 2 *! i <: usize)
-      (Core.Num.impl_i32__wrapping_add (out.[ mk_usize 2 *! i <: usize ] <: i32) o0 <: i32)
+      (Core_models.Num.impl_i32__wrapping_add (out.[ mk_usize 2 *! i <: usize ] <: i32) o0 <: i32)
   in
   let out:t_Slice i32 =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out
       ((mk_usize 2 *! i <: usize) +! mk_usize 1 <: usize)
-      (Core.Num.impl_i32__wrapping_add (out.[ (mk_usize 2 *! i <: usize) +! mk_usize 1 <: usize ]
+      (Core_models.Num.impl_i32__wrapping_add (out.[ (mk_usize 2 *! i <: usize) +! mk_usize 1
+              <:
+              usize ]
             <:
             i32)
           o1
@@ -424,7 +426,7 @@ let accumulating_ntt_multiply_binomials_use_cache
       usize ]
   in
   let ai_bi:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           ai
         <:
@@ -432,7 +434,7 @@ let accumulating_ntt_multiply_binomials_use_cache
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bi <: i32)
   in
   let aj_bj_zeta:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           aj
         <:
@@ -443,10 +445,10 @@ let accumulating_ntt_multiply_binomials_use_cache
         <:
         i32)
   in
-  let ai_bi_aj_bj:i32 = Core.Num.impl_i32__wrapping_add ai_bi aj_bj_zeta in
+  let ai_bi_aj_bj:i32 = Core_models.Num.impl_i32__wrapping_add ai_bi aj_bj_zeta in
   let o0:i32 = ai_bi_aj_bj in
   let ai_bj:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           ai
         <:
@@ -454,24 +456,26 @@ let accumulating_ntt_multiply_binomials_use_cache
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bj <: i32)
   in
   let aj_bi:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           aj
         <:
         i32)
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bi <: i32)
   in
-  let ai_bj_aj_bi:i32 = Core.Num.impl_i32__wrapping_add ai_bj aj_bi in
+  let ai_bj_aj_bi:i32 = Core_models.Num.impl_i32__wrapping_add ai_bj aj_bi in
   let o1:i32 = ai_bj_aj_bi in
   let out:t_Slice i32 =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out
       (mk_usize 2 *! i <: usize)
-      (Core.Num.impl_i32__wrapping_add (out.[ mk_usize 2 *! i <: usize ] <: i32) o0 <: i32)
+      (Core_models.Num.impl_i32__wrapping_add (out.[ mk_usize 2 *! i <: usize ] <: i32) o0 <: i32)
   in
   let out:t_Slice i32 =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out
       ((mk_usize 2 *! i <: usize) +! mk_usize 1 <: usize)
-      (Core.Num.impl_i32__wrapping_add (out.[ (mk_usize 2 *! i <: usize) +! mk_usize 1 <: usize ]
+      (Core_models.Num.impl_i32__wrapping_add (out.[ (mk_usize 2 *! i <: usize) +! mk_usize 1
+              <:
+              usize ]
             <:
             i32)
           o1
@@ -505,7 +509,7 @@ let accumulating_ntt_multiply_binomials
       usize ]
   in
   let ai_bi:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           ai
         <:
@@ -513,7 +517,7 @@ let accumulating_ntt_multiply_binomials
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bi <: i32)
   in
   let bj_zeta_:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           bj
         <:
@@ -524,17 +528,17 @@ let accumulating_ntt_multiply_binomials
     Libcrux_iot_ml_kem.Vector.Portable.Arithmetic.montgomery_reduce_element bj_zeta_
   in
   let aj_bj_zeta:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           aj
         <:
         i32)
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bj_zeta <: i32)
   in
-  let ai_bi_aj_bj:i32 = Core.Num.impl_i32__wrapping_add ai_bi aj_bj_zeta in
+  let ai_bi_aj_bj:i32 = Core_models.Num.impl_i32__wrapping_add ai_bi aj_bj_zeta in
   let o0:i32 = ai_bi_aj_bj in
   let ai_bj:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           ai
         <:
@@ -542,24 +546,26 @@ let accumulating_ntt_multiply_binomials
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bj <: i32)
   in
   let aj_bi:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           aj
         <:
         i32)
       (Libcrux_secrets.Int.f_as_i32 #i16 #FStar.Tactics.Typeclasses.solve bi <: i32)
   in
-  let ai_bj_aj_bi:i32 = Core.Num.impl_i32__wrapping_add ai_bj aj_bi in
+  let ai_bj_aj_bi:i32 = Core_models.Num.impl_i32__wrapping_add ai_bj aj_bi in
   let o1:i32 = ai_bj_aj_bi in
   let out:t_Slice i32 =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out
       (mk_usize 2 *! i <: usize)
-      (Core.Num.impl_i32__wrapping_add (out.[ mk_usize 2 *! i <: usize ] <: i32) o0 <: i32)
+      (Core_models.Num.impl_i32__wrapping_add (out.[ mk_usize 2 *! i <: usize ] <: i32) o0 <: i32)
   in
   let out:t_Slice i32 =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out
       ((mk_usize 2 *! i <: usize) +! mk_usize 1 <: usize)
-      (Core.Num.impl_i32__wrapping_add (out.[ (mk_usize 2 *! i <: usize) +! mk_usize 1 <: usize ]
+      (Core_models.Num.impl_i32__wrapping_add (out.[ (mk_usize 2 *! i <: usize) +! mk_usize 1
+              <:
+              usize ]
             <:
             i32)
           o1
@@ -573,10 +579,10 @@ let accumulating_ntt_multiply
       (out: t_Slice i32)
       (zeta0 zeta1 zeta2 zeta3: i16)
      =
-  let nzeta0:i16 = Core.Num.impl_i16__wrapping_neg zeta0 in
-  let nzeta1:i16 = Core.Num.impl_i16__wrapping_neg zeta1 in
-  let nzeta2:i16 = Core.Num.impl_i16__wrapping_neg zeta2 in
-  let nzeta3:i16 = Core.Num.impl_i16__wrapping_neg zeta3 in
+  let nzeta0:i16 = Core_models.Num.impl_i16__wrapping_neg zeta0 in
+  let nzeta1:i16 = Core_models.Num.impl_i16__wrapping_neg zeta1 in
+  let nzeta2:i16 = Core_models.Num.impl_i16__wrapping_neg zeta2 in
+  let nzeta3:i16 = Core_models.Num.impl_i16__wrapping_neg zeta3 in
   let out:t_Slice i32 =
     accumulating_ntt_multiply_binomials lhs
       rhs
@@ -641,11 +647,11 @@ let accumulating_ntt_multiply_fill_cache
       (cache: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
       (zeta0 zeta1 zeta2 zeta3: i16)
      =
-  let nzeta0:i16 = Core.Num.impl_i16__wrapping_neg zeta0 in
-  let nzeta1:i16 = Core.Num.impl_i16__wrapping_neg zeta1 in
-  let nzeta2:i16 = Core.Num.impl_i16__wrapping_neg zeta2 in
-  let nzeta3:i16 = Core.Num.impl_i16__wrapping_neg zeta3 in
-  let tmp0, tmp1:(t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+  let nzeta0:i16 = Core_models.Num.impl_i16__wrapping_neg zeta0 in
+  let nzeta1:i16 = Core_models.Num.impl_i16__wrapping_neg zeta1 in
+  let nzeta2:i16 = Core_models.Num.impl_i16__wrapping_neg zeta2 in
+  let nzeta3:i16 = Core_models.Num.impl_i16__wrapping_neg zeta3 in
+  let (tmp0: t_Slice i32), (tmp1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
     accumulating_ntt_multiply_binomials_fill_cache lhs
       rhs
       (Libcrux_secrets.Traits.f_classify #i16 #FStar.Tactics.Typeclasses.solve zeta0 <: i16)
@@ -656,7 +662,7 @@ let accumulating_ntt_multiply_fill_cache
   let out:t_Slice i32 = tmp0 in
   let cache:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector = tmp1 in
   let _:Prims.unit = () in
-  let tmp0, tmp1:(t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+  let (tmp0: t_Slice i32), (tmp1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
     accumulating_ntt_multiply_binomials_fill_cache lhs
       rhs
       (Libcrux_secrets.Traits.f_classify #i16 #FStar.Tactics.Typeclasses.solve nzeta0 <: i16)
@@ -667,7 +673,7 @@ let accumulating_ntt_multiply_fill_cache
   let out:t_Slice i32 = tmp0 in
   let cache:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector = tmp1 in
   let _:Prims.unit = () in
-  let tmp0, tmp1:(t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+  let (tmp0: t_Slice i32), (tmp1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
     accumulating_ntt_multiply_binomials_fill_cache lhs
       rhs
       (Libcrux_secrets.Traits.f_classify #i16 #FStar.Tactics.Typeclasses.solve zeta1 <: i16)
@@ -678,7 +684,7 @@ let accumulating_ntt_multiply_fill_cache
   let out:t_Slice i32 = tmp0 in
   let cache:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector = tmp1 in
   let _:Prims.unit = () in
-  let tmp0, tmp1:(t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+  let (tmp0: t_Slice i32), (tmp1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
     accumulating_ntt_multiply_binomials_fill_cache lhs
       rhs
       (Libcrux_secrets.Traits.f_classify #i16 #FStar.Tactics.Typeclasses.solve nzeta1 <: i16)
@@ -689,7 +695,7 @@ let accumulating_ntt_multiply_fill_cache
   let out:t_Slice i32 = tmp0 in
   let cache:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector = tmp1 in
   let _:Prims.unit = () in
-  let tmp0, tmp1:(t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+  let (tmp0: t_Slice i32), (tmp1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
     accumulating_ntt_multiply_binomials_fill_cache lhs
       rhs
       (Libcrux_secrets.Traits.f_classify #i16 #FStar.Tactics.Typeclasses.solve zeta2 <: i16)
@@ -700,7 +706,7 @@ let accumulating_ntt_multiply_fill_cache
   let out:t_Slice i32 = tmp0 in
   let cache:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector = tmp1 in
   let _:Prims.unit = () in
-  let tmp0, tmp1:(t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+  let (tmp0: t_Slice i32), (tmp1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
     accumulating_ntt_multiply_binomials_fill_cache lhs
       rhs
       (Libcrux_secrets.Traits.f_classify #i16 #FStar.Tactics.Typeclasses.solve nzeta2 <: i16)
@@ -711,7 +717,7 @@ let accumulating_ntt_multiply_fill_cache
   let out:t_Slice i32 = tmp0 in
   let cache:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector = tmp1 in
   let _:Prims.unit = () in
-  let tmp0, tmp1:(t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+  let (tmp0: t_Slice i32), (tmp1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
     accumulating_ntt_multiply_binomials_fill_cache lhs
       rhs
       (Libcrux_secrets.Traits.f_classify #i16 #FStar.Tactics.Typeclasses.solve zeta3 <: i16)
@@ -722,7 +728,7 @@ let accumulating_ntt_multiply_fill_cache
   let out:t_Slice i32 = tmp0 in
   let cache:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector = tmp1 in
   let _:Prims.unit = () in
-  let tmp0, tmp1:(t_Slice i32 & Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
+  let (tmp0: t_Slice i32), (tmp1: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
     accumulating_ntt_multiply_binomials_fill_cache lhs
       rhs
       (Libcrux_secrets.Traits.f_classify #i16 #FStar.Tactics.Typeclasses.solve nzeta3 <: i16)

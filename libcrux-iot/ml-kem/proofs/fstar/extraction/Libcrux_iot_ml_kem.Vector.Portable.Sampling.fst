@@ -1,21 +1,21 @@
 module Libcrux_iot_ml_kem.Vector.Portable.Sampling
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let rej_sample (a: t_Slice u8) (out: t_Slice i16) =
   let sampled:usize = mk_usize 0 in
-  let out, sampled:(t_Slice i16 & usize) =
+  let (out: t_Slice i16), (sampled: usize) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-      ((Core.Slice.impl__len #u8 a <: usize) /! mk_usize 3 <: usize)
+      ((Core_models.Slice.impl__len #u8 a <: usize) /! mk_usize 3 <: usize)
       (fun temp_0_ i ->
-          let out, sampled:(t_Slice i16 & usize) = temp_0_ in
+          let (out: t_Slice i16), (sampled: usize) = temp_0_ in
           let i:usize = i in
-          ((Core.Slice.impl__len #i16 out <: usize) =. mk_usize 16 <: bool) &&
+          ((Core_models.Slice.impl__len #i16 out <: usize) =. mk_usize 16 <: bool) &&
           (sampled <=. (mk_usize 2 *! i <: usize) <: bool))
       (out, sampled <: (t_Slice i16 & usize))
       (fun temp_0_ i ->
-          let out, sampled:(t_Slice i16 & usize) = temp_0_ in
+          let (out: t_Slice i16), (sampled: usize) = temp_0_ in
           let i:usize = i in
           let b1:i16 =
             cast (a.[ (i *! mk_usize 3 <: usize) +! mk_usize 0 <: usize ] <: u8) <: i16
@@ -28,7 +28,7 @@ let rej_sample (a: t_Slice u8) (out: t_Slice i16) =
           in
           let d1:i16 = ((b2 &. mk_i16 15 <: i16) <<! mk_i32 8 <: i16) |. b1 in
           let d2:i16 = (b3 <<! mk_i32 4 <: i16) |. (b2 >>! mk_i32 4 <: i16) in
-          let out, sampled:(t_Slice i16 & usize) =
+          let (out: t_Slice i16), (sampled: usize) =
             if d1 <. Libcrux_iot_ml_kem.Vector.Traits.v_FIELD_MODULUS && sampled <. mk_usize 16
             then
               let out:t_Slice i16 =

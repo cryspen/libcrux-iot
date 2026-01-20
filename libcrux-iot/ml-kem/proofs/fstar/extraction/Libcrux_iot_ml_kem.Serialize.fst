@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Serialize
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -30,19 +30,19 @@ let compress_then_serialize_message
       (serialized: t_Slice u8)
       (scratch: v_Vector)
      =
-  let scratch, serialized:(v_Vector & t_Slice u8) =
+  let (scratch: v_Vector), (serialized: t_Slice u8) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       (mk_usize 16)
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
-          (Core.Slice.impl__len #u8 serialized <: usize) =.
+          (Core_models.Slice.impl__len #u8 serialized <: usize) =.
           Libcrux_iot_ml_kem.Constants.v_SHARED_SECRET_SIZE
           <:
           bool)
       (scratch, serialized <: (v_Vector & t_Slice u8))
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
           let scratch:v_Vector =
             to_unsigned_field_modulus #v_Vector
@@ -57,20 +57,22 @@ let compress_then_serialize_message
           let serialized:t_Slice u8 =
             Rust_primitives.Hax.Monomorphized_update_at.update_at_range serialized
               ({
-                  Core.Ops.Range.f_start = mk_usize 2 *! i <: usize;
-                  Core.Ops.Range.f_end = (mk_usize 2 *! i <: usize) +! mk_usize 2 <: usize
+                  Core_models.Ops.Range.f_start = mk_usize 2 *! i <: usize;
+                  Core_models.Ops.Range.f_end = (mk_usize 2 *! i <: usize) +! mk_usize 2 <: usize
                 }
                 <:
-                Core.Ops.Range.t_Range usize)
+                Core_models.Ops.Range.t_Range usize)
               (Libcrux_iot_ml_kem.Vector.Traits.f_serialize_1_ #v_Vector
                   #FStar.Tactics.Typeclasses.solve
                   scratch
                   (serialized.[ {
-                        Core.Ops.Range.f_start = mk_usize 2 *! i <: usize;
-                        Core.Ops.Range.f_end = (mk_usize 2 *! i <: usize) +! mk_usize 2 <: usize
+                        Core_models.Ops.Range.f_start = mk_usize 2 *! i <: usize;
+                        Core_models.Ops.Range.f_end
+                        =
+                        (mk_usize 2 *! i <: usize) +! mk_usize 2 <: usize
                       }
                       <:
-                      Core.Ops.Range.t_Range usize ]
+                      Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
                 <:
@@ -110,11 +112,13 @@ let deserialize_then_decompress_message
                 (Libcrux_iot_ml_kem.Vector.Traits.f_deserialize_1_ #v_Vector
                     #FStar.Tactics.Typeclasses.solve
                     (serialized.[ {
-                          Core.Ops.Range.f_start = mk_usize 2 *! i <: usize;
-                          Core.Ops.Range.f_end = (mk_usize 2 *! i <: usize) +! mk_usize 2 <: usize
+                          Core_models.Ops.Range.f_start = mk_usize 2 *! i <: usize;
+                          Core_models.Ops.Range.f_end
+                          =
+                          (mk_usize 2 *! i <: usize) +! mk_usize 2 <: usize
                         }
                         <:
-                        Core.Ops.Range.t_Range usize ]
+                        Core_models.Ops.Range.t_Range usize ]
                       <:
                       t_Slice u8)
                     (re.Libcrux_iot_ml_kem.Polynomial.f_coefficients.[ i ] <: v_Vector)
@@ -157,26 +161,26 @@ let serialize_uncompressed_ring_element
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #u8 serialized <: usize) =.
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 serialized <: usize) =.
             Libcrux_iot_ml_kem.Constants.v_BYTES_PER_RING_ELEMENT
             <:
             bool)
       in
       ()
   in
-  let scratch, serialized:(v_Vector & t_Slice u8) =
+  let (scratch: v_Vector), (serialized: t_Slice u8) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
-          (Core.Slice.impl__len #u8 serialized <: usize) =.
+          (Core_models.Slice.impl__len #u8 serialized <: usize) =.
           Libcrux_iot_ml_kem.Constants.v_BYTES_PER_RING_ELEMENT
           <:
           bool)
       (scratch, serialized <: (v_Vector & t_Slice u8))
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
           let scratch:v_Vector =
             to_unsigned_field_modulus #v_Vector
@@ -186,20 +190,22 @@ let serialize_uncompressed_ring_element
           let serialized:t_Slice u8 =
             Rust_primitives.Hax.Monomorphized_update_at.update_at_range serialized
               ({
-                  Core.Ops.Range.f_start = mk_usize 24 *! i <: usize;
-                  Core.Ops.Range.f_end = (mk_usize 24 *! i <: usize) +! mk_usize 24 <: usize
+                  Core_models.Ops.Range.f_start = mk_usize 24 *! i <: usize;
+                  Core_models.Ops.Range.f_end = (mk_usize 24 *! i <: usize) +! mk_usize 24 <: usize
                 }
                 <:
-                Core.Ops.Range.t_Range usize)
+                Core_models.Ops.Range.t_Range usize)
               (Libcrux_iot_ml_kem.Vector.Traits.f_serialize_12_ #v_Vector
                   #FStar.Tactics.Typeclasses.solve
                   scratch
                   (serialized.[ {
-                        Core.Ops.Range.f_start = mk_usize 24 *! i <: usize;
-                        Core.Ops.Range.f_end = (mk_usize 24 *! i <: usize) +! mk_usize 24 <: usize
+                        Core_models.Ops.Range.f_start = mk_usize 24 *! i <: usize;
+                        Core_models.Ops.Range.f_end
+                        =
+                        (mk_usize 24 *! i <: usize) +! mk_usize 24 <: usize
                       }
                       <:
-                      Core.Ops.Range.t_Range usize ]
+                      Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
                 <:
@@ -227,7 +233,7 @@ let deserialize_to_uncompressed_ring_element
       re
       (fun re temp_1_ ->
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector = re in
-          let i, bytes:(usize & t_Slice u8) = temp_1_ in
+          let (i: usize), (bytes: t_Slice u8) = temp_1_ in
           {
             re with
             Libcrux_iot_ml_kem.Polynomial.f_coefficients
@@ -267,7 +273,7 @@ let deserialize_to_reduced_ring_element
       re
       (fun re temp_1_ ->
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector = re in
-          let i, bytes:(usize & t_Slice u8) = temp_1_ in
+          let (i: usize), (bytes: t_Slice u8) = temp_1_ in
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector =
             {
               re with
@@ -325,7 +331,8 @@ let deserialize_ring_elements_reduced
             deserialized_pk
           in
           let i:usize = i in
-          (Core.Slice.impl__len #(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
+          (Core_models.Slice.impl__len #(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement
+                v_Vector)
               deserialized_pk
             <:
             usize) =.
@@ -338,7 +345,7 @@ let deserialize_ring_elements_reduced
           (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector) =
             deserialized_pk
           in
-          let i, ring_element:(usize & t_Slice u8) = temp_1_ in
+          let (i: usize), (ring_element: t_Slice u8) = temp_1_ in
           let deserialized_pk:t_Slice
           (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector) =
             Rust_primitives.Hax.Monomorphized_update_at.update_at_usize deserialized_pk
@@ -373,20 +380,21 @@ let compress_then_serialize_10_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool)
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool
+          )
       in
       ()
   in
-  let scratch, serialized:(v_Vector & t_Slice u8) =
+  let (scratch: v_Vector), (serialized: t_Slice u8) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
-          (Core.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool)
+          (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool)
       (scratch, serialized <: (v_Vector & t_Slice u8))
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
           let scratch:v_Vector =
             to_unsigned_field_modulus #v_Vector
@@ -402,20 +410,22 @@ let compress_then_serialize_10_
           let serialized:t_Slice u8 =
             Rust_primitives.Hax.Monomorphized_update_at.update_at_range serialized
               ({
-                  Core.Ops.Range.f_start = mk_usize 20 *! i <: usize;
-                  Core.Ops.Range.f_end = (mk_usize 20 *! i <: usize) +! mk_usize 20 <: usize
+                  Core_models.Ops.Range.f_start = mk_usize 20 *! i <: usize;
+                  Core_models.Ops.Range.f_end = (mk_usize 20 *! i <: usize) +! mk_usize 20 <: usize
                 }
                 <:
-                Core.Ops.Range.t_Range usize)
+                Core_models.Ops.Range.t_Range usize)
               (Libcrux_iot_ml_kem.Vector.Traits.f_serialize_10_ #v_Vector
                   #FStar.Tactics.Typeclasses.solve
                   scratch
                   (serialized.[ {
-                        Core.Ops.Range.f_start = mk_usize 20 *! i <: usize;
-                        Core.Ops.Range.f_end = (mk_usize 20 *! i <: usize) +! mk_usize 20 <: usize
+                        Core_models.Ops.Range.f_start = mk_usize 20 *! i <: usize;
+                        Core_models.Ops.Range.f_end
+                        =
+                        (mk_usize 20 *! i <: usize) +! mk_usize 20 <: usize
                       }
                       <:
-                      Core.Ops.Range.t_Range usize ]
+                      Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
                 <:
@@ -439,20 +449,21 @@ let compress_then_serialize_11_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool)
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool
+          )
       in
       ()
   in
-  let scratch, serialized:(v_Vector & t_Slice u8) =
+  let (scratch: v_Vector), (serialized: t_Slice u8) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
-          (Core.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool)
+          (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool)
       (scratch, serialized <: (v_Vector & t_Slice u8))
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
           let scratch:v_Vector =
             Libcrux_iot_ml_kem.Vector.Traits.to_unsigned_representative #v_Vector
@@ -468,20 +479,22 @@ let compress_then_serialize_11_
           let serialized:t_Slice u8 =
             Rust_primitives.Hax.Monomorphized_update_at.update_at_range serialized
               ({
-                  Core.Ops.Range.f_start = mk_usize 22 *! i <: usize;
-                  Core.Ops.Range.f_end = (mk_usize 22 *! i <: usize) +! mk_usize 22 <: usize
+                  Core_models.Ops.Range.f_start = mk_usize 22 *! i <: usize;
+                  Core_models.Ops.Range.f_end = (mk_usize 22 *! i <: usize) +! mk_usize 22 <: usize
                 }
                 <:
-                Core.Ops.Range.t_Range usize)
+                Core_models.Ops.Range.t_Range usize)
               (Libcrux_iot_ml_kem.Vector.Traits.f_serialize_11_ #v_Vector
                   #FStar.Tactics.Typeclasses.solve
                   scratch
                   (serialized.[ {
-                        Core.Ops.Range.f_start = mk_usize 22 *! i <: usize;
-                        Core.Ops.Range.f_end = (mk_usize 22 *! i <: usize) +! mk_usize 22 <: usize
+                        Core_models.Ops.Range.f_start = mk_usize 22 *! i <: usize;
+                        Core_models.Ops.Range.f_end
+                        =
+                        (mk_usize 22 *! i <: usize) +! mk_usize 22 <: usize
                       }
                       <:
-                      Core.Ops.Range.t_Range usize ]
+                      Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
                 <:
@@ -501,17 +514,17 @@ let compress_then_serialize_ring_element_u
       (serialized: t_Slice u8)
       (scratch: v_Vector)
      =
-  let scratch, serialized:(v_Vector & t_Slice u8) =
+  let (scratch: v_Vector), (serialized: t_Slice u8) =
     match cast (v_COMPRESSION_FACTOR <: usize) <: u32 with
     | Rust_primitives.Integers.MkInt 10 ->
-      let tmp0, tmp1:(t_Slice u8 & v_Vector) =
+      let (tmp0: t_Slice u8), (tmp1: v_Vector) =
         compress_then_serialize_10_ v_OUT_LEN #v_Vector re serialized scratch
       in
       let serialized:t_Slice u8 = tmp0 in
       let scratch:v_Vector = tmp1 in
       scratch, serialized <: (v_Vector & t_Slice u8)
     | Rust_primitives.Integers.MkInt 11 ->
-      let tmp0, tmp1:(t_Slice u8 & v_Vector) =
+      let (tmp0: t_Slice u8), (tmp1: v_Vector) =
         compress_then_serialize_11_ v_OUT_LEN #v_Vector re serialized scratch
       in
       let serialized:t_Slice u8 = tmp0 in
@@ -530,16 +543,16 @@ let compress_then_serialize_4_
       (serialized: t_Slice u8)
       (scratch: v_Vector)
      =
-  let scratch, serialized:(v_Vector & t_Slice u8) =
+  let (scratch: v_Vector), (serialized: t_Slice u8) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
-          (Core.Slice.impl__len #u8 serialized <: usize) =. mk_usize 128 <: bool)
+          (Core_models.Slice.impl__len #u8 serialized <: usize) =. mk_usize 128 <: bool)
       (scratch, serialized <: (v_Vector & t_Slice u8))
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
           let scratch:v_Vector =
             to_unsigned_field_modulus #v_Vector
@@ -555,20 +568,22 @@ let compress_then_serialize_4_
           let serialized:t_Slice u8 =
             Rust_primitives.Hax.Monomorphized_update_at.update_at_range serialized
               ({
-                  Core.Ops.Range.f_start = mk_usize 8 *! i <: usize;
-                  Core.Ops.Range.f_end = (mk_usize 8 *! i <: usize) +! mk_usize 8 <: usize
+                  Core_models.Ops.Range.f_start = mk_usize 8 *! i <: usize;
+                  Core_models.Ops.Range.f_end = (mk_usize 8 *! i <: usize) +! mk_usize 8 <: usize
                 }
                 <:
-                Core.Ops.Range.t_Range usize)
+                Core_models.Ops.Range.t_Range usize)
               (Libcrux_iot_ml_kem.Vector.Traits.f_serialize_4_ #v_Vector
                   #FStar.Tactics.Typeclasses.solve
                   scratch
                   (serialized.[ {
-                        Core.Ops.Range.f_start = mk_usize 8 *! i <: usize;
-                        Core.Ops.Range.f_end = (mk_usize 8 *! i <: usize) +! mk_usize 8 <: usize
+                        Core_models.Ops.Range.f_start = mk_usize 8 *! i <: usize;
+                        Core_models.Ops.Range.f_end
+                        =
+                        (mk_usize 8 *! i <: usize) +! mk_usize 8 <: usize
                       }
                       <:
-                      Core.Ops.Range.t_Range usize ]
+                      Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
                 <:
@@ -587,16 +602,16 @@ let compress_then_serialize_5_
       (serialized: t_Slice u8)
       (scratch: v_Vector)
      =
-  let scratch, serialized:(v_Vector & t_Slice u8) =
+  let (scratch: v_Vector), (serialized: t_Slice u8) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
-          (Core.Slice.impl__len #u8 serialized <: usize) =. mk_usize 160 <: bool)
+          (Core_models.Slice.impl__len #u8 serialized <: usize) =. mk_usize 160 <: bool)
       (scratch, serialized <: (v_Vector & t_Slice u8))
       (fun temp_0_ i ->
-          let scratch, serialized:(v_Vector & t_Slice u8) = temp_0_ in
+          let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
           let scratch:v_Vector =
             Libcrux_iot_ml_kem.Vector.Traits.to_unsigned_representative #v_Vector
@@ -612,20 +627,22 @@ let compress_then_serialize_5_
           let serialized:t_Slice u8 =
             Rust_primitives.Hax.Monomorphized_update_at.update_at_range serialized
               ({
-                  Core.Ops.Range.f_start = mk_usize 10 *! i <: usize;
-                  Core.Ops.Range.f_end = (mk_usize 10 *! i <: usize) +! mk_usize 10 <: usize
+                  Core_models.Ops.Range.f_start = mk_usize 10 *! i <: usize;
+                  Core_models.Ops.Range.f_end = (mk_usize 10 *! i <: usize) +! mk_usize 10 <: usize
                 }
                 <:
-                Core.Ops.Range.t_Range usize)
+                Core_models.Ops.Range.t_Range usize)
               (Libcrux_iot_ml_kem.Vector.Traits.f_serialize_5_ #v_Vector
                   #FStar.Tactics.Typeclasses.solve
                   scratch
                   (serialized.[ {
-                        Core.Ops.Range.f_start = mk_usize 10 *! i <: usize;
-                        Core.Ops.Range.f_end = (mk_usize 10 *! i <: usize) +! mk_usize 10 <: usize
+                        Core_models.Ops.Range.f_start = mk_usize 10 *! i <: usize;
+                        Core_models.Ops.Range.f_end
+                        =
+                        (mk_usize 10 *! i <: usize) +! mk_usize 10 <: usize
                       }
                       <:
-                      Core.Ops.Range.t_Range usize ]
+                      Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
                 <:
@@ -645,17 +662,17 @@ let compress_then_serialize_ring_element_v
       (out: t_Slice u8)
       (scratch: v_Vector)
      =
-  let out, scratch:(t_Slice u8 & v_Vector) =
+  let (out: t_Slice u8), (scratch: v_Vector) =
     match cast (v_COMPRESSION_FACTOR <: usize) <: u32 with
     | Rust_primitives.Integers.MkInt 4 ->
-      let tmp0, tmp1:(t_Slice u8 & v_Vector) =
+      let (tmp0: t_Slice u8), (tmp1: v_Vector) =
         compress_then_serialize_4_ #v_Vector re out scratch
       in
       let out:t_Slice u8 = tmp0 in
       let scratch:v_Vector = tmp1 in
       out, scratch <: (t_Slice u8 & v_Vector)
     | Rust_primitives.Integers.MkInt 5 ->
-      let tmp0, tmp1:(t_Slice u8 & v_Vector) =
+      let (tmp0: t_Slice u8), (tmp1: v_Vector) =
         compress_then_serialize_5_ #v_Vector re out scratch
       in
       let out:t_Slice u8 = tmp0 in
@@ -683,7 +700,7 @@ let deserialize_then_decompress_10_
       re
       (fun re temp_1_ ->
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector = re in
-          let i, bytes:(usize & t_Slice u8) = temp_1_ in
+          let (i: usize), (bytes: t_Slice u8) = temp_1_ in
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector =
             {
               re with
@@ -742,7 +759,7 @@ let deserialize_then_decompress_11_
       re
       (fun re temp_1_ ->
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector = re in
-          let i, bytes:(usize & t_Slice u8) = temp_1_ in
+          let (i: usize), (bytes: t_Slice u8) = temp_1_ in
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector =
             {
               re with
@@ -820,7 +837,7 @@ let deserialize_then_decompress_4_
       re
       (fun re temp_1_ ->
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector = re in
-          let i, bytes:(usize & t_Slice u8) = temp_1_ in
+          let (i: usize), (bytes: t_Slice u8) = temp_1_ in
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector =
             {
               re with
@@ -879,7 +896,7 @@ let deserialize_then_decompress_5_
       re
       (fun re temp_1_ ->
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector = re in
-          let i, bytes:(usize & t_Slice u8) = temp_1_ in
+          let (i: usize), (bytes: t_Slice u8) = temp_1_ in
           let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector =
             {
               re with

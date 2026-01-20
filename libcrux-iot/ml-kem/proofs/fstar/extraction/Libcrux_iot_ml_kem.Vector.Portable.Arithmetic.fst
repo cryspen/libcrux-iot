@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Vector.Portable.Arithmetic
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -13,11 +13,11 @@ let _ =
   ()
 
 let get_n_least_significant_bits (n: u8) (value: u32) =
-  value &. (Core.Num.impl_u32__wrapping_sub (mk_u32 1 <<! n <: u32) (mk_u32 1) <: u32)
+  value &. (Core_models.Num.impl_u32__wrapping_sub (mk_u32 1 <<! n <: u32) (mk_u32 1) <: u32)
 
 let add (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
   let e_lhs0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-    Core.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+    Core_models.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
       #FStar.Tactics.Typeclasses.solve
       lhs
   in
@@ -39,7 +39,7 @@ let add (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVecto
             Rust_primitives.Hax.Monomorphized_update_at.update_at_usize lhs
                 .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements
               i
-              (Core.Num.impl_i16__wrapping_add (lhs
+              (Core_models.Num.impl_i16__wrapping_add (lhs
                       .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ]
                     <:
                     i16)
@@ -56,7 +56,7 @@ let add (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVecto
 
 let sub (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
   let e_lhs0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-    Core.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+    Core_models.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
       #FStar.Tactics.Typeclasses.solve
       lhs
   in
@@ -78,7 +78,7 @@ let sub (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVecto
             Rust_primitives.Hax.Monomorphized_update_at.update_at_usize lhs
                 .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements
               i
-              (Core.Num.impl_i16__wrapping_sub (lhs
+              (Core_models.Num.impl_i16__wrapping_sub (lhs
                       .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ]
                     <:
                     i16)
@@ -95,7 +95,7 @@ let sub (lhs rhs: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVecto
 
 let negate (vec: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
   let e_vec0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-    Core.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+    Core_models.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
       #FStar.Tactics.Typeclasses.solve
       vec
   in
@@ -117,7 +117,7 @@ let negate (vec: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
             Rust_primitives.Hax.Monomorphized_update_at.update_at_usize vec
                 .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements
               i
-              (Core.Num.impl_i16__wrapping_neg (vec
+              (Core_models.Num.impl_i16__wrapping_neg (vec
                       .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ]
                     <:
                     i16)
@@ -136,7 +136,7 @@ let multiply_by_constant
       (c: i16)
      =
   let e_vec0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-    Core.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+    Core_models.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
       #FStar.Tactics.Typeclasses.solve
       vec
   in
@@ -158,7 +158,7 @@ let multiply_by_constant
             Rust_primitives.Hax.Monomorphized_update_at.update_at_usize vec
                 .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements
               i
-              (Core.Num.impl_i16__wrapping_mul (vec
+              (Core_models.Num.impl_i16__wrapping_mul (vec
                       .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ]
                     <:
                     i16)
@@ -178,7 +178,7 @@ let bitwise_and_with_constant
       (c: i16)
      =
   let e_vec0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-    Core.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+    Core_models.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
       #FStar.Tactics.Typeclasses.solve
       vec
   in
@@ -216,7 +216,7 @@ let shift_right
       (vec: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
      =
   let e_vec0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-    Core.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+    Core_models.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
       #FStar.Tactics.Typeclasses.solve
       vec
   in
@@ -252,7 +252,7 @@ let shift_right
 
 let cond_subtract_3329_ (vec: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
   let e_vec0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-    Core.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+    Core_models.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
       #FStar.Tactics.Typeclasses.solve
       vec
   in
@@ -285,7 +285,7 @@ let cond_subtract_3329_ (vec: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_P
                 Rust_primitives.Hax.Monomorphized_update_at.update_at_usize vec
                     .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements
                   i
-                  (Core.Num.impl_i16__wrapping_sub (vec
+                  (Core_models.Num.impl_i16__wrapping_sub (vec
                           .Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ i ]
                         <:
                         i16)
@@ -303,7 +303,8 @@ let cond_subtract_3329_ (vec: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_P
 
 let barrett_reduce_element (value: i16) =
   let t:i32 =
-    Core.Num.impl_i32__wrapping_add (Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_add (Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32
+              #i16
               #FStar.Tactics.Typeclasses.solve
               value
             <:
@@ -318,14 +319,15 @@ let barrett_reduce_element (value: i16) =
       #FStar.Tactics.Typeclasses.solve
       (t >>! (cast (Libcrux_iot_ml_kem.Vector.Traits.v_BARRETT_SHIFT <: i32) <: u32) <: i32)
   in
-  Core.Num.impl_i16__wrapping_sub value
-    (Core.Num.impl_i16__wrapping_mul quotient Libcrux_iot_ml_kem.Vector.Traits.v_FIELD_MODULUS
+  Core_models.Num.impl_i16__wrapping_sub value
+    (Core_models.Num.impl_i16__wrapping_mul quotient
+        Libcrux_iot_ml_kem.Vector.Traits.v_FIELD_MODULUS
       <:
       i16)
 
 let barrett_reduce (vec: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector) =
   let e_vec0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-    Core.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+    Core_models.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
       #FStar.Tactics.Typeclasses.solve
       vec
   in
@@ -365,7 +367,7 @@ let barrett_reduce (vec: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_Portab
 
 let montgomery_reduce_element (value: i32) =
   let k:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           (Libcrux_secrets.Int.f_as_i16 #i32 #FStar.Tactics.Typeclasses.solve value <: i16)
         <:
@@ -381,7 +383,7 @@ let montgomery_reduce_element (value: i32) =
         i32)
   in
   let k_times_modulus:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           (Libcrux_secrets.Int.f_as_i16 #i32 #FStar.Tactics.Typeclasses.solve k <: i16)
         <:
@@ -406,7 +408,7 @@ let montgomery_reduce_element (value: i32) =
       #FStar.Tactics.Typeclasses.solve
       (value >>! (cast (v_MONTGOMERY_SHIFT <: u8) <: u32) <: i32)
   in
-  Core.Num.impl_i16__wrapping_sub value_high c
+  Core_models.Num.impl_i16__wrapping_sub value_high c
 
 let reducing_from_i32_array
       (array: t_Slice i32)
@@ -441,7 +443,7 @@ let reducing_from_i32_array
 
 let montgomery_multiply_fe_by_fer (fe fer: i16) =
   let product:i32 =
-    Core.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
+    Core_models.Num.impl_i32__wrapping_mul (Libcrux_secrets.Int.f_as_i32 #i16
           #FStar.Tactics.Typeclasses.solve
           fe
         <:
@@ -455,7 +457,7 @@ let montgomery_multiply_by_constant
       (c: i16)
      =
   let e_vec0:Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector =
-    Core.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
+    Core_models.Clone.f_clone #Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
       #FStar.Tactics.Typeclasses.solve
       vec
   in

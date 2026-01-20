@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Vector.Portable.Serialize
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -19,7 +19,7 @@ let serialize_1_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #u8 out <: usize) =. mk_usize 2 <: bool)
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 2 <: bool)
       in
       ()
   in
@@ -546,17 +546,17 @@ let serialize_4_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #u8 out <: usize) =. mk_usize 8 <: bool)
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 8 <: bool)
       in
       ()
   in
-  let lhs, lhs_1_, lhs_2_, lhs_3_:(u8 & u8 & u8 & u8) =
+  let (lhs: u8), (lhs_1_: u8), (lhs_2_: u8), (lhs_3_: u8) =
     serialize_4_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 8
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 8
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -573,13 +573,13 @@ let serialize_4_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 3) lhs_3_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_4_, lhs_5_, lhs_6_:(u8 & u8 & u8 & u8) =
+  let (lhs: u8), (lhs_4_: u8), (lhs_5_: u8), (lhs_6_: u8) =
     serialize_4_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 8;
-            Core.Ops.Range.f_end = mk_usize 16
+            Core_models.Ops.Range.f_start = mk_usize 8;
+            Core_models.Ops.Range.f_end = mk_usize 16
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -645,15 +645,21 @@ let deserialize_4_
       (bytes: t_Slice u8)
       (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
      =
-  let lhs, lhs_1_, lhs_2_, lhs_3_, lhs_4_, lhs_5_, lhs_6_, lhs_7_:(i16 & i16 & i16 & i16 & i16 & i16 &
-    i16 &
-    i16) =
+  let
+  (lhs: i16),
+  (lhs_1_: i16),
+  (lhs_2_: i16),
+  (lhs_3_: i16),
+  (lhs_4_: i16),
+  (lhs_5_: i16),
+  (lhs_6_: i16),
+  (lhs_7_: i16) =
     deserialize_4_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 4
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 4
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -762,16 +768,21 @@ let deserialize_4_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_8_, lhs_9_, lhs_10_, lhs_11_, lhs_12_, lhs_13_, lhs_14_:(i16 & i16 & i16 & i16 & i16 &
-    i16 &
-    i16 &
-    i16) =
+  let
+  (lhs: i16),
+  (lhs_8_: i16),
+  (lhs_9_: i16),
+  (lhs_10_: i16),
+  (lhs_11_: i16),
+  (lhs_12_: i16),
+  (lhs_13_: i16),
+  (lhs_14_: i16) =
     deserialize_4_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 4;
-            Core.Ops.Range.f_end = mk_usize 8
+            Core_models.Ops.Range.f_start = mk_usize 4;
+            Core_models.Ops.Range.f_end = mk_usize 8
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -942,17 +953,17 @@ let serialize_5_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #u8 out <: usize) =. mk_usize 10 <: bool)
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 10 <: bool)
       in
       ()
   in
-  let lhs, lhs_1_, lhs_2_, lhs_3_, lhs_4_:(u8 & u8 & u8 & u8 & u8) =
+  let (lhs: u8), (lhs_1_: u8), (lhs_2_: u8), (lhs_3_: u8), (lhs_4_: u8) =
     serialize_5_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 8
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 8
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -972,13 +983,13 @@ let serialize_5_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 4) lhs_4_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_5_, lhs_6_, lhs_7_, lhs_8_:(u8 & u8 & u8 & u8 & u8) =
+  let (lhs: u8), (lhs_5_: u8), (lhs_6_: u8), (lhs_7_: u8), (lhs_8_: u8) =
     serialize_5_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 8;
-            Core.Ops.Range.f_end = mk_usize 16
+            Core_models.Ops.Range.f_start = mk_usize 8;
+            Core_models.Ops.Range.f_end = mk_usize 16
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -1059,15 +1070,21 @@ let deserialize_5_
       (bytes: t_Slice u8)
       (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
      =
-  let lhs, lhs_1_, lhs_2_, lhs_3_, lhs_4_, lhs_5_, lhs_6_, lhs_7_:(i16 & i16 & i16 & i16 & i16 & i16 &
-    i16 &
-    i16) =
+  let
+  (lhs: i16),
+  (lhs_1_: i16),
+  (lhs_2_: i16),
+  (lhs_3_: i16),
+  (lhs_4_: i16),
+  (lhs_5_: i16),
+  (lhs_6_: i16),
+  (lhs_7_: i16) =
     deserialize_5_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 5
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 5
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -1176,16 +1193,21 @@ let deserialize_5_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_8_, lhs_9_, lhs_10_, lhs_11_, lhs_12_, lhs_13_, lhs_14_:(i16 & i16 & i16 & i16 & i16 &
-    i16 &
-    i16 &
-    i16) =
+  let
+  (lhs: i16),
+  (lhs_8_: i16),
+  (lhs_9_: i16),
+  (lhs_10_: i16),
+  (lhs_11_: i16),
+  (lhs_12_: i16),
+  (lhs_13_: i16),
+  (lhs_14_: i16) =
     deserialize_5_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 5;
-            Core.Ops.Range.f_end = mk_usize 10
+            Core_models.Ops.Range.f_start = mk_usize 5;
+            Core_models.Ops.Range.f_end = mk_usize 10
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -1368,17 +1390,17 @@ let serialize_10_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #u8 out <: usize) =. mk_usize 20 <: bool)
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 20 <: bool)
       in
       ()
   in
-  let lhs, lhs_1_, lhs_2_, lhs_3_, lhs_4_:(u8 & u8 & u8 & u8 & u8) =
+  let (lhs: u8), (lhs_1_: u8), (lhs_2_: u8), (lhs_3_: u8), (lhs_4_: u8) =
     serialize_10_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 4
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 4
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -1398,13 +1420,13 @@ let serialize_10_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 4) lhs_4_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_5_, lhs_6_, lhs_7_, lhs_8_:(u8 & u8 & u8 & u8 & u8) =
+  let (lhs: u8), (lhs_5_: u8), (lhs_6_: u8), (lhs_7_: u8), (lhs_8_: u8) =
     serialize_10_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 4;
-            Core.Ops.Range.f_end = mk_usize 8
+            Core_models.Ops.Range.f_start = mk_usize 4;
+            Core_models.Ops.Range.f_end = mk_usize 8
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -1424,13 +1446,13 @@ let serialize_10_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 9) lhs_8_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_9_, lhs_10_, lhs_11_, lhs_12_:(u8 & u8 & u8 & u8 & u8) =
+  let (lhs: u8), (lhs_9_: u8), (lhs_10_: u8), (lhs_11_: u8), (lhs_12_: u8) =
     serialize_10_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 8;
-            Core.Ops.Range.f_end = mk_usize 12
+            Core_models.Ops.Range.f_start = mk_usize 8;
+            Core_models.Ops.Range.f_end = mk_usize 12
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -1450,13 +1472,13 @@ let serialize_10_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 14) lhs_12_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_13_, lhs_14_, lhs_15_, lhs_16_:(u8 & u8 & u8 & u8 & u8) =
+  let (lhs: u8), (lhs_13_: u8), (lhs_14_: u8), (lhs_15_: u8), (lhs_16_: u8) =
     serialize_10_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 12;
-            Core.Ops.Range.f_end = mk_usize 16
+            Core_models.Ops.Range.f_start = mk_usize 12;
+            Core_models.Ops.Range.f_end = mk_usize 16
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -1679,15 +1701,21 @@ let deserialize_10_
       (bytes: t_Slice u8)
       (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
      =
-  let lhs, lhs_1_, lhs_2_, lhs_3_, lhs_4_, lhs_5_, lhs_6_, lhs_7_:(i16 & i16 & i16 & i16 & i16 & i16 &
-    i16 &
-    i16) =
+  let
+  (lhs: i16),
+  (lhs_1_: i16),
+  (lhs_2_: i16),
+  (lhs_3_: i16),
+  (lhs_4_: i16),
+  (lhs_5_: i16),
+  (lhs_6_: i16),
+  (lhs_7_: i16) =
     deserialize_10_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 10
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 10
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -1796,16 +1824,21 @@ let deserialize_10_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_8_, lhs_9_, lhs_10_, lhs_11_, lhs_12_, lhs_13_, lhs_14_:(i16 & i16 & i16 & i16 & i16 &
-    i16 &
-    i16 &
-    i16) =
+  let
+  (lhs: i16),
+  (lhs_8_: i16),
+  (lhs_9_: i16),
+  (lhs_10_: i16),
+  (lhs_11_: i16),
+  (lhs_12_: i16),
+  (lhs_13_: i16),
+  (lhs_14_: i16) =
     deserialize_10_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 10;
-            Core.Ops.Range.f_end = mk_usize 20
+            Core_models.Ops.Range.f_start = mk_usize 10;
+            Core_models.Ops.Range.f_end = mk_usize 20
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -2062,26 +2095,28 @@ let serialize_11_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #u8 out <: usize) =. mk_usize 22 <: bool)
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 22 <: bool)
       in
       ()
   in
-  let lhs, lhs_1_, lhs_2_, lhs_3_, lhs_4_, lhs_5_, lhs_6_, lhs_7_, lhs_8_, lhs_9_, lhs_10_:(u8 & u8 &
-    u8 &
-    u8 &
-    u8 &
-    u8 &
-    u8 &
-    u8 &
-    u8 &
-    u8 &
-    u8) =
+  let
+  (lhs: u8),
+  (lhs_1_: u8),
+  (lhs_2_: u8),
+  (lhs_3_: u8),
+  (lhs_4_: u8),
+  (lhs_5_: u8),
+  (lhs_6_: u8),
+  (lhs_7_: u8),
+  (lhs_8_: u8),
+  (lhs_9_: u8),
+  (lhs_10_: u8) =
     serialize_11_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 8
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 8
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2119,14 +2154,24 @@ let serialize_11_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 10) lhs_10_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_11_, lhs_12_, lhs_13_, lhs_14_, lhs_15_, lhs_16_, lhs_17_, lhs_18_, lhs_19_, lhs_20_:(
-    u8 & u8 & u8 & u8 & u8 & u8 & u8 & u8 & u8 & u8 & u8) =
+  let
+  (lhs: u8),
+  (lhs_11_: u8),
+  (lhs_12_: u8),
+  (lhs_13_: u8),
+  (lhs_14_: u8),
+  (lhs_15_: u8),
+  (lhs_16_: u8),
+  (lhs_17_: u8),
+  (lhs_18_: u8),
+  (lhs_19_: u8),
+  (lhs_20_: u8) =
     serialize_11_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 8;
-            Core.Ops.Range.f_end = mk_usize 16
+            Core_models.Ops.Range.f_start = mk_usize 8;
+            Core_models.Ops.Range.f_end = mk_usize 16
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2339,15 +2384,21 @@ let deserialize_11_
       (bytes: t_Slice u8)
       (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
      =
-  let lhs, lhs_1_, lhs_2_, lhs_3_, lhs_4_, lhs_5_, lhs_6_, lhs_7_:(i16 & i16 & i16 & i16 & i16 & i16 &
-    i16 &
-    i16) =
+  let
+  (lhs: i16),
+  (lhs_1_: i16),
+  (lhs_2_: i16),
+  (lhs_3_: i16),
+  (lhs_4_: i16),
+  (lhs_5_: i16),
+  (lhs_6_: i16),
+  (lhs_7_: i16) =
     deserialize_11_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 11
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 11
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -2456,16 +2507,21 @@ let deserialize_11_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_8_, lhs_9_, lhs_10_, lhs_11_, lhs_12_, lhs_13_, lhs_14_:(i16 & i16 & i16 & i16 & i16 &
-    i16 &
-    i16 &
-    i16) =
+  let
+  (lhs: i16),
+  (lhs_8_: i16),
+  (lhs_9_: i16),
+  (lhs_10_: i16),
+  (lhs_11_: i16),
+  (lhs_12_: i16),
+  (lhs_13_: i16),
+  (lhs_14_: i16) =
     deserialize_11_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 11;
-            Core.Ops.Range.f_end = mk_usize 22
+            Core_models.Ops.Range.f_start = mk_usize 11;
+            Core_models.Ops.Range.f_end = mk_usize 22
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -2605,17 +2661,17 @@ let serialize_12_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core.Slice.impl__len #u8 out <: usize) =. mk_usize 24 <: bool)
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 out <: usize) =. mk_usize 24 <: bool)
       in
       ()
   in
-  let lhs, lhs_1_, lhs_2_:(u8 & u8 & u8) =
+  let (lhs: u8), (lhs_1_: u8), (lhs_2_: u8) =
     serialize_12_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 2
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 2
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2629,13 +2685,13 @@ let serialize_12_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 2) lhs_2_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_3_, lhs_4_:(u8 & u8 & u8) =
+  let (lhs: u8), (lhs_3_: u8), (lhs_4_: u8) =
     serialize_12_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 2;
-            Core.Ops.Range.f_end = mk_usize 4
+            Core_models.Ops.Range.f_start = mk_usize 2;
+            Core_models.Ops.Range.f_end = mk_usize 4
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2649,13 +2705,13 @@ let serialize_12_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 5) lhs_4_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_5_, lhs_6_:(u8 & u8 & u8) =
+  let (lhs: u8), (lhs_5_: u8), (lhs_6_: u8) =
     serialize_12_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 4;
-            Core.Ops.Range.f_end = mk_usize 6
+            Core_models.Ops.Range.f_start = mk_usize 4;
+            Core_models.Ops.Range.f_end = mk_usize 6
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2669,13 +2725,13 @@ let serialize_12_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 8) lhs_6_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_7_, lhs_8_:(u8 & u8 & u8) =
+  let (lhs: u8), (lhs_7_: u8), (lhs_8_: u8) =
     serialize_12_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 6;
-            Core.Ops.Range.f_end = mk_usize 8
+            Core_models.Ops.Range.f_start = mk_usize 6;
+            Core_models.Ops.Range.f_end = mk_usize 8
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2689,13 +2745,13 @@ let serialize_12_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 11) lhs_8_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_9_, lhs_10_:(u8 & u8 & u8) =
+  let (lhs: u8), (lhs_9_: u8), (lhs_10_: u8) =
     serialize_12_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 8;
-            Core.Ops.Range.f_end = mk_usize 10
+            Core_models.Ops.Range.f_start = mk_usize 8;
+            Core_models.Ops.Range.f_end = mk_usize 10
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2709,13 +2765,13 @@ let serialize_12_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 14) lhs_10_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_11_, lhs_12_:(u8 & u8 & u8) =
+  let (lhs: u8), (lhs_11_: u8), (lhs_12_: u8) =
     serialize_12_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 10;
-            Core.Ops.Range.f_end = mk_usize 12
+            Core_models.Ops.Range.f_start = mk_usize 10;
+            Core_models.Ops.Range.f_end = mk_usize 12
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2729,13 +2785,13 @@ let serialize_12_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 17) lhs_12_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_13_, lhs_14_:(u8 & u8 & u8) =
+  let (lhs: u8), (lhs_13_: u8), (lhs_14_: u8) =
     serialize_12_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 12;
-            Core.Ops.Range.f_end = mk_usize 14
+            Core_models.Ops.Range.f_start = mk_usize 12;
+            Core_models.Ops.Range.f_end = mk_usize 14
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2749,13 +2805,13 @@ let serialize_12_
     Rust_primitives.Hax.Monomorphized_update_at.update_at_usize out (mk_usize 20) lhs_14_
   in
   let _:Prims.unit = () in
-  let lhs, lhs_15_, lhs_16_:(u8 & u8 & u8) =
+  let (lhs: u8), (lhs_15_: u8), (lhs_16_: u8) =
     serialize_12_int (v.Libcrux_iot_ml_kem.Vector.Portable.Vector_type.f_elements.[ {
-            Core.Ops.Range.f_start = mk_usize 14;
-            Core.Ops.Range.f_end = mk_usize 16
+            Core_models.Ops.Range.f_start = mk_usize 14;
+            Core_models.Ops.Range.f_end = mk_usize 16
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice i16)
   in
@@ -2789,13 +2845,13 @@ let deserialize_12_
       (bytes: t_Slice u8)
       (out: Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector)
      =
-  let lhs, lhs_1_:(i16 & i16) =
+  let (lhs: i16), (lhs_1_: i16) =
     deserialize_12_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 0;
-            Core.Ops.Range.f_end = mk_usize 3
+            Core_models.Ops.Range.f_start = mk_usize 0;
+            Core_models.Ops.Range.f_end = mk_usize 3
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -2826,13 +2882,13 @@ let deserialize_12_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_2_:(i16 & i16) =
+  let (lhs: i16), (lhs_2_: i16) =
     deserialize_12_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 3;
-            Core.Ops.Range.f_end = mk_usize 6
+            Core_models.Ops.Range.f_start = mk_usize 3;
+            Core_models.Ops.Range.f_end = mk_usize 6
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -2863,13 +2919,13 @@ let deserialize_12_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_3_:(i16 & i16) =
+  let (lhs: i16), (lhs_3_: i16) =
     deserialize_12_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 6;
-            Core.Ops.Range.f_end = mk_usize 9
+            Core_models.Ops.Range.f_start = mk_usize 6;
+            Core_models.Ops.Range.f_end = mk_usize 9
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -2900,13 +2956,13 @@ let deserialize_12_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_4_:(i16 & i16) =
+  let (lhs: i16), (lhs_4_: i16) =
     deserialize_12_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 9;
-            Core.Ops.Range.f_end = mk_usize 12
+            Core_models.Ops.Range.f_start = mk_usize 9;
+            Core_models.Ops.Range.f_end = mk_usize 12
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -2937,13 +2993,13 @@ let deserialize_12_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_5_:(i16 & i16) =
+  let (lhs: i16), (lhs_5_: i16) =
     deserialize_12_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 12;
-            Core.Ops.Range.f_end = mk_usize 15
+            Core_models.Ops.Range.f_start = mk_usize 12;
+            Core_models.Ops.Range.f_end = mk_usize 15
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -2974,13 +3030,13 @@ let deserialize_12_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_6_:(i16 & i16) =
+  let (lhs: i16), (lhs_6_: i16) =
     deserialize_12_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 15;
-            Core.Ops.Range.f_end = mk_usize 18
+            Core_models.Ops.Range.f_start = mk_usize 15;
+            Core_models.Ops.Range.f_end = mk_usize 18
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -3011,13 +3067,13 @@ let deserialize_12_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_7_:(i16 & i16) =
+  let (lhs: i16), (lhs_7_: i16) =
     deserialize_12_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 18;
-            Core.Ops.Range.f_end = mk_usize 21
+            Core_models.Ops.Range.f_start = mk_usize 18;
+            Core_models.Ops.Range.f_end = mk_usize 21
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in
@@ -3048,13 +3104,13 @@ let deserialize_12_
     Libcrux_iot_ml_kem.Vector.Portable.Vector_type.t_PortableVector
   in
   let _:Prims.unit = () in
-  let lhs, lhs_8_:(i16 & i16) =
+  let (lhs: i16), (lhs_8_: i16) =
     deserialize_12_int (bytes.[ {
-            Core.Ops.Range.f_start = mk_usize 21;
-            Core.Ops.Range.f_end = mk_usize 24
+            Core_models.Ops.Range.f_start = mk_usize 21;
+            Core_models.Ops.Range.f_end = mk_usize 24
           }
           <:
-          Core.Ops.Range.t_Range usize ]
+          Core_models.Ops.Range.t_Range usize ]
         <:
         t_Slice u8)
   in

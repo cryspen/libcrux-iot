@@ -1,7 +1,7 @@
 module Libcrux_iot_ml_kem.Invert_ntt
 #set-options "--fuel 0 --ifuel 1 --z3rlimit 80"
-open Core
 open FStar.Mul
+open Core_models
 
 let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
@@ -18,8 +18,9 @@ val invert_ntt_at_layer_1_
       (requires zeta_i =. mk_usize 128)
       (ensures
         fun temp_0_ ->
-          let zeta_i_future, re_future:(usize &
-            Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector) =
+          let
+          (zeta_i_future: usize),
+          (re_future: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector) =
             temp_0_
           in
           zeta_i_future =. mk_usize 64)
@@ -33,8 +34,9 @@ val invert_ntt_at_layer_2_
       (requires zeta_i =. mk_usize 64)
       (ensures
         fun temp_0_ ->
-          let zeta_i_future, re_future:(usize &
-            Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector) =
+          let
+          (zeta_i_future: usize),
+          (re_future: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector) =
             temp_0_
           in
           zeta_i_future =. mk_usize 32)
@@ -48,8 +50,9 @@ val invert_ntt_at_layer_3_
       (requires zeta_i =. mk_usize 32)
       (ensures
         fun temp_0_ ->
-          let zeta_i_future, re_future:(usize &
-            Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector) =
+          let
+          (zeta_i_future: usize),
+          (re_future: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector) =
             temp_0_
           in
           zeta_i_future =. mk_usize 16)
