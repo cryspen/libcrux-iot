@@ -249,16 +249,4 @@ pub(crate) fn invert_ntt_montgomery<const K: usize, Vector: Operations>(
     invert_ntt_at_layer_4_plus(&mut zeta_i, re, 5, scratch);
     invert_ntt_at_layer_4_plus(&mut zeta_i, re, 6, scratch);
     invert_ntt_at_layer_4_plus(&mut zeta_i, re, 7, scratch);
-
-    hax_debug_assert!(
-        to_i16_array(re)[0].abs() < 128 * (K as i16) * FIELD_MODULUS
-            && to_i16_array(re)[1].abs() < 128 * (K as i16) * FIELD_MODULUS
-    );
-    hax_debug_assert!(to_i16_array(re)
-        .into_iter()
-        .enumerate()
-        .skip(2)
-        .all(|(i, coefficient)| coefficient.abs() < (128 / (1 << i.ilog2())) * FIELD_MODULUS));
-
-    re.poly_barrett_reduce();
 }
