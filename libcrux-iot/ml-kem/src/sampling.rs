@@ -249,11 +249,6 @@ pub(super) fn sample_from_binomial_distribution<const ETA: usize, Vector: Operat
     randomness: &[U8],
     output: &mut [I16; 256],
 ) {
-    hax_lib::fstar!(
-        r#"assert (
-        (v (cast $ETA <: u32) == 2) \/
-        (v (cast $ETA <: u32) == 3))"#
-    );
     match ETA as u32 {
         2 => sample_from_binomial_distribution_2::<Vector>(randomness, output),
         3 => sample_from_binomial_distribution_3::<Vector>(randomness, output),
