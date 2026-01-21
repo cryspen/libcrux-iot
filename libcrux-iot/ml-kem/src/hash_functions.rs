@@ -42,9 +42,11 @@ pub(crate) trait Hash {
     fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]);
 
     /// PRFxN aka N SHAKE256
-    #[requires((input.len() == 2 || input.len() == 3 || input.len() == 4) &&
+    #[requires(
+        (input.len() == 2 || input.len() == 3 || input.len() == 4) &&
         out_len <= (u32::MAX / 4) as usize &&
-               outputs.len() == input.len() * out_len)]
+        outputs.len() == input.len() * out_len
+    )]
     #[ensures(|_| future(outputs).len() == outputs.len())]
     fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize);
 
