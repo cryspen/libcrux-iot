@@ -119,18 +119,18 @@ pub(super) fn deserialize_ring_elements_reduced<const K: usize, Vector: Operatio
     };
 }
 
-#[hax_lib::requires(serialized.len() == OUT_LEN && OUT_LEN >= VECTORS_IN_RING_ELEMENT * 20)]
+#[hax_lib::requires(serialized.len() == BLOCK_LEN && BLOCK_LEN >= VECTORS_IN_RING_ELEMENT * 20)]
 #[hax_lib::ensures(|_| future(serialized).len() == serialized.len())]
 #[inline(always)]
-fn compress_then_serialize_10<const OUT_LEN: usize, Vector: Operations>(
+fn compress_then_serialize_10<const BLOCK_LEN: usize, Vector: Operations>(
     re: &PolynomialRingElement<Vector>,
     serialized: &mut [u8],
     scratch: &mut Vector,
 ) {
     #[cfg(not(eurydice))]
-    debug_assert!(serialized.len() == OUT_LEN);
+    debug_assert!(serialized.len() == BLOCK_LEN);
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        hax_lib::loop_invariant!(|i: usize| { serialized.len() == OUT_LEN });
+        hax_lib::loop_invariant!(|i: usize| { serialized.len() == BLOCK_LEN });
         to_unsigned_field_modulus(&re.coefficients[i], scratch);
         Vector::compress::<10>(scratch);
 
@@ -138,19 +138,19 @@ fn compress_then_serialize_10<const OUT_LEN: usize, Vector: Operations>(
     }
 }
 
-#[hax_lib::requires(serialized.len() == OUT_LEN && OUT_LEN >= VECTORS_IN_RING_ELEMENT * 22)]
+#[hax_lib::requires(serialized.len() == BLOCK_LEN && BLOCK_LEN >= VECTORS_IN_RING_ELEMENT * 22)]
 #[hax_lib::ensures(|_| future(serialized).len() == serialized.len())]
 #[inline(always)]
-fn compress_then_serialize_11<const OUT_LEN: usize, Vector: Operations>(
+fn compress_then_serialize_11<const BLOCK_LEN: usize, Vector: Operations>(
     re: &PolynomialRingElement<Vector>,
     serialized: &mut [u8],
     scratch: &mut Vector,
 ) {
     #[cfg(not(eurydice))]
-    debug_assert!(serialized.len() == OUT_LEN);
+    debug_assert!(serialized.len() == BLOCK_LEN);
 
     for i in 0..VECTORS_IN_RING_ELEMENT {
-        hax_lib::loop_invariant!(|i: usize| { serialized.len() == OUT_LEN });
+        hax_lib::loop_invariant!(|i: usize| { serialized.len() == BLOCK_LEN });
         to_unsigned_representative::<Vector>(&re.coefficients[i], scratch);
         Vector::compress::<11>(scratch);
 
@@ -158,23 +158,25 @@ fn compress_then_serialize_11<const OUT_LEN: usize, Vector: Operations>(
     }
 }
 
-#[hax_lib::requires(hax_lib::implies(COMPRESSION_FACTOR == 10, OUT_LEN >= VECTORS_IN_RING_ELEMENT * 20).and(
-                    hax_lib::implies(COMPRESSION_FACTOR == 11, OUT_LEN >= VECTORS_IN_RING_ELEMENT * 22).and(
-                    serialized.len() == OUT_LEN && (COMPRESSION_FACTOR == 10 || COMPRESSION_FACTOR == 11))))]
+#[hax_lib::requires(
+    ((U_COMPRESSION_FACTOR == 10 && BLOCK_LEN >= VECTORS_IN_RING_ELEMENT * 20)
+      || (U_COMPRESSION_FACTOR == 11 && BLOCK_LEN >= VECTORS_IN_RING_ELEMENT * 22)) &&
+    serialized.len() == BLOCK_LEN
+)]
 #[hax_lib::ensures(|_| future(serialized).len() == serialized.len())]
 #[inline(always)]
 pub(super) fn compress_then_serialize_ring_element_u<
-    const COMPRESSION_FACTOR: usize,
-    const OUT_LEN: usize,
+    const U_COMPRESSION_FACTOR: usize,
+    const BLOCK_LEN: usize,
     Vector: Operations,
 >(
     re: &PolynomialRingElement<Vector>,
     serialized: &mut [u8],
     scratch: &mut Vector,
 ) {
-    match COMPRESSION_FACTOR as u32 {
-        10 => compress_then_serialize_10::<OUT_LEN, Vector>(re, serialized, scratch),
-        11 => compress_then_serialize_11::<OUT_LEN, Vector>(re, serialized, scratch),
+    match U_COMPRESSION_FACTOR as u32 {
+        10 => compress_then_serialize_10::<BLOCK_LEN, Vector>(re, serialized, scratch),
+        11 => compress_then_serialize_11::<BLOCK_LEN, Vector>(re, serialized, scratch),
         _ => unreachable!(),
     }
 }
@@ -213,22 +215,23 @@ fn compress_then_serialize_5<Vector: Operations>(
     }
 }
 
-#[hax_lib::requires(out.len() == OUT_LEN &&
-    (COMPRESSION_FACTOR == 4 && OUT_LEN == 128 ||
-        COMPRESSION_FACTOR == 5 && OUT_LEN == 160))]
+#[hax_lib::requires(
+    out.len() == C2_LEN &&
+    (V_COMPRESSION_FACTOR == 4 && C2_LEN == 128 ||
+        V_COMPRESSION_FACTOR == 5 && C2_LEN == 160))]
 #[hax_lib::ensures(|_| future(out).len() == out.len())]
 #[inline(always)]
 pub(super) fn compress_then_serialize_ring_element_v<
     const K: usize,
-    const COMPRESSION_FACTOR: usize,
-    const OUT_LEN: usize,
+    const V_COMPRESSION_FACTOR: usize,
+    const C2_LEN: usize,
     Vector: Operations,
 >(
     re: PolynomialRingElement<Vector>,
     out: &mut [u8],
     scratch: &mut Vector,
 ) {
-    match COMPRESSION_FACTOR as u32 {
+    match V_COMPRESSION_FACTOR as u32 {
         4 => compress_then_serialize_4::<Vector>(re, out, scratch),
         5 => compress_then_serialize_5::<Vector>(re, out, scratch),
         _ => unreachable!(),
@@ -267,16 +270,19 @@ fn deserialize_then_decompress_11<Vector: Operations>(
     }
 }
 
-#[hax_lib::requires((COMPRESSION_FACTOR == 4 || COMPRESSION_FACTOR == 5) && serialized.len() == 32 * COMPRESSION_FACTOR)]
+#[hax_lib::requires(
+    (U_COMPRESSION_FACTOR == 4 || U_COMPRESSION_FACTOR == 5) &&
+    serialized.len() == 32 * U_COMPRESSION_FACTOR
+)]
 #[inline(always)]
 pub(super) fn deserialize_then_decompress_ring_element_u<
-    const COMPRESSION_FACTOR: usize,
+    const U_COMPRESSION_FACTOR: usize,
     Vector: Operations,
 >(
     serialized: &[u8],
     output: &mut PolynomialRingElement<Vector>,
 ) {
-    match COMPRESSION_FACTOR as u32 {
+    match U_COMPRESSION_FACTOR as u32 {
         10 => deserialize_then_decompress_10::<Vector>(serialized, output),
         11 => deserialize_then_decompress_11::<Vector>(serialized, output),
         _ => unreachable!(),
@@ -315,17 +321,19 @@ fn deserialize_then_decompress_5<Vector: Operations>(
     }
 }
 
-#[hax_lib::requires((COMPRESSION_FACTOR == 4 || COMPRESSION_FACTOR == 5) && serialized.len() == 32 * COMPRESSION_FACTOR)]
+#[hax_lib::requires(
+    (V_COMPRESSION_FACTOR == 4 || V_COMPRESSION_FACTOR == 5) &&
+    serialized.len() == 32 * V_COMPRESSION_FACTOR)]
 #[inline(always)]
 pub(super) fn deserialize_then_decompress_ring_element_v<
     const K: usize,
-    const COMPRESSION_FACTOR: usize,
+    const V_COMPRESSION_FACTOR: usize,
     Vector: Operations,
 >(
     serialized: &[u8],
     output: &mut PolynomialRingElement<Vector>,
 ) {
-    match COMPRESSION_FACTOR as u32 {
+    match V_COMPRESSION_FACTOR as u32 {
         4 => deserialize_then_decompress_4::<Vector>(serialized, output),
         5 => deserialize_then_decompress_5::<Vector>(serialized, output),
         _ => unreachable!(),
