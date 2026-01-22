@@ -7,6 +7,8 @@ let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
   (* The implicit dependencies arise from typeclasses instances. *)
   let open Libcrux_iot_ml_kem.Hash_functions in
+  let open Libcrux_secrets.Int.Public_integers in
+  let open Libcrux_secrets.Traits in
   ()
 
 /// This trait collects differences in specification between ML-KEM
@@ -117,3 +119,14 @@ class t_Variant (v_Self: Type0) = {
         (f_cpa_keygen_seed_pre v_K #v_Hasher #i0 x0 x1)
         (fun result -> f_cpa_keygen_seed_post v_K #v_Hasher #i0 x0 x1 result)
 }
+
+/// Implements [`Variant`], to perform the ML-KEM-specific actions
+/// during encapsulation and decapsulation.
+/// Specifically,
+/// * during key generation, the seed hash is domain separated (this is a difference from the FIPS 203 IPD and Kyber)
+/// * during encapsulation, the initial randomness is used without prior hashing,
+/// * the derivation of the shared secret does not include a hash of the ML-KEM ciphertext.
+type t_MlKem = | MlKem : t_MlKem
+
+[@@ FStar.Tactics.Typeclasses.tcinstance]
+val impl:t_Variant t_MlKem

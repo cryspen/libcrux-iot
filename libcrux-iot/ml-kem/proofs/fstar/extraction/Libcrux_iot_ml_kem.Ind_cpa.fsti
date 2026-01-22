@@ -44,7 +44,7 @@ val serialize_public_key_mut
       (scratch: v_Vector)
     : Prims.Pure (t_Slice u8 & v_Vector)
       (requires
-        v_K <=. mk_usize 4 && v_K >. mk_usize 0 &&
+        (v_K =. mk_usize 2 || v_K =. mk_usize 3 || v_K =. mk_usize 4) &&
         (Core_models.Slice.impl__len #u8 seed_for_a <: usize) =. mk_usize 32 &&
         (Core_models.Slice.impl__len #u8 serialized <: usize) =.
         ((v_K *! Libcrux_iot_ml_kem.Constants.v_BYTES_PER_RING_ELEMENT <: usize) +! mk_usize 32
@@ -221,7 +221,7 @@ val serialize_unpacked_secret_key
       (scratch: v_Vector)
     : Prims.Pure (t_Slice u8 & t_Slice u8 & v_Vector)
       (requires
-        v_K >. mk_usize 0 && v_K <=. mk_usize 4 &&
+        (v_K =. mk_usize 2 || v_K =. mk_usize 3 || v_K =. mk_usize 4) &&
         v_PRIVATE_KEY_SIZE =.
         (v_K *! Libcrux_iot_ml_kem.Constants.v_BYTES_PER_RING_ELEMENT <: usize) &&
         v_PUBLIC_KEY_SIZE =.

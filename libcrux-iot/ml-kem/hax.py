@@ -75,9 +75,10 @@ class extractAction(argparse.Action):
             "+libcrux_iot_ml_kem::invert_ntt::**",
             "+libcrux_iot_ml_kem::sampling::**",
             "+libcrux_iot_ml_kem::hash_functions::**",
-            "-libcrux_iot_ml_kem::hash_functions::portable::**", # we can include this again once we have panic freedom in SHA3
             "+libcrux_iot_ml_kem::matrix::**",
             "+libcrux_iot_ml_kem::ind_cpa::**",
+            "+libcrux_iot_ml_kem::ind_cca::**",
+            "-libcrux_iot_ml_kem::hash_functions::portable::**", # we can include this again once we have panic freedom in SHA3
         ]
         include_str = " ".join(includes)
         # interface_include = "+** -libcrux_iot_ml_kem::types -libcrux_iot_ml_kem::constants"
