@@ -71,7 +71,7 @@ use unpacked::*;
 
 /// Concatenate `t` and `ρ` into the public key.
 #[hax_lib::requires(
-    K <= 4 && K > 0 &&
+    (K == 2 || K == 3 || K == 4) &&
     seed_for_a.len() == 32 &&
     serialized.len() == K * BYTES_PER_RING_ELEMENT + 32
 )]
@@ -415,7 +415,7 @@ pub(crate) fn generate_keypair<
 
 /// Serialize the secret key from the unpacked key pair generation.
 #[hax_lib::requires(
-    K > 0 && K <= 4 &&
+    (K == 2 || K == 3 || K == 4) &&
     PRIVATE_KEY_SIZE == K * BYTES_PER_RING_ELEMENT &&
     PUBLIC_KEY_SIZE == K * BYTES_PER_RING_ELEMENT + 32 &&
     serialized_private_key.len() == PRIVATE_KEY_SIZE &&
