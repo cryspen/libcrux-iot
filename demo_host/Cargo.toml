@@ -1,11 +1,16 @@
 [package]
-edition = "2024"
-name = "demo_host"
+name = "client"
 version = "0.1.0"
+edition = "2024"
 
 [dependencies]
-clap = { version = "4.5.53", features = ["derive"] }
-libcrux-ml-dsa = { version = "0.0.4" }
-libcrux-ml-kem = { version = "0.0.4" , features = ["rand"]}
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.7", features = ["ws"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures = "0.3"
 rand = { version = "0.9"}
 serialport = "4.8.1"
+libcrux-ml-dsa = "0.0.6"
+libcrux-ml-kem = "0.0.6"

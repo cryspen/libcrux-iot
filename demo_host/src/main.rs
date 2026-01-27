@@ -1,22 +1,30 @@
-use clap::Parser;
+use axum::{
+    Router,
+    extract::ws::{Message, WebSocket, WebSocketUpgrade},
+    response::{Html, IntoResponse},
+    routing::get,
+};
+use futures::{sink::SinkExt, stream::StreamExt};
 use libcrux_ml_dsa::ml_dsa_65::MLDSA65SigningKey;
 use libcrux_ml_kem::mlkem768::MlKem768Ciphertext;
 use rand::TryRngCore;
-use rand::rngs::OsRng;
-use serialport::SerialPort;
+use serde::{Deserialize, Serialize};
+use std::{
+    env,
+    sync::{Arc, RwLock},
+};
 
-use std::io::Write;
+use tokio::sync::broadcast;
+use tokio::time::{Duration, Instant, sleep, timeout};
 
-use std::num::NonZeroUsize;
-use std::time::Duration;
+const DASHBOARD_ADDRESS: &str = "127.0.0.1:3000";
+const DEFAULT_TTY: &str = "/dev/ttyACM1";
+const MLDSA_CONTEXT: &[u8; 16] = b"Libcrux-IoT Demo";
 
-#[derive(Parser, Debug)]
-struct Args {
-    #[arg(short, long)]
-    device: String,
+pub enum Error {
+    InvalidSignature,
 }
 
-const RESPONSE_BUF_LEN: usize = 4096;
 const SK: [u8; 4032] = [
     31, 37, 215, 153, 90, 137, 0, 82, 53, 54, 125, 134, 105, 73, 18, 130, 2, 190, 25, 213, 70, 233,
     166, 249, 140, 165, 134, 91, 115, 196, 53, 21, 81, 90, 152, 22, 158, 41, 12, 149, 151, 109,
@@ -210,53 +218,392 @@ const SK: [u8; 4032] = [
     213, 76, 53, 150, 201, 247, 199, 49, 77, 80, 188, 236, 60, 177, 55, 254, 42, 22, 168, 88, 63,
     59, 134, 230, 231,
 ];
+// --- Data Structures ---
 
-fn main() {
-    let args = Args::parse();
-    let mldsa_context = b"Libcrux-IoT Demo";
-    let mldsa_sk = MLDSA65SigningKey::new(SK);
-    let mut port = serialport::new(&args.device, 115_200)
-        .timeout(Duration::from_millis(100))
-        .open()
-        .expect("Failed to open port");
-
-    // Generate an ML-KEM key pair.
-    let mut rng = OsRng;
-    let mut mlkem_key_generation_randomness = [0u8; libcrux_ml_kem::KEY_GENERATION_SEED_SIZE];
-    rng.try_fill_bytes(&mut mlkem_key_generation_randomness)
-        .unwrap();
-    let key_pair = libcrux_ml_kem::mlkem768::generate_key_pair(mlkem_key_generation_randomness);
-
-    // Sign the encapsulation key.
-    let mut signing_randomness = [0u8; libcrux_ml_dsa::SIGNING_RANDOMNESS_SIZE];
-    rng.try_fill_bytes(&mut signing_randomness).unwrap();
-
-    let signature = libcrux_ml_dsa::ml_dsa_65::sign(
-        &mldsa_sk,
-        key_pair.public_key().as_slice(),
-        mldsa_context,
-        signing_randomness,
-    )
-    .unwrap();
-
-    // Send the host message.
-    port.write_all(key_pair.public_key().as_slice())
-        .expect("write failed");
-    port.flush().unwrap();
-    port.write_all(signature.as_slice()).expect("write failed");
-    port.flush().unwrap();
-    // Receive the client response.
-    let mut response = [0u8; MlKem768Ciphertext::len()];
-    port.read_exact(&mut response).unwrap();
-    port.flush().unwrap();
-
-    let encapsulation = libcrux_ml_kem::mlkem768::MlKem768Ciphertext::try_from(
-        &response[..libcrux_ml_kem::mlkem768::MlKem768Ciphertext::len()],
-    )
-    .unwrap();
-
-    let shared_secret =
-        libcrux_ml_kem::mlkem768::decapsulate(key_pair.private_key(), &encapsulation);
-
-    println!("Shared secret: {shared_secret:?}");
+#[derive(Clone, Serialize, Debug)]
+struct ConnectionStats {
+    rtt_ms: f64,
+    payload_size: usize,
+    success: bool,
+    is_logical_error: bool, // New: true if response is "Connection failed"
 }
+
+struct AppState {
+    sk: MLDSA65SigningKey,
+    tty_path: String,
+    simulate_error: bool,
+}
+
+// JSON message sent from Browser -> Rust
+#[derive(Deserialize)]
+#[serde(tag = "type", content = "value")]
+enum ClientCommand {
+    UpdatePayload(String),
+    ToggleFail(bool),
+}
+
+type SharedState = Arc<RwLock<AppState>>;
+
+#[tokio::main]
+async fn main() {
+    let mut args = env::args();
+    let tty_path = args.nth(1).unwrap_or_else(|| DEFAULT_TTY.into());
+
+    let (tx, _rx) = broadcast::channel::<ConnectionStats>(100);
+    let tx_shared = Arc::new(tx);
+
+    // Initialize State
+    let state = Arc::new(RwLock::new(AppState {
+        sk: MLDSA65SigningKey::new(SK),
+        tty_path: tty_path.to_string(),
+        simulate_error: false,
+    }));
+
+    // 1. Pinger Task
+    let tx_pinger = tx_shared.clone();
+    let state_pinger = state.clone();
+    tokio::spawn(async move {
+        loop {
+            signed_ping(&tx_pinger, &state_pinger).await;
+            sleep(Duration::from_millis(1000)).await;
+        }
+    });
+
+    // 2. Web Server
+    let app = Router::new().route("/", get(index_handler)).route(
+        "/ws",
+        get(move |ws: WebSocketUpgrade| {
+            let tx = tx_shared.clone();
+            let state = state.clone();
+            async move { ws.on_upgrade(move |socket| websocket_handler(socket, tx, state)) }
+        }),
+    );
+
+    println!("Dashboard running at http://{}", DASHBOARD_ADDRESS);
+    let listener = tokio::net::TcpListener::bind(DASHBOARD_ADDRESS)
+        .await
+        .unwrap();
+    axum::serve(listener, app).await.unwrap();
+}
+
+async fn signed_ping(tx: &Arc<broadcast::Sender<ConnectionStats>>, state: &SharedState) {
+    // Determine what to send based on state
+    let (sk, tty_path, is_forcing_fail) = {
+        let guard = state.read().unwrap();
+        (
+            guard.sk.clone(),
+            guard.tty_path.clone(),
+            guard.simulate_error,
+        )
+    };
+
+    let start = Instant::now();
+
+    // Perform TCP Request
+    let result = timeout(Duration::from_millis(1000), async {
+        let mut port = serialport::new(tty_path, 115_200)
+            .timeout(Duration::from_millis(100))
+            .open()
+            .expect("Failed to open port");
+
+        // Generate an ML-KEM key pair.
+        let mut rng = rand::rngs::OsRng;
+        let mut mlkem_key_generation_randomness = [0u8; libcrux_ml_kem::KEY_GENERATION_SEED_SIZE];
+        rng.try_fill_bytes(&mut mlkem_key_generation_randomness)
+            .unwrap();
+        let key_pair = libcrux_ml_kem::mlkem768::generate_key_pair(mlkem_key_generation_randomness);
+
+        // Sign the encapsulation key.
+        let mut signing_randomness = [0u8; libcrux_ml_dsa::SIGNING_RANDOMNESS_SIZE];
+        rng.try_fill_bytes(&mut signing_randomness).unwrap();
+
+        let mut signature = libcrux_ml_dsa::ml_dsa_65::sign(
+            &sk,
+            key_pair.public_key().as_slice(),
+            MLDSA_CONTEXT,
+            signing_randomness,
+        )
+        .unwrap();
+
+        if is_forcing_fail {
+            signature.as_mut_slice()[0] = !signature.as_mut_slice()[0];
+        }
+
+        // Send the host message.
+        port.write_all(key_pair.public_key().as_slice())
+            .expect("write failed");
+        port.flush().unwrap();
+        port.write_all(signature.as_slice()).expect("write failed");
+        port.flush().unwrap();
+
+        // Receive the client response.
+        let mut response = [0u8; MlKem768Ciphertext::len() + 64];
+        port.read_exact(&mut response).unwrap();
+        port.flush().unwrap();
+
+        if &response[0..64] == &[0u8; 64] {
+            return Err::<[u8; 32], Error>(Error::InvalidSignature);
+        };
+
+        let encapsulation = libcrux_ml_kem::mlkem768::MlKem768Ciphertext::try_from(
+            &response[64..libcrux_ml_kem::mlkem768::MlKem768Ciphertext::len() + 64],
+        )
+        .unwrap();
+
+        let shared_secret =
+            libcrux_ml_kem::mlkem768::decapsulate(key_pair.private_key(), &encapsulation);
+
+        Ok::<[u8; 32], Error>(shared_secret)
+    })
+    .await;
+
+    // Process Result
+    let (is_logical_error, _shared_secret) = match result {
+        Ok(Ok(shared_secret)) => {
+            println!(
+                "Received encapsulation of shared secret: {:?}",
+                shared_secret
+            );
+            (true, shared_secret)
+        }
+        Ok(Err(_)) => (false, [0u8; 32]),
+        _ => todo!(),
+    };
+
+    let stats = ConnectionStats {
+        rtt_ms: start.elapsed().as_secs_f64() * 1000.0,
+        payload_size: libcrux_ml_kem::mlkem768::MlKem768Ciphertext::len(),
+        success: true,
+        is_logical_error,
+    };
+
+    let _ = tx.send(stats);
+}
+
+// --- WebSocket Logic ---
+
+async fn websocket_handler(
+    socket: WebSocket,
+    tx: Arc<broadcast::Sender<ConnectionStats>>,
+    state: SharedState,
+) {
+    let (mut sender, mut receiver) = socket.split();
+    let mut rx_stats = tx.subscribe();
+
+    // Send Stats -> Browser
+    let mut send_task = tokio::spawn(async move {
+        while let Ok(stats) = rx_stats.recv().await {
+            let json = serde_json::to_string(&stats).unwrap();
+            if sender.send(Message::Text(json)).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    // Receive Commands -> Rust
+    let mut recv_task = tokio::spawn(async move {
+        while let Some(Ok(msg)) = receiver.next().await {
+            if let Message::Text(text) = msg {
+                if let Ok(cmd) = serde_json::from_str::<ClientCommand>(&text) {
+                    let mut guard = state.write().unwrap();
+                    match cmd {
+                        ClientCommand::UpdatePayload(new_text) => {
+                            println!("Payload updated: {}", new_text);
+                            guard.tty_path = new_text;
+                        }
+                        ClientCommand::ToggleFail(force_fail) => {
+                            println!("Force Fail mode set to: {}", force_fail);
+                            guard.simulate_error = force_fail;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    tokio::select! {
+        _ = (&mut send_task) => recv_task.abort(),
+        _ = (&mut recv_task) => send_task.abort(),
+    }
+}
+
+async fn index_handler() -> impl IntoResponse {
+    Html(DASHBOARD_HTML)
+}
+
+const DASHBOARD_HTML: &str = r###"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Board Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; margin-top: 0; }
+        
+        .control-panel { 
+            display: flex; gap: 15px; align-items: center; justify-content: center; 
+            margin-bottom: 20px; padding: 15px; background: #eee; border-radius: 4px; 
+        }
+        input[type="text"] { padding: 8px; width: 200px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        
+        /* Toggle Switch Styling */
+        .toggle-container { display: flex; align-items: center; gap: 8px; font-weight: bold; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #dc3545; } /* Red for danger/fail */
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.5em; font-weight: bold; color: #007bff; }
+        .error-val { color: #dc3545; }
+
+        .terminal-container { margin-top: 20px; }
+        .terminal-header { background: #333; color: white; padding: 5px 10px; border-radius: 4px 4px 0 0; font-size: 0.9em; }
+        .terminal-window { 
+            background: #1e1e1e; color: #00ff00; font-family: 'Courier New', monospace; 
+            height: 150px; overflow-y: auto; padding: 10px; border-radius: 0 0 4px 4px; font-size: 0.85em;
+            display: flex; flex-direction: column; 
+        }
+        .log-entry { margin-bottom: 2px; border-bottom: 1px solid #333; }
+        .log-error { color: #ff4444; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>System Monitor</h1>
+
+        <div class="control-panel">
+            <div>
+                <input type="text" id="payloadInput" value="Hello Board" placeholder="Enter payload text">
+                <button onclick="updatePayload()">Update Payload</button>
+            </div>
+            
+            <div class="toggle-container">
+                <label class="switch">
+                    <input type="checkbox" id="failToggle" onchange="toggleFail()">
+                    <span class="slider"></span>
+                </label>
+                <span>Simulate Error</span>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div>RTT</div>
+                <div id="rtt-display" class="stat-val">-- ms</div>
+            </div>
+            <div class="stat-box">
+                <div>Echo Payload</div>
+                <div id="payload-display" class="stat-val">-- bytes</div>
+            </div>
+            <div class="stat-box">
+                <div>Packet Loss</div>
+                <div id="loss-display" class="stat-val error-val">0%</div>
+            </div>
+        </div>
+
+        <canvas id="liveChart"></canvas>
+
+        <div class="terminal-container">
+            <div class="terminal-header">Server Response Log</div>
+            <div id="terminal-window" class="terminal-window"></div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('liveChart').getContext('2d');
+        const termWindow = document.getElementById('terminal-window');
+        let totalPings = 0;
+        let failedPings = 0;
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'RTT (ms)',
+                    data: [],
+                    borderColor: '#007bff',
+                    tension: 0.3,
+                    fill: false
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } }, animation: false }
+        });
+
+        const ws = new WebSocket("ws://" + location.host + "/ws");
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            totalPings++;
+
+            // Handle Display Logic
+            // We treat 'success=false' (network timeout) AND 'is_logical_error' (server sent "Connection failed") as errors
+            const isError = !data.success || data.is_logical_error;
+
+            if (isError) {
+                if(!data.success) failedPings++; // Only count network timeouts as packet loss in %
+                
+                updateChart(null); // Break the line
+                
+                const rttText = document.getElementById('rtt-display');
+                if (data.server_response === "Connection failed") {
+                     rttText.innerText = "FAILED";
+                } else {
+                     rttText.innerText = "TIMEOUT";
+                }
+                rttText.style.color = "#dc3545";
+                
+                logToTerminal(data.server_response, true);
+            } else {
+                updateChart(data.rtt_ms);
+                document.getElementById('rtt-display').innerText = data.rtt_ms.toFixed(1) + " ms";
+                document.getElementById('rtt-display').style.color = "#007bff";
+                logToTerminal(data.server_response, false);
+            }
+
+            document.getElementById('payload-display').innerText = data.payload_size + " bytes";
+            const lossPct = (failedPings / totalPings * 100).toFixed(1);
+            document.getElementById('loss-display').innerText = lossPct + "%";
+        };
+
+        function updateChart(rtt) {
+            const now = new Date().toLocaleTimeString();
+            chart.data.labels.push(now);
+            chart.data.datasets[0].data.push(rtt);
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.update();
+        }
+
+        function logToTerminal(msg, isError) {
+            const now = new Date().toLocaleTimeString();
+            const div = document.createElement("div");
+            div.className = "log-entry" + (isError ? " log-error" : "");
+            div.innerText = `[${now}] ${msg}`;
+            termWindow.appendChild(div);
+            termWindow.scrollTop = termWindow.scrollHeight;
+        }
+
+        function updatePayload() {
+            const text = document.getElementById('payloadInput').value;
+            ws.send(JSON.stringify({ type: "UpdatePayload", value: text }));
+        }
+
+        function toggleFail() {
+            const isChecked = document.getElementById('failToggle').checked;
+            ws.send(JSON.stringify({ type: "ToggleFail", value: isChecked }));
+        }
+    </script>
+</body>
+</html>
+"###;
