@@ -263,6 +263,7 @@ async fn echo<'d, T: UsbInstance + 'd, U: RngInstance + 'd>(
     info!("Done reading ML-DSA 65 signature\n");
 
     info!("Verifying signature on encapsulation key");
+    let mut send_encapsulation = false;
     let result = ml_dsa_65::verify(
         &MLDSA65VerificationKey::new(VK),
         &encapsulation_key_buffer,
@@ -271,40 +272,59 @@ async fn echo<'d, T: UsbInstance + 'd, U: RngInstance + 'd>(
     );
     if result.is_ok() {
         info!(".. Signature verified!");
+        send_encapsulation = true;
     } else {
         info!(".. Verification failed!");
     }
 
-    let encapsulation_key = MlKem768PublicKey::from(&encapsulation_key_buffer);
-    let mut encapsulation_randomness = [0u8; libcrux_iot_ml_kem::ENCAPS_SEED_SIZE];
-    unwrap!(rng.async_fill_bytes(&mut encapsulation_randomness).await);
-    let (encapsulation, shared_secret) =
-        libcrux_iot_ml_kem::mlkem768::encapsulate(&encapsulation_key, encapsulation_randomness);
+    let mut response_ciphertext = MlKem768Ciphertext::default();
+    let mut result_shared_secret = [0u8; 32];
+    // We send one full packet to indicate the response status:
+    // - [0u8;64] -> Error (+ all zero encapsulation)
+    // - [1u8;64] -> Success (+ real encapsulation)
+    let mut status = [0u8; 64];
+    if send_encapsulation {
+        let encapsulation_key = MlKem768PublicKey::from(&encapsulation_key_buffer);
+        let mut encapsulation_randomness = [0u8; libcrux_iot_ml_kem::ENCAPS_SEED_SIZE];
+        unwrap!(rng.async_fill_bytes(&mut encapsulation_randomness).await);
+        let (encapsulation, shared_secret) =
+            libcrux_iot_ml_kem::mlkem768::encapsulate(&encapsulation_key, encapsulation_randomness);
 
-    info!("Sending encapsulated shared secret");
+        info!("Sending encapsulated shared secret");
+        response_ciphertext
+            .as_mut_slice()
+            .copy_from_slice(encapsulation.as_slice());
+        result_shared_secret.copy_from_slice(&shared_secret);
+        status = [1u8; 64];
+    }
+
     index = 0;
     let full_packets = MlKem768Ciphertext::len() / 64;
     let remainder = MlKem768Ciphertext::len() % 64;
+
+    // Send response status
+    class.write_packet(status.as_slice()).await?;
+    // Send encapsulation
     for packet in 0..full_packets {
         let packet_offset = packet * 64;
         class
-            .write_packet(&encapsulation.as_slice()[packet_offset..packet_offset + 64])
+            .write_packet(&response_ciphertext.as_slice()[packet_offset..packet_offset + 64])
             .await?;
     }
     if remainder != 0 {
         let mut buf = [0u8; 64];
         buf[..remainder].copy_from_slice(
-            &encapsulation.as_slice()[full_packets * 64..full_packets * 64 + remainder],
+            &response_ciphertext.as_slice()[full_packets * 64..full_packets * 64 + remainder],
         );
         class
-            .write_packet(&encapsulation.as_slice()[index..])
+            .write_packet(&response_ciphertext.as_slice()[index..])
             .await?;
     } else {
         // Write a zero-length package in this case, to make the host process the last full-length package.
         class.write_packet(&[]).await?;
     }
 
-    info!("Shared secret is {}", shared_secret);
+    info!("Shared secret is {}", result_shared_secret);
 
     Ok(())
 }

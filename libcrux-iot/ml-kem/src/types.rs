@@ -240,3 +240,24 @@ pub(crate) fn unpack_private_key<const CPA_SECRET_KEY_SIZE: usize, const PUBLIC_
         implicit_rejection_value,
     )
 }
+macro_rules! impl_non_hax_types {
+    ($name:ident) => {
+        impl<const SIZE: usize> $name<SIZE> {
+            /// A mutable reference to the raw byte slice.
+            pub fn as_mut_slice(&mut self) -> &mut [u8] {
+                &mut self.value
+            }
+
+            /// A mutable reference to the raw byte array.
+            pub fn as_ref_mut(&mut self) -> &mut [u8; SIZE] {
+                &mut self.value
+            }
+        }
+    };
+}
+
+// Hax can't handle these.
+mod non_hax_impls {
+    use super::*;
+    impl_non_hax_types!(MlKemCiphertext);
+}
