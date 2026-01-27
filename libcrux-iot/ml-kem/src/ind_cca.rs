@@ -31,12 +31,14 @@ pub(crate) mod multiplexing;
 pub(crate) mod instantiations;
 
 /// Serialize the secret key.
-
 #[hax_lib::requires(
-    SERIALIZED_KEY_LEN == private_key.len() + public_key.len() + H_DIGEST_SIZE + implicit_rejection_value.len() &&
-    (SERIALIZED_KEY_LEN == crate::mlkem512::SECRET_KEY_SIZE ||
-        SERIALIZED_KEY_LEN == crate::mlkem768::SECRET_KEY_SIZE ||
-        SERIALIZED_KEY_LEN == crate::mlkem1024::SECRET_KEY_SIZE)
+    ((K == 2 && SERIALIZED_KEY_LEN == crate::mlkem512::SECRET_KEY_SIZE)
+        || (K == 3 && SERIALIZED_KEY_LEN == crate::mlkem768::SECRET_KEY_SIZE)
+        || (K == 4 && SERIALIZED_KEY_LEN == crate::mlkem1024::SECRET_KEY_SIZE)) &&
+    private_key.len() == K * BYTES_PER_RING_ELEMENT &&
+    public_key.len() == K * BYTES_PER_RING_ELEMENT + 32 &&
+    implicit_rejection_value.len() == 32 &&
+    SERIALIZED_KEY_LEN == private_key.len() + public_key.len() + H_DIGEST_SIZE + implicit_rejection_value.len()
 )]
 #[inline(always)]
 fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize, Hasher: Hash>(
@@ -64,7 +66,10 @@ fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize,
 /// This implements the Modulus check in 7.2 2.
 /// Note that the size check in 7.2 1 is covered by the `PUBLIC_KEY_SIZE` in the
 /// `public_key` type.
-#[hax_lib::requires(PUBLIC_KEY_SIZE == K * BYTES_PER_RING_ELEMENT + 32)]
+#[hax_lib::requires(
+    (K == 2 || K == 3 || K == 4) &&
+    PUBLIC_KEY_SIZE == K * BYTES_PER_RING_ELEMENT + 32
+)]
 #[inline(always)]
 pub(crate) fn validate_public_key<
     const K: usize,
@@ -96,6 +101,14 @@ pub(crate) fn validate_public_key<
 /// This implements the Hash check in 7.3 3.
 /// Note that the size checks in 7.2 1 and 2 are covered by the `SECRET_KEY_SIZE`
 /// and `CIPHERTEXT_SIZE` in the `private_key` and `ciphertext` types.
+#[hax_lib::requires(
+    match K {
+        2 => SECRET_KEY_SIZE == crate::mlkem512::SECRET_KEY_SIZE,
+        3 => SECRET_KEY_SIZE == crate::mlkem768::SECRET_KEY_SIZE,
+        4 => SECRET_KEY_SIZE == crate::mlkem1024::SECRET_KEY_SIZE,
+        _ => false
+    }
+)]
 #[inline(always)]
 pub(crate) fn validate_private_key<
     const K: usize,
@@ -112,6 +125,14 @@ pub(crate) fn validate_private_key<
 /// Validate an ML-KEM private key.
 ///
 /// This implements the Hash check in 7.3 3.
+#[hax_lib::requires(
+    match K {
+        2 => SECRET_KEY_SIZE == crate::mlkem512::SECRET_KEY_SIZE,
+        3 => SECRET_KEY_SIZE == crate::mlkem768::SECRET_KEY_SIZE,
+        4 => SECRET_KEY_SIZE == crate::mlkem1024::SECRET_KEY_SIZE,
+        _ => false
+    }
+)]
 #[inline(always)]
 pub(crate) fn validate_private_key_only<
     const K: usize,
@@ -144,12 +165,14 @@ pub(crate) fn validate_private_key_only<
 /// Depending on the `Vector` and `Hasher` used, this requires different hardware
 /// features
 #[hax_lib::requires(
-    (K == 2 || K == 3 || K == 4) &&
+    ((K == 2 && PRIVATE_KEY_SIZE == crate::mlkem512::SECRET_KEY_SIZE)
+        || (K == 3 && PRIVATE_KEY_SIZE == crate::mlkem768::SECRET_KEY_SIZE)
+        || (K == 4 && PRIVATE_KEY_SIZE == crate::mlkem1024::SECRET_KEY_SIZE)) &&
     K_SQUARED == K * K &&
     (ETA1 == 3 || ETA1 == 2) &&
     ETA1_RANDOMNESS_SIZE == 64 * ETA1 &&
+    CPA_PRIVATE_KEY_SIZE == K * BYTES_PER_RING_ELEMENT &&
     PRF_OUTPUT_SIZE1 == K * ETA1_RANDOMNESS_SIZE &&
-    PRIVATE_KEY_SIZE == K * BYTES_PER_RING_ELEMENT &&
     PUBLIC_KEY_SIZE == K * BYTES_PER_RING_ELEMENT + 32
 )]
 #[inline(always)]
@@ -226,7 +249,8 @@ pub(crate) fn generate_keypair<
         VECTOR_V_COMPRESSION_FACTOR == 5 && C2_SIZE == 160) &&
     C1_SIZE == K * C1_BLOCK_SIZE &&
     CIPHERTEXT_SIZE == C1_SIZE + C2_SIZE &&
-    T_AS_NTT_ENCODED_SIZE == BYTES_PER_RING_ELEMENT * K
+    T_AS_NTT_ENCODED_SIZE == BYTES_PER_RING_ELEMENT * K &&
+    PUBLIC_KEY_SIZE == T_AS_NTT_ENCODED_SIZE + 32
 )]
 #[inline(always)]
 pub(crate) fn encapsulate<
@@ -318,7 +342,20 @@ pub(crate) fn encapsulate<
 }
 
 #[hax_lib::requires(
-    (K == 2 || K == 3 || K == 4) &&
+    (
+        K == 2 &&
+        SECRET_KEY_SIZE == crate::mlkem512::SECRET_KEY_SIZE &&
+        CPA_SECRET_KEY_SIZE == crate::mlkem512::CPA_PKE_SECRET_KEY_SIZE &&
+        PUBLIC_KEY_SIZE == crate::mlkem512::CPA_PKE_PUBLIC_KEY_SIZE
+        || K == 3 &&
+        SECRET_KEY_SIZE == crate::mlkem768::SECRET_KEY_SIZE &&
+        CPA_SECRET_KEY_SIZE == crate::mlkem768::CPA_PKE_SECRET_KEY_SIZE &&
+        PUBLIC_KEY_SIZE == crate::mlkem768::CPA_PKE_PUBLIC_KEY_SIZE
+        || K == 4 &&
+        SECRET_KEY_SIZE == crate::mlkem1024::SECRET_KEY_SIZE &&
+        CPA_SECRET_KEY_SIZE == crate::mlkem1024::CPA_PKE_SECRET_KEY_SIZE &&
+        PUBLIC_KEY_SIZE == crate::mlkem1024::CPA_PKE_PUBLIC_KEY_SIZE
+    ) &&
     K_SQUARED == K * K &&
     (ETA1 == 3 || ETA1 == 2) &&
     ETA1_RANDOMNESS_SIZE == 64 * ETA1 &&
@@ -333,7 +370,8 @@ pub(crate) fn encapsulate<
     C1_SIZE == K * C1_BLOCK_SIZE &&
     CIPHERTEXT_SIZE == C1_SIZE + C2_SIZE &&
     T_AS_NTT_ENCODED_SIZE == BYTES_PER_RING_ELEMENT * K &&
-    CIPHERTEXT_SIZE == K * 32 * VECTOR_U_COMPRESSION_FACTOR + 32 * VECTOR_V_COMPRESSION_FACTOR
+    CIPHERTEXT_SIZE == K * 32 * VECTOR_U_COMPRESSION_FACTOR + 32 * VECTOR_V_COMPRESSION_FACTOR &&
+    IMPLICIT_REJECTION_HASH_INPUT_SIZE == SHARED_SECRET_SIZE + CIPHERTEXT_SIZE
 )]
 #[inline(always)]
 pub(crate) fn decapsulate<

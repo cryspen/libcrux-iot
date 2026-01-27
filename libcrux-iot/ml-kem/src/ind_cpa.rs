@@ -542,9 +542,9 @@ fn compress_then_serialize_u<
     cache.len() == K
 )]
 #[hax_lib::ensures(|_|
-    ciphertext.len() == CIPHERTEXT_SIZE &&
-    r_as_ntt.len() == K &&
-    cache.len() == K
+    future(ciphertext).len() == CIPHERTEXT_SIZE &&
+    future(r_as_ntt).len() == K &&
+    future(cache).len() == K
 )]
 #[inline(always)]
 pub(crate) fn encrypt<
