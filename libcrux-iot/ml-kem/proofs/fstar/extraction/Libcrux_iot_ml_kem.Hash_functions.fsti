@@ -3,12 +3,6 @@ module Libcrux_iot_ml_kem.Hash_functions
 open FStar.Mul
 open Core_models
 
-/// The SHA3 block size.
-let v_BLOCK_SIZE: usize = mk_usize 168
-
-/// The size of 3 SHA3 blocks.
-let v_THREE_BLOCKS: usize = v_BLOCK_SIZE *! mk_usize 3
-
 /// Abstraction for the hashing, to pick the fastest version depending on the
 /// platform features available.
 /// In libcrux-iot we currently support a portable instantiations of

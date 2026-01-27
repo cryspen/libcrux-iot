@@ -14,8 +14,6 @@ let _ =
 
 let v_MONTGOMERY_SHIFT: u8 = mk_u8 16
 
-let v_MONTGOMERY_R: i32 = mk_i32 1 <<! v_MONTGOMERY_SHIFT
-
 /// This is calculated as ⌊(BARRETT_R / FIELD_MODULUS) + 1/2⌋
 let v_BARRETT_MULTIPLIER: i32 = mk_i32 20159
 

@@ -548,16 +548,16 @@ val encrypt
           (accumulator_future: t_Array i32 (mk_usize 256)) =
             temp_0_
           in
-          (Core_models.Slice.impl__len #u8 ciphertext <: usize) =. v_CIPHERTEXT_SIZE &&
+          (Core_models.Slice.impl__len #u8 ciphertext_future <: usize) =. v_CIPHERTEXT_SIZE &&
           (Core_models.Slice.impl__len #(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement
                 v_Vector)
-              r_as_ntt
+              r_as_ntt_future
             <:
             usize) =.
           v_K &&
           (Core_models.Slice.impl__len #(Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement
                 v_Vector)
-              cache
+              cache_future
             <:
             usize) =.
           v_K)
