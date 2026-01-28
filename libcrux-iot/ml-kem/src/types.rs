@@ -15,7 +15,7 @@ macro_rules! impl_generic_struct {
 
         #[hax_lib::attributes]
         impl<const SIZE: usize> AsRef<[u8]> for $name<SIZE> {
-            #[ensures(|result| fstar!(r#"$result = ${self_}.f_value"#))]
+            #[ensures(|result| result == &self.value)]
             fn as_ref(&self) -> &[u8] {
                 &self.value
             }
@@ -23,7 +23,7 @@ macro_rules! impl_generic_struct {
 
         #[hax_lib::attributes]
         impl<const SIZE: usize> From<[u8; SIZE]> for $name<SIZE> {
-            #[ensures(|result| fstar!(r#"${result}.f_value = $value"#))]
+            #[ensures(|result| result.value == value)]
             fn from(value: [u8; SIZE]) -> Self {
                 Self { value }
             }
@@ -57,7 +57,7 @@ macro_rules! impl_generic_struct {
         #[hax_lib::attributes]
         impl<const SIZE: usize> $name<SIZE> {
             /// A reference to the raw byte slice.
-            #[ensures(|result| fstar!(r#"$result == self.f_value"#))]
+            #[ensures(|result| result == &self.value)]
             pub fn as_slice(&self) -> &[u8; SIZE] {
                 &self.value
             }
@@ -90,14 +90,14 @@ impl<const SIZE: usize> Default for MlKemPrivateKey<SIZE> {
 }
 #[hax_lib::attributes]
 impl<const SIZE: usize> AsRef<[U8]> for MlKemPrivateKey<SIZE> {
-    #[ensures(|result|fstar!(r#"$result = ${self_}.f_value"#))]
+    #[ensures(|result| result == &self.value)]
     fn as_ref(&self) -> &[U8] {
         &self.value
     }
 }
 #[hax_lib::attributes]
 impl<const SIZE: usize> From<[U8; SIZE]> for MlKemPrivateKey<SIZE> {
-    #[ensures(|result|fstar!(r#"${result}.f_value = $value"#))]
+    #[ensures(|result| result.value == value)]
     fn from(value: [U8; SIZE]) -> Self {
         Self { value }
     }
@@ -126,7 +126,7 @@ impl<const SIZE: usize> TryFrom<&[U8]> for MlKemPrivateKey<SIZE> {
 #[hax_lib::attributes]
 impl<const SIZE: usize> MlKemPrivateKey<SIZE> {
     #[doc = r" A reference to the raw byte slice."]
-    #[ensures(|result|fstar!(r#"$result == self.f_value"#))]
+    #[ensures(|result| result == &self.value)]
     pub fn as_slice(&self) -> &[U8; SIZE] {
         &self.value
     }
@@ -274,6 +274,7 @@ impl<const PRIVATE_KEY_SIZE: usize, const PUBLIC_KEY_SIZE: usize>
     }
 
     /// Create a new [`MlKemKeyPair`] from the secret and public key.
+    // XXX: We don't want to derive PartialEq on the secret key, so we can't do this in Rust at the moment.
     #[ensures(|result| fstar!(r#"${result}.f_sk == $sk /\ ${result}.f_pk == $pk"#))]
     pub fn from(
         sk: MlKemPrivateKey<PRIVATE_KEY_SIZE>,
@@ -316,26 +317,17 @@ impl<const PRIVATE_KEY_SIZE: usize, const PUBLIC_KEY_SIZE: usize>
 /// Unpack an incoming private key into it's different parts.
 ///
 /// We have this here in types to extract into a common core for C.
-#[hax_lib::requires(fstar!(r#"Seq.length private_key >= 
-                            v v_CPA_SECRET_KEY_SIZE + v v_PUBLIC_KEY_SIZE + 
-                            v Libcrux_ml_kem.Constants.v_H_DIGEST_SIZE"#))]
-#[hax_lib::ensures(|result| fstar!(r#"
-           let (ind_cpa_secret_key_s,rest) = split $private_key $CPA_SECRET_KEY_SIZE in
-           let (ind_cpa_public_key_s,rest) = split rest $PUBLIC_KEY_SIZE in
-           let (ind_cpa_public_key_hash_s,implicit_rejection_value_s) = split rest Libcrux_ml_kem.Constants.v_H_DIGEST_SIZE in
-           let (ind_cpa_secret_key,ind_cpa_public_key,ind_cpa_public_key_hash,implicit_rejection_value)
-               = result in
-           ind_cpa_secret_key_s == ind_cpa_secret_key /\
-           ind_cpa_public_key_s == ind_cpa_public_key /\
-           ind_cpa_public_key_hash_s == ind_cpa_public_key_hash /\
-           implicit_rejection_value_s == implicit_rejection_value /\
-           Seq.length ind_cpa_secret_key == v v_CPA_SECRET_KEY_SIZE /\
-           Seq.length ind_cpa_public_key == v v_PUBLIC_KEY_SIZE /\
-           Seq.length ind_cpa_public_key_hash == v Libcrux_ml_kem.Constants.v_H_DIGEST_SIZE /\
-           Seq.length implicit_rejection_value == 
-           Seq.length private_key - 
-             (v v_CPA_SECRET_KEY_SIZE + v v_PUBLIC_KEY_SIZE + v Libcrux_ml_kem.Constants.v_H_DIGEST_SIZE)
-           "#))]
+#[hax_lib::requires(
+    CPA_SECRET_KEY_SIZE <= crate::mlkem1024::CPA_PKE_SECRET_KEY_SIZE &&
+    PUBLIC_KEY_SIZE <= crate::mlkem1024::CPA_PKE_PUBLIC_KEY_SIZE &&
+    private_key.len() >= CPA_SECRET_KEY_SIZE + PUBLIC_KEY_SIZE + crate::constants::H_DIGEST_SIZE
+)]
+#[hax_lib::ensures(|result|
+    result.0.len() == CPA_SECRET_KEY_SIZE &&
+    result.1.len() == PUBLIC_KEY_SIZE &&
+    result.2.len() == crate::constants::H_DIGEST_SIZE &&
+    result.3.len() == private_key.len() - (CPA_SECRET_KEY_SIZE + PUBLIC_KEY_SIZE + crate::constants::H_DIGEST_SIZE)
+)]
 pub(crate) fn unpack_private_key<const CPA_SECRET_KEY_SIZE: usize, const PUBLIC_KEY_SIZE: usize>(
     private_key: &[U8], // len: SECRET_KEY_SIZE
 ) -> (&[U8], &[u8], &[u8], &[U8]) {

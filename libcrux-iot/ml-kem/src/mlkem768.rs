@@ -20,12 +20,12 @@ const VECTOR_V_COMPRESSION_FACTOR: usize = 4;
 // [hax]: hacspec/hacspec-v2#27 stealing error
 //  block_len::<VECTOR_V_COMPRESSION_FACTOR>()
 const C2_SIZE: usize = (COEFFICIENTS_IN_RING_ELEMENT * VECTOR_V_COMPRESSION_FACTOR) / 8;
-const CPA_PKE_SECRET_KEY_SIZE: usize =
+pub(crate) const CPA_PKE_SECRET_KEY_SIZE: usize =
     (RANK * COEFFICIENTS_IN_RING_ELEMENT * BITS_PER_COEFFICIENT) / 8;
 pub(crate) const CPA_PKE_PUBLIC_KEY_SIZE: usize = T_AS_NTT_ENCODED_SIZE + 32;
 // These two are used in the hybrid kem. This could probably be improved.
 const CPA_PKE_CIPHERTEXT_SIZE: usize = C1_SIZE + C2_SIZE;
-const SECRET_KEY_SIZE: usize =
+pub(crate) const SECRET_KEY_SIZE: usize =
     CPA_PKE_SECRET_KEY_SIZE + CPA_PKE_PUBLIC_KEY_SIZE + H_DIGEST_SIZE + SHARED_SECRET_SIZE;
 
 const ETA1: usize = 2;
