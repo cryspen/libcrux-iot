@@ -406,6 +406,14 @@ static inline uint16_t core_num__u16__wrapping_add(uint16_t x, uint16_t y) {
 static inline uint64_t core_num__u64__wrapping_add(uint64_t x, uint64_t y) {
   return x + y;
 }
+
+static inline uint32_t core_num__u32__wrapping_add(uint32_t x, uint32_t y) {
+  return x + y;
+}
+
+static inline size_t core_num__usize__wrapping_add(size_t x0, size_t x1) {
+  return x0 + x1;
+}
 static inline uint8_t core_num__u8__wrapping_sub(uint8_t x, uint8_t y) {
   return x - y;
 }
