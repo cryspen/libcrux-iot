@@ -8,6 +8,7 @@ use embassy_futures::join::join;
 use embassy_stm32::rng::{Instance as RngInstance, Rng};
 use embassy_stm32::usb::{Driver, Instance as UsbInstance};
 use embassy_stm32::{Config, bind_interrupts, peripherals, rng, usb};
+use embassy_time::{Duration, Instant};
 use embassy_usb::Builder;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::driver::EndpointError;
@@ -232,73 +233,93 @@ impl From<EndpointError> for Disconnected {
     }
 }
 
+const MAX_PAYLOAD: usize = 1024;
+
 async fn echo<'d, T: UsbInstance + 'd, U: RngInstance + 'd>(
     class: &mut CdcAcmClass<'d, Driver<'d, T>>,
     rng: &mut Rng<'d, U>,
 ) -> Result<(), Disconnected> {
-    let mut encapsulation_key_buffer = [0u8; MlKem768PublicKey::len()];
+    let mut payload_buffer = [0u8; MlKem768PublicKey::len() + MAX_PAYLOAD];
     let mut signature = MLDSA65Signature::zero();
-    let mut index = 0;
     let mut buf = [0u8; 64];
 
-    // Read an encapsulation key.
-    info!("Reading ML-KEM 768 encapsulation key");
-    while index < MlKem768PublicKey::len() {
+    info!("Reading length of rest of signed payload");
+    let n = class.read_packet(&mut buf).await?;
+    info!(".. read {} bytes", n);
+    let payload_len = u16::from_be_bytes(buf[0..2].try_into().unwrap()) as usize;
+
+    let mut read_bytes_payload = 0;
+    info!("Reading {} bytes of payload.", payload_len);
+    while read_bytes_payload < payload_len {
         let n = class.read_packet(&mut buf).await?;
         info!(".. read {} bytes", n);
-        encapsulation_key_buffer[index..index + n].copy_from_slice(&buf[..n]);
-        index += n;
+        payload_buffer[read_bytes_payload..read_bytes_payload + n].copy_from_slice(&buf[..n]);
+        read_bytes_payload += n;
     }
-    info!("Done reading ML-KEM 768 encapsulation key\n");
-
-    index = 0;
 
     info!("Reading ML-DSA 65 signature");
-    while index < MLDSA65Signature::len() {
+    let mut read_bytes_signature = 0;
+    while read_bytes_signature < MLDSA65Signature::len() {
         let n = class.read_packet(&mut buf).await?;
         info!(".. read {} bytes", n);
-        signature.as_mut_slice()[index..index + n].copy_from_slice(&buf[..n]);
-        index += n;
+        signature.as_mut_slice()[read_bytes_signature..read_bytes_signature + n]
+            .copy_from_slice(&buf[..n]);
+        read_bytes_signature += n;
     }
     info!("Done reading ML-DSA 65 signature\n");
 
     info!("Verifying signature on encapsulation key");
     let mut send_encapsulation = false;
+    let mut verification_duration = Duration::default();
+    let mut encapsulation_duration = Duration::default();
+    // We send one full packet to indicate response status and timings:
+    // - status[0] inidicates signature verification status: 0 = error, 0xff = success
+    // - status[1..10] verification time in ms
+    // - status[10..18] encapsulation time in ms
+    let mut status = [0u8; 64];
+
+    let start_verification = Instant::now();
     let result = ml_dsa_65::verify(
         &MLDSA65VerificationKey::new(VK),
-        &encapsulation_key_buffer,
+        &payload_buffer[..read_bytes_payload],
         b"Libcrux-IoT Demo",
         &signature,
     );
+    let end_verification = Instant::now();
+    verification_duration = end_verification.duration_since(start_verification);
     if result.is_ok() {
         info!(".. Signature verified!");
         send_encapsulation = true;
     } else {
         info!(".. Verification failed!");
     }
+    status[1..9].copy_from_slice(&verification_duration.as_millis().to_be_bytes());
 
     let mut response_ciphertext = MlKem768Ciphertext::default();
     let mut result_shared_secret = [0u8; 32];
-    // We send one full packet to indicate the response status:
-    // - [0u8;64] -> Error (+ all zero encapsulation)
-    // - [1u8;64] -> Success (+ real encapsulation)
-    let mut status = [0u8; 64];
+
     if send_encapsulation {
-        let encapsulation_key = MlKem768PublicKey::from(&encapsulation_key_buffer);
+        let encapsulation_key = MlKem768PublicKey::from(
+            <[u8; MlKem768PublicKey::len()]>::try_from(&payload_buffer[..MlKem768PublicKey::len()])
+                .unwrap(),
+        );
         let mut encapsulation_randomness = [0u8; libcrux_iot_ml_kem::ENCAPS_SEED_SIZE];
+        // Including RNG time in this, since you always have to do this for encapsulation.
+        let start_encapsulation = Instant::now();
         unwrap!(rng.async_fill_bytes(&mut encapsulation_randomness).await);
         let (encapsulation, shared_secret) =
             libcrux_iot_ml_kem::mlkem768::encapsulate(&encapsulation_key, encapsulation_randomness);
-
+        let end_encapsulation = Instant::now();
+        encapsulation_duration = end_encapsulation.duration_since(start_encapsulation);
+        status[9..17].copy_from_slice(&encapsulation_duration.as_millis().to_be_bytes());
         info!("Sending encapsulated shared secret");
         response_ciphertext
             .as_mut_slice()
             .copy_from_slice(encapsulation.as_slice());
         result_shared_secret.copy_from_slice(&shared_secret);
-        status = [1u8; 64];
+        status[0] = 0xff;
     }
 
-    index = 0;
     let full_packets = MlKem768Ciphertext::len() / 64;
     let remainder = MlKem768Ciphertext::len() % 64;
 
@@ -316,9 +337,7 @@ async fn echo<'d, T: UsbInstance + 'd, U: RngInstance + 'd>(
         buf[..remainder].copy_from_slice(
             &response_ciphertext.as_slice()[full_packets * 64..full_packets * 64 + remainder],
         );
-        class
-            .write_packet(&response_ciphertext.as_slice()[index..])
-            .await?;
+        class.write_packet(&buf).await?;
     } else {
         // Write a zero-length package in this case, to make the host process the last full-length package.
         class.write_packet(&[]).await?;

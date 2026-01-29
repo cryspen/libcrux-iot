@@ -6,7 +6,7 @@ use axum::{
 };
 use futures::{sink::SinkExt, stream::StreamExt};
 use libcrux_ml_dsa::ml_dsa_65::MLDSA65SigningKey;
-use libcrux_ml_kem::mlkem768::MlKem768Ciphertext;
+use libcrux_ml_kem::mlkem768::{MlKem768Ciphertext, MlKem768PublicKey};
 use rand::TryRngCore;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -225,12 +225,14 @@ struct ConnectionStats {
     rtt_ms: f64,
     payload_size: usize,
     success: bool,
-    is_logical_error: bool, // New: true if response is "Connection failed"
+    verification_time: u64,
+    encapsulation_time: u64,
+    shared_secret: [u8; 32], // is_logical_error: bool, // New: true if response is "Connection failed"
 }
 
 struct AppState {
     sk: MLDSA65SigningKey,
-    tty_path: String,
+    payload: String,
     simulate_error: bool,
 }
 
@@ -255,7 +257,7 @@ async fn main() {
     // Initialize State
     let state = Arc::new(RwLock::new(AppState {
         sk: MLDSA65SigningKey::new(SK),
-        tty_path: tty_path.to_string(),
+        payload: String::from("Hello Board"),
         simulate_error: false,
     }));
 
@@ -264,7 +266,7 @@ async fn main() {
     let state_pinger = state.clone();
     tokio::spawn(async move {
         loop {
-            signed_ping(&tx_pinger, &state_pinger).await;
+            signed_ping(tty_path.clone(), &tx_pinger, &state_pinger).await;
             sleep(Duration::from_millis(1000)).await;
         }
     });
@@ -286,23 +288,29 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn signed_ping(tx: &Arc<broadcast::Sender<ConnectionStats>>, state: &SharedState) {
+async fn signed_ping(
+    tty_path: String,
+    tx: &Arc<broadcast::Sender<ConnectionStats>>,
+    state: &SharedState,
+) {
     // Determine what to send based on state
-    let (sk, tty_path, is_forcing_fail) = {
+    let (sk, payload, is_forcing_fail) = {
         let guard = state.read().unwrap();
         (
             guard.sk.clone(),
-            guard.tty_path.clone(),
+            guard.payload.clone(),
             guard.simulate_error,
         )
     };
-
+    let payload_len = payload.as_bytes().len() as u16;
     let start = Instant::now();
 
-    // Perform TCP Request
     let result = timeout(Duration::from_millis(1000), async {
+        let mut length_prefix = [0u8; 64];
+
+        let mut payload_buffer = Vec::new();
         let mut port = serialport::new(tty_path, 115_200)
-            .timeout(Duration::from_millis(100))
+            .timeout(Duration::from_millis(1000))
             .open()
             .expect("Failed to open port");
 
@@ -313,13 +321,20 @@ async fn signed_ping(tx: &Arc<broadcast::Sender<ConnectionStats>>, state: &Share
             .unwrap();
         let key_pair = libcrux_ml_kem::mlkem768::generate_key_pair(mlkem_key_generation_randomness);
 
+        length_prefix[0..2]
+            .copy_from_slice(&((payload.len() + MlKem768PublicKey::len()) as u16).to_be_bytes());
+        let sent_len = u16::from_be_bytes(length_prefix[0..2].try_into().unwrap()) as usize;
+        println!("Sending length: {sent_len}");
+        payload_buffer.extend_from_slice(key_pair.public_key().as_slice());
+        payload_buffer.extend_from_slice(payload.as_bytes());
+
         // Sign the encapsulation key.
         let mut signing_randomness = [0u8; libcrux_ml_dsa::SIGNING_RANDOMNESS_SIZE];
         rng.try_fill_bytes(&mut signing_randomness).unwrap();
 
         let mut signature = libcrux_ml_dsa::ml_dsa_65::sign(
             &sk,
-            key_pair.public_key().as_slice(),
+            &payload_buffer,
             MLDSA_CONTEXT,
             signing_randomness,
         )
@@ -330,51 +345,75 @@ async fn signed_ping(tx: &Arc<broadcast::Sender<ConnectionStats>>, state: &Share
         }
 
         // Send the host message.
-        port.write_all(key_pair.public_key().as_slice())
-            .expect("write failed");
+        println!("Sending payload length");
+        port.write_all(&length_prefix).expect("write failed");
         port.flush().unwrap();
+        println!("Sending payload");
+        port.write_all(&payload_buffer).expect("write failed");
+        port.flush().unwrap();
+        println!("Sending signature");
         port.write_all(signature.as_slice()).expect("write failed");
         port.flush().unwrap();
+        println!("Done sending");
 
         // Receive the client response.
         let mut response = [0u8; MlKem768Ciphertext::len() + 64];
         port.read_exact(&mut response).unwrap();
         port.flush().unwrap();
 
-        if &response[0..64] == &[0u8; 64] {
-            return Err::<[u8; 32], Error>(Error::InvalidSignature);
-        };
+        let success = response[0] == 0xff;
 
-        let encapsulation = libcrux_ml_kem::mlkem768::MlKem768Ciphertext::try_from(
-            &response[64..libcrux_ml_kem::mlkem768::MlKem768Ciphertext::len() + 64],
-        )
-        .unwrap();
+        // in ms
+        let verification_time = u64::from_be_bytes(response[1..9].try_into().unwrap());
+        let encapsulation_time = u64::from_be_bytes(response[9..17].try_into().unwrap());
 
-        let shared_secret =
-            libcrux_ml_kem::mlkem768::decapsulate(key_pair.private_key(), &encapsulation);
+        if success {
+            let encapsulation = libcrux_ml_kem::mlkem768::MlKem768Ciphertext::try_from(
+                &response[64..libcrux_ml_kem::mlkem768::MlKem768Ciphertext::len() + 64],
+            )
+            .unwrap();
 
-        Ok::<[u8; 32], Error>(shared_secret)
+            let shared_secret =
+                libcrux_ml_kem::mlkem768::decapsulate(key_pair.private_key(), &encapsulation);
+
+            Ok::<(bool, u64, u64, [u8; 32]), Error>((
+                success,
+                verification_time,
+                encapsulation_time,
+                shared_secret,
+            ))
+        } else {
+            Ok::<(bool, u64, u64, [u8; 32]), Error>((
+                success,
+                verification_time,
+                encapsulation_time,
+                [0u8; 32],
+            ))
+        }
     })
     .await;
 
-    // Process Result
-    let (is_logical_error, _shared_secret) = match result {
-        Ok(Ok(shared_secret)) => {
-            println!(
-                "Received encapsulation of shared secret: {:?}",
-                shared_secret
-            );
-            (true, shared_secret)
-        }
-        Ok(Err(_)) => (false, [0u8; 32]),
+    let (success, verification_time, encapsulation_time, shared_secret) = match result {
+        Ok(Ok((success, verification_time, encapsulation_time, shared_secret))) => (
+            success,
+            verification_time,
+            encapsulation_time,
+            shared_secret,
+        ),
         _ => todo!(),
     };
-
+    println!(
+        "Success: {success}, Verification: {verification_time} ms, Encapsulation: {encapsulation_time} ms, Shared Secret: {shared_secret:?}"
+    );
     let stats = ConnectionStats {
         rtt_ms: start.elapsed().as_secs_f64() * 1000.0,
-        payload_size: libcrux_ml_kem::mlkem768::MlKem768Ciphertext::len(),
-        success: true,
-        is_logical_error,
+        payload_size: libcrux_ml_kem::mlkem768::MlKem768Ciphertext::len()
+            + 4
+            + payload_len as usize,
+        success,
+        verification_time,
+        encapsulation_time,
+        shared_secret,
     };
 
     let _ = tx.send(stats);
@@ -409,7 +448,7 @@ async fn websocket_handler(
                     match cmd {
                         ClientCommand::UpdatePayload(new_text) => {
                             println!("Payload updated: {}", new_text);
-                            guard.tty_path = new_text;
+                            guard.payload = new_text;
                         }
                         ClientCommand::ToggleFail(force_fail) => {
                             println!("Force Fail mode set to: {}", force_fail);
@@ -462,6 +501,9 @@ const DASHBOARD_HTML: &str = r###"
         .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
         .stat-box { text-align: center; }
         .stat-val { font-size: 1.5em; font-weight: bold; color: #007bff; }
+        .rtt-val { font-size: 1.5em; font-weight: bold; color: #007bff; }
+        .vtime-val { font-size: 1.5em; font-weight: bold; color: #2A8A20; }
+        .enctime-val { font-size: 1.5em; font-weight: bold; color: #314DA8; }
         .error-val { color: #dc3545; }
 
         .terminal-container { margin-top: 20px; }
@@ -490,7 +532,7 @@ const DASHBOARD_HTML: &str = r###"
                     <input type="checkbox" id="failToggle" onchange="toggleFail()">
                     <span class="slider"></span>
                 </label>
-                <span>Simulate Error</span>
+                <span>Simulate Bad Signature</span>
             </div>
         </div>
 
@@ -500,12 +542,16 @@ const DASHBOARD_HTML: &str = r###"
                 <div id="rtt-display" class="stat-val">-- ms</div>
             </div>
             <div class="stat-box">
-                <div>Echo Payload</div>
-                <div id="payload-display" class="stat-val">-- bytes</div>
+                <div>Verification Time</div>
+                <div id="vtime-display" class="vtime-val">-- ms</div>
             </div>
             <div class="stat-box">
-                <div>Packet Loss</div>
-                <div id="loss-display" class="stat-val error-val">0%</div>
+                <div>Encapsulation Time</div>
+                <div id="enctime-display" class="enctime-val">-- ms</div>
+            </div>
+            <div class="stat-box">
+                <div>Echo Payload</div>
+                <div id="payload-display" class="stat-val">-- bytes</div>
             </div>
         </div>
 
@@ -533,7 +579,29 @@ const DASHBOARD_HTML: &str = r###"
                     borderColor: '#007bff',
                     tension: 0.3,
                     fill: false
-                }]
+                },
+                {
+                    label: 'Verification Time (ms)',
+                    data: [],
+                    borderColor: '#2A8A20',
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Encapsulation Time (ms)',
+                    data: [],
+                    borderColor: '#314DA8',
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Verification + Encapsulation Time (ms)',
+                    data: [],
+                    borderColor: '#E8892C',
+                    tension: 0.3,
+                    fill: false
+                }
+            ]
             },
             options: { scales: { y: { beginAtZero: true } }, animation: false }
         });
@@ -545,42 +613,37 @@ const DASHBOARD_HTML: &str = r###"
             totalPings++;
 
             // Handle Display Logic
-            // We treat 'success=false' (network timeout) AND 'is_logical_error' (server sent "Connection failed") as errors
-            const isError = !data.success || data.is_logical_error;
+            const isError = !data.success;
 
+            updateChart(data.rtt_ms, data.verification_time, data.encapsulation_time);
+            document.getElementById('rtt-display').innerText = data.rtt_ms.toFixed(1) + " ms";
+            document.getElementById('rtt-display').style.color = "#007bff";
+            document.getElementById('vtime-display').innerText = data.verification_time.toFixed(1) + " ms";
+            document.getElementById('vtime-display').style.color = "#2A8A20";
+            document.getElementById('enctime-display').innerText = data.encapsulation_time.toFixed(1) + " ms";
+            document.getElementById('enctime-display').style.color = "#314DA8";
             if (isError) {
-                if(!data.success) failedPings++; // Only count network timeouts as packet loss in %
-                
-                updateChart(null); // Break the line
-                
-                const rttText = document.getElementById('rtt-display');
-                if (data.server_response === "Connection failed") {
-                     rttText.innerText = "FAILED";
-                } else {
-                     rttText.innerText = "TIMEOUT";
-                }
-                rttText.style.color = "#dc3545";
-                
-                logToTerminal(data.server_response, true);
+               logToTerminal("Error! No encapsulated secret received", true);
             } else {
-                updateChart(data.rtt_ms);
-                document.getElementById('rtt-display').innerText = data.rtt_ms.toFixed(1) + " ms";
-                document.getElementById('rtt-display').style.color = "#007bff";
-                logToTerminal(data.server_response, false);
+               logToTerminal("Success! Shared secret decapsulated: " + data.shared_secret, false);
             }
 
             document.getElementById('payload-display').innerText = data.payload_size + " bytes";
-            const lossPct = (failedPings / totalPings * 100).toFixed(1);
-            document.getElementById('loss-display').innerText = lossPct + "%";
         };
 
-        function updateChart(rtt) {
+        function updateChart(rtt, vtime, enctime) {
             const now = new Date().toLocaleTimeString();
             chart.data.labels.push(now);
             chart.data.datasets[0].data.push(rtt);
+            chart.data.datasets[1].data.push(vtime);
+            chart.data.datasets[2].data.push(enctime);
+            chart.data.datasets[3].data.push(vtime + enctime);
             if (chart.data.labels.length > 20) {
                 chart.data.labels.shift();
                 chart.data.datasets[0].data.shift();
+                chart.data.datasets[1].data.shift();
+                chart.data.datasets[2].data.shift();
+                chart.data.datasets[3].data.shift();
             }
             chart.update();
         }
