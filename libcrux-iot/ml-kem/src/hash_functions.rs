@@ -57,11 +57,13 @@ pub(crate) trait Hash {
 
     /// Squeeze 3 blocks out of the SHAKE128 state.
     #[requires(true)]
+    #[ensures(|_| future(output).len() == output.len())]
     // We only use this to sample entries of the public matrix A, from the public seeds.
     fn shake128_squeeze_first_three_blocks(&mut self, output: &mut [[u8; THREE_BLOCKS]]);
 
     /// Squeeze 1 block out of the SHAKE128 state.
     #[requires(true)]
+    #[ensures(|_| future(output).len() == output.len())]
     // We only use this to sample entries of the public matrix A, from the public seeds.
     fn shake128_squeeze_next_block(&mut self, output: &mut [[u8; BLOCK_SIZE]]);
 }
@@ -141,8 +143,9 @@ pub(crate) mod portable {
         PortableHash { shake128_state }
     }
 
-    #[inline(always)]
     #[hax_lib::opaque]
+    #[hax_lib::ensures(|_| future(output).len() == output.len())]
+    #[inline(always)]
     // We only use this to sample entries of the public matrix A, from the public seeds.
     fn shake128_squeeze_first_three_blocks(
         state: &mut PortableHash,
@@ -171,8 +174,9 @@ pub(crate) mod portable {
         }
     }
 
-    #[inline(always)]
     #[hax_lib::opaque]
+    #[hax_lib::ensures(|_| future(output).len() == output.len())]
+    #[inline(always)]
     // We only use this to sample entries of the public matrix A, from the public seeds.
     fn shake128_squeeze_next_block(state: &mut PortableHash, output: &mut [[u8; BLOCK_SIZE]]) {
         for i in 0..output.len() {
@@ -228,12 +232,14 @@ pub(crate) mod portable {
         }
 
         #[inline(always)]
+        #[ensures(|_| future(output).len() == output.len())]
         // We only use this to sample entries of the public matrix A, from the public seeds.
         fn shake128_squeeze_first_three_blocks(&mut self, output: &mut [[u8; THREE_BLOCKS]]) {
             shake128_squeeze_first_three_blocks(self, output);
         }
 
         #[inline(always)]
+        #[ensures(|_| future(output).len() == output.len())]
         // We only use this to sample entries of the public matrix A, from the public seeds.
         fn shake128_squeeze_next_block(&mut self, output: &mut [[u8; BLOCK_SIZE]]) {
             shake128_squeeze_next_block(self, output);

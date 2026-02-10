@@ -14,26 +14,6 @@ val shake128_init_absorb_final': input: t_Slice (t_Array u8 (mk_usize 34))
 
 let shake128_init_absorb_final = shake128_init_absorb_final'
 
-assume
-val shake128_squeeze_first_three_blocks':
-    state: t_PortableHash ->
-    output: t_Slice (t_Array u8 (mk_usize 504))
-  -> Prims.Pure (t_PortableHash & t_Slice (t_Array u8 (mk_usize 504)))
-      Prims.l_True
-      (fun _ -> Prims.l_True)
-
-let shake128_squeeze_first_three_blocks = shake128_squeeze_first_three_blocks'
-
-assume
-val shake128_squeeze_next_block':
-    state: t_PortableHash ->
-    output: t_Slice (t_Array u8 (mk_usize 168))
-  -> Prims.Pure (t_PortableHash & t_Slice (t_Array u8 (mk_usize 168)))
-      Prims.l_True
-      (fun _ -> Prims.l_True)
-
-let shake128_squeeze_next_block = shake128_squeeze_next_block'
-
 [@@ FStar.Tactics.Typeclasses.tcinstance]
 assume
 val impl': Libcrux_iot_ml_kem.Hash_functions.t_Hash t_PortableHash
@@ -97,3 +77,35 @@ val v_PRFxN': input: t_Slice (t_Array u8 (mk_usize 33)) -> outputs: t_Slice u8 -
           (Core_models.Slice.impl__len #u8 outputs <: usize))
 
 let v_PRFxN = v_PRFxN'
+
+assume
+val shake128_squeeze_first_three_blocks':
+    state: t_PortableHash ->
+    output: t_Slice (t_Array u8 (mk_usize 504))
+  -> Prims.Pure (t_PortableHash & t_Slice (t_Array u8 (mk_usize 504)))
+      Prims.l_True
+      (ensures
+        fun temp_0_ ->
+          let (state_future: t_PortableHash), (output_future: t_Slice (t_Array u8 (mk_usize 504))) =
+            temp_0_
+          in
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 504)) output_future <: usize) =.
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 504)) output <: usize))
+
+let shake128_squeeze_first_three_blocks = shake128_squeeze_first_three_blocks'
+
+assume
+val shake128_squeeze_next_block':
+    state: t_PortableHash ->
+    output: t_Slice (t_Array u8 (mk_usize 168))
+  -> Prims.Pure (t_PortableHash & t_Slice (t_Array u8 (mk_usize 168)))
+      Prims.l_True
+      (ensures
+        fun temp_0_ ->
+          let (state_future: t_PortableHash), (output_future: t_Slice (t_Array u8 (mk_usize 168))) =
+            temp_0_
+          in
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 168)) output_future <: usize) =.
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 168)) output <: usize))
+
+let shake128_squeeze_next_block = shake128_squeeze_next_block'

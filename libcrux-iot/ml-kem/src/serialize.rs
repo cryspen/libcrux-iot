@@ -66,7 +66,6 @@ pub(super) fn deserialize_to_uncompressed_ring_element<Vector: Operations>(
     serialized: &[U8],
     re: &mut PolynomialRingElement<Vector>,
 ) {
-    // hax_lib::fstar!(r#"assert (v $BYTES_PER_RING_ELEMENT / 24 == 16)"#);
     cloop! {
         for (i, bytes) in serialized.chunks_exact(24).enumerate() {
             Vector::deserialize_12(bytes, &mut re.coefficients[i]);
@@ -85,7 +84,6 @@ pub(crate) fn deserialize_to_reduced_ring_element<Vector: Operations>(
     serialized: &[U8],
     re: &mut PolynomialRingElement<Vector>,
 ) {
-    // hax_lib::fstar!(r#"assert (v $BYTES_PER_RING_ELEMENT / 24 == 16)"#);
     cloop! {
         for (i, bytes) in serialized.chunks_exact(24).enumerate() {
             Vector::deserialize_12(bytes, &mut re.coefficients[i]);

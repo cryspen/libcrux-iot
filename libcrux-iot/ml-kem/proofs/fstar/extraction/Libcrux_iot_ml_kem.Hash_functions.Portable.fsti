@@ -11,20 +11,6 @@ val t_PortableHash:eqtype
 val shake128_init_absorb_final (input: t_Slice (t_Array u8 (mk_usize 34)))
     : Prims.Pure t_PortableHash Prims.l_True (fun _ -> Prims.l_True)
 
-val shake128_squeeze_first_three_blocks
-      (state: t_PortableHash)
-      (output: t_Slice (t_Array u8 (mk_usize 504)))
-    : Prims.Pure (t_PortableHash & t_Slice (t_Array u8 (mk_usize 504)))
-      Prims.l_True
-      (fun _ -> Prims.l_True)
-
-val shake128_squeeze_next_block
-      (state: t_PortableHash)
-      (output: t_Slice (t_Array u8 (mk_usize 168)))
-    : Prims.Pure (t_PortableHash & t_Slice (t_Array u8 (mk_usize 168)))
-      Prims.l_True
-      (fun _ -> Prims.l_True)
-
 [@@ FStar.Tactics.Typeclasses.tcinstance]
 val impl:Libcrux_iot_ml_kem.Hash_functions.t_Hash t_PortableHash
 
@@ -73,3 +59,29 @@ val v_PRFxN (input: t_Slice (t_Array u8 (mk_usize 33))) (outputs: t_Slice u8) (o
           let outputs_future:t_Slice u8 = outputs_future in
           (Core_models.Slice.impl__len #u8 outputs_future <: usize) =.
           (Core_models.Slice.impl__len #u8 outputs <: usize))
+
+val shake128_squeeze_first_three_blocks
+      (state: t_PortableHash)
+      (output: t_Slice (t_Array u8 (mk_usize 504)))
+    : Prims.Pure (t_PortableHash & t_Slice (t_Array u8 (mk_usize 504)))
+      Prims.l_True
+      (ensures
+        fun temp_0_ ->
+          let (state_future: t_PortableHash), (output_future: t_Slice (t_Array u8 (mk_usize 504))) =
+            temp_0_
+          in
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 504)) output_future <: usize) =.
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 504)) output <: usize))
+
+val shake128_squeeze_next_block
+      (state: t_PortableHash)
+      (output: t_Slice (t_Array u8 (mk_usize 168)))
+    : Prims.Pure (t_PortableHash & t_Slice (t_Array u8 (mk_usize 168)))
+      Prims.l_True
+      (ensures
+        fun temp_0_ ->
+          let (state_future: t_PortableHash), (output_future: t_Slice (t_Array u8 (mk_usize 168))) =
+            temp_0_
+          in
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 168)) output_future <: usize) =.
+          (Core_models.Slice.impl__len #(t_Array u8 (mk_usize 168)) output <: usize))

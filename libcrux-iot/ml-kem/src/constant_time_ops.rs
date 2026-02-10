@@ -114,7 +114,6 @@ pub(crate) fn compare_ciphertexts_in_constant_time(lhs: &[U8], rhs: &[U8]) -> U8
 /// If `selector` is not zero, return the bytes in `rhs`; return the bytes in
 /// `lhs` otherwise.
 #[inline(never)] // Don't inline this to avoid that the compiler optimizes this out.
-#[hax_lib::fstar::options("--ifuel 0 --z3rlimit 50")]
 #[hax_lib::requires(
     lhs.len() == rhs.len() &&
     out.len() == lhs.len()

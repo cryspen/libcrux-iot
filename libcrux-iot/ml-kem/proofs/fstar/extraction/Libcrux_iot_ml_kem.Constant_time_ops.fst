@@ -99,8 +99,6 @@ let compare (lhs rhs: t_Slice u8) =
 let compare_ciphertexts_in_constant_time (lhs rhs: t_Slice u8) =
   Core_models.Hint.black_box #u8 (compare lhs rhs <: u8)
 
-#push-options "--ifuel 0 --z3rlimit 50"
-
 let select_ct (lhs rhs: t_Slice u8) (selector: u8) (out: t_Slice u8) =
   let (out_orig: Alloc.Vec.t_Vec u8 Alloc.Alloc.t_Global):Alloc.Vec.t_Vec u8 Alloc.Alloc.t_Global =
     Alloc.Slice.impl__to_vec #u8 out
@@ -166,8 +164,6 @@ let select_ct (lhs rhs: t_Slice u8) (selector: u8) (out: t_Slice u8) =
   in
   let _:Prims.unit = if (selector =. (mk_u8 0)) then (eq_intro out lhs) else (eq_intro out rhs) in
   out
-
-#pop-options
 
 let select_shared_secret_in_constant_time (lhs rhs: t_Slice u8) (selector: u8) (out: t_Slice u8) =
   let (hoist1: Prims.unit), (out: t_Slice u8) =

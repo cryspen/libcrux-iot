@@ -45,8 +45,15 @@ use crate::{
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
-#[hax_lib::requires(randomness.len() == K && sampled_coefficients.len() == K && out.len() == K)]
-#[hax_lib::ensures(|_| future(sampled_coefficients).len() == sampled_coefficients.len() && future(out).len() == out.len())]
+#[hax_lib::requires(
+    randomness.len() == K &&
+    sampled_coefficients.len() == K &&
+    out.len() == K
+)]
+#[hax_lib::ensures(|_|
+    future(sampled_coefficients).len() == sampled_coefficients.len() &&
+    future(out).len() == out.len()
+)]
 #[inline(always)]
 // We only use this to sample entries of the public matrix A, from the public seeds.
 fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, const N: usize>(
@@ -97,6 +104,7 @@ fn sample_from_uniform_distribution_next<Vector: Operations, const K: usize, con
     done
 }
 
+// XXX: The `while` loop here does not allow us to prove panic freedom, at the moment.
 #[hax_lib::fstar::verification_status(lax)]
 #[hax_lib::requires(sampled_coefficients.len() == K && out.len() == K)]
 #[hax_lib::ensures(|_| future(sampled_coefficients).len() == K && future(out).len() == K)]
@@ -124,7 +132,9 @@ pub(super) fn sample_from_xof<const K: usize, Vector: Operations, Hasher: Hash>(
     // To avoid failing here, we squeeze more blocks out of the state until
     // we have enough.
     while !done {
-        hax_lib::loop_invariant!(|_: usize| sampled_coefficients.len() == K && out.len() == K);
+        hax_lib::loop_invariant!(|_: usize| randomness_blocksize.len() == K
+            && sampled_coefficients.len() == K
+            && out.len() == K);
         xof_state.shake128_squeeze_next_block(&mut randomness_blocksize);
         done = sample_from_uniform_distribution_next::<Vector, K, BLOCK_SIZE>(
             &randomness_blocksize,
