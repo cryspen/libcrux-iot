@@ -11,22 +11,6 @@ let _ =
 
 let zeta (i: usize) = v_ZETAS_TIMES_MONTGOMERY_R.[ i ]
 
-[@@ FStar.Tactics.Typeclasses.tcinstance]
-assume
-val impl_1':
-    #v_Vector: Type0 ->
-    {| i0: Core_models.Marker.t_Copy v_Vector |} ->
-    {| i1: Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector |}
-  -> Core_models.Marker.t_Copy (t_PolynomialRingElement v_Vector)
-
-let impl_1
-      (#v_Vector: Type0)
-      (#[FStar.Tactics.Typeclasses.tcresolve ()] i0: Core_models.Marker.t_Copy v_Vector)
-      (#[FStar.Tactics.Typeclasses.tcresolve ()]
-          i1:
-          Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector)
-     = impl_1' #v_Vector #i0 #i1
-
 let impl_2__ZERO
       (#v_Vector: Type0)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]

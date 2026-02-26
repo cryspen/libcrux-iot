@@ -367,7 +367,7 @@ let deserialize_ring_elements_reduced
   deserialized_pk
 
 let compress_then_serialize_10_
-      (v_OUT_LEN: usize)
+      (v_BLOCK_LEN: usize)
       (#v_Vector: Type0)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]
           i0:
@@ -380,8 +380,9 @@ let compress_then_serialize_10_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool
-          )
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 serialized <: usize) =. v_BLOCK_LEN
+            <:
+            bool)
       in
       ()
   in
@@ -391,7 +392,7 @@ let compress_then_serialize_10_
       (fun temp_0_ i ->
           let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
-          (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool)
+          (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_BLOCK_LEN <: bool)
       (scratch, serialized <: (v_Vector & t_Slice u8))
       (fun temp_0_ i ->
           let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
@@ -436,7 +437,7 @@ let compress_then_serialize_10_
   serialized, scratch <: (t_Slice u8 & v_Vector)
 
 let compress_then_serialize_11_
-      (v_OUT_LEN: usize)
+      (v_BLOCK_LEN: usize)
       (#v_Vector: Type0)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]
           i0:
@@ -449,8 +450,9 @@ let compress_then_serialize_11_
     if true
     then
       let _:Prims.unit =
-        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool
-          )
+        Hax_lib.v_assert ((Core_models.Slice.impl__len #u8 serialized <: usize) =. v_BLOCK_LEN
+            <:
+            bool)
       in
       ()
   in
@@ -460,7 +462,7 @@ let compress_then_serialize_11_
       (fun temp_0_ i ->
           let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
           let i:usize = i in
-          (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool)
+          (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_BLOCK_LEN <: bool)
       (scratch, serialized <: (v_Vector & t_Slice u8))
       (fun temp_0_ i ->
           let (scratch: v_Vector), (serialized: t_Slice u8) = temp_0_ in
@@ -505,7 +507,7 @@ let compress_then_serialize_11_
   serialized, scratch <: (t_Slice u8 & v_Vector)
 
 let compress_then_serialize_ring_element_u
-      (v_COMPRESSION_FACTOR v_OUT_LEN: usize)
+      (v_U_COMPRESSION_FACTOR v_BLOCK_LEN: usize)
       (#v_Vector: Type0)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]
           i0:
@@ -515,17 +517,17 @@ let compress_then_serialize_ring_element_u
       (scratch: v_Vector)
      =
   let (scratch: v_Vector), (serialized: t_Slice u8) =
-    match cast (v_COMPRESSION_FACTOR <: usize) <: u32 with
+    match cast (v_U_COMPRESSION_FACTOR <: usize) <: u32 with
     | Rust_primitives.Integers.MkInt 10 ->
       let (tmp0: t_Slice u8), (tmp1: v_Vector) =
-        compress_then_serialize_10_ v_OUT_LEN #v_Vector re serialized scratch
+        compress_then_serialize_10_ v_BLOCK_LEN #v_Vector re serialized scratch
       in
       let serialized:t_Slice u8 = tmp0 in
       let scratch:v_Vector = tmp1 in
       scratch, serialized <: (v_Vector & t_Slice u8)
     | Rust_primitives.Integers.MkInt 11 ->
       let (tmp0: t_Slice u8), (tmp1: v_Vector) =
-        compress_then_serialize_11_ v_OUT_LEN #v_Vector re serialized scratch
+        compress_then_serialize_11_ v_BLOCK_LEN #v_Vector re serialized scratch
       in
       let serialized:t_Slice u8 = tmp0 in
       let scratch:v_Vector = tmp1 in
@@ -653,7 +655,7 @@ let compress_then_serialize_5_
   serialized, scratch <: (t_Slice u8 & v_Vector)
 
 let compress_then_serialize_ring_element_v
-      (v_K v_COMPRESSION_FACTOR v_OUT_LEN: usize)
+      (v_K v_V_COMPRESSION_FACTOR v_C2_LEN: usize)
       (#v_Vector: Type0)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]
           i0:
@@ -663,7 +665,7 @@ let compress_then_serialize_ring_element_v
       (scratch: v_Vector)
      =
   let (out: t_Slice u8), (scratch: v_Vector) =
-    match cast (v_COMPRESSION_FACTOR <: usize) <: u32 with
+    match cast (v_V_COMPRESSION_FACTOR <: usize) <: u32 with
     | Rust_primitives.Integers.MkInt 4 ->
       let (tmp0: t_Slice u8), (tmp1: v_Vector) =
         compress_then_serialize_4_ #v_Vector re out scratch
@@ -801,7 +803,7 @@ let deserialize_then_decompress_11_
   re
 
 let deserialize_then_decompress_ring_element_u
-      (v_COMPRESSION_FACTOR: usize)
+      (v_U_COMPRESSION_FACTOR: usize)
       (#v_Vector: Type0)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]
           i0:
@@ -810,7 +812,7 @@ let deserialize_then_decompress_ring_element_u
       (output: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
      =
   let output:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector =
-    match cast (v_COMPRESSION_FACTOR <: usize) <: u32 with
+    match cast (v_U_COMPRESSION_FACTOR <: usize) <: u32 with
     | Rust_primitives.Integers.MkInt 10 ->
       deserialize_then_decompress_10_ #v_Vector serialized output
     | Rust_primitives.Integers.MkInt 11 ->
@@ -938,7 +940,7 @@ let deserialize_then_decompress_5_
   re
 
 let deserialize_then_decompress_ring_element_v
-      (v_K v_COMPRESSION_FACTOR: usize)
+      (v_K v_V_COMPRESSION_FACTOR: usize)
       (#v_Vector: Type0)
       (#[FStar.Tactics.Typeclasses.tcresolve ()]
           i0:
@@ -947,7 +949,7 @@ let deserialize_then_decompress_ring_element_v
       (output: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
      =
   let output:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector =
-    match cast (v_COMPRESSION_FACTOR <: usize) <: u32 with
+    match cast (v_V_COMPRESSION_FACTOR <: usize) <: u32 with
     | Rust_primitives.Integers.MkInt 4 -> deserialize_then_decompress_4_ #v_Vector serialized output
     | Rust_primitives.Integers.MkInt 5 -> deserialize_then_decompress_5_ #v_Vector serialized output
     | _ -> output

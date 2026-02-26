@@ -122,7 +122,7 @@ val deserialize_ring_elements_reduced
             usize))
 
 val compress_then_serialize_10_
-      (v_OUT_LEN: usize)
+      (v_BLOCK_LEN: usize)
       (#v_Vector: Type0)
       {| i0: Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector |}
       (re: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
@@ -130,8 +130,8 @@ val compress_then_serialize_10_
       (scratch: v_Vector)
     : Prims.Pure (t_Slice u8 & v_Vector)
       (requires
-        (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN &&
-        v_OUT_LEN >=.
+        (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_BLOCK_LEN &&
+        v_BLOCK_LEN >=.
         (Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT *! mk_usize 20 <: usize))
       (ensures
         fun temp_0_ ->
@@ -140,7 +140,7 @@ val compress_then_serialize_10_
           (Core_models.Slice.impl__len #u8 serialized <: usize))
 
 val compress_then_serialize_11_
-      (v_OUT_LEN: usize)
+      (v_BLOCK_LEN: usize)
       (#v_Vector: Type0)
       {| i0: Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector |}
       (re: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
@@ -148,8 +148,8 @@ val compress_then_serialize_11_
       (scratch: v_Vector)
     : Prims.Pure (t_Slice u8 & v_Vector)
       (requires
-        (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN &&
-        v_OUT_LEN >=.
+        (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_BLOCK_LEN &&
+        v_BLOCK_LEN >=.
         (Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT *! mk_usize 22 <: usize))
       (ensures
         fun temp_0_ ->
@@ -158,7 +158,7 @@ val compress_then_serialize_11_
           (Core_models.Slice.impl__len #u8 serialized <: usize))
 
 val compress_then_serialize_ring_element_u
-      (v_COMPRESSION_FACTOR v_OUT_LEN: usize)
+      (v_U_COMPRESSION_FACTOR v_BLOCK_LEN: usize)
       (#v_Vector: Type0)
       {| i0: Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector |}
       (re: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
@@ -166,22 +166,13 @@ val compress_then_serialize_ring_element_u
       (scratch: v_Vector)
     : Prims.Pure (t_Slice u8 & v_Vector)
       (requires
-        (b2t (v_COMPRESSION_FACTOR =. mk_usize 10 <: bool) ==>
-          b2t
-          (v_OUT_LEN >=.
-            (Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT *! mk_usize 20 <: usize)
-            <:
-            bool)) /\
-        (b2t (v_COMPRESSION_FACTOR =. mk_usize 11 <: bool) ==>
-          b2t
-          (v_OUT_LEN >=.
-            (Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT *! mk_usize 22 <: usize)
-            <:
-            bool)) /\
-        b2t
-        (((Core_models.Slice.impl__len #u8 serialized <: usize) =. v_OUT_LEN <: bool) &&
-          ((v_COMPRESSION_FACTOR =. mk_usize 10 <: bool) ||
-          (v_COMPRESSION_FACTOR =. mk_usize 11 <: bool))))
+        (v_U_COMPRESSION_FACTOR =. mk_usize 10 &&
+        v_BLOCK_LEN >=.
+        (Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT *! mk_usize 20 <: usize) ||
+        v_U_COMPRESSION_FACTOR =. mk_usize 11 &&
+        v_BLOCK_LEN >=.
+        (Libcrux_iot_ml_kem.Polynomial.v_VECTORS_IN_RING_ELEMENT *! mk_usize 22 <: usize)) &&
+        (Core_models.Slice.impl__len #u8 serialized <: usize) =. v_BLOCK_LEN)
       (ensures
         fun temp_0_ ->
           let (serialized_future: t_Slice u8), (scratch_future: v_Vector) = temp_0_ in
@@ -217,7 +208,7 @@ val compress_then_serialize_5_
           (Core_models.Slice.impl__len #u8 serialized <: usize))
 
 val compress_then_serialize_ring_element_v
-      (v_K v_COMPRESSION_FACTOR v_OUT_LEN: usize)
+      (v_K v_V_COMPRESSION_FACTOR v_C2_LEN: usize)
       (#v_Vector: Type0)
       {| i0: Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector |}
       (re: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
@@ -225,9 +216,9 @@ val compress_then_serialize_ring_element_v
       (scratch: v_Vector)
     : Prims.Pure (t_Slice u8 & v_Vector)
       (requires
-        (Core_models.Slice.impl__len #u8 out <: usize) =. v_OUT_LEN &&
-        (v_COMPRESSION_FACTOR =. mk_usize 4 && v_OUT_LEN =. mk_usize 128 ||
-        v_COMPRESSION_FACTOR =. mk_usize 5 && v_OUT_LEN =. mk_usize 160))
+        (Core_models.Slice.impl__len #u8 out <: usize) =. v_C2_LEN &&
+        (v_V_COMPRESSION_FACTOR =. mk_usize 4 && v_C2_LEN =. mk_usize 128 ||
+        v_V_COMPRESSION_FACTOR =. mk_usize 5 && v_C2_LEN =. mk_usize 160))
       (ensures
         fun temp_0_ ->
           let (out_future: t_Slice u8), (scratch_future: v_Vector) = temp_0_ in
@@ -253,16 +244,16 @@ val deserialize_then_decompress_11_
       (fun _ -> Prims.l_True)
 
 val deserialize_then_decompress_ring_element_u
-      (v_COMPRESSION_FACTOR: usize)
+      (v_U_COMPRESSION_FACTOR: usize)
       (#v_Vector: Type0)
       {| i0: Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector |}
       (serialized: t_Slice u8)
       (output: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
     : Prims.Pure (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
       (requires
-        (v_COMPRESSION_FACTOR =. mk_usize 4 || v_COMPRESSION_FACTOR =. mk_usize 5) &&
+        (v_U_COMPRESSION_FACTOR =. mk_usize 10 || v_U_COMPRESSION_FACTOR =. mk_usize 11) &&
         (Core_models.Slice.impl__len #u8 serialized <: usize) =.
-        (mk_usize 32 *! v_COMPRESSION_FACTOR <: usize))
+        (mk_usize 32 *! v_U_COMPRESSION_FACTOR <: usize))
       (fun _ -> Prims.l_True)
 
 val deserialize_then_decompress_4_
@@ -284,14 +275,14 @@ val deserialize_then_decompress_5_
       (fun _ -> Prims.l_True)
 
 val deserialize_then_decompress_ring_element_v
-      (v_K v_COMPRESSION_FACTOR: usize)
+      (v_K v_V_COMPRESSION_FACTOR: usize)
       (#v_Vector: Type0)
       {| i0: Libcrux_iot_ml_kem.Vector.Traits.t_Operations v_Vector |}
       (serialized: t_Slice u8)
       (output: Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
     : Prims.Pure (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
       (requires
-        (v_COMPRESSION_FACTOR =. mk_usize 4 || v_COMPRESSION_FACTOR =. mk_usize 5) &&
+        (v_V_COMPRESSION_FACTOR =. mk_usize 4 || v_V_COMPRESSION_FACTOR =. mk_usize 5) &&
         (Core_models.Slice.impl__len #u8 serialized <: usize) =.
-        (mk_usize 32 *! v_COMPRESSION_FACTOR <: usize))
+        (mk_usize 32 *! v_V_COMPRESSION_FACTOR <: usize))
       (fun _ -> Prims.l_True)

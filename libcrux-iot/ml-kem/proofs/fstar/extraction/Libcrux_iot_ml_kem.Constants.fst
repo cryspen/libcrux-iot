@@ -3,6 +3,9 @@ module Libcrux_iot_ml_kem.Constants
 open FStar.Mul
 open Core_models
 
+/// Each field element needs floor(log_2(FIELD_MODULUS)) + 1 = 12 bits to represent
+let v_BITS_PER_COEFFICIENT: usize = mk_usize 12
+
 /// Coefficients per ring element
 let v_COEFFICIENTS_IN_RING_ELEMENT: usize = mk_usize 256
 
@@ -14,3 +17,20 @@ let v_BYTES_PER_RING_ELEMENT: usize = v_BITS_PER_RING_ELEMENT /! mk_usize 8
 
 /// The size of an ML-KEM shared secret.
 let v_SHARED_SECRET_SIZE: usize = mk_usize 32
+
+let v_CPA_PKE_KEY_GENERATION_SEED_SIZE: usize = mk_usize 32
+
+/// SHA3 256 digest size
+let v_H_DIGEST_SIZE: usize = mk_usize 32
+
+/// K * BITS_PER_RING_ELEMENT / 8
+/// [eurydice] Note that we can\'t use const generics here because that breaks
+///            C extraction with eurydice.
+let ranked_bytes_per_ring_element (rank: usize)
+    : Prims.Pure usize
+      (requires rank <=. mk_usize 4)
+      (ensures
+        fun result ->
+          let result:usize = result in
+          result =. ((rank *! v_BITS_PER_RING_ELEMENT <: usize) /! mk_usize 8 <: usize)) =
+  (rank *! v_BITS_PER_RING_ELEMENT <: usize) /! mk_usize 8

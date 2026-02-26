@@ -7,8 +7,10 @@
 //! In libcrux-iot, we only support a portable implementation at the moment.
 use super::*;
 
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CCA_PUBLIC_KEY_SIZE $K"#))]
+#[hax_lib::requires(
+    (K == 2 || K == 3 || K == 4) &&
+    PUBLIC_KEY_SIZE == K * BYTES_PER_RING_ELEMENT + 32
+)]
 #[inline(always)]
 pub(crate) fn validate_public_key<const K: usize, const PUBLIC_KEY_SIZE: usize>(
     public_key: &[u8; PUBLIC_KEY_SIZE],
@@ -16,10 +18,15 @@ pub(crate) fn validate_public_key<const K: usize, const PUBLIC_KEY_SIZE: usize>(
     instantiations::portable::validate_public_key::<K, PUBLIC_KEY_SIZE>(public_key)
 }
 
+#[hax_lib::requires(
+    match K {
+        2 => SECRET_KEY_SIZE == crate::mlkem512::SECRET_KEY_SIZE,
+        3 => SECRET_KEY_SIZE == crate::mlkem768::SECRET_KEY_SIZE,
+        4 => SECRET_KEY_SIZE == crate::mlkem1024::SECRET_KEY_SIZE,
+        _ => false
+    }
+)]
 #[inline(always)]
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-                $SECRET_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
-                $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K"#))]
 pub(crate) fn validate_private_key<
     const K: usize,
     const SECRET_KEY_SIZE: usize,
@@ -59,13 +66,17 @@ pub(crate) fn kyber_generate_keypair<
     >(randomness)
 }
 
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    v $K_SQUARED == v $K * v $K /\
-    $CPA_PRIVATE_KEY_SIZE == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K /\
-    $PRIVATE_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
-    $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
-    $ETA1 == Spec.MLKEM.v_ETA1 $K /\
-    $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K"#))]
+#[hax_lib::requires(
+    ((K == 2 && PRIVATE_KEY_SIZE == crate::mlkem512::SECRET_KEY_SIZE)
+        || (K == 3 && PRIVATE_KEY_SIZE == crate::mlkem768::SECRET_KEY_SIZE)
+        || (K == 4 && PRIVATE_KEY_SIZE == crate::mlkem1024::SECRET_KEY_SIZE)) &&
+    K_SQUARED == K * K &&
+    (ETA1 == 3 || ETA1 == 2) &&
+    ETA1_RANDOMNESS_SIZE == 64 * ETA1 &&
+    CPA_PRIVATE_KEY_SIZE == K * BYTES_PER_RING_ELEMENT &&
+    PRF_OUTPUT_SIZE1 == K * ETA1_RANDOMNESS_SIZE &&
+    PUBLIC_KEY_SIZE == K * BYTES_PER_RING_ELEMENT + 32
+)]
 pub(crate) fn generate_keypair<
     const K: usize,
     const K_SQUARED: usize,
@@ -132,20 +143,24 @@ pub(crate) fn kyber_encapsulate<
     >(public_key, randomness)
 }
 
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    v $K_SQUARED == v $K * v $K /\
-    $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
-    $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
-    $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
-    $C1_SIZE == Spec.MLKEM.v_C1_SIZE $K /\
-    $C2_SIZE == Spec.MLKEM.v_C2_SIZE $K /\
-    $VECTOR_U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR  $K /\
-    $VECTOR_V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR  $K /\
-    $C1_BLOCK_SIZE == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
-    $ETA1 == Spec.MLKEM.v_ETA1 $K /\
-    $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
-    $ETA2 == Spec.MLKEM.v_ETA2 $K /\
-    $ETA2_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K"#))]
+#[hax_lib::requires(
+    (K == 2 || K == 3 || K == 4) &&
+    K_SQUARED == K * K &&
+    (ETA1 == 3 || ETA1 == 2) &&
+    ETA1_RANDOMNESS_SIZE == 64 * ETA1 &&
+    PRF_OUTPUT_SIZE1 == K * ETA1_RANDOMNESS_SIZE &&
+    ETA2 == 2 &&
+    ETA2_RANDOMNESS_SIZE == 64 * ETA2 &&
+    PRF_OUTPUT_SIZE2 == K * ETA2_RANDOMNESS_SIZE &&
+    ((VECTOR_U_COMPRESSION_FACTOR == 10 && C1_BLOCK_SIZE == crate::polynomial::VECTORS_IN_RING_ELEMENT * 20)
+        || (VECTOR_U_COMPRESSION_FACTOR == 11 && C1_BLOCK_SIZE == crate::polynomial::VECTORS_IN_RING_ELEMENT * 22)) &&
+    (VECTOR_V_COMPRESSION_FACTOR == 4 && C2_SIZE == 128 ||
+        VECTOR_V_COMPRESSION_FACTOR == 5 && C2_SIZE == 160) &&
+    C1_SIZE == K * C1_BLOCK_SIZE &&
+    CIPHERTEXT_SIZE == C1_SIZE + C2_SIZE &&
+    T_AS_NTT_ENCODED_SIZE == BYTES_PER_RING_ELEMENT * K &&
+    PUBLIC_KEY_SIZE == T_AS_NTT_ENCODED_SIZE + 32
+)]
 pub(crate) fn encapsulate<
     const K: usize,
     const K_SQUARED: usize,
@@ -235,23 +250,38 @@ pub(crate) fn kyber_decapsulate<
     >(private_key, ciphertext)
 }
 
-#[hax_lib::requires(fstar!(r#"Spec.MLKEM.is_rank $K /\
-    v $K_SQUARED == v $K * v $K /\
-    $SECRET_KEY_SIZE == Spec.MLKEM.v_CCA_PRIVATE_KEY_SIZE $K /\
-    $CPA_SECRET_KEY_SIZE == Spec.MLKEM.v_CPA_PRIVATE_KEY_SIZE $K /\
-    $PUBLIC_KEY_SIZE == Spec.MLKEM.v_CPA_PUBLIC_KEY_SIZE $K /\
-    $CIPHERTEXT_SIZE == Spec.MLKEM.v_CPA_CIPHERTEXT_SIZE $K /\
-    $T_AS_NTT_ENCODED_SIZE == Spec.MLKEM.v_T_AS_NTT_ENCODED_SIZE $K /\
-    $C1_SIZE == Spec.MLKEM.v_C1_SIZE $K /\
-    $C2_SIZE == Spec.MLKEM.v_C2_SIZE $K /\
-    $VECTOR_U_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_U_COMPRESSION_FACTOR  $K /\
-    $VECTOR_V_COMPRESSION_FACTOR == Spec.MLKEM.v_VECTOR_V_COMPRESSION_FACTOR  $K /\
-    $C1_BLOCK_SIZE == Spec.MLKEM.v_C1_BLOCK_SIZE $K /\
-    $ETA1 == Spec.MLKEM.v_ETA1 $K /\
-    $ETA1_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA1_RANDOMNESS_SIZE $K /\
-    $ETA2 == Spec.MLKEM.v_ETA2 $K /\
-    $ETA2_RANDOMNESS_SIZE == Spec.MLKEM.v_ETA2_RANDOMNESS_SIZE $K /\
-    $IMPLICIT_REJECTION_HASH_INPUT_SIZE == Spec.MLKEM.v_IMPLICIT_REJECTION_HASH_INPUT_SIZE $K"#))]
+#[hax_lib::requires(
+                (
+                    K == 2 &&
+                    SECRET_KEY_SIZE == crate::mlkem512::SECRET_KEY_SIZE &&
+                    CPA_SECRET_KEY_SIZE == crate::mlkem512::CPA_PKE_SECRET_KEY_SIZE &&
+                    PUBLIC_KEY_SIZE == crate::mlkem512::CPA_PKE_PUBLIC_KEY_SIZE
+                    || K == 3 &&
+                    SECRET_KEY_SIZE == crate::mlkem768::SECRET_KEY_SIZE &&
+                    CPA_SECRET_KEY_SIZE == crate::mlkem768::CPA_PKE_SECRET_KEY_SIZE &&
+                    PUBLIC_KEY_SIZE == crate::mlkem768::CPA_PKE_PUBLIC_KEY_SIZE
+                    || K == 4 &&
+                    SECRET_KEY_SIZE == crate::mlkem1024::SECRET_KEY_SIZE &&
+                    CPA_SECRET_KEY_SIZE == crate::mlkem1024::CPA_PKE_SECRET_KEY_SIZE &&
+                    PUBLIC_KEY_SIZE == crate::mlkem1024::CPA_PKE_PUBLIC_KEY_SIZE
+                ) &&
+                K_SQUARED == K * K &&
+                (ETA1 == 3 || ETA1 == 2) &&
+                ETA1_RANDOMNESS_SIZE == 64 * ETA1 &&
+                PRF_OUTPUT_SIZE1 == K * ETA1_RANDOMNESS_SIZE &&
+                ETA2 == 2 &&
+                ETA2_RANDOMNESS_SIZE == 64 * ETA2 &&
+                PRF_OUTPUT_SIZE2 == K * ETA2_RANDOMNESS_SIZE &&
+                ((VECTOR_U_COMPRESSION_FACTOR == 10 && C1_BLOCK_SIZE == crate::polynomial::VECTORS_IN_RING_ELEMENT * 20)
+                    || (VECTOR_U_COMPRESSION_FACTOR == 11 && C1_BLOCK_SIZE == crate::polynomial::VECTORS_IN_RING_ELEMENT * 22)) &&
+                (VECTOR_V_COMPRESSION_FACTOR == 4 && C2_SIZE == 128 ||
+                    VECTOR_V_COMPRESSION_FACTOR == 5 && C2_SIZE == 160) &&
+                C1_SIZE == K * C1_BLOCK_SIZE &&
+                CIPHERTEXT_SIZE == C1_SIZE + C2_SIZE &&
+                T_AS_NTT_ENCODED_SIZE == BYTES_PER_RING_ELEMENT * K &&
+                CIPHERTEXT_SIZE == K * 32 * VECTOR_U_COMPRESSION_FACTOR + 32 * VECTOR_V_COMPRESSION_FACTOR &&
+                IMPLICIT_REJECTION_HASH_INPUT_SIZE == SHARED_SECRET_SIZE + CIPHERTEXT_SIZE
+            )]
 pub(crate) fn decapsulate<
     const K: usize,
     const K_SQUARED: usize,
