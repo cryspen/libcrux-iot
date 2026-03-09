@@ -6,7 +6,6 @@ use crate::lane::Lane2U32;
 #[cfg(feature = "check-secret-independence")]
 use crate::{FromLeBytes, ToLeBytes};
 
-#[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy)]
 #[cfg_attr(not(eurydice), derive(Debug))]
 pub(crate) struct KeccakState {

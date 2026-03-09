@@ -1,0 +1,11 @@
+name = "libcrux_iot_sha3"
+version = "0.1.0"
+defaultTargets = ["libcrux_iot_sha3"]
+
+[[lean_lib]]
+name = "libcrux_iot_sha3"
+roots = ["extraction.libcrux_iot_sha3", "extraction.helpers"]
+
+[[require]]
+name = "Hax"
+path = "../../hax/hax-lib/proof-libs/lean"

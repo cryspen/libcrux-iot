@@ -9,7 +9,6 @@ use crate::{lane::Lane2U32, state::KeccakState};
 
 /// The internal keccak state that can also buffer inputs to absorb.
 /// This is used in the general xof APIs.
-#[cfg_attr(hax, hax_lib::opaque)]
 pub(crate) struct KeccakXofState<const RATE: usize> {
     inner: KeccakState,
 
@@ -189,6 +188,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
 
 //// From here, everything is generic
 
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 const RC_INTERLEAVED_0: [u32; 255] = [
     0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000001,
     0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000001,
@@ -224,6 +224,7 @@ const RC_INTERLEAVED_0: [u32; 255] = [
     0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000000, 0x00000000, 0x00000000,
 ];
 
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 const RC_INTERLEAVED_1: [u32; 255] = [
     0x00000000, 0x00000089, 0x8000008b, 0x80008080, 0x0000008b, 0x00008000, 0x80008088, 0x80000082,
     0x0000000b, 0x0000000a, 0x00008082, 0x00008003, 0x0000808b, 0x8000000b, 0x8000008a, 0x80000081,
