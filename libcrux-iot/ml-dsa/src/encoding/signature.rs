@@ -177,7 +177,7 @@ pub(crate) fn deserialize_hint(
     let current_true_hints_seen = hint_serialized[max_ones_in_hint + i] as usize;
 
     let mut j = *previous_true_hints_seen;
-    if (current_true_hints_seen < j) || (j > max_ones_in_hint) {
+    if (current_true_hints_seen < j) || (current_true_hints_seen > max_ones_in_hint) {
         // the true hints seen should be increasing
         return Err(VerificationError::MalformedHintError);
     }
