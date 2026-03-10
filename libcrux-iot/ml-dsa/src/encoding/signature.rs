@@ -158,7 +158,7 @@ pub(crate) fn deserialize_signer_response_j<SIMDUnit: Operations>(
             .classify_ref(),
         out_signer_response,
     );
-    if out_signer_response.infinity_norm_exceeds((2 << gamma1_exponent) - beta) {
+    if out_signer_response.infinity_norm_exceeds((1 << gamma1_exponent) - beta) {
         return Err(VerificationError::SignerResponseExceedsBoundError);
     }
     Ok(())
