@@ -536,7 +536,7 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_2(s: &mut KeccakState) {
     {
         let (bx4, bx0) = {
@@ -1002,7 +1002,7 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_2(s: &mut KeccakState) {
     {
         let (bx4, bx0) = {
@@ -1468,7 +1468,7 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_2(s: &mut KeccakState) {
     {
         let (bx4, bx0) = {
@@ -1934,7 +1934,7 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_2(s: &mut KeccakState) {
     {
         let (bx4, bx0) = {
