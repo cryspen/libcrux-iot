@@ -267,7 +267,8 @@ const RC_INTERLEAVED_1: [u32; 255] = [
 // :r !python libcrux/libcrux-sha3/codegen.py
 // ```
 #[inline(always)]
-pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round0_theta(s: &mut KeccakState) {
     {
         let ax_0 = s.get_with_zeta(0, 0, 0);
         let ax_1 = s.get_with_zeta(1, 0, 0);
@@ -380,6 +381,11 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         s.d[3].0[1] = d_x3_zeta1;
     }
+}
+
+#[inline(always)]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut KeccakState) {
     #[cfg(not(feature = "full-unroll"))]
     let i = s.i;
     {
@@ -527,6 +533,11 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax4 = bx4 ^ ((!bx0) & bx1);
         s.set_with_zeta(1, 4, 1, ax4);
     }
+}
+
+#[inline(always)]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_2(s: &mut KeccakState) {
     {
         let (bx4, bx0) = {
             let a0 = s.get_with_zeta(4, 0, 0);
@@ -722,7 +733,8 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round1_theta(s: &mut KeccakState) {
     {
         let ax_0 = s.get_with_zeta(0, 0, 0);
         let ax_2 = s.get_with_zeta(2, 0, 1);
@@ -835,6 +847,11 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         s.d[3].0[1] = d_x3_zeta1;
     }
+}
+
+#[inline(always)]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut KeccakState) {
     #[cfg(not(feature = "full-unroll"))]
     let i = s.i;
     {
@@ -982,6 +999,11 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax4 = bx4 ^ ((!bx0) & bx1);
         s.set_with_zeta(1, 4, 1, ax4);
     }
+}
+
+#[inline(always)]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_2(s: &mut KeccakState) {
     {
         let (bx4, bx0) = {
             let a0 = s.get_with_zeta(3, 0, 1);
@@ -1177,7 +1199,8 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round2_theta(s: &mut KeccakState) {
     {
         let ax_0 = s.get_with_zeta(0, 0, 0);
         let ax_4 = s.get_with_zeta(4, 0, 1);
@@ -1290,6 +1313,11 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         s.d[3].0[1] = d_x3_zeta1;
     }
+}
+
+#[inline(always)]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut KeccakState) {
     #[cfg(not(feature = "full-unroll"))]
     let i = s.i;
     {
@@ -1437,6 +1465,11 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax4 = bx4 ^ ((!bx0) & bx1);
         s.set_with_zeta(1, 4, 1, ax4);
     }
+}
+
+#[inline(always)]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_2(s: &mut KeccakState) {
     {
         let (bx4, bx0) = {
             let a0 = s.get_with_zeta(1, 0, 1);
@@ -1632,7 +1665,8 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round3_theta(s: &mut KeccakState) {
     {
         let ax_0 = s.get_with_zeta(0, 0, 0);
         let ax_3 = s.get_with_zeta(3, 0, 0);
@@ -1745,6 +1779,11 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
         s.d[3].0[1] = d_x3_zeta1;
     }
+}
+
+#[inline(always)]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut KeccakState) {
     #[cfg(not(feature = "full-unroll"))]
     let i = s.i;
     {
@@ -1892,6 +1931,11 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax4 = bx4 ^ ((!bx0) & bx1);
         s.set_with_zeta(1, 4, 1, ax4);
     }
+}
+
+#[inline(always)]
+#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_2(s: &mut KeccakState) {
     {
         let (bx4, bx0) = {
             let a0 = s.get_with_zeta(2, 0, 0);
@@ -2094,10 +2138,18 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
 //   [CYCLE_MEASUREMENT libcrux SHAKE256 (PRF_ETA1_RANDOMNESS_1024)] : + 19139 cycles
 #[inline(always)]
 pub(crate) fn keccakf1600_4rounds<const BASE_ROUND: usize>(s: &mut KeccakState) {
-    keccakf1600_round0::<BASE_ROUND>(s);
-    keccakf1600_round1::<BASE_ROUND>(s);
-    keccakf1600_round2::<BASE_ROUND>(s);
-    keccakf1600_round3::<BASE_ROUND>(s);
+    keccakf1600_round0_theta(s);
+    keccakf1600_round0_pi_rho_chi_1::<BASE_ROUND>(s);
+    keccakf1600_round0_pi_rho_chi_2(s);
+    keccakf1600_round1_theta(s);
+    keccakf1600_round1_pi_rho_chi_1::<BASE_ROUND>(s);
+    keccakf1600_round1_pi_rho_chi_2(s);
+    keccakf1600_round2_theta(s);
+    keccakf1600_round2_pi_rho_chi_1::<BASE_ROUND>(s);
+    keccakf1600_round2_pi_rho_chi_2(s);
+    keccakf1600_round3_theta(s);
+    keccakf1600_round3_pi_rho_chi_1::<BASE_ROUND>(s);
+    keccakf1600_round3_pi_rho_chi_2(s);
 }
 
 #[inline(never)]
