@@ -403,7 +403,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0;
+        let mut ax0 = 0;
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 0];
@@ -443,7 +443,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0;
+        let mut ax0 = 0;
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 0];
@@ -858,7 +858,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0;
+        let mut ax0 = 0;
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 1];
@@ -898,7 +898,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0;
+        let mut ax0 = 0;
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 1];
@@ -1313,7 +1313,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0;
+        let mut ax0 = 0;
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 2];
@@ -1353,7 +1353,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0;
+        let mut ax0 = 0;
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 2];
@@ -1768,7 +1768,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0;
+        let mut ax0 = 0;
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 3];
@@ -1808,7 +1808,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
                 (a4 ^ d4).rotate_left(7),
             )
         };
-        let ax0;
+        let mut ax0 = 0;
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 3];
