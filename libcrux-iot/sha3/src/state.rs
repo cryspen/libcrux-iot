@@ -69,7 +69,7 @@ impl KeccakState {
     /// `out` has the exact size we want here. It must be less than or equal to `RATE`.
     #[inline(always)]
     pub(crate) fn store<const RATE: usize>(self, out: &mut [U8]) {
-        #[cfg(not(eurydice))]
+        #[cfg(not(any(eurydice, hax)))]
         debug_assert!(out.len() <= RATE, "{} > {}", out.len(), RATE);
 
         let num_full_blocks = out.len() / 8;
