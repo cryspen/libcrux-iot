@@ -7022,30 +7022,6 @@ def Impl.set_lane
 @[spec]
 def Impl.store (RATE : usize) (self : KeccakState) (out : (RustSlice u8)) :
     RustM (RustSlice u8) := do
-  let _ ←
-    if true then do
-      let _ ←
-        if
-        (← (!? (← ((← (core_models.slice.Impl.len u8 out)) <=? RATE)))) then do
-          let args : (rust_primitives.hax.Tuple2 usize usize) :=
-            (rust_primitives.hax.Tuple2.mk
-              (← (core_models.slice.Impl.len u8 out))
-              RATE);
-          let args : (RustArray core_models.fmt.rt.Argument 2) :=
-            (RustArray.ofVec #v[(← (core_models.fmt.rt.Impl.new_display usize
-                                    (rust_primitives.hax.Tuple2._0 args))),
-                                  (← (core_models.fmt.rt.Impl.new_display usize
-                                    (rust_primitives.hax.Tuple2._1 args)))]);
-          (rust_primitives.hax.never_to_any
-            (← (core_models.panicking.panic_fmt
-              (← (core_models.fmt.rt.Impl_1.new_v1 ((2 : usize)) ((2 : usize))
-                (RustArray.ofVec #v["", " > "])
-                args)))))
-        else do
-          (pure rust_primitives.hax.Tuple0.mk);
-      (pure rust_primitives.hax.Tuple0.mk)
-    else do
-      (pure rust_primitives.hax.Tuple0.mk);
   let num_full_blocks : usize ←
     ((← (core_models.slice.Impl.len u8 out)) /? (8 : usize));
   let last_block_len : usize ←

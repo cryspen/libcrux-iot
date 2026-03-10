@@ -11,16 +11,28 @@ class core_models.ops.index.IndexMut.AssociatedTypes (A B : Type) where
 class core_models.ops.index.IndexMut (A B : Type) where
   index_mut : A → B → RustM u32
 
-def rust_primitives.hax.monomorphized_update_at.update_at_range_from :
-  RustArray u8 RATE → core_models.ops.range.RangeFrom usize → RustSlice u8 → RustM (RustArray u8 RATE) := sorry
 
-def rust_primitives.hax.monomorphized_update_at.update_at_range :
-  RustArray u8 RATE → core_models.ops.range.Range usize → RustSlice u8 → RustM (RustArray u8 RATE) := sorry
+class rust_primitives.hax.monomorphized_update_at (α : Type) where
+  update_at_range : α → core_models.ops.range.Range usize → RustSlice u8 → RustM α
+  update_at_range_from : α → core_models.ops.range.RangeFrom usize → RustSlice u8 → RustM α
+
+instance : rust_primitives.hax.monomorphized_update_at (RustArray u8 n) where
+  update_at_range := sorry
+  update_at_range_from := sorry
+
+instance : rust_primitives.hax.monomorphized_update_at (RustSlice u8) where
+  update_at_range := sorry
+  update_at_range_from := sorry
 
 instance : GetElemResult (RustArray u8 RATE) (core_models.ops.range.RangeFrom usize) (RustSlice u8) := sorry
 instance :  GetElemResult (RustSlice u8) (core_models.ops.range.RangeFrom usize) (RustSlice u8) := sorry
 
 instance : GetElemResult (RustSlice u8) (core_models.ops.range.RangeTo usize) (RustSlice u8) := sorry
+
+instance : CoeOut (RustArray α n) (RustSlice α) := ⟨fun a => .mk a.toVec.toArray (by simp [USize64.toNat_lt_size])⟩
+
+instance : Coe (RustSlice α) (RustArray α n) := sorry
+
 
 def core_models.num.Impl_8.MAX : u32 := sorry
 
