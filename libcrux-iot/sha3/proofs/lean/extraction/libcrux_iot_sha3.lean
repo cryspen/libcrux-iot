@@ -8707,10 +8707,10 @@ def shake256_squeeze_first_block
       libcrux_iot_sha3.portable.KeccakState
       (RustSlice u8))
     := do
-  let ⟨tmp0, out1⟩ := (libcrux_iot_sha3.portable.KeccakState.state s);
-  let s : libcrux_iot_sha3.portable.KeccakState := {s with state := tmp0};
   let out : (RustSlice u8) ←
-    (libcrux_iot_sha3.keccak.squeeze_first_block ((136 : usize)) out1 out);
+    (libcrux_iot_sha3.keccak.squeeze_first_block ((136 : usize))
+      (libcrux_iot_sha3.portable.KeccakState.state s)
+      out);
   (pure (rust_primitives.hax.Tuple2.mk s out))
 
 --  Squeeze the next SHAKE-256 block

@@ -377,7 +377,7 @@ pub mod portable {
 
         /// Squeeze the first SHAKE-256 block
         pub fn shake256_squeeze_first_block(s: &mut KeccakState, out: &mut [U8]) {
-            squeeze_first_block::<136>(&mut s.state, out)
+            squeeze_first_block::<136>(&s.state, out)
         }
 
         /// Squeeze the next SHAKE-256 block
