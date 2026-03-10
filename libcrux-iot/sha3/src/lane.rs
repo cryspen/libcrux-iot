@@ -41,7 +41,8 @@ impl Lane2U32 {
 
     #[inline(always)]
     pub(crate) fn deinterleave(self) -> Lane2U32 {
-        let Lane2U32([even_bits, odd_bits]) = self;
+        let even_bits = self.0[0];
+        let odd_bits = self.0[1];
         let mut even_spaced_lo = even_bits & 0xffff;
         even_spaced_lo = (even_spaced_lo ^ (even_spaced_lo << 16)) & 0x0000_ffff;
         even_spaced_lo = (even_spaced_lo ^ (even_spaced_lo << 8)) & 0x00ff_00ff;
