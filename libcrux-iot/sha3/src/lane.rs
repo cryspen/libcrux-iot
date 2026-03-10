@@ -1,10 +1,10 @@
-use core::ops::{Index, IndexMut};
+use core::ops::Index;
 
 use libcrux_secrets::{CastOps, Classify as _, U32};
 
 /// A lane of the Keccak state,
 #[derive(Clone, Copy)]
-pub struct Lane2U32([U32; 2]);
+pub struct Lane2U32(pub(crate) [U32; 2]);
 
 impl Lane2U32 {
     #[inline(always)]
@@ -15,11 +15,6 @@ impl Lane2U32 {
     #[inline(always)]
     pub(crate) fn zero() -> Self {
         Self::from_ints([0, 0].classify())
-    }
-
-    #[inline(always)]
-    pub(crate) fn split_at_mut_n<T>(a: &mut [T], mid: usize) -> (&mut [T], &mut [T]) {
-        split_at_mut_1(a, mid)
     }
 
     // NOTE: it would be a bit nicer if we used separate types for the interleaved and
@@ -91,13 +86,6 @@ impl Index<usize> for Lane2U32 {
     }
 }
 
-impl IndexMut<usize> for Lane2U32 {
-    #[inline(always)]
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.0[index]
-    }
-}
-
 impl From<[U32; 2]> for Lane2U32 {
     #[inline(always)]
     fn from(value: [U32; 2]) -> Self {
@@ -116,11 +104,6 @@ impl core::fmt::Debug for Lane2U32 {
             .field(&self.0.declassify())
             .finish()
     }
-}
-
-#[inline(always)]
-fn split_at_mut_1<T>(out: &mut [T], mid: usize) -> (&mut [T], &mut [T]) {
-    out.split_at_mut(mid)
 }
 
 #[cfg(all(not(eurydice), test))]

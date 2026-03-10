@@ -33,7 +33,7 @@ impl KeccakState {
 
     #[inline(always)]
     pub(crate) fn set_with_zeta(&mut self, i: usize, j: usize, zeta: usize, v: U32) {
-        self.st[5 * j + i][zeta] = v
+        self.st[5 * j + i].0[zeta] = v
     }
 
     #[inline(always)]

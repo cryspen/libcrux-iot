@@ -5,7 +5,7 @@ use libcrux_secrets::{Classify, U8};
 #[cfg(feature = "check-secret-independence")]
 use libcrux_secrets::{Declassify, U32};
 
-use crate::{lane::Lane2U32, state::KeccakState};
+use crate::state::KeccakState;
 
 /// The internal keccak state that can also buffer inputs to absorb.
 /// This is used in the general xof APIs.
@@ -164,22 +164,24 @@ impl<const RATE: usize> KeccakXofState<RATE> {
         // XXX: Eurydice does not extract `core::cmp::min`, so we do
         // this instead. (cf. https://github.com/AeneasVerif/eurydice/issues/49)
         let mid = if RATE >= out_len { out_len } else { RATE };
-        let (out0, mut out_rest) = Lane2U32::split_at_mut_n(out, mid);
-        self.inner.store::<RATE>(out0);
+        // let (out0, mut out_rest) = Lane2U32::split_at_mut_n(out, mid);
+        self.inner.store::<RATE>(out);
 
         // If we got asked for more than one block, squeeze out more.
+        let mut offset = mid;
         for _ in 1..blocks {
             // Here we know that we always have full blocks to write out.
-            let (out0, tmp) = Lane2U32::split_at_mut_n(out_rest, RATE);
+            // let (out0, tmp) = Lane2U32::split_at_mut_n(out_rest, RATE);
             keccakf1600(&mut self.inner);
-            self.inner.store::<RATE>(out0);
-            out_rest = tmp;
+            self.inner.store::<RATE>(&mut out[offset..]);
+            // out_rest = tmp;
+            offset += RATE;
         }
 
         if last < out_len {
             // Squeeze out the last partial block
             keccakf1600(&mut self.inner);
-            self.inner.store::<RATE>(out_rest);
+            self.inner.store::<RATE>(&mut out[offset..]);
         }
 
         self.sponge = true;
@@ -272,7 +274,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 0, 0);
         let ax_3 = s.get_with_zeta(3, 0, 0);
         let ax_4 = s.get_with_zeta(4, 0, 0);
-        s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[0].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 0, 1);
@@ -280,7 +282,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 0, 1);
         let ax_3 = s.get_with_zeta(3, 0, 1);
         let ax_4 = s.get_with_zeta(4, 0, 1);
-        s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[0].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 1, 0);
@@ -288,7 +290,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 1, 0);
         let ax_3 = s.get_with_zeta(3, 1, 0);
         let ax_4 = s.get_with_zeta(4, 1, 0);
-        s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[1].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 1, 1);
@@ -296,7 +298,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 1, 1);
         let ax_3 = s.get_with_zeta(3, 1, 1);
         let ax_4 = s.get_with_zeta(4, 1, 1);
-        s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[1].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 2, 0);
@@ -304,7 +306,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 2, 0);
         let ax_3 = s.get_with_zeta(3, 2, 0);
         let ax_4 = s.get_with_zeta(4, 2, 0);
-        s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[2].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 2, 1);
@@ -312,7 +314,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 2, 1);
         let ax_3 = s.get_with_zeta(3, 2, 1);
         let ax_4 = s.get_with_zeta(4, 2, 1);
-        s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[2].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 3, 0);
@@ -320,7 +322,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 3, 0);
         let ax_3 = s.get_with_zeta(3, 3, 0);
         let ax_4 = s.get_with_zeta(4, 3, 0);
-        s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[3].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 3, 1);
@@ -328,7 +330,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 3, 1);
         let ax_3 = s.get_with_zeta(3, 3, 1);
         let ax_4 = s.get_with_zeta(4, 3, 1);
-        s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[3].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 4, 0);
@@ -336,7 +338,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 4, 0);
         let ax_3 = s.get_with_zeta(3, 4, 0);
         let ax_4 = s.get_with_zeta(4, 4, 0);
-        s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[4].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 4, 1);
@@ -344,7 +346,7 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 4, 1);
         let ax_3 = s.get_with_zeta(3, 4, 1);
         let ax_4 = s.get_with_zeta(4, 4, 1);
-        s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[4].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let c_x4_zeta0 = s.c[4][0];
@@ -354,29 +356,29 @@ pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let c_x2_zeta0 = s.c[2][0];
         let c_x4_zeta1 = s.c[4][1];
         let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-        s.d[0][0] = d_x0_zeta0;
+        s.d[0].0[0] = d_x0_zeta0;
         let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-        s.d[2][1] = d_x2_zeta1;
+        s.d[2].0[1] = d_x2_zeta1;
         let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-        s.d[4][0] = d_x4_zeta0;
+        s.d[4].0[0] = d_x4_zeta0;
         let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-        s.d[1][1] = d_x1_zeta1;
+        s.d[1].0[1] = d_x1_zeta1;
         let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-        s.d[3][0] = d_x3_zeta0;
+        s.d[3].0[0] = d_x3_zeta0;
         let c_x1_zeta0 = s.c[1][0];
         let c_x3_zeta1 = s.c[3][1];
         let c_x2_zeta1 = s.c[2][1];
         let c_x0_zeta0 = s.c[0][0];
         let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-        s.d[0][1] = d_x0_zeta1;
+        s.d[0].0[1] = d_x0_zeta1;
         let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-        s.d[2][0] = d_x2_zeta0;
+        s.d[2].0[0] = d_x2_zeta0;
         let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-        s.d[4][1] = d_x4_zeta1;
+        s.d[4].0[1] = d_x4_zeta1;
         let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-        s.d[1][0] = d_x1_zeta0;
+        s.d[1].0[0] = d_x1_zeta0;
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-        s.d[3][1] = d_x3_zeta1;
+        s.d[3].0[1] = d_x3_zeta1;
     }
     #[cfg(not(feature = "full-unroll"))]
     let i = s.i;
@@ -727,7 +729,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_4 = s.get_with_zeta(4, 0, 0);
         let ax_1 = s.get_with_zeta(1, 0, 0);
         let ax_3 = s.get_with_zeta(3, 0, 1);
-        s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[0].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 0, 1);
@@ -735,7 +737,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_4 = s.get_with_zeta(4, 0, 1);
         let ax_1 = s.get_with_zeta(1, 0, 1);
         let ax_3 = s.get_with_zeta(3, 0, 0);
-        s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[0].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_1 = s.get_with_zeta(1, 1, 0);
@@ -743,7 +745,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_0 = s.get_with_zeta(0, 1, 1);
         let ax_2 = s.get_with_zeta(2, 1, 0);
         let ax_4 = s.get_with_zeta(4, 1, 0);
-        s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[1].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_1 = s.get_with_zeta(1, 1, 1);
@@ -751,7 +753,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_0 = s.get_with_zeta(0, 1, 0);
         let ax_2 = s.get_with_zeta(2, 1, 1);
         let ax_4 = s.get_with_zeta(4, 1, 1);
-        s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[1].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_2 = s.get_with_zeta(2, 2, 1);
@@ -759,7 +761,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_1 = s.get_with_zeta(1, 2, 0);
         let ax_3 = s.get_with_zeta(3, 2, 1);
         let ax_0 = s.get_with_zeta(0, 2, 0);
-        s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[2].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_2 = s.get_with_zeta(2, 2, 0);
@@ -767,7 +769,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_1 = s.get_with_zeta(1, 2, 1);
         let ax_3 = s.get_with_zeta(3, 2, 0);
         let ax_0 = s.get_with_zeta(0, 2, 1);
-        s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[2].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_3 = s.get_with_zeta(3, 3, 1);
@@ -775,7 +777,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 3, 1);
         let ax_4 = s.get_with_zeta(4, 3, 0);
         let ax_1 = s.get_with_zeta(1, 3, 1);
-        s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[3].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_3 = s.get_with_zeta(3, 3, 0);
@@ -783,7 +785,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 3, 0);
         let ax_4 = s.get_with_zeta(4, 3, 1);
         let ax_1 = s.get_with_zeta(1, 3, 0);
-        s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[3].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_4 = s.get_with_zeta(4, 4, 0);
@@ -791,7 +793,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_3 = s.get_with_zeta(3, 4, 0);
         let ax_0 = s.get_with_zeta(0, 4, 1);
         let ax_2 = s.get_with_zeta(2, 4, 1);
-        s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[4].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_4 = s.get_with_zeta(4, 4, 1);
@@ -799,7 +801,7 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_3 = s.get_with_zeta(3, 4, 1);
         let ax_0 = s.get_with_zeta(0, 4, 0);
         let ax_2 = s.get_with_zeta(2, 4, 0);
-        s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[4].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let c_x4_zeta0 = s.c[4][0];
@@ -809,29 +811,29 @@ pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let c_x2_zeta0 = s.c[2][0];
         let c_x4_zeta1 = s.c[4][1];
         let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-        s.d[0][0] = d_x0_zeta0;
+        s.d[0].0[0] = d_x0_zeta0;
         let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-        s.d[2][1] = d_x2_zeta1;
+        s.d[2].0[1] = d_x2_zeta1;
         let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-        s.d[4][0] = d_x4_zeta0;
+        s.d[4].0[0] = d_x4_zeta0;
         let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-        s.d[1][1] = d_x1_zeta1;
+        s.d[1].0[1] = d_x1_zeta1;
         let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-        s.d[3][0] = d_x3_zeta0;
+        s.d[3].0[0] = d_x3_zeta0;
         let c_x1_zeta0 = s.c[1][0];
         let c_x3_zeta1 = s.c[3][1];
         let c_x2_zeta1 = s.c[2][1];
         let c_x0_zeta0 = s.c[0][0];
         let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-        s.d[0][1] = d_x0_zeta1;
+        s.d[0].0[1] = d_x0_zeta1;
         let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-        s.d[2][0] = d_x2_zeta0;
+        s.d[2].0[0] = d_x2_zeta0;
         let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-        s.d[4][1] = d_x4_zeta1;
+        s.d[4].0[1] = d_x4_zeta1;
         let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-        s.d[1][0] = d_x1_zeta0;
+        s.d[1].0[0] = d_x1_zeta0;
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-        s.d[3][1] = d_x3_zeta1;
+        s.d[3].0[1] = d_x3_zeta1;
     }
     #[cfg(not(feature = "full-unroll"))]
     let i = s.i;
@@ -1182,7 +1184,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_3 = s.get_with_zeta(3, 0, 1);
         let ax_2 = s.get_with_zeta(2, 0, 1);
         let ax_1 = s.get_with_zeta(1, 0, 1);
-        s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[0].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 0, 1);
@@ -1190,7 +1192,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_3 = s.get_with_zeta(3, 0, 0);
         let ax_2 = s.get_with_zeta(2, 0, 0);
         let ax_1 = s.get_with_zeta(1, 0, 0);
-        s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[0].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_3 = s.get_with_zeta(3, 1, 1);
@@ -1198,7 +1200,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_1 = s.get_with_zeta(1, 1, 1);
         let ax_0 = s.get_with_zeta(0, 1, 1);
         let ax_4 = s.get_with_zeta(4, 1, 0);
-        s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[1].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_3 = s.get_with_zeta(3, 1, 0);
@@ -1206,7 +1208,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_1 = s.get_with_zeta(1, 1, 0);
         let ax_0 = s.get_with_zeta(0, 1, 0);
         let ax_4 = s.get_with_zeta(4, 1, 1);
-        s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[1].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_1 = s.get_with_zeta(1, 2, 1);
@@ -1214,7 +1216,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_4 = s.get_with_zeta(4, 2, 1);
         let ax_3 = s.get_with_zeta(3, 2, 0);
         let ax_2 = s.get_with_zeta(2, 2, 1);
-        s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[2].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_1 = s.get_with_zeta(1, 2, 0);
@@ -1222,7 +1224,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_4 = s.get_with_zeta(4, 2, 0);
         let ax_3 = s.get_with_zeta(3, 2, 1);
         let ax_2 = s.get_with_zeta(2, 2, 0);
-        s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[2].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_4 = s.get_with_zeta(4, 3, 1);
@@ -1230,7 +1232,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 3, 0);
         let ax_1 = s.get_with_zeta(1, 3, 1);
         let ax_0 = s.get_with_zeta(0, 3, 1);
-        s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[3].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_4 = s.get_with_zeta(4, 3, 0);
@@ -1238,7 +1240,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 3, 1);
         let ax_1 = s.get_with_zeta(1, 3, 0);
         let ax_0 = s.get_with_zeta(0, 3, 0);
-        s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[3].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_2 = s.get_with_zeta(2, 4, 1);
@@ -1246,7 +1248,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_0 = s.get_with_zeta(0, 4, 1);
         let ax_4 = s.get_with_zeta(4, 4, 1);
         let ax_3 = s.get_with_zeta(3, 4, 1);
-        s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[4].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_2 = s.get_with_zeta(2, 4, 0);
@@ -1254,7 +1256,7 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_0 = s.get_with_zeta(0, 4, 0);
         let ax_4 = s.get_with_zeta(4, 4, 0);
         let ax_3 = s.get_with_zeta(3, 4, 0);
-        s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[4].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let c_x4_zeta0 = s.c[4][0];
@@ -1264,29 +1266,29 @@ pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let c_x2_zeta0 = s.c[2][0];
         let c_x4_zeta1 = s.c[4][1];
         let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-        s.d[0][0] = d_x0_zeta0;
+        s.d[0].0[0] = d_x0_zeta0;
         let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-        s.d[2][1] = d_x2_zeta1;
+        s.d[2].0[1] = d_x2_zeta1;
         let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-        s.d[4][0] = d_x4_zeta0;
+        s.d[4].0[0] = d_x4_zeta0;
         let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-        s.d[1][1] = d_x1_zeta1;
+        s.d[1].0[1] = d_x1_zeta1;
         let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-        s.d[3][0] = d_x3_zeta0;
+        s.d[3].0[0] = d_x3_zeta0;
         let c_x1_zeta0 = s.c[1][0];
         let c_x3_zeta1 = s.c[3][1];
         let c_x2_zeta1 = s.c[2][1];
         let c_x0_zeta0 = s.c[0][0];
         let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-        s.d[0][1] = d_x0_zeta1;
+        s.d[0].0[1] = d_x0_zeta1;
         let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-        s.d[2][0] = d_x2_zeta0;
+        s.d[2].0[0] = d_x2_zeta0;
         let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-        s.d[4][1] = d_x4_zeta1;
+        s.d[4].0[1] = d_x4_zeta1;
         let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-        s.d[1][0] = d_x1_zeta0;
+        s.d[1].0[0] = d_x1_zeta0;
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-        s.d[3][1] = d_x3_zeta1;
+        s.d[3].0[1] = d_x3_zeta1;
     }
     #[cfg(not(feature = "full-unroll"))]
     let i = s.i;
@@ -1637,7 +1639,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_1 = s.get_with_zeta(1, 0, 1);
         let ax_4 = s.get_with_zeta(4, 0, 1);
         let ax_2 = s.get_with_zeta(2, 0, 0);
-        s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[0].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_0 = s.get_with_zeta(0, 0, 1);
@@ -1645,7 +1647,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_1 = s.get_with_zeta(1, 0, 0);
         let ax_4 = s.get_with_zeta(4, 0, 0);
         let ax_2 = s.get_with_zeta(2, 0, 1);
-        s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[0].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_2 = s.get_with_zeta(2, 1, 1);
@@ -1653,7 +1655,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_3 = s.get_with_zeta(3, 1, 0);
         let ax_1 = s.get_with_zeta(1, 1, 1);
         let ax_4 = s.get_with_zeta(4, 1, 0);
-        s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[1].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_2 = s.get_with_zeta(2, 1, 0);
@@ -1661,7 +1663,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_3 = s.get_with_zeta(3, 1, 1);
         let ax_1 = s.get_with_zeta(1, 1, 0);
         let ax_4 = s.get_with_zeta(4, 1, 1);
-        s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[1].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_4 = s.get_with_zeta(4, 2, 0);
@@ -1669,7 +1671,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_0 = s.get_with_zeta(0, 2, 1);
         let ax_3 = s.get_with_zeta(3, 2, 1);
         let ax_1 = s.get_with_zeta(1, 2, 1);
-        s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[2].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_4 = s.get_with_zeta(4, 2, 1);
@@ -1677,7 +1679,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_0 = s.get_with_zeta(0, 2, 0);
         let ax_3 = s.get_with_zeta(3, 2, 0);
         let ax_1 = s.get_with_zeta(1, 2, 0);
-        s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[2].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_1 = s.get_with_zeta(1, 3, 0);
@@ -1685,7 +1687,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 3, 1);
         let ax_0 = s.get_with_zeta(0, 3, 1);
         let ax_3 = s.get_with_zeta(3, 3, 0);
-        s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[3].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_1 = s.get_with_zeta(1, 3, 1);
@@ -1693,7 +1695,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_2 = s.get_with_zeta(2, 3, 0);
         let ax_0 = s.get_with_zeta(0, 3, 0);
         let ax_3 = s.get_with_zeta(3, 3, 1);
-        s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[3].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_3 = s.get_with_zeta(3, 4, 1);
@@ -1701,7 +1703,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_4 = s.get_with_zeta(4, 4, 1);
         let ax_2 = s.get_with_zeta(2, 4, 0);
         let ax_0 = s.get_with_zeta(0, 4, 0);
-        s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[4].0[0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let ax_3 = s.get_with_zeta(3, 4, 0);
@@ -1709,7 +1711,7 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let ax_4 = s.get_with_zeta(4, 4, 0);
         let ax_2 = s.get_with_zeta(2, 4, 1);
         let ax_0 = s.get_with_zeta(0, 4, 1);
-        s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+        s.c[4].0[1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
     }
     {
         let c_x4_zeta0 = s.c[4][0];
@@ -1719,29 +1721,29 @@ pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
         let c_x2_zeta0 = s.c[2][0];
         let c_x4_zeta1 = s.c[4][1];
         let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-        s.d[0][0] = d_x0_zeta0;
+        s.d[0].0[0] = d_x0_zeta0;
         let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-        s.d[2][1] = d_x2_zeta1;
+        s.d[2].0[1] = d_x2_zeta1;
         let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-        s.d[4][0] = d_x4_zeta0;
+        s.d[4].0[0] = d_x4_zeta0;
         let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-        s.d[1][1] = d_x1_zeta1;
+        s.d[1].0[1] = d_x1_zeta1;
         let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-        s.d[3][0] = d_x3_zeta0;
+        s.d[3].0[0] = d_x3_zeta0;
         let c_x1_zeta0 = s.c[1][0];
         let c_x3_zeta1 = s.c[3][1];
         let c_x2_zeta1 = s.c[2][1];
         let c_x0_zeta0 = s.c[0][0];
         let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-        s.d[0][1] = d_x0_zeta1;
+        s.d[0].0[1] = d_x0_zeta1;
         let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-        s.d[2][0] = d_x2_zeta0;
+        s.d[2].0[0] = d_x2_zeta0;
         let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-        s.d[4][1] = d_x4_zeta1;
+        s.d[4].0[1] = d_x4_zeta1;
         let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-        s.d[1][0] = d_x1_zeta0;
+        s.d[1].0[0] = d_x1_zeta0;
         let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-        s.d[3][1] = d_x3_zeta1;
+        s.d[3].0[1] = d_x3_zeta1;
     }
     #[cfg(not(feature = "full-unroll"))]
     let i = s.i;
@@ -2156,27 +2158,18 @@ pub(crate) fn squeeze_next_block<const RATE: usize>(s: &mut KeccakState, out: &m
 
 #[inline(always)]
 pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
-    let (mut o0, o1) = Lane2U32::split_at_mut_n(out, RATE);
-    squeeze_first_block::<RATE>(s, &mut o0);
-    let (mut o1, mut o2) = Lane2U32::split_at_mut_n(o1, RATE);
-    squeeze_next_block::<RATE>(s, &mut o1);
-    squeeze_next_block::<RATE>(s, &mut o2);
+    squeeze_first_block::<RATE>(s, out);
+    squeeze_next_block::<RATE>(s, &mut out[RATE..]);
+    squeeze_next_block::<RATE>(s, &mut out[2 * RATE..]);
 }
 
 #[inline(always)]
 pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
-    let (mut o0, o1) = Lane2U32::split_at_mut_n(out, RATE);
-    squeeze_first_block::<RATE>(s, &mut o0);
-    let (mut o1, o2) = Lane2U32::split_at_mut_n(o1, RATE);
-
-    squeeze_next_block::<RATE>(s, &mut o1);
-    let (mut o2, o3) = Lane2U32::split_at_mut_n(o2, RATE);
-
-    squeeze_next_block::<RATE>(s, &mut o2);
-    let (mut o3, mut o4) = Lane2U32::split_at_mut_n(o3, RATE);
-
-    squeeze_next_block::<RATE>(s, &mut o3);
-    squeeze_next_block::<RATE>(s, &mut o4);
+    squeeze_first_block::<RATE>(s, out);
+    squeeze_next_block::<RATE>(s, &mut out[RATE..]);
+    squeeze_next_block::<RATE>(s, &mut out[2 * RATE..]);
+    squeeze_next_block::<RATE>(s, &mut out[3 * RATE..]);
+    squeeze_next_block::<RATE>(s, &mut out[4 * RATE..]);
 }
 
 #[inline(always)]
@@ -2217,15 +2210,17 @@ pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut 
     if blocks == 0 {
         squeeze_first_and_last::<RATE>(&s, out)
     } else {
-        let (mut o0, mut o1) = Lane2U32::split_at_mut_n(out, RATE);
-        squeeze_first_block::<RATE>(&s, &mut o0);
+        // let (mut o0, mut o1) = Lane2U32::split_at_mut_n(out, RATE);
+        squeeze_first_block::<RATE>(&s, out);
+        let mut offset = RATE;
         for _i in 1..blocks {
-            let (mut o, orest) = Lane2U32::split_at_mut_n(o1, RATE);
-            squeeze_next_block::<RATE>(&mut s, &mut o);
-            o1 = orest;
+            // let (mut o, orest) = Lane2U32::split_at_mut_n(o1, RATE);
+            squeeze_next_block::<RATE>(&mut s, &mut out[offset..]);
+            // o1 = orest;
+            offset += RATE;
         }
         if last < outlen {
-            squeeze_last::<RATE>(s, o1)
+            squeeze_last::<RATE>(s, &mut out[offset..])
         }
     }
 }
