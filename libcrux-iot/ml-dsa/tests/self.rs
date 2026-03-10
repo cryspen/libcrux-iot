@@ -171,7 +171,7 @@ fn bad_hint() {
     let message = [42u8; 5];
     let context = b"";
 
-    let keypair = ml_dsa_65::generate_key_pair([0u8; 32]);
+    let keypair = ml_dsa_65::generate_key_pair([0u8; 32].classify());
 
     // For ML-DSA-65, the signature layout is:
     //   bytes   0.. 48: commitment hash (COMMITMENT_HASH_SIZE = 48)
@@ -227,7 +227,7 @@ fn bad_hint_out_of_bounds() {
     let message = [42u8; 5];
     let context = b"";
 
-    let keypair = ml_dsa_65::generate_key_pair([0u8; 32]);
+    let keypair = ml_dsa_65::generate_key_pair([0u8; 32].classify());
 
     // As a variation on the test in `bad_hint`, the faulty hint decoding logic can also be used to cause an out-of-bounds memory access during hint decoding by setting the final value of the serialized hint slice to a value greater than the length of the serialized hint slice.
     let mut sig_bytes = [0u8; 3309];
