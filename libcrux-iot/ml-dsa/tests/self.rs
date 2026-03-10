@@ -167,6 +167,10 @@ impl_modified_signing_key_test!(
 
 #[test]
 #[rustfmt::skip]
+// The verification of the following test case signature will fail
+// early in the stack-optimized verification, not reaching the bug
+// that is supposed to be tested here.
+#[cfg(not(feature = "stack"))]
 fn bad_hint() {
     let message = [42u8; 5];
     let context = b"";
@@ -223,6 +227,10 @@ fn bad_hint() {
 
 #[test]
 #[rustfmt::skip]
+// The verification of the following test case signature will fail
+// early in the stack-optimized verification, not reaching the bug
+// that is supposed to be tested here.
+#[cfg(not(feature = "stack"))]
 fn bad_hint_out_of_bounds() {
     let message = [42u8; 5];
     let context = b"";
@@ -250,6 +258,68 @@ fn bad_hint_out_of_bounds() {
     assert!(matches!(
         result,
         Err(libcrux_iot_ml_dsa::VerificationError::MalformedHintError),
+    ));
+}
+
+#[test]
+#[rustfmt::skip]
+#[cfg(feature = "stack")]
+fn bad_hint() {
+    let key_generation_seed = [0u8; 32].classify();
+    let signing_randomness = [
+        47, 251, 166, 65, 93, 209, 37, 229, 152, 54, 82, 108, 142, 203, 121, 196, 234, 249, 136,
+        41, 0, 240, 153, 109, 160, 217, 134, 88, 55, 196, 204, 202,
+    ].classify();
+    let message = [42u8; 5];
+    let context = b"";
+
+    let keypair = ml_dsa_65::generate_key_pair(key_generation_seed);
+    let signature =
+        ml_dsa_65::sign(&keypair.signing_key, &message, context, signing_randomness);
+
+    let mut signature = signature.unwrap();
+
+    
+    signature.as_mut_slice()[3248..].copy_from_slice(&[
+        10, 15, 104, 106, 120, 128, 143, 166, 170, 62, 75, 104, 127, 132, 163, 176, 195, 210, 216,
+        223, 78, 98, 116, 139, 149, 185, 188, 195, 224, 252, 33, 46, 47, 51, 57, 79, 89, 151, 172,
+        173, 229, 233, 234, 238, 24, 82, 125, 175, 208, 236, 237, 5, 6, 7, 8, 9, 20, 30, 44, 51,
+        56,
+    ]);
+    assert!(matches!(
+        ml_dsa_65::verify(&keypair.verification_key, &message, context, &signature),
+        Err(libcrux_iot_ml_dsa::VerificationError::MalformedHintError)
+    ));
+}
+
+#[test]
+#[rustfmt::skip]
+#[cfg(feature = "stack")]
+fn bad_hint_out_of_bounds() {
+    let key_generation_seed = [0u8; 32].classify();
+    let signing_randomness = [
+        47, 251, 166, 65, 93, 209, 37, 229, 152, 54, 82, 108, 142, 203, 121, 196, 234, 249, 136,
+        41, 0, 240, 153, 109, 160, 217, 134, 88, 55, 196, 204, 202,
+    ].classify();
+    let message = [42u8; 5];
+    let context = b"";
+
+    let keypair = ml_dsa_65::generate_key_pair(key_generation_seed);
+    let signature =
+        ml_dsa_65::sign(&keypair.signing_key, &message, context, signing_randomness);
+
+    let mut signature = signature.unwrap();
+
+    
+    signature.as_mut_slice()[3248..].copy_from_slice(&[
+        10, 15, 104, 106, 120, 128, 143, 166, 170, 62, 75, 104, 127, 132, 163, 176, 195, 210, 216,
+        223, 78, 98, 116, 139, 149, 185, 188, 195, 224, 252, 33, 46, 47, 51, 57, 79, 89, 151, 172,
+        173, 229, 233, 234, 238, 24, 82, 125, 175, 208, 236, 237, 5, 6, 7, 8, 9, 20, 30, 44, 51,
+        62,
+    ]);
+    assert!(matches!(
+        ml_dsa_65::verify(&keypair.verification_key, &message, context, &signature),
+        Err(libcrux_iot_ml_dsa::VerificationError::MalformedHintError)
     ));
 }
 
