@@ -1,16 +1,18 @@
 import Hax
 
+/- ## Libcrux secrets -/
 def libcrux_secrets.traits.Classify.classify (α : Type) : α → RustM α := sorry
 def libcrux_secrets.int.CastOps.as_u64 (α : Type) : α → RustM u64 := sorry
-instance : GetElemResult Lane2U32 usize u32 := sorry
 def libcrux_secrets.int.CastOps.as_u32 (α : Type) : α → RustM u32 := sorry
 
 
-class core_models.ops.index.IndexMut.AssociatedTypes (A B : Type) where
+/- ## Index trait -/
 
-class core_models.ops.index.IndexMut (A B : Type) where
-  index_mut : A → B → RustM u32
+instance [core_models.ops.index.Index.AssociatedTypes α β] [core_models.ops.index.Index α β] :
+  GetElemResult α β (core_models.ops.index.Index.AssociatedTypes.Output α β) := sorry
 
+
+/- ## Update at range -/
 
 class rust_primitives.hax.monomorphized_update_at (α : Type) where
   update_at_range : α → core_models.ops.range.Range usize → RustSlice u8 → RustM α
@@ -24,17 +26,29 @@ instance : rust_primitives.hax.monomorphized_update_at (RustSlice u8) where
   update_at_range := sorry
   update_at_range_from := sorry
 
-instance : GetElemResult (RustArray u8 RATE) (core_models.ops.range.RangeFrom usize) (RustSlice u8) := sorry
-instance :  GetElemResult (RustSlice u8) (core_models.ops.range.RangeFrom usize) (RustSlice u8) := sorry
+/- ## Making slices -/
 
+instance : GetElemResult (RustArray u8 n) (core_models.ops.range.RangeFrom usize) (RustSlice u8) := sorry
+instance :  GetElemResult (RustSlice u8) (core_models.ops.range.RangeFrom usize) (RustSlice u8) := sorry
 instance : GetElemResult (RustSlice u8) (core_models.ops.range.RangeTo usize) (RustSlice u8) := sorry
 
-instance : CoeOut (RustArray α n) (RustSlice α) := ⟨fun a => .mk a.toVec.toArray (by simp [USize64.toNat_lt_size])⟩
 
+/- ## Array <-> Slice conversion
+See https://github.com/cryspen/hax/issues/1983
+-/
+
+instance : CoeOut (RustArray α n) (RustSlice α) := ⟨fun a => .mk a.toVec.toArray (by simp [USize64.toNat_lt_size])⟩
 instance : Coe (RustSlice α) (RustArray α n) := sorry
 
 
+/- ## Missing core model definition -/
 def core_models.num.Impl_8.MAX : u32 := sorry
+
+
+
+/- ## For loops for signed integers
+See https://github.com/cryspen/hax/issues/1783
+-/
 
 open Std.Do
 
