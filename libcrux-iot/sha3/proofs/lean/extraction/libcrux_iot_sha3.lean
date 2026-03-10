@@ -557,19 +557,19 @@ namespace libcrux_iot_sha3.lane
 structure Lane2U32 where
   _0 : (RustArray u32 2)
 
-@[instance] opaque Impl_4.AssociatedTypes :
+@[instance] opaque Impl_3.AssociatedTypes :
   core_models.clone.Clone.AssociatedTypes Lane2U32 :=
   by constructor <;> exact Inhabited.default
 
-@[instance] opaque Impl_4 :
+@[instance] opaque Impl_3 :
   core_models.clone.Clone Lane2U32 :=
   by constructor <;> exact Inhabited.default
 
-@[instance] opaque Impl_5.AssociatedTypes :
+@[instance] opaque Impl_4.AssociatedTypes :
   core_models.marker.Copy.AssociatedTypes Lane2U32 :=
   by constructor <;> exact Inhabited.default
 
-@[instance] opaque Impl_5 :
+@[instance] opaque Impl_4 :
   core_models.marker.Copy Lane2U32 :=
   by constructor <;> exact Inhabited.default
 
@@ -584,12 +584,78 @@ def Impl.zero (_ : rust_primitives.hax.Tuple0) : RustM Lane2U32 := do
       (RustArray u32 2) (RustArray.ofVec #v[(0 : u32), (0 : u32)]))))
 
 @[spec]
-def Impl.split_at_mut_n (T : Type) (a : (RustSlice T)) (mid : usize) :
-    RustM sorry := do
-  (pure sorry)
-
-@[spec]
-def Impl.deinterleave (self : Lane2U32) : RustM Lane2U32 := do (pure sorry)
+def Impl.deinterleave (self : Lane2U32) : RustM Lane2U32 := do
+  let even_bits : u32 ← (Lane2U32._0 self)[(0 : usize)]_?;
+  let odd_bits : u32 ← (Lane2U32._0 self)[(1 : usize)]_?;
+  let even_spaced_lo : u32 ← (even_bits &&&? (65535 : u32));
+  let even_spaced_lo : u32 ←
+    ((← (even_spaced_lo ^^^? (← (even_spaced_lo <<<? (16 : i32)))))
+      &&&? (65535 : u32));
+  let even_spaced_lo : u32 ←
+    ((← (even_spaced_lo ^^^? (← (even_spaced_lo <<<? (8 : i32)))))
+      &&&? (16711935 : u32));
+  let even_spaced_lo : u32 ←
+    ((← (even_spaced_lo ^^^? (← (even_spaced_lo <<<? (4 : i32)))))
+      &&&? (252645135 : u32));
+  let even_spaced_lo : u32 ←
+    ((← (even_spaced_lo ^^^? (← (even_spaced_lo <<<? (2 : i32)))))
+      &&&? (858993459 : u32));
+  let even_spaced_lo : u32 ←
+    ((← (even_spaced_lo ^^^? (← (even_spaced_lo <<<? (1 : i32)))))
+      &&&? (1431655765 : u32));
+  let even_spaced_hi : u32 ← (even_bits >>>? (16 : i32));
+  let even_spaced_hi : u32 ←
+    ((← (even_spaced_hi ^^^? (← (even_spaced_hi <<<? (16 : i32)))))
+      &&&? (65535 : u32));
+  let even_spaced_hi : u32 ←
+    ((← (even_spaced_hi ^^^? (← (even_spaced_hi <<<? (8 : i32)))))
+      &&&? (16711935 : u32));
+  let even_spaced_hi : u32 ←
+    ((← (even_spaced_hi ^^^? (← (even_spaced_hi <<<? (4 : i32)))))
+      &&&? (252645135 : u32));
+  let even_spaced_hi : u32 ←
+    ((← (even_spaced_hi ^^^? (← (even_spaced_hi <<<? (2 : i32)))))
+      &&&? (858993459 : u32));
+  let even_spaced_hi : u32 ←
+    ((← (even_spaced_hi ^^^? (← (even_spaced_hi <<<? (1 : i32)))))
+      &&&? (1431655765 : u32));
+  let odd_spaced_lo : u32 ← (odd_bits &&&? (65535 : u32));
+  let odd_spaced_lo : u32 ←
+    ((← (odd_spaced_lo ^^^? (← (odd_spaced_lo <<<? (16 : i32)))))
+      &&&? (65535 : u32));
+  let odd_spaced_lo : u32 ←
+    ((← (odd_spaced_lo ^^^? (← (odd_spaced_lo <<<? (8 : i32)))))
+      &&&? (16711935 : u32));
+  let odd_spaced_lo : u32 ←
+    ((← (odd_spaced_lo ^^^? (← (odd_spaced_lo <<<? (4 : i32)))))
+      &&&? (252645135 : u32));
+  let odd_spaced_lo : u32 ←
+    ((← (odd_spaced_lo ^^^? (← (odd_spaced_lo <<<? (2 : i32)))))
+      &&&? (858993459 : u32));
+  let odd_spaced_lo : u32 ←
+    ((← (odd_spaced_lo ^^^? (← (odd_spaced_lo <<<? (1 : i32)))))
+      &&&? (1431655765 : u32));
+  let odd_spaced_hi : u32 ← (odd_bits >>>? (16 : i32));
+  let odd_spaced_hi : u32 ←
+    ((← (odd_spaced_hi ^^^? (← (odd_spaced_hi <<<? (16 : i32)))))
+      &&&? (65535 : u32));
+  let odd_spaced_hi : u32 ←
+    ((← (odd_spaced_hi ^^^? (← (odd_spaced_hi <<<? (8 : i32)))))
+      &&&? (16711935 : u32));
+  let odd_spaced_hi : u32 ←
+    ((← (odd_spaced_hi ^^^? (← (odd_spaced_hi <<<? (4 : i32)))))
+      &&&? (252645135 : u32));
+  let odd_spaced_hi : u32 ←
+    ((← (odd_spaced_hi ^^^? (← (odd_spaced_hi <<<? (2 : i32)))))
+      &&&? (858993459 : u32));
+  let odd_spaced_hi : u32 ←
+    ((← (odd_spaced_hi ^^^? (← (odd_spaced_hi <<<? (1 : i32)))))
+      &&&? (1431655765 : u32));
+  (pure (Lane2U32.mk
+    (RustArray.ofVec #v[(← (even_spaced_lo
+                            |||? (← (odd_spaced_lo <<<? (1 : i32))))),
+                          (← (even_spaced_hi
+                            |||? (← (odd_spaced_hi <<<? (1 : i32)))))])))
 
 @[reducible] instance Impl_1.AssociatedTypes :
   core_models.ops.index.Index.AssociatedTypes Lane2U32 usize
@@ -646,31 +712,19 @@ def Impl.interleave (self : Lane2U32) : RustM Lane2U32 := do
                             u64 odd_bits))]))
 
 @[reducible] instance Impl_2.AssociatedTypes :
-  core_models.ops.index.IndexMut.AssociatedTypes Lane2U32 usize
-  where
-
-instance Impl_2 : core_models.ops.index.IndexMut Lane2U32 usize where
-  index_mut := fun (self : Lane2U32) (index : usize) => do (pure sorry)
-
-@[reducible] instance Impl_3.AssociatedTypes :
   core_models.convert.From.AssociatedTypes Lane2U32 (RustArray u32 2)
   where
 
-instance Impl_3 : core_models.convert.From Lane2U32 (RustArray u32 2) where
+instance Impl_2 : core_models.convert.From Lane2U32 (RustArray u32 2) where
   _from := fun (value : (RustArray u32 2)) => do (pure (Lane2U32.mk value))
 
-@[instance] opaque Impl_6.AssociatedTypes :
+@[instance] opaque Impl_5.AssociatedTypes :
   core_models.fmt.Debug.AssociatedTypes Lane2U32 :=
   by constructor <;> exact Inhabited.default
 
-@[instance] opaque Impl_6 :
+@[instance] opaque Impl_5 :
   core_models.fmt.Debug Lane2U32 :=
   by constructor <;> exact Inhabited.default
-
-@[spec]
-def split_at_mut_1 (T : Type) (out : (RustSlice T)) (mid : usize) :
-    RustM sorry := do
-  (pure sorry)
 
 end libcrux_iot_sha3.lane
 
@@ -739,20 +793,6 @@ def Impl.fill_buffer (RATE : usize)
       (pure (rust_primitives.hax.Tuple2.mk consumed self));
   let hax_temp_output : usize := consumed;
   (pure (rust_primitives.hax.Tuple2.mk self hax_temp_output))
-
-@[spec]
-def squeeze_first_three_blocks (RATE : usize)
-    (s : libcrux_iot_sha3.state.KeccakState)
-    (out : (RustSlice u8)) :
-    RustM rust_primitives.hax.Tuple0 := do
-  (pure sorry)
-
-@[spec]
-def squeeze_first_five_blocks (RATE : usize)
-    (s : libcrux_iot_sha3.state.KeccakState)
-    (out : (RustSlice u8)) :
-    RustM rust_primitives.hax.Tuple0 := do
-  (pure sorry)
 
 end libcrux_iot_sha3.keccak
 
@@ -827,6 +867,2368 @@ def Impl.get_with_zeta
     RustM u32 := do
   (← (KeccakState.st self)[(← ((← ((5 : usize) *? j)) +? i))]_?)[zeta]_?
 
+end libcrux_iot_sha3.state
+
+
+namespace libcrux_iot_sha3.keccak
+
+set_option maxRecDepth 1000 in
+
+@[spec]
+def keccakf1600_round0_theta (s : libcrux_iot_sha3.state.KeccakState) :
+    RustM libcrux_iot_sha3.state.KeccakState := do
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (0 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (0 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (1 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (1 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let c_x4_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(0 : usize)]_?;
+  let c_x1_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(1 : usize)]_?;
+  let c_x3_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(0 : usize)]_?;
+  let c_x0_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(1 : usize)]_?;
+  let c_x2_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(0 : usize)]_?;
+  let c_x4_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(1 : usize)]_?;
+  let d_x0_zeta0 : u32 ←
+    (c_x4_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x1_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?))
+        (0 : usize)
+        d_x0_zeta0))}))};
+  let d_x2_zeta1 : u32 ← (c_x1_zeta1 ^^^? c_x3_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?))
+        (1 : usize)
+        d_x2_zeta1))}))};
+  let d_x4_zeta0 : u32 ←
+    (c_x3_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x0_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?))
+        (0 : usize)
+        d_x4_zeta0))}))};
+  let d_x1_zeta1 : u32 ← (c_x0_zeta1 ^^^? c_x2_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?))
+        (1 : usize)
+        d_x1_zeta1))}))};
+  let d_x3_zeta0 : u32 ←
+    (c_x2_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x4_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?))
+        (0 : usize)
+        d_x3_zeta0))}))};
+  let c_x1_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(0 : usize)]_?;
+  let c_x3_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(1 : usize)]_?;
+  let c_x2_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(1 : usize)]_?;
+  let c_x0_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(0 : usize)]_?;
+  let d_x0_zeta1 : u32 ← (c_x4_zeta1 ^^^? c_x1_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?))
+        (1 : usize)
+        d_x0_zeta1))}))};
+  let d_x2_zeta0 : u32 ←
+    (c_x1_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x3_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?))
+        (0 : usize)
+        d_x2_zeta0))}))};
+  let d_x4_zeta1 : u32 ← (c_x3_zeta1 ^^^? c_x0_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?))
+        (1 : usize)
+        d_x4_zeta1))}))};
+  let d_x1_zeta0 : u32 ←
+    (c_x0_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x2_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?))
+        (0 : usize)
+        d_x1_zeta0))}))};
+  let d_x3_zeta1 : u32 ← (c_x2_zeta1 ^^^? c_x4_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?))
+        (1 : usize)
+        d_x3_zeta1))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  (pure s)
+
+set_option maxRecDepth 1000 in
+
+@[spec]
+def keccakf1600_round1_theta (s : libcrux_iot_sha3.state.KeccakState) :
+    RustM libcrux_iot_sha3.state.KeccakState := do
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (0 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (0 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (1 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (1 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let c_x4_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(0 : usize)]_?;
+  let c_x1_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(1 : usize)]_?;
+  let c_x3_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(0 : usize)]_?;
+  let c_x0_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(1 : usize)]_?;
+  let c_x2_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(0 : usize)]_?;
+  let c_x4_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(1 : usize)]_?;
+  let d_x0_zeta0 : u32 ←
+    (c_x4_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x1_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?))
+        (0 : usize)
+        d_x0_zeta0))}))};
+  let d_x2_zeta1 : u32 ← (c_x1_zeta1 ^^^? c_x3_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?))
+        (1 : usize)
+        d_x2_zeta1))}))};
+  let d_x4_zeta0 : u32 ←
+    (c_x3_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x0_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?))
+        (0 : usize)
+        d_x4_zeta0))}))};
+  let d_x1_zeta1 : u32 ← (c_x0_zeta1 ^^^? c_x2_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?))
+        (1 : usize)
+        d_x1_zeta1))}))};
+  let d_x3_zeta0 : u32 ←
+    (c_x2_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x4_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?))
+        (0 : usize)
+        d_x3_zeta0))}))};
+  let c_x1_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(0 : usize)]_?;
+  let c_x3_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(1 : usize)]_?;
+  let c_x2_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(1 : usize)]_?;
+  let c_x0_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(0 : usize)]_?;
+  let d_x0_zeta1 : u32 ← (c_x4_zeta1 ^^^? c_x1_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?))
+        (1 : usize)
+        d_x0_zeta1))}))};
+  let d_x2_zeta0 : u32 ←
+    (c_x1_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x3_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?))
+        (0 : usize)
+        d_x2_zeta0))}))};
+  let d_x4_zeta1 : u32 ← (c_x3_zeta1 ^^^? c_x0_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?))
+        (1 : usize)
+        d_x4_zeta1))}))};
+  let d_x1_zeta0 : u32 ←
+    (c_x0_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x2_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?))
+        (0 : usize)
+        d_x1_zeta0))}))};
+  let d_x3_zeta1 : u32 ← (c_x2_zeta1 ^^^? c_x4_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?))
+        (1 : usize)
+        d_x3_zeta1))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  (pure s)
+
+set_option maxRecDepth 1000 in
+
+@[spec]
+def keccakf1600_round2_theta (s : libcrux_iot_sha3.state.KeccakState) :
+    RustM libcrux_iot_sha3.state.KeccakState := do
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (0 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (0 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (1 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (1 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let c_x4_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(0 : usize)]_?;
+  let c_x1_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(1 : usize)]_?;
+  let c_x3_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(0 : usize)]_?;
+  let c_x0_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(1 : usize)]_?;
+  let c_x2_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(0 : usize)]_?;
+  let c_x4_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(1 : usize)]_?;
+  let d_x0_zeta0 : u32 ←
+    (c_x4_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x1_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?))
+        (0 : usize)
+        d_x0_zeta0))}))};
+  let d_x2_zeta1 : u32 ← (c_x1_zeta1 ^^^? c_x3_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?))
+        (1 : usize)
+        d_x2_zeta1))}))};
+  let d_x4_zeta0 : u32 ←
+    (c_x3_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x0_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?))
+        (0 : usize)
+        d_x4_zeta0))}))};
+  let d_x1_zeta1 : u32 ← (c_x0_zeta1 ^^^? c_x2_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?))
+        (1 : usize)
+        d_x1_zeta1))}))};
+  let d_x3_zeta0 : u32 ←
+    (c_x2_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x4_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?))
+        (0 : usize)
+        d_x3_zeta0))}))};
+  let c_x1_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(0 : usize)]_?;
+  let c_x3_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(1 : usize)]_?;
+  let c_x2_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(1 : usize)]_?;
+  let c_x0_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(0 : usize)]_?;
+  let d_x0_zeta1 : u32 ← (c_x4_zeta1 ^^^? c_x1_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?))
+        (1 : usize)
+        d_x0_zeta1))}))};
+  let d_x2_zeta0 : u32 ←
+    (c_x1_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x3_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?))
+        (0 : usize)
+        d_x2_zeta0))}))};
+  let d_x4_zeta1 : u32 ← (c_x3_zeta1 ^^^? c_x0_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?))
+        (1 : usize)
+        d_x4_zeta1))}))};
+  let d_x1_zeta0 : u32 ←
+    (c_x0_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x2_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?))
+        (0 : usize)
+        d_x1_zeta0))}))};
+  let d_x3_zeta1 : u32 ← (c_x2_zeta1 ^^^? c_x4_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?))
+        (1 : usize)
+        d_x3_zeta1))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  (pure s)
+
+set_option maxRecDepth 1000 in
+
+@[spec]
+def keccakf1600_round3_theta (s : libcrux_iot_sha3.state.KeccakState) :
+    RustM libcrux_iot_sha3.state.KeccakState := do
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (0 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (0 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (0 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (0 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (1 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (1 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (2 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (0 : usize));
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (0 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?))
+        (0 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ax_3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (0 : usize));
+  let ax_2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (1 : usize));
+  let ax_0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (1 : usize));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.c s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?))
+        (1 : usize)
+        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
+          ^^^? ax_4))))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let c_x4_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(0 : usize)]_?;
+  let c_x1_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(1 : usize)]_?;
+  let c_x3_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(0 : usize)]_?;
+  let c_x0_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(1 : usize)]_?;
+  let c_x2_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(0 : usize)]_?;
+  let c_x4_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(1 : usize)]_?;
+  let d_x0_zeta0 : u32 ←
+    (c_x4_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x1_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?))
+        (0 : usize)
+        d_x0_zeta0))}))};
+  let d_x2_zeta1 : u32 ← (c_x1_zeta1 ^^^? c_x3_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?))
+        (1 : usize)
+        d_x2_zeta1))}))};
+  let d_x4_zeta0 : u32 ←
+    (c_x3_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x0_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?))
+        (0 : usize)
+        d_x4_zeta0))}))};
+  let d_x1_zeta1 : u32 ← (c_x0_zeta1 ^^^? c_x2_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?))
+        (1 : usize)
+        d_x1_zeta1))}))};
+  let d_x3_zeta0 : u32 ←
+    (c_x2_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x4_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?))
+        (0 : usize)
+        d_x3_zeta0))}))};
+  let c_x1_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(0 : usize)]_?;
+  let c_x3_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(1 : usize)]_?;
+  let c_x2_zeta1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(1 : usize)]_?;
+  let c_x0_zeta0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(0 : usize)]_?;
+  let d_x0_zeta1 : u32 ← (c_x4_zeta1 ^^^? c_x1_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (0 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?))
+        (1 : usize)
+        d_x0_zeta1))}))};
+  let d_x2_zeta0 : u32 ←
+    (c_x1_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x3_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (2 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?))
+        (0 : usize)
+        d_x2_zeta0))}))};
+  let d_x4_zeta1 : u32 ← (c_x3_zeta1 ^^^? c_x0_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (4 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?))
+        (1 : usize)
+        d_x4_zeta1))}))};
+  let d_x1_zeta0 : u32 ←
+    (c_x0_zeta0
+      ^^^? (← (core_models.num.Impl_8.rotate_left c_x2_zeta1 (1 : u32))));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (1 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?))
+        (0 : usize)
+        d_x1_zeta0))}))};
+  let d_x3_zeta1 : u32 ← (c_x2_zeta1 ^^^? c_x4_zeta0);
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s
+    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+      (libcrux_iot_sha3.state.KeccakState.d s)
+      (3 : usize)
+      {(← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?))
+        (1 : usize)
+        d_x3_zeta1))}))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  (pure s)
+
+end libcrux_iot_sha3.keccak
+
+
+namespace libcrux_iot_sha3.state
+
 @[spec]
 def Impl.set_with_zeta
     (self : KeccakState)
@@ -840,10 +3242,12 @@ def Impl.set_with_zeta
     with st := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
       (KeccakState.st self)
       (← ((← ((5 : usize) *? j)) +? i))
-      (← (rust_primitives.hax.update_at
-        (← (KeccakState.st self)[(← ((← ((5 : usize) *? j)) +? i))]_?)
+      {(← (KeccakState.st self)[(← ((← ((5 : usize) *? j)) +? i))]_?)
+      with _0 := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
+        (libcrux_iot_sha3.lane.Lane2U32._0
+          (← (KeccakState.st self)[(← ((← ((5 : usize) *? j)) +? i))]_?))
         zeta
-        v))))};
+        v))}))};
   (pure self)
 
 end libcrux_iot_sha3.state
@@ -851,554 +3255,201 @@ end libcrux_iot_sha3.state
 
 namespace libcrux_iot_sha3.keccak
 
+set_option maxRecDepth 1000 in
+
 @[spec]
-def keccakf1600_round0 (BASE_ROUND : usize)
+def keccakf1600_round0_pi_rho_chi_1 (BASE_ROUND : usize)
     (s : libcrux_iot_sha3.state.KeccakState) :
     RustM libcrux_iot_sha3.state.KeccakState := do
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (0 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (0 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (1 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (1 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (2 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (2 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (3 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (3 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (4 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (4 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let c_x4_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(0 : usize)]_?;
-  let c_x1_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(1 : usize)]_?;
-  let c_x3_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(0 : usize)]_?;
-  let c_x0_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(1 : usize)]_?;
-  let c_x2_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(0 : usize)]_?;
-  let c_x4_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(1 : usize)]_?;
-  let d_x0_zeta0 : u32 ←
-    (c_x4_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x1_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
-        (0 : usize)
-        d_x0_zeta0))))};
-  let d_x2_zeta1 : u32 ← (c_x1_zeta1 ^^^? c_x3_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
-        (1 : usize)
-        d_x2_zeta1))))};
-  let d_x4_zeta0 : u32 ←
-    (c_x3_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x0_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
-        (0 : usize)
-        d_x4_zeta0))))};
-  let d_x1_zeta1 : u32 ← (c_x0_zeta1 ^^^? c_x2_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
-        (1 : usize)
-        d_x1_zeta1))))};
-  let d_x3_zeta0 : u32 ←
-    (c_x2_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x4_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
-        (0 : usize)
-        d_x3_zeta0))))};
-  let c_x1_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(0 : usize)]_?;
-  let c_x3_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(1 : usize)]_?;
-  let c_x2_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(1 : usize)]_?;
-  let c_x0_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(0 : usize)]_?;
-  let d_x0_zeta1 : u32 ← (c_x4_zeta1 ^^^? c_x1_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
-        (1 : usize)
-        d_x0_zeta1))))};
-  let d_x2_zeta0 : u32 ←
-    (c_x1_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x3_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
-        (0 : usize)
-        d_x2_zeta0))))};
-  let d_x4_zeta1 : u32 ← (c_x3_zeta1 ^^^? c_x0_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
-        (1 : usize)
-        d_x4_zeta1))))};
-  let d_x1_zeta0 : u32 ←
-    (c_x0_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x2_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
-        (0 : usize)
-        d_x1_zeta0))))};
-  let d_x3_zeta1 : u32 ← (c_x2_zeta1 ^^^? c_x4_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
-        (1 : usize)
-        d_x3_zeta1))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
   let i : usize := (libcrux_iot_sha3.state.KeccakState.i s);
-  let _ := sorry;
-  let _ := sorry;
+  let a0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize));
+  let d0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)[(0 : usize)]_?;
+  let a1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (0 : usize));
+  let d1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)[(0 : usize)]_?;
+  let ⟨bx0, bx1⟩ :=
+    (rust_primitives.hax.Tuple2.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a0 ^^^? d0)) (0 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a1 ^^^? d1)) (22 : u32))));
+  let a2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (1 : usize));
+  let d2 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)[(1 : usize)]_?;
+  let a3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (1 : usize));
+  let d3 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)[(1 : usize)]_?;
+  let a4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (0 : usize));
+  let d4 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)[(0 : usize)]_?;
+  let ⟨bx2, bx3, bx4⟩ :=
+    (rust_primitives.hax.Tuple3.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a2 ^^^? d2)) (22 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a3 ^^^? d3)) (11 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a4 ^^^? d4)) (7 : u32))));
+  let ax0 : u32 := (0 : u32);
+  let ax0 : u32 ←
+    ((← (bx0 ^^^? (← ((← (~? bx1)) &&&? bx2)))) ^^^? (← RC_INTERLEAVED_0[i]_?));
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize)
+      ax0);
+  let ax1 : u32 ← (bx1 ^^^? (← ((← (~? bx2)) &&&? bx3)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (0 : usize)
+      ax1);
+  let ax2 : u32 ← (bx2 ^^^? (← ((← (~? bx3)) &&&? bx4)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (1 : usize)
+      ax2);
+  let ax3 : u32 ← (bx3 ^^^? (← ((← (~? bx4)) &&&? bx0)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (1 : usize)
+      ax3);
+  let ax4 : u32 ← (bx4 ^^^? (← ((← (~? bx0)) &&&? bx1)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (0 : usize)
+      ax4);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let a0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize));
+  let d0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)[(1 : usize)]_?;
+  let a1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (1 : usize));
+  let d1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)[(1 : usize)]_?;
+  let ⟨bx0, bx1⟩ :=
+    (rust_primitives.hax.Tuple2.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a0 ^^^? d0)) (0 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a1 ^^^? d1)) (22 : u32))));
+  let a2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (0 : usize));
+  let d2 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)[(0 : usize)]_?;
+  let a3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (0 : usize));
+  let d3 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)[(0 : usize)]_?;
+  let a4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (1 : usize));
+  let d4 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)[(1 : usize)]_?;
+  let ⟨bx2, bx3, bx4⟩ :=
+    (rust_primitives.hax.Tuple3.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a2 ^^^? d2)) (21 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a3 ^^^? d3)) (10 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a4 ^^^? d4)) (7 : u32))));
+  let ax0 : u32 := (0 : u32);
+  let ax0 : u32 ←
+    ((← (bx0 ^^^? (← ((← (~? bx1)) &&&? bx2)))) ^^^? (← RC_INTERLEAVED_1[i]_?));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s with i := (← (i +? (1 : usize)))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize)
+      ax0);
+  let ax1 : u32 ← (bx1 ^^^? (← ((← (~? bx2)) &&&? bx3)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (1 : usize)
+      (1 : usize)
+      (1 : usize)
+      ax1);
+  let ax2 : u32 ← (bx2 ^^^? (← ((← (~? bx3)) &&&? bx4)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (2 : usize)
+      (2 : usize)
+      (0 : usize)
+      ax2);
+  let ax3 : u32 ← (bx3 ^^^? (← ((← (~? bx4)) &&&? bx0)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (3 : usize)
+      (3 : usize)
+      (0 : usize)
+      ax3);
+  let ax4 : u32 ← (bx4 ^^^? (← ((← (~? bx0)) &&&? bx1)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (4 : usize)
+      (4 : usize)
+      (1 : usize)
+      ax4);
+  let _ := rust_primitives.hax.Tuple0.mk;
   let a0 : u32 ←
     (libcrux_iot_sha3.state.Impl.get_with_zeta
       s
@@ -1579,6 +3630,13 @@ def keccakf1600_round0 (BASE_ROUND : usize)
       (1 : usize)
       ax4);
   let _ := rust_primitives.hax.Tuple0.mk;
+  (pure s)
+
+set_option maxRecDepth 1500 in
+
+@[spec]
+def keccakf1600_round0_pi_rho_chi_2 (s : libcrux_iot_sha3.state.KeccakState) :
+    RustM libcrux_iot_sha3.state.KeccakState := do
   let a0 : u32 ←
     (libcrux_iot_sha3.state.Impl.get_with_zeta
       s
@@ -2121,554 +4179,201 @@ def keccakf1600_round0 (BASE_ROUND : usize)
   let _ := rust_primitives.hax.Tuple0.mk;
   (pure s)
 
+set_option maxRecDepth 1000 in
+
 @[spec]
-def keccakf1600_round1 (BASE_ROUND : usize)
+def keccakf1600_round1_pi_rho_chi_1 (BASE_ROUND : usize)
     (s : libcrux_iot_sha3.state.KeccakState) :
     RustM libcrux_iot_sha3.state.KeccakState := do
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (0 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (0 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (1 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (1 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (2 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (2 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (3 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (3 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (4 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (4 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let c_x4_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(0 : usize)]_?;
-  let c_x1_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(1 : usize)]_?;
-  let c_x3_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(0 : usize)]_?;
-  let c_x0_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(1 : usize)]_?;
-  let c_x2_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(0 : usize)]_?;
-  let c_x4_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(1 : usize)]_?;
-  let d_x0_zeta0 : u32 ←
-    (c_x4_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x1_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
-        (0 : usize)
-        d_x0_zeta0))))};
-  let d_x2_zeta1 : u32 ← (c_x1_zeta1 ^^^? c_x3_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
-        (1 : usize)
-        d_x2_zeta1))))};
-  let d_x4_zeta0 : u32 ←
-    (c_x3_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x0_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
-        (0 : usize)
-        d_x4_zeta0))))};
-  let d_x1_zeta1 : u32 ← (c_x0_zeta1 ^^^? c_x2_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
-        (1 : usize)
-        d_x1_zeta1))))};
-  let d_x3_zeta0 : u32 ←
-    (c_x2_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x4_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
-        (0 : usize)
-        d_x3_zeta0))))};
-  let c_x1_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(0 : usize)]_?;
-  let c_x3_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(1 : usize)]_?;
-  let c_x2_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(1 : usize)]_?;
-  let c_x0_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(0 : usize)]_?;
-  let d_x0_zeta1 : u32 ← (c_x4_zeta1 ^^^? c_x1_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
-        (1 : usize)
-        d_x0_zeta1))))};
-  let d_x2_zeta0 : u32 ←
-    (c_x1_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x3_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
-        (0 : usize)
-        d_x2_zeta0))))};
-  let d_x4_zeta1 : u32 ← (c_x3_zeta1 ^^^? c_x0_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
-        (1 : usize)
-        d_x4_zeta1))))};
-  let d_x1_zeta0 : u32 ←
-    (c_x0_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x2_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
-        (0 : usize)
-        d_x1_zeta0))))};
-  let d_x3_zeta1 : u32 ← (c_x2_zeta1 ^^^? c_x4_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
-        (1 : usize)
-        d_x3_zeta1))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
   let i : usize := (libcrux_iot_sha3.state.KeccakState.i s);
-  let _ := sorry;
-  let _ := sorry;
+  let a0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize));
+  let d0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)[(0 : usize)]_?;
+  let a1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (1 : usize));
+  let d1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)[(0 : usize)]_?;
+  let ⟨bx0, bx1⟩ :=
+    (rust_primitives.hax.Tuple2.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a0 ^^^? d0)) (0 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a1 ^^^? d1)) (22 : u32))));
+  let a2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (1 : usize));
+  let d2 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)[(1 : usize)]_?;
+  let a3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (1 : usize));
+  let d3 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)[(1 : usize)]_?;
+  let a4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (1 : usize));
+  let d4 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)[(0 : usize)]_?;
+  let ⟨bx2, bx3, bx4⟩ :=
+    (rust_primitives.hax.Tuple3.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a2 ^^^? d2)) (22 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a3 ^^^? d3)) (11 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a4 ^^^? d4)) (7 : u32))));
+  let ax0 : u32 := (0 : u32);
+  let ax0 : u32 ←
+    ((← (bx0 ^^^? (← ((← (~? bx1)) &&&? bx2)))) ^^^? (← RC_INTERLEAVED_0[i]_?));
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize)
+      ax0);
+  let ax1 : u32 ← (bx1 ^^^? (← ((← (~? bx2)) &&&? bx3)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (1 : usize)
+      ax1);
+  let ax2 : u32 ← (bx2 ^^^? (← ((← (~? bx3)) &&&? bx4)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (1 : usize)
+      ax2);
+  let ax3 : u32 ← (bx3 ^^^? (← ((← (~? bx4)) &&&? bx0)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (1 : usize)
+      ax3);
+  let ax4 : u32 ← (bx4 ^^^? (← ((← (~? bx0)) &&&? bx1)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (1 : usize)
+      ax4);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let a0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize));
+  let d0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)[(1 : usize)]_?;
+  let a1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (0 : usize));
+  let d1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)[(1 : usize)]_?;
+  let ⟨bx0, bx1⟩ :=
+    (rust_primitives.hax.Tuple2.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a0 ^^^? d0)) (0 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a1 ^^^? d1)) (22 : u32))));
+  let a2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (0 : usize));
+  let d2 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)[(0 : usize)]_?;
+  let a3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (0 : usize));
+  let d3 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)[(0 : usize)]_?;
+  let a4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (0 : usize));
+  let d4 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)[(1 : usize)]_?;
+  let ⟨bx2, bx3, bx4⟩ :=
+    (rust_primitives.hax.Tuple3.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a2 ^^^? d2)) (21 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a3 ^^^? d3)) (10 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a4 ^^^? d4)) (7 : u32))));
+  let ax0 : u32 := (0 : u32);
+  let ax0 : u32 ←
+    ((← (bx0 ^^^? (← ((← (~? bx1)) &&&? bx2)))) ^^^? (← RC_INTERLEAVED_1[i]_?));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s with i := (← (i +? (1 : usize)))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize)
+      ax0);
+  let ax1 : u32 ← (bx1 ^^^? (← ((← (~? bx2)) &&&? bx3)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (3 : usize)
+      (1 : usize)
+      (0 : usize)
+      ax1);
+  let ax2 : u32 ← (bx2 ^^^? (← ((← (~? bx3)) &&&? bx4)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (1 : usize)
+      (2 : usize)
+      (0 : usize)
+      ax2);
+  let ax3 : u32 ← (bx3 ^^^? (← ((← (~? bx4)) &&&? bx0)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (4 : usize)
+      (3 : usize)
+      (0 : usize)
+      ax3);
+  let ax4 : u32 ← (bx4 ^^^? (← ((← (~? bx0)) &&&? bx1)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (2 : usize)
+      (4 : usize)
+      (0 : usize)
+      ax4);
+  let _ := rust_primitives.hax.Tuple0.mk;
   let a0 : u32 ←
     (libcrux_iot_sha3.state.Impl.get_with_zeta
       s
@@ -2849,6 +4554,13 @@ def keccakf1600_round1 (BASE_ROUND : usize)
       (1 : usize)
       ax4);
   let _ := rust_primitives.hax.Tuple0.mk;
+  (pure s)
+
+set_option maxRecDepth 1500 in
+
+@[spec]
+def keccakf1600_round1_pi_rho_chi_2 (s : libcrux_iot_sha3.state.KeccakState) :
+    RustM libcrux_iot_sha3.state.KeccakState := do
   let a0 : u32 ←
     (libcrux_iot_sha3.state.Impl.get_with_zeta
       s
@@ -3391,554 +5103,201 @@ def keccakf1600_round1 (BASE_ROUND : usize)
   let _ := rust_primitives.hax.Tuple0.mk;
   (pure s)
 
+set_option maxRecDepth 1000 in
+
 @[spec]
-def keccakf1600_round2 (BASE_ROUND : usize)
+def keccakf1600_round2_pi_rho_chi_1 (BASE_ROUND : usize)
     (s : libcrux_iot_sha3.state.KeccakState) :
     RustM libcrux_iot_sha3.state.KeccakState := do
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (0 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (0 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (1 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (1 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (2 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (2 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (3 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (3 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (4 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (4 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let c_x4_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(0 : usize)]_?;
-  let c_x1_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(1 : usize)]_?;
-  let c_x3_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(0 : usize)]_?;
-  let c_x0_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(1 : usize)]_?;
-  let c_x2_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(0 : usize)]_?;
-  let c_x4_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(1 : usize)]_?;
-  let d_x0_zeta0 : u32 ←
-    (c_x4_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x1_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
-        (0 : usize)
-        d_x0_zeta0))))};
-  let d_x2_zeta1 : u32 ← (c_x1_zeta1 ^^^? c_x3_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
-        (1 : usize)
-        d_x2_zeta1))))};
-  let d_x4_zeta0 : u32 ←
-    (c_x3_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x0_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
-        (0 : usize)
-        d_x4_zeta0))))};
-  let d_x1_zeta1 : u32 ← (c_x0_zeta1 ^^^? c_x2_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
-        (1 : usize)
-        d_x1_zeta1))))};
-  let d_x3_zeta0 : u32 ←
-    (c_x2_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x4_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
-        (0 : usize)
-        d_x3_zeta0))))};
-  let c_x1_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(0 : usize)]_?;
-  let c_x3_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(1 : usize)]_?;
-  let c_x2_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(1 : usize)]_?;
-  let c_x0_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(0 : usize)]_?;
-  let d_x0_zeta1 : u32 ← (c_x4_zeta1 ^^^? c_x1_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
-        (1 : usize)
-        d_x0_zeta1))))};
-  let d_x2_zeta0 : u32 ←
-    (c_x1_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x3_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
-        (0 : usize)
-        d_x2_zeta0))))};
-  let d_x4_zeta1 : u32 ← (c_x3_zeta1 ^^^? c_x0_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
-        (1 : usize)
-        d_x4_zeta1))))};
-  let d_x1_zeta0 : u32 ←
-    (c_x0_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x2_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
-        (0 : usize)
-        d_x1_zeta0))))};
-  let d_x3_zeta1 : u32 ← (c_x2_zeta1 ^^^? c_x4_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
-        (1 : usize)
-        d_x3_zeta1))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
   let i : usize := (libcrux_iot_sha3.state.KeccakState.i s);
-  let _ := sorry;
-  let _ := sorry;
+  let a0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize));
+  let d0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)[(0 : usize)]_?;
+  let a1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (1 : usize));
+  let d1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)[(0 : usize)]_?;
+  let ⟨bx0, bx1⟩ :=
+    (rust_primitives.hax.Tuple2.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a0 ^^^? d0)) (0 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a1 ^^^? d1)) (22 : u32))));
+  let a2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (0 : usize));
+  let d2 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)[(1 : usize)]_?;
+  let a3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (0 : usize));
+  let d3 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)[(1 : usize)]_?;
+  let a4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (1 : usize));
+  let d4 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)[(0 : usize)]_?;
+  let ⟨bx2, bx3, bx4⟩ :=
+    (rust_primitives.hax.Tuple3.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a2 ^^^? d2)) (22 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a3 ^^^? d3)) (11 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a4 ^^^? d4)) (7 : u32))));
+  let ax0 : u32 := (0 : u32);
+  let ax0 : u32 ←
+    ((← (bx0 ^^^? (← ((← (~? bx1)) &&&? bx2)))) ^^^? (← RC_INTERLEAVED_0[i]_?));
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize)
+      ax0);
+  let ax1 : u32 ← (bx1 ^^^? (← ((← (~? bx2)) &&&? bx3)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (1 : usize)
+      ax1);
+  let ax2 : u32 ← (bx2 ^^^? (← ((← (~? bx3)) &&&? bx4)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (0 : usize)
+      ax2);
+  let ax3 : u32 ← (bx3 ^^^? (← ((← (~? bx4)) &&&? bx0)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (0 : usize)
+      ax3);
+  let ax4 : u32 ← (bx4 ^^^? (← ((← (~? bx0)) &&&? bx1)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (1 : usize)
+      ax4);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let a0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize));
+  let d0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)[(1 : usize)]_?;
+  let a1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (0 : usize));
+  let d1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)[(1 : usize)]_?;
+  let ⟨bx0, bx1⟩ :=
+    (rust_primitives.hax.Tuple2.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a0 ^^^? d0)) (0 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a1 ^^^? d1)) (22 : u32))));
+  let a2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (1 : usize));
+  let d2 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)[(0 : usize)]_?;
+  let a3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (1 : usize));
+  let d3 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)[(0 : usize)]_?;
+  let a4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (0 : usize));
+  let d4 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)[(1 : usize)]_?;
+  let ⟨bx2, bx3, bx4⟩ :=
+    (rust_primitives.hax.Tuple3.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a2 ^^^? d2)) (21 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a3 ^^^? d3)) (10 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a4 ^^^? d4)) (7 : u32))));
+  let ax0 : u32 := (0 : u32);
+  let ax0 : u32 ←
+    ((← (bx0 ^^^? (← ((← (~? bx1)) &&&? bx2)))) ^^^? (← RC_INTERLEAVED_1[i]_?));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s with i := (← (i +? (1 : usize)))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize)
+      ax0);
+  let ax1 : u32 ← (bx1 ^^^? (← ((← (~? bx2)) &&&? bx3)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (2 : usize)
+      (1 : usize)
+      (0 : usize)
+      ax1);
+  let ax2 : u32 ← (bx2 ^^^? (← ((← (~? bx3)) &&&? bx4)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (4 : usize)
+      (2 : usize)
+      (1 : usize)
+      ax2);
+  let ax3 : u32 ← (bx3 ^^^? (← ((← (~? bx4)) &&&? bx0)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (1 : usize)
+      (3 : usize)
+      (1 : usize)
+      ax3);
+  let ax4 : u32 ← (bx4 ^^^? (← ((← (~? bx0)) &&&? bx1)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (3 : usize)
+      (4 : usize)
+      (0 : usize)
+      ax4);
+  let _ := rust_primitives.hax.Tuple0.mk;
   let a0 : u32 ←
     (libcrux_iot_sha3.state.Impl.get_with_zeta
       s
@@ -4119,6 +5478,13 @@ def keccakf1600_round2 (BASE_ROUND : usize)
       (1 : usize)
       ax4);
   let _ := rust_primitives.hax.Tuple0.mk;
+  (pure s)
+
+set_option maxRecDepth 1500 in
+
+@[spec]
+def keccakf1600_round2_pi_rho_chi_2 (s : libcrux_iot_sha3.state.KeccakState) :
+    RustM libcrux_iot_sha3.state.KeccakState := do
   let a0 : u32 ←
     (libcrux_iot_sha3.state.Impl.get_with_zeta
       s
@@ -4661,554 +6027,201 @@ def keccakf1600_round2 (BASE_ROUND : usize)
   let _ := rust_primitives.hax.Tuple0.mk;
   (pure s)
 
+set_option maxRecDepth 1000 in
+
 @[spec]
-def keccakf1600_round3 (BASE_ROUND : usize)
+def keccakf1600_round3_pi_rho_chi_1 (BASE_ROUND : usize)
     (s : libcrux_iot_sha3.state.KeccakState) :
     RustM libcrux_iot_sha3.state.KeccakState := do
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (0 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (0 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (0 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (0 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (1 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (1 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (1 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (1 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (2 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (2 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (2 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (2 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (3 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (3 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (3 : usize)
-      (0 : usize));
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (3 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (4 : usize)
-      (0 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
-        (0 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let ax_3 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (3 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_1 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (1 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_4 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (4 : usize)
-      (4 : usize)
-      (0 : usize));
-  let ax_2 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (2 : usize)
-      (4 : usize)
-      (1 : usize));
-  let ax_0 : u32 ←
-    (libcrux_iot_sha3.state.Impl.get_with_zeta
-      s
-      (0 : usize)
-      (4 : usize)
-      (1 : usize));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with c := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.c s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)
-        (1 : usize)
-        (← ((← ((← ((← (ax_0 ^^^? ax_1)) ^^^? ax_2)) ^^^? ax_3))
-          ^^^? ax_4))))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
-  let c_x4_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(0 : usize)]_?;
-  let c_x1_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(1 : usize)]_?;
-  let c_x3_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(0 : usize)]_?;
-  let c_x0_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(1 : usize)]_?;
-  let c_x2_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(0 : usize)]_?;
-  let c_x4_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(4 : usize)]_?)[(1 : usize)]_?;
-  let d_x0_zeta0 : u32 ←
-    (c_x4_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x1_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
-        (0 : usize)
-        d_x0_zeta0))))};
-  let d_x2_zeta1 : u32 ← (c_x1_zeta1 ^^^? c_x3_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
-        (1 : usize)
-        d_x2_zeta1))))};
-  let d_x4_zeta0 : u32 ←
-    (c_x3_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x0_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
-        (0 : usize)
-        d_x4_zeta0))))};
-  let d_x1_zeta1 : u32 ← (c_x0_zeta1 ^^^? c_x2_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
-        (1 : usize)
-        d_x1_zeta1))))};
-  let d_x3_zeta0 : u32 ←
-    (c_x2_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x4_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
-        (0 : usize)
-        d_x3_zeta0))))};
-  let c_x1_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(1 : usize)]_?)[(0 : usize)]_?;
-  let c_x3_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(3 : usize)]_?)[(1 : usize)]_?;
-  let c_x2_zeta1 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(2 : usize)]_?)[(1 : usize)]_?;
-  let c_x0_zeta0 : u32 ←
-    (← (libcrux_iot_sha3.state.KeccakState.c s)[(0 : usize)]_?)[(0 : usize)]_?;
-  let d_x0_zeta1 : u32 ← (c_x4_zeta1 ^^^? c_x1_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (0 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)
-        (1 : usize)
-        d_x0_zeta1))))};
-  let d_x2_zeta0 : u32 ←
-    (c_x1_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x3_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (2 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)
-        (0 : usize)
-        d_x2_zeta0))))};
-  let d_x4_zeta1 : u32 ← (c_x3_zeta1 ^^^? c_x0_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (4 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)
-        (1 : usize)
-        d_x4_zeta1))))};
-  let d_x1_zeta0 : u32 ←
-    (c_x0_zeta0
-      ^^^? (← (core_models.num.Impl_8.rotate_left c_x2_zeta1 (1 : u32))));
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (1 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)
-        (0 : usize)
-        d_x1_zeta0))))};
-  let d_x3_zeta1 : u32 ← (c_x2_zeta1 ^^^? c_x4_zeta0);
-  let s : libcrux_iot_sha3.state.KeccakState :=
-    {s
-    with d := (← (rust_primitives.hax.monomorphized_update_at.update_at_usize
-      (libcrux_iot_sha3.state.KeccakState.d s)
-      (3 : usize)
-      (← (rust_primitives.hax.update_at
-        (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)
-        (1 : usize)
-        d_x3_zeta1))))};
-  let _ := rust_primitives.hax.Tuple0.mk;
   let i : usize := (libcrux_iot_sha3.state.KeccakState.i s);
-  let _ := sorry;
-  let _ := sorry;
+  let a0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize));
+  let d0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)[(0 : usize)]_?;
+  let a1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (0 : usize));
+  let d1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)[(0 : usize)]_?;
+  let ⟨bx0, bx1⟩ :=
+    (rust_primitives.hax.Tuple2.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a0 ^^^? d0)) (0 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a1 ^^^? d1)) (22 : u32))));
+  let a2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (0 : usize));
+  let d2 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)[(1 : usize)]_?;
+  let a3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (0 : usize));
+  let d3 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)[(1 : usize)]_?;
+  let a4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (0 : usize));
+  let d4 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)[(0 : usize)]_?;
+  let ⟨bx2, bx3, bx4⟩ :=
+    (rust_primitives.hax.Tuple3.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a2 ^^^? d2)) (22 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a3 ^^^? d3)) (11 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a4 ^^^? d4)) (7 : u32))));
+  let ax0 : u32 := (0 : u32);
+  let ax0 : u32 ←
+    ((← (bx0 ^^^? (← ((← (~? bx1)) &&&? bx2)))) ^^^? (← RC_INTERLEAVED_0[i]_?));
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (0 : usize)
+      ax0);
+  let ax1 : u32 ← (bx1 ^^^? (← ((← (~? bx2)) &&&? bx3)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (0 : usize)
+      ax1);
+  let ax2 : u32 ← (bx2 ^^^? (← ((← (~? bx3)) &&&? bx4)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (0 : usize)
+      ax2);
+  let ax3 : u32 ← (bx3 ^^^? (← ((← (~? bx4)) &&&? bx0)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (0 : usize)
+      ax3);
+  let ax4 : u32 ← (bx4 ^^^? (← ((← (~? bx0)) &&&? bx1)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (0 : usize)
+      ax4);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let a0 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize));
+  let d0 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(0 : usize)]_?)[(1 : usize)]_?;
+  let a1 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (1 : usize));
+  let d1 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(1 : usize)]_?)[(1 : usize)]_?;
+  let ⟨bx0, bx1⟩ :=
+    (rust_primitives.hax.Tuple2.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a0 ^^^? d0)) (0 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a1 ^^^? d1)) (22 : u32))));
+  let a2 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (1 : usize));
+  let d2 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(2 : usize)]_?)[(0 : usize)]_?;
+  let a3 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (1 : usize));
+  let d3 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(3 : usize)]_?)[(0 : usize)]_?;
+  let a4 : u32 ←
+    (libcrux_iot_sha3.state.Impl.get_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (1 : usize));
+  let d4 : u32 ←
+    (← (libcrux_iot_sha3.state.KeccakState.d s)[(4 : usize)]_?)[(1 : usize)]_?;
+  let ⟨bx2, bx3, bx4⟩ :=
+    (rust_primitives.hax.Tuple3.mk
+      (← (core_models.num.Impl_8.rotate_left (← (a2 ^^^? d2)) (21 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a3 ^^^? d3)) (10 : u32)))
+      (← (core_models.num.Impl_8.rotate_left (← (a4 ^^^? d4)) (7 : u32))));
+  let ax0 : u32 := (0 : u32);
+  let ax0 : u32 ←
+    ((← (bx0 ^^^? (← ((← (~? bx1)) &&&? bx2)))) ^^^? (← RC_INTERLEAVED_1[i]_?));
+  let s : libcrux_iot_sha3.state.KeccakState :=
+    {s with i := (← (i +? (1 : usize)))};
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (0 : usize)
+      (1 : usize)
+      ax0);
+  let ax1 : u32 ← (bx1 ^^^? (← ((← (~? bx2)) &&&? bx3)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (1 : usize)
+      (1 : usize)
+      ax1);
+  let ax2 : u32 ← (bx2 ^^^? (← ((← (~? bx3)) &&&? bx4)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (2 : usize)
+      (1 : usize)
+      ax2);
+  let ax3 : u32 ← (bx3 ^^^? (← ((← (~? bx4)) &&&? bx0)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (3 : usize)
+      (1 : usize)
+      ax3);
+  let ax4 : u32 ← (bx4 ^^^? (← ((← (~? bx0)) &&&? bx1)));
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (libcrux_iot_sha3.state.Impl.set_with_zeta
+      s
+      (0 : usize)
+      (4 : usize)
+      (1 : usize)
+      ax4);
+  let _ := rust_primitives.hax.Tuple0.mk;
   let a0 : u32 ←
     (libcrux_iot_sha3.state.Impl.get_with_zeta
       s
@@ -5389,6 +6402,13 @@ def keccakf1600_round3 (BASE_ROUND : usize)
       (1 : usize)
       ax4);
   let _ := rust_primitives.hax.Tuple0.mk;
+  (pure s)
+
+set_option maxRecDepth 1500 in
+
+@[spec]
+def keccakf1600_round3_pi_rho_chi_2 (s : libcrux_iot_sha3.state.KeccakState) :
+    RustM libcrux_iot_sha3.state.KeccakState := do
   let a0 : u32 ←
     (libcrux_iot_sha3.state.Impl.get_with_zeta
       s
@@ -5935,14 +6955,26 @@ def keccakf1600_round3 (BASE_ROUND : usize)
 def keccakf1600_4rounds (BASE_ROUND : usize)
     (s : libcrux_iot_sha3.state.KeccakState) :
     RustM libcrux_iot_sha3.state.KeccakState := do
+  let s : libcrux_iot_sha3.state.KeccakState ← (keccakf1600_round0_theta s);
   let s : libcrux_iot_sha3.state.KeccakState ←
-    (keccakf1600_round0 (BASE_ROUND) s);
+    (keccakf1600_round0_pi_rho_chi_1 (BASE_ROUND) s);
   let s : libcrux_iot_sha3.state.KeccakState ←
-    (keccakf1600_round1 (BASE_ROUND) s);
+    (keccakf1600_round0_pi_rho_chi_2 s);
+  let s : libcrux_iot_sha3.state.KeccakState ← (keccakf1600_round1_theta s);
   let s : libcrux_iot_sha3.state.KeccakState ←
-    (keccakf1600_round2 (BASE_ROUND) s);
+    (keccakf1600_round1_pi_rho_chi_1 (BASE_ROUND) s);
   let s : libcrux_iot_sha3.state.KeccakState ←
-    (keccakf1600_round3 (BASE_ROUND) s);
+    (keccakf1600_round1_pi_rho_chi_2 s);
+  let s : libcrux_iot_sha3.state.KeccakState ← (keccakf1600_round2_theta s);
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (keccakf1600_round2_pi_rho_chi_1 (BASE_ROUND) s);
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (keccakf1600_round2_pi_rho_chi_2 s);
+  let s : libcrux_iot_sha3.state.KeccakState ← (keccakf1600_round3_theta s);
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (keccakf1600_round3_pi_rho_chi_1 (BASE_ROUND) s);
+  let s : libcrux_iot_sha3.state.KeccakState ←
+    (keccakf1600_round3_pi_rho_chi_2 s);
   (pure s)
 
 @[spec]
@@ -5960,26 +6992,6 @@ def keccakf1600 (s : libcrux_iot_sha3.state.KeccakState) :
         RustM libcrux_iot_sha3.state.KeccakState)));
   let s : libcrux_iot_sha3.state.KeccakState := {s with i := (0 : usize)};
   (pure s)
-
---  Squeeze `N` x `LEN` bytes.
-@[spec]
-def Impl.squeeze (RATE : usize)
-    (self : (KeccakXofState (RATE)))
-    (out : (RustSlice u8)) :
-    RustM rust_primitives.hax.Tuple0 := do
-  let self : (KeccakXofState (RATE)) ←
-    if (KeccakXofState.sponge self) then do
-      let self : (KeccakXofState (RATE)) :=
-        {self with inner := (← (keccakf1600 (KeccakXofState.inner self)))};
-      (pure self)
-    else do
-      (pure self);
-  let out_len : usize ← (core_models.slice.Impl.len u8 out);
-  let blocks : usize ← (out_len /? RATE);
-  let last : usize ← (out_len -? (← (out_len %? RATE)));
-  let mid : usize ←
-    if (← (RATE >=? out_len)) then do (pure out_len) else do (pure RATE);
-  (pure sorry)
 
 end libcrux_iot_sha3.keccak
 
@@ -6162,6 +7174,84 @@ def Impl.store (RATE : usize) (self : KeccakState) (out : (RustSlice u8)) :
       else do
         (pure out);
   (pure out)
+
+end libcrux_iot_sha3.state
+
+
+namespace libcrux_iot_sha3.keccak
+
+--  Squeeze `N` x `LEN` bytes.
+@[spec]
+def Impl.squeeze (RATE : usize)
+    (self : (KeccakXofState (RATE)))
+    (out : (RustSlice u8)) :
+    RustM
+    (rust_primitives.hax.Tuple2 (KeccakXofState (RATE)) (RustSlice u8))
+    := do
+  let self : (KeccakXofState (RATE)) ←
+    if (KeccakXofState.sponge self) then do
+      let self : (KeccakXofState (RATE)) :=
+        {self with inner := (← (keccakf1600 (KeccakXofState.inner self)))};
+      (pure self)
+    else do
+      (pure self);
+  let out_len : usize ← (core_models.slice.Impl.len u8 out);
+  let blocks : usize ← (out_len /? RATE);
+  let last : usize ← (out_len -? (← (out_len %? RATE)));
+  let mid : usize ←
+    if (← (RATE >=? out_len)) then do (pure out_len) else do (pure RATE);
+  let out : (RustSlice u8) ←
+    (libcrux_iot_sha3.state.Impl.store (RATE) (KeccakXofState.inner self) out);
+  let offset : usize := mid;
+  let ⟨offset, out, self⟩ ←
+    (rust_primitives.hax.folds.fold_range
+      (1 : usize)
+      blocks
+      (fun ⟨offset, out, self⟩ _ => (do (pure true) : RustM Bool))
+      (rust_primitives.hax.Tuple3.mk offset out self)
+      (fun ⟨offset, out, self⟩ _ =>
+        (do
+        let self : (KeccakXofState (RATE)) :=
+          {self with inner := (← (keccakf1600 (KeccakXofState.inner self)))};
+        let out : (RustSlice u8) ←
+          (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+            out
+            (core_models.ops.range.RangeFrom.mk (start := offset))
+            (← (libcrux_iot_sha3.state.Impl.store (RATE)
+              (KeccakXofState.inner self)
+              (← out[
+                (core_models.ops.range.RangeFrom.mk (start := offset))
+                ]_?))));
+        let offset : usize ← (offset +? RATE);
+        (pure (rust_primitives.hax.Tuple3.mk offset out self)) :
+        RustM
+        (rust_primitives.hax.Tuple3
+          usize
+          (RustSlice u8)
+          (KeccakXofState (RATE))))));
+  let ⟨out, self⟩ ←
+    if (← (last <? out_len)) then do
+      let self : (KeccakXofState (RATE)) :=
+        {self with inner := (← (keccakf1600 (KeccakXofState.inner self)))};
+      let out : (RustSlice u8) ←
+        (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+          out
+          (core_models.ops.range.RangeFrom.mk (start := offset))
+          (← (libcrux_iot_sha3.state.Impl.store (RATE)
+            (KeccakXofState.inner self)
+            (← out[
+              (core_models.ops.range.RangeFrom.mk (start := offset))
+              ]_?))));
+      (pure (rust_primitives.hax.Tuple2.mk out self))
+    else do
+      (pure (rust_primitives.hax.Tuple2.mk out self));
+  let self : (KeccakXofState (RATE)) := {self with sponge := true};
+  (pure (rust_primitives.hax.Tuple2.mk self out))
+
+end libcrux_iot_sha3.keccak
+
+
+namespace libcrux_iot_sha3.state
 
 @[spec]
 def load_block_2u32 (RATE : usize)
@@ -6648,6 +7738,108 @@ def squeeze_next_block (RATE : usize)
     (libcrux_iot_sha3.state.Impl.store_block (RATE) s out);
   (pure (rust_primitives.hax.Tuple2.mk s out))
 
+@[spec]
+def squeeze_first_three_blocks (RATE : usize)
+    (s : libcrux_iot_sha3.state.KeccakState)
+    (out : (RustSlice u8)) :
+    RustM
+    (rust_primitives.hax.Tuple2
+      libcrux_iot_sha3.state.KeccakState
+      (RustSlice u8))
+    := do
+  let out : (RustSlice u8) ← (squeeze_first_block (RATE) s out);
+  let ⟨tmp0, tmp1⟩ ←
+    (squeeze_next_block (RATE)
+      s
+      (← out[(core_models.ops.range.RangeFrom.mk (start := RATE))]_?));
+  let s : libcrux_iot_sha3.state.KeccakState := tmp0;
+  let out : (RustSlice u8) ←
+    (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+      out
+      (core_models.ops.range.RangeFrom.mk (start := RATE))
+      tmp1);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ⟨tmp0, tmp1⟩ ←
+    (squeeze_next_block (RATE)
+      s
+      (← out[
+        (core_models.ops.range.RangeFrom.mk
+          (start := (← ((2 : usize) *? RATE))))
+        ]_?));
+  let s : libcrux_iot_sha3.state.KeccakState := tmp0;
+  let out : (RustSlice u8) ←
+    (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+      out
+      (core_models.ops.range.RangeFrom.mk (start := (← ((2 : usize) *? RATE))))
+      tmp1);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  (pure (rust_primitives.hax.Tuple2.mk s out))
+
+@[spec]
+def squeeze_first_five_blocks (RATE : usize)
+    (s : libcrux_iot_sha3.state.KeccakState)
+    (out : (RustSlice u8)) :
+    RustM
+    (rust_primitives.hax.Tuple2
+      libcrux_iot_sha3.state.KeccakState
+      (RustSlice u8))
+    := do
+  let out : (RustSlice u8) ← (squeeze_first_block (RATE) s out);
+  let ⟨tmp0, tmp1⟩ ←
+    (squeeze_next_block (RATE)
+      s
+      (← out[(core_models.ops.range.RangeFrom.mk (start := RATE))]_?));
+  let s : libcrux_iot_sha3.state.KeccakState := tmp0;
+  let out : (RustSlice u8) ←
+    (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+      out
+      (core_models.ops.range.RangeFrom.mk (start := RATE))
+      tmp1);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ⟨tmp0, tmp1⟩ ←
+    (squeeze_next_block (RATE)
+      s
+      (← out[
+        (core_models.ops.range.RangeFrom.mk
+          (start := (← ((2 : usize) *? RATE))))
+        ]_?));
+  let s : libcrux_iot_sha3.state.KeccakState := tmp0;
+  let out : (RustSlice u8) ←
+    (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+      out
+      (core_models.ops.range.RangeFrom.mk (start := (← ((2 : usize) *? RATE))))
+      tmp1);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ⟨tmp0, tmp1⟩ ←
+    (squeeze_next_block (RATE)
+      s
+      (← out[
+        (core_models.ops.range.RangeFrom.mk
+          (start := (← ((3 : usize) *? RATE))))
+        ]_?));
+  let s : libcrux_iot_sha3.state.KeccakState := tmp0;
+  let out : (RustSlice u8) ←
+    (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+      out
+      (core_models.ops.range.RangeFrom.mk (start := (← ((3 : usize) *? RATE))))
+      tmp1);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  let ⟨tmp0, tmp1⟩ ←
+    (squeeze_next_block (RATE)
+      s
+      (← out[
+        (core_models.ops.range.RangeFrom.mk
+          (start := (← ((4 : usize) *? RATE))))
+        ]_?));
+  let s : libcrux_iot_sha3.state.KeccakState := tmp0;
+  let out : (RustSlice u8) ←
+    (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+      out
+      (core_models.ops.range.RangeFrom.mk (start := (← ((4 : usize) *? RATE))))
+      tmp1);
+  let _ := rust_primitives.hax.Tuple0.mk;
+  (pure (rust_primitives.hax.Tuple2.mk s out))
+
 end libcrux_iot_sha3.keccak
 
 
@@ -6745,11 +7937,55 @@ def keccak (RATE : usize) (DELIM : u8)
       data
       (← ((← (core_models.slice.Impl.len u8 data)) -? rem))
       rem);
-  let out : (RustSlice u8) ←
+  let ⟨out, s⟩ ←
     if (← (blocks ==? (0 : usize))) then do
-      (squeeze_first_and_last (RATE) s out)
+      (pure (rust_primitives.hax.Tuple2.mk
+        (← (squeeze_first_and_last (RATE) s out))
+        s))
     else do
-      (pure out);
+      let out : (RustSlice u8) ← (squeeze_first_block (RATE) s out);
+      let offset : usize := RATE;
+      let ⟨offset, out, s⟩ ←
+        (rust_primitives.hax.folds.fold_range
+          (1 : usize)
+          blocks
+          (fun ⟨offset, out, s⟩ _ => (do (pure true) : RustM Bool))
+          (rust_primitives.hax.Tuple3.mk offset out s)
+          (fun ⟨offset, out, s⟩ _i =>
+            (do
+            let ⟨tmp0, tmp1⟩ ←
+              (squeeze_next_block (RATE)
+                s
+                (← out[
+                  (core_models.ops.range.RangeFrom.mk (start := offset))
+                  ]_?));
+            let s : libcrux_iot_sha3.state.KeccakState := tmp0;
+            let out : (RustSlice u8) ←
+              (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+                out
+                (core_models.ops.range.RangeFrom.mk (start := offset))
+                tmp1);
+            let _ := rust_primitives.hax.Tuple0.mk;
+            let offset : usize ← (offset +? RATE);
+            (pure (rust_primitives.hax.Tuple3.mk offset out s)) :
+            RustM
+            (rust_primitives.hax.Tuple3
+              usize
+              (RustSlice u8)
+              libcrux_iot_sha3.state.KeccakState))));
+      if (← (last <? outlen)) then do
+        (pure (rust_primitives.hax.Tuple2.mk
+          (← (rust_primitives.hax.monomorphized_update_at.update_at_range_from
+            out
+            (core_models.ops.range.RangeFrom.mk (start := offset))
+            (← (squeeze_last (RATE)
+              s
+              (← out[
+                (core_models.ops.range.RangeFrom.mk (start := offset))
+                ]_?)))))
+          s))
+      else do
+        (pure (rust_primitives.hax.Tuple2.mk out s));
   (pure out)
 
 end libcrux_iot_sha3.keccak
