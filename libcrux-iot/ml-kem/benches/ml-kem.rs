@@ -14,7 +14,7 @@ macro_rules! init {
         use $version as version;
 
         fun!("portable", version::portable, group);
-        fun_unpacked!("portable", version::portable::unpacked, group);
+        // fun_unpacked!("portable", version::portable::unpacked, group);
     }};
 }
 
@@ -35,19 +35,20 @@ pub fn key_generation(c: &mut Criterion) {
         };
     }
 
-    macro_rules! fun_unpacked {
-        ($name:expr, $p:path, $group:expr) => {
-            $group.bench_function(format!("unpacked {} (external random)", $name), |b| {
-                use $p as p;
-                let mut seed = [0; 64];
-                rng.try_fill_bytes(&mut seed).unwrap();
-                b.iter(|| {
-                    let mut kp = p::init_key_pair();
-                    p::generate_key_pair_mut(seed, &mut kp);
-                })
-            });
-        };
-    }
+    // XXX: no `unpacked` in `mlkem768::portable`
+    // macro_rules! fun_unpacked {
+    //     ($name:expr, $p:path, $group:expr) => {
+    //         $group.bench_function(format!("unpacked {} (external random)", $name), |b| {
+    //             use $p as p;
+    //             let mut seed = [0; 64];
+    //             rng.try_fill_bytes(&mut seed).unwrap();
+    //             b.iter(|| {
+    //                 let mut kp = p::init_key_pair();
+    //                 p::generate_key_pair_mut(seed, &mut kp);
+    //             })
+    //         });
+    //     };
+    // }
 
     init!(mlkem512, "Key Generation", c);
     init!(mlkem768, "Key Generation", c);
@@ -167,30 +168,31 @@ pub fn decapsulation(c: &mut Criterion) {
         };
     }
 
-    macro_rules! fun_unpacked {
-        ($name:expr, $p:path, $group:expr) => {
-            $group.bench_function(format!("unpacked {}", $name), |b| {
-                use $p as p;
-                let mut seed1 = [0; 64];
-                OsRng.try_fill_bytes(&mut seed1).unwrap();
-                let mut seed2 = [0; 32];
-                OsRng.try_fill_bytes(&mut seed2).unwrap();
-                b.iter_batched(
-                    || {
-                        let mut keypair = p::init_key_pair();
-                        p::generate_key_pair_mut(seed1, &mut keypair);
-                        let (ciphertext, _shared_secret) =
-                            p::encapsulate(&keypair.public_key, seed2);
-                        (keypair, ciphertext)
-                    },
-                    |(keypair, ciphertext)| {
-                        let _shared_secret = black_box(p::decapsulate(&keypair, &ciphertext));
-                    },
-                    BatchSize::SmallInput,
-                )
-            });
-        };
-    }
+    // XXX: no `unpacked` in `mlkem768::portable`
+    // macro_rules! fun_unpacked {
+    //     ($name:expr, $p:path, $group:expr) => {
+    //         $group.bench_function(format!("unpacked {}", $name), |b| {
+    //             use $p as p;
+    //             let mut seed1 = [0; 64];
+    //             OsRng.try_fill_bytes(&mut seed1).unwrap();
+    //             let mut seed2 = [0; 32];
+    //             OsRng.try_fill_bytes(&mut seed2).unwrap();
+    //             b.iter_batched(
+    //                 || {
+    //                     let mut keypair = p::init_key_pair();
+    //                     p::generate_key_pair_mut(seed1, &mut keypair);
+    //                     let (ciphertext, _shared_secret) =
+    //                         p::encapsulate(&keypair.public_key, seed2);
+    //                     (keypair, ciphertext)
+    //                 },
+    //                 |(keypair, ciphertext)| {
+    //                     let _shared_secret = black_box(p::decapsulate(&keypair, &ciphertext));
+    //                 },
+    //                 BatchSize::SmallInput,
+    //             )
+    //         });
+    //     };
+    // }
 
     init!(mlkem512, "Decapsulation", c);
     init!(mlkem768, "Decapsulation", c);
