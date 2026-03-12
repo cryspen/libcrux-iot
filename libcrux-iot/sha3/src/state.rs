@@ -47,6 +47,12 @@ impl KeccakState {
     }
 
     #[inline(always)]
+    pub(crate) fn set_lane_value(&mut self, i: usize, j: usize, value: u32) {
+        // XXX: We can't implement IndexMut for `Lane2U32` because of hax
+        self.c[i].0[j] = value
+    }
+
+    #[inline(always)]
     pub(crate) fn load_block<const RATE: usize>(&mut self, blocks: &[U8], start: usize) {
         load_block_2u32::<RATE>(self, blocks, start)
     }
@@ -109,6 +115,7 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
     let mut state_flat = [Lane2U32::zero(); 25];
     for i in 0..RATE / 8 {
         let offset = start + 8 * i;
+        // u64::from_le_bytes
         let a = U32::from_le_bytes(blocks[offset..offset + 4].try_into().unwrap());
         let b = U32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
         state_flat[i] = Lane2U32::from([a, b]).interleave();
