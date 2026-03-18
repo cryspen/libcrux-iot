@@ -6,7 +6,6 @@ use crate::lane::Lane2U32;
 #[cfg(feature = "check-secret-independence")]
 use crate::{FromLeBytes, ToLeBytes};
 
-#[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy)]
 #[cfg_attr(not(eurydice), derive(Debug))]
 pub(crate) struct KeccakState {
@@ -34,7 +33,7 @@ impl KeccakState {
 
     #[inline(always)]
     pub(crate) fn set_with_zeta(&mut self, i: usize, j: usize, zeta: usize, v: U32) {
-        self.st[5 * j + i][zeta] = v
+        self.st[5 * j + i].0[zeta] = v
     }
 
     #[inline(always)]
@@ -45,6 +44,12 @@ impl KeccakState {
     #[inline(always)]
     pub(crate) fn set_lane(&mut self, i: usize, j: usize, lane: Lane2U32) {
         self.st[5 * j + i] = lane
+    }
+
+    #[inline(always)]
+    pub(crate) fn set_lane_value(&mut self, i: usize, j: usize, value: u32) {
+        // XXX: We can't implement IndexMut for `Lane2U32` because of hax
+        self.c[i].0[j] = value
     }
 
     #[inline(always)]
@@ -70,7 +75,7 @@ impl KeccakState {
     /// `out` has the exact size we want here. It must be less than or equal to `RATE`.
     #[inline(always)]
     pub(crate) fn store<const RATE: usize>(self, out: &mut [U8]) {
-        #[cfg(not(eurydice))]
+        #[cfg(not(any(eurydice, hax)))]
         debug_assert!(out.len() <= RATE, "{} > {}", out.len(), RATE);
 
         let num_full_blocks = out.len() / 8;
@@ -110,6 +115,7 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
     let mut state_flat = [Lane2U32::zero(); 25];
     for i in 0..RATE / 8 {
         let offset = start + 8 * i;
+        // u64::from_le_bytes
         let a = U32::from_le_bytes(blocks[offset..offset + 4].try_into().unwrap());
         let b = U32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
         state_flat[i] = Lane2U32::from([a, b]).interleave();
