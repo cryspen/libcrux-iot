@@ -164,19 +164,19 @@ impl<const RATE: usize> KeccakXofState<RATE> {
         // XXX: Eurydice does not extract `core::cmp::min`, so we do
         // this instead. (cf. https://github.com/AeneasVerif/eurydice/issues/49)
         let mid = if RATE >= out_len { out_len } else { RATE };
-        self.inner.store::<RATE>(out);
+        self.inner.store::<RATE>(&mut out[..mid]);
 
         // If we got asked for more than one block, squeeze out more.
         let mut offset = mid;
         for _ in 1..blocks {
             // Here we know that we always have full blocks to write out.
             keccakf1600(&mut self.inner);
-            self.inner.store::<RATE>(&mut out[offset..]);
-            // out_rest = tmp;
+            self.inner.store::<RATE>(&mut out[offset..offset + RATE]);
             offset += RATE;
         }
 
         if last > 0 && last < out_len {
+            debug_assert_eq!(last, offset);
             // Squeeze out the last partial block
             keccakf1600(&mut self.inner);
             self.inner.store::<RATE>(&mut out[offset..]);
@@ -445,7 +445,7 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 
         // [hax] uninitialized variables are note supported yet in lean.
         #[allow(unused_assignments)]
-        let mut ax0 = 0;
+        let mut ax0 = 0.classify();
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 0];
@@ -488,7 +488,7 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 
         // [hax] uninitialized variables are note supported yet in lean.
         #[allow(unused_assignments)]
-        let mut ax0 = 0;
+        let mut ax0 = 0.classify();
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 0];
@@ -949,7 +949,7 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 
         // [hax] uninitialized variables are note supported yet in lean.
         #[allow(unused_assignments)]
-        let mut ax0 = 0;
+        let mut ax0 = 0.classify();
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 1];
@@ -992,7 +992,7 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 
         // [hax] uninitialized variables are note supported yet in lean.
         #[allow(unused_assignments)]
-        let mut ax0 = 0;
+        let mut ax0 = 0.classify();
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 1];
@@ -1453,7 +1453,7 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 
         // [hax] uninitialized variables are note supported yet in lean.
         #[allow(unused_assignments)]
-        let mut ax0 = 0;
+        let mut ax0 = 0.classify();
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 2];
@@ -1496,7 +1496,7 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 
         // [hax] uninitialized variables are note supported yet in lean.
         #[allow(unused_assignments)]
-        let mut ax0 = 0;
+        let mut ax0 = 0.classify();
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 2];
@@ -1958,7 +1958,7 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 
         // [hax] uninitialized variables are note supported yet in lean.
         #[allow(unused_assignments)]
-        let mut ax0 = 0;
+        let mut ax0 = 0.classify();
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 3];
@@ -2001,7 +2001,7 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 
         // [hax] uninitialized variables are note supported yet in lean.
         #[allow(unused_assignments)]
-        let mut ax0 = 0;
+        let mut ax0 = 0.classify();
         #[cfg(feature = "full-unroll")]
         {
             ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 3];
@@ -2423,6 +2423,7 @@ pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut 
             offset += RATE;
         }
         if last < outlen {
+            debug_assert_eq!(last, offset);
             squeeze_last::<RATE>(s, &mut out[offset..])
         }
     }

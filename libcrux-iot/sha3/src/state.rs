@@ -47,7 +47,7 @@ impl KeccakState {
     }
 
     #[inline(always)]
-    pub(crate) fn set_lane_value(&mut self, i: usize, j: usize, value: u32) {
+    pub(crate) fn set_lane_value(&mut self, i: usize, j: usize, value: U32) {
         // XXX: We can't implement IndexMut for `Lane2U32` because of hax
         self.c[i].0[j] = value
     }
