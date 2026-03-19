@@ -115,7 +115,7 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
     let mut state_flat = [Lane2U32::zero(); 25];
     for i in 0..RATE / 8 {
         let offset = start + 8 * i;
-        // u64::from_le_bytes
+        // Perform `u64::from_le_bytes` on our 32-bit representation:
         let a = U32::from_le_bytes(blocks[offset..offset + 4].try_into().unwrap());
         let b = U32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
         state_flat[i] = Lane2U32::from([a, b]).interleave();
