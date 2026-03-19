@@ -150,7 +150,8 @@ fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
 
 #[inline(always)]
 fn store_block_full_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8; 200]) {
-    store_block_2u32::<RATE>(s, out);
+    // `out[..]` is a workaround for https://github.com/cryspen/hax/issues/1983
+    store_block_2u32::<RATE>(s, &mut out[..]);
 }
 
 #[cfg(feature = "check-secret-independence")]
