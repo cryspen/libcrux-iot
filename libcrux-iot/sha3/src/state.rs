@@ -72,7 +72,8 @@ impl KeccakState {
         store_block_full_2u32::<RATE>(self, out);
     }
 
-    /// `out` has the exact size we want here. It must be less than or equal to `RATE`.
+    /// `out` has the exact size we want here. It must be less than or equal to
+    /// `RATE`.
     #[inline(always)]
     pub(crate) fn store<const RATE: usize>(self, out: &mut [U8]) {
         #[cfg(not(any(eurydice, hax)))]
@@ -150,6 +151,10 @@ fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
 
 #[inline(always)]
 fn store_block_full_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8; 200]) {
+    // `out[..]` is a workaround for https://github.com/cryspen/hax/issues/1983
+    #[cfg(hax)]
+    store_block_2u32::<RATE>(s, &mut out[..]);
+    #[cfg(not(hax))]
     store_block_2u32::<RATE>(s, out);
 }
 
