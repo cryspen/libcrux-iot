@@ -5,13 +5,18 @@ use defmt::{panic, *};
 use defmt_rtt as _; // global logger
 use embassy_executor::Spawner;
 use embassy_futures::join::join;
-use embassy_stm32::rng::{Instance as RngInstance, Rng};
-use embassy_stm32::usb::{Driver, Instance as UsbInstance};
-use embassy_stm32::{Config, bind_interrupts, peripherals, rng, usb};
+use embassy_stm32::{
+    Config, bind_interrupts, peripherals, rng,
+    rng::{Instance as RngInstance, Rng},
+    usb,
+    usb::{Driver, Instance as UsbInstance},
+};
 use embassy_time::{Duration, Instant};
-use embassy_usb::Builder;
-use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
-use embassy_usb::driver::EndpointError;
+use embassy_usb::{
+    Builder,
+    class::cdc_acm::{CdcAcmClass, State},
+    driver::EndpointError,
+};
 use libcrux_iot_ml_dsa::ml_dsa_65::{self, MLDSA65Signature, MLDSA65VerificationKey};
 use libcrux_iot_ml_kem::mlkem768::{MlKem768Ciphertext, MlKem768PublicKey};
 use panic_probe as _;
@@ -157,11 +162,12 @@ async fn main(_spawner: Spawner) {
     let mut ep_out_buffer = [0u8; 256];
     let mut config = embassy_stm32::usb::Config::default();
 
-    // Do not enable vbus_detection. This is a safe default that works in all boards.
-    // However, if your USB device is self-powered (can stay powered on if USB is unplugged), you need
-    // to enable vbus_detection to comply with the USB spec. If you enable it, the board
-    // has to support it or USB won't work at all. See docs on `vbus_detection` for details.
-    config.vbus_detection = false;
+    // Do not enable vbus_detection. This is a safe default that works in all
+    // boards. However, if your USB device is self-powered (can stay powered on
+    // if USB is unplugged), you need to enable vbus_detection to comply with
+    // the USB spec. If you enable it, the board has to support it or USB won't
+    // work at all. See docs on `vbus_detection` for details.
+    config.vbus_detection = true;
 
     let driver = Driver::new_fs(
         p.USB_OTG_FS,
@@ -218,7 +224,8 @@ async fn main(_spawner: Spawner) {
     };
 
     // Run everything concurrently.
-    // If we had made everything `'static` above instead, we could do this using separate tasks instead.
+    // If we had made everything `'static` above instead, we could do this using
+    // separate tasks instead.
     join(usb_fut, echo_fut).await;
 }
 
@@ -273,7 +280,8 @@ async fn echo<'d, T: UsbInstance + 'd, U: RngInstance + 'd>(
     let mut verification_duration = Duration::default();
     let mut encapsulation_duration = Duration::default();
     // We send one full packet to indicate response status and timings:
-    // - status[0] inidicates signature verification status: 0 = error, 0xff = success
+    // - status[0] inidicates signature verification status: 0 = error, 0xff =
+    //   success
     // - status[1..10] verification time in ms
     // - status[10..18] encapsulation time in ms
     let mut status = [0u8; 64];
@@ -304,7 +312,8 @@ async fn echo<'d, T: UsbInstance + 'd, U: RngInstance + 'd>(
                 .unwrap(),
         );
         let mut encapsulation_randomness = [0u8; libcrux_iot_ml_kem::ENCAPS_SEED_SIZE];
-        // Including RNG time in this, since you always have to do this for encapsulation.
+        // Including RNG time in this, since you always have to do this for
+        // encapsulation.
         let start_encapsulation = Instant::now();
         unwrap!(rng.async_fill_bytes(&mut encapsulation_randomness).await);
         let (encapsulation, shared_secret) =
@@ -339,7 +348,8 @@ async fn echo<'d, T: UsbInstance + 'd, U: RngInstance + 'd>(
         );
         class.write_packet(&buf).await?;
     } else {
-        // Write a zero-length package in this case, to make the host process the last full-length package.
+        // Write a zero-length package in this case, to make the host process the last
+        // full-length package.
         class.write_packet(&[]).await?;
     }
 
