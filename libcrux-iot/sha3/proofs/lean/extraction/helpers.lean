@@ -154,3 +154,12 @@ decreasing_by
 instance : @rust_primitives.hax.folds Int32 where
   fold_range := Int32.fold_range
   fold_range_return := sorry
+
+
+namespace core_models.num.Impl_9
+
+@[spec]
+def rotate_left (x : u64) (n : u32) : RustM u64 :=
+  pure (UInt64.ofBitVec (BitVec.rotateLeft x.toBitVec n.toNat))
+
+end core_models.num.Impl_9
