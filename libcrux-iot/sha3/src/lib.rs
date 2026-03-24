@@ -2,6 +2,9 @@
 //!
 //! A SHA3 implementation with optional simd optimisations.
 
+// Below, some arrays are explicitly converted into slices by writing `out[..]`
+// instead of `out` as a workaround for https://github.com/cryspen/hax/issues/1983
+
 #![no_std]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -77,6 +80,14 @@ pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[U8]) -> [U8; LEN]
     debug_assert!(payload.len() <= u32::MAX as usize);
 
     let mut out = [0u8; LEN].classify();
+    #[cfg(hax)]
+    match algorithm {
+        Algorithm::Sha224 => portable::sha224(&mut out[..], payload),
+        Algorithm::Sha256 => portable::sha256(&mut out[..], payload),
+        Algorithm::Sha384 => portable::sha384(&mut out[..], payload),
+        Algorithm::Sha512 => portable::sha512(&mut out[..], payload),
+    }
+    #[cfg(not(hax))]
     match algorithm {
         Algorithm::Sha224 => portable::sha224(&mut out, payload),
         Algorithm::Sha256 => portable::sha256(&mut out, payload),
@@ -92,6 +103,9 @@ pub use hash as sha3;
 /// SHA3 224
 pub fn sha224(data: &[U8]) -> [U8; SHA3_224_DIGEST_SIZE] {
     let mut out = [0u8; 28].classify();
+    #[cfg(hax)]
+    sha224_ema(&mut out[..], data);
+    #[cfg(not(hax))]
     sha224_ema(&mut out, data);
     out
 }
@@ -112,6 +126,9 @@ pub fn sha224_ema(digest: &mut [U8], payload: &[U8]) {
 /// SHA3 256
 pub fn sha256(data: &[U8]) -> [U8; SHA3_256_DIGEST_SIZE] {
     let mut out = [0u8; 32].classify();
+    #[cfg(hax)]
+    sha256_ema(&mut out[..], data);
+    #[cfg(not(hax))]
     sha256_ema(&mut out, data);
     out
 }
@@ -129,6 +146,9 @@ pub fn sha256_ema(digest: &mut [U8], payload: &[U8]) {
 /// SHA3 384
 pub fn sha384(data: &[U8]) -> [U8; SHA3_384_DIGEST_SIZE] {
     let mut out = [0u8; 48].classify();
+    #[cfg(hax)]
+    sha384_ema(&mut out[..], data);
+    #[cfg(not(hax))]
     sha384_ema(&mut out, data);
     out
 }
@@ -146,6 +166,9 @@ pub fn sha384_ema(digest: &mut [U8], payload: &[U8]) {
 /// SHA3 512
 pub fn sha512(data: &[U8]) -> [U8; SHA3_512_DIGEST_SIZE] {
     let mut out = [0u8; 64].classify();
+    #[cfg(hax)]
+    sha512_ema(&mut out[..], data);
+    #[cfg(not(hax))]
     sha512_ema(&mut out, data);
     out
 }
@@ -166,6 +189,9 @@ pub fn sha512_ema(digest: &mut [U8], payload: &[U8]) {
 /// the output will only return `u32::MAX` bytes.
 pub fn shake128<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
     let mut out = [0u8; BYTES].classify();
+    #[cfg(hax)]
+    portable::keccakx1::<168, 0x1fu8>(data, &mut out[..]);
+    #[cfg(not(hax))]
     portable::keccakx1::<168, 0x1fu8>(data, &mut out);
     out
 }
@@ -183,6 +209,9 @@ pub fn shake128_ema(out: &mut [U8], data: &[U8]) {
 /// the output will only return `u32::MAX` bytes.
 pub fn shake256<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
     let mut out = [0u8; BYTES].classify();
+    #[cfg(hax)]
+    portable::keccakx1::<136, 0x1fu8>(data, &mut out[..]);
+    #[cfg(not(hax))]
     portable::keccakx1::<136, 0x1fu8>(data, &mut out);
     out
 }
@@ -377,7 +406,7 @@ pub mod portable {
 
         /// Squeeze the first SHAKE-256 block
         pub fn shake256_squeeze_first_block(s: &mut KeccakState, out: &mut [U8]) {
-            squeeze_first_block::<136>(&mut s.state, out)
+            squeeze_first_block::<136>(&s.state, out)
         }
 
         /// Squeeze the next SHAKE-256 block
