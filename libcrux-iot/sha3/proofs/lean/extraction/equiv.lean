@@ -1316,11 +1316,70 @@ theorem keccakf1600_succeeds (s : KeccakState) (hi : s.i.toNat = 0) :
                 exact strengthen_pre _ (Triple.pure s₆ (SPred.entails.refl _))
   · intro s₇; exact Triple.pure _ (SPred.entails.refl _)
 
+/-! ## Per-round functional equivalence
+
+The core mathematical result: running one spec round on the lifted state equals
+running one impl round and then lifting with the permutation.
+
+Proven by hax_mvcgen on both spec and impl simultaneously — it generates VCs
+that connect the u32 (impl) and u64 (spec) operations, closed by the algebraic
+lifting lemmas (lift_lane_bv_{xor,and,not,or}, chi_lane_lift, etc.).
+-/
+
+-- One spec round: θ → ρ → π → χ → ι
+def spec_round (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
+  let s ← hacspec_sha3.keccak_f.theta state
+  let s ← hacspec_sha3.keccak_f.rho s
+  let s ← hacspec_sha3.keccak_f.pi s
+  let s ← hacspec_sha3.keccak_f.chi s
+  hacspec_sha3.keccak_f.iota s round
+
+-- Impl round 0: theta → pi_rho_chi_1 → pi_rho_chi_2
+def impl_round0 (s : KeccakState) : RustM KeccakState := do
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round0_theta s
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 0 s
+  libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
+
+-- Reusable tactic for round-level equivalence proofs
+macro "round_equiv_proof" : tactic =>
+  `(tactic| (
+    hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
+                core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
+                core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+                libcrux_secrets.traits.Classify.classify, spec_round, impl_round0, lift, lift_lane,
+                lift_lane_bv, spread_to_even, impl_perm, lift_perm]
+    all_goals (first | intro h₁; subst h₁ | skip)
+    all_goals simp (config := { decide := true, maxSteps := 400000 }) [getElemResult, core_models.ops.index.Index.index]
+    all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set]; try rfl) | skip)
+    all_goals (reduce_usize_sizes; simp (config := { decide := true, maxSteps := 400000 }) [Vector.getElem_set]; try rfl)
+    all_goals (repeat' constructor)
+    all_goals (first | rfl | skip)
+    all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set, rot32,
+      lift_lane_bv_xor, lift_lane_bv_and, lift_lane_bv_not, lift_lane_bv_or,
+      chi_lane_lift, theta_apply_lift, theta_d_lift, theta_c_lift]; try rfl) | skip)
+    all_goals (first | omega | simp_all | rfl | skip)
+    all_goals (
+      delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
+      have h255 : USize64.toNat s.i < 255 := by omega
+      rw [dif_pos h255, dif_pos h255]
+      have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
+        simp [BitVec.uaddOverflow]; omega
+      rw [if_neg huadd]
+      delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
+      first | rfl | simp_all)))
+
+-- Round 0 functional equivalence: spec_round(lift s, i) = lift_perm(impl_round0 s, impl_perm)
+set_option maxRecDepth 5000 in
+set_option maxHeartbeats 400000000 in
+open Std.Do in
+theorem round0_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let r_impl ← impl_round0 s
+       let r_spec ← spec_round (lift s) s.i
+       pure (r_spec = lift_perm r_impl impl_perm)
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by round_equiv_proof
+
 -- Full equivalence: the lifted implementation equals the spec.
--- This requires functional equivalence (what each function computes), not just totality.
--- The postconditions need to describe the full output state, not just i-tracking.
--- TODO: Strengthen per-round postconditions to describe all 25 output lanes,
--- then prove lift_perm(impl_round_result, impl_perm^k) = spec_round(lift_perm(input, ...)).
 theorem equivalence (s : KeccakState) :
   hacspec_sha3.keccak_f.keccak_f (lift s) =
     (do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600 s))) := sorry
