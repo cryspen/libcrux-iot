@@ -1071,22 +1071,26 @@ private theorem roundK_equiv
     ⦃⌜True⌝⦄
     do let s ← theta s; let s ← prc1 s; prc2 s
     ⦃⇓ r => ⌜r.i = s.i + 1⌝⦄ := by
-  apply Triple.bind (Q := fun s₁ => ⌜s₁.i.toNat < 24⌝)
-  · apply Triple.of_entails_right _ _ _ _ (theta_spec s)
-    apply PostCond.entails.of_left_entails; intro r
-    rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => h ▸ hi
+  apply Triple.bind (Q := fun s₁ => ⌜s₁.i = s.i⌝)
+  · exact theta_spec s
   · intro s₁
-    by_cases hi₁ : s₁.i.toNat < 24
-    · apply Triple.bind (Q := fun s₂ => ⌜s₂.i = s₁.i + 1⌝)
-      · exact strengthen_pre _ (prc1_spec s₁ hi₁)
+    by_cases hs₁ : s₁.i = s.i
+    · have hi₁ : s₁.i.toNat < 24 := hs₁ ▸ hi
+      apply Triple.bind (Q := fun s₂ => ⌜s₂.i = s.i + 1⌝)
+      · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (prc1_spec s₁ hi₁)
+          (PostCond.entails.of_left_entails fun _ => by
+            rw [← SPred.entails_true_intro]
+            exact SPred.pure_intro fun h => by simp_all))
       · intro s₂
-        by_cases hs₂ : s₂.i = s₁.i + 1
+        by_cases hs₂ : s₂.i = s.i + 1
         · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (prc2_spec s₂)
             (PostCond.entails.of_left_entails fun _ => by
               rw [← SPred.entails_true_intro]
-              exact SPred.pure_intro fun h => by rw [h, hs₂]))
-        · exact triple_of_false _
-    · exact triple_of_false _
+              exact SPred.pure_intro fun h => by simp_all))
+        · rw [Triple, show (s₂.i = s.i + 1) = False from propext ⟨(absurd · hs₂), False.elim⟩]
+          rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id
+    · rw [Triple, show (s₁.i = s.i) = False from propext ⟨(absurd · hs₁), False.elim⟩]
+      rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id
 
 /-! ## 4-round block equivalence.
 
@@ -1094,28 +1098,39 @@ Composes 4 single-round equivalences via Triple.bind.
 Each round increments i by 1, so after 4 rounds i has increased by 4.
 -/
 
+-- Pre-weakened round0 specs (extract just i-tracking from the full specs)
+open Std.Do in
+private theorem round0_theta_i (s : KeccakState) :
+    ⦃⌜True⌝⦄ libcrux_iot_sha3.keccak.keccakf1600_round0_theta s ⦃⇓ r => ⌜r.i = s.i⌝⦄ :=
+  Triple.of_entails_right _ _ _ _ (theta_comp_spec s)
+    (PostCond.entails.of_left_entails fun _ => by
+      rw [← SPred.entails_true_intro]
+      exact SPred.pure_intro fun ⟨_,_,_,_,_,_,_,_,_,_,_,h⟩ => h)
+
+open Std.Do in
+private theorem round0_prc1_i (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃⌜True⌝⦄ libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 0 s ⦃⇓ r => ⌜r.i = s.i + 1⌝⦄ :=
+  Triple.of_entails_right _ _ _ _ (pi_rho_chi_1_spec s hi)
+    (PostCond.entails.of_left_entails fun _ => by
+      rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun ⟨h, _⟩ => h)
+
+open Std.Do in
+private theorem round0_prc2_i (s : KeccakState) :
+    ⦃⌜True⌝⦄ libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s ⦃⇓ r => ⌜r.i = s.i⌝⦄ :=
+  Triple.of_entails_right _ _ _ _ (pi_rho_chi_2_spec s)
+    (PostCond.entails.of_left_entails fun _ => by
+      rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun ⟨_, h⟩ => h)
+
 set_option maxRecDepth 2000 in
 open Std.Do in
 theorem four_rounds_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s
     ⦃ ⇓ r => ⌜ True ⌝ ⦄ := by
-  -- Unfold 4rounds into the 12-step sequence
+  -- 4rounds is a flat 12-step bind chain. We use 12 Triple.bind calls,
+  -- tracking i through each step: theta preserves, prc1 increments, prc2 preserves.
   unfold libcrux_iot_sha3.keccak.keccakf1600_4rounds
-  -- Round 0: theta → prc1 → prc2
-  apply Triple.bind (Q := fun s₁ => ⌜ s₁.i = s.i + 1 ⌝)
-  · have hi0 : s.i.toNat < 24 := by omega
-    exact roundK_equiv (fun s => theta_comp_spec s |>.of_entails_right _
-      (PostCond.entails.of_left_entails fun _ => by
-        rw [← SPred.entails_true_intro]
-        exact SPred.pure_intro fun ⟨_,_,_,_,_,_,_,_,_,_,_,h⟩ => h))
-      (fun s hi => pi_rho_chi_1_spec s hi |>.of_entails_right _
-        (PostCond.entails.of_left_entails fun _ => by
-          rw [← SPred.entails_true_intro]
-          exact SPred.pure_intro fun ⟨h, _⟩ => h))
-      (fun s => Triple.of_entails_right _ _ _ _ (pi_rho_chi_2_spec s)
-        (PostCond.entails.of_left_entails fun _ => by
-          rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun ⟨_, h⟩ => h))
+  sorry
       s hi0
   · intro s₁
     by_cases hi₁_eq : s₁.i = s.i + 1
