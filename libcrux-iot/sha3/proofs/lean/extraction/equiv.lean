@@ -1551,10 +1551,48 @@ theorem round3_eq (s : KeccakState) (hi : s.i.toNat < 24) :
 -- keccakf1600_4rounds = impl_round0 >> impl_round1 >> impl_round2 >> impl_round3
 -- spec_4rounds = spec_round >> spec_round >> spec_round >> spec_round
 -- After 4 rounds, impl_perm^4 = id, so lift_perm ... id = lift
+-- Extract ok value from impl round (reusable for each round)
+private theorem impl_round_ok {f : KeccakState → RustM KeccakState}
+    {s : KeccakState} {g : KeccakState → RustArray u64 25}
+    (h_eq : ∀ s (hi : s.i.toNat < 24), spec_round (g s) s.i = (f s >>= fun r => pure (g r)))
+    (hi : s.i.toNat < 24)
+    (h_ok : ∃ r, f s = .ok r ∧ r.i.toNat = s.i.toNat + 1) :
+    ∃ r, f s = .ok r := by obtain ⟨r, hr, _⟩ := h_ok; exact ⟨r, hr⟩
+
+-- four_round_eq from the four round_eq lemmas
+-- Strategy: extract impl ok values round by round, rewrite spec, simplify
+set_option maxRecDepth 2000 in
+set_option maxHeartbeats 4000000 in
 theorem four_round_eq (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
     spec_4rounds (lift s) s.i =
-    do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s)) := by
-  sorry
+    (libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s >>= fun r => pure (lift r)) := by
+  -- Unfold impl into 4 × 3-step blocks (12 steps) — same as the flat chain
+  unfold spec_4rounds libcrux_iot_sha3.keccak.keccakf1600_4rounds
+  -- Use round_eq to rewrite each spec_round
+  -- But we need the impl results to substitute. Use four_rounds_ok sub-components.
+  -- Actually: just use round0_eq etc. as rewrites, then the bind chains should match.
+  -- The key: after round0_eq, LHS has impl_round0 >>= ... and RHS has impl_round0 >>= ...
+  -- They share the same impl prefix!
+  simp only [bind_assoc]
+  -- Rewrite spec round 0
+  rw [round0_eq s (by omega)]
+  -- Now both sides start with impl_round0 s. Use congrArg to go inside the bind.
+  -- LHS: impl_round0 s >>= fun r₁ => (pure (lift_perm r₁ perm) >>= spec_round _ (s.i+1) >>= ...)
+  -- RHS: impl_round0 s >>= fun r₁ => (impl_round1 r₁ >>= ... >>= pure (lift r_final))
+  -- Factor: impl_round0 s >>= fun r₁ => [LHS_cont r₁ = RHS_cont r₁]
+  congr 1; funext r₁
+  simp only [impl_round0, bind_assoc, pure_bind]
+  -- Rewrite spec round 1
+  rw [round1_eq r₁ (by sorry)]  -- need r₁.i.toNat < 24
+  congr 1; funext r₂
+  simp only [impl_round1, bind_assoc, pure_bind]
+  -- Rewrite spec round 2
+  rw [round2_eq r₂ (by sorry)]
+  congr 1; funext r₃
+  simp only [impl_round2, bind_assoc, pure_bind]
+  -- Rewrite spec round 3
+  rw [round3_eq r₃ (by sorry)]
+  simp only [impl_round3, bind_assoc, pure_bind]
 
 -- 4-round block returns ok and increments i by 4
 -- Derived from four_rounds_equiv by case-splitting on the RustM result
