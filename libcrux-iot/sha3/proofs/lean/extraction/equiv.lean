@@ -1,27 +1,3 @@
-/-!
-# Keccak-f[1600] Bit-Interleaved Equivalence Proof
-
-## Main theorem
-```
-theorem equivalence (s : KeccakState) (hi : s.i.toNat = 0) :
-    keccak_f (lift s) = keccakf1600 s >>= fun r => pure (lift r)
-```
-
-## Status: 3 sorry remaining (trivial i-bounds in four_round_eq)
-
-All per-round functional equivalences proven and compiling via lake build.
-The proof chain: equivalence ← keccak_f_unfold + four_round_eq + four_rounds_ok
-  four_round_eq ← round0-3_eq (via congr/funext, 3 sorry for rK.i.toNat < 24)
-  roundK_eq ← roundK_func_equiv (proven via hax_mvcgen on both spec+impl)
-
-## Architecture
-This file imports only the extraction files (not step_equiv.lean) to keep
-hax_mvcgen's internal simp within its 100K step limit. Definitions needed
-for the proofs are duplicated from step_equiv.lean.
-
-Key technique: hax_mvcgen processes BOTH spec and impl simultaneously,
-generating VCs closed by algebraic lifting lemmas (bv_decide-proven).
--/
 import extraction.hacspec_sha3
 import extraction.libcrux_iot_sha3
 import Std.Tactic.BVDecide
@@ -1661,6 +1637,38 @@ private theorem impl_round_ok (f : KeccakState → RustM KeccakState)
     simp_all [hm, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
       PredTrans.trans, PredTrans.const]
 
+-- i-tracking for impl_roundK (instantiate roundK_equiv with per-step specs)
+open Std.Do in
+private theorem impl_round0_i (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃⌜True⌝⦄ impl_round0 s ⦃⇓ r => ⌜r.i = s.i + 1⌝⦄ :=
+  roundK_equiv (fun s => theta_comp_spec s |>.of_entails_right _
+    (PostCond.entails.of_left_entails fun _ => by
+      rw [← SPred.entails_true_intro]
+      exact SPred.pure_intro fun ⟨_,_,_,_,_,_,_,_,_,_,_,h⟩ => h))
+    (fun s hi => pi_rho_chi_1_spec s hi |>.of_entails_right _
+      (PostCond.entails.of_left_entails fun _ => by
+        rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun ⟨h, _⟩ => h))
+    (fun s => pi_rho_chi_2_spec s |>.of_entails_right _
+      (PostCond.entails.of_left_entails fun _ => by
+        rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun ⟨_, h⟩ => h))
+    s hi
+
+open Std.Do in
+private theorem impl_round1_i (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃⌜True⌝⦄ impl_round1 s ⦃⇓ r => ⌜r.i = s.i + 1⌝⦄ :=
+  roundK_equiv round1_theta_spec (fun s hi => round1_prc1_spec s hi) round1_prc2_spec s hi
+
+open Std.Do in
+private theorem impl_round2_i (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃⌜True⌝⦄ impl_round2 s ⦃⇓ r => ⌜r.i = s.i + 1⌝⦄ :=
+  roundK_equiv round2_theta_spec (fun s hi => round2_prc1_spec s hi) round2_prc2_spec s hi
+
+open Std.Do in
+private theorem impl_round3_i (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃⌜True⌝⦄ impl_round3 s ⦃⇓ r => ⌜r.i = s.i + 1⌝⦄ :=
+  roundK_equiv round3_theta_spec (fun s hi => round3_prc1_spec s hi) round3_prc2_spec s hi
+
+-- four_round_eq: extraction approach (no congr/funext, no sorry)
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 4000000 in
 theorem four_round_eq (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
@@ -1668,21 +1676,29 @@ theorem four_round_eq (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
     (libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s >>= fun r => pure (lift r)) := by
   unfold spec_4rounds libcrux_iot_sha3.keccak.keccakf1600_4rounds
   simp only [bind_assoc]
-  -- Round 0
+  have ok_bind : ∀ {α β : Type} (a : α) (f : α → RustM β), RustM.ok a >>= f = f a := fun _ _ => rfl
+  -- Extract concrete impl results with i-tracking
+  obtain ⟨r₁, hr₁, hi₁⟩ := impl_round_ok impl_round0 (fun s hi => impl_round0_i s hi) s (by omega)
+  obtain ⟨r₂, hr₂, hi₂⟩ := impl_round_ok impl_round1 (fun s hi => impl_round1_i s hi) r₁ (by omega)
+  obtain ⟨r₃, hr₃, hi₃⟩ := impl_round_ok impl_round2 (fun s hi => impl_round2_i s hi) r₂ (by omega)
+  obtain ⟨r₄, hr₄, hi₄⟩ := impl_round_ok impl_round3 (fun s hi => impl_round3_i s hi) r₃ (by omega)
+  -- Substitute all impl results on RHS
+  simp only [hr₁, ok_bind, hr₂, hr₃, hr₄, pure_bind]
+  -- Rewrite each spec round using roundK_eq (hi bounds from i-tracking)
   rw [round0_eq s (by omega)]
-  simp only [impl_round0, bind_assoc, pure_bind]
-  -- Round 1 (inside the bind continuation — use congr 1; funext)
-  congr 1; funext r₁
-  simp only [impl_round1, bind_assoc, pure_bind]
-  rw [round1_eq r₁ (by sorry)]  -- r₁.i.toNat < 24 (follows from i-tracking)
-  -- Round 2
-  congr 1; funext r₂
-  simp only [impl_round2, bind_assoc, pure_bind]
-  rw [round2_eq r₂ (by sorry)]  -- r₂.i.toNat < 24
-  -- Round 3
-  congr 1; funext r₃
-  simp only [impl_round3, bind_assoc, pure_bind]
-  rw [round3_eq r₃ (by sorry)]  -- r₃.i.toNat < 24
+  simp only [hr₁, ok_bind, pure_bind]
+  rw [show r₁.i = (UInt64.ofBitVec (BitVec.ofNat 64 (s.i.toNat + 1))) from
+        usize_eq _ _ (by omega),
+      round1_eq r₁ (by omega)]
+  simp only [hr₂, ok_bind, pure_bind]
+  rw [show r₂.i = (UInt64.ofBitVec (BitVec.ofNat 64 (s.i.toNat + 2))) from
+        usize_eq _ _ (by omega),
+      round2_eq r₂ (by omega)]
+  simp only [hr₃, ok_bind, pure_bind]
+  rw [show r₃.i = (UInt64.ofBitVec (BitVec.ofNat 64 (s.i.toNat + 3))) from
+        usize_eq _ _ (by omega),
+      round3_eq r₃ (by omega)]
+  simp only [hr₄, ok_bind]
 
 -- 4-round block returns ok and increments i by 4
 -- Derived from four_rounds_equiv by case-splitting on the RustM result
