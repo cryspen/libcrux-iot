@@ -1552,6 +1552,11 @@ theorem round3_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
     first | rfl | simp_all)
 
+-- Pre-computed permutation compositions (placed AFTER roundK_func_equiv to
+-- avoid polluting hax_mvcgen's simp context for those proofs)
+def impl_perm2 (i : Fin 25) : Fin 25 := impl_perm (impl_perm i)
+def impl_perm3 (i : Fin 25) : Fin 25 := impl_perm (impl_perm (impl_perm i))
+
 -- Convert per-round Hoare triple to direct RustM equality
 open Std.Do in
 private theorem round_eq_of_func_equiv
