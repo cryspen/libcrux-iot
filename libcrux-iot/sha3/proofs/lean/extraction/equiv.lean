@@ -736,12 +736,25 @@ theorem pi_rho_chi_1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
 -- Monadic spec for pi_rho_chi_2 (round 0).
 -- Processes rows y=2,3,4. Output lane sets:
 -- {4,5,11,17,23} (y=2), {1,7,13,19,20} (y=3), {3,9,10,16,22} (y=4).
+set_option maxRecDepth 3000 in
+set_option maxHeartbeats 80000000 in
 open Std.Do in
 theorem pi_rho_chi_2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
     ⦃ ⇓ r => ⌜ r.d = s.d ⌝ ⦄ := by
-  sorry
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+              libcrux_secrets.traits.Classify.classify]
+  all_goals (first | intro h₁; subst h₁ | skip)
+  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals (reduce_usize_sizes;
+             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
+             try rfl)
+  all_goals (repeat' constructor)
+  all_goals (first | rfl | skip)
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+  all_goals (first | omega | simp_all | rfl | skip)
 
 /-! ## Pi-Rho-Chi lifting theorem
 
