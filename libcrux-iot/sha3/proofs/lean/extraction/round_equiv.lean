@@ -91,11 +91,11 @@ theorem round0_func_equiv' (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_round' (lift' s) s.i
        pure (r_spec = lift_perm' r_impl impl_perm')
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  unfold impl_round0' impl_round1' impl_round2' impl_round3' spec_round'
+  unfold impl_round0' spec_round'
   hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
               core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
               core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, spec_round', impl_round0', lift', lift_lane',
+              libcrux_secrets.traits.Classify.classify, lift', lift_lane',
               lift_lane_bv', spread_to_even', impl_perm', lift_perm']
   round_equiv_tactic'
 
@@ -109,11 +109,11 @@ theorem round1_func_equiv' (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_round' (lift_perm' s impl_perm') s.i
        pure (r_spec = lift_perm' r_impl impl_perm2')
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  unfold impl_round0' impl_round1' impl_round2' impl_round3' spec_round'
+  unfold impl_round1' spec_round'
   hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
               core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
               core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, spec_round', impl_round1', lift', lift_lane',
+              libcrux_secrets.traits.Classify.classify, lift', lift_lane',
               lift_lane_bv', spread_to_even', impl_perm', impl_perm2', lift_perm']
   round_equiv_tactic'
 
@@ -127,11 +127,11 @@ theorem round2_func_equiv' (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_round' (lift_perm' s impl_perm2') s.i
        pure (r_spec = lift_perm' r_impl impl_perm3')
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  unfold impl_round0' impl_round1' impl_round2' impl_round3' spec_round'
+  unfold impl_round2' spec_round'
   hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
               core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
               core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, spec_round', impl_round2', lift', lift_lane',
+              libcrux_secrets.traits.Classify.classify, lift', lift_lane',
               lift_lane_bv', spread_to_even', impl_perm', impl_perm2', impl_perm3', lift_perm']
   round_equiv_tactic'
 
@@ -145,10 +145,10 @@ theorem round3_func_equiv' (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_round' (lift_perm' s impl_perm3') s.i
        pure (r_spec = lift' r_impl)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  unfold impl_round0' impl_round1' impl_round2' impl_round3' spec_round'
+  unfold impl_round3' spec_round'
   hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
               core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
               core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, spec_round', impl_round3', lift', lift_lane',
+              libcrux_secrets.traits.Classify.classify, lift', lift_lane',
               lift_lane_bv', spread_to_even', impl_perm', impl_perm2', impl_perm3', lift_perm']
   round_equiv_tactic'
