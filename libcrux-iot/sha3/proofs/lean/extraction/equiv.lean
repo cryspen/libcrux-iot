@@ -777,7 +777,7 @@ open Std.Do in
 theorem pi_rho_chi_2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.i = s.i ⌝ ⦄ := by
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
@@ -945,7 +945,7 @@ open Std.Do in
 theorem round1_prc2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_2 s
-    ⦃ ⇓ r => ⌜ True ⌝ ⦄ := by prc2_proof
+    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by prc2_proof
 
 -- Round 2
 set_option maxHeartbeats 8000000 in
@@ -989,7 +989,7 @@ open Std.Do in
 theorem round2_prc2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_2 s
-    ⦃ ⇓ r => ⌜ True ⌝ ⦄ := by prc2_proof
+    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by prc2_proof
 
 -- Round 3
 set_option maxHeartbeats 8000000 in
@@ -1033,40 +1033,40 @@ open Std.Do in
 theorem round3_prc2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_2 s
-    ⦃ ⇓ r => ⌜ True ⌝ ⦄ := by prc2_proof
+    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by prc2_proof
 
 /-! ## Single-round equivalence for rounds 1–3 (composed via Triple.bind) -/
 
 -- Helper: weaken any postcondition to True
-private theorem weaken_to_true {m : Type → Type} [Monad m] [WPMonad m (PostShape.except Error PostShape.pure)]
-    {α : Type} {P : Std.Do.Assertion _} {Q : α → Prop} (x : m α) (h : ⦃P⦄ x ⦃⇓ r => ⌜Q r⌝⦄) :
-    ⦃P⦄ x ⦃⇓ r => ⌜True⌝⦄ :=
-  Std.Do.Triple.of_entails_right _ _ _ _ h
-    (Std.Do.PostCond.entails.of_left_entails fun _ => by
-      rw [← Std.Do.SPred.entails_true_intro]
-      exact Std.Do.SPred.pure_intro fun _ => trivial)
+open Std.Do in
+private theorem weaken_to_true {P : Assertion _} {Q : KeccakState → Prop}
+    (m : RustM KeccakState) (h : ⦃P⦄ m ⦃⇓ r => ⌜Q r⌝⦄) :
+    ⦃P⦄ m ⦃⇓ r => ⌜True⌝⦄ :=
+  Triple.of_entails_right _ _ _ _ h
+    (PostCond.entails.of_left_entails fun _ => by
+      rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun _ => trivial)
 
 -- Helper: strengthen precondition (Q ⊢ₛ True is trivial)
-private theorem strengthen_pre {m : Type → Type} [Monad m] [WPMonad m (PostShape.except Error PostShape.pure)]
-    {α : Type} {Q : Prop} {R : Std.Do.PostCond α _} (x : m α) (h : ⦃⌜True⌝⦄ x ⦃R⦄) :
-    ⦃⌜Q⌝⦄ x ⦃R⦄ :=
-  Std.Do.Triple.of_entails_left ⌜True⌝ _ _ _ h (by
-    rw [← Std.Do.SPred.entails_true_intro]
-    exact Std.Do.SPred.pure_intro fun _ => trivial)
+open Std.Do in
+private theorem strengthen_pre {Q : Prop} {R : PostCond KeccakState _}
+    (m : RustM KeccakState) (h : ⦃⌜True⌝⦄ m ⦃R⦄) :
+    ⦃⌜Q⌝⦄ m ⦃R⦄ :=
+  Triple.of_entails_left ⌜True⌝ _ _ _ h (by
+    rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun _ => trivial)
 
 -- Helper: vacuous triple when precondition is False
-private theorem triple_of_false {m : Type → Type} [Monad m] [WPMonad m (PostShape.except Error PostShape.pure)]
-    {α : Type} {R : Std.Do.PostCond α _} (x : m α) :
-    ⦃⌜False⌝⦄ x ⦃R⦄ := by
-  rw [Std.Do.Triple, ← Std.Do.SPred.entails_true_intro]
-  exact Std.Do.SPred.pure_intro fun h => absurd h id
+open Std.Do in
+private theorem triple_of_false {R : PostCond KeccakState _}
+    (m : RustM KeccakState) : ⦃⌜False⌝⦄ m ⦃R⦄ := by
+  rw [Triple, ← SPred.entails_true_intro]
+  exact SPred.pure_intro fun h => absurd h id
 
 open Std.Do in
 private theorem roundK_equiv
     {theta prc1 prc2 : KeccakState → RustM KeccakState}
     (theta_spec : ∀ s, ⦃⌜True⌝⦄ theta s ⦃⇓ r => ⌜r.i = s.i⌝⦄)
     (prc1_spec : ∀ s, s.i.toNat < 24 → ⦃⌜True⌝⦄ prc1 s ⦃⇓ r => ⌜r.i = s.i + 1⌝⦄)
-    (prc2_spec : ∀ s, ⦃⌜True⌝⦄ prc2 s ⦃⇓ r => ⌜True⌝⦄)
+    (prc2_spec : ∀ s, ⦃⌜True⌝⦄ prc2 s ⦃⇓ r => ⌜r.i = s.i⌝⦄)
     (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃⌜True⌝⦄
     do let s ← theta s; let s ← prc1 s; prc2 s
@@ -1077,11 +1077,15 @@ private theorem roundK_equiv
     rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => h ▸ hi
   · intro s₁
     by_cases hi₁ : s₁.i.toNat < 24
-    · apply Triple.bind (Q := fun _ => ⌜True⌝)
-      · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (prc1_spec s₁ hi₁)
-          (PostCond.entails.of_left_entails fun _ => by
-            rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun _ => trivial))
-      · intro s₂; exact strengthen_pre _ (prc2_spec s₂)
+    · apply Triple.bind (Q := fun s₂ => ⌜s₂.i = s₁.i + 1⌝)
+      · exact strengthen_pre _ (prc1_spec s₁ hi₁)
+      · intro s₂
+        by_cases hs₂ : s₂.i = s₁.i + 1
+        · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (prc2_spec s₂)
+            (PostCond.entails.of_left_entails fun _ => by
+              rw [← SPred.entails_true_intro]
+              exact SPred.pure_intro fun h => by rw [h, hs₂]))
+        · exact triple_of_false _
     · exact triple_of_false _
 
 /-! ## 4-round block equivalence.
@@ -1109,7 +1113,9 @@ theorem four_rounds_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
         (PostCond.entails.of_left_entails fun _ => by
           rw [← SPred.entails_true_intro]
           exact SPred.pure_intro fun ⟨h, _⟩ => h))
-      (fun s => weaken_to_true _ (pi_rho_chi_2_spec s))
+      (fun s => Triple.of_entails_right _ _ _ _ (pi_rho_chi_2_spec s)
+        (PostCond.entails.of_left_entails fun _ => by
+          rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun ⟨_, h⟩ => h))
       s hi0
   · intro s₁
     by_cases hi₁_eq : s₁.i = s.i + 1
