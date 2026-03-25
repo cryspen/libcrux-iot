@@ -604,7 +604,195 @@ theorem theta_comp_spec (s : KeccakState) :
       r.st = s.st
     ⌝ ⦄ := by theta_comp_proof
 
-/-! ## Main equivalence theorem -/
+/-! ## Pi permutation and permuted lift
+
+The implementation does pi_rho_chi **in-place**: it reads from pi-permuted source
+positions, applies rho+chi+iota, and writes results back without materializing the
+pi permutation as a data movement. After each round, the implementation state is in
+a permuted layout relative to the spec state.
+
+The permutation after one round is `impl_perm`: it maps an implementation lane index
+to the corresponding spec lane index. Its formula is:
+  impl_perm(5*x + z) = 5*x + (3*z + 2*x) % 5
+
+This permutation has cycle structure: 5 fixed points {0,9,13,17,21} and
+5 disjoint 4-cycles: (1 3 4 2)(5 7 8 6)(10 14 11 12)(15 16 19 18)(20 23 22 24).
+Therefore **impl_perm^4 = id**, meaning after each 4-round block the state returns
+to standard layout and `lift` works without permutation adjustment.
+-/
+
+/-- The pi permutation on lane indices: σ(5*x+y) = 5*((x+3y)%5) + x.
+    Maps an output position to the source position it reads from. -/
+def pi_perm (i : Fin 25) : Fin 25 :=
+  let x := i.val / 5
+  let y := i.val % 5
+  ⟨5 * ((x + 3 * y) % 5) + x, by omega⟩
+
+/-- The implementation-to-spec permutation after one round.
+    impl_state[k] holds the spec value at position impl_perm(k).
+    Formula: impl_perm(5*x + z) = 5*x + (3*z + 2*x) % 5 -/
+def impl_perm (i : Fin 25) : Fin 25 :=
+  let x := i.val / 5
+  let z := i.val % 5
+  ⟨5 * x + (3 * z + 2 * x) % 5, by omega⟩
+
+/-- impl_perm has order 4: after 4 rounds the lane layout returns to identity. -/
+theorem impl_perm_pow4_eq_id : ∀ i : Fin 25, impl_perm (impl_perm (impl_perm (impl_perm i))) = i := by
+  decide
+
+/-- Lift with a permutation applied to lane indices. -/
+def lift_perm (s : KeccakState) (p : Fin 25 → Fin 25) : RustArray u64 25 :=
+  RustArray.ofVec (.ofFn fun i => lift_lane s.st.toVec[(p i).val])
+
+-- lift_perm with identity is just lift.
+theorem lift_perm_id (s : KeccakState) : lift_perm s id = lift s := by
+  unfold lift_perm lift; rfl
+
+/-! ## Iota / Round constant equivalence
+
+The implementation XORs with `RC_INTERLEAVED_0[i]` (z0) and `RC_INTERLEAVED_1[i]` (z1).
+The spec XORs with `ROUND_CONSTANTS[round]` (u64).
+We need: `lift_lane_bv RC0[i] RC1[i] = ROUND_CONSTANTS[i]` for each round.
+-/
+
+-- Round constant equivalence: interleaved RC lifts to standard RC.
+-- We prove this for each concrete round by native_decide.
+open libcrux_iot_sha3.keccak in
+private theorem rc_equiv_aux (i : Fin 24) :
+    have : i.val < USize64.toNat 255 := by
+      simp only [show USize64.toNat 255 = 255 from rfl]; omega
+    lift_lane_bv
+      (RC_INTERLEAVED_0.toVec[i.val].toBitVec)
+      (RC_INTERLEAVED_1.toVec[i.val].toBitVec) =
+    (hacspec_sha3.keccak_f.ROUND_CONSTANTS.toVec[i.val].toBitVec) := by
+  revert i; decide
+
+open libcrux_iot_sha3.keccak in
+theorem rc_equiv (i : Nat) (hi : i < 24) :
+    have : i < USize64.toNat 255 := by
+      simp only [show USize64.toNat 255 = 255 from rfl]; omega
+    lift_lane_bv
+      (RC_INTERLEAVED_0.toVec[i].toBitVec)
+      (RC_INTERLEAVED_1.toVec[i].toBitVec) =
+    (hacspec_sha3.keccak_f.ROUND_CONSTANTS.toVec[i].toBitVec) :=
+  rc_equiv_aux ⟨i, hi⟩
+
+/-! ## Pi-Rho-Chi step equivalence
+
+The implementation fuses theta_apply + rho + pi + chi + iota into two monadic functions:
+- `keccakf1600_round0_pi_rho_chi_1`: processes chi-sheets for output rows y=0,1
+- `keccakf1600_round0_pi_rho_chi_2`: processes chi-sheets for output rows y=2,3,4
+
+Each sheet reads 5 source lanes (determined by the pi permutation), XORs with d
+(theta_apply), rotates (rho), applies chi, and writes back.
+
+For row y, the 5 source lanes are at indices σ(5*x+y) for x=0..4. The interleaved
+rotation amounts are derived from RHO_OFFSETS at those source positions.
+-/
+
+-- Helper: apply chi to a 5-element vector at position x.
+-- chi(x) = b[x] ⊕ (¬b[(x+1)%5] ∧ b[(x+2)%5])
+def chi_u32 (b : Fin 5 → u32) (x : Fin 5) : u32 :=
+  b x ^^^ (~~~(b ⟨(x.val + 1) % 5, by omega⟩) &&& b ⟨(x.val + 2) % 5, by omega⟩)
+
+-- Monadic spec for pi_rho_chi_1 (round 0).
+-- Processes chi-sheets for output rows y=0,1.
+-- Output lane sets: {0,6,12,18,24} (row y=0) and {2,8,14,15,21} (row y=1).
+-- The `i` field is incremented by 1 (one iota round constant consumed).
+set_option maxRecDepth 2000 in
+set_option maxHeartbeats 40000000 in
+open Std.Do in
+theorem pi_rho_chi_1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 0 s
+    ⦃ ⇓ r => ⌜
+      -- i is incremented, d is preserved
+      r.i = s.i + 1 ∧ r.d = s.d
+    ⌝ ⦄ := by
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+              libcrux_secrets.traits.Classify.classify]
+  all_goals (first | intro h₁; subst h₁ | skip)
+  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals (reduce_usize_sizes;
+             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
+             try rfl)
+  all_goals (repeat' constructor)
+  all_goals (first | rfl | skip)
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+  all_goals (first | omega | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | assumption | rfl | skip)
+  -- Remaining goals: RC_INTERLEAVED array bounds + i+1 overflow
+  all_goals (first | omega | simp_all | rfl | skip)
+  all_goals sorry -- WP of RustM.fail: needs instWP unfolding, blocked by open Std.Do scoping
+
+-- Monadic spec for pi_rho_chi_2 (round 0).
+-- Processes rows y=2,3,4. Output lane sets:
+-- {4,5,11,17,23} (y=2), {1,7,13,19,20} (y=3), {3,9,10,16,22} (y=4).
+open Std.Do in
+theorem pi_rho_chi_2_spec (s : KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
+    ⦃ ⇓ r => ⌜ r.d = s.d ⌝ ⦄ := by
+  sorry
+
+/-! ## Pi-Rho-Chi lifting theorem
+
+After pi_rho_chi_1 + pi_rho_chi_2, the lifted state (with impl_perm applied)
+matches the spec's iota(chi(pi(rho(theta_applied_state)))).
+-/
+
+open Std.Do in
+theorem pi_rho_chi_round0_lift (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let s ← libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 0 s
+       libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
+    ⦃ ⇓ r => ⌜
+      True -- placeholder: full statement involves all 25 lifted lanes
+      -- lift_perm r impl_perm = iota(chi(pi(rho(theta_apply(lift s, d))))) s.i
+    ⌝ ⦄ := by
+  sorry
+
+/-! ## Single round equivalence
+
+Combines theta (which computes c, d while preserving st) with pi_rho_chi
+(which reads st and d, applies theta_apply+rho+pi+chi+iota).
+
+After one round, the implementation state is in impl_perm-permuted layout.
+-/
+
+open Std.Do in
+theorem round0_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let s ← libcrux_iot_sha3.keccak.keccakf1600_round0_theta s
+       let s ← libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 0 s
+       libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
+    ⦃ ⇓ r => ⌜
+      True -- placeholder: lift_perm r impl_perm = spec_one_round (lift s) s.i
+    ⌝ ⦄ := by
+  sorry
+
+/-! ## 4-round block equivalence
+
+Since impl_perm^4 = id, after 4 rounds the state is back in standard layout.
+The 4-round block processes rounds i, i+1, i+2, i+3 of the spec.
+-/
+
+open Std.Do in
+theorem four_rounds_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s
+    ⦃ ⇓ r => ⌜
+      -- After 4 rounds, impl_perm^4 = id, so lift (no perm) equals 4 spec rounds
+      True -- placeholder: lift r = spec_4_rounds (lift s) s.i
+    ⌝ ⦄ := by
+  sorry
+
+/-! ## Main equivalence theorem
+
+The full keccak is 6 repetitions of the 4-round block = 24 spec rounds.
+Since each 4-round block returns the state to standard layout (impl_perm^4 = id),
+the composition is straightforward.
+-/
 
 #check hacspec_sha3.keccak_f.keccak_f
 #check libcrux_iot_sha3.keccak.keccakf1600
