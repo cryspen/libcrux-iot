@@ -12,7 +12,7 @@ theorem equivalence (s : KeccakState) :
     (do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600 s)))
 ```
 
-## Current Status: 5 sorry remaining
+## Current Status: 2 sorry remaining (four_rounds_equiv, equivalence)
 
 ### Proven theorems (no sorry):
 | Theorem | Proof technique |
@@ -27,36 +27,35 @@ theorem equivalence (s : KeccakState) :
 | `impl_perm_pow4_eq_id` | `decide` |
 | `lift_perm_id` | `unfold + rfl` |
 | `rc_equiv_aux` / `rc_equiv` | `decide` over Fin 24 |
+| `pi_rho_chi_1_spec` | `hax_mvcgen` + `rw [dif_pos]` for WP (40M heartbeats) |
 | `pi_rho_chi_2_spec` | `hax_mvcgen` (80M heartbeats, 3000 recDepth) |
+| `pi_rho_chi_round0_lift` | `Triple.bind` composing prc1 + prc2 specs |
+| `round0_equiv` | `Triple.bind` composing theta + prc1 + prc2 |
+| `roundK_theta_spec` (rounds 1-3) | `theta_comp_proof` macro (8M each) |
+| `roundK_prc1_spec` (rounds 1-3) | `hax_mvcgen` + `rw [dif_pos]` (40M each) |
+| `roundK_prc2_spec` (rounds 1-3) | `prc2_proof` macro (80M each) |
+| `roundK_compose` | Generic Triple.bind helper for 3-step round |
 
-### Sorry #1: `pi_rho_chi_1_spec` (1 remaining goal)
-- **What works**: `hax_mvcgen` + simp chain closes all goals from the ~370-line
-  monadic function EXCEPT the final WP goals for RC_INTERLEAVED array access.
-- **Remaining goal**: After `delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP`
-  and simplifying `dite_true` (s.i < 255) and `ite_false` (no uaddOverflow),
-  one goal remains that `rfl/trivial/omega/grind` don't close.
-- **Root cause**: Likely a Prop coercion or nested match reduction issue in the
-  Except WP monad. The proof is >95% complete.
-- **How to debug**: Add `trace_state` before the `sorry` to inspect the exact goal.
+### Sorry #1: `four_rounds_equiv`
+- **Structure**: `keccakf1600_4rounds` is a flat 12-step bind chain (4 rounds × 3 steps).
+  After `unfold`, it doesn't group into 3-step blocks that `roundK_compose` expects.
+- **Approach**: Either (a) 12 individual `Triple.bind` calls tracking `i.toNat` in Nat
+  (avoids usize arithmetic issues with omega), or (b) prove bind reassociation to
+  group into 4 × 3-step blocks.
+- **Blocker**: usize arithmetic (`s.i + 1 + 1 = s.i + 2`) doesn't simplify automatically;
+  needs explicit `USize64.toNat` conversion at each step.
+- **All sub-step specs are proven** — only the composition plumbing remains.
 
-### Sorry #2–5: Placeholder theorems (postcondition is `True`)
-These theorems have `True` as their postcondition. They need to be:
-1. **Strengthened** to the actual equivalence statements
-2. **Proven** by composing lower-level specs
+### Sorry #2: `equivalence` (top-level)
+- Composes 6 × `four_rounds_equiv` via `fold_range` + loop invariant.
+- Use `Spec.forIn_monoLoopCombinator` from SpecLemmas.lean.
+- Depends on `four_rounds_equiv`.
 
-| Theorem | Needed postcondition | Approach |
-|---------|---------------------|----------|
-| `pi_rho_chi_round0_lift` | `lift_perm r impl_perm = iota(chi(pi(rho(theta_apply(...)))))` | Compose pi_rho_chi_1_spec + pi_rho_chi_2_spec + lifting lemmas |
-| `round0_equiv` | `lift_perm r impl_perm = spec_one_round (lift s) s.i` | Chain theta_comp_spec + pi_rho_chi_round0_lift |
-| `four_rounds_equiv` | `lift r = spec_4_rounds (lift s) s.i` | Compose 4 round equivs (impl_perm^4 = id) |
-| `equivalence` | Full spec equality | Compose 6 × four_rounds_equiv |
-
-**Composition approach**: Use `Std.Do.Triple` API:
+**Established composition patterns**:
 - `Triple.bind` for sequencing Hoare triples
-- `Triple.of_entails_right` for weakening postconditions
-- `Triple.of_entails_left` for weakening preconditions
-- These are in `.lake/packages/Hax/.../Std/Do/Triple/Basic.lean`
-- Note: `hax_mvcgen` on composed functions hits simp step/recursion limits
+- `Triple.of_entails_right` + `PostCond.entails.of_left_entails` for weakening
+- `strengthen_pre` / `weaken_to_true` / `triple_of_neg` helpers
+- `by_cases` to bridge SPred preconditions to Lean-level hypotheses
 
 ## Key Architecture
 
