@@ -1127,10 +1127,99 @@ theorem four_rounds_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s
     ⦃ ⇓ r => ⌜ True ⌝ ⦄ := by
-  -- 4rounds is a flat 12-step bind chain. We use 12 Triple.bind calls,
-  -- tracking i through each step: theta preserves, prc1 increments, prc2 preserves.
+  -- 4rounds is a flat 12-step bind chain. We compose with Triple.bind,
+  -- tracking i: theta preserves, prc1 increments, prc2 preserves.
+  -- After round K, i = s.i + (K+1). Precondition s.i + 4 ≤ 24 ensures all 4 rounds succeed.
   unfold libcrux_iot_sha3.keccak.keccakf1600_4rounds
-  sorry
+  -- Use the flat 12-step chain with step-by-step Triple.bind.
+  -- Each step uses strengthen_pre to go from ⌜eq⌝ to ⌜True⌝ + by_cases for vacuous case.
+  -- Step 1: theta0 (preserves i)
+  apply Triple.bind (Q := fun s₁ => ⌜s₁.i = s.i⌝)
+  · exact round0_theta_i s
+  · intro s₁; by_cases hs : s₁.i = s.i
+    -- Step 2: prc1_0 (increments i)
+    · apply Triple.bind (Q := fun s₂ => ⌜s₂.i = s.i + 1⌝)
+      · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (round0_prc1_i s₁ (by omega))
+          (PostCond.entails.of_left_entails fun _ => by
+            rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+      · intro s₂; by_cases hs₂ : s₂.i = s.i + 1
+        -- Step 3: prc2_0 (preserves i)
+        · apply Triple.bind (Q := fun s₃ => ⌜s₃.i = s.i + 1⌝)
+          · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (round0_prc2_i s₂)
+              (PostCond.entails.of_left_entails fun _ => by
+                rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+          · intro s₃; by_cases hs₃ : s₃.i = s.i + 1
+            -- Step 4: theta1 (preserves i)
+            · apply Triple.bind (Q := fun s₄ => ⌜s₄.i = s.i + 1⌝)
+              · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (round1_theta_spec s₃)
+                  (PostCond.entails.of_left_entails fun _ => by
+                    rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+              · intro s₄; by_cases hs₄ : s₄.i = s.i + 1
+                -- Step 5: prc1_1 (increments i)
+                · apply Triple.bind (Q := fun s₅ => ⌜s₅.i = s.i + 2⌝)
+                  · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (round1_prc1_spec s₄ (by omega))
+                      (PostCond.entails.of_left_entails fun _ => by
+                        rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+                  · intro s₅; by_cases hs₅ : s₅.i = s.i + 2
+                    -- Step 6: prc2_1 (preserves i)
+                    · apply Triple.bind (Q := fun s₆ => ⌜s₆.i = s.i + 2⌝)
+                      · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (round1_prc2_spec s₅)
+                          (PostCond.entails.of_left_entails fun _ => by
+                            rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+                      · intro s₆; by_cases hs₆ : s₆.i = s.i + 2
+                        -- Step 7: theta2 (preserves i)
+                        · apply Triple.bind (Q := fun s₇ => ⌜s₇.i = s.i + 2⌝)
+                          · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (round2_theta_spec s₆)
+                              (PostCond.entails.of_left_entails fun _ => by
+                                rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+                          · intro s₇; by_cases hs₇ : s₇.i = s.i + 2
+                            -- Step 8: prc1_2 (increments i)
+                            · apply Triple.bind (Q := fun s₈ => ⌜s₈.i = s.i + 3⌝)
+                              · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (round2_prc1_spec s₇ (by omega))
+                                  (PostCond.entails.of_left_entails fun _ => by
+                                    rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+                              · intro s₈; by_cases hs₈ : s₈.i = s.i + 3
+                                -- Step 9: prc2_2 (preserves i)
+                                · apply Triple.bind (Q := fun s₉ => ⌜s₉.i = s.i + 3⌝)
+                                  · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (round2_prc2_spec s₈)
+                                      (PostCond.entails.of_left_entails fun _ => by
+                                        rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+                                  · intro s₉; by_cases hs₉ : s₉.i = s.i + 3
+                                    -- Step 10: theta3 (preserves i)
+                                    · apply Triple.bind (Q := fun s₁₀ => ⌜s₁₀.i = s.i + 3⌝)
+                                      · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (round3_theta_spec s₉)
+                                          (PostCond.entails.of_left_entails fun _ => by
+                                            rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+                                      · intro s₁₀; by_cases hs₁₀ : s₁₀.i = s.i + 3
+                                        -- Step 11: prc1_3 (increments i)
+                                        · apply Triple.bind (Q := fun s₁₁ => ⌜True⌝)
+                                          · exact strengthen_pre _ (weaken_to_true _ (round3_prc1_spec s₁₀ (by omega)))
+                                          · intro s₁₁
+                                            -- Step 12: prc2_3 + pure (last step, postcondition True)
+                                            apply strengthen_pre _
+                                            apply Triple.bind (Q := fun _ => ⌜True⌝)
+                                            · exact weaken_to_true _ (round3_prc2_spec s₁₁)
+                                            · intro s₁₂; exact Triple.pure s₁₂ (SPred.entails.refl _)
+                                        · all_goals (rw [Triple, show _ = False from propext ⟨(absurd · ‹_›), False.elim⟩]
+                                            rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id)
+                                    · all_goals (rw [Triple, show _ = False from propext ⟨(absurd · ‹_›), False.elim⟩]
+                                        rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id)
+                                · all_goals (rw [Triple, show _ = False from propext ⟨(absurd · ‹_›), False.elim⟩]
+                                    rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id)
+                            · all_goals (rw [Triple, show _ = False from propext ⟨(absurd · ‹_›), False.elim⟩]
+                                rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id)
+                        · all_goals (rw [Triple, show _ = False from propext ⟨(absurd · ‹_›), False.elim⟩]
+                            rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id)
+                    · all_goals (rw [Triple, show _ = False from propext ⟨(absurd · ‹_›), False.elim⟩]
+                        rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id)
+                · all_goals (rw [Triple, show _ = False from propext ⟨(absurd · ‹_›), False.elim⟩]
+                    rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id)
+            · all_goals (rw [Triple, show _ = False from propext ⟨(absurd · ‹_›), False.elim⟩]
+                rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id)
+        · all_goals (rw [Triple, show _ = False from propext ⟨(absurd · ‹_›), False.elim⟩]
+            rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id)
+    · rw [Triple, show (s₁.i = s.i) = False from propext ⟨(absurd · hs), False.elim⟩]
+      rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id
       s hi0
   · intro s₁
     by_cases hi₁_eq : s₁.i = s.i + 1
