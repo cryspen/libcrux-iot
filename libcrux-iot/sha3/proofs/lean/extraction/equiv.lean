@@ -666,6 +666,11 @@ def impl_perm (i : Fin 25) : Fin 25 :=
   let z := i.val % 5
   ⟨5 * x + (3 * z + 2 * x) % 5, by omega⟩
 
+/-- impl_perm composed twice. Pre-computed to avoid simp step explosion in hax_mvcgen. -/
+def impl_perm2 (i : Fin 25) : Fin 25 := impl_perm (impl_perm i)
+/-- impl_perm composed three times. -/
+def impl_perm3 (i : Fin 25) : Fin 25 := impl_perm (impl_perm (impl_perm i))
+
 /-- impl_perm has order 4: after 4 rounds the lane layout returns to identity. -/
 theorem impl_perm_pow4_eq_id : ∀ i : Fin 25, impl_perm (impl_perm (impl_perm (impl_perm i))) = i := by
   decide
