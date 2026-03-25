@@ -12,48 +12,24 @@ set_option linter.unusedVariables false
 set_option maxHeartbeats 1000000
 open libcrux_iot_sha3
 
-/- [core::iter::range::{core::iter::range::Step for i32}::backward_checked]:
-   Source: '/rustc/library/core/src/iter/range.rs', lines 340:16-340:74
-   Name pattern: [core::iter::range::{core::iter::range::Step<i32>}::backward_checked] -/
-@[rust_fun
-  "core::iter::range::{core::iter::range::Step<i32>}::backward_checked"]
-axiom I32.Insts.CoreIterRangeStep.backward_checked
-  : Std.I32 → Std.Usize → Result (Option Std.I32)
-
-/- [core::iter::range::{core::iter::range::Step for i32}::forward_checked]:
-   Source: '/rustc/library/core/src/iter/range.rs', lines 319:16-319:73
-   Name pattern: [core::iter::range::{core::iter::range::Step<i32>}::forward_checked] -/
-@[rust_fun
-  "core::iter::range::{core::iter::range::Step<i32>}::forward_checked"]
-axiom I32.Insts.CoreIterRangeStep.forward_checked
-  : Std.I32 → Std.Usize → Result (Option Std.I32)
-
-/- [core::iter::range::{core::iter::range::Step for i32}::steps_between]:
-   Source: '/rustc/library/core/src/iter/range.rs', lines 304:16-304:84
-   Name pattern: [core::iter::range::{core::iter::range::Step<i32>}::steps_between] -/
-@[rust_fun "core::iter::range::{core::iter::range::Step<i32>}::steps_between"]
-axiom I32.Insts.CoreIterRangeStep.steps_between
-  : Std.I32 → Std.I32 → Result (Std.Usize × (Option Std.Usize))
-
 /- [libcrux_secrets::int::public_integers::{libcrux_secrets::traits::Classify<T> for T}::classify]:
    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libcrux-secrets-0.0.5/src/int/public_integers.rs', lines 27:4-27:29
    Name pattern: [libcrux_secrets::int::public_integers::{libcrux_secrets::traits::Classify<@T, @T>}::classify] -/
 @[rust_fun
   "libcrux_secrets::int::public_integers::{libcrux_secrets::traits::Classify<@T, @T>}::classify"]
-axiom libcrux_secrets.traits.Classify.Blanket.classify
-  {T : Type} : T → Result T
+def libcrux_secrets.traits.Classify.Blanket.classify
+  {T : Type} : T → Result T := .ok
 
 /- [libcrux_secrets::int::{libcrux_secrets::int::CastOps for u64}::as_u32]:
    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libcrux-secrets-0.0.5/src/int.rs', lines 83:12-83:34
    Name pattern: [libcrux_secrets::int::{libcrux_secrets::int::CastOps<u64>}::as_u32] -/
 @[rust_fun
   "libcrux_secrets::int::{libcrux_secrets::int::CastOps<u64>}::as_u32"]
-axiom U64.Insts.Libcrux_secretsIntCastOps.as_u32 : Std.U64 → Result Std.U32
+def U64.Insts.Libcrux_secretsIntCastOps.as_u32 : Std.U64 → Result Std.U32 := fun x => .ok (x.cast _)
 
 /- [libcrux_secrets::int::{libcrux_secrets::int::CastOps for u32}::as_u64]:
    Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libcrux-secrets-0.0.5/src/int.rs', lines 91:12-91:34
    Name pattern: [libcrux_secrets::int::{libcrux_secrets::int::CastOps<u32>}::as_u64] -/
 @[rust_fun
   "libcrux_secrets::int::{libcrux_secrets::int::CastOps<u32>}::as_u64"]
-axiom U32.Insts.Libcrux_secretsIntCastOps.as_u64 : Std.U32 → Result Std.U64
-
+def U32.Insts.Libcrux_secretsIntCastOps.as_u64 : Std.U32 → Result Std.U64 := fun x => .ok (x.cast _)

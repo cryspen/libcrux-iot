@@ -1,7 +1,7 @@
 CHARON_EXE = charon
 AENEAS_EXE = aeneas
 
-AENEAS_OPTIONS ?= -loops-to-rec
+AENEAS_OPTIONS ?=
 
 .PHONY: extract
 extract: ../libcrux_iot_sha3.llbc

@@ -16,8 +16,10 @@ open hacspec_sha3
    Source: '/rustc/library/core/src/array/mod.rs', lines 109:0-111:52
    Name pattern: [core::array::from_fn] -/
 @[rust_fun "core::array::from_fn"]
-axiom core.array.from_fn
+def core.array.from_fn'
   {T : Type} {F : Type} (N : Std.Usize) (opsfunctionFnMutFTupleUsizeTInst :
   core.ops.function.FnMut F Std.Usize T) :
-  F → Result (Array T N)
-
+  F → Result (Array T N) := fun f => do
+    let vec ← (Vector.finRange N.val).mapM fun ⟨i, _⟩  => do
+      pure (← core.ops.function.FnMut.call_mut opsfunctionFnMutFTupleUsizeTInst f ⟨i, by grind⟩).1
+    pure ⟨vec.toList, vec.size_toArray⟩

@@ -7,7 +7,6 @@ open Aeneas Aeneas.Std Result ControlFlow Error
 set_option linter.dupNamespace false
 set_option linter.hashCommand false
 set_option linter.unusedVariables false
-set_option maxRecDepth 1000
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
@@ -23,18 +22,6 @@ namespace libcrux_iot_sha3
 @[reducible, rust_trait_impl "core::fmt::Display<usize>"]
 def Usize.Insts.CoreFmtDisplay : core.fmt.Display Std.Usize := {
   fmt := core.fmt.num.imp.DisplayUsize.fmt
-}
-
-/- Trait implementation: [core::iter::range::{core::iter::range::Step for i32}]
-   Source: '/rustc/library/core/src/iter/range.rs', lines 299:12-299:37
-   Name pattern: [core::iter::range::Step<i32>] -/
-@[reducible, rust_trait_impl "core::iter::range::Step<i32>"]
-def I32.Insts.CoreIterRangeStep : core.iter.range.Step Std.I32 := {
-  cloneInst := core.clone.CloneI32
-  partialOrdInst := core.cmp.PartialOrdI32
-  steps_between := I32.Insts.CoreIterRangeStep.steps_between
-  forward_checked := I32.Insts.CoreIterRangeStep.forward_checked
-  backward_checked := I32.Insts.CoreIterRangeStep.backward_checked
 }
 
 /- [libcrux_iot_sha3::keccak::{libcrux_iot_sha3::keccak::KeccakXofState<RATE>}::zero_block]:
@@ -163,36 +150,43 @@ def state.load_block_2u32_loop0
   (iter : core.ops.range.Range Std.Usize) :
   Result (Array lane.Lane2U32 25#usize)
   := do
-  let (o, iter1) ←
-    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
-  match o with
-  | none => ok state_flat
-  | some i =>
-    let i1 ← 8#usize * i
-    let offset ← start + i1
-    let i2 ← offset + 4#usize
-    let s ←
-      core.slice.index.Slice.index (core.slice.index.SliceIndexRangeUsizeSlice
-        Std.U8) blocks { start := offset, «end» := i2 }
-    let r ←
-      core.array.TryFromArrayCopySlice.try_from 4#usize core.marker.CopyU8 s
-    let a ← core.result.Result.unwrap core.fmt.DebugTryFromSliceError r
-    let a1 ← lift (core.num.U32.from_le_bytes a)
-    let i3 ← offset + 8#usize
-    let s1 ←
-      core.slice.index.Slice.index (core.slice.index.SliceIndexRangeUsizeSlice
-        Std.U8) blocks { start := i2, «end» := i3 }
-    let r1 ←
-      core.array.TryFromArrayCopySlice.try_from 4#usize core.marker.CopyU8 s1
-    let a2 ← core.result.Result.unwrap core.fmt.DebugTryFromSliceError r1
-    let b ← lift (core.num.U32.from_le_bytes a2)
-    let lu ←
-      lane.Lane2U32.Insts.CoreConvertFromArrayU322.from
-        (Array.make 2#usize [ a1, b ])
-    let lu1 ← lane.Lane2U32.interleave lu
-    let a3 ← Array.update state_flat i lu1
-    state.load_block_2u32_loop0 blocks start a3 iter1
-partial_fixpoint
+  loop
+    (fun (state_flat1, iter1) =>
+      do
+      let (o, iter2) ←
+        core.iter.range.IteratorRange.next core.iter.range.StepUsize iter1
+      match o with
+      | none => ok (done state_flat1)
+      | some i =>
+        let i1 ← 8#usize * i
+        let offset ← start + i1
+        let i2 ← offset + 4#usize
+        let s ←
+          core.slice.index.Slice.index
+            (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) blocks
+            { start := offset, «end» := i2 }
+        let r ←
+          core.array.TryFromArrayCopySlice.try_from 4#usize core.marker.CopyU8
+            s
+        let a ← core.result.Result.unwrap core.fmt.DebugTryFromSliceError r
+        let a1 ← lift (core.num.U32.from_le_bytes a)
+        let i3 ← offset + 8#usize
+        let s1 ←
+          core.slice.index.Slice.index
+            (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) blocks
+            { start := i2, «end» := i3 }
+        let r1 ←
+          core.array.TryFromArrayCopySlice.try_from 4#usize core.marker.CopyU8
+            s1
+        let a2 ← core.result.Result.unwrap core.fmt.DebugTryFromSliceError r1
+        let b ← lift (core.num.U32.from_le_bytes a2)
+        let lu ←
+          lane.Lane2U32.Insts.CoreConvertFromArrayU322.from
+            (Array.make 2#usize [ a1, b ])
+        let lu1 ← lane.Lane2U32.interleave lu
+        let a3 ← Array.update state_flat1 i lu1
+        ok (cont (a3, iter2)))
+    (state_flat, iter)
 
 /- [libcrux_iot_sha3::state::load_block_2u32]: loop 1:
    Source: 'sha3/src/state.rs', lines 116:4-123:5 -/
@@ -201,25 +195,32 @@ def state.load_block_2u32_loop1
   (iter : core.ops.range.Range Std.Usize) :
   Result state.KeccakState
   := do
-  let (o, iter1) ←
-    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
-  match o with
-  | none => ok s
-  | some i =>
-    let i1 ← i / 5#usize
-    let i2 ← i % 5#usize
-    let got ← state.KeccakState.get_lane s i1 i2
-    let i3 ← lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index got 0#usize
-    let lu ← Array.index_usize state_flat i
-    let i4 ← lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index lu 0#usize
-    let i5 ← lift (i3 ^^^ i4)
-    let i6 ← lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index got 1#usize
-    let i7 ← lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index lu 1#usize
-    let i8 ← lift (i6 ^^^ i7)
-    let lu1 ← lane.Lane2U32.from_ints (Array.make 2#usize [ i5, i8 ])
-    let s1 ← state.KeccakState.set_lane s i1 i2 lu1
-    state.load_block_2u32_loop1 s1 state_flat iter1
-partial_fixpoint
+  loop
+    (fun (s1, iter1) =>
+      do
+      let (o, iter2) ←
+        core.iter.range.IteratorRange.next core.iter.range.StepUsize iter1
+      match o with
+      | none => ok (done s1)
+      | some i =>
+        let i1 ← i / 5#usize
+        let i2 ← i % 5#usize
+        let got ← state.KeccakState.get_lane s1 i1 i2
+        let i3 ←
+          lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index got 0#usize
+        let lu ← Array.index_usize state_flat i
+        let i4 ←
+          lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index lu 0#usize
+        let i5 ← lift (i3 ^^^ i4)
+        let i6 ←
+          lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index got 1#usize
+        let i7 ←
+          lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index lu 1#usize
+        let i8 ← lift (i6 ^^^ i7)
+        let lu1 ← lane.Lane2U32.from_ints (Array.make 2#usize [ i5, i8 ])
+        let s2 ← state.KeccakState.set_lane s1 i1 i2 lu1
+        ok (cont (s2, iter2)))
+    (s, iter)
 
 /- [libcrux_iot_sha3::state::load_block_2u32]:
    Source: 'sha3/src/state.rs', lines 106:0-124:1 -/
@@ -776,12 +777,10 @@ def keccak.keccakf1600_round3_pi_chi_iota_z1
   let i5 ← lift (~~~ bx1)
   let i6 ← lift (i5 &&& bx2)
   let i7 ← lift (bx0 ^^^ i6)
-  let i8 ← Array.index_usize keccak.RC_INTERLEAVED_1 s.i
-  let ax0 ← lift (i7 ^^^ i8)
-  let i9 ← s.i + 1#usize
-  let s1 ←
-    state.KeccakState.set_with_zeta { s with i := i9 } 0#usize 0#usize 1#usize
-      ax0
+  let i8 ← BASE_ROUND + 3#usize
+  let i9 ← Array.index_usize keccak.RC_INTERLEAVED_1 i8
+  let ax0 ← lift (i7 ^^^ i9)
+  let s1 ← state.KeccakState.set_with_zeta s 0#usize 0#usize 1#usize ax0
   let i10 ← lift (~~~ bx2)
   let i11 ← lift (i10 &&& bx3)
   let ax1 ← lift (bx1 ^^^ i11)
@@ -866,24 +865,25 @@ def keccak.keccakf1600_round3_pi_chi_iota_z0
   let i5 ← lift (~~~ bx1)
   let i6 ← lift (i5 &&& bx2)
   let i7 ← lift (bx0 ^^^ i6)
-  let i8 ← Array.index_usize keccak.RC_INTERLEAVED_0 s.i
-  let ax0 ← lift (i7 ^^^ i8)
+  let i8 ← BASE_ROUND + 3#usize
+  let i9 ← Array.index_usize keccak.RC_INTERLEAVED_0 i8
+  let ax0 ← lift (i7 ^^^ i9)
   let s1 ← state.KeccakState.set_with_zeta s 0#usize 0#usize 0#usize ax0
-  let i9 ← lift (~~~ bx2)
-  let i10 ← lift (i9 &&& bx3)
-  let ax1 ← lift (bx1 ^^^ i10)
+  let i10 ← lift (~~~ bx2)
+  let i11 ← lift (i10 &&& bx3)
+  let ax1 ← lift (bx1 ^^^ i11)
   let s2 ← state.KeccakState.set_with_zeta s1 0#usize 1#usize 0#usize ax1
-  let i11 ← lift (~~~ bx3)
-  let i12 ← lift (i11 &&& bx4)
-  let ax2 ← lift (bx2 ^^^ i12)
+  let i12 ← lift (~~~ bx3)
+  let i13 ← lift (i12 &&& bx4)
+  let ax2 ← lift (bx2 ^^^ i13)
   let s3 ← state.KeccakState.set_with_zeta s2 0#usize 2#usize 0#usize ax2
-  let i13 ← lift (~~~ bx4)
-  let i14 ← lift (i13 &&& bx0)
-  let ax3 ← lift (bx3 ^^^ i14)
+  let i14 ← lift (~~~ bx4)
+  let i15 ← lift (i14 &&& bx0)
+  let ax3 ← lift (bx3 ^^^ i15)
   let s4 ← state.KeccakState.set_with_zeta s3 0#usize 3#usize 0#usize ax3
-  let i15 ← lift (~~~ bx0)
-  let i16 ← lift (i15 &&& bx1)
-  let ax4 ← lift (bx4 ^^^ i16)
+  let i16 ← lift (~~~ bx0)
+  let i17 ← lift (i16 &&& bx1)
+  let ax4 ← lift (bx4 ^^^ i17)
   state.KeccakState.set_with_zeta s4 0#usize 4#usize 0#usize ax4
 
 /- [libcrux_iot_sha3::keccak::keccakf1600_round3_theta_d]:
@@ -1644,12 +1644,10 @@ def keccak.keccakf1600_round2_pi_chi_iota_z1
   let i5 ← lift (~~~ bx1)
   let i6 ← lift (i5 &&& bx2)
   let i7 ← lift (bx0 ^^^ i6)
-  let i8 ← Array.index_usize keccak.RC_INTERLEAVED_1 s.i
-  let ax0 ← lift (i7 ^^^ i8)
-  let i9 ← s.i + 1#usize
-  let s1 ←
-    state.KeccakState.set_with_zeta { s with i := i9 } 0#usize 0#usize 1#usize
-      ax0
+  let i8 ← BASE_ROUND + 2#usize
+  let i9 ← Array.index_usize keccak.RC_INTERLEAVED_1 i8
+  let ax0 ← lift (i7 ^^^ i9)
+  let s1 ← state.KeccakState.set_with_zeta s 0#usize 0#usize 1#usize ax0
   let i10 ← lift (~~~ bx2)
   let i11 ← lift (i10 &&& bx3)
   let ax1 ← lift (bx1 ^^^ i11)
@@ -1701,24 +1699,25 @@ def keccak.keccakf1600_round2_pi_chi_iota_z0
   let i5 ← lift (~~~ bx1)
   let i6 ← lift (i5 &&& bx2)
   let i7 ← lift (bx0 ^^^ i6)
-  let i8 ← Array.index_usize keccak.RC_INTERLEAVED_0 s.i
-  let ax0 ← lift (i7 ^^^ i8)
+  let i8 ← BASE_ROUND + 2#usize
+  let i9 ← Array.index_usize keccak.RC_INTERLEAVED_0 i8
+  let ax0 ← lift (i7 ^^^ i9)
   let s1 ← state.KeccakState.set_with_zeta s 0#usize 0#usize 0#usize ax0
-  let i9 ← lift (~~~ bx2)
-  let i10 ← lift (i9 &&& bx3)
-  let ax1 ← lift (bx1 ^^^ i10)
+  let i10 ← lift (~~~ bx2)
+  let i11 ← lift (i10 &&& bx3)
+  let ax1 ← lift (bx1 ^^^ i11)
   let s2 ← state.KeccakState.set_with_zeta s1 2#usize 1#usize 1#usize ax1
-  let i11 ← lift (~~~ bx3)
-  let i12 ← lift (i11 &&& bx4)
-  let ax2 ← lift (bx2 ^^^ i12)
+  let i12 ← lift (~~~ bx3)
+  let i13 ← lift (i12 &&& bx4)
+  let ax2 ← lift (bx2 ^^^ i13)
   let s3 ← state.KeccakState.set_with_zeta s2 4#usize 2#usize 0#usize ax2
-  let i13 ← lift (~~~ bx4)
-  let i14 ← lift (i13 &&& bx0)
-  let ax3 ← lift (bx3 ^^^ i14)
+  let i14 ← lift (~~~ bx4)
+  let i15 ← lift (i14 &&& bx0)
+  let ax3 ← lift (bx3 ^^^ i15)
   let s4 ← state.KeccakState.set_with_zeta s3 1#usize 3#usize 0#usize ax3
-  let i15 ← lift (~~~ bx0)
-  let i16 ← lift (i15 &&& bx1)
-  let ax4 ← lift (bx4 ^^^ i16)
+  let i16 ← lift (~~~ bx0)
+  let i17 ← lift (i16 &&& bx1)
+  let ax4 ← lift (bx4 ^^^ i17)
   state.KeccakState.set_with_zeta s4 3#usize 4#usize 1#usize ax4
 
 /- [libcrux_iot_sha3::keccak::keccakf1600_round2_theta_d]:
@@ -2479,12 +2478,10 @@ def keccak.keccakf1600_round1_pi_chi_iota_z1
   let i5 ← lift (~~~ bx1)
   let i6 ← lift (i5 &&& bx2)
   let i7 ← lift (bx0 ^^^ i6)
-  let i8 ← Array.index_usize keccak.RC_INTERLEAVED_1 s.i
-  let ax0 ← lift (i7 ^^^ i8)
-  let i9 ← s.i + 1#usize
-  let s1 ←
-    state.KeccakState.set_with_zeta { s with i := i9 } 0#usize 0#usize 1#usize
-      ax0
+  let i8 ← BASE_ROUND + 1#usize
+  let i9 ← Array.index_usize keccak.RC_INTERLEAVED_1 i8
+  let ax0 ← lift (i7 ^^^ i9)
+  let s1 ← state.KeccakState.set_with_zeta s 0#usize 0#usize 1#usize ax0
   let i10 ← lift (~~~ bx2)
   let i11 ← lift (i10 &&& bx3)
   let ax1 ← lift (bx1 ^^^ i11)
@@ -2536,24 +2533,25 @@ def keccak.keccakf1600_round1_pi_chi_iota_z0
   let i5 ← lift (~~~ bx1)
   let i6 ← lift (i5 &&& bx2)
   let i7 ← lift (bx0 ^^^ i6)
-  let i8 ← Array.index_usize keccak.RC_INTERLEAVED_0 s.i
-  let ax0 ← lift (i7 ^^^ i8)
+  let i8 ← BASE_ROUND + 1#usize
+  let i9 ← Array.index_usize keccak.RC_INTERLEAVED_0 i8
+  let ax0 ← lift (i7 ^^^ i9)
   let s1 ← state.KeccakState.set_with_zeta s 0#usize 0#usize 0#usize ax0
-  let i9 ← lift (~~~ bx2)
-  let i10 ← lift (i9 &&& bx3)
-  let ax1 ← lift (bx1 ^^^ i10)
+  let i10 ← lift (~~~ bx2)
+  let i11 ← lift (i10 &&& bx3)
+  let ax1 ← lift (bx1 ^^^ i11)
   let s2 ← state.KeccakState.set_with_zeta s1 3#usize 1#usize 1#usize ax1
-  let i11 ← lift (~~~ bx3)
-  let i12 ← lift (i11 &&& bx4)
-  let ax2 ← lift (bx2 ^^^ i12)
+  let i12 ← lift (~~~ bx3)
+  let i13 ← lift (i12 &&& bx4)
+  let ax2 ← lift (bx2 ^^^ i13)
   let s3 ← state.KeccakState.set_with_zeta s2 1#usize 2#usize 1#usize ax2
-  let i13 ← lift (~~~ bx4)
-  let i14 ← lift (i13 &&& bx0)
-  let ax3 ← lift (bx3 ^^^ i14)
+  let i14 ← lift (~~~ bx4)
+  let i15 ← lift (i14 &&& bx0)
+  let ax3 ← lift (bx3 ^^^ i15)
   let s4 ← state.KeccakState.set_with_zeta s3 4#usize 3#usize 1#usize ax3
-  let i15 ← lift (~~~ bx0)
-  let i16 ← lift (i15 &&& bx1)
-  let ax4 ← lift (bx4 ^^^ i16)
+  let i16 ← lift (~~~ bx0)
+  let i17 ← lift (i16 &&& bx1)
+  let ax4 ← lift (bx4 ^^^ i17)
   state.KeccakState.set_with_zeta s4 2#usize 4#usize 1#usize ax4
 
 /- [libcrux_iot_sha3::keccak::keccakf1600_round1_theta_d]:
@@ -3314,12 +3312,10 @@ def keccak.keccakf1600_round0_pi_chi_iota_z1
   let i5 ← lift (~~~ bx1)
   let i6 ← lift (i5 &&& bx2)
   let i7 ← lift (bx0 ^^^ i6)
-  let i8 ← Array.index_usize keccak.RC_INTERLEAVED_1 s.i
-  let ax0 ← lift (i7 ^^^ i8)
-  let i9 ← s.i + 1#usize
-  let s1 ←
-    state.KeccakState.set_with_zeta { s with i := i9 } 0#usize 0#usize 1#usize
-      ax0
+  let i8 ← BASE_ROUND + 0#usize
+  let i9 ← Array.index_usize keccak.RC_INTERLEAVED_1 i8
+  let ax0 ← lift (i7 ^^^ i9)
+  let s1 ← state.KeccakState.set_with_zeta s 0#usize 0#usize 1#usize ax0
   let i10 ← lift (~~~ bx2)
   let i11 ← lift (i10 &&& bx3)
   let ax1 ← lift (bx1 ^^^ i11)
@@ -3371,24 +3367,25 @@ def keccak.keccakf1600_round0_pi_chi_iota_z0
   let i5 ← lift (~~~ bx1)
   let i6 ← lift (i5 &&& bx2)
   let i7 ← lift (bx0 ^^^ i6)
-  let i8 ← Array.index_usize keccak.RC_INTERLEAVED_0 s.i
-  let ax0 ← lift (i7 ^^^ i8)
+  let i8 ← BASE_ROUND + 0#usize
+  let i9 ← Array.index_usize keccak.RC_INTERLEAVED_0 i8
+  let ax0 ← lift (i7 ^^^ i9)
   let s1 ← state.KeccakState.set_with_zeta s 0#usize 0#usize 0#usize ax0
-  let i9 ← lift (~~~ bx2)
-  let i10 ← lift (i9 &&& bx3)
-  let ax1 ← lift (bx1 ^^^ i10)
+  let i10 ← lift (~~~ bx2)
+  let i11 ← lift (i10 &&& bx3)
+  let ax1 ← lift (bx1 ^^^ i11)
   let s2 ← state.KeccakState.set_with_zeta s1 1#usize 1#usize 0#usize ax1
-  let i11 ← lift (~~~ bx3)
-  let i12 ← lift (i11 &&& bx4)
-  let ax2 ← lift (bx2 ^^^ i12)
+  let i12 ← lift (~~~ bx3)
+  let i13 ← lift (i12 &&& bx4)
+  let ax2 ← lift (bx2 ^^^ i13)
   let s3 ← state.KeccakState.set_with_zeta s2 2#usize 2#usize 1#usize ax2
-  let i13 ← lift (~~~ bx4)
-  let i14 ← lift (i13 &&& bx0)
-  let ax3 ← lift (bx3 ^^^ i14)
+  let i14 ← lift (~~~ bx4)
+  let i15 ← lift (i14 &&& bx0)
+  let ax3 ← lift (bx3 ^^^ i15)
   let s4 ← state.KeccakState.set_with_zeta s3 3#usize 3#usize 1#usize ax3
-  let i15 ← lift (~~~ bx0)
-  let i16 ← lift (i15 &&& bx1)
-  let ax4 ← lift (bx4 ^^^ i16)
+  let i16 ← lift (~~~ bx0)
+  let i17 ← lift (i16 &&& bx1)
+  let ax4 ← lift (bx4 ^^^ i17)
   state.KeccakState.set_with_zeta s4 4#usize 4#usize 0#usize ax4
 
 /- [libcrux_iot_sha3::keccak::keccakf1600_round0_theta_d]:
@@ -3726,26 +3723,16 @@ def keccak.keccakf1600_4rounds
   let s3 ← keccak.keccakf1600_round2 BASE_ROUND s2
   keccak.keccakf1600_round3 BASE_ROUND s3
 
-/- [libcrux_iot_sha3::keccak::keccakf1600]: loop 0:
-   Source: 'sha3/src/keccak.rs', lines 2348:4-2351:5 -/
-def keccak.keccakf1600_loop
-  (s : state.KeccakState) (iter : core.ops.range.Range Std.I32) :
-  Result state.KeccakState
-  := do
-  let (o, iter1) ←
-    core.iter.range.IteratorRange.next I32.Insts.CoreIterRangeStep iter
-  match o with
-  | none => ok s
-  | some _ =>
-    let s1 ← keccak.keccakf1600_4rounds 0#usize s
-    keccak.keccakf1600_loop s1 iter1
-partial_fixpoint
-
 /- [libcrux_iot_sha3::keccak::keccakf1600]:
-   Source: 'sha3/src/keccak.rs', lines 2346:0-2362:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2346:0-2356:1 -/
 def keccak.keccakf1600 (s : state.KeccakState) : Result state.KeccakState := do
-  let s1 ← keccak.keccakf1600_loop s { start := 0#i32, «end» := 6#i32 }
-  ok { s1 with i := 0#usize }
+  let s1 ← keccak.keccakf1600_4rounds 0#usize s
+  let s2 ← keccak.keccakf1600_4rounds 4#usize s1
+  let s3 ← keccak.keccakf1600_4rounds 8#usize s2
+  let s4 ← keccak.keccakf1600_4rounds 12#usize s3
+  let s5 ← keccak.keccakf1600_4rounds 16#usize s4
+  let s6 ← keccak.keccakf1600_4rounds 20#usize s5
+  ok { s6 with i := 0#usize }
 
 /- [libcrux_iot_sha3::keccak::{libcrux_iot_sha3::keccak::KeccakXofState<RATE>}::fill_buffer]:
    Source: 'sha3/src/keccak.rs', lines 107:4-121:5 -/
@@ -3784,18 +3771,20 @@ def keccak.KeccakXofState.absorb_full_loop
   (iter : core.ops.range.Range Std.Usize) :
   Result (keccak.KeccakXofState RATE)
   := do
-  let (o, iter1) ←
-    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
-  match o with
-  | none => ok self
-  | some i =>
-    let i1 ← i * RATE
-    let i2 ← input_consumed + i1
-    let ks ← state.KeccakState.load_block RATE self.inner inputs i2
-    let ks1 ← keccak.keccakf1600 ks
-    keccak.KeccakXofState.absorb_full_loop { self with inner := ks1 } inputs
-      input_consumed iter1
-partial_fixpoint
+  loop
+    (fun (self1, iter1) =>
+      do
+      let (o, iter2) ←
+        core.iter.range.IteratorRange.next core.iter.range.StepUsize iter1
+      match o with
+      | none => ok (done self1)
+      | some i =>
+        let i1 ← i * RATE
+        let i2 ← input_consumed + i1
+        let ks ← state.KeccakState.load_block RATE self1.inner inputs i2
+        let ks1 ← keccak.keccakf1600 ks
+        ok (cont ({ self1 with inner := ks1 }, iter2)))
+    (self, iter)
 
 /- [libcrux_iot_sha3::keccak::{libcrux_iot_sha3::keccak::KeccakXofState<RATE>}::absorb_full]:
    Source: 'sha3/src/keccak.rs', lines 70:4-98:5 -/
@@ -4009,39 +3998,44 @@ def state.KeccakState.store_loop
   (iter : core.ops.range.Range Std.Usize) :
   Result (Slice Std.U8)
   := do
-  let (o, iter1) ←
-    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
-  match o with
-  | none => ok out
-  | some i =>
-    let i1 ← i / 5#usize
-    let i2 ← i % 5#usize
-    let lu ← state.KeccakState.get_lane self i1 i2
-    let l ← lane.Lane2U32.deinterleave lu
-    let i3 ← i * 8#usize
-    let i4 ← i3 + 4#usize
-    let (s, index_mut_back) ←
-      core.slice.index.Slice.index_mut
-        (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) out
-        { start := i3, «end» := i4 }
-    let i5 ← lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index l 0#usize
-    let a ← lift (core.num.U32.to_le_bytes i5)
-    let s1 ← lift (Array.to_slice a)
-    let s2 ← core.slice.Slice.copy_from_slice core.marker.CopyU8 s s1
-    let out1 := index_mut_back s2
-    let i6 ← i3 + 4#usize
-    let i7 ← i3 + 8#usize
-    let (s3, index_mut_back1) ←
-      core.slice.index.Slice.index_mut
-        (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) out1
-        { start := i6, «end» := i7 }
-    let i8 ← lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index l 1#usize
-    let a1 ← lift (core.num.U32.to_le_bytes i8)
-    let s4 ← lift (Array.to_slice a1)
-    let s5 ← core.slice.Slice.copy_from_slice core.marker.CopyU8 s3 s4
-    let out2 := index_mut_back1 s5
-    state.KeccakState.store_loop self out2 iter1
-partial_fixpoint
+  loop
+    (fun (out1, iter1) =>
+      do
+      let (o, iter2) ←
+        core.iter.range.IteratorRange.next core.iter.range.StepUsize iter1
+      match o with
+      | none => ok (done out1)
+      | some i =>
+        let i1 ← i / 5#usize
+        let i2 ← i % 5#usize
+        let lu ← state.KeccakState.get_lane self i1 i2
+        let l ← lane.Lane2U32.deinterleave lu
+        let i3 ← i * 8#usize
+        let i4 ← i3 + 4#usize
+        let (s, index_mut_back) ←
+          core.slice.index.Slice.index_mut
+            (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) out1
+            { start := i3, «end» := i4 }
+        let i5 ←
+          lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index l 0#usize
+        let a ← lift (core.num.U32.to_le_bytes i5)
+        let s1 ← lift (Array.to_slice a)
+        let s2 ← core.slice.Slice.copy_from_slice core.marker.CopyU8 s s1
+        let out2 := index_mut_back s2
+        let i6 ← i3 + 4#usize
+        let i7 ← i3 + 8#usize
+        let (s3, index_mut_back1) ←
+          core.slice.index.Slice.index_mut
+            (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) out2
+            { start := i6, «end» := i7 }
+        let i8 ←
+          lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index l 1#usize
+        let a1 ← lift (core.num.U32.to_le_bytes i8)
+        let s4 ← lift (Array.to_slice a1)
+        let s5 ← core.slice.Slice.copy_from_slice core.marker.CopyU8 s3 s4
+        let out3 := index_mut_back1 s5
+        ok (cont (out3, iter2)))
+    (out, iter)
 
 /- [libcrux_iot_sha3::state::{libcrux_iot_sha3::state::KeccakState}::store]:
    Source: 'sha3/src/state.rs', lines 72:4-102:5 -/
@@ -4154,19 +4148,22 @@ def keccak.KeccakXofState.squeeze_loop
   Result (state.KeccakState × (Slice Std.U8) × (Slice Std.U8 → Slice
     Std.U8))
   := do
-  let (o, iter1) ←
-    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
-  match o with
-  | none => ok (ks, out_rest, back)
-  | some _ =>
-    let (p, split_at_mut_n_back) ← lane.Lane2U32.split_at_mut_n out_rest RATE
-    let (out0, tmp) := p
-    let ks1 ← keccak.keccakf1600 ks
-    let out01 ← state.KeccakState.store RATE ks1 out0
-    keccak.KeccakXofState.squeeze_loop RATE
-      (fun s => let s1 := split_at_mut_n_back (out01, s)
-                back s1) ks1 tmp iter1
-partial_fixpoint
+  loop
+    (fun (back1, ks1, out_rest1, iter1) =>
+      do
+      let (o, iter2) ←
+        core.iter.range.IteratorRange.next core.iter.range.StepUsize iter1
+      match o with
+      | none => ok (done (ks1, out_rest1, back1))
+      | some _ =>
+        let (p, split_at_mut_n_back) ←
+          lane.Lane2U32.split_at_mut_n out_rest1 RATE
+        let (out0, tmp) := p
+        let ks2 ← keccak.keccakf1600 ks1
+        let out01 ← state.KeccakState.store RATE ks2 out0
+        ok (cont (fun s => let s1 := split_at_mut_n_back (out01, s)
+                           back1 s1, ks2, tmp, iter2)))
+    (back, ks, out_rest, iter)
 
 /- [libcrux_iot_sha3::keccak::{libcrux_iot_sha3::keccak::KeccakXofState<RATE>}::squeeze]:
    Source: 'sha3/src/keccak.rs', lines 151:4-187:5 -/
@@ -4204,7 +4201,7 @@ def keccak.KeccakXofState.squeeze
     ok ({ self with inner := ks1, sponge := true }, out1)
 
 /- [libcrux_iot_sha3::keccak::absorb_block]:
-   Source: 'sha3/src/keccak.rs', lines 2365:0-2368:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2359:0-2362:1 -/
 def keccak.absorb_block
   (RATE : Std.Usize) (s : state.KeccakState) (blocks : Slice Std.U8)
   (start : Std.Usize) :
@@ -4214,7 +4211,7 @@ def keccak.absorb_block
   keccak.keccakf1600 s1
 
 /- [libcrux_iot_sha3::keccak::absorb_final]:
-   Source: 'sha3/src/keccak.rs', lines 2371:0-2388:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2365:0-2382:1 -/
 def keccak.absorb_final
   (RATE : Std.Usize) (DELIM : Std.U8) (s : state.KeccakState)
   (last : Slice Std.U8) (start : Std.Usize) (len : Std.Usize) :
@@ -4254,39 +4251,44 @@ def state.store_block_2u32_loop
   (iter : core.ops.range.Range Std.Usize) :
   Result (Slice Std.U8)
   := do
-  let (o, iter1) ←
-    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
-  match o with
-  | none => ok out
-  | some i =>
-    let i1 ← i / 5#usize
-    let i2 ← i % 5#usize
-    let lu ← state.KeccakState.get_lane s i1 i2
-    let l ← lane.Lane2U32.deinterleave lu
-    let i3 ← 8#usize * i
-    let i4 ← i3 + 4#usize
-    let (s1, index_mut_back) ←
-      core.slice.index.Slice.index_mut
-        (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) out
-        { start := i3, «end» := i4 }
-    let i5 ← lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index l 0#usize
-    let a ← lift (core.num.U32.to_le_bytes i5)
-    let s2 ← lift (Array.to_slice a)
-    let s3 ← core.slice.Slice.copy_from_slice core.marker.CopyU8 s1 s2
-    let out1 := index_mut_back s3
-    let i6 ← i3 + 4#usize
-    let i7 ← i3 + 8#usize
-    let (s4, index_mut_back1) ←
-      core.slice.index.Slice.index_mut
-        (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) out1
-        { start := i6, «end» := i7 }
-    let i8 ← lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index l 1#usize
-    let a1 ← lift (core.num.U32.to_le_bytes i8)
-    let s5 ← lift (Array.to_slice a1)
-    let s6 ← core.slice.Slice.copy_from_slice core.marker.CopyU8 s4 s5
-    let out2 := index_mut_back1 s6
-    state.store_block_2u32_loop s out2 iter1
-partial_fixpoint
+  loop
+    (fun (out1, iter1) =>
+      do
+      let (o, iter2) ←
+        core.iter.range.IteratorRange.next core.iter.range.StepUsize iter1
+      match o with
+      | none => ok (done out1)
+      | some i =>
+        let i1 ← i / 5#usize
+        let i2 ← i % 5#usize
+        let lu ← state.KeccakState.get_lane s i1 i2
+        let l ← lane.Lane2U32.deinterleave lu
+        let i3 ← 8#usize * i
+        let i4 ← i3 + 4#usize
+        let (s1, index_mut_back) ←
+          core.slice.index.Slice.index_mut
+            (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) out1
+            { start := i3, «end» := i4 }
+        let i5 ←
+          lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index l 0#usize
+        let a ← lift (core.num.U32.to_le_bytes i5)
+        let s2 ← lift (Array.to_slice a)
+        let s3 ← core.slice.Slice.copy_from_slice core.marker.CopyU8 s1 s2
+        let out2 := index_mut_back s3
+        let i6 ← i3 + 4#usize
+        let i7 ← i3 + 8#usize
+        let (s4, index_mut_back1) ←
+          core.slice.index.Slice.index_mut
+            (core.slice.index.SliceIndexRangeUsizeSlice Std.U8) out2
+            { start := i6, «end» := i7 }
+        let i8 ←
+          lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index l 1#usize
+        let a1 ← lift (core.num.U32.to_le_bytes i8)
+        let s5 ← lift (Array.to_slice a1)
+        let s6 ← core.slice.Slice.copy_from_slice core.marker.CopyU8 s4 s5
+        let out3 := index_mut_back1 s6
+        ok (cont (out3, iter2)))
+    (out, iter)
 
 /- [libcrux_iot_sha3::state::store_block_2u32]:
    Source: 'sha3/src/state.rs', lines 132:0-138:1 -/
@@ -4306,7 +4308,7 @@ def state.KeccakState.store_block
   state.store_block_2u32 RATE self out
 
 /- [libcrux_iot_sha3::keccak::squeeze_first_block]:
-   Source: 'sha3/src/keccak.rs', lines 2391:0-2393:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2385:0-2387:1 -/
 def keccak.squeeze_first_block
   (RATE : Std.Usize) (s : state.KeccakState) (out : Slice Std.U8) :
   Result (Slice Std.U8)
@@ -4314,7 +4316,7 @@ def keccak.squeeze_first_block
   state.KeccakState.store_block RATE s out
 
 /- [libcrux_iot_sha3::keccak::squeeze_next_block]:
-   Source: 'sha3/src/keccak.rs', lines 2396:0-2399:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2390:0-2393:1 -/
 def keccak.squeeze_next_block
   (RATE : Std.Usize) (s : state.KeccakState) (out : Slice Std.U8) :
   Result (state.KeccakState × (Slice Std.U8))
@@ -4324,7 +4326,7 @@ def keccak.squeeze_next_block
   ok (s1, out1)
 
 /- [libcrux_iot_sha3::keccak::squeeze_first_three_blocks]:
-   Source: 'sha3/src/keccak.rs', lines 2402:0-2408:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2396:0-2402:1 -/
 def keccak.squeeze_first_three_blocks
   (RATE : Std.Usize) (s : state.KeccakState) (out : Slice Std.U8) :
   Result (state.KeccakState × (Slice Std.U8))
@@ -4341,7 +4343,7 @@ def keccak.squeeze_first_three_blocks
   ok (s2, out1)
 
 /- [libcrux_iot_sha3::keccak::squeeze_first_five_blocks]:
-   Source: 'sha3/src/keccak.rs', lines 2411:0-2424:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2405:0-2418:1 -/
 def keccak.squeeze_first_five_blocks
   (RATE : Std.Usize) (s : state.KeccakState) (out : Slice Std.U8) :
   Result (state.KeccakState × (Slice Std.U8))
@@ -4385,7 +4387,7 @@ def state.KeccakState.store_block_full
   state.store_block_full_2u32 RATE self out
 
 /- [libcrux_iot_sha3::keccak::squeeze_last]:
-   Source: 'sha3/src/keccak.rs', lines 2427:0-2432:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2421:0-2426:1 -/
 def keccak.squeeze_last
   (RATE : Std.Usize) (s : state.KeccakState) (out : Slice Std.U8) :
   Result (Slice Std.U8)
@@ -4402,7 +4404,7 @@ def keccak.squeeze_last
   core.slice.Slice.copy_from_slice core.marker.CopyU8 out s2
 
 /- [libcrux_iot_sha3::keccak::squeeze_first_and_last]:
-   Source: 'sha3/src/keccak.rs', lines 2435:0-2439:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2429:0-2433:1 -/
 def keccak.squeeze_first_and_last
   (RATE : Std.Usize) (s : state.KeccakState) (out : Slice Std.U8) :
   Result (Slice Std.U8)
@@ -4418,28 +4420,31 @@ def keccak.squeeze_first_and_last
   core.slice.Slice.copy_from_slice core.marker.CopyU8 out s1
 
 /- [libcrux_iot_sha3::keccak::WIDTH]
-   Source: 'sha3/src/keccak.rs', lines 2442:0-2442:25 -/
+   Source: 'sha3/src/keccak.rs', lines 2436:0-2436:25 -/
 @[global_simps, irreducible] def keccak.WIDTH : Std.Usize := 200#usize
 
 /- [libcrux_iot_sha3::keccak::keccak]: loop 0:
-   Source: 'sha3/src/keccak.rs', lines 2455:4-2457:5 -/
+   Source: 'sha3/src/keccak.rs', lines 2449:4-2451:5 -/
 def keccak.keccak_loop0
   (RATE : Std.Usize) (data : Slice Std.U8) (s : state.KeccakState)
   (iter : core.ops.range.Range Std.Usize) :
   Result state.KeccakState
   := do
-  let (o, iter1) ←
-    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
-  match o with
-  | none => ok s
-  | some i =>
-    let i1 ← i * RATE
-    let s1 ← keccak.absorb_block RATE s data i1
-    keccak.keccak_loop0 RATE data s1 iter1
-partial_fixpoint
+  loop
+    (fun (s1, iter1) =>
+      do
+      let (o, iter2) ←
+        core.iter.range.IteratorRange.next core.iter.range.StepUsize iter1
+      match o with
+      | none => ok (done s1)
+      | some i =>
+        let i1 ← i * RATE
+        let s2 ← keccak.absorb_block RATE s1 data i1
+        ok (cont (s2, iter2)))
+    (s, iter)
 
 /- [libcrux_iot_sha3::keccak::keccak]: loop 1:
-   Source: 'sha3/src/keccak.rs', lines 2466:8-2470:9 -/
+   Source: 'sha3/src/keccak.rs', lines 2460:8-2464:9 -/
 def keccak.keccak_loop1
   (RATE : Std.Usize) (back : Slice Std.U8 → Slice Std.U8)
   (s : state.KeccakState) (o1 : Slice Std.U8)
@@ -4447,21 +4452,23 @@ def keccak.keccak_loop1
   Result (state.KeccakState × (Slice Std.U8) × (Slice Std.U8 → Slice
     Std.U8))
   := do
-  let (o, iter1) ←
-    core.iter.range.IteratorRange.next core.iter.range.StepUsize iter
-  match o with
-  | none => ok (s, o1, back)
-  | some _ =>
-    let (p, split_at_mut_n_back) ← lane.Lane2U32.split_at_mut_n o1 RATE
-    let (o2, orest) := p
-    let (s1, o3) ← keccak.squeeze_next_block RATE s o2
-    keccak.keccak_loop1 RATE
-      (fun s2 => let s3 := split_at_mut_n_back (o3, s2)
-                 back s3) s1 orest iter1
-partial_fixpoint
+  loop
+    (fun (back1, s1, o11, iter1) =>
+      do
+      let (o, iter2) ←
+        core.iter.range.IteratorRange.next core.iter.range.StepUsize iter1
+      match o with
+      | none => ok (done (s1, o11, back1))
+      | some _ =>
+        let (p, split_at_mut_n_back) ← lane.Lane2U32.split_at_mut_n o11 RATE
+        let (o2, orest) := p
+        let (s2, o3) ← keccak.squeeze_next_block RATE s1 o2
+        ok (cont (fun s3 => let s4 := split_at_mut_n_back (o3, s3)
+                            back1 s4, s2, orest, iter2)))
+    (back, s, o1, iter)
 
 /- [libcrux_iot_sha3::keccak::keccak]:
-   Source: 'sha3/src/keccak.rs', lines 2445:0-2475:1 -/
+   Source: 'sha3/src/keccak.rs', lines 2439:0-2469:1 -/
 def keccak.keccak
   (RATE : Std.Usize) (DELIM : Std.U8) (data : Slice Std.U8)
   (out : Slice Std.U8) :

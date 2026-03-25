@@ -2344,12 +2344,6 @@ pub(crate) fn keccakf1600_4rounds<const BASE_ROUND: usize>(s: &mut KeccakState) 
 
 #[inline(never)]
 pub(crate) fn keccakf1600(s: &mut KeccakState) {
-    #[cfg(not(feature = "full-unroll"))]
-    for _ in 0..6 {
-        // dummy base round, is ignored if we don't unroll
-        keccakf1600_4rounds::<0>(s);
-    }
-    #[cfg(feature = "full-unroll")]
     {
         keccakf1600_4rounds::<0>(s);
         keccakf1600_4rounds::<4>(s);
