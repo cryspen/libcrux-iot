@@ -74,13 +74,14 @@ macro "round_equiv_tactic'" : tactic =>
       chi_lane_lift', theta_apply_lift', theta_d_lift']; rfl) | skip)
     all_goals (first | omega | rfl | skip)
     all_goals (
-      delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
+      simp only [Std.Do.WP.wp, Std.Do.PredTrans.apply, Std.Do.PredTrans.pushExcept] at *
       have h255 : USize64.toNat s.i < 255 := by omega
       rw [dif_pos h255, dif_pos h255]
       have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
         simp [BitVec.uaddOverflow]; omega
       rw [if_neg huadd]
-      delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
+      simp only [Std.Do.Except.instWP, Std.Do.PredTrans.apply, Std.Do.ExceptConds.false,
+        Std.Do.PredTrans.const] at *
       first | rfl | simp_all)))
 
 -- Round 0
