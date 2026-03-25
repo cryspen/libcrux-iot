@@ -1602,17 +1602,7 @@ theorem round3_eq (s : KeccakState) (hi : s.i.toNat < 24) :
 -- 4-round functional equivalence: compose 4 per-round equalities
 -- keccakf1600_4rounds = impl_round0 >> impl_round1 >> impl_round2 >> impl_round3
 -- spec_4rounds = spec_round >> spec_round >> spec_round >> spec_round
--- After 4 rounds, impl_perm^4 = id, so lift_perm ... id = lift
--- Extract ok value from impl round (reusable for each round)
-private theorem impl_round_ok {f : KeccakState → RustM KeccakState}
-    {s : KeccakState} {g : KeccakState → RustArray u64 25}
-    (h_eq : ∀ s (hi : s.i.toNat < 24), spec_round (g s) s.i = (f s >>= fun r => pure (g r)))
-    (hi : s.i.toNat < 24)
-    (h_ok : ∃ r, f s = .ok r ∧ r.i.toNat = s.i.toNat + 1) :
-    ∃ r, f s = .ok r := by obtain ⟨r, hr, _⟩ := h_ok; exact ⟨r, hr⟩
-
--- four_round_eq from the four round_eq lemmas
--- Strategy: extract impl ok values round by round, rewrite spec, simplify
+-- four_round_eq: extraction approach (no congr/funext, no sorry)
 -- We need per-round ok extraction (same pattern as four_rounds_ok)
 -- Each impl_roundK returns ok with i incremented by 1
 open Std.Do in
