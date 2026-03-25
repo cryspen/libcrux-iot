@@ -1163,7 +1163,7 @@ open Std.Do in
 theorem four_rounds_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s
-    ⦃ ⇓ r => ⌜ True ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r.i.toNat = s.i.toNat + 4 ⌝ ⦄ := by
   -- Track s.i.toNat through 12 steps as Nat (avoids usize arithmetic issues).
   -- theta/prc2 preserve (nat_step_preserve), prc1 increments (nat_step_increment).
   unfold libcrux_iot_sha3.keccak.keccakf1600_4rounds
@@ -1210,16 +1210,19 @@ theorem four_rounds_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
                     · exact nat_step_preserve round3_theta_spec s₉ (s.i.toNat + 3)
                     · intro s₁₀
                       -- Step 11: prc1_3 (increments to s.i.toNat + 4)
-                      apply Triple.bind (Q := fun _ => ⌜True⌝)
-                      · exact Triple.of_entails_right _ _ _ _
-                          (nat_step_increment (fun s hi => round3_prc1_spec s hi) s₁₀ (s.i.toNat + 3) (by omega))
-                          (PostCond.entails.of_left_entails fun _ => by
-                            rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun _ => trivial)
+                      apply Triple.bind (Q := fun s₁₁ => ⌜s₁₁.i.toNat = s.i.toNat + 4⌝)
+                      · exact nat_step_increment (fun s hi => round3_prc1_spec s hi) s₁₀ (s.i.toNat + 3) (by omega)
                       · intro s₁₁
-                        -- Step 12: prc2_3 + pure
-                        apply Triple.bind (Q := fun _ => ⌜True⌝)
-                        · exact strengthen_pre _ (weaken_to_true _ (round3_prc2_spec s₁₁))
-                        · intro s₁₂; exact Triple.pure s₁₂ (SPred.entails.refl _)
+                        -- Step 12: prc2_3 (preserves s.i.toNat + 4) + pure
+                        apply Triple.bind (Q := fun s₁₂ => ⌜s₁₂.i.toNat = s.i.toNat + 4⌝)
+                        · exact nat_step_preserve round3_prc2_spec s₁₁ (s.i.toNat + 4)
+                        · intro s₁₂
+                          -- pure just returns s₁₂
+                          by_cases hs₁₂ : s₁₂.i.toNat = s.i.toNat + 4
+                          · exact strengthen_pre _ (Triple.pure s₁₂ (by
+                              rw [← SPred.entails_true_intro]
+                              exact SPred.pure_intro fun _ => hs₁₂))
+                          · exact triple_of_neg hs₁₂ _
 /-! ## Main equivalence theorem. STATUS: sorry.
 
 The full keccak is 6 repetitions of the 4-round block = 24 spec rounds.
@@ -1231,9 +1234,93 @@ non-fixed points, and impl_perm^4 = id on each 4-cycle), the final lift
 has no permutation adjustment.
 -/
 
-#check hacspec_sha3.keccak_f.keccak_f
-#check libcrux_iot_sha3.keccak.keccakf1600
+-- The implementation does not panic (totality): keccakf1600 always returns Except.ok.
+-- This follows from composing 6 × four_rounds_equiv via the fold_range loop.
+-- The initial state has i = 0 (from KeccakState.default or the caller), so i + 4 ≤ 24
+-- holds at each iteration since four_rounds_equiv increments i by 4 each time.
+-- Helper: one iteration of the fold body succeeds and tracks i
+open Std.Do in
+private theorem fold_body_spec (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s
+    ⦃ ⇓ r => ⌜ r.i.toNat = s.i.toNat + 4 ⌝ ⦄ :=
+  four_rounds_equiv s hi
 
+-- keccakf1600 calls fold_range which invokes keccakf1600_4rounds 6 times.
+-- The fold uses the @[spec] annotations on keccakf1600_4rounds and keccakf1600
+-- to generate verification conditions via hax_mvcgen.
+-- We use four_rounds_equiv to close the per-iteration VC.
+-- Helper: one 4-round block as a Nat-level step (increments i by 4)
+open Std.Do in
+private theorem nat_4round_step (s : KeccakState) (n : Nat) (hn : n + 4 ≤ 24) :
+    ⦃⌜s.i.toNat = n⌝⦄
+    libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s
+    ⦃⇓ r => ⌜r.i.toNat = n + 4⌝⦄ := by
+  by_cases hs : s.i.toNat = n
+  · have hi' : s.i.toNat + 4 ≤ 24 := by omega
+    exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (four_rounds_equiv s hi')
+      (PostCond.entails.of_left_entails fun _ => by
+        rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all))
+  · exact triple_of_neg hs _
+
+set_option maxRecDepth 2000 in
+set_option maxHeartbeats 8000000 in
+open Std.Do in
+theorem keccakf1600_succeeds (s : KeccakState) (hi : s.i.toNat = 0) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_sha3.keccak.keccakf1600 s
+    ⦃ ⇓ r => ⌜ True ⌝ ⦄ := by
+  unfold libcrux_iot_sha3.keccak.keccakf1600
+  simp only [rust_primitives.hax.folds.fold_range]
+  -- Structure: (fold_range 0 6 ... s ...) >>= fun s => pure {s with i := 0}
+  -- First split off the trailing pure
+  apply Triple.bind (Q := fun _ => ⌜True⌝)
+  · -- The fold: 6 iterations of keccakf1600_4rounds.
+    -- Unroll one step at a time: unfold exposes 4rounds >>= fold_rest
+    -- Block 1 (i: 0 → 4)
+    unfold Int32.fold_range; simp (config := {decide := true}) only [ite_true]
+    apply Triple.bind (Q := fun s₁ => ⌜s₁.i.toNat = 4⌝)
+    · exact Triple.of_entails_right _ _ _ _ (four_rounds_equiv s (by omega))
+        (PostCond.entails.of_left_entails fun _ => by
+          rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all)
+    · intro s₁
+      -- Block 2 (i: 4 → 8)
+      unfold Int32.fold_range; simp (config := {decide := true}) only [ite_true]
+      apply Triple.bind (Q := fun s₂ => ⌜s₂.i.toNat = 8⌝)
+      · exact nat_4round_step s₁ 4 (by omega)
+      · intro s₂
+        -- Block 3 (i: 8 → 12)
+        unfold Int32.fold_range; simp (config := {decide := true}) only [ite_true]
+        apply Triple.bind (Q := fun s₃ => ⌜s₃.i.toNat = 12⌝)
+        · exact nat_4round_step s₂ 8 (by omega)
+        · intro s₃
+          -- Block 4 (i: 12 → 16)
+          unfold Int32.fold_range; simp (config := {decide := true}) only [ite_true]
+          apply Triple.bind (Q := fun s₄ => ⌜s₄.i.toNat = 16⌝)
+          · exact nat_4round_step s₃ 12 (by omega)
+          · intro s₄
+            -- Block 5 (i: 16 → 20)
+            unfold Int32.fold_range; simp (config := {decide := true}) only [ite_true]
+            apply Triple.bind (Q := fun s₅ => ⌜s₅.i.toNat = 20⌝)
+            · exact nat_4round_step s₄ 16 (by omega)
+            · intro s₅
+              -- Block 6 (i: 20 → 24) + base case (fold_range 6 6 = pure)
+              unfold Int32.fold_range; simp (config := {decide := true}) only [ite_true]
+              apply Triple.bind (Q := fun _ => ⌜True⌝)
+              · exact Triple.of_entails_right _ _ _ _
+                  (nat_4round_step s₅ 20 (by omega))
+                  (PostCond.entails.of_left_entails fun _ => by
+                    rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun _ => trivial)
+              · intro s₆
+                unfold Int32.fold_range; simp (config := {decide := true}) only [ite_false]
+                exact strengthen_pre _ (Triple.pure s₆ (SPred.entails.refl _))
+  · intro s₇; exact Triple.pure _ (SPred.entails.refl _)
+
+-- Full equivalence: the lifted implementation equals the spec.
+-- This requires functional equivalence (what each function computes), not just totality.
+-- The postconditions need to describe the full output state, not just i-tracking.
+-- TODO: Strengthen per-round postconditions to describe all 25 output lanes,
+-- then prove lift_perm(impl_round_result, impl_perm^k) = spec_round(lift_perm(input, ...)).
 theorem equivalence (s : KeccakState) :
   hacspec_sha3.keccak_f.keccak_f (lift s) =
     (do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600 s))) := sorry
