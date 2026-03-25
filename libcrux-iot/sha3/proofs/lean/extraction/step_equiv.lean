@@ -1379,24 +1379,4 @@ def spec_4rounds (state : RustArray u64 25) (start_round : usize) : RustM (RustA
   let s ← spec_round s (start_round + 2)
   spec_round s (start_round + 3)
 
-open Std.Do in
-theorem four_round_func_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    do let r_impl ← libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s
-       let r_spec ← spec_4rounds (lift s) s.i
-       pure (r_spec = lift r_impl)
-    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  sorry
-
-/-! ## Full equivalence -/
-
--- Full equivalence: running both functions produces equal results.
--- Stated as a Hoare triple: run impl, run spec, assert equality.
-open Std.Do in
-theorem equivalence (s : KeccakState) (hi : s.i.toNat = 0) :
-    ⦃ ⌜ True ⌝ ⦄
-    do let r_impl ← libcrux_iot_sha3.keccak.keccakf1600 s
-       let r_spec ← hacspec_sha3.keccak_f.keccak_f (lift s)
-       pure (r_spec = lift r_impl)
-    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  sorry
+-- four_round_func_equiv and equivalence are in extraction/equiv.lean
