@@ -723,7 +723,15 @@ theorem pi_rho_chi_1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   all_goals (first | omega | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | assumption | rfl | skip)
   -- Remaining goals: RC_INTERLEAVED array bounds + i+1 overflow
   all_goals (first | omega | simp_all | rfl | skip)
-  all_goals sorry -- WP of RustM.fail: needs instWP unfolding, blocked by open Std.Do scoping
+  -- Remaining: WP of RC array access + i+1 overflow. Reduce the WP wrappers,
+  -- then the dite conditions evaluate since s.i < 24 < 255 and no overflow.
+  all_goals (
+    delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
+    simp only [show USize64.toNat s.i < 255 from by omega, dite_true,
+      show s.i.toBitVec.uaddOverflow 1#64 = false from by simp [BitVec.uaddOverflow]; omega,
+      ite_false, RustM.bind.match_1, Except.instWP, PredTrans.pushExcept,
+      ExceptConds.false, PredTrans.const] at *
+    all_goals first | rfl | trivial | assumption | omega | sorry)
 
 -- Monadic spec for pi_rho_chi_2 (round 0).
 -- Processes rows y=2,3,4. Output lane sets:
