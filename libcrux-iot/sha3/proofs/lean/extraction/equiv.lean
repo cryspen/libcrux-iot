@@ -8,7 +8,7 @@ open libcrux_iot_sha3.state
 /-!
 # Keccak-f[1600] Bit-Interleaved Equivalence Proof
 
-## Proof Status (5 sorry remaining)
+## Proof Status (4 sorry remaining — all placeholder postconditions)
 
 ### Fully proven:
 - All algebraic lemmas (lift_lane_bv commutes with XOR/AND/NOT/OR/rotation) — bv_decide
@@ -18,13 +18,8 @@ open libcrux_iot_sha3.state
 - impl_perm_pow4_eq_id (permutation order 4) — decide
 - lift_perm_id — rfl
 - rc_equiv (round constant equivalence, 24 cases) — decide
+- pi_rho_chi_1_spec (rows y=0,1, i incremented, d preserved) — hax_mvcgen + rw [dif_pos]
 - pi_rho_chi_2_spec (rows y=2,3,4, d preserved) — hax_mvcgen
-
-### 1 sorry (almost proven):
-- pi_rho_chi_1_spec: hax_mvcgen closes all goals except one WP goal for
-  RC_INTERLEAVED array access. Workaround: delta-unfold RustM.instWPMonad +
-  WPMonad.toWP + friends, then simplify dite conditions using s.i < 24 < 255
-  and no uaddOverflow. One final goal remains (likely Prop coercion issue).
 
 ### 4 sorry (placeholder postconditions — need strengthening):
 - pi_rho_chi_round0_lift: postcondition is `True`, needs real lifting statement
@@ -33,9 +28,8 @@ open libcrux_iot_sha3.state
 - equivalence: top-level theorem, needs composition of all phases
 
 ### Next steps:
-1. Close the last sorry in pi_rho_chi_1_spec (BitVec/WP issue)
-2. Strengthen postconditions of placeholder theorems to real equivalence statements
-3. Prove the strengthened theorems by composing sub-specs
+1. Strengthen postconditions of placeholder theorems to real equivalence statements
+2. Prove the strengthened theorems by composing sub-specs
    (requires Std.Do.Triple API: Triple.bind, Triple.of_entails_right, etc.)
 -/
 
@@ -729,13 +723,12 @@ rotation amounts are derived from RHO_OFFSETS at those source positions.
 def chi_u32 (b : Fin 5 → u32) (x : Fin 5) : u32 :=
   b x ^^^ (~~~(b ⟨(x.val + 1) % 5, by omega⟩) &&& b ⟨(x.val + 2) % 5, by omega⟩)
 
--- Monadic spec for pi_rho_chi_1 (round 0). STATUS: 1 sorry remaining.
+-- Monadic spec for pi_rho_chi_1 (round 0). STATUS: PROVEN.
 -- Processes chi-sheets for output rows y=0,1.
 -- Output lane sets: {0,6,12,18,24} (row y=0) and {2,8,14,15,21} (row y=1).
 -- The `i` field is incremented by 1 (one iota round constant consumed).
--- ISSUE: The final WP goal after delta-unfolding RustM.instWPMonad etc. has one
--- remaining subgoal that rfl/trivial/omega don't close. Likely a Prop coercion
--- or BitVec equality. See the `sorry` at the end of the tactic block.
+-- The WP goals for RC_INTERLEAVED array access are closed via dif_pos + if_neg
+-- after delta-unfolding RustM.instWPMonad.
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 40000000 in
 open Std.Do in
@@ -764,11 +757,13 @@ theorem pi_rho_chi_1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   -- then the dite conditions evaluate since s.i < 24 < 255 and no overflow.
   all_goals (
     delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
-    simp only [show USize64.toNat s.i < 255 from by omega, dite_true,
-      show s.i.toBitVec.uaddOverflow 1#64 = false from by simp [BitVec.uaddOverflow]; omega,
-      ite_false, RustM.bind.match_1, Except.instWP, PredTrans.pushExcept,
-      ExceptConds.false, PredTrans.const] at *
-    all_goals first | rfl | trivial | assumption | omega | sorry)
+    have h255 : USize64.toNat s.i < 255 := by omega
+    rw [dif_pos h255, dif_pos h255]
+    have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
+      simp [BitVec.uaddOverflow]; omega
+    rw [if_neg huadd]
+    delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
+    first | rfl | simp_all)
 
 -- Monadic spec for pi_rho_chi_2 (round 0). STATUS: PROVEN.
 -- Processes rows y=2,3,4. Output lane sets:
