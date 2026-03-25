@@ -263,1824 +263,2069 @@ const RC_INTERLEAVED_1: [u32; 255] = [
 // ```
 // :r !python libcrux/libcrux-sha3/codegen.py
 // ```
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y0_z0(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 0, 0);
+    let ax_1 = s.get_with_zeta(1, 0, 0);
+    let ax_2 = s.get_with_zeta(2, 0, 0);
+    let ax_3 = s.get_with_zeta(3, 0, 0);
+    let ax_4 = s.get_with_zeta(4, 0, 0);
+    s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y0_z1(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 0, 1);
+    let ax_1 = s.get_with_zeta(1, 0, 1);
+    let ax_2 = s.get_with_zeta(2, 0, 1);
+    let ax_3 = s.get_with_zeta(3, 0, 1);
+    let ax_4 = s.get_with_zeta(4, 0, 1);
+    s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y1_z0(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 1, 0);
+    let ax_1 = s.get_with_zeta(1, 1, 0);
+    let ax_2 = s.get_with_zeta(2, 1, 0);
+    let ax_3 = s.get_with_zeta(3, 1, 0);
+    let ax_4 = s.get_with_zeta(4, 1, 0);
+    s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y1_z1(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 1, 1);
+    let ax_1 = s.get_with_zeta(1, 1, 1);
+    let ax_2 = s.get_with_zeta(2, 1, 1);
+    let ax_3 = s.get_with_zeta(3, 1, 1);
+    let ax_4 = s.get_with_zeta(4, 1, 1);
+    s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y2_z0(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 2, 0);
+    let ax_1 = s.get_with_zeta(1, 2, 0);
+    let ax_2 = s.get_with_zeta(2, 2, 0);
+    let ax_3 = s.get_with_zeta(3, 2, 0);
+    let ax_4 = s.get_with_zeta(4, 2, 0);
+    s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y2_z1(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 2, 1);
+    let ax_1 = s.get_with_zeta(1, 2, 1);
+    let ax_2 = s.get_with_zeta(2, 2, 1);
+    let ax_3 = s.get_with_zeta(3, 2, 1);
+    let ax_4 = s.get_with_zeta(4, 2, 1);
+    s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y3_z0(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 3, 0);
+    let ax_1 = s.get_with_zeta(1, 3, 0);
+    let ax_2 = s.get_with_zeta(2, 3, 0);
+    let ax_3 = s.get_with_zeta(3, 3, 0);
+    let ax_4 = s.get_with_zeta(4, 3, 0);
+    s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y3_z1(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 3, 1);
+    let ax_1 = s.get_with_zeta(1, 3, 1);
+    let ax_2 = s.get_with_zeta(2, 3, 1);
+    let ax_3 = s.get_with_zeta(3, 3, 1);
+    let ax_4 = s.get_with_zeta(4, 3, 1);
+    s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y4_z0(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 4, 0);
+    let ax_1 = s.get_with_zeta(1, 4, 0);
+    let ax_2 = s.get_with_zeta(2, 4, 0);
+    let ax_3 = s.get_with_zeta(3, 4, 0);
+    let ax_4 = s.get_with_zeta(4, 4, 0);
+    s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_c_y4_z1(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 4, 1);
+    let ax_1 = s.get_with_zeta(1, 4, 1);
+    let ax_2 = s.get_with_zeta(2, 4, 1);
+    let ax_3 = s.get_with_zeta(3, 4, 1);
+    let ax_4 = s.get_with_zeta(4, 4, 1);
+    s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_theta_d(s: &mut KeccakState) {
+    let c_x4_zeta0 = s.c[4][0];
+    let c_x1_zeta1 = s.c[1][1];
+    let c_x3_zeta0 = s.c[3][0];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x2_zeta0 = s.c[2][0];
+    let c_x4_zeta1 = s.c[4][1];
+    let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
+    s.d[0][0] = d_x0_zeta0;
+    let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
+    s.d[2][1] = d_x2_zeta1;
+    let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
+    s.d[4][0] = d_x4_zeta0;
+    let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
+    s.d[1][1] = d_x1_zeta1;
+    let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
+    s.d[3][0] = d_x3_zeta0;
+    let c_x1_zeta0 = s.c[1][0];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x0_zeta0 = s.c[0][0];
+    let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
+    s.d[0][1] = d_x0_zeta1;
+    let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
+    s.d[2][0] = d_x2_zeta0;
+    let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
+    s.d[4][1] = d_x4_zeta1;
+    let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
+    s.d[1][0] = d_x1_zeta0;
+    let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
+    s.d[3][1] = d_x3_zeta1;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_iota_z0<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    let (bx0, bx1) = {
+        let a0 = s.get_with_zeta(0, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(1, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx2, bx3, bx4) = {
+        let a2 = s.get_with_zeta(2, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(3, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(4, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(22),
+            (a3 ^ d3).rotate_left(11),
+            (a4 ^ d4).rotate_left(7),
+        )
+    };
+    let ax0;
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 0];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[s.i];
+    };
+    s.set_with_zeta(0, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_iota_z1<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    let (bx0, bx1) = {
+        let a0 = s.get_with_zeta(0, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(1, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx2, bx3, bx4) = {
+        let a2 = s.get_with_zeta(2, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(3, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(4, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(21),
+            (a3 ^ d3).rotate_left(10),
+            (a4 ^ d4).rotate_left(7),
+        )
+    };
+    let ax0;
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 0];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[s.i];
+        s.i = s.i + 1;
+    };
+    s.set_with_zeta(0, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_0(s: &mut KeccakState) {
+    let (bx2, bx3) = {
+        let a0 = s.get_with_zeta(2, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(3, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
+    };
+    let (bx4, bx0, bx1) = {
+        let a2 = s.get_with_zeta(4, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(0, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(1, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(14),
+            (a4 ^ d4).rotate_left(10),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_1(s: &mut KeccakState) {
+    let (bx2, bx3) = {
+        let a0 = s.get_with_zeta(2, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(3, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx4, bx0, bx1) = {
+        let a2 = s.get_with_zeta(4, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(0, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(1, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(30),
+            (a3 ^ d3).rotate_left(14),
+            (a4 ^ d4).rotate_left(10),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_2(s: &mut KeccakState) {
+    let (bx4, bx0) = {
+        let a0 = s.get_with_zeta(4, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(0, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx1, bx2, bx3) = {
+        let a2 = s.get_with_zeta(1, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(2, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(3, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(3),
+            (a3 ^ d3).rotate_left(13),
+            (a4 ^ d4).rotate_left(4),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_3(s: &mut KeccakState) {
+    let (bx4, bx0) = {
+        let a0 = s.get_with_zeta(4, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(0, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
+    };
+    let (bx1, bx2, bx3) = {
+        let a2 = s.get_with_zeta(1, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(2, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(3, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(3),
+            (a3 ^ d3).rotate_left(12),
+            (a4 ^ d4).rotate_left(4),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_4(s: &mut KeccakState) {
+    let (bx1, bx2) = {
+        let a0 = s.get_with_zeta(1, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(2, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
+    };
+    let (bx3, bx4, bx0) = {
+        let a2 = s.get_with_zeta(3, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(4, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(0, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(8),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(14),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_5(s: &mut KeccakState) {
+    let (bx1, bx2) = {
+        let a0 = s.get_with_zeta(1, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(2, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
+    };
+    let (bx3, bx4, bx0) = {
+        let a2 = s.get_with_zeta(3, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(4, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(0, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(7),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(13),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_6(s: &mut KeccakState) {
+    let (bx3, bx4) = {
+        let a0 = s.get_with_zeta(3, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(4, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx0, bx1, bx2) = {
+        let a2 = s.get_with_zeta(0, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(1, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(2, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(20),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round0_pi_chi_7(s: &mut KeccakState) {
+    let (bx3, bx4) = {
+        let a0 = s.get_with_zeta(3, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(4, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx0, bx1, bx2) = {
+        let a2 = s.get_with_zeta(0, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(1, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(2, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(27),
+            (a4 ^ d4).rotate_left(19),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 0, ax4);
+}
+
 #[inline(always)]
 pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    keccakf1600_round0_theta_c_y0_z0(s);
+    keccakf1600_round0_theta_c_y0_z1(s);
+    keccakf1600_round0_theta_c_y1_z0(s);
+    keccakf1600_round0_theta_c_y1_z1(s);
+    keccakf1600_round0_theta_c_y2_z0(s);
+    keccakf1600_round0_theta_c_y2_z1(s);
+    keccakf1600_round0_theta_c_y3_z0(s);
+    keccakf1600_round0_theta_c_y3_z1(s);
+    keccakf1600_round0_theta_c_y4_z0(s);
+    keccakf1600_round0_theta_c_y4_z1(s);
+    keccakf1600_round0_theta_d(s);
+    keccakf1600_round0_pi_chi_iota_z0::<BASE_ROUND>(s);
+    keccakf1600_round0_pi_chi_iota_z1::<BASE_ROUND>(s);
+    keccakf1600_round0_pi_chi_0(s);
+    keccakf1600_round0_pi_chi_1(s);
+    keccakf1600_round0_pi_chi_2(s);
+    keccakf1600_round0_pi_chi_3(s);
+    keccakf1600_round0_pi_chi_4(s);
+    keccakf1600_round0_pi_chi_5(s);
+    keccakf1600_round0_pi_chi_6(s);
+    keccakf1600_round0_pi_chi_7(s);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y0_z0(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 0, 0);
+    let ax_2 = s.get_with_zeta(2, 0, 1);
+    let ax_4 = s.get_with_zeta(4, 0, 0);
+    let ax_1 = s.get_with_zeta(1, 0, 0);
+    let ax_3 = s.get_with_zeta(3, 0, 1);
+    s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y0_z1(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 0, 1);
+    let ax_2 = s.get_with_zeta(2, 0, 0);
+    let ax_4 = s.get_with_zeta(4, 0, 1);
+    let ax_1 = s.get_with_zeta(1, 0, 1);
+    let ax_3 = s.get_with_zeta(3, 0, 0);
+    s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y1_z0(s: &mut KeccakState) {
+    let ax_1 = s.get_with_zeta(1, 1, 0);
+    let ax_3 = s.get_with_zeta(3, 1, 1);
+    let ax_0 = s.get_with_zeta(0, 1, 1);
+    let ax_2 = s.get_with_zeta(2, 1, 0);
+    let ax_4 = s.get_with_zeta(4, 1, 0);
+    s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y1_z1(s: &mut KeccakState) {
+    let ax_1 = s.get_with_zeta(1, 1, 1);
+    let ax_3 = s.get_with_zeta(3, 1, 0);
+    let ax_0 = s.get_with_zeta(0, 1, 0);
+    let ax_2 = s.get_with_zeta(2, 1, 1);
+    let ax_4 = s.get_with_zeta(4, 1, 1);
+    s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y2_z0(s: &mut KeccakState) {
+    let ax_2 = s.get_with_zeta(2, 2, 1);
+    let ax_4 = s.get_with_zeta(4, 2, 1);
+    let ax_1 = s.get_with_zeta(1, 2, 0);
+    let ax_3 = s.get_with_zeta(3, 2, 1);
+    let ax_0 = s.get_with_zeta(0, 2, 0);
+    s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y2_z1(s: &mut KeccakState) {
+    let ax_2 = s.get_with_zeta(2, 2, 0);
+    let ax_4 = s.get_with_zeta(4, 2, 0);
+    let ax_1 = s.get_with_zeta(1, 2, 1);
+    let ax_3 = s.get_with_zeta(3, 2, 0);
+    let ax_0 = s.get_with_zeta(0, 2, 1);
+    s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y3_z0(s: &mut KeccakState) {
+    let ax_3 = s.get_with_zeta(3, 3, 1);
+    let ax_0 = s.get_with_zeta(0, 3, 0);
+    let ax_2 = s.get_with_zeta(2, 3, 1);
+    let ax_4 = s.get_with_zeta(4, 3, 0);
+    let ax_1 = s.get_with_zeta(1, 3, 1);
+    s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y3_z1(s: &mut KeccakState) {
+    let ax_3 = s.get_with_zeta(3, 3, 0);
+    let ax_0 = s.get_with_zeta(0, 3, 1);
+    let ax_2 = s.get_with_zeta(2, 3, 0);
+    let ax_4 = s.get_with_zeta(4, 3, 1);
+    let ax_1 = s.get_with_zeta(1, 3, 0);
+    s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y4_z0(s: &mut KeccakState) {
+    let ax_4 = s.get_with_zeta(4, 4, 0);
+    let ax_1 = s.get_with_zeta(1, 4, 0);
+    let ax_3 = s.get_with_zeta(3, 4, 0);
+    let ax_0 = s.get_with_zeta(0, 4, 1);
+    let ax_2 = s.get_with_zeta(2, 4, 1);
+    s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_c_y4_z1(s: &mut KeccakState) {
+    let ax_4 = s.get_with_zeta(4, 4, 1);
+    let ax_1 = s.get_with_zeta(1, 4, 1);
+    let ax_3 = s.get_with_zeta(3, 4, 1);
+    let ax_0 = s.get_with_zeta(0, 4, 0);
+    let ax_2 = s.get_with_zeta(2, 4, 0);
+    s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_theta_d(s: &mut KeccakState) {
+    let c_x4_zeta0 = s.c[4][0];
+    let c_x1_zeta1 = s.c[1][1];
+    let c_x3_zeta0 = s.c[3][0];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x2_zeta0 = s.c[2][0];
+    let c_x4_zeta1 = s.c[4][1];
+    let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
+    s.d[0][0] = d_x0_zeta0;
+    let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
+    s.d[2][1] = d_x2_zeta1;
+    let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
+    s.d[4][0] = d_x4_zeta0;
+    let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
+    s.d[1][1] = d_x1_zeta1;
+    let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
+    s.d[3][0] = d_x3_zeta0;
+    let c_x1_zeta0 = s.c[1][0];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x0_zeta0 = s.c[0][0];
+    let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
+    s.d[0][1] = d_x0_zeta1;
+    let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
+    s.d[2][0] = d_x2_zeta0;
+    let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
+    s.d[4][1] = d_x4_zeta1;
+    let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
+    s.d[1][0] = d_x1_zeta0;
+    let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
+    s.d[3][1] = d_x3_zeta1;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_iota_z0<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    let (bx0, bx1) = {
+        let a0 = s.get_with_zeta(0, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(3, 1, 1);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx2, bx3, bx4) = {
+        let a2 = s.get_with_zeta(1, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(4, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(2, 4, 1);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(22),
+            (a3 ^ d3).rotate_left(11),
+            (a4 ^ d4).rotate_left(7),
+        )
+    };
+    let ax0;
+    #[cfg(feature = "full-unroll")]
     {
-        let ax_0 = s.get_with_zeta(0, 0, 0);
-        let ax_1 = s.get_with_zeta(1, 0, 0);
-        let ax_2 = s.get_with_zeta(2, 0, 0);
-        let ax_3 = s.get_with_zeta(3, 0, 0);
-        let ax_4 = s.get_with_zeta(4, 0, 0);
-        s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 0, 1);
-        let ax_1 = s.get_with_zeta(1, 0, 1);
-        let ax_2 = s.get_with_zeta(2, 0, 1);
-        let ax_3 = s.get_with_zeta(3, 0, 1);
-        let ax_4 = s.get_with_zeta(4, 0, 1);
-        s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 1, 0);
-        let ax_1 = s.get_with_zeta(1, 1, 0);
-        let ax_2 = s.get_with_zeta(2, 1, 0);
-        let ax_3 = s.get_with_zeta(3, 1, 0);
-        let ax_4 = s.get_with_zeta(4, 1, 0);
-        s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 1, 1);
-        let ax_1 = s.get_with_zeta(1, 1, 1);
-        let ax_2 = s.get_with_zeta(2, 1, 1);
-        let ax_3 = s.get_with_zeta(3, 1, 1);
-        let ax_4 = s.get_with_zeta(4, 1, 1);
-        s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 2, 0);
-        let ax_1 = s.get_with_zeta(1, 2, 0);
-        let ax_2 = s.get_with_zeta(2, 2, 0);
-        let ax_3 = s.get_with_zeta(3, 2, 0);
-        let ax_4 = s.get_with_zeta(4, 2, 0);
-        s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 2, 1);
-        let ax_1 = s.get_with_zeta(1, 2, 1);
-        let ax_2 = s.get_with_zeta(2, 2, 1);
-        let ax_3 = s.get_with_zeta(3, 2, 1);
-        let ax_4 = s.get_with_zeta(4, 2, 1);
-        s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 3, 0);
-        let ax_1 = s.get_with_zeta(1, 3, 0);
-        let ax_2 = s.get_with_zeta(2, 3, 0);
-        let ax_3 = s.get_with_zeta(3, 3, 0);
-        let ax_4 = s.get_with_zeta(4, 3, 0);
-        s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 3, 1);
-        let ax_1 = s.get_with_zeta(1, 3, 1);
-        let ax_2 = s.get_with_zeta(2, 3, 1);
-        let ax_3 = s.get_with_zeta(3, 3, 1);
-        let ax_4 = s.get_with_zeta(4, 3, 1);
-        s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 4, 0);
-        let ax_1 = s.get_with_zeta(1, 4, 0);
-        let ax_2 = s.get_with_zeta(2, 4, 0);
-        let ax_3 = s.get_with_zeta(3, 4, 0);
-        let ax_4 = s.get_with_zeta(4, 4, 0);
-        s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 4, 1);
-        let ax_1 = s.get_with_zeta(1, 4, 1);
-        let ax_2 = s.get_with_zeta(2, 4, 1);
-        let ax_3 = s.get_with_zeta(3, 4, 1);
-        let ax_4 = s.get_with_zeta(4, 4, 1);
-        s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let c_x4_zeta0 = s.c[4][0];
-        let c_x1_zeta1 = s.c[1][1];
-        let c_x3_zeta0 = s.c[3][0];
-        let c_x0_zeta1 = s.c[0][1];
-        let c_x2_zeta0 = s.c[2][0];
-        let c_x4_zeta1 = s.c[4][1];
-        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-        s.d[0][0] = d_x0_zeta0;
-        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-        s.d[2][1] = d_x2_zeta1;
-        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-        s.d[4][0] = d_x4_zeta0;
-        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-        s.d[1][1] = d_x1_zeta1;
-        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-        s.d[3][0] = d_x3_zeta0;
-        let c_x1_zeta0 = s.c[1][0];
-        let c_x3_zeta1 = s.c[3][1];
-        let c_x2_zeta1 = s.c[2][1];
-        let c_x0_zeta0 = s.c[0][0];
-        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-        s.d[0][1] = d_x0_zeta1;
-        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-        s.d[2][0] = d_x2_zeta0;
-        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-        s.d[4][1] = d_x4_zeta1;
-        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-        s.d[1][0] = d_x1_zeta0;
-        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-        s.d[3][1] = d_x3_zeta1;
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 1];
+    };
     #[cfg(not(feature = "full-unroll"))]
-    let i = s.i;
     {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(22),
-                (a3 ^ d3).rotate_left(11),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
-        let ax0;
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 0];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
-        };
-        s.set_with_zeta(0, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 0, ax4);
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[s.i];
+    };
+    s.set_with_zeta(0, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_iota_z1<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    let (bx0, bx1) = {
+        let a0 = s.get_with_zeta(0, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(3, 1, 0);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx2, bx3, bx4) = {
+        let a2 = s.get_with_zeta(1, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(4, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(2, 4, 0);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(21),
+            (a3 ^ d3).rotate_left(10),
+            (a4 ^ d4).rotate_left(7),
+        )
+    };
+    let ax0;
+    #[cfg(feature = "full-unroll")]
     {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(21),
-                (a3 ^ d3).rotate_left(10),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
-        let ax0;
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 0];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
-            s.i = i + 1;
-        };
-        s.set_with_zeta(0, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 1, ax4);
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 1];
+    };
+    #[cfg(not(feature = "full-unroll"))]
     {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(1, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(1, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(30),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 1, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(13),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 0, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(12),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 1, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(8),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(14),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 1, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(7),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(13),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 0, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(4, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(20),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 1, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(4, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(27),
-                (a4 ^ d4).rotate_left(19),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 0, ax4);
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[s.i];
+        s.i = s.i + 1;
+    };
+    s.set_with_zeta(0, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_0(s: &mut KeccakState) {
+    let (bx2, bx3) = {
+        let a0 = s.get_with_zeta(4, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(2, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
+    };
+    let (bx4, bx0, bx1) = {
+        let a2 = s.get_with_zeta(0, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(3, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(1, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(14),
+            (a4 ^ d4).rotate_left(10),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_1(s: &mut KeccakState) {
+    let (bx2, bx3) = {
+        let a0 = s.get_with_zeta(4, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(2, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx4, bx0, bx1) = {
+        let a2 = s.get_with_zeta(0, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(3, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(1, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(30),
+            (a3 ^ d3).rotate_left(14),
+            (a4 ^ d4).rotate_left(10),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_2(s: &mut KeccakState) {
+    let (bx4, bx0) = {
+        let a0 = s.get_with_zeta(3, 0, 1);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(1, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx1, bx2, bx3) = {
+        let a2 = s.get_with_zeta(4, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(2, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(0, 4, 1);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(3),
+            (a3 ^ d3).rotate_left(13),
+            (a4 ^ d4).rotate_left(4),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_3(s: &mut KeccakState) {
+    let (bx4, bx0) = {
+        let a0 = s.get_with_zeta(3, 0, 0);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(1, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
+    };
+    let (bx1, bx2, bx3) = {
+        let a2 = s.get_with_zeta(4, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(2, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(0, 4, 0);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(3),
+            (a3 ^ d3).rotate_left(12),
+            (a4 ^ d4).rotate_left(4),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_4(s: &mut KeccakState) {
+    let (bx1, bx2) = {
+        let a0 = s.get_with_zeta(2, 0, 1);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(0, 1, 1);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
+    };
+    let (bx3, bx4, bx0) = {
+        let a2 = s.get_with_zeta(3, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(1, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(4, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(8),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(14),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_5(s: &mut KeccakState) {
+    let (bx1, bx2) = {
+        let a0 = s.get_with_zeta(2, 0, 0);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(0, 1, 0);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
+    };
+    let (bx3, bx4, bx0) = {
+        let a2 = s.get_with_zeta(3, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(1, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(4, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(7),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(13),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_6(s: &mut KeccakState) {
+    let (bx3, bx4) = {
+        let a0 = s.get_with_zeta(1, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(4, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx0, bx1, bx2) = {
+        let a2 = s.get_with_zeta(2, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(0, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(3, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(20),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round1_pi_chi_7(s: &mut KeccakState) {
+    let (bx3, bx4) = {
+        let a0 = s.get_with_zeta(1, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(4, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx0, bx1, bx2) = {
+        let a2 = s.get_with_zeta(2, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(0, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(3, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(27),
+            (a4 ^ d4).rotate_left(19),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 0, ax4);
 }
 
 #[inline(always)]
 pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    keccakf1600_round1_theta_c_y0_z0(s);
+    keccakf1600_round1_theta_c_y0_z1(s);
+    keccakf1600_round1_theta_c_y1_z0(s);
+    keccakf1600_round1_theta_c_y1_z1(s);
+    keccakf1600_round1_theta_c_y2_z0(s);
+    keccakf1600_round1_theta_c_y2_z1(s);
+    keccakf1600_round1_theta_c_y3_z0(s);
+    keccakf1600_round1_theta_c_y3_z1(s);
+    keccakf1600_round1_theta_c_y4_z0(s);
+    keccakf1600_round1_theta_c_y4_z1(s);
+    keccakf1600_round1_theta_d(s);
+    keccakf1600_round1_pi_chi_iota_z0::<BASE_ROUND>(s);
+    keccakf1600_round1_pi_chi_iota_z1::<BASE_ROUND>(s);
+    keccakf1600_round1_pi_chi_0(s);
+    keccakf1600_round1_pi_chi_1(s);
+    keccakf1600_round1_pi_chi_2(s);
+    keccakf1600_round1_pi_chi_3(s);
+    keccakf1600_round1_pi_chi_4(s);
+    keccakf1600_round1_pi_chi_5(s);
+    keccakf1600_round1_pi_chi_6(s);
+    keccakf1600_round1_pi_chi_7(s);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y0_z0(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 0, 0);
+    let ax_4 = s.get_with_zeta(4, 0, 1);
+    let ax_3 = s.get_with_zeta(3, 0, 1);
+    let ax_2 = s.get_with_zeta(2, 0, 1);
+    let ax_1 = s.get_with_zeta(1, 0, 1);
+    s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y0_z1(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 0, 1);
+    let ax_4 = s.get_with_zeta(4, 0, 0);
+    let ax_3 = s.get_with_zeta(3, 0, 0);
+    let ax_2 = s.get_with_zeta(2, 0, 0);
+    let ax_1 = s.get_with_zeta(1, 0, 0);
+    s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y1_z0(s: &mut KeccakState) {
+    let ax_3 = s.get_with_zeta(3, 1, 1);
+    let ax_2 = s.get_with_zeta(2, 1, 1);
+    let ax_1 = s.get_with_zeta(1, 1, 1);
+    let ax_0 = s.get_with_zeta(0, 1, 1);
+    let ax_4 = s.get_with_zeta(4, 1, 0);
+    s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y1_z1(s: &mut KeccakState) {
+    let ax_3 = s.get_with_zeta(3, 1, 0);
+    let ax_2 = s.get_with_zeta(2, 1, 0);
+    let ax_1 = s.get_with_zeta(1, 1, 0);
+    let ax_0 = s.get_with_zeta(0, 1, 0);
+    let ax_4 = s.get_with_zeta(4, 1, 1);
+    s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y2_z0(s: &mut KeccakState) {
+    let ax_1 = s.get_with_zeta(1, 2, 1);
+    let ax_0 = s.get_with_zeta(0, 2, 1);
+    let ax_4 = s.get_with_zeta(4, 2, 1);
+    let ax_3 = s.get_with_zeta(3, 2, 0);
+    let ax_2 = s.get_with_zeta(2, 2, 1);
+    s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y2_z1(s: &mut KeccakState) {
+    let ax_1 = s.get_with_zeta(1, 2, 0);
+    let ax_0 = s.get_with_zeta(0, 2, 0);
+    let ax_4 = s.get_with_zeta(4, 2, 0);
+    let ax_3 = s.get_with_zeta(3, 2, 1);
+    let ax_2 = s.get_with_zeta(2, 2, 0);
+    s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y3_z0(s: &mut KeccakState) {
+    let ax_4 = s.get_with_zeta(4, 3, 1);
+    let ax_3 = s.get_with_zeta(3, 3, 1);
+    let ax_2 = s.get_with_zeta(2, 3, 0);
+    let ax_1 = s.get_with_zeta(1, 3, 1);
+    let ax_0 = s.get_with_zeta(0, 3, 1);
+    s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y3_z1(s: &mut KeccakState) {
+    let ax_4 = s.get_with_zeta(4, 3, 0);
+    let ax_3 = s.get_with_zeta(3, 3, 0);
+    let ax_2 = s.get_with_zeta(2, 3, 1);
+    let ax_1 = s.get_with_zeta(1, 3, 0);
+    let ax_0 = s.get_with_zeta(0, 3, 0);
+    s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y4_z0(s: &mut KeccakState) {
+    let ax_2 = s.get_with_zeta(2, 4, 1);
+    let ax_1 = s.get_with_zeta(1, 4, 0);
+    let ax_0 = s.get_with_zeta(0, 4, 1);
+    let ax_4 = s.get_with_zeta(4, 4, 1);
+    let ax_3 = s.get_with_zeta(3, 4, 1);
+    s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_c_y4_z1(s: &mut KeccakState) {
+    let ax_2 = s.get_with_zeta(2, 4, 0);
+    let ax_1 = s.get_with_zeta(1, 4, 1);
+    let ax_0 = s.get_with_zeta(0, 4, 0);
+    let ax_4 = s.get_with_zeta(4, 4, 0);
+    let ax_3 = s.get_with_zeta(3, 4, 0);
+    s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_theta_d(s: &mut KeccakState) {
+    let c_x4_zeta0 = s.c[4][0];
+    let c_x1_zeta1 = s.c[1][1];
+    let c_x3_zeta0 = s.c[3][0];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x2_zeta0 = s.c[2][0];
+    let c_x4_zeta1 = s.c[4][1];
+    let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
+    s.d[0][0] = d_x0_zeta0;
+    let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
+    s.d[2][1] = d_x2_zeta1;
+    let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
+    s.d[4][0] = d_x4_zeta0;
+    let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
+    s.d[1][1] = d_x1_zeta1;
+    let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
+    s.d[3][0] = d_x3_zeta0;
+    let c_x1_zeta0 = s.c[1][0];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x0_zeta0 = s.c[0][0];
+    let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
+    s.d[0][1] = d_x0_zeta1;
+    let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
+    s.d[2][0] = d_x2_zeta0;
+    let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
+    s.d[4][1] = d_x4_zeta1;
+    let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
+    s.d[1][0] = d_x1_zeta0;
+    let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
+    s.d[3][1] = d_x3_zeta1;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_iota_z0<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    let (bx0, bx1) = {
+        let a0 = s.get_with_zeta(0, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(2, 1, 1);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx2, bx3, bx4) = {
+        let a2 = s.get_with_zeta(4, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(1, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(3, 4, 1);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(22),
+            (a3 ^ d3).rotate_left(11),
+            (a4 ^ d4).rotate_left(7),
+        )
+    };
+    let ax0;
+    #[cfg(feature = "full-unroll")]
     {
-        let ax_0 = s.get_with_zeta(0, 0, 0);
-        let ax_2 = s.get_with_zeta(2, 0, 1);
-        let ax_4 = s.get_with_zeta(4, 0, 0);
-        let ax_1 = s.get_with_zeta(1, 0, 0);
-        let ax_3 = s.get_with_zeta(3, 0, 1);
-        s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 0, 1);
-        let ax_2 = s.get_with_zeta(2, 0, 0);
-        let ax_4 = s.get_with_zeta(4, 0, 1);
-        let ax_1 = s.get_with_zeta(1, 0, 1);
-        let ax_3 = s.get_with_zeta(3, 0, 0);
-        s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_1 = s.get_with_zeta(1, 1, 0);
-        let ax_3 = s.get_with_zeta(3, 1, 1);
-        let ax_0 = s.get_with_zeta(0, 1, 1);
-        let ax_2 = s.get_with_zeta(2, 1, 0);
-        let ax_4 = s.get_with_zeta(4, 1, 0);
-        s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_1 = s.get_with_zeta(1, 1, 1);
-        let ax_3 = s.get_with_zeta(3, 1, 0);
-        let ax_0 = s.get_with_zeta(0, 1, 0);
-        let ax_2 = s.get_with_zeta(2, 1, 1);
-        let ax_4 = s.get_with_zeta(4, 1, 1);
-        s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_2 = s.get_with_zeta(2, 2, 1);
-        let ax_4 = s.get_with_zeta(4, 2, 1);
-        let ax_1 = s.get_with_zeta(1, 2, 0);
-        let ax_3 = s.get_with_zeta(3, 2, 1);
-        let ax_0 = s.get_with_zeta(0, 2, 0);
-        s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_2 = s.get_with_zeta(2, 2, 0);
-        let ax_4 = s.get_with_zeta(4, 2, 0);
-        let ax_1 = s.get_with_zeta(1, 2, 1);
-        let ax_3 = s.get_with_zeta(3, 2, 0);
-        let ax_0 = s.get_with_zeta(0, 2, 1);
-        s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_3 = s.get_with_zeta(3, 3, 1);
-        let ax_0 = s.get_with_zeta(0, 3, 0);
-        let ax_2 = s.get_with_zeta(2, 3, 1);
-        let ax_4 = s.get_with_zeta(4, 3, 0);
-        let ax_1 = s.get_with_zeta(1, 3, 1);
-        s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_3 = s.get_with_zeta(3, 3, 0);
-        let ax_0 = s.get_with_zeta(0, 3, 1);
-        let ax_2 = s.get_with_zeta(2, 3, 0);
-        let ax_4 = s.get_with_zeta(4, 3, 1);
-        let ax_1 = s.get_with_zeta(1, 3, 0);
-        s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_4 = s.get_with_zeta(4, 4, 0);
-        let ax_1 = s.get_with_zeta(1, 4, 0);
-        let ax_3 = s.get_with_zeta(3, 4, 0);
-        let ax_0 = s.get_with_zeta(0, 4, 1);
-        let ax_2 = s.get_with_zeta(2, 4, 1);
-        s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_4 = s.get_with_zeta(4, 4, 1);
-        let ax_1 = s.get_with_zeta(1, 4, 1);
-        let ax_3 = s.get_with_zeta(3, 4, 1);
-        let ax_0 = s.get_with_zeta(0, 4, 0);
-        let ax_2 = s.get_with_zeta(2, 4, 0);
-        s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let c_x4_zeta0 = s.c[4][0];
-        let c_x1_zeta1 = s.c[1][1];
-        let c_x3_zeta0 = s.c[3][0];
-        let c_x0_zeta1 = s.c[0][1];
-        let c_x2_zeta0 = s.c[2][0];
-        let c_x4_zeta1 = s.c[4][1];
-        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-        s.d[0][0] = d_x0_zeta0;
-        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-        s.d[2][1] = d_x2_zeta1;
-        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-        s.d[4][0] = d_x4_zeta0;
-        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-        s.d[1][1] = d_x1_zeta1;
-        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-        s.d[3][0] = d_x3_zeta0;
-        let c_x1_zeta0 = s.c[1][0];
-        let c_x3_zeta1 = s.c[3][1];
-        let c_x2_zeta1 = s.c[2][1];
-        let c_x0_zeta0 = s.c[0][0];
-        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-        s.d[0][1] = d_x0_zeta1;
-        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-        s.d[2][0] = d_x2_zeta0;
-        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-        s.d[4][1] = d_x4_zeta1;
-        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-        s.d[1][0] = d_x1_zeta0;
-        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-        s.d[3][1] = d_x3_zeta1;
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 2];
+    };
     #[cfg(not(feature = "full-unroll"))]
-    let i = s.i;
     {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(22),
-                (a3 ^ d3).rotate_left(11),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
-        let ax0;
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 1];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
-        };
-        s.set_with_zeta(0, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 1, ax4);
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[s.i];
+    };
+    s.set_with_zeta(0, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_iota_z1<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    let (bx0, bx1) = {
+        let a0 = s.get_with_zeta(0, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(2, 1, 0);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx2, bx3, bx4) = {
+        let a2 = s.get_with_zeta(4, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(1, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(3, 4, 0);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(21),
+            (a3 ^ d3).rotate_left(10),
+            (a4 ^ d4).rotate_left(7),
+        )
+    };
+    let ax0;
+    #[cfg(feature = "full-unroll")]
     {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(21),
-                (a3 ^ d3).rotate_left(10),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
-        let ax0;
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 1];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
-            s.i = i + 1;
-        };
-        s.set_with_zeta(0, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 0, ax4);
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 2];
+    };
+    #[cfg(not(feature = "full-unroll"))]
     {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(1, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(1, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(30),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 1, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(13),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 1, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(12),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 0, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(8),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(14),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 1, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(7),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(13),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 0, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(4, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(20),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 1, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(4, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(27),
-                (a4 ^ d4).rotate_left(19),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 0, ax4);
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[s.i];
+        s.i = s.i + 1;
+    };
+    s.set_with_zeta(0, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_0(s: &mut KeccakState) {
+    let (bx2, bx3) = {
+        let a0 = s.get_with_zeta(3, 0, 0);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(0, 1, 0);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
+    };
+    let (bx4, bx0, bx1) = {
+        let a2 = s.get_with_zeta(2, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(4, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(1, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(14),
+            (a4 ^ d4).rotate_left(10),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_1(s: &mut KeccakState) {
+    let (bx2, bx3) = {
+        let a0 = s.get_with_zeta(3, 0, 1);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(0, 1, 1);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx4, bx0, bx1) = {
+        let a2 = s.get_with_zeta(2, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(4, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(1, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(30),
+            (a3 ^ d3).rotate_left(14),
+            (a4 ^ d4).rotate_left(10),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_2(s: &mut KeccakState) {
+    let (bx4, bx0) = {
+        let a0 = s.get_with_zeta(1, 0, 1);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(3, 1, 0);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx1, bx2, bx3) = {
+        let a2 = s.get_with_zeta(0, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(2, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(4, 4, 1);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(3),
+            (a3 ^ d3).rotate_left(13),
+            (a4 ^ d4).rotate_left(4),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_3(s: &mut KeccakState) {
+    let (bx4, bx0) = {
+        let a0 = s.get_with_zeta(1, 0, 0);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(3, 1, 1);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
+    };
+    let (bx1, bx2, bx3) = {
+        let a2 = s.get_with_zeta(0, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(2, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(4, 4, 0);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(3),
+            (a3 ^ d3).rotate_left(12),
+            (a4 ^ d4).rotate_left(4),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_4(s: &mut KeccakState) {
+    let (bx1, bx2) = {
+        let a0 = s.get_with_zeta(4, 0, 1);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(1, 1, 1);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
+    };
+    let (bx3, bx4, bx0) = {
+        let a2 = s.get_with_zeta(3, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(0, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(2, 4, 0);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(8),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(14),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_5(s: &mut KeccakState) {
+    let (bx1, bx2) = {
+        let a0 = s.get_with_zeta(4, 0, 0);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(1, 1, 0);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
+    };
+    let (bx3, bx4, bx0) = {
+        let a2 = s.get_with_zeta(3, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(0, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(2, 4, 1);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(7),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(13),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_6(s: &mut KeccakState) {
+    let (bx3, bx4) = {
+        let a0 = s.get_with_zeta(2, 0, 0);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(4, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx0, bx1, bx2) = {
+        let a2 = s.get_with_zeta(1, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(3, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(0, 4, 0);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(20),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round2_pi_chi_7(s: &mut KeccakState) {
+    let (bx3, bx4) = {
+        let a0 = s.get_with_zeta(2, 0, 1);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(4, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx0, bx1, bx2) = {
+        let a2 = s.get_with_zeta(1, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(3, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(0, 4, 1);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(27),
+            (a4 ^ d4).rotate_left(19),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 1, ax4);
 }
 
 #[inline(always)]
 pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    keccakf1600_round2_theta_c_y0_z0(s);
+    keccakf1600_round2_theta_c_y0_z1(s);
+    keccakf1600_round2_theta_c_y1_z0(s);
+    keccakf1600_round2_theta_c_y1_z1(s);
+    keccakf1600_round2_theta_c_y2_z0(s);
+    keccakf1600_round2_theta_c_y2_z1(s);
+    keccakf1600_round2_theta_c_y3_z0(s);
+    keccakf1600_round2_theta_c_y3_z1(s);
+    keccakf1600_round2_theta_c_y4_z0(s);
+    keccakf1600_round2_theta_c_y4_z1(s);
+    keccakf1600_round2_theta_d(s);
+    keccakf1600_round2_pi_chi_iota_z0::<BASE_ROUND>(s);
+    keccakf1600_round2_pi_chi_iota_z1::<BASE_ROUND>(s);
+    keccakf1600_round2_pi_chi_0(s);
+    keccakf1600_round2_pi_chi_1(s);
+    keccakf1600_round2_pi_chi_2(s);
+    keccakf1600_round2_pi_chi_3(s);
+    keccakf1600_round2_pi_chi_4(s);
+    keccakf1600_round2_pi_chi_5(s);
+    keccakf1600_round2_pi_chi_6(s);
+    keccakf1600_round2_pi_chi_7(s);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y0_z0(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 0, 0);
+    let ax_3 = s.get_with_zeta(3, 0, 0);
+    let ax_1 = s.get_with_zeta(1, 0, 1);
+    let ax_4 = s.get_with_zeta(4, 0, 1);
+    let ax_2 = s.get_with_zeta(2, 0, 0);
+    s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y0_z1(s: &mut KeccakState) {
+    let ax_0 = s.get_with_zeta(0, 0, 1);
+    let ax_3 = s.get_with_zeta(3, 0, 1);
+    let ax_1 = s.get_with_zeta(1, 0, 0);
+    let ax_4 = s.get_with_zeta(4, 0, 0);
+    let ax_2 = s.get_with_zeta(2, 0, 1);
+    s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y1_z0(s: &mut KeccakState) {
+    let ax_2 = s.get_with_zeta(2, 1, 1);
+    let ax_0 = s.get_with_zeta(0, 1, 0);
+    let ax_3 = s.get_with_zeta(3, 1, 0);
+    let ax_1 = s.get_with_zeta(1, 1, 1);
+    let ax_4 = s.get_with_zeta(4, 1, 0);
+    s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y1_z1(s: &mut KeccakState) {
+    let ax_2 = s.get_with_zeta(2, 1, 0);
+    let ax_0 = s.get_with_zeta(0, 1, 1);
+    let ax_3 = s.get_with_zeta(3, 1, 1);
+    let ax_1 = s.get_with_zeta(1, 1, 0);
+    let ax_4 = s.get_with_zeta(4, 1, 1);
+    s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y2_z0(s: &mut KeccakState) {
+    let ax_4 = s.get_with_zeta(4, 2, 0);
+    let ax_2 = s.get_with_zeta(2, 2, 0);
+    let ax_0 = s.get_with_zeta(0, 2, 1);
+    let ax_3 = s.get_with_zeta(3, 2, 1);
+    let ax_1 = s.get_with_zeta(1, 2, 1);
+    s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y2_z1(s: &mut KeccakState) {
+    let ax_4 = s.get_with_zeta(4, 2, 1);
+    let ax_2 = s.get_with_zeta(2, 2, 1);
+    let ax_0 = s.get_with_zeta(0, 2, 0);
+    let ax_3 = s.get_with_zeta(3, 2, 0);
+    let ax_1 = s.get_with_zeta(1, 2, 0);
+    s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y3_z0(s: &mut KeccakState) {
+    let ax_1 = s.get_with_zeta(1, 3, 0);
+    let ax_4 = s.get_with_zeta(4, 3, 1);
+    let ax_2 = s.get_with_zeta(2, 3, 1);
+    let ax_0 = s.get_with_zeta(0, 3, 1);
+    let ax_3 = s.get_with_zeta(3, 3, 0);
+    s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y3_z1(s: &mut KeccakState) {
+    let ax_1 = s.get_with_zeta(1, 3, 1);
+    let ax_4 = s.get_with_zeta(4, 3, 0);
+    let ax_2 = s.get_with_zeta(2, 3, 0);
+    let ax_0 = s.get_with_zeta(0, 3, 0);
+    let ax_3 = s.get_with_zeta(3, 3, 1);
+    s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y4_z0(s: &mut KeccakState) {
+    let ax_3 = s.get_with_zeta(3, 4, 1);
+    let ax_1 = s.get_with_zeta(1, 4, 0);
+    let ax_4 = s.get_with_zeta(4, 4, 1);
+    let ax_2 = s.get_with_zeta(2, 4, 0);
+    let ax_0 = s.get_with_zeta(0, 4, 0);
+    s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_c_y4_z1(s: &mut KeccakState) {
+    let ax_3 = s.get_with_zeta(3, 4, 0);
+    let ax_1 = s.get_with_zeta(1, 4, 1);
+    let ax_4 = s.get_with_zeta(4, 4, 0);
+    let ax_2 = s.get_with_zeta(2, 4, 1);
+    let ax_0 = s.get_with_zeta(0, 4, 1);
+    s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_theta_d(s: &mut KeccakState) {
+    let c_x4_zeta0 = s.c[4][0];
+    let c_x1_zeta1 = s.c[1][1];
+    let c_x3_zeta0 = s.c[3][0];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x2_zeta0 = s.c[2][0];
+    let c_x4_zeta1 = s.c[4][1];
+    let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
+    s.d[0][0] = d_x0_zeta0;
+    let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
+    s.d[2][1] = d_x2_zeta1;
+    let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
+    s.d[4][0] = d_x4_zeta0;
+    let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
+    s.d[1][1] = d_x1_zeta1;
+    let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
+    s.d[3][0] = d_x3_zeta0;
+    let c_x1_zeta0 = s.c[1][0];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x0_zeta0 = s.c[0][0];
+    let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
+    s.d[0][1] = d_x0_zeta1;
+    let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
+    s.d[2][0] = d_x2_zeta0;
+    let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
+    s.d[4][1] = d_x4_zeta1;
+    let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
+    s.d[1][0] = d_x1_zeta0;
+    let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
+    s.d[3][1] = d_x3_zeta1;
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_iota_z0<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    let (bx0, bx1) = {
+        let a0 = s.get_with_zeta(0, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(0, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx2, bx3, bx4) = {
+        let a2 = s.get_with_zeta(0, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(0, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(0, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(22),
+            (a3 ^ d3).rotate_left(11),
+            (a4 ^ d4).rotate_left(7),
+        )
+    };
+    let ax0;
+    #[cfg(feature = "full-unroll")]
     {
-        let ax_0 = s.get_with_zeta(0, 0, 0);
-        let ax_4 = s.get_with_zeta(4, 0, 1);
-        let ax_3 = s.get_with_zeta(3, 0, 1);
-        let ax_2 = s.get_with_zeta(2, 0, 1);
-        let ax_1 = s.get_with_zeta(1, 0, 1);
-        s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 0, 1);
-        let ax_4 = s.get_with_zeta(4, 0, 0);
-        let ax_3 = s.get_with_zeta(3, 0, 0);
-        let ax_2 = s.get_with_zeta(2, 0, 0);
-        let ax_1 = s.get_with_zeta(1, 0, 0);
-        s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_3 = s.get_with_zeta(3, 1, 1);
-        let ax_2 = s.get_with_zeta(2, 1, 1);
-        let ax_1 = s.get_with_zeta(1, 1, 1);
-        let ax_0 = s.get_with_zeta(0, 1, 1);
-        let ax_4 = s.get_with_zeta(4, 1, 0);
-        s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_3 = s.get_with_zeta(3, 1, 0);
-        let ax_2 = s.get_with_zeta(2, 1, 0);
-        let ax_1 = s.get_with_zeta(1, 1, 0);
-        let ax_0 = s.get_with_zeta(0, 1, 0);
-        let ax_4 = s.get_with_zeta(4, 1, 1);
-        s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_1 = s.get_with_zeta(1, 2, 1);
-        let ax_0 = s.get_with_zeta(0, 2, 1);
-        let ax_4 = s.get_with_zeta(4, 2, 1);
-        let ax_3 = s.get_with_zeta(3, 2, 0);
-        let ax_2 = s.get_with_zeta(2, 2, 1);
-        s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_1 = s.get_with_zeta(1, 2, 0);
-        let ax_0 = s.get_with_zeta(0, 2, 0);
-        let ax_4 = s.get_with_zeta(4, 2, 0);
-        let ax_3 = s.get_with_zeta(3, 2, 1);
-        let ax_2 = s.get_with_zeta(2, 2, 0);
-        s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_4 = s.get_with_zeta(4, 3, 1);
-        let ax_3 = s.get_with_zeta(3, 3, 1);
-        let ax_2 = s.get_with_zeta(2, 3, 0);
-        let ax_1 = s.get_with_zeta(1, 3, 1);
-        let ax_0 = s.get_with_zeta(0, 3, 1);
-        s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_4 = s.get_with_zeta(4, 3, 0);
-        let ax_3 = s.get_with_zeta(3, 3, 0);
-        let ax_2 = s.get_with_zeta(2, 3, 1);
-        let ax_1 = s.get_with_zeta(1, 3, 0);
-        let ax_0 = s.get_with_zeta(0, 3, 0);
-        s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_2 = s.get_with_zeta(2, 4, 1);
-        let ax_1 = s.get_with_zeta(1, 4, 0);
-        let ax_0 = s.get_with_zeta(0, 4, 1);
-        let ax_4 = s.get_with_zeta(4, 4, 1);
-        let ax_3 = s.get_with_zeta(3, 4, 1);
-        s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_2 = s.get_with_zeta(2, 4, 0);
-        let ax_1 = s.get_with_zeta(1, 4, 1);
-        let ax_0 = s.get_with_zeta(0, 4, 0);
-        let ax_4 = s.get_with_zeta(4, 4, 0);
-        let ax_3 = s.get_with_zeta(3, 4, 0);
-        s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let c_x4_zeta0 = s.c[4][0];
-        let c_x1_zeta1 = s.c[1][1];
-        let c_x3_zeta0 = s.c[3][0];
-        let c_x0_zeta1 = s.c[0][1];
-        let c_x2_zeta0 = s.c[2][0];
-        let c_x4_zeta1 = s.c[4][1];
-        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-        s.d[0][0] = d_x0_zeta0;
-        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-        s.d[2][1] = d_x2_zeta1;
-        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-        s.d[4][0] = d_x4_zeta0;
-        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-        s.d[1][1] = d_x1_zeta1;
-        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-        s.d[3][0] = d_x3_zeta0;
-        let c_x1_zeta0 = s.c[1][0];
-        let c_x3_zeta1 = s.c[3][1];
-        let c_x2_zeta1 = s.c[2][1];
-        let c_x0_zeta0 = s.c[0][0];
-        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-        s.d[0][1] = d_x0_zeta1;
-        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-        s.d[2][0] = d_x2_zeta0;
-        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-        s.d[4][1] = d_x4_zeta1;
-        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-        s.d[1][0] = d_x1_zeta0;
-        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-        s.d[3][1] = d_x3_zeta1;
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 3];
+    };
     #[cfg(not(feature = "full-unroll"))]
-    let i = s.i;
     {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(22),
-                (a3 ^ d3).rotate_left(11),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
-        let ax0;
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 2];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
-        };
-        s.set_with_zeta(0, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 1, ax4);
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[s.i];
+    };
+    s.set_with_zeta(0, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_iota_z1<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    let (bx0, bx1) = {
+        let a0 = s.get_with_zeta(0, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(0, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx2, bx3, bx4) = {
+        let a2 = s.get_with_zeta(0, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(0, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(0, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(21),
+            (a3 ^ d3).rotate_left(10),
+            (a4 ^ d4).rotate_left(7),
+        )
+    };
+    let ax0;
+    #[cfg(feature = "full-unroll")]
     {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(21),
-                (a3 ^ d3).rotate_left(10),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
-        let ax0;
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 2];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
-            s.i = i + 1;
-        };
-        s.set_with_zeta(0, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 0, ax4);
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 3];
+    };
+    #[cfg(not(feature = "full-unroll"))]
     {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(1, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(1, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(30),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 1, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(13),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 1, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(12),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 0, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(8),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(14),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 0, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(7),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(13),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 1, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(4, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(20),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 0, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(4, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(27),
-                (a4 ^ d4).rotate_left(19),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 1, ax4);
-    }
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[s.i];
+        s.i = s.i + 1;
+    };
+    s.set_with_zeta(0, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_0(s: &mut KeccakState) {
+    let (bx2, bx3) = {
+        let a0 = s.get_with_zeta(1, 0, 0);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(1, 1, 0);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
+    };
+    let (bx4, bx0, bx1) = {
+        let a2 = s.get_with_zeta(1, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(1, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(1, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(14),
+            (a4 ^ d4).rotate_left(10),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_1(s: &mut KeccakState) {
+    let (bx2, bx3) = {
+        let a0 = s.get_with_zeta(1, 0, 1);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(1, 1, 1);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
+    };
+    let (bx4, bx0, bx1) = {
+        let a2 = s.get_with_zeta(1, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(1, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(1, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(30),
+            (a3 ^ d3).rotate_left(14),
+            (a4 ^ d4).rotate_left(10),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_2(s: &mut KeccakState) {
+    let (bx4, bx0) = {
+        let a0 = s.get_with_zeta(2, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(2, 1, 0);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx1, bx2, bx3) = {
+        let a2 = s.get_with_zeta(2, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(2, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(2, 4, 0);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(3),
+            (a3 ^ d3).rotate_left(13),
+            (a4 ^ d4).rotate_left(4),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_3(s: &mut KeccakState) {
+    let (bx4, bx0) = {
+        let a0 = s.get_with_zeta(2, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(2, 1, 1);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
+    };
+    let (bx1, bx2, bx3) = {
+        let a2 = s.get_with_zeta(2, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(2, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(2, 4, 1);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(3),
+            (a3 ^ d3).rotate_left(12),
+            (a4 ^ d4).rotate_left(4),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_4(s: &mut KeccakState) {
+    let (bx1, bx2) = {
+        let a0 = s.get_with_zeta(3, 0, 0);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(3, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
+    };
+    let (bx3, bx4, bx0) = {
+        let a2 = s.get_with_zeta(3, 2, 0);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(3, 3, 0);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(3, 4, 0);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(8),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(14),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_5(s: &mut KeccakState) {
+    let (bx1, bx2) = {
+        let a0 = s.get_with_zeta(3, 0, 1);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(3, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
+    };
+    let (bx3, bx4, bx0) = {
+        let a2 = s.get_with_zeta(3, 2, 1);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(3, 3, 1);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(3, 4, 1);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(7),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(13),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 1, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_6(s: &mut KeccakState) {
+    let (bx3, bx4) = {
+        let a0 = s.get_with_zeta(4, 0, 0);
+        let d0 = s.d[0][1];
+        let a1 = s.get_with_zeta(4, 1, 0);
+        let d1 = s.d[1][0];
+        ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx0, bx1, bx2) = {
+        let a2 = s.get_with_zeta(4, 2, 0);
+        let d2 = s.d[2][0];
+        let a3 = s.get_with_zeta(4, 3, 0);
+        let d3 = s.d[3][1];
+        let a4 = s.get_with_zeta(4, 4, 0);
+        let d4 = s.d[4][1];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(28),
+            (a4 ^ d4).rotate_left(20),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 0, ax4);
+}
+
+#[inline(always)]
+pub(crate) fn keccakf1600_round3_pi_chi_7(s: &mut KeccakState) {
+    let (bx3, bx4) = {
+        let a0 = s.get_with_zeta(4, 0, 1);
+        let d0 = s.d[0][0];
+        let a1 = s.get_with_zeta(4, 1, 1);
+        let d1 = s.d[1][1];
+        ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
+    };
+    let (bx0, bx1, bx2) = {
+        let a2 = s.get_with_zeta(4, 2, 1);
+        let d2 = s.d[2][1];
+        let a3 = s.get_with_zeta(4, 3, 1);
+        let d3 = s.d[3][0];
+        let a4 = s.get_with_zeta(4, 4, 1);
+        let d4 = s.d[4][0];
+        (
+            (a2 ^ d2).rotate_left(31),
+            (a3 ^ d3).rotate_left(27),
+            (a4 ^ d4).rotate_left(19),
+        )
+    };
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 1, ax4);
 }
 
 #[inline(always)]
 pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
-    {
-        let ax_0 = s.get_with_zeta(0, 0, 0);
-        let ax_3 = s.get_with_zeta(3, 0, 0);
-        let ax_1 = s.get_with_zeta(1, 0, 1);
-        let ax_4 = s.get_with_zeta(4, 0, 1);
-        let ax_2 = s.get_with_zeta(2, 0, 0);
-        s.c[0][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_0 = s.get_with_zeta(0, 0, 1);
-        let ax_3 = s.get_with_zeta(3, 0, 1);
-        let ax_1 = s.get_with_zeta(1, 0, 0);
-        let ax_4 = s.get_with_zeta(4, 0, 0);
-        let ax_2 = s.get_with_zeta(2, 0, 1);
-        s.c[0][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_2 = s.get_with_zeta(2, 1, 1);
-        let ax_0 = s.get_with_zeta(0, 1, 0);
-        let ax_3 = s.get_with_zeta(3, 1, 0);
-        let ax_1 = s.get_with_zeta(1, 1, 1);
-        let ax_4 = s.get_with_zeta(4, 1, 0);
-        s.c[1][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_2 = s.get_with_zeta(2, 1, 0);
-        let ax_0 = s.get_with_zeta(0, 1, 1);
-        let ax_3 = s.get_with_zeta(3, 1, 1);
-        let ax_1 = s.get_with_zeta(1, 1, 0);
-        let ax_4 = s.get_with_zeta(4, 1, 1);
-        s.c[1][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_4 = s.get_with_zeta(4, 2, 0);
-        let ax_2 = s.get_with_zeta(2, 2, 0);
-        let ax_0 = s.get_with_zeta(0, 2, 1);
-        let ax_3 = s.get_with_zeta(3, 2, 1);
-        let ax_1 = s.get_with_zeta(1, 2, 1);
-        s.c[2][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_4 = s.get_with_zeta(4, 2, 1);
-        let ax_2 = s.get_with_zeta(2, 2, 1);
-        let ax_0 = s.get_with_zeta(0, 2, 0);
-        let ax_3 = s.get_with_zeta(3, 2, 0);
-        let ax_1 = s.get_with_zeta(1, 2, 0);
-        s.c[2][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_1 = s.get_with_zeta(1, 3, 0);
-        let ax_4 = s.get_with_zeta(4, 3, 1);
-        let ax_2 = s.get_with_zeta(2, 3, 1);
-        let ax_0 = s.get_with_zeta(0, 3, 1);
-        let ax_3 = s.get_with_zeta(3, 3, 0);
-        s.c[3][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_1 = s.get_with_zeta(1, 3, 1);
-        let ax_4 = s.get_with_zeta(4, 3, 0);
-        let ax_2 = s.get_with_zeta(2, 3, 0);
-        let ax_0 = s.get_with_zeta(0, 3, 0);
-        let ax_3 = s.get_with_zeta(3, 3, 1);
-        s.c[3][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_3 = s.get_with_zeta(3, 4, 1);
-        let ax_1 = s.get_with_zeta(1, 4, 0);
-        let ax_4 = s.get_with_zeta(4, 4, 1);
-        let ax_2 = s.get_with_zeta(2, 4, 0);
-        let ax_0 = s.get_with_zeta(0, 4, 0);
-        s.c[4][0] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let ax_3 = s.get_with_zeta(3, 4, 0);
-        let ax_1 = s.get_with_zeta(1, 4, 1);
-        let ax_4 = s.get_with_zeta(4, 4, 0);
-        let ax_2 = s.get_with_zeta(2, 4, 1);
-        let ax_0 = s.get_with_zeta(0, 4, 1);
-        s.c[4][1] = ax_0 ^ ax_1 ^ ax_2 ^ ax_3 ^ ax_4;
-    }
-    {
-        let c_x4_zeta0 = s.c[4][0];
-        let c_x1_zeta1 = s.c[1][1];
-        let c_x3_zeta0 = s.c[3][0];
-        let c_x0_zeta1 = s.c[0][1];
-        let c_x2_zeta0 = s.c[2][0];
-        let c_x4_zeta1 = s.c[4][1];
-        let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-        s.d[0][0] = d_x0_zeta0;
-        let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-        s.d[2][1] = d_x2_zeta1;
-        let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-        s.d[4][0] = d_x4_zeta0;
-        let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-        s.d[1][1] = d_x1_zeta1;
-        let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-        s.d[3][0] = d_x3_zeta0;
-        let c_x1_zeta0 = s.c[1][0];
-        let c_x3_zeta1 = s.c[3][1];
-        let c_x2_zeta1 = s.c[2][1];
-        let c_x0_zeta0 = s.c[0][0];
-        let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-        s.d[0][1] = d_x0_zeta1;
-        let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-        s.d[2][0] = d_x2_zeta0;
-        let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-        s.d[4][1] = d_x4_zeta1;
-        let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-        s.d[1][0] = d_x1_zeta0;
-        let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-        s.d[3][1] = d_x3_zeta1;
-    }
-    #[cfg(not(feature = "full-unroll"))]
-    let i = s.i;
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(22),
-                (a3 ^ d3).rotate_left(11),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
-        let ax0;
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 3];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
-        };
-        s.set_with_zeta(0, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 0, ax4);
-    }
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(21),
-                (a3 ^ d3).rotate_left(10),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
-        let ax0;
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 3];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
-            s.i = i + 1;
-        };
-        s.set_with_zeta(0, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 1, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(1, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(1, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(30),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 1, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(13),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 0, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(12),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 1, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(8),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(14),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 0, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(7),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(13),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 1, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(4, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(20),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 0, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(4, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(27),
-                (a4 ^ d4).rotate_left(19),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 1, ax4);
-    }
+    keccakf1600_round3_theta_c_y0_z0(s);
+    keccakf1600_round3_theta_c_y0_z1(s);
+    keccakf1600_round3_theta_c_y1_z0(s);
+    keccakf1600_round3_theta_c_y1_z1(s);
+    keccakf1600_round3_theta_c_y2_z0(s);
+    keccakf1600_round3_theta_c_y2_z1(s);
+    keccakf1600_round3_theta_c_y3_z0(s);
+    keccakf1600_round3_theta_c_y3_z1(s);
+    keccakf1600_round3_theta_c_y4_z0(s);
+    keccakf1600_round3_theta_c_y4_z1(s);
+    keccakf1600_round3_theta_d(s);
+    keccakf1600_round3_pi_chi_iota_z0::<BASE_ROUND>(s);
+    keccakf1600_round3_pi_chi_iota_z1::<BASE_ROUND>(s);
+    keccakf1600_round3_pi_chi_0(s);
+    keccakf1600_round3_pi_chi_1(s);
+    keccakf1600_round3_pi_chi_2(s);
+    keccakf1600_round3_pi_chi_3(s);
+    keccakf1600_round3_pi_chi_4(s);
+    keccakf1600_round3_pi_chi_5(s);
+    keccakf1600_round3_pi_chi_6(s);
+    keccakf1600_round3_pi_chi_7(s);
 }
 
 // What is interesting is that I assumed that not inlining here should be relatively cheap, because
