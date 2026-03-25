@@ -8,7 +8,7 @@ use crate::{FromLeBytes, ToLeBytes};
 
 #[cfg_attr(hax, hax_lib::opaque)]
 #[derive(Clone, Copy)]
-#[cfg_attr(not(eurydice), derive(Debug))]
+#[cfg_attr(not(any(hax, eurydice)), derive(Debug))]
 pub(crate) struct KeccakState {
     pub(super) st: [Lane2U32; 25],
     pub(super) c: [Lane2U32; 5],
@@ -77,34 +77,33 @@ impl KeccakState {
         let last_block_len = out.len() % 8;
 
         for i in 0..num_full_blocks {
-            let lane = self.get_lane(i / 5, i % 5).deinterleave();
-            out[i * 8..i * 8 + 4].copy_from_slice(&lane[0].to_le_bytes());
-            out[i * 8 + 4..i * 8 + 8].copy_from_slice(&lane[1].to_le_bytes());
+            let l = self.get_lane(i / 5, i % 5).deinterleave();
+            out[i * 8..i * 8 + 4].copy_from_slice(&l[0].to_le_bytes());
+            out[i * 8 + 4..i * 8 + 8].copy_from_slice(&l[1].to_le_bytes());
         }
 
         if last_block_len > 4 {
-            let lane = self
+            let l = self
                 .get_lane(num_full_blocks / 5, num_full_blocks % 5)
                 .deinterleave();
             let last_half_block_len = last_block_len - 4;
 
-            out[num_full_blocks * 8..num_full_blocks * 8 + 4]
-                .copy_from_slice(&lane[0].to_le_bytes());
+            out[num_full_blocks * 8..num_full_blocks * 8 + 4].copy_from_slice(&l[0].to_le_bytes());
             out[num_full_blocks * 8 + 4..num_full_blocks * 8 + last_block_len]
-                .copy_from_slice(&lane[1].to_le_bytes()[0..last_half_block_len]);
+                .copy_from_slice(&l[1].to_le_bytes()[0..last_half_block_len]);
         } else if last_block_len > 0 {
-            let lane = self
+            let l = self
                 .get_lane(num_full_blocks / 5, num_full_blocks % 5)
                 .deinterleave();
 
             out[num_full_blocks * 8..num_full_blocks * 8 + last_block_len]
-                .copy_from_slice(&lane[0].to_le_bytes()[0..last_block_len]);
+                .copy_from_slice(&l[0].to_le_bytes()[0..last_block_len]);
         }
     }
 }
 
 #[inline(always)]
-fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], start: usize) {
+fn load_block_2u32<const RATE: usize>(s: &mut KeccakState, blocks: &[U8], start: usize) {
     #[cfg(not(eurydice))]
     debug_assert!(RATE <= blocks.len() && RATE % 8 == 0);
     let mut state_flat = [Lane2U32::zero(); 25];
@@ -115,8 +114,8 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
         state_flat[i] = Lane2U32::from([a, b]).interleave();
     }
     for i in 0..RATE / 8 {
-        let got = state.get_lane(i / 5, i % 5);
-        state.set_lane(
+        let got = s.get_lane(i / 5, i % 5);
+        s.set_lane(
             i / 5,
             i % 5,
             Lane2U32::from_ints([got[0] ^ state_flat[i][0], got[1] ^ state_flat[i][1]]),
@@ -125,20 +124,16 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
 }
 
 #[inline(always)]
-fn load_block_full_2u32<const RATE: usize>(
-    state: &mut KeccakState,
-    blocks: &[U8; 200],
-    start: usize,
-) {
-    load_block_2u32::<RATE>(state, blocks, start);
+fn load_block_full_2u32<const RATE: usize>(s: &mut KeccakState, blocks: &[U8; 200], start: usize) {
+    load_block_2u32::<RATE>(s, blocks, start);
 }
 
 #[inline(always)]
 fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     for i in 0..RATE / 8 {
-        let lane = s.get_lane(i / 5, i % 5).deinterleave();
-        out[8 * i..8 * i + 4].copy_from_slice(&lane[0].to_le_bytes());
-        out[8 * i + 4..8 * i + 8].copy_from_slice(&lane[1].to_le_bytes());
+        let l = s.get_lane(i / 5, i % 5).deinterleave();
+        out[8 * i..8 * i + 4].copy_from_slice(&l[0].to_le_bytes());
+        out[8 * i + 4..8 * i + 8].copy_from_slice(&l[1].to_le_bytes());
     }
 }
 

@@ -1,0 +1,10 @@
+name = "LibcruxIotSha3"
+version = "0.1.0"
+defaultTargets = ["LibcruxIotSha3"]
+
+[[require]]
+name = "aeneas"
+path = "/home/alex/Projects/aeneas/backends/lean"
+
+[[lean_lib]]
+name = "LibcruxIotSha3"

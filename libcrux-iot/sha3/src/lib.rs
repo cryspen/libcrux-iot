@@ -204,7 +204,7 @@ pub mod portable {
 
     /// The Keccak state for the incremental API.
     #[derive(Clone, Copy)]
-    #[cfg_attr(not(eurydice), derive(Debug))]
+    #[cfg_attr(not(any(hax, eurydice)), derive(Debug))]
     pub struct KeccakState {
         state: state::KeccakState,
     }
