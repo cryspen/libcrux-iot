@@ -1340,6 +1340,21 @@ def impl_round0 (s : KeccakState) : RustM KeccakState := do
   let s ← libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 0 s
   libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
 
+def impl_round1 (s : KeccakState) : RustM KeccakState := do
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round1_theta s
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 0 s
+  libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_2 s
+
+def impl_round2 (s : KeccakState) : RustM KeccakState := do
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round2_theta s
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 0 s
+  libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_2 s
+
+def impl_round3 (s : KeccakState) : RustM KeccakState := do
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round3_theta s
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 0 s
+  libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_2 s
+
 -- Reusable tactic for round-level equivalence proofs
 macro "round_equiv_proof" : tactic =>
   `(tactic| (
@@ -1467,10 +1482,79 @@ theorem keccak_f_unfold (state : RustArray u64 25) :
   simp (config := {decide := true}) only [spec_4rounds, spec_round, bind_assoc, pure_bind]
   rfl
 
--- Per-4-round-block functional equivalence (from per-round equivs)
-axiom four_round_eq (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
+-- Round 2 functional equivalence (sorry — same approach as round0/1)
+open Std.Do in
+theorem round2_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let r_impl ← impl_round2 s
+       let r_spec ← spec_round (lift_perm s impl_perm2) s.i
+       pure (r_spec = lift_perm r_impl impl_perm3)
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by sorry
+
+-- Round 3 functional equivalence (sorry — same approach as round0/1)
+open Std.Do in
+theorem round3_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let r_impl ← impl_round3 s
+       let r_spec ← spec_round (lift_perm s impl_perm3) s.i
+       pure (r_spec = lift r_impl)  -- impl_perm^4 = id
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by sorry
+
+-- Convert per-round Hoare triple to direct RustM equality
+open Std.Do in
+private theorem round_eq_of_func_equiv
+    (m_impl : RustM KeccakState) (m_spec : RustM (RustArray u64 25))
+    (f : KeccakState → RustArray u64 25)
+    (h : ⦃⌜True⌝⦄ (do let a ← m_impl; let b ← m_spec; (pure (b = f a) : RustM Prop)) ⦃⇓ r => ⌜r⌝⦄) :
+    m_spec = (m_impl >>= fun r => pure (f r)) := by
+  match m_impl, m_spec with
+  | .ok v₁, .ok v₂ =>
+    show RustM.ok v₂ = RustM.ok (f v₁); congr 1
+    rw [Triple] at h
+    simp_all [WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+      PredTrans.trans, ExceptT.run, Except.pure, Id.run, pure]
+  | .ok _, .fail e =>
+    exfalso; rw [Triple] at h
+    simp_all [WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+      PredTrans.trans, ExceptT.run, Id.run, pure, throwThe, throw, ExceptT.mk]
+  | .ok _, .div =>
+    exfalso; rw [Triple] at h
+    simp_all [WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+      PredTrans.trans, PredTrans.const]
+  | .fail e, _ =>
+    exfalso; rw [Triple] at h
+    simp_all [WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+      PredTrans.trans, ExceptT.run, Id.run, pure, throwThe, throw, ExceptT.mk]
+  | .div, _ =>
+    exfalso; rw [Triple] at h
+    simp_all [WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+      PredTrans.trans, PredTrans.const]
+
+-- Per-round direct equalities (derived from func_equiv Hoare triples)
+theorem round0_eq (s : KeccakState) (hi : s.i.toNat < 24) :
+    spec_round (lift s) s.i = (impl_round0 s >>= fun r => pure (lift_perm r impl_perm)) :=
+  round_eq_of_func_equiv _ _ _ (round0_func_equiv s hi)
+
+theorem round1_eq (s : KeccakState) (hi : s.i.toNat < 24) :
+    spec_round (lift_perm s impl_perm) s.i = (impl_round1 s >>= fun r => pure (lift_perm r impl_perm2)) :=
+  round_eq_of_func_equiv _ _ _ (round1_func_equiv s hi)
+
+theorem round2_eq (s : KeccakState) (hi : s.i.toNat < 24) :
+    spec_round (lift_perm s impl_perm2) s.i = (impl_round2 s >>= fun r => pure (lift_perm r impl_perm3)) :=
+  round_eq_of_func_equiv _ _ _ (round2_func_equiv s hi)
+
+theorem round3_eq (s : KeccakState) (hi : s.i.toNat < 24) :
+    spec_round (lift_perm s impl_perm3) s.i = (impl_round3 s >>= fun r => pure (lift r)) :=
+  round_eq_of_func_equiv _ _ _ (round3_func_equiv s hi)
+
+-- 4-round functional equivalence: compose 4 per-round equalities
+-- keccakf1600_4rounds = impl_round0 >> impl_round1 >> impl_round2 >> impl_round3
+-- spec_4rounds = spec_round >> spec_round >> spec_round >> spec_round
+-- After 4 rounds, impl_perm^4 = id, so lift_perm ... id = lift
+theorem four_round_eq (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
     spec_4rounds (lift s) s.i =
-    do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s))
+    do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s)) := by
+  sorry
 
 -- 4-round block returns ok and increments i by 4
 -- Derived from four_rounds_equiv by case-splitting on the RustM result
