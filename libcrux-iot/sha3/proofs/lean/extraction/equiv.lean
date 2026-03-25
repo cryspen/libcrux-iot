@@ -5,6 +5,40 @@ import Std.Tactic.BVDecide
 open libcrux_iot_sha3.lane
 open libcrux_iot_sha3.state
 
+/-!
+# Keccak-f[1600] Bit-Interleaved Equivalence Proof
+
+## Proof Status (5 sorry remaining)
+
+### Fully proven:
+- All algebraic lemmas (lift_lane_bv commutes with XOR/AND/NOT/OR/rotation) — bv_decide
+- theta_c specs (10 theorems) — theta_c_proof macro
+- theta_d specs (10 theorems) — theta_d_proof macro
+- theta_comp_spec (full theta composition) — theta_comp_proof macro
+- impl_perm_pow4_eq_id (permutation order 4) — decide
+- lift_perm_id — rfl
+- rc_equiv (round constant equivalence, 24 cases) — decide
+- pi_rho_chi_2_spec (rows y=2,3,4, d preserved) — hax_mvcgen
+
+### 1 sorry (almost proven):
+- pi_rho_chi_1_spec: hax_mvcgen closes all goals except one WP goal for
+  RC_INTERLEAVED array access. Workaround: delta-unfold RustM.instWPMonad +
+  WPMonad.toWP + friends, then simplify dite conditions using s.i < 24 < 255
+  and no uaddOverflow. One final goal remains (likely Prop coercion issue).
+
+### 4 sorry (placeholder postconditions — need strengthening):
+- pi_rho_chi_round0_lift: postcondition is `True`, needs real lifting statement
+- round0_equiv: postcondition is `True`, needs spec round composition
+- four_rounds_equiv: postcondition is `True`, needs 4-round spec composition
+- equivalence: top-level theorem, needs composition of all phases
+
+### Next steps:
+1. Close the last sorry in pi_rho_chi_1_spec (BitVec/WP issue)
+2. Strengthen postconditions of placeholder theorems to real equivalence statements
+3. Prove the strengthened theorems by composing sub-specs
+   (requires Std.Do.Triple API: Triple.bind, Triple.of_entails_right, etc.)
+-/
+
 /-! ## Lift: Interleaved Lane2U32 → standard u64
 
 The implementation stores each 64-bit Keccak lane as two u32 values in
@@ -695,10 +729,13 @@ rotation amounts are derived from RHO_OFFSETS at those source positions.
 def chi_u32 (b : Fin 5 → u32) (x : Fin 5) : u32 :=
   b x ^^^ (~~~(b ⟨(x.val + 1) % 5, by omega⟩) &&& b ⟨(x.val + 2) % 5, by omega⟩)
 
--- Monadic spec for pi_rho_chi_1 (round 0).
+-- Monadic spec for pi_rho_chi_1 (round 0). STATUS: 1 sorry remaining.
 -- Processes chi-sheets for output rows y=0,1.
 -- Output lane sets: {0,6,12,18,24} (row y=0) and {2,8,14,15,21} (row y=1).
 -- The `i` field is incremented by 1 (one iota round constant consumed).
+-- ISSUE: The final WP goal after delta-unfolding RustM.instWPMonad etc. has one
+-- remaining subgoal that rfl/trivial/omega don't close. Likely a Prop coercion
+-- or BitVec equality. See the `sorry` at the end of the tactic block.
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 40000000 in
 open Std.Do in
@@ -733,9 +770,10 @@ theorem pi_rho_chi_1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
       ExceptConds.false, PredTrans.const] at *
     all_goals first | rfl | trivial | assumption | omega | sorry)
 
--- Monadic spec for pi_rho_chi_2 (round 0).
+-- Monadic spec for pi_rho_chi_2 (round 0). STATUS: PROVEN.
 -- Processes rows y=2,3,4. Output lane sets:
 -- {4,5,11,17,23} (y=2), {1,7,13,19,20} (y=3), {3,9,10,16,22} (y=4).
+-- No RC array access (no iota), so no WP-fail issue.
 set_option maxRecDepth 3000 in
 set_option maxHeartbeats 80000000 in
 open Std.Do in
@@ -756,12 +794,18 @@ theorem pi_rho_chi_2_spec (s : KeccakState) :
   all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
   all_goals (first | omega | simp_all | rfl | skip)
 
-/-! ## Pi-Rho-Chi lifting theorem
+/-! ## Pi-Rho-Chi lifting theorem. STATUS: sorry (placeholder postcondition).
 
 After pi_rho_chi_1 + pi_rho_chi_2, the lifted state (with impl_perm applied)
 matches the spec's iota(chi(pi(rho(theta_applied_state)))).
+
+TODO: Strengthen postcondition from `True` to the actual lifting equivalence,
+then prove by composing pi_rho_chi_1_spec + pi_rho_chi_2_spec with the algebraic
+lifting lemmas (lift_lane_bv_{xor,and,not,or}, rotation lemmas, chi_lane_lift).
+Requires Std.Do.Triple composition API (Triple.bind, Triple.of_entails_right).
 -/
 
+set_option maxRecDepth 2000 in
 open Std.Do in
 theorem pi_rho_chi_round0_lift (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
@@ -773,12 +817,15 @@ theorem pi_rho_chi_round0_lift (s : KeccakState) (hi : s.i.toNat < 24) :
     ⌝ ⦄ := by
   sorry
 
-/-! ## Single round equivalence
+/-! ## Single round equivalence. STATUS: sorry (placeholder postcondition).
 
 Combines theta (which computes c, d while preserving st) with pi_rho_chi
 (which reads st and d, applies theta_apply+rho+pi+chi+iota).
 
 After one round, the implementation state is in impl_perm-permuted layout.
+
+TODO: Strengthen postcondition, then prove by chaining theta_comp_spec with
+pi_rho_chi_round0_lift. Repeat for rounds 1-3 (different access patterns).
 -/
 
 open Std.Do in
@@ -792,10 +839,14 @@ theorem round0_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     ⌝ ⦄ := by
   sorry
 
-/-! ## 4-round block equivalence
+/-! ## 4-round block equivalence. STATUS: sorry (placeholder postcondition).
 
 Since impl_perm^4 = id, after 4 rounds the state is back in standard layout.
 The 4-round block processes rounds i, i+1, i+2, i+3 of the spec.
+
+TODO: Strengthen postcondition, compose 4 round equivalences.
+Note: hax_mvcgen on the full 4-round block hits simp step limits.
+Need to use Triple composition API instead.
 -/
 
 open Std.Do in
@@ -808,11 +859,15 @@ theorem four_rounds_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
     ⌝ ⦄ := by
   sorry
 
-/-! ## Main equivalence theorem
+/-! ## Main equivalence theorem. STATUS: sorry.
 
 The full keccak is 6 repetitions of the 4-round block = 24 spec rounds.
 Since each 4-round block returns the state to standard layout (impl_perm^4 = id),
 the composition is straightforward.
+
+TODO: Compose 6 × four_rounds_equiv. Since impl_perm^24 = id (24-cycle on
+non-fixed points, and impl_perm^4 = id on each 4-cycle), the final lift
+has no permutation adjustment.
 -/
 
 #check hacspec_sha3.keccak_f.keccak_f
