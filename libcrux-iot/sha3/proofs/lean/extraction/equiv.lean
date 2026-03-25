@@ -1428,11 +1428,44 @@ def spec_4rounds (state : RustArray u64 25) (start_round : usize) : RustM (RustA
   spec_round s (start_round + 3)
 
 -- keccak_f = 6 × spec_4rounds (fold unrolling)
-axiom keccak_f_unfold (state : RustArray u64 25) :
+set_option maxRecDepth 2000 in
+set_option maxHeartbeats 4000000 in
+theorem keccak_f_unfold (state : RustArray u64 25) :
     hacspec_sha3.keccak_f.keccak_f state =
-    do let s ← spec_4rounds state 0; let s ← spec_4rounds s 4
-       let s ← spec_4rounds s 8; let s ← spec_4rounds s 12
-       let s ← spec_4rounds s 16; spec_4rounds s 20
+    (do let s ← spec_4rounds state 0; let s ← spec_4rounds s 4
+        let s ← spec_4rounds s 8; let s ← spec_4rounds s 12
+        let s ← spec_4rounds s 16; spec_4rounds s 20) := by
+  unfold hacspec_sha3.keccak_f.keccak_f
+  simp only [rust_primitives.hax.folds.fold_range]
+  -- Unroll USize64.fold_range (24 iterations)
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_true]
+  unfold USize64.fold_range; simp (config := {decide := true}) only [ite_false]
+  -- Both sides are now 24 flat spec rounds. Unfold RHS and normalize usize arithmetic.
+  simp (config := {decide := true}) only [spec_4rounds, spec_round, bind_assoc, pure_bind]
+  rfl
 
 -- Per-4-round-block functional equivalence (from per-round equivs)
 axiom four_round_eq (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
