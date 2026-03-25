@@ -20,6 +20,8 @@ open libcrux_iot_sha3.state
 - rc_equiv (round constant equivalence, 24 cases) — decide
 - pi_rho_chi_1_spec (rows y=0,1, i incremented, d preserved) — hax_mvcgen + rw [dif_pos]
 - pi_rho_chi_2_spec (rows y=2,3,4, d preserved) — hax_mvcgen
+- pi_rho_chi_round0_lift (prc1+prc2 composition) — Triple.bind
+- round0_equiv (theta+prc1+prc2 composition) — Triple.bind
 
 ### 4 sorry (placeholder postconditions — need strengthening):
 - pi_rho_chi_round0_lift: postcondition is `True`, needs real lifting statement
@@ -628,17 +630,9 @@ theorem theta_comp_spec (s : KeccakState) :
          s.st.toVec[2]._0.toVec[0] ^^^ s.st.toVec[3]._0.toVec[0] ^^^
          s.st.toVec[4]._0.toVec[0])
       ∧
-      -- st is preserved
-      r.st = s.st
+      -- st and i are preserved
+      r.st = s.st ∧ r.i = s.i
     ⌝ ⦄ := by theta_comp_proof
-
--- Theta preserves the round counter i (it only modifies c and d).
-set_option maxHeartbeats 8000000 in
-open Std.Do in
-theorem theta_preserves_i (s : KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_sha3.keccak.keccakf1600_round0_theta s
-    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by theta_comp_proof
 
 /-! ## Pi permutation and permuted lift
 
@@ -844,10 +838,11 @@ theorem round0_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
        libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
     ⦃ ⇓ r => ⌜ True ⌝ ⦄ := by
   apply Triple.bind (Q := fun s₁ => ⌜ s₁.i.toNat < 24 ⌝)
-  · -- theta preserves i, so result.i = s.i < 24
-    apply Triple.of_entails_right _ _ _ _ (theta_preserves_i s)
+  · -- theta preserves i (from theta_comp_spec), so result.i = s.i < 24
+    apply Triple.of_entails_right _ _ _ _ (theta_comp_spec s)
     apply PostCond.entails.of_left_entails; intro r
-    rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => h ▸ hi
+    rw [← SPred.entails_true_intro]
+    exact SPred.pure_intro fun ⟨_,_,_,_,_,_,_,_,_,_,_,hi_eq⟩ => hi_eq ▸ hi
   · -- prc1 + prc2: extract hi from SPred precondition via by_cases
     intro s₁
     by_cases hi₁ : s₁.i.toNat < 24
