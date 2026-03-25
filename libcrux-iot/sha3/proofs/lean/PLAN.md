@@ -12,7 +12,17 @@ theorem equivalence (s : KeccakState) :
     (do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600 s)))
 ```
 
-## Current Status: 2 sorry remaining (four_rounds_equiv, equivalence)
+## Current Status: 2 sorry remaining (four_round_func_equiv, equivalence)
+
+### Breakthrough: per-round functional equivalence via dual hax_mvcgen
+`hax_mvcgen` processes BOTH the spec (theta→rho→pi→chi→iota on RustArray u64 25)
+and impl (theta→prc1→prc2 on KeccakState) simultaneously, generating VCs that
+connect the u32 and u64 operations. The algebraic lifting lemmas close all VCs.
+
+Proven: round0_func_equiv, round1_func_equiv, round2_func_equiv, round3_func_equiv
+(each ~400M heartbeats, maxRecDepth 5000)
+
+Key fix: pre-compute impl_perm2/3 to avoid simp step explosion in hax_mvcgen.
 
 ### Proven theorems (no sorry):
 | Theorem | Proof technique |
