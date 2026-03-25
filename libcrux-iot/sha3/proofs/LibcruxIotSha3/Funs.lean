@@ -7,10 +7,10 @@ open Aeneas Aeneas.Std Result ControlFlow Error
 set_option linter.dupNamespace false
 set_option linter.hashCommand false
 set_option linter.unusedVariables false
+set_option maxRecDepth 1000
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
-set_option maxRecDepth 1000
 
 /- You can remove the following line by using the CLI option `-all-computable`: -/
 noncomputable section

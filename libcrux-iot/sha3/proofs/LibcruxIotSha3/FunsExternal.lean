@@ -12,36 +12,6 @@ set_option linter.unusedVariables false
 set_option maxHeartbeats 1000000
 open libcrux_iot_sha3
 
-/- [core::fmt::builders::{core::fmt::builders::DebugTuple<'a, 'b>}::field]:
-   Source: '/rustc/library/core/src/fmt/builders.rs', lines 329:4-329:64
-   Name pattern: [core::fmt::builders::{core::fmt::builders::DebugTuple<'a, 'b>}::field] -/
-@[rust_fun
-  "core::fmt::builders::{core::fmt::builders::DebugTuple<'a, 'b>}::field"]
-axiom core.fmt.builders.DebugTuple.field
-  :
-  core.fmt.builders.DebugTuple → Dyn (fun _dyn => core.fmt.Debug _dyn) →
-    Result (core.fmt.builders.DebugTuple × (core.fmt.builders.DebugTuple →
-    core.fmt.builders.DebugTuple))
-
-/- [core::fmt::builders::{core::fmt::builders::DebugTuple<'a, 'b>}::finish]:
-   Source: '/rustc/library/core/src/fmt/builders.rs', lines 431:4-431:43
-   Name pattern: [core::fmt::builders::{core::fmt::builders::DebugTuple<'a, 'b>}::finish] -/
-@[rust_fun
-  "core::fmt::builders::{core::fmt::builders::DebugTuple<'a, 'b>}::finish"]
-axiom core.fmt.builders.DebugTuple.finish
-  :
-  core.fmt.builders.DebugTuple → Result ((core.result.Result Unit
-    core.fmt.Error) × core.fmt.builders.DebugTuple)
-
-/- [core::fmt::{core::fmt::Formatter<'a>}::debug_tuple]:
-   Source: '/rustc/library/core/src/fmt/mod.rs', lines 2600:4-2600:74
-   Name pattern: [core::fmt::{core::fmt::Formatter<'a>}::debug_tuple] -/
-@[rust_fun "core::fmt::{core::fmt::Formatter<'a>}::debug_tuple"]
-axiom core.fmt.Formatter.debug_tuple
-  :
-  core.fmt.Formatter → Str → Result (core.fmt.builders.DebugTuple ×
-    core.fmt.Formatter)
-
 /- [core::iter::range::{core::iter::range::Step for i32}::backward_checked]:
    Source: '/rustc/library/core/src/iter/range.rs', lines 340:16-340:74
    Name pattern: [core::iter::range::{core::iter::range::Step<i32>}::backward_checked] -/
@@ -71,14 +41,6 @@ axiom I32.Insts.CoreIterRangeStep.steps_between
 @[rust_fun
   "libcrux_secrets::int::public_integers::{libcrux_secrets::traits::Classify<@T, @T>}::classify"]
 axiom libcrux_secrets.traits.Classify.Blanket.classify
-  {T : Type} : T → Result T
-
-/- [libcrux_secrets::int::public_integers::{libcrux_secrets::traits::Declassify<T> for T}::declassify]:
-   Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libcrux-secrets-0.0.5/src/int/public_integers.rs', lines 36:4-36:28
-   Name pattern: [libcrux_secrets::int::public_integers::{libcrux_secrets::traits::Declassify<@T, @T>}::declassify] -/
-@[rust_fun
-  "libcrux_secrets::int::public_integers::{libcrux_secrets::traits::Declassify<@T, @T>}::declassify"]
-axiom libcrux_secrets.traits.Declassify.Blanket.declassify
   {T : Type} : T → Result T
 
 /- [libcrux_secrets::int::{libcrux_secrets::int::CastOps for u64}::as_u32]:
