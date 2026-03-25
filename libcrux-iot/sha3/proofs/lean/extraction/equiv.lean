@@ -1122,6 +1122,7 @@ private theorem round0_prc1_i (s : KeccakState) (hi : s.i.toNat < 24) :
     (PostCond.entails.of_left_entails fun _ => by
       rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun ⟨h, _⟩ => h)
 
+set_option maxRecDepth 3000 in
 open Std.Do in
 private theorem round0_prc2_i (s : KeccakState) :
     ⦃⌜True⌝⦄ libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s ⦃⇓ r => ⌜r.i = s.i⌝⦄ :=
@@ -1129,58 +1130,96 @@ private theorem round0_prc2_i (s : KeccakState) :
     (PostCond.entails.of_left_entails fun _ => by
       rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun ⟨_, h⟩ => h)
 
+-- Helper: convert usize-preserving spec to Nat-level postcondition.
+open Std.Do in
+private theorem nat_step_preserve
+    {f : KeccakState → RustM KeccakState}
+    (spec : ∀ s, ⦃⌜True⌝⦄ f s ⦃⇓ r => ⌜r.i = s.i⌝⦄)
+    (s : KeccakState) (n : Nat) :
+    ⦃⌜s.i.toNat = n⌝⦄ f s ⦃⇓ r => ⌜r.i.toNat = n⌝⦄ := by
+  by_cases hs : s.i.toNat = n
+  · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (spec s)
+      (PostCond.entails.of_left_entails fun _ => by
+        rw [← SPred.entails_true_intro]
+        exact SPred.pure_intro fun h => by simp_all))
+  · exact triple_of_neg hs _
+
+-- Helper: convert usize-incrementing spec to Nat-level postcondition.
+open Std.Do in
+private theorem nat_step_increment
+    {f : KeccakState → RustM KeccakState}
+    (spec : ∀ s, s.i.toNat < 24 → ⦃⌜True⌝⦄ f s ⦃⇓ r => ⌜r.i = s.i + 1⌝⦄)
+    (s : KeccakState) (n : Nat) (hn : n < 24) :
+    ⦃⌜s.i.toNat = n⌝⦄ f s ⦃⇓ r => ⌜r.i.toNat = n + 1⌝⦄ := by
+  by_cases hs : s.i.toNat = n
+  · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (spec s (hs ▸ hn))
+      (PostCond.entails.of_left_entails fun _ => by
+        rw [← SPred.entails_true_intro]
+        exact SPred.pure_intro fun h => by simp_all [USize64.toNat_add]; omega))
+  · exact triple_of_neg hs _
+
 set_option maxRecDepth 2000 in
 open Std.Do in
 theorem four_rounds_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s
     ⦃ ⇓ r => ⌜ True ⌝ ⦄ := by
-  -- 4rounds is a flat 12-step bind chain. We track ⌜sₖ.i.toNat + remaining ≤ 24⌝
-  -- through each step. theta/prc2 preserve i, prc1 increments by 1.
+  -- Track s.i.toNat through 12 steps as Nat (avoids usize arithmetic issues).
+  -- theta/prc2 preserve (nat_step_preserve), prc1 increments (nat_step_increment).
   unfold libcrux_iot_sha3.keccak.keccakf1600_4rounds
-  -- We use a single sorry here — the 12-step chain is structurally correct but
-  -- requires careful usize↔Nat conversion at each step. TODO: complete.
-  sorry
-      s hi0
+  -- Step 1: theta0 (preserves i)
+  apply Triple.bind (Q := fun s₁ => ⌜s₁.i.toNat = s.i.toNat⌝)
+  · exact Triple.of_entails_right _ _ _ _ (round0_theta_i s)
+      (PostCond.entails.of_left_entails fun _ => by
+        rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => by simp_all)
   · intro s₁
-    by_cases hi₁_eq : s₁.i = s.i + 1
-    · -- Round 1
-      apply Triple.bind (Q := fun s₂ => ⌜ s₂.i = s.i + 2 ⌝)
-      · have hi1 : s₁.i.toNat < 24 := by omega
-        exact strengthen_pre _ (roundK_equiv
-          round1_theta_spec
-          (fun s hi => round1_prc1_spec s hi)
-          round1_prc2_spec s₁ hi1 |>.of_entails_right _
-          (PostCond.entails.of_left_entails fun _ => by
-            rw [← SPred.entails_true_intro]
-            exact SPred.pure_intro fun h => by rw [h, hi₁_eq]; ring))
-      · intro s₂
-        by_cases hi₂_eq : s₂.i = s.i + 2
-        · -- Round 2
-          apply Triple.bind (Q := fun s₃ => ⌜ s₃.i = s.i + 3 ⌝)
-          · have hi2 : s₂.i.toNat < 24 := by omega
-            exact strengthen_pre _ (roundK_equiv
-              round2_theta_spec
-              (fun s hi => round2_prc1_spec s hi)
-              round2_prc2_spec s₂ hi2 |>.of_entails_right _
-              (PostCond.entails.of_left_entails fun _ => by
-                rw [← SPred.entails_true_intro]
-                exact SPred.pure_intro fun h => by rw [h, hi₂_eq]; ring))
-          · intro s₃
-            by_cases hi₃_eq : s₃.i = s.i + 3
-            · -- Round 3
-              have hi3 : s₃.i.toNat < 24 := by omega
-              exact strengthen_pre _ (weaken_to_true _ (roundK_equiv
-                round3_theta_spec
-                (fun s hi => round3_prc1_spec s hi)
-                round3_prc2_spec s₃ hi3))
-            · rw [Triple, show (s₃.i = s.i + 3) = False from propext ⟨(absurd · hi₃_eq), False.elim⟩]
-              rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id
-        · rw [Triple, show (s₂.i = s.i + 2) = False from propext ⟨(absurd · hi₂_eq), False.elim⟩]
-          rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id
-    · rw [Triple, show (s₁.i = s.i + 1) = False from propext ⟨(absurd · hi₁_eq), False.elim⟩]
-      rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun h => absurd h id
-
+    -- Step 2: prc1_0 (increments to n0 + 1)
+    apply Triple.bind (Q := fun s₂ => ⌜s₂.i.toNat = s.i.toNat + 1⌝)
+    · exact nat_step_increment (fun s hi => round0_prc1_i s hi) s₁ s.i.toNat (by omega)
+    · intro s₂
+      -- Step 3: prc2_0 (preserves n0 + 1)
+      apply Triple.bind (Q := fun s₃ => ⌜s₃.i.toNat = s.i.toNat + 1⌝)
+      · exact nat_step_preserve round0_prc2_i s₂ (s.i.toNat + 1)
+      · intro s₃
+        -- Step 4: theta1 (preserves n0 + 1)
+        apply Triple.bind (Q := fun s₄ => ⌜s₄.i.toNat = s.i.toNat + 1⌝)
+        · exact nat_step_preserve round1_theta_spec s₃ (s.i.toNat + 1)
+        · intro s₄
+          -- Step 5: prc1_1 (increments to n0 + 2)
+          apply Triple.bind (Q := fun s₅ => ⌜s₅.i.toNat = s.i.toNat + 2⌝)
+          · exact nat_step_increment (fun s hi => round1_prc1_spec s hi) s₄ (s.i.toNat + 1) (by omega)
+          · intro s₅
+            -- Step 6: prc2_1 (preserves n0 + 2)
+            apply Triple.bind (Q := fun s₆ => ⌜s₆.i.toNat = s.i.toNat + 2⌝)
+            · exact nat_step_preserve round1_prc2_spec s₅ (s.i.toNat + 2)
+            · intro s₆
+              -- Step 7: theta2 (preserves n0 + 2)
+              apply Triple.bind (Q := fun s₇ => ⌜s₇.i.toNat = s.i.toNat + 2⌝)
+              · exact nat_step_preserve round2_theta_spec s₆ (s.i.toNat + 2)
+              · intro s₇
+                -- Step 8: prc1_2 (increments to n0 + 3)
+                apply Triple.bind (Q := fun s₈ => ⌜s₈.i.toNat = s.i.toNat + 3⌝)
+                · exact nat_step_increment (fun s hi => round2_prc1_spec s hi) s₇ (s.i.toNat + 2) (by omega)
+                · intro s₈
+                  -- Step 9: prc2_2 (preserves n0 + 3)
+                  apply Triple.bind (Q := fun s₉ => ⌜s₉.i.toNat = s.i.toNat + 3⌝)
+                  · exact nat_step_preserve round2_prc2_spec s₈ (s.i.toNat + 3)
+                  · intro s₉
+                    -- Step 10: theta3 (preserves n0 + 3)
+                    apply Triple.bind (Q := fun s₁₀ => ⌜s₁₀.i.toNat = s.i.toNat + 3⌝)
+                    · exact nat_step_preserve round3_theta_spec s₉ (s.i.toNat + 3)
+                    · intro s₁₀
+                      -- Step 11: prc1_3 (increments to s.i.toNat + 4)
+                      apply Triple.bind (Q := fun _ => ⌜True⌝)
+                      · exact Triple.of_entails_right _ _ _ _
+                          (nat_step_increment (fun s hi => round3_prc1_spec s hi) s₁₀ (s.i.toNat + 3) (by omega))
+                          (PostCond.entails.of_left_entails fun _ => by
+                            rw [← SPred.entails_true_intro]; exact SPred.pure_intro fun _ => trivial)
+                      · intro s₁₁
+                        -- Step 12: prc2_3 + pure
+                        apply Triple.bind (Q := fun _ => ⌜True⌝)
+                        · exact strengthen_pre _ (weaken_to_true _ (round3_prc2_spec s₁₁))
+                        · intro s₁₂; exact Triple.pure s₁₂ (SPred.entails.refl _)
 /-! ## Main equivalence theorem. STATUS: sorry.
 
 The full keccak is 6 repetitions of the 4-round block = 24 spec rounds.
