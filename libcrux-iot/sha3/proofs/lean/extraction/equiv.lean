@@ -1503,6 +1503,30 @@ theorem round3_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
     first | rfl | simp_all)
 
+/-! ## 4-round functional equivalence
+
+4 spec rounds on the lifted state = lifting the result of keccakf1600_4rounds.
+Composes round0-3 func_equiv via Triple.bind.
+-/
+
+-- 4 consecutive spec rounds
+def spec_4rounds (state : RustArray u64 25) (start_round : usize) : RustM (RustArray u64 25) := do
+  let s ← spec_round state start_round
+  let s ← spec_round s (start_round + 1)
+  let s ← spec_round s (start_round + 2)
+  spec_round s (start_round + 3)
+
+open Std.Do in
+theorem four_round_func_equiv (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let r_impl ← libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s
+       let r_spec ← spec_4rounds (lift s) s.i
+       pure (r_spec = lift r_impl)
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
+  sorry
+
+/-! ## Full equivalence -/
+
 -- Full equivalence: running both functions produces equal results.
 -- Stated as a Hoare triple: run impl, run spec, assert equality.
 open Std.Do in
