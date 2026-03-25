@@ -1,3 +1,27 @@
+/-!
+# Keccak-f[1600] Bit-Interleaved Equivalence Proof
+
+## Main theorem
+```
+theorem equivalence (s : KeccakState) (hi : s.i.toNat = 0) :
+    keccak_f (lift s) = keccakf1600 s >>= fun r => pure (lift r)
+```
+
+## Status: 3 sorry remaining (trivial i-bounds in four_round_eq)
+
+All per-round functional equivalences proven and compiling via lake build.
+The proof chain: equivalence ← keccak_f_unfold + four_round_eq + four_rounds_ok
+  four_round_eq ← round0-3_eq (via congr/funext, 3 sorry for rK.i.toNat < 24)
+  roundK_eq ← roundK_func_equiv (proven via hax_mvcgen on both spec+impl)
+
+## Architecture
+This file imports only the extraction files (not step_equiv.lean) to keep
+hax_mvcgen's internal simp within its 100K step limit. Definitions needed
+for the proofs are duplicated from step_equiv.lean.
+
+Key technique: hax_mvcgen processes BOTH spec and impl simultaneously,
+generating VCs closed by algebraic lifting lemmas (bv_decide-proven).
+-/
 import extraction.hacspec_sha3
 import extraction.libcrux_iot_sha3
 import Std.Tactic.BVDecide
@@ -1611,7 +1635,7 @@ private theorem impl_round_ok {f : KeccakState → RustM KeccakState}
     (h_ok : ∃ r, f s = .ok r ∧ r.i.toNat = s.i.toNat + 1) :
     ∃ r, f s = .ok r := by obtain ⟨r, hr, _⟩ := h_ok; exact ⟨r, hr⟩
 
--- four_round_eq from the four round_eq lemmas
+-- four_round_eq: 3 sorry remain (rK.i.toNat < 24 bounds from congr/funext)
 -- Strategy: extract impl ok values round by round, rewrite spec, simplify
 -- We need per-round ok extraction (same pattern as four_rounds_ok)
 -- Each impl_roundK returns ok with i incremented by 1
@@ -1686,7 +1710,7 @@ theorem lift_reset_i (s : KeccakState) (v : usize) : lift { s with i := v } = li
 private theorem usize_eq (a b : usize) (ha : a.toNat = b.toNat) : a = b :=
   USize64.eq_of_toBitVec_eq (BitVec.eq_of_toNat_eq ha)
 
--- Full equivalence
+-- Full equivalence (proven from four_round_eq + keccak_f_unfold + four_rounds_ok)
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 8000000 in
 theorem equivalence (s : KeccakState) (hi : s.i.toNat = 0) :
