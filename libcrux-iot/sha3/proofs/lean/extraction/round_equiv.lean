@@ -1,3 +1,5 @@
+import extraction.equiv
+
 /-!
 # Per-round functional equivalence proofs
 
@@ -5,7 +7,6 @@ These are in a separate file to keep the elaboration context lean —
 hax_mvcgen's internal simp (100K step limit) fails when the context
 has too many definitions/instances loaded.
 -/
-import extraction.equiv
 
 open libcrux_iot_sha3.lane
 open libcrux_iot_sha3.state
