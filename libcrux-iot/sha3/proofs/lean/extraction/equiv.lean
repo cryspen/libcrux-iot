@@ -1440,8 +1440,22 @@ axiom four_round_eq (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
     do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s))
 
 -- 4-round block returns ok and increments i by 4
-axiom four_rounds_ok (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
-    ∃ r, libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s = .ok r ∧ r.i.toNat = s.i.toNat + 4
+-- Derived from four_rounds_equiv by case-splitting on the RustM result
+open Std.Do in
+theorem four_rounds_ok (s : KeccakState) (hi : s.i.toNat + 4 ≤ 24) :
+    ∃ r, libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s = .ok r ∧ r.i.toNat = s.i.toNat + 4 := by
+  have h := four_rounds_equiv s hi
+  match hm : libcrux_iot_sha3.keccak.keccakf1600_4rounds 0 s with
+  | .ok r =>
+    refine ⟨r, rfl, ?_⟩
+    rw [Triple] at h; simp_all [hm, WP.wp, PredTrans.apply, PredTrans.pushExcept,
+      PredTrans.pure, PredTrans.trans, ExceptT.run, Except.pure, Id.run, pure]
+  | .fail e =>
+    exfalso; rw [Triple] at h; simp_all [hm, WP.wp, PredTrans.apply, PredTrans.pushExcept,
+      PredTrans.pure, PredTrans.trans, ExceptT.run, Id.run, pure, throwThe, throw, ExceptT.mk]
+  | .div =>
+    exfalso; rw [Triple] at h; simp_all [hm, WP.wp, PredTrans.apply, PredTrans.pushExcept,
+      PredTrans.pure, PredTrans.trans, PredTrans.const]
 
 -- lift ignores the i field
 theorem lift_reset_i (s : KeccakState) (v : usize) : lift { s with i := v } = lift s := by
