@@ -917,7 +917,27 @@ open Std.Do in
 theorem round1_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 0 s
-    ⦃ ⇓ r => ⌜ r.i = s.i + 1 ⌝ ⦄ := by prc1_proof
+    ⦃ ⇓ r => ⌜ r.i = s.i + 1 ⌝ ⦄ := by
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+              libcrux_secrets.traits.Classify.classify]
+  all_goals (first | intro h₁; subst h₁ | skip)
+  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals (reduce_usize_sizes;
+             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+  all_goals (repeat' constructor)
+  all_goals (first | rfl | skip)
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+  all_goals (first | omega | simp_all | rfl | skip)
+  all_goals (
+    delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
+    have h255 : USize64.toNat s.i < 255 := by omega
+    rw [dif_pos h255, dif_pos h255]
+    have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
+      simp [BitVec.uaddOverflow]; omega
+    rw [if_neg huadd]
+    delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
+    first | rfl | simp_all)
 
 set_option maxRecDepth 3000 in
 set_option maxHeartbeats 80000000 in
@@ -941,7 +961,27 @@ open Std.Do in
 theorem round2_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 0 s
-    ⦃ ⇓ r => ⌜ r.i = s.i + 1 ⌝ ⦄ := by prc1_proof
+    ⦃ ⇓ r => ⌜ r.i = s.i + 1 ⌝ ⦄ := by
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+              libcrux_secrets.traits.Classify.classify]
+  all_goals (first | intro h₁; subst h₁ | skip)
+  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals (reduce_usize_sizes;
+             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+  all_goals (repeat' constructor)
+  all_goals (first | rfl | skip)
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+  all_goals (first | omega | simp_all | rfl | skip)
+  all_goals (
+    delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
+    have h255 : USize64.toNat s.i < 255 := by omega
+    rw [dif_pos h255, dif_pos h255]
+    have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
+      simp [BitVec.uaddOverflow]; omega
+    rw [if_neg huadd]
+    delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
+    first | rfl | simp_all)
 
 set_option maxRecDepth 3000 in
 set_option maxHeartbeats 80000000 in
@@ -965,7 +1005,27 @@ open Std.Do in
 theorem round3_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 0 s
-    ⦃ ⇓ r => ⌜ r.i = s.i + 1 ⌝ ⦄ := by prc1_proof
+    ⦃ ⇓ r => ⌜ r.i = s.i + 1 ⌝ ⦄ := by
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+              libcrux_secrets.traits.Classify.classify]
+  all_goals (first | intro h₁; subst h₁ | skip)
+  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals (reduce_usize_sizes;
+             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+  all_goals (repeat' constructor)
+  all_goals (first | rfl | skip)
+  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+  all_goals (first | omega | simp_all | rfl | skip)
+  all_goals (
+    delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
+    have h255 : USize64.toNat s.i < 255 := by omega
+    rw [dif_pos h255, dif_pos h255]
+    have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
+      simp [BitVec.uaddOverflow]; omega
+    rw [if_neg huadd]
+    delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
+    first | rfl | simp_all)
 
 set_option maxRecDepth 3000 in
 set_option maxHeartbeats 80000000 in
