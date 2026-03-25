@@ -1155,7 +1155,7 @@ private theorem nat_step_increment
   · exact strengthen_pre _ (Triple.of_entails_right _ _ _ _ (spec s (hs ▸ hn))
       (PostCond.entails.of_left_entails fun _ => by
         rw [← SPred.entails_true_intro]
-        exact SPred.pure_intro fun h => by simp_all [USize64.toNat_add]; omega))
+        exact SPred.pure_intro fun h => by omega))
   · exact triple_of_neg hs _
 
 set_option maxRecDepth 2000 in
@@ -1448,16 +1448,15 @@ theorem lift_reset_i (s : KeccakState) (v : usize) : lift { s with i := v } = li
   unfold lift lift_lane lift_lane_bv spread_to_even; rfl
 
 -- Helper: usize equality from toNat equality
-private theorem usize_eq (a : usize) (n : Nat) (h : a.toNat = n) :
-    a = UInt64.ofBitVec (BitVec.ofNat 64 n) := by
-  apply USize64.eq_of_toBitVec_eq; apply BitVec.eq_of_toNat_eq; exact h
+private theorem usize_eq (a b : usize) (ha : a.toNat = b.toNat) : a = b :=
+  USize64.eq_of_toBitVec_eq (BitVec.eq_of_toNat_eq ha)
 
 -- Full equivalence
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 8000000 in
 theorem equivalence (s : KeccakState) (hi : s.i.toNat = 0) :
     hacspec_sha3.keccak_f.keccak_f (lift s) =
-    do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600 s)) := by
+    (libcrux_iot_sha3.keccak.keccakf1600 s >>= fun r => pure (lift r)) := by
   -- Unfold impl fold into 6 × keccakf1600_4rounds
   unfold libcrux_iot_sha3.keccak.keccakf1600
   simp only [rust_primitives.hax.folds.fold_range]
@@ -1477,24 +1476,37 @@ theorem equivalence (s : KeccakState) (hi : s.i.toNat = 0) :
   obtain ⟨r₄, hr₄, hi₄⟩ := four_rounds_ok r₃ (by omega)
   obtain ⟨r₅, hr₅, hi₅⟩ := four_rounds_ok r₄ (by omega)
   obtain ⟨r₆, hr₆, hi₆⟩ := four_rounds_ok r₅ (by omega)
-  -- Substitute impl results on RHS
-  simp only [hr₁, hr₂, hr₃, hr₄, hr₅, hr₆, pure_bind, bind_assoc, lift_reset_i]
+  -- Substitute all impl results on RHS and reduce binds
+  -- RustM.ok = pure, so pure_bind applies
+  have ok_bind : ∀ {α β : Type} (a : α) (f : α → RustM β), RustM.ok a >>= f = f a := fun _ _ => rfl
+  simp only [hr₁, ok_bind, hr₂, hr₃, hr₄, hr₅, hr₆, pure_bind, lift_reset_i]
   -- Rewrite each spec_4rounds block using four_round_eq
+  -- Need: spec_4rounds (lift rₖ) rₖ.i = pure (lift rₖ₊₁)  [from four_round_eq + hrₖ₊₁]
+  -- Bridge: numeric literal n = rₖ.i  [via usize_eq]
   -- Block 1: spec_4rounds (lift s) 0 → pure (lift r₁)
-  conv_lhs => rw [show (0 : usize) = s.i from (usize_eq s.i 0 hi).symm]
-  rw [four_round_eq s (by omega), hr₁]; simp only [pure_bind]
-  -- Block 2: spec_4rounds (lift r₁) 4 → pure (lift r₂)
-  conv_lhs => rw [show (4 : usize) = r₁.i from (usize_eq r₁.i 4 (by omega)).symm]
-  rw [four_round_eq r₁ (by omega), hr₂]; simp only [pure_bind]
+  rw [show (0 : usize) = s.i from (usize_eq _ _ hi).symm,
+      four_round_eq s (by omega), hr₁, ok_bind]
+  -- Blocks 2-6: need pure_bind to reduce `pure (lift rₖ) >>= spec_4rounds`
+  -- then usize_eq to match the round number with rₖ.i
+  simp only [pure_bind]
+  -- Compute rₖ.i values as Nat, then convert to usize equality
+  have h1 : r₁.i.toNat = 4 := by omega
+  have h2 : r₂.i.toNat = 8 := by omega
+  have h3 : r₃.i.toNat = 12 := by omega
+  have h4 : r₄.i.toNat = 16 := by omega
+  have h5 : r₅.i.toNat = 20 := by omega
+  -- Block 2
+  rw [show (4 : usize) = r₁.i from (usize_eq _ _ (by rw [h1]; native_decide)).symm,
+      four_round_eq r₁ (by omega), hr₂, ok_bind, pure_bind]
   -- Block 3
-  conv_lhs => rw [show (8 : usize) = r₂.i from (usize_eq r₂.i 8 (by omega)).symm]
-  rw [four_round_eq r₂ (by omega), hr₃]; simp only [pure_bind]
+  rw [show (8 : usize) = r₂.i from (usize_eq _ _ (by rw [h2]; native_decide)).symm,
+      four_round_eq r₂ (by omega), hr₃, ok_bind, pure_bind]
   -- Block 4
-  conv_lhs => rw [show (12 : usize) = r₃.i from (usize_eq r₃.i 12 (by omega)).symm]
-  rw [four_round_eq r₃ (by omega), hr₄]; simp only [pure_bind]
+  rw [show (12 : usize) = r₃.i from (usize_eq _ _ (by rw [h3]; native_decide)).symm,
+      four_round_eq r₃ (by omega), hr₄, ok_bind, pure_bind]
   -- Block 5
-  conv_lhs => rw [show (16 : usize) = r₄.i from (usize_eq r₄.i 16 (by omega)).symm]
-  rw [four_round_eq r₄ (by omega), hr₅]; simp only [pure_bind]
+  rw [show (16 : usize) = r₄.i from (usize_eq _ _ (by rw [h4]; native_decide)).symm,
+      four_round_eq r₄ (by omega), hr₅, ok_bind, pure_bind]
   -- Block 6
-  conv_lhs => rw [show (20 : usize) = r₅.i from (usize_eq r₅.i 20 (by omega)).symm]
-  rw [four_round_eq r₅ (by omega), hr₆]
+  rw [show (20 : usize) = r₅.i from (usize_eq _ _ (by rw [h5]; native_decide)).symm,
+      four_round_eq r₅ (by omega), hr₆, ok_bind]
