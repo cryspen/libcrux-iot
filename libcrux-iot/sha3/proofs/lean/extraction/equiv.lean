@@ -678,6 +678,11 @@ def lift_perm (s : KeccakState) (p : Fin 25 → Fin 25) : RustArray u64 25 :=
 theorem lift_perm_id (s : KeccakState) : lift_perm s id = lift s := by
   unfold lift_perm lift; rfl
 
+/-- impl_perm composed twice. Pre-computed to avoid simp step explosion in hax_mvcgen. -/
+def impl_perm2 (i : Fin 25) : Fin 25 := impl_perm (impl_perm i)
+/-- impl_perm composed three times. -/
+def impl_perm3 (i : Fin 25) : Fin 25 := impl_perm (impl_perm (impl_perm i))
+
 /-! ## Iota / Round constant equivalence
 
 The implementation XORs with `RC_INTERLEAVED_0[i]` (z0) and `RC_INTERLEAVED_1[i]` (z1).
@@ -1403,13 +1408,13 @@ theorem round1_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     do let r_impl ← impl_round1 s
        let r_spec ← spec_round (lift_perm s impl_perm) s.i
-       pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm))
+       pure (r_spec = lift_perm r_impl impl_perm2)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
   hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
               core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
               core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify, spec_round, impl_round1, lift, lift_lane,
-              lift_lane_bv, spread_to_even, impl_perm, lift_perm]
+              lift_lane_bv, spread_to_even, impl_perm, impl_perm2, lift_perm]
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 400000 }) [getElemResult, core_models.ops.index.Index.index]
   all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set]; try rfl) | skip)
@@ -1436,14 +1441,14 @@ open Std.Do in
 theorem round2_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     do let r_impl ← impl_round2 s
-       let r_spec ← spec_round (lift_perm s (impl_perm ∘ impl_perm)) s.i
-       pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm ∘ impl_perm))
+       let r_spec ← spec_round (lift_perm s impl_perm2) s.i
+       pure (r_spec = lift_perm r_impl impl_perm3)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
   hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
               core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
               core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify, spec_round, impl_round2, lift, lift_lane,
-              lift_lane_bv, spread_to_even, impl_perm, lift_perm]
+              lift_lane_bv, spread_to_even, impl_perm, impl_perm2, impl_perm3, lift_perm]
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 400000 }) [getElemResult, core_models.ops.index.Index.index]
   all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set]; try rfl) | skip)
@@ -1470,14 +1475,14 @@ open Std.Do in
 theorem round3_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     do let r_impl ← impl_round3 s
-       let r_spec ← spec_round (lift_perm s (impl_perm ∘ impl_perm ∘ impl_perm)) s.i
+       let r_spec ← spec_round (lift_perm s impl_perm3) s.i
        pure (r_spec = lift r_impl)  -- impl_perm^4 = id, so lift_perm ... id = lift
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
   hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
               core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
               core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify, spec_round, impl_round3, lift, lift_lane,
-              lift_lane_bv, spread_to_even, impl_perm, lift_perm]
+              lift_lane_bv, spread_to_even, impl_perm, impl_perm2, impl_perm3, lift_perm]
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 400000 }) [getElemResult, core_models.ops.index.Index.index]
   all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set]; try rfl) | skip)
@@ -1498,7 +1503,13 @@ theorem round3_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
     first | rfl | simp_all)
 
--- Full equivalence: the lifted implementation equals the spec.
-theorem equivalence (s : KeccakState) :
-  hacspec_sha3.keccak_f.keccak_f (lift s) =
-    (do pure (lift (← libcrux_iot_sha3.keccak.keccakf1600 s))) := sorry
+-- Full equivalence: running both functions produces equal results.
+-- Stated as a Hoare triple: run impl, run spec, assert equality.
+open Std.Do in
+theorem equivalence (s : KeccakState) (hi : s.i.toNat = 0) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let r_impl ← libcrux_iot_sha3.keccak.keccakf1600 s
+       let r_spec ← hacspec_sha3.keccak_f.keccak_f (lift s)
+       pure (r_spec = lift r_impl)
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
+  sorry
