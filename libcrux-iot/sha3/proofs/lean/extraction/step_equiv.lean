@@ -517,25 +517,26 @@ abbrev rot32 (x : u32) (n : Nat) : u32 :=
 -- d[x].z1 = c[(x+4)%5].z1 ⊕ c[(x+1)%5].z0
 -- where c[x].z = st[5x].z ⊕ st[5x+1].z ⊕ st[5x+2].z ⊕ st[5x+3].z ⊕ st[5x+4].z
 -- Reusable tactic for theta composition proofs
+-- Optimized: single simp pass with exact lemma set (from simp?) then split + rfl
 macro "theta_comp_proof" : tactic =>
   `(tactic| (
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction]
     all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp (config := { decide := true }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp only [Vector.getElem_set] at *; try rfl) | skip)
-    all_goals (reduce_usize_sizes;
-               simp (config := { decide := true }) [Vector.getElem_set];
-               try rfl)
-    -- Split all nested conjunctions and close each part
+    all_goals simp (config := { decide := true }) only [getElemResult, core_models.ops.index.Index.index,
+      ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
+      USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
+      Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
+      Std.Do.SPred.down_pure, rot32,
+      show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
+      show (2 : usize).toNat = 2 from rfl]
     all_goals (repeat' constructor)
-    all_goals (first | rfl | skip)
-    all_goals (simp only [Vector.getElem_set, rot32] at *; try rfl)))
+    all_goals (first | subst_vars; rfl | rfl)))
 
 -- Full theta composition: all d[x]._0[z] in terms of original s.st values
 -- d[x].z0 = c[(x+4)%5].z0 ⊕ rot₃₂(c[(x+1)%5].z1, 1)
 -- d[x].z1 = c[(x+4)%5].z1 ⊕ c[(x+1)%5].z0
 -- where c[x].z = st[5x].z ⊕ st[5x+1].z ⊕ st[5x+2].z ⊕ st[5x+3].z ⊕ st[5x+4].z
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 2000000 in
 open Std.Do in
 theorem theta_comp_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -905,7 +906,7 @@ macro "prc1_proof" : tactic =>
       first | rfl | simp_all)))
 
 -- Round 1
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 2000000 in
 open Std.Do in
 theorem round1_theta_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -949,7 +950,7 @@ theorem round1_prc2_spec (s : KeccakState) :
     ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by prc2_proof
 
 -- Round 2
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 2000000 in
 open Std.Do in
 theorem round2_theta_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -993,7 +994,7 @@ theorem round2_prc2_spec (s : KeccakState) :
     ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by prc2_proof
 
 -- Round 3
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 2000000 in
 open Std.Do in
 theorem round3_theta_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
