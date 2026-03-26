@@ -8,4 +8,4 @@ require Hax from git
   "https://github.com/cryspen/hax" @ "main" / "hax-lib" / "proof-libs" / "lean"
 
 lean_lib libcrux_iot_sha3 where
-  roots := #[`extraction.equiv, `extraction.spec, `extraction.helpers, `extraction.hacspec_sha3, `extraction.libcrux_iot_sha3]
+  roots := #[`extraction.equiv, `extraction.round_equiv, `extraction.spec, `extraction.helpers, `extraction.hacspec_sha3, `extraction.libcrux_iot_sha3]

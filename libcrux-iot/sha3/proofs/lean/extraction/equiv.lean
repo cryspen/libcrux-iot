@@ -1,5 +1,6 @@
 import extraction.hacspec_sha3
 import extraction.libcrux_iot_sha3
+import extraction.round_equiv
 import Std.Tactic.BVDecide
 
 open libcrux_iot_sha3.lane
@@ -1383,20 +1384,40 @@ macro "round_equiv_proof" : tactic =>
       delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
       first | rfl | simp_all)))
 
--- Round 0 functional equivalence: spec_round(lift s, i) = lift_perm(impl_round0 s, impl_perm)
-set_option maxRecDepth 5000 in
-set_option maxHeartbeats 400000000 in
+-- Bridge lemmas: primed defs from round_equiv.lean = unprimed defs here
+private theorem bridge_lift (s : KeccakState) : lift' s = lift s := by
+  unfold lift' lift lift_lane' lift_lane lift_lane_bv' lift_lane_bv spread_to_even' spread_to_even; rfl
+private theorem bridge_lift_perm (s : KeccakState) (p : Fin 25 → Fin 25) : lift_perm' s p = lift_perm s p := by
+  unfold lift_perm' lift_perm lift_lane' lift_lane lift_lane_bv' lift_lane_bv spread_to_even' spread_to_even; rfl
+private theorem bridge_spec_round (st : RustArray u64 25) (r : usize) : spec_round' st r = spec_round st r := by
+  unfold spec_round' spec_round; rfl
+private theorem bridge_impl_round0 (s : KeccakState) : impl_round0' s = impl_round0 s := by
+  unfold impl_round0' impl_round0; rfl
+private theorem bridge_impl_round1 (s : KeccakState) : impl_round1' s = impl_round1 s := by
+  unfold impl_round1' impl_round1; rfl
+private theorem bridge_impl_round2 (s : KeccakState) : impl_round2' s = impl_round2 s := by
+  unfold impl_round2' impl_round2; rfl
+private theorem bridge_impl_round3 (s : KeccakState) : impl_round3' s = impl_round3 s := by
+  unfold impl_round3' impl_round3; rfl
+private theorem bridge_impl_perm : impl_perm' = impl_perm := by
+  unfold impl_perm' impl_perm; rfl
+private theorem bridge_impl_perm2 : impl_perm2' = impl_perm2 := by
+  unfold impl_perm2' impl_perm2 impl_perm' impl_perm; rfl
+private theorem bridge_impl_perm3 : impl_perm3' = impl_perm3 := by
+  unfold impl_perm3' impl_perm3 impl_perm' impl_perm; rfl
+
+-- Round func_equivs derived from round_equiv.lean via bridge lemmas
 open Std.Do in
 theorem round0_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     do let r_impl ← impl_round0 s
        let r_spec ← spec_round (lift s) s.i
        pure (r_spec = lift_perm r_impl impl_perm)
-    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by round_equiv_proof
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
+  simp only [← bridge_impl_round0, ← bridge_spec_round, ← bridge_lift,
+    ← bridge_lift_perm, ← bridge_impl_perm]
+  exact round0_func_equiv' s hi
 
--- Round 1 functional equivalence
-set_option maxRecDepth 5000 in
-set_option maxHeartbeats 400000000 in
 open Std.Do in
 theorem round1_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
@@ -1404,30 +1425,9 @@ theorem round1_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_round (lift_perm s impl_perm) s.i
        pure (r_spec = lift_perm r_impl impl_perm2)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
-              core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
-              core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, spec_round, impl_round1, lift, lift_lane,
-              lift_lane_bv, spread_to_even, impl_perm, impl_perm2, lift_perm]
-  all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 400000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set]; try rfl) | skip)
-  all_goals (reduce_usize_sizes; simp (config := { decide := true, maxSteps := 400000 }) [Vector.getElem_set]; try rfl)
-  all_goals (repeat' constructor)
-  all_goals (first | rfl | skip)
-  all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set, rot32,
-    lift_lane_bv_xor, lift_lane_bv_and, lift_lane_bv_not, lift_lane_bv_or,
-    chi_lane_lift, theta_apply_lift, theta_d_lift, theta_c_lift]; try rfl) | skip)
-  all_goals (first | omega | simp_all | rfl | skip)
-  all_goals (
-    delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
-    have h255 : USize64.toNat s.i < 255 := by omega
-    rw [dif_pos h255, dif_pos h255]
-    have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-      simp [BitVec.uaddOverflow]; omega
-    rw [if_neg huadd]
-    delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
-    first | rfl | simp_all)
+  simp only [← bridge_impl_round1, ← bridge_spec_round, ← bridge_lift_perm,
+    ← bridge_impl_perm, ← bridge_impl_perm2]
+  exact round1_func_equiv' s hi
 
 /-! ## Top-level equivalence
 
@@ -1482,9 +1482,6 @@ theorem keccak_f_unfold (state : RustArray u64 25) :
   simp (config := {decide := true}) only [spec_4rounds, spec_round, bind_assoc, pure_bind]
   rfl
 
--- Round 2 functional equivalence
-set_option maxRecDepth 5000 in
-set_option maxHeartbeats 400000000 in
 open Std.Do in
 theorem round2_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
@@ -1492,34 +1489,10 @@ theorem round2_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_round (lift_perm s impl_perm2) s.i
        pure (r_spec = lift_perm r_impl impl_perm3)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
-              core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
-              core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, spec_round, impl_round2, lift, lift_lane,
-              lift_lane_bv, spread_to_even, impl_perm, impl_perm2, impl_perm3, lift_perm]
-  all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 400000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set]; try rfl) | skip)
-  all_goals (reduce_usize_sizes; simp (config := { decide := true, maxSteps := 400000 }) [Vector.getElem_set]; try rfl)
-  all_goals (repeat' constructor)
-  all_goals (first | rfl | skip)
-  all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set, rot32,
-    lift_lane_bv_xor, lift_lane_bv_and, lift_lane_bv_not, lift_lane_bv_or,
-    chi_lane_lift, theta_apply_lift, theta_d_lift, theta_c_lift]; try rfl) | skip)
-  all_goals (first | omega | simp_all | rfl | skip)
-  all_goals (
-    delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
-    have h255 : USize64.toNat s.i < 255 := by omega
-    rw [dif_pos h255, dif_pos h255]
-    have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-      simp [BitVec.uaddOverflow]; omega
-    rw [if_neg huadd]
-    delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
-    first | rfl | simp_all)
+  simp only [← bridge_impl_round2, ← bridge_spec_round, ← bridge_lift_perm,
+    ← bridge_impl_perm2, ← bridge_impl_perm3]
+  exact round2_func_equiv' s hi
 
--- Round 3 functional equivalence
-set_option maxRecDepth 5000 in
-set_option maxHeartbeats 400000000 in
 open Std.Do in
 theorem round3_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
@@ -1527,30 +1500,9 @@ theorem round3_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_round (lift_perm s impl_perm3) s.i
        pure (r_spec = lift r_impl)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
-              core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
-              core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, spec_round, impl_round3, lift, lift_lane,
-              lift_lane_bv, spread_to_even, impl_perm, impl_perm2, impl_perm3, lift_perm]
-  all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 400000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set]; try rfl) | skip)
-  all_goals (reduce_usize_sizes; simp (config := { decide := true, maxSteps := 400000 }) [Vector.getElem_set]; try rfl)
-  all_goals (repeat' constructor)
-  all_goals (first | rfl | skip)
-  all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set, rot32,
-    lift_lane_bv_xor, lift_lane_bv_and, lift_lane_bv_not, lift_lane_bv_or,
-    chi_lane_lift, theta_apply_lift, theta_d_lift, theta_c_lift]; try rfl) | skip)
-  all_goals (first | omega | simp_all | rfl | skip)
-  all_goals (
-    delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
-    have h255 : USize64.toNat s.i < 255 := by omega
-    rw [dif_pos h255, dif_pos h255]
-    have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-      simp [BitVec.uaddOverflow]; omega
-    rw [if_neg huadd]
-    delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
-    first | rfl | simp_all)
+  simp only [← bridge_impl_round3, ← bridge_spec_round, ← bridge_lift_perm,
+    ← bridge_impl_perm3, ← bridge_lift]
+  exact round3_func_equiv' s hi
 
 -- Pre-computed permutation compositions (placed AFTER roundK_func_equiv to
 -- avoid polluting hax_mvcgen's simp context for those proofs)
