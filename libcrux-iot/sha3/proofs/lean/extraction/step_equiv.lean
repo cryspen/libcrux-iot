@@ -391,29 +391,27 @@ macro "prc2_proof" : tactic =>
     all_goals (first | subst_vars; rfl | rfl)))
 
 -- Reusable tactic for prc1 specs (includes WP delta for RC_INTERLEAVED access).
--- Uses open Std.Do to avoid macro hygiene issues with delta names.
+-- Optimized: single simp only pass + WP delta block
 macro "prc1_proof" : tactic =>
   `(tactic| (
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
                 libcrux_secrets.traits.Classify.classify]
     all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
-    all_goals (reduce_usize_sizes;
-               simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
-               try rfl)
+    all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
+      ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
+      USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
+      Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
+      show (25 : usize).toNat = 25 from rfl, show (2 : usize).toNat = 2 from rfl]
     all_goals (repeat' constructor)
-    all_goals (first | rfl | skip)
-    all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
-    all_goals (first | omega | simp_all | rfl | skip)
-    all_goals (open Std.Do in
-      delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
+    all_goals (first | subst_vars; rfl | rfl | omega | skip)
+    all_goals (
+      delta Std.Do.RustM.instWPMonad Std.Do.WPMonad.toWP Std.Do.WP.wp Std.Do.RustM.instWP at *
       have h255 : USize64.toNat s.i < 255 := by omega
       rw [dif_pos h255, dif_pos h255]
       have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
         simp [BitVec.uaddOverflow]; omega
       rw [if_neg huadd]
-      delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
+      delta Std.Do.Except.instWP Std.Do.PredTrans.apply Std.Do.ExceptConds.false Std.Do.PredTrans.const at *
       first | rfl | simp_all)))
 
 -- Round 1
@@ -434,14 +432,13 @@ theorem round1_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
-  all_goals (reduce_usize_sizes;
-             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+  all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
+    ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
+    USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
+    Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
+    show (25 : usize).toNat = 25 from rfl, show (2 : usize).toNat = 2 from rfl]
   all_goals (repeat' constructor)
-  all_goals (first | rfl | skip)
-  all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
-  all_goals (first | omega | simp_all | rfl | skip)
+  all_goals (first | subst_vars; rfl | rfl | omega | skip)
   all_goals (
     delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
     have h255 : USize64.toNat s.i < 255 := by omega
@@ -478,14 +475,13 @@ theorem round2_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
-  all_goals (reduce_usize_sizes;
-             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+  all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
+    ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
+    USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
+    Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
+    show (25 : usize).toNat = 25 from rfl, show (2 : usize).toNat = 2 from rfl]
   all_goals (repeat' constructor)
-  all_goals (first | rfl | skip)
-  all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
-  all_goals (first | omega | simp_all | rfl | skip)
+  all_goals (first | subst_vars; rfl | rfl | omega | skip)
   all_goals (
     delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
     have h255 : USize64.toNat s.i < 255 := by omega
@@ -522,14 +518,13 @@ theorem round3_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
-  all_goals (reduce_usize_sizes;
-             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+  all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
+    ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
+    USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
+    Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
+    show (25 : usize).toNat = 25 from rfl, show (2 : usize).toNat = 2 from rfl]
   all_goals (repeat' constructor)
-  all_goals (first | rfl | skip)
-  all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
-  all_goals (first | omega | simp_all | rfl | skip)
+  all_goals (first | subst_vars; rfl | rfl | omega | skip)
   all_goals (
     delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
     have h255 : USize64.toNat s.i < 255 := by omega
