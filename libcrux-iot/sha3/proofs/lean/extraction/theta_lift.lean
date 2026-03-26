@@ -8,12 +8,34 @@ open libcrux_iot_sha3.lane libcrux_iot_sha3.state
 
 /-! ## Theta lifting: impl theta output lifts to spec theta output
 
-After `keccakf1600_round0_theta s`, the result `r` has:
-- `r.st = s.st` (state lanes preserved)
-- `r.d` = computed theta differences
-
-Applying d to st (interleaved XOR) and lifting gives `spec_theta_unrolled(lift(s))`.
+Strategy: prove lifting lemmas BEFORE making spread_to_even/lift_lane_bv irreducible,
+then use them as rewrite rules. This avoids term blowup from unfolding spread_to_even
+(6 nested 64-bit operations × 25 lanes).
 -/
+
+-- Lifting lemmas (proven by bv_decide before irreducible)
+private theorem lift_xor (a0 a1 b0 b1 : BitVec 32) :
+    lift_lane_bv (a0 ^^^ b0) (a1 ^^^ b1) = lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 := by
+  unfold lift_lane_bv spread_to_even; bv_decide
+
+private theorem lift_td (cL0 cL1 cR0 cR1 : BitVec 32) :
+    lift_lane_bv (cL0 ^^^ cR1.rotateLeft 1) (cL1 ^^^ cR0) =
+    lift_lane_bv cL0 cL1 ^^^ (lift_lane_bv cR0 cR1).rotateLeft 1 := by
+  unfold lift_lane_bv spread_to_even; bv_decide
+
+private theorem lift_xor5 (a0 a1 b0 b1 c0 c1 d0 d1 e0 e1 : BitVec 32) :
+    lift_lane_bv (a0 ^^^ b0 ^^^ c0 ^^^ d0 ^^^ e0) (a1 ^^^ b1 ^^^ c1 ^^^ d1 ^^^ e1) =
+    lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 ^^^
+    lift_lane_bv c0 c1 ^^^ lift_lane_bv d0 d1 ^^^
+    lift_lane_bv e0 e1 := by
+  unfold lift_lane_bv spread_to_even; bv_decide
+
+-- Prevent accidental unfolding of the bit-spreading chain
+attribute [irreducible] spread_to_even lift_lane_bv
+
+-- u32/u64 XOR distributes through toBitVec/ofBitVec (all rfl)
+private theorem u32_xor_toBitVec (a b : u32) : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec := rfl
+private theorem u64_xor_ofBitVec (a b : BitVec 64) : UInt64.ofBitVec (a ^^^ b) = UInt64.ofBitVec a ^^^ UInt64.ofBitVec b := rfl
 
 /-- Theta-applied lift: applies d[i/5] to st[i] (interleaved XOR) then lifts each lane. -/
 def lift_theta_applied (s : KeccakState) : RustArray u64 25 :=
@@ -23,19 +45,10 @@ def lift_theta_applied (s : KeccakState) : RustArray u64 25 :=
       ((s.st.toVec[i]._0.toVec[0] ^^^ s.d.toVec[x]._0.toVec[0]).toBitVec)
       ((s.st.toVec[i]._0.toVec[1] ^^^ s.d.toVec[x]._0.toVec[1]).toBitVec)))
 
--- Algebraic lifting lemmas needed for the proof
-private theorem lift_lane_bv_xor' (a0 a1 b0 b1 : BitVec 32) :
-    lift_lane_bv (a0 ^^^ b0) (a1 ^^^ b1) = lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 := by
-  unfold lift_lane_bv spread_to_even; bv_decide
-
-private theorem theta_d_lift' (cL0 cL1 cR0 cR1 : BitVec 32) :
-    lift_lane_bv (cL0 ^^^ cR1.rotateLeft 1) (cL1 ^^^ cR0) =
-    lift_lane_bv cL0 cL1 ^^^ (lift_lane_bv cR0 cR1).rotateLeft 1 := by
-  unfold lift_lane_bv spread_to_even; bv_decide
-
 /-- After impl theta, the lifted theta-applied state equals spec_theta_unrolled(lift(input)).
-    PROVEN: no sorry. Uses hax_mvcgen on both impl and unrolled spec simultaneously. -/
-set_option maxHeartbeats 32000000 in
+    Uses hax_mvcgen on impl only. The spec equation uses algebraic lifting lemmas
+    with irreducible spread_to_even/lift_lane_bv to avoid term blowup. -/
+set_option maxHeartbeats 4000000 in
 set_option maxRecDepth 2000 in
 open Std.Do in
 theorem theta_lift_spec (s : KeccakState) :
@@ -58,4 +71,4 @@ theorem theta_lift_spec (s : KeccakState) :
     show (2 : usize).toNat = 2 from rfl]
   all_goals (repeat' constructor)
   all_goals (first | subst_vars; rfl | rfl | skip)
-  all_goals (simp only [lift_lane_bv_xor', theta_d_lift']; rfl)
+  all_goals (simp only [u32_xor_toBitVec, lift_xor, lift_td, u64_xor_ofBitVec]; rfl)
