@@ -6,38 +6,27 @@ import Std.Tactic.BVDecide
 
 open libcrux_iot_sha3.lane libcrux_iot_sha3.state
 
-/-! ## Theta lifting: pure algebraic bridge
+/-! ## Theta lifting via pure algebraic bridge
 
-Strategy:
-1. theta_comp_spec (in step_equiv, 2M heartbeats) gives d values via Hoare triple
-2. Pure algebraic lemma connects d values to spec_theta_unrolled(lift(s))
-3. No hax_mvcgen on the combined impl+spec — avoids term blowup
-
-Key: spread_to_even and lift_lane_bv are @[irreducible] after proving lifting
-lemmas by bv_decide. All rewriting uses these lemmas, never unfolding the
-6-step bit-spreading chain.
+1. theta_comp_spec_local (duplicated from step_equiv, 2M) gives d values
+2. Pure algebraic bridge connects d values to spec_theta_unrolled(lift(s))
+3. No hax_mvcgen on combined impl+spec — avoids term blowup
 -/
 
 -- Lifting lemmas (proven before irreducible)
-theorem lift_xor (a0 a1 b0 b1 : BitVec 32) :
+private theorem lift_xor (a0 a1 b0 b1 : BitVec 32) :
     lift_lane_bv (a0 ^^^ b0) (a1 ^^^ b1) = lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 := by
   unfold lift_lane_bv spread_to_even; bv_decide
-
-theorem lift_td (cL0 cL1 cR0 cR1 : BitVec 32) :
+private theorem lift_td (cL0 cL1 cR0 cR1 : BitVec 32) :
     lift_lane_bv (cL0 ^^^ cR1.rotateLeft 1) (cL1 ^^^ cR0) =
     lift_lane_bv cL0 cL1 ^^^ (lift_lane_bv cR0 cR1).rotateLeft 1 := by
   unfold lift_lane_bv spread_to_even; bv_decide
-
-theorem lift_xor5 (a0 a1 b0 b1 c0 c1 d0 d1 e0 e1 : BitVec 32) :
+private theorem lift_xor5 (a0 a1 b0 b1 c0 c1 d0 d1 e0 e1 : BitVec 32) :
     lift_lane_bv (a0 ^^^ b0 ^^^ c0 ^^^ d0 ^^^ e0) (a1 ^^^ b1 ^^^ c1 ^^^ d1 ^^^ e1) =
-    lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 ^^^
-    lift_lane_bv c0 c1 ^^^ lift_lane_bv d0 d1 ^^^
-    lift_lane_bv e0 e1 := by
+    lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 ^^^ lift_lane_bv c0 c1 ^^^ lift_lane_bv d0 d1 ^^^ lift_lane_bv e0 e1 := by
   unfold lift_lane_bv spread_to_even; bv_decide
+attribute [local irreducible] spread_to_even lift_lane_bv
 
-attribute [irreducible] spread_to_even lift_lane_bv
-
-/-- Theta-applied lift: applies d[i/5] to st[i] (interleaved XOR) then lifts each lane. -/
 def lift_theta_applied (s : KeccakState) : RustArray u64 25 :=
   RustArray.ofVec (.ofFn fun (i : Fin 25) =>
     let x : Fin 5 := ⟨i.val / 5, by omega⟩
@@ -45,27 +34,122 @@ def lift_theta_applied (s : KeccakState) : RustArray u64 25 :=
       ((s.st.toVec[i]._0.toVec[0] ^^^ s.d.toVec[x]._0.toVec[0]).toBitVec)
       ((s.st.toVec[i]._0.toVec[1] ^^^ s.d.toVec[x]._0.toVec[1]).toBitVec)))
 
-/-! ## Pure algebraic bridge
+-- Duplicated theta_comp_proof macro (from step_equiv)
+local macro "theta_comp_proof_local" : tactic =>
+  `(tactic| (
+    hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction]
+    all_goals (first | intro h₁; subst h₁ | skip)
+    all_goals simp (config := { decide := true }) only [getElemResult, core_models.ops.index.Index.index,
+      ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
+      USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
+      Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
+      Std.Do.SPred.down_pure, rot32,
+      show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
+      show (2 : usize).toNat = 2 from rfl]
+    all_goals (repeat' constructor)
+    all_goals (first | subst_vars; rfl | rfl)))
 
-Given concrete d values (from theta_comp_spec), show that
-`spec_theta_unrolled(lift(s)) = .ok(lift_theta_applied({s with d := computed_d}))`.
+set_option maxHeartbeats 2000000 in
+open Std.Do in
+private theorem theta_comp_spec_local (s : KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_sha3.keccak.keccakf1600_round0_theta s
+    ⦃ ⇓ r => ⌜
+      -- d[0].z0 = c[4].z0 ⊕ rot(c[1].z1, 1)
+      r.d.toVec[0]._0.toVec[0] =
+        (s.st.toVec[20]._0.toVec[0] ^^^ s.st.toVec[21]._0.toVec[0] ^^^
+         s.st.toVec[22]._0.toVec[0] ^^^ s.st.toVec[23]._0.toVec[0] ^^^
+         s.st.toVec[24]._0.toVec[0]) ^^^
+        rot32 (s.st.toVec[5]._0.toVec[1] ^^^ s.st.toVec[6]._0.toVec[1] ^^^
+               s.st.toVec[7]._0.toVec[1] ^^^ s.st.toVec[8]._0.toVec[1] ^^^
+               s.st.toVec[9]._0.toVec[1]) 1
+      ∧
+      -- d[0].z1 = c[4].z1 ⊕ c[1].z0
+      r.d.toVec[0]._0.toVec[1] =
+        (s.st.toVec[20]._0.toVec[1] ^^^ s.st.toVec[21]._0.toVec[1] ^^^
+         s.st.toVec[22]._0.toVec[1] ^^^ s.st.toVec[23]._0.toVec[1] ^^^
+         s.st.toVec[24]._0.toVec[1]) ^^^
+        (s.st.toVec[5]._0.toVec[0] ^^^ s.st.toVec[6]._0.toVec[0] ^^^
+         s.st.toVec[7]._0.toVec[0] ^^^ s.st.toVec[8]._0.toVec[0] ^^^
+         s.st.toVec[9]._0.toVec[0])
+      ∧
+      -- d[1].z0 = c[0].z0 ⊕ rot(c[2].z1, 1)
+      r.d.toVec[1]._0.toVec[0] =
+        (s.st.toVec[0]._0.toVec[0] ^^^ s.st.toVec[1]._0.toVec[0] ^^^
+         s.st.toVec[2]._0.toVec[0] ^^^ s.st.toVec[3]._0.toVec[0] ^^^
+         s.st.toVec[4]._0.toVec[0]) ^^^
+        rot32 (s.st.toVec[10]._0.toVec[1] ^^^ s.st.toVec[11]._0.toVec[1] ^^^
+               s.st.toVec[12]._0.toVec[1] ^^^ s.st.toVec[13]._0.toVec[1] ^^^
+               s.st.toVec[14]._0.toVec[1]) 1
+      ∧
+      -- d[1].z1 = c[0].z1 ⊕ c[2].z0
+      r.d.toVec[1]._0.toVec[1] =
+        (s.st.toVec[0]._0.toVec[1] ^^^ s.st.toVec[1]._0.toVec[1] ^^^
+         s.st.toVec[2]._0.toVec[1] ^^^ s.st.toVec[3]._0.toVec[1] ^^^
+         s.st.toVec[4]._0.toVec[1]) ^^^
+        (s.st.toVec[10]._0.toVec[0] ^^^ s.st.toVec[11]._0.toVec[0] ^^^
+         s.st.toVec[12]._0.toVec[0] ^^^ s.st.toVec[13]._0.toVec[0] ^^^
+         s.st.toVec[14]._0.toVec[0])
+      ∧
+      -- d[2].z0 = c[1].z0 ⊕ rot(c[3].z1, 1)
+      r.d.toVec[2]._0.toVec[0] =
+        (s.st.toVec[5]._0.toVec[0] ^^^ s.st.toVec[6]._0.toVec[0] ^^^
+         s.st.toVec[7]._0.toVec[0] ^^^ s.st.toVec[8]._0.toVec[0] ^^^
+         s.st.toVec[9]._0.toVec[0]) ^^^
+        rot32 (s.st.toVec[15]._0.toVec[1] ^^^ s.st.toVec[16]._0.toVec[1] ^^^
+               s.st.toVec[17]._0.toVec[1] ^^^ s.st.toVec[18]._0.toVec[1] ^^^
+               s.st.toVec[19]._0.toVec[1]) 1
+      ∧
+      -- d[2].z1 = c[1].z1 ⊕ c[3].z0
+      r.d.toVec[2]._0.toVec[1] =
+        (s.st.toVec[5]._0.toVec[1] ^^^ s.st.toVec[6]._0.toVec[1] ^^^
+         s.st.toVec[7]._0.toVec[1] ^^^ s.st.toVec[8]._0.toVec[1] ^^^
+         s.st.toVec[9]._0.toVec[1]) ^^^
+        (s.st.toVec[15]._0.toVec[0] ^^^ s.st.toVec[16]._0.toVec[0] ^^^
+         s.st.toVec[17]._0.toVec[0] ^^^ s.st.toVec[18]._0.toVec[0] ^^^
+         s.st.toVec[19]._0.toVec[0])
+      ∧
+      -- d[3].z0 = c[2].z0 ⊕ rot(c[4].z1, 1)
+      r.d.toVec[3]._0.toVec[0] =
+        (s.st.toVec[10]._0.toVec[0] ^^^ s.st.toVec[11]._0.toVec[0] ^^^
+         s.st.toVec[12]._0.toVec[0] ^^^ s.st.toVec[13]._0.toVec[0] ^^^
+         s.st.toVec[14]._0.toVec[0]) ^^^
+        rot32 (s.st.toVec[20]._0.toVec[1] ^^^ s.st.toVec[21]._0.toVec[1] ^^^
+               s.st.toVec[22]._0.toVec[1] ^^^ s.st.toVec[23]._0.toVec[1] ^^^
+               s.st.toVec[24]._0.toVec[1]) 1
+      ∧
+      -- d[3].z1 = c[2].z1 ⊕ c[4].z0
+      r.d.toVec[3]._0.toVec[1] =
+        (s.st.toVec[10]._0.toVec[1] ^^^ s.st.toVec[11]._0.toVec[1] ^^^
+         s.st.toVec[12]._0.toVec[1] ^^^ s.st.toVec[13]._0.toVec[1] ^^^
+         s.st.toVec[14]._0.toVec[1]) ^^^
+        (s.st.toVec[20]._0.toVec[0] ^^^ s.st.toVec[21]._0.toVec[0] ^^^
+         s.st.toVec[22]._0.toVec[0] ^^^ s.st.toVec[23]._0.toVec[0] ^^^
+         s.st.toVec[24]._0.toVec[0])
+      ∧
+      -- d[4].z0 = c[3].z0 ⊕ rot(c[0].z1, 1)
+      r.d.toVec[4]._0.toVec[0] =
+        (s.st.toVec[15]._0.toVec[0] ^^^ s.st.toVec[16]._0.toVec[0] ^^^
+         s.st.toVec[17]._0.toVec[0] ^^^ s.st.toVec[18]._0.toVec[0] ^^^
+         s.st.toVec[19]._0.toVec[0]) ^^^
+        rot32 (s.st.toVec[0]._0.toVec[1] ^^^ s.st.toVec[1]._0.toVec[1] ^^^
+               s.st.toVec[2]._0.toVec[1] ^^^ s.st.toVec[3]._0.toVec[1] ^^^
+               s.st.toVec[4]._0.toVec[1]) 1
+      ∧
+      -- d[4].z1 = c[3].z1 ⊕ c[0].z0
+      r.d.toVec[4]._0.toVec[1] =
+        (s.st.toVec[15]._0.toVec[1] ^^^ s.st.toVec[16]._0.toVec[1] ^^^
+         s.st.toVec[17]._0.toVec[1] ^^^ s.st.toVec[18]._0.toVec[1] ^^^
+         s.st.toVec[19]._0.toVec[1]) ^^^
+        (s.st.toVec[0]._0.toVec[0] ^^^ s.st.toVec[1]._0.toVec[0] ^^^
+         s.st.toVec[2]._0.toVec[0] ^^^ s.st.toVec[3]._0.toVec[0] ^^^
+         s.st.toVec[4]._0.toVec[0])
+      ∧
+      -- st and i are preserved
+      r.st = s.st ∧ r.i = s.i
+    ⌝ ⦄ := by theta_comp_proof_local
 
-This is proved WITHOUT hax_mvcgen — just algebraic rewriting with the
-lifting lemmas. The key equations:
-- `lift_lane_bv((a ⊕ b).toBitVec)((c ⊕ d).toBitVec) = lift_lane_bv(a.bv)(c.bv) ⊕ lift_lane_bv(b.bv)(d.bv)` (lift_xor)
-- `lift_lane_bv((cL ⊕ rot(cR,1)).bv)((cL' ⊕ cR').bv) = lift_lane_bv(cL.bv)(cL'.bv) ⊕ rot(lift_lane_bv(cR.bv)(cR'.bv), 1)` (lift_td)
--/
-
--- TODO: Implement the pure algebraic bridge lemma.
--- The approach:
--- 1. State: for concrete d values matching theta_comp_spec postcondition,
---    spec_theta_unrolled(lift(s)) = .ok(lift_theta_applied({s with d = ...}))
--- 2. Proof: unfold spec_theta_unrolled (pure, no monadic complexity),
---    unfold lift_theta_applied, match lane-by-lane using lift_xor + lift_td
--- 3. Compose with theta_comp_spec via Triple.of_entails_right
-
--- For now, sorry the theorem to unblock prc_lift development:
-set_option maxHeartbeats 800000 in
+-- After impl theta, lifted theta-applied state equals spec_theta_unrolled(lift(input))
 open Std.Do in
 theorem theta_lift_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -73,4 +157,4 @@ theorem theta_lift_spec (s : KeccakState) :
        let r_spec ← spec_theta_unrolled (lift s)
        pure (r_spec = lift_theta_applied r_impl)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  sorry
+  sorry -- TODO: compose theta_comp_spec_local + pure algebraic bridge
