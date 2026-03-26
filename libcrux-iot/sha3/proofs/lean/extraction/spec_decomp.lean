@@ -48,6 +48,73 @@ def spec_prc (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 2
   let s ← hacspec_sha3.keccak_f.chi s
   hacspec_sha3.keccak_f.iota s round
 
+/-- Spec prc, fully unrolled (fused rho+pi+chi+iota, no createi/Vector.mapM).
+    Lane layout: p[i] = rotl(state[pi_src[i]], RHO_OFFSETS[pi_src[i]])
+    then chi: ch[5x+y] = p[5x+y] ⊕ (¬p[5((x+1)%5)+y] ∧ p[5((x+2)%5)+y])
+    then iota: ch[0] ⊕ RC[round] -/
+def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
+  -- rho + pi (fused): p[i] = rotl(state[pi_src[i]], rho_offset[pi_src[i]])
+  let p0 := state.toVec[0]
+  let p1 := UInt64.ofBitVec (state.toVec[15].toBitVec.rotateLeft 28)
+  let p2 := UInt64.ofBitVec (state.toVec[5].toBitVec.rotateLeft 1)
+  let p3 := UInt64.ofBitVec (state.toVec[20].toBitVec.rotateLeft 27)
+  let p4 := UInt64.ofBitVec (state.toVec[10].toBitVec.rotateLeft 62)
+  let p5 := UInt64.ofBitVec (state.toVec[6].toBitVec.rotateLeft 44)
+  let p6 := UInt64.ofBitVec (state.toVec[21].toBitVec.rotateLeft 20)
+  let p7 := UInt64.ofBitVec (state.toVec[11].toBitVec.rotateLeft 6)
+  let p8 := UInt64.ofBitVec (state.toVec[1].toBitVec.rotateLeft 36)
+  let p9 := UInt64.ofBitVec (state.toVec[16].toBitVec.rotateLeft 55)
+  let p10 := UInt64.ofBitVec (state.toVec[12].toBitVec.rotateLeft 43)
+  let p11 := UInt64.ofBitVec (state.toVec[2].toBitVec.rotateLeft 3)
+  let p12 := UInt64.ofBitVec (state.toVec[17].toBitVec.rotateLeft 25)
+  let p13 := UInt64.ofBitVec (state.toVec[7].toBitVec.rotateLeft 10)
+  let p14 := UInt64.ofBitVec (state.toVec[22].toBitVec.rotateLeft 39)
+  let p15 := UInt64.ofBitVec (state.toVec[18].toBitVec.rotateLeft 21)
+  let p16 := UInt64.ofBitVec (state.toVec[8].toBitVec.rotateLeft 45)
+  let p17 := UInt64.ofBitVec (state.toVec[23].toBitVec.rotateLeft 8)
+  let p18 := UInt64.ofBitVec (state.toVec[13].toBitVec.rotateLeft 15)
+  let p19 := UInt64.ofBitVec (state.toVec[3].toBitVec.rotateLeft 41)
+  let p20 := UInt64.ofBitVec (state.toVec[24].toBitVec.rotateLeft 14)
+  let p21 := UInt64.ofBitVec (state.toVec[14].toBitVec.rotateLeft 61)
+  let p22 := UInt64.ofBitVec (state.toVec[4].toBitVec.rotateLeft 18)
+  let p23 := UInt64.ofBitVec (state.toVec[19].toBitVec.rotateLeft 56)
+  let p24 := UInt64.ofBitVec (state.toVec[9].toBitVec.rotateLeft 2)
+  -- chi: ch[5x+y] = p[5x+y] ⊕ (¬p[5((x+1)%5)+y] ∧ p[5((x+2)%5)+y])
+  let ch0 := p0 ^^^ ((~~~p5) &&& p10)
+  let ch1 := p1 ^^^ ((~~~p6) &&& p11)
+  let ch2 := p2 ^^^ ((~~~p7) &&& p12)
+  let ch3 := p3 ^^^ ((~~~p8) &&& p13)
+  let ch4 := p4 ^^^ ((~~~p9) &&& p14)
+  let ch5 := p5 ^^^ ((~~~p10) &&& p15)
+  let ch6 := p6 ^^^ ((~~~p11) &&& p16)
+  let ch7 := p7 ^^^ ((~~~p12) &&& p17)
+  let ch8 := p8 ^^^ ((~~~p13) &&& p18)
+  let ch9 := p9 ^^^ ((~~~p14) &&& p19)
+  let ch10 := p10 ^^^ ((~~~p15) &&& p20)
+  let ch11 := p11 ^^^ ((~~~p16) &&& p21)
+  let ch12 := p12 ^^^ ((~~~p17) &&& p22)
+  let ch13 := p13 ^^^ ((~~~p18) &&& p23)
+  let ch14 := p14 ^^^ ((~~~p19) &&& p24)
+  let ch15 := p15 ^^^ ((~~~p20) &&& p0)
+  let ch16 := p16 ^^^ ((~~~p21) &&& p1)
+  let ch17 := p17 ^^^ ((~~~p22) &&& p2)
+  let ch18 := p18 ^^^ ((~~~p23) &&& p3)
+  let ch19 := p19 ^^^ ((~~~p24) &&& p4)
+  let ch20 := p20 ^^^ ((~~~p0) &&& p5)
+  let ch21 := p21 ^^^ ((~~~p1) &&& p6)
+  let ch22 := p22 ^^^ ((~~~p2) &&& p7)
+  let ch23 := p23 ^^^ ((~~~p3) &&& p8)
+  let ch24 := p24 ^^^ ((~~~p4) &&& p9)
+  -- iota: XOR round constant into lane 0
+  let rc ← hacspec_sha3.keccak_f.ROUND_CONSTANTS[round]_?
+  pure (RustArray.ofVec #v[ch0 ^^^ rc, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8, ch9,
+    ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18, ch19, ch20, ch21, ch22, ch23, ch24])
+
+/-- spec_prc_unrolled equals spec_prc (deferred: requires Vector.mapM unrolling). -/
+theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize) :
+    spec_prc state round = spec_prc_unrolled state round := by
+  sorry
+
 /-- spec_round decomposes as spec_prc ∘ spec_theta. -/
 theorem spec_round_decomp (state : RustArray u64 25) (round : usize) :
     (do let s ← hacspec_sha3.keccak_f.theta state
