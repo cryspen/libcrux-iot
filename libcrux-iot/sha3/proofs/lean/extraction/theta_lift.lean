@@ -59,8 +59,7 @@ theorem theta_lift_spec (s : KeccakState) :
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
   unfold spec_theta_unrolled
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, lift, lift_lane,
-              lift_lane_bv, spread_to_even, lift_theta_applied]
+              libcrux_secrets.traits.Classify.classify, lift_theta_applied]
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
     ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
