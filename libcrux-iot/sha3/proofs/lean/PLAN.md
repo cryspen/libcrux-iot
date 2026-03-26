@@ -1,72 +1,71 @@
-# Keccak-f[1600] Bit-Interleaved Equivalence Proof — Status
+# Compositional Round Proof — Implementation Plan
+
+Branch: `alex/compositional-round-proof`
+Working dir: `/Users/karthik/libcrux-iot-lean/libcrux-iot/sha3/proofs/lean`
 
 ## Goal
 
-Prove that the bit-interleaved implementation (`keccakf1600`) equals the
-reference spec (`keccak_f`) when lifted from Lane2U32 to standard u64.
+Replace monolithic `round_equiv.lean` (4 × 400M heartbeats = 73% of build) with
+compositional proofs: theta_lift + prc_lift → round equiv.
 
-## Status: 3 sorry remaining (trivial i-bounds)
+## Current State
 
-Main theorem in `extraction/equiv.lean`:
-```lean
-theorem equivalence (s : KeccakState) (hi : s.i.toNat = 0) :
-    hacspec_sha3.keccak_f.keccak_f (lift s) =
-    (libcrux_iot_sha3.keccak.keccakf1600 s >>= fun r => pure (lift r))
-```
+### Files on branch:
+- `extraction/lift_defs.lean` — definitions (lift, lift_lane_bv, impl_perm, etc.) ✅ compiles
+- `extraction/spec_decomp.lean` — spec_theta_unrolled, spec_prc_unrolled, decomposition ✅ compiles
+- `extraction/theta_lift.lean` — theta_comp_spec_local (2M, proven) + theta_lift_spec (**sorry**) ✅ compiles
+- `extraction/prc_lift.lean` — prc_lift_spec (**sorry**, needs rotation/chi lemmas + WP delta)
 
-All proofs compile via `lake build`. The 3 remaining sorries are
-`rK.i.toNat < 24` bounds inside `four_round_eq` — trivially provable
-once `roundK_eq` is made unconditional.
+### What's proven:
+- theta_comp_spec_local: impl theta produces correct d values (2M heartbeats)
+- All lifting lemmas: lift_xor, lift_td, lift_xor5 (by bv_decide, fast)
+- Composition: theta_lift + prc_lift → round_equiv (type-checked in lean_run_code)
 
-## Proof chain
+## Next Steps (in order)
 
-```
-equivalence (✅)
-├── keccak_f_unfold (✅) — spec fold = 6 × spec_4rounds
-├── four_rounds_ok (✅) — WP extraction from four_rounds_equiv
-└── four_round_eq (3 sorry: i-bounds)
-      ├── round0_eq ← round0_func_equiv (✅ hax_mvcgen, ~400M heartbeats)
-      ├── round1_eq ← round1_func_equiv (✅ hax_mvcgen)
-      ├── round2_eq ← round2_func_equiv (✅ hax_mvcgen)
-      └── round3_eq ← round3_func_equiv (✅ hax_mvcgen)
-```
+### Step 1: Prove theta_lift_spec (pure algebraic bridge)
 
-## File structure
+The theorem: after impl theta, spec_theta_unrolled(lift(s)) = lift_theta_applied(result).
 
-- **`step_equiv.lean`** (~1400 lines): Definitions, algebraic lemmas (`bv_decide`),
-  per-step Hoare triples (`hax_mvcgen`), totality proofs (`Triple.bind`),
-  i-tracking composition, `keccakf1600_succeeds`
-- **`equiv.lean`** (~250 lines): Per-round functional equivalence (`hax_mvcgen`
-  on both spec+impl), round composition, top-level equivalence.
-  Imports only extraction files (not step_equiv) to keep `mvcgen`'s
-  internal simp within its 100K step limit.
+**Approach**: Use `Triple.of_entails_right` to weaken `theta_comp_spec_local`:
 
-## Key technique: dual hax_mvcgen
+    apply Triple.of_entails_right _ _ _ _ (theta_comp_spec_local s)
+    apply PostCond.entails.of_left_entails; intro r
+    rw [← SPred.entails_true_intro]
+    exact SPred.pure_intro fun ⟨hd0z0, hd0z1, ..., hst, hi⟩ => by
+      -- 1. Substitute r.st = s.st (from hst)
+      -- 2. Substitute concrete d values (from hd0z0 etc.)
+      -- 3. Unfold spec_theta_unrolled and lift_theta_applied
+      -- 4. Apply simp [lift_xor, lift_td, lift_xor5, u32_xor_toBitVec, rot32]
+      -- 5. Close with rfl
 
-Each `roundK_func_equiv` runs `hax_mvcgen` on BOTH the spec
-(theta→rho→pi→chi→iota on `RustArray u64 25`) and impl
-(theta→prc1→prc2 on `KeccakState`) simultaneously. The generated VCs
-connect the u32 (impl) and u64 (spec) operations. The algebraic
-lifting lemmas close all VCs automatically:
-- `lift_lane_bv_{xor,and,not,or}` — bitwise ops commute with lift
-- `lift_lane_bv_rotate_{0..62}` — rotation commutes with lift
-- `chi_lane_lift` — chi step commutes with lift
-- `rc_equiv` — interleaved round constants = standard round constants
+**Critical**: Do NOT unfold `lift`, `lift_lane`, `spread_to_even`, or `lift_lane_bv`.
+They must stay opaque. Only use the lifting rewrite lemmas.
 
-## Proven theorems (complete list in equiv.lean)
+Key simp lemmas needed (all rfl or by bv_decide):
+- `u32_xor_toBitVec : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec`
+- `u32_ofBitVec_toBitVec : (UInt32.ofBitVec x).toBitVec = x`
+- `u64_ofBitVec_xor : UInt64.ofBitVec (a ^^^ b) = UInt64.ofBitVec a ^^^ UInt64.ofBitVec b`
+- `lift_xor`, `lift_td`, `lift_xor5` (proven before @[local irreducible])
 
-| Category | Count | Technique |
-|----------|-------|-----------|
-| Algebraic lifting lemmas | 27 | `bv_decide` |
-| Per-step Hoare triples (theta, prc1, prc2 × 4 rounds) | ~40 | `hax_mvcgen` |
-| i-tracking composition (four_rounds_equiv) | 1 | 12-step `Triple.bind` |
-| Totality (keccakf1600_succeeds) | 1 | fold unrolling + `Triple.bind` |
-| Per-round functional equivalence | 4 | dual `hax_mvcgen` |
-| Fold unrolling (keccak_f_unfold) | 1 | `simp` + `rfl` |
-| WP extraction (four_rounds_ok) | 1 | case split + `simp_all` |
-| Top-level equivalence | 1 | `rw` chain of 6 × `four_round_eq` |
+The pure bridge should be fast since all terms are small (lift_lane_bv is irreducible).
+Individual lane equations verified in lean_run_code.
 
-## Build time
+### Step 2: Prove prc_lift_spec
 
-~40 minutes total, dominated by the 4 × `roundK_func_equiv` proofs
-(~400M heartbeats / ~10 minutes each).
+Same pattern as theta_lift but for rho+pi+chi+iota.
+
+prc_lift.lean already has all 25 rotation lemmas + chi/xor/and/not lifting lemmas.
+Needs:
+- WP delta block for RC_INTERLEAVED access (same as existing prc1_proof)
+- `@[local irreducible] spread_to_even lift_lane_bv`
+
+Two options:
+- **Option A**: Combined hax_mvcgen on impl prc1+prc2 + spec_prc_unrolled (80M, tested)
+- **Option B**: Separate impl prc spec + pure algebraic bridge (safer, more code)
+
+### Step 3: Compose theta_lift + prc_lift → round_equiv
+
+Triple.bind to chain, then spec_round_decomp to rewrite. Pure plumbing, already type-checked.
+
+### Step 4: Replicate for rounds 1-3 and replace round_equiv.lean
