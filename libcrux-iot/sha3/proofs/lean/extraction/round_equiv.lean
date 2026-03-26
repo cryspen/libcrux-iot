@@ -58,21 +58,25 @@ def impl_round3' (s : KeccakState) : RustM KeccakState := do
   let s ← libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 0 s
   libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_2 s
 
--- Reusable tactic
--- Leaner tactic: avoid simp_all (which re-processes the entire goal),
--- use simp only + rfl instead
+-- Optimized tactic: single simp only pass for WP reduction, then lifting + WP delta
 macro "round_equiv_tactic'" : tactic =>
   `(tactic| (
     all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp only [Vector.getElem_set]; rfl) | skip)
-    all_goals (reduce_usize_sizes'; simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+    -- Pass 1: WP + indexing reduction (exact lemma set from simp?)
+    all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
+      ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
+      USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
+      Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
+      show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
+      show (2 : usize).toNat = 2 from rfl]
+    -- Pass 2: split conjunctions + close with lifting lemmas
     all_goals (repeat' constructor)
     all_goals (first | rfl | skip)
     all_goals (first | (simp only [Vector.getElem_set, rot32',
       lift_lane_bv_xor', lift_lane_bv_and', lift_lane_bv_not',
       chi_lane_lift', theta_apply_lift', theta_d_lift']; rfl) | skip)
     all_goals (first | omega | rfl | skip)
+    -- Pass 3: WP delta for RC_INTERLEAVED access
     all_goals (
       simp only [Std.Do.WP.wp, Std.Do.PredTrans.apply, Std.Do.PredTrans.pushExcept] at *
       have h255 : USize64.toNat s.i < 255 := by omega
