@@ -274,15 +274,19 @@ macro "reduce_usize_sizes" : tactic =>
                         show (2 : usize).toNat = 2 from rfl])
 
 -- Reusable proof strategy for theta_c-like specs
+-- Optimized: single simp pass with exact lemma set (from simp?) + rfl
 macro "theta_c_proof" : tactic =>
   `(tactic| (
     hax_mvcgen []
     intro h₁; subst h₁
-    simp only (config := { decide := true }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp only [Vector.getElem_set] at *; try rfl) | skip)
-    all_goals (reduce_usize_sizes;
-               simp only (config := { decide := true }) [Vector.getElem_set];
-               try rfl)))
+    simp (config := { decide := true }) only [getElemResult, core_models.ops.index.Index.index,
+      ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
+      USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
+      Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
+      Std.Do.SPred.down_pure,
+      show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
+      show (2 : usize).toNat = 2 from rfl]
+    rfl))
 
 open Std.Do in
 theorem theta_c_x0_z0_spec (s : KeccakState) :
@@ -382,15 +386,17 @@ In interleaved form (rotation by 1 is odd: 2*0+1):
 -/
 
 -- Proof tactic for theta_d (extends theta_c_proof with rotate_left + Lane2U32 indexing)
+-- Optimized: single simp pass with exact lemma set (from simp?) + subst_vars + rfl
 macro "theta_d_proof" : tactic =>
   `(tactic| (
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction]
     all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp only (config := { decide := true }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp only [Vector.getElem_set] at *; try rfl) | skip)
-    all_goals (reduce_usize_sizes;
-               simp only (config := { decide := true }) [Vector.getElem_set];
-               try rfl)))
+    all_goals simp (config := { decide := true }) only [getElemResult, core_models.ops.index.Index.index,
+      ↓reduceDIte, USize64.reduceToNat, USize64.toNat_zero, ↓reduceIte,
+      bind_pure_comp, map_pure, Vector.size, Nat.zero_lt_succ,
+      Std.Do.WP.pure, Vector.getElem_set, Std.Do.SPred.down_pure,
+      show (5 : usize).toNat = 5 from rfl, show (2 : usize).toNat = 2 from rfl]
+    all_goals (first | subst_vars; rfl | rfl)))
 
 -- d[0].z0 = c[4].z0 ⊕ rot₃₂(c[1].z1, 1)
 set_option maxHeartbeats 800000 in
