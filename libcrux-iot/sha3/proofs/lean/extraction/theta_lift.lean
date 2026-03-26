@@ -48,7 +48,7 @@ def lift_theta_applied (s : KeccakState) : RustArray u64 25 :=
 /-- After impl theta, the lifted theta-applied state equals spec_theta_unrolled(lift(input)).
     Uses hax_mvcgen on impl only. The spec equation uses algebraic lifting lemmas
     with irreducible spread_to_even/lift_lane_bv to avoid term blowup. -/
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 8000000 in
 set_option maxRecDepth 2000 in
 open Std.Do in
 theorem theta_lift_spec (s : KeccakState) :
