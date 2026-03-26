@@ -1,0 +1,6 @@
+⚠ [92/96] Replayed extraction.helpers
+warning: extraction/helpers.lean:154:0: declaration uses `sorry`
+warning: extraction/helpers.lean:153:2: declaration uses `sorry`
+⚠ [93/96] Replayed extraction.hacspec_sha3
+warning: extraction/hacspec_sha3.lean:28:4: declaration uses `sorry`
+warning: extraction/hacspec_sha3.lean:115:4: declaration uses `sorry`
