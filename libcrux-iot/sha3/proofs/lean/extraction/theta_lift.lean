@@ -1,7 +1,7 @@
 import extraction.hacspec_sha3
 import extraction.libcrux_iot_sha3
 import extraction.spec_decomp
-import extraction.step_equiv
+import extraction.lift_defs
 import Std.Tactic.BVDecide
 
 open libcrux_iot_sha3.lane libcrux_iot_sha3.state

@@ -1,6 +1,7 @@
 import extraction.hacspec_sha3
 import extraction.libcrux_iot_sha3
 import extraction.spec_decomp
+import extraction.lift_defs
 import extraction.theta_lift
 import Std.Tactic.BVDecide
 
