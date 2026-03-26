@@ -346,7 +346,7 @@ theorem pi_rho_chi_1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
 -- {4,5,11,17,23} (y=2), {1,7,13,19,20} (y=3), {3,9,10,16,22} (y=4).
 -- No RC array access (no iota), so no WP-fail issue.
 set_option maxRecDepth 3000 in
-set_option maxHeartbeats 80000000 in
+set_option maxHeartbeats 3000000 in
 open Std.Do in
 theorem pi_rho_chi_2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -374,20 +374,21 @@ For the True postcondition of four_rounds_equiv, we only need:
 -/
 
 -- Reusable tactic for prc2 specs (no RC access, no WP delta needed)
+-- Optimized: single simp only pass with exact lemma set (from simp?)
 macro "prc2_proof" : tactic =>
   `(tactic| (
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
                 libcrux_secrets.traits.Classify.classify]
     all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
-    all_goals (reduce_usize_sizes;
-               simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
-               try rfl)
+    all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
+      ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
+      USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
+      Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
+      Std.Do.SPred.down_pure, rot32,
+      show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
+      show (2 : usize).toNat = 2 from rfl]
     all_goals (repeat' constructor)
-    all_goals (first | rfl | skip)
-    all_goals (first | (simp (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
-    all_goals (first | omega | simp_all | rfl | skip)))
+    all_goals (first | subst_vars; rfl | rfl)))
 
 -- Reusable tactic for prc1 specs (includes WP delta for RC_INTERLEAVED access).
 -- Uses open Std.Do to avoid macro hygiene issues with delta names.
@@ -452,7 +453,7 @@ theorem round1_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     first | rfl | simp_all)
 
 set_option maxRecDepth 3000 in
-set_option maxHeartbeats 80000000 in
+set_option maxHeartbeats 3000000 in
 open Std.Do in
 theorem round1_prc2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -496,7 +497,7 @@ theorem round2_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     first | rfl | simp_all)
 
 set_option maxRecDepth 3000 in
-set_option maxHeartbeats 80000000 in
+set_option maxHeartbeats 3000000 in
 open Std.Do in
 theorem round2_prc2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -540,7 +541,7 @@ theorem round3_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     first | rfl | simp_all)
 
 set_option maxRecDepth 3000 in
-set_option maxHeartbeats 80000000 in
+set_option maxHeartbeats 3000000 in
 open Std.Do in
 theorem round3_prc2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
