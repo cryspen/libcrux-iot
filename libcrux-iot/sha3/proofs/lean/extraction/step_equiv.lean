@@ -399,7 +399,7 @@ macro "theta_d_proof" : tactic =>
     all_goals (first | subst_vars; rfl | rfl)))
 
 -- d[0].z0 = c[4].z0 ⊕ rot₃₂(c[1].z1, 1)
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d0z0_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -410,7 +410,7 @@ theorem theta_d_d0z0_spec (s : KeccakState) :
   theta_d_proof
 
 -- d[0].z1 = c[4].z1 ⊕ c[1].z0
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d0z1_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -420,7 +420,7 @@ theorem theta_d_d0z1_spec (s : KeccakState) :
   theta_d_proof
 
 -- d[1].z0 = c[0].z0 ⊕ rot₃₂(c[2].z1, 1)
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d1z0_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -431,7 +431,7 @@ theorem theta_d_d1z0_spec (s : KeccakState) :
   theta_d_proof
 
 -- d[1].z1 = c[0].z1 ⊕ c[2].z0
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d1z1_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -441,7 +441,7 @@ theorem theta_d_d1z1_spec (s : KeccakState) :
   theta_d_proof
 
 -- d[2].z0 = c[1].z0 ⊕ rot₃₂(c[3].z1, 1)
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d2z0_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -452,7 +452,7 @@ theorem theta_d_d2z0_spec (s : KeccakState) :
   theta_d_proof
 
 -- d[2].z1 = c[1].z1 ⊕ c[3].z0
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d2z1_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -462,7 +462,7 @@ theorem theta_d_d2z1_spec (s : KeccakState) :
   theta_d_proof
 
 -- d[3].z0 = c[2].z0 ⊕ rot₃₂(c[4].z1, 1)
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d3z0_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -473,7 +473,7 @@ theorem theta_d_d3z0_spec (s : KeccakState) :
   theta_d_proof
 
 -- d[3].z1 = c[2].z1 ⊕ c[4].z0
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d3z1_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -483,7 +483,7 @@ theorem theta_d_d3z1_spec (s : KeccakState) :
   theta_d_proof
 
 -- d[4].z0 = c[3].z0 ⊕ rot₃₂(c[0].z1, 1)
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d4z0_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -494,7 +494,7 @@ theorem theta_d_d4z0_spec (s : KeccakState) :
   theta_d_proof
 
 -- d[4].z1 = c[3].z1 ⊕ c[0].z0
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 open Std.Do in
 theorem theta_d_d4z1_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
