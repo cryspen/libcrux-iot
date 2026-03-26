@@ -27,10 +27,10 @@ macro "reduce_usize_sizes'" : tactic =>
   `(tactic| simp only [Vector.size, show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl, show (2 : usize).toNat = 2 from rfl])
 
 -- Algebraic lemmas
-@[simp] theorem lift_lane_bv_xor' (a0 a1 b0 b1 : BitVec 32) : lift_lane_bv' (a0 ^^^ b0) (a1 ^^^ b1) = lift_lane_bv' a0 a1 ^^^ lift_lane_bv' b0 b1 := by unfold lift_lane_bv' spread_to_even'; bv_decide
-@[simp] theorem lift_lane_bv_and' (a0 a1 b0 b1 : BitVec 32) : lift_lane_bv' (a0 &&& b0) (a1 &&& b1) = lift_lane_bv' a0 a1 &&& lift_lane_bv' b0 b1 := by unfold lift_lane_bv' spread_to_even'; bv_decide
-@[simp] theorem lift_lane_bv_not' (a0 a1 : BitVec 32) : lift_lane_bv' (~~~a0) (~~~a1) = ~~~(lift_lane_bv' a0 a1) := by unfold lift_lane_bv' spread_to_even'; bv_decide
-@[simp] theorem lift_lane_bv_or' (a0 a1 b0 b1 : BitVec 32) : lift_lane_bv' (a0 ||| b0) (a1 ||| b1) = lift_lane_bv' a0 a1 ||| lift_lane_bv' b0 b1 := by unfold lift_lane_bv' spread_to_even'; bv_decide
+theorem lift_lane_bv_xor' (a0 a1 b0 b1 : BitVec 32) : lift_lane_bv' (a0 ^^^ b0) (a1 ^^^ b1) = lift_lane_bv' a0 a1 ^^^ lift_lane_bv' b0 b1 := by unfold lift_lane_bv' spread_to_even'; bv_decide
+theorem lift_lane_bv_and' (a0 a1 b0 b1 : BitVec 32) : lift_lane_bv' (a0 &&& b0) (a1 &&& b1) = lift_lane_bv' a0 a1 &&& lift_lane_bv' b0 b1 := by unfold lift_lane_bv' spread_to_even'; bv_decide
+theorem lift_lane_bv_not' (a0 a1 : BitVec 32) : lift_lane_bv' (~~~a0) (~~~a1) = ~~~(lift_lane_bv' a0 a1) := by unfold lift_lane_bv' spread_to_even'; bv_decide
+theorem lift_lane_bv_or' (a0 a1 b0 b1 : BitVec 32) : lift_lane_bv' (a0 ||| b0) (a1 ||| b1) = lift_lane_bv' a0 a1 ||| lift_lane_bv' b0 b1 := by unfold lift_lane_bv' spread_to_even'; bv_decide
 theorem theta_apply_lift' (a0 a1 d0 d1 : BitVec 32) : lift_lane_bv' (a0 ^^^ d0) (a1 ^^^ d1) = lift_lane_bv' a0 a1 ^^^ lift_lane_bv' d0 d1 := by simp only [lift_lane_bv_xor']
 theorem theta_d_lift' (cL0 cL1 cR0 cR1 : BitVec 32) : lift_lane_bv' (cL0 ^^^ cR1.rotateLeft 1) (cL1 ^^^ cR0) = lift_lane_bv' cL0 cL1 ^^^ (lift_lane_bv' cR0 cR1).rotateLeft 1 := by unfold lift_lane_bv' spread_to_even'; bv_decide
 theorem theta_c_lift' (z0₀ z0₁ z1₀ z1₁ z2₀ z2₁ z3₀ z3₁ z4₀ z4₁ : BitVec 32) : lift_lane_bv' (z0₀ ^^^ z1₀ ^^^ z2₀ ^^^ z3₀ ^^^ z4₀) (z0₁ ^^^ z1₁ ^^^ z2₁ ^^^ z3₁ ^^^ z4₁) = lift_lane_bv' z0₀ z0₁ ^^^ lift_lane_bv' z1₀ z1₁ ^^^ lift_lane_bv' z2₀ z2₁ ^^^ lift_lane_bv' z3₀ z3₁ ^^^ lift_lane_bv' z4₀ z4₁ := by simp only [lift_lane_bv_xor']

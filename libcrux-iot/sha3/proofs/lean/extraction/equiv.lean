@@ -69,28 +69,24 @@ def lift (s : KeccakState) : RustArray u64 25 :=
 
 /-! ## Core bitwise lemmas: operations commute with lift -/
 
-@[simp]
 theorem lift_lane_bv_xor (a0 a1 b0 b1 : BitVec 32) :
     lift_lane_bv (a0 ^^^ b0) (a1 ^^^ b1) =
     lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 := by
   unfold lift_lane_bv spread_to_even
   bv_decide
 
-@[simp]
 theorem lift_lane_bv_and (a0 a1 b0 b1 : BitVec 32) :
     lift_lane_bv (a0 &&& b0) (a1 &&& b1) =
     lift_lane_bv a0 a1 &&& lift_lane_bv b0 b1 := by
   unfold lift_lane_bv spread_to_even
   bv_decide
 
-@[simp]
 theorem lift_lane_bv_not (a0 a1 : BitVec 32) :
     lift_lane_bv (~~~a0) (~~~a1) =
     ~~~(lift_lane_bv a0 a1) := by
   unfold lift_lane_bv spread_to_even
   bv_decide
 
-@[simp]
 theorem lift_lane_bv_or (a0 a1 b0 b1 : BitVec 32) :
     lift_lane_bv (a0 ||| b0) (a1 ||| b1) =
     lift_lane_bv a0 a1 ||| lift_lane_bv b0 b1 := by
@@ -105,7 +101,6 @@ In the interleaved representation, u64 rotation by R corresponds to:
 -/
 
 -- Rotation by 0 (trivial)
-@[simp]
 theorem lift_lane_bv_rotate_0 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 0 =
     lift_lane_bv (z0.rotateLeft 0) (z1.rotateLeft 0) := by
@@ -113,7 +108,6 @@ theorem lift_lane_bv_rotate_0 (z0 z1 : BitVec 32) :
   bv_decide
 
 -- Rotation by 1 (odd: 2*0+1, new_z0=rot(z1,1), new_z1=rot(z0,0))
-@[simp]
 theorem lift_lane_bv_rotate_1 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 1 =
     lift_lane_bv (z1.rotateLeft 1) (z0.rotateLeft 0) := by
@@ -121,75 +115,75 @@ theorem lift_lane_bv_rotate_1 (z0 z1 : BitVec 32) :
   bv_decide
 
 -- Even rotations: rotateLeft (2k) = lift (rotateLeft k, rotateLeft k)
-@[simp] theorem lift_lane_bv_rotate_2 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_2 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 2 = lift_lane_bv (z0.rotateLeft 1) (z1.rotateLeft 1) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_6 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_6 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 6 = lift_lane_bv (z0.rotateLeft 3) (z1.rotateLeft 3) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_8 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_8 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 8 = lift_lane_bv (z0.rotateLeft 4) (z1.rotateLeft 4) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_10 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_10 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 10 = lift_lane_bv (z0.rotateLeft 5) (z1.rotateLeft 5) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_14 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_14 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 14 = lift_lane_bv (z0.rotateLeft 7) (z1.rotateLeft 7) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_18 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_18 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 18 = lift_lane_bv (z0.rotateLeft 9) (z1.rotateLeft 9) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_20 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_20 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 20 = lift_lane_bv (z0.rotateLeft 10) (z1.rotateLeft 10) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_28 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_28 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 28 = lift_lane_bv (z0.rotateLeft 14) (z1.rotateLeft 14) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_36 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_36 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 36 = lift_lane_bv (z0.rotateLeft 18) (z1.rotateLeft 18) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_44 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_44 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 44 = lift_lane_bv (z0.rotateLeft 22) (z1.rotateLeft 22) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_56 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_56 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 56 = lift_lane_bv (z0.rotateLeft 28) (z1.rotateLeft 28) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_62 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_62 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 62 = lift_lane_bv (z0.rotateLeft 31) (z1.rotateLeft 31) := by
   unfold lift_lane_bv spread_to_even; bv_decide
 
 -- Odd rotations: rotateLeft (2k+1) = lift (rotateLeft(z1, k+1), rotateLeft(z0, k))
-@[simp] theorem lift_lane_bv_rotate_3 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_3 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 3 = lift_lane_bv (z1.rotateLeft 2) (z0.rotateLeft 1) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_15 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_15 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 15 = lift_lane_bv (z1.rotateLeft 8) (z0.rotateLeft 7) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_21 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_21 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 21 = lift_lane_bv (z1.rotateLeft 11) (z0.rotateLeft 10) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_25 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_25 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 25 = lift_lane_bv (z1.rotateLeft 13) (z0.rotateLeft 12) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_27 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_27 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 27 = lift_lane_bv (z1.rotateLeft 14) (z0.rotateLeft 13) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_39 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_39 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 39 = lift_lane_bv (z1.rotateLeft 20) (z0.rotateLeft 19) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_41 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_41 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 41 = lift_lane_bv (z1.rotateLeft 21) (z0.rotateLeft 20) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_43 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_43 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 43 = lift_lane_bv (z1.rotateLeft 22) (z0.rotateLeft 21) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_45 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_45 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 45 = lift_lane_bv (z1.rotateLeft 23) (z0.rotateLeft 22) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_55 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_55 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 55 = lift_lane_bv (z1.rotateLeft 28) (z0.rotateLeft 27) := by
   unfold lift_lane_bv spread_to_even; bv_decide
-@[simp] theorem lift_lane_bv_rotate_61 (z0 z1 : BitVec 32) :
+theorem lift_lane_bv_rotate_61 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 61 = lift_lane_bv (z1.rotateLeft 31) (z0.rotateLeft 30) := by
   unfold lift_lane_bv spread_to_even; bv_decide
 
@@ -284,10 +278,10 @@ macro "theta_c_proof" : tactic =>
   `(tactic| (
     hax_mvcgen []
     intro h₁; subst h₁
-    simp (config := { decide := true }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp_all [Vector.getElem_set]; try rfl) | skip)
+    simp only (config := { decide := true }) [getElemResult, core_models.ops.index.Index.index]
+    all_goals (first | (simp only [Vector.getElem_set] at *; try rfl) | skip)
     all_goals (reduce_usize_sizes;
-               simp (config := { decide := true }) [Vector.getElem_set];
+               simp only (config := { decide := true }) [Vector.getElem_set];
                try rfl)))
 
 open Std.Do in
@@ -392,10 +386,10 @@ macro "theta_d_proof" : tactic =>
   `(tactic| (
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction]
     all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp (config := { decide := true }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp_all [Vector.getElem_set]; try rfl) | skip)
+    all_goals simp only (config := { decide := true }) [getElemResult, core_models.ops.index.Index.index]
+    all_goals (first | (simp only [Vector.getElem_set] at *; try rfl) | skip)
     all_goals (reduce_usize_sizes;
-               simp (config := { decide := true }) [Vector.getElem_set];
+               simp only (config := { decide := true }) [Vector.getElem_set];
                try rfl)))
 
 -- d[0].z0 = c[4].z0 ⊕ rot₃₂(c[1].z1, 1)
@@ -521,15 +515,15 @@ macro "theta_comp_proof" : tactic =>
   `(tactic| (
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction]
     all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp (config := { decide := true }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp_all [Vector.getElem_set]; try rfl) | skip)
+    all_goals simp only (config := { decide := true }) [getElemResult, core_models.ops.index.Index.index]
+    all_goals (first | (simp only [Vector.getElem_set] at *; try rfl) | skip)
     all_goals (reduce_usize_sizes;
-               simp (config := { decide := true }) [Vector.getElem_set];
+               simp only (config := { decide := true }) [Vector.getElem_set];
                try rfl)
     -- Split all nested conjunctions and close each part
     all_goals (repeat' constructor)
     all_goals (first | rfl | skip)
-    all_goals (simp_all [Vector.getElem_set, rot32]; try rfl)))
+    all_goals (simp only [Vector.getElem_set, rot32] at *; try rfl)))
 
 -- Full theta composition: all d[x]._0[z] in terms of original s.st values
 -- d[x].z0 = c[(x+4)%5].z0 ⊕ rot₃₂(c[(x+1)%5].z1, 1)
@@ -745,15 +739,15 @@ theorem pi_rho_chi_1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals simp only (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
   all_goals (reduce_usize_sizes;
-             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
+             simp only (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
              try rfl)
   all_goals (repeat' constructor)
   all_goals (first | rfl | skip)
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
-  all_goals (first | omega | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | assumption | rfl | skip)
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
+  all_goals (first | omega | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | assumption | rfl | skip)
   -- Remaining goals: RC_INTERLEAVED array bounds + i+1 overflow
   all_goals (first | omega | simp_all | rfl | skip)
   -- Remaining: WP of RC array access + i+1 overflow. Reduce the WP wrappers,
@@ -763,7 +757,7 @@ theorem pi_rho_chi_1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     have h255 : USize64.toNat s.i < 255 := by omega
     rw [dif_pos h255, dif_pos h255]
     have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-      simp [BitVec.uaddOverflow]; omega
+      simp only [BitVec.uaddOverflow]; omega
     rw [if_neg huadd]
     delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
     first | rfl | simp_all)
@@ -782,14 +776,14 @@ theorem pi_rho_chi_2_spec (s : KeccakState) :
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals simp only (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
   all_goals (reduce_usize_sizes;
-             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
+             simp only (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
              try rfl)
   all_goals (repeat' constructor)
   all_goals (first | rfl | skip)
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
   all_goals (first | omega | simp_all | rfl | skip)
 
 /-! ## Pi-Rho-Chi lifting theorem. STATUS: sorry (placeholder postcondition).
@@ -868,14 +862,14 @@ macro "prc2_proof" : tactic =>
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
                 libcrux_secrets.traits.Classify.classify]
     all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+    all_goals simp only (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+    all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
     all_goals (reduce_usize_sizes;
-               simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
+               simp only (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
                try rfl)
     all_goals (repeat' constructor)
     all_goals (first | rfl | skip)
-    all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+    all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
     all_goals (first | omega | simp_all | rfl | skip)))
 
 -- Reusable tactic for prc1 specs (includes WP delta for RC_INTERLEAVED access).
@@ -885,21 +879,21 @@ macro "prc1_proof" : tactic =>
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
                 libcrux_secrets.traits.Classify.classify]
     all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+    all_goals simp only (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+    all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
     all_goals (reduce_usize_sizes;
-               simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
+               simp only (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set];
                try rfl)
     all_goals (repeat' constructor)
     all_goals (first | rfl | skip)
-    all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+    all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
     all_goals (first | omega | simp_all | rfl | skip)
     all_goals (open Std.Do in
       delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
       have h255 : USize64.toNat s.i < 255 := by omega
       rw [dif_pos h255, dif_pos h255]
       have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-        simp [BitVec.uaddOverflow]; omega
+        simp only [BitVec.uaddOverflow]; omega
       rw [if_neg huadd]
       delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
       first | rfl | simp_all)))
@@ -922,20 +916,20 @@ theorem round1_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals simp only (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
   all_goals (reduce_usize_sizes;
-             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+             simp only (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
   all_goals (repeat' constructor)
   all_goals (first | rfl | skip)
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
   all_goals (first | omega | simp_all | rfl | skip)
   all_goals (
     delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
     have h255 : USize64.toNat s.i < 255 := by omega
     rw [dif_pos h255, dif_pos h255]
     have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-      simp [BitVec.uaddOverflow]; omega
+      simp only [BitVec.uaddOverflow]; omega
     rw [if_neg huadd]
     delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
     first | rfl | simp_all)
@@ -966,20 +960,20 @@ theorem round2_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals simp only (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
   all_goals (reduce_usize_sizes;
-             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+             simp only (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
   all_goals (repeat' constructor)
   all_goals (first | rfl | skip)
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
   all_goals (first | omega | simp_all | rfl | skip)
   all_goals (
     delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
     have h255 : USize64.toNat s.i < 255 := by omega
     rw [dif_pos h255, dif_pos h255]
     have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-      simp [BitVec.uaddOverflow]; omega
+      simp only [BitVec.uaddOverflow]; omega
     rw [if_neg huadd]
     delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
     first | rfl | simp_all)
@@ -1010,20 +1004,20 @@ theorem round3_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set]; try rfl) | skip)
+  all_goals simp only (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set] at *; try rfl) | skip)
   all_goals (reduce_usize_sizes;
-             simp (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
+             simp only (config := { decide := true, maxSteps := 200000 }) [Vector.getElem_set]; try rfl)
   all_goals (repeat' constructor)
   all_goals (first | rfl | skip)
-  all_goals (first | (simp_all (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32]; try rfl) | skip)
+  all_goals (first | (simp only (config := { maxSteps := 200000 }) [Vector.getElem_set, rot32] at *; try rfl) | skip)
   all_goals (first | omega | simp_all | rfl | skip)
   all_goals (
     delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
     have h255 : USize64.toNat s.i < 255 := by omega
     rw [dif_pos h255, dif_pos h255]
     have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-      simp [BitVec.uaddOverflow]; omega
+      simp only [BitVec.uaddOverflow]; omega
     rw [if_neg huadd]
     delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
     first | rfl | simp_all)
