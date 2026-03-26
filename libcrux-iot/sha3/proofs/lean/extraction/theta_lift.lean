@@ -35,7 +35,7 @@ private theorem theta_d_lift' (cL0 cL1 cR0 cR1 : BitVec 32) :
 
 /-- After impl theta, the lifted theta-applied state equals spec_theta_unrolled(lift(input)).
     PROVEN: no sorry. Uses hax_mvcgen on both impl and unrolled spec simultaneously. -/
-set_option maxHeartbeats 16000000 in
+set_option maxHeartbeats 32000000 in
 set_option maxRecDepth 2000 in
 open Std.Do in
 theorem theta_lift_spec (s : KeccakState) :
