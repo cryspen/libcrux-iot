@@ -21,6 +21,10 @@ private theorem lift_td (cL0 cL1 cR0 cR1 : BitVec 32) :
     lift_lane_bv (cL0 ^^^ cR1.rotateLeft 1) (cL1 ^^^ cR0) =
     lift_lane_bv cL0 cL1 ^^^ (lift_lane_bv cR0 cR1).rotateLeft 1 := by
   unfold lift_lane_bv spread_to_even; bv_decide
+-- Odd rotation by 1: z0/z1 swap
+private theorem lift_rot1 (z0 z1 : BitVec 32) :
+    (lift_lane_bv z0 z1).rotateLeft 1 = lift_lane_bv (z1.rotateLeft 1) z0 := by
+  unfold lift_lane_bv spread_to_even; bv_decide
 private theorem lift_xor5 (a0 a1 b0 b1 c0 c1 d0 d1 e0 e1 : BitVec 32) :
     lift_lane_bv (a0 ^^^ b0 ^^^ c0 ^^^ d0 ^^^ e0) (a1 ^^^ b1 ^^^ c1 ^^^ d1 ^^^ e1) =
     lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 ^^^ lift_lane_bv c0 c1 ^^^ lift_lane_bv d0 d1 ^^^ lift_lane_bv e0 e1 := by
@@ -35,6 +39,10 @@ private theorem lift_getElem (s : KeccakState) (i : Nat) (hi : i < (25 : usize).
   show (RustArray.ofVec (Vector.ofFn _)).toVec[i] = _
   simp only [RustArray.toVec, Vector.getElem_ofFn]
   rfl
+
+-- u32 toBitVec lemmas (needed for lift_xor matching after d-value substitution)
+private theorem u32_xor_toBitVec (a b : UInt32) : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec := rfl
+private theorem u32_ofBitVec_toBitVec (x : BitVec 32) : (UInt32.ofBitVec x).toBitVec = x := rfl
 
 -- u64 XOR distributes over ofBitVec
 private theorem u64_ofBitVec_xor (a b : BitVec 64) : UInt64.ofBitVec (a ^^^ b) = UInt64.ofBitVec a ^^^ UInt64.ofBitVec b := rfl
@@ -220,5 +228,8 @@ theorem theta_lift_spec (s : KeccakState) :
                   hd0z0, hd0z1, hd1z0, hd1z1, hd2z0, hd2z1, hd3z0, hd3z1, hd4z0, hd4z1,
                   lift_getElem, lift_xor, lift_td, lift_xor5, rot32,
                   u64_ofBitVec_xor, u64_toBitVec_ofBitVec, u64_xor_toBitVec,
+                  u32_xor_toBitVec, u32_ofBitVec_toBitVec,
                   Std.Do.SPred.down_pure]
-      sorry -- TODO: close vector equality (both sides are #v[...] with identical lift_lane_bv elements)
+      change (⟨_⟩ : RustArray _ _) = ⟨_⟩
+      all_goals (repeat' congr 1)
+      all_goals simp only [← lift_xor5, lift_rot1]
