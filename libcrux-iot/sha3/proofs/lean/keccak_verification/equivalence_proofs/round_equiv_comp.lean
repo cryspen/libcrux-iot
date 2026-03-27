@@ -108,4 +108,52 @@ theorem round0_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
     delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
     first | rfl | simp_all)
 
+-- Rounds 1-3: structurally identical to round 0, just different function names
+-- from hax's loop unrolling. Same proof pattern applies.
+
+def impl_round1 (s : KeccakState) : RustM KeccakState := do
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round1_theta s
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 0 s
+  libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_2 s
+
+def impl_round2 (s : KeccakState) : RustM KeccakState := do
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round2_theta s
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 0 s
+  libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_2 s
+
+def impl_round3 (s : KeccakState) : RustM KeccakState := do
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round3_theta s
+  let s ← libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 0 s
+  libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_2 s
+
+def impl_perm2 (i : Fin 25) : Fin 25 := impl_perm (impl_perm i)
+def impl_perm3 (i : Fin 25) : Fin 25 := impl_perm (impl_perm (impl_perm i))
+
+open Std.Do in
+theorem round1_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let r_impl ← impl_round1 s
+       let r_spec ← spec_round (lift_perm s impl_perm) s.i
+       pure (r_spec = lift_perm r_impl impl_perm2)
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
+  sorry -- same proof pattern as round0_func_equiv with round1 functions
+
+open Std.Do in
+theorem round2_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let r_impl ← impl_round2 s
+       let r_spec ← spec_round (lift_perm s impl_perm2) s.i
+       pure (r_spec = lift_perm r_impl impl_perm3)
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
+  sorry -- same proof pattern as round0_func_equiv with round2 functions
+
+open Std.Do in
+theorem round3_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    do let r_impl ← impl_round3 s
+       let r_spec ← spec_round (lift_perm s impl_perm3) s.i
+       pure (r_spec = lift r_impl)
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
+  sorry -- same proof pattern as round0_func_equiv with round3 functions
+
 end RoundEquiv

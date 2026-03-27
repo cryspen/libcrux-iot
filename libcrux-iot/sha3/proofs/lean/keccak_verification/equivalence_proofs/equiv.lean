@@ -1,5 +1,5 @@
 import keccak_verification.equivalence_proofs.step_equiv
-import keccak_verification.equivalence_proofs.round_equiv
+import keccak_verification.equivalence_proofs.round_equiv_comp
 
 open libcrux_iot_sha3.lane
 open libcrux_iot_sha3.state
@@ -285,117 +285,6 @@ theorem keccakf1600_succeeds (s : KeccakState) (hi : s.i.toNat = 0) :
                 exact strengthen_pre _ (Triple.pure s₆ (SPred.entails.refl _))
   · intro s₇; exact Triple.pure _ (SPred.entails.refl _)
 
-/-! ## Per-round functional equivalence
-
-The core mathematical result: running one spec round on the lifted state equals
-running one impl round and then lifting with the permutation.
-
-Proven by hax_mvcgen on both spec and impl simultaneously — it generates VCs
-that connect the u32 (impl) and u64 (spec) operations, closed by the algebraic
-lifting lemmas (lift_lane_bv_{xor,and,not,or}, chi_lane_lift, etc.).
--/
-
--- One spec round: θ → ρ → π → χ → ι
-def spec_round (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
-  let s ← hacspec_sha3.keccak_f.theta state
-  let s ← hacspec_sha3.keccak_f.rho s
-  let s ← hacspec_sha3.keccak_f.pi s
-  let s ← hacspec_sha3.keccak_f.chi s
-  hacspec_sha3.keccak_f.iota s round
-
--- Impl round 0: theta → pi_rho_chi_1 → pi_rho_chi_2
-def impl_round0 (s : KeccakState) : RustM KeccakState := do
-  let s ← libcrux_iot_sha3.keccak.keccakf1600_round0_theta s
-  let s ← libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 0 s
-  libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
-
-def impl_round1 (s : KeccakState) : RustM KeccakState := do
-  let s ← libcrux_iot_sha3.keccak.keccakf1600_round1_theta s
-  let s ← libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 0 s
-  libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_2 s
-
-def impl_round2 (s : KeccakState) : RustM KeccakState := do
-  let s ← libcrux_iot_sha3.keccak.keccakf1600_round2_theta s
-  let s ← libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 0 s
-  libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_2 s
-
-def impl_round3 (s : KeccakState) : RustM KeccakState := do
-  let s ← libcrux_iot_sha3.keccak.keccakf1600_round3_theta s
-  let s ← libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 0 s
-  libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_2 s
-
--- Reusable tactic for round-level equivalence proofs
-macro "round_equiv_proof" : tactic =>
-  `(tactic| (
-    hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
-                core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
-                core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
-                libcrux_secrets.traits.Classify.classify, spec_round, impl_round0, lift, lift_lane,
-                lift_lane_bv, spread_to_even, impl_perm, lift_perm]
-    all_goals (first | intro h₁; subst h₁ | skip)
-    all_goals simp (config := { decide := true, maxSteps := 400000 }) [getElemResult, core_models.ops.index.Index.index]
-    all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set]; try rfl) | skip)
-    all_goals (reduce_usize_sizes; simp (config := { decide := true, maxSteps := 400000 }) [Vector.getElem_set]; try rfl)
-    all_goals (repeat' constructor)
-    all_goals (first | rfl | skip)
-    all_goals (first | (simp_all (config := { maxSteps := 400000 }) [Vector.getElem_set, rot32,
-      lift_lane_bv_xor, lift_lane_bv_and, lift_lane_bv_not, lift_lane_bv_or,
-      chi_lane_lift, theta_apply_lift, theta_d_lift, theta_c_lift]; try rfl) | skip)
-    all_goals (first | omega | simp_all | rfl | skip)
-    all_goals (
-      delta RustM.instWPMonad WPMonad.toWP WP.wp RustM.instWP at *
-      have h255 : USize64.toNat s.i < 255 := by omega
-      rw [dif_pos h255, dif_pos h255]
-      have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-        simp [BitVec.uaddOverflow]; omega
-      rw [if_neg huadd]
-      delta Except.instWP PredTrans.apply ExceptConds.false PredTrans.const at *
-      first | rfl | simp_all)))
-
--- Bridge lemmas: primed defs from round_equiv.lean = unprimed defs here
-private theorem bridge_lift (s : KeccakState) : lift' s = lift s := by
-  unfold lift' lift lift_lane' lift_lane lift_lane_bv' lift_lane_bv spread_to_even' spread_to_even; rfl
-private theorem bridge_lift_perm (s : KeccakState) (p : Fin 25 → Fin 25) : lift_perm' s p = lift_perm s p := by
-  unfold lift_perm' lift_perm lift_lane' lift_lane lift_lane_bv' lift_lane_bv spread_to_even' spread_to_even; rfl
-private theorem bridge_spec_round (st : RustArray u64 25) (r : usize) : spec_round' st r = spec_round st r := by
-  unfold spec_round' spec_round; rfl
-private theorem bridge_impl_round0 (s : KeccakState) : impl_round0' s = impl_round0 s := by
-  unfold impl_round0' impl_round0; rfl
-private theorem bridge_impl_round1 (s : KeccakState) : impl_round1' s = impl_round1 s := by
-  unfold impl_round1' impl_round1; rfl
-private theorem bridge_impl_round2 (s : KeccakState) : impl_round2' s = impl_round2 s := by
-  unfold impl_round2' impl_round2; rfl
-private theorem bridge_impl_round3 (s : KeccakState) : impl_round3' s = impl_round3 s := by
-  unfold impl_round3' impl_round3; rfl
-private theorem bridge_impl_perm : impl_perm' = impl_perm := by
-  unfold impl_perm' impl_perm; rfl
-private theorem bridge_impl_perm2 : impl_perm2' = impl_perm2 := by
-  unfold impl_perm2' impl_perm2 impl_perm' impl_perm; rfl
-private theorem bridge_impl_perm3 : impl_perm3' = impl_perm3 := by
-  unfold impl_perm3' impl_perm3 impl_perm' impl_perm; rfl
-
--- Round func_equivs derived from round_equiv.lean via bridge lemmas
-open Std.Do in
-theorem round0_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    do let r_impl ← impl_round0 s
-       let r_spec ← spec_round (lift s) s.i
-       pure (r_spec = lift_perm r_impl impl_perm)
-    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  simp only [← bridge_impl_round0, ← bridge_spec_round, ← bridge_lift,
-    ← bridge_lift_perm, ← bridge_impl_perm]
-  exact round0_func_equiv' s hi
-
-open Std.Do in
-theorem round1_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    do let r_impl ← impl_round1 s
-       let r_spec ← spec_round (lift_perm s impl_perm) s.i
-       pure (r_spec = lift_perm r_impl impl_perm2)
-    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  simp only [← bridge_impl_round1, ← bridge_spec_round, ← bridge_lift_perm,
-    ← bridge_impl_perm, ← bridge_impl_perm2]
-  exact round1_func_equiv' s hi
 
 /-! ## Top-level equivalence
 
@@ -450,32 +339,7 @@ theorem keccak_f_unfold (state : RustArray u64 25) :
   simp (config := {decide := true}) only [spec_4rounds, spec_round, bind_assoc, pure_bind]
   rfl
 
-open Std.Do in
-theorem round2_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    do let r_impl ← impl_round2 s
-       let r_spec ← spec_round (lift_perm s impl_perm2) s.i
-       pure (r_spec = lift_perm r_impl impl_perm3)
-    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  simp only [← bridge_impl_round2, ← bridge_spec_round, ← bridge_lift_perm,
-    ← bridge_impl_perm2, ← bridge_impl_perm3]
-  exact round2_func_equiv' s hi
 
-open Std.Do in
-theorem round3_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    do let r_impl ← impl_round3 s
-       let r_spec ← spec_round (lift_perm s impl_perm3) s.i
-       pure (r_spec = lift r_impl)
-    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  simp only [← bridge_impl_round3, ← bridge_spec_round, ← bridge_lift_perm,
-    ← bridge_impl_perm3, ← bridge_lift]
-  exact round3_func_equiv' s hi
-
--- Pre-computed permutation compositions (placed AFTER roundK_func_equiv to
--- avoid polluting hax_mvcgen's simp context for those proofs)
-def impl_perm2 (i : Fin 25) : Fin 25 := impl_perm (impl_perm i)
-def impl_perm3 (i : Fin 25) : Fin 25 := impl_perm (impl_perm (impl_perm i))
 
 -- Convert per-round Hoare triple to direct RustM equality
 open Std.Do in

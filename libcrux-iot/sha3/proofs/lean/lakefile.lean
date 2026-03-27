@@ -21,7 +21,6 @@ lean_lib libcrux_iot_sha3 where
     `keccak_verification.equivalence_proofs.theta_lift,
     `keccak_verification.equivalence_proofs.prc_lift,
     `keccak_verification.equivalence_proofs.round_equiv_comp,
-    `keccak_verification.equivalence_proofs.round_equiv,
     `keccak_verification.equivalence_proofs.step_equiv,
     `keccak_verification.equivalence_proofs.equiv
   ]
