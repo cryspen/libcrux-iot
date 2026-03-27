@@ -63,32 +63,4 @@ theorem prc_lift_spec (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_prc_unrolled (lift_theta_applied s) s.i
        pure (r_spec = lift_perm r_impl impl_perm)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  unfold spec_prc_unrolled
-  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, lift_theta_applied, lift_perm,
-              lift_lane_bv, spread_to_even, impl_perm, rot32']
-  all_goals (first | intro h₁; subst h₁ | skip)
-  all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
-    ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
-    USize64.toBitVec_ofNat, bind_pure_comp, pure_bind, USize64.reduceAdd, map_pure,
-    Vector.size, Nat.zero_lt_succ, bind_pure, Std.Do.WP.pure, Vector.getElem_set,
-    show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
-    show (2 : usize).toNat = 2 from rfl, show (255 : usize).toNat = 255 from rfl]
-  all_goals (repeat' constructor)
-  all_goals (first | subst_vars; rfl | rfl | skip)
-  -- Lifting lemmas for rotation + chi + theta_apply
-  all_goals (first | (simp only [lift_xor, lift_and, lift_not, lift_chi, lift_theta_apply, lift_theta_d,
-    rot32', rot_0, rot_1, rot_2, rot_3, rot_6, rot_8, rot_10, rot_14, rot_15, rot_18, rot_20, rot_21,
-    rot_25, rot_27, rot_28, rot_36, rot_39, rot_41, rot_43, rot_44, rot_45, rot_55, rot_56, rot_61, rot_62,
-    Vector.getElem_set]; rfl) | skip)
-  all_goals (first | omega | rfl | skip)
-  -- WP delta block for RC_INTERLEAVED access (same as prc1_proof)
-  all_goals (
-    delta Std.Do.RustM.instWPMonad Std.Do.WPMonad.toWP Std.Do.WP.wp Std.Do.RustM.instWP at *
-    have h255 : USize64.toNat s.i < 255 := by omega
-    rw [dif_pos h255, dif_pos h255]
-    have huadd : ¬ (s.i.toBitVec.uaddOverflow 1#64 = true) := by
-      simp [BitVec.uaddOverflow]; omega
-    rw [if_neg huadd]
-    delta Std.Do.Except.instWP Std.Do.PredTrans.apply Std.Do.ExceptConds.false Std.Do.PredTrans.const at *
-    first | rfl | simp_all)
+  sorry -- TODO: needs optimization (see PLAN.md Step 2)

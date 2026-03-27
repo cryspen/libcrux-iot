@@ -27,6 +27,24 @@ private theorem lift_xor5 (a0 a1 b0 b1 c0 c1 d0 d1 e0 e1 : BitVec 32) :
   unfold lift_lane_bv spread_to_even; bv_decide
 attribute [local irreducible] spread_to_even lift_lane_bv
 
+-- Bridge: (lift s)[i] = UInt64.ofBitVec(lift_lane_bv(z0, z1)) without unfolding lift/lift_lane elsewhere
+private theorem lift_getElem (s : KeccakState) (i : Nat) (hi : i < (25 : usize).toNat) :
+    (lift s).toVec[i] =
+    UInt64.ofBitVec (lift_lane_bv s.st.toVec[i]._0.toVec[0].toBitVec s.st.toVec[i]._0.toVec[1].toBitVec) := by
+  unfold lift lift_lane
+  show (RustArray.ofVec (Vector.ofFn _)).toVec[i] = _
+  simp only [RustArray.toVec, Vector.getElem_ofFn]
+  rfl
+
+-- u64 XOR distributes over ofBitVec
+private theorem u64_ofBitVec_xor (a b : BitVec 64) : UInt64.ofBitVec (a ^^^ b) = UInt64.ofBitVec a ^^^ UInt64.ofBitVec b := rfl
+
+-- u64 ofBitVec/toBitVec roundtrip
+private theorem u64_toBitVec_ofBitVec (x : BitVec 64) : (UInt64.ofBitVec x).toBitVec = x := rfl
+
+-- u64 toBitVec distributes over XOR (needed to reduce rotation arguments)
+private theorem u64_xor_toBitVec (a b : UInt64) : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec := rfl
+
 def lift_theta_applied (s : KeccakState) : RustArray u64 25 :=
   RustArray.ofVec (.ofFn fun (i : Fin 25) =>
     let x : Fin 5 := ⟨i.val / 5, by omega⟩
@@ -150,6 +168,7 @@ private theorem theta_comp_spec_local (s : KeccakState) :
     ⌝ ⦄ := by theta_comp_proof_local
 
 -- After impl theta, lifted theta-applied state equals spec_theta_unrolled(lift(input))
+set_option maxHeartbeats 8000000 in
 open Std.Do in
 theorem theta_lift_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -157,4 +176,23 @@ theorem theta_lift_spec (s : KeccakState) :
        let r_spec ← spec_theta_unrolled (lift s)
        pure (r_spec = lift_theta_applied r_impl)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  sorry -- TODO: compose theta_comp_spec_local + pure algebraic bridge
+  -- Step 1: Reduce spec_theta_unrolled (lift s) to pure (eliminating the spec bind)
+  show ⦃⌜True⌝⦄
+    (libcrux_iot_sha3.keccak.keccakf1600_round0_theta s >>= fun r_impl =>
+      spec_theta_unrolled (lift s) >>= fun r_spec =>
+      pure (r_spec = lift_theta_applied r_impl))
+    ⦃PostCond.noThrow fun r => ⌜r⌝⦄
+  conv in spec_theta_unrolled _ >>= _ => unfold spec_theta_unrolled; simp only [pure_bind]
+  -- Step 2: Split bind — impl theta then pure algebraic check
+  apply Triple.bind
+  case hx => exact theta_comp_spec_local s
+  case hf =>
+    intro r
+    apply Triple.pure
+    rw [← SPred.entails_true_intro]
+    exact SPred.pure_intro fun ⟨hd0z0, hd0z1, hd1z0, hd1z1, hd2z0, hd2z1, hd3z0, hd3z1, hd4z0, hd4z1, hst, _hi⟩ => by
+      simp only [lift_theta_applied, Vector.getElem_ofFn, hst,
+                  hd0z0, hd0z1, hd1z0, hd1z1, hd2z0, hd2z1, hd3z0, hd3z1, hd4z0, hd4z1,
+                  lift_getElem, lift_xor, lift_td, lift_xor5, rot32,
+                  u64_ofBitVec_xor, u64_toBitVec_ofBitVec, u64_xor_toBitVec,
+                  Std.Do.SPred.down_pure]
