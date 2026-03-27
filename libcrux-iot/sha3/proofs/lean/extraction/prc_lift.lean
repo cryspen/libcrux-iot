@@ -56,7 +56,7 @@ section PrcLift
 attribute [local irreducible] spread_to_even lift_lane_bv
 
 -- After prc1+prc2, the lifted-with-permutation result equals spec_prc_unrolled of theta-applied state.
-set_option maxHeartbeats 80000000 in
+set_option maxHeartbeats 4000000 in
 set_option maxRecDepth 5000 in
 open Std.Do in
 theorem prc_lift_spec (s : KeccakState) (hi : s.i.toNat < 24) :
@@ -67,6 +67,23 @@ theorem prc_lift_spec (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_prc_unrolled (lift_theta_applied s) s.i
        pure (r_spec = lift_perm r_impl impl_perm)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  sorry -- TODO: debug with LSP (80M heartbeat monolithic approach stalls)
+  -- Step 1: Reduce spec_prc_unrolled to pure
+  show ⦃⌜True⌝⦄
+    ((do let s ← libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 0 s
+         libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s) >>= fun r_impl =>
+      spec_prc_unrolled (lift_theta_applied s) s.i >>= fun r_spec =>
+      pure (r_spec = lift_perm r_impl impl_perm))
+    ⦃PostCond.noThrow fun r => ⌜r⌝⦄
+  conv in spec_prc_unrolled _ _ >>= _ => unfold spec_prc_unrolled; simp only [pure_bind]
+  -- Step 2: Split impl from spec algebraic bridge
+  apply Triple.bind
+  case hx =>
+    -- impl-only triple for prc1+prc2
+    sorry
+  case hf =>
+    -- algebraic bridge: for each impl result, show spec = lift_perm r impl_perm
+    intro r
+    apply Triple.pure
+    sorry
 
 end PrcLift
