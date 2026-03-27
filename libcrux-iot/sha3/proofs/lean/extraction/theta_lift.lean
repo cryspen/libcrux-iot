@@ -53,7 +53,7 @@ private theorem u64_toBitVec_ofBitVec (x : BitVec 64) : (UInt64.ofBitVec x).toBi
 -- u64 toBitVec distributes over XOR (needed to reduce rotation arguments)
 private theorem u64_xor_toBitVec (a b : UInt64) : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec := rfl
 
-private abbrev lta (st_z0 st_z1 d_z0 d_z1 : u32) : u64 :=
+abbrev lta (st_z0 st_z1 d_z0 d_z1 : u32) : u64 :=
   UInt64.ofBitVec (lift_lane_bv ((st_z0 ^^^ d_z0).toBitVec) ((st_z1 ^^^ d_z1).toBitVec))
 
 def lift_theta_applied (s : KeccakState) : RustArray u64 25 :=
