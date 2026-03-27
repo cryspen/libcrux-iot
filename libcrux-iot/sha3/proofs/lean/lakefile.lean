@@ -13,6 +13,7 @@ lean_lib libcrux_iot_sha3 where
     `keccak_verification.helpers,
     -- Reference specification (hacspec)
     `keccak_verification.spec.hacspec_sha3,
+    `keccak_verification.spec.createi,
     -- Bit-interleaved implementation
     `keccak_verification.implementation.libcrux_iot_sha3,
     -- Equivalence proofs
