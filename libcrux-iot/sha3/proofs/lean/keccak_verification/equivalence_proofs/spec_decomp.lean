@@ -61,7 +61,7 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
           ExceptT.run, Id.run, Except.pure, SPred.entails, SPred.down_pure,
           hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult,
           rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add]
-        all_goals trivial
+        all_goals (first | trivial | simp_all)
       | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega))
     trivial
   rw [hc.2]; simp only [RustM.bind, bind]
@@ -76,13 +76,18 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
       let cR ← (RustArray.ofVec (Vector.ofFn _))[idx2]_?
       let cR_rot ← core_models.num.Impl_9.rotate_left cR 1
       pure (cL ^^^ cR_rot))
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        getElemResult, core_models.ops.index.Index.index, core_models.num.Impl_9.rotate_left,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
-        RustM.ofTotal]
-      omega)
+    (fun ⟨n, hn⟩ => by
+      match n, hn with
+      | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
+        simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+          ExceptT.run, Id.run, Except.pure, SPred.entails, SPred.down_pure,
+          hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult,
+          rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
+          rust_primitives.ops.arith.Rem.rem,
+          core_models.num.Impl_9.rotate_left, RustM.ofTotal, Vector.getElem_ofFn,
+          show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]
+        all_goals (first | trivial | simp_all)
+      | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega))
     trivial
   rw [hd.2]; simp only [RustM.bind, bind]
   -- Third createi: result (n=25). Each iteration accesses state[idx] and d[idx/5].
@@ -92,13 +97,18 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
       let didx ← idx /? 5
       let dv ← (RustArray.ofVec (Vector.ofFn _))[didx]_?
       pure (v ^^^ dv))
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        getElemResult, core_models.ops.index.Index.index,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
-        RustM.ofTotal]
-      omega)
+    (fun ⟨n, hn⟩ => by
+      match n, hn with
+      | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
+        simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+          ExceptT.run, Id.run, Except.pure, SPred.entails, SPred.down_pure,
+          hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult,
+          rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
+          rust_primitives.ops.arith.Rem.rem,
+          core_models.num.Impl_9.rotate_left, RustM.ofTotal, Vector.getElem_ofFn,
+          show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]
+        all_goals (first | trivial | simp_all)
+      | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega))
     trivial
   rw [hr.2]
   -- Both sides are now .ok(concrete_array). Evaluate Vector.ofFn + RustM.ofTotal.
@@ -178,11 +188,9 @@ def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustAr
   pure (RustArray.ofVec #v[ch0 ^^^ rc, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8, ch9,
     ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18, ch19, ch20, ch21, ch22, ch23, ch24])
 
-/-- spec_prc_unrolled equals spec_prc.
-    Proof: apply createi_ofFn to rho (n=25), pi (n=25), chi (n=25), then iota directly.
-    Requires round < 24 for the ROUND_CONSTANTS table access. -/
-open Std.Do in
+-- spec_prc_unrolled equals spec_prc.
 set_option maxHeartbeats 64000000 in
+open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
     (hround : round.toNat < 24 := by omega) :
     spec_prc state round = spec_prc_unrolled state round := by
@@ -194,11 +202,20 @@ theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
       let v ← state[idx]_?
       let off ← hacspec_sha3.keccak_f.RHO_OFFSETS[idx]_?
       core_models.num.Impl_9.rotate_left v off)
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        getElemResult, core_models.ops.index.Index.index, core_models.num.Impl_9.rotate_left,
-        show (25 : usize).toNat = 25 from rfl]; omega) trivial
+    (fun ⟨n, hn⟩ => by
+      match n, hn with
+      | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
+      | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
+      | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
+        simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+          ExceptT.run, Id.run, Except.pure, SPred.entails, SPred.down_pure,
+          hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult,
+          rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
+          rust_primitives.ops.arith.Rem.rem, rust_primitives.ops.arith.Div.div,
+          core_models.num.Impl_9.rotate_left, RustM.ofTotal, Vector.getElem_ofFn,
+          show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]
+        all_goals (first | trivial | simp_all)
+      | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega)) trivial
   rw [h_rho.2]; simp only [RustM.bind, bind]
   -- pi: createi n=25, accesses rho_result via get
   unfold hacspec_sha3.keccak_f.pi
@@ -210,12 +227,20 @@ theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
       let src ← x +? src
       let src ← src %? 5
       hacspec_sha3.keccak_f.get (RustArray.ofVec (Vector.ofFn _)) src x)
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        hacspec_sha3.keccak_f.get, getElemResult, core_models.ops.index.Index.index,
-        core_models.num.Impl_9.rotate_left, RustM.ofTotal,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]; omega) trivial
+    (fun ⟨n, hn⟩ => by
+      match n, hn with
+      | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
+      | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
+      | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
+        simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+          ExceptT.run, Id.run, Except.pure, SPred.entails, SPred.down_pure,
+          hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult,
+          rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
+          rust_primitives.ops.arith.Rem.rem, rust_primitives.ops.arith.Div.div,
+          core_models.num.Impl_9.rotate_left, RustM.ofTotal, Vector.getElem_ofFn,
+          show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]
+        all_goals (first | trivial | simp_all)
+      | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega)) trivial
   rw [h_pi.2]; simp only [RustM.bind, bind]
   -- chi: createi n=25, accesses pi_result via get
   unfold hacspec_sha3.keccak_f.chi
@@ -233,12 +258,20 @@ theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
       let v2 ← hacspec_sha3.keccak_f.get (RustArray.ofVec (Vector.ofFn _)) x2 y
       let masked ← pure (nv1 &&& v2)
       pure (v ^^^ masked))
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        hacspec_sha3.keccak_f.get, getElemResult, core_models.ops.index.Index.index,
-        RustM.ofTotal,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]; omega) trivial
+    (fun ⟨n, hn⟩ => by
+      match n, hn with
+      | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
+      | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
+      | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
+        simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
+          ExceptT.run, Id.run, Except.pure, SPred.entails, SPred.down_pure,
+          hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult,
+          rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
+          rust_primitives.ops.arith.Rem.rem, rust_primitives.ops.arith.Div.div,
+          core_models.num.Impl_9.rotate_left, RustM.ofTotal, Vector.getElem_ofFn,
+          show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]
+        all_goals (first | trivial | simp_all)
+      | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega)) trivial
   rw [h_chi.2]; simp only [RustM.bind, bind]
   -- iota: no createi, just state[0] ^^^ ROUND_CONSTANTS[round]
   unfold hacspec_sha3.keccak_f.iota
