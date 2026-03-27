@@ -1,5 +1,5 @@
-import extraction.hacspec_sha3
-import extraction.libcrux_iot_sha3
+import keccak_verification.spec.hacspec_sha3
+import keccak_verification.implementation.libcrux_iot_sha3
 
 /-! ## Spec decomposition for compositional round proofs
 

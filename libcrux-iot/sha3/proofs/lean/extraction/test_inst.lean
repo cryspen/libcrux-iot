@@ -1,2 +1,0 @@
-import extraction.helpers
-#check @instGetElemResultOutputOfIndex_extraction

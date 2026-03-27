@@ -8,4 +8,20 @@ require Hax from git
   "https://github.com/cryspen/hax" @ "main" / "hax-lib" / "proof-libs" / "lean"
 
 lean_lib libcrux_iot_sha3 where
-  roots := #[`extraction.equiv, `extraction.step_equiv, `extraction.step_equiv_extras, `extraction.round_equiv, `extraction.lift_defs, `extraction.spec_decomp, `extraction.theta_lift, `extraction.prc_lift, `extraction.round_equiv_comp, `extraction.spec, `extraction.helpers, `extraction.hacspec_sha3, `extraction.libcrux_iot_sha3]
+  roots := #[
+    -- Shared helpers
+    `keccak_verification.helpers,
+    -- Reference specification (hacspec)
+    `keccak_verification.spec.hacspec_sha3,
+    -- Bit-interleaved implementation
+    `keccak_verification.implementation.libcrux_iot_sha3,
+    -- Equivalence proofs
+    `keccak_verification.equivalence_proofs.lift_defs,
+    `keccak_verification.equivalence_proofs.spec_decomp,
+    `keccak_verification.equivalence_proofs.theta_lift,
+    `keccak_verification.equivalence_proofs.prc_lift,
+    `keccak_verification.equivalence_proofs.round_equiv_comp,
+    `keccak_verification.equivalence_proofs.round_equiv,
+    `keccak_verification.equivalence_proofs.step_equiv,
+    `keccak_verification.equivalence_proofs.equiv
+  ]

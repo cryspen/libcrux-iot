@@ -1,5 +1,5 @@
-import extraction.step_equiv
-import extraction.round_equiv
+import keccak_verification.equivalence_proofs.step_equiv
+import keccak_verification.equivalence_proofs.round_equiv
 
 open libcrux_iot_sha3.lane
 open libcrux_iot_sha3.state
@@ -329,7 +329,7 @@ macro "round_equiv_proof" : tactic =>
   `(tactic| (
     hax_mvcgen [hacspec_sha3.keccak_f.get, hacspec_sha3.createi,
                 core_models.array.from_fn, core_models.num.Impl_9.rotate_left,
-                core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+                core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
                 libcrux_secrets.traits.Classify.classify, spec_round, impl_round0, lift, lift_lane,
                 lift_lane_bv, spread_to_even, impl_perm, lift_perm]
     all_goals (first | intro h₁; subst h₁ | skip)

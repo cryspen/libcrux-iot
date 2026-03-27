@@ -1,5 +1,5 @@
-import extraction.hacspec_sha3
-import extraction.libcrux_iot_sha3
+import keccak_verification.spec.hacspec_sha3
+import keccak_verification.implementation.libcrux_iot_sha3
 
 import Std.Tactic.BVDecide
 
@@ -92,7 +92,7 @@ abbrev rot32 (x : u32) (n : Nat) : u32 :=
 -- Optimized: single simp pass with exact lemma set (from simp?) then split + rfl
 macro "theta_comp_proof" : tactic =>
   `(tactic| (
-    hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction]
+    hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification]
     all_goals (first | intro h₁; subst h₁ | skip)
     all_goals simp (config := { decide := true }) only [getElemResult, core_models.ops.index.Index.index,
       ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
@@ -315,7 +315,7 @@ theorem pi_rho_chi_1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
       -- i is incremented, d is preserved
       r.i = s.i + 1 ∧ r.d = s.d
     ⌝ ⦄ := by
-  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
@@ -352,7 +352,7 @@ theorem pi_rho_chi_2_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_2 s
     ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.i = s.i ⌝ ⦄ := by
-  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
@@ -377,7 +377,7 @@ For the True postcondition of four_rounds_equiv, we only need:
 -- Optimized: single simp only pass with exact lemma set (from simp?)
 macro "prc2_proof" : tactic =>
   `(tactic| (
-    hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+    hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
                 libcrux_secrets.traits.Classify.classify]
     all_goals (first | intro h₁; subst h₁ | skip)
     all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
@@ -394,7 +394,7 @@ macro "prc2_proof" : tactic =>
 -- Uses open Std.Do to avoid macro hygiene issues with delta names.
 macro "prc1_proof" : tactic =>
   `(tactic| (
-    hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+    hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
                 libcrux_secrets.traits.Classify.classify]
     all_goals (first | intro h₁; subst h₁ | skip)
     all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
@@ -431,7 +431,7 @@ theorem round1_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 0 s
     ⦃ ⇓ r => ⌜ r.i = s.i + 1 ⌝ ⦄ := by
-  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
@@ -475,7 +475,7 @@ theorem round2_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 0 s
     ⦃ ⇓ r => ⌜ r.i = s.i + 1 ⌝ ⦄ := by
-  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]
@@ -519,7 +519,7 @@ theorem round3_prc1_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 0 s
     ⦃ ⇓ r => ⌜ r.i = s.i + 1 ⌝ ⦄ := by
-  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
               libcrux_secrets.traits.Classify.classify]
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 200000 }) [getElemResult, core_models.ops.index.Index.index]

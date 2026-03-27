@@ -1,4 +1,4 @@
-import extraction.helpers
+import keccak_verification.helpers
 
 -- Experimental lean backend for Hax
 -- The Hax prelude library can be found in hax/proof-libs/lean

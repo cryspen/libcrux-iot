@@ -1,8 +1,8 @@
-import extraction.hacspec_sha3
-import extraction.libcrux_iot_sha3
-import extraction.spec_decomp
-import extraction.lift_defs
-import extraction.theta_lift
+import keccak_verification.spec.hacspec_sha3
+import keccak_verification.implementation.libcrux_iot_sha3
+import keccak_verification.equivalence_proofs.spec_decomp
+import keccak_verification.equivalence_proofs.lift_defs
+import keccak_verification.equivalence_proofs.theta_lift
 import Std.Tactic.BVDecide
 
 open libcrux_iot_sha3.lane libcrux_iot_sha3.state
@@ -103,7 +103,7 @@ theorem prc_lift_spec (s : KeccakState) (hi : s.i.toNat < 24) :
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
   unfold spec_prc_unrolled
   -- hax_mvcgen on impl ONLY: no lift_theta_applied/lift_perm/impl_perm/rot32' in hints
-  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
               libcrux_secrets.traits.Classify.classify]
   -- Close WP goals
   all_goals (first | intro h₁; subst h₁ | skip)

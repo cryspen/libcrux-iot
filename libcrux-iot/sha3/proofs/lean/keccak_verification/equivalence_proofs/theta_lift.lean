@@ -1,7 +1,7 @@
-import extraction.hacspec_sha3
-import extraction.libcrux_iot_sha3
-import extraction.spec_decomp
-import extraction.lift_defs
+import keccak_verification.spec.hacspec_sha3
+import keccak_verification.implementation.libcrux_iot_sha3
+import keccak_verification.equivalence_proofs.spec_decomp
+import keccak_verification.equivalence_proofs.lift_defs
 import Std.Tactic.BVDecide
 
 open libcrux_iot_sha3.lane libcrux_iot_sha3.state
@@ -130,7 +130,7 @@ The postcondition gives all 10 d-value halves (5 groups × z0/z1) plus st/i pres
 -/
 local macro "theta_comp_proof_local" : tactic =>
   `(tactic| (
-    hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction]
+    hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification]
     all_goals (first | intro h₁; subst h₁ | skip)
     all_goals simp (config := { decide := true }) only [getElemResult, core_models.ops.index.Index.index,
       ↓reduceDIte, USize64.reduceToNat, USize64.add_zero, USize64.toNat_zero, ↓reduceIte,
@@ -142,10 +142,10 @@ local macro "theta_comp_proof_local" : tactic =>
     all_goals (repeat' constructor)
     all_goals (first | subst_vars; rfl | rfl)))
 
-/-- Impl-only Hoare triple for theta: produces concrete d-value equations.
-    d[x].z0 = c[(x+4)%5].z0 ⊕ rot32(c[(x+1)%5].z1, 1)
-    d[x].z1 = c[(x+4)%5].z1 ⊕ c[(x+1)%5].z0
-    where c[x] = XOR of 5 lanes in column x. -/
+-- Impl-only Hoare triple for theta: produces concrete d-value equations.
+-- d[x].z0 = c[(x+4) mod 5].z0 XOR rot32(c[(x+1) mod 5].z1, 1)
+-- d[x].z1 = c[(x+4) mod 5].z1 XOR c[(x+1) mod 5].z0
+-- where c[x] = XOR of 5 lanes in column x.
 set_option maxHeartbeats 2000000 in
 open Std.Do in
 private theorem theta_comp_spec_local (s : KeccakState) :

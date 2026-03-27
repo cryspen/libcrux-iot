@@ -1,5 +1,5 @@
-import extraction.prc_lift
-import extraction.spec_decomp
+import keccak_verification.equivalence_proofs.prc_lift
+import keccak_verification.equivalence_proofs.spec_decomp
 
 /-! ## Compositional round equivalence (round 0)
 
@@ -74,7 +74,7 @@ theorem round0_func_equiv (s : KeccakState) (hi : s.i.toNat < 24) :
   -- Unfold spec_prc_unrolled for the WP computation
   unfold spec_prc_unrolled
   -- hax_mvcgen on impl only (no lift/spec/perm terms — critical for performance)
-  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
+  hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
               libcrux_secrets.traits.Classify.classify]
   -- Close WP goals
   all_goals (first | intro h₁; subst h₁ | skip)

@@ -5,7 +5,7 @@ import Hax
 import Std.Tactic.Do
 import Std.Do.Triple
 import Std.Tactic.Do.Syntax
-import extraction.helpers
+import keccak_verification.helpers
 open Std.Do
 open Std.Tactic
 
