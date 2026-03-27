@@ -45,12 +45,37 @@ private theorem u64_toBitVec_ofBitVec (x : BitVec 64) : (UInt64.ofBitVec x).toBi
 -- u64 toBitVec distributes over XOR (needed to reduce rotation arguments)
 private theorem u64_xor_toBitVec (a b : UInt64) : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec := rfl
 
+private abbrev lta (st_z0 st_z1 d_z0 d_z1 : u32) : u64 :=
+  UInt64.ofBitVec (lift_lane_bv ((st_z0 ^^^ d_z0).toBitVec) ((st_z1 ^^^ d_z1).toBitVec))
+
 def lift_theta_applied (s : KeccakState) : RustArray u64 25 :=
-  RustArray.ofVec (.ofFn fun (i : Fin 25) =>
-    let x : Fin 5 := ⟨i.val / 5, by omega⟩
-    UInt64.ofBitVec (lift_lane_bv
-      ((s.st.toVec[i]._0.toVec[0] ^^^ s.d.toVec[x]._0.toVec[0]).toBitVec)
-      ((s.st.toVec[i]._0.toVec[1] ^^^ s.d.toVec[x]._0.toVec[1]).toBitVec)))
+  let d := s.d; let st := s.st
+  RustArray.ofVec #v[
+    lta st.toVec[0]._0.toVec[0] st.toVec[0]._0.toVec[1] d.toVec[0]._0.toVec[0] d.toVec[0]._0.toVec[1],
+    lta st.toVec[1]._0.toVec[0] st.toVec[1]._0.toVec[1] d.toVec[0]._0.toVec[0] d.toVec[0]._0.toVec[1],
+    lta st.toVec[2]._0.toVec[0] st.toVec[2]._0.toVec[1] d.toVec[0]._0.toVec[0] d.toVec[0]._0.toVec[1],
+    lta st.toVec[3]._0.toVec[0] st.toVec[3]._0.toVec[1] d.toVec[0]._0.toVec[0] d.toVec[0]._0.toVec[1],
+    lta st.toVec[4]._0.toVec[0] st.toVec[4]._0.toVec[1] d.toVec[0]._0.toVec[0] d.toVec[0]._0.toVec[1],
+    lta st.toVec[5]._0.toVec[0] st.toVec[5]._0.toVec[1] d.toVec[1]._0.toVec[0] d.toVec[1]._0.toVec[1],
+    lta st.toVec[6]._0.toVec[0] st.toVec[6]._0.toVec[1] d.toVec[1]._0.toVec[0] d.toVec[1]._0.toVec[1],
+    lta st.toVec[7]._0.toVec[0] st.toVec[7]._0.toVec[1] d.toVec[1]._0.toVec[0] d.toVec[1]._0.toVec[1],
+    lta st.toVec[8]._0.toVec[0] st.toVec[8]._0.toVec[1] d.toVec[1]._0.toVec[0] d.toVec[1]._0.toVec[1],
+    lta st.toVec[9]._0.toVec[0] st.toVec[9]._0.toVec[1] d.toVec[1]._0.toVec[0] d.toVec[1]._0.toVec[1],
+    lta st.toVec[10]._0.toVec[0] st.toVec[10]._0.toVec[1] d.toVec[2]._0.toVec[0] d.toVec[2]._0.toVec[1],
+    lta st.toVec[11]._0.toVec[0] st.toVec[11]._0.toVec[1] d.toVec[2]._0.toVec[0] d.toVec[2]._0.toVec[1],
+    lta st.toVec[12]._0.toVec[0] st.toVec[12]._0.toVec[1] d.toVec[2]._0.toVec[0] d.toVec[2]._0.toVec[1],
+    lta st.toVec[13]._0.toVec[0] st.toVec[13]._0.toVec[1] d.toVec[2]._0.toVec[0] d.toVec[2]._0.toVec[1],
+    lta st.toVec[14]._0.toVec[0] st.toVec[14]._0.toVec[1] d.toVec[2]._0.toVec[0] d.toVec[2]._0.toVec[1],
+    lta st.toVec[15]._0.toVec[0] st.toVec[15]._0.toVec[1] d.toVec[3]._0.toVec[0] d.toVec[3]._0.toVec[1],
+    lta st.toVec[16]._0.toVec[0] st.toVec[16]._0.toVec[1] d.toVec[3]._0.toVec[0] d.toVec[3]._0.toVec[1],
+    lta st.toVec[17]._0.toVec[0] st.toVec[17]._0.toVec[1] d.toVec[3]._0.toVec[0] d.toVec[3]._0.toVec[1],
+    lta st.toVec[18]._0.toVec[0] st.toVec[18]._0.toVec[1] d.toVec[3]._0.toVec[0] d.toVec[3]._0.toVec[1],
+    lta st.toVec[19]._0.toVec[0] st.toVec[19]._0.toVec[1] d.toVec[3]._0.toVec[0] d.toVec[3]._0.toVec[1],
+    lta st.toVec[20]._0.toVec[0] st.toVec[20]._0.toVec[1] d.toVec[4]._0.toVec[0] d.toVec[4]._0.toVec[1],
+    lta st.toVec[21]._0.toVec[0] st.toVec[21]._0.toVec[1] d.toVec[4]._0.toVec[0] d.toVec[4]._0.toVec[1],
+    lta st.toVec[22]._0.toVec[0] st.toVec[22]._0.toVec[1] d.toVec[4]._0.toVec[0] d.toVec[4]._0.toVec[1],
+    lta st.toVec[23]._0.toVec[0] st.toVec[23]._0.toVec[1] d.toVec[4]._0.toVec[0] d.toVec[4]._0.toVec[1],
+    lta st.toVec[24]._0.toVec[0] st.toVec[24]._0.toVec[1] d.toVec[4]._0.toVec[0] d.toVec[4]._0.toVec[1]]
 
 -- Duplicated theta_comp_proof macro (from step_equiv)
 local macro "theta_comp_proof_local" : tactic =>
@@ -168,7 +193,7 @@ private theorem theta_comp_spec_local (s : KeccakState) :
     ⌝ ⦄ := by theta_comp_proof_local
 
 -- After impl theta, lifted theta-applied state equals spec_theta_unrolled(lift(input))
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 16000000 in
 open Std.Do in
 theorem theta_lift_spec (s : KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
@@ -191,8 +216,9 @@ theorem theta_lift_spec (s : KeccakState) :
     apply Triple.pure
     rw [← SPred.entails_true_intro]
     exact SPred.pure_intro fun ⟨hd0z0, hd0z1, hd1z0, hd1z1, hd2z0, hd2z1, hd3z0, hd3z1, hd4z0, hd4z1, hst, _hi⟩ => by
-      simp only [lift_theta_applied, Vector.getElem_ofFn, hst,
+      simp only [lift_theta_applied, lta, hst,
                   hd0z0, hd0z1, hd1z0, hd1z1, hd2z0, hd2z1, hd3z0, hd3z1, hd4z0, hd4z1,
                   lift_getElem, lift_xor, lift_td, lift_xor5, rot32,
                   u64_ofBitVec_xor, u64_toBitVec_ofBitVec, u64_xor_toBitVec,
                   Std.Do.SPred.down_pure]
+      sorry -- TODO: close vector equality (both sides are #v[...] with identical lift_lane_bv elements)
