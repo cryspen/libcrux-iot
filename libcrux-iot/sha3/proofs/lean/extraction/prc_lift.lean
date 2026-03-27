@@ -65,7 +65,7 @@ attribute [local irreducible] spread_to_even lift_lane_bv
 --
 -- Key optimization: hax_mvcgen runs on impl ONLY (not combined impl+spec).
 -- The spec-side lift_theta_applied/lift_perm are never in the WP, keeping terms small.
-set_option maxHeartbeats 40000000 in
+set_option maxHeartbeats 20000000 in
 set_option maxRecDepth 5000 in
 open Std.Do in
 theorem prc_lift_spec (s : KeccakState) (hi : s.i.toNat < 24) :
@@ -80,7 +80,7 @@ theorem prc_lift_spec (s : KeccakState) (hi : s.i.toNat < 24) :
   -- Key: lift_theta_applied/lift_perm NOT in hints — keeps WP terms small
   unfold spec_prc_unrolled
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_extraction,
-              libcrux_secrets.traits.Classify.classify, impl_perm, rot32']
+              libcrux_secrets.traits.Classify.classify]
   -- Close WP goals: substitution, simp, constructors
   all_goals (first | intro h₁; subst h₁ | skip)
   all_goals simp (config := { decide := true, maxSteps := 200000 }) only [getElemResult, core_models.ops.index.Index.index,
