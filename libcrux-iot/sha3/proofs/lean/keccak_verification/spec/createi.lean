@@ -1,7 +1,5 @@
-import Hax
+import keccak_verification.spec.hacspec_sha3
 open Std.Do
-
-def hacspec_sha3.createi := core_models.array.from_fn
 
 /-- Constructively extract the value from a `RustM` computation that is
 proven total via a Hoare triple. Uses only `propext` and `Quot.sound`. -/
