@@ -101,7 +101,7 @@ theorem prc_lift_spec (s : KeccakState) (hi : s.i.toNat < 24) :
        let r_spec ← spec_prc_unrolled (lift_theta_applied s) s.i
        pure (r_spec = lift_perm r_impl impl_perm)
     ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
-  unfold spec_prc_unrolled iota_lane chi_lane pi_lane rho_lane
+  unfold spec_prc_unrolled
   -- hax_mvcgen on impl ONLY: no lift_theta_applied/lift_perm/impl_perm/rot32' in hints
   hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
               libcrux_secrets.traits.Classify.classify]

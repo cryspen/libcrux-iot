@@ -95,7 +95,7 @@ local macro "round_equiv_proof" : tactic =>
     rw [spec_round_decomp, spec_theta_unrolled_eq, spec_prc_unrolled_eq]
     simp only [bind_assoc]
     conv in spec_theta_unrolled _ >>= _ => unfold spec_theta_unrolled; simp only [pure_bind]
-    unfold spec_prc_unrolled iota_lane chi_lane pi_lane rho_lane
+    unfold spec_prc_unrolled
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
                 libcrux_secrets.traits.Classify.classify]
     all_goals (first | intro h₁; subst h₁ | skip)
