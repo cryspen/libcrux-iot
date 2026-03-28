@@ -344,11 +344,23 @@ theorem chi_ofFn (f : Fin (25 : usize).toNat → u64) :
       ↓reduceDIte]
     congr 1)
 
+set_option maxHeartbeats 800000 in
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
     (hround : round.toNat < 24 := by omega) :
     spec_prc state round = spec_prc_unrolled state round := by
-  sorry
+  unfold spec_prc spec_prc_unrolled
+  have h25 : (25 : usize).toNat = 25 := rfl
+  have h24 : (24 : usize).toNat = 24 := rfl
+  simp only [bind, RustM.bind, rho_ofFn, pi_ofFn, chi_ofFn]
+  -- iota: reduce round constant access
+  unfold hacspec_sha3.keccak_f.iota
+  simp (config := { decide := true }) [pure, bind, RustM.bind, getElemResult, Vector.getElem_ofFn,
+    rust_primitives.hax.monomorphized_update_at.update_at_usize, Vector.getElem_set,
+    h25, h24, hround]
+  try { congr 1; ext i hi
+        simp only [Array.size_set, Array.size_ofFn] at hi
+        simp (config := { decide := true }) [Array.getElem_set, Array.getElem_ofFn, hi] }
 
 /-- spec_round decomposes as spec_prc . spec_theta. -/
 theorem spec_round_decomp (state : RustArray u64 25) (round : usize) :
