@@ -198,18 +198,16 @@ def spec_prc (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 2
   let s ← hacspec_sha3.keccak_f.chi s
   hacspec_sha3.keccak_f.iota s round
 
+/-- Iota lane function: XOR round constant at index 0, identity elsewhere. -/
+def iota_lane (chi : Fin (25 : usize).toNat → u64) (rc : u64) (i : Fin (25 : usize).toNat) : u64 :=
+  if i.val = 0 then chi i ^^^ rc else chi i
+
 /-- Spec prc, unrolled using pure lane functions (no createi/Vector.mapM).
-    Downstream consumers unfold chi_lane/pi_lane/rho_lane to get concrete per-lane expressions. -/
+    Downstream consumers unfold chi_lane/pi_lane/rho_lane/iota_lane to get concrete expressions. -/
 def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
   have h25 : (25 : usize).toNat = 25 := rfl
-  let r := chi_lane (pi_lane (rho_lane state))
   let rc ← hacspec_sha3.keccak_f.ROUND_CONSTANTS[round]_?
-  pure (RustArray.ofVec #v[
-    r ⟨0, by omega⟩ ^^^ rc, r ⟨1, by omega⟩, r ⟨2, by omega⟩, r ⟨3, by omega⟩, r ⟨4, by omega⟩,
-    r ⟨5, by omega⟩, r ⟨6, by omega⟩, r ⟨7, by omega⟩, r ⟨8, by omega⟩, r ⟨9, by omega⟩,
-    r ⟨10, by omega⟩, r ⟨11, by omega⟩, r ⟨12, by omega⟩, r ⟨13, by omega⟩, r ⟨14, by omega⟩,
-    r ⟨15, by omega⟩, r ⟨16, by omega⟩, r ⟨17, by omega⟩, r ⟨18, by omega⟩, r ⟨19, by omega⟩,
-    r ⟨20, by omega⟩, r ⟨21, by omega⟩, r ⟨22, by omega⟩, r ⟨23, by omega⟩, r ⟨24, by omega⟩])
+  pure (RustArray.ofVec (Vector.ofFn (iota_lane (chi_lane (pi_lane (rho_lane state))) rc)))
 
 -- Compositional sub-lemmas: each converts one monadic step to pure Vector.ofFn.
 
@@ -344,23 +342,29 @@ theorem chi_ofFn (f : Fin (25 : usize).toNat → u64) :
       ↓reduceDIte]
     congr 1)
 
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 800000 in
+open Std.Do in
+theorem iota_ofFn (f : Fin (25 : usize).toNat → u64) (round : usize) (hround : round.toNat < 24) :
+    hacspec_sha3.keccak_f.iota (RustArray.ofVec (Vector.ofFn f)) round =
+    .ok (RustArray.ofVec (Vector.ofFn (iota_lane f (hacspec_sha3.keccak_f.ROUND_CONSTANTS.toVec[round.toNat])))) := by
+  have h25 : (25 : usize).toNat = 25 := rfl
+  have h24 : (24 : usize).toNat = 24 := rfl
+  unfold hacspec_sha3.keccak_f.iota iota_lane
+  simp only [pure, bind, RustM.bind, getElemResult, Vector.getElem_ofFn,
+    rust_primitives.hax.monomorphized_update_at.update_at_usize,
+    h25, h24, hround, dite_true, USize64.reduceToNat]
+  simp only [show (0 : Nat) < 25 from by omega, dite_true, show 0 < (Vector.ofFn f).size from by simp]
+  congr 1; congr 1
+  ext i hi; simp [Vector.getElem_ofFn, Vector.getElem_set, Fin.ext_iff]
+
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
     (hround : round.toNat < 24 := by omega) :
     spec_prc state round = spec_prc_unrolled state round := by
   unfold spec_prc spec_prc_unrolled
-  have h25 : (25 : usize).toNat = 25 := rfl
-  have h24 : (24 : usize).toNat = 24 := rfl
-  simp only [bind, RustM.bind, rho_ofFn, pi_ofFn, chi_ofFn]
-  -- iota: reduce round constant access
-  unfold hacspec_sha3.keccak_f.iota
-  simp (config := { decide := true }) [pure, bind, RustM.bind, getElemResult, Vector.getElem_ofFn,
-    rust_primitives.hax.monomorphized_update_at.update_at_usize, Vector.getElem_set,
-    h25, h24, hround]
-  try { congr 1; ext i hi
-        simp only [Array.size_set, Array.size_ofFn] at hi
-        simp (config := { decide := true }) [Array.getElem_set, Array.getElem_ofFn, hi] }
+  simp only [bind, RustM.bind, rho_ofFn, pi_ofFn, chi_ofFn, iota_ofFn _ _ hround,
+    getElemResult, hround, dite_true, show (24 : usize).toNat = 24 from rfl, pure]
+  rfl
 
 /-- spec_round decomposes as spec_prc . spec_theta. -/
 theorem spec_round_decomp (state : RustArray u64 25) (round : usize) :
