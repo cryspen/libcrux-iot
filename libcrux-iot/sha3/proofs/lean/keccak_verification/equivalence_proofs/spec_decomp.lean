@@ -342,7 +342,7 @@ theorem chi_ofFn (f : Fin (25 : usize).toNat → u64) :
       ↓reduceDIte]
     congr 1)
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 4000000 in
 open Std.Do in
 theorem iota_ofFn (f : Fin (25 : usize).toNat → u64) (round : usize) (hround : round.toNat < 24) :
     hacspec_sha3.keccak_f.iota (RustArray.ofVec (Vector.ofFn f)) round =
@@ -355,7 +355,11 @@ theorem iota_ofFn (f : Fin (25 : usize).toNat → u64) (round : usize) (hround :
     h25, h24, hround, dite_true, USize64.reduceToNat]
   simp only [show (0 : Nat) < 25 from by omega, dite_true, show 0 < (Vector.ofFn f).size from by simp]
   congr 1; congr 1
-  ext i hi; simp [Vector.getElem_ofFn, Vector.getElem_set, Fin.ext_iff]
+  ext ⟨i, hi⟩ _
+  simp only [Vector.getElem_ofFn, Vector.getElem_set]
+  match i with
+  | 0 => simp
+  | n + 1 => simp [Nat.ne_of_gt (Nat.zero_lt_succ n)]
 
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
