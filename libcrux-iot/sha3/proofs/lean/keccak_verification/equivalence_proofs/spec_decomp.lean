@@ -344,7 +344,7 @@ theorem chi_ofFn (f : Fin (25 : usize).toNat → u64) :
       ↓reduceDIte]
     congr 1)
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 4000000 in
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
     (hround : round.toNat < 24 := by omega) :
