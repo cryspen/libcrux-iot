@@ -21,34 +21,59 @@ reduced by simp in the WP monad.
 -- Checked arithmetic for USize64 values known to be < 25.
 -- All Keccak index arithmetic stays within this bound.
 
--- a.toBitVec.toNat = a.toNat for USize64
+-- Checked arithmetic lemmas: translate ?-operators to pure operators + Nat bounds.
+-- Side conditions are all in Nat, so omega can chain bounds through intermediate results.
 private theorem bv_eq_nat (a : USize64) : a.toBitVec.toNat = a.toNat := rfl
 
--- Parameterized by bounds n, m so callers provide concrete bounds at the call site.
--- E.g., usize_add (n := 25) (m := 5) a b ha hb (by omega)
-
-theorem usize_mul (n m : Nat) (a b : USize64) (ha : a.toNat ≤ n) (hb : b.toNat ≤ m)
-    (hnm : n * m < 2 ^ 64) :
+-- Reduction: checked op → pure op (when Nat bound holds)
+theorem usize_mul_ok (a b : USize64) (h : a.toNat * b.toNat < 2 ^ 64) :
     a *? b = pure (a * b) := by
   simp only [rust_primitives.ops.arith.Mul.mul, BitVec.umulOverflow, bv_eq_nat]
-  have : a.toNat * b.toNat ≤ n * m := Nat.mul_le_mul ha hb
   simp only [show ¬ (a.toNat * b.toNat ≥ 2 ^ 64) from by omega,
     ↓reduceIte, decide_false, Bool.false_eq_true]
 
-theorem usize_add (n m : Nat) (a b : USize64) (ha : a.toNat ≤ n) (hb : b.toNat ≤ m)
-    (hnm : n + m < 2 ^ 64) :
+theorem usize_add_ok (a b : USize64) (h : a.toNat + b.toNat < 2 ^ 64) :
     a +? b = pure (a + b) := by
   simp only [rust_primitives.ops.arith.Add.add, BitVec.uaddOverflow, bv_eq_nat]
   simp only [show ¬ (a.toNat + b.toNat ≥ 2 ^ 64) from by omega,
     ↓reduceIte, decide_false, Bool.false_eq_true]
 
-theorem usize_div (a b : USize64) (hb : b ≠ 0) :
+theorem usize_div_ok (a b : USize64) (hb : b ≠ 0) :
     a /? b = pure (a / b) := by
   simp [rust_primitives.ops.arith.Div.div, hb]
 
-theorem usize_rem (a b : USize64) (hb : b ≠ 0) :
+theorem usize_rem_ok (a b : USize64) (hb : b ≠ 0) :
     a %? b = pure (a % b) := by
   simp [rust_primitives.ops.arith.Rem.rem, hb]
+
+-- Nat distribution: (a op b).toNat = a.toNat op b.toNat (when no overflow)
+-- Nat distribution: expose BitVec layer via `change`, then use BitVec lemmas + omega.
+theorem usize_toNat_mul (a b : USize64) (h : a.toNat * b.toNat < 2 ^ 64) :
+    (a * b).toNat = a.toNat * b.toNat := by
+  simp only [← bv_eq_nat] at h
+  show (a.toBitVec * b.toBitVec).toNat = a.toBitVec.toNat * b.toBitVec.toNat
+  rw [BitVec.toNat_mul]; omega
+
+theorem usize_toNat_add (a b : USize64) (h : a.toNat + b.toNat < 2 ^ 64) :
+    (a + b).toNat = a.toNat + b.toNat := by
+  simp only [← bv_eq_nat] at h
+  show (a.toBitVec + b.toBitVec).toNat = a.toBitVec.toNat + b.toBitVec.toNat
+  rw [BitVec.toNat_add]; omega
+
+theorem usize_toNat_div (a b : USize64) :
+    (a / b).toNat = a.toNat / b.toNat := by
+  show (a.toBitVec / b.toBitVec).toNat = a.toBitVec.toNat / b.toBitVec.toNat
+  exact BitVec.toNat_udiv ..
+
+theorem usize_toNat_rem (a b : USize64) :
+    (a % b).toNat = a.toNat % b.toNat := by
+  show (a.toBitVec % b.toBitVec).toNat = a.toBitVec.toNat % b.toBitVec.toNat
+  exact BitVec.toNat_umod ..
+
+theorem usize_toNat_ofNat (n : Nat) (h : n < 2 ^ 64) :
+    (USize64.ofNat n).toNat = n := by
+  show (BitVec.ofNat 64 n).toNat = n
+  rw [BitVec.toNat_ofNat]; omega
 
 -- Pure spec-level functions for each Keccak sub-step.
 -- Used in both the unrolled spec definitions and createi_ofFn proofs.
