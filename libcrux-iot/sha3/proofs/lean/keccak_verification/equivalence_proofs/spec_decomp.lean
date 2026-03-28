@@ -179,17 +179,15 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
   simp only [RustM.bind, bind]
   -- result: createi → Vector.ofFn (theta_result state (theta_d_val (theta_col state)))
   rw [hacspec_sha3.createi_ofFn _ (theta_result state (theta_d_val (theta_col state)))
-    (fun ⟨n, hn⟩ => by
-    match n, hn with
-    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
-    | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
-    | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
-      simp (config := { decide := true }) [bind, pure, RustM.bind, getElemResult,
-        theta_result,
-        rust_primitives.ops.arith.Div.div, BitVec.umulOverflow, BitVec.uaddOverflow,
-        Vector.getElem_ofFn, h5, h25]
-      <;> rfl
-    | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega))]
+    (fun i => by
+    have hi : (USize64.ofNat i.val).toNat = i.val := usize_toNat_ofNat i.val (by omega)
+    simp only [bind, pure, RustM.bind, getElemResult, theta_result,
+      usize_div_ok _ _ (by decide : (5 : USize64) ≠ 0),
+      usize_toNat_div,
+      Vector.getElem_ofFn,
+      hi, h5, h25, USize64.reduceToNat, Nat.add_zero]
+    simp only [show i.val < 25 from i.isLt, show i.val / 5 < 5 from by omega, ↓reduceDIte]
+    rfl)]
   simp only [pure, Vector.ofFn]
   rfl
 
