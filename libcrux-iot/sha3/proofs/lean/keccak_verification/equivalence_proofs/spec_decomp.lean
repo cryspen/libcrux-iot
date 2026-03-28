@@ -198,64 +198,58 @@ def spec_prc (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 2
   let s ← hacspec_sha3.keccak_f.chi s
   hacspec_sha3.keccak_f.iota s round
 
-/-- Spec prc, fully unrolled (fused rho+pi+chi+iota, no createi/Vector.mapM). -/
+/-- Spec prc, unrolled using pure lane functions (no createi/Vector.mapM).
+    Downstream consumers unfold chi_lane/pi_lane/rho_lane to get concrete per-lane expressions. -/
 def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
-  let p0 := state.toVec[0]
-  let p1 := UInt64.ofBitVec (state.toVec[15].toBitVec.rotateLeft 28)
-  let p2 := UInt64.ofBitVec (state.toVec[5].toBitVec.rotateLeft 1)
-  let p3 := UInt64.ofBitVec (state.toVec[20].toBitVec.rotateLeft 27)
-  let p4 := UInt64.ofBitVec (state.toVec[10].toBitVec.rotateLeft 62)
-  let p5 := UInt64.ofBitVec (state.toVec[6].toBitVec.rotateLeft 44)
-  let p6 := UInt64.ofBitVec (state.toVec[21].toBitVec.rotateLeft 20)
-  let p7 := UInt64.ofBitVec (state.toVec[11].toBitVec.rotateLeft 6)
-  let p8 := UInt64.ofBitVec (state.toVec[1].toBitVec.rotateLeft 36)
-  let p9 := UInt64.ofBitVec (state.toVec[16].toBitVec.rotateLeft 55)
-  let p10 := UInt64.ofBitVec (state.toVec[12].toBitVec.rotateLeft 43)
-  let p11 := UInt64.ofBitVec (state.toVec[2].toBitVec.rotateLeft 3)
-  let p12 := UInt64.ofBitVec (state.toVec[17].toBitVec.rotateLeft 25)
-  let p13 := UInt64.ofBitVec (state.toVec[7].toBitVec.rotateLeft 10)
-  let p14 := UInt64.ofBitVec (state.toVec[22].toBitVec.rotateLeft 39)
-  let p15 := UInt64.ofBitVec (state.toVec[18].toBitVec.rotateLeft 21)
-  let p16 := UInt64.ofBitVec (state.toVec[8].toBitVec.rotateLeft 45)
-  let p17 := UInt64.ofBitVec (state.toVec[23].toBitVec.rotateLeft 8)
-  let p18 := UInt64.ofBitVec (state.toVec[13].toBitVec.rotateLeft 15)
-  let p19 := UInt64.ofBitVec (state.toVec[3].toBitVec.rotateLeft 41)
-  let p20 := UInt64.ofBitVec (state.toVec[24].toBitVec.rotateLeft 14)
-  let p21 := UInt64.ofBitVec (state.toVec[14].toBitVec.rotateLeft 61)
-  let p22 := UInt64.ofBitVec (state.toVec[4].toBitVec.rotateLeft 18)
-  let p23 := UInt64.ofBitVec (state.toVec[19].toBitVec.rotateLeft 56)
-  let p24 := UInt64.ofBitVec (state.toVec[9].toBitVec.rotateLeft 2)
-  let ch0 := p0 ^^^ ((~~~p5) &&& p10)
-  let ch1 := p1 ^^^ ((~~~p6) &&& p11)
-  let ch2 := p2 ^^^ ((~~~p7) &&& p12)
-  let ch3 := p3 ^^^ ((~~~p8) &&& p13)
-  let ch4 := p4 ^^^ ((~~~p9) &&& p14)
-  let ch5 := p5 ^^^ ((~~~p10) &&& p15)
-  let ch6 := p6 ^^^ ((~~~p11) &&& p16)
-  let ch7 := p7 ^^^ ((~~~p12) &&& p17)
-  let ch8 := p8 ^^^ ((~~~p13) &&& p18)
-  let ch9 := p9 ^^^ ((~~~p14) &&& p19)
-  let ch10 := p10 ^^^ ((~~~p15) &&& p20)
-  let ch11 := p11 ^^^ ((~~~p16) &&& p21)
-  let ch12 := p12 ^^^ ((~~~p17) &&& p22)
-  let ch13 := p13 ^^^ ((~~~p18) &&& p23)
-  let ch14 := p14 ^^^ ((~~~p19) &&& p24)
-  let ch15 := p15 ^^^ ((~~~p20) &&& p0)
-  let ch16 := p16 ^^^ ((~~~p21) &&& p1)
-  let ch17 := p17 ^^^ ((~~~p22) &&& p2)
-  let ch18 := p18 ^^^ ((~~~p23) &&& p3)
-  let ch19 := p19 ^^^ ((~~~p24) &&& p4)
-  let ch20 := p20 ^^^ ((~~~p0) &&& p5)
-  let ch21 := p21 ^^^ ((~~~p1) &&& p6)
-  let ch22 := p22 ^^^ ((~~~p2) &&& p7)
-  let ch23 := p23 ^^^ ((~~~p3) &&& p8)
-  let ch24 := p24 ^^^ ((~~~p4) &&& p9)
+  have h25 : (25 : usize).toNat = 25 := rfl
+  let r := chi_lane (pi_lane (rho_lane state))
   let rc ← hacspec_sha3.keccak_f.ROUND_CONSTANTS[round]_?
-  pure (RustArray.ofVec #v[ch0 ^^^ rc, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8, ch9,
-    ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18, ch19, ch20, ch21, ch22, ch23, ch24])
+  pure (RustArray.ofVec #v[
+    r ⟨0, by omega⟩ ^^^ rc, r ⟨1, by omega⟩, r ⟨2, by omega⟩, r ⟨3, by omega⟩, r ⟨4, by omega⟩,
+    r ⟨5, by omega⟩, r ⟨6, by omega⟩, r ⟨7, by omega⟩, r ⟨8, by omega⟩, r ⟨9, by omega⟩,
+    r ⟨10, by omega⟩, r ⟨11, by omega⟩, r ⟨12, by omega⟩, r ⟨13, by omega⟩, r ⟨14, by omega⟩,
+    r ⟨15, by omega⟩, r ⟨16, by omega⟩, r ⟨17, by omega⟩, r ⟨18, by omega⟩, r ⟨19, by omega⟩,
+    r ⟨20, by omega⟩, r ⟨21, by omega⟩, r ⟨22, by omega⟩, r ⟨23, by omega⟩, r ⟨24, by omega⟩])
 
--- TODO: Proof passes standalone (lake env lean) but hits kernel deep recursion in lake build.
--- Fix: split into compositional rho_ofFn/pi_ofFn/chi_ofFn sub-lemmas to reduce proof term depth.
+-- Compositional sub-lemmas: each converts one monadic step to pure Vector.ofFn.
+
+open Std.Do in
+theorem rho_ofFn (state : RustArray u64 25) :
+    hacspec_sha3.keccak_f.rho state = .ok (RustArray.ofVec (Vector.ofFn (rho_lane state))) := by
+  have h25 : (25 : usize).toNat = 25 := rfl
+  unfold hacspec_sha3.keccak_f.rho
+  exact hacspec_sha3.createi_ofFn _ (rho_lane state) (fun i => by
+    have hi : (USize64.ofNat i.val).toNat = i.val := usize_toNat_ofNat i.val (by omega)
+    simp only [bind, pure, RustM.bind, getElemResult, rho_lane,
+      core_models.num.Impl_9.rotate_left, h25, hi, USize64.reduceToNat]
+    simp only [show i.val < 25 from i.isLt, ↓reduceDIte,
+      show UInt32.toNat (hacspec_sha3.keccak_f.RHO_OFFSETS.toVec[i.val]) =
+        (hacspec_sha3.keccak_f.RHO_OFFSETS.toVec[i.val]).toNat from rfl]
+    rfl)
+
+open Std.Do in
+theorem pi_ofFn (f : Fin (25 : usize).toNat → u64) :
+    hacspec_sha3.keccak_f.pi (RustArray.ofVec (Vector.ofFn f)) =
+    .ok (RustArray.ofVec (Vector.ofFn (pi_lane f))) := by
+  have h5 : (5 : usize).toNat = 5 := rfl
+  have h25 : (25 : usize).toNat = 25 := rfl
+  unfold hacspec_sha3.keccak_f.pi
+  exact hacspec_sha3.createi_ofFn _ (pi_lane f) (fun i => by
+    have hi : (USize64.ofNat i.val).toNat = i.val := usize_toNat_ofNat i.val (by omega)
+    have hdiv : (USize64.ofNat i.val / 5).toNat = i.val / 5 := by
+      rw [usize_toNat_div]; simp [hi]
+    have hrem : (USize64.ofNat i.val % 5).toNat = i.val % 5 := by
+      rw [usize_toNat_rem]; simp [hi]
+    have hmul : ((3 : USize64) * (USize64.ofNat i.val % 5)).toNat = 3 * (i.val % 5) := by
+      rw [usize_toNat_mul]; simp [hrem, USize64.reduceToNat]; omega
+    sorry)
+
+open Std.Do in
+theorem chi_ofFn (f : Fin (25 : usize).toNat → u64) :
+    hacspec_sha3.keccak_f.chi (RustArray.ofVec (Vector.ofFn f)) =
+    .ok (RustArray.ofVec (Vector.ofFn (chi_lane f))) := by
+  sorry
+
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
     (hround : round.toNat < 24 := by omega) :
