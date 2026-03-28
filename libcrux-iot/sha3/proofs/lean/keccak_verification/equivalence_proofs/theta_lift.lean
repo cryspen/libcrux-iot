@@ -261,8 +261,7 @@ theorem theta_lift_spec (s : KeccakState) :
       pure (r_spec = lift_theta_applied r_impl))
     ⦃PostCond.noThrow fun r => ⌜r⌝⦄
   conv in spec_theta_unrolled _ >>= _ =>
-    unfold spec_theta_unrolled; simp only [theta_result, theta_d_val, theta_col, Vector.getElem_ofFn,
-      show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl, pure_bind]
+    unfold spec_theta_unrolled theta_result theta_d_val theta_col; simp only [pure_bind]
   -- Split: impl WP (via theta_comp_spec_local) then pure algebraic bridge
   apply Triple.bind
   case hx => exact theta_comp_spec_local s
