@@ -1,8 +1,6 @@
 import keccak_verification.spec.hacspec_sha3
 import keccak_verification.spec.createi
 
-set_option profiler true
-
 /-! ## Spec decomposition for compositional round proofs
 
 We decompose `spec_round` (theta ∘ rho ∘ pi ∘ chi ∘ iota) into two stages
