@@ -121,14 +121,7 @@ def spec_theta (state : RustArray u64 25) : RustM (RustArray u64 25) :=
 /-- Spec theta, unrolled using pure lane functions (no createi/Vector.mapM).
     Downstream consumers unfold theta_col/theta_d_val/theta_result to get concrete expressions. -/
 def spec_theta_unrolled (state : RustArray u64 25) : RustM (RustArray u64 25) :=
-  have h25 : (25 : usize).toNat = 25 := rfl
-  let r := theta_result state (theta_d_val (theta_col state))
-  pure (RustArray.ofVec #v[
-    r ⟨0, by omega⟩, r ⟨1, by omega⟩, r ⟨2, by omega⟩, r ⟨3, by omega⟩, r ⟨4, by omega⟩,
-    r ⟨5, by omega⟩, r ⟨6, by omega⟩, r ⟨7, by omega⟩, r ⟨8, by omega⟩, r ⟨9, by omega⟩,
-    r ⟨10, by omega⟩, r ⟨11, by omega⟩, r ⟨12, by omega⟩, r ⟨13, by omega⟩, r ⟨14, by omega⟩,
-    r ⟨15, by omega⟩, r ⟨16, by omega⟩, r ⟨17, by omega⟩, r ⟨18, by omega⟩, r ⟨19, by omega⟩,
-    r ⟨20, by omega⟩, r ⟨21, by omega⟩, r ⟨22, by omega⟩, r ⟨23, by omega⟩, r ⟨24, by omega⟩])
+  pure (RustArray.ofVec (Vector.ofFn (theta_result state (theta_d_val (theta_col state)))))
 
 set_option maxHeartbeats 64000000 in
 open Std.Do in
@@ -190,10 +183,7 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
       hi, h5, h25, USize64.reduceToNat, Nat.add_zero]
     simp only [show i.val < 25 from i.isLt, show i.val / 5 < 5 from by omega, ↓reduceDIte]
     rfl)]
-  -- Close: Vector.ofFn r = #v[r 0, ..., r 24]
-  apply congrArg; apply congrArg
-  apply Vector.ext; intro i hi
-  simp [Vector.getElem_ofFn]
+  rfl
 
 /-- Spec post-theta step: rho + pi + chi + iota. -/
 def spec_prc (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
