@@ -94,10 +94,7 @@ local macro "round_equiv_proof" : tactic =>
   `(tactic| (
     rw [spec_round_decomp, spec_theta_unrolled_eq, spec_prc_unrolled_eq]
     simp only [bind_assoc]
-    conv in spec_theta_unrolled _ >>= _ =>
-      unfold spec_theta_unrolled
-      simp only [pure_bind, RustArray.ofVec, Vector.getElem_ofFn, theta_result, theta_d_val, theta_col,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]
+    conv in spec_theta_unrolled _ >>= _ => unfold spec_theta_unrolled; simp only [pure_bind]
     unfold spec_prc_unrolled iota_lane chi_lane pi_lane rho_lane
     hax_mvcgen [core_models.num.Impl_8.rotate_left, instGetElemResultOutputOfIndex_keccak_verification,
                 libcrux_secrets.traits.Classify.classify]

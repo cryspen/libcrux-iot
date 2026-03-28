@@ -260,10 +260,7 @@ theorem theta_lift_spec (s : KeccakState) :
       spec_theta_unrolled (lift s) >>= fun r_spec =>
       pure (r_spec = lift_theta_applied r_impl))
     ⦃PostCond.noThrow fun r => ⌜r⌝⦄
-  conv in spec_theta_unrolled _ >>= _ =>
-    unfold spec_theta_unrolled
-    simp only [pure_bind, RustArray.ofVec, Vector.getElem_ofFn, theta_result, theta_d_val, theta_col,
-      show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]
+  conv in spec_theta_unrolled _ >>= _ => unfold spec_theta_unrolled; simp only [pure_bind]
   -- Split: impl WP (via theta_comp_spec_local) then pure algebraic bridge
   apply Triple.bind
   case hx => exact theta_comp_spec_local s
