@@ -183,6 +183,7 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
       hi, h5, h25, USize64.reduceToNat, Nat.add_zero]
     simp only [show i.val < 25 from i.isLt, show i.val / 5 < 5 from by omega, ↓reduceDIte]
     rfl)]
+  rfl
 
 /-- Spec post-theta step: rho + pi + chi + iota. -/
 def spec_prc (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
@@ -347,12 +348,12 @@ theorem iota_ofFn (f : Fin (25 : usize).toNat → u64) (round : usize) (hround :
     rust_primitives.hax.monomorphized_update_at.update_at_usize,
     h25, h24, hround, dite_true, USize64.reduceToNat]
   simp only [show (0 : Nat) < 25 from by omega, dite_true, show 0 < (Vector.ofFn f).size from by simp]
-  congr 1; congr 1
-  ext ⟨i, hi⟩ _
+  apply congrArg
+  apply congrArg
+  apply Vector.ext
+  intro i hi
   simp only [Vector.getElem_ofFn, Vector.getElem_set]
-  match i with
-  | 0 => simp
-  | n + 1 => simp [Nat.ne_of_gt (Nat.zero_lt_succ n)]
+  split <;> simp_all
 
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
