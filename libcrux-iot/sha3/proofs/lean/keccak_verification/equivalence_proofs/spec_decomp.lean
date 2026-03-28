@@ -13,6 +13,43 @@ The unrolled versions avoid `createi`/`Vector.mapM` which can't be
 reduced by simp in the WP monad.
 -/
 
+-- Pure spec-level functions for each Keccak sub-step.
+-- Used in both the unrolled spec definitions and createi_ofFn proofs.
+
+def theta_col (state : RustArray u64 25) (x : Fin (5 : usize).toNat) : u64 :=
+  have : (25 : usize).toNat = 25 := rfl
+  have : (5 : usize).toNat = 5 := rfl
+  state.toVec[5 * x.val]'(by omega) ^^^ state.toVec[5 * x.val + 1]'(by omega) ^^^
+  state.toVec[5 * x.val + 2]'(by omega) ^^^ state.toVec[5 * x.val + 3]'(by omega) ^^^
+  state.toVec[5 * x.val + 4]'(by omega)
+
+def theta_d_val (c : Fin (5 : usize).toNat → u64) (x : Fin (5 : usize).toNat) : u64 :=
+  have : (5 : usize).toNat = 5 := rfl
+  c ⟨(x.val + 4) % 5, by omega⟩ ^^^
+  UInt64.ofBitVec ((c ⟨(x.val + 1) % 5, by omega⟩).toBitVec.rotateLeft 1)
+
+def theta_result (state : RustArray u64 25) (d : Fin (5 : usize).toNat → u64)
+    (i : Fin (25 : usize).toNat) : u64 :=
+  have : (5 : usize).toNat = 5 := rfl
+  have : (25 : usize).toNat = 25 := rfl
+  state.toVec[i.val] ^^^ d ⟨i.val / 5, by omega⟩
+
+def rho_lane (state : RustArray u64 25) (i : Fin (25 : usize).toNat) : u64 :=
+  have : (25 : usize).toNat = 25 := rfl
+  UInt64.ofBitVec (state.toVec[i.val].toBitVec.rotateLeft
+    (hacspec_sha3.keccak_f.RHO_OFFSETS.toVec[i.val]).toNat)
+
+def pi_lane (rho : Fin (25 : usize).toNat → u64) (i : Fin (25 : usize).toNat) : u64 :=
+  have : (25 : usize).toNat = 25 := rfl
+  let x := i.val / 5; let y := i.val % 5
+  rho ⟨5 * ((x + 3 * y) % 5) + x, by omega⟩
+
+def chi_lane (pi : Fin (25 : usize).toNat → u64) (i : Fin (25 : usize).toNat) : u64 :=
+  have : (25 : usize).toNat = 25 := rfl
+  let x := i.val / 5; let y := i.val % 5
+  pi i ^^^ ((~~~(pi ⟨5 * ((x + 1) % 5) + y, by omega⟩)) &&&
+                 pi ⟨5 * ((x + 2) % 5) + y, by omega⟩)
+
 /-- Spec theta step: just hacspec theta. -/
 def spec_theta (state : RustArray u64 25) : RustM (RustArray u64 25) :=
   hacspec_sha3.keccak_f.theta state
@@ -36,52 +73,59 @@ def spec_theta_unrolled (state : RustArray u64 25) : RustM (RustArray u64 25) :=
     state.toVec[15] ^^^ d3, state.toVec[16] ^^^ d3, state.toVec[17] ^^^ d3, state.toVec[18] ^^^ d3, state.toVec[19] ^^^ d3,
     state.toVec[20] ^^^ d4, state.toVec[21] ^^^ d4, state.toVec[22] ^^^ d4, state.toVec[23] ^^^ d4, state.toVec[24] ^^^ d4])
 
--- spec_theta_unrolled equals spec_theta.
-set_option maxHeartbeats 32000000 in
+-- Reusable simp set for createi_ofFn totality proofs (Fin 5)
+local macro "createi_totality_5" : tactic =>
+  `(tactic| (fun ⟨n, hn⟩ => by
+    have h5 : (5 : usize).toNat = 5 := rfl
+    match n, hn with
+    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
+      simp (config := { decide := true }) [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind,
+        getElemResult, theta_col, theta_d_val, theta_result,
+        rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
+        rust_primitives.ops.arith.Rem.rem, BitVec.umulOverflow, BitVec.uaddOverflow,
+        core_models.num.Impl_9.rotate_left, Vector.getElem_ofFn, h5]
+    | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega)))
+
+set_option maxHeartbeats 64000000 in
 open Std.Do in
 theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
     spec_theta state = spec_theta_unrolled state := by
   unfold spec_theta hacspec_sha3.keccak_f.theta spec_theta_unrolled
   have h5 : (5 : usize).toNat = 5 := rfl
   have h25 : (25 : usize).toNat = 25 := rfl
-  -- First createi (columns, n=5)
-  let gc : Fin (5 : usize).toNat → u64 := fun i =>
-    state.toVec[5 * i.val]'(by omega) ^^^ state.toVec[5 * i.val + 1]'(by omega) ^^^
-    state.toVec[5 * i.val + 2]'(by omega) ^^^ state.toVec[5 * i.val + 3]'(by omega) ^^^
-    state.toVec[5 * i.val + 4]'(by omega)
-  rw [hacspec_sha3.createi_ofFn _ gc (fun ⟨n, hn⟩ => by
+  -- First createi (columns)
+  rw [hacspec_sha3.createi_ofFn _ (theta_col state) (fun ⟨n, hn⟩ => by
     match n, hn with
     | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
-      simp [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, gc,
-        rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add]
+      simp (config := { decide := true }) [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind,
+        getElemResult, theta_col, rust_primitives.ops.arith.Mul.mul,
+        rust_primitives.ops.arith.Add.add, BitVec.umulOverflow]
     | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega))]
   simp only [RustM.bind, bind]
-  -- Second createi (d-values, n=5)
-  let gd : Fin (5 : usize).toNat → u64 := fun i =>
-    gc ⟨(i.val + 4) % 5, by omega⟩ ^^^
-    UInt64.ofBitVec ((gc ⟨(i.val + 1) % 5, by omega⟩).toBitVec.rotateLeft 1)
-  rw [hacspec_sha3.createi_ofFn _ gd (fun ⟨n, hn⟩ => by
+  -- Second createi (d-values)
+  rw [hacspec_sha3.createi_ofFn _ (theta_d_val (theta_col state)) (fun ⟨n, hn⟩ => by
     match n, hn with
     | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
-      simp [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, gd, gc,
+      simp (config := { decide := true }) [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind,
+        getElemResult, theta_d_val, theta_col,
         rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
-        rust_primitives.ops.arith.Rem.rem, BitVec.uaddOverflow,
+        rust_primitives.ops.arith.Rem.rem, BitVec.umulOverflow, BitVec.uaddOverflow,
         core_models.num.Impl_9.rotate_left, Vector.getElem_ofFn, h5]
     | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega))]
   simp only [RustM.bind, bind]
-  -- Third createi (result, n=25)
-  let gr : Fin (25 : usize).toNat → u64 := fun i =>
-    state.toVec[i.val] ^^^ gd ⟨i.val / 5, by omega⟩
-  rw [hacspec_sha3.createi_ofFn _ gr (fun ⟨n, hn⟩ => by
+  -- Third createi (result)
+  rw [hacspec_sha3.createi_ofFn _ (theta_result state (theta_d_val (theta_col state)))
+    (fun ⟨n, hn⟩ => by
     match n, hn with
     | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
     | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
     | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
-      simp [bind, pure, RustM.bind, getElemResult, gr, gd, gc,
-        rust_primitives.ops.arith.Div.div, BitVec.uaddOverflow,
+      simp (config := { decide := true }) [bind, pure, RustM.bind, getElemResult,
+        theta_result, theta_d_val, theta_col,
+        rust_primitives.ops.arith.Div.div, BitVec.umulOverflow, BitVec.uaddOverflow,
         Vector.getElem_ofFn, h5, h25]
     | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega))]
-  simp only [gc, gd, gr, pure, Vector.getElem_ofFn, h5, h25]
+  simp only [theta_col, theta_d_val, theta_result, pure, Vector.getElem_ofFn, h5, h25]
   rfl
 
 /-- Spec post-theta step: rho + pi + chi + iota. -/
@@ -91,12 +135,8 @@ def spec_prc (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 2
   let s ← hacspec_sha3.keccak_f.chi s
   hacspec_sha3.keccak_f.iota s round
 
-/-- Spec prc, fully unrolled (fused rho+pi+chi+iota, no createi/Vector.mapM).
-    Lane layout: p[i] = rotl(state[pi_src[i]], RHO_OFFSETS[pi_src[i]])
-    then chi: ch[5x+y] = p[5x+y] XOR (NOT p[5((x+1) mod 5)+y] AND p[5((x+2) mod 5)+y])
-    then iota: ch[0] XOR RC[round] -/
+/-- Spec prc, fully unrolled (fused rho+pi+chi+iota, no createi/Vector.mapM). -/
 def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
-  -- rho + pi (fused): p[i] = rotl(state[pi_src[i]], rho_offset[pi_src[i]])
   let p0 := state.toVec[0]
   let p1 := UInt64.ofBitVec (state.toVec[15].toBitVec.rotateLeft 28)
   let p2 := UInt64.ofBitVec (state.toVec[5].toBitVec.rotateLeft 1)
@@ -122,7 +162,6 @@ def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustAr
   let p22 := UInt64.ofBitVec (state.toVec[4].toBitVec.rotateLeft 18)
   let p23 := UInt64.ofBitVec (state.toVec[19].toBitVec.rotateLeft 56)
   let p24 := UInt64.ofBitVec (state.toVec[9].toBitVec.rotateLeft 2)
-  -- chi: ch[5x+y] = p[5x+y] XOR (NOT p[5((x+1) mod 5)+y] AND p[5((x+2) mod 5)+y])
   let ch0 := p0 ^^^ ((~~~p5) &&& p10)
   let ch1 := p1 ^^^ ((~~~p6) &&& p11)
   let ch2 := p2 ^^^ ((~~~p7) &&& p12)
@@ -148,13 +187,11 @@ def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustAr
   let ch22 := p22 ^^^ ((~~~p2) &&& p7)
   let ch23 := p23 ^^^ ((~~~p3) &&& p8)
   let ch24 := p24 ^^^ ((~~~p4) &&& p9)
-  -- iota: XOR round constant into lane 0
   let rc ← hacspec_sha3.keccak_f.ROUND_CONSTANTS[round]_?
   pure (RustArray.ofVec #v[ch0 ^^^ rc, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8, ch9,
     ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18, ch19, ch20, ch21, ch22, ch23, ch24])
 
--- spec_prc_unrolled equals spec_prc.
-set_option maxHeartbeats 64000000 in
+set_option maxHeartbeats 128000000 in
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
     (hround : round.toNat < 24 := by omega) :
@@ -163,57 +200,51 @@ theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
   have h5 : (5 : usize).toNat = 5 := rfl
   have h25 : (25 : usize).toNat = 25 := rfl
   have h24 : (24 : usize).toNat = 24 := rfl
-  -- rho (n=25)
+  -- rho
   unfold hacspec_sha3.keccak_f.rho
-  let g_rho : Fin (25 : usize).toNat → u64 := fun i =>
-    UInt64.ofBitVec (state.toVec[i.val].toBitVec.rotateLeft
-      (hacspec_sha3.keccak_f.RHO_OFFSETS.toVec[i.val]).toNat)
-  rw [hacspec_sha3.createi_ofFn _ g_rho (fun ⟨n, hn⟩ => by
+  rw [hacspec_sha3.createi_ofFn _ (rho_lane state) (fun ⟨n, hn⟩ => by
     match n, hn with
     | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
     | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
     | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
-      simp [bind, pure, RustM.bind, getElemResult, g_rho,
+      simp (config := { decide := true }) [bind, pure, RustM.bind, getElemResult, rho_lane,
         core_models.num.Impl_9.rotate_left, h25]
     | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega))]
   simp only [RustM.bind, bind]
-  -- pi (n=25)
+  -- pi
   unfold hacspec_sha3.keccak_f.pi
-  let g_pi : Fin (25 : usize).toNat → u64 := fun i =>
-    let x := i.val / 5; let y := i.val % 5
-    g_rho ⟨5 * ((x + 3 * y) % 5) + x, by omega⟩
-  rw [hacspec_sha3.createi_ofFn _ g_pi (fun ⟨n, hn⟩ => by
+  rw [hacspec_sha3.createi_ofFn _ (pi_lane (rho_lane state)) (fun ⟨n, hn⟩ => by
     match n, hn with
     | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
     | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
     | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
-      simp [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, g_pi, g_rho,
+      simp (config := { decide := true }) [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind,
+        getElemResult, pi_lane, rho_lane,
         rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
         rust_primitives.ops.arith.Rem.rem, rust_primitives.ops.arith.Div.div,
-        BitVec.uaddOverflow, Vector.getElem_ofFn, core_models.num.Impl_9.rotate_left, h5, h25]
+        BitVec.umulOverflow, BitVec.uaddOverflow, Vector.getElem_ofFn,
+        core_models.num.Impl_9.rotate_left, h5, h25]
     | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega))]
   simp only [RustM.bind, bind]
-  -- chi (n=25)
+  -- chi
   unfold hacspec_sha3.keccak_f.chi
-  let g_chi : Fin (25 : usize).toNat → u64 := fun i =>
-    let x := i.val / 5; let y := i.val % 5
-    g_pi i ^^^ ((~~~(g_pi ⟨5 * ((x + 1) % 5) + y, by omega⟩)) &&&
-                     g_pi ⟨5 * ((x + 2) % 5) + y, by omega⟩)
-  rw [hacspec_sha3.createi_ofFn _ g_chi (fun ⟨n, hn⟩ => by
+  rw [hacspec_sha3.createi_ofFn _ (chi_lane (pi_lane (rho_lane state))) (fun ⟨n, hn⟩ => by
     match n, hn with
     | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
     | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
     | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
-      simp [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, g_chi, g_pi, g_rho,
+      simp (config := { decide := true }) [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind,
+        getElemResult, chi_lane, pi_lane, rho_lane,
         rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
         rust_primitives.ops.arith.Rem.rem, rust_primitives.ops.arith.Div.div,
-        BitVec.uaddOverflow, Vector.getElem_ofFn, core_models.num.Impl_9.rotate_left, h5, h25]
+        BitVec.umulOverflow, BitVec.uaddOverflow, Vector.getElem_ofFn,
+        core_models.num.Impl_9.rotate_left, h5, h25]
     | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega))]
   simp only [RustM.bind, bind]
   -- iota
   unfold hacspec_sha3.keccak_f.iota
   simp only [pure, bind, RustM.bind, getElemResult, Vector.getElem_ofFn,
-    g_chi, g_pi, g_rho, core_models.num.Impl_9.rotate_left,
+    chi_lane, pi_lane, rho_lane, core_models.num.Impl_9.rotate_left,
     rust_primitives.hax.monomorphized_update_at.update_at_usize, h5, h25, h24]
   split <;> simp_all <;> omega
 
