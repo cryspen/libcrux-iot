@@ -240,9 +240,42 @@ theorem pi_ofFn (f : Fin (25 : usize).toNat → u64) :
       rw [usize_toNat_div]; simp [hi]
     have hrem : (USize64.ofNat i.val % 5).toNat = i.val % 5 := by
       rw [usize_toNat_rem]; simp [hi]
-    have hmul : ((3 : USize64) * (USize64.ofNat i.val % 5)).toNat = 3 * (i.val % 5) := by
-      rw [usize_toNat_mul]; simp [hrem, USize64.reduceToNat]; omega
-    sorry)
+    have hmul3y : ((3 : USize64) * (USize64.ofNat i.val % 5)).toNat = 3 * (i.val % 5) := by
+      rw [usize_toNat_mul _ _ (by rw [show (3 : USize64).toNat = 3 from rfl, hrem]; omega)]
+      rw [show (3 : USize64).toNat = 3 from rfl, hrem]
+    have hxp3y : (USize64.ofNat i.val / 5 + 3 * (USize64.ofNat i.val % 5)).toNat =
+        i.val / 5 + 3 * (i.val % 5) := by
+      rw [usize_toNat_add]; simp [hdiv, hmul3y]; omega
+    have hmod : ((USize64.ofNat i.val / 5 + 3 * (USize64.ofNat i.val % 5)) % 5).toNat =
+        (i.val / 5 + 3 * (i.val % 5)) % 5 := by
+      rw [usize_toNat_rem]; simp [hxp3y]
+    have hmul5 : ((5 : USize64) * ((USize64.ofNat i.val / 5 + 3 * (USize64.ofNat i.val % 5)) % 5)).toNat =
+        5 * ((i.val / 5 + 3 * (i.val % 5)) % 5) := by
+      rw [usize_toNat_mul _ _ (by rw [h5, hmod]; omega), h5, hmod]
+    have hfinal : (5 * ((USize64.ofNat i.val / 5 + 3 * (USize64.ofNat i.val % 5)) % 5) +
+        USize64.ofNat i.val / 5).toNat =
+        5 * ((i.val / 5 + 3 * (i.val % 5)) % 5) + i.val / 5 := by
+      rw [usize_toNat_add]; simp [hmul5, hdiv]; omega
+    -- Overflow bounds for each checked op (reference have lemmas)
+    -- Overflow bounds: rewrite to Nat then omega
+    have hmul3y_bound : (3 : USize64).toNat * (USize64.ofNat i.val % 5).toNat < 2 ^ 64 := by
+      rw [show (3 : USize64).toNat = 3 from rfl, hrem]; omega
+    have hxp3y_bound : (USize64.ofNat i.val / 5).toNat + (3 * (USize64.ofNat i.val % 5)).toNat < 2 ^ 64 := by
+      rw [hdiv, hmul3y]; omega
+    have hmul5_bound : (5 : USize64).toNat * ((USize64.ofNat i.val / 5 + 3 * (USize64.ofNat i.val % 5)) % 5).toNat < 2 ^ 64 := by
+      rw [show (5 : USize64).toNat = 5 from h5, hmod]; omega
+    have hfinal_bound : (5 * ((USize64.ofNat i.val / 5 + 3 * (USize64.ofNat i.val % 5)) % 5)).toNat +
+        (USize64.ofNat i.val / 5).toNat < 2 ^ 64 := by
+      rw [hmul5, hdiv]; omega
+    simp only [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, pi_lane,
+      usize_div_ok _ _ (by decide : (5 : USize64) ≠ 0),
+      usize_rem_ok _ _ (by decide : (5 : USize64) ≠ 0),
+      usize_mul_ok _ _ hmul3y_bound, usize_add_ok _ _ hxp3y_bound,
+      usize_mul_ok _ _ hmul5_bound, usize_add_ok _ _ hfinal_bound,
+      hmul3y, hxp3y, hmod, hmul5, hfinal,
+      Vector.getElem_ofFn, hi, h5, h25, USize64.reduceToNat, Nat.add_zero]
+    simp only [show 5 * ((i.val / 5 + 3 * (i.val % 5)) % 5) + i.val / 5 < 25 from by omega,
+      ↓reduceDIte])
 
 open Std.Do in
 theorem chi_ofFn (f : Fin (25 : usize).toNat → u64) :
