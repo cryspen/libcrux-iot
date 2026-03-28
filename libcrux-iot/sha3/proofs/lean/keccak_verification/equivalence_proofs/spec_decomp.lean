@@ -162,15 +162,20 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
     rfl)]
   simp only [RustM.bind, bind]
   -- d-values: createi → Vector.ofFn (theta_d_val (theta_col state))
-  rw [hacspec_sha3.createi_ofFn _ (theta_d_val (theta_col state)) (fun ⟨n, hn⟩ => by
-    match n, hn with
-    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
-      simp (config := { decide := true }) [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind,
-        getElemResult, theta_d_val,
-        rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
-        rust_primitives.ops.arith.Rem.rem, BitVec.umulOverflow, BitVec.uaddOverflow,
-        core_models.num.Impl_9.rotate_left, Vector.getElem_ofFn, h5]
-    | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega))]
+  rw [hacspec_sha3.createi_ofFn _ (theta_d_val (theta_col state)) (fun i => by
+    have hi : (USize64.ofNat i.val).toNat = i.val := usize_toNat_ofNat i.val (by omega)
+    have hadd4 : (USize64.ofNat i.val).toNat + (4 : USize64).toNat < 2 ^ 64 := by simp [hi]; omega
+    have hadd1 : (USize64.ofNat i.val).toNat + (1 : USize64).toNat < 2 ^ 64 := by simp [hi]; omega
+    simp only [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, theta_d_val,
+      usize_add_ok _ _ hadd4, usize_add_ok _ _ hadd1,
+      usize_toNat_add _ _ hadd4, usize_toNat_add _ _ hadd1,
+      usize_rem_ok _ _ (by decide : (5 : USize64) ≠ 0),
+      usize_toNat_rem,
+      core_models.num.Impl_9.rotate_left, Vector.getElem_ofFn,
+      hi, h5, USize64.reduceToNat, Nat.add_zero]
+    simp only [show (i.val + 4) % 5 < 5 from by omega,
+      show (i.val + 1) % 5 < 5 from by omega, ↓reduceDIte,
+      show UInt32.toNat 1 = 1 from rfl])]
   simp only [RustM.bind, bind]
   -- result: createi → Vector.ofFn (theta_result state (theta_d_val (theta_col state)))
   rw [hacspec_sha3.createi_ofFn _ (theta_result state (theta_d_val (theta_col state)))
