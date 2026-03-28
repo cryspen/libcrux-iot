@@ -118,15 +118,23 @@ def spec_theta (state : RustArray u64 25) : RustM (RustArray u64 25) :=
 
 /-- Spec theta, unrolled using pure lane functions (no createi/Vector.mapM).
     Downstream consumers unfold theta_col/theta_d_val/theta_result to get concrete expressions. -/
-def spec_theta_unrolled (state : RustArray u64 25) : RustM (RustArray u64 25) :=
-  have h25 : (25 : usize).toNat = 25 := rfl
-  let r := theta_result state (theta_d_val (theta_col state))
+def spec_theta_unrolled (state : RustArray u64 25) : RustM (RustArray u64 25) := do
+  let c0 := state.toVec[0] ^^^ state.toVec[1] ^^^ state.toVec[2] ^^^ state.toVec[3] ^^^ state.toVec[4]
+  let c1 := state.toVec[5] ^^^ state.toVec[6] ^^^ state.toVec[7] ^^^ state.toVec[8] ^^^ state.toVec[9]
+  let c2 := state.toVec[10] ^^^ state.toVec[11] ^^^ state.toVec[12] ^^^ state.toVec[13] ^^^ state.toVec[14]
+  let c3 := state.toVec[15] ^^^ state.toVec[16] ^^^ state.toVec[17] ^^^ state.toVec[18] ^^^ state.toVec[19]
+  let c4 := state.toVec[20] ^^^ state.toVec[21] ^^^ state.toVec[22] ^^^ state.toVec[23] ^^^ state.toVec[24]
+  let d0 := c4 ^^^ UInt64.ofBitVec (c1.toBitVec.rotateLeft 1)
+  let d1 := c0 ^^^ UInt64.ofBitVec (c2.toBitVec.rotateLeft 1)
+  let d2 := c1 ^^^ UInt64.ofBitVec (c3.toBitVec.rotateLeft 1)
+  let d3 := c2 ^^^ UInt64.ofBitVec (c4.toBitVec.rotateLeft 1)
+  let d4 := c3 ^^^ UInt64.ofBitVec (c0.toBitVec.rotateLeft 1)
   pure (RustArray.ofVec #v[
-    r ⟨0, by omega⟩, r ⟨1, by omega⟩, r ⟨2, by omega⟩, r ⟨3, by omega⟩, r ⟨4, by omega⟩,
-    r ⟨5, by omega⟩, r ⟨6, by omega⟩, r ⟨7, by omega⟩, r ⟨8, by omega⟩, r ⟨9, by omega⟩,
-    r ⟨10, by omega⟩, r ⟨11, by omega⟩, r ⟨12, by omega⟩, r ⟨13, by omega⟩, r ⟨14, by omega⟩,
-    r ⟨15, by omega⟩, r ⟨16, by omega⟩, r ⟨17, by omega⟩, r ⟨18, by omega⟩, r ⟨19, by omega⟩,
-    r ⟨20, by omega⟩, r ⟨21, by omega⟩, r ⟨22, by omega⟩, r ⟨23, by omega⟩, r ⟨24, by omega⟩])
+    state.toVec[0] ^^^ d0, state.toVec[1] ^^^ d0, state.toVec[2] ^^^ d0, state.toVec[3] ^^^ d0, state.toVec[4] ^^^ d0,
+    state.toVec[5] ^^^ d1, state.toVec[6] ^^^ d1, state.toVec[7] ^^^ d1, state.toVec[8] ^^^ d1, state.toVec[9] ^^^ d1,
+    state.toVec[10] ^^^ d2, state.toVec[11] ^^^ d2, state.toVec[12] ^^^ d2, state.toVec[13] ^^^ d2, state.toVec[14] ^^^ d2,
+    state.toVec[15] ^^^ d3, state.toVec[16] ^^^ d3, state.toVec[17] ^^^ d3, state.toVec[18] ^^^ d3, state.toVec[19] ^^^ d3,
+    state.toVec[20] ^^^ d4, state.toVec[21] ^^^ d4, state.toVec[22] ^^^ d4, state.toVec[23] ^^^ d4, state.toVec[24] ^^^ d4])
 
 set_option maxHeartbeats 64000000 in
 open Std.Do in
