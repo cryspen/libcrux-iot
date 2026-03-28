@@ -1,6 +1,5 @@
 import keccak_verification.spec.hacspec_sha3
 import keccak_verification.spec.createi
-import keccak_verification.spec.createi
 import keccak_verification.implementation.libcrux_iot_sha3
 
 /-! ## Spec decomposition for compositional round proofs
@@ -38,75 +37,51 @@ def spec_theta_unrolled (state : RustArray u64 25) : RustM (RustArray u64 25) :=
     state.toVec[20] ^^^ d4, state.toVec[21] ^^^ d4, state.toVec[22] ^^^ d4, state.toVec[23] ^^^ d4, state.toVec[24] ^^^ d4])
 
 -- spec_theta_unrolled equals spec_theta.
--- Proof: apply createi_ofFn to each of the 3 createi calls in theta,
--- converting Vector.mapM to Vector.ofFn via totality proofs (all array accesses in bounds). -/
-open Std.Do in
 set_option maxHeartbeats 32000000 in
+open Std.Do in
 theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
     spec_theta state = spec_theta_unrolled state := by
   unfold spec_theta hacspec_sha3.keccak_f.theta spec_theta_unrolled
-  -- First createi: column XOR (n=5). Each iteration accesses state[5x+y] for y=0..4.
-  have hc := hacspec_sha3.createi_ofFn (n := 5) True
-    (fun x => do
-      let v0 ← hacspec_sha3.keccak_f.get state x 0
-      let v1 ← hacspec_sha3.keccak_f.get state x 1
-      let v01 ← pure (v0 ^^^ v1)
-      let v2 ← hacspec_sha3.keccak_f.get state x 2
-      let v012 ← pure (v01 ^^^ v2)
-      let v3 ← hacspec_sha3.keccak_f.get state x 3
-      let v0123 ← pure (v012 ^^^ v3)
-      let v4 ← hacspec_sha3.keccak_f.get state x 4
-      pure (v0123 ^^^ v4))
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        hacspec_sha3.keccak_f.get, getElemResult, core_models.ops.index.Index.index,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]
-      omega)
-    trivial
-  rw [hc.2]; simp only [RustM.bind, bind]
-  -- Second createi: d-values (n=5). Each iteration accesses c[(x+4)%5] and c[(x+1)%5].
-  have hd := hacspec_sha3.createi_ofFn (n := 5) True
-    (fun x => do
-      let idx1 ← x +? 4
-      let idx1 ← idx1 %? 5
-      let cL ← (RustArray.ofVec (Vector.ofFn _))[idx1]_?
-      let idx2 ← x +? 1
-      let idx2 ← idx2 %? 5
-      let cR ← (RustArray.ofVec (Vector.ofFn _))[idx2]_?
-      let cR_rot ← core_models.num.Impl_9.rotate_left cR 1
-      pure (cL ^^^ cR_rot))
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        getElemResult, core_models.ops.index.Index.index, core_models.num.Impl_9.rotate_left,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
-        RustM.ofTotal]
-      omega)
-    trivial
-  rw [hd.2]; simp only [RustM.bind, bind]
-  -- Third createi: result (n=25). Each iteration accesses state[idx] and d[idx/5].
-  have hr := hacspec_sha3.createi_ofFn (n := 25) True
-    (fun idx => do
-      let v ← state[idx]_?
-      let didx ← idx /? 5
-      let dv ← (RustArray.ofVec (Vector.ofFn _))[didx]_?
-      pure (v ^^^ dv))
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        getElemResult, core_models.ops.index.Index.index,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
-        RustM.ofTotal]
-      omega)
-    trivial
-  rw [hr.2]
-  -- Both sides are now .ok(concrete_array). Evaluate Vector.ofFn + RustM.ofTotal.
-  simp only [pure, RustM.ofTotal, RustM.bind, bind,
-    hacspec_sha3.keccak_f.get, getElemResult, core_models.ops.index.Index.index,
-    core_models.num.Impl_9.rotate_left,
-    show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
-    Vector.getElem_ofFn]
+  have h5 : (5 : usize).toNat = 5 := rfl
+  have h25 : (25 : usize).toNat = 25 := rfl
+  -- First createi (columns, n=5)
+  let gc : Fin (5 : usize).toNat → u64 := fun i =>
+    state.toVec[5 * i.val]'(by omega) ^^^ state.toVec[5 * i.val + 1]'(by omega) ^^^
+    state.toVec[5 * i.val + 2]'(by omega) ^^^ state.toVec[5 * i.val + 3]'(by omega) ^^^
+    state.toVec[5 * i.val + 4]'(by omega)
+  rw [hacspec_sha3.createi_ofFn _ gc (fun ⟨n, hn⟩ => by
+    match n, hn with
+    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
+      simp [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, gc,
+        rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add]
+    | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega))]
+  simp only [RustM.bind, bind]
+  -- Second createi (d-values, n=5)
+  let gd : Fin (5 : usize).toNat → u64 := fun i =>
+    gc ⟨(i.val + 4) % 5, by omega⟩ ^^^
+    UInt64.ofBitVec ((gc ⟨(i.val + 1) % 5, by omega⟩).toBitVec.rotateLeft 1)
+  rw [hacspec_sha3.createi_ofFn _ gd (fun ⟨n, hn⟩ => by
+    match n, hn with
+    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
+      simp [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, gd, gc,
+        rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
+        rust_primitives.ops.arith.Rem.rem, BitVec.uaddOverflow,
+        core_models.num.Impl_9.rotate_left, Vector.getElem_ofFn, h5]
+    | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega))]
+  simp only [RustM.bind, bind]
+  -- Third createi (result, n=25)
+  let gr : Fin (25 : usize).toNat → u64 := fun i =>
+    state.toVec[i.val] ^^^ gd ⟨i.val / 5, by omega⟩
+  rw [hacspec_sha3.createi_ofFn _ gr (fun ⟨n, hn⟩ => by
+    match n, hn with
+    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
+    | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
+    | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
+      simp [bind, pure, RustM.bind, getElemResult, gr, gd, gc,
+        rust_primitives.ops.arith.Div.div, BitVec.uaddOverflow,
+        Vector.getElem_ofFn, h5, h25]
+    | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega))]
+  simp only [gc, gd, gr, pure, Vector.getElem_ofFn, h5, h25]
   rfl
 
 /-- Spec post-theta step: rho + pi + chi + iota. -/
@@ -118,8 +93,8 @@ def spec_prc (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 2
 
 /-- Spec prc, fully unrolled (fused rho+pi+chi+iota, no createi/Vector.mapM).
     Lane layout: p[i] = rotl(state[pi_src[i]], RHO_OFFSETS[pi_src[i]])
-    then chi: ch[5x+y] = p[5x+y] ⊕ (¬p[5((x+1)%5)+y] ∧ p[5((x+2)%5)+y])
-    then iota: ch[0] ⊕ RC[round] -/
+    then chi: ch[5x+y] = p[5x+y] XOR (NOT p[5((x+1) mod 5)+y] AND p[5((x+2) mod 5)+y])
+    then iota: ch[0] XOR RC[round] -/
 def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
   -- rho + pi (fused): p[i] = rotl(state[pi_src[i]], rho_offset[pi_src[i]])
   let p0 := state.toVec[0]
@@ -147,7 +122,7 @@ def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustAr
   let p22 := UInt64.ofBitVec (state.toVec[4].toBitVec.rotateLeft 18)
   let p23 := UInt64.ofBitVec (state.toVec[19].toBitVec.rotateLeft 56)
   let p24 := UInt64.ofBitVec (state.toVec[9].toBitVec.rotateLeft 2)
-  -- chi: ch[5x+y] = p[5x+y] ⊕ (¬p[5((x+1)%5)+y] ∧ p[5((x+2)%5)+y])
+  -- chi: ch[5x+y] = p[5x+y] XOR (NOT p[5((x+1) mod 5)+y] AND p[5((x+2) mod 5)+y])
   let ch0 := p0 ^^^ ((~~~p5) &&& p10)
   let ch1 := p1 ^^^ ((~~~p6) &&& p11)
   let ch2 := p2 ^^^ ((~~~p7) &&& p12)
@@ -179,78 +154,70 @@ def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustAr
     ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18, ch19, ch20, ch21, ch22, ch23, ch24])
 
 -- spec_prc_unrolled equals spec_prc.
--- Proof: apply createi_ofFn to rho (n=25), pi (n=25), chi (n=25), then iota directly.
--- Requires round < 24 for the ROUND_CONSTANTS table access. -/
-open Std.Do in
 set_option maxHeartbeats 64000000 in
+open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
     (hround : round.toNat < 24 := by omega) :
     spec_prc state round = spec_prc_unrolled state round := by
   unfold spec_prc spec_prc_unrolled
-  -- rho: createi n=25, accesses state[idx] and RHO_OFFSETS[idx]
+  have h5 : (5 : usize).toNat = 5 := rfl
+  have h25 : (25 : usize).toNat = 25 := rfl
+  have h24 : (24 : usize).toNat = 24 := rfl
+  -- rho (n=25)
   unfold hacspec_sha3.keccak_f.rho
-  have h_rho := hacspec_sha3.createi_ofFn (n := 25) True
-    (fun idx => do
-      let v ← state[idx]_?
-      let off ← hacspec_sha3.keccak_f.RHO_OFFSETS[idx]_?
-      core_models.num.Impl_9.rotate_left v off)
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        getElemResult, core_models.ops.index.Index.index, core_models.num.Impl_9.rotate_left,
-        show (25 : usize).toNat = 25 from rfl]; omega) trivial
-  rw [h_rho.2]; simp only [RustM.bind, bind]
-  -- pi: createi n=25, accesses rho_result via get
+  let g_rho : Fin (25 : usize).toNat → u64 := fun i =>
+    UInt64.ofBitVec (state.toVec[i.val].toBitVec.rotateLeft
+      (hacspec_sha3.keccak_f.RHO_OFFSETS.toVec[i.val]).toNat)
+  rw [hacspec_sha3.createi_ofFn _ g_rho (fun ⟨n, hn⟩ => by
+    match n, hn with
+    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
+    | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
+    | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
+      simp [bind, pure, RustM.bind, getElemResult, g_rho,
+        core_models.num.Impl_9.rotate_left, h25]
+    | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega))]
+  simp only [RustM.bind, bind]
+  -- pi (n=25)
   unfold hacspec_sha3.keccak_f.pi
-  have h_pi := hacspec_sha3.createi_ofFn (n := 25) True
-    (fun idx => do
-      let x ← idx /? 5
-      let y ← idx %? 5
-      let src ← 3 *? y
-      let src ← x +? src
-      let src ← src %? 5
-      hacspec_sha3.keccak_f.get (RustArray.ofVec (Vector.ofFn _)) src x)
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        hacspec_sha3.keccak_f.get, getElemResult, core_models.ops.index.Index.index,
-        core_models.num.Impl_9.rotate_left, RustM.ofTotal,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]; omega) trivial
-  rw [h_pi.2]; simp only [RustM.bind, bind]
-  -- chi: createi n=25, accesses pi_result via get
+  let g_pi : Fin (25 : usize).toNat → u64 := fun i =>
+    let x := i.val / 5; let y := i.val % 5
+    g_rho ⟨5 * ((x + 3 * y) % 5) + x, by omega⟩
+  rw [hacspec_sha3.createi_ofFn _ g_pi (fun ⟨n, hn⟩ => by
+    match n, hn with
+    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
+    | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
+    | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
+      simp [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, g_pi, g_rho,
+        rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
+        rust_primitives.ops.arith.Rem.rem, rust_primitives.ops.arith.Div.div,
+        BitVec.uaddOverflow, Vector.getElem_ofFn, core_models.num.Impl_9.rotate_left, h5, h25]
+    | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega))]
+  simp only [RustM.bind, bind]
+  -- chi (n=25)
   unfold hacspec_sha3.keccak_f.chi
-  have h_chi := hacspec_sha3.createi_ofFn (n := 25) True
-    (fun idx => do
-      let x ← idx /? 5
-      let y ← idx %? 5
-      let v ← hacspec_sha3.keccak_f.get (RustArray.ofVec (Vector.ofFn _)) x y
-      let x1 ← x +? 1
-      let x1 ← x1 %? 5
-      let v1 ← hacspec_sha3.keccak_f.get (RustArray.ofVec (Vector.ofFn _)) x1 y
-      let nv1 ← pure (~~~v1)
-      let x2 ← x +? 2
-      let x2 ← x2 %? 5
-      let v2 ← hacspec_sha3.keccak_f.get (RustArray.ofVec (Vector.ofFn _)) x2 y
-      let masked ← pure (nv1 &&& v2)
-      pure (v ^^^ masked))
-    (fun i => by
-      simp [Triple, WP.wp, PredTrans.apply, PredTrans.pushExcept, PredTrans.pure,
-        PredTrans.trans, ExceptT.run, Id.run, pure, bind, RustM.bind,
-        hacspec_sha3.keccak_f.get, getElemResult, core_models.ops.index.Index.index,
-        RustM.ofTotal,
-        show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl]; omega) trivial
-  rw [h_chi.2]; simp only [RustM.bind, bind]
-  -- iota: no createi, just state[0] ^^^ ROUND_CONSTANTS[round]
+  let g_chi : Fin (25 : usize).toNat → u64 := fun i =>
+    let x := i.val / 5; let y := i.val % 5
+    g_pi i ^^^ ((~~~(g_pi ⟨5 * ((x + 1) % 5) + y, by omega⟩)) &&&
+                     g_pi ⟨5 * ((x + 2) % 5) + y, by omega⟩)
+  rw [hacspec_sha3.createi_ofFn _ g_chi (fun ⟨n, hn⟩ => by
+    match n, hn with
+    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
+    | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
+    | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ =>
+      simp [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, g_chi, g_pi, g_rho,
+        rust_primitives.ops.arith.Mul.mul, rust_primitives.ops.arith.Add.add,
+        rust_primitives.ops.arith.Rem.rem, rust_primitives.ops.arith.Div.div,
+        BitVec.uaddOverflow, Vector.getElem_ofFn, core_models.num.Impl_9.rotate_left, h5, h25]
+    | n + 25, h => exact absurd (show n + 25 < 25 from h) (by omega))]
+  simp only [RustM.bind, bind]
+  -- iota
   unfold hacspec_sha3.keccak_f.iota
-  simp only [pure, bind, RustM.bind, RustM.ofTotal,
-    getElemResult, core_models.ops.index.Index.index, Vector.getElem_ofFn,
-    hacspec_sha3.keccak_f.get, core_models.num.Impl_9.rotate_left,
-    rust_primitives.hax.monomorphized_update_at.update_at_usize,
-    show (5 : usize).toNat = 5 from rfl, show (25 : usize).toNat = 25 from rfl,
-    show (24 : usize).toNat = 24 from rfl]
+  simp only [pure, bind, RustM.bind, getElemResult, Vector.getElem_ofFn,
+    g_chi, g_pi, g_rho, core_models.num.Impl_9.rotate_left,
+    rust_primitives.hax.monomorphized_update_at.update_at_usize, h5, h25, h24]
   split <;> simp_all <;> omega
 
-/-- spec_round decomposes as spec_prc ∘ spec_theta. -/
+/-- spec_round decomposes as spec_prc . spec_theta. -/
 theorem spec_round_decomp (state : RustArray u64 25) (round : usize) :
     (do let s ← hacspec_sha3.keccak_f.theta state
         let s ← hacspec_sha3.keccak_f.rho s
