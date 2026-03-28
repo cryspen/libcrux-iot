@@ -441,6 +441,7 @@ theorem spec_prc_compact_eq (state : RustArray u64 25) (round : usize)
   unfold spec_prc spec_prc_compact
   simp only [bind, RustM.bind, rho_ofFn, pi_ofFn, chi_ofFn, iota_ofFn _ _ hround,
     getElemResult, hround, dite_true, show (24 : usize).toNat = 24 from rfl, pure]
+  rfl
 
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
