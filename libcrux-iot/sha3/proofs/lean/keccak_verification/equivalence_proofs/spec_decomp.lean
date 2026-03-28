@@ -353,7 +353,9 @@ theorem iota_ofFn (f : Fin (25 : usize).toNat → u64) (round : usize) (hround :
   apply Vector.ext
   intro i hi
   simp only [Vector.getElem_ofFn, Vector.getElem_set]
-  split <;> simp_all
+  split
+  · subst_vars; simp; rfl
+  · simp_all [Ne.symm ‹_›]
 
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
