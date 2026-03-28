@@ -192,6 +192,7 @@ def spec_prc_unrolled (state : RustArray u64 25) (round : usize) : RustM (RustAr
     ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18, ch19, ch20, ch21, ch22, ch23, ch24])
 
 set_option maxHeartbeats 128000000 in
+set_option maxRecDepth 4000 in
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
     (hround : round.toNat < 24 := by omega) :
