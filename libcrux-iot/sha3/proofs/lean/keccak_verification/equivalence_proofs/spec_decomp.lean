@@ -281,7 +281,68 @@ open Std.Do in
 theorem chi_ofFn (f : Fin (25 : usize).toNat → u64) :
     hacspec_sha3.keccak_f.chi (RustArray.ofVec (Vector.ofFn f)) =
     .ok (RustArray.ofVec (Vector.ofFn (chi_lane f))) := by
-  sorry
+  have h5 : (5 : usize).toNat = 5 := rfl
+  have h25 : (25 : usize).toNat = 25 := rfl
+  unfold hacspec_sha3.keccak_f.chi
+  exact hacspec_sha3.createi_ofFn _ (chi_lane f) (fun i => by
+    have hi : (USize64.ofNat i.val).toNat = i.val := usize_toNat_ofNat i.val (by omega)
+    have hdiv : (USize64.ofNat i.val / 5).toNat = i.val / 5 := by rw [usize_toNat_div]; simp [hi]
+    have hrem : (USize64.ofNat i.val % 5).toNat = i.val % 5 := by rw [usize_toNat_rem]; simp [hi]
+    have hx1 : (USize64.ofNat i.val / 5 + 1).toNat = i.val / 5 + 1 := by
+      rw [usize_toNat_add _ _ (by rw [hdiv]; simp; omega)]; simp [hdiv]
+    have hx1mod : ((USize64.ofNat i.val / 5 + 1) % 5).toNat = (i.val / 5 + 1) % 5 := by
+      rw [usize_toNat_rem]; simp [hx1]
+    have hx2 : (USize64.ofNat i.val / 5 + 2).toNat = i.val / 5 + 2 := by
+      rw [usize_toNat_add _ _ (by rw [hdiv]; simp; omega)]; simp [hdiv]
+    have hx2mod : ((USize64.ofNat i.val / 5 + 2) % 5).toNat = (i.val / 5 + 2) % 5 := by
+      rw [usize_toNat_rem]; simp [hx2]
+    have hmul5_1 : ((5 : USize64) * ((USize64.ofNat i.val / 5 + 1) % 5)).toNat = 5 * ((i.val / 5 + 1) % 5) := by
+      rw [usize_toNat_mul _ _ (by rw [h5, hx1mod]; omega), h5, hx1mod]
+    have hmul5_2 : ((5 : USize64) * ((USize64.ofNat i.val / 5 + 2) % 5)).toNat = 5 * ((i.val / 5 + 2) % 5) := by
+      rw [usize_toNat_mul _ _ (by rw [h5, hx2mod]; omega), h5, hx2mod]
+    have hfinal1 : (5 * ((USize64.ofNat i.val / 5 + 1) % 5) + USize64.ofNat i.val % 5).toNat =
+        5 * ((i.val / 5 + 1) % 5) + i.val % 5 := by
+      rw [usize_toNat_add _ _ (by rw [hmul5_1, hrem]; omega), hmul5_1, hrem]
+    have hfinal2 : (5 * ((USize64.ofNat i.val / 5 + 2) % 5) + USize64.ofNat i.val % 5).toNat =
+        5 * ((i.val / 5 + 2) % 5) + i.val % 5 := by
+      rw [usize_toNat_add _ _ (by rw [hmul5_2, hrem]; omega), hmul5_2, hrem]
+    -- 5*x + y (to recover f[i])
+    have hb_5x : (5 : USize64).toNat * (USize64.ofNat i.val / 5).toNat < 2 ^ 64 := by
+      rw [h5, hdiv]; omega
+    have hmul5x : ((5 : USize64) * (USize64.ofNat i.val / 5)).toNat = 5 * (i.val / 5) := by
+      rw [usize_toNat_mul _ _ hb_5x, h5, hdiv]
+    have hb_5xy : (5 * (USize64.ofNat i.val / 5)).toNat + (USize64.ofNat i.val % 5).toNat < 2 ^ 64 := by
+      rw [hmul5x, hrem]; omega
+    have h5xy : (5 * (USize64.ofNat i.val / 5) + USize64.ofNat i.val % 5).toNat = i.val := by
+      rw [usize_toNat_add _ _ hb_5xy, hmul5x, hrem]; omega
+    -- Overflow bounds for (x+1), (x+2), 5*((x+1)%5), etc.
+    have hb_x1 : (USize64.ofNat i.val / 5).toNat + (1 : USize64).toNat < 2 ^ 64 := by
+      rw [hdiv, show (1 : USize64).toNat = 1 from rfl]; omega
+    have hb_x2 : (USize64.ofNat i.val / 5).toNat + (2 : USize64).toNat < 2 ^ 64 := by
+      rw [hdiv, show (2 : USize64).toNat = 2 from rfl]; omega
+    have hb_m1 : (5 : USize64).toNat * ((USize64.ofNat i.val / 5 + 1) % 5).toNat < 2 ^ 64 := by
+      rw [h5, hx1mod]; omega
+    have hb_m2 : (5 : USize64).toNat * ((USize64.ofNat i.val / 5 + 2) % 5).toNat < 2 ^ 64 := by
+      rw [h5, hx2mod]; omega
+    have hb_f1 : (5 * ((USize64.ofNat i.val / 5 + 1) % 5)).toNat + (USize64.ofNat i.val % 5).toNat < 2 ^ 64 := by
+      rw [hmul5_1, hrem]; omega
+    have hb_f2 : (5 * ((USize64.ofNat i.val / 5 + 2) % 5)).toNat + (USize64.ofNat i.val % 5).toNat < 2 ^ 64 := by
+      rw [hmul5_2, hrem]; omega
+    simp only [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, chi_lane,
+      usize_div_ok _ _ (by decide : (5 : USize64) ≠ 0),
+      usize_rem_ok _ _ (by decide : (5 : USize64) ≠ 0),
+      usize_mul_ok _ _ hb_5x, usize_add_ok _ _ hb_5xy,
+      usize_add_ok _ _ hb_x1, usize_add_ok _ _ hb_x2,
+      usize_mul_ok _ _ hb_m1, usize_mul_ok _ _ hb_m2,
+      usize_add_ok _ _ hb_f1, usize_add_ok _ _ hb_f2,
+      hmul5x, h5xy,
+      hx1, hx1mod, hx2, hx2mod, hmul5_1, hmul5_2, hfinal1, hfinal2,
+      Vector.getElem_ofFn, hi, h5, h25, USize64.reduceToNat, Nat.add_zero]
+    simp only [show i.val < 25 from i.isLt,
+      show 5 * ((i.val / 5 + 1) % 5) + i.val % 5 < 25 from by omega,
+      show 5 * ((i.val / 5 + 2) % 5) + i.val % 5 < 25 from by omega,
+      ↓reduceDIte]
+    congr 1)
 
 open Std.Do in
 theorem spec_prc_unrolled_eq (state : RustArray u64 25) (round : usize)
