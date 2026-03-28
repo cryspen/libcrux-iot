@@ -70,7 +70,7 @@ theorem usize_toNat_rem (a b : USize64) :
   show (a.toBitVec % b.toBitVec).toNat = a.toBitVec.toNat % b.toBitVec.toNat
   exact BitVec.toNat_umod ..
 
-theorem usize_toNat_ofNat (n : Nat) (h : n < 2 ^ 64) :
+@[simp] theorem usize_toNat_ofNat (n : Nat) (h : n < 2 ^ 64 := by omega) :
     (USize64.ofNat n).toNat = n := by
   show (BitVec.ofNat 64 n).toNat = n
   rw [BitVec.toNat_ofNat]; omega
@@ -155,12 +155,11 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
       usize_toNat_add _ _ (hab 4 (by native_decide)),
       hmul_nat, hi, h5, h25]
     have : 5 * i.val + 4 < 25 := by have := i.isLt; simp [h5] at this; omega
-    simp only [show (0 : USize64).toNat = 0 from rfl, show (1 : USize64).toNat = 1 from rfl,
-      show (2 : USize64).toNat = 2 from rfl, show (3 : USize64).toNat = 3 from rfl,
-      show (4 : USize64).toNat = 4 from rfl,
+    simp only [USize64.reduceToNat, Nat.add_zero,
       show 5 * i.val + 0 < 25 from by omega, show 5 * i.val + 1 < 25 from by omega,
       show 5 * i.val + 2 < 25 from by omega, show 5 * i.val + 3 < 25 from by omega,
-      show 5 * i.val + 4 < 25 from by omega, ↓reduceDIte])]
+      show 5 * i.val + 4 < 25 from by omega, ↓reduceDIte]
+    rfl)]
   simp only [RustM.bind, bind]
   -- d-values: createi → Vector.ofFn (theta_d_val (theta_col state))
   rw [hacspec_sha3.createi_ofFn _ (theta_d_val (theta_col state)) (fun ⟨n, hn⟩ => by
