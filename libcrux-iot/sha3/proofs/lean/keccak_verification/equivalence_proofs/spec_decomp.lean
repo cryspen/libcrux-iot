@@ -136,15 +136,31 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
   have h5 : (5 : usize).toNat = 5 := rfl
   have h25 : (25 : usize).toNat = 25 := rfl
   -- columns: createi → Vector.ofFn (theta_col state)
-  -- TODO: replace match with match-free proof using usize_mul/usize_add lemmas
-  -- (needs USize64.toNat_mul to chain bounds through arithmetic)
-  rw [hacspec_sha3.createi_ofFn _ (theta_col state) (fun ⟨n, hn⟩ => by
-    match n, hn with
-    | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
-      simp (config := { decide := true }) [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind,
-        getElemResult, theta_col, rust_primitives.ops.arith.Mul.mul,
-        rust_primitives.ops.arith.Add.add, BitVec.umulOverflow]
-    | n + 5, h => exact absurd (show n + 5 < 5 from h) (by omega))]
+  rw [hacspec_sha3.createi_ofFn _ (theta_col state) (fun i => by
+    have hi : (USize64.ofNat i.val).toNat = i.val := usize_toNat_ofNat i.val (by omega)
+    have hmul : (5 : USize64).toNat * (USize64.ofNat i.val).toNat < 2 ^ 64 := by simp [hi, h5]; omega
+    have hmul_nat : ((5 : USize64) * USize64.ofNat i.val).toNat = 5 * i.val := by
+      simp [usize_toNat_mul _ _ hmul, hi, h5]
+    -- All add bounds: (5*i + k).toNat < 2^64 for k=0..4
+    have hab (k : USize64) (hk : k.toNat ≤ 4) :
+        ((5 : USize64) * USize64.ofNat i.val).toNat + k.toNat < 2 ^ 64 := by
+      simp only [hmul_nat]; omega
+    simp only [hacspec_sha3.keccak_f.get, bind, pure, RustM.bind, getElemResult, theta_col,
+      usize_mul_ok _ _ hmul,
+      usize_add_ok _ _ (hab 0 (by native_decide)), usize_add_ok _ _ (hab 1 (by native_decide)),
+      usize_add_ok _ _ (hab 2 (by native_decide)), usize_add_ok _ _ (hab 3 (by native_decide)),
+      usize_add_ok _ _ (hab 4 (by native_decide)),
+      usize_toNat_add _ _ (hab 0 (by native_decide)), usize_toNat_add _ _ (hab 1 (by native_decide)),
+      usize_toNat_add _ _ (hab 2 (by native_decide)), usize_toNat_add _ _ (hab 3 (by native_decide)),
+      usize_toNat_add _ _ (hab 4 (by native_decide)),
+      hmul_nat, hi, h5, h25]
+    have : 5 * i.val + 4 < 25 := by have := i.isLt; simp [h5] at this; omega
+    simp only [show (0 : USize64).toNat = 0 from rfl, show (1 : USize64).toNat = 1 from rfl,
+      show (2 : USize64).toNat = 2 from rfl, show (3 : USize64).toNat = 3 from rfl,
+      show (4 : USize64).toNat = 4 from rfl,
+      show 5 * i.val + 0 < 25 from by omega, show 5 * i.val + 1 < 25 from by omega,
+      show 5 * i.val + 2 < 25 from by omega, show 5 * i.val + 3 < 25 from by omega,
+      show 5 * i.val + 4 < 25 from by omega, ↓reduceDIte])]
   simp only [RustM.bind, bind]
   -- d-values: createi → Vector.ofFn (theta_d_val (theta_col state))
   rw [hacspec_sha3.createi_ofFn _ (theta_d_val (theta_col state)) (fun ⟨n, hn⟩ => by
