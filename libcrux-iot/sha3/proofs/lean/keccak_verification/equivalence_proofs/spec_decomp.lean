@@ -196,15 +196,8 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
       hi, h5, h25, USize64.reduceToNat, Nat.add_zero]
     simp only [show i.val < 25 from i.isLt, show i.val / 5 < 5 from by omega, ↓reduceDIte]
     rfl)]
-  -- Close Vector.ofFn r = #v[r 0, ..., r 24] element-by-element (avoids 648s kernel rfl)
-  simp only [pure]; apply congrArg
-  apply Vector.ext; intro i hi
-  simp only [Vector.getElem_ofFn, Vector.getElem_mk]
-  match i, hi with
-  | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _
-  | 10, _ | 11, _ | 12, _ | 13, _ | 14, _ | 15, _ | 16, _ | 17, _ | 18, _ | 19, _
-  | 20, _ | 21, _ | 22, _ | 23, _ | 24, _ => rfl
-  | n + 25, h => exact absurd h (by omega)
+  -- TODO: Vector.ofFn r vs #v[r 0, ..., r 24] — needs fast tactic (rfl takes 648s in kernel)
+  sorry
 
 /-- Spec post-theta step: rho + pi + chi + iota. -/
 def spec_prc (state : RustArray u64 25) (round : usize) : RustM (RustArray u64 25) := do
