@@ -24,24 +24,29 @@ reduced by simp in the WP monad.
 -- a.toBitVec.toNat = a.toNat for USize64
 private theorem bv_eq_nat (a : USize64) : a.toBitVec.toNat = a.toNat := rfl
 
-theorem usize25_mul (a b : USize64) (ha : a.toNat < 25) (hb : b.toNat < 25) :
+-- Parameterized by bounds n, m so callers provide concrete bounds at the call site.
+-- E.g., usize_add (n := 25) (m := 5) a b ha hb (by omega)
+
+theorem usize_mul (n m : Nat) (a b : USize64) (ha : a.toNat ≤ n) (hb : b.toNat ≤ m)
+    (hnm : n * m < 2 ^ 64) :
     a *? b = pure (a * b) := by
   simp only [rust_primitives.ops.arith.Mul.mul, BitVec.umulOverflow, bv_eq_nat]
-  have : a.toNat * b.toNat < 625 := Nat.mul_lt_mul_of_lt_of_le ha (Nat.le_of_lt hb) (by omega)
+  have : a.toNat * b.toNat ≤ n * m := Nat.mul_le_mul ha hb
   simp only [show ¬ (a.toNat * b.toNat ≥ 2 ^ 64) from by omega,
     ↓reduceIte, decide_false, Bool.false_eq_true]
 
-theorem usize25_add (a b : USize64) (ha : a.toNat < 25) (hb : b.toNat < 25) :
+theorem usize_add (n m : Nat) (a b : USize64) (ha : a.toNat ≤ n) (hb : b.toNat ≤ m)
+    (hnm : n + m < 2 ^ 64) :
     a +? b = pure (a + b) := by
   simp only [rust_primitives.ops.arith.Add.add, BitVec.uaddOverflow, bv_eq_nat]
   simp only [show ¬ (a.toNat + b.toNat ≥ 2 ^ 64) from by omega,
     ↓reduceIte, decide_false, Bool.false_eq_true]
 
-theorem usize25_div (a : USize64) (b : USize64) (ha : a.toNat < 25) (hb : b ≠ 0) :
+theorem usize_div (a b : USize64) (hb : b ≠ 0) :
     a /? b = pure (a / b) := by
   simp [rust_primitives.ops.arith.Div.div, hb]
 
-theorem usize25_rem (a : USize64) (b : USize64) (ha : a.toNat < 25) (hb : b ≠ 0) :
+theorem usize_rem (a b : USize64) (hb : b ≠ 0) :
     a %? b = pure (a % b) := by
   simp [rust_primitives.ops.arith.Rem.rem, hb]
 
@@ -106,6 +111,8 @@ theorem spec_theta_unrolled_eq (state : RustArray u64 25) :
   have h5 : (5 : usize).toNat = 5 := rfl
   have h25 : (25 : usize).toNat = 25 := rfl
   -- columns: createi → Vector.ofFn (theta_col state)
+  -- TODO: replace match with match-free proof using usize_mul/usize_add lemmas
+  -- (needs USize64.toNat_mul to chain bounds through arithmetic)
   rw [hacspec_sha3.createi_ofFn _ (theta_col state) (fun ⟨n, hn⟩ => by
     match n, hn with
     | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ =>
