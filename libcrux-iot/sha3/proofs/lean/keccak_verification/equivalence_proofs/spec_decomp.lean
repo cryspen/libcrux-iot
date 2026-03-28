@@ -12,29 +12,37 @@ The unrolled versions avoid `createi`/`Vector.mapM` which can't be
 reduced by simp in the WP monad.
 -/
 
--- Checked arithmetic reduction lemmas for USize64.
--- These let simp reduce *?, +?, /?, %? without needing concrete index values,
--- eliminating the need for 25-branch match in createi_ofFn proofs.
+-- Checked arithmetic reduction lemmas for Keccak indices (Fin 5, Fin 25).
+-- These let simp reduce *?, +?, /?, %? without matching on concrete index values.
 
--- The side conditions use `a.toNat + b.toNat < USize64.size` etc., which omega can
--- discharge when a, b are small constants or bounded by Fin.
+-- For Fin 25: 5 *? i, i +? k (k ≤ 4), i /? 5, i %? 5
+-- For Fin 5: i +? k (k ≤ 4), i %? 5
 
-@[simp] theorem usize_add_ok (a b : USize64) (h : a.toNat + b.toNat < USize64.size) :
-    rust_primitives.ops.arith.Add.add a b = pure (a + b) := by
-  simp only [rust_primitives.ops.arith.Add.add, BitVec.uaddOverflow]
-  simp [show ¬ (USize64.size ≤ a.toNat + b.toNat) from by omega]
+-- Checked arithmetic for USize64 values known to be < 25.
+-- All Keccak index arithmetic stays within this bound.
 
-@[simp] theorem usize_mul_ok (a b : USize64) (h : a.toNat * b.toNat < USize64.size) :
-    rust_primitives.ops.arith.Mul.mul a b = pure (a * b) := by
-  simp only [rust_primitives.ops.arith.Mul.mul, BitVec.umulOverflow]
-  simp [show ¬ (USize64.size ≤ a.toNat * b.toNat) from by omega]
+-- a.toBitVec.toNat = a.toNat for USize64
+private theorem bv_eq_nat (a : USize64) : a.toBitVec.toNat = a.toNat := rfl
 
-@[simp] theorem usize_div_ok (a b : USize64) (hb : b ≠ 0) :
-    rust_primitives.ops.arith.Div.div a b = pure (a / b) := by
+theorem usize25_mul (a b : USize64) (ha : a.toNat < 25) (hb : b.toNat < 25) :
+    a *? b = pure (a * b) := by
+  simp only [rust_primitives.ops.arith.Mul.mul, BitVec.umulOverflow, bv_eq_nat]
+  have : a.toNat * b.toNat < 625 := Nat.mul_lt_mul_of_lt_of_le ha (Nat.le_of_lt hb) (by omega)
+  simp only [show ¬ (a.toNat * b.toNat ≥ 2 ^ 64) from by omega,
+    ↓reduceIte, decide_false, Bool.false_eq_true]
+
+theorem usize25_add (a b : USize64) (ha : a.toNat < 25) (hb : b.toNat < 25) :
+    a +? b = pure (a + b) := by
+  simp only [rust_primitives.ops.arith.Add.add, BitVec.uaddOverflow, bv_eq_nat]
+  simp only [show ¬ (a.toNat + b.toNat ≥ 2 ^ 64) from by omega,
+    ↓reduceIte, decide_false, Bool.false_eq_true]
+
+theorem usize25_div (a : USize64) (b : USize64) (ha : a.toNat < 25) (hb : b ≠ 0) :
+    a /? b = pure (a / b) := by
   simp [rust_primitives.ops.arith.Div.div, hb]
 
-@[simp] theorem usize_rem_ok (a b : USize64) (hb : b ≠ 0) :
-    rust_primitives.ops.arith.Rem.rem a b = pure (a % b) := by
+theorem usize25_rem (a : USize64) (b : USize64) (ha : a.toNat < 25) (hb : b ≠ 0) :
+    a %? b = pure (a % b) := by
   simp [rust_primitives.ops.arith.Rem.rem, hb]
 
 -- Pure spec-level functions for each Keccak sub-step.
