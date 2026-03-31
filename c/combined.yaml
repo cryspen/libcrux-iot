@@ -1,29 +1,26 @@
 files:
 
   # Constant time ops
+  - name: libcrux_secrets
+    inline_static: true
+    private:
+      patterns:
+        - [libcrux_secrets, "*"]
+      monomorphizations_of:
+        - [libcrux_secrets, "*"]
+
+  # Constant time ops
   - name: libcrux_iot_ct_ops
     inline_static: true
     api:
       - [libcrux_iot_ml_kem, constant_time_ops]
 
-  # MLDSA: MISC NON-ARCHITECTURE SPECIFIC HEADERS
+  # CORE
   - name: libcrux_iot_core
     inline_static: true
     private:
       patterns:
         - [core, "*"]
-      monomorphizations_exact:
-        - [ Eurydice_dst_ref_shared uint8_t size_t_x4]
-        - [ Eurydice_dst_ref_shared uint8_t size_t_x2]
-        - [ Eurydice_dst_ref uint8_t size_t_x4]
-        - [ Eurydice_dst_ref uint8_t size_t_x2]
-        - [ "Eurydice_slice uint8_t_x4" ]
-        - [ "Eurydice_slice uint8_t_x2" ]
-        - [ Eurydice, arr_88]
-        - [ Eurydice, arr_910]
-        - [ Eurydice, arr_6d]
-        - [ core, result, unwrap_26_ab ]
-        - [ core, result, Result_a4 ]
     api:
       - [Eurydice, "*"]
 
@@ -36,42 +33,21 @@ files:
       patterns:
         - [libcrux_iot_ml_dsa, types, "*" ]
       monomorphizations_exact:
-        - [ core, result, Result_53 ]
-        - [ core, result, Result_2e ]
-        - [ core, result, Result_41 ]
-        - [ core, result, Result_97 ]
         - [ core, result, Result_87 ]
         - [ core, result, Result_74 ]
         - [ core, result, Result_5c ]
 
 
-  # SHA3 (no mention of libcrux_iot_mlkem in this section, please)
-  # Portable SHA3
+  # SHA3
   - name: libcrux_iot_sha3_portable
     inline_static: true
     api:
       patterns:
         - [libcrux_iot_sha3, "*"]
-        - [libcrux_iot_sha3, simd, portable, "*"]
-        - [libcrux_iot_sha3, generic_keccak, portable, "*"]
-        - [libcrux_iot_sha3, portable, "*"]
-        - [libcrux_iot_sha3, generic_keccak, "*"]
-        - [libcrux_iot_sha3, traits, "*"]
-        - [libcrux_iot_sha3, generic_keccak, xof, "*"] # xof is only portable for now
       monomorphizations_of:
-        - [libcrux_iot_sha3, simd, portable, "*"]
-        - [libcrux_iot_sha3, generic_keccak, portable, "*"]
-        - [libcrux_iot_sha3, generic_keccak, "*"]
-        - [libcrux_iot_sha3, traits, "*"]
-        - [libcrux_iot_sha3, portable, "*"]
-        - [libcrux_iot_sha3, generic_keccak, xof, "*"]
+        - [libcrux_iot_sha3, "*"]
       monomorphizations_using:
-        - [libcrux_iot_sha3, simd, portable, "*"]
-        - [libcrux_iot_sha3, generic_keccak, portable, "*"]
-        - [libcrux_iot_sha3, generic_keccak, "*"]
-        - [libcrux_iot_sha3, traits, "*"]
         - [libcrux_iot_sha3, portable, "*"]
-        - [libcrux_iot_sha3, generic_keccak, xof, "*"]
       monomorphizations_exact:
         - [ Eurydice, arr_f8 ]
         - [ Eurydice, arr_6c ]
@@ -80,6 +56,9 @@ files:
   - name: libcrux_iot_mldsa65_portable
     inline_static: true
     api:
+      patterns:
+        - [libcrux_iot_ml_dsa, "*"]
+    private:
       patterns:
         - [libcrux_iot_ml_dsa, "*"]
         - [libcrux_iot_ml_dsa, samplex4, portable, "*"]
@@ -115,15 +94,10 @@ files:
       - [ Eurydice, "*" ]
     private:
       monomorphizations_of:
-        # - [core, "*"]
         - [libcrux_iot_secrets, "*"]
-        # - [libcrux_iot_ml_kem, types, "*"]
         - [libcrux_iot_ml_kem, constant_time_ops, "*"]
         - [libcrux_iot_ml_kem, utils, "*" ]
-      # monomorphizations_using:
-        # - [libcrux_iot_ml_kem, types, "*"]
       patterns:
-        # - [core, "*"]
         - [libcrux_iot_secrets, "*"]
         - [libcrux_iot_ml_kem, types, "*"]
         - [libcrux_iot_ml_kem, constant_time_ops, "*"]
