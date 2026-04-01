@@ -74,19 +74,23 @@ if [[ "$clean" = 1 ]]; then
     popd
 fi
 
+pushd $workspace_root
+secrets_root=$(cargo metadata --format-version 1 | jq -r ".packages | .[] | select(.name==\"libcrux-secrets\") | .manifest_path | split(\"/\") | .[:-1] | join(\"/\")")
+popd
+
 # TODO: add LIBCRUX_ENABLE_SIMD128=1 LIBCRUX_ENABLE_SIMD256=1 charon invocations
 if [[ "$no_charon" = 0 ]]; then
     pushd $workspace_root
     cargo clean
     popd
-    rm -rf $workspace_root/libcrux_iot_ml_kem.llbc $workspace_root/libcrux_iot_sha3.llbc $workspace_root/libcrux_iot_ml_dsa.llbc
+    rm -rf $workspace_root/libcrux_iot_ml_kem.llbc $workspace_root/libcrux_iot_sha3.llbc $workspace_root/libcrux_iot_ml_dsa.llbc $secrets_root/libcrux_secrets.llbc
 
     flags=
     if [[ $(uname -m) == "arm64" ]]; then
        flags+="-- --target=x86_64-apple-darwin"
     fi
 
-    cd /home/jonas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libcrux-secrets-0.0.5/
+    cd $secrets_root
     echo "Running charon (secrets) ..."
     RUSTFLAGS="-Cdebug-assertions=no --cfg eurydice" $CHARON_HOME/bin/charon cargo \
              --preset eurydice \
@@ -124,7 +128,7 @@ if [[ "$no_charon" = 0 ]]; then
     # rm -rf $repo_root/libcrux_ml_kem.llbc $repo_root/libcrux_sha3.llbc $repo_root/libcrux_secrets.llbc
     # echo "Running charon (secrets) ..."
     # (cd $repo_root/secrets && RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon --remove-associated-types '*' --translate-all-methods)
-    if ! [[ -f $workspace_root/libcrux_iot_ml_kem.llbc || -f $workspace_root/libcrux_iot_ml_dsa.llbc ]]; then
+    if ! [[ -f $secrets_root/libcrux_secrets.llbc || -f $workspace_root/libcrux_iot_sha3.llbc || -f $workspace_root/libcrux_iot_ml_kem.llbc || -f $workspace_root/libcrux_iot_ml_dsa.llbc ]]; then
         echo "😱😱😱 You are the victim of this bug: https://hacspec.zulipchat.com/#narrow/stream/433829-Circus/topic/charon.20declines.20to.20generate.20an.20llbc.20file"
         echo "Suggestion: rm -rf $repo_root/target or cargo clean"
         exit 1
@@ -196,7 +200,7 @@ $EURYDICE_HOME/eurydice \
     --debug "-dast" \
     --config "$config" -funroll-loops 0 \
     $cpp17 \
-    "$workspace_root/libcrux_secrets.llbc" "$workspace_root/libcrux_iot_sha3.llbc" "$workspace_root/libcrux_iot_ml_kem.llbc" "$workspace_root/libcrux_iot_ml_dsa.llbc" --keep-going
+    "$secrets_root/libcrux_secrets.llbc" "$workspace_root/libcrux_iot_sha3.llbc" "$workspace_root/libcrux_iot_ml_kem.llbc" "$workspace_root/libcrux_iot_ml_dsa.llbc" --keep-going
 
 # if [[ "$eurydice_glue" = 1 ]]; then
 #     cp "$glue" .
