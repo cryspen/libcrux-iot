@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * Charon: 377317d6b25702c46ffff072fa00a3e32095e46f
+ * Eurydice: b227478b67c6a6e2ff611f978f10d6b7f26472ac
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
  * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
- * Libcrux: 2259f47ca2a2a060c9fd147ccc78ed3588bfd288
+ * Libcrux: 0ab0448a17b81dc787e95a2c646c27ae75247f7b
  */
 
 #include "internal/libcrux_iot_sha3.h"
@@ -138,12 +138,231 @@ KRML_MUSTINLINE uint32_t libcrux_iot_sha3_state_get_with_zeta_18(
 }
 
 /**
-This function found in impl {core::ops::index::IndexMut<usize, u32> for
-libcrux_iot_sha3::lane::Lane2U32}
+This function found in impl {libcrux_iot_sha3::state::KeccakState}
 */
-KRML_MUSTINLINE uint32_t *libcrux_iot_sha3_lane_index_mut_c5(
-    Eurydice_arr_b2 *self, size_t index) {
-  return &self->data[index];
+KRML_MUSTINLINE void libcrux_iot_sha3_state_set_lane_value_18(
+    libcrux_iot_sha3_state_KeccakState *self, size_t i, size_t j,
+    uint32_t value) {
+  self->c.data[i].data[j] = value;
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x0_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)0U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)0U, (size_t)0U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)0U, (size_t)0U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)0U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)0U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)0U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x0_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)0U, (size_t)1U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)0U, (size_t)1U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)1U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)1U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)0U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x1_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)1U, (size_t)0U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)1U, (size_t)0U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)0U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)0U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)1U, (size_t)0U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)1U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x1_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)1U, (size_t)1U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)1U, (size_t)1U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)1U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)1U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)1U, (size_t)1U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)1U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x2_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)2U, (size_t)0U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)0U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)2U, (size_t)0U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)2U, (size_t)0U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)0U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)2U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x2_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)2U, (size_t)1U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)1U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)2U, (size_t)1U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)2U, (size_t)1U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)1U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)2U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x3_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)3U, (size_t)0U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)0U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)3U, (size_t)0U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)3U, (size_t)0U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)0U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)3U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x3_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)3U, (size_t)1U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)1U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)3U, (size_t)1U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)3U, (size_t)1U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)1U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)3U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x4_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)4U, (size_t)0U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)0U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)0U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)4U, (size_t)0U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)4U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x4_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)4U, (size_t)1U);
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)1U);
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)1U);
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)1U);
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)4U, (size_t)1U);
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)4U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta_d(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t c_x4_zeta0 =
+      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
+  uint32_t c_x1_zeta1 =
+      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
+  uint32_t c_x3_zeta0 =
+      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
+  uint32_t c_x0_zeta1 =
+      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
+  uint32_t c_x2_zeta0 =
+      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
+  uint32_t c_x4_zeta1 =
+      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
+  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
+  s->d.data->data[0U] = d_x0_zeta0;
+  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
+  s->d.data[2U].data[1U] = d_x2_zeta1;
+  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
+  s->d.data[4U].data[0U] = d_x4_zeta0;
+  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
+  s->d.data[1U].data[1U] = d_x1_zeta1;
+  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
+  s->d.data[3U].data[0U] = d_x3_zeta0;
+  uint32_t c_x1_zeta0 =
+      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
+  uint32_t c_x3_zeta1 =
+      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
+  uint32_t c_x2_zeta1 =
+      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
+  uint32_t c_x0_zeta0 =
+      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
+  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
+  s->d.data->data[1U] = d_x0_zeta1;
+  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
+  s->d.data[2U].data[0U] = d_x2_zeta0;
+  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
+  s->d.data[4U].data[1U] = d_x4_zeta1;
+  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
+  s->d.data[1U].data[0U] = d_x1_zeta0;
+  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
+  s->d.data[3U].data[1U] = d_x3_zeta1;
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_theta(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x0_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x0_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x1_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x1_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x2_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x2_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x3_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x3_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x4_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_c_x4_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta_d(s);
 }
 
 /**
@@ -152,8 +371,7 @@ This function found in impl {libcrux_iot_sha3::state::KeccakState}
 KRML_MUSTINLINE void libcrux_iot_sha3_state_set_with_zeta_18(
     libcrux_iot_sha3_state_KeccakState *self, size_t i, size_t j, size_t zeta,
     uint32_t v) {
-  libcrux_iot_sha3_lane_index_mut_c5(&self->st.data[(size_t)5U * j + i],
-                                     zeta)[0U] = v;
+  self->st.data[(size_t)5U * j + i].data[zeta] = v;
 }
 
 typedef struct uint32_t_x2_s {
@@ -167,555 +385,218 @@ typedef struct uint32_t_x3_s {
   uint32_t thd;
 } uint32_t_x3;
 
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round0
-with const generics
-- BASE_ROUND= 0
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_bc(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_0 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_00 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_01 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_02 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_03 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_04 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_05 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_06 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_47;
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_07 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_48;
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_08 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
-  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
   uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
-                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
-  uint32_t bx00 = uu____0.fst;
-  uint32_t bx10 = uu____0.snd;
+      s, (size_t)0U, (size_t)1U, (size_t)1U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 9U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 1U)};
+  uint32_t bx40 = uu____0.fst;
+  uint32_t bx00 = uu____0.snd;
   uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+      s, (size_t)1U, (size_t)2U, (size_t)0U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
   uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
+      s, (size_t)2U, (size_t)3U, (size_t)1U);
   uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
   uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
+      s, (size_t)3U, (size_t)4U, (size_t)0U);
   uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
-                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
-                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
-  uint32_t bx20 = uu____1.fst;
-  uint32_t bx30 = uu____1.snd;
-  uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)0U + (size_t)0U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 3U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 13U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 4U)};
+  uint32_t bx10 = uu____1.fst;
+  uint32_t bx20 = uu____1.snd;
+  uint32_t bx30 = uu____1.thd;
+  uint32_t ax00 = bx00 ^ (~bx10 & bx20);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
                                           ax00);
   uint32_t ax1 = bx10 ^ (~bx20 & bx30);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
                                           ax1);
   uint32_t ax2 = bx20 ^ (~bx30 & bx40);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
                                           ax2);
   uint32_t ax3 = bx30 ^ (~bx40 & bx00);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
                                           ax3);
   uint32_t ax4 = bx40 ^ (~bx00 & bx10);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
                                           ax4);
   uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
+      s, (size_t)4U, (size_t)0U, (size_t)1U);
   uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
   uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
-                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
-  uint32_t bx01 = uu____2.fst;
-  uint32_t bx11 = uu____2.snd;
+      s, (size_t)0U, (size_t)1U, (size_t)0U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 9U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 0U)};
+  uint32_t bx41 = uu____2.fst;
+  uint32_t bx01 = uu____2.snd;
   uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+      s, (size_t)1U, (size_t)2U, (size_t)1U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
   uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
+      s, (size_t)2U, (size_t)3U, (size_t)0U);
   uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
   uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
+      s, (size_t)3U, (size_t)4U, (size_t)1U);
   uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
-                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
-                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
-  uint32_t bx21 = uu____3.fst;
-  uint32_t bx31 = uu____3.snd;
-  uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)0U + (size_t)0U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 3U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 12U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 4U)};
+  uint32_t bx11 = uu____3.fst;
+  uint32_t bx21 = uu____3.snd;
+  uint32_t bx31 = uu____3.thd;
+  uint32_t ax01 = bx01 ^ (~bx11 & bx21);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
                                           ax01);
   uint32_t ax10 = bx11 ^ (~bx21 & bx31);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
                                           ax10);
   uint32_t ax20 = bx21 ^ (~bx31 & bx41);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
                                           ax20);
   uint32_t ax30 = bx31 ^ (~bx41 & bx01);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
                                           ax30);
   uint32_t ax40 = bx41 ^ (~bx01 & bx11);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
                                           ax40);
   uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+      s, (size_t)1U, (size_t)0U, (size_t)0U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
   uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
-                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
-  uint32_t bx22 = uu____4.fst;
-  uint32_t bx32 = uu____4.snd;
+      s, (size_t)2U, (size_t)1U, (size_t)0U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 18U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 5U)};
+  uint32_t bx12 = uu____4.fst;
+  uint32_t bx22 = uu____4.snd;
   uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
+      s, (size_t)3U, (size_t)2U, (size_t)1U);
   uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
   uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
+      s, (size_t)4U, (size_t)3U, (size_t)0U);
   uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
   uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
-                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
-                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
-  uint32_t bx42 = uu____5.fst;
-  uint32_t bx02 = uu____5.snd;
-  uint32_t bx12 = uu____5.thd;
+      s, (size_t)0U, (size_t)4U, (size_t)1U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 8U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 28U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 14U)};
+  uint32_t bx32 = uu____5.fst;
+  uint32_t bx42 = uu____5.snd;
+  uint32_t bx02 = uu____5.thd;
   uint32_t ax02 = bx02 ^ (~bx12 & bx22);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
                                           ax02);
   uint32_t ax11 = bx12 ^ (~bx22 & bx32);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
                                           ax11);
   uint32_t ax21 = bx22 ^ (~bx32 & bx42);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
                                           ax21);
   uint32_t ax31 = bx32 ^ (~bx42 & bx02);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
                                           ax31);
   uint32_t ax41 = bx42 ^ (~bx02 & bx12);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+      s, (size_t)1U, (size_t)0U, (size_t)1U);
+  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
   uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
+      s, (size_t)2U, (size_t)1U, (size_t)1U);
+  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 18U),
+                         .snd = core_num__u32__rotate_left(a13 ^ d13, 5U)};
+  uint32_t bx13 = uu____6.fst;
+  uint32_t bx23 = uu____6.snd;
   uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
+      s, (size_t)3U, (size_t)2U, (size_t)0U);
   uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
   uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
+      s, (size_t)4U, (size_t)3U, (size_t)1U);
   uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
   uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
+      s, (size_t)0U, (size_t)4U, (size_t)0U);
+  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 7U),
+                         .snd = core_num__u32__rotate_left(a33 ^ d33, 28U),
+                         .thd = core_num__u32__rotate_left(a43 ^ d43, 13U)};
+  uint32_t bx33 = uu____7.fst;
+  uint32_t bx43 = uu____7.snd;
+  uint32_t bx03 = uu____7.thd;
   uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
                                           ax03);
   uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
                                           ax12);
   uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
                                           ax22);
   uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
                                           ax32);
   uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
                                           ax42);
   uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+      s, (size_t)3U, (size_t)0U, (size_t)1U);
+  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
   uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
+      s, (size_t)4U, (size_t)1U, (size_t)0U);
+  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 21U),
                          .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
+  uint32_t bx34 = uu____8.fst;
+  uint32_t bx44 = uu____8.snd;
   uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
+      s, (size_t)0U, (size_t)2U, (size_t)0U);
   uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
   uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
+      s, (size_t)1U, (size_t)3U, (size_t)1U);
   uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
   uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
+      s, (size_t)2U, (size_t)4U, (size_t)1U);
+  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 31U),
+                         .snd = core_num__u32__rotate_left(a34 ^ d34, 28U),
+                         .thd = core_num__u32__rotate_left(a44 ^ d44, 20U)};
+  uint32_t bx04 = uu____9.fst;
+  uint32_t bx14 = uu____9.snd;
+  uint32_t bx24 = uu____9.thd;
   uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
                                           ax04);
   uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
                                           ax13);
   uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
                                           ax23);
   uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
                                           ax33);
   uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
                                           ax43);
   uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)0U);
   uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
   uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
                                                         (size_t)1U, (size_t)1U);
   uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
+  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d0, 20U),
                           .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
+  uint32_t bx3 = uu____10.fst;
+  uint32_t bx4 = uu____10.snd;
   uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)2U, (size_t)1U);
   uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
@@ -725,145 +606,176 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_bc(
   uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
                                                         (size_t)4U, (size_t)0U);
   uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
+  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
                           .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
                           .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
+  uint32_t bx0 = uu____11.fst;
+  uint32_t bx1 = uu____11.snd;
+  uint32_t bx2 = uu____11.thd;
   uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
                                           ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
+  uint32_t ax14 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
+                                          ax14);
+  uint32_t ax24 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
+                                          ax24);
+  uint32_t ax34 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
+                                          ax34);
+  uint32_t ax44 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax48);
+                                          ax44);
 }
 
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round1
-with const generics
-- BASE_ROUND= 0
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_bc(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x0_z0(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)0U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x0_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)0U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x1_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)1U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x1_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)1U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x2_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)2U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x2_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)2U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x3_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)3U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x3_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)3U, (size_t)0U);
   uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_4;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)3U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x4_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_47;
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)4U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x4_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)4U, (size_t)1U);
   uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)4U, (size_t)1U);
@@ -873,8 +785,12 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_bc(
       s, (size_t)0U, (size_t)4U, (size_t)0U);
   uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_48;
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)4U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta_d(
+    libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t c_x4_zeta0 =
       libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
   uint32_t c_x1_zeta1 =
@@ -888,19 +804,15 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_bc(
   uint32_t c_x4_zeta1 =
       libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
   uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
+  s->d.data->data[0U] = d_x0_zeta0;
   uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
+  s->d.data[2U].data[1U] = d_x2_zeta1;
   uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
+  s->d.data[4U].data[0U] = d_x4_zeta0;
   uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
+  s->d.data[1U].data[1U] = d_x1_zeta1;
   uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
+  s->d.data[3U].data[0U] = d_x3_zeta0;
   uint32_t c_x1_zeta0 =
       libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
   uint32_t c_x3_zeta1 =
@@ -910,393 +822,244 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_bc(
   uint32_t c_x0_zeta0 =
       libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
   uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
+  s->d.data->data[1U] = d_x0_zeta1;
   uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
+  s->d.data[2U].data[0U] = d_x2_zeta0;
   uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
+  s->d.data[4U].data[1U] = d_x4_zeta1;
   uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
+  s->d.data[1U].data[0U] = d_x1_zeta0;
   uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
-  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)0U, (size_t)0U);
+  s->d.data[3U].data[1U] = d_x3_zeta1;
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_theta(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x0_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x0_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x1_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x1_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x2_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x2_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x3_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x3_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x4_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_c_x4_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta_d(s);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)0U, (size_t)1U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
   uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
-                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
-  uint32_t bx00 = uu____0.fst;
-  uint32_t bx10 = uu____0.snd;
+      s, (size_t)1U, (size_t)1U, (size_t)1U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 9U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 1U)};
+  uint32_t bx40 = uu____0.fst;
+  uint32_t bx00 = uu____0.snd;
   uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+      s, (size_t)4U, (size_t)2U, (size_t)1U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
   uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
+      s, (size_t)2U, (size_t)3U, (size_t)0U);
   uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
   uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
+      s, (size_t)0U, (size_t)4U, (size_t)1U);
   uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
-                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
-                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
-  uint32_t bx20 = uu____1.fst;
-  uint32_t bx30 = uu____1.snd;
-  uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)0U + (size_t)1U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 3U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 13U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 4U)};
+  uint32_t bx10 = uu____1.fst;
+  uint32_t bx20 = uu____1.snd;
+  uint32_t bx30 = uu____1.thd;
+  uint32_t ax00 = bx00 ^ (~bx10 & bx20);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
                                           ax00);
   uint32_t ax1 = bx10 ^ (~bx20 & bx30);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
                                           ax1);
   uint32_t ax2 = bx20 ^ (~bx30 & bx40);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
                                           ax2);
   uint32_t ax3 = bx30 ^ (~bx40 & bx00);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
                                           ax3);
   uint32_t ax4 = bx40 ^ (~bx00 & bx10);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
                                           ax4);
   uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
+      s, (size_t)3U, (size_t)0U, (size_t)0U);
   uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
   uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
-                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
-  uint32_t bx01 = uu____2.fst;
-  uint32_t bx11 = uu____2.snd;
+      s, (size_t)1U, (size_t)1U, (size_t)0U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 9U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 0U)};
+  uint32_t bx41 = uu____2.fst;
+  uint32_t bx01 = uu____2.snd;
   uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+      s, (size_t)4U, (size_t)2U, (size_t)0U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
   uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
+      s, (size_t)2U, (size_t)3U, (size_t)1U);
   uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
   uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
+      s, (size_t)0U, (size_t)4U, (size_t)0U);
   uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
-                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
-                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
-  uint32_t bx21 = uu____3.fst;
-  uint32_t bx31 = uu____3.snd;
-  uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)0U + (size_t)1U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 3U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 12U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 4U)};
+  uint32_t bx11 = uu____3.fst;
+  uint32_t bx21 = uu____3.snd;
+  uint32_t bx31 = uu____3.thd;
+  uint32_t ax01 = bx01 ^ (~bx11 & bx21);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
                                           ax01);
   uint32_t ax10 = bx11 ^ (~bx21 & bx31);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
                                           ax10);
   uint32_t ax20 = bx21 ^ (~bx31 & bx41);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
                                           ax20);
   uint32_t ax30 = bx31 ^ (~bx41 & bx01);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
                                           ax30);
   uint32_t ax40 = bx41 ^ (~bx01 & bx11);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
                                           ax40);
   uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+      s, (size_t)2U, (size_t)0U, (size_t)1U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
   uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
-                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
-  uint32_t bx22 = uu____4.fst;
-  uint32_t bx32 = uu____4.snd;
+      s, (size_t)0U, (size_t)1U, (size_t)1U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 18U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 5U)};
+  uint32_t bx12 = uu____4.fst;
+  uint32_t bx22 = uu____4.snd;
   uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
+      s, (size_t)3U, (size_t)2U, (size_t)0U);
   uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
   uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
+      s, (size_t)1U, (size_t)3U, (size_t)1U);
   uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
   uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
-                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
-                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
-  uint32_t bx42 = uu____5.fst;
-  uint32_t bx02 = uu____5.snd;
-  uint32_t bx12 = uu____5.thd;
+      s, (size_t)4U, (size_t)4U, (size_t)1U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 8U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 28U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 14U)};
+  uint32_t bx32 = uu____5.fst;
+  uint32_t bx42 = uu____5.snd;
+  uint32_t bx02 = uu____5.thd;
   uint32_t ax02 = bx02 ^ (~bx12 & bx22);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
                                           ax02);
   uint32_t ax11 = bx12 ^ (~bx22 & bx32);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
                                           ax11);
   uint32_t ax21 = bx22 ^ (~bx32 & bx42);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
                                           ax21);
   uint32_t ax31 = bx32 ^ (~bx42 & bx02);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
                                           ax31);
   uint32_t ax41 = bx42 ^ (~bx02 & bx12);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+      s, (size_t)2U, (size_t)0U, (size_t)0U);
+  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
   uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
+      s, (size_t)0U, (size_t)1U, (size_t)0U);
+  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 18U),
+                         .snd = core_num__u32__rotate_left(a13 ^ d13, 5U)};
+  uint32_t bx13 = uu____6.fst;
+  uint32_t bx23 = uu____6.snd;
   uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
+      s, (size_t)3U, (size_t)2U, (size_t)1U);
   uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
   uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
+      s, (size_t)1U, (size_t)3U, (size_t)0U);
   uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
   uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
+      s, (size_t)4U, (size_t)4U, (size_t)0U);
+  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 7U),
+                         .snd = core_num__u32__rotate_left(a33 ^ d33, 28U),
+                         .thd = core_num__u32__rotate_left(a43 ^ d43, 13U)};
+  uint32_t bx33 = uu____7.fst;
+  uint32_t bx43 = uu____7.snd;
+  uint32_t bx03 = uu____7.thd;
   uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
                                           ax03);
   uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
                                           ax12);
   uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
                                           ax22);
   uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
                                           ax32);
   uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
                                           ax42);
   uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+      s, (size_t)1U, (size_t)0U, (size_t)1U);
+  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
   uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
+      s, (size_t)4U, (size_t)1U, (size_t)0U);
+  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 21U),
                          .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
+  uint32_t bx34 = uu____8.fst;
+  uint32_t bx44 = uu____8.snd;
   uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
+      s, (size_t)2U, (size_t)2U, (size_t)1U);
   uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
   uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
+      s, (size_t)0U, (size_t)3U, (size_t)1U);
   uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
   uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
+      s, (size_t)3U, (size_t)4U, (size_t)1U);
+  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 31U),
+                         .snd = core_num__u32__rotate_left(a34 ^ d34, 28U),
+                         .thd = core_num__u32__rotate_left(a44 ^ d44, 20U)};
+  uint32_t bx04 = uu____9.fst;
+  uint32_t bx14 = uu____9.snd;
+  uint32_t bx24 = uu____9.thd;
   uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
                                           ax04);
   uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
                                           ax13);
   uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
                                           ax23);
   uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
                                           ax33);
   uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
                                           ax43);
   uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)0U);
   uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
   uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
                                                         (size_t)1U, (size_t)1U);
   uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
+  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d0, 20U),
                           .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
+  uint32_t bx3 = uu____10.fst;
+  uint32_t bx4 = uu____10.snd;
   uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
                                                         (size_t)2U, (size_t)0U);
   uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
@@ -1306,145 +1069,176 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_bc(
   uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
                                                         (size_t)4U, (size_t)0U);
   uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
+  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
                           .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
                           .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
+  uint32_t bx0 = uu____11.fst;
+  uint32_t bx1 = uu____11.snd;
+  uint32_t bx2 = uu____11.thd;
   uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
                                           ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
+  uint32_t ax14 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
+                                          ax14);
+  uint32_t ax24 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
+                                          ax24);
+  uint32_t ax34 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
+                                          ax34);
+  uint32_t ax44 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax48);
+                                          ax44);
 }
 
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round2
-with const generics
-- BASE_ROUND= 0
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_bc(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x0_z0(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)0U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x0_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)0U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x1_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)1U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x1_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)1U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x2_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)2U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x2_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)2U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x3_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)3U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x3_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)3U, (size_t)0U);
   uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_2) ^ ax_37) ^ ax_47;
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)3U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x4_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_27) ^ ax_38) ^ ax_48;
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)4U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x4_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)4U, (size_t)0U);
   uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)4U, (size_t)1U);
@@ -1454,8 +1248,12 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_bc(
       s, (size_t)4U, (size_t)4U, (size_t)0U);
   uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_28) ^ ax_3) ^ ax_4;
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)4U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta_d(
+    libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t c_x4_zeta0 =
       libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
   uint32_t c_x1_zeta1 =
@@ -1469,19 +1267,15 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_bc(
   uint32_t c_x4_zeta1 =
       libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
   uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
+  s->d.data->data[0U] = d_x0_zeta0;
   uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
+  s->d.data[2U].data[1U] = d_x2_zeta1;
   uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
+  s->d.data[4U].data[0U] = d_x4_zeta0;
   uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
+  s->d.data[1U].data[1U] = d_x1_zeta1;
   uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
+  s->d.data[3U].data[0U] = d_x3_zeta0;
   uint32_t c_x1_zeta0 =
       libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
   uint32_t c_x3_zeta1 =
@@ -1491,393 +1285,244 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_bc(
   uint32_t c_x0_zeta0 =
       libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
   uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
+  s->d.data->data[1U] = d_x0_zeta1;
   uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
+  s->d.data[2U].data[0U] = d_x2_zeta0;
   uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
+  s->d.data[4U].data[1U] = d_x4_zeta1;
   uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
+  s->d.data[1U].data[0U] = d_x1_zeta0;
   uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
-  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)0U, (size_t)0U);
+  s->d.data[3U].data[1U] = d_x3_zeta1;
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_theta(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x0_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x0_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x1_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x1_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x2_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x2_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x3_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x3_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x4_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_c_x4_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta_d(s);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)0U, (size_t)1U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
   uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
-                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
-  uint32_t bx00 = uu____0.fst;
-  uint32_t bx10 = uu____0.snd;
+      s, (size_t)3U, (size_t)1U, (size_t)0U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 9U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 1U)};
+  uint32_t bx40 = uu____0.fst;
+  uint32_t bx00 = uu____0.snd;
   uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+      s, (size_t)0U, (size_t)2U, (size_t)1U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
   uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
+      s, (size_t)2U, (size_t)3U, (size_t)1U);
   uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
   uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
+      s, (size_t)4U, (size_t)4U, (size_t)1U);
   uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
-                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
-                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
-  uint32_t bx20 = uu____1.fst;
-  uint32_t bx30 = uu____1.snd;
-  uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)0U + (size_t)2U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 3U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 13U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 4U)};
+  uint32_t bx10 = uu____1.fst;
+  uint32_t bx20 = uu____1.snd;
+  uint32_t bx30 = uu____1.thd;
+  uint32_t ax00 = bx00 ^ (~bx10 & bx20);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
                                           ax00);
   uint32_t ax1 = bx10 ^ (~bx20 & bx30);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
                                           ax1);
   uint32_t ax2 = bx20 ^ (~bx30 & bx40);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
                                           ax2);
   uint32_t ax3 = bx30 ^ (~bx40 & bx00);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
                                           ax3);
   uint32_t ax4 = bx40 ^ (~bx00 & bx10);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
                                           ax4);
   uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
+      s, (size_t)1U, (size_t)0U, (size_t)0U);
   uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
   uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
-                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
-  uint32_t bx01 = uu____2.fst;
-  uint32_t bx11 = uu____2.snd;
+      s, (size_t)3U, (size_t)1U, (size_t)1U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 9U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 0U)};
+  uint32_t bx41 = uu____2.fst;
+  uint32_t bx01 = uu____2.snd;
   uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+      s, (size_t)0U, (size_t)2U, (size_t)0U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
   uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
+      s, (size_t)2U, (size_t)3U, (size_t)0U);
   uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
   uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
+      s, (size_t)4U, (size_t)4U, (size_t)0U);
   uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
-                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
-                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
-  uint32_t bx21 = uu____3.fst;
-  uint32_t bx31 = uu____3.snd;
-  uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)0U + (size_t)2U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 3U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 12U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 4U)};
+  uint32_t bx11 = uu____3.fst;
+  uint32_t bx21 = uu____3.snd;
+  uint32_t bx31 = uu____3.thd;
+  uint32_t ax01 = bx01 ^ (~bx11 & bx21);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
                                           ax01);
   uint32_t ax10 = bx11 ^ (~bx21 & bx31);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
                                           ax10);
   uint32_t ax20 = bx21 ^ (~bx31 & bx41);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
                                           ax20);
   uint32_t ax30 = bx31 ^ (~bx41 & bx01);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
                                           ax30);
   uint32_t ax40 = bx41 ^ (~bx01 & bx11);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
                                           ax40);
   uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+      s, (size_t)4U, (size_t)0U, (size_t)1U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
   uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
-                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
-  uint32_t bx22 = uu____4.fst;
-  uint32_t bx32 = uu____4.snd;
+      s, (size_t)1U, (size_t)1U, (size_t)1U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 18U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 5U)};
+  uint32_t bx12 = uu____4.fst;
+  uint32_t bx22 = uu____4.snd;
   uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
+      s, (size_t)3U, (size_t)2U, (size_t)1U);
   uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
   uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
+      s, (size_t)0U, (size_t)3U, (size_t)1U);
   uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
   uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
-                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
-                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
-  uint32_t bx42 = uu____5.fst;
-  uint32_t bx02 = uu____5.snd;
-  uint32_t bx12 = uu____5.thd;
+      s, (size_t)2U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 8U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 28U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 14U)};
+  uint32_t bx32 = uu____5.fst;
+  uint32_t bx42 = uu____5.snd;
+  uint32_t bx02 = uu____5.thd;
   uint32_t ax02 = bx02 ^ (~bx12 & bx22);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
                                           ax02);
   uint32_t ax11 = bx12 ^ (~bx22 & bx32);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
                                           ax11);
   uint32_t ax21 = bx22 ^ (~bx32 & bx42);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
                                           ax21);
   uint32_t ax31 = bx32 ^ (~bx42 & bx02);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
                                           ax31);
   uint32_t ax41 = bx42 ^ (~bx02 & bx12);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+      s, (size_t)4U, (size_t)0U, (size_t)0U);
+  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
   uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
+      s, (size_t)1U, (size_t)1U, (size_t)0U);
+  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 18U),
+                         .snd = core_num__u32__rotate_left(a13 ^ d13, 5U)};
+  uint32_t bx13 = uu____6.fst;
+  uint32_t bx23 = uu____6.snd;
   uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
+      s, (size_t)3U, (size_t)2U, (size_t)0U);
   uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
   uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
+      s, (size_t)0U, (size_t)3U, (size_t)0U);
   uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
   uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
+      s, (size_t)2U, (size_t)4U, (size_t)1U);
+  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 7U),
+                         .snd = core_num__u32__rotate_left(a33 ^ d33, 28U),
+                         .thd = core_num__u32__rotate_left(a43 ^ d43, 13U)};
+  uint32_t bx33 = uu____7.fst;
+  uint32_t bx43 = uu____7.snd;
+  uint32_t bx03 = uu____7.thd;
   uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
                                           ax03);
   uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
                                           ax12);
   uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
                                           ax22);
   uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
                                           ax32);
   uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
                                           ax42);
   uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+      s, (size_t)2U, (size_t)0U, (size_t)0U);
+  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
   uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
+      s, (size_t)4U, (size_t)1U, (size_t)0U);
+  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 21U),
                          .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
+  uint32_t bx34 = uu____8.fst;
+  uint32_t bx44 = uu____8.snd;
   uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
+      s, (size_t)1U, (size_t)2U, (size_t)1U);
   uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
   uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
+      s, (size_t)3U, (size_t)3U, (size_t)0U);
   uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
   uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
+      s, (size_t)0U, (size_t)4U, (size_t)0U);
+  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 31U),
+                         .snd = core_num__u32__rotate_left(a34 ^ d34, 28U),
+                         .thd = core_num__u32__rotate_left(a44 ^ d44, 20U)};
+  uint32_t bx04 = uu____9.fst;
+  uint32_t bx14 = uu____9.snd;
+  uint32_t bx24 = uu____9.thd;
   uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
                                           ax04);
   uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
                                           ax13);
   uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
                                           ax23);
   uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
                                           ax33);
   uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
                                           ax43);
   uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)1U);
   uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
   uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
                                                         (size_t)1U, (size_t)1U);
   uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
+  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d0, 20U),
                           .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
+  uint32_t bx3 = uu____10.fst;
+  uint32_t bx4 = uu____10.snd;
   uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
                                                         (size_t)2U, (size_t)0U);
   uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
@@ -1887,145 +1532,176 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_bc(
   uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)4U, (size_t)1U);
   uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
+  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
                           .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
                           .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
+  uint32_t bx0 = uu____11.fst;
+  uint32_t bx1 = uu____11.snd;
+  uint32_t bx2 = uu____11.thd;
   uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
                                           ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
+  uint32_t ax14 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
+                                          ax14);
+  uint32_t ax24 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
+                                          ax24);
+  uint32_t ax34 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
+                                          ax34);
+  uint32_t ax44 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax48);
+                                          ax44);
 }
 
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round3
-with const generics
-- BASE_ROUND= 0
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_bc(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x0_z0(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)0U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x0_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)0U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x1_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)1U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x1_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)1U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x2_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)2U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x2_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)2U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x3_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)3U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x3_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)3U, (size_t)0U);
   uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_3) ^ ax_47;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)3U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x4_z0(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
+  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_37) ^ ax_48;
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)4U, (size_t)0U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x4_z1(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)4U, (size_t)0U);
   uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)4U, (size_t)1U);
@@ -2035,8 +1711,12 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_bc(
       s, (size_t)2U, (size_t)4U, (size_t)1U);
   uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)0U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_38) ^ ax_4;
+  libcrux_iot_sha3_state_set_lane_value_18(
+      s, (size_t)4U, (size_t)1U, (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta_d(
+    libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t c_x4_zeta0 =
       libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
   uint32_t c_x1_zeta1 =
@@ -2050,19 +1730,15 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_bc(
   uint32_t c_x4_zeta1 =
       libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
   uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
+  s->d.data->data[0U] = d_x0_zeta0;
   uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
+  s->d.data[2U].data[1U] = d_x2_zeta1;
   uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
+  s->d.data[4U].data[0U] = d_x4_zeta0;
   uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
+  s->d.data[1U].data[1U] = d_x1_zeta1;
   uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
+  s->d.data[3U].data[0U] = d_x3_zeta0;
   uint32_t c_x1_zeta0 =
       libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
   uint32_t c_x3_zeta1 =
@@ -2072,19 +1748,802 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_bc(
   uint32_t c_x0_zeta0 =
       libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
   uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
+  s->d.data->data[1U] = d_x0_zeta1;
   uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
+  s->d.data[2U].data[0U] = d_x2_zeta0;
   uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
+  s->d.data[4U].data[1U] = d_x4_zeta1;
   uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
+  s->d.data[1U].data[0U] = d_x1_zeta0;
   uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
+  s->d.data[3U].data[1U] = d_x3_zeta1;
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_theta(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x0_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x0_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x1_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x1_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x2_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x2_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x3_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x3_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x4_z0(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_c_x4_z1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta_d(s);
+}
+
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)0U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 9U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 1U)};
+  uint32_t bx40 = uu____0.fst;
+  uint32_t bx00 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)2U, (size_t)0U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)3U, (size_t)0U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)0U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 3U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 13U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 4U)};
+  uint32_t bx10 = uu____1.fst;
+  uint32_t bx20 = uu____1.snd;
+  uint32_t bx30 = uu____1.thd;
+  uint32_t ax00 = bx00 ^ (~bx10 & bx20);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)1U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 9U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 0U)};
+  uint32_t bx41 = uu____2.fst;
+  uint32_t bx01 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)2U, (size_t)1U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)3U, (size_t)1U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)1U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 3U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 12U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 4U)};
+  uint32_t bx11 = uu____3.fst;
+  uint32_t bx21 = uu____3.snd;
+  uint32_t bx31 = uu____3.thd;
+  uint32_t ax01 = bx01 ^ (~bx11 & bx21);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)0U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)0U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 18U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 5U)};
+  uint32_t bx12 = uu____4.fst;
+  uint32_t bx22 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)2U, (size_t)0U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)3U, (size_t)0U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 8U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 28U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 14U)};
+  uint32_t bx32 = uu____5.fst;
+  uint32_t bx42 = uu____5.snd;
+  uint32_t bx02 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)1U);
+  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)1U);
+  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 18U),
+                         .snd = core_num__u32__rotate_left(a13 ^ d13, 5U)};
+  uint32_t bx13 = uu____6.fst;
+  uint32_t bx23 = uu____6.snd;
+  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)2U, (size_t)1U);
+  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)3U, (size_t)1U);
+  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)1U);
+  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 7U),
+                         .snd = core_num__u32__rotate_left(a33 ^ d33, 28U),
+                         .thd = core_num__u32__rotate_left(a43 ^ d43, 13U)};
+  uint32_t bx33 = uu____7.fst;
+  uint32_t bx43 = uu____7.snd;
+  uint32_t bx03 = uu____7.thd;
+  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
+                                          ax03);
+  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
+                                          ax12);
+  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
+                                          ax22);
+  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
+                                          ax32);
+  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
+                                          ax42);
+  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)0U);
+  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)1U, (size_t)0U);
+  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 21U),
+                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
+  uint32_t bx34 = uu____8.fst;
+  uint32_t bx44 = uu____8.snd;
+  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)0U);
+  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)0U);
+  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)4U, (size_t)0U);
+  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 31U),
+                         .snd = core_num__u32__rotate_left(a34 ^ d34, 28U),
+                         .thd = core_num__u32__rotate_left(a44 ^ d44, 20U)};
+  uint32_t bx04 = uu____9.fst;
+  uint32_t bx14 = uu____9.snd;
+  uint32_t bx24 = uu____9.thd;
+  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
+                                          ax04);
+  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
+                                          ax13);
+  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
+                                          ax23);
+  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
+                                          ax33);
+  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
+                                          ax43);
+  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)1U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d0, 20U),
+                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
+  uint32_t bx3 = uu____10.fst;
+  uint32_t bx4 = uu____10.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
+                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
+                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
+  uint32_t bx0 = uu____11.fst;
+  uint32_t bx1 = uu____11.snd;
+  uint32_t bx2 = uu____11.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
+                                          ax0);
+  uint32_t ax14 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
+                                          ax14);
+  uint32_t ax24 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
+                                          ax24);
+  uint32_t ax34 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
+                                          ax34);
+  uint32_t ax44 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
+                                          ax44);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
+- BASE_ROUND= 0
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_bc(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)1U, (size_t)0U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
+  uint32_t bx00 = uu____0.fst;
+  uint32_t bx10 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)2U, (size_t)1U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)3U, (size_t)1U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)4U, (size_t)0U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
+  uint32_t bx20 = uu____1.fst;
+  uint32_t bx30 = uu____1.snd;
+  uint32_t bx40 = uu____1.thd;
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)0U + (size_t)0U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)1U, (size_t)1U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
+  uint32_t bx01 = uu____2.fst;
+  uint32_t bx11 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)2U, (size_t)0U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)3U, (size_t)0U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)4U, (size_t)1U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
+  uint32_t bx21 = uu____3.fst;
+  uint32_t bx31 = uu____3.snd;
+  uint32_t bx41 = uu____3.thd;
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)0U + (size_t)0U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)0U, (size_t)1U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)1U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
+  uint32_t bx22 = uu____4.fst;
+  uint32_t bx32 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)1U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)3U, (size_t)0U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
+  uint32_t bx42 = uu____5.fst;
+  uint32_t bx02 = uu____5.snd;
+  uint32_t bx12 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)0U, (size_t)0U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
+- BASE_ROUND= 0
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_bc(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)1U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
+  uint32_t bx00 = uu____0.fst;
+  uint32_t bx10 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)1U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)1U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)1U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
+  uint32_t bx20 = uu____1.fst;
+  uint32_t bx30 = uu____1.snd;
+  uint32_t bx40 = uu____1.thd;
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)0U + (size_t)1U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)0U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
+  uint32_t bx01 = uu____2.fst;
+  uint32_t bx11 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)0U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)0U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)0U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
+  uint32_t bx21 = uu____3.fst;
+  uint32_t bx31 = uu____3.snd;
+  uint32_t bx41 = uu____3.thd;
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)0U + (size_t)1U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)1U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)1U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
+  uint32_t bx22 = uu____4.fst;
+  uint32_t bx32 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)2U, (size_t)1U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)3U, (size_t)1U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
+  uint32_t bx42 = uu____5.fst;
+  uint32_t bx02 = uu____5.snd;
+  uint32_t bx12 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)0U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
+- BASE_ROUND= 0
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_bc(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)1U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
+  uint32_t bx00 = uu____0.fst;
+  uint32_t bx10 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)0U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)0U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)1U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
+  uint32_t bx20 = uu____1.fst;
+  uint32_t bx30 = uu____1.snd;
+  uint32_t bx40 = uu____1.thd;
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)0U + (size_t)2U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)0U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
+  uint32_t bx01 = uu____2.fst;
+  uint32_t bx11 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)1U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)1U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)0U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
+  uint32_t bx21 = uu____3.fst;
+  uint32_t bx31 = uu____3.snd;
+  uint32_t bx41 = uu____3.thd;
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)0U + (size_t)2U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)0U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)1U, (size_t)0U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
+  uint32_t bx22 = uu____4.fst;
+  uint32_t bx32 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)2U, (size_t)0U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)1U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
+  uint32_t bx42 = uu____5.fst;
+  uint32_t bx02 = uu____5.snd;
+  uint32_t bx12 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)1U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
+- BASE_ROUND= 0
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_bc(
+    libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -2110,9 +2569,9 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_bc(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)0U + (size_t)3U];
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)0U + (size_t)3U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
                                           ax00);
   uint32_t ax1 = bx10 ^ (~bx20 & bx30);
@@ -2152,9 +2611,9 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_bc(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)0U + (size_t)3U];
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)0U + (size_t)3U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
                                           ax01);
   uint32_t ax10 = bx11 ^ (~bx21 & bx31);
@@ -2211,284 +2670,44 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_bc(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax48);
 }
 
 /**
@@ -2498,187 +2717,27 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_bc(
     libcrux_iot_sha3_state_KeccakState *s) {
-  libcrux_iot_sha3_keccak_keccakf1600_round0_bc(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_bc(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_bc(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_bc(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_bc(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_bc(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_bc(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_bc(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round0
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 4
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_ac(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_ac(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_0 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_00 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_01 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_02 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_03 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_04 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_05 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_06 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_47;
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_07 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_48;
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_08 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -2704,9 +2763,9 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_ac(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)4U + (size_t)0U];
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)4U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
                                           ax00);
   uint32_t ax1 = bx10 ^ (~bx20 & bx30);
@@ -2746,9 +2805,9 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_ac(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)4U + (size_t)0U];
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)4U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
                                           ax01);
   uint32_t ax10 = bx11 ^ (~bx21 & bx31);
@@ -2805,2027 +2864,563 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_ac(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
-                                          ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
   uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax48);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round1
-with const generics
-- BASE_ROUND= 4
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_ac(
-    libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_4;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_47;
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_48;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
-  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)0U, (size_t)0U);
-  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
-                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
-  uint32_t bx00 = uu____0.fst;
-  uint32_t bx10 = uu____0.snd;
-  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
-                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
-                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
-  uint32_t bx20 = uu____1.fst;
-  uint32_t bx30 = uu____1.snd;
-  uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)4U + (size_t)1U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
-                                          ax00);
-  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax1);
-  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax2);
-  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax3);
-  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax4);
-  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
-                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
-  uint32_t bx01 = uu____2.fst;
-  uint32_t bx11 = uu____2.snd;
-  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
-                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
-                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
-  uint32_t bx21 = uu____3.fst;
-  uint32_t bx31 = uu____3.snd;
-  uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)4U + (size_t)1U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
-                                          ax01);
-  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax10);
-  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax20);
-  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax30);
-  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax40);
-  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
-                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
-  uint32_t bx22 = uu____4.fst;
-  uint32_t bx32 = uu____4.snd;
-  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
-                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
-                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
-  uint32_t bx42 = uu____5.fst;
-  uint32_t bx02 = uu____5.snd;
-  uint32_t bx12 = uu____5.thd;
-  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax02);
-  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax11);
-  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax21);
-  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax31);
-  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
-                                          ax41);
-  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
-                                          ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax48);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round2
-with const generics
-- BASE_ROUND= 4
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_ac(
-    libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_2) ^ ax_37) ^ ax_47;
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_27) ^ ax_38) ^ ax_48;
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_28) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
-  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)0U, (size_t)0U);
-  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
-                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
-  uint32_t bx00 = uu____0.fst;
-  uint32_t bx10 = uu____0.snd;
-  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
-                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
-                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
-  uint32_t bx20 = uu____1.fst;
-  uint32_t bx30 = uu____1.snd;
-  uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)4U + (size_t)2U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
-                                          ax00);
-  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax1);
-  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax2);
-  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax3);
-  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax4);
-  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
-                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
-  uint32_t bx01 = uu____2.fst;
-  uint32_t bx11 = uu____2.snd;
-  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
-                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
-                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
-  uint32_t bx21 = uu____3.fst;
-  uint32_t bx31 = uu____3.snd;
-  uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)4U + (size_t)2U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
-                                          ax01);
-  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax10);
-  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax20);
-  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax30);
-  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax40);
-  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
-                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
-  uint32_t bx22 = uu____4.fst;
-  uint32_t bx32 = uu____4.snd;
-  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
-                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
-                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
-  uint32_t bx42 = uu____5.fst;
-  uint32_t bx02 = uu____5.snd;
-  uint32_t bx12 = uu____5.thd;
-  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax02);
-  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax11);
-  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax21);
-  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax31);
-  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
-                                          ax41);
-  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
-                                          ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax48);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round3
-with const generics
-- BASE_ROUND= 4
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_ac(
-    libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_3) ^ ax_47;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_37) ^ ax_48;
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_38) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
-  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)0U, (size_t)0U);
-  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
-                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
-  uint32_t bx00 = uu____0.fst;
-  uint32_t bx10 = uu____0.snd;
-  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
-                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
-                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
-  uint32_t bx20 = uu____1.fst;
-  uint32_t bx30 = uu____1.snd;
-  uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)4U + (size_t)3U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
-                                          ax00);
-  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax1);
-  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax2);
-  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax3);
-  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax4);
-  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
-                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
-  uint32_t bx01 = uu____2.fst;
-  uint32_t bx11 = uu____2.snd;
-  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
-                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
-                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
-  uint32_t bx21 = uu____3.fst;
-  uint32_t bx31 = uu____3.snd;
-  uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)4U + (size_t)3U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
-                                          ax01);
-  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax10);
-  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax20);
-  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax30);
-  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax40);
-  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
-                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
-  uint32_t bx22 = uu____4.fst;
-  uint32_t bx32 = uu____4.snd;
-  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
-                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
-                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
-  uint32_t bx42 = uu____5.fst;
-  uint32_t bx02 = uu____5.snd;
-  uint32_t bx12 = uu____5.thd;
-  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax02);
-  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax11);
-  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax21);
-  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax31);
-  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
-                                          ax41);
-  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
-                                          ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
   uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
                                                         (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
   uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
                                           ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
+- BASE_ROUND= 4
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_ac(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)1U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
+  uint32_t bx00 = uu____0.fst;
+  uint32_t bx10 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)1U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)1U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)1U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
+  uint32_t bx20 = uu____1.fst;
+  uint32_t bx30 = uu____1.snd;
+  uint32_t bx40 = uu____1.thd;
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)4U + (size_t)1U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax48);
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)0U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
+  uint32_t bx01 = uu____2.fst;
+  uint32_t bx11 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)0U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)0U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)0U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
+  uint32_t bx21 = uu____3.fst;
+  uint32_t bx31 = uu____3.snd;
+  uint32_t bx41 = uu____3.thd;
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)4U + (size_t)1U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)1U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)1U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
+  uint32_t bx22 = uu____4.fst;
+  uint32_t bx32 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)2U, (size_t)1U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)3U, (size_t)1U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
+  uint32_t bx42 = uu____5.fst;
+  uint32_t bx02 = uu____5.snd;
+  uint32_t bx12 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)0U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
+- BASE_ROUND= 4
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_ac(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)1U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
+  uint32_t bx00 = uu____0.fst;
+  uint32_t bx10 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)0U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)0U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)1U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
+  uint32_t bx20 = uu____1.fst;
+  uint32_t bx30 = uu____1.snd;
+  uint32_t bx40 = uu____1.thd;
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)4U + (size_t)2U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)0U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
+  uint32_t bx01 = uu____2.fst;
+  uint32_t bx11 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)1U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)1U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)0U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
+  uint32_t bx21 = uu____3.fst;
+  uint32_t bx31 = uu____3.snd;
+  uint32_t bx41 = uu____3.thd;
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)4U + (size_t)2U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)0U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)1U, (size_t)0U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
+  uint32_t bx22 = uu____4.fst;
+  uint32_t bx32 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)2U, (size_t)0U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)1U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
+  uint32_t bx42 = uu____5.fst;
+  uint32_t bx02 = uu____5.snd;
+  uint32_t bx12 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)1U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
+- BASE_ROUND= 4
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_ac(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)1U, (size_t)0U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
+  uint32_t bx00 = uu____0.fst;
+  uint32_t bx10 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)2U, (size_t)0U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)3U, (size_t)0U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)4U, (size_t)0U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
+  uint32_t bx20 = uu____1.fst;
+  uint32_t bx30 = uu____1.snd;
+  uint32_t bx40 = uu____1.thd;
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)4U + (size_t)3U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)1U, (size_t)1U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
+  uint32_t bx01 = uu____2.fst;
+  uint32_t bx11 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)2U, (size_t)1U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)3U, (size_t)1U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)4U, (size_t)1U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
+  uint32_t bx21 = uu____3.fst;
+  uint32_t bx31 = uu____3.snd;
+  uint32_t bx41 = uu____3.thd;
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)4U + (size_t)3U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)0U, (size_t)0U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)1U, (size_t)0U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
+  uint32_t bx22 = uu____4.fst;
+  uint32_t bx32 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)0U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)0U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
+  uint32_t bx42 = uu____5.fst;
+  uint32_t bx02 = uu____5.snd;
+  uint32_t bx12 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)0U, (size_t)1U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
 }
 
 /**
@@ -4835,187 +3430,27 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_ac(
     libcrux_iot_sha3_state_KeccakState *s) {
-  libcrux_iot_sha3_keccak_keccakf1600_round0_ac(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_ac(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_ac(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_ac(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_ac(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_ac(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_ac(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_ac(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round0
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 8
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_3b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_3b(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_0 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_00 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_01 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_02 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_03 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_04 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_05 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_06 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_47;
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_07 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_48;
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_08 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -5041,9 +3476,9 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_3b(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)8U + (size_t)0U];
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)8U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
                                           ax00);
   uint32_t ax1 = bx10 ^ (~bx20 & bx30);
@@ -5083,9 +3518,9 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_3b(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)8U + (size_t)0U];
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)8U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
                                           ax01);
   uint32_t ax10 = bx11 ^ (~bx21 & bx31);
@@ -5142,2027 +3577,563 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_3b(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
-                                          ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
   uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax48);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round1
-with const generics
-- BASE_ROUND= 8
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_3b(
-    libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_4;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_47;
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_48;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
-  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)0U, (size_t)0U);
-  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
-                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
-  uint32_t bx00 = uu____0.fst;
-  uint32_t bx10 = uu____0.snd;
-  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
-                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
-                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
-  uint32_t bx20 = uu____1.fst;
-  uint32_t bx30 = uu____1.snd;
-  uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)8U + (size_t)1U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
-                                          ax00);
-  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax1);
-  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax2);
-  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax3);
-  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax4);
-  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
-                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
-  uint32_t bx01 = uu____2.fst;
-  uint32_t bx11 = uu____2.snd;
-  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
-                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
-                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
-  uint32_t bx21 = uu____3.fst;
-  uint32_t bx31 = uu____3.snd;
-  uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)8U + (size_t)1U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
-                                          ax01);
-  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax10);
-  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax20);
-  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax30);
-  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax40);
-  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
-                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
-  uint32_t bx22 = uu____4.fst;
-  uint32_t bx32 = uu____4.snd;
-  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
-                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
-                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
-  uint32_t bx42 = uu____5.fst;
-  uint32_t bx02 = uu____5.snd;
-  uint32_t bx12 = uu____5.thd;
-  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax02);
-  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax11);
-  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax21);
-  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax31);
-  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
-                                          ax41);
-  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
-                                          ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax48);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round2
-with const generics
-- BASE_ROUND= 8
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_3b(
-    libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_2) ^ ax_37) ^ ax_47;
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_27) ^ ax_38) ^ ax_48;
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_28) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
-  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)0U, (size_t)0U);
-  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
-                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
-  uint32_t bx00 = uu____0.fst;
-  uint32_t bx10 = uu____0.snd;
-  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
-                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
-                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
-  uint32_t bx20 = uu____1.fst;
-  uint32_t bx30 = uu____1.snd;
-  uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)8U + (size_t)2U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
-                                          ax00);
-  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax1);
-  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax2);
-  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax3);
-  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax4);
-  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
-                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
-  uint32_t bx01 = uu____2.fst;
-  uint32_t bx11 = uu____2.snd;
-  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
-                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
-                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
-  uint32_t bx21 = uu____3.fst;
-  uint32_t bx31 = uu____3.snd;
-  uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)8U + (size_t)2U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
-                                          ax01);
-  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax10);
-  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax20);
-  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax30);
-  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax40);
-  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
-                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
-  uint32_t bx22 = uu____4.fst;
-  uint32_t bx32 = uu____4.snd;
-  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
-                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
-                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
-  uint32_t bx42 = uu____5.fst;
-  uint32_t bx02 = uu____5.snd;
-  uint32_t bx12 = uu____5.thd;
-  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax02);
-  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax11);
-  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax21);
-  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax31);
-  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
-                                          ax41);
-  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
-                                          ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax48);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round3
-with const generics
-- BASE_ROUND= 8
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_3b(
-    libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_3) ^ ax_47;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_37) ^ ax_48;
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_38) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
-  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)0U, (size_t)0U);
-  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
-                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
-  uint32_t bx00 = uu____0.fst;
-  uint32_t bx10 = uu____0.snd;
-  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
-                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
-                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
-  uint32_t bx20 = uu____1.fst;
-  uint32_t bx30 = uu____1.snd;
-  uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
-      (bx00 ^ (~bx10 & bx20)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)8U + (size_t)3U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
-                                          ax00);
-  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax1);
-  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax2);
-  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax3);
-  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax4);
-  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
-                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
-  uint32_t bx01 = uu____2.fst;
-  uint32_t bx11 = uu____2.snd;
-  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
-                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
-                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
-  uint32_t bx21 = uu____3.fst;
-  uint32_t bx31 = uu____3.snd;
-  uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
-      (bx01 ^ (~bx11 & bx21)) ^
-      LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)8U + (size_t)3U];
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
-                                          ax01);
-  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax10);
-  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax20);
-  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax30);
-  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax40);
-  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
-                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
-  uint32_t bx22 = uu____4.fst;
-  uint32_t bx32 = uu____4.snd;
-  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
-                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
-                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
-  uint32_t bx42 = uu____5.fst;
-  uint32_t bx02 = uu____5.snd;
-  uint32_t bx12 = uu____5.thd;
-  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax02);
-  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax11);
-  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax21);
-  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax31);
-  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
-                                          ax41);
-  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
-                                          ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
   uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
                                                         (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
   uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
                                           ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
+- BASE_ROUND= 8
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_3b(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)1U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
+  uint32_t bx00 = uu____0.fst;
+  uint32_t bx10 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)1U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)1U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)1U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
+  uint32_t bx20 = uu____1.fst;
+  uint32_t bx30 = uu____1.snd;
+  uint32_t bx40 = uu____1.thd;
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)8U + (size_t)1U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax48);
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)1U, (size_t)0U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
+  uint32_t bx01 = uu____2.fst;
+  uint32_t bx11 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)0U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)0U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)4U, (size_t)0U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
+  uint32_t bx21 = uu____3.fst;
+  uint32_t bx31 = uu____3.snd;
+  uint32_t bx41 = uu____3.thd;
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)8U + (size_t)1U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)1U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)1U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
+  uint32_t bx22 = uu____4.fst;
+  uint32_t bx32 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)2U, (size_t)1U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)3U, (size_t)1U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
+  uint32_t bx42 = uu____5.fst;
+  uint32_t bx02 = uu____5.snd;
+  uint32_t bx12 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)0U, (size_t)0U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
+- BASE_ROUND= 8
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_3b(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)1U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
+  uint32_t bx00 = uu____0.fst;
+  uint32_t bx10 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)0U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)0U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)1U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
+  uint32_t bx20 = uu____1.fst;
+  uint32_t bx30 = uu____1.snd;
+  uint32_t bx40 = uu____1.thd;
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)8U + (size_t)2U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)1U, (size_t)0U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
+  uint32_t bx01 = uu____2.fst;
+  uint32_t bx11 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)2U, (size_t)1U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)1U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)4U, (size_t)0U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
+  uint32_t bx21 = uu____3.fst;
+  uint32_t bx31 = uu____3.snd;
+  uint32_t bx41 = uu____3.thd;
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)8U + (size_t)2U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)0U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)1U, (size_t)0U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
+  uint32_t bx22 = uu____4.fst;
+  uint32_t bx32 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)2U, (size_t)2U, (size_t)0U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)4U, (size_t)3U, (size_t)1U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
+  uint32_t bx42 = uu____5.fst;
+  uint32_t bx02 = uu____5.snd;
+  uint32_t bx12 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)3U, (size_t)0U, (size_t)1U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
+}
+
+/**
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
+- BASE_ROUND= 8
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_3b(
+    libcrux_iot_sha3_state_KeccakState *s) {
+  uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)0U, (size_t)0U);
+  uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a10 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)1U, (size_t)0U);
+  uint32_t d10 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____0 = {.fst = core_num__u32__rotate_left(a0 ^ d00, 0U),
+                         .snd = core_num__u32__rotate_left(a10 ^ d10, 22U)};
+  uint32_t bx00 = uu____0.fst;
+  uint32_t bx10 = uu____0.snd;
+  uint32_t a20 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)2U, (size_t)0U);
+  uint32_t d20 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a30 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)3U, (size_t)0U);
+  uint32_t d30 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a40 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)4U, (size_t)0U);
+  uint32_t d40 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____1 = {.fst = core_num__u32__rotate_left(a20 ^ d20, 22U),
+                         .snd = core_num__u32__rotate_left(a30 ^ d30, 11U),
+                         .thd = core_num__u32__rotate_left(a40 ^ d40, 7U)};
+  uint32_t bx20 = uu____1.fst;
+  uint32_t bx30 = uu____1.snd;
+  uint32_t bx40 = uu____1.thd;
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 = (bx00 ^ (~bx10 & bx20)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)8U + (size_t)3U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
+                                          ax00);
+  uint32_t ax1 = bx10 ^ (~bx20 & bx30);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
+                                          ax1);
+  uint32_t ax2 = bx20 ^ (~bx30 & bx40);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
+                                          ax2);
+  uint32_t ax3 = bx30 ^ (~bx40 & bx00);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
+                                          ax3);
+  uint32_t ax4 = bx40 ^ (~bx00 & bx10);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
+                                          ax4);
+  uint32_t a00 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)0U, (size_t)1U);
+  uint32_t d01 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a11 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)1U, (size_t)1U);
+  uint32_t d11 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____2 = {.fst = core_num__u32__rotate_left(a00 ^ d01, 0U),
+                         .snd = core_num__u32__rotate_left(a11 ^ d11, 22U)};
+  uint32_t bx01 = uu____2.fst;
+  uint32_t bx11 = uu____2.snd;
+  uint32_t a21 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)2U, (size_t)1U);
+  uint32_t d21 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a31 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)3U, (size_t)1U);
+  uint32_t d31 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a41 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)0U, (size_t)4U, (size_t)1U);
+  uint32_t d41 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____3 = {.fst = core_num__u32__rotate_left(a21 ^ d21, 21U),
+                         .snd = core_num__u32__rotate_left(a31 ^ d31, 10U),
+                         .thd = core_num__u32__rotate_left(a41 ^ d41, 7U)};
+  uint32_t bx21 = uu____3.fst;
+  uint32_t bx31 = uu____3.snd;
+  uint32_t bx41 = uu____3.thd;
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 = (bx01 ^ (~bx11 & bx21)) ^
+         LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)8U + (size_t)3U];
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
+                                          ax01);
+  uint32_t ax10 = bx11 ^ (~bx21 & bx31);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
+                                          ax10);
+  uint32_t ax20 = bx21 ^ (~bx31 & bx41);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
+                                          ax20);
+  uint32_t ax30 = bx31 ^ (~bx41 & bx01);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
+                                          ax30);
+  uint32_t ax40 = bx41 ^ (~bx01 & bx11);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
+                                          ax40);
+  uint32_t a01 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)0U, (size_t)0U);
+  uint32_t d02 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
+  uint32_t a12 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)1U, (size_t)0U);
+  uint32_t d12 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
+  uint32_t_x2 uu____4 = {.fst = core_num__u32__rotate_left(a01 ^ d02, 2U),
+                         .snd = core_num__u32__rotate_left(a12 ^ d12, 23U)};
+  uint32_t bx22 = uu____4.fst;
+  uint32_t bx32 = uu____4.snd;
+  uint32_t a22 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)2U, (size_t)0U);
+  uint32_t d22 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
+  uint32_t a32 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)3U, (size_t)0U);
+  uint32_t d32 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
+  uint32_t a42 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)4U, (size_t)0U);
+  uint32_t d42 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
+  uint32_t_x3 uu____5 = {.fst = core_num__u32__rotate_left(a22 ^ d22, 31U),
+                         .snd = core_num__u32__rotate_left(a32 ^ d32, 14U),
+                         .thd = core_num__u32__rotate_left(a42 ^ d42, 10U)};
+  uint32_t bx42 = uu____5.fst;
+  uint32_t bx02 = uu____5.snd;
+  uint32_t bx12 = uu____5.thd;
+  uint32_t ax02 = bx02 ^ (~bx12 & bx22);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
+                                          ax02);
+  uint32_t ax11 = bx12 ^ (~bx22 & bx32);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
+                                          ax11);
+  uint32_t ax21 = bx22 ^ (~bx32 & bx42);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
+                                          ax21);
+  uint32_t ax31 = bx32 ^ (~bx42 & bx02);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
+                                          ax31);
+  uint32_t ax41 = bx42 ^ (~bx02 & bx12);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)0U,
+                                          ax41);
+  uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
+      s, (size_t)1U, (size_t)0U, (size_t)1U);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
+                                          ax12);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
+                                          ax22);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
+                                          ax32);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
+  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
+                                          ax42);
 }
 
 /**
@@ -7172,187 +4143,27 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_3b(
     libcrux_iot_sha3_state_KeccakState *s) {
-  libcrux_iot_sha3_keccak_keccakf1600_round0_3b(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_3b(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_3b(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_3b(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_3b(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_3b(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_3b(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_3b(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round0
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 12
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_78(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_78(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_0 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_00 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_01 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_02 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_03 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_04 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_05 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_06 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_47;
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_07 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_48;
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_08 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -7378,7 +4189,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_78(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)12U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -7420,7 +4232,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_78(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)12U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -7479,461 +4292,53 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_78(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax48);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round1
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
 - BASE_ROUND= 12
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_78(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_78(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_4;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_47;
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_48;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -7959,7 +4364,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_78(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)12U + (size_t)1U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -8001,7 +4407,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_78(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)12U + (size_t)1U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -8060,461 +4467,53 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_78(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax48);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round2
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
 - BASE_ROUND= 12
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_78(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_78(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_2) ^ ax_37) ^ ax_47;
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_27) ^ ax_38) ^ ax_48;
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_28) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -8540,7 +4539,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_78(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)12U + (size_t)2U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -8582,7 +4582,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_78(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)12U + (size_t)2U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -8641,461 +4642,53 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_78(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax48);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round3
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
 - BASE_ROUND= 12
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_78(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_78(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_3) ^ ax_47;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_37) ^ ax_48;
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_38) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -9121,7 +4714,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_78(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)12U + (size_t)3U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -9163,7 +4757,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_78(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)12U + (size_t)3U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -9222,284 +4817,44 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_78(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax48);
 }
 
 /**
@@ -9509,187 +4864,27 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_78(
     libcrux_iot_sha3_state_KeccakState *s) {
-  libcrux_iot_sha3_keccak_keccakf1600_round0_78(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_78(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_78(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_78(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_78(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_78(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_78(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_78(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round0
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 16
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_f1(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_f1(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_0 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_00 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_01 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_02 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_03 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_04 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_05 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_06 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_47;
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_07 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_48;
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_08 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -9715,7 +4910,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_f1(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)16U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -9757,7 +4953,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_f1(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)16U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -9816,461 +5013,53 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_f1(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax48);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round1
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
 - BASE_ROUND= 16
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_f1(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_f1(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_4;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_47;
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_48;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -10296,7 +5085,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_f1(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)16U + (size_t)1U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -10338,7 +5128,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_f1(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)16U + (size_t)1U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -10397,461 +5188,53 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_f1(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax48);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round2
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
 - BASE_ROUND= 16
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_f1(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_f1(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_2) ^ ax_37) ^ ax_47;
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_27) ^ ax_38) ^ ax_48;
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_28) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -10877,7 +5260,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_f1(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)16U + (size_t)2U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -10919,7 +5303,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_f1(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)16U + (size_t)2U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -10978,461 +5363,53 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_f1(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax48);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round3
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
 - BASE_ROUND= 16
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_f1(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_f1(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_3) ^ ax_47;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_37) ^ ax_48;
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_38) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -11458,7 +5435,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_f1(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)16U + (size_t)3U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -11500,7 +5478,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_f1(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)16U + (size_t)3U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -11559,284 +5538,44 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_f1(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax48);
 }
 
 /**
@@ -11846,187 +5585,27 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_f1(
     libcrux_iot_sha3_state_KeccakState *s) {
-  libcrux_iot_sha3_keccak_keccakf1600_round0_f1(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_f1(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_f1(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round0
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 20
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_70(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_70(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_0 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_00 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_01 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_02 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_03 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_04 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_05 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_06 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_47;
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_07 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_48;
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_08 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -12052,7 +5631,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_70(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)20U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -12094,7 +5674,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_70(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)20U + (size_t)0U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -12153,461 +5734,53 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_70(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax48);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round1
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
 - BASE_ROUND= 20
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_70(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_70(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_37) ^ ax_4;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_38) ^ ax_47;
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_3) ^ ax_48;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -12633,7 +5806,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_70(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)20U + (size_t)1U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -12675,7 +5849,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_70(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)20U + (size_t)1U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -12734,461 +5909,53 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_70(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)1U, (size_t)0U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)2U, (size_t)0U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)3U, (size_t)0U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)4U, (size_t)0U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax48);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round2
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
 - BASE_ROUND= 20
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_70(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_70(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_2) ^ ax_37) ^ ax_47;
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_27) ^ ax_38) ^ ax_48;
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_28) ^ ax_3) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -13214,7 +5981,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_70(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)20U + (size_t)2U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -13256,7 +6024,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_70(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)20U + (size_t)2U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -13315,461 +6084,53 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_70(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)2U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
+                                                        (size_t)3U, (size_t)0U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)1U, (size_t)1U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)1U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)0U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)2U, (size_t)0U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)1U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)0U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)3U, (size_t)0U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
-                                                        (size_t)2U, (size_t)0U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)3U,
-                                                        (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
-                                                        (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)0U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)4U, (size_t)1U,
-                                          ax48);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_round3
-with const generics
+A monomorphic instance of
+libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
 - BASE_ROUND= 20
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_70(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_70(
     libcrux_iot_sha3_state_KeccakState *s) {
-  uint32_t ax_00 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)0U);
-  uint32_t ax_30 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t ax_10 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t ax_40 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t ax_20 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)0U)[0U] =
-      (((ax_00 ^ ax_10) ^ ax_20) ^ ax_30) ^ ax_40;
-  uint32_t ax_01 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)0U, (size_t)1U);
-  uint32_t ax_31 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t ax_11 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)0U, (size_t)0U);
-  uint32_t ax_41 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t ax_21 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->c.data, (size_t)1U)[0U] =
-      (((ax_01 ^ ax_11) ^ ax_21) ^ ax_31) ^ ax_41;
-  uint32_t ax_22 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t ax_02 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)0U);
-  uint32_t ax_32 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t ax_12 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t ax_42 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)0U)[0U] =
-      (((ax_02 ^ ax_12) ^ ax_22) ^ ax_32) ^ ax_42;
-  uint32_t ax_23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t ax_03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)1U, (size_t)1U);
-  uint32_t ax_33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t ax_13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)0U);
-  uint32_t ax_43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[1U], (size_t)1U)[0U] =
-      (((ax_03 ^ ax_13) ^ ax_23) ^ ax_33) ^ ax_43;
-  uint32_t ax_44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t ax_24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t ax_04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)1U);
-  uint32_t ax_34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t ax_14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)0U)[0U] =
-      (((ax_04 ^ ax_14) ^ ax_24) ^ ax_34) ^ ax_44;
-  uint32_t ax_45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)1U);
-  uint32_t ax_25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t ax_05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)2U, (size_t)0U);
-  uint32_t ax_35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t ax_15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[2U], (size_t)1U)[0U] =
-      (((ax_05 ^ ax_15) ^ ax_25) ^ ax_35) ^ ax_45;
-  uint32_t ax_16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)0U);
-  uint32_t ax_46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)1U);
-  uint32_t ax_26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t ax_06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)1U);
-  uint32_t ax_36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)0U)[0U] =
-      (((ax_06 ^ ax_16) ^ ax_26) ^ ax_36) ^ ax_46;
-  uint32_t ax_17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t ax_47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t ax_27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t ax_07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)3U, (size_t)0U);
-  uint32_t ax_3 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[3U], (size_t)1U)[0U] =
-      (((ax_07 ^ ax_17) ^ ax_27) ^ ax_3) ^ ax_47;
-  uint32_t ax_37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t ax_18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)0U);
-  uint32_t ax_48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)1U);
-  uint32_t ax_28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t ax_08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)0U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)0U)[0U] =
-      (((ax_08 ^ ax_18) ^ ax_28) ^ ax_37) ^ ax_48;
-  uint32_t ax_38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t ax_1 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t ax_4 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t ax_2 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t ax_0 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)0U, (size_t)4U, (size_t)1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->c.data[4U], (size_t)1U)[0U] =
-      (((ax_0 ^ ax_1) ^ ax_2) ^ ax_38) ^ ax_4;
-  uint32_t c_x4_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)0U)[0U];
-  uint32_t c_x1_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)1U)[0U];
-  uint32_t c_x3_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)0U)[0U];
-  uint32_t c_x0_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)1U)[0U];
-  uint32_t c_x2_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)0U)[0U];
-  uint32_t c_x4_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[4U], (size_t)1U)[0U];
-  uint32_t d_x0_zeta0 = c_x4_zeta0 ^ core_num__u32__rotate_left(c_x1_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)0U)[0U] = d_x0_zeta0;
-  uint32_t d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)1U)[0U] =
-      d_x2_zeta1;
-  uint32_t d_x4_zeta0 = c_x3_zeta0 ^ core_num__u32__rotate_left(c_x0_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)0U)[0U] =
-      d_x4_zeta0;
-  uint32_t d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)1U)[0U] =
-      d_x1_zeta1;
-  uint32_t d_x3_zeta0 = c_x2_zeta0 ^ core_num__u32__rotate_left(c_x4_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)0U)[0U] =
-      d_x3_zeta0;
-  uint32_t c_x1_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[1U], (size_t)0U)[0U];
-  uint32_t c_x3_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[3U], (size_t)1U)[0U];
-  uint32_t c_x2_zeta1 =
-      libcrux_iot_sha3_lane_index_cc(&s->c.data[2U], (size_t)1U)[0U];
-  uint32_t c_x0_zeta0 =
-      libcrux_iot_sha3_lane_index_cc(s->c.data, (size_t)0U)[0U];
-  uint32_t d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(s->d.data, (size_t)1U)[0U] = d_x0_zeta1;
-  uint32_t d_x2_zeta0 = c_x1_zeta0 ^ core_num__u32__rotate_left(c_x3_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[2U], (size_t)0U)[0U] =
-      d_x2_zeta0;
-  uint32_t d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[4U], (size_t)1U)[0U] =
-      d_x4_zeta1;
-  uint32_t d_x1_zeta0 = c_x0_zeta0 ^ core_num__u32__rotate_left(c_x2_zeta1, 1U);
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[1U], (size_t)0U)[0U] =
-      d_x1_zeta0;
-  uint32_t d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-  libcrux_iot_sha3_lane_index_mut_c5(&s->d.data[3U], (size_t)1U)[0U] =
-      d_x3_zeta1;
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
   uint32_t d00 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
@@ -13795,7 +6156,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_70(
   uint32_t bx20 = uu____1.fst;
   uint32_t bx30 = uu____1.snd;
   uint32_t bx40 = uu____1.thd;
-  uint32_t ax00 =
+  uint32_t ax00 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax00 =
       (bx00 ^ (~bx10 & bx20)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_0.data[(size_t)20U + (size_t)3U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)0U,
@@ -13837,7 +6199,8 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_70(
   uint32_t bx21 = uu____3.fst;
   uint32_t bx31 = uu____3.snd;
   uint32_t bx41 = uu____3.thd;
-  uint32_t ax01 =
+  uint32_t ax01 = libcrux_secrets_int_public_integers_classify_27_df(0U);
+  ax01 =
       (bx01 ^ (~bx11 & bx21)) ^
       LIBCRUX_IOT_SHA3_KECCAK_RC_INTERLEAVED_1.data[(size_t)20U + (size_t)3U];
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)0U, (size_t)0U, (size_t)1U,
@@ -13896,284 +6259,44 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_70(
                                           ax41);
   uint32_t a02 = libcrux_iot_sha3_state_get_with_zeta_18(
       s, (size_t)1U, (size_t)0U, (size_t)1U);
-  uint32_t d03 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a13 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)1U, (size_t)1U);
-  uint32_t d13 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d03, 1U),
-                         .snd = core_num__u32__rotate_left(a13 ^ d13, 22U)};
-  uint32_t bx23 = uu____6.fst;
-  uint32_t bx33 = uu____6.snd;
-  uint32_t a23 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)2U, (size_t)1U);
-  uint32_t d23 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a33 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)3U, (size_t)1U);
-  uint32_t d33 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a43 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)1U, (size_t)4U, (size_t)1U);
-  uint32_t d43 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a23 ^ d23, 30U),
-                         .snd = core_num__u32__rotate_left(a33 ^ d33, 14U),
-                         .thd = core_num__u32__rotate_left(a43 ^ d43, 10U)};
-  uint32_t bx43 = uu____7.fst;
-  uint32_t bx03 = uu____7.snd;
-  uint32_t bx13 = uu____7.thd;
-  uint32_t ax03 = bx03 ^ (~bx13 & bx23);
+  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
+  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)1U, (size_t)1U);
+  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
+  uint32_t_x2 uu____6 = {.fst = core_num__u32__rotate_left(a02 ^ d0, 1U),
+                         .snd = core_num__u32__rotate_left(a1 ^ d1, 22U)};
+  uint32_t bx2 = uu____6.fst;
+  uint32_t bx3 = uu____6.snd;
+  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)2U, (size_t)1U);
+  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
+  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)3U, (size_t)1U);
+  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
+  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)1U,
+                                                        (size_t)4U, (size_t)1U);
+  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
+  uint32_t_x3 uu____7 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 30U),
+                         .snd = core_num__u32__rotate_left(a3 ^ d3, 14U),
+                         .thd = core_num__u32__rotate_left(a4 ^ d4, 10U)};
+  uint32_t bx4 = uu____7.fst;
+  uint32_t bx0 = uu____7.snd;
+  uint32_t bx1 = uu____7.thd;
+  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)0U, (size_t)1U,
-                                          ax03);
-  uint32_t ax12 = bx13 ^ (~bx23 & bx33);
+                                          ax0);
+  uint32_t ax12 = bx1 ^ (~bx2 & bx3);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)1U, (size_t)1U,
                                           ax12);
-  uint32_t ax22 = bx23 ^ (~bx33 & bx43);
+  uint32_t ax22 = bx2 ^ (~bx3 & bx4);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)2U, (size_t)1U,
                                           ax22);
-  uint32_t ax32 = bx33 ^ (~bx43 & bx03);
+  uint32_t ax32 = bx3 ^ (~bx4 & bx0);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)3U, (size_t)1U,
                                           ax32);
-  uint32_t ax42 = bx43 ^ (~bx03 & bx13);
+  uint32_t ax42 = bx4 ^ (~bx0 & bx1);
   libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)1U, (size_t)4U, (size_t)1U,
                                           ax42);
-  uint32_t a03 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)0U);
-  uint32_t d04 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a14 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)0U);
-  uint32_t d14 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____8 = {.fst = core_num__u32__rotate_left(a03 ^ d04, 9U),
-                         .snd = core_num__u32__rotate_left(a14 ^ d14, 1U)};
-  uint32_t bx44 = uu____8.fst;
-  uint32_t bx04 = uu____8.snd;
-  uint32_t a24 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)0U);
-  uint32_t d24 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a34 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)0U);
-  uint32_t d34 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a44 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)0U);
-  uint32_t d44 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____9 = {.fst = core_num__u32__rotate_left(a24 ^ d24, 3U),
-                         .snd = core_num__u32__rotate_left(a34 ^ d34, 13U),
-                         .thd = core_num__u32__rotate_left(a44 ^ d44, 4U)};
-  uint32_t bx14 = uu____9.fst;
-  uint32_t bx24 = uu____9.snd;
-  uint32_t bx34 = uu____9.thd;
-  uint32_t ax04 = bx04 ^ (~bx14 & bx24);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)0U,
-                                          ax04);
-  uint32_t ax13 = bx14 ^ (~bx24 & bx34);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)0U,
-                                          ax13);
-  uint32_t ax23 = bx24 ^ (~bx34 & bx44);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)0U,
-                                          ax23);
-  uint32_t ax33 = bx34 ^ (~bx44 & bx04);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)0U,
-                                          ax33);
-  uint32_t ax43 = bx44 ^ (~bx04 & bx14);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)0U,
-                                          ax43);
-  uint32_t a04 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)0U, (size_t)1U);
-  uint32_t d05 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a15 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)1U, (size_t)1U);
-  uint32_t d15 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____10 = {.fst = core_num__u32__rotate_left(a04 ^ d05, 9U),
-                          .snd = core_num__u32__rotate_left(a15 ^ d15, 0U)};
-  uint32_t bx45 = uu____10.fst;
-  uint32_t bx05 = uu____10.snd;
-  uint32_t a25 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)2U, (size_t)1U);
-  uint32_t d25 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a35 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)3U, (size_t)1U);
-  uint32_t d35 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a45 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)2U, (size_t)4U, (size_t)1U);
-  uint32_t d45 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____11 = {.fst = core_num__u32__rotate_left(a25 ^ d25, 3U),
-                          .snd = core_num__u32__rotate_left(a35 ^ d35, 12U),
-                          .thd = core_num__u32__rotate_left(a45 ^ d45, 4U)};
-  uint32_t bx15 = uu____11.fst;
-  uint32_t bx25 = uu____11.snd;
-  uint32_t bx35 = uu____11.thd;
-  uint32_t ax05 = bx05 ^ (~bx15 & bx25);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)0U, (size_t)1U,
-                                          ax05);
-  uint32_t ax14 = bx15 ^ (~bx25 & bx35);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)1U, (size_t)1U,
-                                          ax14);
-  uint32_t ax24 = bx25 ^ (~bx35 & bx45);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)2U, (size_t)1U,
-                                          ax24);
-  uint32_t ax34 = bx35 ^ (~bx45 & bx05);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)3U, (size_t)1U,
-                                          ax34);
-  uint32_t ax44 = bx45 ^ (~bx05 & bx15);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)2U, (size_t)4U, (size_t)1U,
-                                          ax44);
-  uint32_t a05 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)0U);
-  uint32_t d06 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a16 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)0U);
-  uint32_t d16 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____12 = {.fst = core_num__u32__rotate_left(a05 ^ d06, 18U),
-                          .snd = core_num__u32__rotate_left(a16 ^ d16, 5U)};
-  uint32_t bx16 = uu____12.fst;
-  uint32_t bx26 = uu____12.snd;
-  uint32_t a26 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)0U);
-  uint32_t d26 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a36 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)0U);
-  uint32_t d36 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a46 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)0U);
-  uint32_t d46 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____13 = {.fst = core_num__u32__rotate_left(a26 ^ d26, 8U),
-                          .snd = core_num__u32__rotate_left(a36 ^ d36, 28U),
-                          .thd = core_num__u32__rotate_left(a46 ^ d46, 14U)};
-  uint32_t bx36 = uu____13.fst;
-  uint32_t bx46 = uu____13.snd;
-  uint32_t bx06 = uu____13.thd;
-  uint32_t ax06 = bx06 ^ (~bx16 & bx26);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)0U,
-                                          ax06);
-  uint32_t ax15 = bx16 ^ (~bx26 & bx36);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)0U,
-                                          ax15);
-  uint32_t ax25 = bx26 ^ (~bx36 & bx46);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)0U,
-                                          ax25);
-  uint32_t ax35 = bx36 ^ (~bx46 & bx06);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)0U,
-                                          ax35);
-  uint32_t ax45 = bx46 ^ (~bx06 & bx16);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)0U,
-                                          ax45);
-  uint32_t a06 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)0U, (size_t)1U);
-  uint32_t d07 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a17 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)1U, (size_t)1U);
-  uint32_t d17 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____14 = {.fst = core_num__u32__rotate_left(a06 ^ d07, 18U),
-                          .snd = core_num__u32__rotate_left(a17 ^ d17, 5U)};
-  uint32_t bx17 = uu____14.fst;
-  uint32_t bx27 = uu____14.snd;
-  uint32_t a27 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)2U, (size_t)1U);
-  uint32_t d27 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a37 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)3U, (size_t)1U);
-  uint32_t d37 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a47 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)3U, (size_t)4U, (size_t)1U);
-  uint32_t d47 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____15 = {.fst = core_num__u32__rotate_left(a27 ^ d27, 7U),
-                          .snd = core_num__u32__rotate_left(a37 ^ d37, 28U),
-                          .thd = core_num__u32__rotate_left(a47 ^ d47, 13U)};
-  uint32_t bx37 = uu____15.fst;
-  uint32_t bx47 = uu____15.snd;
-  uint32_t bx07 = uu____15.thd;
-  uint32_t ax07 = bx07 ^ (~bx17 & bx27);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)0U, (size_t)1U,
-                                          ax07);
-  uint32_t ax16 = bx17 ^ (~bx27 & bx37);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)1U, (size_t)1U,
-                                          ax16);
-  uint32_t ax26 = bx27 ^ (~bx37 & bx47);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)2U, (size_t)1U,
-                                          ax26);
-  uint32_t ax36 = bx37 ^ (~bx47 & bx07);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)3U, (size_t)1U,
-                                          ax36);
-  uint32_t ax46 = bx47 ^ (~bx07 & bx17);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)3U, (size_t)4U, (size_t)1U,
-                                          ax46);
-  uint32_t a07 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)0U);
-  uint32_t d08 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)1U)[0U];
-  uint32_t a18 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)1U, (size_t)0U);
-  uint32_t d18 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)0U)[0U];
-  uint32_t_x2 uu____16 = {.fst = core_num__u32__rotate_left(a07 ^ d08, 21U),
-                          .snd = core_num__u32__rotate_left(a18 ^ d18, 1U)};
-  uint32_t bx38 = uu____16.fst;
-  uint32_t bx48 = uu____16.snd;
-  uint32_t a28 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)2U, (size_t)0U);
-  uint32_t d28 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)0U)[0U];
-  uint32_t a38 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)3U, (size_t)0U);
-  uint32_t d38 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)1U)[0U];
-  uint32_t a48 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)4U, (size_t)0U);
-  uint32_t d48 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)1U)[0U];
-  uint32_t_x3 uu____17 = {.fst = core_num__u32__rotate_left(a28 ^ d28, 31U),
-                          .snd = core_num__u32__rotate_left(a38 ^ d38, 28U),
-                          .thd = core_num__u32__rotate_left(a48 ^ d48, 20U)};
-  uint32_t bx08 = uu____17.fst;
-  uint32_t bx18 = uu____17.snd;
-  uint32_t bx28 = uu____17.thd;
-  uint32_t ax08 = bx08 ^ (~bx18 & bx28);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)0U,
-                                          ax08);
-  uint32_t ax17 = bx18 ^ (~bx28 & bx38);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)0U,
-                                          ax17);
-  uint32_t ax27 = bx28 ^ (~bx38 & bx48);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)0U,
-                                          ax27);
-  uint32_t ax37 = bx38 ^ (~bx48 & bx08);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)0U,
-                                          ax37);
-  uint32_t ax47 = bx48 ^ (~bx08 & bx18);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)0U,
-                                          ax47);
-  uint32_t a08 = libcrux_iot_sha3_state_get_with_zeta_18(
-      s, (size_t)4U, (size_t)0U, (size_t)1U);
-  uint32_t d0 = libcrux_iot_sha3_lane_index_cc(s->d.data, (size_t)0U)[0U];
-  uint32_t a1 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)1U, (size_t)1U);
-  uint32_t d1 = libcrux_iot_sha3_lane_index_cc(&s->d.data[1U], (size_t)1U)[0U];
-  uint32_t_x2 uu____18 = {.fst = core_num__u32__rotate_left(a08 ^ d0, 20U),
-                          .snd = core_num__u32__rotate_left(a1 ^ d1, 1U)};
-  uint32_t bx3 = uu____18.fst;
-  uint32_t bx4 = uu____18.snd;
-  uint32_t a2 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)2U, (size_t)1U);
-  uint32_t d2 = libcrux_iot_sha3_lane_index_cc(&s->d.data[2U], (size_t)1U)[0U];
-  uint32_t a3 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)3U, (size_t)1U);
-  uint32_t d3 = libcrux_iot_sha3_lane_index_cc(&s->d.data[3U], (size_t)0U)[0U];
-  uint32_t a4 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)4U,
-                                                        (size_t)4U, (size_t)1U);
-  uint32_t d4 = libcrux_iot_sha3_lane_index_cc(&s->d.data[4U], (size_t)0U)[0U];
-  uint32_t_x3 uu____19 = {.fst = core_num__u32__rotate_left(a2 ^ d2, 31U),
-                          .snd = core_num__u32__rotate_left(a3 ^ d3, 27U),
-                          .thd = core_num__u32__rotate_left(a4 ^ d4, 19U)};
-  uint32_t bx0 = uu____19.fst;
-  uint32_t bx1 = uu____19.snd;
-  uint32_t bx2 = uu____19.thd;
-  uint32_t ax0 = bx0 ^ (~bx1 & bx2);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)0U, (size_t)1U,
-                                          ax0);
-  uint32_t ax18 = bx1 ^ (~bx2 & bx3);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)1U, (size_t)1U,
-                                          ax18);
-  uint32_t ax28 = bx2 ^ (~bx3 & bx4);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)2U, (size_t)1U,
-                                          ax28);
-  uint32_t ax38 = bx3 ^ (~bx4 & bx0);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)3U, (size_t)1U,
-                                          ax38);
-  uint32_t ax48 = bx4 ^ (~bx0 & bx1);
-  libcrux_iot_sha3_state_set_with_zeta_18(s, (size_t)4U, (size_t)4U, (size_t)1U,
-                                          ax48);
 }
 
 /**
@@ -14183,10 +6306,18 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_70(
     libcrux_iot_sha3_state_KeccakState *s) {
-  libcrux_iot_sha3_keccak_keccakf1600_round0_70(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_70(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_70(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
 KRML_NOINLINE void libcrux_iot_sha3_keccak_keccakf1600(
@@ -14236,6 +6367,11 @@ libcrux_iot_sha3_lane_deinterleave_8d(Eurydice_arr_b2 self) {
                even_spaced_hi | odd_spaced_hi << 1U}});
 }
 
+typedef struct const_size_t__x2_s {
+  const size_t *fst;
+  const size_t *snd;
+} const_size_t__x2;
+
 /**
 A monomorphic instance of libcrux_iot_sha3.state.load_block_2u32
 with const generics
@@ -14262,7 +6398,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_f8(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -14273,7 +6409,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_f8(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -14444,44 +6580,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_f8(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_f8(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.lane.split_at_mut_1
-with types uint8_t
-
-*/
-KRML_MUSTINLINE Eurydice_dst_ref_mut_uint8_t_size_t_x2
-libcrux_iot_sha3_lane_split_at_mut_1_90(Eurydice_mut_borrow_slice_u8 out,
-                                        size_t mid) {
-  return Eurydice_slice_split_at_mut(out, mid, uint8_t,
-                                     Eurydice_dst_ref_mut_uint8_t_size_t_x2);
-}
-
-/**
-This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
-*/
-/**
-A monomorphic instance of libcrux_iot_sha3.lane.split_at_mut_n_8d
-with types uint8_t
-
-*/
-KRML_MUSTINLINE Eurydice_dst_ref_mut_uint8_t_size_t_x2
-libcrux_iot_sha3_lane_split_at_mut_n_8d_90(Eurydice_mut_borrow_slice_u8 a,
-                                           size_t mid) {
-  return libcrux_iot_sha3_lane_split_at_mut_1_90(a, mid);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -14531,18 +6634,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_f8(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_f8(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -14553,11 +6649,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_96(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)72U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)72U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)72U;
+  size_t rem = data.meta % (size_t)72U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)72U;
   size_t last = outlen - outlen % (size_t)72U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -14565,28 +6659,22 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_96(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_f8(&s, data, i0 * (size_t)72U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_96(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_96(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_f8(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
-        libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)72U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
-    libcrux_iot_sha3_keccak_squeeze_first_block_f8(&s, o0);
+    libcrux_iot_sha3_keccak_squeeze_first_block_f8(&s, out);
+    size_t offset = (size_t)72U;
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
-          libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)72U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
-      libcrux_iot_sha3_keccak_squeeze_next_block_f8(&s, o);
-      o1 = orest;
+      libcrux_iot_sha3_keccak_squeeze_next_block_f8(
+          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
+      offset = offset + (size_t)72U;
     }
     if (last < outlen) {
-      libcrux_iot_sha3_keccak_squeeze_last_f8(s, o1);
+      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
+      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
+      libcrux_iot_sha3_keccak_squeeze_last_f8(
+          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
     }
   }
 }
@@ -14636,7 +6724,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_5b(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -14647,7 +6735,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_5b(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -14818,18 +6906,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_5b(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -14879,18 +6960,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_5b(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_5b(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -14901,11 +6975,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)136U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)136U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)136U;
+  size_t rem = data.meta % (size_t)136U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)136U;
   size_t last = outlen - outlen % (size_t)136U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -14913,28 +6985,22 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_5b(&s, data, i0 * (size_t)136U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_ad(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_ad(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
-        libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)136U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
-    libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s, o0);
+    libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s, out);
+    size_t offset = (size_t)136U;
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
-          libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)136U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
-      libcrux_iot_sha3_keccak_squeeze_next_block_5b(&s, o);
-      o1 = orest;
+      libcrux_iot_sha3_keccak_squeeze_next_block_5b(
+          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
+      offset = offset + (size_t)136U;
     }
     if (last < outlen) {
-      libcrux_iot_sha3_keccak_squeeze_last_5b(s, o1);
+      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
+      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
+      libcrux_iot_sha3_keccak_squeeze_last_5b(
+          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
     }
   }
 }
@@ -14993,11 +7059,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad0(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)136U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)136U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)136U;
+  size_t rem = data.meta % (size_t)136U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)136U;
   size_t last = outlen - outlen % (size_t)136U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -15005,28 +7069,22 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad0(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_5b(&s, data, i0 * (size_t)136U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_ad0(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_ad0(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
-        libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)136U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
-    libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s, o0);
+    libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s, out);
+    size_t offset = (size_t)136U;
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
-          libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)136U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
-      libcrux_iot_sha3_keccak_squeeze_next_block_5b(&s, o);
-      o1 = orest;
+      libcrux_iot_sha3_keccak_squeeze_next_block_5b(
+          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
+      offset = offset + (size_t)136U;
     }
     if (last < outlen) {
-      libcrux_iot_sha3_keccak_squeeze_last_5b(s, o1);
+      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
+      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
+      libcrux_iot_sha3_keccak_squeeze_last_5b(
+          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
     }
   }
 }
@@ -15084,7 +7142,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_3a(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -15095,7 +7153,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_3a(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -15176,10 +7234,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_c6(
 */
 void libcrux_iot_sha3_portable_incremental_shake128_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 data0) {
-  libcrux_iot_sha3_state_KeccakState *uu____0 = s;
-  Eurydice_borrow_slice_u8 uu____1 = data0;
-  libcrux_iot_sha3_keccak_absorb_final_c6(uu____0, uu____1, (size_t)0U,
-                                          Eurydice_slice_len(data0, uint8_t));
+  libcrux_iot_sha3_keccak_absorb_final_c6(s, data0, (size_t)0U, data0.meta);
 }
 
 /**
@@ -15259,17 +7314,11 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_three_blocks_3a(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____0 =
-      libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)168U);
-  Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
-  Eurydice_mut_borrow_slice_u8 o10 = uu____0.snd;
-  libcrux_iot_sha3_keccak_squeeze_first_block_3a(s, o0);
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____1 =
-      libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o10, (size_t)168U);
-  Eurydice_mut_borrow_slice_u8 o1 = uu____1.fst;
-  Eurydice_mut_borrow_slice_u8 o2 = uu____1.snd;
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(s, o1);
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(s, o2);
+  libcrux_iot_sha3_keccak_squeeze_first_block_3a(s, out);
+  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
+      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
+      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)2U * (size_t)168U));
 }
 
 /**
@@ -15340,7 +7389,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_2c(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -15351,7 +7400,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_2c(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -15522,18 +7571,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_2c(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_2c(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -15583,18 +7625,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_2c(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_2c(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -15605,11 +7640,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_1e(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)144U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)144U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)144U;
+  size_t rem = data.meta % (size_t)144U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)144U;
   size_t last = outlen - outlen % (size_t)144U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -15617,28 +7650,22 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_1e(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_2c(&s, data, i0 * (size_t)144U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_1e(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_1e(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_2c(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
-        libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)144U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
-    libcrux_iot_sha3_keccak_squeeze_first_block_2c(&s, o0);
+    libcrux_iot_sha3_keccak_squeeze_first_block_2c(&s, out);
+    size_t offset = (size_t)144U;
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
-          libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)144U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
-      libcrux_iot_sha3_keccak_squeeze_next_block_2c(&s, o);
-      o1 = orest;
+      libcrux_iot_sha3_keccak_squeeze_next_block_2c(
+          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
+      offset = offset + (size_t)144U;
     }
     if (last < outlen) {
-      libcrux_iot_sha3_keccak_squeeze_last_2c(s, o1);
+      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
+      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
+      libcrux_iot_sha3_keccak_squeeze_last_2c(
+          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
     }
   }
 }
@@ -15688,7 +7715,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_7a(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
@@ -15699,7 +7726,7 @@ KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_7a(
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_44){
+        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
     Eurydice_arr_b2 uu____0 =
         libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
@@ -15870,18 +7897,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_7a(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_7a(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -15931,18 +7951,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_7a(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_7a(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -15953,11 +7966,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_7c(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)104U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)104U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)104U;
+  size_t rem = data.meta % (size_t)104U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)104U;
   size_t last = outlen - outlen % (size_t)104U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -15965,28 +7976,22 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_7c(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_7a(&s, data, i0 * (size_t)104U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_7c(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_7c(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_7a(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
-        libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)104U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
-    libcrux_iot_sha3_keccak_squeeze_first_block_7a(&s, o0);
+    libcrux_iot_sha3_keccak_squeeze_first_block_7a(&s, out);
+    size_t offset = (size_t)104U;
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
-          libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)104U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
-      libcrux_iot_sha3_keccak_squeeze_next_block_7a(&s, o);
-      o1 = orest;
+      libcrux_iot_sha3_keccak_squeeze_next_block_7a(
+          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
+      offset = offset + (size_t)104U;
     }
     if (last < outlen) {
-      libcrux_iot_sha3_keccak_squeeze_last_7a(s, o1);
+      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
+      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
+      libcrux_iot_sha3_keccak_squeeze_last_7a(
+          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
     }
   }
 }
@@ -16146,18 +8151,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_3a(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_3a(s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -16171,18 +8169,11 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_3a(
   Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
       (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
   libcrux_iot_sha3_state_store_block_full_18_3a(&s, &b);
-  Eurydice_mut_borrow_slice_u8 uu____0 = out;
-  const Eurydice_arr_88 *uu____1 = &b;
-  Eurydice_slice_copy(
-      uu____0,
-      Eurydice_array_to_subslice_shared_36(
-          uu____1, (KRML_CLITERAL(core_ops_range_Range_08){
-                       .start = (size_t)0U,
-                       .end = Eurydice_slice_len(
-                           (KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                               .ptr = out.ptr, .meta = out.meta}),
-                           uint8_t)})),
-      uint8_t);
+  Eurydice_slice_copy(out,
+                      Eurydice_array_to_subslice_shared_36(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                                  .start = (size_t)0U, .end = out.meta})),
+                      uint8_t);
 }
 
 /**
@@ -16193,11 +8184,9 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_c6(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = Eurydice_slice_len(data, uint8_t) / (size_t)168U;
-  size_t rem = Eurydice_slice_len(data, uint8_t) % (size_t)168U;
-  size_t outlen = Eurydice_slice_len((KRML_CLITERAL(Eurydice_borrow_slice_u8){
-                                         .ptr = out.ptr, .meta = out.meta}),
-                                     uint8_t);
+  size_t n = data.meta / (size_t)168U;
+  size_t rem = data.meta % (size_t)168U;
+  size_t outlen = out.meta;
   size_t blocks = outlen / (size_t)168U;
   size_t last = outlen - outlen % (size_t)168U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
@@ -16205,28 +8194,22 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_c6(
     size_t i0 = i;
     libcrux_iot_sha3_keccak_absorb_block_3a(&s, data, i0 * (size_t)168U);
   }
-  libcrux_iot_sha3_state_KeccakState *uu____0 = &s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_c6(
-      uu____0, uu____1, Eurydice_slice_len(data, uint8_t) - rem, rem);
+  libcrux_iot_sha3_keccak_absorb_final_c6(&s, data, data.meta - rem, rem);
   if (blocks == (size_t)0U) {
     libcrux_iot_sha3_keccak_squeeze_first_and_last_3a(&s, out);
   } else {
-    Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
-        libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)168U);
-    Eurydice_mut_borrow_slice_u8 o0 = uu____2.fst;
-    Eurydice_mut_borrow_slice_u8 o1 = uu____2.snd;
-    libcrux_iot_sha3_keccak_squeeze_first_block_3a(&s, o0);
+    libcrux_iot_sha3_keccak_squeeze_first_block_3a(&s, out);
+    size_t offset = (size_t)168U;
     for (size_t i = (size_t)1U; i < blocks; i++) {
-      Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
-          libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o1, (size_t)168U);
-      Eurydice_mut_borrow_slice_u8 o = uu____3.fst;
-      Eurydice_mut_borrow_slice_u8 orest = uu____3.snd;
-      libcrux_iot_sha3_keccak_squeeze_next_block_3a(&s, o);
-      o1 = orest;
+      libcrux_iot_sha3_keccak_squeeze_next_block_3a(
+          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
+      offset = offset + (size_t)168U;
     }
     if (last < outlen) {
-      libcrux_iot_sha3_keccak_squeeze_last_3a(s, o1);
+      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
+      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
+      libcrux_iot_sha3_keccak_squeeze_last_3a(
+          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
     }
   }
 }
@@ -16285,27 +8268,15 @@ with const generics
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_five_blocks_3a(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____0 =
-      libcrux_iot_sha3_lane_split_at_mut_n_8d_90(out, (size_t)168U);
-  Eurydice_mut_borrow_slice_u8 o0 = uu____0.fst;
-  Eurydice_mut_borrow_slice_u8 o10 = uu____0.snd;
-  libcrux_iot_sha3_keccak_squeeze_first_block_3a(s, o0);
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____1 =
-      libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o10, (size_t)168U);
-  Eurydice_mut_borrow_slice_u8 o1 = uu____1.fst;
-  Eurydice_mut_borrow_slice_u8 o20 = uu____1.snd;
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(s, o1);
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____2 =
-      libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o20, (size_t)168U);
-  Eurydice_mut_borrow_slice_u8 o2 = uu____2.fst;
-  Eurydice_mut_borrow_slice_u8 o30 = uu____2.snd;
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(s, o2);
-  Eurydice_dst_ref_mut_uint8_t_size_t_x2 uu____3 =
-      libcrux_iot_sha3_lane_split_at_mut_n_8d_90(o30, (size_t)168U);
-  Eurydice_mut_borrow_slice_u8 o3 = uu____3.fst;
-  Eurydice_mut_borrow_slice_u8 o4 = uu____3.snd;
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(s, o3);
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(s, o4);
+  libcrux_iot_sha3_keccak_squeeze_first_block_3a(s, out);
+  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
+      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
+      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)2U * (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
+      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)3U * (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
+      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)4U * (size_t)168U));
 }
 
 /**
@@ -16321,10 +8292,7 @@ void libcrux_iot_sha3_portable_incremental_shake128_squeeze_first_five_blocks(
 */
 void libcrux_iot_sha3_portable_incremental_shake256_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_state_KeccakState *uu____0 = s;
-  Eurydice_borrow_slice_u8 uu____1 = data;
-  libcrux_iot_sha3_keccak_absorb_final_ad0(uu____0, uu____1, (size_t)0U,
-                                           Eurydice_slice_len(data, uint8_t));
+  libcrux_iot_sha3_keccak_absorb_final_ad0(s, data, (size_t)0U, data.meta);
 }
 
 /**
@@ -16340,7 +8308,7 @@ libcrux_iot_sha3_portable_incremental_shake256_init(void) {
 */
 void libcrux_iot_sha3_portable_incremental_shake256_squeeze_first_block(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_squeeze_first_block_5b(s, out);
+  libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s[0U], out);
 }
 
 /**

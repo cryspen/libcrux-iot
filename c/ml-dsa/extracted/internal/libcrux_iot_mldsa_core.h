@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: unset
- * Libcrux: 1ad7c25705450131b575043e252c944035898962
+ * Charon: 377317d6b25702c46ffff072fa00a3e32095e46f
+ * Eurydice: b227478b67c6a6e2ff611f978f10d6b7f26472ac
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
+ * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
+ * Libcrux: 0ab0448a17b81dc787e95a2c646c27ae75247f7b
  */
 
 #ifndef internal_libcrux_iot_mldsa_core_H
@@ -30,12 +30,6 @@ static inline Eurydice_array_u8x4 core_num__u32__to_le_bytes(uint32_t x0);
 
 static inline uint64_t core_num__u64__from_le_bytes(Eurydice_array_u8x8 x0);
 
-extern uint8_t core_ops_bit__core__ops__bit__BitAnd_u8__u8__for__0__u8___bitand(
-    const uint8_t *x0, uint8_t x1);
-
-extern uint8_t core_ops_bit__core__ops__bit__Shr_i32__u8__for__0__u8___shr(
-    const uint8_t *x0, int32_t x1);
-
 /**
 A monomorphic instance of core.ops.range.Range
 with types size_t
@@ -52,9 +46,84 @@ This function found in impl {libcrux_secrets::int::CastOps for u32}
 uint64_t libcrux_secrets_int_as_u64_b8(uint32_t self);
 
 /**
+This function found in impl {libcrux_secrets::traits::Classify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
+with types uint32_t
+
+*/
+uint32_t libcrux_secrets_int_public_integers_classify_27_df(uint32_t self);
+
+/**
 This function found in impl {libcrux_secrets::int::CastOps for u64}
 */
 uint32_t libcrux_secrets_int_as_u32_a3(uint64_t self);
+
+/**
+This function found in impl {libcrux_secrets::traits::Classify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
+with types int64_t
+
+*/
+int64_t libcrux_secrets_int_public_integers_classify_27_b8(int64_t self);
+
+/**
+This function found in impl {libcrux_secrets::traits::Declassify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.declassify_d8
+with types int32_t
+
+*/
+int32_t libcrux_secrets_int_public_integers_declassify_d8_a8(int32_t self);
+
+/**
+This function found in impl {libcrux_secrets::int::CastOps for i32}
+*/
+int64_t libcrux_secrets_int_as_i64_36(int32_t self);
+
+/**
+This function found in impl {libcrux_secrets::int::CastOps for i64}
+*/
+uint64_t libcrux_secrets_int_as_u64_60(int64_t self);
+
+/**
+This function found in impl {libcrux_secrets::traits::Classify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
+with types int32_t
+
+*/
+int32_t libcrux_secrets_int_public_integers_classify_27_a8(int32_t self);
+
+/**
+This function found in impl {libcrux_secrets::int::CastOps for u64}
+*/
+int32_t libcrux_secrets_int_as_i32_a3(uint64_t self);
+
+/**
+This function found in impl {libcrux_secrets::int::CastOps for i64}
+*/
+int32_t libcrux_secrets_int_as_i32_60(int64_t self);
+
+/**
+This function found in impl {libcrux_secrets::traits::Declassify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.declassify_d8
+with types uint8_t
+
+*/
+uint8_t libcrux_secrets_int_public_integers_declassify_d8_90(uint8_t self);
+
+/**
+This function found in impl {libcrux_secrets::int::CastOps for u8}
+*/
+int32_t libcrux_secrets_int_as_i32_59(uint8_t self);
 
 /**
 This function found in impl {libcrux_secrets::traits::Classify<T> for T}
@@ -67,11 +136,16 @@ with types uint8_t
 uint8_t libcrux_secrets_int_public_integers_classify_27_90(uint8_t self);
 
 /**
+This function found in impl {libcrux_secrets::int::CastOps for i32}
+*/
+uint8_t libcrux_secrets_int_as_u8_36(int32_t self);
+
+/**
 A monomorphic instance of libcrux_iot_ml_dsa.types.MLDSASignature
 with const generics
 - $4627size_t
 */
-typedef Eurydice_arr_38 libcrux_iot_ml_dsa_types_MLDSASignature_9b;
+typedef Eurydice_arr_380 libcrux_iot_ml_dsa_types_MLDSASignature_9b;
 
 /**
  A reference to the raw byte array.
@@ -84,8 +158,8 @@ A monomorphic instance of libcrux_iot_ml_dsa.types.as_ref_ad
 with const generics
 - SIZE= 4627
 */
-const Eurydice_arr_38 *libcrux_iot_ml_dsa_types_as_ref_ad_c2(
-    const Eurydice_arr_38 *self);
+const Eurydice_arr_380 *libcrux_iot_ml_dsa_types_as_ref_ad_c2(
+    const Eurydice_arr_380 *self);
 
 /**
  A reference to the raw byte array.
@@ -99,8 +173,32 @@ A monomorphic instance of libcrux_iot_ml_dsa.types.as_ref_e9
 with const generics
 - SIZE= 2592
 */
-const Eurydice_arr_510 *libcrux_iot_ml_dsa_types_as_ref_e9_d8(
-    const Eurydice_arr_510 *self);
+const Eurydice_arr_51 *libcrux_iot_ml_dsa_types_as_ref_e9_d8(
+    const Eurydice_arr_51 *self);
+
+/**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
+with types Eurydice_arr uint8_t[[$64size_t]]
+
+*/
+const Eurydice_arr_06 *libcrux_secrets_int_public_integers_classify_ref_c5_49(
+    const Eurydice_arr_06 *self);
+
+/**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
+with types Eurydice_arr uint8_t[[$2592size_t]]
+
+*/
+const Eurydice_arr_51 *libcrux_secrets_int_public_integers_classify_ref_c5_fc(
+    const Eurydice_arr_51 *self);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -109,7 +207,7 @@ with const generics
 - N= 4627
 */
 Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_24(
-    const Eurydice_arr_38 *a);
+    const Eurydice_arr_380 *a);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -118,7 +216,7 @@ with const generics
 - N= 2592
 */
 Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_f70(
-    const Eurydice_arr_510 *a);
+    const Eurydice_arr_51 *a);
 
 /**
  A reference to the raw byte array.
@@ -149,17 +247,18 @@ with types uint8_t
 with const generics
 - N= 4627
 */
-Eurydice_mut_borrow_slice_u8 Eurydice_array_to_slice_mut_24(Eurydice_arr_38 *a);
+Eurydice_mut_borrow_slice_u8 Eurydice_array_to_slice_mut_24(
+    Eurydice_arr_380 *a);
 
 /**
 A monomorphic instance of Eurydice.arr
-with types Eurydice_arr int32_t[[$256size_t]]
+with types Eurydice_arr_c3
 with const generics
 - $8size_t
 */
-typedef struct Eurydice_arr_05_s {
+typedef struct Eurydice_arr_fb_s {
   Eurydice_arr_c3 data[8U];
-} Eurydice_arr_05;
+} Eurydice_arr_fb;
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -167,8 +266,8 @@ with types Eurydice_arr int32_t[[$256size_t]]
 with const generics
 - N= 8
 */
-Eurydice_dst_ref_shared_59 Eurydice_array_to_slice_shared_6d1(
-    const Eurydice_arr_05 *a);
+Eurydice_dst_ref_shared_22 Eurydice_array_to_slice_shared_6d1(
+    const Eurydice_arr_fb *a);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_mut
@@ -176,7 +275,7 @@ with types Eurydice_arr int32_t[[$256size_t]]
 with const generics
 - N= 8
 */
-Eurydice_dst_ref_mut_59 Eurydice_array_to_slice_mut_6d1(Eurydice_arr_05 *a);
+Eurydice_dst_ref_mut_22 Eurydice_array_to_slice_mut_6d1(Eurydice_arr_fb *a);
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -216,7 +315,7 @@ A monomorphic instance of libcrux_iot_ml_dsa.types.zero_ad
 with const generics
 - SIZE= 4627
 */
-Eurydice_arr_38 libcrux_iot_ml_dsa_types_zero_ad_c2(void);
+Eurydice_arr_380 libcrux_iot_ml_dsa_types_zero_ad_c2(void);
 
 /**
  Build
@@ -230,7 +329,7 @@ A monomorphic instance of libcrux_iot_ml_dsa.types.new_e9
 with const generics
 - SIZE= 2592
 */
-Eurydice_arr_510 libcrux_iot_ml_dsa_types_new_e9_d8(Eurydice_arr_510 value);
+Eurydice_arr_51 libcrux_iot_ml_dsa_types_new_e9_d8(Eurydice_arr_51 value);
 
 /**
  Build
@@ -252,7 +351,7 @@ with const generics
 - N= 2592
 */
 Eurydice_mut_borrow_slice_u8 Eurydice_array_to_slice_mut_f70(
-    Eurydice_arr_510 *a);
+    Eurydice_arr_51 *a);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_mut
@@ -297,6 +396,30 @@ with const generics
 - SIZE= 1952
 */
 const Eurydice_arr_4a *libcrux_iot_ml_dsa_types_as_ref_e9_97(
+    const Eurydice_arr_4a *self);
+
+/**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
+with types Eurydice_arr uint8_t[[$48size_t]]
+
+*/
+const Eurydice_arr_5f *libcrux_secrets_int_public_integers_classify_ref_c5_7d(
+    const Eurydice_arr_5f *self);
+
+/**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
+with types Eurydice_arr uint8_t[[$1952size_t]]
+
+*/
+const Eurydice_arr_4a *libcrux_secrets_int_public_integers_classify_ref_c5_3d(
     const Eurydice_arr_4a *self);
 
 /**
@@ -351,13 +474,13 @@ Eurydice_mut_borrow_slice_u8 Eurydice_array_to_slice_mut_ee0(
 
 /**
 A monomorphic instance of Eurydice.arr
-with types Eurydice_arr int32_t[[$256size_t]]
+with types Eurydice_arr_c3
 with const generics
 - $6size_t
 */
-typedef struct Eurydice_arr_e6_s {
+typedef struct Eurydice_arr_b5_s {
   Eurydice_arr_c3 data[6U];
-} Eurydice_arr_e6;
+} Eurydice_arr_b5;
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -365,8 +488,20 @@ with types Eurydice_arr int32_t[[$256size_t]]
 with const generics
 - N= 6
 */
-Eurydice_dst_ref_shared_59 Eurydice_array_to_slice_shared_6d0(
-    const Eurydice_arr_e6 *a);
+Eurydice_dst_ref_shared_22 Eurydice_array_to_slice_shared_6d0(
+    const Eurydice_arr_b5 *a);
+
+/**
+This function found in impl {libcrux_secrets::traits::DeclassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.declassify_ref_ad
+with types Eurydice_arr uint8_t[[$48size_t]]
+
+*/
+const Eurydice_arr_5f *libcrux_secrets_int_public_integers_declassify_ref_ad_7d(
+    const Eurydice_arr_5f *self);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_mut
@@ -374,7 +509,7 @@ with types Eurydice_arr int32_t[[$256size_t]]
 with const generics
 - N= 6
 */
-Eurydice_dst_ref_mut_59 Eurydice_array_to_slice_mut_6d0(Eurydice_arr_e6 *a);
+Eurydice_dst_ref_mut_22 Eurydice_array_to_slice_mut_6d0(Eurydice_arr_b5 *a);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -479,6 +614,86 @@ const Eurydice_arr_40 *libcrux_iot_ml_dsa_types_as_ref_e9_db(
     const Eurydice_arr_40 *self);
 
 /**
+This function found in impl {libcrux_secrets::traits::Classify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
+with types Eurydice_arr int32_t[[$256size_t]]
+
+*/
+Eurydice_arr_c3 libcrux_secrets_int_public_integers_classify_27_5c(
+    Eurydice_arr_c3 self);
+
+/**
+A monomorphic instance of Eurydice.array_to_subslice_to_shared
+with types int32_t, core_ops_range_RangeTo size_t, Eurydice_derefed_slice
+int32_t with const generics
+- N= 263
+*/
+Eurydice_dst_ref_shared_fc Eurydice_array_to_subslice_to_shared_c2(
+    const Eurydice_arr_13 *a, size_t r);
+
+/**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a
+(@Slice<T>)> for &'a (@Slice<T>)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.classify_public.classify_ref_9b
+with types int32_t
+
+*/
+Eurydice_dst_ref_shared_fc
+libcrux_secrets_int_classify_public_classify_ref_9b_a8(
+    Eurydice_dst_ref_shared_fc self);
+
+/**
+This function found in impl {libcrux_secrets::traits::Classify<T> for T}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_27
+with types Eurydice_arr uint8_t[[$34size_t]]
+
+*/
+Eurydice_arr_48 libcrux_secrets_int_public_integers_classify_27_2c(
+    Eurydice_arr_48 self);
+
+/**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
+with types Eurydice_arr uint8_t[[$32size_t]]
+
+*/
+const Eurydice_arr_60 *libcrux_secrets_int_public_integers_classify_ref_c5_62(
+    const Eurydice_arr_60 *self);
+
+/**
+This function found in impl {libcrux_secrets::traits::DeclassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.declassify_ref_ad
+with types Eurydice_arr uint8_t[[$64size_t]]
+
+*/
+const Eurydice_arr_06 *libcrux_secrets_int_public_integers_declassify_ref_ad_49(
+    const Eurydice_arr_06 *self);
+
+/**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
+with types Eurydice_arr uint8_t[[$1312size_t]]
+
+*/
+const Eurydice_arr_40 *libcrux_secrets_int_public_integers_classify_ref_c5_90(
+    const Eurydice_arr_40 *self);
+
+/**
 A monomorphic instance of Eurydice.array_to_slice_shared
 with types uint8_t
 with const generics
@@ -530,13 +745,13 @@ Eurydice_mut_borrow_slice_u8 Eurydice_array_to_slice_mut_180(
 
 /**
 A monomorphic instance of Eurydice.arr
-with types Eurydice_arr int32_t[[$256size_t]]
+with types Eurydice_arr_c3
 with const generics
 - $4size_t
 */
-typedef struct Eurydice_arr_51_s {
+typedef struct Eurydice_arr_83_s {
   Eurydice_arr_c3 data[4U];
-} Eurydice_arr_51;
+} Eurydice_arr_83;
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -544,8 +759,20 @@ with types Eurydice_arr int32_t[[$256size_t]]
 with const generics
 - N= 4
 */
-Eurydice_dst_ref_shared_59 Eurydice_array_to_slice_shared_6d(
-    const Eurydice_arr_51 *a);
+Eurydice_dst_ref_shared_22 Eurydice_array_to_slice_shared_6d(
+    const Eurydice_arr_83 *a);
+
+/**
+This function found in impl {libcrux_secrets::traits::DeclassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.declassify_ref_ad
+with types Eurydice_arr uint8_t[[$32size_t]]
+
+*/
+const Eurydice_arr_60 *libcrux_secrets_int_public_integers_declassify_ref_ad_62(
+    const Eurydice_arr_60 *self);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_mut
@@ -553,7 +780,7 @@ with types Eurydice_arr int32_t[[$256size_t]]
 with const generics
 - N= 4
 */
-Eurydice_dst_ref_mut_59 Eurydice_array_to_slice_mut_6d(Eurydice_arr_51 *a);
+Eurydice_dst_ref_mut_22 Eurydice_array_to_slice_mut_6d(Eurydice_arr_83 *a);
 
 /**
 A monomorphic instance of Eurydice.array_to_subslice_mut
@@ -563,6 +790,15 @@ with const generics
 */
 Eurydice_dst_ref_mut_fc Eurydice_array_to_subslice_mut_7f(
     Eurydice_arr_c3 *a, core_ops_range_Range_08 r);
+
+/**
+A monomorphic instance of Eurydice.array_to_slice_shared
+with types int32_t
+with const generics
+- N= 256
+*/
+Eurydice_dst_ref_shared_fc Eurydice_array_to_slice_shared_200(
+    const Eurydice_arr_c3 *a);
 
 /**
 A monomorphic instance of Eurydice.array_to_subslice_from_shared
@@ -575,16 +811,16 @@ Eurydice_borrow_slice_u8 Eurydice_array_to_subslice_from_shared_8c(
 
 /**
 A monomorphic instance of core.result.Result
-with types Eurydice_arr uint8_t[[$8size_t]], core_array_TryFromSliceError
+with types Eurydice_array_u8x8, core_array_TryFromSliceError
 
 */
-typedef struct Result_a4_s {
-  Result_a4_tags tag;
+typedef struct Result_8e_s {
+  Result_8e_tags tag;
   union {
     Eurydice_array_u8x8 case_Ok;
     TryFromSliceError case_Err;
   } val;
-} Result_a4;
+} Result_8e;
 
 /**
 This function found in impl {core::result::Result<T, E>[TraitClause@0,
@@ -595,7 +831,7 @@ A monomorphic instance of core.result.unwrap_26
 with types Eurydice_arr uint8_t[[$8size_t]], core_array_TryFromSliceError
 
 */
-Eurydice_array_u8x8 unwrap_26_ab(Result_a4 self);
+Eurydice_array_u8x8 unwrap_26_ab(Result_8e self);
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -648,7 +884,7 @@ with types uint8_t
 with const generics
 - N= 576
 */
-Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_fa0(
+Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_fa(
     const Eurydice_arr_5f0 *a);
 
 /**
@@ -659,6 +895,18 @@ with const generics
 */
 Eurydice_mut_borrow_slice_u8 Eurydice_array_to_slice_mut_fa(
     Eurydice_arr_5f0 *a);
+
+/**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
+with types Eurydice_arr uint8_t[[$11size_t]]
+
+*/
+const Eurydice_arr_cb *libcrux_secrets_int_public_integers_classify_ref_c5_4e(
+    const Eurydice_arr_cb *self);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -700,15 +948,6 @@ with const generics
 - SIZE= 2420
 */
 Eurydice_arr_400 libcrux_iot_ml_dsa_types_zero_ad_1a(void);
-
-/**
-A monomorphic instance of Eurydice.array_to_slice_shared
-with types int32_t
-with const generics
-- N= 256
-*/
-Eurydice_dst_ref_shared_fc Eurydice_array_to_slice_shared_200(
-    const Eurydice_arr_c3 *a);
 
 /**
  Build
@@ -753,11 +992,6 @@ with const generics
 */
 Eurydice_mut_borrow_slice_u8 Eurydice_array_to_slice_mut_59(Eurydice_arr_18 *a);
 
-typedef struct Eurydice_dst_ref_shared_uint8_t_size_t_x2_s {
-  Eurydice_borrow_slice_u8 fst;
-  Eurydice_borrow_slice_u8 snd;
-} Eurydice_dst_ref_shared_uint8_t_size_t_x2;
-
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
 with types uint8_t
@@ -766,6 +1000,18 @@ with const generics
 */
 Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_d8(
     const Eurydice_arr_06 *a);
+
+/**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a
+(@Slice<T>)> for &'a (@Slice<T>)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.classify_public.classify_ref_9b
+with types uint8_t
+
+*/
+Eurydice_borrow_slice_u8 libcrux_secrets_int_classify_public_classify_ref_9b_90(
+    Eurydice_borrow_slice_u8 self);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -778,13 +1024,13 @@ Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_39(
 
 /**
 A monomorphic instance of Eurydice.arr
-with types Eurydice_arr int32_t[[$263size_t]]
+with types Eurydice_arr_13
 with const generics
 - $4size_t
 */
-typedef struct Eurydice_arr_46_s {
+typedef struct Eurydice_arr_38_s {
   Eurydice_arr_13 data[4U];
-} Eurydice_arr_46;
+} Eurydice_arr_38;
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_mut
@@ -792,17 +1038,17 @@ with types Eurydice_arr int32_t[[$263size_t]]
 with const generics
 - N= 4
 */
-Eurydice_dst_ref_mut_2c Eurydice_array_to_slice_mut_f6(Eurydice_arr_46 *a);
+Eurydice_dst_ref_mut_4c Eurydice_array_to_slice_mut_f6(Eurydice_arr_38 *a);
 
 /**
 A monomorphic instance of Eurydice.dst_ref_shared
-with types Eurydice_arr int32_t[[$263size_t]], size_t
+with types Eurydice_arr_13, size_t
 
 */
-typedef struct Eurydice_dst_ref_shared_2c_s {
+typedef struct Eurydice_dst_ref_shared_4c_s {
   const Eurydice_arr_13 *ptr;
   size_t meta;
-} Eurydice_dst_ref_shared_2c;
+} Eurydice_dst_ref_shared_4c;
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -814,6 +1060,18 @@ Eurydice_dst_ref_shared_fc Eurydice_array_to_slice_shared_20(
     const Eurydice_arr_13 *a);
 
 /**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
+with types Eurydice_arr int32_t[[$263size_t]]
+
+*/
+const Eurydice_arr_13 *libcrux_secrets_int_public_integers_classify_ref_c5_0d(
+    const Eurydice_arr_13 *self);
+
+/**
 A monomorphic instance of Eurydice.array_to_slice_shared
 with types uint8_t
 with const generics
@@ -823,13 +1081,16 @@ Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_7b(
     const Eurydice_arr_27 *a);
 
 /**
-A monomorphic instance of Eurydice.array_to_slice_shared
-with types uint8_t
-with const generics
-- N= 840
+This function found in impl {libcrux_secrets::traits::DeclassifyRef<&'a (T)> for
+&'a (T)}
 */
-Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_a8(
-    const Eurydice_arr_12 *a);
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.declassify_ref_ad
+with types Eurydice_arr uint8_t[[$168size_t]]
+
+*/
+const Eurydice_arr_27 *libcrux_secrets_int_public_integers_declassify_ref_ad_fe(
+    const Eurydice_arr_27 *self);
 
 /**
 A monomorphic instance of Eurydice.array_to_subslice_from_mut
@@ -841,6 +1102,18 @@ Eurydice_dst_ref_mut_fc Eurydice_array_to_subslice_from_mut_96(
     Eurydice_arr_13 *a, size_t r);
 
 /**
+This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.classify_ref_c5
+with types Eurydice_arr uint8_t[[$34size_t]]
+
+*/
+const Eurydice_arr_48 *libcrux_secrets_int_public_integers_classify_ref_c5_2c(
+    const Eurydice_arr_48 *self);
+
+/**
 A monomorphic instance of Eurydice.array_to_slice_shared
 with types uint8_t
 with const generics
@@ -848,6 +1121,19 @@ with const generics
 */
 Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_8d(
     const Eurydice_arr_48 *a);
+
+/**
+This function found in impl {libcrux_secrets::traits::DeclassifyRef<&'a
+(@Slice<T>)> for &'a (@Slice<T>)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.classify_public.declassify_ref_7f
+with types uint8_t
+
+*/
+Eurydice_borrow_slice_u8
+libcrux_secrets_int_classify_public_declassify_ref_7f_90(
+    Eurydice_borrow_slice_u8 self);
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -902,6 +1188,18 @@ with const generics
 */
 Eurydice_dst_ref_shared_fc Eurydice_array_to_subslice_shared_7f(
     const Eurydice_arr_d4 *a, core_ops_range_Range_08 r);
+
+/**
+This function found in impl {libcrux_secrets::traits::DeclassifyRef<&'a (T)> for
+&'a (T)}
+*/
+/**
+A monomorphic instance of libcrux_secrets.int.public_integers.declassify_ref_ad
+with types Eurydice_arr int32_t[[$8size_t]]
+
+*/
+const Eurydice_arr_d4 *libcrux_secrets_int_public_integers_declassify_ref_ad_90(
+    const Eurydice_arr_d4 *self);
 
 /**
 A monomorphic instance of Eurydice.array_to_slice_shared
@@ -1047,6 +1345,15 @@ Eurydice_arr_f1 libcrux_secrets_int_public_integers_classify_27_4b(
     Eurydice_arr_f1 self);
 
 /**
+A monomorphic instance of Eurydice.slice_subslice_to_mut
+with types uint8_t, core_ops_range_RangeTo size_t, Eurydice_derefed_slice
+uint8_t
+
+*/
+Eurydice_mut_borrow_slice_u8 Eurydice_slice_subslice_to_mut_c6(
+    Eurydice_mut_borrow_slice_u8 s, size_t r);
+
+/**
 A monomorphic instance of Eurydice.array_to_subslice_shared
 with types uint8_t, core_ops_range_Range size_t, Eurydice_derefed_slice uint8_t
 with const generics
@@ -1119,6 +1426,15 @@ uint8_t with const generics
 */
 Eurydice_mut_borrow_slice_u8 Eurydice_array_to_subslice_from_mut_8c(
     Eurydice_arr_3d *a, size_t r);
+
+/**
+A monomorphic instance of Eurydice.slice_subslice_from_mut
+with types uint8_t, core_ops_range_RangeFrom size_t, Eurydice_derefed_slice
+uint8_t
+
+*/
+Eurydice_mut_borrow_slice_u8 Eurydice_slice_subslice_from_mut_6b(
+    Eurydice_mut_borrow_slice_u8 s, size_t r);
 
 /**
 A monomorphic instance of Eurydice.arr
