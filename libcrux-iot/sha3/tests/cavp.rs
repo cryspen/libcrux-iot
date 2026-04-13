@@ -23,14 +23,22 @@ macro_rules! sha3_test {
     };
 }
 
+//# spec=api.md#EQ-01-01 type=test
 sha3_test!(SHA3_224LongMsg, SHA3_224_DIGEST_SIZE, Algorithm::Sha224);
+//# spec=api.md#EQ-01-02 type=test
 sha3_test!(SHA3_256LongMsg, SHA3_256_DIGEST_SIZE, Algorithm::Sha256);
+//# spec=api.md#EQ-01-03 type=test
 sha3_test!(SHA3_384LongMsg, SHA3_384_DIGEST_SIZE, Algorithm::Sha384);
+//# spec=api.md#EQ-01-04 type=test
 sha3_test!(SHA3_512LongMsg, SHA3_512_DIGEST_SIZE, Algorithm::Sha512);
 
+//# spec=api.md#EQ-01-01 type=test
 sha3_test!(SHA3_224ShortMsg, SHA3_224_DIGEST_SIZE, Algorithm::Sha224);
+//# spec=api.md#EQ-01-02 type=test
 sha3_test!(SHA3_256ShortMsg, SHA3_256_DIGEST_SIZE, Algorithm::Sha256);
+//# spec=api.md#EQ-01-03 type=test
 sha3_test!(SHA3_384ShortMsg, SHA3_384_DIGEST_SIZE, Algorithm::Sha384);
+//# spec=api.md#EQ-01-04 type=test
 sha3_test!(SHA3_512ShortMsg, SHA3_512_DIGEST_SIZE, Algorithm::Sha512);
 
 macro_rules! shake_test {
@@ -58,10 +66,14 @@ macro_rules! shake_test {
     };
 }
 
+//# spec=api.md#EQ-02-01 type=test
 shake_test!(SHAKE128LongMsg, shake128_ema);
+//# spec=api.md#EQ-02-01 type=test
 shake_test!(SHAKE128ShortMsg, shake128_ema);
 
+//# spec=api.md#EQ-02-02 type=test
 shake_test!(SHAKE256LongMsg, shake256_ema);
+//# spec=api.md#EQ-02-02 type=test
 shake_test!(SHAKE256ShortMsg, shake256_ema);
 
 macro_rules! shake_vo_test {
@@ -88,5 +100,7 @@ macro_rules! shake_vo_test {
         }
     };
 }
+//# spec=api.md#EQ-02-01 type=test
 shake_vo_test!(SHAKE128VariableOut, shake128_ema);
+//# spec=api.md#EQ-02-02 type=test
 shake_vo_test!(SHAKE256VariableOut, shake256_ema);

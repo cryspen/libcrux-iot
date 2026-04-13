@@ -2,6 +2,7 @@ use core::ops::Index;
 
 use libcrux_secrets::{CastOps, Classify as _, U32};
 
+//# spec=api.md#EQ-01
 /// A lane of the Keccak state,
 #[derive(Clone, Copy)]
 pub struct Lane2U32(pub(crate) [U32; 2]);

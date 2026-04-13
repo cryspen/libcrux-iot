@@ -1,0 +1,14 @@
+[spec]
+paths = ["specs/api.md"]
+
+[rust]
+src = ["src/", "tests/"]
+
+[lean]
+# hax outputs extracted Lean files here (created by --run-hax)
+lake_dir = "proofs/lean/"
+proofs = ["proofs/lean/keccak_verification/implementation/"]
+
+[hax]
+# crate_dir defaults to this directory (next to Cargo.toml)
+# extra_args = ["-i", "-** +req_fixture::*"]

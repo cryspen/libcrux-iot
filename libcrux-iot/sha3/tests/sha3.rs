@@ -1,5 +1,7 @@
 use libcrux_secrets::{ClassifyRef as _, DeclassifyRef};
 
+//# spec=api.md#EQ-01-02 type=test
+//# spec=api.md#EQ-02-01 type=test
 #[test]
 fn sha3_kat_oneshot() {
     let d256 = libcrux_iot_sha3::sha256(b"Hello, World!".classify_ref());
@@ -12,6 +14,8 @@ fn sha3_kat_oneshot() {
     assert_eq!(hex::encode(dshake.declassify_ref()), expectedshake);
 }
 
+//# spec=api.md#EQ-01-02 type=test
+//# spec=api.md#EQ-02-01 type=test
 #[test]
 fn sha3_simd_kat_oneshot() {
     let d256 = libcrux_iot_sha3::sha256(b"Hello, World!".classify_ref());
