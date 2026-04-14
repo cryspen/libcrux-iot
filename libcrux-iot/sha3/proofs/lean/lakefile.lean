@@ -7,6 +7,7 @@ package libcrux_iot_sha3 where
 require Hax from git
   "https://github.com/cryspen/hax" @ "main" / "hax-lib" / "proof-libs" / "lean"
 
+@[default_target]
 lean_lib libcrux_iot_sha3 where
   roots := #[
     -- Shared helpers
