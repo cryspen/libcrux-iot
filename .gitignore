@@ -20,3 +20,4 @@ kyber-crate/
 *.bak
 *.lock
 /.fstar-cache/
+/c/combined/generated/build/

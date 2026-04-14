@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
- * F*: unset
- * Libcrux: 1ad7c25705450131b575043e252c944035898962
+ * Charon: 377317d6b25702c46ffff072fa00a3e32095e46f
+ * Eurydice: b227478b67c6a6e2ff611f978f10d6b7f26472ac
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
+ * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
+ * Libcrux: 0ab0448a17b81dc787e95a2c646c27ae75247f7b
  */
 
 #ifndef libcrux_iot_mldsa_core_H
@@ -20,15 +20,30 @@
 extern "C" {
 #endif
 
+#define libcrux_iot_ml_dsa_types_VerificationError_MalformedHintError 0
+#define libcrux_iot_ml_dsa_types_VerificationError_SignerResponseExceedsBoundError \
+  1
+#define libcrux_iot_ml_dsa_types_VerificationError_CommitmentHashesDontMatchError \
+  2
+#define libcrux_iot_ml_dsa_types_VerificationError_VerificationContextTooLongError \
+  3
+
+typedef uint8_t libcrux_iot_ml_dsa_types_VerificationError;
+
+#define libcrux_iot_ml_dsa_types_SigningError_RejectionSamplingError 0
+#define libcrux_iot_ml_dsa_types_SigningError_ContextTooLongError 1
+
+typedef uint8_t libcrux_iot_ml_dsa_types_SigningError;
+
 /**
 A monomorphic instance of Eurydice.arr
 with types uint8_t
 with const generics
 - $4627size_t
 */
-typedef struct Eurydice_arr_38_s {
+typedef struct Eurydice_arr_380_s {
   uint8_t data[4627U];
-} Eurydice_arr_38;
+} Eurydice_arr_380;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -36,9 +51,19 @@ with types uint8_t
 with const generics
 - $2592size_t
 */
-typedef struct Eurydice_arr_510_s {
+typedef struct Eurydice_arr_51_s {
   uint8_t data[2592U];
-} Eurydice_arr_510;
+} Eurydice_arr_51;
+
+/**
+A monomorphic instance of Eurydice.arr
+with types uint8_t
+with const generics
+- $64size_t
+*/
+typedef struct Eurydice_arr_06_s {
+  uint8_t data[64U];
+} Eurydice_arr_06;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -62,23 +87,23 @@ typedef struct Eurydice_arr_c3_s {
 
 /**
 A monomorphic instance of Eurydice.dst_ref_shared
-with types Eurydice_arr int32_t[[$256size_t]], size_t
+with types Eurydice_arr_c3, size_t
 
 */
-typedef struct Eurydice_dst_ref_shared_59_s {
+typedef struct Eurydice_dst_ref_shared_22_s {
   const Eurydice_arr_c3 *ptr;
   size_t meta;
-} Eurydice_dst_ref_shared_59;
+} Eurydice_dst_ref_shared_22;
 
 /**
 A monomorphic instance of Eurydice.dst_ref_mut
-with types Eurydice_arr int32_t[[$256size_t]], size_t
+with types Eurydice_arr_c3, size_t
 
 */
-typedef struct Eurydice_dst_ref_mut_59_s {
+typedef struct Eurydice_dst_ref_mut_22_s {
   Eurydice_arr_c3 *ptr;
   size_t meta;
-} Eurydice_dst_ref_mut_59;
+} Eurydice_dst_ref_mut_22;
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.types.MLDSAKeyPair
@@ -88,7 +113,7 @@ with const generics
 */
 typedef struct libcrux_iot_ml_dsa_types_MLDSAKeyPair_2d_s {
   Eurydice_arr_180 signing_key;
-  Eurydice_arr_510 verification_key;
+  Eurydice_arr_51 verification_key;
 } libcrux_iot_ml_dsa_types_MLDSAKeyPair_2d;
 
 /**
@@ -115,21 +140,21 @@ typedef struct Eurydice_arr_4a_s {
 A monomorphic instance of Eurydice.arr
 with types uint8_t
 with const generics
-- $4032size_t
-*/
-typedef struct Eurydice_arr_d10_s {
-  uint8_t data[4032U];
-} Eurydice_arr_d10;
-
-/**
-A monomorphic instance of Eurydice.arr
-with types uint8_t
-with const generics
 - $48size_t
 */
 typedef struct Eurydice_arr_5f_s {
   uint8_t data[48U];
 } Eurydice_arr_5f;
+
+/**
+A monomorphic instance of Eurydice.arr
+with types uint8_t
+with const generics
+- $4032size_t
+*/
+typedef struct Eurydice_arr_d10_s {
+  uint8_t data[4032U];
+} Eurydice_arr_d10;
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.types.MLDSAKeyPair
@@ -161,6 +186,46 @@ with const generics
 typedef struct Eurydice_arr_40_s {
   uint8_t data[1312U];
 } Eurydice_arr_40;
+
+/**
+A monomorphic instance of Eurydice.dst_ref_shared
+with types int32_t, size_t
+
+*/
+typedef struct Eurydice_dst_ref_shared_fc_s {
+  const int32_t *ptr;
+  size_t meta;
+} Eurydice_dst_ref_shared_fc;
+
+/**
+A monomorphic instance of Eurydice.arr
+with types int32_t
+with const generics
+- $263size_t
+*/
+typedef struct Eurydice_arr_13_s {
+  int32_t data[263U];
+} Eurydice_arr_13;
+
+/**
+A monomorphic instance of Eurydice.arr
+with types uint8_t
+with const generics
+- $34size_t
+*/
+typedef struct Eurydice_arr_48_s {
+  uint8_t data[34U];
+} Eurydice_arr_48;
+
+/**
+A monomorphic instance of Eurydice.arr
+with types uint8_t
+with const generics
+- $32size_t
+*/
+typedef struct Eurydice_arr_60_s {
+  uint8_t data[32U];
+} Eurydice_arr_60;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -195,7 +260,7 @@ typedef struct Eurydice_arr_3d_s {
 #define Ok 0
 #define Err 1
 
-typedef uint8_t Result_a4_tags;
+typedef uint8_t Result_8e_tags;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -228,16 +293,6 @@ typedef struct Eurydice_arr_cb_s {
 } Eurydice_arr_cb;
 
 /**
-A monomorphic instance of Eurydice.dst_ref_shared
-with types int32_t, size_t
-
-*/
-typedef struct Eurydice_dst_ref_shared_fc_s {
-  const int32_t *ptr;
-  size_t meta;
-} Eurydice_dst_ref_shared_fc;
-
-/**
 A monomorphic instance of libcrux_iot_ml_dsa.types.MLDSAKeyPair
 with const generics
 - $1312size_t
@@ -252,16 +307,6 @@ typedef struct libcrux_iot_ml_dsa_types_MLDSAKeyPair_c2_s {
 A monomorphic instance of Eurydice.arr
 with types uint8_t
 with const generics
-- $64size_t
-*/
-typedef struct Eurydice_arr_06_s {
-  uint8_t data[64U];
-} Eurydice_arr_06;
-
-/**
-A monomorphic instance of Eurydice.arr
-with types uint8_t
-with const generics
 - $66size_t
 */
 typedef struct Eurydice_arr_a2_s {
@@ -269,24 +314,14 @@ typedef struct Eurydice_arr_a2_s {
 } Eurydice_arr_a2;
 
 /**
-A monomorphic instance of Eurydice.arr
-with types int32_t
-with const generics
-- $263size_t
-*/
-typedef struct Eurydice_arr_13_s {
-  int32_t data[263U];
-} Eurydice_arr_13;
-
-/**
 A monomorphic instance of Eurydice.dst_ref_mut
-with types Eurydice_arr int32_t[[$263size_t]], size_t
+with types Eurydice_arr_13, size_t
 
 */
-typedef struct Eurydice_dst_ref_mut_2c_s {
+typedef struct Eurydice_dst_ref_mut_4c_s {
   Eurydice_arr_13 *ptr;
   size_t meta;
-} Eurydice_dst_ref_mut_2c;
+} Eurydice_dst_ref_mut_4c;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -300,36 +335,6 @@ typedef struct Eurydice_arr_27_s {
 
 /**
 A monomorphic instance of Eurydice.arr
-with types uint8_t
-with const generics
-- $840size_t
-*/
-typedef struct Eurydice_arr_12_s {
-  uint8_t data[840U];
-} Eurydice_arr_12;
-
-/**
-A monomorphic instance of Eurydice.arr
-with types uint8_t
-with const generics
-- $34size_t
-*/
-typedef struct Eurydice_arr_48_s {
-  uint8_t data[34U];
-} Eurydice_arr_48;
-
-/**
-A monomorphic instance of Eurydice.arr
-with types uint8_t
-with const generics
-- $32size_t
-*/
-typedef struct Eurydice_arr_60_s {
-  uint8_t data[32U];
-} Eurydice_arr_60;
-
-/**
-A monomorphic instance of Eurydice.arr
 with types int32_t
 with const generics
 - $8size_t
@@ -337,6 +342,16 @@ with const generics
 typedef struct Eurydice_arr_d4_s {
   int32_t data[8U];
 } Eurydice_arr_d4;
+
+/**
+A monomorphic instance of Eurydice.arr
+with types uint8_t
+with const generics
+- $840size_t
+*/
+typedef struct Eurydice_arr_12_s {
+  uint8_t data[840U];
+} Eurydice_arr_12;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -357,21 +372,6 @@ with const generics
 typedef struct Eurydice_arr_b2_s {
   uint32_t data[2U];
 } Eurydice_arr_b2;
-
-#define libcrux_iot_ml_dsa_types_SigningError_RejectionSamplingError 0
-#define libcrux_iot_ml_dsa_types_SigningError_ContextTooLongError 1
-
-typedef uint8_t libcrux_iot_ml_dsa_types_SigningError;
-
-#define libcrux_iot_ml_dsa_types_VerificationError_MalformedHintError 0
-#define libcrux_iot_ml_dsa_types_VerificationError_SignerResponseExceedsBoundError \
-  1
-#define libcrux_iot_ml_dsa_types_VerificationError_CommitmentHashesDontMatchError \
-  2
-#define libcrux_iot_ml_dsa_types_VerificationError_VerificationContextTooLongError \
-  3
-
-typedef uint8_t libcrux_iot_ml_dsa_types_VerificationError;
 
 #if defined(__cplusplus)
 }

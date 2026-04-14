@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * Charon: 377317d6b25702c46ffff072fa00a3e32095e46f
+ * Eurydice: b227478b67c6a6e2ff611f978f10d6b7f26472ac
+ * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
  * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
- * Libcrux: 2259f47ca2a2a060c9fd147ccc78ed3588bfd288
+ * Libcrux: 0ab0448a17b81dc787e95a2c646c27ae75247f7b
  */
 
 #ifndef internal_libcrux_iot_mlkem_portable_H
@@ -22,38 +22,6 @@ extern "C" {
 
 #include "../libcrux_iot_mlkem_portable.h"
 #include "libcrux_iot_core.h"
-
-/**
-A monomorphic instance of Eurydice.arr
-with types libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector
-with const generics
-- $16size_t
-*/
-typedef struct Eurydice_arr_3d0_s {
-  Eurydice_arr_e2 data[16U];
-} Eurydice_arr_3d0;
-
-/**
-A monomorphic instance of Eurydice.dst_ref_mut
-with types libcrux_iot_ml_kem_polynomial_PolynomialRingElement
-libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector, size_t
-
-*/
-typedef struct Eurydice_dst_ref_mut_64_s {
-  Eurydice_arr_3d0 *ptr;
-  size_t meta;
-} Eurydice_dst_ref_mut_64;
-
-/**
-A monomorphic instance of Eurydice.dst_ref_shared
-with types libcrux_iot_ml_kem_polynomial_PolynomialRingElement
-libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector, size_t
-
-*/
-typedef struct Eurydice_dst_ref_shared_64_s {
-  const Eurydice_arr_3d0 *ptr;
-  size_t meta;
-} Eurydice_dst_ref_shared_64;
 
 /**
  Validate an ML-KEM public key.
@@ -153,12 +121,9 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - PRF_OUTPUT_SIZE1= 512
 - PRF_OUTPUT_SIZE2= 512
 */
-tuple_32 libcrux_iot_ml_kem_ind_cca_encapsulate_351(
+tuple_62 libcrux_iot_ml_kem_ind_cca_encapsulate_351(
     const Eurydice_arr_00 *public_key, const Eurydice_arr_600 *randomness);
 
-/**
- This code verifies on some machines, runs out of memory on others
-*/
 /**
 A monomorphic instance of libcrux_iot_ml_kem.ind_cca.decapsulate
 with types libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector,
@@ -285,12 +250,9 @@ libcrux_iot_ml_kem_variant_MlKem with const generics
 - PRF_OUTPUT_SIZE1= 384
 - PRF_OUTPUT_SIZE2= 384
 */
-tuple_50 libcrux_iot_ml_kem_ind_cca_encapsulate_350(
+tuple_e9 libcrux_iot_ml_kem_ind_cca_encapsulate_350(
     const Eurydice_arr_74 *public_key, const Eurydice_arr_600 *randomness);
 
-/**
- This code verifies on some machines, runs out of memory on others
-*/
 /**
 A monomorphic instance of libcrux_iot_ml_kem.ind_cca.decapsulate
 with types libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector,
