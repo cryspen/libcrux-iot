@@ -1,5 +1,6 @@
 [spec]
 paths = ["specs/api.md"]
+url = "http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/"
 
 [rust]
 src = ["src/", "tests/"]
