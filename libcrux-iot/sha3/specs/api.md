@@ -51,10 +51,6 @@ pub fn sha512(data: &[U8]) -> [U8; SHA3_512_DIGEST_SIZE];
 ```
 
 
-#### LE-01-04-01 SHA3-512
-
-SHA-512 output MUST be of length 64 bytes and input MUST be smaller than `u32::MAX`.
-
 ## EQ-02 SHAKE
 
 `shake128`, and `shake256` functions implement the SHAKE function,

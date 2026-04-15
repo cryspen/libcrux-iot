@@ -553,6 +553,8 @@ end libcrux_iot_sha3.keccak
 namespace libcrux_iot_sha3.lane
 
 --  A lane of the Keccak state,
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01)
 structure Lane2U32 where
   _0 : (RustArray u32 2)
 
@@ -8048,6 +8050,8 @@ def SHA3_384_DIGEST_SIZE : usize := (48 : usize)
 def SHA3_512_DIGEST_SIZE : usize := (64 : usize)
 
 --  The Digest Algorithm.
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01)
 inductive Algorithm : Type
 | --  SHA3 224
     Sha224 : Algorithm
@@ -8142,6 +8146,8 @@ instance Impl_1 : core_models.convert.From u32 Algorithm where
       | (Algorithm.Sha512 ) => do (pure (4 : u32))
 
 --  Returns the output size of a digest.
+-- 
+--  [spec-no-test](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01)
 @[spec]
 def digest_size (mode : Algorithm) : RustM usize := do
   match mode with
@@ -8156,6 +8162,8 @@ end libcrux_iot_sha3
 namespace libcrux_iot_sha3.portable
 
 --  The Keccak state for the incremental API.
+-- 
+--  [spec-no-test](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03)
 structure KeccakState where
   state : libcrux_iot_sha3.state.KeccakState
 
@@ -8201,6 +8209,8 @@ namespace libcrux_iot_sha3
 -- 
 --  Preconditions:
 --  - `digest.len() == 28`
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-01)
 @[spec]
 def sha224_ema (digest : (RustSlice u8)) (payload : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8230,6 +8240,9 @@ def sha224_ema (digest : (RustSlice u8)) (payload : (RustSlice u8)) :
   (pure digest)
 
 --  SHA3 224
+-- 
+--  [spec-no-test](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01)
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-01)
 @[spec]
 def sha224 (data : (RustSlice u8)) : RustM (RustArray u8 28) := do
   let out : (RustArray u8 28) ←
@@ -8243,6 +8256,9 @@ def sha224 (data : (RustSlice u8)) : RustM (RustArray u8 28) := do
   (pure out)
 
 --  SHA3 256
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-02)
 @[spec]
 def sha256_ema (digest : (RustSlice u8)) (payload : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8272,6 +8288,10 @@ def sha256_ema (digest : (RustSlice u8)) (payload : (RustSlice u8)) :
   (pure digest)
 
 --  SHA3 256
+-- 
+--  [spec-no-test](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01)
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-02)
 @[spec]
 def sha256 (data : (RustSlice u8)) : RustM (RustArray u8 32) := do
   let out : (RustArray u8 32) ←
@@ -8284,8 +8304,10 @@ def sha256 (data : (RustSlice u8)) : RustM (RustArray u8 32) := do
       (← (sha256_ema (← out[core_models.ops.range.RangeFull.mk]_?) data)));
   (pure out)
 
--- # spec=api.md#EQ-01-03 type=todo
 --  SHA3 384
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-03)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-03)
 @[spec]
 def sha384_ema (digest : (RustSlice u8)) (payload : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8315,6 +8337,10 @@ def sha384_ema (digest : (RustSlice u8)) (payload : (RustSlice u8)) :
   (pure digest)
 
 --  SHA3 384
+-- 
+--  [spec-no-test](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01)
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-03)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-03)
 @[spec]
 def sha384 (data : (RustSlice u8)) : RustM (RustArray u8 48) := do
   let out : (RustArray u8 48) ←
@@ -8328,6 +8354,9 @@ def sha384 (data : (RustSlice u8)) : RustM (RustArray u8 48) := do
   (pure out)
 
 --  SHA3 512
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-04)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-04)
 @[spec]
 def sha512_ema (digest : (RustSlice u8)) (payload : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8357,6 +8386,10 @@ def sha512_ema (digest : (RustSlice u8)) (payload : (RustSlice u8)) :
   (pure digest)
 
 --  SHA3 512
+-- 
+--  [spec-no-test](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01)
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-04)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-04)
 @[spec]
 def sha512 (data : (RustSlice u8)) : RustM (RustArray u8 64) := do
   let out : (RustArray u8 64) ←
@@ -8373,6 +8406,10 @@ def sha512 (data : (RustSlice u8)) : RustM (RustArray u8 64) := do
 -- 
 --  Note that the output length `BYTES` must fit into 32 bit. If it is longer,
 --  the output will only return `u32::MAX` bytes.
+-- 
+--  [spec-no-test](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02)
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-01)
 @[spec]
 def shake128 (BYTES : usize) (data : (RustSlice u8)) :
     RustM (RustArray u8 BYTES) := do
@@ -8391,6 +8428,8 @@ def shake128 (BYTES : usize) (data : (RustSlice u8)) :
 --  SHAKE 128
 -- 
 --  Writes `out.len()` bytes.
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-01)
 @[spec]
 def shake128_ema (out : (RustSlice u8)) (data : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8402,6 +8441,9 @@ def shake128_ema (out : (RustSlice u8)) (data : (RustSlice u8)) :
 -- 
 --  Note that the output length `BYTES` must fit into 32 bit. If it is longer,
 --  the output will only return `u32::MAX` bytes.
+--  [spec-no-test](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02)
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-02)
 @[spec]
 def shake256 (BYTES : usize) (data : (RustSlice u8)) :
     RustM (RustArray u8 BYTES) := do
@@ -8420,6 +8462,8 @@ def shake256 (BYTES : usize) (data : (RustSlice u8)) :
 --  SHAKE 256
 -- 
 --  Writes `out.len()` bytes.
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-02)
 @[spec]
 def shake256_ema (out : (RustSlice u8)) (data : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8433,6 +8477,9 @@ end libcrux_iot_sha3
 namespace libcrux_iot_sha3.portable
 
 --  A portable SHA3 224 implementation.
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-01)
 @[spec]
 def sha224 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8441,6 +8488,9 @@ def sha224 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
   (pure digest)
 
 --  A portable SHA3 256 implementation.
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-02)
 @[spec]
 def sha256 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8449,6 +8499,9 @@ def sha256 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
   (pure digest)
 
 --  A portable SHA3 384 implementation.
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-03)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-03)
 @[spec]
 def sha384 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8457,6 +8510,9 @@ def sha384 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
   (pure digest)
 
 --  A portable SHA3 512 implementation.
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-04)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01-04)
 @[spec]
 def sha512 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8470,6 +8526,8 @@ end libcrux_iot_sha3.portable
 namespace libcrux_iot_sha3
 
 --  SHA3
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01)
 @[spec]
 def hash (LEN : usize) (algorithm : Algorithm) (payload : (RustSlice u8)) :
     RustM (RustArray u8 LEN) := do
@@ -8525,6 +8583,9 @@ end libcrux_iot_sha3
 namespace libcrux_iot_sha3.portable
 
 --  A portable SHAKE128 implementation.
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-01)
 @[spec]
 def shake128 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8533,6 +8594,9 @@ def shake128 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
   (pure digest)
 
 --  A portable SHAKE256 implementation.
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-02-02)
 @[spec]
 def shake256 (digest : (RustSlice u8)) (data : (RustSlice u8)) :
     RustM (RustSlice u8) := do
@@ -8557,6 +8621,9 @@ end libcrux_iot_sha3.portable.incremental.private
 namespace libcrux_iot_sha3.portable.incremental
 
 --  SHAKE128 Xof state
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
 structure Shake128Xof where
   state : (libcrux_iot_sha3.keccak.KeccakXofState ((168 : usize)))
 
@@ -8577,6 +8644,8 @@ end libcrux_iot_sha3.portable.incremental.private
 namespace libcrux_iot_sha3.portable.incremental
 
 --  SHAKE256 Xof state
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
 structure Shake256Xof where
   state : (libcrux_iot_sha3.keccak.KeccakXofState ((136 : usize)))
 
@@ -8689,6 +8758,9 @@ instance Impl_1 : Xof Shake256Xof ((136 : usize)) where
     (pure (rust_primitives.hax.Tuple2.mk self out))
 
 --  Create a new SHAKE-128 state object.
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
 @[spec]
 def shake128_init (_ : rust_primitives.hax.Tuple0) :
     RustM libcrux_iot_sha3.portable.KeccakState := do
@@ -8697,6 +8769,9 @@ def shake128_init (_ : rust_primitives.hax.Tuple0) :
       rust_primitives.hax.Tuple0.mk)))))
 
 --  Absorb
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
 @[spec]
 def shake128_absorb_final
     (s : libcrux_iot_sha3.portable.KeccakState)
@@ -8714,6 +8789,9 @@ def shake128_absorb_final
   (pure s)
 
 --  Perform four rounds of the keccak permutation functions
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
 @[spec]
 def keccakf1660_4rounds (s : libcrux_iot_sha3.portable.KeccakState) :
     RustM libcrux_iot_sha3.portable.KeccakState := do
@@ -8724,6 +8802,9 @@ def keccakf1660_4rounds (s : libcrux_iot_sha3.portable.KeccakState) :
   (pure s)
 
 --  Squeeze three blocks
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
 @[spec]
 def shake128_squeeze_first_three_blocks
     (s : libcrux_iot_sha3.portable.KeccakState)
@@ -8743,6 +8824,9 @@ def shake128_squeeze_first_three_blocks
   (pure (rust_primitives.hax.Tuple2.mk s out0))
 
 --  Squeeze five blocks
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
 @[spec]
 def shake128_squeeze_first_five_blocks
     (s : libcrux_iot_sha3.portable.KeccakState)
@@ -8762,6 +8846,9 @@ def shake128_squeeze_first_five_blocks
   (pure (rust_primitives.hax.Tuple2.mk s out0))
 
 --  Squeeze another block
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-01)
 @[spec]
 def shake128_squeeze_next_block
     (s : libcrux_iot_sha3.portable.KeccakState)
@@ -8781,6 +8868,9 @@ def shake128_squeeze_next_block
   (pure (rust_primitives.hax.Tuple2.mk s out0))
 
 --  Create a new SHAKE-256 state object.
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
 @[spec]
 def shake256_init (_ : rust_primitives.hax.Tuple0) :
     RustM libcrux_iot_sha3.portable.KeccakState := do
@@ -8789,6 +8879,9 @@ def shake256_init (_ : rust_primitives.hax.Tuple0) :
       rust_primitives.hax.Tuple0.mk)))))
 
 --  Absorb some data for SHAKE-256 for the last time
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
 @[spec]
 def shake256_absorb_final
     (s : libcrux_iot_sha3.portable.KeccakState)
@@ -8806,6 +8899,10 @@ def shake256_absorb_final
   (pure s)
 
 --  Squeeze the first SHAKE-256 block
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
 @[spec]
 def shake256_squeeze_first_block
     (s : libcrux_iot_sha3.portable.KeccakState)
@@ -8822,6 +8919,10 @@ def shake256_squeeze_first_block
   (pure (rust_primitives.hax.Tuple2.mk s out))
 
 --  Squeeze the next SHAKE-256 block
+-- 
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
+--  [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
+--  [spec-verify](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-03-02)
 @[spec]
 def shake256_squeeze_next_block
     (s : libcrux_iot_sha3.portable.KeccakState)

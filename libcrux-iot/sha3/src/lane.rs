@@ -2,8 +2,9 @@ use core::ops::Index;
 
 use libcrux_secrets::{CastOps, Classify as _, U32};
 
-//# spec=api.md#EQ-01
 /// A lane of the Keccak state,
+///
+/// [spec](http://github.com/cryspen/libcrux-iot/blob/franziskus/proofs-and-reqs/libcrux-iot/sha3/specs/api.md#EQ-01)
 #[derive(Clone, Copy)]
 pub struct Lane2U32(pub(crate) [U32; 2]);
 
@@ -110,8 +111,9 @@ impl core::fmt::Debug for Lane2U32 {
 
 #[cfg(all(not(eurydice), test))]
 mod interleave_tests {
-    use super::*;
     use libcrux_secrets::Declassify;
+
+    use super::*;
 
     #[test]
     fn identity() {
