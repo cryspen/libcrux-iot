@@ -329,11 +329,6 @@ pub mod incremental {
         absorb_final::<168, 0x1fu8>(&mut s.state, data0, 0, data0.len());
     }
 
-    /// Perform four rounds of the keccak permutation functions
-    pub fn keccakf1660_4rounds(s: &mut KeccakState) {
-        crate::keccak::keccakf1600_4rounds::<0>(&mut s.state);
-    }
-
     /// Squeeze three blocks
     pub fn shake128_squeeze_first_three_blocks(s: &mut KeccakState, out0: &mut [U8]) {
         squeeze_first_three_blocks::<168>(&mut s.state, out0)
