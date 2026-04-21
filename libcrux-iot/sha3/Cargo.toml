@@ -25,6 +25,12 @@ hax-lib.workspace = true
 
 [features]
 full-unroll = []
+
+# Expose unbuffered XOF functionality for cases where the exact
+# absorbtion and squeeze lengths are known, e.g. ML-KEM or ML-DSA.
+unbuffered-xof = []
+
+# Turn on secret-independence checking via `libcrux-secrets`
 check-secret-independence = ["libcrux-secrets/check-secret-independence"]
 
 [dev-dependencies]

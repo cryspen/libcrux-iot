@@ -98,7 +98,7 @@ pub(crate) mod shake128 {
 
 /// A portable implementation of [`shake128::Xof`] and [`shake256::Xof`].
 pub(crate) mod portable {
-    use libcrux_iot_sha3::incremental::{self, KeccakState, Xof};
+    use libcrux_iot_sha3::incremental::{self, UnbufferedXofState, Xof};
     use libcrux_secrets::{Classify as _, U8};
 
     use super::{shake128, shake256};
@@ -108,10 +108,10 @@ pub(crate) mod portable {
     /// We're using a portable implementation so this is actually sequential.
     #[cfg_attr(hax, hax_lib::opaque)]
     pub(crate) struct Shake128X4 {
-        state0: KeccakState,
-        state1: KeccakState,
-        state2: KeccakState,
-        state3: KeccakState,
+        state0: UnbufferedXofState,
+        state1: UnbufferedXofState,
+        state2: UnbufferedXofState,
+        state3: UnbufferedXofState,
     }
 
     #[inline(always)]
@@ -232,7 +232,7 @@ pub(crate) mod portable {
     /// Portable SHAKE 128 state
     #[cfg_attr(hax, hax_lib::opaque)]
     pub(crate) struct Shake128 {
-        state: KeccakState,
+        state: UnbufferedXofState,
     }
 
     #[inline(always)]
@@ -250,7 +250,7 @@ pub(crate) mod portable {
     /// Portable SHAKE 256 state
     #[cfg_attr(hax, hax_lib::opaque)]
     pub(crate) struct Shake256 {
-        state: KeccakState,
+        state: UnbufferedXofState,
     }
 
     #[inline(always)]
@@ -306,10 +306,10 @@ pub(crate) mod portable {
     /// We're using a portable implementation so this is actually sequential.
     #[cfg_attr(hax, hax_lib::opaque)]
     pub(crate) struct Shake256X4 {
-        state0: libcrux_iot_sha3::incremental::KeccakState,
-        state1: libcrux_iot_sha3::incremental::KeccakState,
-        state2: libcrux_iot_sha3::incremental::KeccakState,
-        state3: libcrux_iot_sha3::incremental::KeccakState,
+        state0: incremental::UnbufferedXofState,
+        state1: incremental::UnbufferedXofState,
+        state2: incremental::UnbufferedXofState,
+        state3: incremental::UnbufferedXofState,
     }
 
     #[inline(always)]

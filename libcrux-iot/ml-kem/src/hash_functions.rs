@@ -72,7 +72,7 @@ pub(crate) trait Hash {
 pub(crate) mod portable {
     use libcrux_iot_sha3::{
         self,
-        incremental::{self, KeccakState},
+        incremental::{self, UnbufferedXofState},
         sha256_ema, sha512_ema, shake256_ema,
     };
     use libcrux_secrets::Classify as _;
@@ -87,7 +87,7 @@ pub(crate) mod portable {
     /// All other functions don't actually use any members.
     #[cfg_attr(hax, hax_lib::opaque)]
     pub(crate) struct PortableHash {
-        shake128_state: [KeccakState; 4],
+        shake128_state: [UnbufferedXofState; 4],
     }
 
     #[hax_lib::requires(output.len() == 64)]
