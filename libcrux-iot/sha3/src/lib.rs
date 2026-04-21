@@ -82,17 +82,17 @@ pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[U8]) -> [U8; LEN]
     let mut out = [0u8; LEN].classify();
     #[cfg(hax)]
     match algorithm {
-        Algorithm::Sha224 => portable::sha224(&mut out[..], payload),
-        Algorithm::Sha256 => portable::sha256(&mut out[..], payload),
-        Algorithm::Sha384 => portable::sha384(&mut out[..], payload),
-        Algorithm::Sha512 => portable::sha512(&mut out[..], payload),
+        Algorithm::Sha224 => sha224_ema(&mut out[..], payload),
+        Algorithm::Sha256 => sha256_ema(&mut out[..], payload),
+        Algorithm::Sha384 => sha384_ema(&mut out[..], payload),
+        Algorithm::Sha512 => sha512_ema(&mut out[..], payload),
     }
     #[cfg(not(hax))]
     match algorithm {
-        Algorithm::Sha224 => portable::sha224(&mut out, payload),
-        Algorithm::Sha256 => portable::sha256(&mut out, payload),
-        Algorithm::Sha384 => portable::sha384(&mut out, payload),
-        Algorithm::Sha512 => portable::sha512(&mut out, payload),
+        Algorithm::Sha224 => sha224_ema(&mut out, payload),
+        Algorithm::Sha256 => sha256_ema(&mut out, payload),
+        Algorithm::Sha384 => sha384_ema(&mut out, payload),
+        Algorithm::Sha512 => sha512_ema(&mut out, payload),
     }
     out
 }
@@ -120,7 +120,7 @@ pub fn sha224_ema(digest: &mut [U8], payload: &[U8]) {
     #[cfg(not(eurydice))]
     debug_assert!(digest.len() == 28);
 
-    portable::keccakx1::<144, 0x06u8>(payload, digest);
+    keccakx1::<144, 0x06u8>(payload, digest);
 }
 
 /// SHA3 256
@@ -140,7 +140,7 @@ pub fn sha256_ema(digest: &mut [U8], payload: &[U8]) {
     #[cfg(not(eurydice))]
     debug_assert!(digest.len() == 32);
 
-    portable::keccakx1::<136, 0x06u8>(payload, digest);
+    keccakx1::<136, 0x06u8>(payload, digest);
 }
 
 /// SHA3 384
@@ -160,7 +160,7 @@ pub fn sha384_ema(digest: &mut [U8], payload: &[U8]) {
     #[cfg(not(eurydice))]
     debug_assert!(digest.len() == 48);
 
-    portable::keccakx1::<104, 0x06u8>(payload, digest);
+    keccakx1::<104, 0x06u8>(payload, digest);
 }
 
 /// SHA3 512
@@ -180,7 +180,7 @@ pub fn sha512_ema(digest: &mut [U8], payload: &[U8]) {
     #[cfg(not(eurydice))]
     debug_assert!(digest.len() == 64);
 
-    portable::keccakx1::<72, 0x06u8>(payload, digest);
+    keccakx1::<72, 0x06u8>(payload, digest);
 }
 
 /// SHAKE 128
@@ -190,9 +190,9 @@ pub fn sha512_ema(digest: &mut [U8], payload: &[U8]) {
 pub fn shake128<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
     let mut out = [0u8; BYTES].classify();
     #[cfg(hax)]
-    portable::keccakx1::<168, 0x1fu8>(data, &mut out[..]);
+    keccakx1::<168, 0x1fu8>(data, &mut out[..]);
     #[cfg(not(hax))]
-    portable::keccakx1::<168, 0x1fu8>(data, &mut out);
+    keccakx1::<168, 0x1fu8>(data, &mut out);
     out
 }
 
@@ -200,7 +200,7 @@ pub fn shake128<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
 ///
 /// Writes `out.len()` bytes.
 pub fn shake128_ema(out: &mut [U8], data: &[U8]) {
-    portable::keccakx1::<168, 0x1fu8>(data, out);
+    keccakx1::<168, 0x1fu8>(data, out);
 }
 
 /// SHAKE 256
@@ -210,9 +210,9 @@ pub fn shake128_ema(out: &mut [U8], data: &[U8]) {
 pub fn shake256<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
     let mut out = [0u8; BYTES].classify();
     #[cfg(hax)]
-    portable::keccakx1::<136, 0x1fu8>(data, &mut out[..]);
+    keccakx1::<136, 0x1fu8>(data, &mut out[..]);
     #[cfg(not(hax))]
-    portable::keccakx1::<136, 0x1fu8>(data, &mut out);
+    keccakx1::<136, 0x1fu8>(data, &mut out);
     out
 }
 
@@ -220,201 +220,163 @@ pub fn shake256<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
 ///
 /// Writes `out.len()` bytes.
 pub fn shake256_ema(out: &mut [U8], data: &[U8]) {
-    portable::keccakx1::<136, 0x1fu8>(data, out);
+    keccakx1::<136, 0x1fu8>(data, out);
 }
 
-//  === The portable instantiation === //
-
-/// A portable SHA3 implementation
-pub mod portable {
+/// An incremental API for SHAKE
+pub mod incremental {
     use libcrux_secrets::U8;
 
-    use super::*;
-
-    /// The Keccak state for the incremental API.
+    /// An Keccak permutation state.
     #[derive(Clone, Copy)]
     #[cfg_attr(not(eurydice), derive(Debug))]
     pub struct KeccakState {
-        state: state::KeccakState,
+        pub(crate) state: crate::state::KeccakState,
     }
 
-    pub(crate) fn keccakx1<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut [U8]) {
-        keccak::keccak::<RATE, DELIM>(data, out)
+    use crate::keccak::{
+        absorb_final, squeeze_first_block, squeeze_first_five_blocks, squeeze_first_three_blocks,
+        squeeze_next_block, KeccakXofState,
+    };
+    mod private {
+        pub trait Sealed {}
+
+        impl Sealed for super::Shake128Xof {}
+        impl Sealed for super::Shake256Xof {}
     }
 
-    /// A portable SHA3 224 implementation.
-    pub fn sha224(digest: &mut [U8], data: &[U8]) {
-        keccakx1::<144, 0x06u8>(data, digest);
+    /// SHAKE128 Xof state
+    pub struct Shake128Xof {
+        state: KeccakXofState<168>,
     }
 
-    /// A portable SHA3 256 implementation.
-    pub fn sha256(digest: &mut [U8], data: &[U8]) {
-        keccakx1::<136, 0x06u8>(data, digest);
+    /// SHAKE256 Xof state
+    pub struct Shake256Xof {
+        state: KeccakXofState<136>,
     }
 
-    /// A portable SHA3 384 implementation.
-    pub fn sha384(digest: &mut [U8], data: &[U8]) {
-        keccakx1::<104, 0x06u8>(data, digest);
+    /// An XOF
+    pub trait Xof<const RATE: usize>: private::Sealed {
+        /// Create new absorb state
+        fn new() -> Self;
+
+        /// Absorb input
+        fn absorb(&mut self, input: &[U8]);
+
+        /// Absorb final input (may be empty)
+        fn absorb_final(&mut self, input: &[U8]);
+
+        /// Squeeze output bytes
+        fn squeeze(&mut self, out: &mut [U8]);
     }
 
-    /// A portable SHA3 512 implementation.
-    pub fn sha512(digest: &mut [U8], data: &[U8]) {
-        keccakx1::<72, 0x06u8>(data, digest);
+    impl Xof<168> for Shake128Xof {
+        fn new() -> Self {
+            Self {
+                state: KeccakXofState::<168>::new(),
+            }
+        }
+
+        fn absorb(&mut self, input: &[U8]) {
+            self.state.absorb(input);
+        }
+
+        fn absorb_final(&mut self, input: &[U8]) {
+            self.state.absorb_final::<0x1fu8>(input);
+        }
+
+        /// Shake128 squeeze
+        fn squeeze(&mut self, out: &mut [U8]) {
+            self.state.squeeze(out);
+        }
     }
 
-    /// A portable SHAKE128 implementation.
-    pub fn shake128(digest: &mut [U8], data: &[U8]) {
-        keccakx1::<168, 0x1fu8>(data, digest);
+    /// Shake256 XOF in absorb state
+    impl Xof<136> for Shake256Xof {
+        /// Shake256 new state
+        fn new() -> Self {
+            Self {
+                state: KeccakXofState::<136>::new(),
+            }
+        }
+
+        /// Shake256 absorb
+        fn absorb(&mut self, input: &[U8]) {
+            self.state.absorb(input);
+        }
+
+        /// Shake256 absorb final
+        fn absorb_final(&mut self, input: &[U8]) {
+            self.state.absorb_final::<0x1fu8>(input);
+        }
+
+        /// Shake256 squeeze
+        fn squeeze(&mut self, out: &mut [U8]) {
+            self.state.squeeze(out);
+        }
     }
 
-    /// A portable SHAKE256 implementation.
-    pub fn shake256(digest: &mut [U8], data: &[U8]) {
-        keccakx1::<136, 0x1fu8>(data, digest);
+    /// Create a new SHAKE-128 state object.
+    #[inline(always)]
+    pub fn shake128_init() -> KeccakState {
+        KeccakState {
+            state: crate::state::KeccakState::new(),
+        }
     }
 
-    /// An incremental API for SHAKE
-    pub mod incremental {
-        use keccak::{
-            absorb_final, squeeze_first_block, squeeze_first_five_blocks,
-            squeeze_first_three_blocks, squeeze_next_block, KeccakXofState,
-        };
-        use libcrux_secrets::U8;
-        mod private {
-            pub trait Sealed {}
+    /// Absorb
+    pub fn shake128_absorb_final(s: &mut KeccakState, data0: &[U8]) {
+        absorb_final::<168, 0x1fu8>(&mut s.state, data0, 0, data0.len());
+    }
 
-            impl Sealed for super::Shake128Xof {}
-            impl Sealed for super::Shake256Xof {}
+    /// Perform four rounds of the keccak permutation functions
+    pub fn keccakf1660_4rounds(s: &mut KeccakState) {
+        crate::keccak::keccakf1600_4rounds::<0>(&mut s.state);
+    }
+
+    /// Squeeze three blocks
+    pub fn shake128_squeeze_first_three_blocks(s: &mut KeccakState, out0: &mut [U8]) {
+        squeeze_first_three_blocks::<168>(&mut s.state, out0)
+    }
+
+    /// Squeeze five blocks
+    pub fn shake128_squeeze_first_five_blocks(s: &mut KeccakState, out0: &mut [U8]) {
+        squeeze_first_five_blocks::<168>(&mut s.state, out0)
+    }
+
+    /// Squeeze another block
+    pub fn shake128_squeeze_next_block(s: &mut KeccakState, out0: &mut [U8]) {
+        squeeze_next_block::<168>(&mut s.state, out0)
+    }
+
+    /// Create a new SHAKE-256 state object.
+    #[inline(always)]
+    pub fn shake256_init() -> KeccakState {
+        KeccakState {
+            state: crate::state::KeccakState::new(),
         }
-        use super::*;
+    }
 
-        /// SHAKE128 Xof state
-        pub struct Shake128Xof {
-            state: KeccakXofState<168>,
-        }
+    /// Absorb some data for SHAKE-256 for the last time
+    pub fn shake256_absorb_final(s: &mut KeccakState, data: &[U8]) {
+        absorb_final::<136, 0x1fu8>(&mut s.state, data, 0, data.len());
+    }
 
-        /// SHAKE256 Xof state
-        pub struct Shake256Xof {
-            state: KeccakXofState<136>,
-        }
+    /// Squeeze the first SHAKE-256 block
+    pub fn shake256_squeeze_first_block(s: &mut KeccakState, out: &mut [U8]) {
+        squeeze_first_block::<136>(&s.state, out)
+    }
 
-        /// An XOF
-        pub trait Xof<const RATE: usize>: private::Sealed {
-            /// Create new absorb state
-            fn new() -> Self;
-
-            /// Absorb input
-            fn absorb(&mut self, input: &[U8]);
-
-            /// Absorb final input (may be empty)
-            fn absorb_final(&mut self, input: &[U8]);
-
-            /// Squeeze output bytes
-            fn squeeze(&mut self, out: &mut [U8]);
-        }
-
-        impl Xof<168> for Shake128Xof {
-            fn new() -> Self {
-                Self {
-                    state: KeccakXofState::<168>::new(),
-                }
-            }
-
-            fn absorb(&mut self, input: &[U8]) {
-                self.state.absorb(input);
-            }
-
-            fn absorb_final(&mut self, input: &[U8]) {
-                self.state.absorb_final::<0x1fu8>(input);
-            }
-
-            /// Shake128 squeeze
-            fn squeeze(&mut self, out: &mut [U8]) {
-                self.state.squeeze(out);
-            }
-        }
-
-        /// Shake256 XOF in absorb state
-        impl Xof<136> for Shake256Xof {
-            /// Shake256 new state
-            fn new() -> Self {
-                Self {
-                    state: KeccakXofState::<136>::new(),
-                }
-            }
-
-            /// Shake256 absorb
-            fn absorb(&mut self, input: &[U8]) {
-                self.state.absorb(input);
-            }
-
-            /// Shake256 absorb final
-            fn absorb_final(&mut self, input: &[U8]) {
-                self.state.absorb_final::<0x1fu8>(input);
-            }
-
-            /// Shake256 squeeze
-            fn squeeze(&mut self, out: &mut [U8]) {
-                self.state.squeeze(out);
-            }
-        }
-
-        /// Create a new SHAKE-128 state object.
-        #[inline(always)]
-        pub fn shake128_init() -> KeccakState {
-            KeccakState {
-                state: state::KeccakState::new(),
-            }
-        }
-
-        /// Absorb
-        pub fn shake128_absorb_final(s: &mut KeccakState, data0: &[U8]) {
-            absorb_final::<168, 0x1fu8>(&mut s.state, data0, 0, data0.len());
-        }
-
-        /// Perform four rounds of the keccak permutation functions
-        pub fn keccakf1660_4rounds(s: &mut KeccakState) {
-            keccak::keccakf1600_4rounds::<0>(&mut s.state);
-        }
-
-        /// Squeeze three blocks
-        pub fn shake128_squeeze_first_three_blocks(s: &mut KeccakState, out0: &mut [U8]) {
-            squeeze_first_three_blocks::<168>(&mut s.state, out0)
-        }
-
-        /// Squeeze five blocks
-        pub fn shake128_squeeze_first_five_blocks(s: &mut KeccakState, out0: &mut [U8]) {
-            squeeze_first_five_blocks::<168>(&mut s.state, out0)
-        }
-
-        /// Squeeze another block
-        pub fn shake128_squeeze_next_block(s: &mut KeccakState, out0: &mut [U8]) {
-            squeeze_next_block::<168>(&mut s.state, out0)
-        }
-
-        /// Create a new SHAKE-256 state object.
-        #[inline(always)]
-        pub fn shake256_init() -> KeccakState {
-            KeccakState {
-                state: state::KeccakState::new(),
-            }
-        }
-
-        /// Absorb some data for SHAKE-256 for the last time
-        pub fn shake256_absorb_final(s: &mut KeccakState, data: &[U8]) {
-            absorb_final::<136, 0x1fu8>(&mut s.state, data, 0, data.len());
-        }
-
-        /// Squeeze the first SHAKE-256 block
-        pub fn shake256_squeeze_first_block(s: &mut KeccakState, out: &mut [U8]) {
-            squeeze_first_block::<136>(&s.state, out)
-        }
-
-        /// Squeeze the next SHAKE-256 block
-        pub fn shake256_squeeze_next_block(s: &mut KeccakState, out: &mut [U8]) {
-            squeeze_next_block::<136>(&mut s.state, out)
-        }
+    /// Squeeze the next SHAKE-256 block
+    pub fn shake256_squeeze_next_block(s: &mut KeccakState, out: &mut [U8]) {
+        squeeze_next_block::<136>(&mut s.state, out)
     }
 }
+
+pub(crate) fn keccakx1<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut [U8]) {
+    keccak::keccak::<RATE, DELIM>(data, out)
+}
+//  === The portable instantiation === //
 
 #[cfg(feature = "check-secret-independence")]
 trait FromLeBytes<const N: usize>: Sized {

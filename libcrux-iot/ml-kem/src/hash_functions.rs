@@ -70,11 +70,16 @@ pub(crate) trait Hash {
 
 /// A portable implementation of [`Hash`]
 pub(crate) mod portable {
-    use super::*;
-    use libcrux_iot_sha3::portable::{self, incremental, KeccakState};
+    use libcrux_iot_sha3::{
+        self,
+        incremental::{self, KeccakState},
+        sha256_ema, sha512_ema, shake256_ema,
+    };
     use libcrux_secrets::Classify as _;
     #[cfg(not(hax))]
     use libcrux_secrets::ClassifyRefMut as _;
+
+    use super::*;
 
     /// The state.
     ///
@@ -90,7 +95,7 @@ pub(crate) mod portable {
     #[hax_lib::opaque]
     #[inline(always)]
     fn G(input: &[U8], output: &mut [U8]) {
-        portable::sha512(output, input);
+        sha512_ema(output, input);
     }
 
     #[hax_lib::requires(output.len() == 32)]
@@ -98,7 +103,7 @@ pub(crate) mod portable {
     #[hax_lib::opaque]
     #[inline(always)]
     fn H(input: &[U8], output: &mut [U8]) {
-        portable::sha256(output, input);
+        sha256_ema(output, input);
     }
 
     #[hax_lib::requires(LEN <= u32::MAX as usize && out.len() == LEN)]
@@ -108,7 +113,7 @@ pub(crate) mod portable {
     fn PRF<const LEN: usize>(input: &[U8], out: &mut [U8]) {
         #[cfg(not(eurydice))]
         debug_assert!(out.len() == LEN);
-        portable::shake256(out, input);
+        shake256_ema(out, input);
     }
 
     #[hax_lib::requires(
@@ -122,7 +127,7 @@ pub(crate) mod portable {
     fn PRFxN(input: &[[U8; 33]], outputs: &mut [U8], out_len: usize) {
         for i in 0..input.len() {
             hax_lib::loop_invariant!(|_: usize| outputs.len() == input.len() * out_len);
-            portable::shake256(
+            shake256_ema(
                 &mut outputs[i * out_len..(i + 1) * out_len],
                 input[i].as_slice(),
             );
