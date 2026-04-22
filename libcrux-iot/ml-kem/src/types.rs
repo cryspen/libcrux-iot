@@ -365,6 +365,7 @@ macro_rules! impl_non_hax_types {
 }
 
 // Hax can't handle these.
+#[cfg(not(hax))]
 mod non_hax_impls {
     use super::*;
     impl_non_hax_types!(MlKemCiphertext);
