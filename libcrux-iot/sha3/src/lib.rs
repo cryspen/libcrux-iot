@@ -119,8 +119,8 @@ pub const fn digest_size(mode: Algorithm) -> usize {
 /// Hashes using a particular [`Algorithm`] of the SHA3 family.
 ///
 /// # Examples
-///
-/// ```rust
+#[cfg_attr(not(feature = "check-secret-independence"), doc = r#"```rust"#)]
+#[cfg_attr(feature = "check-secret-independence", doc = r#"```rust,ignore"#)]
 /// use libcrux_iot_sha3::{digest_size, hash, Algorithm};
 ///
 /// let payload = b"Kecak is a Balinese dance.";
