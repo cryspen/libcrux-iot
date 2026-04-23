@@ -38,10 +38,10 @@ macro_rules! impl_hash_traits {
     };
 }
 
-impl_hash_traits!(Sha3_224, Sha3_224Hasher, SHA3_224_LEN, portable::sha224);
-impl_hash_traits!(Sha3_256, Sha3_256Hasher, SHA3_256_LEN, portable::sha256);
-impl_hash_traits!(Sha3_384, Sha3_384Hasher, SHA3_384_LEN, portable::sha384);
-impl_hash_traits!(Sha3_512, Sha3_512Hasher, SHA3_512_LEN, portable::sha512);
+impl_hash_traits!(Sha3_224, Sha3_224Hasher, SHA3_224_LEN, sha224_ema);
+impl_hash_traits!(Sha3_256, Sha3_256Hasher, SHA3_256_LEN, sha256_ema);
+impl_hash_traits!(Sha3_384, Sha3_384Hasher, SHA3_384_LEN, sha384_ema);
+impl_hash_traits!(Sha3_512, Sha3_512Hasher, SHA3_512_LEN, sha512_ema);
 
 // Implement the slice hash trait
 // This is excluded for the hax extraction
