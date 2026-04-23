@@ -2,8 +2,12 @@
 #![no_std]
 #![cfg(feature = "mldsa87")]
 
+use embedded_alloc::LlffHeap as Heap;
 use libcrux_iot_ml_dsa::ml_dsa_87 as mldsa;
 use libcrux_nrf52810 as board; // global logger + panicking-behavior + memory layout
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
 
 #[cortex_m_rt::entry]
 fn main() -> ! {

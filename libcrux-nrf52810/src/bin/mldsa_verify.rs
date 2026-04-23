@@ -2,8 +2,12 @@
 #![no_std]
 #![cfg(feature = "mldsa87")]
 
+use embedded_alloc::LlffHeap as Heap;
 use libcrux_iot_ml_dsa::ml_dsa_87 as mldsa;
 use libcrux_nrf52810 as board; // global logger + panicking-behavior + memory layout
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
 
 static SIGNATURE: [u8; 4627] = [
     154, 87, 4, 180, 140, 33, 3, 215, 213, 217, 228, 43, 218, 42, 215, 237, 7, 157, 76, 158, 95,
