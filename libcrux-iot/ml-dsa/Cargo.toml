@@ -17,7 +17,7 @@ bench = false # so libtest doesn't eat the arguments to criterion
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libcrux-iot-sha3 = { path = "../sha3" }
+libcrux-iot-sha3 = { path = "../sha3", features = ["unbuffered-xof"] }
 libcrux-macros.workspace = true
 hax-lib.workspace = true
 libcrux-secrets.workspace = true

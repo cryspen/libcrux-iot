@@ -98,22 +98,20 @@ pub(crate) mod shake128 {
 
 /// A portable implementation of [`shake128::Xof`] and [`shake256::Xof`].
 pub(crate) mod portable {
-    use super::{shake128, shake256};
-    use libcrux_iot_sha3::portable::{
-        incremental::{self, Xof},
-        KeccakState,
-    };
+    use libcrux_iot_sha3::incremental::{self, UnbufferedXofState, Xof};
     use libcrux_secrets::{Classify as _, U8};
+
+    use super::{shake128, shake256};
 
     /// Portable SHAKE 128 x4 state.
     ///
     /// We're using a portable implementation so this is actually sequential.
     #[cfg_attr(hax, hax_lib::opaque)]
     pub(crate) struct Shake128X4 {
-        state0: KeccakState,
-        state1: KeccakState,
-        state2: KeccakState,
-        state3: KeccakState,
+        state0: UnbufferedXofState,
+        state1: UnbufferedXofState,
+        state2: UnbufferedXofState,
+        state3: UnbufferedXofState,
     }
 
     #[inline(always)]
@@ -234,12 +232,12 @@ pub(crate) mod portable {
     /// Portable SHAKE 128 state
     #[cfg_attr(hax, hax_lib::opaque)]
     pub(crate) struct Shake128 {
-        state: KeccakState,
+        state: UnbufferedXofState,
     }
 
     #[inline(always)]
     fn shake128(input: &[U8], out: &mut [U8]) {
-        libcrux_iot_sha3::portable::shake128(out, input);
+        libcrux_iot_sha3::shake128_ema(out, input);
     }
 
     impl shake128::Xof for Shake128 {
@@ -252,12 +250,12 @@ pub(crate) mod portable {
     /// Portable SHAKE 256 state
     #[cfg_attr(hax, hax_lib::opaque)]
     pub(crate) struct Shake256 {
-        state: KeccakState,
+        state: UnbufferedXofState,
     }
 
     #[inline(always)]
     fn shake256<const OUTPUT_LENGTH: usize>(input: &[U8], out: &mut [U8; OUTPUT_LENGTH]) {
-        libcrux_iot_sha3::portable::shake256(out, input);
+        libcrux_iot_sha3::shake256_ema(out, input);
     }
 
     #[inline(always)]
@@ -308,10 +306,10 @@ pub(crate) mod portable {
     /// We're using a portable implementation so this is actually sequential.
     #[cfg_attr(hax, hax_lib::opaque)]
     pub(crate) struct Shake256X4 {
-        state0: libcrux_iot_sha3::portable::KeccakState,
-        state1: libcrux_iot_sha3::portable::KeccakState,
-        state2: libcrux_iot_sha3::portable::KeccakState,
-        state3: libcrux_iot_sha3::portable::KeccakState,
+        state0: incremental::UnbufferedXofState,
+        state1: incremental::UnbufferedXofState,
+        state2: incremental::UnbufferedXofState,
+        state3: incremental::UnbufferedXofState,
     }
 
     #[inline(always)]

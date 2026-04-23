@@ -28,6 +28,7 @@ bench = false # so libtest doesn't eat the arguments to criterion
 rand = { version = "0.9", optional = true }
 libcrux-iot-sha3 = { path = "../sha3" , features = [
     "full-unroll",
+    "unbuffered-xof"
 ] }
 hax-lib.workspace = true
 libcrux-secrets.workspace = true

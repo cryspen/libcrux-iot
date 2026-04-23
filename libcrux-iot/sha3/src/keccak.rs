@@ -2363,6 +2363,7 @@ pub(crate) fn squeeze_next_block<const RATE: usize>(s: &mut KeccakState, out: &m
 }
 
 #[inline(always)]
+#[cfg(feature = "unbuffered-xof")]
 pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     squeeze_first_block::<RATE>(s, out);
     squeeze_next_block::<RATE>(s, &mut out[RATE..]);
@@ -2370,6 +2371,7 @@ pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState,
 }
 
 #[inline(always)]
+#[cfg(feature = "unbuffered-xof")]
 pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     squeeze_first_block::<RATE>(s, out);
     squeeze_next_block::<RATE>(s, &mut out[RATE..]);
