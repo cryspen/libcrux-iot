@@ -28,10 +28,9 @@
 //! ### `unbuffered-xof`
 //!
 //! This exposes an additional, unbuffered interface to the SHAKE
-//! APIs. This is useful for reducing memory usage in applications where
-//! inputs are always fully absorbed immediately and only outputs of
-//! lengths that are multiples of `RATE` are squeezed, e.g. in ML-KEM or
-//! ML-DSA.
+//! APIs. This is useful for reducing memory usage in ML-KEM and ML-DSA
+//! applications where inputs are always fully absorbed immediately and
+//! only outputs of lengths that are multiples of `RATE` are squeezed.
 //!
 //! ### `check-secret-independence`
 //!
@@ -165,7 +164,7 @@ pub fn sha224(payload: &[U8]) -> [U8; SHA3_224_DIGEST_SIZE] {
 
 /// Writes SHA3-224 digest of input payload to externally allocated buffer.
 ///
-/// Preconditions
+/// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
 /// - `digest` is exactly [`SHA3_224_DIGEST_SIZE`] bytes long
 pub fn sha224_ema(digest: &mut [U8], payload: &[U8]) {
@@ -179,7 +178,7 @@ pub fn sha224_ema(digest: &mut [U8], payload: &[U8]) {
 
 /// Returns SHA3-256 digest of input payload.
 ///
-/// Preconditions
+/// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
 pub fn sha256(data: &[U8]) -> [U8; SHA3_256_DIGEST_SIZE] {
     let mut out = [0u8; 32].classify();
@@ -192,7 +191,7 @@ pub fn sha256(data: &[U8]) -> [U8; SHA3_256_DIGEST_SIZE] {
 
 /// Writes SHA3-256 digest of input payload to externally allocated buffer.
 ///
-/// Preconditions
+/// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
 /// - `digest` is exactly [`SHA3_256_DIGEST_SIZE`] bytes long
 pub fn sha256_ema(digest: &mut [U8], payload: &[U8]) {
@@ -206,7 +205,7 @@ pub fn sha256_ema(digest: &mut [U8], payload: &[U8]) {
 
 /// Returns SHA3-384 digest of input payload.
 ///
-/// Preconditions
+/// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
 pub fn sha384(data: &[U8]) -> [U8; SHA3_384_DIGEST_SIZE] {
     let mut out = [0u8; 48].classify();
@@ -281,7 +280,7 @@ pub fn shake128_ema(out: &mut [U8], data: &[U8]) {
     keccakx1::<168, 0x1fu8>(data, out);
 }
 
-/// Returns SHA3-256 digest of input payload.
+/// Returns SHAKE256 digest of input payload.
 ///
 /// Preconditions:
 /// - `BYTES` is at most `u32::MAX as usize`
@@ -294,7 +293,7 @@ pub fn shake256<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
     out
 }
 
-/// Writes SHA3-256 digest of input payload to externally allocated buffer.
+/// Writes SHAKE256 digest of input payload to externally allocated buffer.
 ///
 /// Writes `out.len()` bytes.
 ///
@@ -313,7 +312,7 @@ pub mod incremental {
     #[cfg_attr(not(eurydice), derive(Debug))]
     #[cfg(feature = "unbuffered-xof")]
     pub struct UnbufferedXofState {
-        pub(crate) state: crate::state::KeccakState,
+        state: crate::state::KeccakState,
     }
 
     use crate::keccak::KeccakXofState;
