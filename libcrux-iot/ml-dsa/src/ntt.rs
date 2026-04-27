@@ -24,12 +24,17 @@ pub(crate) fn ntt_multiply_montgomery<SIMDUnit: Operations>(
     ()
 }
 
+#[inline(always)]
+// Barrett reduce all coefficients.
+pub(crate) fn reduce<SIMDUnit: Operations>(re: &mut PolynomialRingElement<SIMDUnit>) {
+    SIMDUnit::reduce(&mut re.simd_units);
+}
+
 #[cfg(test)]
 mod tests {
     use libcrux_secrets::ClassifyRef as _;
 
     use super::*;
-
     use crate::{polynomial::PolynomialRingElement, simd::traits::Operations};
 
     fn test_ntt_generic<SIMDUnit: Operations>() {
