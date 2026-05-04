@@ -34,6 +34,7 @@ class extractAction(argparse.Action):
             "-**",
             "+libcrux_iot_sha3::lane::**",
             "+libcrux_iot_sha3::state::**",
+            "+libcrux_iot_sha3::keccak::**",
         ]
         include_str = " ".join(includes)
         cargo_hax_into = [
