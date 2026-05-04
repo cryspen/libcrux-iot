@@ -17,10 +17,6 @@ bench = false # so libtest doesn't eat the arguments to criterion
 
 [dependencies]
 libcrux-secrets.workspace = true
-
-# This is only required for verification.
-# The hax config is set by the hax toolchain.
-[target.'cfg(hax)'.dependencies]
 hax-lib.workspace = true
 
 [features]
