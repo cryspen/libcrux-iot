@@ -1,3 +1,5 @@
+#[cfg(hax)]
+use hax_lib::ToInt;
 #[cfg(feature = "check-secret-independence")]
 use libcrux_secrets::{Classify, Declassify};
 use libcrux_secrets::{U32, U8};
@@ -59,25 +61,25 @@ impl KeccakState {
     }
 
     #[inline(always)]
-    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 200 && start <= 200 && start + RATE + 7 <= blocks.len())]
+    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && start.to_int() + RATE.to_int() <= blocks.len().to_int())]
     pub(crate) fn load_block<const RATE: usize>(&mut self, blocks: &[U8], start: usize) {
         load_block_2u32::<RATE>(self, blocks, start)
     }
 
     #[inline(always)]
-    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 200 && RATE <= out.len())]
+    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && RATE <= out.len())]
     pub(crate) fn store_block<const RATE: usize>(&self, out: &mut [U8]) {
         store_block_2u32::<RATE>(self, out)
     }
 
     #[inline(always)]
-    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 200 && start <= 200 && start + RATE + 7 <= 200)]
+    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && start <= 200 && start + RATE <= 144)]
     pub(crate) fn load_block_full<const RATE: usize>(&mut self, blocks: &[U8; 200], start: usize) {
         load_block_full_2u32::<RATE>(self, blocks, start)
     }
 
     #[inline(always)]
-    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 200)]
+    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 144)]
     pub(crate) fn store_block_full<const RATE: usize>(&self, out: &mut [U8; 200]) {
         store_block_full_2u32::<RATE>(self, out);
     }
@@ -85,7 +87,8 @@ impl KeccakState {
     /// `out` has the exact size we want here. It must be less than or equal to
     /// `RATE`.
     #[inline(always)]
-    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 200 && out.len() <= RATE)]
+    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && out.len() <= RATE)]
+    #[hax_lib::ensures(|_| future(out).len() == out.len())]
     pub(crate) fn store<const RATE: usize>(self, out: &mut [U8]) {
         #[cfg(not(any(eurydice, hax)))]
         debug_assert!(out.len() <= RATE, "{} > {}", out.len(), RATE);
@@ -124,7 +127,7 @@ impl KeccakState {
     }
 }
 
-#[hax_lib::requires(RATE % 8 == 0 && RATE <= 200 && start <= 200 && start + RATE + 7 <= blocks.len())]
+#[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && start.to_int() + RATE.to_int() <= blocks.len().to_int())]
 #[inline(always)]
 fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], start: usize) {
     #[cfg(not(eurydice))]
@@ -147,7 +150,7 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
     }
 }
 
-#[hax_lib::requires(RATE % 8 == 0 && RATE <= 200 && start <= 200 && start + RATE + 7 <= 200)]
+#[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && start.to_int() + RATE.to_int() <= 200.to_int())]
 #[inline(always)]
 fn load_block_full_2u32<const RATE: usize>(
     state: &mut KeccakState,
@@ -157,7 +160,7 @@ fn load_block_full_2u32<const RATE: usize>(
     load_block_2u32::<RATE>(state, blocks, start);
 }
 
-#[hax_lib::requires(RATE % 8 == 0 && RATE <= 200 && RATE <= out.len())]
+#[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && RATE <= out.len())]
 #[inline(always)]
 fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     #[cfg(hax)]
@@ -170,7 +173,7 @@ fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     }
 }
 
-#[hax_lib::requires(RATE % 8 == 0 && RATE <= 200)]
+#[hax_lib::requires(RATE % 8 == 0 && RATE <= 144)]
 #[inline(always)]
 fn store_block_full_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8; 200]) {
     // `out[..]` is a workaround for https://github.com/cryspen/hax/issues/1983
