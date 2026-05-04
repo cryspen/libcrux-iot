@@ -21,3 +21,4 @@ kyber-crate/
 *.lock
 /.fstar-cache/
 /c/combined/generated/build/
+/libcrux-iot/sha3/proofs/fstar/extraction/.depend
