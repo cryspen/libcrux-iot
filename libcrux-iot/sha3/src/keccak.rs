@@ -417,7 +417,6 @@ pub(crate) fn keccakf1600_round0_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
     s: &mut KeccakState,
 ) {
@@ -465,7 +464,6 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
     s: &mut KeccakState,
 ) {
@@ -514,7 +512,6 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y1_zeta0(s: &mut KeccakState) {
     let (bx2, bx3) = {
         let a0 = s.get_with_zeta(2, 0, 1);
@@ -549,7 +546,6 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y1_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y1_zeta1(s: &mut KeccakState) {
     let (bx2, bx3) = {
         let a0 = s.get_with_zeta(2, 0, 0);
@@ -592,7 +588,6 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y2_zeta0(s: &mut KeccakState) {
     let (bx4, bx0) = {
         let a0 = s.get_with_zeta(4, 0, 0);
@@ -627,7 +622,6 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y2_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y2_zeta1(s: &mut KeccakState) {
     let (bx4, bx0) = {
         let a0 = s.get_with_zeta(4, 0, 1);
@@ -662,7 +656,6 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y2_zeta1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y3_zeta0(s: &mut KeccakState) {
     let (bx1, bx2) = {
         let a0 = s.get_with_zeta(1, 0, 0);
@@ -697,7 +690,6 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y3_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y3_zeta1(s: &mut KeccakState) {
     let (bx1, bx2) = {
         let a0 = s.get_with_zeta(1, 0, 1);
@@ -732,7 +724,6 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y3_zeta1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y4_zeta0(s: &mut KeccakState) {
     let (bx3, bx4) = {
         let a0 = s.get_with_zeta(3, 0, 1);
@@ -767,7 +758,6 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y4_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_y4_zeta1(s: &mut KeccakState) {
     let (bx3, bx4) = {
         let a0 = s.get_with_zeta(3, 0, 0);
@@ -961,7 +951,6 @@ pub(crate) fn keccakf1600_round1_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
     s: &mut KeccakState,
 ) {
@@ -1009,7 +998,6 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
     s: &mut KeccakState,
 ) {
@@ -1058,7 +1046,6 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y1_zeta0(s: &mut KeccakState) {
     let (bx2, bx3) = {
         let a0 = s.get_with_zeta(4, 0, 1);
@@ -1093,7 +1080,6 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y1_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y1_zeta1(s: &mut KeccakState) {
     let (bx2, bx3) = {
         let a0 = s.get_with_zeta(4, 0, 0);
@@ -1136,7 +1122,6 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y2_zeta0(s: &mut KeccakState) {
     let (bx4, bx0) = {
         let a0 = s.get_with_zeta(3, 0, 1);
@@ -1171,7 +1156,6 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y2_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y2_zeta1(s: &mut KeccakState) {
     let (bx4, bx0) = {
         let a0 = s.get_with_zeta(3, 0, 0);
@@ -1206,7 +1190,6 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y2_zeta1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y3_zeta0(s: &mut KeccakState) {
     let (bx1, bx2) = {
         let a0 = s.get_with_zeta(2, 0, 1);
@@ -1241,7 +1224,6 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y3_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y3_zeta1(s: &mut KeccakState) {
     let (bx1, bx2) = {
         let a0 = s.get_with_zeta(2, 0, 0);
@@ -1276,7 +1258,6 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y3_zeta1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y4_zeta0(s: &mut KeccakState) {
     let (bx3, bx4) = {
         let a0 = s.get_with_zeta(1, 0, 1);
@@ -1311,7 +1292,6 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y4_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_y4_zeta1(s: &mut KeccakState) {
     let (bx3, bx4) = {
         let a0 = s.get_with_zeta(1, 0, 0);
@@ -1505,7 +1485,6 @@ pub(crate) fn keccakf1600_round2_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
     s: &mut KeccakState,
 ) {
@@ -1553,7 +1532,6 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
     s: &mut KeccakState,
 ) {
@@ -1602,7 +1580,6 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y1_zeta0(s: &mut KeccakState) {
     let (bx2, bx3) = {
         let a0 = s.get_with_zeta(3, 0, 0);
@@ -1637,7 +1614,6 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y1_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y1_zeta1(s: &mut KeccakState) {
     let (bx2, bx3) = {
         let a0 = s.get_with_zeta(3, 0, 1);
@@ -1680,7 +1656,6 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y2_zeta0(s: &mut KeccakState) {
     let (bx4, bx0) = {
         let a0 = s.get_with_zeta(1, 0, 1);
@@ -1715,7 +1690,6 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y2_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y2_zeta1(s: &mut KeccakState) {
     let (bx4, bx0) = {
         let a0 = s.get_with_zeta(1, 0, 0);
@@ -1750,7 +1724,6 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y2_zeta1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y3_zeta0(s: &mut KeccakState) {
     let (bx1, bx2) = {
         let a0 = s.get_with_zeta(4, 0, 1);
@@ -1785,7 +1758,6 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y3_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y3_zeta1(s: &mut KeccakState) {
     let (bx1, bx2) = {
         let a0 = s.get_with_zeta(4, 0, 0);
@@ -1820,7 +1792,6 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y3_zeta1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y4_zeta0(s: &mut KeccakState) {
     let (bx3, bx4) = {
         let a0 = s.get_with_zeta(2, 0, 0);
@@ -1855,7 +1826,6 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y4_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_y4_zeta1(s: &mut KeccakState) {
     let (bx3, bx4) = {
         let a0 = s.get_with_zeta(2, 0, 1);
@@ -2050,7 +2020,6 @@ pub(crate) fn keccakf1600_round3_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
     s: &mut KeccakState,
 ) {
@@ -2098,7 +2067,6 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
     s: &mut KeccakState,
 ) {
@@ -2147,7 +2115,6 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y1_zeta0(s: &mut KeccakState) {
     let (bx2, bx3) = {
         let a0 = s.get_with_zeta(1, 0, 0);
@@ -2182,7 +2149,6 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y1_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1000 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y1_zeta1(s: &mut KeccakState) {
     let (bx2, bx3) = {
         let a0 = s.get_with_zeta(1, 0, 1);
@@ -2225,7 +2191,6 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y2_zeta0(s: &mut KeccakState) {
     let (bx4, bx0) = {
         let a0 = s.get_with_zeta(2, 0, 0);
@@ -2260,7 +2225,6 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y2_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y2_zeta1(s: &mut KeccakState) {
     let (bx4, bx0) = {
         let a0 = s.get_with_zeta(2, 0, 1);
@@ -2295,7 +2259,6 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y2_zeta1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y3_zeta0(s: &mut KeccakState) {
     let (bx1, bx2) = {
         let a0 = s.get_with_zeta(3, 0, 0);
@@ -2330,7 +2293,6 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y3_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y3_zeta1(s: &mut KeccakState) {
     let (bx1, bx2) = {
         let a0 = s.get_with_zeta(3, 0, 1);
@@ -2365,7 +2327,6 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y3_zeta1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y4_zeta0(s: &mut KeccakState) {
     let (bx3, bx4) = {
         let a0 = s.get_with_zeta(4, 0, 0);
@@ -2400,7 +2361,6 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y4_zeta0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[cfg_attr(hax, hax_lib::lean::before("set_option maxRecDepth 1500 in"))]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_y4_zeta1(s: &mut KeccakState) {
     let (bx3, bx4) = {
         let a0 = s.get_with_zeta(4, 0, 1);
