@@ -65,8 +65,12 @@ class proveAction(argparse.Action):
 class cleanAction(argparse.Action):
 
     def __call__(self, parser, args, values, option_string=None) -> None:
-        shell(["rm"] + glob("./proofs/fstar/extraction/*.fst"))
-        shell(["rm"] + glob("./proofs/fstar/extraction/*.fsti"))
+        fst_files = glob("./proofs/fstar/extraction/*.fst")
+        fsti_files = glob("./proofs/fstar/extraction/*.fsti")
+        if fst_files:
+            shell(["rm"] + fst_files)
+        if fsti_files:
+            shell(["rm"] + fsti_files)
         return None
 
 
