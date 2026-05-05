@@ -417,9 +417,7 @@ pub(crate) fn keccakf1600_round0_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
-    s: &mut KeccakState,
-) {
+pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(s: &mut KeccakState) {
     let (bx0, bx1) = {
         let a0 = s.get_with_zeta(0, 0, 0);
         let d0 = s.d[0][0];
@@ -441,9 +439,7 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
         )
     };
 
-    // [hax] uninitialized variables are note supported yet in lean.
-    #[allow(unused_assignments)]
-    let mut ax0 = 0.classify();
+    let ax0;
     #[cfg(feature = "full-unroll")]
     {
         ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 0];
@@ -464,9 +460,7 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
-    s: &mut KeccakState,
-) {
+pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(s: &mut KeccakState) {
     let (bx0, bx1) = {
         let a0 = s.get_with_zeta(0, 0, 1);
         let d0 = s.d[0][1];
@@ -488,9 +482,7 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
         )
     };
 
-    // [hax] uninitialized variables are note supported yet in lean.
-    #[allow(unused_assignments)]
-    let mut ax0 = 0.classify();
+    let ax0;
     #[cfg(feature = "full-unroll")]
     {
         ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 0];
@@ -951,9 +943,7 @@ pub(crate) fn keccakf1600_round1_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
-    s: &mut KeccakState,
-) {
+pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(s: &mut KeccakState) {
     let (bx0, bx1) = {
         let a0 = s.get_with_zeta(0, 0, 0);
         let d0 = s.d[0][0];
@@ -975,9 +965,7 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
         )
     };
 
-    // [hax] uninitialized variables are note supported yet in lean.
-    #[allow(unused_assignments)]
-    let mut ax0 = 0.classify();
+    let ax0;
     #[cfg(feature = "full-unroll")]
     {
         ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 1];
@@ -998,9 +986,7 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
-    s: &mut KeccakState,
-) {
+pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(s: &mut KeccakState) {
     let (bx0, bx1) = {
         let a0 = s.get_with_zeta(0, 0, 1);
         let d0 = s.d[0][1];
@@ -1022,9 +1008,7 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
         )
     };
 
-    // [hax] uninitialized variables are note supported yet in lean.
-    #[allow(unused_assignments)]
-    let mut ax0 = 0.classify();
+    let ax0;
     #[cfg(feature = "full-unroll")]
     {
         ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 1];
@@ -1485,9 +1469,7 @@ pub(crate) fn keccakf1600_round2_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
-    s: &mut KeccakState,
-) {
+pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(s: &mut KeccakState) {
     let (bx0, bx1) = {
         let a0 = s.get_with_zeta(0, 0, 0);
         let d0 = s.d[0][0];
@@ -1509,9 +1491,7 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
         )
     };
 
-    // [hax] uninitialized variables are note supported yet in lean.
-    #[allow(unused_assignments)]
-    let mut ax0 = 0.classify();
+    let ax0;
     #[cfg(feature = "full-unroll")]
     {
         ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 2];
@@ -1532,9 +1512,7 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
-    s: &mut KeccakState,
-) {
+pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(s: &mut KeccakState) {
     let (bx0, bx1) = {
         let a0 = s.get_with_zeta(0, 0, 1);
         let d0 = s.d[0][1];
@@ -1556,9 +1534,7 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
         )
     };
 
-    // [hax] uninitialized variables are note supported yet in lean.
-    #[allow(unused_assignments)]
-    let mut ax0 = 0.classify();
+    let ax0;
     #[cfg(feature = "full-unroll")]
     {
         ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 2];
@@ -2020,9 +1996,7 @@ pub(crate) fn keccakf1600_round3_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
-    s: &mut KeccakState,
-) {
+pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(s: &mut KeccakState) {
     let (bx0, bx1) = {
         let a0 = s.get_with_zeta(0, 0, 0);
         let d0 = s.d[0][0];
@@ -2044,9 +2018,7 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
         )
     };
 
-    // [hax] uninitialized variables are note supported yet in lean.
-    #[allow(unused_assignments)]
-    let mut ax0 = 0.classify();
+    let ax0;
     #[cfg(feature = "full-unroll")]
     {
         ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 3];
@@ -2067,9 +2039,7 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta0<const BASE_ROUND: usize>(
 }
 
 #[inline(always)]
-pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
-    s: &mut KeccakState,
-) {
+pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(s: &mut KeccakState) {
     let (bx0, bx1) = {
         let a0 = s.get_with_zeta(0, 0, 1);
         let d0 = s.d[0][1];
@@ -2091,9 +2061,7 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_y0_zeta1<const BASE_ROUND: usize>(
         )
     };
 
-    // [hax] uninitialized variables are note supported yet in lean.
-    #[allow(unused_assignments)]
-    let mut ax0 = 0.classify();
+    let ax0;
     #[cfg(feature = "full-unroll")]
     {
         ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 3];
