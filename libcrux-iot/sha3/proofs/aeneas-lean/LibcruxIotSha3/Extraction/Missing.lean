@@ -1,4 +1,3 @@
--- Axioms for constants that are missing from the current extraction.
 import Aeneas
 import CoreModels
 
@@ -6,114 +5,188 @@ open Aeneas Aeneas.Std Result
 
 noncomputable section
 
--- libcrux_secrets::traits::Classify::Blanket::classify
--- Blanket impl that wraps any value into a successful Result.
 namespace libcrux_secrets.traits.Classify.Blanket
-axiom classify : {T : Type} → T → Aeneas.Std.Result T
+def classify {T : Type} (a : T) : Aeneas.Std.Result T := ok a
 end libcrux_secrets.traits.Classify.Blanket
 
 namespace Aeneas.Std
 
--- Integer cast operations from libcrux_secrets
-axiom U32.Insts.Libcrux_secretsIntCastOps.as_u64 : U32 → Result U64
-axiom U64.Insts.Libcrux_secretsIntCastOps.as_u32 : U64 → Result U32
+def U32.Insts.Libcrux_secretsIntCastOps.as_u64 (x : U32) : Result U64 :=
+  ok (UScalar.cast .U64 x)
 
--- I32 range step instance (mirrors Usize.Insts.Core_modelsIterRangeStep)
-axiom I32.Insts.Core_modelsIterRangeStep : core_models.iter.range.Step I32
+def U64.Insts.Libcrux_secretsIntCastOps.as_u32 (x : U64) : Result U32 :=
+  ok (UScalar.cast .U32 x)
 
--- Slice indexing via a SliceIndex instance
-axiom Slice.Insts.Core_modelsOpsIndexIndex.index :
-  {T I Output : Type} →
-  core.slice.index.SliceIndex I (Slice T) Output →
-  Slice T → I → Result Output
+def I32.Insts.Core_modelsIterRangeStep : core_models.iter.range.Step I32 := {
+  cloneInst       := { clone := fun x => Aeneas.Std.Result.ok x}
+  partialOrdInst  := {
+    PartialEqInst := { eq := fun x y => ok (x == y) }
+    partial_cmp := fun x y =>
+      ok (core_models.option.Option.Some
+        (match compare x.val y.val with
+        | .lt => core_models.cmp.Ordering.Less
+        | .eq => core_models.cmp.Ordering.Equal
+        | .gt => core_models.cmp.Ordering.Greater))
+  }
+  steps_between   :=
+    λ start end_ =>
+      if h: start > end_ then ok ⟨ 0#usize, none ⟩ else
+        let steps := Usize.ofNatCore (end_.val - start.val).toNat (by scalar_tac)
+        ok ⟨ steps, some steps ⟩
+  forward_checked :=
+    λ start n => ok (Option.ofResult (IScalar.tryMk .I32 (start.val + (n.val : Int))))
+  backward_checked :=
+    λ start n => ok (Option.ofResult (IScalar.tryMk .I32 (start.val - (n.val : Int))))
+}
 
-axiom Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut :
-  {T I Output : Type} →
-  core.slice.index.SliceIndex I (Slice T) Output →
-  Slice T → I → Result (Output × (Output → Slice T))
+def Slice.Insts.Core_modelsOpsIndexIndex.index
+  {T I Output : Type}
+  (inst : core.slice.index.SliceIndex I (Slice T) Output)
+  (s : Slice T) (i : I) : Result Output :=
+  core.slice.index.Slice.index inst s i
 
--- Array indexing via a SliceIndex instance
-axiom Array.Insts.Core_modelsOpsIndexIndex.index :
-  {T I Output : Type} → {N : Usize} →
-  core.slice.index.SliceIndex I (Slice T) Output →
-  Array T N → I → Result Output
+def Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+  {T I Output : Type}
+  (inst : core.slice.index.SliceIndex I (Slice T) Output)
+  (s : Slice T) (i : I) : Result (Output × (Output → Slice T)) :=
+  core.slice.index.Slice.index_mut inst s i
 
-axiom Array.Insts.Core_modelsOpsIndexIndexMut.index_mut :
-  {T I Output : Type} → {N : Usize} →
-  core.slice.index.SliceIndex I (Slice T) Output →
-  Array T N → I → Result (Output × (Output → Array T N))
+def Array.Insts.Core_modelsOpsIndexIndex.index
+  {T I Output : Type} {N : Usize}
+  (inst : core.slice.index.SliceIndex I (Slice T) Output)
+  (arr : Array T N) (i : I) : Result Output :=
+  core.slice.index.Slice.index inst (Array.to_slice arr) i
 
--- Display instance for Usize (used with fmt::rt::Argument::new_display)
-axiom Usize.Insts.Core_modelsFmtDisplay : core_models.fmt.Display Usize
+def Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+  {T I Output : Type} {N : Usize}
+  (inst : core.slice.index.SliceIndex I (Slice T) Output)
+  (arr : Array T N) (i : I) : Result (Output × (Output → Array T N)) := do
+  let (s, to_arr) := Array.to_slice_mut arr
+  let (out, to_slice) ← core.slice.index.Slice.index_mut inst s i
+  ok (out, fun o => to_arr (to_slice o))
 
--- Debug instances
-axiom Usize.Insts.Core_modelsFmtDebug : core_models.fmt.Debug Usize
+@[reducible] def Usize.Insts.Core_modelsFmtDisplay : core_models.fmt.Display Usize :=
+  { fmt := fun _ f => ok (core_models.result.Result.Ok (), f) }
 
--- Debug instance builder for Array (parameterised over element Debug)
-axiom Array.Insts.Core_modelsFmtDebug :
-  {T : Type} → (N : Usize) → core_models.fmt.Debug T → core_models.fmt.Debug (Array T N)
+@[reducible] def Usize.Insts.Core_modelsFmtDebug : core_models.fmt.Debug Usize :=
+  { dbg_fmt := fun _ f => ok (core_models.result.Result.Ok (), f) }
 
--- Slice index instance wrappers (identity coercions for the index/index_mut dispatch)
-axiom Slice.Insts.Core_modelsOpsIndexIndex :
-  {T I O : Type} → core.slice.index.SliceIndex I (Slice T) O → core.slice.index.SliceIndex I (Slice T) O
+@[reducible] def Array.Insts.Core_modelsFmtDebug
+  {T : Type} (_N : Usize) (_elem : core_models.fmt.Debug T) :
+  core_models.fmt.Debug (Array T _N) :=
+  { dbg_fmt := fun _ f => ok (core_models.result.Result.Ok (), f) }
 
-axiom Slice.Insts.Core_modelsOpsIndexIndexMut :
-  {T I O : Type} → core.slice.index.SliceIndex I (Slice T) O → core.slice.index.SliceIndex I (Slice T) O
+def Slice.Insts.Core_modelsOpsIndexIndex
+  {T I O : Type} (inst : core.slice.index.SliceIndex I (Slice T) O) :
+  core.slice.index.SliceIndex I (Slice T) O := inst
+
+def Slice.Insts.Core_modelsOpsIndexIndexMut
+  {T I O : Type} (inst : core.slice.index.SliceIndex I (Slice T) O) :
+  core.slice.index.SliceIndex I (Slice T) O := inst
 
 end Aeneas.Std
 
 namespace core_models
 
--- core::result::Result::unwrap
-axiom result.Result.unwrap :
-  {T E : Type} → fmt.Debug E → result.Result T E → Aeneas.Std.Result T
+def result.Result.unwrap
+  {T E : Type} (_dbg : fmt.Debug E) (r : result.Result T E) :
+  Aeneas.Std.Result T :=
+  match r with
+  | .Ok x => Aeneas.Std.Result.ok x
+  | .Err _ => Aeneas.Std.Result.fail Aeneas.Std.Error.panic
 
--- core::fmt::Arguments::new
-axiom fmt.Arguments.new :
-  {N M : Aeneas.Std.Usize} →
-  Aeneas.Std.Array Aeneas.Std.U8 N →
-  Aeneas.Std.Array fmt.rt.Argument M →
-  Aeneas.Std.Result fmt.Arguments
+def fmt.Arguments.new
+  {N M : Aeneas.Std.Usize}
+  (_ : Aeneas.Std.Array Aeneas.Std.U8 N)
+  (_ : Aeneas.Std.Array fmt.rt.Argument M) :
+  Aeneas.Std.Result fmt.Arguments :=
+  Aeneas.Std.Result.ok ()
 
--- core::fmt::Formatter::write_str
-axiom fmt.Formatter.write_str :
-  fmt.Formatter → Aeneas.Std.Str →
-  Aeneas.Std.Result (result.Result Unit fmt.Error × fmt.Formatter)
+def fmt.Formatter.write_str
+  (f : fmt.Formatter) (_ : Aeneas.Std.Str) :
+  Aeneas.Std.Result (result.Result Unit fmt.Error × fmt.Formatter) :=
+  Aeneas.Std.Result.ok (.Ok (), f)
 
--- core::fmt::Formatter::debug_struct_field4_finish
-axiom fmt.Formatter.debug_struct_field4_finish :
-  fmt.Formatter → Aeneas.Std.Str →
-  Aeneas.Std.Str → Aeneas.Std.Dyn (fun _dyn => fmt.Debug _dyn) →
-  Aeneas.Std.Str → Aeneas.Std.Dyn (fun _dyn => fmt.Debug _dyn) →
-  Aeneas.Std.Str → Aeneas.Std.Dyn (fun _dyn => fmt.Debug _dyn) →
-  Aeneas.Std.Str → Aeneas.Std.Dyn (fun _dyn => fmt.Debug _dyn) →
-  Aeneas.Std.Result (result.Result Unit fmt.Error × fmt.Formatter)
+def fmt.Formatter.debug_struct_field4_finish
+  (f : fmt.Formatter) (_ : Aeneas.Std.Str)
+  (_ : Aeneas.Std.Str) (_ : Aeneas.Std.Dyn (fun _dyn => fmt.Debug _dyn))
+  (_ : Aeneas.Std.Str) (_ : Aeneas.Std.Dyn (fun _dyn => fmt.Debug _dyn))
+  (_ : Aeneas.Std.Str) (_ : Aeneas.Std.Dyn (fun _dyn => fmt.Debug _dyn))
+  (_ : Aeneas.Std.Str) (_ : Aeneas.Std.Dyn (fun _dyn => fmt.Debug _dyn)) :
+  Aeneas.Std.Result (result.Result Unit fmt.Error × fmt.Formatter) :=
+  Aeneas.Std.Result.ok (.Ok (), f)
 
--- core::slice::[T]::copy_from_slice
-axiom slice.Slice.copy_from_slice :
-  {T : Type} → marker.Copy T →
-  Aeneas.Std.Slice T → Aeneas.Std.Slice T → Aeneas.Std.Result (Aeneas.Std.Slice T)
+def slice.Slice.copy_from_slice
+  {T : Type} (_cpy : marker.Copy T)
+  (dst : Aeneas.Std.Slice T) (src : Aeneas.Std.Slice T) :
+  Aeneas.Std.Result (Aeneas.Std.Slice T) :=
+  if Aeneas.Std.Slice.len dst = Aeneas.Std.Slice.len src then
+    Aeneas.Std.Result.ok src
+  else Aeneas.Std.Result.fail Aeneas.Std.Error.panic
 
--- Debug instance for shared references (&T modelled as T)
-axiom Shared0T.Insts.Core_modelsFmtDebug :
-  {T : Type} → fmt.Debug T → fmt.Debug T
+def Shared0T.Insts.Core_modelsFmtDebug
+  {T : Type} (d : fmt.Debug T) : fmt.Debug T := d
 
--- Debug instance for array::TryFromSliceError
-axiom array.TryFromSliceError.Insts.Core_modelsFmtDebug : fmt.Debug array.TryFromSliceError
+@[reducible] def array.TryFromSliceError.Insts.Core_modelsFmtDebug :
+  fmt.Debug array.TryFromSliceError :=
+  { dbg_fmt := fun _ f => Aeneas.Std.Result.ok (.Ok (), f) }
 
--- SliceIndex instances for the core_models Range types
-axiom ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice :
-  (T : Type) → Aeneas.Std.core.slice.index.SliceIndex
-    (ops.range.Range Aeneas.Std.Usize) (Aeneas.Std.Slice T) (Aeneas.Std.Slice T)
+def cmRangeUsizeToAeneas (r : ops.range.Range Aeneas.Std.Usize) :
+    Aeneas.Std.core.ops.range.Range Aeneas.Std.Usize :=
+  { start := r.start, «end» := r.«end» }
 
-axiom ops.range.RangeToUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice :
-  (T : Type) → Aeneas.Std.core.slice.index.SliceIndex
-    (ops.range.RangeTo Aeneas.Std.Usize) (Aeneas.Std.Slice T) (Aeneas.Std.Slice T)
+def cmRangeToUsizeToAeneas (r : ops.range.RangeTo Aeneas.Std.Usize) :
+    Aeneas.Std.core.ops.range.RangeTo Aeneas.Std.Usize :=
+  { «end» := r.«end» }
 
-axiom ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice :
-  (T : Type) → Aeneas.Std.core.slice.index.SliceIndex
-    (ops.range.RangeFrom Aeneas.Std.Usize) (Aeneas.Std.Slice T) (Aeneas.Std.Slice T)
+@[reducible] def ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+  (T : Type) : Aeneas.Std.core.slice.index.SliceIndex
+    (ops.range.Range Aeneas.Std.Usize) (Aeneas.Std.Slice T) (Aeneas.Std.Slice T) :=
+  { sealedInst := {}
+    get := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.get (cmRangeUsizeToAeneas r) s
+    get_mut := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.get_mut (cmRangeUsizeToAeneas r) s
+    get_unchecked := fun _ _ => Aeneas.Std.Result.fail Aeneas.Std.Error.undef
+    get_unchecked_mut := fun _ _ => Aeneas.Std.Result.fail Aeneas.Std.Error.undef
+    index := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.index (cmRangeUsizeToAeneas r) s
+    index_mut := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.index_mut (cmRangeUsizeToAeneas r) s }
+
+@[reducible] def ops.range.RangeToUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+  (T : Type) : Aeneas.Std.core.slice.index.SliceIndex
+    (ops.range.RangeTo Aeneas.Std.Usize) (Aeneas.Std.Slice T) (Aeneas.Std.Slice T) :=
+  { sealedInst := {}
+    get := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeToUsizeSlice.get (cmRangeToUsizeToAeneas r) s
+    get_mut := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeToUsizeSlice.get_mut (cmRangeToUsizeToAeneas r) s
+    get_unchecked := fun _ _ => Aeneas.Std.Result.fail Aeneas.Std.Error.undef
+    get_unchecked_mut := fun _ _ => Aeneas.Std.Result.fail Aeneas.Std.Error.undef
+    index := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeToUsizeSlice.index (cmRangeToUsizeToAeneas r) s
+    index_mut := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeToUsizeSlice.index_mut (cmRangeToUsizeToAeneas r) s }
+
+@[reducible] def ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+  (T : Type) : Aeneas.Std.core.slice.index.SliceIndex
+    (ops.range.RangeFrom Aeneas.Std.Usize) (Aeneas.Std.Slice T) (Aeneas.Std.Slice T) :=
+  let toFullRange (r : ops.range.RangeFrom Aeneas.Std.Usize) (s : Aeneas.Std.Slice T) :
+      Aeneas.Std.core.ops.range.Range Aeneas.Std.Usize :=
+    { start := r.start, «end» := Aeneas.Std.Slice.len s }
+  { sealedInst := {}
+    get := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.get (toFullRange r s) s
+    get_mut := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.get_mut (toFullRange r s) s
+    get_unchecked := fun _ _ => Aeneas.Std.Result.fail Aeneas.Std.Error.undef
+    get_unchecked_mut := fun _ _ => Aeneas.Std.Result.fail Aeneas.Std.Error.undef
+    index := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.index (toFullRange r s) s
+    index_mut := fun r s =>
+      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.index_mut (toFullRange r s) s }
 
 end core_models
 
-end -- noncomputable section
+end
