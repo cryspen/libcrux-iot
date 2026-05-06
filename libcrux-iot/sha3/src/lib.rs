@@ -65,7 +65,12 @@ pub const SHA3_384_DIGEST_SIZE: usize = 48;
 /// Size in bytes of a SHA3 512 digest
 pub const SHA3_512_DIGEST_SIZE: usize = 64;
 
-/// The Digest Algorithm
+#[cfg(not(any(hax, eurydice)))]
+mod impl_digest_trait;
+#[cfg(not(any(hax, eurydice)))]
+pub use impl_digest_trait::*;
+
+/// The Digest Algorithm.
 #[cfg_attr(not(eurydice), derive(Copy, Clone, Debug, PartialEq))]
 #[repr(u32)]
 pub enum Algorithm {
