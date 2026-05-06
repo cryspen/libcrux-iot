@@ -1,7 +1,9 @@
 use libcrux_secrets::Classify as _;
 
-use super::arithmetic::{self, montgomery_multiply_fe_by_fer};
-use super::vector_type::Coefficients;
+use super::{
+    arithmetic::{self, montgomery_multiply_fe_by_fer},
+    vector_type::Coefficients,
+};
 use crate::simd::traits::{COEFFICIENTS_IN_SIMD_UNIT, SIMD_UNITS_IN_RING_ELEMENT};
 
 #[inline(always)]
@@ -306,4 +308,101 @@ pub(crate) fn invert_ntt_montgomery(re: &mut [Coefficients; SIMD_UNITS_IN_RING_E
 
     // [hax] https://github.com/hacspec/hax/issues/720
     ()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        polynomial::PolynomialRingElement,
+        simd::traits::{Operations, FIELD_MODULUS, SIMD_UNITS_IN_RING_ELEMENT},
+    };
+
+    fn poly_reduce_from_value<SIMDUnit: Operations>(
+        value: i32,
+        reduce: bool,
+    ) -> PolynomialRingElement<SIMDUnit> {
+        let mut re = PolynomialRingElement::<SIMDUnit>::zero();
+
+        PolynomialRingElement::<SIMDUnit>::from_i32_array(
+            &[value.classify(); SIMD_UNITS_IN_RING_ELEMENT * COEFFICIENTS_IN_SIMD_UNIT],
+            &mut re,
+        );
+
+        if reduce {
+            SIMDUnit::reduce(&mut re.simd_units);
+        }
+
+        let _ = core::hint::black_box(SIMDUnit::invert_ntt_montgomery(&mut re.simd_units));
+
+        re
+    }
+
+    #[test]
+    fn inv_ntt_unreduced_max() {
+        let value = FIELD_MODULUS + (FIELD_MODULUS / 1024) + 6;
+        let _re_portable =
+            poly_reduce_from_value::<crate::simd::portable::PortableSIMDUnit>(value, true);
+    }
+
+    #[test]
+    fn inv_ntt_reduced() {
+        let value = FIELD_MODULUS + (FIELD_MODULUS / 1024) + 7;
+        let _re_portable =
+            poly_reduce_from_value::<crate::simd::portable::PortableSIMDUnit>(value, true);
+    }
+
+    #[test]
+    #[should_panic]
+    fn inv_ntt_reduced_panic() {
+        let value = FIELD_MODULUS + (FIELD_MODULUS / 1024) + 7;
+        // iNTT without reduction: In debug mode this will panic.
+        let re1 = poly_reduce_from_value::<crate::simd::portable::PortableSIMDUnit>(value, false);
+
+        let re2 = poly_reduce_from_value::<crate::simd::portable::PortableSIMDUnit>(value, true);
+
+        // In release mode, one of the checks below will panic, since
+        // the intermediate values silently overflowed, producing an
+        // incorrect result.
+        assert_eq!(re1.to_i32_array(), re2.to_i32_array());
+    }
+
+    #[test]
+    fn inv_ntt_reduced_large() {
+        let value = FIELD_MODULUS * 8;
+        let _re_portable =
+            poly_reduce_from_value::<crate::simd::portable::PortableSIMDUnit>(value, true);
+    }
+
+    #[test]
+    #[should_panic]
+    fn inv_ntt_reduced_large_panic() {
+        let value = FIELD_MODULUS * 8;
+
+        // iNTT without reduction: In debug mode this will panic.
+        let re1 = poly_reduce_from_value::<crate::simd::portable::PortableSIMDUnit>(value, false);
+
+        let re2 = poly_reduce_from_value::<crate::simd::portable::PortableSIMDUnit>(value, true);
+
+        // In release mode, one of the checks below will panic, since
+        // the intermediate values silently overflowed, producing an
+        // incorrect result.
+        assert_eq!(re1.to_i32_array(), re2.to_i32_array());
+    }
+
+    #[test]
+    #[should_panic]
+    fn inv_ntt_unreduced_panic() {
+        let value = FIELD_MODULUS + (FIELD_MODULUS / 1024) + 7;
+
+        // iNTT without reduction: In debug mode this will panic.
+        let re1 = poly_reduce_from_value::<crate::simd::portable::PortableSIMDUnit>(value, false);
+
+        let re2 = poly_reduce_from_value::<crate::simd::portable::PortableSIMDUnit>(value, true);
+
+        // In release mode, one of the checks below will panic, since
+        // the intermediate values silently overflowed, producing an
+        // incorrect result.
+        assert_eq!(re1.to_i32_array(), re2.to_i32_array());
+    }
 }
