@@ -496,3 +496,100 @@ trait FromLeBytes<const N: usize>: Sized {
 trait ToLeBytes<const N: usize>: Sized {
     fn to_le_bytes(self) -> [U8; N];
 }
+
+#[cfg(kani)]
+mod verification {
+    use super::*;
+    use crate::keccak::KeccakXofState;
+    use libcrux_secrets::*;
+
+    // ── SHA3-256 (RATE=136, DELIM=0x06, output=32) ───────────────────────────
+
+    #[kani::proof]
+    #[kani::unwind(136)]
+    fn sha3_256_empty() {
+        let input: [u8; 0] = [];
+        let mut out = [0u8; 32].classify();
+        keccakx1::<136, 0x06>(input.classify_ref(), &mut out);
+    }
+
+    #[kani::proof]
+    #[kani::unwind(136)]
+    fn sha3_256_one_block() {
+        let input: [u8; 136] = kani::any();
+        let mut out = [0u8; 32].classify();
+        keccakx1::<136, 0x06>(input.classify_ref(), &mut out);
+    }
+
+    #[kani::proof]
+    #[kani::unwind(272)]
+    fn sha3_256_two_blocks() {
+        let input: [u8; 272] = kani::any();
+        let mut out = [0u8; 32].classify();
+        keccakx1::<136, 0x06>(input.classify_ref(), &mut out);
+    }
+
+    // ── SHA3-224 (RATE=144, DELIM=0x06, output=28) ───────────────────────────
+
+    #[kani::proof]
+    #[kani::unwind(144)]
+    fn sha3_224_one_block() {
+        let input: [u8; 144] = kani::any();
+        let mut out = [0u8; 28].classify();
+        keccakx1::<144, 0x06>(input.classify_ref(), &mut out);
+    }
+
+    // ── SHA3-384 (RATE=104, DELIM=0x06, output=48) ───────────────────────────
+
+    #[kani::proof]
+    #[kani::unwind(104)]
+    fn sha3_384_one_block() {
+        let input: [u8; 104] = kani::any();
+        let mut out = [0u8; 48].classify();
+        keccakx1::<104, 0x06>(input.classify_ref(), &mut out);
+    }
+
+    // ── SHA3-512 (RATE=72, DELIM=0x06, output=64) ────────────────────────────
+
+    #[kani::proof]
+    #[kani::unwind(72)]
+    fn sha3_512_one_block() {
+        let input: [u8; 72] = kani::any();
+        let mut out = [0u8; 64].classify();
+        keccakx1::<72, 0x06>(input.classify_ref(), &mut out);
+    }
+
+    // ── SHAKE128 (RATE=168, DELIM=0x1f) ──────────────────────────────────────
+
+    #[kani::proof]
+    #[kani::unwind(168)]
+    fn shake128_one_block() {
+        let input: [u8; 168] = kani::any();
+        let mut out = [0u8; 168].classify();
+        keccakx1::<168, 0x1f>(input.classify_ref(), &mut out);
+    }
+
+    // ── SHAKE256 (RATE=136, DELIM=0x1f) ──────────────────────────────────────
+
+    #[kani::proof]
+    #[kani::unwind(136)]
+    fn shake256_one_block() {
+        let input: [u8; 136] = kani::any();
+        let mut out = [0u8; 136].classify();
+        keccakx1::<136, 0x1f>(input.classify_ref(), &mut out);
+    }
+
+    // ── Incremental SHAKE128 XOF ──────────────────────────────────────────────
+
+    #[kani::proof]
+    #[kani::unwind(168)]
+    fn shake128_xof_one_block() {
+        let mut state = KeccakXofState::<168>::new();
+        let input: [u8; 168] = kani::any();
+        state.absorb(input.classify_ref());
+        let trailing: [u8; 0] = [];
+        state.absorb_final::<0x1f>(trailing.classify_ref());
+        let mut out = [0u8; 168].classify();
+        state.squeeze(&mut out);
+    }
+}
