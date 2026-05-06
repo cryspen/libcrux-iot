@@ -1,9 +1,9 @@
-name = "LibcruxIotMlDsa"
+name = "LibcruxIotMlKem"
 version = "0.1.0"
-defaultTargets = ["LibcruxIotMlDsa"]
+defaultTargets = ["LibcruxIotMlKem"]
 
 [[lean_lib]]
-name = "LibcruxIotMlDsa"
+name = "LibcruxIotMlKem"
 
 [[require]]
 name = "Hax"

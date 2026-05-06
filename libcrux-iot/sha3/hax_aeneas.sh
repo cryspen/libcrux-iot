@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# hax version: c11d79045605edbceb02377c1053e03f7c36b8c4
+# hax version: 7b4bd97058e0fcbf9135b76297ca91942f2327a6
 # aeneas version: 863909af
 
 cargo hax into aeneas-lean
