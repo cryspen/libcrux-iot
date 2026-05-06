@@ -8,4 +8,4 @@ name = "LibcruxIotSha3"
 [[require]]
 name = "Hax"
 git = { url = "https://github.com/cryspen/hax-evit", subDir = "hax-lib/proof-libs/aeneas-lean" }
-rev = "436167e"
+rev = "c11d79045605edbceb02377c1053e03f7c36b8c4"
