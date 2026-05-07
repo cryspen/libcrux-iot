@@ -535,7 +535,7 @@ let impl__absorb_full (v_RATE: usize) (self: t_KeccakXofState v_RATE) (inputs: t
     : Prims.Pure (t_KeccakXofState v_RATE & usize)
       (requires
         v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
-        v_RATE <=. mk_usize 144 &&
+        v_RATE <=. mk_usize 168 &&
         self.f_buf_len <. v_RATE &&
         ((Rust_primitives.Hax.Int.from_machine (Core_models.Slice.impl__len #u8 inputs <: usize)
             <:
@@ -637,7 +637,7 @@ let impl__absorb (v_RATE: usize) (self: t_KeccakXofState v_RATE) (inputs: t_Slic
     : Prims.Pure (t_KeccakXofState v_RATE)
       (requires
         v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
-        v_RATE <=. mk_usize 144 &&
+        v_RATE <=. mk_usize 168 &&
         self.f_buf_len <. v_RATE &&
         ((Rust_primitives.Hax.Int.from_machine (Core_models.Slice.impl__len #u8 inputs <: usize)
             <:
@@ -716,7 +716,7 @@ let impl__absorb_final
     : Prims.Pure (t_KeccakXofState v_RATE)
       (requires
         v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
-        v_RATE <=. mk_usize 144 &&
+        v_RATE <=. mk_usize 168 &&
         self.f_buf_len <. v_RATE &&
         ((Rust_primitives.Hax.Int.from_machine (Core_models.Slice.impl__len #u8 inputs <: usize)
             <:
@@ -829,13 +829,13 @@ let impl__absorb_final
     { self with f_inner = keccakf1600 self.f_inner } <: t_KeccakXofState v_RATE
   in
   self
-
+#push-options "--z3rlimit 60"
 /// Squeeze `N` x `LEN` bytes.
 let impl__squeeze (v_RATE: usize) (self: t_KeccakXofState v_RATE) (out: t_Slice u8)
     : Prims.Pure (t_KeccakXofState v_RATE & t_Slice u8)
       (requires
         v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
-        v_RATE <=. mk_usize 144)
+        v_RATE <=. mk_usize 168)
       (fun _ -> Prims.l_True) =
   let self:t_KeccakXofState v_RATE =
     if self.f_sponge
@@ -940,7 +940,7 @@ let impl__squeeze (v_RATE: usize) (self: t_KeccakXofState v_RATE) (out: t_Slice 
   in
   let self:t_KeccakXofState v_RATE = { self with f_sponge = true } <: t_KeccakXofState v_RATE in
   self, out <: (t_KeccakXofState v_RATE & t_Slice u8)
-
+#pop-options
 let absorb_block
       (v_RATE: usize)
       (s: Libcrux_iot_sha3.State.t_KeccakState)
@@ -948,7 +948,7 @@ let absorb_block
       (start: usize)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         ((Rust_primitives.Hax.Int.from_machine start <: Hax_lib.Int.t_Int) +
           (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
           <:
@@ -972,7 +972,7 @@ let absorb_final
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
       (requires
         v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
-        v_RATE <=. mk_usize 144 &&
+        v_RATE <=. mk_usize 168 &&
         len <. v_RATE &&
         ((Rust_primitives.Hax.Int.from_machine start <: Hax_lib.Int.t_Int) +
           (Rust_primitives.Hax.Int.from_machine len <: Hax_lib.Int.t_Int)
@@ -1043,7 +1043,7 @@ let absorb_final
 let squeeze_first_block (v_RATE: usize) (s: Libcrux_iot_sha3.State.t_KeccakState) (out: t_Slice u8)
     : Prims.Pure (t_Slice u8)
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         v_RATE <=. (Core_models.Slice.impl__len #u8 out <: usize))
       (ensures
         fun out_future ->
@@ -1056,7 +1056,7 @@ let squeeze_first_block (v_RATE: usize) (s: Libcrux_iot_sha3.State.t_KeccakState
 let squeeze_next_block (v_RATE: usize) (s: Libcrux_iot_sha3.State.t_KeccakState) (out: t_Slice u8)
     : Prims.Pure (Libcrux_iot_sha3.State.t_KeccakState & t_Slice u8)
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         v_RATE <=. (Core_models.Slice.impl__len #u8 out <: usize))
       (ensures
         fun temp_0_ ->
@@ -1075,7 +1075,7 @@ let squeeze_first_three_blocks
       (out: t_Slice u8)
     : Prims.Pure (Libcrux_iot_sha3.State.t_KeccakState & t_Slice u8)
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         (mk_usize 3 *! v_RATE <: usize) <=. (Core_models.Slice.impl__len #u8 out <: usize))
       (fun _ -> Prims.l_True) =
   let out:t_Slice u8 = squeeze_first_block v_RATE s out in
@@ -1119,7 +1119,7 @@ let squeeze_first_five_blocks
       (out: t_Slice u8)
     : Prims.Pure (Libcrux_iot_sha3.State.t_KeccakState & t_Slice u8)
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         (mk_usize 5 *! v_RATE <: usize) <=. (Core_models.Slice.impl__len #u8 out <: usize))
       (fun _ -> Prims.l_True) =
   let out:t_Slice u8 = squeeze_first_block v_RATE s out in
@@ -1196,7 +1196,7 @@ let squeeze_first_five_blocks
 let squeeze_last (v_RATE: usize) (s: Libcrux_iot_sha3.State.t_KeccakState) (out: t_Slice u8)
     : Prims.Pure (t_Slice u8)
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         (Core_models.Slice.impl__len #u8 out <: usize) <=. mk_usize 200)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600 s in
@@ -1228,7 +1228,7 @@ let squeeze_first_and_last
       (out: t_Slice u8)
     : Prims.Pure (t_Slice u8)
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         (Core_models.Slice.impl__len #u8 out <: usize) <=. mk_usize 200)
       (fun _ -> Prims.l_True) =
   let b:t_Array u8 (mk_usize 200) =
@@ -1259,7 +1259,7 @@ let keccak (v_RATE: usize) (v_DELIM: u8) (data out: t_Slice u8)
     : Prims.Pure (t_Slice u8)
       (requires
         v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
-        v_RATE <=. mk_usize 144)
+        v_RATE <=. mk_usize 168)
       (ensures
         fun out_future ->
           let out_future:t_Slice u8 = out_future in
