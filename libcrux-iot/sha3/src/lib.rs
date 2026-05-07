@@ -87,6 +87,7 @@ pub enum Algorithm {
     Sha512 = 4,
 }
 
+#[hax_lib::opaque]
 impl From<u32> for Algorithm {
     fn from(v: u32) -> Algorithm {
         match v {
@@ -130,11 +131,16 @@ pub const fn digest_size(mode: Algorithm) -> usize {
 /// let payload = b"Kecak is a Balinese dance.";
 /// let digest: [u8; digest_size(Algorithm::Sha256)] = hash(Algorithm::Sha256, payload);
 /// ```
+#[hax_lib::requires(payload.len() <= u32::MAX as usize && LEN == digest_size(algorithm))]
 pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[U8]) -> [U8; LEN] {
     #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
 
     let mut out = [0u8; LEN].classify();
+
+    // We have to work around a hax issue with implicit array
+    // conversion here.
+    // cf. https://github.com/cryspen/hax/issues/1983
     #[cfg(hax)]
     match algorithm {
         Algorithm::Sha224 => sha224_ema(&mut out[..], payload),
@@ -158,8 +164,13 @@ pub use hash as sha3;
 ///
 /// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
+#[hax_lib::requires(payload.len() <= u32::MAX as usize)]
 pub fn sha224(payload: &[U8]) -> [U8; SHA3_224_DIGEST_SIZE] {
-    let mut out = [0u8; 28].classify();
+    let mut out = [0u8; SHA3_224_DIGEST_SIZE].classify();
+
+    // We have to work around a hax issue with implicit array
+    // conversion here.
+    // cf. https://github.com/cryspen/hax/issues/1983
     #[cfg(hax)]
     sha224_ema(&mut out[..], payload);
     #[cfg(not(hax))]
@@ -172,6 +183,7 @@ pub fn sha224(payload: &[U8]) -> [U8; SHA3_224_DIGEST_SIZE] {
 /// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
 /// - `digest` is exactly [`SHA3_224_DIGEST_SIZE`] bytes long
+#[hax_lib::requires(payload.len() <= u32::MAX as usize && digest.len() == SHA3_224_DIGEST_SIZE)]
 pub fn sha224_ema(digest: &mut [U8], payload: &[U8]) {
     #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
@@ -185,12 +197,17 @@ pub fn sha224_ema(digest: &mut [U8], payload: &[U8]) {
 ///
 /// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
-pub fn sha256(data: &[U8]) -> [U8; SHA3_256_DIGEST_SIZE] {
-    let mut out = [0u8; 32].classify();
+#[hax_lib::requires(payload.len() <= u32::MAX as usize)]
+pub fn sha256(payload: &[U8]) -> [U8; SHA3_256_DIGEST_SIZE] {
+    let mut out = [0u8; SHA3_256_DIGEST_SIZE].classify();
+
+    // We have to work around a hax issue with implicit array
+    // conversion here.
+    // cf. https://github.com/cryspen/hax/issues/1983
     #[cfg(hax)]
-    sha256_ema(&mut out[..], data);
+    sha256_ema(&mut out[..], payload);
     #[cfg(not(hax))]
-    sha256_ema(&mut out, data);
+    sha256_ema(&mut out, payload);
     out
 }
 
@@ -199,6 +216,7 @@ pub fn sha256(data: &[U8]) -> [U8; SHA3_256_DIGEST_SIZE] {
 /// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
 /// - `digest` is exactly [`SHA3_256_DIGEST_SIZE`] bytes long
+#[hax_lib::requires(payload.len() <= u32::MAX as usize && digest.len() == SHA3_256_DIGEST_SIZE)]
 pub fn sha256_ema(digest: &mut [U8], payload: &[U8]) {
     #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
@@ -212,12 +230,17 @@ pub fn sha256_ema(digest: &mut [U8], payload: &[U8]) {
 ///
 /// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
-pub fn sha384(data: &[U8]) -> [U8; SHA3_384_DIGEST_SIZE] {
-    let mut out = [0u8; 48].classify();
+#[hax_lib::requires(payload.len() <= u32::MAX as usize)]
+pub fn sha384(payload: &[U8]) -> [U8; SHA3_384_DIGEST_SIZE] {
+    let mut out = [0u8; SHA3_384_DIGEST_SIZE].classify();
+
+    // We have to work around a hax issue with implicit array
+    // conversion here.
+    // cf. https://github.com/cryspen/hax/issues/1983
     #[cfg(hax)]
-    sha384_ema(&mut out[..], data);
+    sha384_ema(&mut out[..], payload);
     #[cfg(not(hax))]
-    sha384_ema(&mut out, data);
+    sha384_ema(&mut out, payload);
     out
 }
 
@@ -226,6 +249,7 @@ pub fn sha384(data: &[U8]) -> [U8; SHA3_384_DIGEST_SIZE] {
 /// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
 /// - `digest` is exactly [`SHA3_384_DIGEST_SIZE`] bytes long
+#[hax_lib::requires(payload.len() <= u32::MAX as usize && digest.len() == SHA3_384_DIGEST_SIZE)]
 pub fn sha384_ema(digest: &mut [U8], payload: &[U8]) {
     #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
@@ -239,12 +263,17 @@ pub fn sha384_ema(digest: &mut [U8], payload: &[U8]) {
 ///
 /// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
-pub fn sha512(data: &[U8]) -> [U8; SHA3_512_DIGEST_SIZE] {
-    let mut out = [0u8; 64].classify();
+#[hax_lib::requires(payload.len() <= u32::MAX as usize)]
+pub fn sha512(payload: &[U8]) -> [U8; SHA3_512_DIGEST_SIZE] {
+    let mut out = [0u8; SHA3_512_DIGEST_SIZE].classify();
+
+    // We have to work around a hax issue with implicit array
+    // conversion here.
+    // cf. https://github.com/cryspen/hax/issues/1983
     #[cfg(hax)]
-    sha512_ema(&mut out[..], data);
+    sha512_ema(&mut out[..], payload);
     #[cfg(not(hax))]
-    sha512_ema(&mut out, data);
+    sha512_ema(&mut out, payload);
     out
 }
 
@@ -253,6 +282,7 @@ pub fn sha512(data: &[U8]) -> [U8; SHA3_512_DIGEST_SIZE] {
 /// Preconditions:
 /// - `payload` is at most `u32::MAX` bytes long
 /// - `digest` is exactly [`SHA3_512_DIGEST_SIZE`] bytes long
+#[hax_lib::requires(payload.len() <= u32::MAX as usize && digest.len() == SHA3_512_DIGEST_SIZE)]
 pub fn sha512_ema(digest: &mut [U8], payload: &[U8]) {
     #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
@@ -266,8 +296,13 @@ pub fn sha512_ema(digest: &mut [U8], payload: &[U8]) {
 ///
 /// Preconditions:
 /// - `BYTES` is at most `u32::MAX as usize`
+#[hax_lib::requires(BYTES <= u32::MAX as usize)]
 pub fn shake128<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
     let mut out = [0u8; BYTES].classify();
+
+    // We have to work around a hax issue with implicit array
+    // conversion here.
+    // cf. https://github.com/cryspen/hax/issues/1983
     #[cfg(hax)]
     keccakx1::<168, 0x1fu8>(data, &mut out[..]);
     #[cfg(not(hax))]
@@ -281,6 +316,7 @@ pub fn shake128<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
 ///
 /// Preconditions:
 /// - `out` is at most `u32::MAX` bytes long
+#[hax_lib::requires(out.len() <= u32::MAX as usize)]
 pub fn shake128_ema(out: &mut [U8], data: &[U8]) {
     keccakx1::<168, 0x1fu8>(data, out);
 }
@@ -289,8 +325,13 @@ pub fn shake128_ema(out: &mut [U8], data: &[U8]) {
 ///
 /// Preconditions:
 /// - `BYTES` is at most `u32::MAX as usize`
+#[hax_lib::requires(BYTES <= u32::MAX as usize)]
 pub fn shake256<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
     let mut out = [0u8; BYTES].classify();
+
+    // We have to work around a hax issue with implicit array
+    // conversion here.
+    // cf. https://github.com/cryspen/hax/issues/1983
     #[cfg(hax)]
     keccakx1::<136, 0x1fu8>(data, &mut out[..]);
     #[cfg(not(hax))]
@@ -304,12 +345,15 @@ pub fn shake256<const BYTES: usize>(data: &[U8]) -> [U8; BYTES] {
 ///
 /// Preconditions:
 /// - `out` is at most `u32::MAX` bytes long
+#[hax_lib::requires(out.len() <= u32::MAX as usize)]
 pub fn shake256_ema(out: &mut [U8], data: &[U8]) {
     keccakx1::<136, 0x1fu8>(data, out);
 }
 
 /// Incremental API for SHAKE XOFs
 pub mod incremental {
+    #[cfg(hax)]
+    use hax_lib::ToInt;
     use libcrux_secrets::U8;
 
     /// An unbuffered XOF state.
@@ -345,6 +389,7 @@ pub mod incremental {
 
     /// Interface for an input-buffering Extendable Output Function
     /// (XOF)
+    #[hax_lib::attributes]
     pub trait Xof<const RATE: usize>: private::Sealed {
         /// Create new buffered XOF state.
         ///
@@ -386,17 +431,25 @@ pub mod incremental {
         fn squeeze(&mut self, out: &mut [U8]);
     }
 
+    #[hax_lib::attributes]
     impl Xof<168> for Shake128Xof {
         fn new() -> Self {
             Self {
                 state: KeccakXofState::<168>::new(),
             }
         }
-
+        #[hax_lib::requires(
+            self.state.buf_len < 168
+            && input.len().to_int() + self.state.buf_len.to_int() <= usize::MAX.to_int()
+        )]
         fn absorb(&mut self, input: &[U8]) {
             self.state.absorb(input);
         }
 
+        #[hax_lib::requires(
+            self.state.buf_len < 168
+            && input.len().to_int() + self.state.buf_len.to_int() <= usize::MAX.to_int()
+        )]
         fn absorb_final(&mut self, input: &[U8]) {
             self.state.absorb_final::<0x1fu8>(input);
         }
@@ -406,6 +459,7 @@ pub mod incremental {
         }
     }
 
+    #[hax_lib::attributes]
     impl Xof<136> for Shake256Xof {
         fn new() -> Self {
             Self {
@@ -413,10 +467,18 @@ pub mod incremental {
             }
         }
 
+        #[hax_lib::requires(
+            self.state.buf_len < 136
+            && input.len().to_int() + self.state.buf_len.to_int() <= usize::MAX.to_int()
+        )]
         fn absorb(&mut self, input: &[U8]) {
             self.state.absorb(input);
         }
 
+        #[hax_lib::requires(
+            self.state.buf_len < 136
+            && input.len().to_int() + self.state.buf_len.to_int() <= usize::MAX.to_int()
+        )]
         fn absorb_final(&mut self, input: &[U8]) {
             self.state.absorb_final::<0x1fu8>(input);
         }
@@ -438,24 +500,28 @@ pub mod incremental {
 
     /// Absorb
     #[cfg(feature = "unbuffered-xof")]
+    #[hax_lib::requires(data0.len() < 168)]
     pub fn shake128_absorb_final(s: &mut UnbufferedXofState, data0: &[U8]) {
         absorb_final::<168, 0x1fu8>(&mut s.state, data0, 0, data0.len());
     }
 
     /// Squeeze three blocks
     #[cfg(feature = "unbuffered-xof")]
+    #[hax_lib::requires(out0.len() >= 3 * 168)]
     pub fn shake128_squeeze_first_three_blocks(s: &mut UnbufferedXofState, out0: &mut [U8]) {
         squeeze_first_three_blocks::<168>(&mut s.state, out0)
     }
 
     /// Squeeze five blocks
     #[cfg(feature = "unbuffered-xof")]
+    #[hax_lib::requires(out0.len() >= 5 * 168)]
     pub fn shake128_squeeze_first_five_blocks(s: &mut UnbufferedXofState, out0: &mut [U8]) {
         squeeze_first_five_blocks::<168>(&mut s.state, out0)
     }
 
     /// Squeeze another block
     #[cfg(feature = "unbuffered-xof")]
+    #[hax_lib::requires(out0.len() >= 168)]
     pub fn shake128_squeeze_next_block(s: &mut UnbufferedXofState, out0: &mut [U8]) {
         squeeze_next_block::<168>(&mut s.state, out0)
     }
@@ -471,23 +537,29 @@ pub mod incremental {
 
     /// Absorb some data for SHAKE-256 for the last time
     #[cfg(feature = "unbuffered-xof")]
+    #[hax_lib::requires(data.len() < 136)]
     pub fn shake256_absorb_final(s: &mut UnbufferedXofState, data: &[U8]) {
         absorb_final::<136, 0x1fu8>(&mut s.state, data, 0, data.len());
     }
 
     /// Squeeze the first SHAKE-256 block
     #[cfg(feature = "unbuffered-xof")]
+    #[hax_lib::requires(out.len() >= 136)]
     pub fn shake256_squeeze_first_block(s: &mut UnbufferedXofState, out: &mut [U8]) {
         squeeze_first_block::<136>(&s.state, out)
     }
 
     /// Squeeze the next SHAKE-256 block
     #[cfg(feature = "unbuffered-xof")]
+    #[hax_lib::requires(out.len() >= 136)]
     pub fn shake256_squeeze_next_block(s: &mut UnbufferedXofState, out: &mut [U8]) {
         squeeze_next_block::<136>(&mut s.state, out)
     }
 }
 
+#[hax_lib::requires(
+    RATE > 0 && RATE % 8 == 0 && RATE <= 168
+)]
 pub(crate) fn keccakx1<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut [U8]) {
     keccak::keccak::<RATE, DELIM>(data, out)
 }

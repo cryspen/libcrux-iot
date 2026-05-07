@@ -164,7 +164,7 @@ let impl_KeccakState__set_lane_value (self: t_KeccakState) (i j: usize) (value: 
 let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice u8)
     : Prims.Pure (t_Slice u8)
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         (Core_models.Slice.impl__len #u8 out <: usize) <=. v_RATE)
       (ensures
         fun out_future ->
@@ -369,7 +369,7 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
 let load_block_2u32 (v_RATE: usize) (state: t_KeccakState) (blocks: t_Slice u8) (start: usize)
     : Prims.Pure t_KeccakState
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         ((Rust_primitives.Hax.Int.from_machine start <: Hax_lib.Int.t_Int) +
           (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
           <:
@@ -513,7 +513,7 @@ let impl_KeccakState__load_block
       (start: usize)
     : Prims.Pure t_KeccakState
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         ((Rust_primitives.Hax.Int.from_machine start <: Hax_lib.Int.t_Int) +
           (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
           <:
@@ -532,7 +532,7 @@ let load_block_full_2u32
       (start: usize)
     : Prims.Pure t_KeccakState
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         ((Rust_primitives.Hax.Int.from_machine start <: Hax_lib.Int.t_Int) +
           (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
           <:
@@ -549,9 +549,9 @@ let impl_KeccakState__load_block_full
       (start: usize)
     : Prims.Pure t_KeccakState
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         start <=. mk_usize 200 &&
-        (start +! v_RATE <: usize) <=. mk_usize 144)
+        (start +! v_RATE <: usize) <=. mk_usize 168)
       (fun _ -> Prims.l_True) =
   let self:t_KeccakState = load_block_full_2u32 v_RATE self blocks start in
   self
@@ -559,7 +559,7 @@ let impl_KeccakState__load_block_full
 let store_block_2u32 (v_RATE: usize) (s: t_KeccakState) (out: t_Slice u8)
     : Prims.Pure (t_Slice u8)
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         v_RATE <=. (Core_models.Slice.impl__len #u8 out <: usize))
       (fun _ -> Prims.l_True) =
   let e_out_len:usize = Core_models.Slice.impl__len #u8 out in
@@ -636,7 +636,7 @@ let store_block_2u32 (v_RATE: usize) (s: t_KeccakState) (out: t_Slice u8)
 let impl_KeccakState__store_block (v_RATE: usize) (self: t_KeccakState) (out: t_Slice u8)
     : Prims.Pure (t_Slice u8)
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144 &&
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         v_RATE <=. (Core_models.Slice.impl__len #u8 out <: usize))
       (fun _ -> Prims.l_True) =
   let out:t_Slice u8 = store_block_2u32 v_RATE self out in
@@ -644,7 +644,7 @@ let impl_KeccakState__store_block (v_RATE: usize) (self: t_KeccakState) (out: t_
 
 let store_block_full_2u32 (v_RATE: usize) (s: t_KeccakState) (out: t_Array u8 (mk_usize 200))
     : Prims.Pure (t_Array u8 (mk_usize 200))
-      (requires (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144)
+      (requires (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168)
       (fun _ -> Prims.l_True) =
   let out:t_Array u8 (mk_usize 200) =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_range_full out
@@ -664,7 +664,7 @@ let impl_KeccakState__store_block_full
       (self: t_KeccakState)
       (out: t_Array u8 (mk_usize 200))
     : Prims.Pure (t_Array u8 (mk_usize 200))
-      (requires (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 144)
+      (requires (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168)
       (fun _ -> Prims.l_True) =
   let out:t_Array u8 (mk_usize 200) = store_block_full_2u32 v_RATE self out in
   out
