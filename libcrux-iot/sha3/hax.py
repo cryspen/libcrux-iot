@@ -31,6 +31,7 @@ class extractAction(argparse.Action):
 
     def __call__(self, parser, args, values, option_string=None) -> None:
         includes = [
+            # "+**",
             "-**",
             "+libcrux_iot_sha3::lane::**",
             "+libcrux_iot_sha3::state::**",
@@ -40,6 +41,10 @@ class extractAction(argparse.Action):
         cargo_hax_into = [
             "cargo",
             "hax",
+            "-C",
+            "-F",
+            "unbuffered-xof",
+            ";",
             "into",
             "-i",
             include_str,

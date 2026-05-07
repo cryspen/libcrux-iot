@@ -2513,12 +2513,14 @@ pub(crate) fn absorb_final<const RATE: usize, const DELIM: u8>(
 
 #[inline(always)]
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && RATE <= out.len())]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 pub(crate) fn squeeze_first_block<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     s.store_block::<RATE>(out)
 }
 
 #[inline(always)]
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && RATE <= out.len())]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 pub(crate) fn squeeze_next_block<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     keccakf1600(s);
     s.store_block::<RATE>(out)
@@ -2526,7 +2528,7 @@ pub(crate) fn squeeze_next_block<const RATE: usize>(s: &mut KeccakState, out: &m
 
 #[inline(always)]
 #[cfg(feature = "unbuffered-xof")]
-#[hax_lib::opaque]
+#[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && 3 * RATE <= out.len())]
 pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     squeeze_first_block::<RATE>(s, out);
     squeeze_next_block::<RATE>(s, &mut out[RATE..]);
@@ -2535,7 +2537,7 @@ pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState,
 
 #[inline(always)]
 #[cfg(feature = "unbuffered-xof")]
-#[hax_lib::opaque]
+#[hax_lib::requires(RATE % 8 == 0 && RATE <= 144 && 5 * RATE <= out.len())]
 pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     squeeze_first_block::<RATE>(s, out);
     squeeze_next_block::<RATE>(s, &mut out[RATE..]);
@@ -2579,11 +2581,12 @@ pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut 
 
     let mut s = KeccakState::new();
 
-    for i in 0..n {
-        hax_lib::loop_invariant!(|i: usize| {
-            i.to_int() * RATE.to_int() + RATE.to_int() <= data.len().to_int() && out.len() == outlen
-        });
-        absorb_block::<RATE>(&mut s, &data, i * RATE);
+    let mut start = 0;
+    for _i in 0..n {
+        hax_lib::loop_invariant!(|_i: usize| { start.to_int() == _i.to_int() * RATE.to_int() });
+
+        absorb_block::<RATE>(&mut s, &data, start);
+        start += RATE;
     }
 
     absorb_final::<RATE, DELIM>(&mut s, data, data.len() - rem, rem);
