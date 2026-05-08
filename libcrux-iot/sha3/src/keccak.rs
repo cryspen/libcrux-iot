@@ -196,47 +196,52 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     // This code verifies with the z3rlimit specified below, but we
     // can't use the `options` attribute because of a hax issue.
     // cf. https://github.com/cryspen/hax/issues/1698
-    // #[hax_lib::fstar::options("--z3rlimit 60")]
     pub(crate) fn squeeze(&mut self, out: &mut [U8]) {
-        if self.sponge {
-            // If we called `squeeze` before, call f1600 first.
-            // We do it this way around so that we don't call f1600 at the end
-            // when we don't need it.
-            keccakf1600(&mut self.inner);
-        }
-
-        // How many blocks do we need to squeeze out?
-        let out_len = out.len();
-        let blocks = out_len / RATE;
-        let last = out_len - (out_len % RATE);
-
-        // Squeeze out one to start with.
-        // XXX: Eurydice does not extract `core::cmp::min`, so we do
-        // this instead. (cf. https://github.com/AeneasVerif/eurydice/issues/49)
-        let mid = if RATE >= out_len { out_len } else { RATE };
-        self.inner.store::<RATE>(&mut out[..mid]);
-
-        // If we got asked for more than one block, squeeze out more.
-        let mut offset = mid;
-        for _k in 1..blocks {
-            hax_lib::loop_invariant!(|_k: usize| {
-                out.len() == out_len && offset.to_int() == _k.to_int() * RATE.to_int()
-            });
-            // Here we know that we always have full blocks to write out.
-            keccakf1600(&mut self.inner);
-            self.inner.store::<RATE>(&mut out[offset..offset + RATE]);
-            offset += RATE;
-        }
-
-        if last > 0 && last < out_len {
-            debug_assert_eq!(last, offset);
-            // Squeeze out the last partial block
-            keccakf1600(&mut self.inner);
-            self.inner.store::<RATE>(&mut out[offset..]);
-        }
-
-        self.sponge = true;
+        _squeeze(self, out);
     }
+}
+
+#[hax_lib::requires(RATE > 0 && RATE % 8 == 0 && RATE <= 168)]
+#[hax_lib::fstar::options("--z3rlimit 60")]
+fn _squeeze<const RATE: usize>(state: &mut KeccakXofState<RATE>, out: &mut [u8]) {
+    if state.sponge {
+        // If we called `squeeze` before, call f1600 first.
+        // We do it this way around so that we don't call f1600 at the end
+        // when we don't need it.
+        keccakf1600(&mut state.inner);
+    }
+
+    // How many blocks do we need to squeeze out?
+    let out_len = out.len();
+    let blocks = out_len / RATE;
+    let last = out_len - (out_len % RATE);
+
+    // Squeeze out one to start with.
+    // XXX: Eurydice does not extract `core::cmp::min`, so we do
+    // this instead. (cf. https://github.com/AeneasVerif/eurydice/issues/49)
+    let mid = if RATE >= out_len { out_len } else { RATE };
+    state.inner.store::<RATE>(&mut out[..mid]);
+
+    // If we got asked for more than one block, squeeze out more.
+    let mut offset = mid;
+    for _k in 1..blocks {
+        hax_lib::loop_invariant!(|_k: usize| {
+            out.len() == out_len && offset.to_int() == _k.to_int() * RATE.to_int()
+        });
+        // Here we know that we always have full blocks to write out.
+        keccakf1600(&mut state.inner);
+        state.inner.store::<RATE>(&mut out[offset..offset + RATE]);
+        offset += RATE;
+    }
+
+    if last > 0 && last < out_len {
+        debug_assert_eq!(last, offset);
+        // Squeeze out the last partial block
+        keccakf1600(&mut state.inner);
+        state.inner.store::<RATE>(&mut out[offset..]);
+    }
+
+    state.sponge = true;
 }
 
 //// From here, everything is generic
@@ -245,7 +250,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1000 in")
 )]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
 const RC_INTERLEAVED_0: [u32; 255] = [
     0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000001,
     0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000001,
@@ -285,7 +290,7 @@ const RC_INTERLEAVED_0: [u32; 255] = [
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1000 in")
 )]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
 const RC_INTERLEAVED_1: [u32; 255] = [
     0x00000000, 0x00000089, 0x8000008b, 0x80008080, 0x0000008b, 0x00008000, 0x80008088, 0x80000082,
     0x0000000b, 0x0000000a, 0x00008082, 0x00008003, 0x0000808b, 0x8000000b, 0x8000008a, 0x80000081,
@@ -326,7 +331,8 @@ const RC_INTERLEAVED_1: [u32; 255] = [
 // :r !python libcrux/libcrux-sha3/codegen.py
 // ```
 #[inline(always)]
-#[hax_lib::opaque]
+// //#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x0_z0(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 0, 0);
     let ax_1 = s.get_with_zeta(1, 0, 0);
@@ -337,7 +343,8 @@ pub(crate) fn keccakf1600_round0_theta_c_x0_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x0_z1(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 0, 1);
     let ax_1 = s.get_with_zeta(1, 0, 1);
@@ -348,7 +355,8 @@ pub(crate) fn keccakf1600_round0_theta_c_x0_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x1_z0(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 1, 0);
     let ax_1 = s.get_with_zeta(1, 1, 0);
@@ -359,7 +367,8 @@ pub(crate) fn keccakf1600_round0_theta_c_x1_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x1_z1(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 1, 1);
     let ax_1 = s.get_with_zeta(1, 1, 1);
@@ -370,7 +379,8 @@ pub(crate) fn keccakf1600_round0_theta_c_x1_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x2_z0(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 2, 0);
     let ax_1 = s.get_with_zeta(1, 2, 0);
@@ -381,7 +391,8 @@ pub(crate) fn keccakf1600_round0_theta_c_x2_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x2_z1(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 2, 1);
     let ax_1 = s.get_with_zeta(1, 2, 1);
@@ -392,7 +403,8 @@ pub(crate) fn keccakf1600_round0_theta_c_x2_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x3_z0(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 3, 0);
     let ax_1 = s.get_with_zeta(1, 3, 0);
@@ -403,7 +415,8 @@ pub(crate) fn keccakf1600_round0_theta_c_x3_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x3_z1(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 3, 1);
     let ax_1 = s.get_with_zeta(1, 3, 1);
@@ -414,7 +427,8 @@ pub(crate) fn keccakf1600_round0_theta_c_x3_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x4_z0(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 4, 0);
     let ax_1 = s.get_with_zeta(1, 4, 0);
@@ -425,7 +439,8 @@ pub(crate) fn keccakf1600_round0_theta_c_x4_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta_c_x4_z1(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 4, 1);
     let ax_1 = s.get_with_zeta(1, 4, 1);
@@ -436,43 +451,73 @@ pub(crate) fn keccakf1600_round0_theta_c_x4_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
-pub(crate) fn keccakf1600_round0_theta_d(s: &mut KeccakState) {
-    // D[x] = C[x-1] XOR ROT64(C[x+1], 1)
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round0_theta_d_x0(s: &mut KeccakState) {
     let c_x4_zeta0 = s.c[4][0];
     let c_x1_zeta1 = s.c[1][1];
-    let c_x3_zeta0 = s.c[3][0];
-    let c_x0_zeta1 = s.c[0][1];
-    let c_x2_zeta0 = s.c[2][0];
     let c_x4_zeta1 = s.c[4][1];
-    let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-    s.d[0].0[0] = d_x0_zeta0;
-    let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-    s.d[2].0[1] = d_x2_zeta1;
-    let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-    s.d[4].0[0] = d_x4_zeta0;
-    let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-    s.d[1].0[1] = d_x1_zeta1;
-    let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-    s.d[3].0[0] = d_x3_zeta0;
     let c_x1_zeta0 = s.c[1][0];
-    let c_x3_zeta1 = s.c[3][1];
-    let c_x2_zeta1 = s.c[2][1];
-    let c_x0_zeta0 = s.c[0][0];
-    let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-    s.d[0].0[1] = d_x0_zeta1;
-    let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-    s.d[2].0[0] = d_x2_zeta0;
-    let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-    s.d[4].0[1] = d_x4_zeta1;
-    let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-    s.d[1].0[0] = d_x1_zeta0;
-    let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-    s.d[3].0[1] = d_x3_zeta1;
+    s.d[0].0[0] = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
+    s.d[0].0[1] = c_x4_zeta1 ^ c_x1_zeta0;
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round0_theta_d_x1(s: &mut KeccakState) {
+    let c_x0_zeta0 = s.c[0][0];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x2_zeta0 = s.c[2][0];
+    s.d[1].0[0] = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
+    s.d[1].0[1] = c_x0_zeta1 ^ c_x2_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round0_theta_d_x2(s: &mut KeccakState) {
+    let c_x1_zeta0 = s.c[1][0];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x1_zeta1 = s.c[1][1];
+    let c_x3_zeta0 = s.c[3][0];
+    s.d[2].0[0] = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
+    s.d[2].0[1] = c_x1_zeta1 ^ c_x3_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round0_theta_d_x3(s: &mut KeccakState) {
+    let c_x2_zeta0 = s.c[2][0];
+    let c_x4_zeta1 = s.c[4][1];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x4_zeta0 = s.c[4][0];
+    s.d[3].0[0] = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
+    s.d[3].0[1] = c_x2_zeta1 ^ c_x4_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round0_theta_d_x4(s: &mut KeccakState) {
+    let c_x3_zeta0 = s.c[3][0];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x0_zeta0 = s.c[0][0];
+    s.d[4].0[0] = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
+    s.d[4].0[1] = c_x3_zeta1 ^ c_x0_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round0_theta_d(s: &mut KeccakState) {
+    keccakf1600_round0_theta_d_x0(s);
+    keccakf1600_round0_theta_d_x1(s);
+    keccakf1600_round0_theta_d_x2(s);
+    keccakf1600_round0_theta_d_x3(s);
+    keccakf1600_round0_theta_d_x4(s);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round0_theta(s: &mut KeccakState) {
     // C[x][zeta] = A[0,x][zeta] ^ A[1,x][zeta] ^ A[2,x][zeta] ^ A[3,x][zeta] ^ A[4,x][zeta]
     // https://github.com/hacl-star/hacl-star/blob/main/specs/Spec.SHA3.fst#L28C1-L29C74
@@ -489,166 +534,316 @@ pub(crate) fn keccakf1600_round0_theta(s: &mut KeccakState) {
     keccakf1600_round0_theta_d(s);
 }
 
+#[derive(Clone, Copy)]
+struct BxArg(usize, usize, usize, usize, u32); // x, y, zeta, d_zeta, rot
+
 #[inline(always)]
+#[hax_lib::requires(
+    a.0 < 5 && a.1 < 5 && a.2 < 2 && a.3 < 2 &&
+    b.0 < 5 && b.1 < 5 && b.2 < 2 && b.3 < 2
+)]
+fn bx_2(s: &KeccakState, a: BxArg, b: BxArg) -> (u32, u32) {
+    (
+        (s.get_with_zeta(a.0, a.1, a.2) ^ s.d[a.1][a.3]).rotate_left(a.4),
+        (s.get_with_zeta(b.0, b.1, b.2) ^ s.d[b.1][b.3]).rotate_left(b.4),
+    )
+}
+
+#[inline(always)]
+#[hax_lib::requires(
+    a.0 < 5 && a.1 < 5 && a.2 < 2 && a.3 < 2 &&
+    b.0 < 5 && b.1 < 5 && b.2 < 2 && b.3 < 2 &&
+    c.0 < 5 && c.1 < 5 && c.2 < 2 && c.3 < 2
+)]
+fn bx_3(s: &KeccakState, a: BxArg, b: BxArg, c: BxArg) -> (u32, u32, u32) {
+    (
+        (s.get_with_zeta(a.0, a.1, a.2) ^ s.d[a.1][a.3]).rotate_left(a.4),
+        (s.get_with_zeta(b.0, b.1, b.2) ^ s.d[b.1][b.3]).rotate_left(b.4),
+        (s.get_with_zeta(c.0, c.1, c.2) ^ s.d[c.1][c.3]).rotate_left(c.4),
+    )
+}
+
+#[inline(always)]
+#[hax_lib::requires(BASE_ROUND < 255 && s.i < 255)]
+// Ensure that F* knows that `i` doesn't change
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+// #[hax_lib::fstar::options("--split_queries always --fuel 1")]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_1a<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
+
+    let (bx0, bx1) = bx_2(s, BxArg(0, 0, 0, 0, 0), BxArg(1, 1, 0, 0, 22));
+    let (bx2, bx3, bx4) = bx_3(
+        s,
+        BxArg(2, 2, 1, 1, 22),
+        BxArg(3, 3, 1, 1, 11),
+        BxArg(4, 4, 0, 0, 7),
+    );
+
+    // [hax] uninitialized variables are note supported yet in lean.
+    #[allow(unused_assignments)]
+    let mut ax0 = 0.classify();
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 0];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
+    };
+
+    s.set_with_zeta(0, 0, 0, ax0);
+
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 0, ax1);
+
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 1, ax2);
+
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 1, ax3);
+
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 0, ax4);
+}
+
+#[inline(always)]
+#[hax_lib::requires(BASE_ROUND < 255 && s.i < 255)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_1b<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
+
+    let (bx0, bx1) = bx_2(s, BxArg(0, 0, 1, 1, 0), BxArg(1, 1, 1, 1, 22));
+    let (bx2, bx3, bx4) = bx_3(
+        s,
+        BxArg(2, 2, 0, 0, 21),
+        BxArg(3, 3, 0, 0, 10),
+        BxArg(4, 4, 1, 1, 7),
+    );
+
+    // [hax] uninitialized variables are note supported yet in lean.
+    #[allow(unused_assignments)]
+    let mut ax0 = 0.classify();
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 0];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
+        s.i = i + 1;
+    };
+
+    s.set_with_zeta(0, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 1, ax4);
+}
+
+#[inline(always)]
+// Ensure that F* knows that `i` doesn't change
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+// #[hax_lib::fstar::options("--split_queries always --fuel 1")]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_1c(s: &mut KeccakState) {
+    let (bx4, bx0, bx1) = bx_3(
+        s,
+        BxArg(4, 2, 1, 1, 31),
+        BxArg(0, 3, 0, 0, 14),
+        BxArg(1, 4, 0, 0, 10),
+    );
+    let (bx2, bx3) = bx_2(s, BxArg(2, 0, 1, 1, 2), BxArg(3, 1, 1, 1, 23));
+
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 0, ax4);
+}
+
+#[inline(always)]
+// Ensure that F* knows that `i` doesn't change
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+// #[hax_lib::fstar::options("--split_queries always --fuel 1")]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_1d(s: &mut KeccakState) {
+    let (bx4, bx0, bx1) = bx_3(
+        s,
+        BxArg(4, 2, 0, 0, 30),
+        BxArg(0, 3, 1, 1, 14),
+        BxArg(1, 4, 1, 1, 10),
+    );
+    let (bx2, bx3) = bx_2(s, BxArg(2, 0, 0, 0, 1), BxArg(3, 1, 0, 0, 22));
+
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 1, ax4);
+}
+
+#[inline(always)]
+#[hax_lib::requires(BASE_ROUND < 255 && s.i < 255)]
 #[cfg_attr(
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1000 in")
 )]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+// #[hax_lib::fstar::options("--split_queries always --z3rlimit 100 --fuel 1")]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut KeccakState) {
-    #[cfg(not(feature = "full-unroll"))]
-    let i = s.i;
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(22),
-                (a3 ^ d3).rotate_left(11),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
+    keccakf1600_round0_pi_rho_chi_1a::<BASE_ROUND>(s);
+    keccakf1600_round0_pi_rho_chi_1b::<BASE_ROUND>(s);
+    keccakf1600_round0_pi_rho_chi_1c(s);
+    keccakf1600_round0_pi_rho_chi_1d(s);
+}
 
-        // [hax] uninitialized variables are note supported yet in lean.
-        #[allow(unused_assignments)]
-        let mut ax0 = 0.classify();
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 0];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
-        };
-        s.set_with_zeta(0, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 0, ax4);
-    }
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(21),
-                (a3 ^ d3).rotate_left(10),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_2a(s: &mut KeccakState) {
+    let (bx4, bx0) = bx_2(s, BxArg(4, 0, 0, 0, 9), BxArg(0, 1, 1, 1, 1));
+    let (bx1, bx2, bx3) = bx_3(
+        s,
+        BxArg(1, 2, 0, 0, 3),
+        BxArg(2, 3, 1, 1, 13),
+        BxArg(3, 4, 0, 0, 4),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 0, ax4);
+}
 
-        // [hax] uninitialized variables are note supported yet in lean.
-        #[allow(unused_assignments)]
-        let mut ax0 = 0.classify();
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 0];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
-            s.i = i + 1;
-        };
-        s.set_with_zeta(0, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 1, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(1, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(1, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(30),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 1, ax4);
-    }
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_2b(s: &mut KeccakState) {
+    let (bx4, bx0) = bx_2(s, BxArg(4, 0, 1, 1, 9), BxArg(0, 1, 0, 0, 0));
+    let (bx1, bx2, bx3) = bx_3(
+        s,
+        BxArg(1, 2, 1, 1, 3),
+        BxArg(2, 3, 0, 0, 12),
+        BxArg(3, 4, 1, 1, 4),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 1, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_2c(s: &mut KeccakState) {
+    let (bx1, bx2) = bx_2(s, BxArg(1, 0, 0, 0, 18), BxArg(2, 1, 0, 0, 5));
+    let (bx3, bx4, bx0) = bx_3(
+        s,
+        BxArg(3, 2, 1, 1, 8),
+        BxArg(4, 3, 0, 0, 28),
+        BxArg(0, 4, 1, 1, 14),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 1, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_2d(s: &mut KeccakState) {
+    let (bx1, bx2) = bx_2(s, BxArg(1, 0, 1, 1, 18), BxArg(2, 1, 1, 1, 5));
+    let (bx3, bx4, bx0) = bx_3(
+        s,
+        BxArg(3, 2, 0, 0, 7),
+        BxArg(4, 3, 1, 1, 28),
+        BxArg(0, 4, 0, 0, 13),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_2e(s: &mut KeccakState) {
+    let (bx0, bx1, bx2) = bx_3(
+        s,
+        BxArg(0, 2, 0, 0, 31),
+        BxArg(1, 3, 1, 1, 28),
+        BxArg(2, 4, 1, 1, 20),
+    );
+    let (bx3, bx4) = bx_2(s, BxArg(3, 0, 1, 1, 21), BxArg(4, 1, 0, 0, 1));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 1, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round0_pi_rho_chi_2f(s: &mut KeccakState) {
+    let (bx0, bx1, bx2) = bx_3(
+        s,
+        BxArg(0, 2, 1, 1, 31),
+        BxArg(1, 3, 0, 0, 27),
+        BxArg(2, 4, 0, 0, 19),
+    );
+    let (bx3, bx4) = bx_2(s, BxArg(3, 0, 0, 0, 20), BxArg(4, 1, 1, 1, 1));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 0, ax4);
 }
 
 #[inline(always)]
@@ -656,204 +851,22 @@ pub(crate) fn keccakf1600_round0_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1500 in")
 )]
-#[hax_lib::opaque]
+// Ensure that F* knows that `i` doesn't change
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+// #[hax_lib::fstar::options("--split_queries always --fuel 1")]
+//#[hax_lib::opaque]
 pub(crate) fn keccakf1600_round0_pi_rho_chi_2(s: &mut KeccakState) {
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(13),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 0, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(12),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 1, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(8),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(14),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 1, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(7),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(13),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 0, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(4, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(20),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 1, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(4, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(27),
-                (a4 ^ d4).rotate_left(19),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 0, ax4);
-    }
+    keccakf1600_round0_pi_rho_chi_2a(s);
+    keccakf1600_round0_pi_rho_chi_2b(s);
+    keccakf1600_round0_pi_rho_chi_2c(s);
+    keccakf1600_round0_pi_rho_chi_2d(s);
+    keccakf1600_round0_pi_rho_chi_2e(s);
+    keccakf1600_round0_pi_rho_chi_2f(s);
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x0_z0(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 0, 0);
     let ax_2 = s.get_with_zeta(2, 0, 1);
@@ -864,7 +877,8 @@ pub(crate) fn keccakf1600_round1_theta_c_x0_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x0_z1(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 0, 1);
     let ax_2 = s.get_with_zeta(2, 0, 0);
@@ -875,7 +889,8 @@ pub(crate) fn keccakf1600_round1_theta_c_x0_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x1_z0(s: &mut KeccakState) {
     let ax_1 = s.get_with_zeta(1, 1, 0);
     let ax_3 = s.get_with_zeta(3, 1, 1);
@@ -886,7 +901,8 @@ pub(crate) fn keccakf1600_round1_theta_c_x1_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x1_z1(s: &mut KeccakState) {
     let ax_1 = s.get_with_zeta(1, 1, 1);
     let ax_3 = s.get_with_zeta(3, 1, 0);
@@ -897,7 +913,8 @@ pub(crate) fn keccakf1600_round1_theta_c_x1_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x2_z0(s: &mut KeccakState) {
     let ax_2 = s.get_with_zeta(2, 2, 1);
     let ax_4 = s.get_with_zeta(4, 2, 1);
@@ -908,7 +925,8 @@ pub(crate) fn keccakf1600_round1_theta_c_x2_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x2_z1(s: &mut KeccakState) {
     let ax_2 = s.get_with_zeta(2, 2, 0);
     let ax_4 = s.get_with_zeta(4, 2, 0);
@@ -919,7 +937,8 @@ pub(crate) fn keccakf1600_round1_theta_c_x2_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x3_z0(s: &mut KeccakState) {
     let ax_3 = s.get_with_zeta(3, 3, 1);
     let ax_0 = s.get_with_zeta(0, 3, 0);
@@ -930,7 +949,8 @@ pub(crate) fn keccakf1600_round1_theta_c_x3_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x3_z1(s: &mut KeccakState) {
     let ax_3 = s.get_with_zeta(3, 3, 0);
     let ax_0 = s.get_with_zeta(0, 3, 1);
@@ -941,7 +961,8 @@ pub(crate) fn keccakf1600_round1_theta_c_x3_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x4_z0(s: &mut KeccakState) {
     let ax_4 = s.get_with_zeta(4, 4, 0);
     let ax_1 = s.get_with_zeta(1, 4, 0);
@@ -952,7 +973,8 @@ pub(crate) fn keccakf1600_round1_theta_c_x4_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta_c_x4_z1(s: &mut KeccakState) {
     let ax_4 = s.get_with_zeta(4, 4, 1);
     let ax_1 = s.get_with_zeta(1, 4, 1);
@@ -963,42 +985,74 @@ pub(crate) fn keccakf1600_round1_theta_c_x4_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
-pub(crate) fn keccakf1600_round1_theta_d(s: &mut KeccakState) {
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round1_theta_d_x0(s: &mut KeccakState) {
     let c_x4_zeta0 = s.c[4][0];
     let c_x1_zeta1 = s.c[1][1];
-    let c_x3_zeta0 = s.c[3][0];
-    let c_x0_zeta1 = s.c[0][1];
-    let c_x2_zeta0 = s.c[2][0];
     let c_x4_zeta1 = s.c[4][1];
-    let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-    s.d[0].0[0] = d_x0_zeta0;
-    let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-    s.d[2].0[1] = d_x2_zeta1;
-    let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-    s.d[4].0[0] = d_x4_zeta0;
-    let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-    s.d[1].0[1] = d_x1_zeta1;
-    let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-    s.d[3].0[0] = d_x3_zeta0;
     let c_x1_zeta0 = s.c[1][0];
-    let c_x3_zeta1 = s.c[3][1];
-    let c_x2_zeta1 = s.c[2][1];
-    let c_x0_zeta0 = s.c[0][0];
-    let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-    s.d[0].0[1] = d_x0_zeta1;
-    let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-    s.d[2].0[0] = d_x2_zeta0;
-    let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-    s.d[4].0[1] = d_x4_zeta1;
-    let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-    s.d[1].0[0] = d_x1_zeta0;
-    let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-    s.d[3].0[1] = d_x3_zeta1;
+    s.d[0].0[0] = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
+    s.d[0].0[1] = c_x4_zeta1 ^ c_x1_zeta0;
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round1_theta_d_x1(s: &mut KeccakState) {
+    let c_x0_zeta0 = s.c[0][0];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x2_zeta0 = s.c[2][0];
+    s.d[1].0[0] = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
+    s.d[1].0[1] = c_x0_zeta1 ^ c_x2_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round1_theta_d_x2(s: &mut KeccakState) {
+    let c_x1_zeta0 = s.c[1][0];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x1_zeta1 = s.c[1][1];
+    let c_x3_zeta0 = s.c[3][0];
+    s.d[2].0[0] = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
+    s.d[2].0[1] = c_x1_zeta1 ^ c_x3_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round1_theta_d_x3(s: &mut KeccakState) {
+    let c_x2_zeta0 = s.c[2][0];
+    let c_x4_zeta1 = s.c[4][1];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x4_zeta0 = s.c[4][0];
+    s.d[3].0[0] = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
+    s.d[3].0[1] = c_x2_zeta1 ^ c_x4_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round1_theta_d_x4(s: &mut KeccakState) {
+    let c_x3_zeta0 = s.c[3][0];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x0_zeta0 = s.c[0][0];
+    s.d[4].0[0] = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
+    s.d[4].0[1] = c_x3_zeta1 ^ c_x0_zeta0;
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round1_theta_d(s: &mut KeccakState) {
+    keccakf1600_round1_theta_d_x0(s);
+    keccakf1600_round1_theta_d_x1(s);
+    keccakf1600_round1_theta_d_x2(s);
+    keccakf1600_round1_theta_d_x3(s);
+    keccakf1600_round1_theta_d_x4(s);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round1_theta(s: &mut KeccakState) {
     keccakf1600_round1_theta_c_x0_z0(s);
     keccakf1600_round1_theta_c_x0_z1(s);
@@ -1014,165 +1068,266 @@ pub(crate) fn keccakf1600_round1_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
+#[hax_lib::requires(BASE_ROUND < 254 && s.i < 255)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_1a<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
+    let (bx0, bx1) = bx_2(s, BxArg(0, 0, 0, 0, 0), BxArg(3, 1, 1, 0, 22));
+    let (bx2, bx3, bx4) = bx_3(
+        s,
+        BxArg(1, 2, 1, 1, 22),
+        BxArg(4, 3, 1, 1, 11),
+        BxArg(2, 4, 1, 0, 7),
+    );
+
+    // [hax] uninitialized variables are note supported yet in lean.
+    #[allow(unused_assignments)]
+    let mut ax0 = 0.classify();
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 1];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
+    };
+    s.set_with_zeta(0, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 1, ax4);
+}
+
+#[inline(always)]
+#[hax_lib::requires(BASE_ROUND < 254 && s.i < 255)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_1b<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
+    let (bx0, bx1) = bx_2(s, BxArg(0, 0, 1, 1, 0), BxArg(3, 1, 0, 1, 22));
+    let (bx2, bx3, bx4) = bx_3(
+        s,
+        BxArg(1, 2, 0, 0, 21),
+        BxArg(4, 3, 0, 0, 10),
+        BxArg(2, 4, 0, 1, 7),
+    );
+
+    // [hax] uninitialized variables are note supported yet in lean.
+    #[allow(unused_assignments)]
+    let mut ax0 = 0.classify();
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 1];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
+        s.i = i + 1;
+    };
+    s.set_with_zeta(0, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_1c(s: &mut KeccakState) {
+    let (bx4, bx0, bx1) = bx_3(
+        s,
+        BxArg(0, 2, 1, 1, 31),
+        BxArg(3, 3, 1, 0, 14),
+        BxArg(1, 4, 0, 0, 10),
+    );
+    let (bx2, bx3) = bx_2(s, BxArg(4, 0, 1, 1, 2), BxArg(2, 1, 1, 1, 23));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_1d(s: &mut KeccakState) {
+    let (bx4, bx0, bx1) = bx_3(
+        s,
+        BxArg(0, 2, 0, 0, 30),
+        BxArg(3, 3, 0, 1, 14),
+        BxArg(1, 4, 1, 1, 10),
+    );
+    let (bx2, bx3) = bx_2(s, BxArg(4, 0, 0, 0, 1), BxArg(2, 1, 0, 0, 22));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 1, ax4);
+}
+
+#[inline(always)]
 #[cfg_attr(
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1000 in")
 )]
-#[hax_lib::opaque]
+#[hax_lib::requires(BASE_ROUND < 254 && s.i < 255)]
+//#[hax_lib::opaque]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut KeccakState) {
-    #[cfg(not(feature = "full-unroll"))]
-    let i = s.i;
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(22),
-                (a3 ^ d3).rotate_left(11),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
+    keccakf1600_round1_pi_rho_chi_1a::<BASE_ROUND>(s);
+    keccakf1600_round1_pi_rho_chi_1b::<BASE_ROUND>(s);
+    keccakf1600_round1_pi_rho_chi_1c(s);
+    keccakf1600_round1_pi_rho_chi_1d(s);
+}
 
-        // [hax] uninitialized variables are note supported yet in lean.
-        #[allow(unused_assignments)]
-        let mut ax0 = 0.classify();
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 1];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
-        };
-        s.set_with_zeta(0, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 1, ax4);
-    }
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(21),
-                (a3 ^ d3).rotate_left(10),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_2a(s: &mut KeccakState) {
+    let (bx4, bx0) = bx_2(s, BxArg(3, 0, 1, 0, 9), BxArg(1, 1, 1, 1, 1));
+    let (bx1, bx2, bx3) = bx_3(
+        s,
+        BxArg(4, 2, 1, 0, 3),
+        BxArg(2, 3, 0, 1, 13),
+        BxArg(0, 4, 1, 0, 4),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 1, ax4);
+}
 
-        // [hax] uninitialized variables are note supported yet in lean.
-        #[allow(unused_assignments)]
-        let mut ax0 = 0.classify();
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 1];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
-            s.i = i + 1;
-        };
-        s.set_with_zeta(0, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(1, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(1, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(30),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 1, ax4);
-    }
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_2b(s: &mut KeccakState) {
+    let (bx4, bx0) = bx_2(s, BxArg(3, 0, 0, 1, 9), BxArg(1, 1, 0, 0, 0));
+    let (bx1, bx2, bx3) = bx_3(
+        s,
+        BxArg(4, 2, 0, 1, 3),
+        BxArg(2, 3, 1, 0, 12),
+        BxArg(0, 4, 0, 1, 4),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_2c(s: &mut KeccakState) {
+    let (bx1, bx2) = bx_2(s, BxArg(2, 0, 1, 0, 18), BxArg(0, 1, 1, 0, 5));
+    let (bx3, bx4, bx0) = bx_3(
+        s,
+        BxArg(3, 2, 0, 1, 8),
+        BxArg(1, 3, 1, 0, 28),
+        BxArg(4, 4, 1, 1, 14),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 1, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_2d(s: &mut KeccakState) {
+    let (bx1, bx2) = bx_2(s, BxArg(2, 0, 0, 1, 18), BxArg(0, 1, 0, 1, 5));
+    let (bx3, bx4, bx0) = bx_3(
+        s,
+        BxArg(3, 2, 1, 0, 7),
+        BxArg(1, 3, 0, 1, 28),
+        BxArg(4, 4, 0, 0, 13),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_2e(s: &mut KeccakState) {
+    let (bx0, bx1, bx2) = bx_3(
+        s,
+        BxArg(2, 2, 1, 0, 31),
+        BxArg(0, 3, 1, 1, 28),
+        BxArg(3, 4, 1, 1, 20),
+    );
+    let (bx3, bx4) = bx_2(s, BxArg(1, 0, 1, 1, 21), BxArg(4, 1, 0, 0, 1));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 1, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round1_pi_rho_chi_2f(s: &mut KeccakState) {
+    let (bx0, bx1, bx2) = bx_3(
+        s,
+        BxArg(2, 2, 0, 1, 31),
+        BxArg(0, 3, 0, 0, 27),
+        BxArg(3, 4, 0, 0, 19),
+    );
+    let (bx3, bx4) = bx_2(s, BxArg(1, 0, 0, 0, 20), BxArg(4, 1, 1, 1, 1));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 0, ax4);
 }
 
 #[inline(always)]
@@ -1180,204 +1335,19 @@ pub(crate) fn keccakf1600_round1_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1500 in")
 )]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
 pub(crate) fn keccakf1600_round1_pi_rho_chi_2(s: &mut KeccakState) {
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(13),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 1, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(12),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 0, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(8),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(14),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 1, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(7),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(13),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 0, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(4, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(20),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 1, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(4, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(27),
-                (a4 ^ d4).rotate_left(19),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 0, ax4);
-    }
+    keccakf1600_round1_pi_rho_chi_2a(s);
+    keccakf1600_round1_pi_rho_chi_2b(s);
+    keccakf1600_round1_pi_rho_chi_2c(s);
+    keccakf1600_round1_pi_rho_chi_2d(s);
+    keccakf1600_round1_pi_rho_chi_2e(s);
+    keccakf1600_round1_pi_rho_chi_2f(s);
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x0_z0(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 0, 0);
     let ax_4 = s.get_with_zeta(4, 0, 1);
@@ -1388,7 +1358,8 @@ pub(crate) fn keccakf1600_round2_theta_c_x0_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x0_z1(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 0, 1);
     let ax_4 = s.get_with_zeta(4, 0, 0);
@@ -1399,7 +1370,8 @@ pub(crate) fn keccakf1600_round2_theta_c_x0_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x1_z0(s: &mut KeccakState) {
     let ax_3 = s.get_with_zeta(3, 1, 1);
     let ax_2 = s.get_with_zeta(2, 1, 1);
@@ -1410,7 +1382,8 @@ pub(crate) fn keccakf1600_round2_theta_c_x1_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x1_z1(s: &mut KeccakState) {
     let ax_3 = s.get_with_zeta(3, 1, 0);
     let ax_2 = s.get_with_zeta(2, 1, 0);
@@ -1421,7 +1394,8 @@ pub(crate) fn keccakf1600_round2_theta_c_x1_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x2_z0(s: &mut KeccakState) {
     let ax_1 = s.get_with_zeta(1, 2, 1);
     let ax_0 = s.get_with_zeta(0, 2, 1);
@@ -1432,7 +1406,8 @@ pub(crate) fn keccakf1600_round2_theta_c_x2_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x2_z1(s: &mut KeccakState) {
     let ax_1 = s.get_with_zeta(1, 2, 0);
     let ax_0 = s.get_with_zeta(0, 2, 0);
@@ -1443,7 +1418,8 @@ pub(crate) fn keccakf1600_round2_theta_c_x2_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x3_z0(s: &mut KeccakState) {
     let ax_4 = s.get_with_zeta(4, 3, 1);
     let ax_3 = s.get_with_zeta(3, 3, 1);
@@ -1454,7 +1430,8 @@ pub(crate) fn keccakf1600_round2_theta_c_x3_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x3_z1(s: &mut KeccakState) {
     let ax_4 = s.get_with_zeta(4, 3, 0);
     let ax_3 = s.get_with_zeta(3, 3, 0);
@@ -1465,7 +1442,8 @@ pub(crate) fn keccakf1600_round2_theta_c_x3_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x4_z0(s: &mut KeccakState) {
     let ax_2 = s.get_with_zeta(2, 4, 1);
     let ax_1 = s.get_with_zeta(1, 4, 0);
@@ -1476,7 +1454,8 @@ pub(crate) fn keccakf1600_round2_theta_c_x4_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta_c_x4_z1(s: &mut KeccakState) {
     let ax_2 = s.get_with_zeta(2, 4, 0);
     let ax_1 = s.get_with_zeta(1, 4, 1);
@@ -1487,42 +1466,74 @@ pub(crate) fn keccakf1600_round2_theta_c_x4_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
-pub(crate) fn keccakf1600_round2_theta_d(s: &mut KeccakState) {
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round2_theta_d_x0(s: &mut KeccakState) {
     let c_x4_zeta0 = s.c[4][0];
     let c_x1_zeta1 = s.c[1][1];
-    let c_x3_zeta0 = s.c[3][0];
-    let c_x0_zeta1 = s.c[0][1];
-    let c_x2_zeta0 = s.c[2][0];
     let c_x4_zeta1 = s.c[4][1];
-    let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-    s.d[0].0[0] = d_x0_zeta0;
-    let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-    s.d[2].0[1] = d_x2_zeta1;
-    let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-    s.d[4].0[0] = d_x4_zeta0;
-    let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-    s.d[1].0[1] = d_x1_zeta1;
-    let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-    s.d[3].0[0] = d_x3_zeta0;
     let c_x1_zeta0 = s.c[1][0];
-    let c_x3_zeta1 = s.c[3][1];
-    let c_x2_zeta1 = s.c[2][1];
-    let c_x0_zeta0 = s.c[0][0];
-    let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-    s.d[0].0[1] = d_x0_zeta1;
-    let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-    s.d[2].0[0] = d_x2_zeta0;
-    let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-    s.d[4].0[1] = d_x4_zeta1;
-    let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-    s.d[1].0[0] = d_x1_zeta0;
-    let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-    s.d[3].0[1] = d_x3_zeta1;
+    s.d[0].0[0] = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
+    s.d[0].0[1] = c_x4_zeta1 ^ c_x1_zeta0;
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round2_theta_d_x1(s: &mut KeccakState) {
+    let c_x0_zeta0 = s.c[0][0];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x2_zeta0 = s.c[2][0];
+    s.d[1].0[0] = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
+    s.d[1].0[1] = c_x0_zeta1 ^ c_x2_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round2_theta_d_x2(s: &mut KeccakState) {
+    let c_x1_zeta0 = s.c[1][0];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x1_zeta1 = s.c[1][1];
+    let c_x3_zeta0 = s.c[3][0];
+    s.d[2].0[0] = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
+    s.d[2].0[1] = c_x1_zeta1 ^ c_x3_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round2_theta_d_x3(s: &mut KeccakState) {
+    let c_x2_zeta0 = s.c[2][0];
+    let c_x4_zeta1 = s.c[4][1];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x4_zeta0 = s.c[4][0];
+    s.d[3].0[0] = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
+    s.d[3].0[1] = c_x2_zeta1 ^ c_x4_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round2_theta_d_x4(s: &mut KeccakState) {
+    let c_x3_zeta0 = s.c[3][0];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x0_zeta0 = s.c[0][0];
+    s.d[4].0[0] = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
+    s.d[4].0[1] = c_x3_zeta1 ^ c_x0_zeta0;
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round2_theta_d(s: &mut KeccakState) {
+    keccakf1600_round2_theta_d_x0(s);
+    keccakf1600_round2_theta_d_x1(s);
+    keccakf1600_round2_theta_d_x2(s);
+    keccakf1600_round2_theta_d_x3(s);
+    keccakf1600_round2_theta_d_x4(s);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round2_theta(s: &mut KeccakState) {
     keccakf1600_round2_theta_c_x0_z0(s);
     keccakf1600_round2_theta_c_x0_z1(s);
@@ -1538,165 +1549,266 @@ pub(crate) fn keccakf1600_round2_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
+#[hax_lib::requires(BASE_ROUND < 253 && s.i < 255)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_1a<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
+    let (bx0, bx1) = bx_2(s, BxArg(0, 0, 0, 0, 0), BxArg(2, 1, 1, 0, 22));
+    let (bx2, bx3, bx4) = bx_3(
+        s,
+        BxArg(4, 2, 0, 1, 22),
+        BxArg(1, 3, 0, 1, 11),
+        BxArg(3, 4, 1, 0, 7),
+    );
+
+    // [hax] uninitialized variables are note supported yet in lean.
+    #[allow(unused_assignments)]
+    let mut ax0 = 0.classify();
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 2];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
+    };
+    s.set_with_zeta(0, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 1, ax4);
+}
+
+#[inline(always)]
+#[hax_lib::requires(BASE_ROUND < 253 && s.i < 255)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_1b<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
+    let (bx0, bx1) = bx_2(s, BxArg(0, 0, 1, 1, 0), BxArg(2, 1, 0, 1, 22));
+    let (bx2, bx3, bx4) = bx_3(
+        s,
+        BxArg(4, 2, 1, 0, 21),
+        BxArg(1, 3, 1, 0, 10),
+        BxArg(3, 4, 0, 1, 7),
+    );
+
+    // [hax] uninitialized variables are note supported yet in lean.
+    #[allow(unused_assignments)]
+    let mut ax0 = 0.classify();
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 2];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
+        s.i = i + 1;
+    };
+    s.set_with_zeta(0, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_1c(s: &mut KeccakState) {
+    let (bx4, bx0, bx1) = bx_3(
+        s,
+        BxArg(2, 2, 0, 1, 31),
+        BxArg(4, 3, 1, 0, 14),
+        BxArg(1, 4, 0, 0, 10),
+    );
+    let (bx2, bx3) = bx_2(s, BxArg(3, 0, 0, 1, 2), BxArg(0, 1, 0, 1, 23));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_1d(s: &mut KeccakState) {
+    let (bx4, bx0, bx1) = bx_3(
+        s,
+        BxArg(2, 2, 1, 0, 30),
+        BxArg(4, 3, 0, 1, 14),
+        BxArg(1, 4, 1, 1, 10),
+    );
+    let (bx2, bx3) = bx_2(s, BxArg(3, 0, 1, 0, 1), BxArg(0, 1, 1, 0, 22));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 1, ax4);
+}
+
+#[inline(always)]
 #[cfg_attr(
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1000 in")
 )]
-#[hax_lib::opaque]
+#[hax_lib::requires(BASE_ROUND < 253 && s.i < 255)]
+//#[hax_lib::opaque]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut KeccakState) {
-    #[cfg(not(feature = "full-unroll"))]
-    let i = s.i;
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(22),
-                (a3 ^ d3).rotate_left(11),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
+    keccakf1600_round2_pi_rho_chi_1a::<BASE_ROUND>(s);
+    keccakf1600_round2_pi_rho_chi_1b::<BASE_ROUND>(s);
+    keccakf1600_round2_pi_rho_chi_1c(s);
+    keccakf1600_round2_pi_rho_chi_1d(s);
+}
 
-        // [hax] uninitialized variables are note supported yet in lean.
-        #[allow(unused_assignments)]
-        let mut ax0 = 0.classify();
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 2];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
-        };
-        s.set_with_zeta(0, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 1, ax4);
-    }
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(21),
-                (a3 ^ d3).rotate_left(10),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_2a(s: &mut KeccakState) {
+    let (bx4, bx0) = bx_2(s, BxArg(1, 0, 1, 0, 9), BxArg(3, 1, 0, 1, 1));
+    let (bx1, bx2, bx3) = bx_3(
+        s,
+        BxArg(0, 2, 1, 0, 3),
+        BxArg(2, 3, 1, 1, 13),
+        BxArg(4, 4, 1, 0, 4),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 1, ax4);
+}
 
-        // [hax] uninitialized variables are note supported yet in lean.
-        #[allow(unused_assignments)]
-        let mut ax0 = 0.classify();
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 2];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
-            s.i = i + 1;
-        };
-        s.set_with_zeta(0, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(1, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(1, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(30),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 1, ax4);
-    }
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_2b(s: &mut KeccakState) {
+    let (bx4, bx0) = bx_2(s, BxArg(1, 0, 0, 1, 9), BxArg(3, 1, 1, 0, 0));
+    let (bx1, bx2, bx3) = bx_3(
+        s,
+        BxArg(0, 2, 0, 1, 3),
+        BxArg(2, 3, 0, 0, 12),
+        BxArg(4, 4, 0, 1, 4),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_2c(s: &mut KeccakState) {
+    let (bx1, bx2) = bx_2(s, BxArg(4, 0, 1, 0, 18), BxArg(1, 1, 1, 0, 5));
+    let (bx3, bx4, bx0) = bx_3(
+        s,
+        BxArg(3, 2, 1, 1, 8),
+        BxArg(0, 3, 1, 0, 28),
+        BxArg(2, 4, 0, 1, 14),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_2d(s: &mut KeccakState) {
+    let (bx1, bx2) = bx_2(s, BxArg(4, 0, 0, 1, 18), BxArg(1, 1, 0, 1, 5));
+    let (bx3, bx4, bx0) = bx_3(
+        s,
+        BxArg(3, 2, 0, 0, 7),
+        BxArg(0, 3, 0, 1, 28),
+        BxArg(2, 4, 1, 0, 13),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 1, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_2e(s: &mut KeccakState) {
+    let (bx0, bx1, bx2) = bx_3(
+        s,
+        BxArg(1, 2, 1, 0, 31),
+        BxArg(3, 3, 0, 1, 28),
+        BxArg(0, 4, 0, 1, 20),
+    );
+    let (bx3, bx4) = bx_2(s, BxArg(2, 0, 0, 1, 21), BxArg(4, 1, 0, 0, 1));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round2_pi_rho_chi_2f(s: &mut KeccakState) {
+    let (bx0, bx1, bx2) = bx_3(
+        s,
+        BxArg(1, 2, 0, 1, 31),
+        BxArg(3, 3, 1, 0, 27),
+        BxArg(0, 4, 1, 0, 19),
+    );
+    let (bx3, bx4) = bx_2(s, BxArg(2, 0, 1, 0, 20), BxArg(4, 1, 1, 1, 1));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 1, ax4);
 }
 
 #[inline(always)]
@@ -1704,200 +1816,14 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1500 in")
 )]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
 pub(crate) fn keccakf1600_round2_pi_rho_chi_2(s: &mut KeccakState) {
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(13),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 1, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(12),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 0, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(8),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(14),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 0, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(7),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(13),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 1, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(4, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(20),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 0, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(4, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(27),
-                (a4 ^ d4).rotate_left(19),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 1, ax4);
-    }
+    keccakf1600_round2_pi_rho_chi_2a(s);
+    keccakf1600_round2_pi_rho_chi_2b(s);
+    keccakf1600_round2_pi_rho_chi_2c(s);
+    keccakf1600_round2_pi_rho_chi_2d(s);
+    keccakf1600_round2_pi_rho_chi_2e(s);
+    keccakf1600_round2_pi_rho_chi_2f(s);
 }
 
 #[inline(always)]
@@ -1905,7 +1831,8 @@ pub(crate) fn keccakf1600_round2_pi_rho_chi_2(s: &mut KeccakState) {
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1000 in")
 )]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x0_z0(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 0, 0);
     let ax_3 = s.get_with_zeta(3, 0, 0);
@@ -1916,7 +1843,8 @@ pub(crate) fn keccakf1600_round3_theta_c_x0_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x0_z1(s: &mut KeccakState) {
     let ax_0 = s.get_with_zeta(0, 0, 1);
     let ax_3 = s.get_with_zeta(3, 0, 1);
@@ -1927,7 +1855,8 @@ pub(crate) fn keccakf1600_round3_theta_c_x0_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x1_z0(s: &mut KeccakState) {
     let ax_2 = s.get_with_zeta(2, 1, 1);
     let ax_0 = s.get_with_zeta(0, 1, 0);
@@ -1938,7 +1867,8 @@ pub(crate) fn keccakf1600_round3_theta_c_x1_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x1_z1(s: &mut KeccakState) {
     let ax_2 = s.get_with_zeta(2, 1, 0);
     let ax_0 = s.get_with_zeta(0, 1, 1);
@@ -1949,7 +1879,8 @@ pub(crate) fn keccakf1600_round3_theta_c_x1_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x2_z0(s: &mut KeccakState) {
     let ax_4 = s.get_with_zeta(4, 2, 0);
     let ax_2 = s.get_with_zeta(2, 2, 0);
@@ -1960,7 +1891,8 @@ pub(crate) fn keccakf1600_round3_theta_c_x2_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x2_z1(s: &mut KeccakState) {
     let ax_4 = s.get_with_zeta(4, 2, 1);
     let ax_2 = s.get_with_zeta(2, 2, 1);
@@ -1971,7 +1903,8 @@ pub(crate) fn keccakf1600_round3_theta_c_x2_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x3_z0(s: &mut KeccakState) {
     let ax_1 = s.get_with_zeta(1, 3, 0);
     let ax_4 = s.get_with_zeta(4, 3, 1);
@@ -1982,7 +1915,8 @@ pub(crate) fn keccakf1600_round3_theta_c_x3_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x3_z1(s: &mut KeccakState) {
     let ax_1 = s.get_with_zeta(1, 3, 1);
     let ax_4 = s.get_with_zeta(4, 3, 0);
@@ -1993,7 +1927,8 @@ pub(crate) fn keccakf1600_round3_theta_c_x3_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x4_z0(s: &mut KeccakState) {
     let ax_3 = s.get_with_zeta(3, 4, 1);
     let ax_1 = s.get_with_zeta(1, 4, 0);
@@ -2004,7 +1939,8 @@ pub(crate) fn keccakf1600_round3_theta_c_x4_z0(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta_c_x4_z1(s: &mut KeccakState) {
     let ax_3 = s.get_with_zeta(3, 4, 0);
     let ax_1 = s.get_with_zeta(1, 4, 1);
@@ -2015,42 +1951,74 @@ pub(crate) fn keccakf1600_round3_theta_c_x4_z1(s: &mut KeccakState) {
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
-pub(crate) fn keccakf1600_round3_theta_d(s: &mut KeccakState) {
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round3_theta_d_x0(s: &mut KeccakState) {
     let c_x4_zeta0 = s.c[4][0];
     let c_x1_zeta1 = s.c[1][1];
-    let c_x3_zeta0 = s.c[3][0];
-    let c_x0_zeta1 = s.c[0][1];
-    let c_x2_zeta0 = s.c[2][0];
     let c_x4_zeta1 = s.c[4][1];
-    let d_x0_zeta0 = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
-    s.d[0].0[0] = d_x0_zeta0;
-    let d_x2_zeta1 = c_x1_zeta1 ^ c_x3_zeta0;
-    s.d[2].0[1] = d_x2_zeta1;
-    let d_x4_zeta0 = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
-    s.d[4].0[0] = d_x4_zeta0;
-    let d_x1_zeta1 = c_x0_zeta1 ^ c_x2_zeta0;
-    s.d[1].0[1] = d_x1_zeta1;
-    let d_x3_zeta0 = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
-    s.d[3].0[0] = d_x3_zeta0;
     let c_x1_zeta0 = s.c[1][0];
-    let c_x3_zeta1 = s.c[3][1];
-    let c_x2_zeta1 = s.c[2][1];
-    let c_x0_zeta0 = s.c[0][0];
-    let d_x0_zeta1 = c_x4_zeta1 ^ c_x1_zeta0;
-    s.d[0].0[1] = d_x0_zeta1;
-    let d_x2_zeta0 = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
-    s.d[2].0[0] = d_x2_zeta0;
-    let d_x4_zeta1 = c_x3_zeta1 ^ c_x0_zeta0;
-    s.d[4].0[1] = d_x4_zeta1;
-    let d_x1_zeta0 = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
-    s.d[1].0[0] = d_x1_zeta0;
-    let d_x3_zeta1 = c_x2_zeta1 ^ c_x4_zeta0;
-    s.d[3].0[1] = d_x3_zeta1;
+    s.d[0].0[0] = c_x4_zeta0 ^ c_x1_zeta1.rotate_left(1);
+    s.d[0].0[1] = c_x4_zeta1 ^ c_x1_zeta0;
 }
 
 #[inline(always)]
-#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round3_theta_d_x1(s: &mut KeccakState) {
+    let c_x0_zeta0 = s.c[0][0];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x2_zeta0 = s.c[2][0];
+    s.d[1].0[0] = c_x0_zeta0 ^ c_x2_zeta1.rotate_left(1);
+    s.d[1].0[1] = c_x0_zeta1 ^ c_x2_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round3_theta_d_x2(s: &mut KeccakState) {
+    let c_x1_zeta0 = s.c[1][0];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x1_zeta1 = s.c[1][1];
+    let c_x3_zeta0 = s.c[3][0];
+    s.d[2].0[0] = c_x1_zeta0 ^ c_x3_zeta1.rotate_left(1);
+    s.d[2].0[1] = c_x1_zeta1 ^ c_x3_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round3_theta_d_x3(s: &mut KeccakState) {
+    let c_x2_zeta0 = s.c[2][0];
+    let c_x4_zeta1 = s.c[4][1];
+    let c_x2_zeta1 = s.c[2][1];
+    let c_x4_zeta0 = s.c[4][0];
+    s.d[3].0[0] = c_x2_zeta0 ^ c_x4_zeta1.rotate_left(1);
+    s.d[3].0[1] = c_x2_zeta1 ^ c_x4_zeta0;
+}
+
+#[inline(always)]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round3_theta_d_x4(s: &mut KeccakState) {
+    let c_x3_zeta0 = s.c[3][0];
+    let c_x0_zeta1 = s.c[0][1];
+    let c_x3_zeta1 = s.c[3][1];
+    let c_x0_zeta0 = s.c[0][0];
+    s.d[4].0[0] = c_x3_zeta0 ^ c_x0_zeta1.rotate_left(1);
+    s.d[4].0[1] = c_x3_zeta1 ^ c_x0_zeta0;
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
+pub(crate) fn keccakf1600_round3_theta_d(s: &mut KeccakState) {
+    keccakf1600_round3_theta_d_x0(s);
+    keccakf1600_round3_theta_d_x1(s);
+    keccakf1600_round3_theta_d_x2(s);
+    keccakf1600_round3_theta_d_x3(s);
+    keccakf1600_round3_theta_d_x4(s);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::ensures(|_| future(s).i == s.i)]
 pub(crate) fn keccakf1600_round3_theta(s: &mut KeccakState) {
     keccakf1600_round3_theta_c_x0_z0(s);
     keccakf1600_round3_theta_c_x0_z1(s);
@@ -2066,165 +2034,266 @@ pub(crate) fn keccakf1600_round3_theta(s: &mut KeccakState) {
 }
 
 #[inline(always)]
+#[hax_lib::requires(BASE_ROUND < 252 && s.i < 255)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_1a<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
+    let (bx0, bx1) = bx_2(s, BxArg(0, 0, 0, 0, 0), BxArg(0, 1, 0, 0, 22));
+    let (bx2, bx3, bx4) = bx_3(
+        s,
+        BxArg(0, 2, 0, 1, 22),
+        BxArg(0, 3, 0, 1, 11),
+        BxArg(0, 4, 0, 0, 7),
+    );
+
+    // [hax] uninitialized variables are note supported yet in lean.
+    #[allow(unused_assignments)]
+    let mut ax0 = 0.classify();
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 3];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
+    };
+    s.set_with_zeta(0, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 0, ax4);
+}
+
+#[inline(always)]
+#[hax_lib::requires(BASE_ROUND < 252 && s.i < 255)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_1b<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    #[cfg(not(feature = "full-unroll"))]
+    let i = s.i;
+    let (bx0, bx1) = bx_2(s, BxArg(0, 0, 1, 1, 0), BxArg(0, 1, 1, 1, 22));
+    let (bx2, bx3, bx4) = bx_3(
+        s,
+        BxArg(0, 2, 1, 0, 21),
+        BxArg(0, 3, 1, 0, 10),
+        BxArg(0, 4, 1, 1, 7),
+    );
+
+    // [hax] uninitialized variables are note supported yet in lean.
+    #[allow(unused_assignments)]
+    let mut ax0 = 0.classify();
+    #[cfg(feature = "full-unroll")]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 3];
+    };
+    #[cfg(not(feature = "full-unroll"))]
+    {
+        ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
+        s.i = i + 1;
+    };
+    s.set_with_zeta(0, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(0, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(0, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(0, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(0, 4, 1, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_1c(s: &mut KeccakState) {
+    let (bx4, bx0, bx1) = bx_3(
+        s,
+        BxArg(1, 2, 0, 1, 31),
+        BxArg(1, 3, 0, 0, 14),
+        BxArg(1, 4, 0, 0, 10),
+    );
+    let (bx2, bx3) = bx_2(s, BxArg(1, 0, 0, 1, 2), BxArg(1, 1, 0, 1, 23));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_1d(s: &mut KeccakState) {
+    let (bx4, bx0, bx1) = bx_3(
+        s,
+        BxArg(1, 2, 1, 0, 30),
+        BxArg(1, 3, 1, 1, 14),
+        BxArg(1, 4, 1, 1, 10),
+    );
+    let (bx2, bx3) = bx_2(s, BxArg(1, 0, 1, 0, 1), BxArg(1, 1, 1, 0, 22));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(1, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(1, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(1, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(1, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(1, 4, 1, ax4);
+}
+
+#[inline(always)]
 #[cfg_attr(
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1000 in")
 )]
-#[hax_lib::opaque]
+#[hax_lib::requires(BASE_ROUND < 252 && s.i < 255)]
+//#[hax_lib::opaque]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut KeccakState) {
-    #[cfg(not(feature = "full-unroll"))]
-    let i = s.i;
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(0, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(0, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(0, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(0, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(22),
-                (a3 ^ d3).rotate_left(11),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
+    keccakf1600_round3_pi_rho_chi_1a::<BASE_ROUND>(s);
+    keccakf1600_round3_pi_rho_chi_1b::<BASE_ROUND>(s);
+    keccakf1600_round3_pi_rho_chi_1c(s);
+    keccakf1600_round3_pi_rho_chi_1d(s);
+}
 
-        // [hax] uninitialized variables are note supported yet in lean.
-        #[allow(unused_assignments)]
-        let mut ax0 = 0.classify();
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[BASE_ROUND + 3];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_0[i];
-        };
-        s.set_with_zeta(0, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 0, ax4);
-    }
-    {
-        let (bx0, bx1) = {
-            let a0 = s.get_with_zeta(0, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(0, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(0), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx2, bx3, bx4) = {
-            let a2 = s.get_with_zeta(0, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(0, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(0, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(21),
-                (a3 ^ d3).rotate_left(10),
-                (a4 ^ d4).rotate_left(7),
-            )
-        };
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_2a(s: &mut KeccakState) {
+    let (bx4, bx0) = bx_2(s, BxArg(2, 0, 0, 0, 9), BxArg(2, 1, 0, 1, 1));
+    let (bx1, bx2, bx3) = bx_3(
+        s,
+        BxArg(2, 2, 0, 0, 3),
+        BxArg(2, 3, 0, 1, 13),
+        BxArg(2, 4, 0, 0, 4),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 0, ax4);
+}
 
-        // [hax] uninitialized variables are note supported yet in lean.
-        #[allow(unused_assignments)]
-        let mut ax0 = 0.classify();
-        #[cfg(feature = "full-unroll")]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[BASE_ROUND + 3];
-        };
-        #[cfg(not(feature = "full-unroll"))]
-        {
-            ax0 = bx0 ^ ((!bx1) & bx2) ^ RC_INTERLEAVED_1[i];
-            s.i = i + 1;
-        };
-        s.set_with_zeta(0, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(0, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(0, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(0, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(0, 4, 1, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(1, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(1, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(2), (a1 ^ d1).rotate_left(23))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(1, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(1, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(1, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 0, ax4);
-    }
-    {
-        let (bx2, bx3) = {
-            let a0 = s.get_with_zeta(1, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(1, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(1), (a1 ^ d1).rotate_left(22))
-        };
-        let (bx4, bx0, bx1) = {
-            let a2 = s.get_with_zeta(1, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(1, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(1, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(30),
-                (a3 ^ d3).rotate_left(14),
-                (a4 ^ d4).rotate_left(10),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(1, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(1, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(1, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(1, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(1, 4, 1, ax4);
-    }
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_2b(s: &mut KeccakState) {
+    let (bx4, bx0) = bx_2(s, BxArg(2, 0, 1, 1, 9), BxArg(2, 1, 1, 0, 0));
+    let (bx1, bx2, bx3) = bx_3(
+        s,
+        BxArg(2, 2, 1, 1, 3),
+        BxArg(2, 3, 1, 0, 12),
+        BxArg(2, 4, 1, 1, 4),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(2, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(2, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(2, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(2, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(2, 4, 1, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_2c(s: &mut KeccakState) {
+    let (bx1, bx2) = bx_2(s, BxArg(3, 0, 0, 0, 18), BxArg(3, 1, 0, 0, 5));
+    let (bx3, bx4, bx0) = bx_3(
+        s,
+        BxArg(3, 2, 0, 1, 8),
+        BxArg(3, 3, 0, 0, 28),
+        BxArg(3, 4, 0, 1, 14),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_2d(s: &mut KeccakState) {
+    let (bx1, bx2) = bx_2(s, BxArg(3, 0, 1, 1, 18), BxArg(3, 1, 1, 1, 5));
+    let (bx3, bx4, bx0) = bx_3(
+        s,
+        BxArg(3, 2, 1, 0, 7),
+        BxArg(3, 3, 1, 1, 28),
+        BxArg(3, 4, 1, 0, 13),
+    );
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(3, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(3, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(3, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(3, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(3, 4, 1, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_2e(s: &mut KeccakState) {
+    let (bx0, bx1, bx2) = bx_3(
+        s,
+        BxArg(4, 2, 0, 0, 31),
+        BxArg(4, 3, 0, 1, 28),
+        BxArg(4, 4, 0, 1, 20),
+    );
+    let (bx3, bx4) = bx_2(s, BxArg(4, 0, 0, 1, 21), BxArg(4, 1, 0, 0, 1));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 0, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 0, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 0, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 0, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 0, ax4);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+pub(crate) fn keccakf1600_round3_pi_rho_chi_2f(s: &mut KeccakState) {
+    let (bx0, bx1, bx2) = bx_3(
+        s,
+        BxArg(4, 2, 1, 1, 31),
+        BxArg(4, 3, 1, 0, 27),
+        BxArg(4, 4, 1, 0, 19),
+    );
+    let (bx3, bx4) = bx_2(s, BxArg(4, 0, 1, 0, 20), BxArg(4, 1, 1, 1, 1));
+    let ax0 = bx0 ^ ((!bx1) & bx2);
+    s.set_with_zeta(4, 0, 1, ax0);
+    let ax1 = bx1 ^ ((!bx2) & bx3);
+    s.set_with_zeta(4, 1, 1, ax1);
+    let ax2 = bx2 ^ ((!bx3) & bx4);
+    s.set_with_zeta(4, 2, 1, ax2);
+    let ax3 = bx3 ^ ((!bx4) & bx0);
+    s.set_with_zeta(4, 3, 1, ax3);
+    let ax4 = bx4 ^ ((!bx0) & bx1);
+    s.set_with_zeta(4, 4, 1, ax4);
 }
 
 #[inline(always)]
@@ -2232,200 +2301,14 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_1<const BASE_ROUND: usize>(s: &mut K
     hax_backend_lean,
     hax_lib::lean::before("set_option maxRecDepth 1500 in")
 )]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
 pub(crate) fn keccakf1600_round3_pi_rho_chi_2(s: &mut KeccakState) {
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(2, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(2, 1, 0);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(2, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(2, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(2, 4, 0);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(13),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 0, ax4);
-    }
-    {
-        let (bx4, bx0) = {
-            let a0 = s.get_with_zeta(2, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(2, 1, 1);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(9), (a1 ^ d1).rotate_left(0))
-        };
-        let (bx1, bx2, bx3) = {
-            let a2 = s.get_with_zeta(2, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(2, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(2, 4, 1);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(3),
-                (a3 ^ d3).rotate_left(12),
-                (a4 ^ d4).rotate_left(4),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(2, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(2, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(2, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(2, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(2, 4, 1, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(3, 0, 0);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(3, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 0);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(3, 3, 0);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(3, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(8),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(14),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 0, ax4);
-    }
-    {
-        let (bx1, bx2) = {
-            let a0 = s.get_with_zeta(3, 0, 1);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(3, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(18), (a1 ^ d1).rotate_left(5))
-        };
-        let (bx3, bx4, bx0) = {
-            let a2 = s.get_with_zeta(3, 2, 1);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(3, 3, 1);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(3, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(7),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(13),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(3, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(3, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(3, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(3, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(3, 4, 1, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(4, 0, 0);
-            let d0 = s.d[0][1];
-            let a1 = s.get_with_zeta(4, 1, 0);
-            let d1 = s.d[1][0];
-            ((a0 ^ d0).rotate_left(21), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(4, 2, 0);
-            let d2 = s.d[2][0];
-            let a3 = s.get_with_zeta(4, 3, 0);
-            let d3 = s.d[3][1];
-            let a4 = s.get_with_zeta(4, 4, 0);
-            let d4 = s.d[4][1];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(28),
-                (a4 ^ d4).rotate_left(20),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 0, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 0, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 0, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 0, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 0, ax4);
-    }
-    {
-        let (bx3, bx4) = {
-            let a0 = s.get_with_zeta(4, 0, 1);
-            let d0 = s.d[0][0];
-            let a1 = s.get_with_zeta(4, 1, 1);
-            let d1 = s.d[1][1];
-            ((a0 ^ d0).rotate_left(20), (a1 ^ d1).rotate_left(1))
-        };
-        let (bx0, bx1, bx2) = {
-            let a2 = s.get_with_zeta(4, 2, 1);
-            let d2 = s.d[2][1];
-            let a3 = s.get_with_zeta(4, 3, 1);
-            let d3 = s.d[3][0];
-            let a4 = s.get_with_zeta(4, 4, 1);
-            let d4 = s.d[4][0];
-            (
-                (a2 ^ d2).rotate_left(31),
-                (a3 ^ d3).rotate_left(27),
-                (a4 ^ d4).rotate_left(19),
-            )
-        };
-        let ax0 = bx0 ^ ((!bx1) & bx2);
-        s.set_with_zeta(4, 0, 1, ax0);
-        let ax1 = bx1 ^ ((!bx2) & bx3);
-        s.set_with_zeta(4, 1, 1, ax1);
-        let ax2 = bx2 ^ ((!bx3) & bx4);
-        s.set_with_zeta(4, 2, 1, ax2);
-        let ax3 = bx3 ^ ((!bx4) & bx0);
-        s.set_with_zeta(4, 3, 1, ax3);
-        let ax4 = bx4 ^ ((!bx0) & bx1);
-        s.set_with_zeta(4, 4, 1, ax4);
-    }
+    keccakf1600_round3_pi_rho_chi_2a(s);
+    keccakf1600_round3_pi_rho_chi_2b(s);
+    keccakf1600_round3_pi_rho_chi_2c(s);
+    keccakf1600_round3_pi_rho_chi_2d(s);
+    keccakf1600_round3_pi_rho_chi_2e(s);
+    keccakf1600_round3_pi_rho_chi_2f(s);
 }
 
 // What is interesting is that I assumed that not inlining here should be relatively cheap, because
@@ -2435,24 +2318,58 @@ pub(crate) fn keccakf1600_round3_pi_rho_chi_2(s: &mut KeccakState) {
 // vs
 //   [CYCLE_MEASUREMENT libcrux SHAKE256 (PRF_ETA1_RANDOMNESS_1024)] : + 19139 cycles
 #[inline(always)]
-#[hax_lib::opaque]
+#[hax_lib::requires(BASE_ROUND < 252 && s.i < 255)]
+#[hax_lib::fstar::options("--z3rlimit 60")]
+//#[hax_lib::opaque]
 pub(crate) fn keccakf1600_4rounds<const BASE_ROUND: usize>(s: &mut KeccakState) {
+    keccakf1600_round0::<BASE_ROUND>(s);
+    keccakf1600_round1::<BASE_ROUND>(s);
+    keccakf1600_round2::<BASE_ROUND>(s);
+    keccakf1600_round3::<BASE_ROUND>(s);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::requires(BASE_ROUND < 255 && s.i < 255)]
+#[hax_lib::fstar::options("--z3rlimit 60")]
+pub(crate) fn keccakf1600_round0<const BASE_ROUND: usize>(s: &mut KeccakState) {
     keccakf1600_round0_theta(s);
     keccakf1600_round0_pi_rho_chi_1::<BASE_ROUND>(s);
     keccakf1600_round0_pi_rho_chi_2(s);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::requires(BASE_ROUND < 254 && s.i < 255)]
+// #[hax_lib::fstar::options("--z3rlimit 60")]
+pub(crate) fn keccakf1600_round1<const BASE_ROUND: usize>(s: &mut KeccakState) {
     keccakf1600_round1_theta(s);
     keccakf1600_round1_pi_rho_chi_1::<BASE_ROUND>(s);
     keccakf1600_round1_pi_rho_chi_2(s);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::requires(BASE_ROUND < 253 && s.i < 255)]
+// #[hax_lib::fstar::options("--z3rlimit 60")]
+pub(crate) fn keccakf1600_round2<const BASE_ROUND: usize>(s: &mut KeccakState) {
     keccakf1600_round2_theta(s);
     keccakf1600_round2_pi_rho_chi_1::<BASE_ROUND>(s);
     keccakf1600_round2_pi_rho_chi_2(s);
+}
+
+#[inline(always)]
+//#[hax_lib::opaque]
+#[hax_lib::requires(BASE_ROUND < 252 && s.i < 255)]
+#[hax_lib::fstar::options("--z3rlimit 60")]
+pub(crate) fn keccakf1600_round3<const BASE_ROUND: usize>(s: &mut KeccakState) {
     keccakf1600_round3_theta(s);
     keccakf1600_round3_pi_rho_chi_1::<BASE_ROUND>(s);
     keccakf1600_round3_pi_rho_chi_2(s);
 }
 
 #[inline(never)]
-#[hax_lib::opaque]
+//#[hax_lib::opaque]
 pub(crate) fn keccakf1600(s: &mut KeccakState) {
     #[cfg(not(feature = "full-unroll"))]
     for _ in 0..6 {
@@ -2526,6 +2443,7 @@ pub(crate) fn squeeze_next_block<const RATE: usize>(s: &mut KeccakState, out: &m
 #[inline(always)]
 #[cfg(feature = "unbuffered-xof")]
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && 3 * RATE <= out.len())]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     squeeze_first_block::<RATE>(s, out);
     squeeze_next_block::<RATE>(s, &mut out[RATE..]);
@@ -2535,6 +2453,7 @@ pub(crate) fn squeeze_first_three_blocks<const RATE: usize>(s: &mut KeccakState,
 #[inline(always)]
 #[cfg(feature = "unbuffered-xof")]
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && 5 * RATE <= out.len())]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, out: &mut [U8]) {
     squeeze_first_block::<RATE>(s, out);
     squeeze_next_block::<RATE>(s, &mut out[RATE..]);
@@ -2545,6 +2464,7 @@ pub(crate) fn squeeze_first_five_blocks<const RATE: usize>(s: &mut KeccakState, 
 
 #[inline(always)]
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && out.len() <= 200)]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 pub(crate) fn squeeze_last<const RATE: usize>(mut s: KeccakState, out: &mut [U8]) {
     keccakf1600(&mut s);
     let mut b = [0u8; 200].classify();
@@ -2554,6 +2474,7 @@ pub(crate) fn squeeze_last<const RATE: usize>(mut s: KeccakState, out: &mut [U8]
 
 #[inline(always)]
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && out.len() <= 200)]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 pub(crate) fn squeeze_first_and_last<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     let mut b = [0u8; 200].classify();
     s.store_block_full::<RATE>(&mut b);

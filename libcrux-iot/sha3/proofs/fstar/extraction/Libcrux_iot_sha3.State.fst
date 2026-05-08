@@ -68,7 +68,10 @@ let impl_KeccakState__get_with_zeta (self: t_KeccakState) (i j zeta: usize)
 let impl_KeccakState__set_with_zeta (self: t_KeccakState) (i j zeta: usize) (v: u32)
     : Prims.Pure t_KeccakState
       (requires i <. mk_usize 5 && j <. mk_usize 5 && zeta <. mk_usize 2)
-      (fun _ -> Prims.l_True) =
+      (ensures
+        fun self_e_future ->
+          let self_e_future:t_KeccakState = self_e_future in
+          self_e_future.f_i =. self.f_i) =
   let self:t_KeccakState =
     {
       self with
@@ -114,7 +117,12 @@ let impl_KeccakState__set_lane
       (self: t_KeccakState)
       (i j: usize)
       (lane: Libcrux_iot_sha3.Lane.t_Lane2U32)
-    : Prims.Pure t_KeccakState (requires i <. mk_usize 5 && j <. mk_usize 5) (fun _ -> Prims.l_True) =
+    : Prims.Pure t_KeccakState
+      (requires i <. mk_usize 5 && j <. mk_usize 5)
+      (ensures
+        fun self_e_future ->
+          let self_e_future:t_KeccakState = self_e_future in
+          self_e_future.f_i =. self.f_i) =
   let self:t_KeccakState =
     {
       self with
@@ -130,7 +138,12 @@ let impl_KeccakState__set_lane
   self
 
 let impl_KeccakState__set_lane_value (self: t_KeccakState) (i j: usize) (value: u32)
-    : Prims.Pure t_KeccakState (requires i <. mk_usize 5 && j <. mk_usize 2) (fun _ -> Prims.l_True) =
+    : Prims.Pure t_KeccakState
+      (requires i <. mk_usize 5 && j <. mk_usize 2)
+      (ensures
+        fun self_e_future ->
+          let self_e_future:t_KeccakState = self_e_future in
+          self_e_future.f_i =. self.f_i) =
   let self:t_KeccakState =
     {
       self with
@@ -561,7 +574,11 @@ let store_block_2u32 (v_RATE: usize) (s: t_KeccakState) (out: t_Slice u8)
       (requires
         (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         v_RATE <=. (Core_models.Slice.impl__len #u8 out <: usize))
-      (fun _ -> Prims.l_True) =
+      (ensures
+        fun out_future ->
+          let out_future:t_Slice u8 = out_future in
+          (Core_models.Slice.impl__len #u8 out_future <: usize) =.
+          (Core_models.Slice.impl__len #u8 out <: usize)) =
   let e_out_len:usize = Core_models.Slice.impl__len #u8 out in
   let out:t_Slice u8 =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
@@ -638,14 +655,22 @@ let impl_KeccakState__store_block (v_RATE: usize) (self: t_KeccakState) (out: t_
       (requires
         (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
         v_RATE <=. (Core_models.Slice.impl__len #u8 out <: usize))
-      (fun _ -> Prims.l_True) =
+      (ensures
+        fun out_future ->
+          let out_future:t_Slice u8 = out_future in
+          (Core_models.Slice.impl__len #u8 out_future <: usize) =.
+          (Core_models.Slice.impl__len #u8 out <: usize)) =
   let out:t_Slice u8 = store_block_2u32 v_RATE self out in
   out
 
 let store_block_full_2u32 (v_RATE: usize) (s: t_KeccakState) (out: t_Array u8 (mk_usize 200))
     : Prims.Pure (t_Array u8 (mk_usize 200))
       (requires (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168)
-      (fun _ -> Prims.l_True) =
+      (ensures
+        fun out_future ->
+          let out_future:t_Array u8 (mk_usize 200) = out_future in
+          (Core_models.Slice.impl__len #u8 (out_future <: t_Slice u8) <: usize) =.
+          (Core_models.Slice.impl__len #u8 (out <: t_Slice u8) <: usize)) =
   let out:t_Array u8 (mk_usize 200) =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_range_full out
       (Core_models.Ops.Range.RangeFull <: Core_models.Ops.Range.t_RangeFull)
@@ -665,6 +690,10 @@ let impl_KeccakState__store_block_full
       (out: t_Array u8 (mk_usize 200))
     : Prims.Pure (t_Array u8 (mk_usize 200))
       (requires (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168)
-      (fun _ -> Prims.l_True) =
+      (ensures
+        fun out_future ->
+          let out_future:t_Array u8 (mk_usize 200) = out_future in
+          (Core_models.Slice.impl__len #u8 (out_future <: t_Slice u8) <: usize) =.
+          (Core_models.Slice.impl__len #u8 (out <: t_Slice u8) <: usize)) =
   let out:t_Array u8 (mk_usize 200) = store_block_full_2u32 v_RATE self out in
   out

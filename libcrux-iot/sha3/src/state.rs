@@ -37,6 +37,8 @@ impl KeccakState {
 
     #[inline(always)]
     #[hax_lib::requires(i < 5 && j < 5 && zeta < 2)]
+    // Ensure that F* knows that `i` doesn't change
+    #[hax_lib::ensures(|_| future(self).i == self.i)]
     pub(crate) fn set_with_zeta(&mut self, i: usize, j: usize, zeta: usize, v: U32) {
         self.st[5 * j + i].0[zeta] = v
     }
@@ -49,12 +51,16 @@ impl KeccakState {
 
     #[inline(always)]
     #[hax_lib::requires(i < 5 && j < 5)]
+    // Ensure that F* knows that `i` doesn't change
+    #[hax_lib::ensures(|_| future(self).i == self.i)]
     pub(crate) fn set_lane(&mut self, i: usize, j: usize, lane: Lane2U32) {
         self.st[5 * j + i] = lane
     }
 
     #[inline(always)]
     #[hax_lib::requires(i < 5 && j < 2)]
+    // Ensure that F* knows that `i` doesn't change
+    #[hax_lib::ensures(|_| future(self).i == self.i)]
     pub(crate) fn set_lane_value(&mut self, i: usize, j: usize, value: U32) {
         // XXX: We can't implement IndexMut for `Lane2U32` because of hax
         self.c[i].0[j] = value
@@ -68,6 +74,7 @@ impl KeccakState {
 
     #[inline(always)]
     #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && RATE <= out.len())]
+    #[hax_lib::ensures(|_| future(out).len() == out.len())]
     pub(crate) fn store_block<const RATE: usize>(&self, out: &mut [U8]) {
         store_block_2u32::<RATE>(self, out)
     }
@@ -80,6 +87,7 @@ impl KeccakState {
 
     #[inline(always)]
     #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168)]
+    #[hax_lib::ensures(|_| future(out).len() == out.len())]
     pub(crate) fn store_block_full<const RATE: usize>(&self, out: &mut [U8; 200]) {
         store_block_full_2u32::<RATE>(self, out);
     }
@@ -161,6 +169,7 @@ fn load_block_full_2u32<const RATE: usize>(
 }
 
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && RATE <= out.len())]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 #[inline(always)]
 fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     #[cfg(hax)]
@@ -174,6 +183,7 @@ fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
 }
 
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168)]
+#[hax_lib::ensures(|_| future(out).len() == out.len())]
 #[inline(always)]
 fn store_block_full_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8; 200]) {
     // `out[..]` is a workaround for https://github.com/cryspen/hax/issues/1983
