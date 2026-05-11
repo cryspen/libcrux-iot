@@ -195,12 +195,7 @@ let v_RC_INTERLEAVED_1_: t_Array u32 (mk_usize 255) =
   Rust_primitives.Hax.array_of_list 255 list
 
 let keccakf1600_round0_theta_c_x0_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 0) (mk_usize 0)
   in
@@ -225,12 +220,7 @@ let keccakf1600_round0_theta_c_x0_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_c_x0_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 0) (mk_usize 1)
   in
@@ -255,12 +245,7 @@ let keccakf1600_round0_theta_c_x0_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_c_x1_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 1) (mk_usize 0)
   in
@@ -285,12 +270,7 @@ let keccakf1600_round0_theta_c_x1_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_c_x1_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 1) (mk_usize 1)
   in
@@ -315,12 +295,7 @@ let keccakf1600_round0_theta_c_x1_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_c_x2_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 2) (mk_usize 0)
   in
@@ -345,12 +320,7 @@ let keccakf1600_round0_theta_c_x2_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_c_x2_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 2) (mk_usize 1)
   in
@@ -375,12 +345,7 @@ let keccakf1600_round0_theta_c_x2_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_c_x3_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 3) (mk_usize 0)
   in
@@ -405,12 +370,7 @@ let keccakf1600_round0_theta_c_x3_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_c_x3_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 3) (mk_usize 1)
   in
@@ -435,12 +395,7 @@ let keccakf1600_round0_theta_c_x3_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_c_x4_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 4) (mk_usize 0)
   in
@@ -465,12 +420,7 @@ let keccakf1600_round0_theta_c_x4_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_c_x4_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 4) (mk_usize 1)
   in
@@ -495,12 +445,7 @@ let keccakf1600_round0_theta_c_x4_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_d_x0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x4_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 4 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -572,12 +517,7 @@ let keccakf1600_round0_theta_d_x0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_d_x1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x0_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 0 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -649,12 +589,7 @@ let keccakf1600_round0_theta_d_x1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_d_x2 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x1_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 1 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -726,12 +661,7 @@ let keccakf1600_round0_theta_d_x2 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_d_x3 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x2_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 2 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -803,12 +733,7 @@ let keccakf1600_round0_theta_d_x3 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_d_x4 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x3_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 3 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -880,12 +805,7 @@ let keccakf1600_round0_theta_d_x4 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta_d (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_theta_d_x0 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_theta_d_x1 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_theta_d_x2 s in
@@ -894,12 +814,7 @@ let keccakf1600_round0_theta_d (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_theta (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_theta_c_x0_z0 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_theta_c_x0_z1 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_theta_c_x1_z0 s in
@@ -1005,12 +920,8 @@ let bx_3_ (s: Libcrux_iot_sha3.State.t_KeccakState) (a b c: t_BxArg)
 
 let keccakf1600_round0_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 255 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
-  let i:usize = s.Libcrux_iot_sha3.State.f_i in
+      (requires v_BASE_ROUND <. mk_usize 255)
+      (fun _ -> Prims.l_True) =
   let (bx0: u32), (bx1: u32) =
     bx_2_ s
       (BxArg (mk_usize 0) (mk_usize 0) (mk_usize 0) (mk_usize 0) (mk_u32 0) <: t_BxArg)
@@ -1023,12 +934,9 @@ let keccakf1600_round0_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
       (BxArg (mk_usize 4) (mk_usize 4) (mk_usize 0) (mk_usize 0) (mk_u32 7) <: t_BxArg)
   in
   let ax0:u32 =
-    Libcrux_secrets.Traits.f_classify #u32 #FStar.Tactics.Typeclasses.solve (mk_u32 0)
+    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^.
+    (v_RC_INTERLEAVED_0_.[ v_BASE_ROUND +! mk_usize 0 <: usize ] <: u32)
   in
-  let ax0:u32 =
-    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^. (v_RC_INTERLEAVED_0_.[ i ] <: u32)
-  in
-  let _:Prims.unit = () in
   let s:Libcrux_iot_sha3.State.t_KeccakState =
     Libcrux_iot_sha3.State.impl_KeccakState__set_with_zeta s
       (mk_usize 0)
@@ -1072,9 +980,8 @@ let keccakf1600_round0_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
 
 let keccakf1600_round0_pi_rho_chi_1b (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 255 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 255)
       (fun _ -> Prims.l_True) =
-  let i:usize = s.Libcrux_iot_sha3.State.f_i in
   let (bx0: u32), (bx1: u32) =
     bx_2_ s
       (BxArg (mk_usize 0) (mk_usize 0) (mk_usize 1) (mk_usize 1) (mk_u32 0) <: t_BxArg)
@@ -1087,15 +994,9 @@ let keccakf1600_round0_pi_rho_chi_1b (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
       (BxArg (mk_usize 4) (mk_usize 4) (mk_usize 1) (mk_usize 1) (mk_u32 7) <: t_BxArg)
   in
   let ax0:u32 =
-    Libcrux_secrets.Traits.f_classify #u32 #FStar.Tactics.Typeclasses.solve (mk_u32 0)
+    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^.
+    (v_RC_INTERLEAVED_1_.[ v_BASE_ROUND +! mk_usize 0 <: usize ] <: u32)
   in
-  let ax0:u32 =
-    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^. (v_RC_INTERLEAVED_1_.[ i ] <: u32)
-  in
-  let s:Libcrux_iot_sha3.State.t_KeccakState =
-    { s with Libcrux_iot_sha3.State.f_i = i +! mk_usize 1 } <: Libcrux_iot_sha3.State.t_KeccakState
-  in
-  let _:Prims.unit = () in
   let s:Libcrux_iot_sha3.State.t_KeccakState =
     Libcrux_iot_sha3.State.impl_KeccakState__set_with_zeta s
       (mk_usize 0)
@@ -1138,12 +1039,7 @@ let keccakf1600_round0_pi_rho_chi_1b (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
   s
 
 let keccakf1600_round0_pi_rho_chi_1c (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let (bx4: u32), (bx0: u32), (bx1: u32) =
     bx_3_ s
       (BxArg (mk_usize 4) (mk_usize 2) (mk_usize 1) (mk_usize 1) (mk_u32 31) <: t_BxArg)
@@ -1198,12 +1094,7 @@ let keccakf1600_round0_pi_rho_chi_1c (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_pi_rho_chi_1d (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let (bx4: u32), (bx0: u32), (bx1: u32) =
     bx_3_ s
       (BxArg (mk_usize 4) (mk_usize 2) (mk_usize 0) (mk_usize 0) (mk_u32 30) <: t_BxArg)
@@ -1259,7 +1150,7 @@ let keccakf1600_round0_pi_rho_chi_1d (s: Libcrux_iot_sha3.State.t_KeccakState)
 
 let keccakf1600_round0_pi_rho_chi_1_ (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 255 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 255)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_pi_rho_chi_1a v_BASE_ROUND s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_pi_rho_chi_1b v_BASE_ROUND s in
@@ -1598,12 +1489,7 @@ let keccakf1600_round0_pi_rho_chi_2f (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round0_pi_rho_chi_2_ (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_pi_rho_chi_2a s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_pi_rho_chi_2b s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_pi_rho_chi_2c s in
@@ -1613,12 +1499,7 @@ let keccakf1600_round0_pi_rho_chi_2_ (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x0_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 0) (mk_usize 0)
   in
@@ -1643,12 +1524,7 @@ let keccakf1600_round1_theta_c_x0_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x0_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 0) (mk_usize 1)
   in
@@ -1673,12 +1549,7 @@ let keccakf1600_round1_theta_c_x0_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x1_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_1_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 1) (mk_usize 1) (mk_usize 0)
   in
@@ -1703,12 +1574,7 @@ let keccakf1600_round1_theta_c_x1_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x1_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_1_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 1) (mk_usize 1) (mk_usize 1)
   in
@@ -1733,12 +1599,7 @@ let keccakf1600_round1_theta_c_x1_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x2_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_2_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 2) (mk_usize 2) (mk_usize 1)
   in
@@ -1763,12 +1624,7 @@ let keccakf1600_round1_theta_c_x2_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x2_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_2_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 2) (mk_usize 2) (mk_usize 0)
   in
@@ -1793,12 +1649,7 @@ let keccakf1600_round1_theta_c_x2_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x3_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_3_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 3) (mk_usize 3) (mk_usize 1)
   in
@@ -1823,12 +1674,7 @@ let keccakf1600_round1_theta_c_x3_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x3_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_3_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 3) (mk_usize 3) (mk_usize 0)
   in
@@ -1853,12 +1699,7 @@ let keccakf1600_round1_theta_c_x3_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x4_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_4_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 4) (mk_usize 4) (mk_usize 0)
   in
@@ -1883,12 +1724,7 @@ let keccakf1600_round1_theta_c_x4_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_c_x4_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_4_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 4) (mk_usize 4) (mk_usize 1)
   in
@@ -1913,12 +1749,7 @@ let keccakf1600_round1_theta_c_x4_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_d_x0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x4_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 4 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -1990,12 +1821,7 @@ let keccakf1600_round1_theta_d_x0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_d_x1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x0_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 0 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -2067,12 +1893,7 @@ let keccakf1600_round1_theta_d_x1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_d_x2 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x1_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 1 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -2144,12 +1965,7 @@ let keccakf1600_round1_theta_d_x2 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_d_x3 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x2_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 2 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -2221,12 +2037,7 @@ let keccakf1600_round1_theta_d_x3 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_d_x4 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x3_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 3 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -2298,12 +2109,7 @@ let keccakf1600_round1_theta_d_x4 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta_d (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_theta_d_x0 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_theta_d_x1 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_theta_d_x2 s in
@@ -2312,12 +2118,7 @@ let keccakf1600_round1_theta_d (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round1_theta (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_theta_c_x0_z0 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_theta_c_x0_z1 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_theta_c_x1_z0 s in
@@ -2333,9 +2134,8 @@ let keccakf1600_round1_theta (s: Libcrux_iot_sha3.State.t_KeccakState)
 
 let keccakf1600_round1_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 254 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 254)
       (fun _ -> Prims.l_True) =
-  let i:usize = s.Libcrux_iot_sha3.State.f_i in
   let (bx0: u32), (bx1: u32) =
     bx_2_ s
       (BxArg (mk_usize 0) (mk_usize 0) (mk_usize 0) (mk_usize 0) (mk_u32 0) <: t_BxArg)
@@ -2348,12 +2148,9 @@ let keccakf1600_round1_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
       (BxArg (mk_usize 2) (mk_usize 4) (mk_usize 1) (mk_usize 0) (mk_u32 7) <: t_BxArg)
   in
   let ax0:u32 =
-    Libcrux_secrets.Traits.f_classify #u32 #FStar.Tactics.Typeclasses.solve (mk_u32 0)
+    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^.
+    (v_RC_INTERLEAVED_0_.[ v_BASE_ROUND +! mk_usize 1 <: usize ] <: u32)
   in
-  let ax0:u32 =
-    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^. (v_RC_INTERLEAVED_0_.[ i ] <: u32)
-  in
-  let _:Prims.unit = () in
   let s:Libcrux_iot_sha3.State.t_KeccakState =
     Libcrux_iot_sha3.State.impl_KeccakState__set_with_zeta s
       (mk_usize 0)
@@ -2397,9 +2194,8 @@ let keccakf1600_round1_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
 
 let keccakf1600_round1_pi_rho_chi_1b (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 254 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 254)
       (fun _ -> Prims.l_True) =
-  let i:usize = s.Libcrux_iot_sha3.State.f_i in
   let (bx0: u32), (bx1: u32) =
     bx_2_ s
       (BxArg (mk_usize 0) (mk_usize 0) (mk_usize 1) (mk_usize 1) (mk_u32 0) <: t_BxArg)
@@ -2412,15 +2208,9 @@ let keccakf1600_round1_pi_rho_chi_1b (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
       (BxArg (mk_usize 2) (mk_usize 4) (mk_usize 0) (mk_usize 1) (mk_u32 7) <: t_BxArg)
   in
   let ax0:u32 =
-    Libcrux_secrets.Traits.f_classify #u32 #FStar.Tactics.Typeclasses.solve (mk_u32 0)
+    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^.
+    (v_RC_INTERLEAVED_1_.[ v_BASE_ROUND +! mk_usize 1 <: usize ] <: u32)
   in
-  let ax0:u32 =
-    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^. (v_RC_INTERLEAVED_1_.[ i ] <: u32)
-  in
-  let s:Libcrux_iot_sha3.State.t_KeccakState =
-    { s with Libcrux_iot_sha3.State.f_i = i +! mk_usize 1 } <: Libcrux_iot_sha3.State.t_KeccakState
-  in
-  let _:Prims.unit = () in
   let s:Libcrux_iot_sha3.State.t_KeccakState =
     Libcrux_iot_sha3.State.impl_KeccakState__set_with_zeta s
       (mk_usize 0)
@@ -2574,7 +2364,7 @@ let keccakf1600_round1_pi_rho_chi_1d (s: Libcrux_iot_sha3.State.t_KeccakState)
 
 let keccakf1600_round1_pi_rho_chi_1_ (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 254 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 254)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_pi_rho_chi_1a v_BASE_ROUND s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_pi_rho_chi_1b v_BASE_ROUND s in
@@ -2923,12 +2713,7 @@ let keccakf1600_round1_pi_rho_chi_2_ (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x0_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 0) (mk_usize 0)
   in
@@ -2953,12 +2738,7 @@ let keccakf1600_round2_theta_c_x0_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x0_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 0) (mk_usize 1)
   in
@@ -2983,12 +2763,7 @@ let keccakf1600_round2_theta_c_x0_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x1_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_3_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 3) (mk_usize 1) (mk_usize 1)
   in
@@ -3013,12 +2788,7 @@ let keccakf1600_round2_theta_c_x1_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x1_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_3_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 3) (mk_usize 1) (mk_usize 0)
   in
@@ -3043,12 +2813,7 @@ let keccakf1600_round2_theta_c_x1_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x2_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_1_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 1) (mk_usize 2) (mk_usize 1)
   in
@@ -3073,12 +2838,7 @@ let keccakf1600_round2_theta_c_x2_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x2_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_1_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 1) (mk_usize 2) (mk_usize 0)
   in
@@ -3103,12 +2863,7 @@ let keccakf1600_round2_theta_c_x2_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x3_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_4_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 4) (mk_usize 3) (mk_usize 1)
   in
@@ -3133,12 +2888,7 @@ let keccakf1600_round2_theta_c_x3_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x3_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_4_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 4) (mk_usize 3) (mk_usize 0)
   in
@@ -3163,12 +2913,7 @@ let keccakf1600_round2_theta_c_x3_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x4_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_2_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 2) (mk_usize 4) (mk_usize 1)
   in
@@ -3193,12 +2938,7 @@ let keccakf1600_round2_theta_c_x4_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_c_x4_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_2_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 2) (mk_usize 4) (mk_usize 0)
   in
@@ -3223,12 +2963,7 @@ let keccakf1600_round2_theta_c_x4_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_d_x0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x4_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 4 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -3300,12 +3035,7 @@ let keccakf1600_round2_theta_d_x0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_d_x1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x0_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 0 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -3377,12 +3107,7 @@ let keccakf1600_round2_theta_d_x1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_d_x2 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x1_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 1 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -3454,12 +3179,7 @@ let keccakf1600_round2_theta_d_x2 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_d_x3 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x2_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 2 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -3531,12 +3251,7 @@ let keccakf1600_round2_theta_d_x3 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_d_x4 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x3_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 3 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -3608,12 +3323,7 @@ let keccakf1600_round2_theta_d_x4 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta_d (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_theta_d_x0 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_theta_d_x1 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_theta_d_x2 s in
@@ -3622,12 +3332,7 @@ let keccakf1600_round2_theta_d (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round2_theta (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_theta_c_x0_z0 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_theta_c_x0_z1 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_theta_c_x1_z0 s in
@@ -3643,9 +3348,8 @@ let keccakf1600_round2_theta (s: Libcrux_iot_sha3.State.t_KeccakState)
 
 let keccakf1600_round2_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 253 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 253)
       (fun _ -> Prims.l_True) =
-  let i:usize = s.Libcrux_iot_sha3.State.f_i in
   let (bx0: u32), (bx1: u32) =
     bx_2_ s
       (BxArg (mk_usize 0) (mk_usize 0) (mk_usize 0) (mk_usize 0) (mk_u32 0) <: t_BxArg)
@@ -3658,12 +3362,9 @@ let keccakf1600_round2_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
       (BxArg (mk_usize 3) (mk_usize 4) (mk_usize 1) (mk_usize 0) (mk_u32 7) <: t_BxArg)
   in
   let ax0:u32 =
-    Libcrux_secrets.Traits.f_classify #u32 #FStar.Tactics.Typeclasses.solve (mk_u32 0)
+    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^.
+    (v_RC_INTERLEAVED_0_.[ v_BASE_ROUND +! mk_usize 2 <: usize ] <: u32)
   in
-  let ax0:u32 =
-    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^. (v_RC_INTERLEAVED_0_.[ i ] <: u32)
-  in
-  let _:Prims.unit = () in
   let s:Libcrux_iot_sha3.State.t_KeccakState =
     Libcrux_iot_sha3.State.impl_KeccakState__set_with_zeta s
       (mk_usize 0)
@@ -3707,9 +3408,8 @@ let keccakf1600_round2_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
 
 let keccakf1600_round2_pi_rho_chi_1b (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 253 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 253)
       (fun _ -> Prims.l_True) =
-  let i:usize = s.Libcrux_iot_sha3.State.f_i in
   let (bx0: u32), (bx1: u32) =
     bx_2_ s
       (BxArg (mk_usize 0) (mk_usize 0) (mk_usize 1) (mk_usize 1) (mk_u32 0) <: t_BxArg)
@@ -3722,15 +3422,9 @@ let keccakf1600_round2_pi_rho_chi_1b (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
       (BxArg (mk_usize 3) (mk_usize 4) (mk_usize 0) (mk_usize 1) (mk_u32 7) <: t_BxArg)
   in
   let ax0:u32 =
-    Libcrux_secrets.Traits.f_classify #u32 #FStar.Tactics.Typeclasses.solve (mk_u32 0)
+    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^.
+    (v_RC_INTERLEAVED_1_.[ v_BASE_ROUND +! mk_usize 2 <: usize ] <: u32)
   in
-  let ax0:u32 =
-    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^. (v_RC_INTERLEAVED_1_.[ i ] <: u32)
-  in
-  let s:Libcrux_iot_sha3.State.t_KeccakState =
-    { s with Libcrux_iot_sha3.State.f_i = i +! mk_usize 1 } <: Libcrux_iot_sha3.State.t_KeccakState
-  in
-  let _:Prims.unit = () in
   let s:Libcrux_iot_sha3.State.t_KeccakState =
     Libcrux_iot_sha3.State.impl_KeccakState__set_with_zeta s
       (mk_usize 0)
@@ -3884,7 +3578,7 @@ let keccakf1600_round2_pi_rho_chi_1d (s: Libcrux_iot_sha3.State.t_KeccakState)
 
 let keccakf1600_round2_pi_rho_chi_1_ (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 253 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 253)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_pi_rho_chi_1a v_BASE_ROUND s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_pi_rho_chi_1b v_BASE_ROUND s in
@@ -4233,12 +3927,7 @@ let keccakf1600_round2_pi_rho_chi_2_ (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x0_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 0) (mk_usize 0)
   in
@@ -4263,12 +3952,7 @@ let keccakf1600_round3_theta_c_x0_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x0_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_0_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 0) (mk_usize 0) (mk_usize 1)
   in
@@ -4293,12 +3977,7 @@ let keccakf1600_round3_theta_c_x0_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x1_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_2_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 2) (mk_usize 1) (mk_usize 1)
   in
@@ -4323,12 +4002,7 @@ let keccakf1600_round3_theta_c_x1_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x1_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_2_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 2) (mk_usize 1) (mk_usize 0)
   in
@@ -4353,12 +4027,7 @@ let keccakf1600_round3_theta_c_x1_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x2_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_4_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 4) (mk_usize 2) (mk_usize 0)
   in
@@ -4383,12 +4052,7 @@ let keccakf1600_round3_theta_c_x2_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x2_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_4_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 4) (mk_usize 2) (mk_usize 1)
   in
@@ -4413,12 +4077,7 @@ let keccakf1600_round3_theta_c_x2_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x3_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_1_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 1) (mk_usize 3) (mk_usize 0)
   in
@@ -4443,12 +4102,7 @@ let keccakf1600_round3_theta_c_x3_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x3_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_1_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 1) (mk_usize 3) (mk_usize 1)
   in
@@ -4473,12 +4127,7 @@ let keccakf1600_round3_theta_c_x3_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x4_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_3_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 3) (mk_usize 4) (mk_usize 1)
   in
@@ -4503,12 +4152,7 @@ let keccakf1600_round3_theta_c_x4_z0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_c_x4_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let ax_3_:u32 =
     Libcrux_iot_sha3.State.impl_KeccakState__get_with_zeta s (mk_usize 3) (mk_usize 4) (mk_usize 0)
   in
@@ -4533,12 +4177,7 @@ let keccakf1600_round3_theta_c_x4_z1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_d_x0 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x4_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 4 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -4610,12 +4249,7 @@ let keccakf1600_round3_theta_d_x0 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_d_x1 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x0_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 0 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -4687,12 +4321,7 @@ let keccakf1600_round3_theta_d_x1 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_d_x2 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x1_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 1 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -4764,12 +4393,7 @@ let keccakf1600_round3_theta_d_x2 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_d_x3 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x2_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 2 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -4841,12 +4465,7 @@ let keccakf1600_round3_theta_d_x3 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_d_x4 (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let c_x3_zeta0:u32 =
     (s.Libcrux_iot_sha3.State.f_c.[ mk_usize 3 ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
   in
@@ -4918,12 +4537,7 @@ let keccakf1600_round3_theta_d_x4 (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta_d (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_theta_d_x0 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_theta_d_x1 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_theta_d_x2 s in
@@ -4932,12 +4546,7 @@ let keccakf1600_round3_theta_d (s: Libcrux_iot_sha3.State.t_KeccakState)
   s
 
 let keccakf1600_round3_theta (s: Libcrux_iot_sha3.State.t_KeccakState)
-    : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      Prims.l_True
-      (ensures
-        fun s_future ->
-          let s_future:Libcrux_iot_sha3.State.t_KeccakState = s_future in
-          s_future.Libcrux_iot_sha3.State.f_i =. s.Libcrux_iot_sha3.State.f_i) =
+    : Libcrux_iot_sha3.State.t_KeccakState =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_theta_c_x0_z0 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_theta_c_x0_z1 s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_theta_c_x1_z0 s in
@@ -4953,9 +4562,8 @@ let keccakf1600_round3_theta (s: Libcrux_iot_sha3.State.t_KeccakState)
 
 let keccakf1600_round3_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 252 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 252)
       (fun _ -> Prims.l_True) =
-  let i:usize = s.Libcrux_iot_sha3.State.f_i in
   let (bx0: u32), (bx1: u32) =
     bx_2_ s
       (BxArg (mk_usize 0) (mk_usize 0) (mk_usize 0) (mk_usize 0) (mk_u32 0) <: t_BxArg)
@@ -4968,12 +4576,9 @@ let keccakf1600_round3_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
       (BxArg (mk_usize 0) (mk_usize 4) (mk_usize 0) (mk_usize 0) (mk_u32 7) <: t_BxArg)
   in
   let ax0:u32 =
-    Libcrux_secrets.Traits.f_classify #u32 #FStar.Tactics.Typeclasses.solve (mk_u32 0)
+    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^.
+    (v_RC_INTERLEAVED_0_.[ v_BASE_ROUND +! mk_usize 3 <: usize ] <: u32)
   in
-  let ax0:u32 =
-    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^. (v_RC_INTERLEAVED_0_.[ i ] <: u32)
-  in
-  let _:Prims.unit = () in
   let s:Libcrux_iot_sha3.State.t_KeccakState =
     Libcrux_iot_sha3.State.impl_KeccakState__set_with_zeta s
       (mk_usize 0)
@@ -5017,9 +4622,8 @@ let keccakf1600_round3_pi_rho_chi_1a (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
 
 let keccakf1600_round3_pi_rho_chi_1b (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 252 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 252)
       (fun _ -> Prims.l_True) =
-  let i:usize = s.Libcrux_iot_sha3.State.f_i in
   let (bx0: u32), (bx1: u32) =
     bx_2_ s
       (BxArg (mk_usize 0) (mk_usize 0) (mk_usize 1) (mk_usize 1) (mk_u32 0) <: t_BxArg)
@@ -5032,15 +4636,9 @@ let keccakf1600_round3_pi_rho_chi_1b (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.
       (BxArg (mk_usize 0) (mk_usize 4) (mk_usize 1) (mk_usize 1) (mk_u32 7) <: t_BxArg)
   in
   let ax0:u32 =
-    Libcrux_secrets.Traits.f_classify #u32 #FStar.Tactics.Typeclasses.solve (mk_u32 0)
+    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^.
+    (v_RC_INTERLEAVED_1_.[ v_BASE_ROUND +! mk_usize 3 <: usize ] <: u32)
   in
-  let ax0:u32 =
-    (bx0 ^. ((~.bx1 <: u32) &. bx2 <: u32) <: u32) ^. (v_RC_INTERLEAVED_1_.[ i ] <: u32)
-  in
-  let s:Libcrux_iot_sha3.State.t_KeccakState =
-    { s with Libcrux_iot_sha3.State.f_i = i +! mk_usize 1 } <: Libcrux_iot_sha3.State.t_KeccakState
-  in
-  let _:Prims.unit = () in
   let s:Libcrux_iot_sha3.State.t_KeccakState =
     Libcrux_iot_sha3.State.impl_KeccakState__set_with_zeta s
       (mk_usize 0)
@@ -5194,7 +4792,7 @@ let keccakf1600_round3_pi_rho_chi_1d (s: Libcrux_iot_sha3.State.t_KeccakState)
 
 let keccakf1600_round3_pi_rho_chi_1_ (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 252 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 252)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_pi_rho_chi_1a v_BASE_ROUND s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_pi_rho_chi_1b v_BASE_ROUND s in
@@ -5546,7 +5144,7 @@ let keccakf1600_round3_pi_rho_chi_2_ (s: Libcrux_iot_sha3.State.t_KeccakState)
 
 let keccakf1600_round0 (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 255 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 255)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_theta s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0_pi_rho_chi_1_ v_BASE_ROUND s in
@@ -5557,7 +5155,7 @@ let keccakf1600_round0 (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_Keccak
 
 let keccakf1600_round1 (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 254 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 254)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_theta s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1_pi_rho_chi_1_ v_BASE_ROUND s in
@@ -5566,7 +5164,7 @@ let keccakf1600_round1 (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_Keccak
 
 let keccakf1600_round2 (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 253 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 253)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_theta s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round2_pi_rho_chi_1_ v_BASE_ROUND s in
@@ -5577,7 +5175,7 @@ let keccakf1600_round2 (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_Keccak
 
 let keccakf1600_round3 (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 252 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 252)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_theta s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round3_pi_rho_chi_1_ v_BASE_ROUND s in
@@ -5590,7 +5188,7 @@ let keccakf1600_round3 (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_Keccak
 
 let keccakf1600_4rounds (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_KeccakState)
     : Prims.Pure Libcrux_iot_sha3.State.t_KeccakState
-      (requires v_BASE_ROUND <. mk_usize 252 && s.Libcrux_iot_sha3.State.f_i <. mk_usize 255)
+      (requires v_BASE_ROUND <. mk_usize 21)
       (fun _ -> Prims.l_True) =
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round0 v_BASE_ROUND s in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_round1 v_BASE_ROUND s in
@@ -5600,24 +5198,311 @@ let keccakf1600_4rounds (v_BASE_ROUND: usize) (s: Libcrux_iot_sha3.State.t_Kecca
 
 #pop-options
 
-let keccakf1600 (s: Libcrux_iot_sha3.State.t_KeccakState) : Libcrux_iot_sha3.State.t_KeccakState =
-  let s:Libcrux_iot_sha3.State.t_KeccakState =
-    Rust_primitives.Hax.Folds.fold_range (mk_i32 0)
-      (mk_i32 6)
-      (fun s temp_1_ ->
-          let s:Libcrux_iot_sha3.State.t_KeccakState = s in
-          let _:i32 = temp_1_ in
-          true)
-      s
-      (fun s temp_1_ ->
-          let s:Libcrux_iot_sha3.State.t_KeccakState = s in
-          let _:i32 = temp_1_ in
-          keccakf1600_4rounds (mk_usize 0) s <: Libcrux_iot_sha3.State.t_KeccakState)
-  in
-  let s:Libcrux_iot_sha3.State.t_KeccakState =
-    { s with Libcrux_iot_sha3.State.f_i = mk_usize 0 } <: Libcrux_iot_sha3.State.t_KeccakState
-  in
+let keccakf1600_4rounds0 (s: Libcrux_iot_sha3.State.t_KeccakState)
+    : Libcrux_iot_sha3.State.t_KeccakState =
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds (mk_usize 0) s in
   s
+
+let keccakf1600_4rounds4 (s: Libcrux_iot_sha3.State.t_KeccakState)
+    : Libcrux_iot_sha3.State.t_KeccakState =
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds (mk_usize 4) s in
+  s
+
+let keccakf1600_4rounds8 (s: Libcrux_iot_sha3.State.t_KeccakState)
+    : Libcrux_iot_sha3.State.t_KeccakState =
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds (mk_usize 8) s in
+  s
+
+let keccakf1600_4rounds12 (s: Libcrux_iot_sha3.State.t_KeccakState)
+    : Libcrux_iot_sha3.State.t_KeccakState =
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds (mk_usize 12) s in
+  s
+
+let keccakf1600_4rounds16 (s: Libcrux_iot_sha3.State.t_KeccakState)
+    : Libcrux_iot_sha3.State.t_KeccakState =
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds (mk_usize 16) s in
+  s
+
+let keccakf1600_4rounds20 (s: Libcrux_iot_sha3.State.t_KeccakState)
+    : Libcrux_iot_sha3.State.t_KeccakState =
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds (mk_usize 20) s in
+  s
+
+#push-options "--z3rlimit 60"
+
+let keccakf1600 (s: Libcrux_iot_sha3.State.t_KeccakState) : Libcrux_iot_sha3.State.t_KeccakState =
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds0 s in
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds4 s in
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds8 s in
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds12 s in
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds16 s in
+  let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600_4rounds20 s in
+  s
+
+#pop-options
+
+let squeeze_update
+      (v_RATE: usize)
+      (state: Libcrux_iot_sha3.State.t_KeccakState)
+      (out: t_Slice u8)
+      (offset: usize)
+    : Prims.Pure (Libcrux_iot_sha3.State.t_KeccakState & t_Slice u8)
+      (requires
+        v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
+        v_RATE <=. mk_usize 168 &&
+        ((Rust_primitives.Hax.Int.from_machine offset <: Hax_lib.Int.t_Int) +
+          (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
+          <:
+          Hax_lib.Int.t_Int) <=
+        (Rust_primitives.Hax.Int.from_machine (Core_models.Slice.impl__len #u8 out <: usize)
+          <:
+          Hax_lib.Int.t_Int))
+      (ensures
+        fun temp_0_ ->
+          let (state_future: Libcrux_iot_sha3.State.t_KeccakState), (out_future: t_Slice u8) =
+            temp_0_
+          in
+          (Core_models.Slice.impl__len #u8 out_future <: usize) =.
+          (Core_models.Slice.impl__len #u8 out <: usize)) =
+  let state:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600 state in
+  let out:t_Slice u8 =
+    Rust_primitives.Hax.Monomorphized_update_at.update_at_range out
+      ({
+          Core_models.Ops.Range.f_start = offset;
+          Core_models.Ops.Range.f_end = offset +! v_RATE <: usize
+        }
+        <:
+        Core_models.Ops.Range.t_Range usize)
+      (Libcrux_iot_sha3.State.impl_KeccakState__store v_RATE
+          state
+          (out.[ {
+                Core_models.Ops.Range.f_start = offset;
+                Core_models.Ops.Range.f_end = offset +! v_RATE <: usize
+              }
+              <:
+              Core_models.Ops.Range.t_Range usize ]
+            <:
+            t_Slice u8)
+        <:
+        t_Slice u8)
+  in
+  state, out <: (Libcrux_iot_sha3.State.t_KeccakState & t_Slice u8)
+
+#push-options "--z3rlimit 100 --split_queries always"
+
+let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
+    : Prims.Pure (t_KeccakXofState v_RATE & t_Slice u8)
+      (requires
+        v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
+        v_RATE <=. mk_usize 168)
+      (fun _ -> Prims.l_True) =
+  let state:t_KeccakXofState v_RATE =
+    if state.f_sponge
+    then
+      let state:t_KeccakXofState v_RATE =
+        { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
+      in
+      state
+    else state
+  in
+  let out_len:usize = Core_models.Slice.impl__len #u8 out in
+  let blocks:usize = out_len /! v_RATE in
+  let last:usize = out_len -! (out_len %! v_RATE <: usize) in
+  let mid:usize = if v_RATE >=. out_len then out_len else v_RATE in
+  let out:t_Slice u8 =
+    Rust_primitives.Hax.Monomorphized_update_at.update_at_range_to out
+      ({ Core_models.Ops.Range.f_end = mid } <: Core_models.Ops.Range.t_RangeTo usize)
+      (Libcrux_iot_sha3.State.impl_KeccakState__store v_RATE
+          state.f_inner
+          (out.[ { Core_models.Ops.Range.f_end = mid } <: Core_models.Ops.Range.t_RangeTo usize ]
+            <:
+            t_Slice u8)
+        <:
+        t_Slice u8)
+  in
+  let offset:usize = mid in
+  let (offset: usize), (out: t_Slice u8), (state: t_KeccakXofState v_RATE) =
+    Rust_primitives.Hax.Folds.fold_range (mk_usize 1)
+      blocks
+      (fun temp_0_ e_k ->
+          let (offset: usize), (out: t_Slice u8), (state: t_KeccakXofState v_RATE) = temp_0_ in
+          let e_k:usize = e_k in
+          ((Core_models.Slice.impl__len #u8 out <: usize) =. out_len <: bool) &&
+          ((Rust_primitives.Hax.Int.from_machine offset <: Hax_lib.Int.t_Int) =
+            ((Rust_primitives.Hax.Int.from_machine e_k <: Hax_lib.Int.t_Int) *
+              (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
+              <:
+              Hax_lib.Int.t_Int)
+            <:
+            bool) &&
+          ((offset -! v_RATE <: usize) <=. (Core_models.Slice.impl__len #u8 out <: usize) <: bool))
+      (offset, out, state <: (usize & t_Slice u8 & t_KeccakXofState v_RATE))
+      (fun temp_0_ e_k ->
+          let (offset: usize), (out: t_Slice u8), (state: t_KeccakXofState v_RATE) = temp_0_ in
+          let e_k:usize = e_k in
+          let (tmp0: Libcrux_iot_sha3.State.t_KeccakState), (tmp1: t_Slice u8) =
+            squeeze_update v_RATE state.f_inner out offset
+          in
+          let state:t_KeccakXofState v_RATE =
+            { state with f_inner = tmp0 } <: t_KeccakXofState v_RATE
+          in
+          let out:t_Slice u8 = tmp1 in
+          let _:Prims.unit = () in
+          let offset:usize = offset +! v_RATE in
+          offset, out, state <: (usize & t_Slice u8 & t_KeccakXofState v_RATE))
+  in
+  let (out: t_Slice u8), (state: t_KeccakXofState v_RATE) =
+    if last >. mk_usize 0 && last <. out_len
+    then
+      let _:Prims.unit =
+        if true
+        then
+          let _:Prims.unit =
+            match last, offset <: (usize & usize) with
+            | left_val, right_val -> Hax_lib.v_assert (left_val =. right_val <: bool)
+          in
+          ()
+      in
+      let state:t_KeccakXofState v_RATE =
+        { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
+      in
+      let out:t_Slice u8 =
+        Rust_primitives.Hax.Monomorphized_update_at.update_at_range_from out
+          ({ Core_models.Ops.Range.f_start = offset } <: Core_models.Ops.Range.t_RangeFrom usize)
+          (Libcrux_iot_sha3.State.impl_KeccakState__store v_RATE
+              state.f_inner
+              (out.[ { Core_models.Ops.Range.f_start = offset }
+                  <:
+                  Core_models.Ops.Range.t_RangeFrom usize ]
+                <:
+                t_Slice u8)
+            <:
+            t_Slice u8)
+      in
+      out, state <: (t_Slice u8 & t_KeccakXofState v_RATE)
+    else out, state <: (t_Slice u8 & t_KeccakXofState v_RATE)
+  in
+  let state:t_KeccakXofState v_RATE = { state with f_sponge = true } <: t_KeccakXofState v_RATE in
+  state, out <: (t_KeccakXofState v_RATE & t_Slice u8)
+
+#pop-options
+
+/// Squeeze `N` x `LEN` bytes.
+let impl__squeeze (v_RATE: usize) (self: t_KeccakXofState v_RATE) (out: t_Slice u8)
+    : Prims.Pure (t_KeccakXofState v_RATE & t_Slice u8)
+      (requires
+        v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
+        v_RATE <=. mk_usize 168)
+      (ensures
+        fun temp_0_ ->
+          let (self_e_future: t_KeccakXofState v_RATE), (out_future: t_Slice u8) = temp_0_ in
+          (Core_models.Slice.impl__len #u8 out_future <: usize) =.
+          (Core_models.Slice.impl__len #u8 out <: usize)) =
+  let (tmp0: t_KeccakXofState v_RATE), (tmp1: t_Slice u8) = e_squeeze v_RATE self out in
+  let self:t_KeccakXofState v_RATE = tmp0 in
+  let out:t_Slice u8 = tmp1 in
+  let _:Prims.unit = () in
+  self, out <: (t_KeccakXofState v_RATE & t_Slice u8)
+
+#push-options "--z3rlimit 100"
+
+let e_absorb_full (v_RATE: usize) (state: t_KeccakXofState v_RATE) (inputs: t_Slice u8)
+    : Prims.Pure (t_KeccakXofState v_RATE & usize)
+      (requires
+        v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
+        v_RATE <=. mk_usize 168 &&
+        state.f_buf_len <. v_RATE &&
+        ((Rust_primitives.Hax.Int.from_machine (Core_models.Slice.impl__len #u8 inputs <: usize)
+            <:
+            Hax_lib.Int.t_Int) +
+          (Rust_primitives.Hax.Int.from_machine state.f_buf_len <: Hax_lib.Int.t_Int)
+          <:
+          Hax_lib.Int.t_Int) <=
+        (Rust_primitives.Hax.Int.from_machine Core_models.Num.impl_usize__MAX <: Hax_lib.Int.t_Int))
+      (ensures
+        fun temp_0_ ->
+          let (state_future: t_KeccakXofState v_RATE), (remainder: usize) = temp_0_ in
+          remainder <. v_RATE && remainder <=. (Core_models.Slice.impl__len #u8 inputs <: usize) &&
+          state_future.f_buf_len <=. v_RATE &&
+          ((Rust_primitives.Hax.Int.from_machine state_future.f_buf_len <: Hax_lib.Int.t_Int) +
+            (Rust_primitives.Hax.Int.from_machine remainder <: Hax_lib.Int.t_Int)
+            <:
+            Hax_lib.Int.t_Int) <
+          (Rust_primitives.Hax.Int.from_machine Core_models.Num.impl_usize__MAX <: Hax_lib.Int.t_Int
+          )) =
+  let _:Prims.unit =
+    if true
+    then
+      let _:Prims.unit = Hax_lib.v_assert (state.f_buf_len <. v_RATE <: bool) in
+      ()
+  in
+  let (tmp0: t_KeccakXofState v_RATE), (out: usize) = impl__fill_buffer v_RATE state inputs in
+  let state:t_KeccakXofState v_RATE = tmp0 in
+  let input_consumed:usize = out in
+  let state:t_KeccakXofState v_RATE =
+    if input_consumed >. mk_usize 0
+    then
+      let state:t_KeccakXofState v_RATE =
+        {
+          state with
+          f_inner
+          =
+          Libcrux_iot_sha3.State.impl_KeccakState__load_block v_RATE
+            state.f_inner
+            (state.f_buf <: t_Slice u8)
+            (mk_usize 0)
+        }
+        <:
+        t_KeccakXofState v_RATE
+      in
+      let state:t_KeccakXofState v_RATE =
+        { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
+      in
+      let state:t_KeccakXofState v_RATE =
+        { state with f_buf_len = mk_usize 0 } <: t_KeccakXofState v_RATE
+      in
+      state
+    else state
+  in
+  let input_to_consume:usize =
+    (Core_models.Slice.impl__len #u8 inputs <: usize) -! input_consumed
+  in
+  let num_blocks:usize = input_to_consume /! v_RATE in
+  let remainder:usize = input_to_consume %! v_RATE in
+  let e_buf_len:usize = state.f_buf_len in
+  let state:t_KeccakXofState v_RATE =
+    Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
+      num_blocks
+      (fun state e_i ->
+          let state:t_KeccakXofState v_RATE = state in
+          let e_i:usize = e_i in
+          state.f_buf_len =. e_buf_len <: bool)
+      state
+      (fun state i ->
+          let state:t_KeccakXofState v_RATE = state in
+          let i:usize = i in
+          let state:t_KeccakXofState v_RATE =
+            {
+              state with
+              f_inner
+              =
+              Libcrux_iot_sha3.State.impl_KeccakState__load_block v_RATE
+                state.f_inner
+                inputs
+                (input_consumed +! (i *! v_RATE <: usize) <: usize)
+            }
+            <:
+            t_KeccakXofState v_RATE
+          in
+          let state:t_KeccakXofState v_RATE =
+            { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
+          in
+          state)
+  in
+  let hax_temp_output:usize = remainder in
+  state, hax_temp_output <: (t_KeccakXofState v_RATE & usize)
+
+#pop-options
 
 let impl__absorb_full (v_RATE: usize) (self: t_KeccakXofState v_RATE) (inputs: t_Slice u8)
     : Prims.Pure (t_KeccakXofState v_RATE & usize)
@@ -5643,76 +5528,9 @@ let impl__absorb_full (v_RATE: usize) (self: t_KeccakXofState v_RATE) (inputs: t
             Hax_lib.Int.t_Int) <
           (Rust_primitives.Hax.Int.from_machine Core_models.Num.impl_usize__MAX <: Hax_lib.Int.t_Int
           )) =
-  let _:Prims.unit =
-    if true
-    then
-      let _:Prims.unit = Hax_lib.v_assert (self.f_buf_len <. v_RATE <: bool) in
-      ()
-  in
-  let (tmp0: t_KeccakXofState v_RATE), (out: usize) = impl__fill_buffer v_RATE self inputs in
+  let (tmp0: t_KeccakXofState v_RATE), (out: usize) = e_absorb_full v_RATE self inputs in
   let self:t_KeccakXofState v_RATE = tmp0 in
-  let input_consumed:usize = out in
-  let self:t_KeccakXofState v_RATE =
-    if input_consumed >. mk_usize 0
-    then
-      let self:t_KeccakXofState v_RATE =
-        {
-          self with
-          f_inner
-          =
-          Libcrux_iot_sha3.State.impl_KeccakState__load_block v_RATE
-            self.f_inner
-            (self.f_buf <: t_Slice u8)
-            (mk_usize 0)
-        }
-        <:
-        t_KeccakXofState v_RATE
-      in
-      let self:t_KeccakXofState v_RATE =
-        { self with f_inner = keccakf1600 self.f_inner } <: t_KeccakXofState v_RATE
-      in
-      let self:t_KeccakXofState v_RATE =
-        { self with f_buf_len = mk_usize 0 } <: t_KeccakXofState v_RATE
-      in
-      self
-    else self
-  in
-  let input_to_consume:usize =
-    (Core_models.Slice.impl__len #u8 inputs <: usize) -! input_consumed
-  in
-  let num_blocks:usize = input_to_consume /! v_RATE in
-  let remainder:usize = input_to_consume %! v_RATE in
-  let e_buf_len:usize = self.f_buf_len in
-  let self:t_KeccakXofState v_RATE =
-    Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
-      num_blocks
-      (fun self e_i ->
-          let self:t_KeccakXofState v_RATE = self in
-          let e_i:usize = e_i in
-          self.f_buf_len =. e_buf_len <: bool)
-      self
-      (fun self i ->
-          let self:t_KeccakXofState v_RATE = self in
-          let i:usize = i in
-          let self:t_KeccakXofState v_RATE =
-            {
-              self with
-              f_inner
-              =
-              Libcrux_iot_sha3.State.impl_KeccakState__load_block v_RATE
-                self.f_inner
-                inputs
-                (input_consumed +! (i *! v_RATE <: usize) <: usize)
-            }
-            <:
-            t_KeccakXofState v_RATE
-          in
-          let self:t_KeccakXofState v_RATE =
-            { self with f_inner = keccakf1600 self.f_inner } <: t_KeccakXofState v_RATE
-          in
-          self)
-  in
-  let hax_temp_output:usize = remainder in
+  let hax_temp_output:usize = out in
   self, hax_temp_output <: (t_KeccakXofState v_RATE & usize)
 
 /// Absorb
@@ -5917,133 +5735,6 @@ let impl__absorb_final
     { self with f_inner = keccakf1600 self.f_inner } <: t_KeccakXofState v_RATE
   in
   self
-
-#push-options "--z3rlimit 60"
-
-let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
-    : Prims.Pure (t_KeccakXofState v_RATE & t_Slice u8)
-      (requires
-        v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
-        v_RATE <=. mk_usize 168)
-      (fun _ -> Prims.l_True) =
-  let state:t_KeccakXofState v_RATE =
-    if state.f_sponge
-    then
-      let state:t_KeccakXofState v_RATE =
-        { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
-      in
-      state
-    else state
-  in
-  let out_len:usize = Core_models.Slice.impl__len #u8 out in
-  let blocks:usize = out_len /! v_RATE in
-  let last:usize = out_len -! (out_len %! v_RATE <: usize) in
-  let mid:usize = if v_RATE >=. out_len then out_len else v_RATE in
-  let out:t_Slice u8 =
-    Rust_primitives.Hax.Monomorphized_update_at.update_at_range_to out
-      ({ Core_models.Ops.Range.f_end = mid } <: Core_models.Ops.Range.t_RangeTo usize)
-      (Libcrux_iot_sha3.State.impl_KeccakState__store v_RATE
-          state.f_inner
-          (out.[ { Core_models.Ops.Range.f_end = mid } <: Core_models.Ops.Range.t_RangeTo usize ]
-            <:
-            t_Slice u8)
-        <:
-        t_Slice u8)
-  in
-  let offset:usize = mid in
-  let (offset: usize), (out: t_Slice u8), (state: t_KeccakXofState v_RATE) =
-    Rust_primitives.Hax.Folds.fold_range (mk_usize 1)
-      blocks
-      (fun temp_0_ e_k ->
-          let (offset: usize), (out: t_Slice u8), (state: t_KeccakXofState v_RATE) = temp_0_ in
-          let e_k:usize = e_k in
-          ((Core_models.Slice.impl__len #u8 out <: usize) =. out_len <: bool) &&
-          ((Rust_primitives.Hax.Int.from_machine offset <: Hax_lib.Int.t_Int) =
-            ((Rust_primitives.Hax.Int.from_machine e_k <: Hax_lib.Int.t_Int) *
-              (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
-              <:
-              Hax_lib.Int.t_Int)
-            <:
-            bool))
-      (offset, out, state <: (usize & t_Slice u8 & t_KeccakXofState v_RATE))
-      (fun temp_0_ e_k ->
-          let (offset: usize), (out: t_Slice u8), (state: t_KeccakXofState v_RATE) = temp_0_ in
-          let e_k:usize = e_k in
-          let state:t_KeccakXofState v_RATE =
-            { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
-          in
-          let out:t_Slice u8 =
-            Rust_primitives.Hax.Monomorphized_update_at.update_at_range out
-              ({
-                  Core_models.Ops.Range.f_start = offset;
-                  Core_models.Ops.Range.f_end = offset +! v_RATE <: usize
-                }
-                <:
-                Core_models.Ops.Range.t_Range usize)
-              (Libcrux_iot_sha3.State.impl_KeccakState__store v_RATE
-                  state.f_inner
-                  (out.[ {
-                        Core_models.Ops.Range.f_start = offset;
-                        Core_models.Ops.Range.f_end = offset +! v_RATE <: usize
-                      }
-                      <:
-                      Core_models.Ops.Range.t_Range usize ]
-                    <:
-                    t_Slice u8)
-                <:
-                t_Slice u8)
-          in
-          let offset:usize = offset +! v_RATE in
-          offset, out, state <: (usize & t_Slice u8 & t_KeccakXofState v_RATE))
-  in
-  let (out: t_Slice u8), (state: t_KeccakXofState v_RATE) =
-    if last >. mk_usize 0 && last <. out_len
-    then
-      let _:Prims.unit =
-        if true
-        then
-          let _:Prims.unit =
-            match last, offset <: (usize & usize) with
-            | left_val, right_val -> Hax_lib.v_assert (left_val =. right_val <: bool)
-          in
-          ()
-      in
-      let state:t_KeccakXofState v_RATE =
-        { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
-      in
-      let out:t_Slice u8 =
-        Rust_primitives.Hax.Monomorphized_update_at.update_at_range_from out
-          ({ Core_models.Ops.Range.f_start = offset } <: Core_models.Ops.Range.t_RangeFrom usize)
-          (Libcrux_iot_sha3.State.impl_KeccakState__store v_RATE
-              state.f_inner
-              (out.[ { Core_models.Ops.Range.f_start = offset }
-                  <:
-                  Core_models.Ops.Range.t_RangeFrom usize ]
-                <:
-                t_Slice u8)
-            <:
-            t_Slice u8)
-      in
-      out, state <: (t_Slice u8 & t_KeccakXofState v_RATE)
-    else out, state <: (t_Slice u8 & t_KeccakXofState v_RATE)
-  in
-  let state:t_KeccakXofState v_RATE = { state with f_sponge = true } <: t_KeccakXofState v_RATE in
-  state, out <: (t_KeccakXofState v_RATE & t_Slice u8)
-
-#pop-options
-
-/// Squeeze `N` x `LEN` bytes.
-let impl__squeeze (v_RATE: usize) (self: t_KeccakXofState v_RATE) (out: t_Slice u8)
-    : Prims.Pure (t_KeccakXofState v_RATE & t_Slice u8)
-      (requires
-        v_RATE >. mk_usize 0 && (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 &&
-        v_RATE <=. mk_usize 168)
-      (fun _ -> Prims.l_True) =
-  let (tmp0: t_KeccakXofState v_RATE), (tmp1: t_Slice u8) = e_squeeze v_RATE self out in
-  let self:t_KeccakXofState v_RATE = tmp0 in
-  let out:t_Slice u8 = tmp1 in
-  let _:Prims.unit = () in
-  self, out <: (t_KeccakXofState v_RATE & t_Slice u8)
 
 let absorb_block
       (v_RATE: usize)

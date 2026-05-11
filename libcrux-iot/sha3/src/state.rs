@@ -14,7 +14,6 @@ pub(crate) struct KeccakState {
     pub(super) st: [Lane2U32; 25],
     pub(super) c: [Lane2U32; 5],
     pub(super) d: [Lane2U32; 5],
-    pub(super) i: usize,
 }
 
 #[hax_lib::attributes]
@@ -25,7 +24,6 @@ impl KeccakState {
             st: [Lane2U32::zero(); 25],
             c: [Lane2U32::zero(); 5],
             d: [Lane2U32::zero(); 5],
-            i: 0,
         }
     }
 
@@ -37,8 +35,6 @@ impl KeccakState {
 
     #[inline(always)]
     #[hax_lib::requires(i < 5 && j < 5 && zeta < 2)]
-    // Ensure that F* knows that `i` doesn't change
-    #[hax_lib::ensures(|_| future(self).i == self.i)]
     pub(crate) fn set_with_zeta(&mut self, i: usize, j: usize, zeta: usize, v: U32) {
         self.st[5 * j + i].0[zeta] = v
     }
@@ -51,16 +47,12 @@ impl KeccakState {
 
     #[inline(always)]
     #[hax_lib::requires(i < 5 && j < 5)]
-    // Ensure that F* knows that `i` doesn't change
-    #[hax_lib::ensures(|_| future(self).i == self.i)]
     pub(crate) fn set_lane(&mut self, i: usize, j: usize, lane: Lane2U32) {
         self.st[5 * j + i] = lane
     }
 
     #[inline(always)]
     #[hax_lib::requires(i < 5 && j < 2)]
-    // Ensure that F* knows that `i` doesn't change
-    #[hax_lib::ensures(|_| future(self).i == self.i)]
     pub(crate) fn set_lane_value(&mut self, i: usize, j: usize, value: U32) {
         // XXX: We can't implement IndexMut for `Lane2U32` because of hax
         self.c[i].0[j] = value
@@ -148,6 +140,7 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
         let b = U32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
         state_flat[i] = Lane2U32::from([a, b]).interleave();
     }
+
     for i in 0..RATE / 8 {
         let got = state.get_lane(i / 5, i % 5);
         state.set_lane(

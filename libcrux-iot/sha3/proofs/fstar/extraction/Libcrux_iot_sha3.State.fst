@@ -12,8 +12,7 @@ let _ =
 type t_KeccakState = {
   f_st:t_Array Libcrux_iot_sha3.Lane.t_Lane2U32 (mk_usize 25);
   f_c:t_Array Libcrux_iot_sha3.Lane.t_Lane2U32 (mk_usize 5);
-  f_d:t_Array Libcrux_iot_sha3.Lane.t_Lane2U32 (mk_usize 5);
-  f_i:usize
+  f_d:t_Array Libcrux_iot_sha3.Lane.t_Lane2U32 (mk_usize 5)
 }
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
@@ -52,8 +51,7 @@ let impl_KeccakState__new (_: Prims.unit) : t_KeccakState =
     Rust_primitives.Hax.repeat (Libcrux_iot_sha3.Lane.impl_Lane2U32__zero ()
         <:
         Libcrux_iot_sha3.Lane.t_Lane2U32)
-      (mk_usize 5);
-    f_i = mk_usize 0
+      (mk_usize 5)
   }
   <:
   t_KeccakState
@@ -68,10 +66,7 @@ let impl_KeccakState__get_with_zeta (self: t_KeccakState) (i j zeta: usize)
 let impl_KeccakState__set_with_zeta (self: t_KeccakState) (i j zeta: usize) (v: u32)
     : Prims.Pure t_KeccakState
       (requires i <. mk_usize 5 && j <. mk_usize 5 && zeta <. mk_usize 2)
-      (ensures
-        fun self_e_future ->
-          let self_e_future:t_KeccakState = self_e_future in
-          self_e_future.f_i =. self.f_i) =
+      (fun _ -> Prims.l_True) =
   let self:t_KeccakState =
     {
       self with
@@ -117,12 +112,7 @@ let impl_KeccakState__set_lane
       (self: t_KeccakState)
       (i j: usize)
       (lane: Libcrux_iot_sha3.Lane.t_Lane2U32)
-    : Prims.Pure t_KeccakState
-      (requires i <. mk_usize 5 && j <. mk_usize 5)
-      (ensures
-        fun self_e_future ->
-          let self_e_future:t_KeccakState = self_e_future in
-          self_e_future.f_i =. self.f_i) =
+    : Prims.Pure t_KeccakState (requires i <. mk_usize 5 && j <. mk_usize 5) (fun _ -> Prims.l_True) =
   let self:t_KeccakState =
     {
       self with
@@ -138,12 +128,7 @@ let impl_KeccakState__set_lane
   self
 
 let impl_KeccakState__set_lane_value (self: t_KeccakState) (i j: usize) (value: u32)
-    : Prims.Pure t_KeccakState
-      (requires i <. mk_usize 5 && j <. mk_usize 2)
-      (ensures
-        fun self_e_future ->
-          let self_e_future:t_KeccakState = self_e_future in
-          self_e_future.f_i =. self.f_i) =
+    : Prims.Pure t_KeccakState (requires i <. mk_usize 5 && j <. mk_usize 2) (fun _ -> Prims.l_True) =
   let self:t_KeccakState =
     {
       self with
