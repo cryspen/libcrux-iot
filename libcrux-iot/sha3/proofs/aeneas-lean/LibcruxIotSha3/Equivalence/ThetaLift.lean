@@ -1,17 +1,18 @@
 /-
-  θ-step impl/spec lifting — validation spike file.
+  θ-step impl/spec lifting.
 
-  This file currently contains a single goal: `theta_comp_spec_local`,
-  the impl-side post-condition of `keccakf1600_round0_theta`. Once that
-  goal closes cleanly with `hax_mvcgen` + `grind`, the rest of the file
-  plan (full `theta_lift_spec` triple + `Triple.bind` composition) can
-  be filled in.
+  This file contains the impl-side post-condition for
+  `keccakf1600_round0_theta` (the 12-conjunct d-value form,
+  `theta_comp_spec_local`), and the spec-coupling theorem
+  `theta_lift_spec` that connects it to `keccak_f.theta_unrolled` on
+  the spec side via the lifting algebra in `LiftLemmas.lean`.
 -/
 import LibcruxIotSha3.Equivalence.Lift
 import LibcruxIotSha3.Equivalence.LiftLemmas
+import HacspecSha3
 import Hax
 
-open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3
+open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Equivalence
 
@@ -97,6 +98,21 @@ private theorem rotate_left_u32_spec
     ⦃ Q ⦄ := by
   unfold core_models.num.U32.rotate_left
     rust_primitives.arithmetic.rotate_left_u32
+  mvcgen [Std.UScalar.rotate_left]
+  apply hpost _ rfl
+
+/-- `core_models.num.U64.rotate_left` returns the bit-rotated value. Same
+    shape as `rotate_left_u32_spec`; used on the spec side of
+    `theta_lift_spec` for the 5 ρ-style rotations in `theta_unrolled`. -/
+@[spec]
+private theorem rotate_left_u64_spec
+    (x : Std.U64) (n : Std.U32) {Q}
+    (hpost : ∀ v : Std.U64, v.bv = x.bv.rotateLeft n.val → (Q.1 v).down) :
+    ⦃ ⌜ True ⌝ ⦄
+    core_models.num.U64.rotate_left x n
+    ⦃ Q ⦄ := by
+  unfold core_models.num.U64.rotate_left
+    rust_primitives.arithmetic.rotate_left_u64
   mvcgen [Std.UScalar.rotate_left]
   apply hpost _ rfl
 
@@ -371,5 +387,57 @@ theorem theta_comp_spec_local (s : state.KeccakState) :
     | trivial
     | grind
     | simp_all
+
+/-! ## θ-applied lifted state (spec-coupling side)
+
+After impl θ, the impl's `r.st` is *unchanged* — the actual XOR-into-`st`
+is deferred to π·ρ·χ. But the spec's `theta_unrolled` *does* apply the
+d-values to the state in one go. To bridge this asymmetry we define
+`lift_theta_applied r_impl`, the lifted 25-lane state that the spec
+would produce given the impl's post-θ d-cells. The spec-coupling
+theorem then proves `theta_unrolled (lift s) = ok (lift_theta_applied r_impl)`.
+-/
+
+/-- The 25-lane `u64` state that the spec's `theta_unrolled` produces
+    given the impl's post-θ scratch cells. Each lane `i` is
+    `lift_lane_bv (s.st[i].z0 ⊕ s.d[i/5].z0) (s.st[i].z1 ⊕ s.d[i/5].z1)`. -/
+def lift_theta_applied (s : state.KeccakState) : Std.Array Std.U64 25#usize :=
+  ⟨List.ofFn (fun i : Fin 25 =>
+      ⟨lift_lane_bv
+          ((s.st.val[i.val]!).val[0]!.bv ^^^ (s.d.val[i.val / 5]!).val[0]!.bv)
+          ((s.st.val[i.val]!).val[1]!.bv ^^^ (s.d.val[i.val / 5]!).val[1]!.bv)⟩),
+    by simp⟩
+
+/-! ## Spec-coupling theorem
+
+After running the impl θ on `s`, the spec's `theta_unrolled (lift s)`
+produces exactly `lift_theta_applied r_impl`. The chain of equalities:
+
+  spec lane i  = (lift s)[i] ⊕ spec_d[i/5]
+              = lift_lane (s.st[i]) ⊕ spec_d[i/5]    -- by lift def
+              = lift_lane (s.st[i]) ⊕ lift_lane_bv impl_d[i/5]  -- by lift_td/xor5
+              = lift_lane_bv (st.z0 ⊕ d.z0) (st.z1 ⊕ d.z1)  -- by lift_xor
+              = lift_theta_applied r_impl . val[i]   -- by def
+
+The substitution from `theta_comp_spec_local`'s 12-conjunct post is
+how we bridge "spec d-cell content" with "impl r.d cell content".
+-/
+
+set_option maxHeartbeats 16000000 in
+theorem theta_lift_spec (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    (do
+      let r_impl ← keccak.keccakf1600_round0_theta s
+      let r_spec ← keccak_f.theta_unrolled (lift s)
+      pure (r_spec = lift_theta_applied r_impl))
+    ⦃ ⇓ r => ⌜ r ⌝ ⦄ := by
+  apply Triple.bind
+  case hx => exact theta_comp_spec_local s
+  case hf =>
+    intro r_impl
+    unfold keccak_f.theta_unrolled
+    hax_mvcgen
+    all_goals try scalar_tac
+    sorry
 
 end libcrux_iot_sha3.Equivalence
