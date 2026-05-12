@@ -24,20 +24,8 @@ def check_version(cmd: list[str], expected: str) -> None:
 check_version(["cargo", "hax", "--version"], HAX_VERSION)
 check_version(["aeneas", "-version"], AENEAS_VERSION)
 
-# `full-unroll` straight-lines the 6-iteration keccakf1600 outer loop into
-# six explicit `keccakf1600_4rounds::<BASE>(s)` calls. The aeneas-lean
-# equivalence proofs rely on this shape to skip the outer-loop spec entirely.
 result = subprocess.run(
-    [
-        "cargo",
-        "hax",
-        "-C",
-        "--features",
-        "full-unroll",
-        ";",
-        "into",
-        "aeneas-lean",
-    ],
+    ["cargo", "hax", "into", "aeneas-lean"],
     env={**os.environ, "RUSTFLAGS": "--cfg charon"},
     capture_output=True,
     text=True,
