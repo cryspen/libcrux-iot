@@ -14,6 +14,9 @@ def check_version(cmd: list[str], expected: str) -> None:
     result = subprocess.run(cmd, capture_output=True, text=True)
     output = result.stdout + result.stderr
     if expected not in output:
+        if os.environ.get("SKIP_VERSION_CHECK") == "1":
+            print(f"warning: version mismatch for {cmd[0]} (expected {expected!r}); continuing because SKIP_VERSION_CHECK=1", file=sys.stderr)
+            return
         print(f"Version mismatch for {cmd[0]}: expected {expected!r} in output:\n{output}", file=sys.stderr)
         sys.exit(1)
 
@@ -21,8 +24,20 @@ def check_version(cmd: list[str], expected: str) -> None:
 check_version(["cargo", "hax", "--version"], HAX_VERSION)
 check_version(["aeneas", "-version"], AENEAS_VERSION)
 
+# `full-unroll` straight-lines the 6-iteration keccakf1600 outer loop into
+# six explicit `keccakf1600_4rounds::<BASE>(s)` calls. The aeneas-lean
+# equivalence proofs rely on this shape to skip the outer-loop spec entirely.
 result = subprocess.run(
-    ["cargo", "hax", "into", "aeneas-lean"],
+    [
+        "cargo",
+        "hax",
+        "-C",
+        "--features",
+        "full-unroll",
+        ";",
+        "into",
+        "aeneas-lean",
+    ],
     env={**os.environ, "RUSTFLAGS": "--cfg charon"},
     capture_output=True,
     text=True,
