@@ -27,16 +27,24 @@ set_option mvcgen.warning false
 /-! ### Primitive spec for `set_with_zeta`
 
 Writes `v` into lane `(5*j + i)` at half `zeta`. Leaves `d`, `i`, `c`
-untouched. For now we expose only the preservation form; the
-strengthened `r.st = s.st.set (5*j+i) (...)` form requires threading
-the internal Usize index through `hpost`. -/
+untouched and modifies exactly one half of one lane. We express the
+new `r.st` content at the underlying list level (`r.st.val = ...
+List.set ...`) rather than at the `Aeneas.Std.Array` level, because
+`mvcgen` produces a fresh `Usize r✝²` (with `r✝².val = 5 * j.val +
+i.val`) which is *structurally* distinct from a reconstructed
+`⟨5*j+i, _⟩#usize` — the two have the same `.val` but the Aeneas
+Array form discriminates by the wrapping. `Array.set_val_eq` bridges
+the two: `(a.set i x).val = a.val.set i.val x`. -/
 
 @[spec]
 private theorem set_with_zeta_spec
     (s : state.KeccakState) (i j zeta : Std.Usize) (v : Std.U32) {Q}
     (hi : i.val < 5) (hj : j.val < 5) (hzeta : zeta.val < 2)
     (hpost : ∀ r : state.KeccakState,
-        r.i = s.i → r.c = s.c → r.d = s.d → (Q.1 r).down) :
+        r.i = s.i → r.c = s.c → r.d = s.d →
+        r.st.val = s.st.val.set (5 * j.val + i.val)
+                     ((s.st.val[5 * j.val + i.val]!).set zeta v) →
+        (Q.1 r).down) :
     ⦃ ⌜ True ⌝ ⦄
     state.KeccakState.set_with_zeta s i j zeta v
     ⦃ Q ⦄ := by
@@ -45,7 +53,7 @@ private theorem set_with_zeta_spec
   all_goals first | simpa | scalar_tac | (
     simp only [Std.WP.predn] at *
     obtain ⟨_, _⟩ := ‹_ ∧ _›
-    apply hpost <;> simp [*])
+    apply hpost <;> first | scalar_tac | simp_all [Std.Array.set_val_eq])
 
 /-! ### Per-sub-function preservation specs
 
