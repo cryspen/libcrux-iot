@@ -65,17 +65,18 @@ in informal form:
 |---|---|---|
 | `Lift.lean` | 101 | ✅ done — lift, lift_lane_bv, impl_perm, impl_perm_pow4_eq_id |
 | `LiftLemmas.lean` | 168 | ✅ done — 25 `rot_N` lemmas + `lift_xor`/`lift_and`/`lift_not`/`lift_chi`/`lift_theta_apply`/`lift_td`/`lift_rot1`/`lift_xor5`, all via `bv_decide` |
-| `ThetaLift.lean` | 375 | ✅ impl side — `theta_comp_spec_local` gives the 10 d-cell values + st/i preservation; spec-side coupling pending |
+| `ThetaLift.lean` | 458 | ✅ impl side — `theta_comp_spec_local` gives the 10 d-cell values + st/i preservation; ⚠️ spec-side `theta_lift_spec` scaffolded (`Triple.bind` + `hax_mvcgen` reduce the goal to `Array.make 25 [...] = lift_theta_applied r_impl`), algebraic close TODO via `lift_xor`/`lift_xor5`/`lift_td`/`lift_rot1`. |
 | `RcEquiv.lean` | 39 | ✅ done — `rc_equiv` for `i < 24` via `native_decide` |
 | `PrcLift.lean` | 160 | ✅ impl side preservation — `pi_rho_chi_{1,2}_spec_local` register d/c/i; spec-side coupling pending |
 | `StepSpecs.lean` | 500 | ✅ done — round 1–3 step preservation specs (82 declarations via one `step_preserve_proof` macro) |
 | Spec-coupling files | — | ⏳ next — `theta_lift_spec`, `prc_lift_spec`, `round_equiv`, top 24-round |
 
-Sorry hygiene: **zero `sorry`** in this directory.
+Sorry hygiene: **1 `sorry`** in this directory (the algebraic close of
+`theta_lift_spec`'s main residual — Step 6 of stage 2 in flight).
 
 ```bash
 grep -rn sorry libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/
-# (empty)
+# libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/ThetaLift.lean:455:    sorry
 ```
 
 Build cost: `lake build` from the project root takes ~2 minutes from

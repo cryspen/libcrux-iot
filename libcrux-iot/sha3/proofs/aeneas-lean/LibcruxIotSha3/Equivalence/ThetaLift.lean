@@ -438,6 +438,20 @@ theorem theta_lift_spec (s : state.KeccakState) :
     unfold keccak_f.theta_unrolled
     hax_mvcgen
     all_goals try scalar_tac
+    -- Main residual: Array.make 25 [r✝²⁴..r✝] = lift_theta_applied r_impl.
+    -- The hypothesis chain `h✝k` gives each r✝k.bv as some XOR of
+    -- (lift s)[k]! BitVecs and rotateLeft thereof. The 12-conjunct
+    -- hypothesis (theta_comp_spec_local's post on r_impl) gives
+    -- r_impl.d cell content. The algebra then closes via
+    -- lift_xor5 + lift_td + lift_rot1 from LiftLemmas.lean.
+    --
+    -- Closing this requires either (a) a manual lane-by-lane proof
+    -- (~25 cases, each a U64.bv_eq_imp_eq → simp_all over the
+    -- chain + lift_xor algebra) or (b) a custom tactic macro that
+    -- composes the chain. The OLD branch did (a) — see
+    -- `theta_lift_spec` in `libcrux-iot/sha3/proofs/lean/extraction/
+    -- theta_lift.lean` at commit 4e67e76. Adaptation to the Aeneas-Lean
+    -- types is in flight.
     sorry
 
 end libcrux_iot_sha3.Equivalence
