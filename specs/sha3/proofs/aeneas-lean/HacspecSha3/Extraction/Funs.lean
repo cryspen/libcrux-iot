@@ -17,18 +17,18 @@ noncomputable section
 namespace hacspec_sha3
 
 /-- [hacspec_sha3::keccak_f::get]:
-    Source: 'src/keccak_f.rs', lines 16:0-18:1
+    Source: 'src/keccak_f.rs', lines 18:0-20:1
     Visibility: public -/
 def keccak_f.get
   (state : Array Std.U64 25#usize) (x : Std.Usize) (y : Std.Usize) :
   Result Std.U64
   := do
-  let i ← 5#usize * y
-  let i1 ← i + x
+  let i ← 5#usize * x
+  let i1 ← i + y
   Array.index_usize state i1
 
 /-- [hacspec_sha3::keccak_f::ROUND_CONSTANTS]
-    Source: 'src/keccak_f.rs', lines 25:0-50:2
+    Source: 'src/keccak_f.rs', lines 27:0-52:2
     Visibility: public -/
 @[global_simps, irreducible]
 def keccak_f.ROUND_CONSTANTS : Array Std.U64 24#usize :=
@@ -43,14 +43,14 @@ def keccak_f.ROUND_CONSTANTS : Array Std.U64 24#usize :=
     ]
 
 /-- [hacspec_sha3::keccak_f::RHO_OFFSETS]
-    Source: 'src/keccak_f.rs', lines 55:0-62:2
+    Source: 'src/keccak_f.rs', lines 57:0-64:2
     Visibility: public -/
 @[global_simps, irreducible]
 def keccak_f.RHO_OFFSETS : Array Std.U32 25#usize :=
   Array.make 25#usize [
-    0#u32, 1#u32, 62#u32, 28#u32, 27#u32, 36#u32, 44#u32, 6#u32, 55#u32,
-    20#u32, 3#u32, 10#u32, 43#u32, 25#u32, 39#u32, 41#u32, 45#u32, 15#u32,
-    21#u32, 8#u32, 18#u32, 2#u32, 61#u32, 56#u32, 14#u32
+    0#u32, 36#u32, 3#u32, 41#u32, 18#u32, 1#u32, 44#u32, 10#u32, 45#u32, 2#u32,
+    62#u32, 6#u32, 43#u32, 15#u32, 61#u32, 28#u32, 55#u32, 25#u32, 21#u32,
+    56#u32, 27#u32, 20#u32, 39#u32, 8#u32, 14#u32
     ]
 
 /-- [hacspec_sha3::createi]:
@@ -65,23 +65,23 @@ def createi
     core_modelsopsfunctionFnFTupleUsizeTInst.FnMutInst f
 
 /-- [hacspec_sha3::keccak_f::theta::closure#2]
-    Source: 'src/keccak_f.rs', lines 82:12-82:41 -/
+    Source: 'src/keccak_f.rs', lines 86:12-86:41 -/
 def keccak_f.theta.closure_2 := Array Std.U64 25#usize × Array Std.U64 5#usize
 
 /-- [hacspec_sha3::keccak_f::theta::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#2<0, 1>}::call]:
-    Source: 'src/keccak_f.rs', lines 82:12-82:41 -/
+    Source: 'src/keccak_f.rs', lines 86:12-86:41 -/
 def keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   (c : keccak_f.theta.closure_2) (tupled_args : Std.Usize) :
   Result Std.U64
   := do
   let (a, a1) := c
   let i ← Array.index_usize a tupled_args
-  let i1 ← tupled_args % 5#usize
+  let i1 ← tupled_args / 5#usize
   let i2 ← Array.index_usize a1 i1
   ok (i ^^^ i2)
 
 /-- [hacspec_sha3::keccak_f::theta::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#2<0, 1>}::call_mut]:
-    Source: 'src/keccak_f.rs', lines 82:12-82:41 -/
+    Source: 'src/keccak_f.rs', lines 86:12-86:41 -/
 def
   keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
   (state : keccak_f.theta.closure_2) (args : Std.Usize) :
@@ -93,7 +93,7 @@ def
   ok (i, state)
 
 /-- [hacspec_sha3::keccak_f::theta::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#2<0, 1>}::call_once]:
-    Source: 'src/keccak_f.rs', lines 82:12-82:41 -/
+    Source: 'src/keccak_f.rs', lines 86:12-86:41 -/
 def
   keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : keccak_f.theta.closure_2) (i : Std.Usize) : Result Std.U64 := do
@@ -103,7 +103,7 @@ def
   ok i1
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::theta::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#2<0, 1>}]
-    Source: 'src/keccak_f.rs', lines 82:12-82:41 -/
+    Source: 'src/keccak_f.rs', lines 86:12-86:41 -/
 @[reducible]
 def keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
   core_models.ops.function.FnOnce keccak_f.theta.closure_2 Std.Usize Std.U64
@@ -113,7 +113,7 @@ def keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::theta::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#2<0, 1>}]
-    Source: 'src/keccak_f.rs', lines 82:12-82:41 -/
+    Source: 'src/keccak_f.rs', lines 86:12-86:41 -/
 @[reducible]
 def keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
   core_models.ops.function.FnMut keccak_f.theta.closure_2 Std.Usize Std.U64
@@ -125,7 +125,7 @@ def keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::theta::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#2<0, 1>}]
-    Source: 'src/keccak_f.rs', lines 82:12-82:41 -/
+    Source: 'src/keccak_f.rs', lines 86:12-86:41 -/
 @[reducible]
 def keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
   core_models.ops.function.Fn keccak_f.theta.closure_2 Std.Usize Std.U64 := {
@@ -136,12 +136,12 @@ def keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
 }
 
 /-- [hacspec_sha3::keccak_f::theta::closure#1]
-    Source: 'src/keccak_f.rs', lines 81:30-81:80 -/
+    Source: 'src/keccak_f.rs', lines 83:30-83:80 -/
 @[reducible]
 def keccak_f.theta.closure_1 := Array Std.U64 5#usize
 
 /-- [hacspec_sha3::keccak_f::theta::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#1<0>}::call]:
-    Source: 'src/keccak_f.rs', lines 81:30-81:80 -/
+    Source: 'src/keccak_f.rs', lines 83:30-83:80 -/
 def keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   (c : keccak_f.theta.closure_1) (tupled_args : Std.Usize) :
   Result Std.U64
@@ -156,7 +156,7 @@ def keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   ok (i2 ^^^ i6)
 
 /-- [hacspec_sha3::keccak_f::theta::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#1<0>}::call_mut]:
-    Source: 'src/keccak_f.rs', lines 81:30-81:80 -/
+    Source: 'src/keccak_f.rs', lines 83:30-83:80 -/
 def
   keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
   (state : keccak_f.theta.closure_1) (args : Std.Usize) :
@@ -168,7 +168,7 @@ def
   ok (i, state)
 
 /-- [hacspec_sha3::keccak_f::theta::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#1<0>}::call_once]:
-    Source: 'src/keccak_f.rs', lines 81:30-81:80 -/
+    Source: 'src/keccak_f.rs', lines 83:30-83:80 -/
 def
   keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : keccak_f.theta.closure_1) (i : Std.Usize) : Result Std.U64 := do
@@ -178,7 +178,7 @@ def
   ok i1
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::theta::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#1<0>}]
-    Source: 'src/keccak_f.rs', lines 81:30-81:80 -/
+    Source: 'src/keccak_f.rs', lines 83:30-83:80 -/
 @[reducible]
 def keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
   core_models.ops.function.FnOnce keccak_f.theta.closure_1 Std.Usize Std.U64
@@ -188,7 +188,7 @@ def keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::theta::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#1<0>}]
-    Source: 'src/keccak_f.rs', lines 81:30-81:80 -/
+    Source: 'src/keccak_f.rs', lines 83:30-83:80 -/
 @[reducible]
 def keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
   core_models.ops.function.FnMut keccak_f.theta.closure_1 Std.Usize Std.U64
@@ -200,7 +200,7 @@ def keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::theta::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::theta::closure#1<0>}]
-    Source: 'src/keccak_f.rs', lines 81:30-81:80 -/
+    Source: 'src/keccak_f.rs', lines 83:30-83:80 -/
 @[reducible]
 def keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
   core_models.ops.function.Fn keccak_f.theta.closure_1 Std.Usize Std.U64 := {
@@ -211,12 +211,12 @@ def keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
 }
 
 /-- [hacspec_sha3::keccak_f::theta::closure]
-    Source: 'src/keccak_f.rs', lines 74:30-80:5 -/
+    Source: 'src/keccak_f.rs', lines 76:30-82:5 -/
 @[reducible]
 def keccak_f.theta.closure := Array Std.U64 25#usize
 
 /-- [hacspec_sha3::keccak_f::theta::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::theta::closure<0>}::call]:
-    Source: 'src/keccak_f.rs', lines 74:30-80:5 -/
+    Source: 'src/keccak_f.rs', lines 76:30-82:5 -/
 def keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   (c : keccak_f.theta.closure) (tupled_args : Std.Usize) : Result Std.U64 := do
   let i ← keccak_f.get c tupled_args 0#usize
@@ -230,7 +230,7 @@ def keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   ok (i6 ^^^ i7)
 
 /-- [hacspec_sha3::keccak_f::theta::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::theta::closure<0>}::call_mut]:
-    Source: 'src/keccak_f.rs', lines 74:30-80:5 -/
+    Source: 'src/keccak_f.rs', lines 76:30-82:5 -/
 def
   keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
   (state : keccak_f.theta.closure) (args : Std.Usize) :
@@ -242,7 +242,7 @@ def
   ok (i, state)
 
 /-- [hacspec_sha3::keccak_f::theta::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::theta::closure<0>}::call_once]:
-    Source: 'src/keccak_f.rs', lines 74:30-80:5 -/
+    Source: 'src/keccak_f.rs', lines 76:30-82:5 -/
 def
   keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : keccak_f.theta.closure) (i : Std.Usize) : Result Std.U64 := do
@@ -252,7 +252,7 @@ def
   ok i1
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::theta::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::theta::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 74:30-80:5 -/
+    Source: 'src/keccak_f.rs', lines 76:30-82:5 -/
 @[reducible]
 def keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
   core_models.ops.function.FnOnce keccak_f.theta.closure Std.Usize Std.U64 := {
@@ -261,7 +261,7 @@ def keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::theta::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::theta::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 74:30-80:5 -/
+    Source: 'src/keccak_f.rs', lines 76:30-82:5 -/
 @[reducible]
 def keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
   core_models.ops.function.FnMut keccak_f.theta.closure Std.Usize Std.U64 := {
@@ -272,7 +272,7 @@ def keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::theta::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::theta::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 74:30-80:5 -/
+    Source: 'src/keccak_f.rs', lines 76:30-82:5 -/
 @[reducible]
 def keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
   core_models.ops.function.Fn keccak_f.theta.closure Std.Usize Std.U64 := {
@@ -284,7 +284,7 @@ def keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
 
 set_option Aeneas.customDoElab false in
 /-- [hacspec_sha3::keccak_f::theta]:
-    Source: 'src/keccak_f.rs', lines 73:0-83:1
+    Source: 'src/keccak_f.rs', lines 75:0-87:1
     Visibility: public -/
 def keccak_f.theta
   (state : Array Std.U64 25#usize) : Result (Array Std.U64 25#usize) := do
@@ -299,12 +299,12 @@ def keccak_f.theta
     (state, d)
 
 /-- [hacspec_sha3::keccak_f::rho::closure]
-    Source: 'src/keccak_f.rs', lines 89:12-89:58 -/
+    Source: 'src/keccak_f.rs', lines 93:12-93:58 -/
 @[reducible]
 def keccak_f.rho.closure := Array Std.U64 25#usize
 
 /-- [hacspec_sha3::keccak_f::rho::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::rho::closure<0>}::call]:
-    Source: 'src/keccak_f.rs', lines 89:12-89:58 -/
+    Source: 'src/keccak_f.rs', lines 93:12-93:58 -/
 def keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   (c : keccak_f.rho.closure) (tupled_args : Std.Usize) : Result Std.U64 := do
   let i ← Array.index_usize c tupled_args
@@ -312,7 +312,7 @@ def keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   core_models.num.U64.rotate_left i i1
 
 /-- [hacspec_sha3::keccak_f::rho::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::rho::closure<0>}::call_mut]:
-    Source: 'src/keccak_f.rs', lines 89:12-89:58 -/
+    Source: 'src/keccak_f.rs', lines 93:12-93:58 -/
 def
   keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
   (state : keccak_f.rho.closure) (args : Std.Usize) :
@@ -324,7 +324,7 @@ def
   ok (i, state)
 
 /-- [hacspec_sha3::keccak_f::rho::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::rho::closure<0>}::call_once]:
-    Source: 'src/keccak_f.rs', lines 89:12-89:58 -/
+    Source: 'src/keccak_f.rs', lines 93:12-93:58 -/
 def
   keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : keccak_f.rho.closure) (i : Std.Usize) : Result Std.U64 := do
@@ -334,7 +334,7 @@ def
   ok i1
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::rho::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::rho::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 89:12-89:58 -/
+    Source: 'src/keccak_f.rs', lines 93:12-93:58 -/
 @[reducible]
 def keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
   core_models.ops.function.FnOnce keccak_f.rho.closure Std.Usize Std.U64 := {
@@ -343,7 +343,7 @@ def keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::rho::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::rho::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 89:12-89:58 -/
+    Source: 'src/keccak_f.rs', lines 93:12-93:58 -/
 @[reducible]
 def keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
   core_models.ops.function.FnMut keccak_f.rho.closure Std.Usize Std.U64 := {
@@ -354,7 +354,7 @@ def keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::rho::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::rho::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 89:12-89:58 -/
+    Source: 'src/keccak_f.rs', lines 93:12-93:58 -/
 @[reducible]
 def keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
   core_models.ops.function.Fn keccak_f.rho.closure Std.Usize Std.U64 := {
@@ -364,7 +364,7 @@ def keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
 }
 
 /-- [hacspec_sha3::keccak_f::rho]:
-    Source: 'src/keccak_f.rs', lines 88:0-90:1
+    Source: 'src/keccak_f.rs', lines 92:0-94:1
     Visibility: public -/
 def keccak_f.rho
   (state : Array Std.U64 25#usize) : Result (Array Std.U64 25#usize) := do
@@ -372,23 +372,23 @@ def keccak_f.rho
     keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 state
 
 /-- [hacspec_sha3::keccak_f::pi::closure]
-    Source: 'src/keccak_f.rs', lines 96:12-100:5 -/
+    Source: 'src/keccak_f.rs', lines 100:12-106:5 -/
 @[reducible]
 def keccak_f.pi.closure := Array Std.U64 25#usize
 
 /-- [hacspec_sha3::keccak_f::pi::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::pi::closure<0>}::call]:
-    Source: 'src/keccak_f.rs', lines 96:12-100:5 -/
+    Source: 'src/keccak_f.rs', lines 100:12-106:5 -/
 def keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   (c : keccak_f.pi.closure) (tupled_args : Std.Usize) : Result Std.U64 := do
-  let y ← tupled_args / 5#usize
-  let x ← tupled_args % 5#usize
+  let x ← tupled_args / 5#usize
+  let y ← tupled_args % 5#usize
   let i ← 3#usize * y
   let i1 ← x + i
   let i2 ← i1 % 5#usize
   keccak_f.get c i2 x
 
 /-- [hacspec_sha3::keccak_f::pi::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::pi::closure<0>}::call_mut]:
-    Source: 'src/keccak_f.rs', lines 96:12-100:5 -/
+    Source: 'src/keccak_f.rs', lines 100:12-106:5 -/
 def keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
   (state : keccak_f.pi.closure) (args : Std.Usize) :
   Result (Std.U64 × keccak_f.pi.closure)
@@ -399,7 +399,7 @@ def keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
   ok (i, state)
 
 /-- [hacspec_sha3::keccak_f::pi::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::pi::closure<0>}::call_once]:
-    Source: 'src/keccak_f.rs', lines 96:12-100:5 -/
+    Source: 'src/keccak_f.rs', lines 100:12-106:5 -/
 def
   keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : keccak_f.pi.closure) (i : Std.Usize) : Result Std.U64 := do
@@ -409,7 +409,7 @@ def
   ok i1
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::pi::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::pi::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 96:12-100:5 -/
+    Source: 'src/keccak_f.rs', lines 100:12-106:5 -/
 @[reducible]
 def keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
   core_models.ops.function.FnOnce keccak_f.pi.closure Std.Usize Std.U64 := {
@@ -418,7 +418,7 @@ def keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::pi::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::pi::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 96:12-100:5 -/
+    Source: 'src/keccak_f.rs', lines 100:12-106:5 -/
 @[reducible]
 def keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
   core_models.ops.function.FnMut keccak_f.pi.closure Std.Usize Std.U64 := {
@@ -429,7 +429,7 @@ def keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::pi::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::pi::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 96:12-100:5 -/
+    Source: 'src/keccak_f.rs', lines 100:12-106:5 -/
 @[reducible]
 def keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
   core_models.ops.function.Fn keccak_f.pi.closure Std.Usize Std.U64 := {
@@ -439,7 +439,7 @@ def keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
 }
 
 /-- [hacspec_sha3::keccak_f::pi]:
-    Source: 'src/keccak_f.rs', lines 95:0-101:1
+    Source: 'src/keccak_f.rs', lines 99:0-107:1
     Visibility: public -/
 def keccak_f.pi
   (state : Array Std.U64 25#usize) : Result (Array Std.U64 25#usize) := do
@@ -447,16 +447,16 @@ def keccak_f.pi
     keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 state
 
 /-- [hacspec_sha3::keccak_f::chi::closure]
-    Source: 'src/keccak_f.rs', lines 107:12-111:5 -/
+    Source: 'src/keccak_f.rs', lines 113:12-119:5 -/
 @[reducible]
 def keccak_f.chi.closure := Array Std.U64 25#usize
 
 /-- [hacspec_sha3::keccak_f::chi::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::chi::closure<0>}::call]:
-    Source: 'src/keccak_f.rs', lines 107:12-111:5 -/
+    Source: 'src/keccak_f.rs', lines 113:12-119:5 -/
 def keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   (c : keccak_f.chi.closure) (tupled_args : Std.Usize) : Result Std.U64 := do
-  let y ← tupled_args / 5#usize
-  let x ← tupled_args % 5#usize
+  let x ← tupled_args / 5#usize
+  let y ← tupled_args % 5#usize
   let i ← keccak_f.get c x y
   let i1 ← x + 1#usize
   let i2 ← i1 % 5#usize
@@ -469,7 +469,7 @@ def keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
   ok (i ^^^ i8)
 
 /-- [hacspec_sha3::keccak_f::chi::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::chi::closure<0>}::call_mut]:
-    Source: 'src/keccak_f.rs', lines 107:12-111:5 -/
+    Source: 'src/keccak_f.rs', lines 113:12-119:5 -/
 def
   keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
   (state : keccak_f.chi.closure) (args : Std.Usize) :
@@ -481,7 +481,7 @@ def
   ok (i, state)
 
 /-- [hacspec_sha3::keccak_f::chi::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::chi::closure<0>}::call_once]:
-    Source: 'src/keccak_f.rs', lines 107:12-111:5 -/
+    Source: 'src/keccak_f.rs', lines 113:12-119:5 -/
 def
   keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : keccak_f.chi.closure) (i : Std.Usize) : Result Std.U64 := do
@@ -491,7 +491,7 @@ def
   ok i1
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::chi::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::keccak_f::chi::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 107:12-111:5 -/
+    Source: 'src/keccak_f.rs', lines 113:12-119:5 -/
 @[reducible]
 def keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
   core_models.ops.function.FnOnce keccak_f.chi.closure Std.Usize Std.U64 := {
@@ -500,7 +500,7 @@ def keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::chi::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::keccak_f::chi::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 107:12-111:5 -/
+    Source: 'src/keccak_f.rs', lines 113:12-119:5 -/
 @[reducible]
 def keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
   core_models.ops.function.FnMut keccak_f.chi.closure Std.Usize Std.U64 := {
@@ -511,7 +511,7 @@ def keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64 :
 }
 
 /-- Trait implementation: [hacspec_sha3::keccak_f::chi::{core::ops::function::Fn<(usize), u64> for hacspec_sha3::keccak_f::chi::closure<0>}]
-    Source: 'src/keccak_f.rs', lines 107:12-111:5 -/
+    Source: 'src/keccak_f.rs', lines 113:12-119:5 -/
 @[reducible]
 def keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
   core_models.ops.function.Fn keccak_f.chi.closure Std.Usize Std.U64 := {
@@ -521,7 +521,7 @@ def keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 :
 }
 
 /-- [hacspec_sha3::keccak_f::chi]:
-    Source: 'src/keccak_f.rs', lines 106:0-112:1
+    Source: 'src/keccak_f.rs', lines 112:0-120:1
     Visibility: public -/
 def keccak_f.chi
   (state : Array Std.U64 25#usize) : Result (Array Std.U64 25#usize) := do
@@ -529,7 +529,7 @@ def keccak_f.chi
     keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64 state
 
 /-- [hacspec_sha3::keccak_f::iota]:
-    Source: 'src/keccak_f.rs', lines 118:0-121:1
+    Source: 'src/keccak_f.rs', lines 126:0-129:1
     Visibility: public -/
 def keccak_f.iota
   (state : Array Std.U64 25#usize) (round : Std.Usize) :
@@ -540,8 +540,307 @@ def keccak_f.iota
   let i2 ← lift (i1 ^^^ i)
   Array.update state 0#usize i2
 
+/-- [hacspec_sha3::keccak_f::theta_unrolled]:
+    Source: 'src/keccak_f.rs', lines 143:0-185:1
+    Visibility: public -/
+def keccak_f.theta_unrolled
+  (state : Array Std.U64 25#usize) : Result (Array Std.U64 25#usize) := do
+  let i ← Array.index_usize state 0#usize
+  let i1 ← Array.index_usize state 1#usize
+  let i2 ← lift (i ^^^ i1)
+  let i3 ← Array.index_usize state 2#usize
+  let i4 ← lift (i2 ^^^ i3)
+  let i5 ← Array.index_usize state 3#usize
+  let i6 ← lift (i4 ^^^ i5)
+  let i7 ← Array.index_usize state 4#usize
+  let c0 ← lift (i6 ^^^ i7)
+  let i8 ← Array.index_usize state 5#usize
+  let i9 ← Array.index_usize state 6#usize
+  let i10 ← lift (i8 ^^^ i9)
+  let i11 ← Array.index_usize state 7#usize
+  let i12 ← lift (i10 ^^^ i11)
+  let i13 ← Array.index_usize state 8#usize
+  let i14 ← lift (i12 ^^^ i13)
+  let i15 ← Array.index_usize state 9#usize
+  let c1 ← lift (i14 ^^^ i15)
+  let i16 ← Array.index_usize state 10#usize
+  let i17 ← Array.index_usize state 11#usize
+  let i18 ← lift (i16 ^^^ i17)
+  let i19 ← Array.index_usize state 12#usize
+  let i20 ← lift (i18 ^^^ i19)
+  let i21 ← Array.index_usize state 13#usize
+  let i22 ← lift (i20 ^^^ i21)
+  let i23 ← Array.index_usize state 14#usize
+  let c2 ← lift (i22 ^^^ i23)
+  let i24 ← Array.index_usize state 15#usize
+  let i25 ← Array.index_usize state 16#usize
+  let i26 ← lift (i24 ^^^ i25)
+  let i27 ← Array.index_usize state 17#usize
+  let i28 ← lift (i26 ^^^ i27)
+  let i29 ← Array.index_usize state 18#usize
+  let i30 ← lift (i28 ^^^ i29)
+  let i31 ← Array.index_usize state 19#usize
+  let c3 ← lift (i30 ^^^ i31)
+  let i32 ← Array.index_usize state 20#usize
+  let i33 ← Array.index_usize state 21#usize
+  let i34 ← lift (i32 ^^^ i33)
+  let i35 ← Array.index_usize state 22#usize
+  let i36 ← lift (i34 ^^^ i35)
+  let i37 ← Array.index_usize state 23#usize
+  let i38 ← lift (i36 ^^^ i37)
+  let i39 ← Array.index_usize state 24#usize
+  let c4 ← lift (i38 ^^^ i39)
+  let i40 ← core_models.num.U64.rotate_left c1 1#u32
+  let d0 ← lift (c4 ^^^ i40)
+  let i41 ← core_models.num.U64.rotate_left c2 1#u32
+  let d1 ← lift (c0 ^^^ i41)
+  let i42 ← core_models.num.U64.rotate_left c3 1#u32
+  let d2 ← lift (c1 ^^^ i42)
+  let i43 ← core_models.num.U64.rotate_left c4 1#u32
+  let d3 ← lift (c2 ^^^ i43)
+  let i44 ← core_models.num.U64.rotate_left c0 1#u32
+  let d4 ← lift (c3 ^^^ i44)
+  let i45 ← lift (i ^^^ d0)
+  let i46 ← lift (i1 ^^^ d0)
+  let i47 ← lift (i3 ^^^ d0)
+  let i48 ← lift (i5 ^^^ d0)
+  let i49 ← lift (i7 ^^^ d0)
+  let i50 ← lift (i8 ^^^ d1)
+  let i51 ← lift (i9 ^^^ d1)
+  let i52 ← lift (i11 ^^^ d1)
+  let i53 ← lift (i13 ^^^ d1)
+  let i54 ← lift (i15 ^^^ d1)
+  let i55 ← lift (i16 ^^^ d2)
+  let i56 ← lift (i17 ^^^ d2)
+  let i57 ← lift (i19 ^^^ d2)
+  let i58 ← lift (i21 ^^^ d2)
+  let i59 ← lift (i23 ^^^ d2)
+  let i60 ← lift (i24 ^^^ d3)
+  let i61 ← lift (i25 ^^^ d3)
+  let i62 ← lift (i27 ^^^ d3)
+  let i63 ← lift (i29 ^^^ d3)
+  let i64 ← lift (i31 ^^^ d3)
+  let i65 ← lift (i32 ^^^ d4)
+  let i66 ← lift (i33 ^^^ d4)
+  let i67 ← lift (i35 ^^^ d4)
+  let i68 ← lift (i37 ^^^ d4)
+  let i69 ← lift (i39 ^^^ d4)
+  ok
+    (Array.make 25#usize [
+      i45, i46, i47, i48, i49, i50, i51, i52, i53, i54, i55, i56, i57, i58,
+      i59, i60, i61, i62, i63, i64, i65, i66, i67, i68, i69
+      ])
+
+/-- [hacspec_sha3::keccak_f::rho_unrolled]:
+    Source: 'src/keccak_f.rs', lines 188:0-216:1
+    Visibility: public -/
+def keccak_f.rho_unrolled
+  (state : Array Std.U64 25#usize) : Result (Array Std.U64 25#usize) := do
+  let i ← Array.index_usize state 0#usize
+  let i1 ← core_models.num.U64.rotate_left i 0#u32
+  let i2 ← Array.index_usize state 1#usize
+  let i3 ← core_models.num.U64.rotate_left i2 36#u32
+  let i4 ← Array.index_usize state 2#usize
+  let i5 ← core_models.num.U64.rotate_left i4 3#u32
+  let i6 ← Array.index_usize state 3#usize
+  let i7 ← core_models.num.U64.rotate_left i6 41#u32
+  let i8 ← Array.index_usize state 4#usize
+  let i9 ← core_models.num.U64.rotate_left i8 18#u32
+  let i10 ← Array.index_usize state 5#usize
+  let i11 ← core_models.num.U64.rotate_left i10 1#u32
+  let i12 ← Array.index_usize state 6#usize
+  let i13 ← core_models.num.U64.rotate_left i12 44#u32
+  let i14 ← Array.index_usize state 7#usize
+  let i15 ← core_models.num.U64.rotate_left i14 10#u32
+  let i16 ← Array.index_usize state 8#usize
+  let i17 ← core_models.num.U64.rotate_left i16 45#u32
+  let i18 ← Array.index_usize state 9#usize
+  let i19 ← core_models.num.U64.rotate_left i18 2#u32
+  let i20 ← Array.index_usize state 10#usize
+  let i21 ← core_models.num.U64.rotate_left i20 62#u32
+  let i22 ← Array.index_usize state 11#usize
+  let i23 ← core_models.num.U64.rotate_left i22 6#u32
+  let i24 ← Array.index_usize state 12#usize
+  let i25 ← core_models.num.U64.rotate_left i24 43#u32
+  let i26 ← Array.index_usize state 13#usize
+  let i27 ← core_models.num.U64.rotate_left i26 15#u32
+  let i28 ← Array.index_usize state 14#usize
+  let i29 ← core_models.num.U64.rotate_left i28 61#u32
+  let i30 ← Array.index_usize state 15#usize
+  let i31 ← core_models.num.U64.rotate_left i30 28#u32
+  let i32 ← Array.index_usize state 16#usize
+  let i33 ← core_models.num.U64.rotate_left i32 55#u32
+  let i34 ← Array.index_usize state 17#usize
+  let i35 ← core_models.num.U64.rotate_left i34 25#u32
+  let i36 ← Array.index_usize state 18#usize
+  let i37 ← core_models.num.U64.rotate_left i36 21#u32
+  let i38 ← Array.index_usize state 19#usize
+  let i39 ← core_models.num.U64.rotate_left i38 56#u32
+  let i40 ← Array.index_usize state 20#usize
+  let i41 ← core_models.num.U64.rotate_left i40 27#u32
+  let i42 ← Array.index_usize state 21#usize
+  let i43 ← core_models.num.U64.rotate_left i42 20#u32
+  let i44 ← Array.index_usize state 22#usize
+  let i45 ← core_models.num.U64.rotate_left i44 39#u32
+  let i46 ← Array.index_usize state 23#usize
+  let i47 ← core_models.num.U64.rotate_left i46 8#u32
+  let i48 ← Array.index_usize state 24#usize
+  let i49 ← core_models.num.U64.rotate_left i48 14#u32
+  ok
+    (Array.make 25#usize [
+      i1, i3, i5, i7, i9, i11, i13, i15, i17, i19, i21, i23, i25, i27, i29,
+      i31, i33, i35, i37, i39, i41, i43, i45, i47, i49
+      ])
+
+/-- [hacspec_sha3::keccak_f::pi_unrolled]:
+    Source: 'src/keccak_f.rs', lines 222:0-250:1
+    Visibility: public -/
+def keccak_f.pi_unrolled
+  (state : Array Std.U64 25#usize) : Result (Array Std.U64 25#usize) := do
+  let i ← Array.index_usize state 0#usize
+  let i1 ← Array.index_usize state 15#usize
+  let i2 ← Array.index_usize state 5#usize
+  let i3 ← Array.index_usize state 20#usize
+  let i4 ← Array.index_usize state 10#usize
+  let i5 ← Array.index_usize state 6#usize
+  let i6 ← Array.index_usize state 21#usize
+  let i7 ← Array.index_usize state 11#usize
+  let i8 ← Array.index_usize state 1#usize
+  let i9 ← Array.index_usize state 16#usize
+  let i10 ← Array.index_usize state 12#usize
+  let i11 ← Array.index_usize state 2#usize
+  let i12 ← Array.index_usize state 17#usize
+  let i13 ← Array.index_usize state 7#usize
+  let i14 ← Array.index_usize state 22#usize
+  let i15 ← Array.index_usize state 18#usize
+  let i16 ← Array.index_usize state 8#usize
+  let i17 ← Array.index_usize state 23#usize
+  let i18 ← Array.index_usize state 13#usize
+  let i19 ← Array.index_usize state 3#usize
+  let i20 ← Array.index_usize state 24#usize
+  let i21 ← Array.index_usize state 14#usize
+  let i22 ← Array.index_usize state 4#usize
+  let i23 ← Array.index_usize state 19#usize
+  let i24 ← Array.index_usize state 9#usize
+  ok
+    (Array.make 25#usize [
+      i, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16,
+      i17, i18, i19, i20, i21, i22, i23, i24
+      ])
+
+/-- [hacspec_sha3::keccak_f::chi_unrolled]:
+    Source: 'src/keccak_f.rs', lines 256:0-284:1
+    Visibility: public -/
+def keccak_f.chi_unrolled
+  (state : Array Std.U64 25#usize) : Result (Array Std.U64 25#usize) := do
+  let i ← Array.index_usize state 0#usize
+  let i1 ← Array.index_usize state 5#usize
+  let i2 ← lift (~~~ i1)
+  let i3 ← Array.index_usize state 10#usize
+  let i4 ← lift (i2 &&& i3)
+  let i5 ← lift (i ^^^ i4)
+  let i6 ← Array.index_usize state 1#usize
+  let i7 ← Array.index_usize state 6#usize
+  let i8 ← lift (~~~ i7)
+  let i9 ← Array.index_usize state 11#usize
+  let i10 ← lift (i8 &&& i9)
+  let i11 ← lift (i6 ^^^ i10)
+  let i12 ← Array.index_usize state 2#usize
+  let i13 ← Array.index_usize state 7#usize
+  let i14 ← lift (~~~ i13)
+  let i15 ← Array.index_usize state 12#usize
+  let i16 ← lift (i14 &&& i15)
+  let i17 ← lift (i12 ^^^ i16)
+  let i18 ← Array.index_usize state 3#usize
+  let i19 ← Array.index_usize state 8#usize
+  let i20 ← lift (~~~ i19)
+  let i21 ← Array.index_usize state 13#usize
+  let i22 ← lift (i20 &&& i21)
+  let i23 ← lift (i18 ^^^ i22)
+  let i24 ← Array.index_usize state 4#usize
+  let i25 ← Array.index_usize state 9#usize
+  let i26 ← lift (~~~ i25)
+  let i27 ← Array.index_usize state 14#usize
+  let i28 ← lift (i26 &&& i27)
+  let i29 ← lift (i24 ^^^ i28)
+  let i30 ← lift (~~~ i3)
+  let i31 ← Array.index_usize state 15#usize
+  let i32 ← lift (i30 &&& i31)
+  let i33 ← lift (i1 ^^^ i32)
+  let i34 ← lift (~~~ i9)
+  let i35 ← Array.index_usize state 16#usize
+  let i36 ← lift (i34 &&& i35)
+  let i37 ← lift (i7 ^^^ i36)
+  let i38 ← lift (~~~ i15)
+  let i39 ← Array.index_usize state 17#usize
+  let i40 ← lift (i38 &&& i39)
+  let i41 ← lift (i13 ^^^ i40)
+  let i42 ← lift (~~~ i21)
+  let i43 ← Array.index_usize state 18#usize
+  let i44 ← lift (i42 &&& i43)
+  let i45 ← lift (i19 ^^^ i44)
+  let i46 ← lift (~~~ i27)
+  let i47 ← Array.index_usize state 19#usize
+  let i48 ← lift (i46 &&& i47)
+  let i49 ← lift (i25 ^^^ i48)
+  let i50 ← lift (~~~ i31)
+  let i51 ← Array.index_usize state 20#usize
+  let i52 ← lift (i50 &&& i51)
+  let i53 ← lift (i3 ^^^ i52)
+  let i54 ← lift (~~~ i35)
+  let i55 ← Array.index_usize state 21#usize
+  let i56 ← lift (i54 &&& i55)
+  let i57 ← lift (i9 ^^^ i56)
+  let i58 ← lift (~~~ i39)
+  let i59 ← Array.index_usize state 22#usize
+  let i60 ← lift (i58 &&& i59)
+  let i61 ← lift (i15 ^^^ i60)
+  let i62 ← lift (~~~ i43)
+  let i63 ← Array.index_usize state 23#usize
+  let i64 ← lift (i62 &&& i63)
+  let i65 ← lift (i21 ^^^ i64)
+  let i66 ← lift (~~~ i47)
+  let i67 ← Array.index_usize state 24#usize
+  let i68 ← lift (i66 &&& i67)
+  let i69 ← lift (i27 ^^^ i68)
+  let i70 ← lift (~~~ i51)
+  let i71 ← lift (i70 &&& i)
+  let i72 ← lift (i31 ^^^ i71)
+  let i73 ← lift (~~~ i55)
+  let i74 ← lift (i73 &&& i6)
+  let i75 ← lift (i35 ^^^ i74)
+  let i76 ← lift (~~~ i59)
+  let i77 ← lift (i76 &&& i12)
+  let i78 ← lift (i39 ^^^ i77)
+  let i79 ← lift (~~~ i63)
+  let i80 ← lift (i79 &&& i18)
+  let i81 ← lift (i43 ^^^ i80)
+  let i82 ← lift (~~~ i67)
+  let i83 ← lift (i82 &&& i24)
+  let i84 ← lift (i47 ^^^ i83)
+  let i85 ← lift (~~~ i)
+  let i86 ← lift (i85 &&& i1)
+  let i87 ← lift (i51 ^^^ i86)
+  let i88 ← lift (~~~ i6)
+  let i89 ← lift (i88 &&& i7)
+  let i90 ← lift (i55 ^^^ i89)
+  let i91 ← lift (~~~ i12)
+  let i92 ← lift (i91 &&& i13)
+  let i93 ← lift (i59 ^^^ i92)
+  let i94 ← lift (~~~ i18)
+  let i95 ← lift (i94 &&& i19)
+  let i96 ← lift (i63 ^^^ i95)
+  let i97 ← lift (~~~ i24)
+  let i98 ← lift (i97 &&& i25)
+  let i99 ← lift (i67 ^^^ i98)
+  ok
+    (Array.make 25#usize [
+      i5, i11, i17, i23, i29, i33, i37, i41, i45, i49, i53, i57, i61, i65, i69,
+      i72, i75, i78, i81, i84, i87, i90, i93, i96, i99
+      ])
+
 /-- [hacspec_sha3::keccak_f::keccak_f]: loop body 0:
-    Source: 'src/keccak_f.rs', lines 131:4-133:5
+    Source: 'src/keccak_f.rs', lines 294:4-296:5
     Visibility: public -/
 @[rust_loop_body]
 def keccak_f.keccak_f_loop.body
@@ -564,7 +863,7 @@ def keccak_f.keccak_f_loop.body
     ok (cont (iter1, state1))
 
 /-- [hacspec_sha3::keccak_f::keccak_f]: loop 0:
-    Source: 'src/keccak_f.rs', lines 131:4-133:5
+    Source: 'src/keccak_f.rs', lines 294:4-296:5
     Visibility: public -/
 @[rust_loop]
 def keccak_f.keccak_f_loop
@@ -577,7 +876,7 @@ def keccak_f.keccak_f_loop
     (iter, state)
 
 /-- [hacspec_sha3::keccak_f::keccak_f]:
-    Source: 'src/keccak_f.rs', lines 130:0-135:1
+    Source: 'src/keccak_f.rs', lines 293:0-298:1
     Visibility: public -/
 @[reducible]
 def keccak_f.keccak_f
@@ -617,12 +916,12 @@ def keccak_f.keccak_f
 @[global_simps, irreducible] def sha3.SHAKE_DELIM : Std.U8 := 31#u8
 
 /-- [hacspec_sha3::sponge::squeeze::closure]
-    Source: 'src/sponge.rs', lines 158:12-163:5 -/
+    Source: 'src/sponge.rs', lines 177:12-182:5 -/
 def sponge.squeeze.closure (OUTPUT_LEN : Std.Usize) :=
   Std.Usize × Array Std.U64 25#usize
 
 /-- [hacspec_sha3::sponge::iterate_keccak_f]:
-    Source: 'src/sponge.rs', lines 135:0-141:1
+    Source: 'src/sponge.rs', lines 154:0-160:1
     Visibility: public -/
 def sponge.iterate_keccak_f
   (n : Std.Usize) (state : Array Std.U64 25#usize) :
@@ -636,8 +935,16 @@ def sponge.iterate_keccak_f
     keccak_f.keccak_f a
 partial_fixpoint
 
+/-- [hacspec_sha3::sponge::byte_lane_idx]:
+    Source: 'src/sponge.rs', lines 16:0-18:1 -/
+def sponge.byte_lane_idx (b : Std.Usize) : Result Std.Usize := do
+  let i ← b % 5#usize
+  let i1 ← 5#usize * i
+  let i2 ← b / 5#usize
+  i1 + i2
+
 /-- [hacspec_sha3::sponge::squeeze::{core::ops::function::Fn<(usize), u8> for hacspec_sha3::sponge::squeeze::closure<0, 1, OUTPUT_LEN>}::call]:
-    Source: 'src/sponge.rs', lines 158:12-163:5 -/
+    Source: 'src/sponge.rs', lines 177:12-182:5 -/
 def sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8.call
   {OUTPUT_LEN : Std.Usize} (c : sponge.squeeze.closure OUTPUT_LEN)
   (tupled_args : Std.Usize) :
@@ -649,13 +956,14 @@ def sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8.call
   let j ← tupled_args - i1
   let state_b ← sponge.iterate_keccak_f b a
   let i2 ← j / 8#usize
-  let i3 ← Array.index_usize state_b i2
-  let a1 ← core_models.num.U64.to_le_bytes i3
-  let i4 ← j % 8#usize
-  Array.index_usize a1 i4
+  let i3 ← sponge.byte_lane_idx i2
+  let i4 ← Array.index_usize state_b i3
+  let a1 ← core_models.num.U64.to_le_bytes i4
+  let i5 ← j % 8#usize
+  Array.index_usize a1 i5
 
 /-- [hacspec_sha3::sponge::squeeze::{core::ops::function::FnMut<(usize), u8> for hacspec_sha3::sponge::squeeze::closure<0, 1, OUTPUT_LEN>}::call_mut]:
-    Source: 'src/sponge.rs', lines 158:12-163:5 -/
+    Source: 'src/sponge.rs', lines 177:12-182:5 -/
 def
   sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU8.call_mut
   {OUTPUT_LEN : Std.Usize} (state : sponge.squeeze.closure OUTPUT_LEN)
@@ -668,7 +976,7 @@ def
   ok (i, state)
 
 /-- [hacspec_sha3::sponge::squeeze::{core::ops::function::FnOnce<(usize), u8> for hacspec_sha3::sponge::squeeze::closure<0, 1, OUTPUT_LEN>}::call_once]:
-    Source: 'src/sponge.rs', lines 158:12-163:5 -/
+    Source: 'src/sponge.rs', lines 177:12-182:5 -/
 def
   sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU8.call_once
   {OUTPUT_LEN : Std.Usize} (c : sponge.squeeze.closure OUTPUT_LEN)
@@ -681,7 +989,7 @@ def
   ok i1
 
 /-- Trait implementation: [hacspec_sha3::sponge::squeeze::{core::ops::function::FnOnce<(usize), u8> for hacspec_sha3::sponge::squeeze::closure<0, 1, OUTPUT_LEN>}]
-    Source: 'src/sponge.rs', lines 158:12-163:5 -/
+    Source: 'src/sponge.rs', lines 177:12-182:5 -/
 @[reducible]
 def sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU8
   (OUTPUT_LEN : Std.Usize) : core_models.ops.function.FnOnce
@@ -691,7 +999,7 @@ def sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU8
 }
 
 /-- Trait implementation: [hacspec_sha3::sponge::squeeze::{core::ops::function::FnMut<(usize), u8> for hacspec_sha3::sponge::squeeze::closure<0, 1, OUTPUT_LEN>}]
-    Source: 'src/sponge.rs', lines 158:12-163:5 -/
+    Source: 'src/sponge.rs', lines 177:12-182:5 -/
 @[reducible]
 def sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU8
   (OUTPUT_LEN : Std.Usize) : core_models.ops.function.FnMut
@@ -704,7 +1012,7 @@ def sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU8
 }
 
 /-- Trait implementation: [hacspec_sha3::sponge::squeeze::{core::ops::function::Fn<(usize), u8> for hacspec_sha3::sponge::squeeze::closure<0, 1, OUTPUT_LEN>}]
-    Source: 'src/sponge.rs', lines 158:12-163:5 -/
+    Source: 'src/sponge.rs', lines 177:12-182:5 -/
 @[reducible]
 def sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8
   (OUTPUT_LEN : Std.Usize) : core_models.ops.function.Fn
@@ -717,7 +1025,7 @@ def sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8
 }
 
 /-- [hacspec_sha3::sponge::squeeze]:
-    Source: 'src/sponge.rs', lines 157:0-164:1
+    Source: 'src/sponge.rs', lines 176:0-183:1
     Visibility: public -/
 def sponge.squeeze
   (OUTPUT_LEN : Std.Usize) (state : Array Std.U64 25#usize) (rate : Std.Usize)
@@ -729,7 +1037,7 @@ def sponge.squeeze
     OUTPUT_LEN) (rate, state)
 
 /-- [hacspec_sha3::sponge::pad_last_block]:
-    Source: 'src/sponge.rs', lines 74:0-86:1
+    Source: 'src/sponge.rs', lines 93:0-105:1
     Visibility: public -/
 def sponge.pad_last_block
   (message : Slice Std.U8) (msg_offset : Std.Usize) (remaining : Std.Usize)
@@ -758,42 +1066,46 @@ def sponge.pad_last_block
   Array.update buffer2 i1 i3
 
 /-- [hacspec_sha3::sponge::xor_block_into_state::closure]
-    Source: 'src/sponge.rs', lines 20:29-28:9 -/
+    Source: 'src/sponge.rs', lines 33:29-44:9 -/
 def sponge.xor_block_into_state.closure :=
   Std.Usize × Array Std.U64 25#usize × Slice Std.U8
 
 /-- [hacspec_sha3::sponge::xor_block_into_state::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::sponge::xor_block_into_state::closure<0, 1, 2>}::call_mut]:
-    Source: 'src/sponge.rs', lines 20:29-28:9 -/
+    Source: 'src/sponge.rs', lines 33:29-44:9 -/
 def
   sponge.xor_block_into_state.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
   (c : sponge.xor_block_into_state.closure) (tupled_args : Std.Usize) :
   Result (Std.U64 × sponge.xor_block_into_state.closure)
   := do
   let (i, a, s) := c
-  let i1 ← i / 8#usize
-  if tupled_args < i1
+  let x ← tupled_args / 5#usize
+  let y ← tupled_args % 5#usize
+  let i1 ← 5#usize * y
+  let b ← i1 + x
+  let i2 ← i / 8#usize
+  if b < i2
   then
-    let i2 ← Array.index_usize a tupled_args
-    let i3 ← 8#usize * tupled_args
-    let i4 ← i3 + 8#usize
+    let i3 ← Array.index_usize a tupled_args
+    let i4 ← 8#usize * b
+    let i5 ← i4 + 8#usize
     let s1 ←
       core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
         (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-        Std.U8) s { start := i3, «end» := i4 }
+        Std.U8) s { start := i4, «end» := i5 }
     let r ←
       core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
         8#usize core_models.U8.Insts.Core_modelsMarkerCopy s1
     let a1 ←
       core_models.result.Result.unwrap
         core_models.array.TryFromSliceError.Insts.Core_modelsFmtDebug r
-    let i5 ← core_models.num.U64.from_le_bytes a1
-    let i6 ← lift (i2 ^^^ i5)
-    ok (i6, c)
-  else let i2 ← Array.index_usize a tupled_args
-       ok (i2, c)
+    let i6 ← core_models.num.U64.from_le_bytes a1
+    let i7 ← lift (i3 ^^^ i6)
+    ok (i7, c)
+  else let i3 ← Array.index_usize a tupled_args
+       ok (i3, c)
 
 /-- [hacspec_sha3::sponge::xor_block_into_state::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::sponge::xor_block_into_state::closure<0, 1, 2>}::call_once]:
-    Source: 'src/sponge.rs', lines 20:29-28:9 -/
+    Source: 'src/sponge.rs', lines 33:29-44:9 -/
 def
   sponge.xor_block_into_state.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : sponge.xor_block_into_state.closure) (i : Std.Usize) :
@@ -805,7 +1117,7 @@ def
   ok i1
 
 /-- Trait implementation: [hacspec_sha3::sponge::xor_block_into_state::{core::ops::function::FnOnce<(usize), u64> for hacspec_sha3::sponge::xor_block_into_state::closure<0, 1, 2>}]
-    Source: 'src/sponge.rs', lines 20:29-28:9 -/
+    Source: 'src/sponge.rs', lines 33:29-44:9 -/
 @[reducible]
 def
   sponge.xor_block_into_state.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU64
@@ -816,7 +1128,7 @@ def
 }
 
 /-- Trait implementation: [hacspec_sha3::sponge::xor_block_into_state::{core::ops::function::FnMut<(usize), u64> for hacspec_sha3::sponge::xor_block_into_state::closure<0, 1, 2>}]
-    Source: 'src/sponge.rs', lines 20:29-28:9 -/
+    Source: 'src/sponge.rs', lines 33:29-44:9 -/
 @[reducible]
 def
   sponge.xor_block_into_state.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64
@@ -829,7 +1141,7 @@ def
 }
 
 /-- [hacspec_sha3::sponge::xor_block_into_state]:
-    Source: 'src/sponge.rs', lines 17:0-42:1
+    Source: 'src/sponge.rs', lines 27:0-61:1
     Visibility: public -/
 def sponge.xor_block_into_state
   (state : Array Std.U64 25#usize) (block : Slice Std.U8) (rate : Std.Usize) :
@@ -840,7 +1152,7 @@ def sponge.xor_block_into_state
     (rate, state, block)
 
 /-- [hacspec_sha3::sponge::absorb_block]:
-    Source: 'src/sponge.rs', lines 63:0-66:1
+    Source: 'src/sponge.rs', lines 82:0-85:1
     Visibility: public -/
 def sponge.absorb_block
   (state : Array Std.U64 25#usize) (block : Slice Std.U8) (rate : Std.Usize) :
@@ -850,7 +1162,7 @@ def sponge.absorb_block
   keccak_f.keccak_f state1
 
 /-- [hacspec_sha3::sponge::absorb_final]:
-    Source: 'src/sponge.rs', lines 94:0-104:1
+    Source: 'src/sponge.rs', lines 113:0-123:1
     Visibility: public -/
 def sponge.absorb_final
   (state : Array Std.U64 25#usize) (message : Slice Std.U8)
@@ -867,7 +1179,7 @@ def sponge.absorb_final
   sponge.absorb_block state s rate
 
 /-- [hacspec_sha3::sponge::absorb_rec]:
-    Source: 'src/sponge.rs', lines 112:0-119:1
+    Source: 'src/sponge.rs', lines 131:0-138:1
     Visibility: public -/
 def sponge.absorb_rec
   (state : Array Std.U64 25#usize) (rate : Std.Usize) (delim : Std.U8)
@@ -891,7 +1203,7 @@ def sponge.absorb_rec
 partial_fixpoint
 
 /-- [hacspec_sha3::sponge::absorb]:
-    Source: 'src/sponge.rs', lines 129:0-131:1
+    Source: 'src/sponge.rs', lines 148:0-150:1
     Visibility: public -/
 def sponge.absorb
   (rate : Std.Usize) (delim : Std.U8) (message : Slice Std.U8) :
@@ -901,7 +1213,7 @@ def sponge.absorb
   sponge.absorb_rec a rate delim message
 
 /-- [hacspec_sha3::sponge::keccak]:
-    Source: 'src/sponge.rs', lines 178:0-180:1
+    Source: 'src/sponge.rs', lines 197:0-199:1
     Visibility: public -/
 def sponge.keccak
   (OUTPUT_LEN : Std.Usize) (rate : Std.Usize) (delim : Std.U8)
@@ -954,13 +1266,13 @@ def sha3.shake256
   sponge.keccak N sha3.SHAKE256_RATE sha3.SHAKE_DELIM message
 
 /-- [hacspec_sha3::sponge::squeeze_state::closure]
-    Source: 'src/sponge.rs', lines 54:35-54:72 -/
+    Source: 'src/sponge.rs', lines 73:35-73:87 -/
 @[reducible]
 def sponge.squeeze_state.closure (OUTPUT_LEN : Std.Usize) :=
   Array Std.U64 25#usize
 
 /-- [hacspec_sha3::sponge::squeeze_state::{core::ops::function::Fn<(usize), u8> for hacspec_sha3::sponge::squeeze_state::closure<0, OUTPUT_LEN>}::call]:
-    Source: 'src/sponge.rs', lines 54:35-54:72 -/
+    Source: 'src/sponge.rs', lines 73:35-73:87 -/
 def
   sponge.squeeze_state.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8.call
   {OUTPUT_LEN : Std.Usize} (c : sponge.squeeze_state.closure OUTPUT_LEN)
@@ -968,13 +1280,14 @@ def
   Result Std.U8
   := do
   let i ← tupled_args / 8#usize
-  let i1 ← Array.index_usize c i
-  let a ← core_models.num.U64.to_le_bytes i1
-  let i2 ← tupled_args % 8#usize
-  Array.index_usize a i2
+  let i1 ← sponge.byte_lane_idx i
+  let i2 ← Array.index_usize c i1
+  let a ← core_models.num.U64.to_le_bytes i2
+  let i3 ← tupled_args % 8#usize
+  Array.index_usize a i3
 
 /-- [hacspec_sha3::sponge::squeeze_state::{core::ops::function::FnMut<(usize), u8> for hacspec_sha3::sponge::squeeze_state::closure<0, OUTPUT_LEN>}::call_mut]:
-    Source: 'src/sponge.rs', lines 54:35-54:72 -/
+    Source: 'src/sponge.rs', lines 73:35-73:87 -/
 def
   sponge.squeeze_state.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU8.call_mut
   {OUTPUT_LEN : Std.Usize} (state : sponge.squeeze_state.closure OUTPUT_LEN)
@@ -987,7 +1300,7 @@ def
   ok (i, state)
 
 /-- [hacspec_sha3::sponge::squeeze_state::{core::ops::function::FnOnce<(usize), u8> for hacspec_sha3::sponge::squeeze_state::closure<0, OUTPUT_LEN>}::call_once]:
-    Source: 'src/sponge.rs', lines 54:35-54:72 -/
+    Source: 'src/sponge.rs', lines 73:35-73:87 -/
 def
   sponge.squeeze_state.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU8.call_once
   {OUTPUT_LEN : Std.Usize} (c : sponge.squeeze_state.closure OUTPUT_LEN)
@@ -1000,7 +1313,7 @@ def
   ok i1
 
 /-- Trait implementation: [hacspec_sha3::sponge::squeeze_state::{core::ops::function::FnOnce<(usize), u8> for hacspec_sha3::sponge::squeeze_state::closure<0, OUTPUT_LEN>}]
-    Source: 'src/sponge.rs', lines 54:35-54:72 -/
+    Source: 'src/sponge.rs', lines 73:35-73:87 -/
 @[reducible]
 def sponge.squeeze_state.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU8
   (OUTPUT_LEN : Std.Usize) : core_models.ops.function.FnOnce
@@ -1010,7 +1323,7 @@ def sponge.squeeze_state.closure.Insts.Core_modelsOpsFunctionFnOnceTupleUsizeU8
 }
 
 /-- Trait implementation: [hacspec_sha3::sponge::squeeze_state::{core::ops::function::FnMut<(usize), u8> for hacspec_sha3::sponge::squeeze_state::closure<0, OUTPUT_LEN>}]
-    Source: 'src/sponge.rs', lines 54:35-54:72 -/
+    Source: 'src/sponge.rs', lines 73:35-73:87 -/
 @[reducible]
 def sponge.squeeze_state.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU8
   (OUTPUT_LEN : Std.Usize) : core_models.ops.function.FnMut
@@ -1023,7 +1336,7 @@ def sponge.squeeze_state.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU8
 }
 
 /-- Trait implementation: [hacspec_sha3::sponge::squeeze_state::{core::ops::function::Fn<(usize), u8> for hacspec_sha3::sponge::squeeze_state::closure<0, OUTPUT_LEN>}]
-    Source: 'src/sponge.rs', lines 54:35-54:72 -/
+    Source: 'src/sponge.rs', lines 73:35-73:87 -/
 @[reducible]
 def sponge.squeeze_state.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8
   (OUTPUT_LEN : Std.Usize) : core_models.ops.function.Fn
@@ -1036,7 +1349,7 @@ def sponge.squeeze_state.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8
 }
 
 /-- [hacspec_sha3::sponge::squeeze_state]:
-    Source: 'src/sponge.rs', lines 48:0-57:1
+    Source: 'src/sponge.rs', lines 67:0-76:1
     Visibility: public -/
 def sponge.squeeze_state
   {OUTPUT_LEN : Std.Usize} (state : Array Std.U64 25#usize)
