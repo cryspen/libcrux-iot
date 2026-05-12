@@ -1,11 +1,21 @@
 /// Sponge construction — FIPS 202, Algorithm 8 (KECCAK[c])
 /// with pad10*1 padding — FIPS 202, Algorithm 9.
 ///
-/// With the state stored as `state[5·y + x]` (FIPS 202 §3.1.2), byte-lane
-/// `l` lives directly at `state[l]`, so no lane-index permutation is
-/// needed here.
+/// FIPS 202 §3.1.2 places byte block `b` at lane `(x = b%5, y = b/5)`. With
+/// the in-memory layout `state[5*x + y] = A[x, y]` (see `keccak_f.rs`),
+/// byte block `b` therefore lives at `state[5*(b%5) + b/5]`.
 use crate::createi;
 use crate::keccak_f::{keccak_f, State};
+
+/// Map a byte-block index `b ∈ 0..25` to the in-memory state slot that
+/// holds the corresponding lane under the `state[5*x + y] = A[x, y]` layout.
+///
+/// FIPS 202 §3.1.2 puts byte block `b` at lane `(x = b%5, y = b/5)`.
+#[inline]
+#[hax_lib::requires(b < 25)]
+fn byte_lane_idx(b: usize) -> usize {
+    5 * (b % 5) + b / 5
+}
 
 #[cfg(hax)]
 use hax_lib::int::*;
@@ -15,27 +25,36 @@ use hax_lib::int::*;
 /// Corresponds to the `S ⊕ (Pi || 0^c)` step of Algorithm 8.
 #[hax_lib::requires(rate <= 200 && rate % 8 == 0 && block.len() >= rate)]
 pub fn xor_block_into_state(state: State, block: &[u8], rate: usize) -> State {
+    // Iterate over state-array slots `idx = 5*x + y`. Slot `idx` corresponds
+    // to byte block `b` where `idx = 5*(b%5) + b/5`, i.e. `b = 5*y + x` with
+    // `x = idx/5`, `y = idx%5`.
     #[cfg(charon)] // https://github.com/AeneasVerif/aeneas/issues/924
     {
-        core::array::from_fn(|i| {
-            if i < rate / 8 {
-                // The slice is exactly 8 bytes (since `i < rate / 8` and
+        core::array::from_fn(|idx| {
+            let x = idx / 5;
+            let y = idx % 5;
+            let b = 5 * y + x;
+            if b < rate / 8 {
+                // The slice is exactly 8 bytes (since `b < rate / 8` and
                 // `block.len() >= rate`), so `try_into::<[u8; 8]>` cannot fail.
-                state[i] ^ u64::from_le_bytes(block[8 * i..8 * i + 8].try_into().unwrap())
+                state[idx] ^ u64::from_le_bytes(block[8 * b..8 * b + 8].try_into().unwrap())
             } else {
-                state[i]
+                state[idx]
             }
         })
     }
     #[cfg(not(charon))]
     {
-        createi(|i| {
-            if i < rate / 8 {
-                // The slice is exactly 8 bytes (since `i < rate / 8` and
+        createi(|idx| {
+            let x = idx / 5;
+            let y = idx % 5;
+            let b = 5 * y + x;
+            if b < rate / 8 {
+                // The slice is exactly 8 bytes (since `b < rate / 8` and
                 // `block.len() >= rate`), so `try_into::<[u8; 8]>` cannot fail.
-                state[i] ^ u64::from_le_bytes(block[8 * i..8 * i + 8].try_into().unwrap())
+                state[idx] ^ u64::from_le_bytes(block[8 * b..8 * b + 8].try_into().unwrap())
             } else {
-                state[i]
+                state[idx]
             }
         })
     }
@@ -51,7 +70,7 @@ pub fn squeeze_state<const OUTPUT_LEN: usize>(
     out_offset: usize,
     len: usize,
 ) -> [u8; OUTPUT_LEN] {
-    let bytes: [u8; 200] = createi(|i| state[i / 8].to_le_bytes()[i % 8]);
+    let bytes: [u8; 200] = createi(|i| state[byte_lane_idx(i / 8)].to_le_bytes()[i % 8]);
     output[out_offset..out_offset + len].copy_from_slice(&bytes[0..len]);
     output
 }
@@ -159,7 +178,7 @@ pub fn squeeze<const OUTPUT_LEN: usize>(state: State, rate: usize) -> [u8; OUTPU
         let b = k / rate;
         let j = k - b * rate;
         let state_b = iterate_keccak_f(b, state);
-        state_b[j / 8].to_le_bytes()[j % 8]
+        state_b[byte_lane_idx(j / 8)].to_le_bytes()[j % 8]
     })
 }
 

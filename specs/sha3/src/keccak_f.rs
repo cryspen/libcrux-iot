@@ -1,9 +1,11 @@
 /// Keccak-f[1600] permutation — FIPS 202, Section 3.3.
 ///
 /// The state is a 5×5 array of 64-bit lanes stored as a flat `[u64; 25]`.
-/// Lane `A[x, y]` maps to flat index `5*y + x`, matching the natural
-/// flat indexing induced by FIPS 202 §3.1.2 (`A[x, y, z] = S[w(5y + x) + z]`)
-/// and the Keccak reference implementation.
+/// Lane `A[x, y]` maps to flat index `5*x + y`. This is an in-memory layout
+/// choice independent of FIPS 202 §3.1.2's bit-string→array conversion;
+/// θ/ρ/π/χ/ι operate on `A[x, y]` regardless of how the lanes are laid out.
+/// The byte ↔ lane mapping in the sponge layer compensates so that the SHA-3
+/// outputs remain FIPS-correct.
 use crate::createi;
 
 /// Keccak-f[1600] state: 5×5 lanes of 64-bit words.
@@ -14,7 +16,7 @@ pub type State = [u64; 25];
 #[inline]
 #[hax_lib::requires(x < 5 && y < 5)]
 pub fn get(state: &State, x: usize, y: usize) -> u64 {
-    state[5 * y + x]
+    state[5 * x + y]
 }
 
 // =========================================================================
@@ -51,14 +53,14 @@ pub const ROUND_CONSTANTS: [u64; 24] = [
 
 /// Rotation offsets for ρ step — FIPS 202, Algorithm 2 / Table 2.
 ///
-/// Indexed as `RHO_OFFSETS[5*y + x]`.
+/// Indexed as `RHO_OFFSETS[5*x + y]`.
 pub const RHO_OFFSETS: [u32; 25] = [
-    //  x=0  x=1  x=2  x=3  x=4
-    0, 1, 62, 28, 27, // y = 0
-    36, 44, 6, 55, 20, // y = 1
-    3, 10, 43, 25, 39, // y = 2
-    41, 45, 15, 21, 8, // y = 3
-    18, 2, 61, 56, 14, // y = 4
+    //  y=0  y=1  y=2  y=3  y=4
+    0, 36, 3, 41, 18, // x = 0
+    1, 44, 10, 45, 2, // x = 1
+    62, 6, 43, 15, 61, // x = 2
+    28, 55, 25, 21, 56, // x = 3
+    27, 20, 39, 8, 14, // x = 4
 ];
 
 // =========================================================================
@@ -79,7 +81,9 @@ pub fn theta(state: State) -> State {
             ^ get(&state, x, 4)
     });
     let d: [u64; 5] = createi(|x| c[(x + 4) % 5] ^ c[(x + 1) % 5].rotate_left(1));
-    createi(|idx| state[idx] ^ d[idx % 5])
+    // Under the new layout `state[5*x + y] = A[x, y]`, the x-coordinate is
+    // `idx / 5`.
+    createi(|idx| state[idx] ^ d[idx / 5])
 }
 
 /// ρ step — FIPS 202, Algorithm 2.
@@ -94,8 +98,10 @@ pub fn rho(state: State) -> State {
 ///   A′[x,y] = A[(x + 3y) mod 5, x]
 pub fn pi(state: State) -> State {
     createi(|idx| {
-        let y = idx / 5;
-        let x = idx % 5;
+        // Under the new layout `state[5*x + y] = A[x, y]`,
+        // x = idx / 5, y = idx % 5.
+        let x = idx / 5;
+        let y = idx % 5;
         get(&state, (x + 3 * y) % 5, x)
     })
 }
@@ -105,8 +111,10 @@ pub fn pi(state: State) -> State {
 ///   A′[x,y] = A[x,y] ⊕ (¬A[(x+1) mod 5, y] ∧ A[(x+2) mod 5, y])
 pub fn chi(state: State) -> State {
     createi(|idx| {
-        let y = idx / 5;
-        let x = idx % 5;
+        // Under the new layout `state[5*x + y] = A[x, y]`,
+        // x = idx / 5, y = idx % 5.
+        let x = idx / 5;
+        let y = idx % 5;
         get(&state, x, y) ^ (!get(&state, (x + 1) % 5, y) & get(&state, (x + 2) % 5, y))
     })
 }
