@@ -117,10 +117,10 @@ def lane.Lane2U32.interleave
   (self : lane.Lane2U32) : Result lane.Lane2U32 := do
   let i ←
     lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index self 0#usize
-  let i1 ← U32.Insts.Libcrux_secretsIntCastOps.as_u64 i
+  let i1 ← libcrux_secrets.U32.Insts.Libcrux_secretsIntCastOps.as_u64 i
   let i2 ←
     lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index self 1#usize
-  let i3 ← U32.Insts.Libcrux_secretsIntCastOps.as_u64 i2
+  let i3 ← libcrux_secrets.U32.Insts.Libcrux_secretsIntCastOps.as_u64 i2
   let i4 ← i3 <<< 32#i32
   let lane_u64 ← lift (i1 ||| i4)
   let even_bits ← lift (lane_u64 &&& 6148914691236517205#u64)
@@ -156,8 +156,10 @@ def lane.Lane2U32.interleave
   let i24 ← odd_bits4 >>> 16#i32
   let i25 ← lift (odd_bits4 ^^^ i24)
   let odd_bits5 ← lift (i25 &&& 4294967295#u64)
-  let i26 ← U64.Insts.Libcrux_secretsIntCastOps.as_u32 even_bits5
-  let i27 ← U64.Insts.Libcrux_secretsIntCastOps.as_u32 odd_bits5
+  let i26 ←
+    libcrux_secrets.U64.Insts.Libcrux_secretsIntCastOps.as_u32 even_bits5
+  let i27 ←
+    libcrux_secrets.U64.Insts.Libcrux_secretsIntCastOps.as_u32 odd_bits5
   lane.Lane2U32.from_ints (Array.make 2#usize [ i26, i27 ])
 
 /-- [libcrux_iot_sha3::state::load_block_2u32]: loop body 0:
@@ -172,7 +174,7 @@ def state.load_block_2u32_loop0.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done state_flat)
   | core_models.option.Option.Some i =>
@@ -180,24 +182,24 @@ def state.load_block_2u32_loop0.body
     let offset ← start + i1
     let i2 ← offset + 4#usize
     let s ←
-      Slice.Insts.Core_modelsOpsIndexIndex.index
+      core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
         (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8) blocks { start := offset, «end» := i2 }
     let r ←
-      Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
-        4#usize U8.Insts.Core_modelsMarkerCopy s
+      core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
+        4#usize core_models.U8.Insts.Core_modelsMarkerCopy s
     let a ←
       core_models.result.Result.unwrap
         core_models.array.TryFromSliceError.Insts.Core_modelsFmtDebug r
     let a1 ← core_models.num.U32.from_le_bytes a
     let i3 ← offset + 8#usize
     let s1 ←
-      Slice.Insts.Core_modelsOpsIndexIndex.index
+      core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
         (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8) blocks { start := i2, «end» := i3 }
     let r1 ←
-      Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
-        4#usize U8.Insts.Core_modelsMarkerCopy s1
+      core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
+        4#usize core_models.U8.Insts.Core_modelsMarkerCopy s1
     let a2 ←
       core_models.result.Result.unwrap
         core_models.array.TryFromSliceError.Insts.Core_modelsFmtDebug r1
@@ -233,7 +235,7 @@ def state.load_block_2u32_loop1.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done s)
   | core_models.option.Option.Some i =>
@@ -772,6 +774,7 @@ def keccak.keccakf1600_round3_pi_rho_chi_y1_zeta0
   let ax4 ← lift (bx4 ^^^ i14)
   state.KeccakState.set_with_zeta s4 1#usize 4#usize 0#usize ax4
 
+set_option maxRecDepth 1000 in
 /-- [libcrux_iot_sha3::keccak::RC_INTERLEAVED_1]
     Source: 'sha3/src/keccak.rs', lines 228:0-261:2 -/
 @[global_simps, irreducible]
@@ -888,6 +891,7 @@ def keccak.keccakf1600_round3_pi_rho_chi_y0_zeta1
   let ax4 ← lift (bx4 ^^^ i17)
   state.KeccakState.set_with_zeta s4 0#usize 4#usize 1#usize ax4
 
+set_option maxRecDepth 1000 in
 /-- [libcrux_iot_sha3::keccak::RC_INTERLEAVED_0]
     Source: 'sha3/src/keccak.rs', lines 192:0-225:2 -/
 @[global_simps, irreducible]
@@ -3749,7 +3753,7 @@ def keccak.keccakf1600_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      I32.Insts.Core_modelsIterRangeStep iter
+      core_models.I32.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done s)
   | core_models.option.Option.Some _ =>
@@ -3788,17 +3792,17 @@ def keccak.KeccakXofState.fill_buffer
     then
       let consumed ← RATE - self.buf_len
       let (s, index_mut_back) ←
-        Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
-          (Slice.Insts.Core_modelsOpsIndexIndexMut
+        core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
           (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8)) self.buf { start := self.buf_len }
       let s1 ←
-        Slice.Insts.Core_modelsOpsIndexIndex.index
+        core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
           (core_models.ops.range.RangeToUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8) inputs { «end» := consumed }
       let s2 ←
-        core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy
-          s s1
+        core_models.slice.Slice.copy_from_slice
+          core_models.U8.Insts.Core_modelsMarkerCopy s s1
       let i1 ← self.buf_len + consumed
       let a := index_mut_back s2
       ok (consumed, { self with buf := a, buf_len := i1 })
@@ -3817,7 +3821,7 @@ def keccak.KeccakXofState.absorb_full_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done self)
   | core_models.option.Option.Some i =>
@@ -3887,18 +3891,18 @@ def keccak.KeccakXofState.absorb
     let input_len ← core_models.slice.Slice.len inputs
     let i ← self1.buf_len + input_remainder_len
     let (s, index_mut_back) ←
-      Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
-        (Slice.Insts.Core_modelsOpsIndexIndexMut
+      core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+        (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
         (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8)) self1.buf { start := self1.buf_len, «end» := i }
     let i1 ← input_len - input_remainder_len
     let s1 ←
-      Slice.Insts.Core_modelsOpsIndexIndex.index
+      core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
         (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8) inputs { start := i1 }
     let s2 ←
-      core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy s
-        s1
+      core_models.slice.Slice.copy_from_slice
+        core_models.U8.Insts.Core_modelsMarkerCopy s s1
     let a := index_mut_back s2
     ok { self1 with buf := a, buf_len := i }
   else ok self1
@@ -3939,18 +3943,18 @@ def keccak.KeccakXofState.absorb_final
     then
       do
       let (s, index_mut_back) ←
-        Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
-          (Slice.Insts.Core_modelsOpsIndexIndexMut
+        core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
           (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8)) blocks { start := 0#usize, «end» := self1.buf_len }
       let s1 ←
-        Array.Insts.Core_modelsOpsIndexIndex.index
-          (Slice.Insts.Core_modelsOpsIndexIndex
+        core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndex
           (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8)) self1.buf { start := 0#usize, «end» := self1.buf_len }
       let s2 ←
-        core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy
-          s s1
+        core_models.slice.Slice.copy_from_slice
+          core_models.U8.Insts.Core_modelsMarkerCopy s s1
       ok (index_mut_back s2)
     else ok blocks
   let blocks2 ←
@@ -3959,18 +3963,18 @@ def keccak.KeccakXofState.absorb_final
       do
       let i ← self1.buf_len + input_remainder_len
       let (s, index_mut_back) ←
-        Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
-          (Slice.Insts.Core_modelsOpsIndexIndexMut
+        core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
           (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8)) blocks1 { start := self1.buf_len, «end» := i }
       let i1 ← input_len - input_remainder_len
       let s1 ←
-        Slice.Insts.Core_modelsOpsIndexIndex.index
+        core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
           (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8) inputs { start := i1 }
       let s2 ←
-        core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy
-          s s1
+        core_models.slice.Slice.copy_from_slice
+          core_models.U8.Insts.Core_modelsMarkerCopy s s1
       ok (index_mut_back s2)
     else ok blocks1
   let i ← libcrux_secrets.traits.Classify.Blanket.classify DELIMITER
@@ -4071,7 +4075,7 @@ def state.KeccakState.store_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done out)
   | core_models.option.Option.Some i =>
@@ -4082,7 +4086,7 @@ def state.KeccakState.store_loop.body
     let i3 ← i * 8#usize
     let i4 ← i3 + 4#usize
     let (s, index_mut_back) ←
-      Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+      core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
         (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8) out { start := i3, «end» := i4 }
     let i5 ←
@@ -4090,13 +4094,13 @@ def state.KeccakState.store_loop.body
     let a ← core_models.num.U32.to_le_bytes i5
     let s1 ← lift (Array.to_slice a)
     let s2 ←
-      core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy s
-        s1
+      core_models.slice.Slice.copy_from_slice
+        core_models.U8.Insts.Core_modelsMarkerCopy s s1
     let out1 := index_mut_back s2
     let i6 ← i3 + 4#usize
     let i7 ← i3 + 8#usize
     let (s3, index_mut_back1) ←
-      Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+      core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
         (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8) out1 { start := i6, «end» := i7 }
     let i8 ←
@@ -4104,8 +4108,8 @@ def state.KeccakState.store_loop.body
     let a1 ← core_models.num.U32.to_le_bytes i8
     let s4 ← lift (Array.to_slice a1)
     let s5 ←
-      core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy s3
-        s4
+      core_models.slice.Slice.copy_from_slice
+        core_models.U8.Insts.Core_modelsMarkerCopy s3 s4
     let out2 := index_mut_back1 s5
     ok (cont (iter1, out2))
 
@@ -4145,7 +4149,7 @@ def state.KeccakState.store
       let i3 ← num_full_blocks * 8#usize
       let i4 ← i3 + 4#usize
       let (s, index_mut_back) ←
-        Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+        core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
           (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8) out1 { start := i3, «end» := i4 }
       let i5 ←
@@ -4153,26 +4157,26 @@ def state.KeccakState.store
       let a ← core_models.num.U32.to_le_bytes i5
       let s1 ← lift (Array.to_slice a)
       let s2 ←
-        core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy
-          s s1
+        core_models.slice.Slice.copy_from_slice
+          core_models.U8.Insts.Core_modelsMarkerCopy s s1
       let out2 := index_mut_back s2
       let i6 ← i3 + 4#usize
       let i7 ← i3 + last_block_len
       let (s3, index_mut_back1) ←
-        Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+        core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
           (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8) out2 { start := i6, «end» := i7 }
       let i8 ←
         lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index l 1#usize
       let a1 ← core_models.num.U32.to_le_bytes i8
       let s4 ←
-        Array.Insts.Core_modelsOpsIndexIndex.index
-          (Slice.Insts.Core_modelsOpsIndexIndex
+        core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndex
           (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8)) a1 { start := 0#usize, «end» := last_half_block_len }
       let s5 ←
-        core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy
-          s3 s4
+        core_models.slice.Slice.copy_from_slice
+          core_models.U8.Insts.Core_modelsMarkerCopy s3 s4
       ok (index_mut_back1 s5)
     else
       if last_block_len > 0#usize
@@ -4184,34 +4188,36 @@ def state.KeccakState.store
         let i3 ← num_full_blocks * 8#usize
         let i4 ← i3 + last_block_len
         let (s, index_mut_back) ←
-          Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+          core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
             (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
             Std.U8) out1 { start := i3, «end» := i4 }
         let i5 ←
           lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index l 0#usize
         let a ← core_models.num.U32.to_le_bytes i5
         let s1 ←
-          Array.Insts.Core_modelsOpsIndexIndex.index
-            (Slice.Insts.Core_modelsOpsIndexIndex
+          core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+            (core_models.Slice.Insts.Core_modelsOpsIndexIndex
             (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
             Std.U8)) a { start := 0#usize, «end» := last_block_len }
         let s2 ←
           core_models.slice.Slice.copy_from_slice
-            U8.Insts.Core_modelsMarkerCopy s s1
+            core_models.U8.Insts.Core_modelsMarkerCopy s s1
         ok (index_mut_back s2)
       else ok out1
   else
+/-
     let a ←
-      core_models.fmt.rt.Argument.new_display Usize.Insts.Core_modelsFmtDisplay
-        i
+      core_models.fmt.rt.Argument.new_display
+        core_models.Usize.Insts.Core_modelsFmtDisplay i
     let a1 ←
-      core_models.fmt.rt.Argument.new_display Usize.Insts.Core_modelsFmtDisplay
-        RATE
+      core_models.fmt.rt.Argument.new_display
+        core_models.Usize.Insts.Core_modelsFmtDisplay RATE
     let _ ←
       core_models.fmt.Arguments.new
         (Array.make 7#usize [
           192#u8, 3#u8, 32#u8, 62#u8, 32#u8, 192#u8, 0#u8
           ]) (Array.make 2#usize [ a, a1 ])
+-/
     fail panic
 
 /-- [libcrux_iot_sha3::keccak::{libcrux_iot_sha3::keccak::KeccakXofState<RATE>}::squeeze]: loop body 0:
@@ -4226,14 +4232,14 @@ def keccak.KeccakXofState.squeeze_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done (ks, out, offset))
   | core_models.option.Option.Some _ =>
     let ks1 ← keccak.keccakf1600 ks
     let i ← offset + RATE
     let (s, index_mut_back) ←
-      Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+      core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
         (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8) out { start := offset, «end» := i }
     let s1 ← state.KeccakState.store RATE ks1 s
@@ -4271,7 +4277,7 @@ def keccak.KeccakXofState.squeeze
               then ok out_len
               else ok RATE
   let (s, index_mut_back) ←
-    Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+    core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
       (core_models.ops.range.RangeToUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
       Std.U8) out { «end» := mid }
   let s1 ← state.KeccakState.store RATE ks s
@@ -4286,7 +4292,7 @@ def keccak.KeccakXofState.squeeze
     then
       let ks2 ← keccak.keccakf1600 ks1
       let (s2, index_mut_back1) ←
-        Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+        core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
           (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8) out2 { start := offset }
       let s3 ← state.KeccakState.store RATE ks2 s2
@@ -4320,18 +4326,18 @@ def keccak.absorb_final
     then
       do
       let (s1, index_mut_back) ←
-        Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
-          (Slice.Insts.Core_modelsOpsIndexIndexMut
+        core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
           (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8)) blocks { start := 0#usize, «end» := len }
       let i ← start + len
       let s2 ←
-        Slice.Insts.Core_modelsOpsIndexIndex.index
+        core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
           (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8) last { start, «end» := i }
       let s3 ←
-        core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy
-          s1 s2
+        core_models.slice.Slice.copy_from_slice
+          core_models.U8.Insts.Core_modelsMarkerCopy s1 s2
       ok (index_mut_back s3)
     else ok blocks
   let i ← libcrux_secrets.traits.Classify.Blanket.classify DELIM
@@ -4354,7 +4360,7 @@ def state.store_block_2u32_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done out)
   | core_models.option.Option.Some i =>
@@ -4365,7 +4371,7 @@ def state.store_block_2u32_loop.body
     let i3 ← 8#usize * i
     let i4 ← i3 + 4#usize
     let (s1, index_mut_back) ←
-      Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+      core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
         (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8) out { start := i3, «end» := i4 }
     let i5 ←
@@ -4373,13 +4379,13 @@ def state.store_block_2u32_loop.body
     let a ← core_models.num.U32.to_le_bytes i5
     let s2 ← lift (Array.to_slice a)
     let s3 ←
-      core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy s1
-        s2
+      core_models.slice.Slice.copy_from_slice
+        core_models.U8.Insts.Core_modelsMarkerCopy s1 s2
     let out1 := index_mut_back s3
     let i6 ← i3 + 4#usize
     let i7 ← i3 + 8#usize
     let (s4, index_mut_back1) ←
-      Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+      core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
         (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8) out1 { start := i6, «end» := i7 }
     let i8 ←
@@ -4387,8 +4393,8 @@ def state.store_block_2u32_loop.body
     let a1 ← core_models.num.U32.to_le_bytes i8
     let s5 ← lift (Array.to_slice a1)
     let s6 ←
-      core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy s4
-        s5
+      core_models.slice.Slice.copy_from_slice
+        core_models.U8.Insts.Core_modelsMarkerCopy s4 s5
     let out2 := index_mut_back1 s6
     ok (cont (iter1, out2))
 
@@ -4470,11 +4476,12 @@ def keccak.squeeze_last
   let b1 ← state.KeccakState.store_block_full RATE s1 b
   let i ← core_models.slice.Slice.len out
   let s2 ←
-    Array.Insts.Core_modelsOpsIndexIndex.index
-      (Slice.Insts.Core_modelsOpsIndexIndex
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
       (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
       Std.U8)) b1 { start := 0#usize, «end» := i }
-  core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy out s2
+  core_models.slice.Slice.copy_from_slice
+    core_models.U8.Insts.Core_modelsMarkerCopy out s2
 
 /-- [libcrux_iot_sha3::keccak::squeeze_first_and_last]:
     Source: 'sha3/src/keccak.rs', lines 2480:0-2484:1 -/
@@ -4487,11 +4494,12 @@ def keccak.squeeze_first_and_last
   let b1 ← state.KeccakState.store_block_full RATE s b
   let i ← core_models.slice.Slice.len out
   let s1 ←
-    Array.Insts.Core_modelsOpsIndexIndex.index
-      (Slice.Insts.Core_modelsOpsIndexIndex
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
       (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
       Std.U8)) b1 { start := 0#usize, «end» := i }
-  core_models.slice.Slice.copy_from_slice U8.Insts.Core_modelsMarkerCopy out s1
+  core_models.slice.Slice.copy_from_slice
+    core_models.U8.Insts.Core_modelsMarkerCopy out s1
 
 /-- [libcrux_iot_sha3::keccak::WIDTH]
     Source: 'sha3/src/keccak.rs', lines 2487:0-2487:25 -/
@@ -4508,7 +4516,7 @@ def keccak.keccak_loop0.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done s)
   | core_models.option.Option.Some i =>
@@ -4540,12 +4548,12 @@ def keccak.keccak_loop1.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done (out, s, offset))
   | core_models.option.Option.Some _ =>
     let (s1, index_mut_back) ←
-      Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+      core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
         (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
         Std.U8) out { start := offset }
     let (s2, s3) ← keccak.squeeze_next_block RATE s s1
@@ -4596,7 +4604,7 @@ def keccak.keccak
     if last < outlen
     then
       let (s4, index_mut_back) ←
-        Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
+        core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
           (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
           Std.U8) out2 { start := offset }
       let s5 ← keccak.squeeze_last RATE s3 s4
@@ -4642,46 +4650,28 @@ def lane.Lane2U32.Insts.Core_modelsConvertFromArrayU322 :
   «from» := lane.Lane2U32.Insts.Core_modelsConvertFromArrayU322.from
 }
 
-/-- [libcrux_iot_sha3::lane::{core::fmt::Debug for libcrux_iot_sha3::lane::Lane2U32}::fmt]:
-    Source: 'sha3/src/lane.rs', lines 102:4-107:5
-    Visibility: public -/
-def lane.Lane2U32.Insts.Core_modelsFmtDebug.fmt
-  (self : lane.Lane2U32) (f : core_models.fmt.Formatter) :
-  Result ((core_models.result.Result Unit core_models.fmt.Error) ×
-    core_models.fmt.Formatter)
-  := do
-  sorry
-
-/-- Trait implementation: [libcrux_iot_sha3::lane::{core::fmt::Debug for libcrux_iot_sha3::lane::Lane2U32}]
-    Source: 'sha3/src/lane.rs', lines 101:0-108:1 -/
-@[reducible]
-def lane.Lane2U32.Insts.Core_modelsFmtDebug : core_models.fmt.Debug
-  lane.Lane2U32 := {
-  fmt := lane.Lane2U32.Insts.Core_modelsFmtDebug.fmt
-}
-
 /-- [libcrux_iot_sha3::SHA3_224_DIGEST_SIZE]
-    Source: 'sha3/src/lib.rs', lines 60:0-60:43
+    Source: 'sha3/src/lib.rs', lines 62:0-62:43
     Visibility: public -/
 @[global_simps, irreducible] def SHA3_224_DIGEST_SIZE : Std.Usize := 28#usize
 
 /-- [libcrux_iot_sha3::SHA3_256_DIGEST_SIZE]
-    Source: 'sha3/src/lib.rs', lines 62:0-62:43
+    Source: 'sha3/src/lib.rs', lines 64:0-64:43
     Visibility: public -/
 @[global_simps, irreducible] def SHA3_256_DIGEST_SIZE : Std.Usize := 32#usize
 
 /-- [libcrux_iot_sha3::SHA3_384_DIGEST_SIZE]
-    Source: 'sha3/src/lib.rs', lines 64:0-64:43
+    Source: 'sha3/src/lib.rs', lines 66:0-66:43
     Visibility: public -/
 @[global_simps, irreducible] def SHA3_384_DIGEST_SIZE : Std.Usize := 48#usize
 
 /-- [libcrux_iot_sha3::SHA3_512_DIGEST_SIZE]
-    Source: 'sha3/src/lib.rs', lines 66:0-66:43
+    Source: 'sha3/src/lib.rs', lines 68:0-68:43
     Visibility: public -/
 @[global_simps, irreducible] def SHA3_512_DIGEST_SIZE : Std.Usize := 64#usize
 
 /-- [libcrux_iot_sha3::Algorithm]
-    Source: 'sha3/src/lib.rs', lines 71:0-83:1
+    Source: 'sha3/src/lib.rs', lines 73:0-85:1
     Visibility: public -/
 @[discriminant u32 [1,2,3,4]]
 inductive Algorithm where
@@ -4691,14 +4681,14 @@ inductive Algorithm where
 | Sha512 : Algorithm
 
 /-- [libcrux_iot_sha3::{core::clone::Clone for libcrux_iot_sha3::Algorithm}::clone]:
-    Source: 'sha3/src/lib.rs', lines 69:39-69:44
+    Source: 'sha3/src/lib.rs', lines 71:39-71:44
     Visibility: public -/
 def Algorithm.Insts.Core_modelsCloneClone.clone
   (self : Algorithm) : Result Algorithm := do
   ok self
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::clone::Clone for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 69:39-69:44 -/
+    Source: 'sha3/src/lib.rs', lines 71:39-71:44 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsCloneClone : core_models.clone.Clone Algorithm
   := {
@@ -4706,7 +4696,7 @@ def Algorithm.Insts.Core_modelsCloneClone : core_models.clone.Clone Algorithm
 }
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::marker::Copy for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 69:33-69:37 -/
+    Source: 'sha3/src/lib.rs', lines 71:33-71:37 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsMarkerCopy : core_models.marker.Copy Algorithm
   := {
@@ -4714,7 +4704,7 @@ def Algorithm.Insts.Core_modelsMarkerCopy : core_models.marker.Copy Algorithm
 }
 
 /-- [libcrux_iot_sha3::{core::fmt::Debug for libcrux_iot_sha3::Algorithm}::fmt]:
-    Source: 'sha3/src/lib.rs', lines 69:46-69:51
+    Source: 'sha3/src/lib.rs', lines 71:46-71:51
     Visibility: public -/
 def Algorithm.Insts.Core_modelsFmtDebug.fmt
   (self : Algorithm) (f : core_models.fmt.Formatter) :
@@ -4728,21 +4718,21 @@ def Algorithm.Insts.Core_modelsFmtDebug.fmt
   | Algorithm.Sha512 => core_models.fmt.Formatter.write_str f (toStr "Sha512")
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::fmt::Debug for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 69:46-69:51 -/
+    Source: 'sha3/src/lib.rs', lines 71:46-71:51 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsFmtDebug : core_models.fmt.Debug Algorithm := {
-  fmt := Algorithm.Insts.Core_modelsFmtDebug.fmt
+  dbg_fmt := Algorithm.Insts.Core_modelsFmtDebug.fmt
 }
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::marker::StructuralPartialEq for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 69:53-69:62 -/
+    Source: 'sha3/src/lib.rs', lines 71:53-71:62 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsMarkerStructuralPartialEq :
   core_models.marker.StructuralPartialEq Algorithm := {
 }
 
 /-- [libcrux_iot_sha3::{core::cmp::PartialEq<libcrux_iot_sha3::Algorithm> for libcrux_iot_sha3::Algorithm}::eq]:
-    Source: 'sha3/src/lib.rs', lines 69:53-69:62
+    Source: 'sha3/src/lib.rs', lines 71:53-71:62
     Visibility: public -/
 def Algorithm.Insts.Core_modelsCmpPartialEqAlgorithm.eq
   (self : Algorithm) (other : Algorithm) : Result Bool := do
@@ -4751,7 +4741,7 @@ def Algorithm.Insts.Core_modelsCmpPartialEqAlgorithm.eq
   ok (self1 = other1)
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::cmp::PartialEq<libcrux_iot_sha3::Algorithm> for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 69:53-69:62 -/
+    Source: 'sha3/src/lib.rs', lines 71:53-71:62 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsCmpPartialEqAlgorithm :
   core_models.cmp.PartialEq Algorithm Algorithm := {
@@ -4759,7 +4749,7 @@ def Algorithm.Insts.Core_modelsCmpPartialEqAlgorithm :
 }
 
 /-- [libcrux_iot_sha3::{core::convert::From<u32> for libcrux_iot_sha3::Algorithm}::from]:
-    Source: 'sha3/src/lib.rs', lines 86:4-94:5
+    Source: 'sha3/src/lib.rs', lines 88:4-96:5
     Visibility: public -/
 def Algorithm.Insts.Core_modelsConvertFromU32.from
   (v : Std.U32) : Result Algorithm := do
@@ -4771,7 +4761,7 @@ def Algorithm.Insts.Core_modelsConvertFromU32.from
   | _ => fail panic
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::convert::From<u32> for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 85:0-95:1 -/
+    Source: 'sha3/src/lib.rs', lines 87:0-97:1 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsConvertFromU32 : core_models.convert.From
   Algorithm Std.U32 := {
@@ -4779,7 +4769,7 @@ def Algorithm.Insts.Core_modelsConvertFromU32 : core_models.convert.From
 }
 
 /-- [libcrux_iot_sha3::{core::convert::From<libcrux_iot_sha3::Algorithm> for u32}::from]:
-    Source: 'sha3/src/lib.rs', lines 98:4-105:5
+    Source: 'sha3/src/lib.rs', lines 100:4-107:5
     Visibility: public -/
 def U32.Insts.Core_modelsConvertFromAlgorithm.from
   (v : Algorithm) : Result Std.U32 := do
@@ -4790,7 +4780,7 @@ def U32.Insts.Core_modelsConvertFromAlgorithm.from
   | Algorithm.Sha512 => ok 4#u32
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::convert::From<libcrux_iot_sha3::Algorithm> for u32}]
-    Source: 'sha3/src/lib.rs', lines 97:0-106:1 -/
+    Source: 'sha3/src/lib.rs', lines 99:0-108:1 -/
 @[reducible]
 def U32.Insts.Core_modelsConvertFromAlgorithm : core_models.convert.From
   Std.U32 Algorithm := {
@@ -4798,7 +4788,7 @@ def U32.Insts.Core_modelsConvertFromAlgorithm : core_models.convert.From
 }
 
 /-- [libcrux_iot_sha3::digest_size]:
-    Source: 'sha3/src/lib.rs', lines 109:0-116:1
+    Source: 'sha3/src/lib.rs', lines 111:0-118:1
     Visibility: public -/
 def digest_size (mode : Algorithm) : Result Std.Usize := do
   match mode with
@@ -4808,7 +4798,7 @@ def digest_size (mode : Algorithm) : Result Std.Usize := do
   | Algorithm.Sha512 => ok SHA3_512_DIGEST_SIZE
 
 /-- [libcrux_iot_sha3::keccakx1]:
-    Source: 'sha3/src/lib.rs', lines 486:0-488:1 -/
+    Source: 'sha3/src/lib.rs', lines 488:0-490:1 -/
 def keccakx1
   (RATE : Std.Usize) (DELIM : Std.U8) (data : Slice Std.U8)
   (out : Slice Std.U8) :
@@ -4817,7 +4807,7 @@ def keccakx1
   keccak.keccak RATE DELIM data out
 
 /-- [libcrux_iot_sha3::sha512_ema]:
-    Source: 'sha3/src/lib.rs', lines 251:0-258:1
+    Source: 'sha3/src/lib.rs', lines 253:0-260:1
     Visibility: public -/
 def sha512_ema
   (digest : Slice Std.U8) (payload : Slice Std.U8) :
@@ -4831,7 +4821,7 @@ def sha512_ema
   keccakx1 72#usize 6#u8 payload digest
 
 /-- [libcrux_iot_sha3::sha384_ema]:
-    Source: 'sha3/src/lib.rs', lines 224:0-231:1
+    Source: 'sha3/src/lib.rs', lines 226:0-233:1
     Visibility: public -/
 def sha384_ema
   (digest : Slice Std.U8) (payload : Slice Std.U8) :
@@ -4845,7 +4835,7 @@ def sha384_ema
   keccakx1 104#usize 6#u8 payload digest
 
 /-- [libcrux_iot_sha3::sha256_ema]:
-    Source: 'sha3/src/lib.rs', lines 197:0-204:1
+    Source: 'sha3/src/lib.rs', lines 199:0-206:1
     Visibility: public -/
 def sha256_ema
   (digest : Slice Std.U8) (payload : Slice Std.U8) :
@@ -4859,7 +4849,7 @@ def sha256_ema
   keccakx1 136#usize 6#u8 payload digest
 
 /-- [libcrux_iot_sha3::sha224_ema]:
-    Source: 'sha3/src/lib.rs', lines 170:0-177:1
+    Source: 'sha3/src/lib.rs', lines 172:0-179:1
     Visibility: public -/
 def sha224_ema
   (digest : Slice Std.U8) (payload : Slice Std.U8) :
@@ -4873,7 +4863,7 @@ def sha224_ema
   keccakx1 144#usize 6#u8 payload digest
 
 /-- [libcrux_iot_sha3::hash]:
-    Source: 'sha3/src/lib.rs', lines 128:0-148:1
+    Source: 'sha3/src/lib.rs', lines 130:0-150:1
     Visibility: public -/
 def hash
   (LEN : Std.Usize) (algorithm : Algorithm) (payload : Slice Std.U8) :
@@ -4903,7 +4893,7 @@ def hash
     ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::sha224]:
-    Source: 'sha3/src/lib.rs', lines 156:0-163:1
+    Source: 'sha3/src/lib.rs', lines 158:0-165:1
     Visibility: public -/
 def sha224 (payload : Slice Std.U8) : Result (Array Std.U8 28#usize) := do
   let a := Array.repeat 28#usize 0#u8
@@ -4913,7 +4903,7 @@ def sha224 (payload : Slice Std.U8) : Result (Array Std.U8 28#usize) := do
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::sha256]:
-    Source: 'sha3/src/lib.rs', lines 183:0-190:1
+    Source: 'sha3/src/lib.rs', lines 185:0-192:1
     Visibility: public -/
 def sha256 (data : Slice Std.U8) : Result (Array Std.U8 32#usize) := do
   let a := Array.repeat 32#usize 0#u8
@@ -4923,7 +4913,7 @@ def sha256 (data : Slice Std.U8) : Result (Array Std.U8 32#usize) := do
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::sha384]:
-    Source: 'sha3/src/lib.rs', lines 210:0-217:1
+    Source: 'sha3/src/lib.rs', lines 212:0-219:1
     Visibility: public -/
 def sha384 (data : Slice Std.U8) : Result (Array Std.U8 48#usize) := do
   let a := Array.repeat 48#usize 0#u8
@@ -4933,7 +4923,7 @@ def sha384 (data : Slice Std.U8) : Result (Array Std.U8 48#usize) := do
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::sha512]:
-    Source: 'sha3/src/lib.rs', lines 237:0-244:1
+    Source: 'sha3/src/lib.rs', lines 239:0-246:1
     Visibility: public -/
 def sha512 (data : Slice Std.U8) : Result (Array Std.U8 64#usize) := do
   let a := Array.repeat 64#usize 0#u8
@@ -4943,7 +4933,7 @@ def sha512 (data : Slice Std.U8) : Result (Array Std.U8 64#usize) := do
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::shake128]:
-    Source: 'sha3/src/lib.rs', lines 264:0-271:1
+    Source: 'sha3/src/lib.rs', lines 266:0-273:1
     Visibility: public -/
 def shake128
   (BYTES : Std.Usize) (data : Slice Std.U8) : Result (Array Std.U8 BYTES) := do
@@ -4954,14 +4944,14 @@ def shake128
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::shake128_ema]:
-    Source: 'sha3/src/lib.rs', lines 279:0-281:1
+    Source: 'sha3/src/lib.rs', lines 281:0-283:1
     Visibility: public -/
 def shake128_ema
   (out : Slice Std.U8) (data : Slice Std.U8) : Result (Slice Std.U8) := do
   keccakx1 168#usize 31#u8 data out
 
 /-- [libcrux_iot_sha3::shake256]:
-    Source: 'sha3/src/lib.rs', lines 287:0-294:1
+    Source: 'sha3/src/lib.rs', lines 289:0-296:1
     Visibility: public -/
 def shake256
   (BYTES : Std.Usize) (data : Slice Std.U8) : Result (Array Std.U8 BYTES) := do
@@ -4972,45 +4962,45 @@ def shake256
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::shake256_ema]:
-    Source: 'sha3/src/lib.rs', lines 302:0-304:1
+    Source: 'sha3/src/lib.rs', lines 304:0-306:1
     Visibility: public -/
 def shake256_ema
   (out : Slice Std.U8) (data : Slice Std.U8) : Result (Slice Std.U8) := do
   keccakx1 136#usize 31#u8 data out
 
 /-- Trait declaration: [libcrux_iot_sha3::incremental::private::Sealed]
-    Source: 'sha3/src/lib.rs', lines 325:8-325:27
+    Source: 'sha3/src/lib.rs', lines 327:8-327:27
     Visibility: public -/
 structure incremental.private.Sealed (Self : Type) where
 
 /-- [libcrux_iot_sha3::incremental::Shake128Xof]
-    Source: 'sha3/src/lib.rs', lines 332:4-334:5
+    Source: 'sha3/src/lib.rs', lines 334:4-336:5
     Visibility: public -/
 structure incremental.Shake128Xof where
   state : keccak.KeccakXofState 168#usize
 
 /-- Trait implementation: [libcrux_iot_sha3::incremental::private::{libcrux_iot_sha3::incremental::private::Sealed for libcrux_iot_sha3::incremental::Shake128Xof}]
-    Source: 'sha3/src/lib.rs', lines 327:8-327:45 -/
+    Source: 'sha3/src/lib.rs', lines 329:8-329:45 -/
 @[reducible]
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalPrivateSealed :
   incremental.private.Sealed incremental.Shake128Xof := {
 }
 
 /-- [libcrux_iot_sha3::incremental::Shake256Xof]
-    Source: 'sha3/src/lib.rs', lines 337:4-339:5
+    Source: 'sha3/src/lib.rs', lines 339:4-341:5
     Visibility: public -/
 structure incremental.Shake256Xof where
   state : keccak.KeccakXofState 136#usize
 
 /-- Trait implementation: [libcrux_iot_sha3::incremental::private::{libcrux_iot_sha3::incremental::private::Sealed for libcrux_iot_sha3::incremental::Shake256Xof}]
-    Source: 'sha3/src/lib.rs', lines 328:8-328:45 -/
+    Source: 'sha3/src/lib.rs', lines 330:8-330:45 -/
 @[reducible]
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalPrivateSealed :
   incremental.private.Sealed incremental.Shake256Xof := {
 }
 
 /-- Trait declaration: [libcrux_iot_sha3::incremental::Xof]
-    Source: 'sha3/src/lib.rs', lines 343:4-382:5
+    Source: 'sha3/src/lib.rs', lines 345:4-384:5
     Visibility: public -/
 structure incremental.Xof (Self : Type) (RATE : Std.Usize) where
   privateSealedInst : incremental.private.Sealed Self
@@ -5020,7 +5010,7 @@ structure incremental.Xof (Self : Type) (RATE : Std.Usize) where
   squeeze : Self → Slice Std.U8 → Result (Self × (Slice Std.U8))
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}::squeeze]:
-    Source: 'sha3/src/lib.rs', lines 399:8-401:9
+    Source: 'sha3/src/lib.rs', lines 401:8-403:9
     Visibility: public -/
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.squeeze
   (self : incremental.Shake128Xof) (out : Slice Std.U8) :
@@ -5030,7 +5020,7 @@ def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.squeeze
   ok ({ state := kxs }, out1)
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}::absorb_final]:
-    Source: 'sha3/src/lib.rs', lines 395:8-397:9
+    Source: 'sha3/src/lib.rs', lines 397:8-399:9
     Visibility: public -/
 def
   incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.absorb_final
@@ -5041,7 +5031,7 @@ def
   ok { state := kxs }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}::absorb]:
-    Source: 'sha3/src/lib.rs', lines 391:8-393:9
+    Source: 'sha3/src/lib.rs', lines 393:8-395:9
     Visibility: public -/
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.absorb
   (self : incremental.Shake128Xof) (input : Slice Std.U8) :
@@ -5051,7 +5041,7 @@ def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.absorb
   ok { state := kxs }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}::new]:
-    Source: 'sha3/src/lib.rs', lines 385:8-389:9
+    Source: 'sha3/src/lib.rs', lines 387:8-391:9
     Visibility: public -/
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.new
   : Result incremental.Shake128Xof := do
@@ -5059,7 +5049,7 @@ def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.new
   ok { state := kxs }
 
 /-- Trait implementation: [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}]
-    Source: 'sha3/src/lib.rs', lines 384:4-402:5 -/
+    Source: 'sha3/src/lib.rs', lines 386:4-404:5 -/
 @[reducible]
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168 :
   incremental.Xof incremental.Shake128Xof 168#usize := {
@@ -5075,7 +5065,7 @@ def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168 :
 }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}::squeeze]:
-    Source: 'sha3/src/lib.rs', lines 420:8-422:9
+    Source: 'sha3/src/lib.rs', lines 422:8-424:9
     Visibility: public -/
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.squeeze
   (self : incremental.Shake256Xof) (out : Slice Std.U8) :
@@ -5085,7 +5075,7 @@ def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.squeeze
   ok ({ state := kxs }, out1)
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}::absorb_final]:
-    Source: 'sha3/src/lib.rs', lines 415:8-417:9
+    Source: 'sha3/src/lib.rs', lines 417:8-419:9
     Visibility: public -/
 def
   incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.absorb_final
@@ -5096,7 +5086,7 @@ def
   ok { state := kxs }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}::absorb]:
-    Source: 'sha3/src/lib.rs', lines 411:8-413:9
+    Source: 'sha3/src/lib.rs', lines 413:8-415:9
     Visibility: public -/
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.absorb
   (self : incremental.Shake256Xof) (input : Slice Std.U8) :
@@ -5106,7 +5096,7 @@ def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.absorb
   ok { state := kxs }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}::new]:
-    Source: 'sha3/src/lib.rs', lines 405:8-409:9
+    Source: 'sha3/src/lib.rs', lines 407:8-411:9
     Visibility: public -/
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.new
   : Result incremental.Shake256Xof := do
@@ -5114,7 +5104,7 @@ def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.new
   ok { state := kxs }
 
 /-- Trait implementation: [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}]
-    Source: 'sha3/src/lib.rs', lines 404:4-423:5 -/
+    Source: 'sha3/src/lib.rs', lines 406:4-425:5 -/
 @[reducible]
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136 :
   incremental.Xof incremental.Shake256Xof 136#usize := {
@@ -5150,37 +5140,6 @@ def state.KeccakState.Insts.Core_modelsCloneClone : core_models.clone.Clone
 def state.KeccakState.Insts.Core_modelsMarkerCopy : core_models.marker.Copy
   state.KeccakState := {
   cloneCloneInst := state.KeccakState.Insts.Core_modelsCloneClone
-}
-
-/-- [libcrux_iot_sha3::state::{core::fmt::Debug for libcrux_iot_sha3::state::KeccakState}::fmt]:
-    Source: 'sha3/src/state.rs', lines 10:33-10:38
-    Visibility: public -/
-def state.KeccakState.Insts.Core_modelsFmtDebug.fmt
-  (self : state.KeccakState) (f : core_models.fmt.Formatter) :
-  Result ((core_models.result.Result Unit core_models.fmt.Error) ×
-    core_models.fmt.Formatter)
-  := do
-  let dyn :=
-    Dyn.mk _ (Array.Insts.Core_modelsFmtDebug 25#usize
-      lane.Lane2U32.Insts.Core_modelsFmtDebug) self.st
-  let dyn1 :=
-    Dyn.mk _ (Array.Insts.Core_modelsFmtDebug 5#usize
-      lane.Lane2U32.Insts.Core_modelsFmtDebug) self.c
-  let dyn2 :=
-    Dyn.mk _ (Array.Insts.Core_modelsFmtDebug 5#usize
-      lane.Lane2U32.Insts.Core_modelsFmtDebug) self.d
-  let dyn3 :=
-    Dyn.mk _ (Shared0T.Insts.Core_modelsFmtDebug
-      Usize.Insts.Core_modelsFmtDebug) self.i
-  core_models.fmt.Formatter.debug_struct_field4_finish f (toStr "KeccakState")
-    (toStr "st") dyn (toStr "c") dyn1 (toStr "d") dyn2 (toStr "i") dyn3
-
-/-- Trait implementation: [libcrux_iot_sha3::state::{core::fmt::Debug for libcrux_iot_sha3::state::KeccakState}]
-    Source: 'sha3/src/state.rs', lines 10:33-10:38 -/
-@[reducible]
-def state.KeccakState.Insts.Core_modelsFmtDebug : core_models.fmt.Debug
-  state.KeccakState := {
-  fmt := state.KeccakState.Insts.Core_modelsFmtDebug.fmt
 }
 
 end libcrux_iot_sha3
