@@ -20,11 +20,28 @@ def check_version(cmd: list[str], expected: str) -> None:
 check_version(["cargo", "hax", "--version"], HAX_VERSION)
 check_version(["aeneas", "-version"], AENEAS_VERSION)
 
-subprocess.run(
+import os
+result = subprocess.run(
     ["cargo", "hax", "into", "aeneas-lean"],
-    env={**__import__("os").environ, "RUSTFLAGS": "--cfg charon"},
-    check=True,
+    env={**os.environ, "RUSTFLAGS": "--cfg charon"},
+    capture_output=True,
+    text=True,
 )
+
+# Suppress version mismatch warnings. (We check versions above.)
+_ANSI = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
+def should_suppress(line: str) -> bool:
+    plain = _ANSI.sub('', line)
+    return plain.startswith("warning: hax: aeneas version mismatch:") or plain.startswith("warning: hax: charon version mismatch:")
+
+for line in result.stdout.splitlines():
+    if not should_suppress(line):
+        print(line)
+for line in result.stderr.splitlines():
+    if not should_suppress(line):
+        print(line, file=sys.stderr)
+if result.returncode != 0:
+    sys.exit(result.returncode)
 
 funs_lean = Path("proofs/aeneas-lean/HacspecSha3/Extraction/Funs.lean")
 content = funs_lean.read_text()
