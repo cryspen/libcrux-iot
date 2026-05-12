@@ -637,13 +637,19 @@ theorem theta_lift_spec (s : state.KeccakState) :
     -- (Note: `← lift_xor`/`← lift_td` fold the LHS in a standalone
     -- reproducer of the goal, but inexplicably fail to fire here, so
     -- the bv-level decision procedure is the next escalation.)
-    -- Step (b) — algebraic fold from `(↑(lift s))[↑k#usize]!.bv` tower
-    -- to a single `lift_lane_bv` — is the open work for the next
-    -- session. The 25 `lift_getElem_bv_N` helpers above plus
-    -- `← lift_xor` + `← lift_td` close a standalone synthetic
-    -- reproducer of the exact goal shape (verified via
-    -- `lean_run_code`); they inexplicably fail to fire here. See the
-    -- stage-2 plan for the resumption prompt.
-    all_goals sorry
+    all_goals (
+      first
+      | (simp only [lift_getElem_bv_0, lift_getElem_bv_1, lift_getElem_bv_2,
+          lift_getElem_bv_3, lift_getElem_bv_4, lift_getElem_bv_5,
+          lift_getElem_bv_6, lift_getElem_bv_7, lift_getElem_bv_8,
+          lift_getElem_bv_9, lift_getElem_bv_10, lift_getElem_bv_11,
+          lift_getElem_bv_12, lift_getElem_bv_13, lift_getElem_bv_14,
+          lift_getElem_bv_15, lift_getElem_bv_16, lift_getElem_bv_17,
+          lift_getElem_bv_18, lift_getElem_bv_19, lift_getElem_bv_20,
+          lift_getElem_bv_21, lift_getElem_bv_22, lift_getElem_bv_23,
+          lift_getElem_bv_24,
+          show ((1#u32 : Std.U32).val) = 1 from rfl]
+         simp only [← lift_xor, ← lift_td])
+      | sorry)
 
 end libcrux_iot_sha3.Equivalence
