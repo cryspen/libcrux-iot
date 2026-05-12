@@ -9,13 +9,17 @@ namespace libcrux_secrets.traits.Classify.Blanket
 def classify {T : Type} (a : T) : Aeneas.Std.Result T := ok a
 end libcrux_secrets.traits.Classify.Blanket
 
-namespace Aeneas.Std
+namespace libcrux_secrets
 
 def U32.Insts.Libcrux_secretsIntCastOps.as_u64 (x : U32) : Result U64 :=
   ok (UScalar.cast .U64 x)
 
 def U64.Insts.Libcrux_secretsIntCastOps.as_u32 (x : U64) : Result U32 :=
   ok (UScalar.cast .U32 x)
+
+end libcrux_secrets
+
+namespace core_models
 
 def I32.Insts.Core_modelsIterRangeStep : core_models.iter.range.Step I32 := {
   cloneInst       := { clone := fun x => Aeneas.Std.Result.ok x}
@@ -84,9 +88,6 @@ def Slice.Insts.Core_modelsOpsIndexIndexMut
   {T I O : Type} (inst : core.slice.index.SliceIndex I (Slice T) O) :
   core.slice.index.SliceIndex I (Slice T) O := inst
 
-end Aeneas.Std
-
-namespace core_models
 
 def result.Result.unwrap
   {T E : Type} (_dbg : fmt.Debug E) (r : result.Result T E) :
