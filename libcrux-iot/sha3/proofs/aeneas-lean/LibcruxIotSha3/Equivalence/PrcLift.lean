@@ -18,7 +18,7 @@ import LibcruxIotSha3.Equivalence.ThetaLift
 import Hax
 import Lean
 
-open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3
+open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Equivalence
 
@@ -85,134 +85,16 @@ private theorem set_with_zeta_spec
     obtain ⟨_, _⟩ := ‹_ ∧ _›
     apply hpost <;> first | scalar_tac | simp_all [Std.Array.set_val_eq])
 
-/-! ### Per-sub-function preservation specs
+/-! ## Full-FC sub-function specs (Step 7)
 
 Each of the 10 `pi_rho_chi_y{0..4}_zeta{0,1}` sub-functions writes 5
-cells of `st`; they preserve `d`, `c` and (for all but `y0_zeta1`)
-`i`. We register the minimal `r.d = s.d ∧ r.c = s.c ∧ r.i = s.i`
-form (with `i` increment exposed for `y0_zeta1`), which is enough to
-compose into the prc1 / prc2 composed specs. -/
+cells of `st`; we capture them in **50-cell FC form**: 5 written cells
+(chi formulas), 5 other-halves of written lanes (preserved), 40 cells
+of 20 untouched lanes (preserved via the `preserves_complement` macro).
 
-set_option maxHeartbeats 4000000
-
-local macro "prc_sub_preserves_proof" subfun:ident : tactic =>
-  `(tactic|
-    (unfold $subfun
-     hax_mvcgen <;>
-       scalar_tac))
-
-@[spec]
-private theorem pi_rho_chi_y0_zeta0_spec
-    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0 BR s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0
-
-@[spec]
-private theorem pi_rho_chi_y0_zeta1_spec
-    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y0_zeta1 BR s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y0_zeta1
-
-@[spec]
-private theorem pi_rho_chi_y1_zeta0_spec (s : state.KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y1_zeta0 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta0
-
-@[spec]
-private theorem pi_rho_chi_y1_zeta1_spec (s : state.KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y1_zeta1 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta1
-
-@[spec]
-private theorem pi_rho_chi_y2_zeta0_spec (s : state.KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y2_zeta0 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta0
-
-@[spec]
-private theorem pi_rho_chi_y2_zeta1_spec (s : state.KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y2_zeta1 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta1
-
-@[spec]
-private theorem pi_rho_chi_y3_zeta0_spec (s : state.KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y3_zeta0 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta0
-
-@[spec]
-private theorem pi_rho_chi_y3_zeta1_spec (s : state.KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y3_zeta1 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta1
-
-@[spec]
-private theorem pi_rho_chi_y4_zeta0_spec (s : state.KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y4_zeta0 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta0
-
-@[spec]
-private theorem pi_rho_chi_y4_zeta1_spec (s : state.KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  prc_sub_preserves_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1
-
-/-! ### Composed prc1 / prc2 specs (impl-side preservation form)
-
-After the 4-sub-function `pi_rho_chi_1` chain, `d`/`c` are preserved
-and `i` is incremented by one. After the 6-sub-function `pi_rho_chi_2`
-chain, `d`/`c`/`i` are all preserved. Full `r.st` content
-characterisation is deferred. -/
-
-set_option maxHeartbeats 2000000 in
-theorem pi_rho_chi_1_spec_local
-    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_1 BR s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
-  unfold keccak.keccakf1600_round0_pi_rho_chi_1
-  hax_mvcgen
-  all_goals (try trivial); scalar_tac
-
-set_option maxHeartbeats 2000000 in
-theorem pi_rho_chi_2_spec_local (s : state.KeccakState) :
-    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_2 s
-    ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
-  unfold keccak.keccakf1600_round0_pi_rho_chi_2
-  hax_mvcgen
-  all_goals (try trivial); scalar_tac
-
-/-! ## Full-FC sub-function spec template (Step 7 — validated pattern)
-
-The `prc_lift_spec` spec-coupling theorem requires content-level
-postconditions on the 10 `pi_rho_chi_y_zeta` sub-functions: each cell
-written by the sub-function must be expressed as a chi formula over
-rotation-twisted XORs of `s.st`/`s.d` halves. The preservation forms
-above don't carry this information, so Step 7 needs an FC layer.
-
-This file currently lands the **first** FC sub-function spec
-(`pi_rho_chi_y0_zeta0_spec_fc`) as a validated template — it proves
-that `unfold; hax_mvcgen` followed by a refine-and-chain proof pattern
-closes the 8-conjunct FC post (d/c/i preservation + 5 cell equations)
-inside the project's 16M heartbeat budget. The remaining 9 sub-
-function FC specs follow the identical structure with substituted
-parameters (per-sub-function `(read_lane, half)` tuples, `bx`-index-
-to-d-index permutations, rotation offsets, `(write_lane, half)`
-tuples, and RC-table inclusion only for `y0_zeta0` / `y0_zeta1`).
-
-Parameter tables for the 9 remaining sub-functions are documented in
-the stage-2 plan, status update for the tenth session segment.
-
-The `_fc` y0_zeta0 spec is **not** `@[spec]`-tagged: the preservation
-form above still owns the registry slot so `pi_rho_chi_{1,2}_spec_local`
-preservation proofs remain unaffected. Once all 10 FC specs land, the
-preservation forms can either be replaced (cleaner) or derived from FC
-forms in `RoundEquiv` if both are needed. -/
+The FC posts are `@[spec]`-tagged so `hax_mvcgen` threads the cell
+content automatically when composing `pi_rho_chi_{1,2}` (via the
+`prc_chain_FC` spec) and downstream into `prc_lift_spec`. -/
 
 /-- Common proof pattern for FC sub-function specs: `unfold; hax_mvcgen;`
     then either `scalar_tac` for bounds, or refine the 8-conjunct post
@@ -268,6 +150,7 @@ private def apply_5_writes
     via `apply_5_writes` is blocked on the mvcgen chain-hypothesis
     forward-substitution problem; 50-cell form composes cleanly. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y0_zeta0_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0 BR s
@@ -298,6 +181,7 @@ private theorem pi_rho_chi_y0_zeta0_spec_fc
 /-! y0_zeta1 FC: writes lanes 0/6/12/18/24 at halves 1/1/0/0/1;
     RC_INTERLEAVED_1[s.i] XORed into lane 0 half 1; INCREMENTS `s.i`. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y0_zeta1_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y0_zeta1 BR s
@@ -325,6 +209,7 @@ private theorem pi_rho_chi_y0_zeta1_spec_fc
 /-! y1_zeta0 FC: writes lanes 2/8/14/15/21 at halves 1/1/1/0/0; preserves `s.i`.
     Shift=2: bx_i reads from write_pos[(i-2) mod 5]. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y1_zeta0_spec_fc
     (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y1_zeta0 s
@@ -350,6 +235,7 @@ private theorem pi_rho_chi_y1_zeta0_spec_fc
 
 /-! y1_zeta1 FC: writes lanes 2/8/14/15/21 at halves 0/0/0/1/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y1_zeta1_spec_fc
     (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y1_zeta1 s
@@ -375,6 +261,7 @@ private theorem pi_rho_chi_y1_zeta1_spec_fc
 
 /-! y2_zeta0 FC: writes lanes 4/5/11/17/23 at halves 0/1/0/1/0; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y2_zeta0_spec_fc
     (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y2_zeta0 s
@@ -400,6 +287,7 @@ private theorem pi_rho_chi_y2_zeta0_spec_fc
 
 /-! y2_zeta1 FC: writes lanes 4/5/11/17/23 at halves 1/0/1/0/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y2_zeta1_spec_fc
     (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y2_zeta1 s
@@ -425,6 +313,7 @@ private theorem pi_rho_chi_y2_zeta1_spec_fc
 
 /-! y3_zeta0 FC: writes lanes 1/7/13/19/20 at halves 0/0/1/0/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y3_zeta0_spec_fc
     (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y3_zeta0 s
@@ -450,6 +339,7 @@ private theorem pi_rho_chi_y3_zeta0_spec_fc
 
 /-! y3_zeta1 FC: writes lanes 1/7/13/19/20 at halves 1/1/0/1/0; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y3_zeta1_spec_fc
     (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y3_zeta1 s
@@ -475,6 +365,7 @@ private theorem pi_rho_chi_y3_zeta1_spec_fc
 
 /-! y4_zeta0 FC: writes lanes 3/9/10/16/22 at halves 1/0/0/1/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y4_zeta0_spec_fc
     (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y4_zeta0 s
@@ -500,6 +391,7 @@ private theorem pi_rho_chi_y4_zeta0_spec_fc
 
 /-! y4_zeta1 FC: writes lanes 3/9/10/16/22 at halves 0/1/1/0/0; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
+@[spec]
 private theorem pi_rho_chi_y4_zeta1_spec_fc
     (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1 s
