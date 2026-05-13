@@ -541,4 +541,52 @@ theorem rho_unrolled_spec (state : Std.Array Std.U64 25#usize) :
     show ((23#usize : Std.Usize).val) = 23 from rfl,
     show ((24#usize : Std.Usize).val) = 24 from rfl]
 
+/-- Pure semantics of `keccak_f.pi_unrolled`: permutes lanes according
+    to the Keccak π-permutation table. No rotation. -/
+def pi_applied (state : Std.Array Std.U64 25#usize) :
+    Std.Array Std.U64 25#usize :=
+  Std.Array.make 25#usize [
+    state.val[0]!, state.val[15]!, state.val[5]!, state.val[20]!, state.val[10]!,
+    state.val[6]!, state.val[21]!, state.val[11]!, state.val[1]!, state.val[16]!,
+    state.val[12]!, state.val[2]!, state.val[17]!, state.val[7]!, state.val[22]!,
+    state.val[18]!, state.val[8]!, state.val[23]!, state.val[13]!, state.val[3]!,
+    state.val[24]!, state.val[14]!, state.val[4]!, state.val[19]!, state.val[9]!]
+
+@[spec]
+theorem pi_unrolled_spec (state : Std.Array Std.U64 25#usize) :
+    ⦃ ⌜ True ⌝ ⦄ keccak_f.pi_unrolled state
+    ⦃ ⇓ r => ⌜ r = pi_applied state ⌝ ⦄ := by
+  unfold keccak_f.pi_unrolled
+  hax_mvcgen
+  all_goals try scalar_tac
+  unfold pi_applied
+  apply Subtype.ext
+  simp only [Std.Array.make]
+  simp_all only [
+    show ((0#usize : Std.Usize).val) = 0 from rfl,
+    show ((1#usize : Std.Usize).val) = 1 from rfl,
+    show ((2#usize : Std.Usize).val) = 2 from rfl,
+    show ((3#usize : Std.Usize).val) = 3 from rfl,
+    show ((4#usize : Std.Usize).val) = 4 from rfl,
+    show ((5#usize : Std.Usize).val) = 5 from rfl,
+    show ((6#usize : Std.Usize).val) = 6 from rfl,
+    show ((7#usize : Std.Usize).val) = 7 from rfl,
+    show ((8#usize : Std.Usize).val) = 8 from rfl,
+    show ((9#usize : Std.Usize).val) = 9 from rfl,
+    show ((10#usize : Std.Usize).val) = 10 from rfl,
+    show ((11#usize : Std.Usize).val) = 11 from rfl,
+    show ((12#usize : Std.Usize).val) = 12 from rfl,
+    show ((13#usize : Std.Usize).val) = 13 from rfl,
+    show ((14#usize : Std.Usize).val) = 14 from rfl,
+    show ((15#usize : Std.Usize).val) = 15 from rfl,
+    show ((16#usize : Std.Usize).val) = 16 from rfl,
+    show ((17#usize : Std.Usize).val) = 17 from rfl,
+    show ((18#usize : Std.Usize).val) = 18 from rfl,
+    show ((19#usize : Std.Usize).val) = 19 from rfl,
+    show ((20#usize : Std.Usize).val) = 20 from rfl,
+    show ((21#usize : Std.Usize).val) = 21 from rfl,
+    show ((22#usize : Std.Usize).val) = 22 from rfl,
+    show ((23#usize : Std.Usize).val) = 23 from rfl,
+    show ((24#usize : Std.Usize).val) = 24 from rfl]
+
 end libcrux_iot_sha3.Equivalence
