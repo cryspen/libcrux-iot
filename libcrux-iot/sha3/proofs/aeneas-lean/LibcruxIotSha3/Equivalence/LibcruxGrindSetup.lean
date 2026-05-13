@@ -1,5 +1,12 @@
 /- Project-local grind attribute, modelled on `Aeneas.Grind.agrind`. -/
+import Aeneas
 import Aeneas.Tactic.Solver.Grind.Init
+
+-- Normalise UScalar/IScalar literal projections during `grind`: bridges
+-- `(n#uXX).val = n` and `(n#iXX).val = n` so integer literals appearing in
+-- E-graph keys match across `BitVec`/`Nat`/`Int` views.
+attribute [grind norm] Aeneas.Std.UScalar.ofNatCore_val_eq
+attribute [grind norm] Aeneas.Std.IScalar.ofInt_val_eq
 
 namespace libcrux_iot_sha3.Equivalence
 
