@@ -122,7 +122,7 @@ local macro "theta_sub_preserves_st_i_proof" subfun:ident : tactic =>
   `(tactic|
     (unfold $subfun
      hax_mvcgen <;>
-       first | grind | scalar_tac))
+       scalar_tac))
 
 /-- Tactic for the strengthened `theta_c_xX_zZ` specs: after `hax_mvcgen`
     handles the do-block, the remaining VC says the freshly-written

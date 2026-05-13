@@ -69,7 +69,7 @@ local macro "prc_sub_preserves_proof" subfun:ident : tactic =>
   `(tactic|
     (unfold $subfun
      hax_mvcgen <;>
-       first | grind | scalar_tac))
+       scalar_tac))
 
 @[spec]
 private theorem pi_rho_chi_y0_zeta0_spec
@@ -147,7 +147,7 @@ theorem pi_rho_chi_1_spec_local
     ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
   unfold keccak.keccakf1600_round0_pi_rho_chi_1
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 set_option maxHeartbeats 2000000 in
 theorem pi_rho_chi_2_spec_local (s : state.KeccakState) :
@@ -155,6 +155,6 @@ theorem pi_rho_chi_2_spec_local (s : state.KeccakState) :
     ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
   unfold keccak.keccakf1600_round0_pi_rho_chi_2
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 end libcrux_iot_sha3.Equivalence

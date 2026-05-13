@@ -36,7 +36,7 @@ primitive specs. -/
 local macro "step_preserve_proof" subs:ident+ : tactic =>
   `(tactic|
     (unfold $subs:ident*
-     hax_mvcgen <;> first | grind | scalar_tac))
+     hax_mvcgen <;> scalar_tac))
 
 /-! ### Round 1 -- θ sub-functions -/
 
@@ -111,7 +111,7 @@ theorem theta_round1_preserves_st_i (s : state.KeccakState) :
     ⦃ ⇓ r => ⌜ r.st = s.st ∧ r.i = s.i ⌝ ⦄ := by
   unfold keccak.keccakf1600_round1_theta
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 /-! ### Round 2 -- θ sub-functions -/
 
@@ -186,7 +186,7 @@ theorem theta_round2_preserves_st_i (s : state.KeccakState) :
     ⦃ ⇓ r => ⌜ r.st = s.st ∧ r.i = s.i ⌝ ⦄ := by
   unfold keccak.keccakf1600_round2_theta
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 /-! ### Round 3 -- θ sub-functions -/
 
@@ -261,7 +261,7 @@ theorem theta_round3_preserves_st_i (s : state.KeccakState) :
     ⦃ ⇓ r => ⌜ r.st = s.st ∧ r.i = s.i ⌝ ⦄ := by
   unfold keccak.keccakf1600_round3_theta
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 /-! ### Round 1 -- πρχ sub-functions and composed -/
 
@@ -332,14 +332,14 @@ theorem prc1_round1_spec (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val 
     ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
   unfold keccak.keccakf1600_round1_pi_rho_chi_1
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 theorem prc2_round1_spec (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_2 s
     ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
   unfold keccak.keccakf1600_round1_pi_rho_chi_2
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 /-! ### Round 2 -- πρχ sub-functions and composed -/
 
@@ -410,14 +410,14 @@ theorem prc1_round2_spec (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val 
     ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
   unfold keccak.keccakf1600_round2_pi_rho_chi_1
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 theorem prc2_round2_spec (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_2 s
     ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
   unfold keccak.keccakf1600_round2_pi_rho_chi_2
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 /-! ### Round 3 -- πρχ sub-functions and composed -/
 
@@ -488,13 +488,13 @@ theorem prc1_round3_spec (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val 
     ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
   unfold keccak.keccakf1600_round3_pi_rho_chi_1
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 theorem prc2_round3_spec (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_2 s
     ⦃ ⇓ r => ⌜ r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ⌝ ⦄ := by
   unfold keccak.keccakf1600_round3_pi_rho_chi_2
   hax_mvcgen
-  all_goals first | trivial | grind
+  all_goals (try trivial); scalar_tac
 
 end libcrux_iot_sha3.Equivalence
