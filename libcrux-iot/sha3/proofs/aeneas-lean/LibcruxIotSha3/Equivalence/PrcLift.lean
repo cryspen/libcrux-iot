@@ -415,4 +415,31 @@ private theorem pi_rho_chi_y4_zeta1_spec_fc
       preserves_complement s r [3, 9, 10, 16, 22] ⌝ ⦄ := by
   prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1
 
+/-! ## Spec-side `@[spec]` lemmas for `keccak_f.{iota,rho_unrolled,pi_unrolled,chi_unrolled}`
+
+These pure-semantics descriptions let `hax_mvcgen` thread the spec
+computation as a black-box step rather than drilling into each
+function's 25-cell do-block. Crucial for keeping `prc_lift_spec`'s
+WP tractable (without these, the impl+spec WP exceeds delab budget). -/
+
+/-- Pure semantics of `keccak_f.iota`: XORs `ROUND_CONSTANTS[round]` into lane 0. -/
+def iota_applied (state : Std.Array Std.U64 25#usize) (round : Std.Usize) :
+    Std.Array Std.U64 25#usize :=
+  state.set 0#usize (state.val[0]! ^^^ keccak_f.ROUND_CONSTANTS.val[round.val]!)
+
+@[spec]
+theorem iota_spec (state : Std.Array Std.U64 25#usize) (round : Std.Usize)
+    (h : round.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄ keccak_f.iota state round
+    ⦃ ⇓ r => ⌜ r = iota_applied state round ⌝ ⦄ := by
+  unfold keccak_f.iota
+  hax_mvcgen
+  all_goals first
+    | scalar_tac
+    | (unfold iota_applied
+       simp_all only [Std.UScalar.eq_equiv_bv_eq, Std.UScalar.bv_xor]
+       congr 1
+       apply Std.U64.bv_eq_imp_eq
+       simp_all [Std.UScalar.bv_xor])
+
 end libcrux_iot_sha3.Equivalence
