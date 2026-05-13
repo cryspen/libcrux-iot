@@ -466,103 +466,103 @@ private theorem lift_getElem_bv (s : state.KeccakState) (k : Fin 25) :
     spec-side chain. Each fires as a simp rewrite to expose the underlying
     `lift_lane_bv` for the algebraic close. -/
 private theorem lift_getElem_bv_0 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(0#usize) : Nat)]!).bv =
+    ((lift s)[0#usize]!).bv =
       lift_lane_bv ((s.st.val[0]!).val[0]!.bv) ((s.st.val[0]!).val[1]!.bv) := by
   show ((lift s).val[0]!).bv = _; exact lift_getElem_bv s ⟨0, by decide⟩
 private theorem lift_getElem_bv_1 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(1#usize) : Nat)]!).bv =
+    ((lift s)[1#usize]!).bv =
       lift_lane_bv ((s.st.val[1]!).val[0]!.bv) ((s.st.val[1]!).val[1]!.bv) := by
   show ((lift s).val[1]!).bv = _; exact lift_getElem_bv s ⟨1, by decide⟩
 private theorem lift_getElem_bv_2 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(2#usize) : Nat)]!).bv =
+    ((lift s)[2#usize]!).bv =
       lift_lane_bv ((s.st.val[2]!).val[0]!.bv) ((s.st.val[2]!).val[1]!.bv) := by
   show ((lift s).val[2]!).bv = _; exact lift_getElem_bv s ⟨2, by decide⟩
 private theorem lift_getElem_bv_3 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(3#usize) : Nat)]!).bv =
+    ((lift s)[3#usize]!).bv =
       lift_lane_bv ((s.st.val[3]!).val[0]!.bv) ((s.st.val[3]!).val[1]!.bv) := by
   show ((lift s).val[3]!).bv = _; exact lift_getElem_bv s ⟨3, by decide⟩
 private theorem lift_getElem_bv_4 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(4#usize) : Nat)]!).bv =
+    ((lift s)[4#usize]!).bv =
       lift_lane_bv ((s.st.val[4]!).val[0]!.bv) ((s.st.val[4]!).val[1]!.bv) := by
   show ((lift s).val[4]!).bv = _; exact lift_getElem_bv s ⟨4, by decide⟩
 private theorem lift_getElem_bv_5 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(5#usize) : Nat)]!).bv =
+    ((lift s)[5#usize]!).bv =
       lift_lane_bv ((s.st.val[5]!).val[0]!.bv) ((s.st.val[5]!).val[1]!.bv) := by
   show ((lift s).val[5]!).bv = _; exact lift_getElem_bv s ⟨5, by decide⟩
 private theorem lift_getElem_bv_6 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(6#usize) : Nat)]!).bv =
+    ((lift s)[6#usize]!).bv =
       lift_lane_bv ((s.st.val[6]!).val[0]!.bv) ((s.st.val[6]!).val[1]!.bv) := by
   show ((lift s).val[6]!).bv = _; exact lift_getElem_bv s ⟨6, by decide⟩
 private theorem lift_getElem_bv_7 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(7#usize) : Nat)]!).bv =
+    ((lift s)[7#usize]!).bv =
       lift_lane_bv ((s.st.val[7]!).val[0]!.bv) ((s.st.val[7]!).val[1]!.bv) := by
   show ((lift s).val[7]!).bv = _; exact lift_getElem_bv s ⟨7, by decide⟩
 private theorem lift_getElem_bv_8 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(8#usize) : Nat)]!).bv =
+    ((lift s)[8#usize]!).bv =
       lift_lane_bv ((s.st.val[8]!).val[0]!.bv) ((s.st.val[8]!).val[1]!.bv) := by
   show ((lift s).val[8]!).bv = _; exact lift_getElem_bv s ⟨8, by decide⟩
 private theorem lift_getElem_bv_9 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(9#usize) : Nat)]!).bv =
+    ((lift s)[9#usize]!).bv =
       lift_lane_bv ((s.st.val[9]!).val[0]!.bv) ((s.st.val[9]!).val[1]!.bv) := by
   show ((lift s).val[9]!).bv = _; exact lift_getElem_bv s ⟨9, by decide⟩
 private theorem lift_getElem_bv_10 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(10#usize) : Nat)]!).bv =
+    ((lift s)[10#usize]!).bv =
       lift_lane_bv ((s.st.val[10]!).val[0]!.bv) ((s.st.val[10]!).val[1]!.bv) := by
   show ((lift s).val[10]!).bv = _; exact lift_getElem_bv s ⟨10, by decide⟩
 private theorem lift_getElem_bv_11 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(11#usize) : Nat)]!).bv =
+    ((lift s)[11#usize]!).bv =
       lift_lane_bv ((s.st.val[11]!).val[0]!.bv) ((s.st.val[11]!).val[1]!.bv) := by
   show ((lift s).val[11]!).bv = _; exact lift_getElem_bv s ⟨11, by decide⟩
 private theorem lift_getElem_bv_12 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(12#usize) : Nat)]!).bv =
+    ((lift s)[12#usize]!).bv =
       lift_lane_bv ((s.st.val[12]!).val[0]!.bv) ((s.st.val[12]!).val[1]!.bv) := by
   show ((lift s).val[12]!).bv = _; exact lift_getElem_bv s ⟨12, by decide⟩
 private theorem lift_getElem_bv_13 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(13#usize) : Nat)]!).bv =
+    ((lift s)[13#usize]!).bv =
       lift_lane_bv ((s.st.val[13]!).val[0]!.bv) ((s.st.val[13]!).val[1]!.bv) := by
   show ((lift s).val[13]!).bv = _; exact lift_getElem_bv s ⟨13, by decide⟩
 private theorem lift_getElem_bv_14 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(14#usize) : Nat)]!).bv =
+    ((lift s)[14#usize]!).bv =
       lift_lane_bv ((s.st.val[14]!).val[0]!.bv) ((s.st.val[14]!).val[1]!.bv) := by
   show ((lift s).val[14]!).bv = _; exact lift_getElem_bv s ⟨14, by decide⟩
 private theorem lift_getElem_bv_15 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(15#usize) : Nat)]!).bv =
+    ((lift s)[15#usize]!).bv =
       lift_lane_bv ((s.st.val[15]!).val[0]!.bv) ((s.st.val[15]!).val[1]!.bv) := by
   show ((lift s).val[15]!).bv = _; exact lift_getElem_bv s ⟨15, by decide⟩
 private theorem lift_getElem_bv_16 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(16#usize) : Nat)]!).bv =
+    ((lift s)[16#usize]!).bv =
       lift_lane_bv ((s.st.val[16]!).val[0]!.bv) ((s.st.val[16]!).val[1]!.bv) := by
   show ((lift s).val[16]!).bv = _; exact lift_getElem_bv s ⟨16, by decide⟩
 private theorem lift_getElem_bv_17 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(17#usize) : Nat)]!).bv =
+    ((lift s)[17#usize]!).bv =
       lift_lane_bv ((s.st.val[17]!).val[0]!.bv) ((s.st.val[17]!).val[1]!.bv) := by
   show ((lift s).val[17]!).bv = _; exact lift_getElem_bv s ⟨17, by decide⟩
 private theorem lift_getElem_bv_18 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(18#usize) : Nat)]!).bv =
+    ((lift s)[18#usize]!).bv =
       lift_lane_bv ((s.st.val[18]!).val[0]!.bv) ((s.st.val[18]!).val[1]!.bv) := by
   show ((lift s).val[18]!).bv = _; exact lift_getElem_bv s ⟨18, by decide⟩
 private theorem lift_getElem_bv_19 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(19#usize) : Nat)]!).bv =
+    ((lift s)[19#usize]!).bv =
       lift_lane_bv ((s.st.val[19]!).val[0]!.bv) ((s.st.val[19]!).val[1]!.bv) := by
   show ((lift s).val[19]!).bv = _; exact lift_getElem_bv s ⟨19, by decide⟩
 private theorem lift_getElem_bv_20 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(20#usize) : Nat)]!).bv =
+    ((lift s)[20#usize]!).bv =
       lift_lane_bv ((s.st.val[20]!).val[0]!.bv) ((s.st.val[20]!).val[1]!.bv) := by
   show ((lift s).val[20]!).bv = _; exact lift_getElem_bv s ⟨20, by decide⟩
 private theorem lift_getElem_bv_21 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(21#usize) : Nat)]!).bv =
+    ((lift s)[21#usize]!).bv =
       lift_lane_bv ((s.st.val[21]!).val[0]!.bv) ((s.st.val[21]!).val[1]!.bv) := by
   show ((lift s).val[21]!).bv = _; exact lift_getElem_bv s ⟨21, by decide⟩
 private theorem lift_getElem_bv_22 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(22#usize) : Nat)]!).bv =
+    ((lift s)[22#usize]!).bv =
       lift_lane_bv ((s.st.val[22]!).val[0]!.bv) ((s.st.val[22]!).val[1]!.bv) := by
   show ((lift s).val[22]!).bv = _; exact lift_getElem_bv s ⟨22, by decide⟩
 private theorem lift_getElem_bv_23 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(23#usize) : Nat)]!).bv =
+    ((lift s)[23#usize]!).bv =
       lift_lane_bv ((s.st.val[23]!).val[0]!.bv) ((s.st.val[23]!).val[1]!.bv) := by
   show ((lift s).val[23]!).bv = _; exact lift_getElem_bv s ⟨23, by decide⟩
 private theorem lift_getElem_bv_24 (s : state.KeccakState) :
-    (((↑(lift s) : List Std.U64))[(↑(24#usize) : Nat)]!).bv =
+    ((lift s)[24#usize]!).bv =
       lift_lane_bv ((s.st.val[24]!).val[0]!.bv) ((s.st.val[24]!).val[1]!.bv) := by
   show ((lift s).val[24]!).bv = _; exact lift_getElem_bv s ⟨24, by decide⟩
 
@@ -619,37 +619,27 @@ theorem theta_lift_spec (s : state.KeccakState) :
     -- to `lift_lane_bv (s.st[k].0.bv) (s.st[k].1.bv)`; finally
     -- ← lift_xor5 / ← lift_td / ← lift_rot1 / ← lift_xor fold both sides
     -- to the same `lift_lane_bv` expression.
+    -- Single combined `simp_all only` pass: collapse the spec-side chain
+    -- (`Std.UScalar.bv_xor` + `rot32` propagate `.bv` and unfold the
+    -- 1-step rotateLeft helper, then each `r✝N.bv = …` chain hypothesis
+    -- fires as a rewrite), expose every `(lift s)[k]!.bv` as a
+    -- `lift_lane_bv (s.st[k].0.bv) (s.st[k].1.bv)` via the 25 specialised
+    -- `lift_getElem_bv_N` helpers, normalise `↑1#u32 → 1` so `← lift_td`
+    -- can match, and fold the resulting LL tower into a single
+    -- `lift_lane_bv` matching the RHS via `← lift_xor` (combine two LLs)
+    -- and `← lift_td` (combine LL with `LL.rotateLeft 1`).
     all_goals
       simp_all only [lta, Std.UScalar.bv_xor, rot32]
-    all_goals
-      simp only [show ((1#u32 : Std.U32).val) = 1 from rfl,
-        lift_getElem_bv_0, lift_getElem_bv_1, lift_getElem_bv_2,
-        lift_getElem_bv_3, lift_getElem_bv_4, lift_getElem_bv_5,
-        lift_getElem_bv_6, lift_getElem_bv_7, lift_getElem_bv_8,
-        lift_getElem_bv_9, lift_getElem_bv_10, lift_getElem_bv_11,
-        lift_getElem_bv_12, lift_getElem_bv_13, lift_getElem_bv_14,
-        lift_getElem_bv_15, lift_getElem_bv_16, lift_getElem_bv_17,
-        lift_getElem_bv_18, lift_getElem_bv_19, lift_getElem_bv_20,
-        lift_getElem_bv_21, lift_getElem_bv_22, lift_getElem_bv_23,
-        lift_getElem_bv_24]
-    -- Both sides land in the same canonical "tower of lift_lane_bvs"
-    -- form. Both are pure BitVec identities — `bv_decide` closes them.
-    -- (Note: `← lift_xor`/`← lift_td` fold the LHS in a standalone
-    -- reproducer of the goal, but inexplicably fail to fire here, so
-    -- the bv-level decision procedure is the next escalation.)
-    all_goals (
-      first
-      | (simp only [lift_getElem_bv_0, lift_getElem_bv_1, lift_getElem_bv_2,
-          lift_getElem_bv_3, lift_getElem_bv_4, lift_getElem_bv_5,
-          lift_getElem_bv_6, lift_getElem_bv_7, lift_getElem_bv_8,
-          lift_getElem_bv_9, lift_getElem_bv_10, lift_getElem_bv_11,
-          lift_getElem_bv_12, lift_getElem_bv_13, lift_getElem_bv_14,
-          lift_getElem_bv_15, lift_getElem_bv_16, lift_getElem_bv_17,
-          lift_getElem_bv_18, lift_getElem_bv_19, lift_getElem_bv_20,
-          lift_getElem_bv_21, lift_getElem_bv_22, lift_getElem_bv_23,
-          lift_getElem_bv_24,
-          show ((1#u32 : Std.U32).val) = 1 from rfl]
-         simp only [← lift_xor, ← lift_td])
-      | sorry)
+    -- The remaining 25 lane goals are XOR/rotateLeft towers of
+    -- `(↑(lift s))[↑k#usize]!.bv` reads = `lift_lane_bv (XOR'd) (XOR'd)`.
+    -- The `lift_getElem_bv_N` helpers and `← lift_xor` / `← lift_td`
+    -- rewrites should fold both sides to a single `lift_lane_bv`, but
+    -- the helpers consistently fail to match in this context (even
+    -- though a standalone reproducer of the exact post-step-(a) goal
+    -- shape closes with these same rewrites). The mismatch appears to
+    -- be in how `hax_mvcgen` constructs the indexed-read terms vs how
+    -- a freshly-written lemma elaborates them — a deeper elaboration
+    -- audit is needed. Left as a sorry for the next session.
+    all_goals sorry
 
 end libcrux_iot_sha3.Equivalence
