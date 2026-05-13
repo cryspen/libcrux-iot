@@ -26,6 +26,96 @@ The pitfalls are organised into two parts:
 
 ---
 
+## Priority for proof engineers
+
+This is the priority-ordered shortlist of what to look at first.
+
+### 🔴 P0 — Active blocker for `theta_lift_spec` (and by extension Steps 7–9 of the stage)
+
+- **L6  `lift_lane_bv` irreducibility blocks the final `← lift_xor`
+  / `← lift_td` fold.** With every other diagnostic addressed (helpers
+  fire for all 25 reads on both sides, indices are normalised, both
+  sides land in the canonical LL tower form), the very last step —
+  combining adjacent `lift_lane_bv ?a ?b ^^^ lift_lane_bv ?c ?d` pairs
+  via the reverse lifting lemmas — refuses to fire in the actual proof
+  context.  A standalone `lean_run_code` reproducer with the same
+  surface goal closes via `simp only [← lift_xor, ← lift_td]`.  The
+  one surviving `sorry` in `LibcruxIotSha3/Equivalence/ThetaLift.lean`
+  is exactly this step.
+
+  Hypothesis: simp's reducibility-aware matcher treats the irreducible
+  `lift_lane_bv` head differently in the in-context goal vs. the
+  reproducer, even though pp shows identical surface syntax.  Need a
+  proof engineer who knows simp's internals to confirm and propose
+  either (a) a config flag that disables the reducibility check, or
+  (b) a rewriting strategy that doesn't trip it.
+
+### 🟠 P1 — High-leverage unblockers (would have prevented ~60% of the diagnostic burn)
+
+These would have made the difference between "first attempt closes" and
+"three sessions of pp.all diagnostics".  Each is a small, well-scoped
+addition to `Aeneas.Std`:
+
+- **L13 (1)  `@[simp] theorem Usize.val_ofNat_lit (n h) :
+  (Std.Usize.ofNat n h).val = n := rfl`** (plus U32/U64 variants).
+  Without this we needed 25 explicit `show ... from rfl` rewrites to
+  normalise indices.  After adding the show-set, helpers started
+  firing.  *Single best lemma to add.*
+- **L13 (4)  `@[simp] theorem Array.getElem!_Nat_eq_via_coe :
+  (↑a : List α)[n]! = a.val[n]!`** — bridges the two surface forms of
+  list indexing.  Without this, helpers written in one form fail to
+  match goals in the other.
+- **L1.2  Make `Std.UScalar.ofNat`'s bound proof proof-irrelevant** (or
+  add a canonicalisation `@[simp]` rewrite).  Two `0#usize`s in the
+  same proof can have syntactically distinct bound proofs and fail to
+  unify.  This is a subtle, recurring source of "simp made no progress"
+  failures that won't surface until late in a proof.
+
+### 🟡 P2 — One-time costs (already worked around; no future blockers)
+
+Already paid the cost in this stage's proof; documenting so future
+users don't re-pay:
+
+- **L1.1  GetElem? instance pp ambiguity** — solved by mental model
+  + `set_option pp.all true` diagnostic.  A `pp.coercions.types` default
+  for GetElem args would help future debuggers.
+- **L5  `List.ofFn` doesn't unfold to a literal cons-list**
+  — rewrote `lift_theta_applied` as a literal 25-element list (~150
+  lines).  Future authors should default to `Array.make n [...]`.
+- **L11  `set_with_zeta` needed `Array.set_val_eq` bridge** — solved
+  with the underlying-list form for the postcondition.  Pattern is
+  documented in the `set_with_zeta_spec` proof.
+- **L8  `↑1#u32` vs `1` on rotation amounts** — solved with one
+  `show ... from rfl`.  A `BitVec.rotateLeft_lit_nat` simp lemma would
+  generalise this.
+
+### 🟢 P3 — Quality of life (annoyances, not blockers)
+
+- **L4  `simp_all only` doesn't split `And` hypotheses** — workaround
+  via `obtain ⟨_, h⟩ := h✝` when not anonymous.  An `mvcgen` option to
+  emit split conjuncts directly would help.
+- **L7  `@[step]` vs `@[spec]` distinction** — once understood,
+  mechanical conversion.  A documented `derive_spec_from_step` macro
+  would be nice.
+- **L9  `Triple.bind` boilerplate** — 5 lines per spec-coupling proof.
+  Macro candidate.
+- **L10  `Array.make` abbrev doesn't unfold** — add to simp set.
+- **L12  Underdocumented Triple entailment lemmas** — pure docs gap.
+
+### Suggested action for proof engineers
+
+1.  **Diagnose L6 first** — without this, no progress on the load-bearing
+    sorry.  The single ThetaLift.lean sorry at line 585 + the
+    standalone reproducer below it is enough to confirm/refute the
+    "reducibility-aware matcher" hypothesis.
+2.  **Land L13 (1) and L13 (4) in `Aeneas.Std`** — these are tiny `@[simp]`
+    lemmas that immediately unblock Step 7 (`PrcLift` spec coupling)
+    without re-running the surface-syntax diagnostic gauntlet.
+3.  **L1.2 (proof-irrelevant bounds) is research-y** — defer until
+    after Steps 7–9 land, but be aware it's a latent risk.
+
+---
+
 # Part 1 — Lean / aeneas-lean / Hax tactic difficulties
 
 ## L1.  Surface-syntax ≠ underlying term (the biggest time sink)
@@ -359,19 +449,26 @@ advances past the pinned commit but still produces compatible output).
 **Suggestion:** ship a Docker image / nix flake with the pinned
 toolchain so end users don't need to bisect commits and OCaml versions.
 
-## T2.  Test infrastructure / iteration speed
+## T2.  No documented iteration workflow in the aeneas-lean README
 
-There's no equivalent of `cargo check --tests` for the aeneas-lean
-proofs — `lake build` is all-or-nothing.  When iterating on a single
-proof file, `lake env lean File.lean` is the closest, but each call
-re-compiles dependencies, taking 8–75 s per check.
+The aeneas-lean README documents `lake build` (full rebuild, 30–120 s
+for this tree) but doesn't mention either:
 
-The `lean-lsp-mcp` server (via the `lean4-skills` plugin) gets this
-down to <1s by reusing the LSP session, but is an external dep.
+- `lake env lean Path/To/File.lean` — single-file check, still 8–75 s
+  per call because dependencies recompile.
+- The `lean-lsp-mcp` server (via the third-party `lean4-skills`
+  Claude-Code plugin / Cursor extension / VS Code Lean integration) —
+  reuses one LSP session so checks are sub-second.  This is what I
+  actually used throughout, and without it the diagnostic time would
+  have been multiples larger.
 
-**Suggestion:** add a documented `lake env lean File.lean` wrapper that
-caches dependencies (or directly recommend the `lean-lsp-mcp` /
-language-server workflow in the aeneas-lean README).
+A first-time aeneas-lean user has no way to learn this from the docs;
+they'll default to `lake build` and burn hours on every iteration.
+
+**Suggestion:** add an "Iteration workflow" section to the aeneas-lean
+README that points new users at the LSP / `lean-lsp-mcp` / standard
+Lean editor integrations as the default workflow.  `lake build` is for
+CI; LSP is for authoring.
 
 ## T3.  No documented end-to-end "what should compile" baseline
 
