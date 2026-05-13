@@ -442,4 +442,103 @@ theorem iota_spec (state : Std.Array Std.U64 25#usize) (round : Std.Usize)
        apply Std.U64.bv_eq_imp_eq
        simp_all [Std.UScalar.bv_xor])
 
+/-- Helper: rotate a `Std.U64` at the BitVec level. -/
+private abbrev rot64 (x : Std.U64) (n : Nat) : Std.U64 := ⟨x.bv.rotateLeft n⟩
+
+/-- Pure semantics of `keccak_f.rho_unrolled`: rotates each lane by the
+    Keccak ρ-offset table entry. -/
+def rho_applied (state : Std.Array Std.U64 25#usize) :
+    Std.Array Std.U64 25#usize :=
+  Std.Array.make 25#usize [
+    rot64 (state.val[0]!) 0,
+    rot64 (state.val[1]!) 36,
+    rot64 (state.val[2]!) 3,
+    rot64 (state.val[3]!) 41,
+    rot64 (state.val[4]!) 18,
+    rot64 (state.val[5]!) 1,
+    rot64 (state.val[6]!) 44,
+    rot64 (state.val[7]!) 10,
+    rot64 (state.val[8]!) 45,
+    rot64 (state.val[9]!) 2,
+    rot64 (state.val[10]!) 62,
+    rot64 (state.val[11]!) 6,
+    rot64 (state.val[12]!) 43,
+    rot64 (state.val[13]!) 15,
+    rot64 (state.val[14]!) 61,
+    rot64 (state.val[15]!) 28,
+    rot64 (state.val[16]!) 55,
+    rot64 (state.val[17]!) 25,
+    rot64 (state.val[18]!) 21,
+    rot64 (state.val[19]!) 56,
+    rot64 (state.val[20]!) 27,
+    rot64 (state.val[21]!) 20,
+    rot64 (state.val[22]!) 39,
+    rot64 (state.val[23]!) 8,
+    rot64 (state.val[24]!) 14]
+
+@[spec]
+theorem rho_unrolled_spec (state : Std.Array Std.U64 25#usize) :
+    ⦃ ⌜ True ⌝ ⦄ keccak_f.rho_unrolled state
+    ⦃ ⇓ r => ⌜ r = rho_applied state ⌝ ⦄ := by
+  unfold keccak_f.rho_unrolled
+  hax_mvcgen
+  all_goals try scalar_tac
+  -- Single residual: Array.make 25 [v0..v24] = rho_applied state
+  unfold rho_applied
+  apply Subtype.ext
+  simp only [Std.Array.make]
+  repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
+  all_goals (apply Std.U64.bv_eq_imp_eq)
+  all_goals simp_all only [
+    show ((0#u32 : Std.U32).val) = 0 from rfl,
+    show ((1#u32 : Std.U32).val) = 1 from rfl,
+    show ((2#u32 : Std.U32).val) = 2 from rfl,
+    show ((3#u32 : Std.U32).val) = 3 from rfl,
+    show ((6#u32 : Std.U32).val) = 6 from rfl,
+    show ((8#u32 : Std.U32).val) = 8 from rfl,
+    show ((10#u32 : Std.U32).val) = 10 from rfl,
+    show ((14#u32 : Std.U32).val) = 14 from rfl,
+    show ((15#u32 : Std.U32).val) = 15 from rfl,
+    show ((18#u32 : Std.U32).val) = 18 from rfl,
+    show ((20#u32 : Std.U32).val) = 20 from rfl,
+    show ((21#u32 : Std.U32).val) = 21 from rfl,
+    show ((25#u32 : Std.U32).val) = 25 from rfl,
+    show ((27#u32 : Std.U32).val) = 27 from rfl,
+    show ((28#u32 : Std.U32).val) = 28 from rfl,
+    show ((36#u32 : Std.U32).val) = 36 from rfl,
+    show ((39#u32 : Std.U32).val) = 39 from rfl,
+    show ((41#u32 : Std.U32).val) = 41 from rfl,
+    show ((43#u32 : Std.U32).val) = 43 from rfl,
+    show ((44#u32 : Std.U32).val) = 44 from rfl,
+    show ((45#u32 : Std.U32).val) = 45 from rfl,
+    show ((55#u32 : Std.U32).val) = 55 from rfl,
+    show ((56#u32 : Std.U32).val) = 56 from rfl,
+    show ((61#u32 : Std.U32).val) = 61 from rfl,
+    show ((62#u32 : Std.U32).val) = 62 from rfl,
+    show ((0#usize : Std.Usize).val) = 0 from rfl,
+    show ((1#usize : Std.Usize).val) = 1 from rfl,
+    show ((2#usize : Std.Usize).val) = 2 from rfl,
+    show ((3#usize : Std.Usize).val) = 3 from rfl,
+    show ((4#usize : Std.Usize).val) = 4 from rfl,
+    show ((5#usize : Std.Usize).val) = 5 from rfl,
+    show ((6#usize : Std.Usize).val) = 6 from rfl,
+    show ((7#usize : Std.Usize).val) = 7 from rfl,
+    show ((8#usize : Std.Usize).val) = 8 from rfl,
+    show ((9#usize : Std.Usize).val) = 9 from rfl,
+    show ((10#usize : Std.Usize).val) = 10 from rfl,
+    show ((11#usize : Std.Usize).val) = 11 from rfl,
+    show ((12#usize : Std.Usize).val) = 12 from rfl,
+    show ((13#usize : Std.Usize).val) = 13 from rfl,
+    show ((14#usize : Std.Usize).val) = 14 from rfl,
+    show ((15#usize : Std.Usize).val) = 15 from rfl,
+    show ((16#usize : Std.Usize).val) = 16 from rfl,
+    show ((17#usize : Std.Usize).val) = 17 from rfl,
+    show ((18#usize : Std.Usize).val) = 18 from rfl,
+    show ((19#usize : Std.Usize).val) = 19 from rfl,
+    show ((20#usize : Std.Usize).val) = 20 from rfl,
+    show ((21#usize : Std.Usize).val) = 21 from rfl,
+    show ((22#usize : Std.Usize).val) = 22 from rfl,
+    show ((23#usize : Std.Usize).val) = 23 from rfl,
+    show ((24#usize : Std.Usize).val) = 24 from rfl]
+
 end libcrux_iot_sha3.Equivalence
