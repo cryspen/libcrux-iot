@@ -63,20 +63,19 @@ in informal form:
 
 | File | Lines | Status |
 |---|---|---|
-| `Lift.lean` | 101 | ✅ done — lift, lift_lane_bv, impl_perm, impl_perm_pow4_eq_id |
-| `LiftLemmas.lean` | 168 | ✅ done — 25 `rot_N` lemmas + `lift_xor`/`lift_and`/`lift_not`/`lift_chi`/`lift_theta_apply`/`lift_td`/`lift_rot1`/`lift_xor5`, all via `bv_decide` |
-| `ThetaLift.lean` | 458 | ✅ impl side — `theta_comp_spec_local` gives the 10 d-cell values + st/i preservation; ⚠️ spec-side `theta_lift_spec` scaffolded (`Triple.bind` + `hax_mvcgen` reduce the goal to `Array.make 25 [...] = lift_theta_applied r_impl`), algebraic close TODO via `lift_xor`/`lift_xor5`/`lift_td`/`lift_rot1`. |
+| `Lift.lean` | 265 | ✅ done — interleaved-lane lifting definitions + bv_decide-closed algebra (25 `rot_N` + `lift_xor`/`lift_and`/`lift_not`/`lift_chi`/`lift_theta_apply`/`lift_td`/`lift_rot1`/`lift_xor5`). Consolidated from prior `Lift`/`LiftLemmas` split. |
+| `UScalarAC.lean` | new | ✅ Tier 1.5 local `Std.Associative`/`Std.Commutative` instances on `Std.UScalar.xor`/`and`/`or` (filling an Aeneas surface gap) |
+| `ThetaLift.lean` | 685 | ✅ done — `theta_comp_spec_local` (10 d-cell values + st/i preservation) AND `theta_lift_spec` (algebraic close via `simp only [Std.UScalarTy.U64_numBits_eq, ← lift_xor, ← lift_td]`) |
 | `RcEquiv.lean` | 39 | ✅ done — `rc_equiv` for `i < 24` via `native_decide` |
 | `PrcLift.lean` | 160 | ✅ impl side preservation — `pi_rho_chi_{1,2}_spec_local` register d/c/i; spec-side coupling pending |
 | `StepSpecs.lean` | 500 | ✅ done — round 1–3 step preservation specs (82 declarations via one `step_preserve_proof` macro) |
-| Spec-coupling files | — | ⏳ next — `theta_lift_spec`, `prc_lift_spec`, `round_equiv`, top 24-round |
+| Spec-coupling files | — | ⏳ next — `prc_lift_spec`, `round_equiv`, top 24-round |
 
-Sorry hygiene: **1 `sorry`** in this directory (the algebraic close of
-`theta_lift_spec`'s main residual — Step 6 of stage 2 in flight).
+Sorry hygiene: **0 sorries** in this directory as of Stage 2 Step 6.5.
 
 ```bash
 grep -rn sorry libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/
-# libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/ThetaLift.lean:455:    sorry
+# (no output)
 ```
 
 Build cost: `lake build` from the project root takes ~2 minutes from
@@ -87,9 +86,9 @@ ranges from 1.8 s (`RcEquiv`) to 75 s (`StepSpecs`).
 
 ```
 LibcruxIotSha3/Equivalence/
-├── Lift.lean          Bit-interleaved → u64 lifting (manual definitions)
-├── LiftLemmas.lean    BV-decide-closed algebra over lift_lane_bv
-├── ThetaLift.lean     impl-side spec for θ: r.d cells in terms of s.st halves
+├── Lift.lean          Bit-interleaved → u64 lifting (defs + bv_decide algebra)
+├── UScalarAC.lean     Local Std.Associative/Commutative on Std.UScalar.xor/and/or (Aeneas surface fill)
+├── ThetaLift.lean     impl-side spec for θ + spec-coupling theta_lift_spec
 ├── RcEquiv.lean       lift_lane_bv RC_INTERLEAVED_{0,1}[i] = ROUND_CONSTANTS[i]
 ├── PrcLift.lean       impl-side spec for ρ∘π∘χ∘ι: d/c/i preservation
 └── StepSpecs.lean     Preservation specs for rounds 1, 2, 3 (rounds 0 in Theta/PrcLift)
@@ -150,7 +149,7 @@ lake exe cache get                                    # one-time prime
 lake build                                            # ~2 min from clean
 # or per-file (faster feedback):
 lake env lean LibcruxIotSha3/Equivalence/Lift.lean
-lake env lean LibcruxIotSha3/Equivalence/LiftLemmas.lean
+lake env lean LibcruxIotSha3/Equivalence/UScalarAC.lean
 lake env lean LibcruxIotSha3/Equivalence/ThetaLift.lean
 lake env lean LibcruxIotSha3/Equivalence/RcEquiv.lean
 lake env lean LibcruxIotSha3/Equivalence/PrcLift.lean
@@ -207,7 +206,7 @@ must report `aeneas b5c45e84`.
   the top of any file that does post-mvcgen reasoning — every `simp`
   call otherwise unfolds them into a six-step parallel-bit-deposit
   cascade × 25 lanes, blowing up term sizes by orders of magnitude.
-- All "lift commutes with op" lemmas in `LiftLemmas.lean` close by
+- All "lift commutes with op" lemmas (second half of `Lift.lean`) close by
   `unfold lift_lane_bv spread_to_even; bv_decide` — the SAT solver
   dispatches them in seconds.
 - For U32 equalities arising from post-mvcgen residuals, the standard

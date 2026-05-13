@@ -1,6 +1,5 @@
 -- Experiment: compare agrind / libcruxgrind / grind on the L6 algebraic-fold goal.
 import LibcruxIotSha3.Equivalence.Lift
-import LibcruxIotSha3.Equivalence.LiftLemmas
 import LibcruxIotSha3.Equivalence.LibcruxGrindSetup
 
 open Aeneas Aeneas.Std libcrux_iot_sha3 libcrux_iot_sha3.Equivalence Aeneas.Grind

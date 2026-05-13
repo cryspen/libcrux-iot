@@ -2,7 +2,6 @@
 -- Tests whether grind/agrind/libcruxgrind/simp_only can close the L6 shape
 -- under different lemma orientations and explicit AC hints.
 import LibcruxIotSha3.Equivalence.Lift
-import LibcruxIotSha3.Equivalence.LiftLemmas
 import LibcruxIotSha3.Equivalence.LibcruxGrindSetup
 
 open Aeneas Aeneas.Std libcrux_iot_sha3 libcrux_iot_sha3.Equivalence Aeneas.Grind

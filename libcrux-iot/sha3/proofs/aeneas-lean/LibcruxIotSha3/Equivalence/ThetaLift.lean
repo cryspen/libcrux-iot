@@ -8,7 +8,7 @@
   the spec side via the lifting algebra in `LiftLemmas.lean`.
 -/
 import LibcruxIotSha3.Equivalence.Lift
-import LibcruxIotSha3.Equivalence.LiftLemmas
+import LibcruxIotSha3.Equivalence.UScalarAC
 import HacspecSha3
 import Hax
 
@@ -633,7 +633,7 @@ theorem theta_lift_spec (s : state.KeccakState) :
     -- rewrites. This canonicalisation is what the OLD-branch close
     -- relied on (their spec used `.toVec[i]` with Nat `i` directly).
     all_goals
-      simp_all only [lta, Std.UScalar.bv_xor, rot32,
+      simp_all only [Std.UScalar.bv_xor, rot32,
         show ((0#usize : Std.Usize).val) = 0 from rfl,
         show ((1#usize : Std.Usize).val) = 1 from rfl,
         show ((2#usize : Std.Usize).val) = 2 from rfl,
@@ -660,13 +660,8 @@ theorem theta_lift_spec (s : state.KeccakState) :
         show ((23#usize : Std.Usize).val) = 23 from rfl,
         show ((24#usize : Std.Usize).val) = 24 from rfl,
         show ((1#u32 : Std.U32).val) = 1 from rfl]
-    -- Step (b): apply 25 `lift_getElem_bv_N` helpers. With the
-    -- `(N#usize).val = N` normalisation from step (a), they now fire
-    -- for the OUTER `(lift s)[N]!.bv` reads. The INNER reads inside
-    -- `.rotateLeft 1` still don't get rewritten (bv_decide reports them
-    -- as separate abstracted variables), so the algebraic close
-    -- remains open. The next session should figure out why simp_only
-    -- doesn't recurse into rotateLeft.bv arguments.
+    -- Step (b): apply 25 `lift_getElem_bv_N` helpers to convert every
+    -- `(lift s)[k]!.bv` read into `lift_lane_bv (s.st[k].0.bv) (s.st[k].1.bv)`.
     all_goals
       simp only [lift_getElem_bv_0, lift_getElem_bv_1, lift_getElem_bv_2,
         lift_getElem_bv_3, lift_getElem_bv_4, lift_getElem_bv_5,
@@ -677,13 +672,17 @@ theorem theta_lift_spec (s : state.KeccakState) :
         lift_getElem_bv_18, lift_getElem_bv_19, lift_getElem_bv_20,
         lift_getElem_bv_21, lift_getElem_bv_22, lift_getElem_bv_23,
         lift_getElem_bv_24]
-    -- Helpers fire for ALL reads; LL-tower form on LHS. But neither
-    -- `agrind`, `grind`, nor `libcruxgrind` close (each tried 180-230s
-    -- before failing). The standalone-reproducer simp_only also fails
-    -- in this context. The blocker is structural: `lift_lane_bv` is
-    -- `@[local irreducible]`, and the grind engines may need
-    -- commutativity facts (`BitVec.xor_comm`) to align the LHS tower
-    -- with the RHS XOR'd args.
-    all_goals sorry
+    -- Step (c): the L6 algebraic close. The residual is a
+    -- `lift_lane_bv`-tower (LHS) against a single `lift_lane_bv`
+    -- applied to the algebraic identity (RHS). The reverse rewrites
+    -- `← lift_xor` / `← lift_td` fold the LHS, BUT they don't fire
+    -- unless we first canonicalise the BitVec width: the post-mvcgen
+    -- residue carries `BitVec UScalarTy.U64.numBits` (from the spec-
+    -- side `Std.U64` chain), whereas `lift_xor` / `lift_td` are stated
+    -- on `BitVec 64`. `numBits` doesn't unfold under simp's matcher,
+    -- so `Std.UScalarTy.U64_numBits_eq` bridges the two as the first
+    -- simp arg. (See `HAX_AENEAS_PITFALLS.md` §L6 for the diagnostic
+    -- history.)
+    all_goals simp only [Std.UScalarTy.U64_numBits_eq, ← lift_xor, ← lift_td]
 
 end libcrux_iot_sha3.Equivalence
