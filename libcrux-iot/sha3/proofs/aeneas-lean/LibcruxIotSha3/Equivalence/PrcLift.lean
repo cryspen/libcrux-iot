@@ -186,8 +186,10 @@ forms in `RoundEquiv` if both are needed. -/
 /-- Common proof pattern for FC sub-function specs: `unfold; hax_mvcgen;`
     then either `scalar_tac` for bounds, or refine the 8-conjunct post
     (d/c/i preservation + 5 cell equations) and discharge each via
-    assumption-chain (for preservation) or `simp_all + bv_eq_imp_eq +
-    simp_all` (for cell equations). -/
+    `simp_all` with `Std.UScalar.eq_equiv_bv_eq` (the U32-to-BitVec
+    decomposition lemma that's tagged `@[bvify]` but NOT `@[simp]` in
+    Aeneas, requiring explicit inclusion here). See
+    `Scratch_UScalarNat.lean` for the root-cause investigation. -/
 local macro "prc_y_zeta_fc_proof" subfun:ident : tactic => `(tactic|
   (unfold $subfun
    hax_mvcgen
@@ -197,10 +199,10 @@ local macro "prc_y_zeta_fc_proof" subfun:ident : tactic => `(tactic|
         all_goals first
           | (apply Eq.trans ‹_›; assumption)
           | assumption
-          | (simp_all [Std.Array.set_val_eq, rot32]
-             try (apply Std.U32.bv_eq_imp_eq;
-                  simp_all [Std.UScalar.bv_xor, Std.UScalar.bv_and,
-                            Std.UScalar.bv_not])))))
+          | simp_all [Std.Array.set_val_eq, rot32,
+                      Std.UScalar.eq_equiv_bv_eq,
+                      Std.UScalar.bv_xor, Std.UScalar.bv_and,
+                      Std.UScalar.bv_not])))
 
 set_option maxHeartbeats 8000000
 
@@ -246,5 +248,22 @@ private theorem pi_rho_chi_y0_zeta0_spec_fc
       r.st.val[18]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
       r.st.val[24]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ⌝ ⦄ := by
   prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0
+
+/-! ### Chained-set FC form: deferred
+
+The chained-set form (one big `r.st.val = apply_5_writes ...` equation
+capturing all 25 lanes) would compose cleanly for `prc_lift_spec`, but
+closing it requires peeling 5 levels of `.set` via congruence to
+expose cell-level U32 equalities. `fcongr` peels only one level at a
+time and `repeat' fcongr` doesn't recurse into the inner `Std.Array.set`
+operations (which have a different structure than `List.set`).
+
+The `Std.UScalar.eq_equiv_bv_eq` bridge (now in the macro) unlocks
+cell-level proofs trivially, per agent investigation in
+`Scratch_UScalarNat.lean`. What remains is the peeling step.
+
+Candidates for the next session: write a custom congruence lemma
+specific to `apply_5_writes`, OR explicitly state the post as 25
+individual cell equations (avoiding the chained-set wrapping). -/
 
 end libcrux_iot_sha3.Equivalence
