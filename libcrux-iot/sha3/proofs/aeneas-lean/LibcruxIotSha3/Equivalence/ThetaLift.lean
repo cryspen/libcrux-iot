@@ -628,18 +628,19 @@ theorem theta_lift_spec (s : state.KeccakState) :
     -- can match, and fold the resulting LL tower into a single
     -- `lift_lane_bv` matching the RHS via `← lift_xor` (combine two LLs)
     -- and `← lift_td` (combine LL with `LL.rotateLeft 1`).
+    -- Step (a) collapses the spec-side chain. Step (b) — algebraic fold
+    -- — deferred: the OLD-branch recipe (forward `lift_xor` / `lift_xor5`
+    -- / `lift_td` + `lift_getElem` + `rfl`) doesn't fire here because
+    -- `hax_mvcgen` generates `(lift s)[k#usize]!` Array+Usize reads
+    -- while the lemma's LHS pattern (also Array+Usize) somehow
+    -- syntactically differs (rw reports "pattern not found").
+    -- The OLD branch's `lift_getElem` used `.toVec[i]` (List+Nat) which
+    -- worked because the OLD spec used the same form. Diagnosing the
+    -- form mismatch + crafting a matching helper is the open work for
+    -- the next session. See ~/.claude/plans/this-folder-contains-an-
+    -- gentle-nebula-stage2.md for the resumption prompt.
     all_goals
       simp_all only [lta, Std.UScalar.bv_xor, rot32]
-    -- The remaining 25 lane goals are XOR/rotateLeft towers of
-    -- `(↑(lift s))[↑k#usize]!.bv` reads = `lift_lane_bv (XOR'd) (XOR'd)`.
-    -- The `lift_getElem_bv_N` helpers and `← lift_xor` / `← lift_td`
-    -- rewrites should fold both sides to a single `lift_lane_bv`, but
-    -- the helpers consistently fail to match in this context (even
-    -- though a standalone reproducer of the exact post-step-(a) goal
-    -- shape closes with these same rewrites). The mismatch appears to
-    -- be in how `hax_mvcgen` constructs the indexed-read terms vs how
-    -- a freshly-written lemma elaborates them — a deeper elaboration
-    -- audit is needed. Left as a sorry for the next session.
     all_goals sorry
 
 end libcrux_iot_sha3.Equivalence
