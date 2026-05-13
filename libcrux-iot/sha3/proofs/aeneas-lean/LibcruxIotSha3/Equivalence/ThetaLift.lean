@@ -455,7 +455,7 @@ private theorem lift_getElem (s : state.KeccakState) (k : Fin 25) :
   change (List.ofFn _)[k.val]! = _
   rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
 
-private theorem lift_getElem_bv (s : state.KeccakState) (k : Fin 25) :
+theorem lift_getElem_bv (s : state.KeccakState) (k : Fin 25) :
     ((↑(lift s) : List Std.U64)[(k.val : Nat)]!).bv =
       lift_lane_bv ((s.st.val[k.val]!).val[0]!.bv) ((s.st.val[k.val]!).val[1]!.bv) := by
   rw [lift_getElem]
@@ -465,103 +465,103 @@ private theorem lift_getElem_bv (s : state.KeccakState) (k : Fin 25) :
     exactly the syntactic shape `hax_mvcgen` produces in `theta_unrolled`'s
     spec-side chain. Each fires as a simp rewrite to expose the underlying
     `lift_lane_bv` for the algebraic close. -/
-private theorem lift_getElem_bv_0 (s : state.KeccakState) :
+theorem lift_getElem_bv_0 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(0 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[0]!).val[0]!.bv) ((s.st.val[0]!).val[1]!.bv) := by
   show ((lift s).val[0]!).bv = _; exact lift_getElem_bv s ⟨0, by decide⟩
-private theorem lift_getElem_bv_1 (s : state.KeccakState) :
+theorem lift_getElem_bv_1 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(1 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[1]!).val[0]!.bv) ((s.st.val[1]!).val[1]!.bv) := by
   show ((lift s).val[1]!).bv = _; exact lift_getElem_bv s ⟨1, by decide⟩
-private theorem lift_getElem_bv_2 (s : state.KeccakState) :
+theorem lift_getElem_bv_2 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(2 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[2]!).val[0]!.bv) ((s.st.val[2]!).val[1]!.bv) := by
   show ((lift s).val[2]!).bv = _; exact lift_getElem_bv s ⟨2, by decide⟩
-private theorem lift_getElem_bv_3 (s : state.KeccakState) :
+theorem lift_getElem_bv_3 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(3 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[3]!).val[0]!.bv) ((s.st.val[3]!).val[1]!.bv) := by
   show ((lift s).val[3]!).bv = _; exact lift_getElem_bv s ⟨3, by decide⟩
-private theorem lift_getElem_bv_4 (s : state.KeccakState) :
+theorem lift_getElem_bv_4 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(4 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[4]!).val[0]!.bv) ((s.st.val[4]!).val[1]!.bv) := by
   show ((lift s).val[4]!).bv = _; exact lift_getElem_bv s ⟨4, by decide⟩
-private theorem lift_getElem_bv_5 (s : state.KeccakState) :
+theorem lift_getElem_bv_5 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(5 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[5]!).val[0]!.bv) ((s.st.val[5]!).val[1]!.bv) := by
   show ((lift s).val[5]!).bv = _; exact lift_getElem_bv s ⟨5, by decide⟩
-private theorem lift_getElem_bv_6 (s : state.KeccakState) :
+theorem lift_getElem_bv_6 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(6 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[6]!).val[0]!.bv) ((s.st.val[6]!).val[1]!.bv) := by
   show ((lift s).val[6]!).bv = _; exact lift_getElem_bv s ⟨6, by decide⟩
-private theorem lift_getElem_bv_7 (s : state.KeccakState) :
+theorem lift_getElem_bv_7 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(7 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[7]!).val[0]!.bv) ((s.st.val[7]!).val[1]!.bv) := by
   show ((lift s).val[7]!).bv = _; exact lift_getElem_bv s ⟨7, by decide⟩
-private theorem lift_getElem_bv_8 (s : state.KeccakState) :
+theorem lift_getElem_bv_8 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(8 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[8]!).val[0]!.bv) ((s.st.val[8]!).val[1]!.bv) := by
   show ((lift s).val[8]!).bv = _; exact lift_getElem_bv s ⟨8, by decide⟩
-private theorem lift_getElem_bv_9 (s : state.KeccakState) :
+theorem lift_getElem_bv_9 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(9 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[9]!).val[0]!.bv) ((s.st.val[9]!).val[1]!.bv) := by
   show ((lift s).val[9]!).bv = _; exact lift_getElem_bv s ⟨9, by decide⟩
-private theorem lift_getElem_bv_10 (s : state.KeccakState) :
+theorem lift_getElem_bv_10 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(10 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[10]!).val[0]!.bv) ((s.st.val[10]!).val[1]!.bv) := by
   show ((lift s).val[10]!).bv = _; exact lift_getElem_bv s ⟨10, by decide⟩
-private theorem lift_getElem_bv_11 (s : state.KeccakState) :
+theorem lift_getElem_bv_11 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(11 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[11]!).val[0]!.bv) ((s.st.val[11]!).val[1]!.bv) := by
   show ((lift s).val[11]!).bv = _; exact lift_getElem_bv s ⟨11, by decide⟩
-private theorem lift_getElem_bv_12 (s : state.KeccakState) :
+theorem lift_getElem_bv_12 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(12 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[12]!).val[0]!.bv) ((s.st.val[12]!).val[1]!.bv) := by
   show ((lift s).val[12]!).bv = _; exact lift_getElem_bv s ⟨12, by decide⟩
-private theorem lift_getElem_bv_13 (s : state.KeccakState) :
+theorem lift_getElem_bv_13 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(13 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[13]!).val[0]!.bv) ((s.st.val[13]!).val[1]!.bv) := by
   show ((lift s).val[13]!).bv = _; exact lift_getElem_bv s ⟨13, by decide⟩
-private theorem lift_getElem_bv_14 (s : state.KeccakState) :
+theorem lift_getElem_bv_14 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(14 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[14]!).val[0]!.bv) ((s.st.val[14]!).val[1]!.bv) := by
   show ((lift s).val[14]!).bv = _; exact lift_getElem_bv s ⟨14, by decide⟩
-private theorem lift_getElem_bv_15 (s : state.KeccakState) :
+theorem lift_getElem_bv_15 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(15 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[15]!).val[0]!.bv) ((s.st.val[15]!).val[1]!.bv) := by
   show ((lift s).val[15]!).bv = _; exact lift_getElem_bv s ⟨15, by decide⟩
-private theorem lift_getElem_bv_16 (s : state.KeccakState) :
+theorem lift_getElem_bv_16 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(16 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[16]!).val[0]!.bv) ((s.st.val[16]!).val[1]!.bv) := by
   show ((lift s).val[16]!).bv = _; exact lift_getElem_bv s ⟨16, by decide⟩
-private theorem lift_getElem_bv_17 (s : state.KeccakState) :
+theorem lift_getElem_bv_17 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(17 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[17]!).val[0]!.bv) ((s.st.val[17]!).val[1]!.bv) := by
   show ((lift s).val[17]!).bv = _; exact lift_getElem_bv s ⟨17, by decide⟩
-private theorem lift_getElem_bv_18 (s : state.KeccakState) :
+theorem lift_getElem_bv_18 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(18 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[18]!).val[0]!.bv) ((s.st.val[18]!).val[1]!.bv) := by
   show ((lift s).val[18]!).bv = _; exact lift_getElem_bv s ⟨18, by decide⟩
-private theorem lift_getElem_bv_19 (s : state.KeccakState) :
+theorem lift_getElem_bv_19 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(19 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[19]!).val[0]!.bv) ((s.st.val[19]!).val[1]!.bv) := by
   show ((lift s).val[19]!).bv = _; exact lift_getElem_bv s ⟨19, by decide⟩
-private theorem lift_getElem_bv_20 (s : state.KeccakState) :
+theorem lift_getElem_bv_20 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(20 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[20]!).val[0]!.bv) ((s.st.val[20]!).val[1]!.bv) := by
   show ((lift s).val[20]!).bv = _; exact lift_getElem_bv s ⟨20, by decide⟩
-private theorem lift_getElem_bv_21 (s : state.KeccakState) :
+theorem lift_getElem_bv_21 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(21 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[21]!).val[0]!.bv) ((s.st.val[21]!).val[1]!.bv) := by
   show ((lift s).val[21]!).bv = _; exact lift_getElem_bv s ⟨21, by decide⟩
-private theorem lift_getElem_bv_22 (s : state.KeccakState) :
+theorem lift_getElem_bv_22 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(22 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[22]!).val[0]!.bv) ((s.st.val[22]!).val[1]!.bv) := by
   show ((lift s).val[22]!).bv = _; exact lift_getElem_bv s ⟨22, by decide⟩
-private theorem lift_getElem_bv_23 (s : state.KeccakState) :
+theorem lift_getElem_bv_23 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(23 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[23]!).val[0]!.bv) ((s.st.val[23]!).val[1]!.bv) := by
   show ((lift s).val[23]!).bv = _; exact lift_getElem_bv s ⟨23, by decide⟩
-private theorem lift_getElem_bv_24 (s : state.KeccakState) :
+theorem lift_getElem_bv_24 (s : state.KeccakState) :
     ((↑(lift s) : List Std.U64)[(24 : Nat)]!).bv =
       lift_lane_bv ((s.st.val[24]!).val[0]!.bv) ((s.st.val[24]!).val[1]!.bv) := by
   show ((lift s).val[24]!).bv = _; exact lift_getElem_bv s ⟨24, by decide⟩
