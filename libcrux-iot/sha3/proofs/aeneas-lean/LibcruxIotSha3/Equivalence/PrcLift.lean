@@ -204,11 +204,31 @@ local macro "prc_y_zeta_fc_proof" subfun:ident : tactic => `(tactic|
 
 set_option maxHeartbeats 8000000
 
-/-- y0_zeta0 FC: writes lanes 0/6/12/18/24 at halves 0/0/1/1/0;
-    RC_INTERLEAVED_0[s.i] XORed into lane 0 half 0; preserves `s.i`.
+/-! ### Chained-set FC helper
 
-    Validated FC template. The other 9 sub-functions follow this exact
-    structure with substituted parameters (see plan status update). -/
+`apply_5_writes` takes 5 (lane, half, value) tuples and produces the
+List form `((((l.set lane0 (l[lane0]!.set half0 v0)).set lane1 ...).set
+lane4 ...))`. Used to express FC sub-function posts compactly, avoiding
+the multiline `.set` parsing issue inside `⌜ ⌝`. -/
+@[reducible]
+private def apply_5_writes
+    (l : List lane.Lane2U32)
+    (lane0 lane1 lane2 lane3 lane4 : Nat)
+    (half0 half1 half2 half3 half4 : Std.Usize)
+    (v0 v1 v2 v3 v4 : Std.U32) : List lane.Lane2U32 :=
+  let l := l.set lane0 ((l[lane0]!).set half0 v0)
+  let l := l.set lane1 ((l[lane1]!).set half1 v1)
+  let l := l.set lane2 ((l[lane2]!).set half2 v2)
+  let l := l.set lane3 ((l[lane3]!).set half3 v3)
+  l.set lane4 ((l[lane4]!).set half4 v4)
+
+/-- y0_zeta0 FC: 5-cell-equation form (validated template).
+    Closes via `prc_y_zeta_fc_proof` macro at 8M heartbeats / ~30s.
+
+    Composition note: this form provides 5 cell values + d/c/i
+    preservation. For `prc_lift_spec`, all 50 cells are covered by the
+    union of 10 sub-fn FC specs (no preservation-of-unwritten clause
+    needed if all 50 cells get explicit equations from prc_1 + prc_2). -/
 private theorem pi_rho_chi_y0_zeta0_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0 BR s
