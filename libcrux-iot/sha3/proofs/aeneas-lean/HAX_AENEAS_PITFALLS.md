@@ -15,14 +15,27 @@ unresolved.  The verification context:
   closed via `hax_mvcgen` + `@[spec]` chaining + post-mvcgen algebra.
 - Tree: `libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/`.
 
-## A. Surface-syntax ≠ underlying term (the biggest time sink)
+The pitfalls are organised into two parts:
+
+- **Part 1 — Lean / aeneas-lean / Hax tactic difficulties** (sections L1–L13)
+  — proof-engineering issues: surface-syntax mismatches, missing simp
+  lemmas, mvcgen behaviour, irreducibility-vs-matching interactions,
+  Triple boilerplate, etc.  This is the focus.
+- **Part 2 — Toolchain / build / infrastructure difficulties** (sections T1–T3)
+  — re-extraction pin management, iteration speed.
+
+---
+
+# Part 1 — Lean / aeneas-lean / Hax tactic difficulties
+
+## L1.  Surface-syntax ≠ underlying term (the biggest time sink)
 
 The Lean pretty-printer routinely inserts `↑` casts that hide which
 underlying GetElem instance / coercion was actually picked.  Two
 expressions that print identically may use **different** GetElem?
 instances and therefore fail simp/rw unification.
 
-### A.1  `↑(lift s)[↑N#usize]!.bv` has three valid elaborations
+### L1.1  `↑(lift s)[↑N#usize]!.bv` has four valid elaborations
 
 For `lift s : Std.Array Std.U64 25#usize`:
 
@@ -41,7 +54,7 @@ requires `set_option pp.all true` which produces 200-line terms.
 distinctive marker (e.g. `↑ₐ` vs `↑ₗ`) or `pp.coercions.types` should be
 on by default for `GetElem?` arguments in user-facing surface display.
 
-### A.2  Bound-proof discrimination in `Std.Usize.ofNat N _`
+### L1.2  Bound-proof discrimination in `Std.Usize.ofNat N _`
 
 `0#usize` desugars to `Aeneas.Std.Usize.ofNat 0 (proof : 0 ≤ ...)`.  Two
 occurrences of `0#usize` in the same file can have proof-irrelevantly
@@ -54,7 +67,7 @@ proof-irrelevant via `Decidable.rec`-style or add a `@[simp]`
 canonicalisation lemma `Usize.ofNat_irrelevant` that rewrites any
 bound-proof to a canonical one.
 
-### A.3  `Subtype.val ≠ ↑` syntactically
+### L1.3  `Subtype.val ≠ ↑` syntactically
 
 `↑(lift s)` for `lift s : Std.Array Std.U64 25` elaborates to
 `@Subtype.val (List Std.U64) (fun l => l.length = 25) (lift s)` which
@@ -68,7 +81,7 @@ is definitionally `(lift s).val`.  But:
 These four hours of fight could have been avoided if there were a
 single canonical pp form for "underlying list of a `Std.Array`".
 
-## B. `(N#usize).val` does not reduce automatically
+## L2.  `(N#usize).val` does not reduce automatically
 
 After `Array.index_usize_spec` (an `@[step]` lemma with postcondition
 `x = v.val[i.val]!`), the index appears as `(N#usize).val` (Nat).  This
@@ -91,7 +104,7 @@ fire.
 ((Std.Usize.ofNat n h).val) = n := rfl` or a `simp norm_num` extension
 that reduces these literal-index `.val` calls.
 
-## C. Multiple GetElem instances on the same container
+## L3.  Multiple GetElem instances on the same container
 
 `Std.Array α n` has FOUR active `GetElem?` instances simultaneously:
 
@@ -103,14 +116,14 @@ that reduces these literal-index `.val` calls.
 A spec function written by hand often uses (1) or (4); `hax_mvcgen`
 + `Array.index_usize_spec` produces (3) in residual goals.  Lemmas
 written by hand often default to (3) but appear to be (1) due to pp
-coercions (see A.1).
+coercions (see L1.1).
 
 **Suggestion:** pick ONE canonical form for the impl/spec equivalence
 proof surface — preferably (1) (Array + Usize) since that's what the
 Rust source uses — and provide universal `@[simp]` rewrites that
 canonicalise the others to it.
 
-## D. `simp_all only` doesn't propagate conjunctions in hypotheses
+## L4.  `simp_all only` doesn't propagate conjunctions in hypotheses
 
 After `hax_mvcgen` on `theta_unrolled`, the spec-side chain produces
 ~75 anonymous hypotheses like:
@@ -130,7 +143,7 @@ and `simp_all` may already have rewritten earlier copies.
 in each chain step into separate hypotheses, OR provide a `simp_all`
 configuration that auto-splits And/Iff hypotheses.
 
-## E. `Fin.foldr` / `List.ofFn` in `lift_theta_applied` blocked unfolding
+## L5.  `Fin.foldr` / `List.ofFn` in `lift_theta_applied` blocked unfolding
 
 Defining the 25-lane lifted array via `List.ofFn (fun i : Fin 25 => ...)`
 seemed natural:
@@ -152,7 +165,7 @@ with 25 explicit entries.  Cost: ~150 lines of boilerplate.
 from a list" form, and the aeneas-lean tutorial should warn against
 `List.ofFn` for proof-friendly definitions.
 
-## F. `lift_lane_bv` irreducibility interferes with `simp` matching of forward lifting lemmas
+## L6.  `lift_lane_bv` irreducibility interferes with `simp` matching of forward lifting lemmas (LOAD-BEARING UNRESOLVED)
 
 `spread_to_even` and `lift_lane_bv` are marked `@[local irreducible]`
 in `ThetaLift.lean` (to prevent the 6-step parallel-bit-deposit
@@ -170,7 +183,9 @@ though they SHOULD match by pure syntactic pattern matching:
 
 In a **standalone reproducer** (no surrounding hypotheses) the same
 simp call closes the goal.  In the actual proof context it doesn't —
-even after extensive form-canonicalisation work.
+even after extensive form-canonicalisation work and after writing the
+25 `lift_getElem_bv_N` helpers in the exact form
+`((↑(lift s) : List Std.U64)[(N : Nat)]!).bv` that matches the goal.
 
 **Hypothesis:** simp's matcher may be doing "reducibility-aware"
 matching that gives up when the head symbol is irreducible AND the
@@ -181,7 +196,12 @@ is the load-bearing unresolved blocker for `theta_lift_spec`.
 in the Hax tactic guide, OR provide a `simp_norm` config that
 canonicalises BitVec/UScalar expressions before pattern matching.
 
-## G. `@[step]` vs `@[spec]` distinction
+See `LibcruxIotSha3/Equivalence/ThetaLift.lean:585` for the residual
+`sorry` and the surrounding scaffolding (literal-list
+`lift_theta_applied`, 25 `lift_getElem_bv_N` helpers, the 12-conjunct
+destructure, the 25-way `congr 1` peel).
+
+## L7.  `@[step]` vs `@[spec]` distinction undocumented
 
 `Aeneas.Std.Array.index_usize_spec` is `@[step]`-tagged.  My
 hand-written specs are `@[spec]`-tagged.  Both produce postconditions
@@ -208,7 +228,7 @@ theorem foo_spec {Q} (hpost : ∀ r, rigid_post r → (Q.1 r).down) :
 **Suggestion:** document this clearly in the Hax tactic guide, and
 ideally provide a `derive_spec_from_step` macro.
 
-## H. `hax_mvcgen` strips `rotateLeft` arg coercion inconsistently
+## L8.  `hax_mvcgen` strips `rotateLeft` arg coercion inconsistently
 
 After `hax_mvcgen` resolves a `core_models.num.U64.rotate_left x n`
 call (which takes a `n : Std.U32`), the rotation amount appears in two
@@ -227,7 +247,7 @@ syntactically.  Required adding a fifth `show ((1#u32 : Std.U32).val) =
 **Suggestion:** `hax_mvcgen` could uniformly reduce `↑(N#u32) : Nat` to
 `N` for literal `N` when resolving the `rotate_left` step.
 
-## I. `Triple.bind` boilerplate for spec-impl separation
+## L9.  `Triple.bind` boilerplate for spec-impl separation
 
 To prove `theta_lift_spec`, the proof structure has to be:
 
@@ -249,7 +269,7 @@ the impl-side spec as its argument would simplify.
 
 **Suggestion:** add a `triple_bind_spec impl_side_spec` tactic to Hax.
 
-## J. `Array.make` discrimination from `⟨_, _⟩` constructor
+## L10.  `Array.make` discrimination from `⟨_, _⟩` constructor
 
 `Std.Array.make n init hl := ⟨init, hl⟩`.  When unfolding
 `lift_theta_applied` (which uses `Array.make`), the goal contains
@@ -260,7 +280,7 @@ Subtype constructor form `⟨List, length proof⟩`, I had to add
 **Suggestion:** mark `Std.Array.make` as `@[reducible]` or add a `@[simp]`
 unfolding lemma `Array.make_def : Array.make n init hl = ⟨init, hl⟩`.
 
-## K. `set_with_zeta` post-condition requires `Array.set_val_eq` bridge
+## L11.  `set_with_zeta` post-condition requires `Array.set_val_eq` bridge
 
 The `set_with_zeta` primitive produces an internal `Usize` for the
 flat index `5*j + i`, which is structurally distinct from a
@@ -285,26 +305,7 @@ r.st = s.st.set ⟨5 * j.val + i.val, _⟩ ((s.st.val[5 * j.val + i.val]!).set z
 Usize indices and reconstructed Usize indices both reduce to the same
 form.
 
-## L. Re-extraction toolchain pin
-
-`hax_aeneas.py` pins `AENEAS_VERSION = "b5c45e84"`, `HAX_VERSION =
-"7b4bd97058..."`, but the released aeneas/hax versions don't always
-include these commits.  Building aeneas from source requires:
-
-- A dedicated opam switch (OCaml 5.2.1).
-- 11 ocaml deps installed by name (no `opam install --deps-only`).
-- Charon at the matching `charon-pin` commit.
-- macOS users need `gmake` (Homebrew) because aeneas's Makefile
-  rejects system `make 3.81`.
-
-The `SKIP_VERSION_CHECK=1` escape hatch helps when a downstream
-flag mismatch isn't actually breaking (e.g. when hax-evit HEAD
-advances past the pinned commit but still produces compatible output).
-
-**Suggestion:** ship a Docker image / nix flake with the pinned
-toolchain so end users don't need to bisect commits and OCaml versions.
-
-## M. `Hax/MissingLean.Std.Do.Triple.Basic` lemmas are underdocumented
+## L12.  `Hax/MissingLean.Std.Do.Triple.Basic` lemmas are underdocumented
 
 The Triple entailment lemmas (`Triple.bind`, `Triple.pure`,
 `Triple.of_entails_right`, etc.) are the workhorses for assembling
@@ -315,23 +316,9 @@ spec-impl coupling proofs but have only sketch docstrings.  Each took
 showing how to compose `Triple.bind` with both `@[spec]` and `@[step]`
 postconditions.
 
-## N. Test infrastructure
+## L13.  Specific `@[simp]` lemmas missing from `Aeneas.Std`
 
-There's no equivalent of `cargo check --tests` for the aeneas-lean
-proofs — `lake build` is all-or-nothing.  When iterating on a single
-proof file, `lake env lean File.lean` is the closest, but each call
-re-compiles dependencies, taking 8–75 s per check.
-
-The `lean-lsp-mcp` server (via the `lean4-skills` plugin) gets this
-down to <1s by reusing the LSP session, but is an external dep.
-
-**Suggestion:** add a documented `lake env lean File.lean` wrapper that
-caches dependencies (or directly recommend the `lean-lsp-mcp` /
-language-server workflow in the aeneas-lean README).
-
-## Specific simp lemmas that would have saved hours
-
-A wishlist of `@[simp]` lemmas missing from `Aeneas.Std`:
+A wishlist that would have saved hours:
 
 1.  `Usize.val_ofNat_lit : (Std.Usize.ofNat n h).val = n` (when n is a
     literal Nat); same for `U32.val_ofNat_lit`, etc.
@@ -351,20 +338,69 @@ would have closed on the first attempt.
 
 ---
 
+# Part 2 — Toolchain / build / infrastructure difficulties
+
+## T1.  Re-extraction toolchain pin
+
+`hax_aeneas.py` pins `AENEAS_VERSION = "b5c45e84"`, `HAX_VERSION =
+"7b4bd97058..."`, but the released aeneas/hax versions don't always
+include these commits.  Building aeneas from source requires:
+
+- A dedicated opam switch (OCaml 5.2.1).
+- 11 ocaml deps installed by name (no `opam install --deps-only`).
+- Charon at the matching `charon-pin` commit.
+- macOS users need `gmake` (Homebrew) because aeneas's Makefile
+  rejects system `make 3.81`.
+
+The `SKIP_VERSION_CHECK=1` escape hatch helps when a downstream
+flag mismatch isn't actually breaking (e.g. when hax-evit HEAD
+advances past the pinned commit but still produces compatible output).
+
+**Suggestion:** ship a Docker image / nix flake with the pinned
+toolchain so end users don't need to bisect commits and OCaml versions.
+
+## T2.  Test infrastructure / iteration speed
+
+There's no equivalent of `cargo check --tests` for the aeneas-lean
+proofs — `lake build` is all-or-nothing.  When iterating on a single
+proof file, `lake env lean File.lean` is the closest, but each call
+re-compiles dependencies, taking 8–75 s per check.
+
+The `lean-lsp-mcp` server (via the `lean4-skills` plugin) gets this
+down to <1s by reusing the LSP session, but is an external dep.
+
+**Suggestion:** add a documented `lake env lean File.lean` wrapper that
+caches dependencies (or directly recommend the `lean-lsp-mcp` /
+language-server workflow in the aeneas-lean README).
+
+## T3.  No documented end-to-end "what should compile" baseline
+
+After a re-extraction (`hax_aeneas.py`), there is no quick
+"compiles?  yes/no" sanity check beyond a full `lake build`.  A
+documented green-light file list (e.g. `Equivalence/ThetaLift.lean`
+should always compile within 19 s, etc.) would help users spot
+toolchain regressions vs. their own breakages.
+
+**Suggestion:** ship a `Makefile` or `lake.test` target that builds
+the equivalence proofs and reports per-file timing, so a fresh clone
+can verify the baseline in one command.
+
+---
+
 ## Closing note
 
 Stage 2 of the SHA-3 equivalence proof landed in 8 sessions × 1.5
 days each; ~60% of that was diagnostic time on the surface-syntax /
-underlying-term mismatches in sections A–C above.  The proof
+underlying-term mismatches in sections L1–L3 above.  The proof
 **structure** (the 11 sub-function `@[spec]` lemmas, the 12-conjunct
 `theta_comp_spec_local` post, the `lift_theta_applied` definition, the
 25 `lift_getElem_bv_N` helpers, the impl-side preservation specs) was
 straightforward to write once the form-matching issues were
 understood.  The remaining `sorry` (the algebraic fold from LL-tower
-to single LL) is one missing piece of simp-normalisation lore.
+to single LL, see L6) is one missing piece of simp-normalisation lore.
 
 If hax-aeneas-lean is to become accessible to verification engineers
 who aren't already deeply familiar with Lean 4's elaboration
-internals, the surface-vs-underlying-term disambiguation (A–C) and the
-`Aeneas.Std` simp-lemma wishlist above are the most impactful items to
-address.
+internals, the surface-vs-underlying-term disambiguation (L1–L3) and
+the `Aeneas.Std` simp-lemma wishlist (L13) above are the most
+impactful items to address.
