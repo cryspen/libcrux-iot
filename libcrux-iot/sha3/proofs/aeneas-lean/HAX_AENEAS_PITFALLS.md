@@ -255,7 +255,7 @@ with 25 explicit entries.  Cost: ~150 lines of boilerplate.
 from a list" form, and the aeneas-lean tutorial should warn against
 `List.ofFn` for proof-friendly definitions.
 
-## L6.  `lift_lane_bv` irreducibility interferes with `simp` matching of forward lifting lemmas (LOAD-BEARING UNRESOLVED)
+## L6.  `lift_lane_bv` irreducibility interferes with `simp` matching of forward lifting lemmas (RESOLVED — missing `UScalarTy.U64_numBits_eq` bridge)
 
 `spread_to_even` and `lift_lane_bv` are marked `@[local irreducible]`
 in `ThetaLift.lean` (to prevent the 6-step parallel-bit-deposit
@@ -286,10 +286,36 @@ is the load-bearing unresolved blocker for `theta_lift_spec`.
 in the Hax tactic guide, OR provide a `simp_norm` config that
 canonicalises BitVec/UScalar expressions before pattern matching.
 
-See `LibcruxIotSha3/Equivalence/ThetaLift.lean:585` for the residual
-`sorry` and the surrounding scaffolding (literal-list
-`lift_theta_applied`, 25 `lift_getElem_bv_N` helpers, the 12-conjunct
-destructure, the 25-way `congr 1` peel).
+See `LibcruxIotSha3/Equivalence/ThetaLift.lean:585` for the surrounding
+scaffolding (literal-list `lift_theta_applied`, 25 `lift_getElem_bv_N`
+helpers, the 12-conjunct destructure, the 25-way `congr 1` peel).
+
+**Resolution (2026-05-13, ninth session):** the L6 close is a one-line
+`simp only`:
+
+```lean
+all_goals simp only [Std.UScalarTy.U64_numBits_eq, ← lift_xor, ← lift_td]
+```
+
+The root cause was the **type** of the BitVec carried through the
+post-`mvcgen` chain: the goal contains `BitVec UScalarTy.U64.numBits`
+(from the spec-side `Std.U64`-typed chain), whereas the forward lifting
+lemmas `lift_xor` / `lift_td` are stated on `BitVec 32`/`BitVec 64`.
+`UScalarTy.U64.numBits` reduces to `64` by definition but the Aeneas
+backend marks `numBits` so simp's unifier won't WHNF through it. Adding
+the registered `Std.UScalarTy.U64_numBits_eq` rewrite as the first simp
+argument canonicalises the residue and the reverse rewrites then fold
+the LL-tower into a single `lift_lane_bv`.
+
+In parallel we also built the typed `Lifted n` wrapper (`Lifted.lean`)
+with project-local `Std.Associative` / `Std.Commutative` instances on
+`Std.UScalar.xor`/`and`/`or` (Tier 1.5 per the stage-2 plan), and a
+wrapper-level `lift_*_l` / `rot_N_l` lemma family. While not needed for
+`theta_lift_spec` itself, this wrapper gives `grind`/`agrind` AC
+reasoning over lifted lanes — useful for Step 7 (`PrcLift`) where
+`χ`-nonlinearity may compound AC mismatches. The local UScalar AC
+instances are also a candidate for an eventual Aeneas-upstream PR
+(Tier 3) once stable across more proofs.
 
 ## L7.  `@[step]` vs `@[spec]` distinction undocumented
 

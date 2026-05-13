@@ -14,7 +14,6 @@
   and is gated on the M2 spec re-extraction.
 -/
 import LibcruxIotSha3.Equivalence.Lift
-import LibcruxIotSha3.Equivalence.LiftLemmas
 import LibcruxIotSha3.Equivalence.ThetaLift
 import Hax
 
