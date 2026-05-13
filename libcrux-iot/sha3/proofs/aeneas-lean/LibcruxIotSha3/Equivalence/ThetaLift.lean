@@ -598,8 +598,7 @@ theorem theta_lift_spec (s : state.KeccakState) :
         pure (r_spec = lift_theta_applied r_impl)).holds ⌝ ⦄ := by
   apply Triple.of_entails_right _ (theta_comp_spec_local s)
   rw [PostCond.entails_noThrow]
-  intro r_impl
-  intro hpost
+  intro r_impl hpost
   dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
   unfold Aeneas.Std.Result.holds
   unfold keccak_f.theta_unrolled
