@@ -152,4 +152,151 @@ example (a d v : Std.U32)
     v = Equivalence.rot32 (a ^^^ d) 0 := by
   simp_all [Equivalence.rot32]
 
+-- ============================================================
+-- Section 6: Composition experiments
+-- ============================================================
+
+/-- Local copy of apply_5_writes for experimentation. -/
+@[reducible]
+def apply_5_writes_exp
+    (l : List libcrux_iot_sha3.lane.Lane2U32)
+    (lane0 lane1 lane2 lane3 lane4 : Nat)
+    (half0 half1 half2 half3 half4 : Std.Usize)
+    (v0 v1 v2 v3 v4 : Std.U32) : List libcrux_iot_sha3.lane.Lane2U32 :=
+  let l := l.set lane0 ((l[lane0]!).set half0 v0)
+  let l := l.set lane1 ((l[lane1]!).set half1 v1)
+  let l := l.set lane2 ((l[lane2]!).set half2 v2)
+  let l := l.set lane3 ((l[lane3]!).set half3 v3)
+  l.set lane4 ((l[lane4]!).set half4 v4)
+
+-- Concrete substitution for y0_zeta0 sub-fn lane indices:
+--   lanes 0/6/12/18/24, halves 0/0/1/1/0
+-- We want, from a chained-set hypothesis, to derive the 5 cell equations.
+
+/-- The breakthrough: in chained-set form, the 5 cell extractions
+    close uniformly with `refine ⟨..⟩ <;> simp_all [Std.Array.set_val_eq]`.
+    The 5-fold `.set` chain unfolds cleanly via simp's `List.getElem!_set`
+    + `Std.Array.set_val_eq` lemma. -/
+example
+    (slist : List libcrux_iot_sha3.lane.Lane2U32)
+    (rlist : List libcrux_iot_sha3.lane.Lane2U32)
+    (v0 v1 v2 v3 v4 : Std.U32)
+    (h25 : slist.length = 25)
+    (hchain : rlist = apply_5_writes_exp slist 0 6 12 18 24
+                                          0#usize 0#usize 1#usize 1#usize 0#usize
+                                          v0 v1 v2 v3 v4) :
+    rlist[0]!.val[0]! = v0 ∧
+    rlist[6]!.val[0]! = v1 ∧
+    rlist[12]!.val[1]! = v2 ∧
+    rlist[18]!.val[1]! = v3 ∧
+    rlist[24]!.val[0]! = v4 := by
+  subst hchain
+  unfold apply_5_writes_exp
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;> simp_all [Std.Array.set_val_eq]
+
+/-- The realistic shape: 5-cell chained-set form with chi-formula RHS.
+    Extracting any of the 5 written cells should reduce, via simp, to the
+    corresponding chi-formula equation — which then closes with the
+    `eq_equiv_bv_eq` lemma. -/
+example
+    (slist : List libcrux_iot_sha3.lane.Lane2U32)
+    (rlist : List libcrux_iot_sha3.lane.Lane2U32)
+    (a0 a1 a2 a3 a4 d0 d1 d2 d3 d4 : Std.U32) (RC : Std.U32)
+    (h25 : slist.length = 25)
+    (hchain : rlist = apply_5_writes_exp slist 0 6 12 18 24
+                          0#usize 0#usize 1#usize 1#usize 0#usize
+                          ((Equivalence.rot32 (a0 ^^^ d0) 0) ^^^
+                              ((~~~ Equivalence.rot32 (a1 ^^^ d1) 22) &&&
+                                  Equivalence.rot32 (a2 ^^^ d2) 22) ^^^ RC)
+                          ((Equivalence.rot32 (a1 ^^^ d1) 22) ^^^
+                              ((~~~ Equivalence.rot32 (a2 ^^^ d2) 22) &&&
+                                  Equivalence.rot32 (a3 ^^^ d3) 11))
+                          ((Equivalence.rot32 (a2 ^^^ d2) 22) ^^^
+                              ((~~~ Equivalence.rot32 (a3 ^^^ d3) 11) &&&
+                                  Equivalence.rot32 (a4 ^^^ d4) 7))
+                          ((Equivalence.rot32 (a3 ^^^ d3) 11) ^^^
+                              ((~~~ Equivalence.rot32 (a4 ^^^ d4) 7) &&&
+                                  Equivalence.rot32 (a0 ^^^ d0) 0))
+                          ((Equivalence.rot32 (a4 ^^^ d4) 7) ^^^
+                              ((~~~ Equivalence.rot32 (a0 ^^^ d0) 0) &&&
+                                  Equivalence.rot32 (a1 ^^^ d1) 22))) :
+    rlist[0]!.val[0]! =
+      (Equivalence.rot32 (a0 ^^^ d0) 0) ^^^
+        ((~~~ Equivalence.rot32 (a1 ^^^ d1) 22) &&&
+             Equivalence.rot32 (a2 ^^^ d2) 22) ^^^ RC ∧
+    rlist[6]!.val[0]! =
+      (Equivalence.rot32 (a1 ^^^ d1) 22) ^^^
+        ((~~~ Equivalence.rot32 (a2 ^^^ d2) 22) &&&
+             Equivalence.rot32 (a3 ^^^ d3) 11) ∧
+    rlist[12]!.val[1]! =
+      (Equivalence.rot32 (a2 ^^^ d2) 22) ^^^
+        ((~~~ Equivalence.rot32 (a3 ^^^ d3) 11) &&&
+             Equivalence.rot32 (a4 ^^^ d4) 7) ∧
+    rlist[18]!.val[1]! =
+      (Equivalence.rot32 (a3 ^^^ d3) 11) ^^^
+        ((~~~ Equivalence.rot32 (a4 ^^^ d4) 7) &&&
+             Equivalence.rot32 (a0 ^^^ d0) 0) ∧
+    rlist[24]!.val[0]! =
+      (Equivalence.rot32 (a4 ^^^ d4) 7) ^^^
+        ((~~~ Equivalence.rot32 (a0 ^^^ d0) 0) &&&
+             Equivalence.rot32 (a1 ^^^ d1) 22) := by
+  subst hchain
+  unfold apply_5_writes_exp
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;> simp_all [Std.Array.set_val_eq]
+
+/-- TWO chained sub-fns: simulating pi_rho_chi_1's chain of two sub-fns.
+    First sub-fn writes lanes 0/6/12/18/24, second writes lanes 5/11/17/23/4.
+    From `mlist = apply_5_writes slist ...` AND `rlist = apply_5_writes mlist ...`,
+    can we extract:
+      - rlist's NEW cells (the 5 from the second sub-fn, written via v5..v9)
+      - rlist's PRESERVED cells from first sub-fn (the 5 from the first set,
+        unchanged because second sub-fn writes different lanes)? -/
+example
+    (slist mlist rlist : List libcrux_iot_sha3.lane.Lane2U32)
+    (v0 v1 v2 v3 v4 v5 v6 v7 v8 v9 : Std.U32)
+    (h25 : slist.length = 25)
+    (hchain1 : mlist = apply_5_writes_exp slist 0 6 12 18 24
+                          0#usize 0#usize 1#usize 1#usize 0#usize
+                          v0 v1 v2 v3 v4)
+    (hchain2 : rlist = apply_5_writes_exp mlist 5 11 17 23 4
+                          1#usize 1#usize 0#usize 0#usize 1#usize
+                          v5 v6 v7 v8 v9) :
+    -- 5 NEW cells from sub-fn 2
+    rlist[5]!.val[1]! = v5 ∧
+    rlist[11]!.val[1]! = v6 ∧
+    rlist[17]!.val[0]! = v7 ∧
+    rlist[23]!.val[0]! = v8 ∧
+    rlist[4]!.val[1]! = v9 ∧
+    -- 5 PRESERVED cells from sub-fn 1 (those lanes not touched by sub-fn 2)
+    rlist[0]!.val[0]! = v0 ∧
+    rlist[6]!.val[0]! = v1 ∧
+    rlist[12]!.val[1]! = v2 ∧
+    rlist[18]!.val[1]! = v3 ∧
+    rlist[24]!.val[0]! = v4 := by
+  subst hchain2 hchain1
+  unfold apply_5_writes_exp
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+    simp_all [Std.Array.set_val_eq]
+
+/-- Now: can we ALSO derive preservation of the other 20 cells from a
+    chained-set hypothesis? This is the key composition question. -/
+example
+    (slist : List libcrux_iot_sha3.lane.Lane2U32)
+    (rlist : List libcrux_iot_sha3.lane.Lane2U32)
+    (v0 v1 v2 v3 v4 : Std.U32)
+    (h25 : slist.length = 25)
+    (hchain : rlist = apply_5_writes_exp slist 0 6 12 18 24
+                                          0#usize 0#usize 1#usize 1#usize 0#usize
+                                          v0 v1 v2 v3 v4) :
+    -- Sample of preserved cells: lane 1 untouched (read by next sub-fn);
+    -- lane 0 half 1 untouched (only half 0 written)
+    rlist[1]!.val[0]! = slist[1]!.val[0]! ∧
+    rlist[1]!.val[1]! = slist[1]!.val[1]! ∧
+    rlist[0]!.val[1]! = slist[0]!.val[1]! ∧
+    rlist[6]!.val[1]! = slist[6]!.val[1]! ∧
+    rlist[12]!.val[0]! = slist[12]!.val[0]! := by
+  subst hchain
+  unfold apply_5_writes_exp
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;> simp_all [Std.Array.set_val_eq]
+
 end ScratchUScalarNat
