@@ -16,12 +16,43 @@
 import LibcruxIotSha3.Equivalence.Lift
 import LibcruxIotSha3.Equivalence.ThetaLift
 import Hax
+import Lean
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3
 
 namespace libcrux_iot_sha3.Equivalence
 
 set_option mvcgen.warning false
+
+/-! ### Macro: `preserves_complement`
+
+Given a list of 5 written lane indices, expand to the 40-conjunct
+preservation block for the 20 untouched lanes (both halves each).
+
+Usage inside a Triple post:
+```
+preserves_complement s r [0, 6, 12, 18, 24]
+```
+expands to
+```
+r.st.val[1]!.val[0]! = s.st.val[1]!.val[0]! ∧ r.st.val[1]!.val[1]! = s.st.val[1]!.val[1]! ∧
+... (40 conjuncts total, for lanes ∈ {1,2,3,4,5,7,8,9,10,11,13,...,23})
+```
+
+The 5 other-halves of written lanes (e.g., `r.st.val[0]!.val[1]! = ...`)
+remain explicit — they're sub-fn-specific (depend on which half is
+written) and don't follow the lane-complement pattern. -/
+
+open Lean in
+macro "preserves_complement" s:term:max r:term:max "[" excluded:num,* "]" : term => do
+  let excludedNats : List Nat := excluded.getElems.toList.map (·.getNat)
+  let preserved : List Nat := (List.range 25).filter (fun l => l ∉ excludedNats)
+  preserved.foldrM
+    (init := (← `(True)))
+    (fun lane acc => do
+      let lLit := Syntax.mkNatLit lane
+      `(($r).st.val[$lLit]!.val[0]! = ($s).st.val[$lLit]!.val[0]! ∧
+        ($r).st.val[$lLit]!.val[1]! = ($s).st.val[$lLit]!.val[1]! ∧ $acc))
 
 /-! ### Primitive spec for `set_with_zeta`
 
@@ -199,6 +230,7 @@ local macro "prc_y_zeta_fc_proof" subfun:ident : tactic => `(tactic|
         all_goals first
           | (apply Eq.trans ‹_›; assumption)
           | assumption
+          | scalar_tac
           | simp_all [Std.Array.set_val_eq, rot32,
                       Std.UScalar.eq_equiv_bv_eq,
                       Std.UScalar.bv_xor, Std.UScalar.bv_and,
@@ -224,13 +256,18 @@ private def apply_5_writes
   let l := l.set lane3 ((l[lane3]!).set half3 v3)
   l.set lane4 ((l[lane4]!).set half4 v4)
 
-/-- y0_zeta0 FC: 5-cell-equation form (validated template).
-    Closes via `prc_y_zeta_fc_proof` macro at 8M heartbeats / ~30s.
+/-! y0_zeta0 FC (50-cell form, composes for prc_lift_spec).
 
-    Composition note: this form provides 5 cell values + d/c/i
-    preservation. For `prc_lift_spec`, all 50 cells are covered by the
-    union of 10 sub-fn FC specs (no preservation-of-unwritten clause
-    needed if all 50 cells get explicit equations from prc_1 + prc_2). -/
+    Captures all 25 lanes × 2 halves: 5 written cells (chi formulas), 5
+    other-halves of written lanes (preserved), 40 cells of 20 untouched
+    lanes (preserved). Closes via `prc_y_zeta_fc_proof` macro at 16M
+    heartbeats (the macro's 8-hole `refine` parses right-associatively
+    and `simp_all` chains through all 53 conjuncts).
+
+    Per Option B recommendation (agent investigation): chained-set form
+    via `apply_5_writes` is blocked on the mvcgen chain-hypothesis
+    forward-substitution problem; 50-cell form composes cleanly. -/
+set_option maxHeartbeats 16000000 in
 private theorem pi_rho_chi_y0_zeta0_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0 BR s
@@ -241,29 +278,249 @@ private theorem pi_rho_chi_y0_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 11
       let bx4 := rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      -- 5 written cells
       r.st.val[0]!.val[0]! =
         bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_0.val[s.i.val]! ∧
       r.st.val[6]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
       r.st.val[12]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
       r.st.val[18]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[24]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ⌝ ⦄ := by
+      r.st.val[24]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      -- Other halves of written lanes (5 cells preserved)
+      r.st.val[0]!.val[1]! = s.st.val[0]!.val[1]! ∧
+      r.st.val[6]!.val[1]! = s.st.val[6]!.val[1]! ∧
+      r.st.val[12]!.val[0]! = s.st.val[12]!.val[0]! ∧
+      r.st.val[18]!.val[0]! = s.st.val[18]!.val[0]! ∧
+      r.st.val[24]!.val[1]! = s.st.val[24]!.val[1]! ∧
+      -- 20 untouched lanes, both halves (40 cells preserved, via macro)
+      preserves_complement s r [0, 6, 12, 18, 24] ⌝ ⦄ := by
   prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0
 
-/-! ### Chained-set FC form: deferred
+/-! y0_zeta1 FC: writes lanes 0/6/12/18/24 at halves 1/1/0/0/1;
+    RC_INTERLEAVED_1[s.i] XORed into lane 0 half 1; INCREMENTS `s.i`. -/
+set_option maxHeartbeats 16000000 in
+private theorem pi_rho_chi_y0_zeta1_spec_fc
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y0_zeta1 BR s
+    ⦃ ⇓ r => ⌜
+      let bx0 := rot32 (s.st.val[0]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 0
+      let bx1 := rot32 (s.st.val[6]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 22
+      let bx2 := rot32 (s.st.val[12]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 21
+      let bx3 := rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 10
+      let bx4 := rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 7
+      r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ∧
+      r.st.val[0]!.val[1]! =
+        bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_1.val[s.i.val]! ∧
+      r.st.val[6]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
+      r.st.val[12]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
+      r.st.val[18]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
+      r.st.val[24]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      r.st.val[0]!.val[0]! = s.st.val[0]!.val[0]! ∧
+      r.st.val[6]!.val[0]! = s.st.val[6]!.val[0]! ∧
+      r.st.val[12]!.val[1]! = s.st.val[12]!.val[1]! ∧
+      r.st.val[18]!.val[1]! = s.st.val[18]!.val[1]! ∧
+      r.st.val[24]!.val[0]! = s.st.val[24]!.val[0]! ∧
+      preserves_complement s r [0, 6, 12, 18, 24] ⌝ ⦄ := by
+  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y0_zeta1
 
-The chained-set form (one big `r.st.val = apply_5_writes ...` equation
-capturing all 25 lanes) would compose cleanly for `prc_lift_spec`, but
-closing it requires peeling 5 levels of `.set` via congruence to
-expose cell-level U32 equalities. `fcongr` peels only one level at a
-time and `repeat' fcongr` doesn't recurse into the inner `Std.Array.set`
-operations (which have a different structure than `List.set`).
+/-! y1_zeta0 FC: writes lanes 2/8/14/15/21 at halves 1/1/1/0/0; preserves `s.i`.
+    Shift=2: bx_i reads from write_pos[(i-2) mod 5]. -/
+set_option maxHeartbeats 16000000 in
+private theorem pi_rho_chi_y1_zeta0_spec_fc
+    (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y1_zeta0 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := rot32 (s.st.val[15]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 14
+      let bx1 := rot32 (s.st.val[21]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 10
+      let bx2 := rot32 (s.st.val[2]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 2
+      let bx3 := rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 23
+      let bx4 := rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 31
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val[2]!.val[1]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
+      r.st.val[8]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
+      r.st.val[14]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
+      r.st.val[15]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
+      r.st.val[21]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      r.st.val[2]!.val[0]! = s.st.val[2]!.val[0]! ∧
+      r.st.val[8]!.val[0]! = s.st.val[8]!.val[0]! ∧
+      r.st.val[14]!.val[0]! = s.st.val[14]!.val[0]! ∧
+      r.st.val[15]!.val[1]! = s.st.val[15]!.val[1]! ∧
+      r.st.val[21]!.val[1]! = s.st.val[21]!.val[1]! ∧
+      preserves_complement s r [2, 8, 14, 15, 21] ⌝ ⦄ := by
+  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta0
 
-The `Std.UScalar.eq_equiv_bv_eq` bridge (now in the macro) unlocks
-cell-level proofs trivially, per agent investigation in
-`Scratch_UScalarNat.lean`. What remains is the peeling step.
+/-! y1_zeta1 FC: writes lanes 2/8/14/15/21 at halves 0/0/0/1/1; preserves `s.i`. -/
+set_option maxHeartbeats 16000000 in
+private theorem pi_rho_chi_y1_zeta1_spec_fc
+    (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y1_zeta1 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := rot32 (s.st.val[15]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 14
+      let bx1 := rot32 (s.st.val[21]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 10
+      let bx2 := rot32 (s.st.val[2]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 1
+      let bx3 := rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 22
+      let bx4 := rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 30
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val[2]!.val[0]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
+      r.st.val[8]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
+      r.st.val[14]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
+      r.st.val[15]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
+      r.st.val[21]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      r.st.val[2]!.val[1]! = s.st.val[2]!.val[1]! ∧
+      r.st.val[8]!.val[1]! = s.st.val[8]!.val[1]! ∧
+      r.st.val[14]!.val[1]! = s.st.val[14]!.val[1]! ∧
+      r.st.val[15]!.val[0]! = s.st.val[15]!.val[0]! ∧
+      r.st.val[21]!.val[0]! = s.st.val[21]!.val[0]! ∧
+      preserves_complement s r [2, 8, 14, 15, 21] ⌝ ⦄ := by
+  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta1
 
-Candidates for the next session: write a custom congruence lemma
-specific to `apply_5_writes`, OR explicitly state the post as 25
-individual cell equations (avoiding the chained-set wrapping). -/
+/-! y2_zeta0 FC: writes lanes 4/5/11/17/23 at halves 0/1/0/1/0; preserves `s.i`. -/
+set_option maxHeartbeats 16000000 in
+private theorem pi_rho_chi_y2_zeta0_spec_fc
+    (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y2_zeta0 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := rot32 (s.st.val[5]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
+      let bx1 := rot32 (s.st.val[11]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 3
+      let bx2 := rot32 (s.st.val[17]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 13
+      let bx3 := rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 4
+      let bx4 := rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 9
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val[4]!.val[0]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
+      r.st.val[5]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
+      r.st.val[11]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
+      r.st.val[17]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
+      r.st.val[23]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      r.st.val[4]!.val[1]! = s.st.val[4]!.val[1]! ∧
+      r.st.val[5]!.val[0]! = s.st.val[5]!.val[0]! ∧
+      r.st.val[11]!.val[1]! = s.st.val[11]!.val[1]! ∧
+      r.st.val[17]!.val[0]! = s.st.val[17]!.val[0]! ∧
+      r.st.val[23]!.val[1]! = s.st.val[23]!.val[1]! ∧
+      preserves_complement s r [4, 5, 11, 17, 23] ⌝ ⦄ := by
+  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta0
+
+/-! y2_zeta1 FC: writes lanes 4/5/11/17/23 at halves 1/0/1/0/1; preserves `s.i`. -/
+set_option maxHeartbeats 16000000 in
+private theorem pi_rho_chi_y2_zeta1_spec_fc
+    (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y2_zeta1 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := rot32 (s.st.val[5]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 0
+      let bx1 := rot32 (s.st.val[11]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 3
+      let bx2 := rot32 (s.st.val[17]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 12
+      let bx3 := rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 4
+      let bx4 := rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 9
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val[4]!.val[1]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
+      r.st.val[5]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
+      r.st.val[11]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
+      r.st.val[17]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
+      r.st.val[23]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      r.st.val[4]!.val[0]! = s.st.val[4]!.val[0]! ∧
+      r.st.val[5]!.val[1]! = s.st.val[5]!.val[1]! ∧
+      r.st.val[11]!.val[0]! = s.st.val[11]!.val[0]! ∧
+      r.st.val[17]!.val[1]! = s.st.val[17]!.val[1]! ∧
+      r.st.val[23]!.val[0]! = s.st.val[23]!.val[0]! ∧
+      preserves_complement s r [4, 5, 11, 17, 23] ⌝ ⦄ := by
+  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta1
+
+/-! y3_zeta0 FC: writes lanes 1/7/13/19/20 at halves 0/0/1/0/1; preserves `s.i`. -/
+set_option maxHeartbeats 16000000 in
+private theorem pi_rho_chi_y3_zeta0_spec_fc
+    (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y3_zeta0 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := rot32 (s.st.val[20]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 14
+      let bx1 := rot32 (s.st.val[1]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 18
+      let bx2 := rot32 (s.st.val[7]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 5
+      let bx3 := rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 8
+      let bx4 := rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 28
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val[1]!.val[0]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
+      r.st.val[7]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
+      r.st.val[13]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
+      r.st.val[19]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
+      r.st.val[20]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      r.st.val[1]!.val[1]! = s.st.val[1]!.val[1]! ∧
+      r.st.val[7]!.val[1]! = s.st.val[7]!.val[1]! ∧
+      r.st.val[13]!.val[0]! = s.st.val[13]!.val[0]! ∧
+      r.st.val[19]!.val[1]! = s.st.val[19]!.val[1]! ∧
+      r.st.val[20]!.val[0]! = s.st.val[20]!.val[0]! ∧
+      preserves_complement s r [1, 7, 13, 19, 20] ⌝ ⦄ := by
+  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta0
+
+/-! y3_zeta1 FC: writes lanes 1/7/13/19/20 at halves 1/1/0/1/0; preserves `s.i`. -/
+set_option maxHeartbeats 16000000 in
+private theorem pi_rho_chi_y3_zeta1_spec_fc
+    (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y3_zeta1 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := rot32 (s.st.val[20]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 13
+      let bx1 := rot32 (s.st.val[1]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 18
+      let bx2 := rot32 (s.st.val[7]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 5
+      let bx3 := rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 7
+      let bx4 := rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 28
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val[1]!.val[1]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
+      r.st.val[7]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
+      r.st.val[13]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
+      r.st.val[19]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
+      r.st.val[20]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      r.st.val[1]!.val[0]! = s.st.val[1]!.val[0]! ∧
+      r.st.val[7]!.val[0]! = s.st.val[7]!.val[0]! ∧
+      r.st.val[13]!.val[1]! = s.st.val[13]!.val[1]! ∧
+      r.st.val[19]!.val[0]! = s.st.val[19]!.val[0]! ∧
+      r.st.val[20]!.val[1]! = s.st.val[20]!.val[1]! ∧
+      preserves_complement s r [1, 7, 13, 19, 20] ⌝ ⦄ := by
+  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta1
+
+/-! y4_zeta0 FC: writes lanes 3/9/10/16/22 at halves 1/0/0/1/1; preserves `s.i`. -/
+set_option maxHeartbeats 16000000 in
+private theorem pi_rho_chi_y4_zeta0_spec_fc
+    (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y4_zeta0 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := rot32 (s.st.val[10]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 31
+      let bx1 := rot32 (s.st.val[16]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 28
+      let bx2 := rot32 (s.st.val[22]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 20
+      let bx3 := rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 21
+      let bx4 := rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val[3]!.val[1]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
+      r.st.val[9]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
+      r.st.val[10]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
+      r.st.val[16]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
+      r.st.val[22]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      r.st.val[3]!.val[0]! = s.st.val[3]!.val[0]! ∧
+      r.st.val[9]!.val[1]! = s.st.val[9]!.val[1]! ∧
+      r.st.val[10]!.val[1]! = s.st.val[10]!.val[1]! ∧
+      r.st.val[16]!.val[0]! = s.st.val[16]!.val[0]! ∧
+      r.st.val[22]!.val[0]! = s.st.val[22]!.val[0]! ∧
+      preserves_complement s r [3, 9, 10, 16, 22] ⌝ ⦄ := by
+  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta0
+
+/-! y4_zeta1 FC: writes lanes 3/9/10/16/22 at halves 0/1/1/0/0; preserves `s.i`. -/
+set_option maxHeartbeats 16000000 in
+private theorem pi_rho_chi_y4_zeta1_spec_fc
+    (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := rot32 (s.st.val[10]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 31
+      let bx1 := rot32 (s.st.val[16]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 27
+      let bx2 := rot32 (s.st.val[22]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 19
+      let bx3 := rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 20
+      let bx4 := rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val[3]!.val[0]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
+      r.st.val[9]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
+      r.st.val[10]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
+      r.st.val[16]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
+      r.st.val[22]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
+      r.st.val[3]!.val[1]! = s.st.val[3]!.val[1]! ∧
+      r.st.val[9]!.val[0]! = s.st.val[9]!.val[0]! ∧
+      r.st.val[10]!.val[0]! = s.st.val[10]!.val[0]! ∧
+      r.st.val[16]!.val[1]! = s.st.val[16]!.val[1]! ∧
+      r.st.val[22]!.val[1]! = s.st.val[22]!.val[1]! ∧
+      preserves_complement s r [3, 9, 10, 16, 22] ⌝ ⦄ := by
+  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1
 
 end libcrux_iot_sha3.Equivalence
