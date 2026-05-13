@@ -581,7 +581,7 @@ The substitution from `theta_comp_spec_local`'s 12-conjunct post is
 how we bridge "spec d-cell content" with "impl r.d cell content".
 -/
 
-set_option maxHeartbeats 64000000 in
+set_option maxHeartbeats 16000000 in
 theorem theta_lift_spec (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     (do
