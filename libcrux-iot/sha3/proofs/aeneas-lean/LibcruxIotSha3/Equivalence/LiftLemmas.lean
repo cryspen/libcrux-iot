@@ -115,14 +115,17 @@ theorem rot_61 (z0 z1 : BitVec 32) :
 
 /-! ## Bitwise distributivity over lifting -/
 
+@[agrind =, grind =]
 theorem lift_xor (a0 a1 b0 b1 : BitVec 32) :
     lift_lane_bv (a0 ^^^ b0) (a1 ^^^ b1) = lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 := by
   unfold lift_lane_bv spread_to_even; bv_decide
 
+@[agrind =, grind =]
 theorem lift_and (a0 a1 b0 b1 : BitVec 32) :
     lift_lane_bv (a0 &&& b0) (a1 &&& b1) = lift_lane_bv a0 a1 &&& lift_lane_bv b0 b1 := by
   unfold lift_lane_bv spread_to_even; bv_decide
 
+@[agrind =, grind =]
 theorem lift_not (a0 a1 : BitVec 32) :
     lift_lane_bv (~~~a0) (~~~a1) = ~~~(lift_lane_bv a0 a1) := by
   unfold lift_lane_bv spread_to_even; bv_decide
@@ -145,6 +148,7 @@ theorem lift_theta_apply (a0 a1 d0 d1 : BitVec 32) :
 
 /-- θ-d structure: the interleaved θ-d computation lifts correctly.
     `lift(cL ⊕ rot(cR,1), cL' ⊕ cR') = lift(cL,cL') ⊕ rotateLeft(lift(cR,cR'),1)`. -/
+@[agrind =, grind =]
 theorem lift_td (cL0 cL1 cR0 cR1 : BitVec 32) :
     lift_lane_bv (cL0 ^^^ cR1.rotateLeft 1) (cL1 ^^^ cR0) =
     lift_lane_bv cL0 cL1 ^^^ (lift_lane_bv cR0 cR1).rotateLeft 1 := by
@@ -152,12 +156,14 @@ theorem lift_td (cL0 cL1 cR0 cR1 : BitVec 32) :
 
 /-- Single odd-1 rotation: halves swap with adjusted sub-rotations.
     `rotateLeft(lift(z0,z1), 1) = lift(rot(z1,1), z0)`. -/
+@[agrind =, grind =]
 theorem lift_rot1 (z0 z1 : BitVec 32) :
     (lift_lane_bv z0 z1).rotateLeft 1 = lift_lane_bv (z1.rotateLeft 1) z0 := by
   unfold lift_lane_bv spread_to_even; bv_decide
 
 /-- XOR of 5 lanes distributes through interleaved lifting. Used for the
     C-row computation in θ. -/
+@[agrind =, grind =]
 theorem lift_xor5 (a0 a1 b0 b1 c0 c1 d0 d1 e0 e1 : BitVec 32) :
     lift_lane_bv (a0 ^^^ b0 ^^^ c0 ^^^ d0 ^^^ e0)
                  (a1 ^^^ b1 ^^^ c1 ^^^ d1 ^^^ e1) =

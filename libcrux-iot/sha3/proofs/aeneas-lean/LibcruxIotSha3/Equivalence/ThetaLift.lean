@@ -677,12 +677,13 @@ theorem theta_lift_spec (s : state.KeccakState) :
         lift_getElem_bv_18, lift_getElem_bv_19, lift_getElem_bv_20,
         lift_getElem_bv_21, lift_getElem_bv_22, lift_getElem_bv_23,
         lift_getElem_bv_24]
-    -- Helpers now fire for ALL `(↑(lift s))[N]!.bv` reads (outer AND
-    -- inside `.rotateLeft 1`) thanks to the List-form helper LHS
-    -- `((↑(lift s) : List Std.U64)[(N : Nat)]!).bv`. The LHS is now a
-    -- complete LL tower. The final fold step (`← lift_xor` + `← lift_td`)
-    -- still doesn't fire — see HAX_AENEAS_PITFALLS.md section F for the
-    -- diagnostic. Sorry budget unchanged.
+    -- Helpers fire for ALL reads; LL-tower form on LHS. But neither
+    -- `agrind`, `grind`, nor `libcruxgrind` close (each tried 180-230s
+    -- before failing). The standalone-reproducer simp_only also fails
+    -- in this context. The blocker is structural: `lift_lane_bv` is
+    -- `@[local irreducible]`, and the grind engines may need
+    -- commutativity facts (`BitVec.xor_comm`) to align the LHS tower
+    -- with the RHS XOR'd args.
     all_goals sorry
 
 end libcrux_iot_sha3.Equivalence
