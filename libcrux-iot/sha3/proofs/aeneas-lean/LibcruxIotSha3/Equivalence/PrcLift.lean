@@ -661,4 +661,320 @@ theorem chi_unrolled_spec (state : Std.Array Std.U64 25#usize) :
     show ((23#usize : Std.Usize).val) = 23 from rfl,
     show ((24#usize : Std.Usize).val) = 24 from rfl]
 
+/-! ## Intermediate spec for round-0 πρχι (the fused per-cell formula)
+
+Instead of proving the impl/spec equivalence directly against the
+4-layer composition `iota_applied (chi_applied (pi_applied (rho_applied
+a)))` — which blows up by ~25^4 on unfold — we introduce a monolithic
+intermediate spec `prc_spec` that mirrors the impl's fused per-cell
+structure (one chi formula per output, with rotation+pi-permuted reads
+inlined). -/
+
+/-- Monolithic spec mirroring the impl's fused per-cell structure. For
+    each output position i ∈ 0..24, the chi formula reads rho-rotated,
+    pi-permuted inputs. π[i] is inlined; ρ-offsets are inlined per
+    impl-position via the `inp` helper. Lane 0 receives the iota
+    round-constant injection. -/
+def prc_spec (a : Std.Array Std.U64 25#usize) (r : Std.Usize) :
+    Std.Array Std.U64 25#usize :=
+  let inp : Nat → Std.U64 := fun k =>
+    match k with
+    | 0  => rot64 a.val[0]!  0
+    | 1  => rot64 a.val[1]!  36
+    | 2  => rot64 a.val[2]!  3
+    | 3  => rot64 a.val[3]!  41
+    | 4  => rot64 a.val[4]!  18
+    | 5  => rot64 a.val[5]!  1
+    | 6  => rot64 a.val[6]!  44
+    | 7  => rot64 a.val[7]!  10
+    | 8  => rot64 a.val[8]!  45
+    | 9  => rot64 a.val[9]!  2
+    | 10 => rot64 a.val[10]! 62
+    | 11 => rot64 a.val[11]! 6
+    | 12 => rot64 a.val[12]! 43
+    | 13 => rot64 a.val[13]! 15
+    | 14 => rot64 a.val[14]! 61
+    | 15 => rot64 a.val[15]! 28
+    | 16 => rot64 a.val[16]! 55
+    | 17 => rot64 a.val[17]! 25
+    | 18 => rot64 a.val[18]! 21
+    | 19 => rot64 a.val[19]! 56
+    | 20 => rot64 a.val[20]! 27
+    | 21 => rot64 a.val[21]! 20
+    | 22 => rot64 a.val[22]! 39
+    | 23 => rot64 a.val[23]! 8
+    | _  => rot64 a.val[24]! 14
+  Std.Array.make 25#usize [
+    -- i=0: π[0]=0, π[5]=6, π[10]=12. Chi row + iota RC.
+    inp 0 ^^^ ((~~~ inp 6) &&& inp 12) ^^^ keccak_f.ROUND_CONSTANTS.val[r.val]!,
+    -- i=1: π[1]=15, π[6]=21, π[11]=2
+    inp 15 ^^^ ((~~~ inp 21) &&& inp 2),
+    -- i=2: π[2]=5, π[7]=11, π[12]=17
+    inp 5 ^^^ ((~~~ inp 11) &&& inp 17),
+    -- i=3: π[3]=20, π[8]=1, π[13]=7
+    inp 20 ^^^ ((~~~ inp 1) &&& inp 7),
+    -- i=4: π[4]=10, π[9]=16, π[14]=22
+    inp 10 ^^^ ((~~~ inp 16) &&& inp 22),
+    -- i=5: π[5]=6, π[10]=12, π[15]=18
+    inp 6 ^^^ ((~~~ inp 12) &&& inp 18),
+    -- i=6: π[6]=21, π[11]=2, π[16]=8
+    inp 21 ^^^ ((~~~ inp 2) &&& inp 8),
+    -- i=7: π[7]=11, π[12]=17, π[17]=23
+    inp 11 ^^^ ((~~~ inp 17) &&& inp 23),
+    -- i=8: π[8]=1, π[13]=7, π[18]=13
+    inp 1 ^^^ ((~~~ inp 7) &&& inp 13),
+    -- i=9: π[9]=16, π[14]=22, π[19]=3
+    inp 16 ^^^ ((~~~ inp 22) &&& inp 3),
+    -- i=10: π[10]=12, π[15]=18, π[20]=24
+    inp 12 ^^^ ((~~~ inp 18) &&& inp 24),
+    -- i=11: π[11]=2, π[16]=8, π[21]=14
+    inp 2 ^^^ ((~~~ inp 8) &&& inp 14),
+    -- i=12: π[12]=17, π[17]=23, π[22]=4
+    inp 17 ^^^ ((~~~ inp 23) &&& inp 4),
+    -- i=13: π[13]=7, π[18]=13, π[23]=19
+    inp 7 ^^^ ((~~~ inp 13) &&& inp 19),
+    -- i=14: π[14]=22, π[19]=3, π[24]=9
+    inp 22 ^^^ ((~~~ inp 3) &&& inp 9),
+    -- i=15: π[15]=18, π[20]=24, π[0]=0
+    inp 18 ^^^ ((~~~ inp 24) &&& inp 0),
+    -- i=16: π[16]=8, π[21]=14, π[1]=15
+    inp 8 ^^^ ((~~~ inp 14) &&& inp 15),
+    -- i=17: π[17]=23, π[22]=4, π[2]=5
+    inp 23 ^^^ ((~~~ inp 4) &&& inp 5),
+    -- i=18: π[18]=13, π[23]=19, π[3]=20
+    inp 13 ^^^ ((~~~ inp 19) &&& inp 20),
+    -- i=19: π[19]=3, π[24]=9, π[4]=10
+    inp 3 ^^^ ((~~~ inp 9) &&& inp 10),
+    -- i=20: π[20]=24, π[0]=0, π[5]=6
+    inp 24 ^^^ ((~~~ inp 0) &&& inp 6),
+    -- i=21: π[21]=14, π[1]=15, π[6]=21
+    inp 14 ^^^ ((~~~ inp 15) &&& inp 21),
+    -- i=22: π[22]=4, π[2]=5, π[7]=11
+    inp 4 ^^^ ((~~~ inp 5) &&& inp 11),
+    -- i=23: π[23]=19, π[3]=20, π[8]=1
+    inp 19 ^^^ ((~~~ inp 20) &&& inp 1),
+    -- i=24: π[24]=9, π[4]=10, π[9]=16
+    inp 9 ^^^ ((~~~ inp 10) &&& inp 16)
+  ]
+
+/-- Bridge 2: the intermediate `prc_spec` equals the 4-layer composite
+    `iota_applied ∘ chi_applied ∘ pi_applied ∘ rho_applied`. Pure
+    spec-level identity — no impl side, no chain hyps. -/
+theorem prc_spec_eq_composed (a : Std.Array Std.U64 25#usize) (r : Std.Usize) :
+    iota_applied (chi_applied (pi_applied (rho_applied a))) r = prc_spec a r := by
+  unfold iota_applied chi_applied pi_applied rho_applied prc_spec
+  rfl
+
+/-! ## Per-cell access lemmas for `lift_theta_applied`
+
+For the algebraic cascade in `prc_lift_spec`, we need to expose each
+`(lift_theta_applied s).val[k]!.bv` as `lift_lane_bv` of theta-XORed
+halves. The 25 lemmas below are each `rfl` after unfolding. They serve
+the same role as `lift_getElem_bv_N` does for `lift s`. -/
+
+theorem lift_theta_applied_bv_0 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[0]!).bv =
+      lift_lane_bv ((s.st.val[0]!).val[0]! ^^^ (s.d.val[0]!).val[0]!).bv
+                   ((s.st.val[0]!).val[1]! ^^^ (s.d.val[0]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_1 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[1]!).bv =
+      lift_lane_bv ((s.st.val[1]!).val[0]! ^^^ (s.d.val[0]!).val[0]!).bv
+                   ((s.st.val[1]!).val[1]! ^^^ (s.d.val[0]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_2 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[2]!).bv =
+      lift_lane_bv ((s.st.val[2]!).val[0]! ^^^ (s.d.val[0]!).val[0]!).bv
+                   ((s.st.val[2]!).val[1]! ^^^ (s.d.val[0]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_3 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[3]!).bv =
+      lift_lane_bv ((s.st.val[3]!).val[0]! ^^^ (s.d.val[0]!).val[0]!).bv
+                   ((s.st.val[3]!).val[1]! ^^^ (s.d.val[0]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_4 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[4]!).bv =
+      lift_lane_bv ((s.st.val[4]!).val[0]! ^^^ (s.d.val[0]!).val[0]!).bv
+                   ((s.st.val[4]!).val[1]! ^^^ (s.d.val[0]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_5 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[5]!).bv =
+      lift_lane_bv ((s.st.val[5]!).val[0]! ^^^ (s.d.val[1]!).val[0]!).bv
+                   ((s.st.val[5]!).val[1]! ^^^ (s.d.val[1]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_6 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[6]!).bv =
+      lift_lane_bv ((s.st.val[6]!).val[0]! ^^^ (s.d.val[1]!).val[0]!).bv
+                   ((s.st.val[6]!).val[1]! ^^^ (s.d.val[1]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_7 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[7]!).bv =
+      lift_lane_bv ((s.st.val[7]!).val[0]! ^^^ (s.d.val[1]!).val[0]!).bv
+                   ((s.st.val[7]!).val[1]! ^^^ (s.d.val[1]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_8 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[8]!).bv =
+      lift_lane_bv ((s.st.val[8]!).val[0]! ^^^ (s.d.val[1]!).val[0]!).bv
+                   ((s.st.val[8]!).val[1]! ^^^ (s.d.val[1]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_9 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[9]!).bv =
+      lift_lane_bv ((s.st.val[9]!).val[0]! ^^^ (s.d.val[1]!).val[0]!).bv
+                   ((s.st.val[9]!).val[1]! ^^^ (s.d.val[1]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_10 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[10]!).bv =
+      lift_lane_bv ((s.st.val[10]!).val[0]! ^^^ (s.d.val[2]!).val[0]!).bv
+                   ((s.st.val[10]!).val[1]! ^^^ (s.d.val[2]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_11 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[11]!).bv =
+      lift_lane_bv ((s.st.val[11]!).val[0]! ^^^ (s.d.val[2]!).val[0]!).bv
+                   ((s.st.val[11]!).val[1]! ^^^ (s.d.val[2]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_12 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[12]!).bv =
+      lift_lane_bv ((s.st.val[12]!).val[0]! ^^^ (s.d.val[2]!).val[0]!).bv
+                   ((s.st.val[12]!).val[1]! ^^^ (s.d.val[2]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_13 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[13]!).bv =
+      lift_lane_bv ((s.st.val[13]!).val[0]! ^^^ (s.d.val[2]!).val[0]!).bv
+                   ((s.st.val[13]!).val[1]! ^^^ (s.d.val[2]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_14 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[14]!).bv =
+      lift_lane_bv ((s.st.val[14]!).val[0]! ^^^ (s.d.val[2]!).val[0]!).bv
+                   ((s.st.val[14]!).val[1]! ^^^ (s.d.val[2]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_15 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[15]!).bv =
+      lift_lane_bv ((s.st.val[15]!).val[0]! ^^^ (s.d.val[3]!).val[0]!).bv
+                   ((s.st.val[15]!).val[1]! ^^^ (s.d.val[3]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_16 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[16]!).bv =
+      lift_lane_bv ((s.st.val[16]!).val[0]! ^^^ (s.d.val[3]!).val[0]!).bv
+                   ((s.st.val[16]!).val[1]! ^^^ (s.d.val[3]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_17 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[17]!).bv =
+      lift_lane_bv ((s.st.val[17]!).val[0]! ^^^ (s.d.val[3]!).val[0]!).bv
+                   ((s.st.val[17]!).val[1]! ^^^ (s.d.val[3]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_18 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[18]!).bv =
+      lift_lane_bv ((s.st.val[18]!).val[0]! ^^^ (s.d.val[3]!).val[0]!).bv
+                   ((s.st.val[18]!).val[1]! ^^^ (s.d.val[3]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_19 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[19]!).bv =
+      lift_lane_bv ((s.st.val[19]!).val[0]! ^^^ (s.d.val[3]!).val[0]!).bv
+                   ((s.st.val[19]!).val[1]! ^^^ (s.d.val[3]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_20 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[20]!).bv =
+      lift_lane_bv ((s.st.val[20]!).val[0]! ^^^ (s.d.val[4]!).val[0]!).bv
+                   ((s.st.val[20]!).val[1]! ^^^ (s.d.val[4]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_21 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[21]!).bv =
+      lift_lane_bv ((s.st.val[21]!).val[0]! ^^^ (s.d.val[4]!).val[0]!).bv
+                   ((s.st.val[21]!).val[1]! ^^^ (s.d.val[4]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_22 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[22]!).bv =
+      lift_lane_bv ((s.st.val[22]!).val[0]! ^^^ (s.d.val[4]!).val[0]!).bv
+                   ((s.st.val[22]!).val[1]! ^^^ (s.d.val[4]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_23 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[23]!).bv =
+      lift_lane_bv ((s.st.val[23]!).val[0]! ^^^ (s.d.val[4]!).val[0]!).bv
+                   ((s.st.val[23]!).val[1]! ^^^ (s.d.val[4]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+theorem lift_theta_applied_bv_24 (s : state.KeccakState) :
+    ((lift_theta_applied s).val[24]!).bv =
+      lift_lane_bv ((s.st.val[24]!).val[0]! ^^^ (s.d.val[4]!).val[0]!).bv
+                   ((s.st.val[24]!).val[1]! ^^^ (s.d.val[4]!).val[1]!).bv := by
+  unfold lift_theta_applied; rfl
+
+/-! ## Bridge 1: `prc_lift_spec`
+
+Couples the impl `keccakf1600_round0_pi_rho_chi_{1,2}` chain to the spec
+`iota ∘ chi_unrolled ∘ pi_unrolled ∘ rho_unrolled`. After the recursive
+`hax_mvcgen` produces 50 impl cell equations plus 4 spec substitutions,
+we rewrite the spec side via Bridge 2 to use `prc_spec`, then close the
+25-lane equality via the standard lift cascade (lift_getElem_bv + lift
+algebra). -/
+set_option maxHeartbeats 128000000 in
+@[spec]
+theorem prc_lift_spec (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    (do let r1 ← keccak.keccakf1600_round0_pi_rho_chi_1 0#usize s
+        keccak.keccakf1600_round0_pi_rho_chi_2 r1)
+    ⦃ ⇓ r_impl => ⌜
+      (do let a1 ← keccak_f.rho_unrolled (lift_theta_applied s)
+          let a2 ← keccak_f.pi_unrolled a1
+          let a3 ← keccak_f.chi_unrolled a2
+          let r_spec ← keccak_f.iota a3 s.i
+          pure (r_spec = lift_perm r_impl impl_perm)).holds ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round0_pi_rho_chi_1
+  unfold keccak.keccakf1600_round0_pi_rho_chi_2
+  hax_mvcgen
+  all_goals try scalar_tac
+  subst_vars
+  rw [prc_spec_eq_composed]
+  casesm* _ ∧ _
+  simp_all only []
+  apply Subtype.ext
+  unfold prc_spec lift_perm impl_perm
+  simp only [Std.Array.make, List.ofFn_succ, List.ofFn_zero, Fin.val_succ, Fin.val_zero,
+    Nat.succ_eq_add_one, Nat.zero_add, Nat.reduceAdd, Nat.reduceMul, Nat.reduceDiv, Nat.reduceMod]
+  repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
+  all_goals (apply Std.U64.bv_eq_imp_eq)
+  all_goals (simp only [rot64, lift_lane, Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not,
+    rot32,
+    show ((0#usize : Std.Usize).val) = 0 from rfl,
+    show ((1#usize : Std.Usize).val) = 1 from rfl,
+    show ((2#usize : Std.Usize).val) = 2 from rfl,
+    show ((3#usize : Std.Usize).val) = 3 from rfl,
+    show ((4#usize : Std.Usize).val) = 4 from rfl,
+    show ((5#usize : Std.Usize).val) = 5 from rfl,
+    show ((6#usize : Std.Usize).val) = 6 from rfl,
+    show ((7#usize : Std.Usize).val) = 7 from rfl,
+    show ((8#usize : Std.Usize).val) = 8 from rfl,
+    show ((9#usize : Std.Usize).val) = 9 from rfl,
+    show ((10#usize : Std.Usize).val) = 10 from rfl,
+    show ((11#usize : Std.Usize).val) = 11 from rfl,
+    show ((12#usize : Std.Usize).val) = 12 from rfl,
+    show ((13#usize : Std.Usize).val) = 13 from rfl,
+    show ((14#usize : Std.Usize).val) = 14 from rfl,
+    show ((15#usize : Std.Usize).val) = 15 from rfl,
+    show ((16#usize : Std.Usize).val) = 16 from rfl,
+    show ((17#usize : Std.Usize).val) = 17 from rfl,
+    show ((18#usize : Std.Usize).val) = 18 from rfl,
+    show ((19#usize : Std.Usize).val) = 19 from rfl,
+    show ((20#usize : Std.Usize).val) = 20 from rfl,
+    show ((21#usize : Std.Usize).val) = 21 from rfl,
+    show ((22#usize : Std.Usize).val) = 22 from rfl,
+    show ((23#usize : Std.Usize).val) = 23 from rfl,
+    show ((24#usize : Std.Usize).val) = 24 from rfl])
+  all_goals simp only [lift_theta_applied_bv_0, lift_theta_applied_bv_1, lift_theta_applied_bv_2,
+    lift_theta_applied_bv_3, lift_theta_applied_bv_4, lift_theta_applied_bv_5,
+    lift_theta_applied_bv_6, lift_theta_applied_bv_7, lift_theta_applied_bv_8,
+    lift_theta_applied_bv_9, lift_theta_applied_bv_10, lift_theta_applied_bv_11,
+    lift_theta_applied_bv_12, lift_theta_applied_bv_13, lift_theta_applied_bv_14,
+    lift_theta_applied_bv_15, lift_theta_applied_bv_16, lift_theta_applied_bv_17,
+    lift_theta_applied_bv_18, lift_theta_applied_bv_19, lift_theta_applied_bv_20,
+    lift_theta_applied_bv_21, lift_theta_applied_bv_22, lift_theta_applied_bv_23,
+    lift_theta_applied_bv_24, Std.UScalar.bv_xor]
+  all_goals simp_all only [Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
+  all_goals simp only [Std.UScalarTy.U64_numBits_eq,
+    ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
+    ← rot_0, ← rot_1, ← rot_2, ← rot_3, ← rot_6, ← rot_8, ← rot_10,
+    ← rot_14, ← rot_15, ← rot_18, ← rot_20, ← rot_21, ← rot_25, ← rot_27,
+    ← rot_28, ← rot_36, ← rot_39, ← rot_41, ← rot_43, ← rot_44, ← rot_45,
+    ← rot_55, ← rot_56, ← rot_61, ← rot_62,
+    rc_equiv]
+
 end libcrux_iot_sha3.Equivalence
