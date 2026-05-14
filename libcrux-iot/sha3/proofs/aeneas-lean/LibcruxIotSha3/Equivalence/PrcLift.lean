@@ -15,6 +15,7 @@
 -/
 import LibcruxIotSha3.Equivalence.Lift
 import LibcruxIotSha3.Equivalence.ThetaLift
+import LibcruxIotSha3.Equivalence.RcEquiv
 import Hax
 import Lean
 
