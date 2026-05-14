@@ -84,7 +84,7 @@ private theorem set_with_zeta_spec
   all_goals first | simpa | scalar_tac | (
     simp only [Std.WP.predn] at *
     obtain ⟨_, _⟩ := ‹_ ∧ _›
-    apply hpost <;> first | scalar_tac | simp_all [Std.Array.set_val_eq])
+    apply hpost <;> scalar_tac)
 
 /-! ## Full-FC sub-function specs (Step 7)
 
@@ -438,7 +438,7 @@ theorem iota_spec (state : Std.Array Std.U64 25#usize) (round : Std.Usize)
   all_goals first
     | scalar_tac
     | (unfold iota_applied
-       simp_all only [Std.UScalar.eq_equiv_bv_eq, Std.UScalar.bv_xor]
+       simp_all only [Std.UScalar.eq_equiv_bv_eq]
        congr 1
        apply Std.U64.bv_eq_imp_eq
        simp_all [Std.UScalar.bv_xor])
