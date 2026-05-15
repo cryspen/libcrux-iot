@@ -17,7 +17,7 @@
   `PrcLift.lean`. This file extends the preservation form to rounds
   1, 2, 3 without re-doing the content strengthening.
 -/
-import LibcruxIotSha3.Equivalence.ThetaLift
+import LibcruxIotSha3.Equivalence.ThetaLiftDefs
 import LibcruxIotSha3.Equivalence.PrcLift
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3
