@@ -4,6 +4,7 @@ defaultTargets = ["LibcruxIotSha3"]
 
 [[lean_lib]]
 name = "LibcruxIotSha3"
+globs = ["LibcruxIotSha3", "LibcruxIotSha3.+"]
 
 [[require]]
 name = "Hax"
