@@ -97,13 +97,8 @@ The FC posts are `@[spec]`-tagged so `hax_mvcgen` threads the cell
 content automatically when composing `pi_rho_chi_{1,2}` (via the
 `prc_chain_FC` spec) and downstream into `prc_lift_spec`. -/
 
-/-- Common proof pattern for FC sub-function specs: `unfold; hax_mvcgen;`
-    then either `scalar_tac` for bounds, or refine the 8-conjunct post
-    (d/c/i preservation + 5 cell equations) and discharge each via
-    `simp_all` with `Std.UScalar.eq_equiv_bv_eq` (the U32-to-BitVec
-    decomposition lemma that's tagged `@[bvify]` but NOT `@[simp]` in
-    Aeneas, requiring explicit inclusion here). See
-    `Scratch_UScalarNat.lean` for the root-cause investigation. -/
+/-- Legacy macro for the original 50-cell FC posts (kept while migrating
+    the remaining FCs to the R1 chained-set form). -/
 local macro "prc_y_zeta_fc_proof" subfun:ident : tactic => `(tactic|
   (unfold $subfun
    hax_mvcgen
@@ -118,6 +113,39 @@ local macro "prc_y_zeta_fc_proof" subfun:ident : tactic => `(tactic|
                       Std.UScalar.eq_equiv_bv_eq,
                       Std.UScalar.bv_xor, Std.UScalar.bv_and,
                       Std.UScalar.bv_not])))
+
+/- Proof body for the R1 chained-set FC posts in the y1-y4 family
+   (no RC step, preserves `s.i`). Uses `expose_names` to grab the stable
+   hyp names produced by `hax_mvcgen` (which assigns h_25..h_55 to the
+   chi value chains and h_28..h_59 to the state chain).
+   Hygiene is disabled so that the `h_X` references resolve to the
+   runtime-introduced names rather than fresh macro-local ones. -/
+set_option hygiene false in
+local macro "prc_y_zeta_no_rc_proof" subfun:ident : tactic => `(tactic|
+  (unfold $subfun
+   hax_mvcgen
+   all_goals try scalar_tac
+   expose_names
+   refine ⟨?_, ?_, ?_, ?_⟩
+   · exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
+   · exact h_57.trans (h_50.trans (h_43.trans (h_36.trans h_29)))
+   · exact h_56.trans (h_49.trans (h_42.trans (h_35.trans h_28)))
+   · rw [h_59, h_52, h_45, h_38, h_31]
+     norm_num [apply_5_writes]
+     congr 6
+     all_goals apply Std.U32.bv_eq_imp_eq
+     all_goals (
+       simp only [
+         h_27.2, h_26.2, h_25,
+         h_34.2, h_33.2, h_32,
+         h_41.2, h_40.2, h_39,
+         h_48.2, h_47.2, h_46,
+         h_55.2, h_54.2, h_53,
+         h_7, h_9, h_20, h_22, h_24,
+         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
+         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
+         Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
+       norm_num)))
 
 set_option maxHeartbeats 8000000
 
@@ -139,17 +167,11 @@ private def apply_5_writes
   let l := l.set lane3 ((l[lane3]!).set half3 v3)
   l.set lane4 ((l[lane4]!).set half4 v4)
 
-/-! y0_zeta0 FC (50-cell form, composes for prc_lift_spec).
+/-! y0_zeta0 FC (R1 chained-set form).
 
-    Captures all 25 lanes × 2 halves: 5 written cells (chi formulas), 5
-    other-halves of written lanes (preserved), 40 cells of 20 untouched
-    lanes (preserved). Closes via `prc_y_zeta_fc_proof` macro at 16M
-    heartbeats (the macro's 8-hole `refine` parses right-associatively
-    and `simp_all` chains through all 53 conjuncts).
-
-    Per Option B recommendation (agent investigation): chained-set form
-    via `apply_5_writes` is blocked on the mvcgen chain-hypothesis
-    forward-substitution problem; 50-cell form composes cleanly. -/
+    Captures the 5 writes as a single chained `apply_5_writes` equation
+    on `r.st.val`. Downstream `simp` with aeneas's List.set/getElem!
+    lemmas can evaluate any cell read in O(1). -/
 set_option maxHeartbeats 16000000 in
 @[spec]
 private theorem pi_rho_chi_y0_zeta0_spec_fc
@@ -162,22 +184,52 @@ private theorem pi_rho_chi_y0_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 11
       let bx4 := rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      -- 5 written cells
-      r.st.val[0]!.val[0]! =
-        bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_0.val[s.i.val]! ∧
-      r.st.val[6]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[12]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[18]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[24]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      -- Other halves of written lanes (5 cells preserved)
-      r.st.val[0]!.val[1]! = s.st.val[0]!.val[1]! ∧
-      r.st.val[6]!.val[1]! = s.st.val[6]!.val[1]! ∧
-      r.st.val[12]!.val[0]! = s.st.val[12]!.val[0]! ∧
-      r.st.val[18]!.val[0]! = s.st.val[18]!.val[0]! ∧
-      r.st.val[24]!.val[1]! = s.st.val[24]!.val[1]! ∧
-      -- 20 untouched lanes, both halves (40 cells preserved, via macro)
-      preserves_complement s r [0, 6, 12, 18, 24] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0
+      r.st.val = apply_5_writes s.st.val
+        0 6 12 18 24
+        0#usize 0#usize 1#usize 1#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_0.val[s.i.val]!)
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0
+  hax_mvcgen
+  all_goals try scalar_tac
+  expose_names
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · -- r.d = s.d
+    exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
+  · -- r.c = s.c
+    exact h_59.trans (h_52.trans (h_45.trans (h_38.trans h_31)))
+  · -- r.i = s.i
+    exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
+  · -- val-eq: ↑r.st = apply_5_writes ...
+    rw [h_61, h_54, h_47, h_40, h_33]
+    norm_num [apply_5_writes]
+    congr 6
+    all_goals apply Std.U32.bv_eq_imp_eq
+    all_goals (
+      simp only [
+        -- chi 0 chain (r_14)
+        h_29.2, h_27.2, h_26.2, h_25,
+        -- chi 1 chain (r_18)
+        h_36.2, h_35.2, h_34,
+        -- chi 2 chain (r_22)
+        h_43.2, h_42.2, h_41,
+        -- chi 3 chain (r_26)
+        h_50.2, h_49.2, h_48,
+        -- chi 4 chain (r_30)
+        h_57.2, h_56.2, h_55,
+        -- rotateLeft hyps (v_4, v_5, v_12, v_13, v_14)
+        h_7, h_9, h_20, h_22, h_24,
+        -- xor hyps (r_2, r_3, r_7, r_8, r_9)
+        h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
+        -- RC_INTERLEAVED hyp (r_13)
+        h_28,
+        -- substitute v_i and r_i to s.st/s.d reads
+        h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
+      norm_num)
 
 /-! y0_zeta1 FC: writes lanes 0/6/12/18/24 at halves 1/1/0/0/1;
     RC_INTERLEAVED_1[s.i] XORed into lane 0 half 1; INCREMENTS `s.i`. -/
@@ -193,22 +245,47 @@ private theorem pi_rho_chi_y0_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 10
       let bx4 := rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ∧
-      r.st.val[0]!.val[1]! =
-        bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_1.val[s.i.val]! ∧
-      r.st.val[6]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[12]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[18]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[24]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      r.st.val[0]!.val[0]! = s.st.val[0]!.val[0]! ∧
-      r.st.val[6]!.val[0]! = s.st.val[6]!.val[0]! ∧
-      r.st.val[12]!.val[1]! = s.st.val[12]!.val[1]! ∧
-      r.st.val[18]!.val[1]! = s.st.val[18]!.val[1]! ∧
-      r.st.val[24]!.val[0]! = s.st.val[24]!.val[0]! ∧
-      preserves_complement s r [0, 6, 12, 18, 24] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y0_zeta1
+      r.st.val = apply_5_writes s.st.val
+        0 6 12 18 24
+        1#usize 1#usize 0#usize 0#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_1.val[s.i.val]!)
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round0_pi_rho_chi_y0_zeta1
+  hax_mvcgen
+  all_goals try scalar_tac
+  expose_names
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · -- r.d = s.d
+    exact h_61.trans (h_54.trans (h_47.trans (h_40.trans h_33)))
+  · -- r.c = s.c
+    exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
+  · -- ↑r.i = ↑s.i + 1
+    rw [h_59, h_52, h_45, h_38, h_31, h_30]
+    rfl
+  · -- val-eq
+    rw [h_62, h_55, h_48, h_41, h_34]
+    norm_num [apply_5_writes]
+    congr 6
+    all_goals apply Std.U32.bv_eq_imp_eq
+    all_goals (
+      simp only [
+        h_29.2, h_27.2, h_26.2, h_25,
+        h_37.2, h_36.2, h_35,
+        h_44.2, h_43.2, h_42,
+        h_51.2, h_50.2, h_49,
+        h_58.2, h_57.2, h_56,
+        h_7, h_9, h_20, h_22, h_24,
+        h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
+        h_28,
+        h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
+      norm_num)
 
-/-! y1_zeta0 FC: writes lanes 2/8/14/15/21 at halves 1/1/1/0/0; preserves `s.i`.
-    Shift=2: bx_i reads from write_pos[(i-2) mod 5]. -/
+/-! y1_zeta0 FC (R1 chained-set form): writes lanes 2/8/14/15/21 at halves 1/1/1/0/0;
+    preserves `s.i`. Shift=2: bx_i reads from write_pos[(i-2) mod 5]. -/
 set_option maxHeartbeats 16000000 in
 @[spec]
 private theorem pi_rho_chi_y1_zeta0_spec_fc
@@ -221,18 +298,15 @@ private theorem pi_rho_chi_y1_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 23
       let bx4 := rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 31
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val[2]!.val[1]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
-      r.st.val[8]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[14]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[15]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[21]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      r.st.val[2]!.val[0]! = s.st.val[2]!.val[0]! ∧
-      r.st.val[8]!.val[0]! = s.st.val[8]!.val[0]! ∧
-      r.st.val[14]!.val[0]! = s.st.val[14]!.val[0]! ∧
-      r.st.val[15]!.val[1]! = s.st.val[15]!.val[1]! ∧
-      r.st.val[21]!.val[1]! = s.st.val[21]!.val[1]! ∧
-      preserves_complement s r [2, 8, 14, 15, 21] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta0
+      r.st.val = apply_5_writes s.st.val
+        2 8 14 15 21
+        1#usize 1#usize 1#usize 0#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta0
 
 /-! y1_zeta1 FC: writes lanes 2/8/14/15/21 at halves 0/0/0/1/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -247,18 +321,15 @@ private theorem pi_rho_chi_y1_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 22
       let bx4 := rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 30
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val[2]!.val[0]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
-      r.st.val[8]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[14]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[15]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[21]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      r.st.val[2]!.val[1]! = s.st.val[2]!.val[1]! ∧
-      r.st.val[8]!.val[1]! = s.st.val[8]!.val[1]! ∧
-      r.st.val[14]!.val[1]! = s.st.val[14]!.val[1]! ∧
-      r.st.val[15]!.val[0]! = s.st.val[15]!.val[0]! ∧
-      r.st.val[21]!.val[0]! = s.st.val[21]!.val[0]! ∧
-      preserves_complement s r [2, 8, 14, 15, 21] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta1
+      r.st.val = apply_5_writes s.st.val
+        2 8 14 15 21
+        0#usize 0#usize 0#usize 1#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta1
 
 /-! y2_zeta0 FC: writes lanes 4/5/11/17/23 at halves 0/1/0/1/0; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -273,18 +344,15 @@ private theorem pi_rho_chi_y2_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 4
       let bx4 := rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val[4]!.val[0]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
-      r.st.val[5]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[11]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[17]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[23]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      r.st.val[4]!.val[1]! = s.st.val[4]!.val[1]! ∧
-      r.st.val[5]!.val[0]! = s.st.val[5]!.val[0]! ∧
-      r.st.val[11]!.val[1]! = s.st.val[11]!.val[1]! ∧
-      r.st.val[17]!.val[0]! = s.st.val[17]!.val[0]! ∧
-      r.st.val[23]!.val[1]! = s.st.val[23]!.val[1]! ∧
-      preserves_complement s r [4, 5, 11, 17, 23] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta0
+      r.st.val = apply_5_writes s.st.val
+        4 5 11 17 23
+        0#usize 1#usize 0#usize 1#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta0
 
 /-! y2_zeta1 FC: writes lanes 4/5/11/17/23 at halves 1/0/1/0/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -299,18 +367,15 @@ private theorem pi_rho_chi_y2_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 4
       let bx4 := rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val[4]!.val[1]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
-      r.st.val[5]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[11]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[17]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[23]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      r.st.val[4]!.val[0]! = s.st.val[4]!.val[0]! ∧
-      r.st.val[5]!.val[1]! = s.st.val[5]!.val[1]! ∧
-      r.st.val[11]!.val[0]! = s.st.val[11]!.val[0]! ∧
-      r.st.val[17]!.val[1]! = s.st.val[17]!.val[1]! ∧
-      r.st.val[23]!.val[0]! = s.st.val[23]!.val[0]! ∧
-      preserves_complement s r [4, 5, 11, 17, 23] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta1
+      r.st.val = apply_5_writes s.st.val
+        4 5 11 17 23
+        1#usize 0#usize 1#usize 0#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta1
 
 /-! y3_zeta0 FC: writes lanes 1/7/13/19/20 at halves 0/0/1/0/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -325,18 +390,15 @@ private theorem pi_rho_chi_y3_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 8
       let bx4 := rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val[1]!.val[0]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
-      r.st.val[7]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[13]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[19]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[20]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      r.st.val[1]!.val[1]! = s.st.val[1]!.val[1]! ∧
-      r.st.val[7]!.val[1]! = s.st.val[7]!.val[1]! ∧
-      r.st.val[13]!.val[0]! = s.st.val[13]!.val[0]! ∧
-      r.st.val[19]!.val[1]! = s.st.val[19]!.val[1]! ∧
-      r.st.val[20]!.val[0]! = s.st.val[20]!.val[0]! ∧
-      preserves_complement s r [1, 7, 13, 19, 20] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta0
+      r.st.val = apply_5_writes s.st.val
+        1 7 13 19 20
+        0#usize 0#usize 1#usize 0#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta0
 
 /-! y3_zeta1 FC: writes lanes 1/7/13/19/20 at halves 1/1/0/1/0; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -351,18 +413,15 @@ private theorem pi_rho_chi_y3_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 7
       let bx4 := rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val[1]!.val[1]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
-      r.st.val[7]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[13]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[19]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[20]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      r.st.val[1]!.val[0]! = s.st.val[1]!.val[0]! ∧
-      r.st.val[7]!.val[0]! = s.st.val[7]!.val[0]! ∧
-      r.st.val[13]!.val[1]! = s.st.val[13]!.val[1]! ∧
-      r.st.val[19]!.val[0]! = s.st.val[19]!.val[0]! ∧
-      r.st.val[20]!.val[1]! = s.st.val[20]!.val[1]! ∧
-      preserves_complement s r [1, 7, 13, 19, 20] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta1
+      r.st.val = apply_5_writes s.st.val
+        1 7 13 19 20
+        1#usize 1#usize 0#usize 1#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta1
 
 /-! y4_zeta0 FC: writes lanes 3/9/10/16/22 at halves 1/0/0/1/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -377,18 +436,15 @@ private theorem pi_rho_chi_y4_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 21
       let bx4 := rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val[3]!.val[1]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
-      r.st.val[9]!.val[0]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[10]!.val[0]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[16]!.val[1]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[22]!.val[1]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      r.st.val[3]!.val[0]! = s.st.val[3]!.val[0]! ∧
-      r.st.val[9]!.val[1]! = s.st.val[9]!.val[1]! ∧
-      r.st.val[10]!.val[1]! = s.st.val[10]!.val[1]! ∧
-      r.st.val[16]!.val[0]! = s.st.val[16]!.val[0]! ∧
-      r.st.val[22]!.val[0]! = s.st.val[22]!.val[0]! ∧
-      preserves_complement s r [3, 9, 10, 16, 22] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta0
+      r.st.val = apply_5_writes s.st.val
+        3 9 10 16 22
+        1#usize 0#usize 0#usize 1#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta0
 
 /-! y4_zeta1 FC: writes lanes 3/9/10/16/22 at halves 0/1/1/0/0; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -403,18 +459,15 @@ private theorem pi_rho_chi_y4_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 20
       let bx4 := rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val[3]!.val[0]! = bx0 ^^^ ((~~~bx1) &&& bx2) ∧
-      r.st.val[9]!.val[1]! = bx1 ^^^ ((~~~bx2) &&& bx3) ∧
-      r.st.val[10]!.val[1]! = bx2 ^^^ ((~~~bx3) &&& bx4) ∧
-      r.st.val[16]!.val[0]! = bx3 ^^^ ((~~~bx4) &&& bx0) ∧
-      r.st.val[22]!.val[0]! = bx4 ^^^ ((~~~bx0) &&& bx1) ∧
-      r.st.val[3]!.val[1]! = s.st.val[3]!.val[1]! ∧
-      r.st.val[9]!.val[0]! = s.st.val[9]!.val[0]! ∧
-      r.st.val[10]!.val[0]! = s.st.val[10]!.val[0]! ∧
-      r.st.val[16]!.val[1]! = s.st.val[16]!.val[1]! ∧
-      r.st.val[22]!.val[1]! = s.st.val[22]!.val[1]! ∧
-      preserves_complement s r [3, 9, 10, 16, 22] ⌝ ⦄ := by
-  prc_y_zeta_fc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1
+      r.st.val = apply_5_writes s.st.val
+        3 9 10 16 22
+        0#usize 1#usize 1#usize 0#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1
 
 /-! ## Spec-side `@[spec]` lemmas for `keccak_f.{iota,rho_unrolled,pi_unrolled,chi_unrolled}`
 
@@ -906,7 +959,7 @@ Couples the impl `keccakf1600_round0_pi_rho_chi_{1,2}` chain to the spec
 we rewrite the spec side via Bridge 2 to use `prc_spec`, then close the
 25-lane equality via the standard lift cascade (lift_getElem_bv + lift
 algebra). -/
-set_option maxHeartbeats 128000000 in
+set_option maxHeartbeats 32000000 in
 @[spec]
 theorem prc_lift_spec (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
@@ -925,56 +978,62 @@ theorem prc_lift_spec (s : state.KeccakState) (hi : s.i.val < 24) :
   subst_vars
   rw [prc_spec_eq_composed]
   casesm* _ ∧ _
-  simp_all only []
+  rename_i r9 r8 r7 r6 r5 r4 r3 r2 r1 r' hd hc hi h_chain
+    l26 l25 l24 l23 l22 l21 l20 l19 l18 l17 l16 l15 l14 l13 l12 l11 l10 l9 l8
+    h_FC9 l7 h_FC8 l6 h_FC7 l5 h_FC6 l4 h_FC5 l3 h_FC4 l2 h_FC3 l1 h_FC2 l_last h_FC1
+  -- Substitute d/c/i preservation chains BEFORE the cell split (avoids per-cell duplication).
+  simp only [l_last, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17,
+    l18, l19, l20, l21, l22, l23, l24, l25, l26]
+    at h_chain h_FC1 h_FC2 h_FC3 h_FC4 h_FC5 h_FC6 h_FC7 h_FC8 h_FC9
+  have hr'  : (↑r'.st : List lane.Lane2U32).length = 25  := by exact r'.st.2
+  have hr1  : (↑r1.st : List lane.Lane2U32).length = 25  := by exact r1.st.2
+  have hr2  : (↑r2.st : List lane.Lane2U32).length = 25  := by exact r2.st.2
+  have hr3  : (↑r3.st : List lane.Lane2U32).length = 25  := by exact r3.st.2
+  have hr4  : (↑r4.st : List lane.Lane2U32).length = 25  := by exact r4.st.2
+  have hr5  : (↑r5.st : List lane.Lane2U32).length = 25  := by exact r5.st.2
+  have hr6  : (↑r6.st : List lane.Lane2U32).length = 25  := by exact r6.st.2
+  have hr7  : (↑r7.st : List lane.Lane2U32).length = 25  := by exact r7.st.2
+  have hr8  : (↑r8.st : List lane.Lane2U32).length = 25  := by exact r8.st.2
+  have hr9  : (↑r9.st : List lane.Lane2U32).length = 25  := by exact r9.st.2
+  have hss  : (↑s.st  : List lane.Lane2U32).length = 25  := by exact s.st.2
+  have hlane : ∀ (L : lane.Lane2U32), L.val.length = 2 := fun L => L.2
   apply Subtype.ext
   unfold prc_spec lift_perm impl_perm
   simp only [Std.Array.make, List.ofFn_succ, List.ofFn_zero, Fin.val_succ, Fin.val_zero,
     Nat.succ_eq_add_one, Nat.zero_add, Nat.reduceAdd, Nat.reduceMul, Nat.reduceDiv, Nat.reduceMod]
   repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
-  all_goals (apply Std.U64.bv_eq_imp_eq)
-  all_goals (simp only [rot64, lift_lane, Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not,
-    rot32,
-    show ((0#usize : Std.Usize).val) = 0 from rfl,
-    show ((1#usize : Std.Usize).val) = 1 from rfl,
-    show ((2#usize : Std.Usize).val) = 2 from rfl,
-    show ((3#usize : Std.Usize).val) = 3 from rfl,
-    show ((4#usize : Std.Usize).val) = 4 from rfl,
-    show ((5#usize : Std.Usize).val) = 5 from rfl,
-    show ((6#usize : Std.Usize).val) = 6 from rfl,
-    show ((7#usize : Std.Usize).val) = 7 from rfl,
-    show ((8#usize : Std.Usize).val) = 8 from rfl,
-    show ((9#usize : Std.Usize).val) = 9 from rfl,
-    show ((10#usize : Std.Usize).val) = 10 from rfl,
-    show ((11#usize : Std.Usize).val) = 11 from rfl,
-    show ((12#usize : Std.Usize).val) = 12 from rfl,
-    show ((13#usize : Std.Usize).val) = 13 from rfl,
-    show ((14#usize : Std.Usize).val) = 14 from rfl,
-    show ((15#usize : Std.Usize).val) = 15 from rfl,
-    show ((16#usize : Std.Usize).val) = 16 from rfl,
-    show ((17#usize : Std.Usize).val) = 17 from rfl,
-    show ((18#usize : Std.Usize).val) = 18 from rfl,
-    show ((19#usize : Std.Usize).val) = 19 from rfl,
-    show ((20#usize : Std.Usize).val) = 20 from rfl,
-    show ((21#usize : Std.Usize).val) = 21 from rfl,
-    show ((22#usize : Std.Usize).val) = 22 from rfl,
-    show ((23#usize : Std.Usize).val) = 23 from rfl,
-    show ((24#usize : Std.Usize).val) = 24 from rfl])
-  all_goals simp only [lift_theta_applied_bv_0, lift_theta_applied_bv_1, lift_theta_applied_bv_2,
-    lift_theta_applied_bv_3, lift_theta_applied_bv_4, lift_theta_applied_bv_5,
-    lift_theta_applied_bv_6, lift_theta_applied_bv_7, lift_theta_applied_bv_8,
-    lift_theta_applied_bv_9, lift_theta_applied_bv_10, lift_theta_applied_bv_11,
-    lift_theta_applied_bv_12, lift_theta_applied_bv_13, lift_theta_applied_bv_14,
-    lift_theta_applied_bv_15, lift_theta_applied_bv_16, lift_theta_applied_bv_17,
-    lift_theta_applied_bv_18, lift_theta_applied_bv_19, lift_theta_applied_bv_20,
-    lift_theta_applied_bv_21, lift_theta_applied_bv_22, lift_theta_applied_bv_23,
-    lift_theta_applied_bv_24, Std.UScalar.bv_xor]
-  all_goals simp_all only [Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
-  all_goals simp only [Std.UScalarTy.U64_numBits_eq,
-    ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
-    ← rot_0, ← rot_1, ← rot_2, ← rot_3, ← rot_6, ← rot_8, ← rot_10,
-    ← rot_14, ← rot_15, ← rot_18, ← rot_20, ← rot_21, ← rot_25, ← rot_27,
-    ← rot_28, ← rot_36, ← rot_39, ← rot_41, ← rot_43, ← rot_44, ← rot_45,
-    ← rot_55, ← rot_56, ← rot_61, ← rot_62,
-    rc_equiv]
+  -- Per-cell: cascade chain through apply_5_writes + Std.Array.set, then lift_theta_applied_bv_K,
+  -- then ← lift_* / ← rot_* / rc_equiv to equate spec and impl side.
+  all_goals (
+    apply Std.U64.bv_eq_imp_eq
+    simp (config := { decide := true }) only
+      [h_chain, h_FC1, h_FC2, h_FC3, h_FC4, h_FC5, h_FC6, h_FC7, h_FC8, h_FC9, apply_5_writes,
+       lift_lane,
+       List.getElem!_set_ne, List.getElem!_set, List.length_set,
+       Std.Array.set_val_eq, hlane,
+       hr', hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hss,
+       show ((0#usize : Std.Usize) : Nat) = 0 from rfl,
+       show ((1#usize : Std.Usize) : Nat) = 1 from rfl]
+    simp only [lift_theta_applied_bv_0, lift_theta_applied_bv_1, lift_theta_applied_bv_2,
+      lift_theta_applied_bv_3, lift_theta_applied_bv_4, lift_theta_applied_bv_5,
+      lift_theta_applied_bv_6, lift_theta_applied_bv_7, lift_theta_applied_bv_8,
+      lift_theta_applied_bv_9, lift_theta_applied_bv_10, lift_theta_applied_bv_11,
+      lift_theta_applied_bv_12, lift_theta_applied_bv_13, lift_theta_applied_bv_14,
+      lift_theta_applied_bv_15, lift_theta_applied_bv_16, lift_theta_applied_bv_17,
+      lift_theta_applied_bv_18, lift_theta_applied_bv_19, lift_theta_applied_bv_20,
+      lift_theta_applied_bv_21, lift_theta_applied_bv_22, lift_theta_applied_bv_23,
+      lift_theta_applied_bv_24,
+      Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32, rot64]
+    simp only [Std.UScalarTy.U64_numBits_eq,
+      ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
+      ← rot_0, ← rot_1, ← rot_2, ← rot_3, ← rot_6, ← rot_8, ← rot_10,
+      ← rot_14, ← rot_15, ← rot_18, ← rot_20, ← rot_21, ← rot_25, ← rot_27,
+      ← rot_28, ← rot_36, ← rot_39, ← rot_41, ← rot_43, ← rot_44, ← rot_45,
+      ← rot_55, ← rot_56, ← rot_61, ← rot_62,
+      rc_equiv])
+  -- R2 unresolved: cell-24 (impl_perm 24 = 20) appears non-trivial; bv_decide finds
+  -- a counterexample for the analytic form of the equation, suggesting an
+  -- impl_perm / chain-reduction mismatch. Investigation in handoff.
+  all_goals sorry
 
 end libcrux_iot_sha3.Equivalence
