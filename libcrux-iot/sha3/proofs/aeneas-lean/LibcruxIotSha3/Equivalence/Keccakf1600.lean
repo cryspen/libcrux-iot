@@ -35,6 +35,18 @@ def spec_round_step (state : Std.Array Std.U64 25#usize) (round : Std.Usize) :
   let s_chi ← keccak_f.chi_unrolled s_pi
   keccak_f.iota s_chi round
 
+/-- Convert a `Nat` ≤ 24 to `Std.Usize`. Used in `four_round_post` /
+    `keccakf1600_post` to bridge `Nat.fold` indices and `+ k` round
+    offsets into the `Std.Usize` argument that `spec_round_step`
+    requires. Since `24 < 2^32 ≤ 2^System.Platform.numBits`, the
+    bound proof is trivial. -/
+private def roundOfNat (k : Nat) (h : k ≤ 24) : Std.Usize :=
+  Std.UScalar.ofNatCore k (by
+    have h24 : (24 : Nat) < 2 ^ Std.UScalarTy.Usize.numBits := by
+      simp only [Std.UScalarTy.Usize_numBits_eq]
+      rcases System.Platform.numBits_eq with hpn | hpn <;> rw [hpn] <;> decide
+    omega)
+
 /-! ## 4-round composition
 
 Each round transforms a `KeccakState` with an associated layout
@@ -42,26 +54,27 @@ Each round transforms a `KeccakState` with an associated layout
 (by `impl_perm_pow4_eq_id`), so the lane permutation cancels and the
 output lift uses just `impl_swap`. -/
 
-def four_round_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
+@[irreducible]
+def four_round_post (s : state.KeccakState) (h : s.i.val + 4 ≤ 24)
+    (r_impl : state.KeccakState) : Prop :=
   (do
     let s1 ← spec_round_step (lift s) s.i
-    let s2 ← spec_round_step s1 (s.i.val + 1)
-    let s3 ← spec_round_step s2 (s.i.val + 2)
-    let r_spec ← spec_round_step s3 (s.i.val + 3)
+    let s2 ← spec_round_step s1 (roundOfNat (s.i.val + 1) (by omega))
+    let s3 ← spec_round_step s2 (roundOfNat (s.i.val + 2) (by omega))
+    let r_spec ← spec_round_step s3 (roundOfNat (s.i.val + 3) (by omega))
     pure (r_spec = lift_perm r_impl id impl_swap)).holds
 
-/-- 4-round equivalence: `keccakf1600_4rounds` on impl produces a state
-    `r_impl` such that the spec applied 4 times equals
-    `lift_perm r_impl id impl_swap`.
-
-    Proof composes `round{0,1,2,3}_equiv_spec` through the inlined
-    impl chain (theta + prc_chi_1 + prc_chi_2 per round). After
-    round 3 the cumulative permutation is `impl_perm^[4] = id`. -/
-set_option maxHeartbeats 64000000 in
+-- 4-round equivalence: `keccakf1600_4rounds` on impl produces a state
+-- `r_impl` such that the spec applied 4 times equals
+-- `lift_perm r_impl id impl_swap`.
+--
+-- Proof composes `round{0,1,2,3}_equiv_spec` through the inlined
+-- impl chain (theta + prc_chi_1 + prc_chi_2 per round). After
+-- round 3 the cumulative permutation is `impl_perm^[4] = id`.
 theorem four_round_equiv (s : state.KeccakState) (hi : s.i.val + 4 ≤ 24) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_4rounds 0#usize s
-    ⦃ ⇓ r_impl => ⌜ four_round_post s r_impl ⌝ ⦄ := by
+    ⦃ ⇓ r_impl => ⌜ four_round_post s hi r_impl ⌝ ⦄ := by
   -- Strategy: unfold keccakf1600_4rounds (a chain of 12 sub-calls);
   -- introduce intermediate states s_θ_k and s_prc_k for k=0..3 via the
   -- chain wrappers; apply round_{0,1,2,3}_equiv_spec sequentially via
@@ -76,14 +89,18 @@ The outer loop body in `keccak.keccakf1600` calls `keccakf1600_4rounds`
 6 times. Each iteration advances `s.i` by 4 and accumulates 4 more
 spec rounds. -/
 
+@[irreducible]
 def keccakf1600_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
   -- Apply spec_round_step 24 times starting from `lift s` with round
-  -- indices 0..23.
-  ∃ (lifted_final : Std.Array Std.U64 25#usize),
-    (Nat.fold 24
-      (fun i _ acc => acc >>= fun st => spec_round_step st i)
-      (pure (lift s))).holds (· = lifted_final) ∧
-    lifted_final = lift_perm r_impl id impl_swap
+  -- indices 0..23 (each `Nat` index `< 24` converted via `roundOfNat`).
+  -- The folded `Result (Std.Array …)` is then compared to the impl
+  -- lift inside a final `pure (… = …)`, yielding `Result Prop` whose
+  -- `.holds` is the post.
+  (do
+    let lifted_final ← Nat.fold 24
+      (fun i h acc => acc >>= fun st => spec_round_step st (roundOfNat i (by omega)))
+      (pure (lift s))
+    pure (lifted_final = lift_perm r_impl id impl_swap)).holds
 
 /-- Top-level equivalence: `keccak.keccakf1600` (the full 24-round
     permutation) on the bit-interleaved impl produces a state whose
