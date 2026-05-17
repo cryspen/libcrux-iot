@@ -64,6 +64,33 @@ def four_round_post (s : state.KeccakState) (h : s.i.val + 4 ≤ 24)
     let r_spec ← spec_round_step s3 (roundOfNat (s.i.val + 3) (by omega))
     pure (r_spec = lift_perm r_impl id impl_swap)).holds
 
+/-! ## Fold lemma: bundle inline 12-call chain into 4 nested (theta_k, chain_k) pairs
+
+The extracted `keccak.keccakf1600_4rounds 0#usize s` is a 12-call inline
+do-block. Each per-round `(pi_rho_chi_1 0#usize; pi_rho_chi_2)` pair is
+packaged in `RoundEquiv.lean` as `keccakf1600_round{k}_pi_rho_chi_chain`
+(a named `def`). This lemma folds the inline pairs into chain-wrapper
+calls and groups each round as a nested 2-call do-block so `Triple.bind`
+can split exactly at round boundaries, dispatching each pair via
+`round_k_equiv_spec`. -/
+set_option maxHeartbeats 8000000 in
+theorem keccakf1600_4rounds_fold (s : state.KeccakState) :
+    keccak.keccakf1600_4rounds 0#usize s = (do
+      let r0 ← (do let s1 ← keccak.keccakf1600_round0_theta s
+                   keccakf1600_round0_pi_rho_chi_chain s1)
+      let r1 ← (do let s1 ← keccak.keccakf1600_round1_theta r0
+                   keccakf1600_round1_pi_rho_chi_chain s1)
+      let r2 ← (do let s1 ← keccak.keccakf1600_round2_theta r1
+                   keccakf1600_round2_pi_rho_chi_chain s1)
+      do let s1 ← keccak.keccakf1600_round3_theta r2
+         keccakf1600_round3_pi_rho_chi_chain s1) := by
+  unfold keccak.keccakf1600_4rounds
+    keccakf1600_round0_pi_rho_chi_chain
+    keccakf1600_round1_pi_rho_chi_chain
+    keccakf1600_round2_pi_rho_chi_chain
+    keccakf1600_round3_pi_rho_chi_chain
+  simp [bind_assoc]
+
 -- 4-round equivalence: `keccakf1600_4rounds` on impl produces a state
 -- `r_impl` such that the spec applied 4 times equals
 -- `lift_perm r_impl id impl_swap`.
@@ -75,12 +102,43 @@ theorem four_round_equiv (s : state.KeccakState) (hi : s.i.val + 4 ≤ 24) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_4rounds 0#usize s
     ⦃ ⇓ r_impl => ⌜ four_round_post s hi r_impl ⌝ ⦄ := by
-  -- Strategy: unfold keccakf1600_4rounds (a chain of 12 sub-calls);
-  -- introduce intermediate states s_θ_k and s_prc_k for k=0..3 via the
-  -- chain wrappers; apply round_{0,1,2,3}_equiv_spec sequentially via
-  -- Triple.bind, threading the i increments (each prc_chi_1 bumps i);
-  -- at the end, fold `lift_perm r impl_perm_4 impl_swap` to
-  -- `lift_perm r id impl_swap` via impl_perm_pow4_eq_id.
+  -- Strategy: rewrite the inline 12-call chain to the nested 4-round
+  -- form (each round = inner do-block of `theta_k; chain_k`). Then
+  -- chain the four `round_k_equiv_spec`s via `Triple.bind`. Each round's
+  -- chain spec needs `s.i.val < 24`, so we thread i-increment side-info
+  -- via `round_k_i_inc` sidecars combined with `triple_conj_post`.
+  -- After 4 rounds, the cumulative permutation is `impl_perm^[4] = id`,
+  -- discharged via `impl_perm_pow4_eq_id`.
+  rw [keccakf1600_4rounds_fold]
+  -- Round 0: precondition `⌜True⌝`, no precondition extraction needed.
+  apply Std.Do.Triple.bind _ _
+    (triple_conj_post (round0_equiv_spec s (by omega)) (round0_i_inc s (by omega)))
+  intro r0
+  -- After Round 0's Triple.bind, the precondition for the continuation
+  -- is the conjunction post: ⌜round0_post s r0 ∧ r0.i.val = s.i.val + 1⌝.
+  -- Lift it into proof-context hypotheses via `triple_imp_intro` so
+  -- subsequent round preconditions can use omega over the i-chain.
+  apply triple_imp_intro
+  rintro ⟨h_round0, h_i0⟩
+  apply Std.Do.Triple.bind _ _
+    (triple_conj_post (round1_equiv_spec r0 (by omega)) (round1_i_inc r0 (by omega)))
+  intro r1
+  apply triple_imp_intro
+  rintro ⟨h_round1, h_i1⟩
+  apply Std.Do.Triple.bind _ _
+    (triple_conj_post (round2_equiv_spec r1 (by omega)) (round2_i_inc r1 (by omega)))
+  intro r2
+  apply triple_imp_intro
+  rintro ⟨h_round2, h_i2⟩
+  -- Round 3 is the tail of the do-block (no outer `let r3 ← …`), so we
+  -- finish by weakening the post of the combined Triple to derive
+  -- `four_round_post s hi r3`. The analytical step uses the four
+  -- per-round posts (h_round0/h_round1/h_round2 in scope, h_round3
+  -- from the round-3 Triple's post) plus `impl_perm_pow4_eq_id` to
+  -- collapse `impl_perm^[4]` to `id`.
+  apply Std.Do.Triple.of_entails_right _
+    (triple_conj_post (round3_equiv_spec r2 (by omega)) (round3_i_inc r2 (by omega)))
+  -- Goal: ⌜round3_post r2 r ∧ r.i.val = r2.i.val + 1⌝ ⊢ ⌜four_round_post s hi r⌝
   sorry
 
 /-! ## 24-round (keccakf1600) equivalence
