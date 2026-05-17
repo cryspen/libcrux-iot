@@ -961,7 +961,7 @@ we rewrite the spec side via Bridge 2 to use `prc_spec`, then close the
 algebra). -/
 set_option maxHeartbeats 32000000 in
 @[spec]
-theorem prc_lift_spec (s : state.KeccakState) (hi : s.i.val < 24) :
+theorem prc_lift_spec (s : state.KeccakState) (hi_lt : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let r1 ← keccak.keccakf1600_round0_pi_rho_chi_1 0#usize s
         keccak.keccakf1600_round0_pi_rho_chi_2 r1)
@@ -970,7 +970,7 @@ theorem prc_lift_spec (s : state.KeccakState) (hi : s.i.val < 24) :
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
-          pure (r_spec = lift_perm r_impl impl_perm)).holds ⌝ ⦄ := by
+          pure (r_spec = lift_perm r_impl impl_perm impl_swap)).holds ⌝ ⦄ := by
   unfold keccak.keccakf1600_round0_pi_rho_chi_1
   unfold keccak.keccakf1600_round0_pi_rho_chi_2
   hax_mvcgen
@@ -998,9 +998,10 @@ theorem prc_lift_spec (s : state.KeccakState) (hi : s.i.val < 24) :
   have hss  : (↑s.st  : List lane.Lane2U32).length = 25  := by exact s.st.2
   have hlane : ∀ (L : lane.Lane2U32), L.val.length = 2 := fun L => L.2
   apply Subtype.ext
-  unfold prc_spec lift_perm impl_perm
-  simp only [Std.Array.make, List.ofFn_succ, List.ofFn_zero, Fin.val_succ, Fin.val_zero,
-    Nat.succ_eq_add_one, Nat.zero_add, Nat.reduceAdd, Nat.reduceMul, Nat.reduceDiv, Nat.reduceMod]
+  unfold prc_spec lift_perm impl_perm impl_swap lift_lane_maybe_swap
+  simp (config := { decide := true }) only [Std.Array.make, List.ofFn_succ, List.ofFn_zero,
+    Fin.val_succ, Fin.val_zero, Nat.succ_eq_add_one, Nat.zero_add, Nat.reduceAdd, Nat.reduceMul,
+    Nat.reduceDiv, Nat.reduceMod, reduceIte]
   repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
   -- Per-cell: cascade chain through apply_5_writes + Std.Array.set, then lift_theta_applied_bv_K,
   -- then ← lift_* / ← rot_* / rc_equiv to equate spec and impl side.
@@ -1025,15 +1026,11 @@ theorem prc_lift_spec (s : state.KeccakState) (hi : s.i.val < 24) :
       lift_theta_applied_bv_24,
       Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32, rot64]
     simp only [Std.UScalarTy.U64_numBits_eq,
+      rot_0, rot_1, rot_2, rot_3, rot_6, rot_8, rot_10,
+      rot_14, rot_15, rot_18, rot_20, rot_21, rot_25, rot_27,
+      rot_28, rot_36, rot_39, rot_41, rot_43, rot_44, rot_45,
+      rot_55, rot_56, rot_61, rot_62,
       ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
-      ← rot_0, ← rot_1, ← rot_2, ← rot_3, ← rot_6, ← rot_8, ← rot_10,
-      ← rot_14, ← rot_15, ← rot_18, ← rot_20, ← rot_21, ← rot_25, ← rot_27,
-      ← rot_28, ← rot_36, ← rot_39, ← rot_41, ← rot_43, ← rot_44, ← rot_45,
-      ← rot_55, ← rot_56, ← rot_61, ← rot_62,
-      rc_equiv])
-  -- R2 unresolved: cell-24 (impl_perm 24 = 20) appears non-trivial; bv_decide finds
-  -- a counterexample for the analytic form of the equation, suggesting an
-  -- impl_perm / chain-reduction mismatch. Investigation in handoff.
-  all_goals sorry
+      ← rc_equiv _ hi_lt])
 
 end libcrux_iot_sha3.Equivalence
