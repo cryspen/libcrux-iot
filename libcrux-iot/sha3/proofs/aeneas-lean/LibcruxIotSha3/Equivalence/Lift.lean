@@ -86,12 +86,12 @@ abbrev rot32 (x : Std.U32) (n : Nat) : Std.U32 :=
 -/
 
 /-- The lane permutation induced by one round of the implementation.
-    Maps an impl lane index to the spec position it now holds:
-    `impl_perm(5*x + z) = 5*x + ((3*z + 2*x) mod 5)`. -/
+    Maps a spec cell index to the impl lane that now holds it:
+    `impl_perm(5*x + z) = 5*x + ((2*z + x) mod 5)`. -/
 def impl_perm (i : Fin 25) : Fin 25 :=
   let x := i.val / 5
   let z := i.val % 5
-  ⟨5 * x + (3 * z + 2 * x) % 5, by omega⟩
+  ⟨5 * x + (2 * z + x) % 5, by omega⟩
 
 /-- The impl permutation has order 4: after 4 rounds, layout re-aligns
     with the spec's `[u64; 25]` ordering. Closed by `decide` over the 25
@@ -100,17 +100,37 @@ theorem impl_perm_pow4_eq_id :
     ∀ i : Fin 25, impl_perm (impl_perm (impl_perm (impl_perm i))) = i := by
   decide
 
+/-- Per-impl-lane half-swap flag for the round-0 storage layout.
+    `impl_swap L = true` iff impl lane `L` stores its U64 with halves
+    physically reversed (i.e., `val[0]` holds spec `z1` and `val[1]` holds
+    spec `z0`). Formula: `parity (rho_table[L/5][L%5])` — the
+    bit-interleaved impl pre-aligns each lane's polarity to match the
+    rho rotation that the NEXT round will apply to that physical
+    position, avoiding explicit half-swaps during chi. -/
+def impl_swap (i : Fin 25) : Bool :=
+  match i.val with
+  | 2 | 3 | 5 | 8 | 12 | 13 | 14 | 16 | 17 | 18 | 20 | 22 => true
+  | _ => false
+
+/-- Lift a single lane to U64, optionally swapping halves. -/
+def lift_lane_maybe_swap (l : libcrux_iot_sha3.lane.Lane2U32) (sw : Bool) :
+    Std.U64 :=
+  if sw then ⟨lift_lane_bv (l.val[1]!).bv (l.val[0]!).bv⟩
+  else lift_lane l
+
 /-- Lift a permuted state: applies permutation `p` to lane indices before
-    lifting each lane. -/
-def lift_perm (s : libcrux_iot_sha3.state.KeccakState) (p : Fin 25 → Fin 25) :
+    lifting each lane. `sw : Fin 25 → Bool` selects per-impl-lane half-swap
+    (pass `fun _ => false` for the no-swap case). -/
+def lift_perm (s : libcrux_iot_sha3.state.KeccakState) (p : Fin 25 → Fin 25)
+    (sw : Fin 25 → Bool) :
     Array Std.U64 25#usize :=
-  ⟨List.ofFn (fun i : Fin 25 => lift_lane (s.st.val[(p i).val]!)),
+  ⟨List.ofFn (fun i : Fin 25 => lift_lane_maybe_swap (s.st.val[(p i).val]!) (sw (p i))),
     by simp⟩
 
-/-- `lift_perm s id = lift s`. -/
+/-- `lift_perm s id (fun _ => false) = lift s`. -/
 theorem lift_perm_id (s : libcrux_iot_sha3.state.KeccakState) :
-    lift_perm s id = lift s := by
-  unfold lift_perm lift
+    lift_perm s id (fun _ => false) = lift s := by
+  unfold lift_perm lift lift_lane_maybe_swap
   rfl
 
 /-! ## Algebraic lemmas about `lift_lane_bv`
