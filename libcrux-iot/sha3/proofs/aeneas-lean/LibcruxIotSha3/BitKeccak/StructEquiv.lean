@@ -1566,4 +1566,709 @@ theorem keccakf1600_round1_pi_rho_chi_2_eq (s : state.KeccakState) :
 
 end Round1PrcLiftComp
 
+/-! # Round 2 -/
+
+/-! ## θ-stage c-cell sub-fns (round 2)
+
+Same control flow as round 1 (5 XOR-reads + 1 set_lane_value); the only
+differences are the zeta-pattern (the impl_perm²-image of round-0's
+column-read pattern) and the function name. So `round1_theta_c_proof`
+is reusable. -/
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x0_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x0_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x0_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x0_z0
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x0_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x0_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x0_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x0_z1
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x1_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x1_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x1_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x1_z0
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x1_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x1_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x1_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x1_z1
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x2_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x2_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x2_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x2_z0
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x2_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x2_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x2_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x2_z1
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x3_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x3_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x3_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x3_z0
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x3_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x3_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x3_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x3_z1
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x4_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x4_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x4_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x4_z0
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_theta_c_x4_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_c_x4_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_c_x4_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  round1_theta_c_proof keccak.keccakf1600_round2_theta_c_x4_z1
+
+/-! ## θ-stage d-cell sub-fn (round 2)
+
+Identical formulas to rounds 0/1; only the function name differs. -/
+
+set_option maxHeartbeats 1600000 in
+@[spec]
+private theorem round2_theta_d_spec_fc (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_theta_d s
+    ⦃ ⇓ r => ⌜ r.st = s.st ∧ r.i = s.i ∧ r.c = s.c ∧
+        r.d.val[0]!.val[0]! =
+          s.c.val[4]!.val[0]! ^^^ Equivalence.rot32 s.c.val[1]!.val[1]! 1 ∧
+        r.d.val[0]!.val[1]! =
+          s.c.val[4]!.val[1]! ^^^ s.c.val[1]!.val[0]! ∧
+        r.d.val[1]!.val[0]! =
+          s.c.val[0]!.val[0]! ^^^ Equivalence.rot32 s.c.val[2]!.val[1]! 1 ∧
+        r.d.val[1]!.val[1]! =
+          s.c.val[0]!.val[1]! ^^^ s.c.val[2]!.val[0]! ∧
+        r.d.val[2]!.val[0]! =
+          s.c.val[1]!.val[0]! ^^^ Equivalence.rot32 s.c.val[3]!.val[1]! 1 ∧
+        r.d.val[2]!.val[1]! =
+          s.c.val[1]!.val[1]! ^^^ s.c.val[3]!.val[0]! ∧
+        r.d.val[3]!.val[0]! =
+          s.c.val[2]!.val[0]! ^^^ Equivalence.rot32 s.c.val[4]!.val[1]! 1 ∧
+        r.d.val[3]!.val[1]! =
+          s.c.val[2]!.val[1]! ^^^ s.c.val[4]!.val[0]! ∧
+        r.d.val[4]!.val[0]! =
+          s.c.val[3]!.val[0]! ^^^ Equivalence.rot32 s.c.val[0]!.val[1]! 1 ∧
+        r.d.val[4]!.val[1]! =
+          s.c.val[3]!.val[1]! ^^^ s.c.val[0]!.val[0]! ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round2_theta_d
+  hax_mvcgen
+  all_goals first
+    | scalar_tac
+    | trivial
+    | (refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+       all_goals first | trivial | assumption | (
+         simp only [Std.WP.predn] at *
+         try apply Std.U32.bv_eq_imp_eq
+         simp_all [Std.UScalar.bv_xor, Equivalence.rot32]))
+
+set_option maxHeartbeats 8000000 in
+@[spec high]
+theorem bit_round2_theta_d_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta_d s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_theta_d (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hc hd00 hd01 hd10 hd11 hd20 hd21 hd30 hd31 hd40 hd41
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = _
+    apply Vector.ext
+    intro i hi
+    rw [stateArray5FromAeneas_getElem! r.d i hi]
+    match i, hi with
+    | 0, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd00]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd01]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+    | 1, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd10]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd11]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+    | 2, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd20]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd21]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+    | 3, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd30]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd31]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+    | 4, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd40]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd41]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+  · show r.i = s.i
+    exact hi_eq
+
+/-! ## PrcLift sub-fns (round 2)
+
+Same control flow as round 1, so the round-1 macros `round1_prc_y_zeta_no_rc_proof`
+and the FC spec template are reusable. -/
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y0_zeta0_spec_fc
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y0_zeta0 BR s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[0]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 0
+      let bx1 := Equivalence.rot32 (s.st.val[7]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
+      let bx2 := Equivalence.rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 22
+      let bx3 := Equivalence.rot32 (s.st.val[16]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 11
+      let bx4 := Equivalence.rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 7
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val = apply_5_writes s.st.val
+        0 7 14 16 23
+        0#usize 1#usize 0#usize 0#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_0.val[s.i.val]!)
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round2_pi_rho_chi_y0_zeta0
+  hax_mvcgen
+  all_goals try scalar_tac
+  expose_names
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
+  · exact h_59.trans (h_52.trans (h_45.trans (h_38.trans h_31)))
+  · exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
+  · rw [h_61, h_54, h_47, h_40, h_33]
+    norm_num [apply_5_writes]
+    congr 6
+    all_goals try apply Std.U32.bv_eq_imp_eq
+    all_goals (
+      simp only [
+        h_29.2, h_27.2, h_26.2, h_25,
+        h_36.2, h_35.2, h_34,
+        h_43.2, h_42.2, h_41,
+        h_50.2, h_49.2, h_48,
+        h_57.2, h_56.2, h_55,
+        h_7, h_9, h_20, h_22, h_24,
+        h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
+        h_28,
+        h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Equivalence.rot32]
+      norm_num)
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y0_zeta1_spec_fc
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y0_zeta1 BR s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[0]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 0
+      let bx1 := Equivalence.rot32 (s.st.val[7]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 22
+      let bx2 := Equivalence.rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 21
+      let bx3 := Equivalence.rot32 (s.st.val[16]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 10
+      let bx4 := Equivalence.rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 7
+      r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ∧
+      r.st.val = apply_5_writes s.st.val
+        0 7 14 16 23
+        1#usize 0#usize 1#usize 1#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_1.val[s.i.val]!)
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round2_pi_rho_chi_y0_zeta1
+  hax_mvcgen
+  all_goals try scalar_tac
+  expose_names
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · exact h_61.trans (h_54.trans (h_47.trans (h_40.trans h_33)))
+  · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
+  · rw [h_59, h_52, h_45, h_38, h_31, h_30]
+    rfl
+  · rw [h_62, h_55, h_48, h_41, h_34]
+    norm_num [apply_5_writes]
+    congr 6
+    all_goals try apply Std.U32.bv_eq_imp_eq
+    all_goals (
+      simp only [
+        h_29.2, h_27.2, h_26.2, h_25,
+        h_37.2, h_36.2, h_35,
+        h_44.2, h_43.2, h_42,
+        h_51.2, h_50.2, h_49,
+        h_58.2, h_57.2, h_56,
+        h_7, h_9, h_20, h_22, h_24,
+        h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
+        h_28,
+        h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Equivalence.rot32]
+      norm_num)
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y1_zeta0_spec_fc (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y1_zeta0 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 14
+      let bx1 := Equivalence.rot32 (s.st.val[21]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 10
+      let bx2 := Equivalence.rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 2
+      let bx3 := Equivalence.rot32 (s.st.val[5]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 23
+      let bx4 := Equivalence.rot32 (s.st.val[12]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val = apply_5_writes s.st.val
+        3 5 12 19 21
+        0#usize 0#usize 0#usize 1#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  round1_prc_y_zeta_no_rc_proof keccak.keccakf1600_round2_pi_rho_chi_y1_zeta0
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y1_zeta1_spec_fc (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y1_zeta1 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 14
+      let bx1 := Equivalence.rot32 (s.st.val[21]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 10
+      let bx2 := Equivalence.rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 1
+      let bx3 := Equivalence.rot32 (s.st.val[5]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
+      let bx4 := Equivalence.rot32 (s.st.val[12]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 30
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val = apply_5_writes s.st.val
+        3 5 12 19 21
+        1#usize 1#usize 1#usize 0#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  round1_prc_y_zeta_no_rc_proof keccak.keccakf1600_round2_pi_rho_chi_y1_zeta1
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y2_zeta0_spec_fc (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y2_zeta0 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 1
+      let bx1 := Equivalence.rot32 (s.st.val[10]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 3
+      let bx2 := Equivalence.rot32 (s.st.val[17]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 13
+      let bx3 := Equivalence.rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 4
+      let bx4 := Equivalence.rot32 (s.st.val[1]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 9
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val = apply_5_writes s.st.val
+        1 8 10 17 24
+        1#usize 0#usize 1#usize 1#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  round1_prc_y_zeta_no_rc_proof keccak.keccakf1600_round2_pi_rho_chi_y2_zeta0
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y2_zeta1_spec_fc (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y2_zeta1 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 0
+      let bx1 := Equivalence.rot32 (s.st.val[10]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 3
+      let bx2 := Equivalence.rot32 (s.st.val[17]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 12
+      let bx3 := Equivalence.rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 4
+      let bx4 := Equivalence.rot32 (s.st.val[1]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 9
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val = apply_5_writes s.st.val
+        1 8 10 17 24
+        0#usize 1#usize 0#usize 0#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  round1_prc_y_zeta_no_rc_proof keccak.keccakf1600_round2_pi_rho_chi_y2_zeta1
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y3_zeta0_spec_fc (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y3_zeta0 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[22]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 14
+      let bx1 := Equivalence.rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 18
+      let bx2 := Equivalence.rot32 (s.st.val[6]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 5
+      let bx3 := Equivalence.rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 8
+      let bx4 := Equivalence.rot32 (s.st.val[15]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 28
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val = apply_5_writes s.st.val
+        4 6 13 15 22
+        1#usize 1#usize 1#usize 1#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  round1_prc_y_zeta_no_rc_proof keccak.keccakf1600_round2_pi_rho_chi_y3_zeta0
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y3_zeta1_spec_fc (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y3_zeta1 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[22]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 13
+      let bx1 := Equivalence.rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 18
+      let bx2 := Equivalence.rot32 (s.st.val[6]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 5
+      let bx3 := Equivalence.rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 7
+      let bx4 := Equivalence.rot32 (s.st.val[15]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val = apply_5_writes s.st.val
+        4 6 13 15 22
+        0#usize 0#usize 0#usize 0#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  round1_prc_y_zeta_no_rc_proof keccak.keccakf1600_round2_pi_rho_chi_y3_zeta1
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y4_zeta0_spec_fc (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y4_zeta0 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[11]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 31
+      let bx1 := Equivalence.rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
+      let bx2 := Equivalence.rot32 (s.st.val[20]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 20
+      let bx3 := Equivalence.rot32 (s.st.val[2]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 21
+      let bx4 := Equivalence.rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val = apply_5_writes s.st.val
+        2 9 11 18 20
+        0#usize 0#usize 1#usize 0#usize 0#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  round1_prc_y_zeta_no_rc_proof keccak.keccakf1600_round2_pi_rho_chi_y4_zeta0
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+private theorem round2_pi_rho_chi_y4_zeta1_spec_fc (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y4_zeta1 s
+    ⦃ ⇓ r => ⌜
+      let bx0 := Equivalence.rot32 (s.st.val[11]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
+      let bx1 := Equivalence.rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 27
+      let bx2 := Equivalence.rot32 (s.st.val[20]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 19
+      let bx3 := Equivalence.rot32 (s.st.val[2]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 20
+      let bx4 := Equivalence.rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
+      r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
+      r.st.val = apply_5_writes s.st.val
+        2 9 11 18 20
+        1#usize 1#usize 0#usize 1#usize 1#usize
+        (bx0 ^^^ ((~~~bx1) &&& bx2))
+        (bx1 ^^^ ((~~~bx2) &&& bx3))
+        (bx2 ^^^ ((~~~bx3) &&& bx4))
+        (bx3 ^^^ ((~~~bx4) &&& bx0))
+        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
+  round1_prc_y_zeta_no_rc_proof keccak.keccakf1600_round2_pi_rho_chi_y4_zeta1
+
+/-! ### Round-2 PrcLift bit-side equivalences -/
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y0_zeta0_eq
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y0_zeta0 BR s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y0_zeta0 BR (KState.fromAeneas s) ∧
+      r.i = s.i ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine ⟨?_, hi_eq⟩
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y0_zeta1_eq
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y0_zeta1 BR s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y0_zeta1 BR (KState.fromAeneas s) ∧
+      r.i.val = s.i.val + 1 ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine ⟨?_, hi_eq⟩
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · exact usize_succ_eq hi_eq hi
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y1_zeta0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y1_zeta0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y1_zeta0 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y1_zeta1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y1_zeta1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y1_zeta1 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y2_zeta0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y2_zeta0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y2_zeta0 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y2_zeta1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y2_zeta1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y2_zeta1 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y3_zeta0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y3_zeta0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y3_zeta0 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y3_zeta1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y3_zeta1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y3_zeta1 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y4_zeta0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y4_zeta0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y4_zeta0 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec high]
+theorem bit_round2_pi_rho_chi_y4_zeta1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_y4_zeta1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_round2_pi_rho_chi_y4_zeta1 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hd hc hi_eq hst
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · apply Vector.toArray_inj.mp
+    simp [stateArray25FromAeneas, hst, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
 end libcrux_iot_sha3.BitKeccak
