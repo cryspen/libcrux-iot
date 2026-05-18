@@ -5,6 +5,7 @@
   `bv_decide`.
 -/
 import LibcruxIotSha3.BitKeccak.StateIso
+import LibcruxIotSha3.Equivalence.Lift
 
 namespace libcrux_iot_sha3.BitKeccak
 
@@ -31,6 +32,15 @@ theorem Lane.fromAeneas_z1 (l : lane.Lane2U32) :
   obtain ⟨a, b, hl⟩ := Lane2U32.shape l
   simp [Lane.fromAeneas, hl]
 
+/-- `Lane.fromAeneas` written as a literal `Lane.mk`, with the two halves
+    expressed via `[k]!` rather than `[k]?.getD _`. Used by `bit_theta_d_eq`
+    to bridge the raw projection form (exposed after `Lane.mk.injEq` on the
+    LHS) back to FC-style `r.d.val[i]!.val[j]!` cells. -/
+theorem Lane.fromAeneas_mk (l : lane.Lane2U32) :
+    Lane.fromAeneas l = ⟨l.val[0]!.bv, l.val[1]!.bv⟩ := by
+  obtain ⟨a, b, hl⟩ := Lane2U32.shape l
+  simp [Lane.fromAeneas, hl]
+
 /-! ## `stateArray*FromAeneas` indexed reads — bridge to underlying `.val[k]` -/
 
 @[simp]
@@ -52,5 +62,19 @@ theorem stateArray5FromAeneas_getElem
       have := a.property; omega)) := by
   show ((a.val.map Lane.fromAeneas).toArray)[k]'_ = _
   simp [List.getElem_map]
+
+/-- Variant of `stateArray5FromAeneas_getElem` reading the underlying list
+    via `[k]!` rather than the bounded `[k]'_`. Used by `bit_theta_d_eq`
+    (and the round-1..3 d-cell analogues) so the FC's per-cell hypotheses
+    `r.d.val[i]!.val[j]! = …` plug in directly without a `[i]'_` ↔ `[i]!`
+    bridge step. -/
+theorem stateArray5FromAeneas_getElem!
+    (a : Std.Array lane.Lane2U32 5#usize) (k : Nat) (hk : k < 5) :
+    (stateArray5FromAeneas a)[k] = Lane.fromAeneas a.val[k]! := by
+  have hp : k < a.val.length := by
+    have h5u : ((5#usize : Std.Usize).val) = 5 := by
+      simp [Std.UScalar.ofNatCore_val_eq]
+    have := a.property; omega
+  rw [stateArray5FromAeneas_getElem _ k hk, getElem!_pos a.val k hp]
 
 end libcrux_iot_sha3.BitKeccak

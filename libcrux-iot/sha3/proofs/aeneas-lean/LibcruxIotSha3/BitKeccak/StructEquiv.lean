@@ -509,4 +509,87 @@ theorem bit_theta_c_x4_z1_eq (s : state.KeccakState) :
   · show r.i = s.i
     exact hi_eq
 
+/-! ## θ-stage d-cell sub-fn
+
+The FC `theta_d_spec` gives a 10-conjunct postcondition (one per
+`r.d[i]!.val[j]!` cell), unlike the c-family which gives a single
+`r.c = s.c.set …` equation. We therefore can't fold the result with
+`rw [hd]` + `List.map_set`; we instead reduce to a 5-way
+`Vector.ext` and discharge each lane via `Lane.mk.injEq` on z0/z1.
+-/
+
+set_option maxHeartbeats 8000000 in
+@[spec]
+theorem bit_theta_d_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_d s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_d (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hc hd00 hd01 hd10 hd11 hd20 hd21 hd30 hd31 hd40 hd41
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
+    rw [hc]
+  · -- d: 10 cell equalities determine 5 lanes; case-split on i.
+    show stateArray5FromAeneas r.d = _
+    apply Vector.ext
+    intro i hi
+    rw [stateArray5FromAeneas_getElem! r.d i hi]
+    match i, hi with
+    | 0, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd00]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd01]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+    | 1, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd10]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd11]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+    | 2, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd20]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd21]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+    | 3, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd30]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd31]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+    | 4, _ =>
+      simp only [Vector.getElem_set]
+      rw [Lane.fromAeneas_mk]
+      refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
+      · rw [hd40]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+      · rw [hd41]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas,
+          stateArray5FromAeneas_getElem!]
+  · show r.i = s.i
+    exact hi_eq
+
 end libcrux_iot_sha3.BitKeccak
