@@ -61,7 +61,7 @@ def spec_round_step (state : Std.Array Std.U64 25#usize) (round : Std.Usize) :
     offsets into the `Std.Usize` argument that `spec_round_step`
     requires. Since `24 < 2^32 ≤ 2^System.Platform.numBits`, the
     bound proof is trivial. -/
-private def roundOfNat (k : Nat) (h : k ≤ 24) : Std.Usize :=
+def roundOfNat (k : Nat) (h : k ≤ 24) : Std.Usize :=
   Std.UScalar.ofNatCore k (by
     have h24 : (24 : Nat) < 2 ^ Std.UScalarTy.Usize.numBits := by
       simp only [Std.UScalarTy.Usize_numBits_eq]
@@ -266,49 +266,8 @@ def keccakf1600_loop_post (s : state.KeccakState) (s_final : state.KeccakState) 
       (pure (lift s))
     pure (lifted_final = lift_perm s_final id impl_swap)).holds
 
-/-- Pending: full loop induction via `loop.spec_decr_nat` (Aeneas's
-    generic well-founded loop combinator), threading `four_round_equiv`
-    through each of 6 iterations. The invariant tracks
-    `s_iter.i.val = 4 * iter.start.toNat` and the 4k-fold spec state. -/
-theorem keccakf1600_loop_equiv (s : state.KeccakState) (h_i : s.i = 0#usize) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600_loop { start := 0#i32, «end» := 6#i32 } s
-    ⦃ ⇓ s_final => ⌜ keccakf1600_loop_post s s_final ⌝ ⦄ := by
-  sorry
-
-/-- Top-level equivalence: `keccak.keccakf1600` (the full 24-round
-    permutation) on the bit-interleaved impl produces a state whose
-    swap-aware lift equals the spec's 24-fold round application.
-
-    Proof iterates `four_round_equiv` 6 times via the outer
-    `keccakf1600_loop`. The loop invariant tracks `s.i` and the
-    accumulated spec state. -/
-theorem keccakf1600_equiv (s : state.KeccakState) (h_i : s.i = 0#usize) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600 s
-    ⦃ ⇓ r_impl => ⌜ keccakf1600_post s r_impl ⌝ ⦄ := by
-  -- Strategy: split via `Triple.bind` at the `i := 0` reset. The reset
-  -- preserves `lift_perm` since `lift_perm` reads only `.st`. The loop
-  -- side delegates to `keccakf1600_loop_equiv` (Thread C).
-  unfold keccak.keccakf1600
-  apply Std.Do.Triple.bind _ _ (keccakf1600_loop_equiv s h_i)
-  intro s_final
-  apply triple_imp_intro
-  intro h_loop
-  -- Goal: ⦃True⦄ ok {s_final with i := 0#usize} ⦃⇓ r => ⌜keccakf1600_post s r⌝⦄
-  -- The post `keccakf1600_post s r` says
-  --   (Nat.fold 24 spec_round_step (lift s) = lift_perm r id impl_swap).
-  -- `lift_perm` ignores `.i`, so `lift_perm {s_final with i := 0} = lift_perm s_final`.
-  -- Reduces to `h_loop` (which is `keccakf1600_loop_post s s_final`).
-  unfold keccakf1600_post
-  unfold keccakf1600_loop_post at h_loop
-  -- `lift_perm` reads only `.st`, so setting `.i := 0` doesn't change the lift.
-  have h_lift_eq : lift_perm { s_final with i := 0#usize } id impl_swap
-                 = lift_perm s_final id impl_swap := by
-    unfold lift_perm; rfl
-  -- Reduce `⦃True⦄ Result.ok v ⦃⇓ r => ⌜Q r⌝⦄` to `Q v`, then bridge by h_lift_eq.
-  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp] at h_loop ⊢
-  rw [h_lift_eq]
-  simpa using h_loop
+/-! Definitions for `keccakf1600_loop_equiv` and `keccakf1600_equiv`
+are continued in `Keccakf1600Loop.lean`, which depends on the I32
+iterator/loop spec infrastructure built there. -/
 
 end libcrux_iot_sha3.Equivalence
