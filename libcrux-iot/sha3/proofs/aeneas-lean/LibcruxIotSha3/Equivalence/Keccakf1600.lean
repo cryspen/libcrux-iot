@@ -252,6 +252,30 @@ def keccakf1600_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop
       (pure (lift s))
     pure (lifted_final = lift_perm r_impl id impl_swap)).holds
 
+/-! ## Loop spec (Thread C)
+
+The loop spec talks only about the `.st` field of the loop output —
+`lift_perm` is independent of `.i`. Concretely: after the 6-iteration
+loop, the lifted (`id`-perm) output `.st` equals the 24-fold spec
+round application of `lift s`. -/
+
+def keccakf1600_loop_post (s : state.KeccakState) (s_final : state.KeccakState) : Prop :=
+  (do
+    let lifted_final ← Nat.fold 24
+      (fun i h acc => acc >>= fun st => spec_round_step st (roundOfNat i (by omega)))
+      (pure (lift s))
+    pure (lifted_final = lift_perm s_final id impl_swap)).holds
+
+/-- Pending: full loop induction via `loop.spec_decr_nat` (Aeneas's
+    generic well-founded loop combinator), threading `four_round_equiv`
+    through each of 6 iterations. The invariant tracks
+    `s_iter.i.val = 4 * iter.start.toNat` and the 4k-fold spec state. -/
+theorem keccakf1600_loop_equiv (s : state.KeccakState) (h_i : s.i = 0#usize) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_loop { start := 0#i32, «end» := 6#i32 } s
+    ⦃ ⇓ s_final => ⌜ keccakf1600_loop_post s s_final ⌝ ⦄ := by
+  sorry
+
 /-- Top-level equivalence: `keccak.keccakf1600` (the full 24-round
     permutation) on the bit-interleaved impl produces a state whose
     swap-aware lift equals the spec's 24-fold round application.
@@ -263,15 +287,28 @@ theorem keccakf1600_equiv (s : state.KeccakState) (h_i : s.i = 0#usize) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600 s
     ⦃ ⇓ r_impl => ⌜ keccakf1600_post s r_impl ⌝ ⦄ := by
-  -- Strategy: unfold keccak.keccakf1600 → keccakf1600_loop with its
-  -- I32 range iterator over [0, 6); each loop body call is
-  -- keccakf1600_4rounds 0#usize. Apply hax_loop with invariant:
-  --   ∃ i ∈ [0, 6], s_iter.i.val = 4*i ∧
-  --     (Nat.fold (4*i) spec_round_step) (lift s) holds
-  --     for the lifted intermediate.
-  -- Each loop iteration consumes one four_round_equiv to advance the
-  -- invariant. After 6 iterations, s_iter.i = 24 and the spec has been
-  -- applied 24 times.
-  sorry
+  -- Strategy: split via `Triple.bind` at the `i := 0` reset. The reset
+  -- preserves `lift_perm` since `lift_perm` reads only `.st`. The loop
+  -- side delegates to `keccakf1600_loop_equiv` (Thread C).
+  unfold keccak.keccakf1600
+  apply Std.Do.Triple.bind _ _ (keccakf1600_loop_equiv s h_i)
+  intro s_final
+  apply triple_imp_intro
+  intro h_loop
+  -- Goal: ⦃True⦄ ok {s_final with i := 0#usize} ⦃⇓ r => ⌜keccakf1600_post s r⌝⦄
+  -- The post `keccakf1600_post s r` says
+  --   (Nat.fold 24 spec_round_step (lift s) = lift_perm r id impl_swap).
+  -- `lift_perm` ignores `.i`, so `lift_perm {s_final with i := 0} = lift_perm s_final`.
+  -- Reduces to `h_loop` (which is `keccakf1600_loop_post s s_final`).
+  unfold keccakf1600_post
+  unfold keccakf1600_loop_post at h_loop
+  -- `lift_perm` reads only `.st`, so setting `.i := 0` doesn't change the lift.
+  have h_lift_eq : lift_perm { s_final with i := 0#usize } id impl_swap
+                 = lift_perm s_final id impl_swap := by
+    unfold lift_perm; rfl
+  -- Reduce `⦃True⦄ Result.ok v ⦃⇓ r => ⌜Q r⌝⦄` to `Q v`, then bridge by h_lift_eq.
+  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp] at h_loop ⊢
+  rw [h_lift_eq]
+  simpa using h_loop
 
 end libcrux_iot_sha3.Equivalence

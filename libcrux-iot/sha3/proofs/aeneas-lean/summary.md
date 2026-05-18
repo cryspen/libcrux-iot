@@ -110,10 +110,25 @@ The five spec round functions all have a pure-semantics
 
 ### Open in this file (`Keccakf1600.lean`)
 
-- `keccakf1600_equiv` (sorry) — full 24-round loop induction.
-  Not yet attempted; requires the loop invariant tracking
-  `s_iter.i.val = 4*i` and the accumulated spec state, with
-  `four_round_equiv` consumed once per iteration.
+- `keccakf1600_loop_equiv` (sorry) — the 6-iteration loop spec; the
+  only remaining sorry in this file. Plan: apply Aeneas's
+  `loop.spec_decr_nat` with measure
+  `iter.end.toNat - iter.start.toNat`, invariant
+  `s_iter.i.val = 4 * iter.start.toNat ∧
+   (Nat.fold (4 * iter.start.toNat) spec_round_step (lift s) =
+    lift_perm s_iter (impl_perm^k) impl_swap).holds`
+  (with `impl_perm^[4] = id` collapsing every 4 rounds). Each step
+  uses `four_round_equiv` once. Needs an I32 iterator-`next` spec
+  (analogous to `IteratorRange_next_spec` in the hax
+  `LoopEquivalence` example, but for I32 instead of Usize).
+
+- `keccakf1600_equiv` is now **closed conditional on
+  `keccakf1600_loop_equiv`**: the proof splits via `Triple.bind` at
+  the final `i := 0` reset, observes that `lift_perm` reads only
+  `.st` (so setting `.i := 0` doesn't change the lift, witnessed by
+  `lift_perm {s_final with i := 0} _ _ = lift_perm s_final _ _ := by
+   unfold lift_perm; rfl`), and discharges the loop side via
+  `keccakf1600_loop_equiv`.
 
 ### Open in lift files (`ThetaLiftRound{1,2,3}.lean`, `PrcLiftRound{1,2,3}.lean`)
 
