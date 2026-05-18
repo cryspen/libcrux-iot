@@ -92,21 +92,25 @@ The five spec round functions all have a pure-semantics
   from a `(do C; pure (r = X)).holds` hypothesis. Closed by
   `cases C <;> simp_all [Result.holds, Triple, WP.wp, Functor.map, SPred.down_pure]`.
 
+- **`four_round_equiv` (Keccakf1600.lean) is now closed** (modulo the
+  round-1/2/3 stubs it transitively depends on). Pattern: after the
+  pre-existing Triple.bind scaffolding lands `h_round{0,1,2,3}` and
+  `h_i{0,1,2,3}` in scope, the analytical step is:
+  1. `rw [PostCond.entails_noThrow]; intro r3 hpost; dsimp; obtain ⟨h_round3, h_i3⟩ := hpost`.
+  2. `unfold round{0,1,2,3}_post` in the four `h_round_k` hyps.
+  3. For each k, `have h_c_k : <explicit chain type> = .ok X_k := holds_chain_eq_ok h_round_k`.
+  4. `unfold four_round_post spec_round_step` on the goal.
+  5. Alternate `rw [h_c_k]` and `simp only [Aeneas.Std.bind_tc_ok]`,
+     prefixed by `rw [h_idx1, h_idx2, h_idx3]` (round-index
+     `roundOfNat (s.i.val + k) _ = r_{k-1}.i` via
+     `UScalar.eq_of_val_eq` + `UScalar.ofNatCore_val_eq` + `h_i{k-1}`).
+  6. Close with `simp only [Result.holds, Triple, WP.wp]; trivial`.
+  File-level build: 11.5 s, under the 60 s budget. The theorem uses
+  `set_option maxHeartbeats 4000000`.
+
 ### Open in this file (`Keccakf1600.lean`)
 
-- `four_round_equiv` (line 122 sorry) — analytical step remains. The
-  proof skeleton is in place: `Triple.bind` × 3 to consume rounds 0–2
-  via `round_k_equiv_spec` + `round_k_i_inc` (combined with
-  `triple_conj_post`), `triple_imp_intro` to lift each round's post into
-  proof context, then `Triple.of_entails_right` for round 3 to expose
-  `round3_post r2 r3 ∧ r3.i.val = r2.i.val + 1` as `h_round3`/`h_i3`. At
-  the sorry we have in scope `h_round{0,1,2,3}` (each one a 5-call spec
-  chain `.holds` ending in `pure (r_spec = lift_perm r_k <perm_k> impl_swap)`)
-  and the i-chain `h_i{0,1,2,3}`. The goal is `four_round_post s hi r3`,
-  which is the 20-call chain (4 × `spec_round_step` ending in
-  `pure (r_spec = lift_perm r3 id impl_swap)`).
-
-- `keccakf1600_equiv` (line 212 sorry) — full 24-round loop induction.
+- `keccakf1600_equiv` (sorry) — full 24-round loop induction.
   Not yet attempted; requires the loop invariant tracking
   `s_iter.i.val = 4*i` and the accumulated spec state, with
   `four_round_equiv` consumed once per iteration.
@@ -137,33 +141,17 @@ The five spec round functions all have a pure-semantics
   recipe is validated: `round0_i_inc` is proven in 5 lines
   (`unfold` chain + `pi_rho_chi_{1,2}` + `hax_mvcgen` + `scalar_tac`).
 
-## Strategy for the remaining `four_round_equiv` step
+## Lessons learned
 
-The key blocker discovered today: applying `holds_chain_eq_ok h_round0`
-yields a Result equation whose pretty-printed LHS shows the spec chain
-fully reduced to a single `iota (Array.make 25 [...explicit 25-tuple...]) idx`
-form (likely because the spec function bodies eagerly reduce during
-unification). However, **giving the `have` an explicit type ascription
-forces Lean to keep the chain shape**, and `rw [h_c0]` then succeeds
-against the matching chain in the goal (after `unfold spec_round_step`).
-
-Drafted plan (currently in the file up to the rewrite of round 0):
-
-1. `rw [PostCond.entails_noThrow]; intro r3 hpost; dsimp; obtain ⟨h_round3, h_i3⟩ := hpost`.
-2. `unfold round{0,1,2,3}_post` in the four `h_round_k` hyps.
-3. Extract each `h_c_k : <chain> = .ok X_k` via `have h_c_k : <explicit chain type> := holds_chain_eq_ok h_round_k` — **the explicit type is load-bearing** to prevent Lean's elaborator from collapsing the chain.
-4. `unfold four_round_post spec_round_step` in the goal.
-5. `rw [h_c0]`. The first chain becomes `.ok X0`; the bind simplifies
-   `let s1 ← .ok X0` to `s1 := X0`. After `simp` clean-up the goal's
-   second chain has input `X0` (= `lift_perm r0 impl_perm impl_swap`)
-   and index `roundOfNat (s.i.val + 1) _`.
-6. Rewrite the round index: `roundOfNat (s.i.val + k) _ = r_{k-1}.i`,
-   established via `Std.UScalar.eq_of_val_eq` + `Std.UScalar.ofNatCore_val_eq`
-   + `h_i{k-1}`.
-7. `rw [h_c1]`, then index rewrite for round 2, `rw [h_c2]`,
-   index rewrite for round 3, `rw [h_c3]`. After all 4 rewrites the
-   goal is `pure (lift_perm r3 id impl_swap = lift_perm r3 id impl_swap)).holds`
-   which `simp` closes.
+The key blocker for `four_round_equiv`: applying
+`holds_chain_eq_ok h_round0` *without* a type ascription yields a
+Result equation whose pretty-printed LHS shows the spec chain fully
+reduced to a single `iota (Array.make 25 [...explicit 25-tuple...]) idx`
+form (Lean's elaborator eagerly reduces the spec-function chain during
+unification). **Giving the `have` an explicit type ascription forces
+Lean to keep the chain shape**, after which `rw [h_c_k]` matches the
+goal's chain (post `unfold spec_round_step`). Same trick used for all
+four `h_c_k`s.
 
 ## Discipline (binding, unchanged)
 
