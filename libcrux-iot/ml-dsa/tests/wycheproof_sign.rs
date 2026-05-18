@@ -62,11 +62,15 @@ macro_rules! wycheproof_sign_test {
                         );
 
                         if let Err(SigningError::ContextTooLongError) = signature {
-                            assert!(test.result == TestResult::Invalid)
+                            assert!(test.result == TestResult::Invalid);
+                            assert!(test.flags.contains(&Flag::InvalidContext));
+                            continue;
                         }
 
                         if test.result == TestResult::Valid {
                             assert_eq!(signature.unwrap().as_slice(), test.sig.as_slice());
+                        } else {
+                            panic!("tc_id: {}, unexpected test failure", test.tc_id)
                         }
                     }
                 }
