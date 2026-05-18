@@ -10,11 +10,11 @@
     loop in `keccak.keccakf1600`. The state at the end of round 24
     satisfies `lift_perm r id impl_swap = spec_keccakf1600 (lift s)`.
 
-  Status: lemma statements present; proof bodies sorry, with comments
-  documenting which round_equiv specs are needed. The point is to show
-  that the per-round specs are *sufficient* — once the prc_lift and
-  theta_lift specs for rounds 1, 2, 3 are discharged, the entire
-  chain follows mechanically.
+  Status: `four_round_equiv` is closed (assuming the round-1/2/3
+  `round_k_equiv_spec` + `round_k_i_inc` lemmas, which are themselves
+  blocked on `theta_lift_spec_k` / `prc_lift_spec_k`).
+  `keccakf1600_equiv` remains `sorry` pending the outer-loop induction
+  in `keccak.keccakf1600`.
 -/
 import LibcruxIotSha3.Equivalence.RoundEquiv
 
@@ -119,6 +119,7 @@ theorem keccakf1600_4rounds_fold (s : state.KeccakState) :
 -- Proof composes `round{0,1,2,3}_equiv_spec` through the inlined
 -- impl chain (theta + prc_chi_1 + prc_chi_2 per round). After
 -- round 3 the cumulative permutation is `impl_perm^[4] = id`.
+set_option maxHeartbeats 4000000 in
 theorem four_round_equiv (s : state.KeccakState) (hi : s.i.val + 4 ≤ 24) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_4rounds 0#usize s
@@ -181,7 +182,56 @@ theorem four_round_equiv (s : state.KeccakState) (hi : s.i.val + 4 ≤ 24) :
   unfold four_round_post spec_round_step
   -- Now try to rewrite using h_c0.
   rw [h_c0]
-  sorry
+  simp only [Aeneas.Std.bind_tc_ok]
+  -- Round-index equalities so subsequent rewrites can dispatch h_c{1,2,3}.
+  have h_idx1 : roundOfNat (s.i.val + 1) (by omega) = r0.i :=
+    Std.UScalar.eq_of_val_eq (by
+      unfold roundOfNat; rw [Std.UScalar.ofNatCore_val_eq]; omega)
+  have h_idx2 : roundOfNat (s.i.val + 2) (by omega) = r1.i :=
+    Std.UScalar.eq_of_val_eq (by
+      unfold roundOfNat; rw [Std.UScalar.ofNatCore_val_eq]; omega)
+  have h_idx3 : roundOfNat (s.i.val + 3) (by omega) = r2.i :=
+    Std.UScalar.eq_of_val_eq (by
+      unfold roundOfNat; rw [Std.UScalar.ofNatCore_val_eq]; omega)
+  rw [h_idx1, h_idx2, h_idx3]
+  -- Extract round-1 chain equation.
+  have h_c1 : (do
+      let s_theta ← keccak_f.theta_unrolled (lift_perm r0 impl_perm impl_swap)
+      let s_rho ← keccak_f.rho_unrolled s_theta
+      let s_pi ← keccak_f.pi_unrolled s_rho
+      let s_chi ← keccak_f.chi_unrolled s_pi
+      keccak_f.iota s_chi r0.i) =
+        .ok (lift_perm r1 (impl_perm ∘ impl_perm) impl_swap) :=
+    holds_chain_eq_ok h_round1
+  rw [h_c1]
+  simp only [Aeneas.Std.bind_tc_ok]
+  -- Round 2.
+  have h_c2 : (do
+      let s_theta ← keccak_f.theta_unrolled (lift_perm r1 (impl_perm ∘ impl_perm) impl_swap)
+      let s_rho ← keccak_f.rho_unrolled s_theta
+      let s_pi ← keccak_f.pi_unrolled s_rho
+      let s_chi ← keccak_f.chi_unrolled s_pi
+      keccak_f.iota s_chi r1.i) =
+        .ok (lift_perm r2 (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap) :=
+    holds_chain_eq_ok h_round2
+  rw [h_c2]
+  simp only [Aeneas.Std.bind_tc_ok]
+  -- Round 3.
+  have h_c3 : (do
+      let s_theta ← keccak_f.theta_unrolled
+        (lift_perm r2 (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap)
+      let s_rho ← keccak_f.rho_unrolled s_theta
+      let s_pi ← keccak_f.pi_unrolled s_rho
+      let s_chi ← keccak_f.chi_unrolled s_pi
+      keccak_f.iota s_chi r2.i) =
+        .ok (lift_perm r3 id impl_swap) :=
+    holds_chain_eq_ok h_round3
+  rw [h_c3]
+  -- Goal reduces to: (do let r ← .ok X; pure (r = X)).holds, which is True.
+  simp only [Aeneas.Std.bind_tc_ok]
+  -- Now: (pure (lift_perm r3 id impl_swap = lift_perm r3 id impl_swap)).holds
+  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp]
+  trivial
 
 /-! ## 24-round (keccakf1600) equivalence
 
