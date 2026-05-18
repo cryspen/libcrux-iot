@@ -93,6 +93,44 @@ def stateArray5FromAeneas (a : Aeneas.Std.Array lane.Lane2U32 5#usize) :
       simp [Std.UScalar.ofNatCore_val_eq]
     omega⟩
 
+/-! ## Per-half `Lane.fromAeneas` bridge for `Std.Array.set` -/
+
+theorem Lane.fromAeneas_set_zeta0 (l : lane.Lane2U32) (v : Std.U32) :
+    Lane.fromAeneas (Std.Array.set l 0#usize v) = { (Lane.fromAeneas l) with z0 := v.bv } := by
+  obtain ⟨vals, hlen⟩ := l
+  have h2 : vals.length = 2 := by
+    have : ((2#usize : Std.Usize).val) = 2 := by simp [Std.UScalar.ofNatCore_val_eq]
+    rw [this] at hlen; exact hlen
+  match vals, h2 with
+  | [_, _], _ => rfl
+
+theorem Lane.fromAeneas_set_zeta1 (l : lane.Lane2U32) (v : Std.U32) :
+    Lane.fromAeneas (Std.Array.set l 1#usize v) = { (Lane.fromAeneas l) with z1 := v.bv } := by
+  obtain ⟨vals, hlen⟩ := l
+  have h2 : vals.length = 2 := by
+    have : ((2#usize : Std.Usize).val) = 2 := by simp [Std.UScalar.ofNatCore_val_eq]
+    rw [this] at hlen; exact hlen
+  match vals, h2 with
+  | [_, _], _ => rfl
+
+/-! ## `stateArray25FromAeneas` distributes over `List.set` -/
+
+theorem stateArray25FromAeneas_set_val
+    (a : Aeneas.Std.Array lane.Lane2U32 25#usize) (k : Nat) (hk : k < 25) (v : lane.Lane2U32)
+    (hlen : (a.val.set k v).length = (25#usize : Std.Usize).val) :
+    stateArray25FromAeneas ⟨a.val.set k v, hlen⟩
+    = (stateArray25FromAeneas a).set k (Lane.fromAeneas v) (by simp [hk]) := by
+  have hk' : k < (List.map Lane.fromAeneas a.val).toArray.size := by
+    simp [List.length_map, a.property, Std.UScalar.ofNatCore_val_eq, hk]
+  apply Vector.toArray_inj.mp
+  show ((a.val.set k v).map Lane.fromAeneas).toArray
+       = (a.val.map Lane.fromAeneas).toArray.set k (Lane.fromAeneas v) hk'
+  rw [List.map_set]
+  rfl
+
+theorem stateArray5FromAeneas_eq_of_val_eq (a b : Aeneas.Std.Array lane.Lane2U32 5#usize) :
+    a = b → stateArray5FromAeneas a = stateArray5FromAeneas b := fun h => h ▸ rfl
+
 /-! ## KState ↔ state.KeccakState -/
 
 /-- The pure-Lean `KState` as an Aeneas `state.KeccakState`. -/
