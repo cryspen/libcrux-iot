@@ -375,23 +375,27 @@ each `pi_rho_chi_1`). These sidecar lemmas expose that fact so
 `four_round_equiv` can discharge each subsequent round's precondition
 `s.i.val < 24`. -/
 
+set_option maxHeartbeats 16000000 in
 theorem round0_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let s1 ← keccak.keccakf1600_round0_theta s
         keccakf1600_round0_pi_rho_chi_chain s1)
     ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
-  -- theta_lift_spec exposes `r_theta.i = s.i`; the chain bumps `i` by 1
-  -- via the `pi_rho_chi_y0_zeta1` step (per PrcLift `pi_rho_chi_y0_zeta1_spec_fc`).
-  -- Proof strategy: hax_mvcgen fires the private @[spec]s for each
-  -- pi_rho_chi sub-fn; collect the chain hyps for `r.i` to get the
-  -- single +1 bump and propagate.
-  sorry
+  unfold keccakf1600_round0_pi_rho_chi_chain
+  unfold keccak.keccakf1600_round0_pi_rho_chi_1
+  unfold keccak.keccakf1600_round0_pi_rho_chi_2
+  hax_mvcgen
+  all_goals scalar_tac
 
 theorem round1_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let s1 ← keccak.keccakf1600_round1_theta s
         keccakf1600_round1_pi_rho_chi_chain s1)
     ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
+  -- Same recipe as `round0_i_inc` (unfold + hax_mvcgen + scalar_tac)
+  -- once round-1 has per-FC `@[spec]`s in `PrcLiftRound1.lean` (the
+  -- analogues of the `pi_rho_chi_y0_zeta1_spec_fc` etc. in `PrcLift.lean`).
+  -- Until that infrastructure exists, sorry'd.
   sorry
 
 theorem round2_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
@@ -399,6 +403,8 @@ theorem round2_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
     (do let s1 ← keccak.keccakf1600_round2_theta s
         keccakf1600_round2_pi_rho_chi_chain s1)
     ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
+  -- See `round1_i_inc`'s comment. Needs per-FC `@[spec]`s in
+  -- `PrcLiftRound2.lean`.
   sorry
 
 theorem round3_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
@@ -406,6 +412,8 @@ theorem round3_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
     (do let s1 ← keccak.keccakf1600_round3_theta s
         keccakf1600_round3_pi_rho_chi_chain s1)
     ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
+  -- See `round1_i_inc`'s comment. Needs per-FC `@[spec]`s in
+  -- `PrcLiftRound3.lean`.
   sorry
 
 end libcrux_iot_sha3.Equivalence
