@@ -5,7 +5,7 @@
   equal to the pure-Lean `bit_pi_rho_chi_y0_zeta0` under `KState.fromAeneas`.
 
   Strategy (per the "minimize unfolding" rule):
-  - Consume the existing `@[spec]`-tagged FC lemma `pi_rho_chi_y0_zeta0_spec_fc`
+  - Consume the existing `@[spec high]`-tagged FC lemma `pi_rho_chi_y0_zeta0_spec_fc`
     from `PrcLift.lean` via `mvcgen` — no need to re-do its bv chain locally.
   - The residual `KState.fromAeneas r = bit_pi_rho_chi_y0_zeta0 ...` splits
     into 4 field equalities. The `st` field collapses by `simp` once the
@@ -51,16 +51,18 @@ private theorem usize_succ_eq
   rw [hmod, hsv]
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y0_zeta0_eq
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0 BR s
     ⦃ ⇓ r => ⌜
-      KState.fromAeneas r = bit_pi_rho_chi_y0_zeta0 BR (KState.fromAeneas s) ⌝ ⦄ := by
+      KState.fromAeneas r = bit_pi_rho_chi_y0_zeta0 BR (KState.fromAeneas s) ∧
+      r.i = s.i ⌝ ⦄ := by
   mvcgen
   rename_i r
   intro hd hc hi_eq hst
+  refine ⟨?_, hi_eq⟩
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · -- st: structural collapse via the iso projection lemmas + bit-side unfold
     apply Vector.toArray_inj.mp
@@ -78,16 +80,18 @@ theorem bit_pi_rho_chi_y0_zeta0_eq
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y0_zeta1_eq
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y0_zeta1 BR s
     ⦃ ⇓ r => ⌜
-      KState.fromAeneas r = bit_pi_rho_chi_y0_zeta1 BR (KState.fromAeneas s) ⌝ ⦄ := by
+      KState.fromAeneas r = bit_pi_rho_chi_y0_zeta1 BR (KState.fromAeneas s) ∧
+      r.i.val = s.i.val + 1 ⌝ ⦄ := by
   mvcgen
   rename_i r
   intro hd hc hi_eq hst
+  refine ⟨?_, hi_eq⟩
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
@@ -102,7 +106,7 @@ theorem bit_pi_rho_chi_y0_zeta1_eq
 /-! ## No-RC PrcLift sub-fns (y1..y4 × ζ0/ζ1) — preserve `s.i`. -/
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y1_zeta0_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y1_zeta0 s
@@ -124,7 +128,7 @@ theorem bit_pi_rho_chi_y1_zeta0_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y1_zeta1_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y1_zeta1 s
@@ -146,7 +150,7 @@ theorem bit_pi_rho_chi_y1_zeta1_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y2_zeta0_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y2_zeta0 s
@@ -168,7 +172,7 @@ theorem bit_pi_rho_chi_y2_zeta0_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y2_zeta1_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y2_zeta1 s
@@ -190,7 +194,7 @@ theorem bit_pi_rho_chi_y2_zeta1_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y3_zeta0_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y3_zeta0 s
@@ -212,7 +216,7 @@ theorem bit_pi_rho_chi_y3_zeta0_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y3_zeta1_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y3_zeta1 s
@@ -234,7 +238,7 @@ theorem bit_pi_rho_chi_y3_zeta1_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y4_zeta0_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y4_zeta0 s
@@ -256,7 +260,7 @@ theorem bit_pi_rho_chi_y4_zeta0_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_pi_rho_chi_y4_zeta1_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1 s
@@ -280,7 +284,7 @@ theorem bit_pi_rho_chi_y4_zeta1_eq (s : state.KeccakState) :
 /-! ## θ-stage c-cell sub-fns -/
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x0_z0_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x0_z0 s
@@ -303,7 +307,7 @@ theorem bit_theta_c_x0_z0_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x0_z1_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x0_z1 s
@@ -326,7 +330,7 @@ theorem bit_theta_c_x0_z1_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x1_z0_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x1_z0 s
@@ -349,7 +353,7 @@ theorem bit_theta_c_x1_z0_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x1_z1_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x1_z1 s
@@ -372,7 +376,7 @@ theorem bit_theta_c_x1_z1_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x2_z0_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x2_z0 s
@@ -395,7 +399,7 @@ theorem bit_theta_c_x2_z0_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x2_z1_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x2_z1 s
@@ -418,7 +422,7 @@ theorem bit_theta_c_x2_z1_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x3_z0_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x3_z0 s
@@ -441,7 +445,7 @@ theorem bit_theta_c_x3_z0_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x3_z1_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x3_z1 s
@@ -464,7 +468,7 @@ theorem bit_theta_c_x3_z1_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x4_z0_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x4_z0 s
@@ -487,7 +491,7 @@ theorem bit_theta_c_x4_z0_eq (s : state.KeccakState) :
     exact hi_eq
 
 set_option maxHeartbeats 4000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_c_x4_z1_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_c_x4_z1 s
@@ -519,7 +523,7 @@ The FC `theta_d_spec` gives a 10-conjunct postcondition (one per
 -/
 
 set_option maxHeartbeats 8000000 in
-@[spec]
+@[spec high]
 theorem bit_theta_d_eq (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round0_theta_d s
@@ -591,5 +595,94 @@ theorem bit_theta_d_eq (s : state.KeccakState) :
           stateArray5FromAeneas_getElem!]
   · show r.i = s.i
     exact hi_eq
+
+/-! ## θ-step composition (round 0)
+
+With the 11 sub-fn equivalences tagged `@[spec high]`, `mvcgen` threads
+them through the 11-step do-chain of `keccak.keccakf1600_round0_theta`
+(the `high` priority overrides the FC default-priority `@[spec]`s in
+`Equivalence/ThetaLiftDefs.lean` that target the same sub-fns). The
+residual after `mvcgen` is the definitional unfolding of
+`bit_keccakf1600_round0_theta` applied to `KState.fromAeneas s`. -/
+
+section ThetaComp
+/-! Same `attribute [local irreducible]` pattern as `PrcLiftComp`
+    below — keeps `mvcgen` from whnf-reducing the ~5-line nested set
+    chain in each `bit_theta_c_*` sub-fn while threading the 11-bind
+    chain. With them irreducible, the chain threads in default
+    heartbeats; without, ~4M are needed. -/
+attribute [local irreducible]
+  bit_theta_c_x0_z0 bit_theta_c_x0_z1
+  bit_theta_c_x1_z0 bit_theta_c_x1_z1
+  bit_theta_c_x2_z0 bit_theta_c_x2_z1
+  bit_theta_c_x3_z0 bit_theta_c_x3_z1
+  bit_theta_c_x4_z0 bit_theta_c_x4_z1
+  bit_theta_d
+
+@[spec high]
+theorem keccakf1600_round0_theta_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round0_theta (KState.fromAeneas s) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round0_theta
+  mvcgen
+  expose_names
+  intro h_last
+  rw [h_last, h_9, h_8, h_7, h_6, h_5, h_4, h_3, h_2, h_1, h]
+  rfl
+
+end ThetaComp
+
+/-! ## PrcLift compositions (round 0)
+
+Same threading pattern as `keccakf1600_round0_theta_eq` — `mvcgen`
+uses the `@[spec high]`-tagged bit-side per-sub-fn equivalences. -/
+
+section PrcLiftComp
+/-! `attribute [local irreducible]` on the per-sub-fn bit-side defs is
+    crucial: without it, `mvcgen` whnf-reduces them while processing the
+    bind chain — each contains ~30 lines of nested `Vector.set` /
+    `BitVec` operations, and four nested expansions blow well past 4M
+    heartbeats. With them irreducible, the chain threads in <200K. -/
+attribute [local irreducible]
+  bit_pi_rho_chi_y0_zeta0 bit_pi_rho_chi_y0_zeta1
+  bit_pi_rho_chi_y1_zeta0 bit_pi_rho_chi_y1_zeta1
+  bit_pi_rho_chi_y2_zeta0 bit_pi_rho_chi_y2_zeta1
+  bit_pi_rho_chi_y3_zeta0 bit_pi_rho_chi_y3_zeta1
+  bit_pi_rho_chi_y4_zeta0 bit_pi_rho_chi_y4_zeta1
+
+@[spec high]
+theorem keccakf1600_round0_pi_rho_chi_1_eq
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_pi_rho_chi_1 BR s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round0_pi_rho_chi_1 BR (KState.fromAeneas s) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round0_pi_rho_chi_1
+  mvcgen
+  -- vc2.hi: y0_zeta1's precondition `r.i.val < 24` from the conjunctive
+  -- post of y0_zeta0_eq. `scalar_tac` reads `r.i = s.i ∧ s.i.val < 24`.
+  · scalar_tac
+  -- Main chain: thread the 4 hypotheses + close the bit composition.
+  · expose_names
+    intro h_y1z1
+    rw [h_y1z1, h_2, h_1.1, h.1]
+    rfl
+
+@[spec high]
+theorem keccakf1600_round0_pi_rho_chi_2_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_pi_rho_chi_2 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round0_pi_rho_chi_2 (KState.fromAeneas s) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round0_pi_rho_chi_2
+  mvcgen
+  expose_names
+  intro h_last
+  rw [h_last, h_4, h_3, h_2, h_1, h]
+  rfl
+
+end PrcLiftComp
 
 end libcrux_iot_sha3.BitKeccak

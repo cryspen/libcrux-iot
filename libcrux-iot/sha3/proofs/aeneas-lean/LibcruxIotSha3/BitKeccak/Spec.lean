@@ -347,4 +347,41 @@ def bit_theta_d (s : KState) : KState :=
   let d' := s.d.set 0 nd0 |>.set 1 nd1 |>.set 2 nd2 |>.set 3 nd3 |>.set 4 nd4
   { s with d := d' }
 
+/-! ## θ-step composition (round 0)
+
+    Mirror of `keccak.keccakf1600_round0_theta` in `Funs.lean`: a
+    deterministic let-chain through the 10 c-cell sub-fns followed by
+    the d-cell write. -/
+def bit_keccakf1600_round0_theta (s : KState) : KState :=
+  let s1  := bit_theta_c_x0_z0 s
+  let s2  := bit_theta_c_x0_z1 s1
+  let s3  := bit_theta_c_x1_z0 s2
+  let s4  := bit_theta_c_x1_z1 s3
+  let s5  := bit_theta_c_x2_z0 s4
+  let s6  := bit_theta_c_x2_z1 s5
+  let s7  := bit_theta_c_x3_z0 s6
+  let s8  := bit_theta_c_x3_z1 s7
+  let s9  := bit_theta_c_x4_z0 s8
+  let s10 := bit_theta_c_x4_z1 s9
+  bit_theta_d s10
+
+/-! ## PrcLift compositions (round 0)
+
+    Mirrors of `keccak.keccakf1600_round0_pi_rho_chi_{1,2}` in
+    `Funs.lean`. `_1` carries the round-constant parameter `BR` (only
+    the `y0` sub-fns consume it; `y1` sub-fns ignore). -/
+def bit_keccakf1600_round0_pi_rho_chi_1 (BR : Std.Usize) (s : KState) : KState :=
+  let s1 := bit_pi_rho_chi_y0_zeta0 BR s
+  let s2 := bit_pi_rho_chi_y0_zeta1 BR s1
+  let s3 := bit_pi_rho_chi_y1_zeta0 s2
+  bit_pi_rho_chi_y1_zeta1 s3
+
+def bit_keccakf1600_round0_pi_rho_chi_2 (s : KState) : KState :=
+  let s1 := bit_pi_rho_chi_y2_zeta0 s
+  let s2 := bit_pi_rho_chi_y2_zeta1 s1
+  let s3 := bit_pi_rho_chi_y3_zeta0 s2
+  let s4 := bit_pi_rho_chi_y3_zeta1 s3
+  let s5 := bit_pi_rho_chi_y4_zeta0 s4
+  bit_pi_rho_chi_y4_zeta1 s5
+
 end libcrux_iot_sha3.BitKeccak
