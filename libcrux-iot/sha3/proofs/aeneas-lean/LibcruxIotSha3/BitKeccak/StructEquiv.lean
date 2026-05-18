@@ -2271,4 +2271,68 @@ theorem bit_round2_pi_rho_chi_y4_zeta1_eq (s : state.KeccakState) :
   · show r.i = s.i
     exact hi_eq
 
+/-! ## Compositions (round 2) -/
+
+section Round2ThetaComp
+attribute [local irreducible]
+  bit_round2_theta_c_x0_z0 bit_round2_theta_c_x0_z1
+  bit_round2_theta_c_x1_z0 bit_round2_theta_c_x1_z1
+  bit_round2_theta_c_x2_z0 bit_round2_theta_c_x2_z1
+  bit_round2_theta_c_x3_z0 bit_round2_theta_c_x3_z1
+  bit_round2_theta_c_x4_z0 bit_round2_theta_c_x4_z1
+  bit_round2_theta_d
+
+@[spec high]
+theorem keccakf1600_round2_theta_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round2_theta (KState.fromAeneas s) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round2_theta
+  mvcgen
+  expose_names
+  intro h_last
+  rw [h_last, h_9, h_8, h_7, h_6, h_5, h_4, h_3, h_2, h_1, h]
+  rfl
+
+end Round2ThetaComp
+
+section Round2PrcLiftComp
+attribute [local irreducible]
+  bit_round2_pi_rho_chi_y0_zeta0 bit_round2_pi_rho_chi_y0_zeta1
+  bit_round2_pi_rho_chi_y1_zeta0 bit_round2_pi_rho_chi_y1_zeta1
+  bit_round2_pi_rho_chi_y2_zeta0 bit_round2_pi_rho_chi_y2_zeta1
+  bit_round2_pi_rho_chi_y3_zeta0 bit_round2_pi_rho_chi_y3_zeta1
+  bit_round2_pi_rho_chi_y4_zeta0 bit_round2_pi_rho_chi_y4_zeta1
+
+@[spec high]
+theorem keccakf1600_round2_pi_rho_chi_1_eq
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_1 BR s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round2_pi_rho_chi_1 BR (KState.fromAeneas s) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round2_pi_rho_chi_1
+  mvcgen
+  · scalar_tac
+  · expose_names
+    intro h_y1z1
+    rw [h_y1z1, h_2, h_1.1, h.1]
+    rfl
+
+@[spec high]
+theorem keccakf1600_round2_pi_rho_chi_2_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_2 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round2_pi_rho_chi_2 (KState.fromAeneas s) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round2_pi_rho_chi_2
+  mvcgen
+  expose_names
+  intro h_last
+  rw [h_last, h_4, h_3, h_2, h_1, h]
+  rfl
+
+end Round2PrcLiftComp
+
 end libcrux_iot_sha3.BitKeccak
