@@ -1012,4 +1012,33 @@ def bit_round2_pi_rho_chi_y4_zeta1 (s : KState) : KState :=
   let st' := s.st.set 2 new2 |>.set 9 new9 |>.set 11 new11 |>.set 18 new18 |>.set 20 new20
   { s with st := st' }
 
+/-! ## Compositions (round 2) -/
+
+def bit_keccakf1600_round2_theta (s : KState) : KState :=
+  let s1  := bit_round2_theta_c_x0_z0 s
+  let s2  := bit_round2_theta_c_x0_z1 s1
+  let s3  := bit_round2_theta_c_x1_z0 s2
+  let s4  := bit_round2_theta_c_x1_z1 s3
+  let s5  := bit_round2_theta_c_x2_z0 s4
+  let s6  := bit_round2_theta_c_x2_z1 s5
+  let s7  := bit_round2_theta_c_x3_z0 s6
+  let s8  := bit_round2_theta_c_x3_z1 s7
+  let s9  := bit_round2_theta_c_x4_z0 s8
+  let s10 := bit_round2_theta_c_x4_z1 s9
+  bit_round2_theta_d s10
+
+def bit_keccakf1600_round2_pi_rho_chi_1 (BR : Std.Usize) (s : KState) : KState :=
+  let s1 := bit_round2_pi_rho_chi_y0_zeta0 BR s
+  let s2 := bit_round2_pi_rho_chi_y0_zeta1 BR s1
+  let s3 := bit_round2_pi_rho_chi_y1_zeta0 s2
+  bit_round2_pi_rho_chi_y1_zeta1 s3
+
+def bit_keccakf1600_round2_pi_rho_chi_2 (s : KState) : KState :=
+  let s1 := bit_round2_pi_rho_chi_y2_zeta0 s
+  let s2 := bit_round2_pi_rho_chi_y2_zeta1 s1
+  let s3 := bit_round2_pi_rho_chi_y3_zeta0 s2
+  let s4 := bit_round2_pi_rho_chi_y3_zeta1 s3
+  let s5 := bit_round2_pi_rho_chi_y4_zeta0 s4
+  bit_round2_pi_rho_chi_y4_zeta1 s5
+
 end libcrux_iot_sha3.BitKeccak
