@@ -12,7 +12,7 @@ repository = "https://github.com/cryspen/libcrux-iot"
 readme = "README.md"
 
 [workspace.dependencies]
-libcrux-kats = { git = "https://github.com/cryspen/libcrux.git", rev = "1f1c5cea822a2f30f728391e4365c5c58d726980" }
+libcrux-kats = { git = "https://github.com/cryspen/libcrux.git" }
 libcrux-secrets = { version = "0.0.5" }
 libcrux-macros = { version = "0.0.3" }
 cavp = { version = "0.0.2" }
