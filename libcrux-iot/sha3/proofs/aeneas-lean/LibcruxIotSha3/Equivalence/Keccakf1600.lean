@@ -22,6 +22,27 @@ open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Equivalence
 
+/-! ## Helper: extract Triple from a `(do C; pure (r = X)).holds` -/
+
+/-- From a `.holds` claim of the form `(do let r ← C; pure (r = X)).holds`
+    derive the corresponding Triple `⦃True⦄ C ⦃⇓ r => ⌜r = X⌝⦄`. Used in
+    `four_round_equiv` to extract per-round chain Triples from each
+    `round_k_post` hypothesis. -/
+theorem holds_pure_eq_imp_triple {α : Type} {C : Aeneas.Std.Result α} {X : α}
+    (h : (do let r ← C; pure (r = X)).holds) :
+    ⦃⌜True⌝⦄ C ⦃⇓ r => ⌜r = X⌝⦄ := by
+  cases C
+  all_goals simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
+                      Std.Do.SPred.down_pure]
+
+/-- From a `.holds` claim of the form `(do let r ← C; pure (r = X)).holds`
+    derive the underlying Result equation `C = .ok X`. -/
+theorem holds_chain_eq_ok {α : Type} {C : Aeneas.Std.Result α} {X : α}
+    (h : (do let r ← C; pure (r = X)).holds) : C = .ok X := by
+  cases C
+  all_goals simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
+                      Std.Do.SPred.down_pure]
+
 /-! ## Spec-side one-round step (theta + rho + pi + chi + iota)
 
 Bundles the 5-step spec round into a single function so we can talk
@@ -139,6 +160,27 @@ theorem four_round_equiv (s : state.KeccakState) (hi : s.i.val + 4 ≤ 24) :
   apply Std.Do.Triple.of_entails_right _
     (triple_conj_post (round3_equiv_spec r2 (by omega)) (round3_i_inc r2 (by omega)))
   -- Goal: ⌜round3_post r2 r ∧ r.i.val = r2.i.val + 1⌝ ⊢ ⌜four_round_post s hi r⌝
+  rw [PostCond.entails_noThrow]
+  intro r3 hpost
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at hpost ⊢
+  obtain ⟨h_round3, h_i3⟩ := hpost
+  -- Unfold the 4 per-round posts to expose the spec chains.
+  unfold round0_post at h_round0
+  unfold round1_post at h_round1
+  unfold round2_post at h_round2
+  unfold round3_post at h_round3
+  -- Extract Result equations from each round.
+  have h_c0 : (do
+      let s_theta ← keccak_f.theta_unrolled (lift s)
+      let s_rho ← keccak_f.rho_unrolled s_theta
+      let s_pi ← keccak_f.pi_unrolled s_rho
+      let s_chi ← keccak_f.chi_unrolled s_pi
+      keccak_f.iota s_chi s.i) = .ok (lift_perm r0 impl_perm impl_swap) :=
+    holds_chain_eq_ok h_round0
+  -- Unfold the goal's four_round_post + spec_round_step.
+  unfold four_round_post spec_round_step
+  -- Now try to rewrite using h_c0.
+  rw [h_c0]
   sorry
 
 /-! ## 24-round (keccakf1600) equivalence
