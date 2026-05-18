@@ -287,4 +287,64 @@ def bit_pi_rho_chi_y4_zeta1 (s : KState) : KState :=
   let st' := s.st.set 3 new3 |>.set 9 new9 |>.set 10 new10 |>.set 16 new16 |>.set 22 new22
   { s with st := st' }
 
+/-! ## θ-stage c-cell sub-fns
+
+    Each `bit_theta_c_x{X}_z{Z}` overwrites the `z{Z}` half of the column
+    XOR cell `s.c[X]` with the XOR of the `z{Z}` halves of the five
+    lanes in column `X`: `s.st[5*X + 0..4].z{Z}`.
+
+    The `s.st`, `s.i`, `s.d` fields are preserved. -/
+def bit_theta_c_x0_z0 (s : KState) : KState :=
+  let v := s.st[0].z0 ^^^ s.st[1].z0 ^^^ s.st[2].z0 ^^^ s.st[3].z0 ^^^ s.st[4].z0
+  { s with c := s.c.set 0 { s.c[0] with z0 := v } }
+
+def bit_theta_c_x0_z1 (s : KState) : KState :=
+  let v := s.st[0].z1 ^^^ s.st[1].z1 ^^^ s.st[2].z1 ^^^ s.st[3].z1 ^^^ s.st[4].z1
+  { s with c := s.c.set 0 { s.c[0] with z1 := v } }
+
+def bit_theta_c_x1_z0 (s : KState) : KState :=
+  let v := s.st[5].z0 ^^^ s.st[6].z0 ^^^ s.st[7].z0 ^^^ s.st[8].z0 ^^^ s.st[9].z0
+  { s with c := s.c.set 1 { s.c[1] with z0 := v } }
+
+def bit_theta_c_x1_z1 (s : KState) : KState :=
+  let v := s.st[5].z1 ^^^ s.st[6].z1 ^^^ s.st[7].z1 ^^^ s.st[8].z1 ^^^ s.st[9].z1
+  { s with c := s.c.set 1 { s.c[1] with z1 := v } }
+
+def bit_theta_c_x2_z0 (s : KState) : KState :=
+  let v := s.st[10].z0 ^^^ s.st[11].z0 ^^^ s.st[12].z0 ^^^ s.st[13].z0 ^^^ s.st[14].z0
+  { s with c := s.c.set 2 { s.c[2] with z0 := v } }
+
+def bit_theta_c_x2_z1 (s : KState) : KState :=
+  let v := s.st[10].z1 ^^^ s.st[11].z1 ^^^ s.st[12].z1 ^^^ s.st[13].z1 ^^^ s.st[14].z1
+  { s with c := s.c.set 2 { s.c[2] with z1 := v } }
+
+def bit_theta_c_x3_z0 (s : KState) : KState :=
+  let v := s.st[15].z0 ^^^ s.st[16].z0 ^^^ s.st[17].z0 ^^^ s.st[18].z0 ^^^ s.st[19].z0
+  { s with c := s.c.set 3 { s.c[3] with z0 := v } }
+
+def bit_theta_c_x3_z1 (s : KState) : KState :=
+  let v := s.st[15].z1 ^^^ s.st[16].z1 ^^^ s.st[17].z1 ^^^ s.st[18].z1 ^^^ s.st[19].z1
+  { s with c := s.c.set 3 { s.c[3] with z1 := v } }
+
+def bit_theta_c_x4_z0 (s : KState) : KState :=
+  let v := s.st[20].z0 ^^^ s.st[21].z0 ^^^ s.st[22].z0 ^^^ s.st[23].z0 ^^^ s.st[24].z0
+  { s with c := s.c.set 4 { s.c[4] with z0 := v } }
+
+def bit_theta_c_x4_z1 (s : KState) : KState :=
+  let v := s.st[20].z1 ^^^ s.st[21].z1 ^^^ s.st[22].z1 ^^^ s.st[23].z1 ^^^ s.st[24].z1
+  { s with c := s.c.set 4 { s.c[4] with z1 := v } }
+
+/-! ## θ-stage d-cell sub-fn
+
+    Overwrites all five `s.d` cells with the XOR-rotate-1 pattern from
+    `s.c`. Preserves `s.st`, `s.i`, `s.c`. -/
+def bit_theta_d (s : KState) : KState :=
+  let nd0 : Lane := ⟨s.c[4].z0 ^^^ (s.c[1].z1).rotateLeft 1, s.c[4].z1 ^^^ s.c[1].z0⟩
+  let nd1 : Lane := ⟨s.c[0].z0 ^^^ (s.c[2].z1).rotateLeft 1, s.c[0].z1 ^^^ s.c[2].z0⟩
+  let nd2 : Lane := ⟨s.c[1].z0 ^^^ (s.c[3].z1).rotateLeft 1, s.c[1].z1 ^^^ s.c[3].z0⟩
+  let nd3 : Lane := ⟨s.c[2].z0 ^^^ (s.c[4].z1).rotateLeft 1, s.c[2].z1 ^^^ s.c[4].z0⟩
+  let nd4 : Lane := ⟨s.c[3].z0 ^^^ (s.c[0].z1).rotateLeft 1, s.c[3].z1 ^^^ s.c[0].z0⟩
+  let d' := s.d.set 0 nd0 |>.set 1 nd1 |>.set 2 nd2 |>.set 3 nd3 |>.set 4 nd4
+  { s with d := d' }
+
 end libcrux_iot_sha3.BitKeccak

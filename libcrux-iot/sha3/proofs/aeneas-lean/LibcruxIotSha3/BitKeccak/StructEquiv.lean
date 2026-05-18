@@ -16,6 +16,7 @@ import LibcruxIotSha3.BitKeccak.Spec
 import LibcruxIotSha3.BitKeccak.StateIso
 import LibcruxIotSha3.BitKeccak.Project
 import LibcruxIotSha3.Equivalence.PrcLift
+import LibcruxIotSha3.Equivalence.ThetaLiftDefs
 import Hax
 
 namespace libcrux_iot_sha3.BitKeccak
@@ -271,6 +272,238 @@ theorem bit_pi_rho_chi_y4_zeta1_eq (s : state.KeccakState) :
       KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+/-! ## θ-stage c-cell sub-fns -/
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x0_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x0_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x0_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x0_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x0_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x0_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x1_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x1_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x1_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x1_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x1_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x1_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x2_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x2_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x2_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x2_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x2_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x2_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x3_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x3_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x3_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x3_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x3_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x3_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x4_z0_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x4_z0 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x4_z0 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+  · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
+    rw [hd]
+  · show r.i = s.i
+    exact hi_eq
+
+set_option maxHeartbeats 4000000 in
+@[spec]
+theorem bit_theta_c_x4_z1_eq (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta_c_x4_z1 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_theta_c_x4_z1 (KState.fromAeneas s) ⌝ ⦄ := by
+  mvcgen
+  rename_i r
+  intro hst hi_eq hd hc
+  refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
+  · show stateArray25FromAeneas r.st = stateArray25FromAeneas s.st
+    rw [hst]
+  · apply Vector.toArray_inj.mp
+    simp [stateArray5FromAeneas, hc, List.map_set,
+      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray5FromAeneas_getElem,
+      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
