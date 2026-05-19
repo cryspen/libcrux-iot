@@ -16,7 +16,7 @@ theorem theta_lift_spec_3 (s : state.KeccakState) :
       r_impl.i = s.i ∧
       (do
         let r_spec ← keccak_f.theta_unrolled
-          (lift_perm s (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap)
+          (lift_perm s (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3))
         pure (r_spec = lift_theta_applied r_impl)).holds ⌝ ⦄ := by
   sorry
 

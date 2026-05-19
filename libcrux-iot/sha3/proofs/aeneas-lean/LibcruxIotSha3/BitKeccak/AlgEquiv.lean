@@ -192,54 +192,33 @@ theorem bit_round3_i (s : KState) (hi : s.i.val < 24) :
       bit_keccakf1600_round3_theta_i]
   exact usize_succ_val s.i hi
 
-/-! ## "Balanced" precondition — a load-bearing fix to the architecture.
+/-! ## Time-varying polarity tracking (no `BalancedAt` precondition)
 
-    The pure bit-side `bit_round{k}` definitions read `s.st[i].z0` /
-    `s.st[i].z1` literally, matching the impl's storage convention. The
-    spec under `lift_perm s p impl_swap` reads `s.st[(p i)].val[swap?1:0]`,
-    which swaps halves on `impl_swap`-true lanes. The two readings agree
-    exactly when the `impl_swap`-true lanes (under permutation `p`) have
-    `z0 = z1` — captured below as `BalancedAt k s`.
+    The earlier static-`impl_swap` architecture required a
+    `BalancedAt k` precondition that was *not* preserved across rounds
+    1–3 (empirical counter-example, 2026-05-19). The fix is the
+    time-varying `impl_swap_k` in `Equivalence/Lift.lean`: a 4-cycle
+    `swZero → impl_swap → sw2 → sw3 → swZero` that tracks the actual
+    polarity layout at each round so the canonical lift recovers the
+    spec U64.
 
-    Computational counterexample: for `s` with `z0 ≠ z1` on the
-    `impl_swap`-true lanes (2, 3, 5, 8, 12, 13, 14, 16, 17, 18, 20, 22),
-    `spec_round_step (lift_perm s.toAeneas id impl_swap) s.i` differs
-    from `lift_perm (bit_round0 s).toAeneas impl_perm impl_swap` at all
-    25 lanes. Verified via `native_decide` on a concrete state — see
-    the 2026-05-19 session report. -/
+    With `impl_swap_k`, the per-round identities hold **unconditionally**
+    (verified empirically on three different unbalanced probes,
+    2026-05-19 session). Both the start and the end of a 4-round chunk
+    use `impl_swap_k 0 = impl_swap_k 4 = (fun _ => false)`, so
+    `lift_perm s id (impl_swap_k 0) = lift s` — the canonical lift
+    threads cleanly through the 24-round chain with no `BalancedAt`. -/
 
-/-- `BalancedAt k s` says the canonical lift of `s` (with permutation
-    `impl_perm^[k]` and swap `impl_swap`) matches the naive lift (no
-    swap). Equivalently: for every `i` with `impl_swap (impl_perm^[k] i)
-    = true`, the physical lane `s.st[(impl_perm^[k] i).val]` has
-    `z0 = z1`. Required as a precondition on each per-round algebraic
-    correspondence; threaded across 4-round groups by
-    `bit_keccakf1600_4rounds_preserves_balanced`.
-
-    **Key observation (to be formalized as `balancedAt_iff_balancedAt_zero`):**
-    `BalancedAt k s` is *independent of k* — since `impl_perm^[k]` is a
-    bijection on `Fin 25` (`impl_perm_pow4_eq_id` makes `impl_perm` an
-    element of order dividing 4), the condition reduces to
-    `∀ j ∈ Fin 25, impl_swap j = true → z0 = z1 at s.st.val[j.val]!`
-    (the swap-true set `{2,3,5,8,12,13,14,16,17,18,20,22}` is fixed).
-    Formalizing this simplification collapses the 4 per-round
-    preservation lemmas to a single `bit_round{k} s preserves Balanced`
-    claim, dischargeable lane-by-lane via `bv_decide`. -/
-def BalancedAt (k : Nat) (s : KState) : Prop :=
-  lift_perm s.toAeneas (impl_perm^[k]) impl_swap
-  = lift_perm s.toAeneas (impl_perm^[k]) (fun _ => false)
-
-/-! ## Per-round algebraic correspondence (the load-bearing 4 sorries).
+/-! ## Per-round algebraic correspondence (unconditional).
 
     Statement shape (for k ∈ {0,1,2,3}):
 
-    `BalancedAt k s →`
-    `spec_round_step (lift_perm s.toAeneas (impl_perm^[k]) impl_swap) s.i`
-    `  = .ok (lift_perm (bit_round{k} s).toAeneas (impl_perm^[k+1]) impl_swap)`
+    `spec_round_step (lift_perm s.toAeneas (impl_perm^[k]) (impl_swap_k k)) s.i`
+    `  = .ok (lift_perm (bit_round{k} s).toAeneas (impl_perm^[k+1]) (impl_swap_k (k+1)))`
 
-    Each says: under the Balanced precondition, the spec round-step on
-    the canonically-lifted input matches the canonical lift of the
-    bit-side per-round update. -/
+    The bit-side `bit_round{k}` propagates the time-varying polarity
+    pattern; the canonical lift reads the impl-side state with the
+    correct swap-set at each round. No precondition on the state. -/
 
 /-! ### Generic extractors
 
@@ -297,193 +276,124 @@ private theorem round0_full_bit_eq (s : state.KeccakState) (hi : s.i.val < 24) :
   unfold bit_round0
   rw [h_prc2, h_prc1, h_theta]
 
-/-- Round 0 algebraic equivalence. Composes the existing closed
-    `round0_equiv_spec` (which couples the impl chain to the spec
-    `do { θ; ρ; π; χ; ι }`) with Campaign 1's bit-side chain Triple
-    `round0_full_bit_eq`; the `BalancedAt 0` precondition collapses
-    `lift_perm s.toAeneas id impl_swap` to `lift s.toAeneas` (via
-    `lift_perm_id`) so the spec call matches `round0_equiv_spec`'s
-    input. The conjunction Triple's post is independent of `r` and
-    *is* the goal, extracted via `triple_imp_prop`. -/
-theorem bit_round0_alg_eq (s : KState) (hi : s.i.val < 24)
-    (h_bal : BalancedAt 0 s) :
-    spec_round_step (lift_perm s.toAeneas id impl_swap) s.i
+/-- Round 0 algebraic equivalence (unconditional). Composes
+    `round0_equiv_spec` (impl ⇔ spec `θ;ρ;π;χ;ι`) with Campaign 1's
+    bit-side chain Triple `round0_full_bit_eq`. Input convention is
+    `impl_swap_k 0 = (fun _ => false)`, i.e. the canonical `lift`;
+    output convention is `impl_swap_k 1 = impl_swap`, matching the
+    existing `round0_post`. -/
+theorem bit_round0_alg_eq (s : KState) (hi : s.i.val < 24) :
+    spec_round_step (lift s.toAeneas) s.i
     = .ok (lift_perm (bit_round0 s).toAeneas impl_perm impl_swap) := by
-  -- Step 1: BalancedAt 0 s → lift_perm s.toAeneas id impl_swap = Equivalence.lift s.toAeneas.
-  have h_lift_eq : lift_perm s.toAeneas id impl_swap = Equivalence.lift s.toAeneas := by
-    have h : lift_perm s.toAeneas (impl_perm^[0]) impl_swap
-           = lift_perm s.toAeneas (impl_perm^[0]) (fun _ => false) := h_bal
-    rw [Function.iterate_zero] at h
-    rw [h, lift_perm_id]
-  rw [h_lift_eq]
-  -- Step 2: Combine round0_equiv_spec + Campaign 1 chain Triple, extract via triple_imp_prop.
   apply triple_imp_prop
   apply Std.Do.Triple.of_entails_right _
     (triple_conj_post (round0_equiv_spec s.toAeneas hi) (round0_full_bit_eq s.toAeneas hi))
   rw [PostCond.entails_noThrow]
   intro r ⟨h_round0_post, h_from_eq⟩
   dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_round0_post h_from_eq ⊢
-  -- (a) Derive r = (bit_round0 s).toAeneas via the toAeneas / fromAeneas round-trips.
   have h_r_eq : r = (bit_round0 s).toAeneas := by
     rw [← KState.toAeneas_fromAeneas r, h_from_eq, KState.fromAeneas_toAeneas]
-  -- (b) Extract spec_round_step = .ok (lift_perm r impl_perm impl_swap) from round0_post.
   unfold round0_post at h_round0_post
   have h_spec_eq : spec_round_step (Equivalence.lift s.toAeneas) s.toAeneas.i
                  = .ok (lift_perm r impl_perm impl_swap) := by
     unfold spec_round_step
     exact holds_chain_eq_ok h_round0_post
-  show spec_round_step (Equivalence.lift s.toAeneas) s.i = .ok (lift_perm (bit_round0 s).toAeneas impl_perm impl_swap)
+  show spec_round_step (Equivalence.lift s.toAeneas) s.i
+     = .ok (lift_perm (bit_round0 s).toAeneas impl_perm impl_swap)
   rw [show s.i = s.toAeneas.i from rfl, h_spec_eq, h_r_eq]
 
-/-- Round 1 algebraic equivalence. Algebra mirrors `theta_lift_spec_1 +
-    prc_lift_spec_1` (currently sorry'd in `ThetaLiftRound1.lean` +
-    `PrcLiftRound1.lean`), transcribed against `bit_round1`. Requires
-    `BalancedAt 1 s` (i.e., balance under the round-1 storage layout). -/
-theorem bit_round1_alg_eq (s : KState) (hi : s.i.val < 24)
-    (h_bal : BalancedAt 1 s) :
-    spec_round_step (lift_perm s.toAeneas impl_perm impl_swap) s.i
-    = .ok (lift_perm (bit_round1 s).toAeneas (impl_perm ∘ impl_perm) impl_swap) := by
+/-- Round 1 algebraic equivalence (unconditional). Input convention
+    `impl_swap_k 1 = impl_swap`, output `impl_swap_k 2`. Currently
+    blocked on `round1_equiv_spec` (sorry'd in `RoundEquiv.lean`) and
+    its prerequisites `theta_lift_spec_1` / `prc_lift_spec_1` (sorry'd
+    in their stub files); those need to be updated to use the
+    time-varying `impl_swap_k` shape. -/
+theorem bit_round1_alg_eq (s : KState) (hi : s.i.val < 24) :
+    spec_round_step (lift_perm s.toAeneas impl_perm (impl_swap_k 1)) s.i
+    = .ok (lift_perm (bit_round1 s).toAeneas (impl_perm ∘ impl_perm) (impl_swap_k 2)) := by
   sorry
 
-/-- Round 2 algebraic equivalence. Algebra mirrors `theta_lift_spec_2 +
-    prc_lift_spec_2` (sorry'd in `ThetaLiftRound2.lean` +
-    `PrcLiftRound2.lean`), transcribed against `bit_round2`. -/
-theorem bit_round2_alg_eq (s : KState) (hi : s.i.val < 24)
-    (h_bal : BalancedAt 2 s) :
-    spec_round_step (lift_perm s.toAeneas (impl_perm ∘ impl_perm) impl_swap) s.i
-    = .ok (lift_perm (bit_round2 s).toAeneas (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap) := by
+/-- Round 2 algebraic equivalence (unconditional). Input `impl_swap_k 2`,
+    output `impl_swap_k 3`. -/
+theorem bit_round2_alg_eq (s : KState) (hi : s.i.val < 24) :
+    spec_round_step
+        (lift_perm s.toAeneas (impl_perm ∘ impl_perm) (impl_swap_k 2)) s.i
+    = .ok (lift_perm (bit_round2 s).toAeneas
+              (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) := by
   sorry
 
-/-- Round 3 algebraic equivalence. After round 3, `impl_perm^[4] = id`
-    collapses the permutation. Algebra mirrors `theta_lift_spec_3 +
-    prc_lift_spec_3` (sorry'd in `ThetaLiftRound3.lean` +
-    `PrcLiftRound3.lean`), transcribed against `bit_round3`. -/
-theorem bit_round3_alg_eq (s : KState) (hi : s.i.val < 24)
-    (h_bal : BalancedAt 3 s) :
-    spec_round_step (lift_perm s.toAeneas (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap) s.i
-    = .ok (lift_perm (bit_round3 s).toAeneas id impl_swap) := by
+/-- Round 3 algebraic equivalence (unconditional). Input `impl_swap_k 3`,
+    output `impl_swap_k 4 = (fun _ => false)`. With
+    `impl_perm^[4] = id`, the output collapses to `lift (bit_round3 s).toAeneas`. -/
+theorem bit_round3_alg_eq (s : KState) (hi : s.i.val < 24) :
+    spec_round_step
+        (lift_perm s.toAeneas (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) s.i
+    = .ok (lift (bit_round3 s).toAeneas) := by
   sorry
 
-/-! ## Balance preservation across rounds and 4-round groups.
-
-    Each `bit_round{k}` should map a state Balanced at layout `k` to one
-    Balanced at layout `k+1`. After four rounds, `impl_perm^[4] = id`
-    aligns the layout back to `k=0`, so a chunk-level preservation
-    closes the inductive step in `bit_keccak_spec_alg_eq`. -/
-
-/-- Round-0 preserves balance: `BalancedAt 0 s → BalancedAt 1 (bit_round0 s)`. -/
-theorem bit_round0_preserves_balanced (s : KState) (hi : s.i.val < 24)
-    (h_bal : BalancedAt 0 s) :
-    BalancedAt 1 (bit_round0 s) := by
-  sorry
-
-/-- Round-1 preserves balance: `BalancedAt 1 s → BalancedAt 2 (bit_round1 s)`. -/
-theorem bit_round1_preserves_balanced (s : KState) (hi : s.i.val < 24)
-    (h_bal : BalancedAt 1 s) :
-    BalancedAt 2 (bit_round1 s) := by
-  sorry
-
-/-- Round-2 preserves balance: `BalancedAt 2 s → BalancedAt 3 (bit_round2 s)`. -/
-theorem bit_round2_preserves_balanced (s : KState) (hi : s.i.val < 24)
-    (h_bal : BalancedAt 2 s) :
-    BalancedAt 3 (bit_round2 s) := by
-  sorry
-
-/-- Round-3 preserves balance: `BalancedAt 3 s → BalancedAt 0 (bit_round3 s)`. -/
-theorem bit_round3_preserves_balanced (s : KState) (hi : s.i.val < 24)
-    (h_bal : BalancedAt 3 s) :
-    BalancedAt 0 (bit_round3 s) := by
-  sorry
-
-/-- 4-round groups preserve `BalancedAt 0` — the inductive invariant used
-    by `bit_keccak_spec_alg_eq` across the 6 chunks. -/
-theorem bit_keccakf1600_4rounds_preserves_balanced (s : KState) (hi : s.i.val + 4 ≤ 24)
-    (h_bal : BalancedAt 0 s) :
-    BalancedAt 0 (bit_keccakf1600_4rounds 0#usize s) := by
-  rw [bit_keccakf1600_4rounds_eq_chain]
-  -- Apply the 4 per-round preservation lemmas, threading the i-bound.
-  have h_i0 : (bit_round0 s).i.val = s.i.val + 1 := bit_round0_i s (by omega)
-  have hb0 := bit_round0_preserves_balanced s (by omega) h_bal
-  have h_i1 : (bit_round1 (bit_round0 s)).i.val = s.i.val + 2 := by
-    rw [bit_round1_i _ (by rw [h_i0]; omega), h_i0]
-  have hb1 := bit_round1_preserves_balanced (bit_round0 s) (by rw [h_i0]; omega) hb0
-  have h_i2 : (bit_round2 (bit_round1 (bit_round0 s))).i.val = s.i.val + 3 := by
-    rw [bit_round2_i _ (by rw [h_i1]; omega), h_i1]
-  have hb2 := bit_round2_preserves_balanced (bit_round1 (bit_round0 s)) (by rw [h_i1]; omega) hb1
-  exact bit_round3_preserves_balanced _ (by rw [h_i2]; omega) hb2
-
-/-! ## 4-round closure
+/-! ## 4-round closure (unconditional)
 
     Composes the 4 per-round algebraic identities via `Result.bind`
-    associativity. Uses the i-increment chain to align iota constants. -/
+    associativity. Uses the i-increment chain to align iota constants.
+    Start and end both use the canonical `lift` (since
+    `impl_swap_k 0 = impl_swap_k 4 = (fun _ => false)`). -/
 
 set_option maxHeartbeats 4000000 in
-theorem bit_4rounds_alg_eq (s : KState) (hi : s.i.val + 4 ≤ 24)
-    (h_bal : BalancedAt 0 s) :
+theorem bit_4rounds_alg_eq (s : KState) (hi : s.i.val + 4 ≤ 24) :
     (do
-      let s1 ← spec_round_step (lift_perm s.toAeneas id impl_swap) s.i
+      let s1 ← spec_round_step (lift s.toAeneas) s.i
       let s2 ← spec_round_step s1 (roundOfNat (s.i.val + 1) (by omega))
       let s3 ← spec_round_step s2 (roundOfNat (s.i.val + 2) (by omega))
       spec_round_step s3 (roundOfNat (s.i.val + 3) (by omega)))
-    = .ok (lift_perm (bit_keccakf1600_4rounds 0#usize s).toAeneas id impl_swap) := by
+    = .ok (lift (bit_keccakf1600_4rounds 0#usize s).toAeneas) := by
   rw [bit_keccakf1600_4rounds_eq_chain]
-  -- Round 0
-  have h0 := bit_round0_alg_eq s (by omega) h_bal
+  -- Round 0: input convention `impl_swap_k 0 = (fun _ => false)` ↔ `lift`.
+  have h0 := bit_round0_alg_eq s (by omega)
   rw [h0]; simp only [Aeneas.Std.bind_tc_ok]
-  -- Round 1: align iota constant via i-chain
+  -- Round 1: align iota constant via i-chain; input `impl_swap_k 1 = impl_swap`.
   have h_i0_val : (bit_round0 s).i.val = s.i.val + 1 := bit_round0_i s (by omega)
-  have hb1 : BalancedAt 1 (bit_round0 s) :=
-    bit_round0_preserves_balanced s (by omega) h_bal
   have h_i1 : (bit_round0 s).i = roundOfNat (s.i.val + 1) (by omega) := by
     apply Std.UScalar.eq_of_val_eq
     rw [h_i0_val]
     unfold roundOfNat; rw [Std.UScalar.ofNatCore_val_eq]
-  have h1 := bit_round1_alg_eq (bit_round0 s) (by rw [h_i0_val]; omega) hb1
+  have h1 := bit_round1_alg_eq (bit_round0 s) (by rw [h_i0_val]; omega)
+  -- `impl_swap_k 1 = impl_swap` (definitional via `impl_swap_k_one`).
+  rw [show (impl_swap_k 1 : Fin 25 → Bool) = impl_swap from
+        funext (fun L => impl_swap_k_one L)] at h1
   rw [← h_i1, h1]; simp only [Aeneas.Std.bind_tc_ok]
   -- Round 2
   have h_i1_val : (bit_round1 (bit_round0 s)).i.val = s.i.val + 2 := by
     rw [bit_round1_i _ (by rw [h_i0_val]; omega), h_i0_val]
-  have hb2 : BalancedAt 2 (bit_round1 (bit_round0 s)) :=
-    bit_round1_preserves_balanced (bit_round0 s) (by rw [h_i0_val]; omega) hb1
   have h_i2 : (bit_round1 (bit_round0 s)).i = roundOfNat (s.i.val + 2) (by omega) := by
     apply Std.UScalar.eq_of_val_eq
     rw [h_i1_val]
     unfold roundOfNat; rw [Std.UScalar.ofNatCore_val_eq]
-  have h2 := bit_round2_alg_eq (bit_round1 (bit_round0 s)) (by rw [h_i1_val]; omega) hb2
+  have h2 := bit_round2_alg_eq (bit_round1 (bit_round0 s)) (by rw [h_i1_val]; omega)
   rw [← h_i2, h2]; simp only [Aeneas.Std.bind_tc_ok]
-  -- Round 3
+  -- Round 3: output uses `lift` (since `impl_swap_k 4 = false` and `impl_perm^[4] = id`).
   have h_i2_val : (bit_round2 (bit_round1 (bit_round0 s))).i.val = s.i.val + 3 := by
     rw [bit_round2_i _ (by rw [h_i1_val]; omega), h_i1_val]
-  have hb3 : BalancedAt 3 (bit_round2 (bit_round1 (bit_round0 s))) :=
-    bit_round2_preserves_balanced _ (by rw [h_i1_val]; omega) hb2
   have h_i3 : (bit_round2 (bit_round1 (bit_round0 s))).i = roundOfNat (s.i.val + 3) (by omega) := by
     apply Std.UScalar.eq_of_val_eq
     rw [h_i2_val]
     unfold roundOfNat; rw [Std.UScalar.ofNatCore_val_eq]
   have h3 := bit_round3_alg_eq (bit_round2 (bit_round1 (bit_round0 s)))
-    (by rw [h_i2_val]; omega) hb3
+    (by rw [h_i2_val]; omega)
   rw [← h_i3, h3]
 
 set_option maxHeartbeats 2000000 in
-/-- Index-parameterized variant of `bit_4rounds_alg_eq`. Takes a `Nat`
-    index `n` and the equation `n = s.i.val`; substitution then makes
-    this identical in shape to `bit_4rounds_alg_eq` modulo the first
-    `s.i` ↔ `roundOfNat n _` identity (closed by `Std.UScalar.eq_of_val_eq`). -/
+/-- Index-parameterized variant of `bit_4rounds_alg_eq`. -/
 theorem bit_4rounds_alg_eq_at (s : KState) (n : Nat) (h_n : n + 4 ≤ 24)
-    (h_i : n = s.i.val) (h_bal : BalancedAt 0 s) :
+    (h_i : n = s.i.val) :
     (do
-      let s1 ← spec_round_step (lift_perm s.toAeneas id impl_swap)
+      let s1 ← spec_round_step (lift s.toAeneas)
                   (roundOfNat n (by omega))
       let s2 ← spec_round_step s1 (roundOfNat (n + 1) (by omega))
       let s3 ← spec_round_step s2 (roundOfNat (n + 2) (by omega))
       spec_round_step s3 (roundOfNat (n + 3) (by omega)))
-    = .ok (lift_perm (bit_keccakf1600_4rounds 0#usize s).toAeneas id impl_swap) := by
+    = .ok (lift (bit_keccakf1600_4rounds 0#usize s).toAeneas) := by
   subst h_i
-  -- Indices are now `s.i.val + k`, matching bit_4rounds_alg_eq.
-  have h_chain := bit_4rounds_alg_eq s h_n h_bal
-  -- The only difference: goal has `roundOfNat s.i.val _` at position 0,
-  -- h_chain has `s.i`. Rewrite the goal direction (not h_chain) to avoid
-  -- dependent-rewrite friction on the remaining roundOfNat indices.
+  have h_chain := bit_4rounds_alg_eq s h_n
   have h_si_eq : roundOfNat s.i.val (by omega) = s.i := by
     apply Std.UScalar.eq_of_val_eq
     unfold roundOfNat; rw [Std.UScalar.ofNatCore_val_eq]
@@ -518,35 +428,18 @@ private theorem nat_iterate_i (s : KState) (h_i : s.i.val = 0) (k : Nat) (hk : k
     rw [bit_keccakf1600_4rounds_i _ (by rw [hIH]; omega)]
     rw [hIH]; ring
 
-/-- `BalancedAt 0` propagates across `k` iterations of the 4-round group,
-    threading the i-counter so we can discharge each chunk's bound. -/
-private theorem nat_iterate_balanced (s : KState) (h_i_val : s.i.val = 0)
-    (h_bal : BalancedAt 0 s) (k : Nat) (hk : k ≤ 6) :
-    BalancedAt 0 (Nat.iterate (bit_keccakf1600_4rounds 0#usize) k s) := by
-  induction k with
-  | zero => simpa
-  | succ n IH =>
-    have hn : n ≤ 6 := by omega
-    have hIH := IH hn
-    have h_iter_i : (Nat.iterate (bit_keccakf1600_4rounds 0#usize) n s).i.val = 4 * n :=
-      nat_iterate_i s h_i_val n hn
-    rw [Function.iterate_succ_apply']
-    exact bit_keccakf1600_4rounds_preserves_balanced _ (by rw [h_iter_i]; omega) hIH
-
 set_option maxHeartbeats 4000000 in
-/-- The 24-round Campaign 2 closure on the pure-Lean side. Requires
-    `BalancedAt 0 s` (the initial state is balanced under impl_swap);
-    the inductive step uses `bit_keccakf1600_4rounds_preserves_balanced`
-    to thread the invariant across 6 chunks. -/
-theorem bit_keccak_spec_alg_eq (s : KState) (h_i : s.i = 0#usize)
-    (h_bal : BalancedAt 0 s) :
-    spec_chain (lift_perm s.toAeneas id impl_swap) 24
-    = .ok (lift_perm (Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 s).toAeneas id impl_swap) := by
+/-- The 24-round Campaign 2 closure on the pure-Lean side (unconditional).
+    With the time-varying `impl_swap_k` cycle, no `BalancedAt`
+    precondition is needed — both ends of each 4-round chunk use the
+    canonical `lift` view. -/
+theorem bit_keccak_spec_alg_eq (s : KState) (h_i : s.i = 0#usize) :
+    spec_chain (lift s.toAeneas) 24
+    = .ok (lift (Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 s).toAeneas) := by
   have h_i_val : s.i.val = 0 := by rw [h_i]; rfl
-  -- Induct over k ∈ {0..6}, tracking the i counter.
   suffices h : ∀ k ≤ 6,
-      spec_chain (lift_perm s.toAeneas id impl_swap) (4 * k)
-      = .ok (lift_perm (Nat.iterate (bit_keccakf1600_4rounds 0#usize) k s).toAeneas id impl_swap) by
+      spec_chain (lift s.toAeneas) (4 * k)
+      = .ok (lift (Nat.iterate (bit_keccakf1600_4rounds 0#usize) k s).toAeneas) by
     have h6 := h 6 (by omega)
     rw [show (24 : Nat) = 4 * 6 from rfl]; exact h6
   intro k hk
@@ -556,29 +449,20 @@ theorem bit_keccak_spec_alg_eq (s : KState) (h_i : s.i = 0#usize)
   | succ n IH =>
     have hn : n ≤ 6 := by omega
     have IH' := IH hn
-    -- 4 * (n+1) = 4 * n + 4
     rw [show 4 * (n + 1) = 4 * n + 4 from by ring]
-    -- spec_chain (4*n + 4) = spec_chain (4*n) >>= (4-step group)
     rw [show 4 * n + 4 = (4 * n + 3) + 1 from rfl, spec_chain_succ]
     rw [show 4 * n + 3 = (4 * n + 2) + 1 from rfl, spec_chain_succ]
     rw [show 4 * n + 2 = (4 * n + 1) + 1 from rfl, spec_chain_succ]
     rw [show 4 * n + 1 = 4 * n + 1 from rfl, spec_chain_succ]
     rw [IH']
     simp only [Aeneas.Std.bind_tc_ok]
-    -- Goal: 4-step chain starting from (lift_perm (iter^[n] s) id impl_swap) at index 4*n
-    --       = .ok (lift_perm (iter^[n+1] s) id impl_swap)
     rw [Function.iterate_succ_apply']
-    -- Set acc := iter^[n] s and use bit_4rounds_alg_eq_at.
     have h_acc_i_val : (Nat.iterate (bit_keccakf1600_4rounds 0#usize) n s).i.val = 4 * n :=
       nat_iterate_i s h_i_val n hn
-    have h_acc_bal : BalancedAt 0 (Nat.iterate (bit_keccakf1600_4rounds 0#usize) n s) :=
-      nat_iterate_balanced s h_i_val h_bal n hn
     have h_acc_i_bnd : (Nat.iterate (bit_keccakf1600_4rounds 0#usize) n s).i.val + 4 ≤ 24 := by
       rw [h_acc_i_val]; omega
     set acc := Nat.iterate (bit_keccakf1600_4rounds 0#usize) n s
-    have h_chain := bit_4rounds_alg_eq_at acc (4 * n) (by omega) h_acc_i_val.symm h_acc_bal
-    -- Goal has spec_round_step_at; reduce to spec_round_step + roundOfNat
-    -- and align do-block desugaring with bind_assoc.
+    have h_chain := bit_4rounds_alg_eq_at acc (4 * n) (by omega) h_acc_i_val.symm
     unfold spec_round_step_at
     simp only [show (4 * n + 1 + 1 : Nat) = 4 * n + 2 from rfl,
                show (4 * n + 1 + 1 + 1 : Nat) = 4 * n + 3 from rfl,
@@ -593,77 +477,67 @@ theorem bit_keccak_spec_alg_eq (s : KState) (h_i : s.i = 0#usize)
 
     Combines `keccakf1600_eq` (Campaign 1: impl ≡ bit_keccak_spec on
     pure-Lean side) with `bit_keccak_spec_alg_eq` (Campaign 2: 24-fold
-    spec on lift_perm equals lift_perm of bit_keccak_spec) to derive
-    the impl-level top-level `keccakf1600_equiv` post (with `Balanced`
-    precondition via `h_lift`). -/
+    spec on `lift s` equals `lift` of bit_keccak_spec output). The
+    `keccakf1600_post` shape (with the canonical `lift r_impl` on the
+    spec equality, no `lift_perm`) follows from the time-varying
+    `impl_swap_k` cycle reaching `swZero` at round 24. No `BalancedAt`
+    precondition needed. -/
 
 theorem keccakf1600_equiv_via_bit (s : state.KeccakState)
-    (h_i : s.i = 0#usize)
-    (h_lift : Equivalence.lift s = lift_perm s id impl_swap) :
+    (h_i : s.i = 0#usize) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600 s
-    ⦃ ⇓ r_impl => ⌜ keccakf1600_post s r_impl ⌝ ⦄ := by
+    ⦃ ⇓ r_impl => ⌜ keccakf1600_post_canonical s r_impl ⌝ ⦄ := by
   apply Std.Do.Triple.of_entails_right _ (keccakf1600_eq s h_i)
   rw [PostCond.entails_noThrow]
   intro r h_fromAeneas
   dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_fromAeneas ⊢
-  unfold keccakf1600_post
-  -- Bridge: `keccakf1600_post`'s Nat.fold IS `spec_chain` (it's just inlined).
-  -- (`keccakf1600_loop_post_eq_spec_chain` formalizes this for `_loop_post`;
-  -- the same proof works here.)
+  unfold keccakf1600_post_canonical
+  -- Bridge: the Nat.fold IS `spec_chain` (just inlined).
   have h_post_eq :
       (do let lifted_final ← Nat.fold 24
             (fun i h acc => acc >>= fun st => spec_round_step st (roundOfNat i (by omega)))
             (pure (Equivalence.lift s))
-          pure (lifted_final = lift_perm r id impl_swap)).holds
+          pure (lifted_final = Equivalence.lift r)).holds
       = (do let lifted_final ← spec_chain (Equivalence.lift s) 24
-            pure (lifted_final = lift_perm r id impl_swap)).holds := by
+            pure (lifted_final = Equivalence.lift r)).holds := by
     unfold spec_chain spec_round_step_at
     congr 1
   rw [h_post_eq]
-  -- Bridge lift s → lift_perm s id impl_swap (h_lift) → lift_perm (toAeneas (fromAeneas s)) id impl_swap.
-  rw [h_lift, show lift_perm s id impl_swap
-                = lift_perm (KState.toAeneas (KState.fromAeneas s)) id impl_swap from by
+  -- Bridge lift s → lift (toAeneas (fromAeneas s)) via toAeneas_fromAeneas round-trip.
+  rw [show (Equivalence.lift s : Array Std.U64 25#usize)
+        = Equivalence.lift (KState.toAeneas (KState.fromAeneas s)) from by
         rw [KState.toAeneas_fromAeneas]]
-  -- Apply Campaign 2.
+  -- Apply Campaign 2 (unconditional).
   have h_i' : (KState.fromAeneas s).i = 0#usize := by
     show (KState.fromAeneas s).i = 0#usize
     unfold KState.fromAeneas
     exact h_i
-  -- `h_lift` is exactly `BalancedAt 0 (KState.fromAeneas s)` up to direction +
-  -- the `toAeneas ∘ fromAeneas = id` round-trip, and `lift = lift_perm _ id _`
-  -- with `fun _ => false` (by `lift_perm_id`).
-  have h_bal : BalancedAt 0 (KState.fromAeneas s) := by
-    show lift_perm (KState.fromAeneas s).toAeneas (impl_perm^[0]) impl_swap
-       = lift_perm (KState.fromAeneas s).toAeneas (impl_perm^[0]) (fun _ => false)
-    rw [Function.iterate_zero, KState.toAeneas_fromAeneas, ← h_lift, lift_perm_id]
-  rw [bit_keccak_spec_alg_eq (KState.fromAeneas s) h_i' h_bal]
+  rw [bit_keccak_spec_alg_eq (KState.fromAeneas s) h_i']
   unfold bit_keccak_spec at h_fromAeneas
-  -- Bridge: r.st = (toAeneas (iter^[6] (fromAeneas s))).st (since lift_perm
+  -- Bridge: r.st = (toAeneas (iter^[6] (fromAeneas s))).st (since `lift`
   -- reads only .st, and `with i := 0` preserves `.st` on both sides).
-  have h_lift_perm_st_only :
+  have h_lift_st_only :
       ∀ (a b : state.KeccakState), a.st = b.st →
-        lift_perm a id impl_swap = lift_perm b id impl_swap := by
+        Equivalence.lift a = Equivalence.lift b := by
     intro a b hab
-    unfold lift_perm
+    unfold Equivalence.lift
     apply Subtype.ext
-    show List.ofFn (fun i : Fin 25 => lift_lane_maybe_swap (a.st.val[(id i).val]!) (impl_swap (id i)))
-       = List.ofFn (fun i : Fin 25 => lift_lane_maybe_swap (b.st.val[(id i).val]!) (impl_swap (id i)))
+    show List.ofFn (fun i : Fin 25 => lift_lane (a.st.val[i.val]!))
+       = List.ofFn (fun i : Fin 25 => lift_lane (b.st.val[i.val]!))
     rw [hab]
   have h_r_eq_iter_st :
       r.st = (KState.toAeneas
                 (Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 (KState.fromAeneas s))).st := by
-    -- r.st = toAeneas (fromAeneas r).st (round-trip on .st)
     have hrt : r.st = stateArray25ToAeneas (KState.fromAeneas r).st :=
       (stateArray25_toAeneas_fromAeneas r.st).symm
     rw [hrt]
-    -- (fromAeneas r).st = (iter^[6] _).st (from h_fromAeneas; `with i := 0` keeps `.st`)
     have h_from_st : (KState.fromAeneas r).st
                    = (Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 (KState.fromAeneas s)).st := by
       rw [h_fromAeneas]
     rw [h_from_st]
     rfl
   apply pure_prop_holds
-  exact h_lift_perm_st_only _ _ h_r_eq_iter_st.symm
+  exact h_lift_st_only _ _ h_r_eq_iter_st.symm
 
 end libcrux_iot_sha3.BitKeccak

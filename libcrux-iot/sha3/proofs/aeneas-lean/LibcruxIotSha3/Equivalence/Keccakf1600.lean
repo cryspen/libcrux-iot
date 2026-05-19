@@ -71,9 +71,9 @@ def roundOfNat (k : Nat) (h : k ≤ 24) : Std.Usize :=
 /-! ## 4-round composition
 
 Each round transforms a `KeccakState` with an associated layout
-`(impl_perm^[k], impl_swap)`. After 4 rounds, `impl_perm^[4] = id`
-(by `impl_perm_pow4_eq_id`), so the lane permutation cancels and the
-output lift uses just `impl_swap`. -/
+`(impl_perm^[k], impl_swap_k k)`. After 4 rounds, `impl_perm^[4] = id`
+and `impl_swap_k 4 = swZero`, so the output lift collapses to the
+canonical `lift` (no swap). -/
 
 @[irreducible]
 def four_round_post (s : state.KeccakState) (h : s.i.val + 4 ≤ 24)
@@ -83,7 +83,7 @@ def four_round_post (s : state.KeccakState) (h : s.i.val + 4 ≤ 24)
     let s2 ← spec_round_step s1 (roundOfNat (s.i.val + 1) (by omega))
     let s3 ← spec_round_step s2 (roundOfNat (s.i.val + 2) (by omega))
     let r_spec ← spec_round_step s3 (roundOfNat (s.i.val + 3) (by omega))
-    pure (r_spec = lift_perm r_impl id impl_swap)).holds
+    pure (r_spec = Equivalence.lift r_impl)).holds
 
 /-! ## Fold lemma: bundle inline 12-call chain into 4 nested (theta_k, chain_k) pairs
 
@@ -194,42 +194,47 @@ theorem four_round_equiv (s : state.KeccakState) (hi : s.i.val + 4 ≤ 24) :
     Std.UScalar.eq_of_val_eq (by
       unfold roundOfNat; rw [Std.UScalar.ofNatCore_val_eq]; omega)
   rw [h_idx1, h_idx2, h_idx3]
-  -- Extract round-1 chain equation.
+  -- Extract round-1 chain equation. Input uses `impl_swap_k 1`, output `impl_swap_k 2`.
   have h_c1 : (do
-      let s_theta ← keccak_f.theta_unrolled (lift_perm r0 impl_perm impl_swap)
+      let s_theta ← keccak_f.theta_unrolled (lift_perm r0 impl_perm (impl_swap_k 1))
       let s_rho ← keccak_f.rho_unrolled s_theta
       let s_pi ← keccak_f.pi_unrolled s_rho
       let s_chi ← keccak_f.chi_unrolled s_pi
       keccak_f.iota s_chi r0.i) =
-        .ok (lift_perm r1 (impl_perm ∘ impl_perm) impl_swap) :=
+        .ok (lift_perm r1 (impl_perm ∘ impl_perm) (impl_swap_k 2)) :=
     holds_chain_eq_ok h_round1
+  -- `impl_swap_k 1 = impl_swap` (definitional via `impl_swap_k_one`); the
+  -- round-0 chain (h_c0) emits `lift_perm r0 impl_perm impl_swap`, so rewrite
+  -- to match h_c1's input.
+  rw [show (impl_swap_k 1 : Fin 25 → Bool) = impl_swap from
+        funext (fun L => impl_swap_k_one L)] at h_c1
   rw [h_c1]
   simp only [Aeneas.Std.bind_tc_ok]
   -- Round 2.
   have h_c2 : (do
-      let s_theta ← keccak_f.theta_unrolled (lift_perm r1 (impl_perm ∘ impl_perm) impl_swap)
+      let s_theta ← keccak_f.theta_unrolled
+        (lift_perm r1 (impl_perm ∘ impl_perm) (impl_swap_k 2))
       let s_rho ← keccak_f.rho_unrolled s_theta
       let s_pi ← keccak_f.pi_unrolled s_rho
       let s_chi ← keccak_f.chi_unrolled s_pi
       keccak_f.iota s_chi r1.i) =
-        .ok (lift_perm r2 (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap) :=
+        .ok (lift_perm r2 (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) :=
     holds_chain_eq_ok h_round2
   rw [h_c2]
   simp only [Aeneas.Std.bind_tc_ok]
-  -- Round 3.
+  -- Round 3 — output is canonical `lift r3` (since `impl_swap_k 4 = swZero`
+  -- and `impl_perm^[4] = id`).
   have h_c3 : (do
       let s_theta ← keccak_f.theta_unrolled
-        (lift_perm r2 (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap)
+        (lift_perm r2 (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3))
       let s_rho ← keccak_f.rho_unrolled s_theta
       let s_pi ← keccak_f.pi_unrolled s_rho
       let s_chi ← keccak_f.chi_unrolled s_pi
       keccak_f.iota s_chi r2.i) =
-        .ok (lift_perm r3 id impl_swap) :=
+        .ok (Equivalence.lift r3) :=
     holds_chain_eq_ok h_round3
   rw [h_c3]
-  -- Goal reduces to: (do let r ← .ok X; pure (r = X)).holds, which is True.
   simp only [Aeneas.Std.bind_tc_ok]
-  -- Now: (pure (lift_perm r3 id impl_swap = lift_perm r3 id impl_swap)).holds
   simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp]
   trivial
 
@@ -251,6 +256,23 @@ def keccakf1600_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop
       (fun i h acc => acc >>= fun st => spec_round_step st (roundOfNat i (by omega)))
       (pure (lift s))
     pure (lifted_final = lift_perm r_impl id impl_swap)).holds
+
+/-- Canonical variant of `keccakf1600_post`: compares the 24-fold spec
+    output against the canonical `lift r_impl` (no swap). This is the
+    statement proven via the time-varying `impl_swap_k` architecture
+    (`BitKeccak/AlgEquiv.lean`) — at round 24 (= round 0 mod 4) the
+    polarity cycle returns to `swZero`, so the spec output is read
+    canonically. The original `keccakf1600_post` (using
+    `lift_perm r_impl id impl_swap`) coincides with this iff
+    `Balanced r_impl`, which is *not* preserved by the bit-side 24
+    rounds in general (see `feedback_bit_keccak_balanced_preservation_false`). -/
+@[irreducible]
+def keccakf1600_post_canonical (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
+  (do
+    let lifted_final ← Nat.fold 24
+      (fun i h acc => acc >>= fun st => spec_round_step st (roundOfNat i (by omega)))
+      (pure (lift s))
+    pure (lifted_final = lift r_impl)).holds
 
 /-! ## Loop spec (Thread C)
 

@@ -112,6 +112,41 @@ def impl_swap (i : Fin 25) : Bool :=
   | 2 | 3 | 5 | 8 | 12 | 13 | 14 | 16 | 17 | 18 | 20 | 22 => true
   | _ => false
 
+/-- Time-varying polarity layout. After round `k`, the impl-side lane at
+    impl-pos `L` stores its halves swapped (relative to canonical) iff
+    `impl_swap_k k L = true`. Cycle of length 4 — `impl_swap_k 4 =
+    impl_swap_k 0 = (fun _ => false)`.
+
+    Empirically derived (2026-05-19 session): per-round identities
+
+    `spec_round_step (lift_perm s.toAeneas (impl_perm^[k]) (impl_swap_k k)) s.i`
+    `  = .ok (lift_perm (bit_round{k} s).toAeneas (impl_perm^[k+1]) (impl_swap_k (k+1)))`
+
+    hold **unconditionally** (no `BalancedAt`-style precondition) for this
+    cycle. The four `bit_round{k}` ops absorb the polarity changes into
+    the impl's actual half-storage; the `impl_swap_k k` function tracks
+    which impl-positions are swapped at round `k` so the canonical lift
+    recovers the spec U64.
+
+    The 4-round cycle starts and ends with `swZero` (no swap), so the
+    canonical `lift s = lift_perm s id (fun _ => false)` view threads
+    cleanly through the 24-round chain. -/
+@[irreducible] def impl_swap_k (k : Nat) (L : Fin 25) : Bool :=
+  match k % 4 with
+  | 0 => false
+  | 1 => impl_swap L
+  | 2 => decide (L.val ∉ ([0, 9, 13, 17, 21] : List Nat))
+  | _ => decide (L.val ∈ ([1, 4, 6, 7, 10, 11, 13, 15, 17, 19, 23, 24] : List Nat))
+
+theorem impl_swap_k_zero (L : Fin 25) : impl_swap_k 0 L = false := by
+  unfold impl_swap_k; rfl
+
+theorem impl_swap_k_four (L : Fin 25) : impl_swap_k 4 L = impl_swap_k 0 L := by
+  unfold impl_swap_k; rfl
+
+theorem impl_swap_k_one (L : Fin 25) : impl_swap_k 1 L = impl_swap L := by
+  unfold impl_swap_k; rfl
+
 /-- Lift a single lane to U64, optionally swapping halves. -/
 def lift_lane_maybe_swap (l : libcrux_iot_sha3.lane.Lane2U32) (sw : Bool) :
     Std.U64 :=

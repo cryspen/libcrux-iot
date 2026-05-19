@@ -224,7 +224,7 @@ theorem keccakf1600_round1_pi_rho_chi_chain_spec
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
-          pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm) impl_swap)).holds ⌝ ⦄ := by
+          pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm) (impl_swap_k 2))).holds ⌝ ⦄ := by
   unfold keccakf1600_round1_pi_rho_chi_chain
   exact prc_lift_spec_1 s hi
 
@@ -243,7 +243,8 @@ theorem keccakf1600_round2_pi_rho_chi_chain_spec
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
-          pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap)).holds ⌝ ⦄ := by
+          pure (r_spec = lift_perm r_impl
+            (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3))).holds ⌝ ⦄ := by
   unfold keccakf1600_round2_pi_rho_chi_chain
   exact prc_lift_spec_2 s hi
 
@@ -262,21 +263,24 @@ theorem keccakf1600_round3_pi_rho_chi_chain_spec
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
-          pure (r_spec = lift_perm r_impl id impl_swap)).holds ⌝ ⦄ := by
+          -- Round 3 output uses canonical `lift` (= `lift_perm _ id swZero`,
+          -- via `impl_perm^[4] = id` and `impl_swap_k 4 = swZero`).
+          pure (r_spec = Equivalence.lift r_impl)).holds ⌝ ⦄ := by
   unfold keccakf1600_round3_pi_rho_chi_chain
   exact prc_lift_spec_3 s hi
 
 /-- Spec-chain claim for round 1 (input s is the round-0 impl output, so
-    the spec lift uses `impl_perm` permutation + `impl_swap`). -/
+    the spec lift uses `impl_perm` permutation + `impl_swap_k 1`, where
+    `impl_swap_k 1 = impl_swap`). Output uses `impl_swap_k 2`. -/
 @[irreducible]
 def round1_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
   (do
-    let s_theta ← keccak_f.theta_unrolled (lift_perm s impl_perm impl_swap)
+    let s_theta ← keccak_f.theta_unrolled (lift_perm s impl_perm (impl_swap_k 1))
     let s_rho ← keccak_f.rho_unrolled s_theta
     let s_pi ← keccak_f.pi_unrolled s_rho
     let s_chi ← keccak_f.chi_unrolled s_pi
     let r_spec ← keccak_f.iota s_chi s.i
-    pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm) impl_swap)).holds
+    pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm) (impl_swap_k 2))).holds
 
 theorem round1_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
@@ -291,12 +295,13 @@ theorem round1_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
 @[irreducible]
 def round2_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
   (do
-    let s_theta ← keccak_f.theta_unrolled (lift_perm s (impl_perm ∘ impl_perm) impl_swap)
+    let s_theta ← keccak_f.theta_unrolled
+      (lift_perm s (impl_perm ∘ impl_perm) (impl_swap_k 2))
     let s_rho ← keccak_f.rho_unrolled s_theta
     let s_pi ← keccak_f.pi_unrolled s_rho
     let s_chi ← keccak_f.chi_unrolled s_pi
     let r_spec ← keccak_f.iota s_chi s.i
-    pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap)).holds
+    pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3))).holds
 
 theorem round2_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
@@ -308,12 +313,14 @@ theorem round2_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
 def round3_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
   (do
     let s_theta ← keccak_f.theta_unrolled
-      (lift_perm s (impl_perm ∘ impl_perm ∘ impl_perm) impl_swap)
+      (lift_perm s (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3))
     let s_rho ← keccak_f.rho_unrolled s_theta
     let s_pi ← keccak_f.pi_unrolled s_rho
     let s_chi ← keccak_f.chi_unrolled s_pi
     let r_spec ← keccak_f.iota s_chi s.i
-    pure (r_spec = lift_perm r_impl id impl_swap)).holds
+    -- Output uses `impl_swap_k 4 = (fun _ => false)`, i.e. the canonical
+    -- `lift` (after `impl_perm^[4] = id`). Equivalent to `lift r_impl`.
+    pure (r_spec = Equivalence.lift r_impl)).holds
 
 theorem round3_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
