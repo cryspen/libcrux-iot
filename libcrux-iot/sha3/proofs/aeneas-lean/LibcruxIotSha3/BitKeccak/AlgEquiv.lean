@@ -302,6 +302,35 @@ theorem bit_round0_alg_eq (s : KState) (hi : s.i.val < 24) :
      = .ok (lift_perm (bit_round0 s).toAeneas impl_perm impl_swap)
   rw [show s.i = s.toAeneas.i from rfl, h_spec_eq, h_r_eq]
 
+/-! ### Round-1 chain Triple (bit-side equivalence over the 3-step impl) -/
+
+private theorem round1_full_bit_eq (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃⌜True⌝⦄
+    (do let s1 ← keccak.keccakf1600_round1_theta s
+        keccakf1600_round1_pi_rho_chi_chain s1)
+    ⦃⇓ r => ⌜KState.fromAeneas r = bit_round1 (KState.fromAeneas s)⌝⦄ := by
+  apply Std.Do.Triple.bind _ _ (keccakf1600_round1_theta_eq s)
+  intro s1
+  apply triple_imp_intro
+  intro h_theta
+  have h_s1_i : s1.i = s.i := by
+    have h : (KState.fromAeneas s1).i = (bit_keccakf1600_round1_theta (KState.fromAeneas s)).i :=
+      congrArg (·.i) h_theta
+    rw [bit_keccakf1600_round1_theta_i] at h
+    exact h
+  unfold keccakf1600_round1_pi_rho_chi_chain
+  apply Std.Do.Triple.bind _ _
+    (keccakf1600_round1_pi_rho_chi_1_eq 0#usize s1 (by rw [h_s1_i]; exact hi))
+  intro s2
+  apply triple_imp_intro
+  intro h_prc1
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round1_pi_rho_chi_2_eq s2)
+  rw [PostCond.entails_noThrow]
+  intro r h_prc2
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_prc2 ⊢
+  unfold bit_round1
+  rw [h_prc2, h_prc1, h_theta]
+
 /-- Round 1 algebraic equivalence (unconditional). Input convention
     `impl_swap_k 1 = impl_swap`, output `impl_swap_k 2`. Currently
     blocked on `round1_equiv_spec` (sorry'd in `RoundEquiv.lean`) and
@@ -313,6 +342,35 @@ theorem bit_round1_alg_eq (s : KState) (hi : s.i.val < 24) :
     = .ok (lift_perm (bit_round1 s).toAeneas (impl_perm ∘ impl_perm) (impl_swap_k 2)) := by
   sorry
 
+/-! ### Round-2 chain Triple (bit-side equivalence over the 3-step impl) -/
+
+private theorem round2_full_bit_eq (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃⌜True⌝⦄
+    (do let s1 ← keccak.keccakf1600_round2_theta s
+        keccakf1600_round2_pi_rho_chi_chain s1)
+    ⦃⇓ r => ⌜KState.fromAeneas r = bit_round2 (KState.fromAeneas s)⌝⦄ := by
+  apply Std.Do.Triple.bind _ _ (keccakf1600_round2_theta_eq s)
+  intro s1
+  apply triple_imp_intro
+  intro h_theta
+  have h_s1_i : s1.i = s.i := by
+    have h : (KState.fromAeneas s1).i = (bit_keccakf1600_round2_theta (KState.fromAeneas s)).i :=
+      congrArg (·.i) h_theta
+    rw [bit_keccakf1600_round2_theta_i] at h
+    exact h
+  unfold keccakf1600_round2_pi_rho_chi_chain
+  apply Std.Do.Triple.bind _ _
+    (keccakf1600_round2_pi_rho_chi_1_eq 0#usize s1 (by rw [h_s1_i]; exact hi))
+  intro s2
+  apply triple_imp_intro
+  intro h_prc1
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round2_pi_rho_chi_2_eq s2)
+  rw [PostCond.entails_noThrow]
+  intro r h_prc2
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_prc2 ⊢
+  unfold bit_round2
+  rw [h_prc2, h_prc1, h_theta]
+
 /-- Round 2 algebraic equivalence (unconditional). Input `impl_swap_k 2`,
     output `impl_swap_k 3`. -/
 theorem bit_round2_alg_eq (s : KState) (hi : s.i.val < 24) :
@@ -321,6 +379,35 @@ theorem bit_round2_alg_eq (s : KState) (hi : s.i.val < 24) :
     = .ok (lift_perm (bit_round2 s).toAeneas
               (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) := by
   sorry
+
+/-! ### Round-3 chain Triple (bit-side equivalence over the 3-step impl) -/
+
+private theorem round3_full_bit_eq (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃⌜True⌝⦄
+    (do let s1 ← keccak.keccakf1600_round3_theta s
+        keccakf1600_round3_pi_rho_chi_chain s1)
+    ⦃⇓ r => ⌜KState.fromAeneas r = bit_round3 (KState.fromAeneas s)⌝⦄ := by
+  apply Std.Do.Triple.bind _ _ (keccakf1600_round3_theta_eq s)
+  intro s1
+  apply triple_imp_intro
+  intro h_theta
+  have h_s1_i : s1.i = s.i := by
+    have h : (KState.fromAeneas s1).i = (bit_keccakf1600_round3_theta (KState.fromAeneas s)).i :=
+      congrArg (·.i) h_theta
+    rw [bit_keccakf1600_round3_theta_i] at h
+    exact h
+  unfold keccakf1600_round3_pi_rho_chi_chain
+  apply Std.Do.Triple.bind _ _
+    (keccakf1600_round3_pi_rho_chi_1_eq 0#usize s1 (by rw [h_s1_i]; exact hi))
+  intro s2
+  apply triple_imp_intro
+  intro h_prc1
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round3_pi_rho_chi_2_eq s2)
+  rw [PostCond.entails_noThrow]
+  intro r h_prc2
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_prc2 ⊢
+  unfold bit_round3
+  rw [h_prc2, h_prc1, h_theta]
 
 /-- Round 3 algebraic equivalence (unconditional). Input `impl_swap_k 3`,
     output `impl_swap_k 4 = (fun _ => false)`. With
