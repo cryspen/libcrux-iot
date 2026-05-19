@@ -1362,4 +1362,35 @@ def bit_keccakf1600_round3_pi_rho_chi_2 (s : KState) : KState :=
   let s5 := bit_round3_pi_rho_chi_y4_zeta0 s4
   bit_round3_pi_rho_chi_y4_zeta1 s5
 
+/-! ## 4-round bundle (Campaign-1 mid-level composition)
+
+    Mirrors the structure of `keccak.keccakf1600_4rounds`: 12 sub-piece
+    calls chained `round0_theta → round0_pi_rho_chi_1 → _2 → round1_…
+    → … → round3_pi_rho_chi_2`. `BR` is the `BASE_ROUND` parameter
+    (always `0#usize` at the top-level loop call site). -/
+def bit_keccakf1600_4rounds (BR : Std.Usize) (s : KState) : KState :=
+  let s1  := bit_keccakf1600_round0_theta s
+  let s2  := bit_keccakf1600_round0_pi_rho_chi_1 BR s1
+  let s3  := bit_keccakf1600_round0_pi_rho_chi_2 s2
+  let s4  := bit_keccakf1600_round1_theta s3
+  let s5  := bit_keccakf1600_round1_pi_rho_chi_1 BR s4
+  let s6  := bit_keccakf1600_round1_pi_rho_chi_2 s5
+  let s7  := bit_keccakf1600_round2_theta s6
+  let s8  := bit_keccakf1600_round2_pi_rho_chi_1 BR s7
+  let s9  := bit_keccakf1600_round2_pi_rho_chi_2 s8
+  let s10 := bit_keccakf1600_round3_theta s9
+  let s11 := bit_keccakf1600_round3_pi_rho_chi_1 BR s10
+  bit_keccakf1600_round3_pi_rho_chi_2 s11
+
+/-! ## Top-level spec: 6 × 4-round bundle, then reset `i` to 0.
+
+    `Nat.iterate f 6` is `f∘f∘f∘f∘f∘f`. Each `bit_keccakf1600_4rounds 0`
+    bumps `s.i` by 4 (one increment in each round's `pi_rho_chi_1`), so
+    after 6 iterations `s.i.val = 24`. The final `with i := 0` reset
+    mirrors `ok { s1 with i := 0#usize }` in
+    `keccak.keccakf1600`. -/
+def bit_keccak_spec (s : KState) : KState :=
+  let s' := Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 s
+  { s' with i := 0#usize }
+
 end libcrux_iot_sha3.BitKeccak

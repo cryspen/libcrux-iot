@@ -17,6 +17,7 @@ import LibcruxIotSha3.BitKeccak.StateIso
 import LibcruxIotSha3.BitKeccak.Project
 import LibcruxIotSha3.Equivalence.PrcLift
 import LibcruxIotSha3.Equivalence.ThetaLiftDefs
+import LibcruxIotSha3.Equivalence.Keccakf1600Loop
 import Hax
 
 namespace libcrux_iot_sha3.BitKeccak
@@ -3101,5 +3102,634 @@ theorem keccakf1600_round3_pi_rho_chi_2_eq (s : state.KeccakState) :
   rfl
 
 end Round3PrcLiftComp
+
+/-! # Loop bridge — Phase 1 Step B
+
+Closes Campaign 1 by lifting the 12 round-level `_eq` theorems through
+the impl's 4-round bundle, then through the 6-iteration outer loop,
+landing the top-level `keccakf1600 s ≡ bit_keccak_spec (KState.fromAeneas s)`.
+
+Architecture: no `Balanced`-preservation needed — the bit-side defs are
+pure `KState → KState` and `KState.fromAeneas r = bit_… (KState.fromAeneas s)`
+chains cleanly across iterations.
+
+Pattern:
+1. Strengthen the 12 round-level `_eq` posts to include i-info (`r.i = s.i`
+   for theta/pi_rho_chi_2, `r.i.val = s.i.val + 1` for pi_rho_chi_1).
+2. Bundle into a 4-round `keccakf1600_4rounds_eq` (+ `r.i.val = s.i.val + 4`).
+3. Iterate via `loop_range_spec_i32` for 6 iterations.
+4. Post-reset `i := 0` to match `bit_keccak_spec`'s wrap.
+-/
+
+section LoopBridge
+
+/-! ## Bit-side i-projection lemmas
+
+The bit-side composer fns are nested let-bindings whose `.i` field
+projects definitionally. Each `theta`/`pi_rho_chi_2` composer preserves
+`i`; each `pi_rho_chi_1` composer bumps `i` by 1 (via the `y0_zeta1`
+RC-bearing sub-piece). Used by the round-level `_i` theorems below to
+derive the i-info from the bit-side equality. -/
+
+private theorem bit_keccakf1600_round0_theta_i (s : KState) :
+    (bit_keccakf1600_round0_theta s).i = s.i := by
+  unfold bit_keccakf1600_round0_theta bit_theta_d
+    bit_theta_c_x0_z0 bit_theta_c_x0_z1
+    bit_theta_c_x1_z0 bit_theta_c_x1_z1
+    bit_theta_c_x2_z0 bit_theta_c_x2_z1
+    bit_theta_c_x3_z0 bit_theta_c_x3_z1
+    bit_theta_c_x4_z0 bit_theta_c_x4_z1
+  rfl
+
+private theorem bit_keccakf1600_round0_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
+    (bit_keccakf1600_round0_pi_rho_chi_1 BR s).i =
+      ⟨s.i.bv + (1 : BitVec System.Platform.numBits)⟩ := by
+  unfold bit_keccakf1600_round0_pi_rho_chi_1
+    bit_pi_rho_chi_y0_zeta0 bit_pi_rho_chi_y0_zeta1
+    bit_pi_rho_chi_y1_zeta0 bit_pi_rho_chi_y1_zeta1
+  rfl
+
+private theorem bit_keccakf1600_round0_pi_rho_chi_2_i (s : KState) :
+    (bit_keccakf1600_round0_pi_rho_chi_2 s).i = s.i := by
+  unfold bit_keccakf1600_round0_pi_rho_chi_2
+    bit_pi_rho_chi_y2_zeta0 bit_pi_rho_chi_y2_zeta1
+    bit_pi_rho_chi_y3_zeta0 bit_pi_rho_chi_y3_zeta1
+    bit_pi_rho_chi_y4_zeta0 bit_pi_rho_chi_y4_zeta1
+  rfl
+
+private theorem bit_keccakf1600_round1_theta_i (s : KState) :
+    (bit_keccakf1600_round1_theta s).i = s.i := by
+  unfold bit_keccakf1600_round1_theta bit_round1_theta_d
+    bit_round1_theta_c_x0_z0 bit_round1_theta_c_x0_z1
+    bit_round1_theta_c_x1_z0 bit_round1_theta_c_x1_z1
+    bit_round1_theta_c_x2_z0 bit_round1_theta_c_x2_z1
+    bit_round1_theta_c_x3_z0 bit_round1_theta_c_x3_z1
+    bit_round1_theta_c_x4_z0 bit_round1_theta_c_x4_z1
+  rfl
+
+private theorem bit_keccakf1600_round1_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
+    (bit_keccakf1600_round1_pi_rho_chi_1 BR s).i =
+      ⟨s.i.bv + (1 : BitVec System.Platform.numBits)⟩ := by
+  unfold bit_keccakf1600_round1_pi_rho_chi_1
+    bit_round1_pi_rho_chi_y0_zeta0 bit_round1_pi_rho_chi_y0_zeta1
+    bit_round1_pi_rho_chi_y1_zeta0 bit_round1_pi_rho_chi_y1_zeta1
+  rfl
+
+private theorem bit_keccakf1600_round1_pi_rho_chi_2_i (s : KState) :
+    (bit_keccakf1600_round1_pi_rho_chi_2 s).i = s.i := by
+  unfold bit_keccakf1600_round1_pi_rho_chi_2
+    bit_round1_pi_rho_chi_y2_zeta0 bit_round1_pi_rho_chi_y2_zeta1
+    bit_round1_pi_rho_chi_y3_zeta0 bit_round1_pi_rho_chi_y3_zeta1
+    bit_round1_pi_rho_chi_y4_zeta0 bit_round1_pi_rho_chi_y4_zeta1
+  rfl
+
+private theorem bit_keccakf1600_round2_theta_i (s : KState) :
+    (bit_keccakf1600_round2_theta s).i = s.i := by
+  unfold bit_keccakf1600_round2_theta bit_round2_theta_d
+    bit_round2_theta_c_x0_z0 bit_round2_theta_c_x0_z1
+    bit_round2_theta_c_x1_z0 bit_round2_theta_c_x1_z1
+    bit_round2_theta_c_x2_z0 bit_round2_theta_c_x2_z1
+    bit_round2_theta_c_x3_z0 bit_round2_theta_c_x3_z1
+    bit_round2_theta_c_x4_z0 bit_round2_theta_c_x4_z1
+  rfl
+
+private theorem bit_keccakf1600_round2_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
+    (bit_keccakf1600_round2_pi_rho_chi_1 BR s).i =
+      ⟨s.i.bv + (1 : BitVec System.Platform.numBits)⟩ := by
+  unfold bit_keccakf1600_round2_pi_rho_chi_1
+    bit_round2_pi_rho_chi_y0_zeta0 bit_round2_pi_rho_chi_y0_zeta1
+    bit_round2_pi_rho_chi_y1_zeta0 bit_round2_pi_rho_chi_y1_zeta1
+  rfl
+
+private theorem bit_keccakf1600_round2_pi_rho_chi_2_i (s : KState) :
+    (bit_keccakf1600_round2_pi_rho_chi_2 s).i = s.i := by
+  unfold bit_keccakf1600_round2_pi_rho_chi_2
+    bit_round2_pi_rho_chi_y2_zeta0 bit_round2_pi_rho_chi_y2_zeta1
+    bit_round2_pi_rho_chi_y3_zeta0 bit_round2_pi_rho_chi_y3_zeta1
+    bit_round2_pi_rho_chi_y4_zeta0 bit_round2_pi_rho_chi_y4_zeta1
+  rfl
+
+private theorem bit_keccakf1600_round3_theta_i (s : KState) :
+    (bit_keccakf1600_round3_theta s).i = s.i := by
+  unfold bit_keccakf1600_round3_theta bit_round3_theta_d
+    bit_round3_theta_c_x0_z0 bit_round3_theta_c_x0_z1
+    bit_round3_theta_c_x1_z0 bit_round3_theta_c_x1_z1
+    bit_round3_theta_c_x2_z0 bit_round3_theta_c_x2_z1
+    bit_round3_theta_c_x3_z0 bit_round3_theta_c_x3_z1
+    bit_round3_theta_c_x4_z0 bit_round3_theta_c_x4_z1
+  rfl
+
+private theorem bit_keccakf1600_round3_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
+    (bit_keccakf1600_round3_pi_rho_chi_1 BR s).i =
+      ⟨s.i.bv + (1 : BitVec System.Platform.numBits)⟩ := by
+  unfold bit_keccakf1600_round3_pi_rho_chi_1
+    bit_round3_pi_rho_chi_y0_zeta0 bit_round3_pi_rho_chi_y0_zeta1
+    bit_round3_pi_rho_chi_y1_zeta0 bit_round3_pi_rho_chi_y1_zeta1
+  rfl
+
+private theorem bit_keccakf1600_round3_pi_rho_chi_2_i (s : KState) :
+    (bit_keccakf1600_round3_pi_rho_chi_2 s).i = s.i := by
+  unfold bit_keccakf1600_round3_pi_rho_chi_2
+    bit_round3_pi_rho_chi_y2_zeta0 bit_round3_pi_rho_chi_y2_zeta1
+    bit_round3_pi_rho_chi_y3_zeta0 bit_round3_pi_rho_chi_y3_zeta1
+    bit_round3_pi_rho_chi_y4_zeta0 bit_round3_pi_rho_chi_y4_zeta1
+  rfl
+
+/-- `(KState.fromAeneas r).i = r.i` definitionally. Used to project i-info
+    out of the bit-side equality. -/
+private theorem fromAeneas_i_eq (r : state.KeccakState) :
+    (KState.fromAeneas r).i = r.i := rfl
+
+/-- Inverse of `usize_succ_eq`: from `r.bv = s.bv + 1` (the bit-side
+    increment encoding) and `s.val < 24` (overflow guard), recover the
+    UScalar-level equation `r.val = s.val + 1`. -/
+private theorem usize_succ_val_eq
+    {r s : Aeneas.Std.Usize} (hr : r = ⟨s.bv + (1 : BitVec System.Platform.numBits)⟩)
+    (hi : s.val < 24) :
+    r.val = s.val + 1 := by
+  subst hr
+  show (s.bv + (1 : BitVec System.Platform.numBits)).toNat = s.val + 1
+  have h32 : (32 : Nat) ≤ System.Platform.numBits := by
+    have := System.Platform.numBits_eq; omega
+  have hpow : (2 : Nat) ^ 32 ≤ 2 ^ System.Platform.numBits :=
+    Nat.pow_le_pow_right (by decide) h32
+  have hone : (1 : BitVec System.Platform.numBits).toNat = 1 := by
+    have h1 : (1 : Nat) % 2 ^ System.Platform.numBits = 1 := by
+      apply Nat.mod_eq_of_lt; omega
+    simp [BitVec.toNat_ofNat, h1]
+  rw [BitVec.toNat_add, hone]
+  have hsv : s.bv.toNat = s.val := rfl
+  have hmod : (s.bv.toNat + 1) % 2 ^ System.Platform.numBits = s.bv.toNat + 1 := by
+    apply Nat.mod_eq_of_lt
+    rw [hsv]; omega
+  rw [hmod, hsv]
+
+/-! ## Bundled round-level Triples
+
+Each combines the existing `keccakf1600_round{k}_{theta,pi_rho_chi_1,pi_rho_chi_2}_eq`
+(bit-side equality) with the i-info derived via the `_i` projection
+lemmas above. The bundled posts thread `r.i = s.i` (for non-mutating
+calls) or `r.i.val = s.i.val + 1` (for `pi_rho_chi_1`), enabling
+`hi : s_iter.i.val < 24` discharge in the 4-round `Triple.bind` chain. -/
+
+private theorem round0_theta_bundled (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_theta s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round0_theta (KState.fromAeneas s)
+      ∧ r.i = s.i ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round0_theta_eq s)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have hi : (KState.fromAeneas r).i = (bit_keccakf1600_round0_theta (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round0_theta_i] at hi
+  exact hi
+
+private theorem round0_pi_rho_chi_1_bundled
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_pi_rho_chi_1 BR s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round0_pi_rho_chi_1 BR (KState.fromAeneas s)
+      ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round0_pi_rho_chi_1_eq BR s hi)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have heq : (KState.fromAeneas r).i =
+      (bit_keccakf1600_round0_pi_rho_chi_1 BR (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round0_pi_rho_chi_1_i] at heq
+  exact usize_succ_val_eq heq hi
+
+private theorem round0_pi_rho_chi_2_bundled (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round0_pi_rho_chi_2 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round0_pi_rho_chi_2 (KState.fromAeneas s)
+      ∧ r.i = s.i ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round0_pi_rho_chi_2_eq s)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have hi : (KState.fromAeneas r).i = (bit_keccakf1600_round0_pi_rho_chi_2 (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round0_pi_rho_chi_2_i] at hi
+  exact hi
+
+private theorem round1_theta_bundled (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round1_theta s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round1_theta (KState.fromAeneas s)
+      ∧ r.i = s.i ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round1_theta_eq s)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have hi : (KState.fromAeneas r).i = (bit_keccakf1600_round1_theta (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round1_theta_i] at hi
+  exact hi
+
+private theorem round1_pi_rho_chi_1_bundled
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round1_pi_rho_chi_1 BR s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round1_pi_rho_chi_1 BR (KState.fromAeneas s)
+      ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round1_pi_rho_chi_1_eq BR s hi)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have heq : (KState.fromAeneas r).i =
+      (bit_keccakf1600_round1_pi_rho_chi_1 BR (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round1_pi_rho_chi_1_i] at heq
+  exact usize_succ_val_eq heq hi
+
+private theorem round1_pi_rho_chi_2_bundled (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round1_pi_rho_chi_2 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round1_pi_rho_chi_2 (KState.fromAeneas s)
+      ∧ r.i = s.i ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round1_pi_rho_chi_2_eq s)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have hi : (KState.fromAeneas r).i = (bit_keccakf1600_round1_pi_rho_chi_2 (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round1_pi_rho_chi_2_i] at hi
+  exact hi
+
+private theorem round2_theta_bundled (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_theta s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round2_theta (KState.fromAeneas s)
+      ∧ r.i = s.i ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round2_theta_eq s)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have hi : (KState.fromAeneas r).i = (bit_keccakf1600_round2_theta (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round2_theta_i] at hi
+  exact hi
+
+private theorem round2_pi_rho_chi_1_bundled
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_1 BR s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round2_pi_rho_chi_1 BR (KState.fromAeneas s)
+      ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round2_pi_rho_chi_1_eq BR s hi)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have heq : (KState.fromAeneas r).i =
+      (bit_keccakf1600_round2_pi_rho_chi_1 BR (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round2_pi_rho_chi_1_i] at heq
+  exact usize_succ_val_eq heq hi
+
+private theorem round2_pi_rho_chi_2_bundled (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round2_pi_rho_chi_2 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round2_pi_rho_chi_2 (KState.fromAeneas s)
+      ∧ r.i = s.i ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round2_pi_rho_chi_2_eq s)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have hi : (KState.fromAeneas r).i = (bit_keccakf1600_round2_pi_rho_chi_2 (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round2_pi_rho_chi_2_i] at hi
+  exact hi
+
+private theorem round3_theta_bundled (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round3_theta s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round3_theta (KState.fromAeneas s)
+      ∧ r.i = s.i ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round3_theta_eq s)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have hi : (KState.fromAeneas r).i = (bit_keccakf1600_round3_theta (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round3_theta_i] at hi
+  exact hi
+
+private theorem round3_pi_rho_chi_1_bundled
+    (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round3_pi_rho_chi_1 BR s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round3_pi_rho_chi_1 BR (KState.fromAeneas s)
+      ∧ r.i.val = s.i.val + 1 ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round3_pi_rho_chi_1_eq BR s hi)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have heq : (KState.fromAeneas r).i =
+      (bit_keccakf1600_round3_pi_rho_chi_1 BR (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round3_pi_rho_chi_1_i] at heq
+  exact usize_succ_val_eq heq hi
+
+private theorem round3_pi_rho_chi_2_bundled (s : state.KeccakState) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_round3_pi_rho_chi_2 s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_round3_pi_rho_chi_2 (KState.fromAeneas s)
+      ∧ r.i = s.i ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_round3_pi_rho_chi_2_eq s)
+  rw [PostCond.entails_noThrow]
+  intro r h_eq
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq ⊢
+  refine ⟨h_eq, ?_⟩
+  have hi : (KState.fromAeneas r).i = (bit_keccakf1600_round3_pi_rho_chi_2 (KState.fromAeneas s)).i :=
+    congrArg (·.i) h_eq
+  rw [bit_keccakf1600_round3_pi_rho_chi_2_i] at hi
+  exact hi
+
+/-! ## Main 4-round equivalence
+
+Chains the 12 bundled round-level Triples via `Triple.bind`. The
+threaded i-info from each call's conjunctive post discharges the
+`s_iter.i.val < 24` precondition required by the next `pi_rho_chi_1`.
+
+The bit-side equality threading is straightforward: each step rewrites
+`KState.fromAeneas s_{k+1} = bit_… (KState.fromAeneas s_k)`, and the
+final conclusion follows by `unfold bit_keccakf1600_4rounds; rfl`-style
+collapse over the 12 chained equalities. -/
+
+open libcrux_iot_sha3.Equivalence (triple_imp_intro triple_conj_post
+  loop_range_spec_i32 IteratorRange_next_spec_i32
+  pure_prop_holds of_pure_prop_holds)
+
+open Result ControlFlow
+
+/-- Local copy of the private `triple_of_ok_i32` from `Keccakf1600Loop.lean`:
+    a pure `ok v` value satisfies any `Triple` whose post `P r` holds at `v`. -/
+private theorem triple_of_ok_local {α : Type} {x : Result α} {v : α} {P : α → Prop}
+    (hx : x = Aeneas.Std.Result.ok v) (hp : P v) :
+    (⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄) := by
+  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+
+set_option maxHeartbeats 4000000 in
+theorem keccakf1600_4rounds_eq (BR : Std.Usize) (s : state.KeccakState)
+    (hi : s.i.val + 4 ≤ 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_4rounds BR s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r = bit_keccakf1600_4rounds BR (KState.fromAeneas s)
+      ∧ r.i.val = s.i.val + 4 ⌝ ⦄ := by
+  unfold keccak.keccakf1600_4rounds
+  -- Round 0
+  apply Std.Do.Triple.bind _ _ (round0_theta_bundled s)
+  intro s1
+  apply triple_imp_intro
+  rintro ⟨h_eq_1, h_i_1⟩
+  apply Std.Do.Triple.bind _ _
+    (round0_pi_rho_chi_1_bundled BR s1 (by rw [h_i_1]; omega))
+  intro s2
+  apply triple_imp_intro
+  rintro ⟨h_eq_2, h_i_2⟩
+  apply Std.Do.Triple.bind _ _ (round0_pi_rho_chi_2_bundled s2)
+  intro s3
+  apply triple_imp_intro
+  rintro ⟨h_eq_3, h_i_3⟩
+  -- Round 1
+  apply Std.Do.Triple.bind _ _ (round1_theta_bundled s3)
+  intro s4
+  apply triple_imp_intro
+  rintro ⟨h_eq_4, h_i_4⟩
+  apply Std.Do.Triple.bind _ _
+    (round1_pi_rho_chi_1_bundled BR s4
+      (by rw [show s4.i = s3.i from h_i_4, show s3.i = s2.i from h_i_3, h_i_2,
+              show s1.i = s.i from h_i_1]; omega))
+  intro s5
+  apply triple_imp_intro
+  rintro ⟨h_eq_5, h_i_5⟩
+  apply Std.Do.Triple.bind _ _ (round1_pi_rho_chi_2_bundled s5)
+  intro s6
+  apply triple_imp_intro
+  rintro ⟨h_eq_6, h_i_6⟩
+  -- Round 2
+  apply Std.Do.Triple.bind _ _ (round2_theta_bundled s6)
+  intro s7
+  apply triple_imp_intro
+  rintro ⟨h_eq_7, h_i_7⟩
+  apply Std.Do.Triple.bind _ _
+    (round2_pi_rho_chi_1_bundled BR s7
+      (by rw [show s7.i = s6.i from h_i_7, show s6.i = s5.i from h_i_6, h_i_5,
+              show s4.i = s3.i from h_i_4, show s3.i = s2.i from h_i_3, h_i_2,
+              show s1.i = s.i from h_i_1]; omega))
+  intro s8
+  apply triple_imp_intro
+  rintro ⟨h_eq_8, h_i_8⟩
+  apply Std.Do.Triple.bind _ _ (round2_pi_rho_chi_2_bundled s8)
+  intro s9
+  apply triple_imp_intro
+  rintro ⟨h_eq_9, h_i_9⟩
+  -- Round 3
+  apply Std.Do.Triple.bind _ _ (round3_theta_bundled s9)
+  intro s10
+  apply triple_imp_intro
+  rintro ⟨h_eq_10, h_i_10⟩
+  apply Std.Do.Triple.bind _ _
+    (round3_pi_rho_chi_1_bundled BR s10
+      (by rw [show s10.i = s9.i from h_i_10, show s9.i = s8.i from h_i_9, h_i_8,
+              show s7.i = s6.i from h_i_7, show s6.i = s5.i from h_i_6, h_i_5,
+              show s4.i = s3.i from h_i_4, show s3.i = s2.i from h_i_3, h_i_2,
+              show s1.i = s.i from h_i_1]; omega))
+  intro s11
+  apply triple_imp_intro
+  rintro ⟨h_eq_11, h_i_11⟩
+  -- Tail: round3_pi_rho_chi_2 — combine with the chain to derive the post.
+  apply Std.Do.Triple.of_entails_right _ (round3_pi_rho_chi_2_bundled s11)
+  rw [PostCond.entails_noThrow]
+  intro r ⟨h_eq_12, h_i_12⟩
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_eq_12 h_i_12 ⊢
+  refine ⟨?_, ?_⟩
+  · -- bit-side equality: chain the 12 h_eq_k's into the bit_keccakf1600_4rounds unfolding
+    unfold bit_keccakf1600_4rounds
+    rw [h_eq_12, h_eq_11, h_eq_10, h_eq_9, h_eq_8, h_eq_7, h_eq_6, h_eq_5,
+        h_eq_4, h_eq_3, h_eq_2, h_eq_1]
+  · -- r.i.val = s.i.val + 4: chain the 12 h_i_k's.
+    -- r.i = s11.i (h_i_12), s11.i.val = s10.i.val + 1 (h_i_11),
+    -- s10.i = s9.i (h_i_10), s9.i = s8.i (h_i_9), s8.i.val = s7.i.val + 1 (h_i_8),
+    -- s7.i = s6.i (h_i_7), s6.i = s5.i (h_i_6), s5.i.val = s4.i.val + 1 (h_i_5),
+    -- s4.i = s3.i (h_i_4), s3.i = s2.i (h_i_3), s2.i.val = s1.i.val + 1 (h_i_2),
+    -- s1.i = s.i (h_i_1).
+    have : r.i = s11.i := h_i_12
+    have : r.i.val = s11.i.val := congrArg (·.val) this
+    rw [this, h_i_11,
+        show s10.i = s9.i from h_i_10, show s9.i = s8.i from h_i_9, h_i_8,
+        show s7.i = s6.i from h_i_7, show s6.i = s5.i from h_i_6, h_i_5,
+        show s4.i = s3.i from h_i_4, show s3.i = s2.i from h_i_3, h_i_2,
+        show s1.i = s.i from h_i_1]
+
+/-! ## Loop bridge: iterate `bit_keccakf1600_4rounds` 6 times
+
+Uses `loop_range_spec_i32` with an invariant that tracks both the
+iteration index–to–`s.i` correspondence (`s_iter.i.val = 4 * k.val.toNat`)
+and the bit-side equality (`KState.fromAeneas s_iter = f^[k] (...)`).
+
+This is the bit-side analogue of `keccakf1600_loop_equiv` in
+`Equivalence/Keccakf1600Loop.lean`, but without the `Balanced` /
+`lift_perm` machinery: the bit-side defs already chain structurally. -/
+
+/-- Per-iteration invariant for the bit-side loop bridge: at iter
+    boundary `k ∈ [0, 6]`, the impl state has `i.val = 4k`, and its
+    iso projection equals the `k`-fold bit-side iteration. -/
+private def bit_loop_inv (s_0 : state.KeccakState) (k : Std.I32)
+    (s_iter : state.KeccakState) : Prop :=
+  0 ≤ k.val ∧ k.val ≤ 6 ∧
+  s_iter.i.val = 4 * k.val.toNat ∧
+  KState.fromAeneas s_iter =
+    Nat.iterate (bit_keccakf1600_4rounds 0#usize) k.val.toNat (KState.fromAeneas s_0)
+
+set_option maxHeartbeats 4000000 in
+theorem keccakf1600_loop_eq (s : state.KeccakState) (h_i : s.i = 0#usize) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600_loop { start := 0#i32, «end» := 6#i32 } s
+    ⦃ ⇓ r => ⌜
+      KState.fromAeneas r =
+        Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 (KState.fromAeneas s) ⌝ ⦄ := by
+  unfold keccak.keccakf1600_loop
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_i32
+      (fun (iter1, s1) => keccak.keccakf1600_loop.body iter1 s1)
+      s 0#i32 6#i32
+      (fun k s_iter => pure (bit_loop_inv s k s_iter))
+      (by decide)
+      (by -- h_init: invariant at k=0 with s_iter = s.
+          apply pure_prop_holds
+          refine ⟨by decide, by decide, ?_, ?_⟩
+          · rw [h_i]; rfl
+          · show KState.fromAeneas s = KState.fromAeneas s
+            rfl)
+      ?_)
+  · -- Post-entailment: extract bit-side eq at k=6.
+    rw [PostCond.entails_noThrow]
+    intro s_final hinv
+    dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at hinv ⊢
+    have ⟨_, _, _, h_iter⟩ := of_pure_prop_holds hinv
+    have h6 : (6#i32 : Std.I32).val.toNat = 6 := by decide
+    rw [h6] at h_iter
+    exact h_iter
+  · -- h_step: per-iteration body Triple.
+    intro acc k h_ge h_le hinv
+    have hk_inv := of_pure_prop_holds hinv
+    obtain ⟨h_ge_k, h_le_k, h_acc_i, h_iter_acc⟩ := hk_inv
+    unfold keccak.keccakf1600_loop.body
+    apply Std.Do.Triple.bind _ _
+      (IteratorRange_next_spec_i32 k 6#i32 (by decide)
+        (Q := PostCond.noThrow fun (oi : Option Std.I32 × _) => ⌜
+          match oi.1 with
+          | none => k.val ≥ (6#i32 : Std.I32).val ∧ oi.2 = { start := k, «end» := 6#i32 }
+          | some i => i = k ∧ k.val < (6#i32 : Std.I32).val ∧
+                      oi.2.«end» = 6#i32 ∧ oi.2.start.val = k.val + 1
+        ⌝)
+        (fun hlt s hs => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          refine ⟨rfl, hlt, rfl, hs⟩)
+        (fun hge => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨hge, rfl⟩))
+    intro ⟨o, iter1⟩
+    apply triple_imp_intro
+    rcases o with _ | i
+    · -- none branch: k.val = 6, body returns done acc.
+      rintro ⟨hge, hiter1_eq⟩
+      have h6 : (6#i32 : Std.I32).val = 6 := by decide
+      have hk_eq : k.val = 6 := by omega
+      have hk_eq_i32 : k = 6#i32 := Std.IScalar.eq_of_val_eq (by rw [hk_eq, h6])
+      show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
+      apply triple_of_ok_local rfl
+      apply pure_prop_holds
+      refine ⟨by decide, by decide, ?_, ?_⟩
+      · rw [hk_eq_i32] at h_acc_i; exact h_acc_i
+      · rw [hk_eq_i32] at h_iter_acc; exact h_iter_acc
+    · -- some i branch: body runs keccakf1600_4rounds 0 acc, returns cont (iter1, s1).
+      rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
+      have h6 : (6#i32 : Std.I32).val = 6 := by decide
+      cases hi_eq
+      have hk_lt' : k.val < 6 := by rw [← h6]; exact hk_lt
+      have hk_toNat_lt : k.val.toNat < 6 := by omega
+      have h_i_bnd : acc.i.val + 4 ≤ 24 := by rw [h_acc_i]; omega
+      show ⦃⌜True⌝⦄
+        (do let s1 ← keccak.keccakf1600_4rounds 0#usize acc; Aeneas.Std.Result.ok (cont (iter1, s1)))
+        ⦃_⦄
+      apply Std.Do.Triple.bind _ _ (keccakf1600_4rounds_eq 0#usize acc h_i_bnd)
+      intro s1
+      apply triple_imp_intro
+      rintro ⟨h_eq_s1, h_i_s1⟩
+      apply triple_of_ok_local rfl
+      refine ⟨hk_lt, hiter1_end, hiter1_start, ?_⟩
+      apply pure_prop_holds
+      have h_start_val : iter1.start.val = k.val + 1 := hiter1_start
+      have h_start_ge : 0 ≤ iter1.start.val := by rw [h_start_val]; omega
+      have h_start_le : iter1.start.val ≤ 6 := by rw [h_start_val]; omega
+      have h_start_toNat : iter1.start.val.toNat = k.val.toNat + 1 := by
+        rw [h_start_val, Int.toNat_add (by omega) (by decide)]; rfl
+      refine ⟨h_start_ge, h_start_le, ?_, ?_⟩
+      · -- s1.i.val = 4 * iter1.start.val.toNat
+        rw [h_i_s1, h_acc_i, h_start_toNat]; ring
+      · -- KState.fromAeneas s1 = f^[iter1.start.val.toNat] (KState.fromAeneas s)
+        rw [h_start_toNat]
+        -- f^[k+1] x = f (f^[k] x) via Function.iterate_succ_apply'
+        rw [Function.iterate_succ_apply']
+        rw [← h_iter_acc, ← h_eq_s1]
+
+/-! ## Top-level keccakf1600 equivalence
+
+Composes `keccakf1600_loop_eq` (the 6×4-round iteration) with the
+trailing `{ s1 with i := 0#usize }` reset that matches the bit-side
+`bit_keccak_spec`'s `{ s' with i := 0#usize }` wrap. -/
+
+theorem keccakf1600_eq (s : state.KeccakState) (h_i : s.i = 0#usize) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600 s
+    ⦃ ⇓ r => ⌜ KState.fromAeneas r = bit_keccak_spec (KState.fromAeneas s) ⌝ ⦄ := by
+  unfold keccak.keccakf1600
+  apply Std.Do.Triple.bind _ _ (keccakf1600_loop_eq s h_i)
+  intro s1
+  apply triple_imp_intro
+  intro h_loop
+  -- The tail: ok { s1 with i := 0#usize }.
+  apply triple_of_ok_local rfl
+  unfold bit_keccak_spec
+  -- Goal: KState.fromAeneas { s1 with i := 0#usize } =
+  --       { Nat.iterate (...) 6 (KState.fromAeneas s) with i := 0#usize }
+  -- LHS = { KState.fromAeneas s1 with i := 0#usize } (by definition of fromAeneas)
+  -- RHS = { Nat.iterate ... with i := 0#usize }; substitute h_loop.
+  show KState.fromAeneas { s1 with i := 0#usize } =
+    { Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 (KState.fromAeneas s) with i := 0#usize }
+  rw [← h_loop]
+  rfl
+
+end LoopBridge
 
 end libcrux_iot_sha3.BitKeccak
