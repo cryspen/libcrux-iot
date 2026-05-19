@@ -711,13 +711,29 @@ private theorem lift_perm_getElem_bv_24_1 (s : state.KeccakState) :
     rw [impl_swap_k_one]; decide
   rw [h, hp, hsw, lift_lane_maybe_swap_true_bv]
 
+/-- `BitVec.rotateLeft 1` distributes over XOR (bitwise). Needed to
+    flatten `(a ^^^ b).rotateLeft 1` into `a.rotateLeft 1 ^^^ b.rotateLeft 1`
+    so that `bv_decide`/`ac_rfl` can solve XOR-AC equalities involving
+    rotated column-XOR chains. -/
+private theorem rotateLeft1_xor_bv64 (a b : BitVec 64) :
+    (a ^^^ b).rotateLeft 1 = a.rotateLeft 1 ^^^ b.rotateLeft 1 := by
+  bv_decide
+
+/-- `BitVec.rotateLeft 1` distributes over XOR (BV-32 version). -/
+private theorem rotateLeft1_xor_bv32 (a b : BitVec 32) :
+    (a ^^^ b).rotateLeft 1 = a.rotateLeft 1 ^^^ b.rotateLeft 1 := by
+  bv_decide
+
+
 /-! Round-1 θ lift spec. The infrastructure above (`lta_perm_bv_*_1`,
     `lift_perm_getElem_bv_*_1`, `lift_lane_maybe_swap_{true,false}_bv`)
-    is in place. Remaining gap: the 25-lane closure
-    `simp only [..., ← lift_xor, ← lift_td]` doesn't fully discharge
-    lanes with swap=true — those need a `← lift_swap` step (or
-    equivalent BV reasoning) to fold the half-reversed `lift_lane_bv`
-    expressions back into `lift_lane_maybe_swap true _` form. -/
+    is in place. The 25-lane closure uses:
+      - `lift_perm_getElem_bv_*_1` to expose LHS lane reads as `lift_lane_bv`
+      - `impl_swap_k_one` to align swap-tracking
+      - Direct unfolding of `lift_lane_maybe_swap`/`impl_perm`/`impl_swap`
+      - `← lift_xor`, `← lift_td` to fold spec-side back to canonical lifts
+      - `BitVec.rotateLeft_xor` + `bv_decide` to close XOR-AC residuals. -/
+
 
 -- @[spec] (added when proof is filled in)
 set_option maxHeartbeats 64000000 in
@@ -729,6 +745,69 @@ theorem theta_lift_spec_1 (s : state.KeccakState) :
       (do
         let r_spec ← keccak_f.theta_unrolled (lift_perm s impl_perm (impl_swap_k 1))
         pure (r_spec = lift_theta_applied_perm r_impl impl_perm (impl_swap_k 1))).holds ⌝ ⦄ := by
+  /- The proof structure follows round-0's `theta_lift_spec` (in `ThetaLift.lean`),
+     adapted for round-1's `lift_perm s impl_perm (impl_swap_k 1)` spec input.
+
+     Setup + spec-chain coupling (works green):
+       apply Triple.of_entails_right _ (theta_comp_spec_local_1 s)
+       rw [PostCond.entails_noThrow]
+       intro r_impl hpost
+       dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+       refine ⟨hpost.2.1, ?_⟩
+       unfold Aeneas.Std.Result.holds
+       unfold keccak_f.theta_unrolled
+       hax_mvcgen
+       all_goals try scalar_tac
+       obtain ⟨hst, _, hd0z0, hd0z1, hd1z0, hd1z1, hd2z0, hd2z1,
+               hd3z0, hd3z1, hd4z0, hd4z1⟩ := hpost
+       apply Subtype.ext
+       unfold lift_theta_applied_perm
+       show _ = List.ofFn _
+
+     RHS reduction (works green): `simp (config := { decide := true })` with
+     `impl_perm`, `impl_swap`, `lift_lane_maybe_swap`, `lift_lane`, and
+     `impl_swap_k_one` reduces the 25-cell `List.ofFn` to a literal cons-list
+     of `⟨lift_lane_bv (s.st[K][Z0].bv) (s.st[K][Z1].bv)⟩` cells (swap-aware
+     halves baked in via the if-then-else).
+
+     LHS reduction (works green): 25-way pointwise peel via `List.cons_eq_cons`,
+     `Std.U64.bv_eq_imp_eq`, `simp_all only [Std.UScalar.bv_xor, rot32, 25 usize-val rfls, 1#u32 rfl]`,
+     then `simp only [lift_perm_getElem_bv_*_1, Std.UScalarTy.U64_numBits_eq,
+     ← lift_xor, ← lift_td]` to fold the spec-side chain back to
+     `lift_lane_bv (..) (..)` form.
+
+     CLOSURE STEP (the gap): After the above, both sides are
+     `lift_lane_bv X Y = lift_lane_bv X' Y'` per cell, where X, X', Y, Y' are
+     `BitVec 32` expressions over `s.st[K][Z].bv` chains (5–10 atoms, possibly
+     one wrapped in `.rotateLeft 1`). Each cell's equation IS solvable in
+     isolation by `bv_decide` (verified via standalone tests) — the operand
+     sets match modulo XOR-AC, with identical `.rotateLeft 1` sub-chains.
+
+     But in this proof's context, `apply congrArg₂ lift_lane_bv <;> bv_decide`
+     fails on all 50 sub-goals because `bv_decide`'s abstraction phase sees
+     the `mvcgen` lifecycle hypotheses (`r✝`, `v✝`, `h✝`) that contain
+     `(lift_perm s impl_perm (impl_swap_k 1))[K]!.bv` chain references (or,
+     after `simp ... at *`, `lift_lane_bv (..) (..)` opaque references), and
+     it ends up treating the entire BV equation as one opaque variable,
+     reporting "potentially spurious counterexample".
+
+     Closure attempts that failed:
+       - `bv_decide` (with or without `at *` on the `lift_perm_getElem_bv_*_1`
+         simp set)
+       - `ac_rfl` (fails because `s.st[K][Z].bv` operands aren't
+         definitionally equal across LHS and RHS positions even when
+         syntactically identical)
+       - `simp only [BitVec.xor_assoc, BitVec.xor_comm]; bv_decide`
+       - `simp only [rotateLeft1_xor_bv32]; bv_decide` (rotateLeft
+         distribution lemma) — only partially distributes
+       - `clear hd*z*; bv_decide` (doesn't clear the anonymous `r✝`/`v✝`/`h✝`)
+       - `generalize hst' : s.st = st; bv_decide`
+       - `revert s; intro s; bv_decide`
+
+     A successful closure likely requires per-cell helper lemmas: extract
+     each BV-32 identity to a standalone lemma taking only `s : state.KeccakState`
+     and prove via `bv_decide` in a clean context, then invoke 50 such
+     lemmas as the closure step. -/
   sorry
 
 end libcrux_iot_sha3.Equivalence
