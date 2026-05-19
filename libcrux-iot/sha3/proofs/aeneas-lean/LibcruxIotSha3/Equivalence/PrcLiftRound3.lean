@@ -21,7 +21,9 @@ theorem prc_lift_spec_3 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
-          pure (r_spec = lift_perm r_impl id impl_swap)).holds ⌝ ⦄ := by
+          -- Output is the canonical `lift` (since `impl_swap_k 4 = swZero`
+          -- and `impl_perm^[4] = id`).
+          pure (r_spec = Equivalence.lift r_impl)).holds ⌝ ⦄ := by
   sorry
 
 end libcrux_iot_sha3.Equivalence

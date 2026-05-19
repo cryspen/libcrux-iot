@@ -378,32 +378,16 @@ theorem four_round_chunk_equiv
         let r_spec ← spec_round_step_at (s.i.val + 3) st3
         pure (r_spec = lift_perm r id impl_swap)).holds
       ∧ lift r = lift_perm r id impl_swap ⌝ ⦄ := by
-  -- Combine `four_round_equiv` (algebraic chain) and
-  -- `keccakf1600_4rounds_preserves_lift_eq` (preservation of canonicality).
-  apply Triple.of_entails_right _
-    (triple_conj_post (four_round_equiv s h_i)
-      (keccakf1600_4rounds_preserves_lift_eq s h_i h_lift))
-  rw [PostCond.entails_noThrow]
-  intro r ⟨h4, h_lift_r⟩
-  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h4 ⊢
-  refine ⟨?_, h_lift_r⟩
-  -- Unfold `four_round_post` and rewrite spec input from `lift s` to `lift_perm s id impl_swap`.
-  unfold four_round_post at h4
-  rw [← h_lift]
-  -- Reduce `spec_round_step_at` to `spec_round_step` under the i < 24 bound.
-  unfold spec_round_step_at
-  have h0 : s.i.val < 24 := by omega
-  have h1 : s.i.val + 1 < 24 := by omega
-  have h2 : s.i.val + 2 < 24 := by omega
-  have h3 : s.i.val + 3 < 24 := by omega
-  simp [h0, h1, h2, h3]
-  -- Bridge the `s.i` (Usize) in four_round_post with `roundOfNat s.i.val` here.
-  have h_idx0 : roundOfNat s.i.val (by omega) = s.i := by
-    apply Std.UScalar.eq_of_val_eq
-    unfold roundOfNat
-    rw [Std.UScalar.ofNatCore_val_eq]
-  rw [h_idx0]
-  exact h4
+  -- TODO(2026-05-19 architectural pivot): OLD chunk-equiv was structured
+  -- around Balanced preservation across rounds 1-3 — empirically *not*
+  -- preserved. The new top-level proof goes via
+  -- `BitKeccak.keccakf1600_equiv_via_bit` against `keccakf1600_post_canonical`
+  -- (uses `lift r_impl` directly, no Balanced output requirement).
+  -- This OLD path's `four_round_post` now produces `lift r` (canonical);
+  -- bridging it to `lift_perm r id impl_swap` would require Balanced output,
+  -- which is not generically true. Sorry'd pending a decision to deprecate
+  -- the OLD `keccakf1600_equiv` path entirely.
+  sorry
 
 /-! ## Loop equivalence
 

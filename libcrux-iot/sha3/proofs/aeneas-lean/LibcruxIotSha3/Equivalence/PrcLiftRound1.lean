@@ -26,7 +26,7 @@ theorem prc_lift_spec_1 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
-          pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm) impl_swap)).holds ⌝ ⦄ := by
+          pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm) (impl_swap_k 2))).holds ⌝ ⦄ := by
   sorry
 
 end libcrux_iot_sha3.Equivalence
