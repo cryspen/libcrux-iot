@@ -3131,7 +3131,7 @@ projects definitionally. Each `theta`/`pi_rho_chi_2` composer preserves
 RC-bearing sub-piece). Used by the round-level `_i` theorems below to
 derive the i-info from the bit-side equality. -/
 
-private theorem bit_keccakf1600_round0_theta_i (s : KState) :
+theorem bit_keccakf1600_round0_theta_i (s : KState) :
     (bit_keccakf1600_round0_theta s).i = s.i := by
   unfold bit_keccakf1600_round0_theta bit_theta_d
     bit_theta_c_x0_z0 bit_theta_c_x0_z1
@@ -3141,7 +3141,7 @@ private theorem bit_keccakf1600_round0_theta_i (s : KState) :
     bit_theta_c_x4_z0 bit_theta_c_x4_z1
   rfl
 
-private theorem bit_keccakf1600_round0_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
+theorem bit_keccakf1600_round0_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
     (bit_keccakf1600_round0_pi_rho_chi_1 BR s).i =
       ⟨s.i.bv + (1 : BitVec System.Platform.numBits)⟩ := by
   unfold bit_keccakf1600_round0_pi_rho_chi_1
@@ -3149,7 +3149,7 @@ private theorem bit_keccakf1600_round0_pi_rho_chi_1_i (BR : Std.Usize) (s : KSta
     bit_pi_rho_chi_y1_zeta0 bit_pi_rho_chi_y1_zeta1
   rfl
 
-private theorem bit_keccakf1600_round0_pi_rho_chi_2_i (s : KState) :
+theorem bit_keccakf1600_round0_pi_rho_chi_2_i (s : KState) :
     (bit_keccakf1600_round0_pi_rho_chi_2 s).i = s.i := by
   unfold bit_keccakf1600_round0_pi_rho_chi_2
     bit_pi_rho_chi_y2_zeta0 bit_pi_rho_chi_y2_zeta1
@@ -3157,7 +3157,7 @@ private theorem bit_keccakf1600_round0_pi_rho_chi_2_i (s : KState) :
     bit_pi_rho_chi_y4_zeta0 bit_pi_rho_chi_y4_zeta1
   rfl
 
-private theorem bit_keccakf1600_round1_theta_i (s : KState) :
+theorem bit_keccakf1600_round1_theta_i (s : KState) :
     (bit_keccakf1600_round1_theta s).i = s.i := by
   unfold bit_keccakf1600_round1_theta bit_round1_theta_d
     bit_round1_theta_c_x0_z0 bit_round1_theta_c_x0_z1
@@ -3167,7 +3167,7 @@ private theorem bit_keccakf1600_round1_theta_i (s : KState) :
     bit_round1_theta_c_x4_z0 bit_round1_theta_c_x4_z1
   rfl
 
-private theorem bit_keccakf1600_round1_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
+theorem bit_keccakf1600_round1_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
     (bit_keccakf1600_round1_pi_rho_chi_1 BR s).i =
       ⟨s.i.bv + (1 : BitVec System.Platform.numBits)⟩ := by
   unfold bit_keccakf1600_round1_pi_rho_chi_1
@@ -3175,7 +3175,7 @@ private theorem bit_keccakf1600_round1_pi_rho_chi_1_i (BR : Std.Usize) (s : KSta
     bit_round1_pi_rho_chi_y1_zeta0 bit_round1_pi_rho_chi_y1_zeta1
   rfl
 
-private theorem bit_keccakf1600_round1_pi_rho_chi_2_i (s : KState) :
+theorem bit_keccakf1600_round1_pi_rho_chi_2_i (s : KState) :
     (bit_keccakf1600_round1_pi_rho_chi_2 s).i = s.i := by
   unfold bit_keccakf1600_round1_pi_rho_chi_2
     bit_round1_pi_rho_chi_y2_zeta0 bit_round1_pi_rho_chi_y2_zeta1
@@ -3183,7 +3183,7 @@ private theorem bit_keccakf1600_round1_pi_rho_chi_2_i (s : KState) :
     bit_round1_pi_rho_chi_y4_zeta0 bit_round1_pi_rho_chi_y4_zeta1
   rfl
 
-private theorem bit_keccakf1600_round2_theta_i (s : KState) :
+theorem bit_keccakf1600_round2_theta_i (s : KState) :
     (bit_keccakf1600_round2_theta s).i = s.i := by
   unfold bit_keccakf1600_round2_theta bit_round2_theta_d
     bit_round2_theta_c_x0_z0 bit_round2_theta_c_x0_z1
@@ -3193,7 +3193,7 @@ private theorem bit_keccakf1600_round2_theta_i (s : KState) :
     bit_round2_theta_c_x4_z0 bit_round2_theta_c_x4_z1
   rfl
 
-private theorem bit_keccakf1600_round2_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
+theorem bit_keccakf1600_round2_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
     (bit_keccakf1600_round2_pi_rho_chi_1 BR s).i =
       ⟨s.i.bv + (1 : BitVec System.Platform.numBits)⟩ := by
   unfold bit_keccakf1600_round2_pi_rho_chi_1
@@ -3201,7 +3201,7 @@ private theorem bit_keccakf1600_round2_pi_rho_chi_1_i (BR : Std.Usize) (s : KSta
     bit_round2_pi_rho_chi_y1_zeta0 bit_round2_pi_rho_chi_y1_zeta1
   rfl
 
-private theorem bit_keccakf1600_round2_pi_rho_chi_2_i (s : KState) :
+theorem bit_keccakf1600_round2_pi_rho_chi_2_i (s : KState) :
     (bit_keccakf1600_round2_pi_rho_chi_2 s).i = s.i := by
   unfold bit_keccakf1600_round2_pi_rho_chi_2
     bit_round2_pi_rho_chi_y2_zeta0 bit_round2_pi_rho_chi_y2_zeta1
@@ -3209,7 +3209,7 @@ private theorem bit_keccakf1600_round2_pi_rho_chi_2_i (s : KState) :
     bit_round2_pi_rho_chi_y4_zeta0 bit_round2_pi_rho_chi_y4_zeta1
   rfl
 
-private theorem bit_keccakf1600_round3_theta_i (s : KState) :
+theorem bit_keccakf1600_round3_theta_i (s : KState) :
     (bit_keccakf1600_round3_theta s).i = s.i := by
   unfold bit_keccakf1600_round3_theta bit_round3_theta_d
     bit_round3_theta_c_x0_z0 bit_round3_theta_c_x0_z1
@@ -3219,7 +3219,7 @@ private theorem bit_keccakf1600_round3_theta_i (s : KState) :
     bit_round3_theta_c_x4_z0 bit_round3_theta_c_x4_z1
   rfl
 
-private theorem bit_keccakf1600_round3_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
+theorem bit_keccakf1600_round3_pi_rho_chi_1_i (BR : Std.Usize) (s : KState) :
     (bit_keccakf1600_round3_pi_rho_chi_1 BR s).i =
       ⟨s.i.bv + (1 : BitVec System.Platform.numBits)⟩ := by
   unfold bit_keccakf1600_round3_pi_rho_chi_1
@@ -3227,7 +3227,7 @@ private theorem bit_keccakf1600_round3_pi_rho_chi_1_i (BR : Std.Usize) (s : KSta
     bit_round3_pi_rho_chi_y1_zeta0 bit_round3_pi_rho_chi_y1_zeta1
   rfl
 
-private theorem bit_keccakf1600_round3_pi_rho_chi_2_i (s : KState) :
+theorem bit_keccakf1600_round3_pi_rho_chi_2_i (s : KState) :
     (bit_keccakf1600_round3_pi_rho_chi_2 s).i = s.i := by
   unfold bit_keccakf1600_round3_pi_rho_chi_2
     bit_round3_pi_rho_chi_y2_zeta0 bit_round3_pi_rho_chi_y2_zeta1
