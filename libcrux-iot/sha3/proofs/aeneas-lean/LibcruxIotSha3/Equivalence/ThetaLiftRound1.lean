@@ -745,69 +745,172 @@ theorem theta_lift_spec_1 (s : state.KeccakState) :
       (do
         let r_spec ← keccak_f.theta_unrolled (lift_perm s impl_perm (impl_swap_k 1))
         pure (r_spec = lift_theta_applied_perm r_impl impl_perm (impl_swap_k 1))).holds ⌝ ⦄ := by
-  /- The proof structure follows round-0's `theta_lift_spec` (in `ThetaLift.lean`),
-     adapted for round-1's `lift_perm s impl_perm (impl_swap_k 1)` spec input.
-
-     Setup + spec-chain coupling (works green):
-       apply Triple.of_entails_right _ (theta_comp_spec_local_1 s)
-       rw [PostCond.entails_noThrow]
-       intro r_impl hpost
-       dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
-       refine ⟨hpost.2.1, ?_⟩
-       unfold Aeneas.Std.Result.holds
-       unfold keccak_f.theta_unrolled
-       hax_mvcgen
-       all_goals try scalar_tac
-       obtain ⟨hst, _, hd0z0, hd0z1, hd1z0, hd1z1, hd2z0, hd2z1,
-               hd3z0, hd3z1, hd4z0, hd4z1⟩ := hpost
-       apply Subtype.ext
-       unfold lift_theta_applied_perm
-       show _ = List.ofFn _
-
-     RHS reduction (works green): `simp (config := { decide := true })` with
-     `impl_perm`, `impl_swap`, `lift_lane_maybe_swap`, `lift_lane`, and
-     `impl_swap_k_one` reduces the 25-cell `List.ofFn` to a literal cons-list
-     of `⟨lift_lane_bv (s.st[K][Z0].bv) (s.st[K][Z1].bv)⟩` cells (swap-aware
-     halves baked in via the if-then-else).
-
-     LHS reduction (works green): 25-way pointwise peel via `List.cons_eq_cons`,
-     `Std.U64.bv_eq_imp_eq`, `simp_all only [Std.UScalar.bv_xor, rot32, 25 usize-val rfls, 1#u32 rfl]`,
-     then `simp only [lift_perm_getElem_bv_*_1, Std.UScalarTy.U64_numBits_eq,
-     ← lift_xor, ← lift_td]` to fold the spec-side chain back to
-     `lift_lane_bv (..) (..)` form.
-
-     CLOSURE STEP (the gap): After the above, both sides are
-     `lift_lane_bv X Y = lift_lane_bv X' Y'` per cell, where X, X', Y, Y' are
-     `BitVec 32` expressions over `s.st[K][Z].bv` chains (5–10 atoms, possibly
-     one wrapped in `.rotateLeft 1`). Each cell's equation IS solvable in
-     isolation by `bv_decide` (verified via standalone tests) — the operand
-     sets match modulo XOR-AC, with identical `.rotateLeft 1` sub-chains.
-
-     But in this proof's context, `apply congrArg₂ lift_lane_bv <;> bv_decide`
-     fails on all 50 sub-goals because `bv_decide`'s abstraction phase sees
-     the `mvcgen` lifecycle hypotheses (`r✝`, `v✝`, `h✝`) that contain
-     `(lift_perm s impl_perm (impl_swap_k 1))[K]!.bv` chain references (or,
-     after `simp ... at *`, `lift_lane_bv (..) (..)` opaque references), and
-     it ends up treating the entire BV equation as one opaque variable,
-     reporting "potentially spurious counterexample".
-
-     Closure attempts that failed:
-       - `bv_decide` (with or without `at *` on the `lift_perm_getElem_bv_*_1`
-         simp set)
-       - `ac_rfl` (fails because `s.st[K][Z].bv` operands aren't
-         definitionally equal across LHS and RHS positions even when
-         syntactically identical)
-       - `simp only [BitVec.xor_assoc, BitVec.xor_comm]; bv_decide`
-       - `simp only [rotateLeft1_xor_bv32]; bv_decide` (rotateLeft
-         distribution lemma) — only partially distributes
-       - `clear hd*z*; bv_decide` (doesn't clear the anonymous `r✝`/`v✝`/`h✝`)
-       - `generalize hst' : s.st = st; bv_decide`
-       - `revert s; intro s; bv_decide`
-
-     A successful closure likely requires per-cell helper lemmas: extract
-     each BV-32 identity to a standalone lemma taking only `s : state.KeccakState`
-     and prove via `bv_decide` in a clean context, then invoke 50 such
-     lemmas as the closure step. -/
-  sorry
+  apply Triple.of_entails_right _ (theta_comp_spec_local_1 s)
+  rw [PostCond.entails_noThrow]
+  intro r_impl hpost
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+  refine ⟨hpost.2.1, ?_⟩
+  unfold Aeneas.Std.Result.holds
+  unfold keccak_f.theta_unrolled
+  hax_mvcgen
+  all_goals try scalar_tac
+  obtain ⟨hst, _, hd0z0, hd0z1, hd1z0, hd1z1, hd2z0, hd2z1,
+          hd3z0, hd3z1, hd4z0, hd4z1⟩ := hpost
+  apply Subtype.ext
+  unfold lift_theta_applied_perm
+  show _ = List.ofFn _
+  simp only [Std.Array.make, List.ofFn_succ, List.ofFn_zero, Fin.val_zero, Fin.val_succ,
+             Nat.zero_add, Nat.reduceAdd, hst]
+  repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
+  all_goals (apply Std.U64.bv_eq_imp_eq)
+  -- Rewrite `impl_swap_k 1` to `impl_swap`.
+  all_goals simp only [impl_swap_k_one]
+  -- Unfold `lift_lane_maybe_swap` and `lift_lane` to expose `s.st[(impl_perm K).val]!`.
+  -- The if-then-else branches reduce at concrete Fin K via `decide := true`.
+  all_goals
+    simp (config := { decide := true }) only [
+      lift_lane_maybe_swap, lift_lane,
+      Std.UScalar.bv_xor,
+      reduceIte,
+      show ((0#usize : Std.Usize).val) = 0 from rfl,
+      show ((1#usize : Std.Usize).val) = 1 from rfl,
+      show ((2#usize : Std.Usize).val) = 2 from rfl,
+      show ((3#usize : Std.Usize).val) = 3 from rfl,
+      show ((4#usize : Std.Usize).val) = 4 from rfl,
+      show (↑(impl_perm 0) : Nat) = 0 from rfl,
+      show (↑(impl_perm 1) : Nat) = 2 from rfl,
+      show (↑(impl_perm 2) : Nat) = 4 from rfl,
+      show (↑(impl_perm 3) : Nat) = 1 from rfl,
+      show (↑(impl_perm 4) : Nat) = 3 from rfl,
+      show (↑(impl_perm 5) : Nat) = 6 from rfl,
+      show (↑(impl_perm 6) : Nat) = 8 from rfl,
+      show (↑(impl_perm 7) : Nat) = 5 from rfl,
+      show (↑(impl_perm 8) : Nat) = 7 from rfl,
+      show (↑(impl_perm 9) : Nat) = 9 from rfl,
+      show (↑(impl_perm 10) : Nat) = 12 from rfl,
+      show (↑(impl_perm 11) : Nat) = 14 from rfl,
+      show (↑(impl_perm 12) : Nat) = 11 from rfl,
+      show (↑(impl_perm 13) : Nat) = 13 from rfl,
+      show (↑(impl_perm 14) : Nat) = 10 from rfl,
+      show (↑(impl_perm 15) : Nat) = 18 from rfl,
+      show (↑(impl_perm 16) : Nat) = 15 from rfl,
+      show (↑(impl_perm 17) : Nat) = 17 from rfl,
+      show (↑(impl_perm 18) : Nat) = 19 from rfl,
+      show (↑(impl_perm 19) : Nat) = 16 from rfl,
+      show (↑(impl_perm 20) : Nat) = 24 from rfl,
+      show (↑(impl_perm 21) : Nat) = 21 from rfl,
+      show (↑(impl_perm 22) : Nat) = 23 from rfl,
+      show (↑(impl_perm 23) : Nat) = 20 from rfl,
+      show (↑(impl_perm 24) : Nat) = 22 from rfl]
+  all_goals
+    simp_all only [Std.UScalar.bv_xor, rot32,
+      show ((0#usize : Std.Usize).val) = 0 from rfl,
+      show ((1#usize : Std.Usize).val) = 1 from rfl,
+      show ((2#usize : Std.Usize).val) = 2 from rfl,
+      show ((3#usize : Std.Usize).val) = 3 from rfl,
+      show ((4#usize : Std.Usize).val) = 4 from rfl,
+      show ((5#usize : Std.Usize).val) = 5 from rfl,
+      show ((6#usize : Std.Usize).val) = 6 from rfl,
+      show ((7#usize : Std.Usize).val) = 7 from rfl,
+      show ((8#usize : Std.Usize).val) = 8 from rfl,
+      show ((9#usize : Std.Usize).val) = 9 from rfl,
+      show ((10#usize : Std.Usize).val) = 10 from rfl,
+      show ((11#usize : Std.Usize).val) = 11 from rfl,
+      show ((12#usize : Std.Usize).val) = 12 from rfl,
+      show ((13#usize : Std.Usize).val) = 13 from rfl,
+      show ((14#usize : Std.Usize).val) = 14 from rfl,
+      show ((15#usize : Std.Usize).val) = 15 from rfl,
+      show ((16#usize : Std.Usize).val) = 16 from rfl,
+      show ((17#usize : Std.Usize).val) = 17 from rfl,
+      show ((18#usize : Std.Usize).val) = 18 from rfl,
+      show ((19#usize : Std.Usize).val) = 19 from rfl,
+      show ((20#usize : Std.Usize).val) = 20 from rfl,
+      show ((21#usize : Std.Usize).val) = 21 from rfl,
+      show ((22#usize : Std.Usize).val) = 22 from rfl,
+      show ((23#usize : Std.Usize).val) = 23 from rfl,
+      show ((24#usize : Std.Usize).val) = 24 from rfl,
+      show ((1#u32 : Std.U32).val) = 1 from rfl]
+  all_goals
+    simp only [lift_perm_getElem_bv_0_1, lift_perm_getElem_bv_1_1, lift_perm_getElem_bv_2_1,
+      lift_perm_getElem_bv_3_1, lift_perm_getElem_bv_4_1, lift_perm_getElem_bv_5_1,
+      lift_perm_getElem_bv_6_1, lift_perm_getElem_bv_7_1, lift_perm_getElem_bv_8_1,
+      lift_perm_getElem_bv_9_1, lift_perm_getElem_bv_10_1, lift_perm_getElem_bv_11_1,
+      lift_perm_getElem_bv_12_1, lift_perm_getElem_bv_13_1, lift_perm_getElem_bv_14_1,
+      lift_perm_getElem_bv_15_1, lift_perm_getElem_bv_16_1, lift_perm_getElem_bv_17_1,
+      lift_perm_getElem_bv_18_1, lift_perm_getElem_bv_19_1, lift_perm_getElem_bv_20_1,
+      lift_perm_getElem_bv_21_1, lift_perm_getElem_bv_22_1, lift_perm_getElem_bv_23_1,
+      lift_perm_getElem_bv_24_1]
+  -- Merge LHS `lift_lane_bv` chain into a single `lift_lane_bv (combined_X) (combined_Y)`
+  -- to match the RHS shape. `← lift_xor` collapses `lift_lane_bv A B ^^^ lift_lane_bv C D`
+  -- into `lift_lane_bv (A^^^C) (B^^^D)`; `← lift_td` collapses the rotated column chain.
+  all_goals simp only [Std.UScalarTy.U64_numBits_eq, ← lift_xor, ← lift_td]
+  -- Normalize `Fin.succ ... 0` chains via remaining `impl_perm` reductions for any
+  -- Fin index depth (covers cases where the depth wasn't normalized earlier).
+  all_goals try
+    simp only [
+      show (↑(impl_perm (Fin.succ 0)) : Nat) = 2 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ) : Nat) = 4 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ) : Nat) = 1 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ) : Nat) = 3 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ) : Nat) = 6 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ) : Nat) = 8 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ) : Nat) = 5 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ) : Nat) = 7 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 9 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 12 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 14 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 11 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 13 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 10 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 18 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 15 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 17 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 19 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 16 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 24 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 21 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 23 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 20 from rfl,
+      show (↑(impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ) : Nat) = 22 from rfl]
+  -- Each cell is now `lift_lane_bv X Y = lift_lane_bv X' Y'` where X, X', Y, Y'
+  -- are pure XOR chains over `s.st[K]!.val[J]!.bv` plus optional `.rotateLeft 1`,
+  -- equal modulo XOR-AC. Split into two BV-32 sub-equalities, then close via bv_decide.
+  all_goals first
+    | rfl
+    | apply congrArg₂ lift_lane_bv
+  -- Distribute `.rotateLeft 1` over XOR (using local helper) on both sides, so
+  -- LHS and RHS become pure flat XOR-chains over BV-32 atoms modulo XOR-AC.
+  -- 50 BV-32 cells. Roughly half close cleanly via `ac_rfl` (the cells where
+  -- `← lift_td` left both sides in matching `^^^`-over-rotateLeft form). The
+  -- remaining 25 cells are stuck at the form
+  --   `<lane> ^^^ (<col5> ^^^ (<col5_rot>).rotateLeft 1) = <lane> ^^^ (<col5'> ^^^ (<col5_rot'>).rotateLeft 1)`
+  -- where col5/col5_rot vs col5'/col5_rot' differ only by XOR-AC reordering.
+  -- `bv_decide` proves this in isolation (verified via `test_cell0_z0`) but
+  -- inside the main proof's mvcgen-polluted context the SAT abstraction
+  -- treats the whole BV-32 side as one opaque variable. The standard fix is
+  -- 25 per-cell `bv_decide`-discharged BV-32 lemmas (see comment block above).
+  -- Distribute `.rotateLeft 1` over XOR on BOTH sides. Iterate twice if needed.
+  -- Distribute `.rotateLeft 1` over XOR on BOTH sides via iterated rewriting:
+  -- `simp only` fully flattens both sides into pure XOR chains over BV-32 atoms.
+  -- One pass distributes the outer rotateLeft; a second pass catches the
+  -- inner-residual rotateLeft occurrences that `← lift_td` re-bundled. After
+  -- distribution, each cell is `lhs ^^^ chain = lhs' ^^^ chain'` modulo XOR-AC.
+  all_goals try simp only [rotateLeft1_xor_bv32]
+  all_goals try simp only [rotateLeft1_xor_bv32]
+  -- Three closure cases per BV-32 sub-goal:
+  --   1. `ac_rfl`: both sides match modulo XOR-AC of `BitVec.xor` (uses the
+  --      `Std.Associative`/`Std.Commutative` instances registered in core).
+  --   2. `apply congrArg (HXor.hXor _); ac_rfl`: peel a shared lane-atom prefix
+  --      that breaks `ac_rfl`'s associativity-canonicalisation, then close the
+  --      remaining XOR chain by AC.
+  --   3. `(2) + ← rotateLeft1_xor_bv32; ac_rfl`: same as (2) but combine the
+  --      distributed `.rotateLeft 1` atoms back into a single rotated chain
+  --      (handles the cells whose LHS got fully distributed but RHS kept the
+  --      `(.. ^^^ ..).rotateLeft 1` form, or vice-versa).
+  all_goals
+    first | ac_rfl
+          | (apply congrArg (HXor.hXor (α := BitVec 32) _); ac_rfl)
+          | (apply congrArg (HXor.hXor (α := BitVec 32) _);
+             try simp only [← rotateLeft1_xor_bv32]; ac_rfl)
 
 end libcrux_iot_sha3.Equivalence
