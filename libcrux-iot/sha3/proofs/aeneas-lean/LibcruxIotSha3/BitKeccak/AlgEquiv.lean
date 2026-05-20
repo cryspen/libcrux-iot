@@ -12,34 +12,33 @@
   3. KState round-trip `KState.toAeneas (KState.fromAeneas s) = s` — bridges
      Campaign 1's pure-Lean output back into the Aeneas universe for the
      spec equation. Needed at the top-level composition.
-  4. `BalancedAt k s` predicate — under `(impl_perm^[k], impl_swap)`,
-     the state lifts identically with or without `impl_swap`. Required
-     because the pure bit-side `bit_round{k}` reads halves literally,
-     while the spec under `lift_perm _ p impl_swap` reads them swap-aware
-     — they agree only on Balanced states (verified by counterexample).
+  4. Time-varying `impl_swap_k` polarity tracking (see
+     `Equivalence/Lift.lean`) — a 4-cycle
+     `swZero → impl_swap → sw2 → sw3 → swZero` that tracks the actual
+     polarity layout at each round. Replaces the earlier static-`impl_swap`
+     architecture that needed a `BalancedAt k` precondition (pivoted out
+     on 2026-05-19 after empirical evidence that `BalancedAt` is not
+     preserved across rounds 1–3). With `impl_swap_k`, both ends of a
+     4-round chunk use `impl_swap_k 0 = impl_swap_k 4 = (fun _ => false)`,
+     so the canonical lift threads through unconditionally.
   5. Per-round algebraic correspondence theorems
      `bit_round{k}_alg_eq` (k ∈ {0,1,2,3}) — the load-bearing algebra
-     of Campaign 2. Each says
-     `BalancedAt k s →`
-     `spec_round_step (lift_perm s.toAeneas (impl_perm^[k]) impl_swap) s.i`
-     `  = .ok (lift_perm (bit_round{k} s).toAeneas (impl_perm^[k+1]) impl_swap)`.
-     *Currently `sorry`.* Paired with 4 preservation lemmas
-     `bit_round{k}_preserves_balanced` (also `sorry`) that thread the
-     invariant `BalancedAt k → BalancedAt (k+1)` across rounds; bundled
-     by `bit_keccakf1600_4rounds_preserves_balanced` (using
-     `impl_perm^[4] = id` to close the 4-round loop on `BalancedAt 0`).
-  6. 4-round closure `bit_4rounds_alg_eq` — composes the 4 sorry'd
-     per-round identities through `Result.bind`. Uses `impl_perm_pow4_eq_id`
-     to collapse `impl_perm^[4]` to `id` at the group boundary.
-  7. 24-round closure `bit_keccak_alg_eq` — 6-iteration induction over
-     `Nat.iterate (bit_keccakf1600_4rounds 0) 6`. Threads both the
-     `s.i.val = 4k` chain (for iota constants) and the `BalancedAt 0`
-     invariant (via the chunk-preservation lemma).
+     of Campaign 2. Each says (unconditionally, no state precondition)
+     `spec_round_step (lift_perm s.toAeneas (impl_perm^[k]) (impl_swap_k k)) s.i`
+     `  = .ok (lift_perm (bit_round{k} s).toAeneas (impl_perm^[k+1]) (impl_swap_k (k+1)))`.
+  6. 4-round closure `bit_4rounds_alg_eq` — composes the 4 per-round
+     identities through `Result.bind`. Uses `impl_perm_pow4_eq_id`
+     to collapse `impl_perm^[4]` to `id` and `impl_swap_k 4 = impl_swap_k 0`
+     to close the swap cycle at the group boundary.
+  7. 24-round closure `bit_keccak_spec_alg_eq` — 6-iteration induction
+     over `Nat.iterate (bit_keccakf1600_4rounds 0) 6`. Threads the
+     `s.i.val = 4k` chain (for iota constants); no `BalancedAt`
+     invariant needed.
   8. Top-level `keccakf1600_equiv_via_bit` — composes Campaign 1's
-     `keccakf1600_eq` with Campaign 2's `bit_keccak_alg_eq` to retarget
-     the impl-level `keccakf1600_post`. Discharges `BalancedAt 0` from
-     the existing `h_lift : Equivalence.lift s = lift_perm s id impl_swap`
-     hypothesis via `lift_perm_id` + `KState.toAeneas_fromAeneas`.
+     `keccakf1600_eq` with Campaign 2's `bit_keccak_spec_alg_eq` to
+     retarget the impl-level `keccakf1600_post`. The canonical-lift
+     shape (with `lift r_impl`, no `lift_perm`) follows from the
+     swap cycle reaching `swZero` at round 24.
 
   Plan: `~/.claude/plans/fancy-gliding-swan.md`, Phase 3.
 -/
@@ -332,11 +331,7 @@ private theorem round1_full_bit_eq (s : state.KeccakState) (hi : s.i.val < 24) :
   rw [h_prc2, h_prc1, h_theta]
 
 /-- Round 1 algebraic equivalence (unconditional). Input convention
-    `impl_swap_k 1 = impl_swap`, output `impl_swap_k 2`. Currently
-    blocked on `round1_equiv_spec` (sorry'd in `RoundEquiv.lean`) and
-    its prerequisites `theta_lift_spec_1` / `prc_lift_spec_1` (sorry'd
-    in their stub files); those need to be updated to use the
-    time-varying `impl_swap_k` shape. -/
+    `impl_swap_k 1 = impl_swap`, output `impl_swap_k 2`. -/
 theorem bit_round1_alg_eq (s : KState) (hi : s.i.val < 24) :
     spec_round_step (lift_perm s.toAeneas impl_perm (impl_swap_k 1)) s.i
     = .ok (lift_perm (bit_round1 s).toAeneas (impl_perm ∘ impl_perm) (impl_swap_k 2)) := by

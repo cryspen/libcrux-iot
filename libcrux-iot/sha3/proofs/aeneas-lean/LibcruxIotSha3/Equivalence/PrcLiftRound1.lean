@@ -644,11 +644,14 @@ theorem lift_theta_applied_perm_bv_24_1 (s : state.KeccakState) :
 
 /-! ## Main composition: `prc_lift_spec_1`
 
-   Infrastructure is in place (10 per-FC specs + 25 input cell access lemmas);
-   the final main composition mirrors `prc_lift_spec` (round 0) but additionally
-   requires the output side to be characterised as `lift_perm r_impl (impl_perm ∘
-   impl_perm) (impl_swap_k 2)`, which the round-0 cascade does not handle directly.
-   Left as `sorry` pending the output-side characterisation cascade. -/
+   Infrastructure: 10 per-FC specs + 25 input cell access lemmas. The proof
+   mirrors `prc_lift_spec` (round 0) but characterises the output as
+   `lift_perm r_impl (impl_perm ∘ impl_perm) (impl_swap_k 2)` rather than the
+   plain canonical lift. The output side is handled by a `conv_rhs` scoping
+   block that unfolds `impl_swap_k 2` (rewriting it to its concrete polarity
+   indicator on `Fin 25`) and `impl_perm`/`lift_lane_maybe_swap` only on the
+   RHS — this avoids accidentally normalising the LHS, which would defeat the
+   per-cell `simp` cascade. Runs at 256M heartbeats. -/
 
 set_option maxHeartbeats 256000000 in
 theorem prc_lift_spec_1 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
