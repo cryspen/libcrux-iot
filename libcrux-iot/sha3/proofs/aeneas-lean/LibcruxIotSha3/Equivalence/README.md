@@ -69,9 +69,11 @@ in informal form:
 | `RcEquiv.lean` | 39 | ✅ done — `rc_equiv` for `i < 24` via `native_decide` |
 | `PrcLift.lean` | 160 | ✅ impl side preservation — `pi_rho_chi_{1,2}_spec_local` register d/c/i; spec-side coupling pending |
 | `StepSpecs.lean` | 500 | ✅ done — round 1–3 step preservation specs (82 declarations via one `step_preserve_proof` macro) |
-| Spec-coupling files | — | ⏳ next — `prc_lift_spec`, `round_equiv`, top 24-round |
+| Spec-coupling files | — | ✅ done — `prc_lift_spec`, `round_k_equiv_spec` (`RoundEquiv.lean`), top 24-round in `BitKeccak/AlgEquiv.lean` |
+| `SpecChain.lean` | — | ✅ `spec_chain` over the four `_unrolled` spec functions |
+| `HacspecBridge.lean` | ~1290 | ✅ Bridge 1 — couples impl to hacspec top-level `keccak_f.keccak_f` via `createi_pure_spec` (`@[spec]` for pure-closure `createi`), 6 per-closure `[spec]` Triples (θ×3, ρ/π/χ), 4 function equalities `keccak_f.X = keccak_f.X_unrolled`, `spec_chain_hacspec_eq_spec_chain`, `Usize` iterator/loop specs, `keccak_f_loop_eq_spec_chain_hacspec`, and the top theorem `keccakf1600_equiv_hacspec` |
 
-Sorry hygiene: **0 sorries** in this directory as of Stage 2 Step 6.5.
+Sorry hygiene: **0 sorries** in this directory.
 
 ```bash
 grep -rn sorry libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/

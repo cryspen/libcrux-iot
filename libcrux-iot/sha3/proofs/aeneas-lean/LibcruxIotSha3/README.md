@@ -10,9 +10,21 @@ pipeline; this directory then proves their equivalence.
 For the extraction pipeline + per-file build commands, see
 [`Equivalence/README.md`](Equivalence/README.md).
 
-## Top-level theorem
+## Top-level theorems
 
-[`BitKeccak/AlgEquiv.lean`](BitKeccak/AlgEquiv.lean), end of file:
+### Hacspec-level coupling (`Equivalence/HacspecBridge.lean`)
+
+```lean
+theorem keccakf1600_equiv_hacspec (s : state.KeccakState) :
+    keccak.keccakf1600 s = keccak_f.keccak_f (lift s)
+```
+
+The impl's 24-round permutation equals the hacspec top-level
+`keccak_f.keccak_f` (defined in `specs/sha3/src/keccak_f.rs`,
+extracted to `HacspecSha3/Extraction/Funs.lean`) applied to the
+bit-interleaved canonical view `lift s`. Direct `Result α` equation.
+
+### Bit-interleaved post (`BitKeccak/AlgEquiv.lean`)
 
 ```lean
 theorem keccakf1600_equiv_via_bit (s : state.KeccakState)
@@ -36,6 +48,12 @@ Informally: the impl's 24-round permutation, lifted to the spec's
 flat-`u64[25]` representation, equals the spec's 24-fold application
 of `θ ∘ ρ ∘ π ∘ χ ∘ ι` starting from `lift s`. No precondition on the
 input state beyond `s.i = 0`. Only standard Lean axioms.
+
+`keccakf1600_equiv_hacspec` composes `keccakf1600_equiv_via_bit` with
+`spec_chain_hacspec_eq_spec_chain` (Bridge 1's loop-body equivalence:
+non-`_unrolled` hacspec functions equal their `_unrolled` `spec_chain`
+counterparts) and `keccak_f_loop_eq_spec_chain_hacspec` (24-step
+unroll of the hacspec loop into `Nat.fold`).
 
 ## Proof architecture
 
@@ -160,17 +178,17 @@ LibcruxIotSha3/
 │   │                                  i-increment lemmas + chain wrappers
 │   ├── Keccakf1600.lean             ← keccakf1600_post + keccakf1600_post_canonical
 │   │                                  definitions (the public post shapes)
-│   │
-│   ├── AgrindExperiment.lean        ← experimental grind orientation tests
-│   │                                  (sandbox; not used by main proofs)
-│   └── LibcruxGrindSetup.lean       ← grind setup shared by experiments
+│   ├── SpecChain.lean               ← spec_chain over _unrolled functions
+│   └── HacspecBridge.lean           ← Bridge 1: hacspec coupling. createi_pure_spec,
+│                                      6 per-closure [spec] Triples, 4 function
+│                                      equalities keccak_f.X = keccak_f.X_unrolled,
+│                                      spec_chain_hacspec_eq_spec_chain, Usize
+│                                      iterator/loop specs, keccak_f_loop_eq_*,
+│                                      and the top theorem keccakf1600_equiv_hacspec
 │
-├── Extraction/
-│   ├── Funs.lean                    ← Rust impl extraction (generated; do not edit)
-│   └── Missing.lean                 ← hand-written aeneas surface fills
-│
-└── Experiment/
-    └── Phase0CycleAlgebra.lean      ← sandbox for the impl_swap_k 4-cycle algebra
+└── Extraction/
+    ├── Funs.lean                    ← Rust impl extraction (generated; do not edit)
+    └── Missing.lean                 ← hand-written aeneas surface fills
 ```
 
 ## Verifying
@@ -179,12 +197,17 @@ From `libcrux-iot/sha3/proofs/aeneas-lean/`:
 
 ```bash
 lake exe cache get        # one-time prime
-lake build LibcruxIotSha3.BitKeccak.AlgEquiv   # ~5 s once cached; ~3 min from clean
+lake build LibcruxIotSha3.Equivalence.HacspecBridge   # final hacspec coupling
+# or LibcruxIotSha3.BitKeccak.AlgEquiv for the bit-interleaved post only
 ```
 
-Expected: 0 sorries in `LibcruxIotSha3/`, only standard Lean axioms
-(`propext`, `Classical.choice`, `Quot.sound`, `Lean.ofReduceBool`,
-`Lean.trustCompiler`).
+Expected: 0 sorries in `LibcruxIotSha3/`, only standard Lean axioms.
+`keccakf1600_equiv_hacspec` and `keccakf1600_equiv_via_bit` both
+report `propext` + `Classical.choice` + `Quot.sound` + `Lean.ofReduceBool`
++ `Lean.trustCompiler`. The non-standard `Lean.ofReduceBool`/
+`Lean.trustCompiler` come from a single `native_decide` in
+`Equivalence/RcEquiv.lean:29` (24-entry round-constant identity check)
+needed because the round-constant arrays are `@[irreducible]`.
 
 ```bash
 grep -rn "by sorry\|^  sorry" LibcruxIotSha3/   # must be empty
