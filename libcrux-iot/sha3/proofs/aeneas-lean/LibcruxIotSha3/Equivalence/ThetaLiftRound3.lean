@@ -698,11 +698,6 @@ private theorem lift_perm_getElem_bv_24_3 (s : state.KeccakState) :
   have hsw : impl_swap_k 3 ((impl_perm ∘ impl_perm ∘ impl_perm) ⟨24, by decide⟩) = false := by rw [impl_swap_k_three]; decide
   rw [h, hp, hsw, lift_lane_maybe_swap_false_bv_3]
 
-/-- `BitVec.rotateLeft 1` distributes over XOR (BV-32 version, round 3 copy). -/
-private theorem rotateLeft1_xor_bv32_3 (a b : BitVec 32) :
-    (a ^^^ b).rotateLeft 1 = a.rotateLeft 1 ^^^ b.rotateLeft 1 := by
-  bv_decide
-
 set_option maxHeartbeats 64000000 in
 @[spec]
 theorem theta_lift_spec_3 (s : state.KeccakState) :
@@ -812,11 +807,11 @@ theorem theta_lift_spec_3 (s : state.KeccakState) :
   all_goals first
     | rfl
     | apply congrArg₂ lift_lane_bv
-  all_goals try simp only [rotateLeft1_xor_bv32_3]
+  all_goals try simp only [rotateLeft1_xor_bv32]
   all_goals
     first | ac_rfl
           | (apply congrArg (HXor.hXor (α := BitVec 32) _); ac_rfl)
           | (apply congrArg (HXor.hXor (α := BitVec 32) _);
-             try simp only [← rotateLeft1_xor_bv32_3]; ac_rfl)
+             try simp only [← rotateLeft1_xor_bv32]; ac_rfl)
 
 end libcrux_iot_sha3.Equivalence

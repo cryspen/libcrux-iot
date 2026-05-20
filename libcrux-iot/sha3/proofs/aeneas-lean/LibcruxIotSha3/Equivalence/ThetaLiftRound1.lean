@@ -711,20 +711,6 @@ private theorem lift_perm_getElem_bv_24_1 (s : state.KeccakState) :
     rw [impl_swap_k_one]; decide
   rw [h, hp, hsw, lift_lane_maybe_swap_true_bv]
 
-/-- `BitVec.rotateLeft 1` distributes over XOR (bitwise). Needed to
-    flatten `(a ^^^ b).rotateLeft 1` into `a.rotateLeft 1 ^^^ b.rotateLeft 1`
-    so that `bv_decide`/`ac_rfl` can solve XOR-AC equalities involving
-    rotated column-XOR chains. -/
-private theorem rotateLeft1_xor_bv64 (a b : BitVec 64) :
-    (a ^^^ b).rotateLeft 1 = a.rotateLeft 1 ^^^ b.rotateLeft 1 := by
-  bv_decide
-
-/-- `BitVec.rotateLeft 1` distributes over XOR (BV-32 version). -/
-private theorem rotateLeft1_xor_bv32 (a b : BitVec 32) :
-    (a ^^^ b).rotateLeft 1 = a.rotateLeft 1 ^^^ b.rotateLeft 1 := by
-  bv_decide
-
-
 /-! Round-1 θ lift spec. The infrastructure above (`lta_perm_bv_*_1`,
     `lift_perm_getElem_bv_*_1`, `lift_lane_maybe_swap_{true,false}_bv`)
     is in place. The 25-lane closure uses:

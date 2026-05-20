@@ -724,11 +724,6 @@ private theorem lift_perm_getElem_bv_24_2 (s : state.KeccakState) :
     unfold impl_swap_k; decide
   rw [h, hp, hsw, lift_lane_maybe_swap_true_bv]
 
-/-- `BitVec.rotateLeft 1` distributes over XOR (BV-32 version). -/
-private theorem rotateLeft1_xor_bv32 (a b : BitVec 32) :
-    (a ^^^ b).rotateLeft 1 = a.rotateLeft 1 ^^^ b.rotateLeft 1 := by
-  bv_decide
-
 set_option maxHeartbeats 64000000 in
 @[spec]
 theorem theta_lift_spec_2 (s : state.KeccakState) :
