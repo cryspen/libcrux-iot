@@ -356,4 +356,231 @@ To complete the bridge to `keccak_f.keccak_f`, two more steps are needed:
    hacspec-level top theorem coupling `keccak.keccakf1600` to
    `keccak_f.keccak_f` directly. -/
 
+/-! ## Loop bridge: `keccak_f.keccak_f` equals `spec_chain_hacspec ... 24`
+
+Direct induction on the number of remaining loop iterations. We pair the
+loop's `start` index with a `Nat`-level counter `k`, and a proof that the
+spec chain to `k` succeeds with `acc`. At each step:
+
+- Iterator at `{kU, 24}` with `kU.val = k`: if `k < 24` returns
+  `Some kU, iter1` with `iter1.start.val = k + 1`; if `k = 24` returns
+  `None`.
+- Loop body's θ;ρ;π;χ;ι chain is precisely `spec_round_step_hacspec acc kU`.
+- By `spec_chain_hacspec_succ`, `spec_chain_hacspec s (k+1) =
+  spec_chain_hacspec s k >>= spec_round_step_hacspec_at k =
+  spec_round_step_hacspec_at k acc =
+  spec_round_step_hacspec acc (roundOfNat k _)`. Since `kU.val = k`,
+  `roundOfNat k _ = kU`, so this equals `spec_round_step_hacspec acc kU`.
+- Failure in `spec_round_step_hacspec acc kU` propagates identically on
+  both sides (loop fails, spec_chain fails and propagates to 24). -/
+
+/-- Direct equality form of `IteratorRange.next` over a `Usize` range
+    `{kU, 24}` when `kU.val < 24`: returns `Some kU` and increments the
+    start by 1. Companion to `IteratorRange_next_spec_usize` (Triple form). -/
+private theorem IteratorRange_next_eq_some_usize
+    (kU : Std.Usize) (hkU : kU.val < 24) :
+    ∃ kU' : Std.Usize, kU'.val = kU.val + 1 ∧
+      core_models.iter.range.IteratorRange.next
+        core_models.Usize.Insts.Core_modelsIterRangeStep
+        ({ start := kU, «end» := 24#usize } :
+          core_models.ops.range.Range Std.Usize) =
+        .ok (core_models.option.Option.Some kU,
+             { start := kU', «end» := 24#usize }) := by
+  -- Compute kU' = kU + 1.
+  have hkUmax : kU.val + 1 ≤ Std.Usize.max := by
+    have h24 : (24 : Nat) ≤ Std.Usize.max := by
+      simp [Std.Usize.max, Std.Usize.numBits]
+      have := System.Platform.numBits_eq
+      rcases this with hp | hp <;> rw [hp] <;> decide
+    omega
+  have hck := Std.Usize.checked_add_bv_spec kU 1#usize
+  have h_some :
+      ∃ s' : Std.Usize, Std.Usize.checked_add kU 1#usize = some s' ∧
+        s'.val = kU.val + 1 := by
+    cases hres : Std.Usize.checked_add kU 1#usize with
+    | some s' =>
+        rw [hres] at hck
+        obtain ⟨_, hsv, _⟩ := hck
+        refine ⟨s', rfl, ?_⟩
+        rw [hsv]; rfl
+    | none =>
+        rw [hres] at hck
+        have h1u : (1#usize : Std.Usize).val = 1 := by rfl
+        rw [h1u] at hck
+        omega
+  obtain ⟨kU', hres, hkU'val⟩ := h_some
+  refine ⟨kU', hkU'val, ?_⟩
+  unfold core_models.iter.range.IteratorRange.next
+  unfold core_models.Usize.Insts.Core_modelsIterRangeStep
+    core_models.iter.range.StepUsize
+  unfold Aeneas.Std.core.iter.range.StepUsize.forward_checked
+  have hkU_lt24 : kU.val < (24#usize : Std.Usize).val := hkU
+  simp only [compare, compareOfLessAndEq, if_pos hkU_lt24, bind_tc_ok, hres,
+             if_true]
+
+/-- Direct equality form of `IteratorRange.next` when `kU.val ≥ 24`:
+    returns `None`. -/
+private theorem IteratorRange_next_eq_none_usize
+    (kU : Std.Usize) (hkU : kU.val ≥ 24) :
+    core_models.iter.range.IteratorRange.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep
+      ({ start := kU, «end» := 24#usize } :
+        core_models.ops.range.Range Std.Usize) =
+      .ok (core_models.option.Option.None,
+           { start := kU, «end» := 24#usize }) := by
+  unfold core_models.iter.range.IteratorRange.next
+  unfold core_models.Usize.Insts.Core_modelsIterRangeStep
+    core_models.iter.range.StepUsize
+  have hkU_ge : ¬ kU.val < (24#usize : Std.Usize).val := by
+    show ¬ kU.val < 24; omega
+  by_cases heq : kU.val = (24#usize : Std.Usize).val
+  · simp only [compare, compareOfLessAndEq, if_neg hkU_ge, if_pos heq,
+               bind_tc_ok, reduceCtorEq, if_false]
+  · simp only [compare, compareOfLessAndEq, if_neg hkU_ge, if_neg heq,
+               bind_tc_ok, reduceCtorEq, if_false]
+
+/-- `roundOfNat k.val ... = kU` when `kU.val = k.val`: a `Std.Usize`
+    constructed from its `.val` round-trips through `roundOfNat`. -/
+private theorem roundOfNat_val_eq (kU : Std.Usize) (hk : kU.val < 24) :
+    roundOfNat kU.val (by omega) = kU := by
+  apply Std.UScalar.eq_of_val_eq
+  unfold roundOfNat
+  rw [Std.UScalar.ofNatCore_val_eq]
+
+/-- Failure propagation: if `spec_chain_hacspec s k = .fail e`, then for
+    all `n ≥ k`, `spec_chain_hacspec s n = .fail e`. -/
+private theorem spec_chain_hacspec_fail_mono
+    (s : Std.Array Std.U64 25#usize) (k : Nat) (e : Error)
+    (h : spec_chain_hacspec s k = .fail e) :
+    ∀ n, spec_chain_hacspec s (k + n) = .fail e := by
+  intro n
+  induction n with
+  | zero => exact h
+  | succ n ih =>
+    rw [show k + (n + 1) = (k + n) + 1 from rfl, spec_chain_hacspec_succ, ih]
+    rfl
+
+/-- Divergence propagation: if `spec_chain_hacspec s k = .div`, then for
+    all `n ≥ k`, `spec_chain_hacspec s n = .div`. -/
+private theorem spec_chain_hacspec_div_mono
+    (s : Std.Array Std.U64 25#usize) (k : Nat)
+    (h : spec_chain_hacspec s k = .div) :
+    ∀ n, spec_chain_hacspec s (k + n) = .div := by
+  intro n
+  induction n with
+  | zero => exact h
+  | succ n ih =>
+    rw [show k + (n + 1) = (k + n) + 1 from rfl, spec_chain_hacspec_succ, ih]
+    rfl
+
+/-- Body of the loop after the iterator step in the Some branch: the
+    `θ;ρ;π;χ;ι` chain wrapped with `ok (cont ...)`. Equals
+    `spec_round_step_hacspec acc kU >>= (ok (cont (iter1, ·)))` by
+    definitional unfolding of `spec_round_step_hacspec`. -/
+private theorem loop_body_some_eq
+    (acc : Std.Array Std.U64 25#usize) (kU : Std.Usize)
+    (iter1 : core_models.ops.range.Range Std.Usize) :
+    (do
+      let a ← keccak_f.theta acc
+      let a1 ← keccak_f.rho a
+      let a2 ← keccak_f.pi a1
+      let a3 ← keccak_f.chi a2
+      let state1 ← keccak_f.iota a3 kU
+      Aeneas.Std.Result.ok
+        (cont (iter1, state1) :
+          ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+            (Std.Array Std.U64 25#usize)) (Std.Array Std.U64 25#usize))) =
+    (do
+      let state1 ← spec_round_step_hacspec acc kU
+      Aeneas.Std.Result.ok (cont (iter1, state1))) := by
+  unfold spec_round_step_hacspec
+  simp only [bind_assoc]
+
+/-- Inductive helper: induct on `n = 24 - k`, the number of remaining
+    iterations. At `n = 0` (`k = 24`), the iterator returns `None` and the
+    loop yields `.ok acc`, which by hypothesis equals `spec_chain_hacspec
+    s 24`. At `n + 1` (`k < 24`), the body's θ;ρ;π;χ;ι chain matches
+    `spec_round_step_hacspec acc kU`; success recurses via IH on
+    `(n, k+1, kU+1, acc')`, failure/div propagates to round 24 via the
+    `_mono` lemmas. -/
+private theorem keccak_f_loop_eq_aux (s : Std.Array Std.U64 25#usize) :
+    ∀ (n k : Nat) (kU : Std.Usize) (acc : Std.Array Std.U64 25#usize),
+      kU.val = k → k + n = 24 →
+      spec_chain_hacspec s k = .ok acc →
+      keccak_f.keccak_f_loop { start := kU, «end» := 24#usize } acc =
+        spec_chain_hacspec s 24 := by
+  intro n
+  induction n with
+  | zero =>
+    intro k kU acc hkU hkn hchain
+    have hk : k = 24 := by omega
+    subst hk
+    have hkU24 : kU.val = (24#usize : Std.Usize).val := by rw [hkU]; rfl
+    have hkU24' : kU = 24#usize := Std.UScalar.eq_of_val_eq hkU24
+    subst hkU24'
+    have hkU_ge : (24#usize : Std.Usize).val ≥ 24 := by decide
+    have hnext := IteratorRange_next_eq_none_usize 24#usize hkU_ge
+    unfold keccak_f.keccak_f_loop
+    rw [loop.eq_def]
+    unfold keccak_f.keccak_f_loop.body
+    simp only [hnext, bind_tc_ok]
+    dsimp
+    rw [hchain]
+  | succ n ih =>
+    intro k kU acc hkU hkn hchain
+    have hk_lt : k < 24 := by omega
+    have hkU_lt : kU.val < 24 := by rw [hkU]; exact hk_lt
+    obtain ⟨kU', hkU'val, hnext⟩ := IteratorRange_next_eq_some_usize kU hkU_lt
+    unfold keccak_f.keccak_f_loop
+    rw [loop.eq_def]
+    unfold keccak_f.keccak_f_loop.body
+    simp only [hnext, bind_tc_ok]
+    dsimp
+    rw [loop_body_some_eq acc kU { start := kU', «end» := 24#usize }]
+    have h_chain_succ : spec_chain_hacspec s (k + 1) =
+        spec_round_step_hacspec acc kU := by
+      rw [spec_chain_hacspec_succ, hchain]
+      show spec_round_step_hacspec_at k acc = spec_round_step_hacspec acc kU
+      -- Replace `k` everywhere with `kU.val` (via hkU.symm) to dispatch the
+      -- dependent `roundOfNat k _` proof obligation cleanly.
+      have hk_eq : k = kU.val := hkU.symm
+      subst hk_eq
+      unfold spec_round_step_hacspec_at
+      rw [dif_pos hkU_lt]
+      rw [roundOfNat_val_eq kU hkU_lt]
+    cases hstep : spec_round_step_hacspec acc kU with
+    | ok r =>
+      simp only [bind_tc_ok]
+      have hchain' : spec_chain_hacspec s (k + 1) = .ok r := by
+        rw [h_chain_succ]; exact hstep
+      have hkU'val' : kU'.val = k + 1 := by rw [hkU'val, hkU]
+      have hkn' : (k + 1) + n = 24 := by omega
+      have hih := ih (k + 1) kU' r hkU'val' hkn' hchain'
+      unfold keccak_f.keccak_f_loop at hih
+      exact hih
+    | fail e =>
+      simp only [bind_tc_fail]
+      have hk1fail : spec_chain_hacspec s (k + 1) = .fail e := by
+        rw [h_chain_succ]; exact hstep
+      have h24eq : 24 = (k + 1) + n := by omega
+      rw [h24eq, spec_chain_hacspec_fail_mono s (k + 1) e hk1fail n]
+    | div =>
+      simp only [bind_tc_div]
+      have hk1div : spec_chain_hacspec s (k + 1) = .div := by
+        rw [h_chain_succ]; exact hstep
+      have h24eq : 24 = (k + 1) + n := by omega
+      rw [h24eq, spec_chain_hacspec_div_mono s (k + 1) hk1div n]
+
+/-- **Loop bridge**: the hacspec `keccak_f.keccak_f` function equals the
+    `Nat.fold 24` chain `spec_chain_hacspec s 24`.
+
+    Instantiates `keccak_f_loop_eq_aux` at `n = 24`, `k = 0`, `kU =
+    0#usize`, `acc = s`. The initial spec_chain hypothesis is
+    `spec_chain_hacspec s 0 = .ok s` (by `spec_chain_hacspec_zero`). -/
+theorem keccak_f_loop_eq_spec_chain_hacspec
+    (s : Std.Array Std.U64 25#usize) :
+    keccak_f.keccak_f s = spec_chain_hacspec s 24 := by
+  unfold keccak_f.keccak_f
+  exact keccak_f_loop_eq_aux s 24 0 0#usize s rfl rfl (spec_chain_hacspec_zero s)
+
 end libcrux_iot_sha3.Equivalence
