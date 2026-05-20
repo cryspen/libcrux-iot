@@ -119,9 +119,10 @@ local macro "prc_y_zeta_fc_proof" subfun:ident : tactic => `(tactic|
    hyp names produced by `hax_mvcgen` (which assigns h_25..h_55 to the
    chi value chains and h_28..h_59 to the state chain).
    Hygiene is disabled so that the `h_X` references resolve to the
-   runtime-introduced names rather than fresh macro-local ones. -/
+   runtime-introduced names rather than fresh macro-local ones.
+   Shared across rounds 0-3. -/
 set_option hygiene false in
-local macro "prc_y_zeta_no_rc_proof" subfun:ident : tactic => `(tactic|
+macro "prc_y_zeta_no_rc_proof" subfun:ident : tactic => `(tactic|
   (unfold $subfun
    hax_mvcgen
    all_goals try scalar_tac

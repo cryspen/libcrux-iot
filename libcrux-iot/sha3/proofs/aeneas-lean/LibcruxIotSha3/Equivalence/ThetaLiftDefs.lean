@@ -134,8 +134,8 @@ local macro "theta_sub_preserves_st_i_proof" subfun:ident : tactic =>
     handles the do-block, the remaining VC says the freshly-written
     `c[X][Z]` value equals the chained XOR of five `s.st` reads. The
     XOR equality is per `UScalar.eq_equiv_bv_eq` + the BitVec halves
-    of `h✝` already accumulated by `mvcgen`. -/
-local macro "theta_c_proof" subfun:ident : tactic =>
+    of `h✝` already accumulated by `mvcgen`. Shared across rounds 0-3. -/
+macro "theta_c_proof" subfun:ident : tactic =>
   `(tactic|
     (unfold $subfun
      hax_mvcgen
