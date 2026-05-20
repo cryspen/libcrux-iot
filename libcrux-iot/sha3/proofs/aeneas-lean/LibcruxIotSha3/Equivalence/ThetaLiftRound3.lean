@@ -651,7 +651,7 @@ private theorem lift_perm_getElem_bv_24_3 (s : state.KeccakState) :
   have hsw : impl_swap_k 3 ((impl_perm ∘ impl_perm ∘ impl_perm) ⟨24, by decide⟩) = false := by rw [impl_swap_k_three]; decide
   rw [h, hp, hsw, lift_lane_maybe_swap_false_bv]
 
-set_option maxHeartbeats 64000000 in
+set_option maxHeartbeats 2000000 in
 @[spec]
 theorem theta_lift_spec_3 (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄

@@ -652,7 +652,7 @@ private theorem lift_eq_lift_perm_pow4 (r : state.KeccakState) :
   unfold lift_lane_maybe_swap
   simp
 
-set_option maxHeartbeats 256000000 in
+set_option maxHeartbeats 1000000 in
 theorem prc_lift_spec_3 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let r1 ← keccak.keccakf1600_round3_pi_rho_chi_1 0#usize s

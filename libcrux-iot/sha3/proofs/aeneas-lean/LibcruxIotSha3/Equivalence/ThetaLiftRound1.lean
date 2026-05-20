@@ -677,7 +677,7 @@ private theorem lift_perm_getElem_bv_24_1 (s : state.KeccakState) :
       - `BitVec.rotateLeft_xor` + `bv_decide` to close XOR-AC residuals. -/
 
 
-set_option maxHeartbeats 64000000 in
+set_option maxHeartbeats 2000000 in
 @[spec]
 theorem theta_lift_spec_1 (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄

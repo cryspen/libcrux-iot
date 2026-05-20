@@ -677,7 +677,7 @@ private theorem lift_perm_getElem_bv_24_2 (s : state.KeccakState) :
     unfold impl_swap_k; decide
   rw [h, hp, hsw, lift_lane_maybe_swap_true_bv]
 
-set_option maxHeartbeats 64000000 in
+set_option maxHeartbeats 2000000 in
 @[spec]
 theorem theta_lift_spec_2 (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
