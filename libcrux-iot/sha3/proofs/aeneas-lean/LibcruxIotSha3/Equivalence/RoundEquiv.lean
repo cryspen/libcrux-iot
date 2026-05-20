@@ -6,11 +6,12 @@
   This file composes `theta_lift_spec` and `prc_lift_spec` (round 0)
   into a single Triple establishing the full per-round equivalence.
 
-  ## Status (2026-05-17 evening — round 0 proven at 16M)
+  ## Status — all four rounds proven
 
-  `round0_equiv_spec` builds in ≤ 16M heartbeats (file builds in ~12 s).
-  Rounds 1/2/3 are sorry'd pending the underlying `theta_lift_spec_k`
-  and `prc_lift_spec_k` proofs.
+  `round{0,1,2,3}_equiv_spec` each build at 16M heartbeats. The four
+  proofs follow the same shape (one `hax_mvcgen`, side-goal `scalar_tac`
+  chain, `unfold round{k}_post` + `casesm` + second `hax_mvcgen` +
+  `simp_all`) and each is tagged `@[spec]` for the top-level composition.
 
   ### Key discipline (don't break)
   Each `round{k}_post` is declared `@[irreducible]`. This is load-bearing:
@@ -39,15 +40,13 @@
     not recursively dispatch the 5 spec lemmas during impl
     advancement.
 
-  ## Open work (rounds 1/2/3)
+  ## Round dependencies
 
-  `round{1,2,3}_equiv_spec` are sorry'd pending the underlying
-  `theta_lift_spec_k` and `prc_lift_spec_k` proofs (see
-  `ThetaLiftRound{1,2,3}.lean`, `PrcLiftRound{1,2,3}.lean`). When
-  those are filled in, transcribe the round-0 proof shape (one
-  `hax_mvcgen`, side-goal scalar_tac chain, `unfold round{k}_post`
-  + casesm + second `hax_mvcgen` + `simp_all`) — and tag each round
-  spec `@[spec]` so the top-level `four_round_equiv` can fire them.
+  Each `round{k}_equiv_spec` discharges via the underlying
+  `theta_lift_spec_k` and `prc_lift_spec_k` lemmas (see
+  `ThetaLiftRound{1,2,3}.lean`, `PrcLiftRound{1,2,3}.lean`). All four
+  round specs are tagged `@[spec]` so the top-level `four_round_equiv`
+  fires them automatically.
 -/
 import LibcruxIotSha3.Equivalence.ThetaLift
 import LibcruxIotSha3.Equivalence.ThetaLiftRound1
