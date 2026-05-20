@@ -214,13 +214,14 @@ def keccakf1600_round1_pi_rho_chi_chain (s : state.KeccakState) :
   let r1 ← keccak.keccakf1600_round1_pi_rho_chi_1 0#usize s
   keccak.keccakf1600_round1_pi_rho_chi_2 r1
 
--- @[spec] (added when prc_lift_spec_1 body is filled in)
+@[spec]
 theorem keccakf1600_round1_pi_rho_chi_chain_spec
     (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     keccakf1600_round1_pi_rho_chi_chain s
     ⦃ ⇓ r_impl => ⌜
-      (do let a1 ← keccak_f.rho_unrolled (lift_theta_applied s)
+      (do let a1 ← keccak_f.rho_unrolled
+            (lift_theta_applied_perm s impl_perm (impl_swap_k 1))
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
@@ -233,13 +234,14 @@ def keccakf1600_round2_pi_rho_chi_chain (s : state.KeccakState) :
   let r1 ← keccak.keccakf1600_round2_pi_rho_chi_1 0#usize s
   keccak.keccakf1600_round2_pi_rho_chi_2 r1
 
--- @[spec] (added when prc_lift_spec_2 body is filled in)
+@[spec]
 theorem keccakf1600_round2_pi_rho_chi_chain_spec
     (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     keccakf1600_round2_pi_rho_chi_chain s
     ⦃ ⇓ r_impl => ⌜
-      (do let a1 ← keccak_f.rho_unrolled (lift_theta_applied s)
+      (do let a1 ← keccak_f.rho_unrolled
+            (lift_theta_applied_perm s (impl_perm ∘ impl_perm) (impl_swap_k 2))
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
@@ -253,13 +255,15 @@ def keccakf1600_round3_pi_rho_chi_chain (s : state.KeccakState) :
   let r1 ← keccak.keccakf1600_round3_pi_rho_chi_1 0#usize s
   keccak.keccakf1600_round3_pi_rho_chi_2 r1
 
--- @[spec] (added when prc_lift_spec_3 body is filled in)
+@[spec]
 theorem keccakf1600_round3_pi_rho_chi_chain_spec
     (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     keccakf1600_round3_pi_rho_chi_chain s
     ⦃ ⇓ r_impl => ⌜
-      (do let a1 ← keccak_f.rho_unrolled (lift_theta_applied s)
+      (do let a1 ← keccak_f.rho_unrolled
+            (lift_theta_applied_perm s
+              (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3))
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
@@ -282,15 +286,20 @@ def round1_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
     let r_spec ← keccak_f.iota s_chi s.i
     pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm) (impl_swap_k 2))).holds
 
+set_option maxHeartbeats 16000000 in
 theorem round1_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let s1 ← keccak.keccakf1600_round1_theta s
         keccakf1600_round1_pi_rho_chi_chain s1)
     ⦃ ⇓ r_impl => ⌜round1_post s r_impl⌝ ⦄ := by
-  -- Same shape as round0_equiv_spec; closes by `hax_mvcgen + simp_all`
-  -- once `theta_lift_spec_1` and `prc_lift_spec_1` are tagged `@[spec]`
-  -- (currently sorry'd in their stub files).
-  sorry
+  hax_mvcgen
+  all_goals first
+    | scalar_tac
+    | (casesm* _ ∧ _; scalar_tac)
+    | (unfold round1_post
+       casesm* _ ∧ _
+       hax_mvcgen
+       all_goals first | scalar_tac | simp_all)
 
 @[irreducible]
 def round2_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
@@ -303,11 +312,20 @@ def round2_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
     let r_spec ← keccak_f.iota s_chi s.i
     pure (r_spec = lift_perm r_impl (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3))).holds
 
+set_option maxHeartbeats 16000000 in
 theorem round2_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let s1 ← keccak.keccakf1600_round2_theta s
         keccakf1600_round2_pi_rho_chi_chain s1)
-    ⦃ ⇓ r_impl => ⌜round2_post s r_impl⌝ ⦄ := by sorry
+    ⦃ ⇓ r_impl => ⌜round2_post s r_impl⌝ ⦄ := by
+  hax_mvcgen
+  all_goals first
+    | scalar_tac
+    | (casesm* _ ∧ _; scalar_tac)
+    | (unfold round2_post
+       casesm* _ ∧ _
+       hax_mvcgen
+       all_goals first | scalar_tac | simp_all)
 
 @[irreducible]
 def round3_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
@@ -322,11 +340,20 @@ def round3_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
     -- `lift` (after `impl_perm^[4] = id`). Equivalent to `lift r_impl`.
     pure (r_spec = Equivalence.lift r_impl)).holds
 
+set_option maxHeartbeats 16000000 in
 theorem round3_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let s1 ← keccak.keccakf1600_round3_theta s
         keccakf1600_round3_pi_rho_chi_chain s1)
-    ⦃ ⇓ r_impl => ⌜round3_post s r_impl⌝ ⦄ := by sorry
+    ⦃ ⇓ r_impl => ⌜round3_post s r_impl⌝ ⦄ := by
+  hax_mvcgen
+  all_goals first
+    | scalar_tac
+    | (casesm* _ ∧ _; scalar_tac)
+    | (unfold round3_post
+       casesm* _ ∧ _
+       hax_mvcgen
+       all_goals first | scalar_tac | simp_all)
 
 /-! ## Triple combinator: conjunction of posts (deterministic monad)
 
@@ -394,33 +421,40 @@ theorem round0_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
   hax_mvcgen
   all_goals scalar_tac
 
+set_option maxHeartbeats 16000000 in
 theorem round1_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let s1 ← keccak.keccakf1600_round1_theta s
         keccakf1600_round1_pi_rho_chi_chain s1)
     ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
-  -- Same recipe as `round0_i_inc` (unfold + hax_mvcgen + scalar_tac)
-  -- once round-1 has per-FC `@[spec]`s in `PrcLiftRound1.lean` (the
-  -- analogues of the `pi_rho_chi_y0_zeta1_spec_fc` etc. in `PrcLift.lean`).
-  -- Until that infrastructure exists, sorry'd.
-  sorry
+  unfold keccakf1600_round1_pi_rho_chi_chain
+  unfold keccak.keccakf1600_round1_pi_rho_chi_1
+  unfold keccak.keccakf1600_round1_pi_rho_chi_2
+  hax_mvcgen
+  all_goals scalar_tac
 
+set_option maxHeartbeats 16000000 in
 theorem round2_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let s1 ← keccak.keccakf1600_round2_theta s
         keccakf1600_round2_pi_rho_chi_chain s1)
     ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
-  -- See `round1_i_inc`'s comment. Needs per-FC `@[spec]`s in
-  -- `PrcLiftRound2.lean`.
-  sorry
+  unfold keccakf1600_round2_pi_rho_chi_chain
+  unfold keccak.keccakf1600_round2_pi_rho_chi_1
+  unfold keccak.keccakf1600_round2_pi_rho_chi_2
+  hax_mvcgen
+  all_goals scalar_tac
 
+set_option maxHeartbeats 16000000 in
 theorem round3_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let s1 ← keccak.keccakf1600_round3_theta s
         keccakf1600_round3_pi_rho_chi_chain s1)
     ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
-  -- See `round1_i_inc`'s comment. Needs per-FC `@[spec]`s in
-  -- `PrcLiftRound3.lean`.
-  sorry
+  unfold keccakf1600_round3_pi_rho_chi_chain
+  unfold keccak.keccakf1600_round3_pi_rho_chi_1
+  unfold keccak.keccakf1600_round3_pi_rho_chi_2
+  hax_mvcgen
+  all_goals scalar_tac
 
 end libcrux_iot_sha3.Equivalence
