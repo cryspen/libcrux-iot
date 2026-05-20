@@ -23,37 +23,10 @@ set_option mvcgen.warning false
 
 /-! ### FC proof macros (round-1 versions)
 
-`prc_y_zeta_no_rc_proof_1` and `prc_y_zeta_with_rc_proof_1` are the
+`prc_y_zeta_no_rc_proof` and `prc_y_zeta_with_rc_proof_1` are the
 round-1 analogues of the round-0 macros in `PrcLift.lean`. They have
 the same `hax_mvcgen` hyp-name layout because the impl FC bodies have
 the same shape (5 reads, 5 rotates, 5 chi steps, 5 writes). -/
-
-set_option hygiene false in
-local macro "prc_y_zeta_no_rc_proof_1" subfun:ident : tactic => `(tactic|
-  (unfold $subfun
-   hax_mvcgen
-   all_goals try scalar_tac
-   expose_names
-   refine ⟨?_, ?_, ?_, ?_⟩
-   · exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
-   · exact h_57.trans (h_50.trans (h_43.trans (h_36.trans h_29)))
-   · exact h_56.trans (h_49.trans (h_42.trans (h_35.trans h_28)))
-   · rw [h_59, h_52, h_45, h_38, h_31]
-     norm_num [apply_5_writes]
-     congr 6
-     all_goals apply Std.U32.bv_eq_imp_eq
-     all_goals (
-       simp only [
-         h_27.2, h_26.2, h_25,
-         h_34.2, h_33.2, h_32,
-         h_41.2, h_40.2, h_39,
-         h_48.2, h_47.2, h_46,
-         h_55.2, h_54.2, h_53,
-         h_7, h_9, h_20, h_22, h_24,
-         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
-         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-         Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
-       norm_num)))
 
 set_option maxHeartbeats 16000000
 
@@ -182,7 +155,7 @@ private theorem pi_rho_chi_y1_zeta0_spec_fc_1
         (bx2 ^^^ ((~~~bx3) &&& bx4))
         (bx3 ^^^ ((~~~bx4) &&& bx0))
         (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof_1 keccak.keccakf1600_round1_pi_rho_chi_y1_zeta0
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round1_pi_rho_chi_y1_zeta0
 
 /-! y1_zeta1 FC (round 1): writes lanes 4/7/10/18/21 at halves 0/0/0/0/1;
     preserves `s.i`. -/
@@ -206,7 +179,7 @@ private theorem pi_rho_chi_y1_zeta1_spec_fc_1
         (bx2 ^^^ ((~~~bx3) &&& bx4))
         (bx3 ^^^ ((~~~bx4) &&& bx0))
         (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof_1 keccak.keccakf1600_round1_pi_rho_chi_y1_zeta1
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round1_pi_rho_chi_y1_zeta1
 
 /-! y2_zeta0 FC (round 1): writes lanes 3/6/14/17/20 at halves 1/1/1/0/1;
     preserves `s.i`. -/
@@ -230,7 +203,7 @@ private theorem pi_rho_chi_y2_zeta0_spec_fc_1
         (bx2 ^^^ ((~~~bx3) &&& bx4))
         (bx3 ^^^ ((~~~bx4) &&& bx0))
         (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof_1 keccak.keccakf1600_round1_pi_rho_chi_y2_zeta0
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round1_pi_rho_chi_y2_zeta0
 
 /-! y2_zeta1 FC (round 1): writes lanes 3/6/14/17/20 at halves 0/0/0/1/0;
     preserves `s.i`. -/
@@ -254,7 +227,7 @@ private theorem pi_rho_chi_y2_zeta1_spec_fc_1
         (bx2 ^^^ ((~~~bx3) &&& bx4))
         (bx3 ^^^ ((~~~bx4) &&& bx0))
         (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof_1 keccak.keccakf1600_round1_pi_rho_chi_y2_zeta1
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round1_pi_rho_chi_y2_zeta1
 
 /-! y3_zeta0 FC (round 1): writes lanes 2/5/13/16/24 at halves 1/1/0/1/1;
     preserves `s.i`. -/
@@ -278,7 +251,7 @@ private theorem pi_rho_chi_y3_zeta0_spec_fc_1
         (bx2 ^^^ ((~~~bx3) &&& bx4))
         (bx3 ^^^ ((~~~bx4) &&& bx0))
         (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof_1 keccak.keccakf1600_round1_pi_rho_chi_y3_zeta0
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round1_pi_rho_chi_y3_zeta0
 
 /-! y3_zeta1 FC (round 1): writes lanes 2/5/13/16/24 at halves 0/0/1/0/0;
     preserves `s.i`. -/
@@ -302,7 +275,7 @@ private theorem pi_rho_chi_y3_zeta1_spec_fc_1
         (bx2 ^^^ ((~~~bx3) &&& bx4))
         (bx3 ^^^ ((~~~bx4) &&& bx0))
         (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof_1 keccak.keccakf1600_round1_pi_rho_chi_y3_zeta1
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round1_pi_rho_chi_y3_zeta1
 
 /-! y4_zeta0 FC (round 1): writes lanes 1/9/12/15/23 at halves 1/0/1/1/1;
     preserves `s.i`. -/
@@ -326,7 +299,7 @@ private theorem pi_rho_chi_y4_zeta0_spec_fc_1
         (bx2 ^^^ ((~~~bx3) &&& bx4))
         (bx3 ^^^ ((~~~bx4) &&& bx0))
         (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof_1 keccak.keccakf1600_round1_pi_rho_chi_y4_zeta0
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round1_pi_rho_chi_y4_zeta0
 
 /-! y4_zeta1 FC (round 1): writes lanes 1/9/12/15/23 at halves 0/1/0/0/0;
     preserves `s.i`. -/
@@ -350,7 +323,7 @@ private theorem pi_rho_chi_y4_zeta1_spec_fc_1
         (bx2 ^^^ ((~~~bx3) &&& bx4))
         (bx3 ^^^ ((~~~bx4) &&& bx0))
         (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof_1 keccak.keccakf1600_round1_pi_rho_chi_y4_zeta1
+  prc_y_zeta_no_rc_proof keccak.keccakf1600_round1_pi_rho_chi_y4_zeta1
 
 /-! ## Input cell access lemmas
 

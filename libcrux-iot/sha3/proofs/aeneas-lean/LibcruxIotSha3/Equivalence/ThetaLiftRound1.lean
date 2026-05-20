@@ -31,23 +31,6 @@ set_option mvcgen.warning false
 
 attribute [local irreducible] spread_to_even lift_lane_bv
 
-/-- Tactic for round-1 c-cell specs: same shape as the round-0
-    `theta_c_proof` macro in `ThetaLiftDefs.lean` (re-declared here
-    locally because that macro is `local`). -/
-local macro "theta_c1_proof" subfun:ident : tactic =>
-  `(tactic|
-    (unfold $subfun
-     hax_mvcgen
-     all_goals first
-       | scalar_tac
-       | (intros
-          refine ⟨?_, ?_, ?_, ?_⟩
-          all_goals first | assumption | (
-            apply Eq.trans ‹_›
-            congr 2
-            apply Std.U32.bv_eq_imp_eq
-            simp_all [Std.UScalar.bv_xor]))))
-
 /-! ## Round-1 per-c-cell sub-function specs
 
 Each round-1 `theta_c_x{X}_z{Z}` reads 5 `s.st` halves with a
@@ -66,7 +49,7 @@ private theorem theta_c_x0_z0_spec_1 (s : state.KeccakState) :
           (s.st.val[0]!.val[0]! ^^^ s.st.val[1]!.val[0]! ^^^
            s.st.val[2]!.val[1]! ^^^ s.st.val[3]!.val[1]! ^^^
            s.st.val[4]!.val[0]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x0_z0
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x0_z0
 
 @[spec]
 private theorem theta_c_x0_z1_spec_1 (s : state.KeccakState) :
@@ -76,7 +59,7 @@ private theorem theta_c_x0_z1_spec_1 (s : state.KeccakState) :
           (s.st.val[0]!.val[1]! ^^^ s.st.val[1]!.val[1]! ^^^
            s.st.val[2]!.val[0]! ^^^ s.st.val[3]!.val[0]! ^^^
            s.st.val[4]!.val[1]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x0_z1
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x0_z1
 
 @[spec]
 private theorem theta_c_x1_z0_spec_1 (s : state.KeccakState) :
@@ -86,7 +69,7 @@ private theorem theta_c_x1_z0_spec_1 (s : state.KeccakState) :
           (s.st.val[5]!.val[1]! ^^^ s.st.val[6]!.val[0]! ^^^
            s.st.val[7]!.val[0]! ^^^ s.st.val[8]!.val[1]! ^^^
            s.st.val[9]!.val[0]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x1_z0
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x1_z0
 
 @[spec]
 private theorem theta_c_x1_z1_spec_1 (s : state.KeccakState) :
@@ -96,7 +79,7 @@ private theorem theta_c_x1_z1_spec_1 (s : state.KeccakState) :
           (s.st.val[5]!.val[0]! ^^^ s.st.val[6]!.val[1]! ^^^
            s.st.val[7]!.val[1]! ^^^ s.st.val[8]!.val[0]! ^^^
            s.st.val[9]!.val[1]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x1_z1
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x1_z1
 
 @[spec]
 private theorem theta_c_x2_z0_spec_1 (s : state.KeccakState) :
@@ -106,7 +89,7 @@ private theorem theta_c_x2_z0_spec_1 (s : state.KeccakState) :
           (s.st.val[10]!.val[0]! ^^^ s.st.val[11]!.val[0]! ^^^
            s.st.val[12]!.val[1]! ^^^ s.st.val[13]!.val[1]! ^^^
            s.st.val[14]!.val[1]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x2_z0
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x2_z0
 
 @[spec]
 private theorem theta_c_x2_z1_spec_1 (s : state.KeccakState) :
@@ -116,7 +99,7 @@ private theorem theta_c_x2_z1_spec_1 (s : state.KeccakState) :
           (s.st.val[10]!.val[1]! ^^^ s.st.val[11]!.val[1]! ^^^
            s.st.val[12]!.val[0]! ^^^ s.st.val[13]!.val[0]! ^^^
            s.st.val[14]!.val[0]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x2_z1
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x2_z1
 
 @[spec]
 private theorem theta_c_x3_z0_spec_1 (s : state.KeccakState) :
@@ -126,7 +109,7 @@ private theorem theta_c_x3_z0_spec_1 (s : state.KeccakState) :
           (s.st.val[15]!.val[0]! ^^^ s.st.val[16]!.val[1]! ^^^
            s.st.val[17]!.val[1]! ^^^ s.st.val[18]!.val[1]! ^^^
            s.st.val[19]!.val[0]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x3_z0
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x3_z0
 
 @[spec]
 private theorem theta_c_x3_z1_spec_1 (s : state.KeccakState) :
@@ -136,7 +119,7 @@ private theorem theta_c_x3_z1_spec_1 (s : state.KeccakState) :
           (s.st.val[15]!.val[1]! ^^^ s.st.val[16]!.val[0]! ^^^
            s.st.val[17]!.val[0]! ^^^ s.st.val[18]!.val[0]! ^^^
            s.st.val[19]!.val[1]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x3_z1
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x3_z1
 
 @[spec]
 private theorem theta_c_x4_z0_spec_1 (s : state.KeccakState) :
@@ -146,7 +129,7 @@ private theorem theta_c_x4_z0_spec_1 (s : state.KeccakState) :
           (s.st.val[20]!.val[1]! ^^^ s.st.val[21]!.val[0]! ^^^
            s.st.val[22]!.val[1]! ^^^ s.st.val[23]!.val[0]! ^^^
            s.st.val[24]!.val[0]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x4_z0
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x4_z0
 
 @[spec]
 private theorem theta_c_x4_z1_spec_1 (s : state.KeccakState) :
@@ -156,7 +139,7 @@ private theorem theta_c_x4_z1_spec_1 (s : state.KeccakState) :
           (s.st.val[20]!.val[0]! ^^^ s.st.val[21]!.val[1]! ^^^
            s.st.val[22]!.val[0]! ^^^ s.st.val[23]!.val[1]! ^^^
            s.st.val[24]!.val[1]!)) ⌝ ⦄ := by
-  theta_c1_proof keccak.keccakf1600_round1_theta_c_x4_z1
+  theta_c_proof keccak.keccakf1600_round1_theta_c_x4_z1
 
 /-! Round-1 `theta_d` overwrites `s.d` from the existing `s.c` cells.
     Same control shape as round 0 (theta_d uses c-cells canonically). -/
