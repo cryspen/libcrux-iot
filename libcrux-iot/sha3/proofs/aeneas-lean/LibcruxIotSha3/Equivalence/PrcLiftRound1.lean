@@ -626,7 +626,7 @@ theorem lift_theta_applied_perm_bv_24_1 (s : state.KeccakState) :
    RHS — this avoids accidentally normalising the LHS, which would defeat the
    per-cell `simp` cascade. Runs at 256M heartbeats. -/
 
-set_option maxHeartbeats 256000000 in
+set_option maxHeartbeats 1000000 in
 theorem prc_lift_spec_1 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let r1 ← keccak.keccakf1600_round1_pi_rho_chi_1 0#usize s
