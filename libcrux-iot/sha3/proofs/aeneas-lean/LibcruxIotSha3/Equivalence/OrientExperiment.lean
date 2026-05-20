@@ -1,3 +1,16 @@
+-- STATUS: SLATED FOR DELETION (2026-05-20)
+--
+-- This file is an experimental sandbox for tactic-orientation tests on
+-- the L6 algebraic-close blocker from an earlier campaign. It is not
+-- imported by any other file (verified by grep) and its `grind` failure
+-- (from commit ccb2dc0) is contained to this file.
+--
+-- The L6 algebraic-close blocker it was investigating is resolved by
+-- the bit-keccak Campaign 2 architecture (`ac_rfl` over `BitVec.xor`
+-- post `lift_lane_bv`-fold; see `ThetaLiftRound1.lean`'s closure).
+--
+-- Action: delete this file.
+--
 -- Orientation/AC experiments for the L6 algebraic-close blocker.
 -- Tests whether grind/agrind/libcruxgrind/simp_only can close the L6 shape
 -- under different lemma orientations and explicit AC hints.

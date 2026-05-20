@@ -2,6 +2,25 @@
   I32 iterator + loop specs for `keccak.keccakf1600_loop`, plus the
   loop-equivalence theorem.
 
+  ## STATUS: SLATED FOR DELETION (2026-05-20)
+
+  This file is the OLD `keccakf1600_equiv` path. The two sorries
+  (`keccakf1600_4rounds_preserves_balanced` and `four_round_chunk_equiv`)
+  require `Balanced` preservation across rounds 1-3, which is
+  empirically false (see `feedback_bit_keccak_balanced_preservation_false`).
+  The OLD `keccakf1600_post` shape would require `lift_perm r id impl_swap`
+  on the output, equivalent to `lift r` only when `Balanced r` — not
+  generically true.
+
+  The NEW top-level theorem `BitKeccak.keccakf1600_equiv_via_bit`
+  (in `BitKeccak/AlgEquiv.lean`) proves `keccakf1600_post_canonical`
+  (using canonical `lift r_impl` directly, no `Balanced` precondition)
+  and supersedes everything here. No external callers depend on this
+  file's exports.
+
+  Action: delete this file after the bit-keccak campaign closes its
+  remaining sorries.
+
   Mirrors `LoopEquivalence/Spec.lean`'s Usize iterator/loop spec
   template, adapted to the `Std.I32` Step instance in
   `Extraction/Missing.lean:25`.
