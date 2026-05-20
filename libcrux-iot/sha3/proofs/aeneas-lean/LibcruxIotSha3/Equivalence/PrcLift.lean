@@ -156,7 +156,7 @@ List form `((((l.set lane0 (l[lane0]!.set half0 v0)).set lane1 ...).set
 lane4 ...))`. Used to express FC sub-function posts compactly, avoiding
 the multiline `.set` parsing issue inside `⌜ ⌝`. -/
 @[reducible]
-private def apply_5_writes
+def apply_5_writes
     (l : List lane.Lane2U32)
     (lane0 lane1 lane2 lane3 lane4 : Nat)
     (half0 half1 half2 half3 half4 : Std.Usize)
@@ -497,7 +497,7 @@ theorem iota_spec (state : Std.Array Std.U64 25#usize) (round : Std.Usize)
        simp_all [Std.UScalar.bv_xor])
 
 /-- Helper: rotate a `Std.U64` at the BitVec level. -/
-private abbrev rot64 (x : Std.U64) (n : Nat) : Std.U64 := ⟨x.bv.rotateLeft n⟩
+abbrev rot64 (x : Std.U64) (n : Nat) : Std.U64 := ⟨x.bv.rotateLeft n⟩
 
 /-- Pure semantics of `keccak_f.rho_unrolled`: rotates each lane by the
     Keccak ρ-offset table entry. -/
