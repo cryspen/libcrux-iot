@@ -703,8 +703,8 @@ private theorem rotateLeft1_xor_bv32_3 (a b : BitVec 32) :
     (a ^^^ b).rotateLeft 1 = a.rotateLeft 1 ^^^ b.rotateLeft 1 := by
   bv_decide
 
--- @[spec] (added when proof is filled in)
 set_option maxHeartbeats 64000000 in
+@[spec]
 theorem theta_lift_spec_3 (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round3_theta s
