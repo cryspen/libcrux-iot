@@ -340,7 +340,22 @@ private theorem round1_full_bit_eq (s : state.KeccakState) (hi : s.i.val < 24) :
 theorem bit_round1_alg_eq (s : KState) (hi : s.i.val < 24) :
     spec_round_step (lift_perm s.toAeneas impl_perm (impl_swap_k 1)) s.i
     = .ok (lift_perm (bit_round1 s).toAeneas (impl_perm ∘ impl_perm) (impl_swap_k 2)) := by
-  sorry
+  apply triple_imp_prop
+  apply Std.Do.Triple.of_entails_right _
+    (triple_conj_post (round1_equiv_spec s.toAeneas hi) (round1_full_bit_eq s.toAeneas hi))
+  rw [PostCond.entails_noThrow]
+  intro r ⟨h_round1_post, h_from_eq⟩
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_round1_post h_from_eq ⊢
+  have h_r_eq : r = (bit_round1 s).toAeneas := by
+    rw [← KState.toAeneas_fromAeneas r, h_from_eq, KState.fromAeneas_toAeneas]
+  unfold round1_post at h_round1_post
+  have h_spec_eq : spec_round_step (lift_perm s.toAeneas impl_perm (impl_swap_k 1)) s.toAeneas.i
+                 = .ok (lift_perm r (impl_perm ∘ impl_perm) (impl_swap_k 2)) := by
+    unfold spec_round_step
+    exact holds_chain_eq_ok h_round1_post
+  show spec_round_step (lift_perm s.toAeneas impl_perm (impl_swap_k 1)) s.i
+     = .ok (lift_perm (bit_round1 s).toAeneas (impl_perm ∘ impl_perm) (impl_swap_k 2))
+  rw [show s.i = s.toAeneas.i from rfl, h_spec_eq, h_r_eq]
 
 /-! ### Round-2 chain Triple (bit-side equivalence over the 3-step impl) -/
 
@@ -378,7 +393,23 @@ theorem bit_round2_alg_eq (s : KState) (hi : s.i.val < 24) :
         (lift_perm s.toAeneas (impl_perm ∘ impl_perm) (impl_swap_k 2)) s.i
     = .ok (lift_perm (bit_round2 s).toAeneas
               (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) := by
-  sorry
+  apply triple_imp_prop
+  apply Std.Do.Triple.of_entails_right _
+    (triple_conj_post (round2_equiv_spec s.toAeneas hi) (round2_full_bit_eq s.toAeneas hi))
+  rw [PostCond.entails_noThrow]
+  intro r ⟨h_round2_post, h_from_eq⟩
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_round2_post h_from_eq ⊢
+  have h_r_eq : r = (bit_round2 s).toAeneas := by
+    rw [← KState.toAeneas_fromAeneas r, h_from_eq, KState.fromAeneas_toAeneas]
+  unfold round2_post at h_round2_post
+  have h_spec_eq :
+      spec_round_step (lift_perm s.toAeneas (impl_perm ∘ impl_perm) (impl_swap_k 2)) s.toAeneas.i
+        = .ok (lift_perm r (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) := by
+    unfold spec_round_step
+    exact holds_chain_eq_ok h_round2_post
+  show spec_round_step (lift_perm s.toAeneas (impl_perm ∘ impl_perm) (impl_swap_k 2)) s.i
+     = .ok (lift_perm (bit_round2 s).toAeneas (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3))
+  rw [show s.i = s.toAeneas.i from rfl, h_spec_eq, h_r_eq]
 
 /-! ### Round-3 chain Triple (bit-side equivalence over the 3-step impl) -/
 
@@ -416,7 +447,25 @@ theorem bit_round3_alg_eq (s : KState) (hi : s.i.val < 24) :
     spec_round_step
         (lift_perm s.toAeneas (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) s.i
     = .ok (lift (bit_round3 s).toAeneas) := by
-  sorry
+  apply triple_imp_prop
+  apply Std.Do.Triple.of_entails_right _
+    (triple_conj_post (round3_equiv_spec s.toAeneas hi) (round3_full_bit_eq s.toAeneas hi))
+  rw [PostCond.entails_noThrow]
+  intro r ⟨h_round3_post, h_from_eq⟩
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_round3_post h_from_eq ⊢
+  have h_r_eq : r = (bit_round3 s).toAeneas := by
+    rw [← KState.toAeneas_fromAeneas r, h_from_eq, KState.fromAeneas_toAeneas]
+  unfold round3_post at h_round3_post
+  have h_spec_eq :
+      spec_round_step
+          (lift_perm s.toAeneas (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) s.toAeneas.i
+        = .ok (Equivalence.lift r) := by
+    unfold spec_round_step
+    exact holds_chain_eq_ok h_round3_post
+  show spec_round_step
+          (lift_perm s.toAeneas (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) s.i
+        = .ok (Equivalence.lift (bit_round3 s).toAeneas)
+  rw [show s.i = s.toAeneas.i from rfl, h_spec_eq, h_r_eq]
 
 /-! ## 4-round closure (unconditional)
 
