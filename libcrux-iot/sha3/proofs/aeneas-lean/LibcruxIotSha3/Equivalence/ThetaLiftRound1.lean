@@ -772,36 +772,7 @@ theorem theta_lift_spec_1 (s : state.KeccakState) :
       lift_lane_maybe_swap, lift_lane,
       Std.UScalar.bv_xor,
       reduceIte,
-      show ((0#usize : Std.Usize).val) = 0 from rfl,
-      show ((1#usize : Std.Usize).val) = 1 from rfl,
-      show ((2#usize : Std.Usize).val) = 2 from rfl,
-      show ((3#usize : Std.Usize).val) = 3 from rfl,
-      show ((4#usize : Std.Usize).val) = 4 from rfl,
-      show (↑(impl_perm 0) : Nat) = 0 from rfl,
-      show (↑(impl_perm 1) : Nat) = 2 from rfl,
-      show (↑(impl_perm 2) : Nat) = 4 from rfl,
-      show (↑(impl_perm 3) : Nat) = 1 from rfl,
-      show (↑(impl_perm 4) : Nat) = 3 from rfl,
-      show (↑(impl_perm 5) : Nat) = 6 from rfl,
-      show (↑(impl_perm 6) : Nat) = 8 from rfl,
-      show (↑(impl_perm 7) : Nat) = 5 from rfl,
-      show (↑(impl_perm 8) : Nat) = 7 from rfl,
-      show (↑(impl_perm 9) : Nat) = 9 from rfl,
-      show (↑(impl_perm 10) : Nat) = 12 from rfl,
-      show (↑(impl_perm 11) : Nat) = 14 from rfl,
-      show (↑(impl_perm 12) : Nat) = 11 from rfl,
-      show (↑(impl_perm 13) : Nat) = 13 from rfl,
-      show (↑(impl_perm 14) : Nat) = 10 from rfl,
-      show (↑(impl_perm 15) : Nat) = 18 from rfl,
-      show (↑(impl_perm 16) : Nat) = 15 from rfl,
-      show (↑(impl_perm 17) : Nat) = 17 from rfl,
-      show (↑(impl_perm 18) : Nat) = 19 from rfl,
-      show (↑(impl_perm 19) : Nat) = 16 from rfl,
-      show (↑(impl_perm 20) : Nat) = 24 from rfl,
-      show (↑(impl_perm 21) : Nat) = 21 from rfl,
-      show (↑(impl_perm 22) : Nat) = 23 from rfl,
-      show (↑(impl_perm 23) : Nat) = 20 from rfl,
-      show (↑(impl_perm 24) : Nat) = 22 from rfl]
+      show (↑(impl_perm 0) : Nat) = 0 from rfl]
   all_goals
     simp_all only [Std.UScalar.bv_xor, rot32,
       show ((0#usize : Std.Usize).val) = 0 from rfl,
@@ -895,7 +866,6 @@ theorem theta_lift_spec_1 (s : state.KeccakState) :
   -- One pass distributes the outer rotateLeft; a second pass catches the
   -- inner-residual rotateLeft occurrences that `← lift_td` re-bundled. After
   -- distribution, each cell is `lhs ^^^ chain = lhs' ^^^ chain'` modulo XOR-AC.
-  all_goals try simp only [rotateLeft1_xor_bv32]
   all_goals try simp only [rotateLeft1_xor_bv32]
   -- Three closure cases per BV-32 sub-goal:
   --   1. `ac_rfl`: both sides match modulo XOR-AC of `BitVec.xor` (uses the
