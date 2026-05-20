@@ -1,39 +1,40 @@
 /-
-  I32 iterator + loop specs for `keccak.keccakf1600_loop`, plus the
-  loop-equivalence theorem.
+  I32 iterator + loop helpers + spec-chain helpers.
 
-  ## STATUS: SLATED FOR DELETION (2026-05-20)
+  ## History (2026-05-20 cleanup)
 
-  This file is the OLD `keccakf1600_equiv` path. The two sorries
-  (`keccakf1600_4rounds_preserves_balanced` and `four_round_chunk_equiv`)
-  require `Balanced` preservation across rounds 1-3, which is
-  empirically false (see `feedback_bit_keccak_balanced_preservation_false`).
-  The OLD `keccakf1600_post` shape would require `lift_perm r id impl_swap`
-  on the output, equivalent to `lift r` only when `Balanced r` — not
-  generically true.
+  This file used to host the OLD `keccakf1600_equiv` path, which was
+  structured around `Balanced` preservation across rounds 1-3 — a
+  property empirically false (see memory
+  `feedback_bit_keccak_balanced_preservation_false`). The OLD post
+  required `lift_perm r id impl_swap` on the output, equivalent to
+  the canonical `lift r` only when `Balanced r` — not generically true.
 
-  The NEW top-level theorem `BitKeccak.keccakf1600_equiv_via_bit`
-  (in `BitKeccak/AlgEquiv.lean`) proves `keccakf1600_post_canonical`
-  (using canonical `lift r_impl` directly, no `Balanced` precondition)
-  and supersedes everything here. No external callers depend on this
-  file's exports.
+  The OLD theorems (`keccakf1600_4rounds_preserves_balanced`,
+  `keccakf1600_4rounds_preserves_lift_eq`,
+  `keccakf1600_loop_post_eq_spec_chain`, `four_round_chunk_equiv`,
+  `keccakf1600_loop_equiv`, `keccakf1600_equiv`, plus the supporting
+  `Balanced` / `lift_eq_lift_perm_iff` / `lift_lane_bv_swap_iff`
+  defs and `keccakf1600_4rounds_i_inc`, `loop_inv_prop`,
+  `holds_chain4_eq_ok` helpers) have been removed. They are
+  superseded by `BitKeccak.keccakf1600_equiv_via_bit` in
+  `BitKeccak/AlgEquiv.lean`, which proves `keccakf1600_post_canonical`
+  (canonical `lift r_impl`, no `Balanced` precondition) via the
+  time-varying `impl_swap_k` architecture.
 
-  Action: delete this file after the bit-keccak campaign closes its
-  remaining sorries.
+  ## What remains
 
-  Mirrors `LoopEquivalence/Spec.lean`'s Usize iterator/loop spec
-  template, adapted to the `Std.I32` Step instance in
-  `Extraction/Missing.lean:25`.
+  Shared infrastructure still needed by:
+  - `BitKeccak/StructEquiv.lean` and `BitKeccak/AlgEquiv.lean`:
+    `loop_range_spec_i32`, `IteratorRange_next_spec_i32`,
+    `pure_prop_holds`, `of_pure_prop_holds`.
+  - `BitKeccak/AlgEquiv.lean`'s 24-round closure:
+    `spec_round_step_at`, `spec_chain`, `spec_chain_zero`,
+    `spec_chain_succ`.
 
-  ## Composability note
-
-  `four_round_equiv s` proves `spec_4(lift s) = lift_perm r id impl_swap`.
-  To chain it across 6 iterations, the previous chunk's spec output
-  (`lift_perm s_iter id impl_swap`) must equal the next chunk's spec
-  input (`lift s_iter`). This requires `lift s_iter = lift_perm s_iter
-  id impl_swap` at every iteration boundary, which we encode as a
-  precondition (`h_lift`) on the initial state and a preservation
-  lemma (`keccakf1600_4rounds_preserves_lift_eq`).
+  A future cleanup may want to rename this file (e.g. to
+  `LoopHelpers.lean` or split across two files) since the original
+  "keccakf1600 loop equiv" framing is no longer accurate.
 -/
 import LibcruxIotSha3.Equivalence.Keccakf1600
 
@@ -204,115 +205,11 @@ theorem loop_range_spec_i32 {β : Type}
       exact ih acc' iter'.start
         (by rw [hstart]; omega) (by rw [hstart]; omega) (by rw [hstart]; omega) hinv'
 
-/-! ## Preservation lemma
-
-The composability of `four_round_equiv` across iterations needs `lift s
-= lift_perm s id impl_swap` (the impl-swap halves cancel under raw
-reading) to hold at every iteration boundary. We state this as a
-precondition and require it to be preserved by `keccakf1600_4rounds`.
-
-### Structural reduction
-
-The canonical condition `lift s = lift_perm s id impl_swap` is
-equivalent to: *for each of the 12 `impl_swap` lanes,
-`s.st.val[L]!.val[0]! = s.st.val[L]!.val[1]!`*. Call this property
-**balanced** (`Balanced`).
-
-This equivalence holds because `lift_lane_bv x y = lift_lane_bv y x ↔
-x = y` (a bv_decide fact: `lift_lane_bv_swap_iff`).
-
-The preservation lemma reduces to **balance preservation under the
-12-call impl chain** (`keccakf1600_4rounds_preserves_balanced`),
-which is the remaining bit-level fact. -/
-
-/-- `lift_lane_bv` is symmetric in its arguments iff the arguments are
-    equal. Discharged by `bv_decide` after unfolding the bit-deposit
-    chain. -/
-theorem lift_lane_bv_swap_iff (x y : BitVec 32) :
-    lift_lane_bv x y = lift_lane_bv y x ↔ x = y := by
-  unfold lift_lane_bv spread_to_even
-  constructor
-  · intro h; bv_decide
-  · intro h; subst h; rfl
-
-/-- A `UScalar` is determined by its underlying `BitVec`. -/
-private theorem uscalar_eq_of_bv_eq {ty} {x y : Std.UScalar ty} (h : x.bv = y.bv) :
-    x = y := by
-  cases x; cases y; congr
-
-/-- The "balanced" property: on each of the 12 `impl_swap` lanes, the
-    two 32-bit halves of the impl's bit-interleaved storage are equal.
-    Equivalent to the canonical condition (see `lift_eq_lift_perm_iff`). -/
-def Balanced (s : state.KeccakState) : Prop :=
-  ∀ i : Fin 25, impl_swap i = true →
-    (s.st.val[i.val]!).val[0]! = (s.st.val[i.val]!).val[1]!
-
-/-- The canonical condition `lift s = lift_perm s id impl_swap` is
-    equivalent to `Balanced s`. -/
-theorem lift_eq_lift_perm_iff (s : state.KeccakState) :
-    lift s = lift_perm s id impl_swap ↔ Balanced s := by
-  unfold lift lift_perm Balanced
-  simp only [Function.id_def]
-  rw [Subtype.mk_eq_mk, List.ofFn_inj]
-  constructor
-  · intro h i hsw
-    have hi := congrFun h i
-    unfold lift_lane_maybe_swap lift_lane at hi
-    rw [hsw] at hi
-    simp only [if_true, Std.UScalar.mk.injEq] at hi
-    rw [lift_lane_bv_swap_iff] at hi
-    exact uscalar_eq_of_bv_eq hi
-  · intro h
-    funext i
-    unfold lift_lane_maybe_swap
-    by_cases hsw : impl_swap i = true
-    · simp only [hsw, if_true]
-      unfold lift_lane
-      simp only [Std.UScalar.mk.injEq]
-      rw [lift_lane_bv_swap_iff]
-      exact congrArg _ (h i hsw)
-    · simp only [Bool.not_eq_true] at hsw
-      rw [hsw]; simp
-
-/-- **Remaining bit-level fact.** `keccakf1600_4rounds` preserves the
-    `Balanced` property on the 12 `impl_swap` lanes.
-
-    *Strategy for closing:* per-call mvcgen on each of the 12 inlined
-    impl calls (round0_theta, pi_rho_chi_1, pi_rho_chi_2 for each of
-    rounds 0/1/2/3), tracking which lanes maintain `val[0] = val[1]`
-    after each call. The chi/iota/theta steps act lane-locally with
-    XOR/AND/rotation; balance preservation per lane is a finite
-    `bv_decide` check on the 32-bit halves of the involved lanes.
-
-    Estimated effort: 200-500 lines. -/
-theorem keccakf1600_4rounds_preserves_balanced
-    (s : state.KeccakState) (h_i : s.i.val + 4 ≤ 24) (h_bal : Balanced s) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600_4rounds 0#usize s
-    ⦃ ⇓ r => ⌜ Balanced r ⌝ ⦄ := by
-  sorry
-
-/-- Preservation of the canonical condition through 4 impl rounds.
-    Reduces to `keccakf1600_4rounds_preserves_balanced` via the
-    `Balanced ↔ lift = lift_perm id impl_swap` bridge. -/
-theorem keccakf1600_4rounds_preserves_lift_eq
-    (s : state.KeccakState) (h_i : s.i.val + 4 ≤ 24)
-    (h_lift : lift s = lift_perm s id impl_swap) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600_4rounds 0#usize s
-    ⦃ ⇓ r_impl => ⌜ lift r_impl = lift_perm r_impl id impl_swap ⌝ ⦄ := by
-  have h_bal : Balanced s := (lift_eq_lift_perm_iff s).mp h_lift
-  apply Triple.of_entails_right _ (keccakf1600_4rounds_preserves_balanced s h_i h_bal)
-  rw [PostCond.entails_noThrow]
-  intro r h_bal_r
-  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_bal_r ⊢
-  exact (lift_eq_lift_perm_iff r).mpr h_bal_r
-
 /-! ## Spec-chain helper
 
-`fold_body` is the per-step function used inside the `Nat.fold 24`
-spec chain in `keccakf1600_loop_post`. Wrapping it lets us reason
-about the chain uniformly when peeling off iterations. -/
+`spec_round_step_at` wraps `spec_round_step` for use inside the
+`Nat.fold 24` chain in `keccakf1600_loop_post` / `keccakf1600_post_canonical`.
+`spec_chain` packages the `Nat.fold` form. -/
 
 def spec_round_step_at (round_idx : Nat) (st : Std.Array Std.U64 25#usize) :
     Result (Std.Array Std.U64 25#usize) :=
@@ -335,147 +232,10 @@ theorem spec_chain_succ (s_lift : Std.Array Std.U64 25#usize) (n : Nat) :
   unfold spec_chain
   rw [Nat.fold_succ]
 
-/-- The `Nat.fold 24` chain in `keccakf1600_loop_post` equals `spec_chain s 24`. -/
-theorem keccakf1600_loop_post_eq_spec_chain
-    (s : state.KeccakState) (s_final : state.KeccakState) :
-    keccakf1600_loop_post s s_final =
-      (do let lifted_final ← spec_chain (lift s) 24
-          pure (lifted_final = lift_perm s_final id impl_swap)).holds := by
-  unfold keccakf1600_loop_post spec_chain spec_round_step_at
-  -- Both sides have shape `Nat.fold 24 body init`. Under `i < 24` (from
-  -- Nat.fold's signature), the `if` in `spec_round_step_at` reduces to
-  -- the spec_round_step branch.
-  congr 1
+/-! ## `pure P` ↔ `P` for `Result Prop`
 
-/-! ## 4-round i-increment
-
-Chains the four `round_k_i_inc` lemmas to show that
-`keccakf1600_4rounds` advances `s.i` by 4. Needed for propagating the
-loop invariant's `s_iter.i.val = 4 * k` field across iterations. -/
-
-set_option maxHeartbeats 2000000 in
-theorem keccakf1600_4rounds_i_inc (s : state.KeccakState) (h_i : s.i.val + 4 ≤ 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600_4rounds 0#usize s
-    ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 4 ⌝ ⦄ := by
-  rw [keccakf1600_4rounds_fold]
-  apply Std.Do.Triple.bind _ _ (round0_i_inc s (by omega))
-  intro r0
-  apply triple_imp_intro
-  intro h_i0
-  apply Std.Do.Triple.bind _ _ (round1_i_inc r0 (by omega))
-  intro r1
-  apply triple_imp_intro
-  intro h_i1
-  apply Std.Do.Triple.bind _ _ (round2_i_inc r1 (by omega))
-  intro r2
-  apply triple_imp_intro
-  intro h_i2
-  apply Std.Do.Triple.of_entails_right _ (round3_i_inc r2 (by omega))
-  rw [PostCond.entails_noThrow]
-  intro r3 h_i3
-  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_i3 ⊢
-  omega
-
-/-! ## 4-round chunk equiv (composable form)
-
-A composable version of `four_round_equiv`: given `lift s = lift_perm s
-id impl_swap` (so input is canonical), the 4 spec rounds run from the
-*canonical* spec state, and the output is also canonical. -/
-
-set_option maxHeartbeats 2000000 in
-theorem four_round_chunk_equiv
-    (s : state.KeccakState) (h_i : s.i.val + 4 ≤ 24)
-    (h_lift : lift s = lift_perm s id impl_swap) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600_4rounds 0#usize s
-    ⦃ ⇓ r => ⌜
-      (do
-        let st1 ← spec_round_step_at s.i.val (lift_perm s id impl_swap)
-        let st2 ← spec_round_step_at (s.i.val + 1) st1
-        let st3 ← spec_round_step_at (s.i.val + 2) st2
-        let r_spec ← spec_round_step_at (s.i.val + 3) st3
-        pure (r_spec = lift_perm r id impl_swap)).holds
-      ∧ lift r = lift_perm r id impl_swap ⌝ ⦄ := by
-  -- TODO(2026-05-19 architectural pivot): OLD chunk-equiv was structured
-  -- around Balanced preservation across rounds 1-3 — empirically *not*
-  -- preserved. The new top-level proof goes via
-  -- `BitKeccak.keccakf1600_equiv_via_bit` against `keccakf1600_post_canonical`
-  -- (uses `lift r_impl` directly, no Balanced output requirement).
-  -- This OLD path's `four_round_post` now produces `lift r` (canonical);
-  -- bridging it to `lift_perm r id impl_swap` would require Balanced output,
-  -- which is not generically true. Sorry'd pending a decision to deprecate
-  -- the OLD `keccakf1600_equiv` path entirely.
-  sorry
-
-/-! ## Loop equivalence
-
-Iterates `four_round_chunk_equiv` 6 times via `loop_range_spec_i32`. The
-invariant tracks `s_iter.i.val = 4 * iter.start.toNat`, the canonical
-condition `lift s_iter = lift_perm s_iter id impl_swap`, and the
-4k-fold spec chain matching `lift_perm s_iter id impl_swap`. -/
-
-/-- The loop invariant: at iteration boundary `k`,
-  - `k ∈ [0, 6]`,
-  - `s_iter.i.val = 4 * k`,
-  - the impl state is canonical (lift = lift_perm id impl_swap),
-  - and the spec chain through `4k` rounds matches `lift_perm s_iter id impl_swap`. -/
-def loop_inv_prop (s_0 : state.KeccakState) (k : Std.I32) (s_iter : state.KeccakState) :
-    Prop :=
-  0 ≤ k.val ∧ k.val ≤ 6 ∧
-  s_iter.i.val = 4 * k.val.toNat ∧
-  lift s_iter = lift_perm s_iter id impl_swap ∧
-  spec_chain (lift s_0) (4 * k.val.toNat) = .ok (lift_perm s_iter id impl_swap)
-
-/-- 4-step chain version of `holds_chain_eq_ok`: from the `.holds` of a
-    `do let st1 ← f0; let st2 ← f1 st1; let st3 ← f2 st2; let r ← f3 st3;
-    pure (r = X)`, derive the underlying `Result` equation for the 3-bind
-    left-associated chain (matching the shape produced by peeling
-    `spec_chain_succ` four times). -/
-private theorem holds_chain4_eq_ok {α : Type} {f0 : Result α} {f1 f2 f3 : α → Result α} {X : α}
-    (h : (do let st1 ← f0
-             let st2 ← f1 st1
-             let st3 ← f2 st2
-             let r ← f3 st3
-             pure (r = X)).holds) :
-    (do let st1 ← f0
-        let st2 ← f1 st1
-        let st3 ← f2 st2
-        f3 st3) = .ok X := by
-  cases hf0 : f0 with
-  | ok v1 =>
-    cases hf1 : f1 v1 with
-    | ok v2 =>
-      cases hf2 : f2 v2 with
-      | ok v3 =>
-        cases hf3 : f3 v3 with
-        | ok v4 =>
-          simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
-                    Std.Do.SPred.down_pure]
-        | fail e =>
-          simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
-                    Std.Do.SPred.down_pure]
-        | div =>
-          simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
-                    Std.Do.SPred.down_pure]
-      | fail e =>
-        simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
-                  Std.Do.SPred.down_pure]
-      | div =>
-        simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
-                  Std.Do.SPred.down_pure]
-    | fail e =>
-      simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
-                Std.Do.SPred.down_pure]
-    | div =>
-      simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
-                Std.Do.SPred.down_pure]
-  | fail e =>
-    simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
-              Std.Do.SPred.down_pure]
-  | div =>
-    simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
-              Std.Do.SPred.down_pure]
+Used by `BitKeccak/StructEquiv.lean` and the loop-invariant unpacking
+in `BitKeccak/AlgEquiv.lean`. -/
 
 theorem pure_prop_holds {P : Prop} (h : P) : (pure P : Result Prop).holds := by
   simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp]
@@ -485,184 +245,5 @@ theorem pure_prop_holds {P : Prop} (h : P) : (pure P : Result Prop).holds := by
 theorem of_pure_prop_holds {P : Prop} (h : (pure P : Result Prop).holds) : P := by
   simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp] at h
   exact h trivial
-
-set_option maxHeartbeats 4000000 in
-/-- Loop equivalence with the canonical precondition `lift s = lift_perm s
-    id impl_swap` (initial half-swaps cancel). The post couples
-    `keccakf1600_loop_post` with the canonical condition on the output. -/
-theorem keccakf1600_loop_equiv
-    (s : state.KeccakState) (h_i : s.i = 0#usize)
-    (h_lift : lift s = lift_perm s id impl_swap) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600_loop { start := 0#i32, «end» := 6#i32 } s
-    ⦃ ⇓ s_final => ⌜ keccakf1600_loop_post s s_final
-                    ∧ lift s_final = lift_perm s_final id impl_swap ⌝ ⦄ := by
-  unfold keccak.keccakf1600_loop
-  apply Std.Do.Triple.of_entails_right _
-    (loop_range_spec_i32
-      (fun (iter1, s1) => keccak.keccakf1600_loop.body iter1 s1)
-      s 0#i32 6#i32
-      (fun k s_iter => pure (loop_inv_prop s k s_iter))
-      (by decide)
-      (by -- h_init: invariant at iter start (k=0, s_iter = s).
-          apply pure_prop_holds
-          refine ⟨by decide, by decide, ?_, h_lift, ?_⟩
-          · rw [h_i]; rfl
-          · rw [show (4 * (0#i32 : Std.I32).val.toNat) = 0 from rfl, spec_chain_zero,
-                  ← h_lift])
-      ?_)
-  · -- Post-entailment: derive keccakf1600_loop_post + lift = lift_perm from inv at k=6.
-    rw [PostCond.entails_noThrow]
-    intro s_final hinv
-    dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at hinv ⊢
-    have ⟨_, _, _, h_lift_f, h_chain⟩ := of_pure_prop_holds hinv
-    refine ⟨?_, h_lift_f⟩
-    rw [keccakf1600_loop_post_eq_spec_chain]
-    have h24 : (4 * (6#i32 : Std.I32).val.toNat) = 24 := by decide
-    rw [h24] at h_chain
-    -- Goal: (do let lifted ← spec_chain (lift s) 24; pure (lifted = lift_perm s_final id impl_swap)).holds
-    -- h_chain: spec_chain (lift s) 24 = .ok (lift_perm s_final id impl_swap)
-    rw [h_chain]
-    apply pure_prop_holds
-    rfl
-  · -- h_step: per-iteration body Triple.
-    intro acc k h_ge h_le hinv
-    have hk_inv := of_pure_prop_holds hinv
-    obtain ⟨h_ge_k, h_le_k, h_acc_i, h_lift_acc, h_chain_acc⟩ := hk_inv
-    -- The body: `do let (o, iter1) ← iter.next; match o with | none => done acc | some _ => ...`
-    unfold keccak.keccakf1600_loop.body
-    -- Apply Triple.bind with the iterator spec. Q encodes the case-split: in the
-    -- `none` branch we get `k.val = 6`; in the `some` branch we get the next iter.
-    apply Std.Do.Triple.bind _ _
-      (IteratorRange_next_spec_i32 k 6#i32 (by decide)
-        (Q := PostCond.noThrow fun (oi : Option Std.I32 × _) => ⌜
-          match oi.1 with
-          | none => k.val ≥ (6#i32 : Std.I32).val ∧ oi.2 = { start := k, «end» := 6#i32 }
-          | some i => i = k ∧ k.val < (6#i32 : Std.I32).val ∧
-                      oi.2.«end» = 6#i32 ∧ oi.2.start.val = k.val + 1
-        ⌝)
-        (fun hlt s hs => by
-          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
-          refine ⟨rfl, hlt, rfl, hs⟩)
-        (fun hge => by
-          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
-          exact ⟨hge, rfl⟩))
-    intro ⟨o, iter1⟩
-    apply triple_imp_intro
-    -- Now case-split on `o` to handle the match in the body.
-    rcases o with _ | i
-    · -- none branch: body's match returns `ok (done acc)`. k.val = 6.
-      rintro ⟨hge, hiter1_eq⟩
-      have h6 : (6#i32 : Std.I32).val = 6 := by decide
-      have hk_eq : k.val = 6 := by omega
-      have hk_eq_i32 : k = 6#i32 := Std.IScalar.eq_of_val_eq (by rw [hk_eq, h6])
-      -- body reduces to: ok (done acc)
-      show ⦃⌜True⌝⦄ (ok (done acc) : Result _) ⦃_⦄
-      apply triple_of_ok_i32 rfl
-      -- Goal: (inv 6#i32 acc).holds (matched in the `done` arm)
-      apply pure_prop_holds
-      refine ⟨by decide, by decide, ?_, h_lift_acc, ?_⟩
-      · rw [hk_eq_i32] at h_acc_i; exact h_acc_i
-      · rw [hk_eq_i32] at h_chain_acc; exact h_chain_acc
-    · -- some i branch: body's match runs keccakf1600_4rounds then returns cont (iter1, s1).
-      rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
-      have h6 : (6#i32 : Std.I32).val = 6 := by decide
-      -- Replace `i` everywhere with `k` (since the bind passes the original index `k`).
-      cases hi_eq
-      -- We need acc.i.val + 4 ≤ 24 from h_acc_i and hk_lt.
-      have hk_lt' : k.val < 6 := by rw [← h6]; exact hk_lt
-      have hk_toNat_lt : k.val.toNat < 6 := by omega
-      have h_i_bnd : acc.i.val + 4 ≤ 24 := by rw [h_acc_i]; omega
-      -- The body's `match` collapses to:
-      --   do let s1 ← keccakf1600_4rounds 0#usize acc; ok (cont (iter1, s1))
-      show ⦃⌜True⌝⦄
-        (do let s1 ← keccak.keccakf1600_4rounds 0#usize acc; ok (cont (iter1, s1))) ⦃_⦄
-      -- Apply Triple.bind with four_round_chunk_equiv combined with i_inc.
-      apply Std.Do.Triple.bind _ _
-        (triple_conj_post
-          (four_round_chunk_equiv acc h_i_bnd h_lift_acc)
-          (keccakf1600_4rounds_i_inc acc h_i_bnd))
-      intro s1
-      apply triple_imp_intro
-      rintro ⟨⟨h_chain_post, h_lift_s1⟩, h_i_inc⟩
-      -- Now body: ok (cont (iter1, s1))
-      apply triple_of_ok_i32 rfl
-      -- Goal:
-      --   k.val < (6#i32).val ∧ iter1.end = 6#i32 ∧ iter1.start.val = k.val + 1
-      --   ∧ (inv iter1.start s1).holds
-      refine ⟨hk_lt, hiter1_end, hiter1_start, ?_⟩
-      apply pure_prop_holds
-      have h_start_val : iter1.start.val = k.val + 1 := hiter1_start
-      have h_start_ge : 0 ≤ iter1.start.val := by rw [h_start_val]; omega
-      have h_start_le : iter1.start.val ≤ 6 := by rw [h_start_val]; omega
-      have h_start_toNat : iter1.start.val.toNat = k.val.toNat + 1 := by
-        rw [h_start_val, Int.toNat_add (by omega) (by decide)]; rfl
-      refine ⟨h_start_ge, h_start_le, ?_, h_lift_s1, ?_⟩
-      · -- s1.i.val = 4 * iter1.start.val.toNat
-        -- Combine h_i_inc (s1.i.val = acc.i.val + 4), h_acc_i, and h_start_toNat.
-        rw [h_i_inc, h_acc_i, h_start_toNat]; ring
-      · -- spec_chain (lift s) (4 * iter1.start.val.toNat) = .ok (lift_perm s1 id impl_swap)
-        rw [h_start_toNat, show 4 * (k.val.toNat + 1) = 4 * k.val.toNat + 4 from by ring]
-        -- Extract the 4-step chain equation from h_chain_post.
-        have h_C : (do let st1 ← spec_round_step_at acc.i.val (lift_perm acc id impl_swap)
-                       let st2 ← spec_round_step_at (acc.i.val + 1) st1
-                       let st3 ← spec_round_step_at (acc.i.val + 2) st2
-                       spec_round_step_at (acc.i.val + 3) st3)
-                    = .ok (lift_perm s1 id impl_swap) := by
-          exact holds_chain4_eq_ok h_chain_post
-        -- Peel off 4 levels of spec_chain via spec_chain_succ.
-        rw [show 4 * k.val.toNat + 4 = (4 * k.val.toNat + 3) + 1 from rfl, spec_chain_succ]
-        rw [show 4 * k.val.toNat + 3 = (4 * k.val.toNat + 2) + 1 from rfl, spec_chain_succ]
-        rw [show 4 * k.val.toNat + 2 = (4 * k.val.toNat + 1) + 1 from rfl, spec_chain_succ]
-        rw [show 4 * k.val.toNat + 1 = (4 * k.val.toNat) + 1 from rfl, spec_chain_succ]
-        rw [h_chain_acc]
-        -- Goal:
-        --   (.ok (lift_perm acc id impl_swap) >>= λ st => spec_round_step_at (4n) st)
-        --     >>= ... >>= λ st => spec_round_step_at (4n+3) st
-        --   = .ok (lift_perm s1 id impl_swap)
-        simp only [Aeneas.Std.bind_tc_ok]
-        rw [← h_acc_i]
-        simp only [Nat.add_assoc, bind_assoc, show 1 + 1 = 2 from rfl,
-                   show 1 + 1 + 1 = 3 from rfl]
-        exact h_C
-
-/-! ## Top-level keccakf1600 equivalence -/
-
-/-- Top-level equivalence: `keccak.keccakf1600` (the full 24-round
-    permutation) on the canonical bit-interleaved impl produces a state
-    whose swap-aware lift equals the spec's 24-fold round application.
-
-    Proof delegates to `keccakf1600_loop_equiv` and handles the trailing
-    `i := 0` reset (the reset preserves `lift_perm` since it reads only
-    `.st`). -/
-theorem keccakf1600_equiv (s : state.KeccakState) (h_i : s.i = 0#usize)
-    (h_lift : lift s = lift_perm s id impl_swap) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600 s
-    ⦃ ⇓ r_impl => ⌜ keccakf1600_post s r_impl ⌝ ⦄ := by
-  -- Weaken the strong post (which adds `lift r = lift_perm r id impl_swap`)
-  -- to just `keccakf1600_post`.
-  have h_strong := keccakf1600_loop_equiv s h_i h_lift
-  have h_weakened : ⦃ ⌜True⌝ ⦄
-      keccak.keccakf1600_loop { start := 0#i32, «end» := 6#i32 } s
-      ⦃ ⇓ s_final => ⌜keccakf1600_loop_post s s_final⌝ ⦄ := by
-    apply Triple.of_entails_right _ h_strong
-    rw [PostCond.entails_noThrow]
-    intro s_final hpost
-    dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at hpost ⊢
-    exact hpost.1
-  unfold keccak.keccakf1600
-  apply Std.Do.Triple.bind _ _ h_weakened
-  intro s_final
-  apply triple_imp_intro
-  intro h_loop
-  unfold keccakf1600_post
-  unfold keccakf1600_loop_post at h_loop
-  have h_lift_perm_eq : lift_perm { s_final with i := 0#usize } id impl_swap
-                      = lift_perm s_final id impl_swap := by
-    unfold lift_perm; rfl
-  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp] at h_loop ⊢
-  rw [h_lift_perm_eq]
-  simpa using h_loop
 
 end libcrux_iot_sha3.Equivalence
