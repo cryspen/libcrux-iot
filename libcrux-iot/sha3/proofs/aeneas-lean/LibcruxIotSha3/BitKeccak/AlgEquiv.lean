@@ -43,7 +43,7 @@
   Plan: `~/.claude/plans/fancy-gliding-swan.md`, Phase 3.
 -/
 import LibcruxIotSha3.BitKeccak.StructEquiv
-import LibcruxIotSha3.Equivalence.Keccakf1600Loop
+import LibcruxIotSha3.Equivalence.SpecChain
 
 namespace libcrux_iot_sha3.BitKeccak
 

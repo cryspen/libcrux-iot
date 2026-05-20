@@ -17,7 +17,8 @@ import LibcruxIotSha3.BitKeccak.StateIso
 import LibcruxIotSha3.BitKeccak.Project
 import LibcruxIotSha3.Equivalence.PrcLift
 import LibcruxIotSha3.Equivalence.ThetaLiftDefs
-import LibcruxIotSha3.Equivalence.Keccakf1600Loop
+import LibcruxIotSha3.Equivalence.I32LoopSpec
+import LibcruxIotSha3.Equivalence.SpecChain
 import Hax
 
 namespace libcrux_iot_sha3.BitKeccak
@@ -3596,9 +3597,11 @@ Uses `loop_range_spec_i32` with an invariant that tracks both the
 iteration index–to–`s.i` correspondence (`s_iter.i.val = 4 * k.val.toNat`)
 and the bit-side equality (`KState.fromAeneas s_iter = f^[k] (...)`).
 
-This is the bit-side analogue of `keccakf1600_loop_equiv` in
-`Equivalence/Keccakf1600Loop.lean`, but without the `Balanced` /
-`lift_perm` machinery: the bit-side defs already chain structurally. -/
+This is the bit-side analogue of the former `keccakf1600_loop_equiv`
+(removed during the 2026-05-20 cleanup; spec-chain + I32 loop helpers
+extracted into `Equivalence/SpecChain.lean` + `Equivalence/I32LoopSpec.lean`),
+but without the `Balanced` / `lift_perm` machinery: the bit-side defs
+already chain structurally. -/
 
 /-- Per-iteration invariant for the bit-side loop bridge: at iter
     boundary `k ∈ [0, 6]`, the impl state has `i.val = 4k`, and its
