@@ -319,4 +319,12 @@ theorem lift_xor5 (a0 a1 b0 b1 c0 c1 d0 d1 e0 e1 : BitVec 32) :
       lift_lane_bv d0 d1 ^^^ lift_lane_bv e0 e1 := by
   unfold lift_lane_bv spread_to_even; bv_decide
 
+/-- `BitVec.rotateLeft 1` distributes over XOR (BV-32 version). Needed to
+    flatten `(a ^^^ b).rotateLeft 1` into `a.rotateLeft 1 ^^^ b.rotateLeft 1`
+    so that `bv_decide`/`ac_rfl` can solve XOR-AC equalities involving
+    rotated column-XOR chains. Shared across `ThetaLiftRound{1,2,3}`. -/
+theorem rotateLeft1_xor_bv32 (a b : BitVec 32) :
+    (a ^^^ b).rotateLeft 1 = a.rotateLeft 1 ^^^ b.rotateLeft 1 := by
+  bv_decide
+
 end libcrux_iot_sha3.Equivalence
