@@ -147,6 +147,20 @@ theorem impl_swap_k_four (L : Fin 25) : impl_swap_k 4 L = impl_swap_k 0 L := by
 theorem impl_swap_k_one (L : Fin 25) : impl_swap_k 1 L = impl_swap L := by
   unfold impl_swap_k; rfl
 
+/-- `impl_swap_k 2 L = decide (L.val ∉ [0, 9, 13, 17, 21])`. Shared
+    across `PrcLiftRound2` + downstream round-2 spec files. -/
+theorem impl_swap_k_two (L : Fin 25) :
+    impl_swap_k 2 L =
+      decide (L.val ∉ ([0, 9, 13, 17, 21] : List Nat)) := by
+  unfold impl_swap_k; rfl
+
+/-- `impl_swap_k 3 L = decide (L.val ∈ [1,4,6,7,10,11,13,15,17,19,23,24])`.
+    Shared across `PrcLiftRound3` + downstream round-3 spec files. -/
+theorem impl_swap_k_three (L : Fin 25) :
+    impl_swap_k 3 L =
+      decide (L.val ∈ ([1, 4, 6, 7, 10, 11, 13, 15, 17, 19, 23, 24] : List Nat)) := by
+  unfold impl_swap_k; rfl
+
 /-- Lift a single lane to U64, optionally swapping halves. -/
 def lift_lane_maybe_swap (l : libcrux_iot_sha3.lane.Lane2U32) (sw : Bool) :
     Std.U64 :=
@@ -167,6 +181,41 @@ theorem lift_perm_id (s : libcrux_iot_sha3.state.KeccakState) :
     lift_perm s id (fun _ => false) = lift s := by
   unfold lift_perm lift lift_lane_maybe_swap
   rfl
+
+/-! ## Generic `lift_perm` / `lift_lane_maybe_swap` helpers
+
+These four lemmas appear textually-identical across all three
+`ThetaLiftRound{1,2,3}` files; hoisted here so each round file
+just references the shared copy. -/
+
+/-- `lift_perm` lane indexing: read the k-th lane of a permuted state. -/
+theorem lift_perm_getElem (s : libcrux_iot_sha3.state.KeccakState)
+    (p : Fin 25 → Fin 25) (sw : Fin 25 → Bool) (k : Fin 25) :
+    (lift_perm s p sw).val[k.val]! =
+      lift_lane_maybe_swap (s.st.val[(p k).val]!) (sw (p k)) := by
+  unfold lift_perm
+  change (List.ofFn _)[k.val]! = _
+  rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
+
+/-- BV variant of `lift_perm_getElem`. -/
+theorem lift_perm_getElem_bv_aux (s : libcrux_iot_sha3.state.KeccakState)
+    (p : Fin 25 → Fin 25) (sw : Fin 25 → Bool) (k : Fin 25) :
+    ((↑(lift_perm s p sw) : List Std.U64)[(k.val : Nat)]!).bv =
+      (lift_lane_maybe_swap (s.st.val[(p k).val]!) (sw (p k))).bv := by
+  show ((lift_perm s p sw).val[k.val]!).bv = _
+  rw [lift_perm_getElem]
+
+/-- `lift_lane_maybe_swap` on the `true` branch. -/
+theorem lift_lane_maybe_swap_true_bv (l : libcrux_iot_sha3.lane.Lane2U32) :
+    (lift_lane_maybe_swap l true).bv =
+      lift_lane_bv (l.val[1]!).bv (l.val[0]!).bv := by
+  unfold lift_lane_maybe_swap; rfl
+
+/-- `lift_lane_maybe_swap` on the `false` branch. -/
+theorem lift_lane_maybe_swap_false_bv (l : libcrux_iot_sha3.lane.Lane2U32) :
+    (lift_lane_maybe_swap l false).bv =
+      lift_lane_bv (l.val[0]!).bv (l.val[1]!).bv := by
+  unfold lift_lane_maybe_swap lift_lane; rfl
 
 /-! ## Algebraic lemmas about `lift_lane_bv`
 

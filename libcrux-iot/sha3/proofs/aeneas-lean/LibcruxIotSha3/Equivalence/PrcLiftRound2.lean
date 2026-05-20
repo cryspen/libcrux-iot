@@ -353,12 +353,6 @@ private theorem lta_perm_getElem_2 (s : state.KeccakState)
   change (List.ofFn _)[k.val]! = _
   rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
 
-/-- `impl_swap_k 2 L = decide (L.val ∉ [0, 9, 13, 17, 21])`. -/
-private theorem impl_swap_k_two (L : Fin 25) :
-    impl_swap_k 2 L =
-      decide (L.val ∉ ([0, 9, 13, 17, 21] : List Nat)) := by
-  unfold impl_swap_k; rfl
-
 theorem lift_theta_applied_perm_bv_0_2 (s : state.KeccakState) :
     ((lift_theta_applied_perm s (impl_perm ∘ impl_perm) (impl_swap_k 2)).val[0]!).bv =
       lift_lane_bv ((s.st.val[0]!).val[0]! ^^^ (s.d.val[0]!).val[0]!).bv
