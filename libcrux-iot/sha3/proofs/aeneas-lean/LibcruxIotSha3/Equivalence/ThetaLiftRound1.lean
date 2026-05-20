@@ -735,8 +735,8 @@ private theorem rotateLeft1_xor_bv32 (a b : BitVec 32) :
       - `BitVec.rotateLeft_xor` + `bv_decide` to close XOR-AC residuals. -/
 
 
--- @[spec] (added when proof is filled in)
 set_option maxHeartbeats 64000000 in
+@[spec]
 theorem theta_lift_spec_1 (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600_round1_theta s
