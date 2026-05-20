@@ -980,4 +980,313 @@ theorem theta_eq_theta_unrolled (state : Std.Array Std.U64 25#usize) :
     result_eq_of_triple (theta_unrolled_spec state)
   rw [h1, h2]
 
+set_option linter.unusedSimpArgs false in
+theorem rho_eq_rho_unrolled (state : Std.Array Std.U64 25#usize) :
+    keccak_f.rho state = keccak_f.rho_unrolled state := by
+  have h1 : keccak_f.rho state = .ok (rho_applied state) := by
+    apply result_eq_of_triple
+    unfold keccak_f.rho
+    hax_mvcgen
+    case vc1.f => exact rho_closure_at state ‹ℕ›
+    all_goals first
+      | (rw [usize_bv_ofNat_val _ (by scalar_tac)] at *
+         first | scalar_tac | assumption)
+      | scalar_tac
+      | (-- final 25-cell array equality
+         apply Subtype.ext
+         unfold rho_applied
+         simp only [Std.Array.make]
+         rename_i r_a ha
+         have ha0  := ha  0 (by decide); have ha1  := ha  1 (by decide)
+         have ha2  := ha  2 (by decide); have ha3  := ha  3 (by decide)
+         have ha4  := ha  4 (by decide); have ha5  := ha  5 (by decide)
+         have ha6  := ha  6 (by decide); have ha7  := ha  7 (by decide)
+         have ha8  := ha  8 (by decide); have ha9  := ha  9 (by decide)
+         have ha10 := ha 10 (by decide); have ha11 := ha 11 (by decide)
+         have ha12 := ha 12 (by decide); have ha13 := ha 13 (by decide)
+         have ha14 := ha 14 (by decide); have ha15 := ha 15 (by decide)
+         have ha16 := ha 16 (by decide); have ha17 := ha 17 (by decide)
+         have ha18 := ha 18 (by decide); have ha19 := ha 19 (by decide)
+         have ha20 := ha 20 (by decide); have ha21 := ha 21 (by decide)
+         have ha22 := ha 22 (by decide); have ha23 := ha 23 (by decide)
+         have ha24 := ha 24 (by decide)
+         simp only [rho_closure_at, rot64,
+           show (keccak_f.RHO_OFFSETS.val[0]!).val = 0 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[1]!).val = 36 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[2]!).val = 3 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[3]!).val = 41 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[4]!).val = 18 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[5]!).val = 1 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[6]!).val = 44 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[7]!).val = 10 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[8]!).val = 45 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[9]!).val = 2 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[10]!).val = 62 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[11]!).val = 6 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[12]!).val = 43 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[13]!).val = 15 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[14]!).val = 61 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[15]!).val = 28 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[16]!).val = 55 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[17]!).val = 25 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[18]!).val = 21 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[19]!).val = 56 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[20]!).val = 27 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[21]!).val = 20 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[22]!).val = 39 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[23]!).val = 8 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
+           show (keccak_f.RHO_OFFSETS.val[24]!).val = 14 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make]]
+           at ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 ha9
+              ha10 ha11 ha12 ha13 ha14 ha15 ha16 ha17 ha18 ha19
+              ha20 ha21 ha22 ha23 ha24
+         obtain ⟨lst, hlen⟩ := r_a
+         simp only [show ((25#usize : Std.Usize).val) = 25 from rfl] at hlen
+         match lst, hlen with
+         | [v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,
+            v15,v16,v17,v18,v19,v20,v21,v22,v23,v24], _ =>
+           simp only [List.getElem!_cons_zero, List.getElem!_cons_succ]
+             at ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 ha9 ha10 ha11 ha12 ha13
+                ha14 ha15 ha16 ha17 ha18 ha19 ha20 ha21 ha22 ha23 ha24
+           simp only [ha0, ha1, ha2, ha3, ha4, ha5, ha6, ha7, ha8, ha9,
+             ha10, ha11, ha12, ha13, ha14, ha15, ha16, ha17, ha18, ha19,
+             ha20, ha21, ha22, ha23, ha24])
+  have h2 : keccak_f.rho_unrolled state = .ok (rho_applied state) :=
+    result_eq_of_triple (rho_unrolled_spec state)
+  rw [h1, h2]
+
+set_option linter.unusedSimpArgs false in
+theorem pi_eq_pi_unrolled (state : Std.Array Std.U64 25#usize) :
+    keccak_f.pi state = keccak_f.pi_unrolled state := by
+  have h1 : keccak_f.pi state = .ok (pi_applied state) := by
+    apply result_eq_of_triple
+    unfold keccak_f.pi
+    hax_mvcgen
+    case vc1.f => exact pi_closure_at state ‹ℕ›
+    all_goals first
+      | (rw [usize_bv_ofNat_val _ (by scalar_tac)] at *
+         first | scalar_tac | assumption)
+      | scalar_tac
+      | (-- final 25-cell array equality
+         apply Subtype.ext
+         unfold pi_applied
+         simp only [Std.Array.make]
+         rename_i r_a ha
+         have ha0  := ha  0 (by decide); have ha1  := ha  1 (by decide)
+         have ha2  := ha  2 (by decide); have ha3  := ha  3 (by decide)
+         have ha4  := ha  4 (by decide); have ha5  := ha  5 (by decide)
+         have ha6  := ha  6 (by decide); have ha7  := ha  7 (by decide)
+         have ha8  := ha  8 (by decide); have ha9  := ha  9 (by decide)
+         have ha10 := ha 10 (by decide); have ha11 := ha 11 (by decide)
+         have ha12 := ha 12 (by decide); have ha13 := ha 13 (by decide)
+         have ha14 := ha 14 (by decide); have ha15 := ha 15 (by decide)
+         have ha16 := ha 16 (by decide); have ha17 := ha 17 (by decide)
+         have ha18 := ha 18 (by decide); have ha19 := ha 19 (by decide)
+         have ha20 := ha 20 (by decide); have ha21 := ha 21 (by decide)
+         have ha22 := ha 22 (by decide); have ha23 := ha 23 (by decide)
+         have ha24 := ha 24 (by decide)
+         simp only [pi_closure_at,
+           show 5 * (((0:Nat) / 5 + 3 * (0 % 5)) % 5) + (0:Nat) / 5 = 0 from rfl,
+           show 5 * (((1:Nat) / 5 + 3 * (1 % 5)) % 5) + (1:Nat) / 5 = 15 from rfl,
+           show 5 * (((2:Nat) / 5 + 3 * (2 % 5)) % 5) + (2:Nat) / 5 = 5 from rfl,
+           show 5 * (((3:Nat) / 5 + 3 * (3 % 5)) % 5) + (3:Nat) / 5 = 20 from rfl,
+           show 5 * (((4:Nat) / 5 + 3 * (4 % 5)) % 5) + (4:Nat) / 5 = 10 from rfl,
+           show 5 * (((5:Nat) / 5 + 3 * (5 % 5)) % 5) + (5:Nat) / 5 = 6 from rfl,
+           show 5 * (((6:Nat) / 5 + 3 * (6 % 5)) % 5) + (6:Nat) / 5 = 21 from rfl,
+           show 5 * (((7:Nat) / 5 + 3 * (7 % 5)) % 5) + (7:Nat) / 5 = 11 from rfl,
+           show 5 * (((8:Nat) / 5 + 3 * (8 % 5)) % 5) + (8:Nat) / 5 = 1 from rfl,
+           show 5 * (((9:Nat) / 5 + 3 * (9 % 5)) % 5) + (9:Nat) / 5 = 16 from rfl,
+           show 5 * (((10:Nat) / 5 + 3 * (10 % 5)) % 5) + (10:Nat) / 5 = 12 from rfl,
+           show 5 * (((11:Nat) / 5 + 3 * (11 % 5)) % 5) + (11:Nat) / 5 = 2 from rfl,
+           show 5 * (((12:Nat) / 5 + 3 * (12 % 5)) % 5) + (12:Nat) / 5 = 17 from rfl,
+           show 5 * (((13:Nat) / 5 + 3 * (13 % 5)) % 5) + (13:Nat) / 5 = 7 from rfl,
+           show 5 * (((14:Nat) / 5 + 3 * (14 % 5)) % 5) + (14:Nat) / 5 = 22 from rfl,
+           show 5 * (((15:Nat) / 5 + 3 * (15 % 5)) % 5) + (15:Nat) / 5 = 18 from rfl,
+           show 5 * (((16:Nat) / 5 + 3 * (16 % 5)) % 5) + (16:Nat) / 5 = 8 from rfl,
+           show 5 * (((17:Nat) / 5 + 3 * (17 % 5)) % 5) + (17:Nat) / 5 = 23 from rfl,
+           show 5 * (((18:Nat) / 5 + 3 * (18 % 5)) % 5) + (18:Nat) / 5 = 13 from rfl,
+           show 5 * (((19:Nat) / 5 + 3 * (19 % 5)) % 5) + (19:Nat) / 5 = 3 from rfl,
+           show 5 * (((20:Nat) / 5 + 3 * (20 % 5)) % 5) + (20:Nat) / 5 = 24 from rfl,
+           show 5 * (((21:Nat) / 5 + 3 * (21 % 5)) % 5) + (21:Nat) / 5 = 14 from rfl,
+           show 5 * (((22:Nat) / 5 + 3 * (22 % 5)) % 5) + (22:Nat) / 5 = 4 from rfl,
+           show 5 * (((23:Nat) / 5 + 3 * (23 % 5)) % 5) + (23:Nat) / 5 = 19 from rfl,
+           show 5 * (((24:Nat) / 5 + 3 * (24 % 5)) % 5) + (24:Nat) / 5 = 9 from rfl]
+           at ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 ha9
+              ha10 ha11 ha12 ha13 ha14 ha15 ha16 ha17 ha18 ha19
+              ha20 ha21 ha22 ha23 ha24
+         obtain ⟨lst, hlen⟩ := r_a
+         simp only [show ((25#usize : Std.Usize).val) = 25 from rfl] at hlen
+         match lst, hlen with
+         | [v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,
+            v15,v16,v17,v18,v19,v20,v21,v22,v23,v24], _ =>
+           simp only [List.getElem!_cons_zero, List.getElem!_cons_succ]
+             at ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 ha9 ha10 ha11 ha12 ha13
+                ha14 ha15 ha16 ha17 ha18 ha19 ha20 ha21 ha22 ha23 ha24
+           simp only [ha0, ha1, ha2, ha3, ha4, ha5, ha6, ha7, ha8, ha9,
+             ha10, ha11, ha12, ha13, ha14, ha15, ha16, ha17, ha18, ha19,
+             ha20, ha21, ha22, ha23, ha24])
+  have h2 : keccak_f.pi_unrolled state = .ok (pi_applied state) :=
+    result_eq_of_triple (pi_unrolled_spec state)
+  rw [h1, h2]
+
+set_option linter.unusedSimpArgs false in
+set_option maxHeartbeats 16000000 in
+theorem chi_eq_chi_unrolled (state : Std.Array Std.U64 25#usize) :
+    keccak_f.chi state = keccak_f.chi_unrolled state := by
+  have h1 : keccak_f.chi state = .ok (chi_applied state) := by
+    apply result_eq_of_triple
+    unfold keccak_f.chi
+    hax_mvcgen
+    case vc1.f => exact chi_closure_at state ‹ℕ›
+    all_goals first
+      | (rw [usize_bv_ofNat_val _ (by scalar_tac)] at *
+         first | scalar_tac | assumption)
+      | scalar_tac
+      | (-- final 25-cell array equality
+         apply Subtype.ext
+         unfold chi_applied
+         simp only [Std.Array.make]
+         rename_i r_a ha
+         have ha0  := ha  0 (by decide); have ha1  := ha  1 (by decide)
+         have ha2  := ha  2 (by decide); have ha3  := ha  3 (by decide)
+         have ha4  := ha  4 (by decide); have ha5  := ha  5 (by decide)
+         have ha6  := ha  6 (by decide); have ha7  := ha  7 (by decide)
+         have ha8  := ha  8 (by decide); have ha9  := ha  9 (by decide)
+         have ha10 := ha 10 (by decide); have ha11 := ha 11 (by decide)
+         have ha12 := ha 12 (by decide); have ha13 := ha 13 (by decide)
+         have ha14 := ha 14 (by decide); have ha15 := ha 15 (by decide)
+         have ha16 := ha 16 (by decide); have ha17 := ha 17 (by decide)
+         have ha18 := ha 18 (by decide); have ha19 := ha 19 (by decide)
+         have ha20 := ha 20 (by decide); have ha21 := ha 21 (by decide)
+         have ha22 := ha 22 (by decide); have ha23 := ha 23 (by decide)
+         have ha24 := ha 24 (by decide)
+         simp only [chi_closure_at,
+           show (0:Nat)/5 = 0 from rfl, show (0:Nat)%5 = 0 from rfl,
+           show (1:Nat)/5 = 0 from rfl, show (1:Nat)%5 = 1 from rfl,
+           show (2:Nat)/5 = 0 from rfl, show (2:Nat)%5 = 2 from rfl,
+           show (3:Nat)/5 = 0 from rfl, show (3:Nat)%5 = 3 from rfl,
+           show (4:Nat)/5 = 0 from rfl, show (4:Nat)%5 = 4 from rfl,
+           show (5:Nat)/5 = 1 from rfl, show (5:Nat)%5 = 0 from rfl,
+           show (6:Nat)/5 = 1 from rfl, show (6:Nat)%5 = 1 from rfl,
+           show (7:Nat)/5 = 1 from rfl, show (7:Nat)%5 = 2 from rfl,
+           show (8:Nat)/5 = 1 from rfl, show (8:Nat)%5 = 3 from rfl,
+           show (9:Nat)/5 = 1 from rfl, show (9:Nat)%5 = 4 from rfl,
+           show (10:Nat)/5 = 2 from rfl, show (10:Nat)%5 = 0 from rfl,
+           show (11:Nat)/5 = 2 from rfl, show (11:Nat)%5 = 1 from rfl,
+           show (12:Nat)/5 = 2 from rfl, show (12:Nat)%5 = 2 from rfl,
+           show (13:Nat)/5 = 2 from rfl, show (13:Nat)%5 = 3 from rfl,
+           show (14:Nat)/5 = 2 from rfl, show (14:Nat)%5 = 4 from rfl,
+           show (15:Nat)/5 = 3 from rfl, show (15:Nat)%5 = 0 from rfl,
+           show (16:Nat)/5 = 3 from rfl, show (16:Nat)%5 = 1 from rfl,
+           show (17:Nat)/5 = 3 from rfl, show (17:Nat)%5 = 2 from rfl,
+           show (18:Nat)/5 = 3 from rfl, show (18:Nat)%5 = 3 from rfl,
+           show (19:Nat)/5 = 3 from rfl, show (19:Nat)%5 = 4 from rfl,
+           show (20:Nat)/5 = 4 from rfl, show (20:Nat)%5 = 0 from rfl,
+           show (21:Nat)/5 = 4 from rfl, show (21:Nat)%5 = 1 from rfl,
+           show (22:Nat)/5 = 4 from rfl, show (22:Nat)%5 = 2 from rfl,
+           show (23:Nat)/5 = 4 from rfl, show (23:Nat)%5 = 3 from rfl,
+           show (24:Nat)/5 = 4 from rfl, show (24:Nat)%5 = 4 from rfl,
+           show (0 + 1) % 5 = 1 from rfl, show (0 + 2) % 5 = 2 from rfl,
+           show (1 + 1) % 5 = 2 from rfl, show (1 + 2) % 5 = 3 from rfl,
+           show (2 + 1) % 5 = 3 from rfl, show (2 + 2) % 5 = 4 from rfl,
+           show (3 + 1) % 5 = 4 from rfl, show (3 + 2) % 5 = 0 from rfl,
+           show (4 + 1) % 5 = 0 from rfl, show (4 + 2) % 5 = 1 from rfl]
+           at ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 ha9
+              ha10 ha11 ha12 ha13 ha14 ha15 ha16 ha17 ha18 ha19
+              ha20 ha21 ha22 ha23 ha24
+         obtain ⟨lst, hlen⟩ := r_a
+         simp only [show ((25#usize : Std.Usize).val) = 25 from rfl] at hlen
+         match lst, hlen with
+         | [v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,
+            v15,v16,v17,v18,v19,v20,v21,v22,v23,v24], _ =>
+           simp only [List.getElem!_cons_zero, List.getElem!_cons_succ]
+             at ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 ha9 ha10 ha11 ha12 ha13
+                ha14 ha15 ha16 ha17 ha18 ha19 ha20 ha21 ha22 ha23 ha24
+           simp only [ha0, ha1, ha2, ha3, ha4, ha5, ha6, ha7, ha8, ha9,
+             ha10, ha11, ha12, ha13, ha14, ha15, ha16, ha17, ha18, ha19,
+             ha20, ha21, ha22, ha23, ha24]
+           apply List.cons_eq_cons.mpr
+           refine ⟨?_, ?_⟩
+           all_goals first
+             | rfl
+             | (apply Std.U64.bv_eq_imp_eq
+                simp_all only [Std.UScalar.bv_xor, Std.UScalar.bv_and,
+                  Std.UScalar.bv_not])
+             | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
+  have h2 : keccak_f.chi_unrolled state = .ok (chi_applied state) :=
+    result_eq_of_triple (chi_unrolled_spec state)
+  rw [h1, h2]
+
+/-! ## Bridge 1 closure: spec_round_step / spec_chain equality
+
+These compose the four X = X_unrolled lemmas above to bridge
+`spec_round_step_hacspec` ↔ `spec_round_step`, then lift via induction to
+`spec_chain_hacspec` ↔ `spec_chain`. -/
+
+theorem spec_round_step_hacspec_eq_spec_round_step
+    (state : Std.Array Std.U64 25#usize) (round : Std.Usize) :
+    spec_round_step_hacspec state round = spec_round_step state round := by
+  unfold spec_round_step_hacspec spec_round_step
+  simp only [theta_eq_theta_unrolled, rho_eq_rho_unrolled, pi_eq_pi_unrolled,
+      chi_eq_chi_unrolled]
+
+theorem spec_chain_hacspec_eq_spec_chain
+    (s : Std.Array Std.U64 25#usize) (n : Nat) :
+    spec_chain_hacspec s n = spec_chain s n := by
+  induction n with
+  | zero => rw [spec_chain_hacspec_zero, spec_chain_zero]
+  | succ k ih =>
+    rw [spec_chain_hacspec_succ, spec_chain_succ, ih]
+    -- Both sides now end with `>>= spec_round_step_*_at k`. Show the
+    -- two `_at` wrappers are equal as functions.
+    congr 1
+    funext st
+    unfold spec_round_step_hacspec_at spec_round_step_at
+    by_cases hk : k < 24
+    · simp only [dif_pos hk]
+      exact spec_round_step_hacspec_eq_spec_round_step st _
+    · simp only [dif_neg hk]
+
+/-! ## Top-level theorem: impl ↔ hacspec
+
+`keccak.keccakf1600 s` succeeds and produces `r_impl` such that the
+hacspec `keccak_f.keccak_f` applied to `lift s` succeeds with
+`lift r_impl`. Composes `keccakf1600_equiv_via_bit` (Campaign 1+2
+canonical post) with `spec_chain_hacspec ↔ spec_chain` (Bridge 1) and
+`keccak_f_loop_eq_spec_chain_hacspec` (loop bridge). -/
+
+theorem keccakf1600_equiv_hacspec (s : state.KeccakState)
+    (h_i : s.i = 0#usize) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600 s
+    ⦃ ⇓ r_impl => ⌜ keccak_f.keccak_f (lift s) = .ok (lift r_impl) ⌝ ⦄ := by
+  -- Start from `keccakf1600_equiv_via_bit`'s canonical post.
+  apply Std.Do.Triple.of_entails_right _ (BitKeccak.keccakf1600_equiv_via_bit s h_i)
+  rw [PostCond.entails_noThrow]
+  intro r h_post
+  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_post ⊢
+  -- `h_post : keccakf1600_post_canonical s r`.
+  -- Unfold the canonical post to get the spec_chain equation.
+  unfold keccakf1600_post_canonical at h_post
+  -- Convert the `Nat.fold` form to `spec_chain`.
+  have h_chain :
+      (do let lifted_final ← spec_chain (Equivalence.lift s) 24
+          pure (lifted_final = Equivalence.lift r)).holds := by
+    have h_eq :
+        (do let lifted_final ← Nat.fold 24
+              (fun i h acc => acc >>= fun st => spec_round_step st (roundOfNat i (by omega)))
+              (pure (Equivalence.lift s))
+            pure (lifted_final = Equivalence.lift r)).holds
+        = (do let lifted_final ← spec_chain (Equivalence.lift s) 24
+              pure (lifted_final = Equivalence.lift r)).holds := by
+      unfold spec_chain spec_round_step_at
+      congr 1
+    rw [h_eq] at h_post
+    exact h_post
+  -- Extract spec_chain (lift s) 24 = .ok (lift r).
+  have h_spec_chain : spec_chain (Equivalence.lift s) 24 = .ok (Equivalence.lift r) :=
+    holds_chain_eq_ok h_chain
+  -- Bridge via spec_chain_hacspec and keccak_f_loop_eq_spec_chain_hacspec.
+  rw [keccak_f_loop_eq_spec_chain_hacspec, spec_chain_hacspec_eq_spec_chain]
+  exact h_spec_chain
+
 end libcrux_iot_sha3.Equivalence
