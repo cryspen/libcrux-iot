@@ -878,6 +878,7 @@ private theorem usize_bv_ofNat_val (k : Nat) (h : k < 2^UScalarTy.Usize.numBits)
   rw [BitVec.toNat_ofNat]
   exact Nat.mod_eq_of_lt h
 
+set_option linter.unusedSimpArgs false in
 theorem theta_eq_theta_unrolled (state : Std.Array Std.U64 25#usize) :
     keccak_f.theta state = keccak_f.theta_unrolled state := by
   have h1 : keccak_f.theta state = .ok (theta_unrolled_applied state) := by
@@ -896,7 +897,85 @@ theorem theta_eq_theta_unrolled (state : Std.Array Std.U64 25#usize) :
          apply Subtype.ext
          unfold theta_unrolled_applied
          simp only [Std.Array.make]
-         sorry)
+         rename_i r_c hc r_d hd r_a ha
+         -- hc : ∀ i < 5, r_c.val[i]! = theta_closure_c_at state i
+         -- hd : ∀ i < 5, r_d.val[i]! = theta_closure_1_d_at r_c i
+         -- ha : ∀ i < 25, r_a.val[i]! = theta_closure_2_at (state, r_d) i
+         have hc0 := hc 0 (by decide); have hc1 := hc 1 (by decide)
+         have hc2 := hc 2 (by decide); have hc3 := hc 3 (by decide)
+         have hc4 := hc 4 (by decide)
+         simp only [theta_closure_c_at,
+           show (5 * 0 : Nat) = 0 from rfl, show (5 * 0 + 1 : Nat) = 1 from rfl,
+           show (5 * 0 + 2 : Nat) = 2 from rfl, show (5 * 0 + 3 : Nat) = 3 from rfl,
+           show (5 * 0 + 4 : Nat) = 4 from rfl,
+           show (5 * 1 : Nat) = 5 from rfl, show (5 * 1 + 1 : Nat) = 6 from rfl,
+           show (5 * 1 + 2 : Nat) = 7 from rfl, show (5 * 1 + 3 : Nat) = 8 from rfl,
+           show (5 * 1 + 4 : Nat) = 9 from rfl,
+           show (5 * 2 : Nat) = 10 from rfl, show (5 * 2 + 1 : Nat) = 11 from rfl,
+           show (5 * 2 + 2 : Nat) = 12 from rfl, show (5 * 2 + 3 : Nat) = 13 from rfl,
+           show (5 * 2 + 4 : Nat) = 14 from rfl,
+           show (5 * 3 : Nat) = 15 from rfl, show (5 * 3 + 1 : Nat) = 16 from rfl,
+           show (5 * 3 + 2 : Nat) = 17 from rfl, show (5 * 3 + 3 : Nat) = 18 from rfl,
+           show (5 * 3 + 4 : Nat) = 19 from rfl,
+           show (5 * 4 : Nat) = 20 from rfl, show (5 * 4 + 1 : Nat) = 21 from rfl,
+           show (5 * 4 + 2 : Nat) = 22 from rfl, show (5 * 4 + 3 : Nat) = 23 from rfl,
+           show (5 * 4 + 4 : Nat) = 24 from rfl] at hc0 hc1 hc2 hc3 hc4
+         have hd0 := hd 0 (by decide); have hd1 := hd 1 (by decide)
+         have hd2 := hd 2 (by decide); have hd3 := hd 3 (by decide)
+         have hd4 := hd 4 (by decide)
+         simp only [theta_closure_1_d_at, hc0, hc1, hc2, hc3, hc4,
+           show (0 + 4) % 5 = 4 from rfl, show (0 + 1) % 5 = 1 from rfl,
+           show (1 + 4) % 5 = 0 from rfl, show (1 + 1) % 5 = 2 from rfl,
+           show (2 + 4) % 5 = 1 from rfl, show (2 + 1) % 5 = 3 from rfl,
+           show (3 + 4) % 5 = 2 from rfl, show (3 + 1) % 5 = 4 from rfl,
+           show (4 + 4) % 5 = 3 from rfl, show (4 + 1) % 5 = 0 from rfl] at hd0 hd1 hd2 hd3 hd4
+         -- Build per-cell equalities for r_a.val[i]! using ha then substituting hd
+         have ha0  := ha  0 (by decide); have ha1  := ha  1 (by decide)
+         have ha2  := ha  2 (by decide); have ha3  := ha  3 (by decide)
+         have ha4  := ha  4 (by decide); have ha5  := ha  5 (by decide)
+         have ha6  := ha  6 (by decide); have ha7  := ha  7 (by decide)
+         have ha8  := ha  8 (by decide); have ha9  := ha  9 (by decide)
+         have ha10 := ha 10 (by decide); have ha11 := ha 11 (by decide)
+         have ha12 := ha 12 (by decide); have ha13 := ha 13 (by decide)
+         have ha14 := ha 14 (by decide); have ha15 := ha 15 (by decide)
+         have ha16 := ha 16 (by decide); have ha17 := ha 17 (by decide)
+         have ha18 := ha 18 (by decide); have ha19 := ha 19 (by decide)
+         have ha20 := ha 20 (by decide); have ha21 := ha 21 (by decide)
+         have ha22 := ha 22 (by decide); have ha23 := ha 23 (by decide)
+         have ha24 := ha 24 (by decide)
+         simp only [theta_closure_2_at,
+           show (0:Nat)/5 = 0 from rfl, show (1:Nat)/5 = 0 from rfl,
+           show (2:Nat)/5 = 0 from rfl, show (3:Nat)/5 = 0 from rfl,
+           show (4:Nat)/5 = 0 from rfl,
+           show (5:Nat)/5 = 1 from rfl, show (6:Nat)/5 = 1 from rfl,
+           show (7:Nat)/5 = 1 from rfl, show (8:Nat)/5 = 1 from rfl,
+           show (9:Nat)/5 = 1 from rfl,
+           show (10:Nat)/5 = 2 from rfl, show (11:Nat)/5 = 2 from rfl,
+           show (12:Nat)/5 = 2 from rfl, show (13:Nat)/5 = 2 from rfl,
+           show (14:Nat)/5 = 2 from rfl,
+           show (15:Nat)/5 = 3 from rfl, show (16:Nat)/5 = 3 from rfl,
+           show (17:Nat)/5 = 3 from rfl, show (18:Nat)/5 = 3 from rfl,
+           show (19:Nat)/5 = 3 from rfl,
+           show (20:Nat)/5 = 4 from rfl, show (21:Nat)/5 = 4 from rfl,
+           show (22:Nat)/5 = 4 from rfl, show (23:Nat)/5 = 4 from rfl,
+           hd0, hd1, hd2, hd3, hd4]
+           at ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 ha9
+              ha10 ha11 ha12 ha13 ha14 ha15 ha16 ha17 ha18 ha19
+              ha20 ha21 ha22 ha23 ha24
+         -- Now each ha_i states r_a.val[i]! = (state expression matching list)
+         -- Destruct r_a.val using its length 25
+         obtain ⟨lst, hlen⟩ := r_a
+         simp only [show ((25#usize : Std.Usize).val) = 25 from rfl] at hlen
+         -- Strip the list 25 elements
+         match lst, hlen with
+         | [v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,
+            v15,v16,v17,v18,v19,v20,v21,v22,v23,v24], _ =>
+           simp only [List.getElem!_cons_zero, List.getElem!_cons_succ]
+             at ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 ha9 ha10 ha11 ha12 ha13
+                ha14 ha15 ha16 ha17 ha18 ha19 ha20 ha21 ha22 ha23 ha24
+           simp only [ha0, ha1, ha2, ha3, ha4, ha5, ha6, ha7, ha8, ha9,
+             ha10, ha11, ha12, ha13, ha14, ha15, ha16, ha17, ha18, ha19,
+             ha20, ha21, ha22, ha23, ha24])
   have h2 : keccak_f.theta_unrolled state = .ok (theta_unrolled_applied state) :=
     result_eq_of_triple (theta_unrolled_spec state)
   rw [h1, h2]
