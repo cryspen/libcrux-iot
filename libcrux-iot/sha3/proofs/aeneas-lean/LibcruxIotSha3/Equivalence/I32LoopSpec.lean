@@ -1,40 +1,20 @@
 /-
-  I32 iterator + loop helpers + spec-chain helpers.
+  I32 iterator + range-loop spec helpers.
+
+  Provides:
+  - `IteratorRange_next_spec_i32` — Hoare spec for one `IteratorRange.next`
+    step over an `I32` range, splitting on `i.val < e.val`.
+  - `loop_range_spec_i32` — induction principle for `loop` over
+    `core.ops.range.Range I32`, parameterised by an invariant `inv`.
+
+  Used by `BitKeccak/StructEquiv.lean` to verify the 6-iteration
+  `keccakf1600` round-bundle loop.
 
   ## History (2026-05-20 cleanup)
 
-  This file used to host the OLD `keccakf1600_equiv` path, which was
-  structured around `Balanced` preservation across rounds 1-3 — a
-  property empirically false (see memory
-  `feedback_bit_keccak_balanced_preservation_false`). The OLD post
-  required `lift_perm r id impl_swap` on the output, equivalent to
-  the canonical `lift r` only when `Balanced r` — not generically true.
-
-  The OLD theorems (`keccakf1600_4rounds_preserves_balanced`,
-  `keccakf1600_4rounds_preserves_lift_eq`,
-  `keccakf1600_loop_post_eq_spec_chain`, `four_round_chunk_equiv`,
-  `keccakf1600_loop_equiv`, `keccakf1600_equiv`, plus the supporting
-  `Balanced` / `lift_eq_lift_perm_iff` / `lift_lane_bv_swap_iff`
-  defs and `keccakf1600_4rounds_i_inc`, `loop_inv_prop`,
-  `holds_chain4_eq_ok` helpers) have been removed. They are
-  superseded by `BitKeccak.keccakf1600_equiv_via_bit` in
-  `BitKeccak/AlgEquiv.lean`, which proves `keccakf1600_post_canonical`
-  (canonical `lift r_impl`, no `Balanced` precondition) via the
-  time-varying `impl_swap_k` architecture.
-
-  ## What remains
-
-  Shared infrastructure still needed by:
-  - `BitKeccak/StructEquiv.lean` and `BitKeccak/AlgEquiv.lean`:
-    `loop_range_spec_i32`, `IteratorRange_next_spec_i32`,
-    `pure_prop_holds`, `of_pure_prop_holds`.
-  - `BitKeccak/AlgEquiv.lean`'s 24-round closure:
-    `spec_round_step_at`, `spec_chain`, `spec_chain_zero`,
-    `spec_chain_succ`.
-
-  A future cleanup may want to rename this file (e.g. to
-  `LoopHelpers.lean` or split across two files) since the original
-  "keccakf1600 loop equiv" framing is no longer accurate.
+  Extracted from the former `Equivalence/Keccakf1600Loop.lean`. The
+  spec-chain + `Result Prop` helpers from the same file now live in
+  `Equivalence/SpecChain.lean`.
 -/
 import LibcruxIotSha3.Equivalence.Keccakf1600
 
@@ -204,46 +184,5 @@ theorem loop_range_spec_i32 {β : Type}
       rw [hiter]
       exact ih acc' iter'.start
         (by rw [hstart]; omega) (by rw [hstart]; omega) (by rw [hstart]; omega) hinv'
-
-/-! ## Spec-chain helper
-
-`spec_round_step_at` wraps `spec_round_step` for use inside the
-`Nat.fold 24` chain in `keccakf1600_loop_post` / `keccakf1600_post_canonical`.
-`spec_chain` packages the `Nat.fold` form. -/
-
-def spec_round_step_at (round_idx : Nat) (st : Std.Array Std.U64 25#usize) :
-    Result (Std.Array Std.U64 25#usize) :=
-  if h : round_idx < 24 then spec_round_step st (roundOfNat round_idx (by omega))
-  else .fail .panic
-
-/-- `spec_chain n s_lift` applies `n` spec rounds (indices 0..n-1) to
-    the lifted initial state `s_lift`. -/
-def spec_chain (s_lift : Std.Array Std.U64 25#usize) (n : Nat) :
-    Result (Std.Array Std.U64 25#usize) :=
-  Nat.fold n (fun i _ acc => acc >>= fun st => spec_round_step_at i st) (pure s_lift)
-
-theorem spec_chain_zero (s_lift : Std.Array Std.U64 25#usize) :
-    spec_chain s_lift 0 = .ok s_lift := by
-  rfl
-
-theorem spec_chain_succ (s_lift : Std.Array Std.U64 25#usize) (n : Nat) :
-    spec_chain s_lift (n + 1) =
-      spec_chain s_lift n >>= fun st => spec_round_step_at n st := by
-  unfold spec_chain
-  rw [Nat.fold_succ]
-
-/-! ## `pure P` ↔ `P` for `Result Prop`
-
-Used by `BitKeccak/StructEquiv.lean` and the loop-invariant unpacking
-in `BitKeccak/AlgEquiv.lean`. -/
-
-theorem pure_prop_holds {P : Prop} (h : P) : (pure P : Result Prop).holds := by
-  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp]
-  intro _
-  exact h
-
-theorem of_pure_prop_holds {P : Prop} (h : (pure P : Result Prop).holds) : P := by
-  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp] at h
-  exact h trivial
 
 end libcrux_iot_sha3.Equivalence
