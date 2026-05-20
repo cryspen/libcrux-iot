@@ -344,12 +344,6 @@ For each `K = 0..24`, expose
 as `lift_lane_bv` of swap-aware halves of `s.st[L_K]` XOR'd with `s.d[K/5]`.
 The mapping `K → L_K, sw_K` is fixed: see the table in `ThetaLiftRound3.lean`. -/
 
-/-- `impl_swap_k 3 L = decide (L.val ∈ [1,4,6,7,10,11,13,15,17,19,23,24])`. -/
-private theorem impl_swap_k_three (L : Fin 25) :
-    impl_swap_k 3 L =
-      decide (L.val ∈ ([1, 4, 6, 7, 10, 11, 13, 15, 17, 19, 23, 24] : List Nat)) := by
-  unfold impl_swap_k; rfl
-
 private theorem lta_perm_getElem_3 (s : state.KeccakState)
     (p : Fin 25 → Fin 25) (sw : Fin 25 → Bool) (k : Fin 25) :
     (lift_theta_applied_perm s p sw).val[k.val]! =

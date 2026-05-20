@@ -258,39 +258,6 @@ theorem theta_comp_spec_local_2 (s : state.KeccakState) :
 These mirror the round-1 infrastructure but with the round-2 layout
 parameters `(impl_perm ∘ impl_perm, impl_swap_k 2)`. -/
 
-/-- `impl_swap_k 2 L = decide (L.val ∉ [0, 9, 13, 17, 21])`. -/
-private theorem impl_swap_k_two (L : Fin 25) :
-    impl_swap_k 2 L =
-      decide (L.val ∉ ([0, 9, 13, 17, 21] : List Nat)) := by
-  unfold impl_swap_k; rfl
-
-private theorem lift_perm_getElem (s : state.KeccakState)
-    (p : Fin 25 → Fin 25) (sw : Fin 25 → Bool) (k : Fin 25) :
-    (lift_perm s p sw).val[k.val]! =
-      lift_lane_maybe_swap (s.st.val[(p k).val]!) (sw (p k)) := by
-  unfold lift_perm
-  change (List.ofFn _)[k.val]! = _
-  rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
-
-private theorem lift_perm_getElem_bv_aux (s : state.KeccakState)
-    (p : Fin 25 → Fin 25) (sw : Fin 25 → Bool) (k : Fin 25) :
-    ((↑(lift_perm s p sw) : List Std.U64)[(k.val : Nat)]!).bv =
-      (lift_lane_maybe_swap (s.st.val[(p k).val]!) (sw (p k))).bv := by
-  show ((lift_perm s p sw).val[k.val]!).bv = _
-  rw [lift_perm_getElem]
-
-/-- `lift_lane_maybe_swap` on the `true` branch. -/
-private theorem lift_lane_maybe_swap_true_bv (l : libcrux_iot_sha3.lane.Lane2U32) :
-    (lift_lane_maybe_swap l true).bv =
-      lift_lane_bv (l.val[1]!).bv (l.val[0]!).bv := by
-  unfold lift_lane_maybe_swap; rfl
-
-/-- `lift_lane_maybe_swap` on the `false` branch. -/
-private theorem lift_lane_maybe_swap_false_bv (l : libcrux_iot_sha3.lane.Lane2U32) :
-    (lift_lane_maybe_swap l false).bv =
-      lift_lane_bv (l.val[0]!).bv (l.val[1]!).bv := by
-  unfold lift_lane_maybe_swap lift_lane; rfl
-
 /-! ## RHS-side rewriting: `lift_theta_applied_perm`'s `lift_lane_maybe_swap`
     cells at concrete `Fin 25` indices for round 2 (`(impl_perm ∘ impl_perm)`,
     `impl_swap_k 2`). -/

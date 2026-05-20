@@ -301,33 +301,6 @@ Each `lift_perm_getElem_bv_k_1` exposes the spec-side input lane `k` as a
 `lift_lane_bv` over the appropriate halves of `s.st[impl_perm k]`, with
 half polarity selected by `impl_swap (impl_perm k)`. -/
 
-private theorem lift_perm_getElem (s : state.KeccakState)
-    (p : Fin 25 → Fin 25) (sw : Fin 25 → Bool) (k : Fin 25) :
-    (lift_perm s p sw).val[k.val]! =
-      lift_lane_maybe_swap (s.st.val[(p k).val]!) (sw (p k)) := by
-  unfold lift_perm
-  change (List.ofFn _)[k.val]! = _
-  rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
-
-private theorem lift_perm_getElem_bv_aux (s : state.KeccakState)
-    (p : Fin 25 → Fin 25) (sw : Fin 25 → Bool) (k : Fin 25) :
-    ((↑(lift_perm s p sw) : List Std.U64)[(k.val : Nat)]!).bv =
-      (lift_lane_maybe_swap (s.st.val[(p k).val]!) (sw (p k))).bv := by
-  show ((lift_perm s p sw).val[k.val]!).bv = _
-  rw [lift_perm_getElem]
-
-/-- `lift_lane_maybe_swap` on the `true` branch. -/
-private theorem lift_lane_maybe_swap_true_bv (l : libcrux_iot_sha3.lane.Lane2U32) :
-    (lift_lane_maybe_swap l true).bv =
-      lift_lane_bv (l.val[1]!).bv (l.val[0]!).bv := by
-  unfold lift_lane_maybe_swap; rfl
-
-/-- `lift_lane_maybe_swap` on the `false` branch. -/
-private theorem lift_lane_maybe_swap_false_bv (l : libcrux_iot_sha3.lane.Lane2U32) :
-    (lift_lane_maybe_swap l false).bv =
-      lift_lane_bv (l.val[0]!).bv (l.val[1]!).bv := by
-  unfold lift_lane_maybe_swap lift_lane; rfl
-
 /-! ## RHS-side rewriting: `lift_theta_applied_perm`'s `lift_lane_maybe_swap`
     cells at concrete `Fin 25` indices, mapped to the corresponding
     `lift_lane_bv` over halves of `s.st[impl_perm K]`. -/
