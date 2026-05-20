@@ -10,21 +10,31 @@ pipeline; this directory then proves their equivalence.
 For the extraction pipeline + per-file build commands, see
 [`Equivalence/README.md`](Equivalence/README.md).
 
-## Top-level theorems
+## Main theorem
 
-### Hacspec-level coupling (`Equivalence/HacspecBridge.lean`)
+[`Equivalence/HacspecBridge.lean:1257`](Equivalence/HacspecBridge.lean#L1257):
 
 ```lean
-theorem keccakf1600_equiv_hacspec (s : state.KeccakState) :
-    keccak.keccakf1600 s = keccak_f.keccak_f (lift s)
+theorem keccakf1600_equiv_hacspec (s : state.KeccakState)
+    (h_i : s.i = 0#usize) :
+    ⦃ ⌜ True ⌝ ⦄
+    keccak.keccakf1600 s
+    ⦃ ⇓ r_impl => ⌜ keccak_f.keccak_f (lift s) = .ok (lift r_impl) ⌝ ⦄
 ```
 
-The impl's 24-round permutation equals the hacspec top-level
-`keccak_f.keccak_f` (defined in `specs/sha3/src/keccak_f.rs`,
-extracted to `HacspecSha3/Extraction/Funs.lean`) applied to the
-bit-interleaved canonical view `lift s`. Direct `Result α` equation.
+Informally: the impl's 24-round Keccak-f[1600] permutation, lifted
+to the spec's flat-`u64[25]` representation, equals what the hacspec
+top-level `keccak_f.keccak_f` (defined in `specs/sha3/src/keccak_f.rs`,
+extracted to `HacspecSha3/Extraction/Funs.lean`) produces when applied
+to the same lifted input. Only standard Lean axioms (`propext`,
+`Classical.choice`, `Quot.sound`) plus `Lean.ofReduceBool` /
+`Lean.trustCompiler` inherited transitively from a single
+`native_decide` in [`Equivalence/RcEquiv.lean:29`](Equivalence/RcEquiv.lean#L29)
+(24-entry round-constant identity check under `@[irreducible]` arrays).
 
-### Bit-interleaved post (`BitKeccak/AlgEquiv.lean`)
+## Underlying bit-interleaved post
+
+[`BitKeccak/AlgEquiv.lean:617`](BitKeccak/AlgEquiv.lean#L617):
 
 ```lean
 theorem keccakf1600_equiv_via_bit (s : state.KeccakState)
@@ -34,7 +44,7 @@ theorem keccakf1600_equiv_via_bit (s : state.KeccakState)
     ⦃ ⇓ r_impl => ⌜ keccakf1600_post_canonical s r_impl ⌝ ⦄
 ```
 
-where (`Equivalence/Keccakf1600.lean`)
+where ([`Equivalence/Keccakf1600.lean`](Equivalence/Keccakf1600.lean))
 
 ```lean
 def keccakf1600_post_canonical (s r_impl : state.KeccakState) : Prop :=
@@ -44,16 +54,12 @@ def keccakf1600_post_canonical (s r_impl : state.KeccakState) : Prop :=
       pure (lifted_final = lift r_impl)).holds
 ```
 
-Informally: the impl's 24-round permutation, lifted to the spec's
-flat-`u64[25]` representation, equals the spec's 24-fold application
-of `θ ∘ ρ ∘ π ∘ χ ∘ ι` starting from `lift s`. No precondition on the
-input state beyond `s.i = 0`. Only standard Lean axioms.
-
-`keccakf1600_equiv_hacspec` composes `keccakf1600_equiv_via_bit` with
+The bit-interleaved post characterises the impl through the
+`_unrolled` spec chain. The hacspec-level theorem composes this with
 `spec_chain_hacspec_eq_spec_chain` (Bridge 1's loop-body equivalence:
-non-`_unrolled` hacspec functions equal their `_unrolled` `spec_chain`
-counterparts) and `keccak_f_loop_eq_spec_chain_hacspec` (24-step
-unroll of the hacspec loop into `Nat.fold`).
+non-`_unrolled` hacspec functions equal their `_unrolled` counterparts)
+and `keccak_f_loop_eq_spec_chain_hacspec` (24-step unroll of the
+hacspec loop into `Nat.fold`).
 
 ## Proof architecture
 
