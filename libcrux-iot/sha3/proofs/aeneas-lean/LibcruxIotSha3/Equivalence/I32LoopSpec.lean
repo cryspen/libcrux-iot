@@ -25,6 +25,22 @@ namespace libcrux_iot_sha3.Equivalence
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
 
+/-! ### Triple → Result-equation converter
+
+When each call_mut's purity is stated as a Triple (natural for
+`hax_mvcgen`-driven proofs), the Result equation needed by
+`createi_pure_eq` follows directly. Used both here (in this file's
+loop-spec helpers) and externally (in `HacspecBridge.lean`). -/
+
+theorem result_eq_of_triple {α : Type} {x : Result α} {v : α}
+    (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ r = v ⌝ ⦄) : x = .ok v := by
+  match hx : x, h with
+  | .ok v', h =>
+      have hv' : v' = v := by simpa [Triple, WP.wp] using h
+      rw [hv']
+  | .fail e, h => exact absurd h (by simp [Triple, WP.wp])
+  | .div, h => exact absurd h (by simp [Triple, WP.wp])
+
 /-! ## I32 iterator-next spec
 
 The `core_models.I32.Insts.Core_modelsIterRangeStep` instance (defined

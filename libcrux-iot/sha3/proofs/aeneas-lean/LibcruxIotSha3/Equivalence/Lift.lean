@@ -376,4 +376,15 @@ theorem rotateLeft1_xor_bv32 (a b : BitVec 32) :
     (a ^^^ b).rotateLeft 1 = a.rotateLeft 1 ^^^ b.rotateLeft 1 := by
   bv_decide
 
+/-! ## `Usize`-bv constant normalisation -/
+
+/-- Normalisation bridge: `↑(BitVec.ofNat numBits k)#uscalar = k` when k is
+    in bounds. The shape is what `hax_mvcgen` leaves behind when applying
+    `createi_pure_spec`'s `hpure` over `inst.FnMutInst.call_mut c ⟨BitVec.ofNat _ k⟩`. -/
+theorem usize_bv_ofNat_val (k : Nat) (h : k < 2^Std.UScalarTy.Usize.numBits) :
+    Std.UScalar.val (Std.UScalar.mk (BitVec.ofNat Std.UScalarTy.Usize.numBits k)) = k := by
+  show (BitVec.ofNat _ k).toNat = k
+  rw [BitVec.toNat_ofNat]
+  exact Nat.mod_eq_of_lt h
+
 end libcrux_iot_sha3.Equivalence
