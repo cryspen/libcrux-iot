@@ -39,10 +39,9 @@
 
   The full posts targeted by Plan.lean § 1 lines 244–324 also include:
 
-  - `load_block_spec`:
-    `sponge.xor_block_into_state (lift s)
-       (Slice.from_list ((blocks.val.drop start.val).take RATE.val))
-       RATE = .ok (Equivalence.lift r)`
+  - `load_block_spec` (monadic-in-post form):
+    `⦃ True ⦄ sponge.xor_block_into_state (lift s) block RATE
+       ⦃ ⇓ s' => s' = lift r ⦄`
   - `store_block_spec`:
     `∀ k < RATE.val, r.val[k]! =
        ((Equivalence.lift s).val[5*((k/8)%5) + (k/8)/5]!).bv.toLEBytes[k%8]!`
@@ -55,17 +54,27 @@
      as `interleave_bv (u32_le b1) (u32_le b2)` for each iterated `k`.
   2. Strengthening Loop1's invariant to characterize each touched
      `s'.st[5*(j%5) + j/5]` via `lift_lane_bv_xor`.
-  3. Driving `createi_pure_spec` on `xor_block_into_state`'s closure,
-     which has an `if b < i2` branch. This requires either a
-     conditional generalization of `createi_pure_spec` or a per-cell
-     `@[spec]` for the closure with the conditional in the post.
+  3. Driving `from_fn_pure_spec` (from `Sponge/XorBlockSpec.lean`, the
+     `FnMut`-direct analog of `createi_pure_spec`) on
+     `sponge.xor_block_into_state`'s closure, which has an `if b < rate/8`
+     branch. The conditional lives inside the per-cell `f`-function
+     `xor_block_value_at` (also in `XorBlockSpec.lean`), so the closure
+     itself is pure (both branches return `(value, c)` with `c`
+     unchanged). The per-cell `@[spec]`
+     (`xor_block_closure_call_mut_spec`) is staged in
+     `XorBlockSpec.lean` — its body needs the inner do-chain
+     `slice-index → try_from → unwrap → from_le_bytes → ok` driven
+     for the `b < rate/8` branch.
 
   The current Triples close the *control-flow* gap and pass through
   the `r.i = s.i` invariant needed for the next-`keccakf1600`'s
   precondition. Phase 2 can now compose against them via `hax_mvcgen`
   to drive the absorb/squeeze loops at the impl side. The remaining
   spec-equation half is deferred to a follow-up pass once the loop-0
-  /loop-1 strong invariants land.
+  /loop-1 strong invariants land. The Phase 1a closer (2026-05-21) landed
+  `from_fn_pure_spec` as new generic infrastructure (it parallels
+  `createi_pure_spec` from `HacspecBridge.lean` but takes a `FnMut`
+  instance directly).
 
   The BV-pure identity layer (`interleave_bv`, `deinterleave_bv`,
   `lift_lane_bv_xor`, `interleave_bv_lift_eq`,
@@ -86,6 +95,7 @@
     Triples and BV-pure identity layer.
 -/
 import LibcruxIotSha3.Sponge.LoopSpecs
+import LibcruxIotSha3.Sponge.XorBlockSpec
 
 open Aeneas Aeneas.Std Result ControlFlow Std.Do libcrux_iot_sha3 hacspec_sha3
 
