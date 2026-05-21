@@ -159,17 +159,27 @@ the precondition `r = .Ok v`.
 NB: the `try_from` Triple (for `Slice T → Array T N`) is now proved at the
 bottom of this file (added 2026-05-21). -/
 
-/-- `Result.unwrap` succeeds with `v` whenever the input is `.Ok v`. -/
+/-- `Result.unwrap` of a `.Ok`-valued `r` returns the inner value.
+
+    We state both the precondition (`∃ v, r = .Ok v`) and the post
+    (`r = .Ok r'`), leaving `v` quantified inside `mvcgen`'s assertion
+    bag. This avoids the mvcgen unification quirk where the explicit
+    `v` argument gets eagerly bound to the first matching local of the
+    right type. -/
 @[spec]
 theorem core_models_result_Result_unwrap_spec
-    {T E : Type} (dbg : core_models.fmt.Debug E) (r : core_models.result.Result T E) (v : T)
-    (h : r = .Ok v) :
+    {T E : Type} (dbg : core_models.fmt.Debug E)
+    (r : core_models.result.Result T E)
+    (h : ∃ v, r = .Ok v) :
     ⦃ ⌜ True ⌝ ⦄
     core_models.result.Result.unwrap dbg r
-    ⦃ ⇓ r' => ⌜ r' = v ⌝ ⦄ := by
+    ⦃ ⇓ r' => ⌜ r = .Ok r' ⌝ ⦄ := by
+  obtain ⟨v, hv⟩ := h
   unfold core_models.result.Result.unwrap
-  subst h
+  subst hv
   simp [Triple, WP.wp]
+
+
 
 /-! ### `core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut` over `Range Usize`
 
@@ -375,8 +385,8 @@ private theorem array_from_fn_try_from_eq_ok
     subst hres
     rfl
 
-/-- The main Triple: `try_from N cpy s` succeeds with `Ok a` such that
-    `a.val = s.val`, whenever `s.val.length = N.val`. -/
+/-- The main Triple: `try_from N cpy s` succeeds with `Ok (Array.make N s.val _)`,
+    whenever `s.val.length = N.val`. -/
 @[spec]
 theorem core_models_array_try_from_slice_spec
     {T : Type} [Inhabited T] {N : Std.Usize} (cpy : core_models.marker.Copy T)
@@ -384,8 +394,8 @@ theorem core_models_array_try_from_slice_spec
     ⦃ ⌜ True ⌝ ⦄
     core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
       N cpy s
-    ⦃ ⇓ r => ⌜ ∃ (a : Std.Array T N),
-                r = core_models.result.Result.Ok a ∧ a.val = s.val ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r = core_models.result.Result.Ok
+                    (Std.Array.make N s.val (by simp [hlen])) ⌝ ⦄ := by
   -- Unfold try_from and reduce the `do` chain step-by-step.
   unfold core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
   -- `core_models.slice.Slice.len x` is `pure (Slice.len x)`, returns `.ok (Slice.len s)`.
@@ -396,11 +406,35 @@ theorem core_models_array_try_from_slice_spec
     simp [hlen]
   -- Reduce the array_from_fn call to .ok.
   have h_afn := array_from_fn_try_from_eq_ok (T := T) (N := N) cpy s hlen
-  -- Now stitch into the Triple. The post for `ok (.Ok (Array.make N s.val))`
-  -- becomes `∃ a, .Ok (Array.make N s.val) = .Ok a ∧ a.val = s.val`.
   simp only [Triple, WP.wp, pure, Pure.pure, bind_tc_ok, hi_eq, if_true, h_afn]
-  -- Goal is now `⌜True⌝.down → ⌜∃ a, .Ok (Array.make N s.val) = .Ok a ∧ a.val = s.val⌝.down`.
   intro _
-  exact ⟨Std.Array.make N s.val (by simp [hlen]), rfl, rfl⟩
+  trivial
+
+/-- Fused `try_from + Result.unwrap` Triple. The two-step pattern
+    `let r ← try_from N cpy s; let a ← Result.unwrap dbg r` is the
+    canonical Aeneas idiom for slice → array coercion; we provide a
+    direct equation that mvcgen can chain without intermediate metavars. -/
+theorem core_models_try_from_unwrap_spec
+    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : core_models.marker.Copy T)
+    (dbg : core_models.fmt.Debug core_models.array.TryFromSliceError)
+    (s : Slice T) (hlen : s.val.length = N.val) :
+    ⦃ ⌜ True ⌝ ⦄
+    (do
+      let r ← core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
+                N cpy s
+      core_models.result.Result.unwrap dbg r)
+    ⦃ ⇓ a => ⌜ a = Std.Array.make N s.val (by simp [hlen]) ⌝ ⦄ := by
+  -- Establish `try_from ... = .ok (.Ok (Array.make N s.val _))` outright.
+  have h_try := core_models_array_try_from_slice_spec (T := T) (N := N) cpy s hlen
+  -- Then unfold Result.unwrap and reduce.
+  unfold core_models.result.Result.unwrap
+  -- Reduce `try_from` to its known .ok form. The Triple post `h_try` already
+  -- encodes this.
+  have h_eq : (core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
+                  N cpy s)
+              = .ok (.Ok (Std.Array.make N s.val (by simp [hlen]))) := by
+    exact libcrux_iot_sha3.Equivalence.result_eq_of_triple h_try
+  rw [h_eq]
+  simp [Triple, WP.wp]
 
 end libcrux_iot_sha3.Sponge

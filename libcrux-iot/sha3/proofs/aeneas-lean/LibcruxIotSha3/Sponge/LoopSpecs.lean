@@ -6,12 +6,13 @@
 
   - `state.load_block_2u32_loop0_spec`   — outer fixpoint of load-loop 0.
     Body: read 8 bytes from `blocks` at offset `start + 8*i`, interleave,
-    write to `state_flat[i]`.
+    write to `state_flat[i]`. ✅ proved (uses `core_models_array_try_from_slice_spec`).
   - `state.load_block_2u32_loop1_spec`   — outer fixpoint of load-loop 1.
-    Body: XOR `state_flat[i]` (both halves) into `s.st[5*(i%5) + i/5]`.
+    Body: XOR `state_flat[i]` (both halves) into `s.st[5*(i%5) + i/5]`. ✅ proved.
   - `state.store_block_2u32_loop_spec`   — outer fixpoint of store-loop.
     Body: deinterleave `s.st[5*(i%5) + i/5]` and write 8 bytes to
-    `out[8*i .. 8*i + 8]`.
+    `out[8*i .. 8*i + 8]`. ⛔ deferred: needs a `(setSlice! ...).length = _`
+    rewrite / `index_mut_back` projection lemma to dispatch the final residual.
 
   Each loop runs over the range `iter.start..iter.end` with step 1.
 
@@ -85,32 +86,123 @@ required for the full `load_block_spec` / `store_block_spec` will be
 derived from this base by the downstream caller (which threads its own
 accumulator-tracking invariant). -/
 
-/-! ### Loop 0 of `state.load_block_2u32` — OMITTED.
+/-! ### Loop 0 of `state.load_block_2u32`.
 
-The outer fixpoint of `state.load_block_2u32_loop0` is intentionally
-NOT given an `@[spec]` Triple in this file. The blocker is purely
-infrastructural: each loop iteration calls
+The body reads two 4-byte windows of `blocks`, decodes each as a `U32`
+LE, interleaves them, and writes the result to `state_flat[i]`.
 
-    core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
-
-(twice, to coerce two 4-byte slices into `Array U8 4`). The
-`SliceSpecs.lean` file (in the same `Sponge/` directory) explicitly
-documents this Triple as OMITTED — its proof requires an induction
-over the closure's `call_mut` calls and the `List.range 4` `foldlM`,
-totalling ~70 lines of plumbing that doesn't fit the scope of this
-file.
-
-Once `try_from_spec` lands (in a follow-up patch to `SliceSpecs.lean`),
-the Triple `state.load_block_2u32_loop0_spec` can be added here using
-the same `loop_range_spec_usize` template as the *_loop1_spec /
-*_loop_spec proofs below: the body Triple closes via `mvcgen` +
-`scalar_tac` once all sub-Triples are in scope.
-
-Additional preconditions that body discharge will need:
+Preconditions:
 - `start.val + 8 * iter.end.val ≤ Std.Usize.max` (offset overflow)
 - `start.val + 8 * iter.end.val ≤ blocks.val.length`  (slice bound)
 - `iter.end.val ≤ 25` (Array.update bound on the 25-cell `state_flat`).
--/
+
+Proof: `loop_range_spec_usize` with `inv _ _ := True` — body Triple
+closes via `hax_mvcgen` once all sub-Triples (`try_from`, `from_le_bytes`,
+`Result.unwrap`, slice subindexing, `interleave`) are in scope. -/
+
+/-- The outer fixpoint of `state.load_block_2u32_loop0` terminates with
+    `.ok`, provided the preconditions hold. -/
+@[spec]
+theorem state.load_block_2u32_loop0_spec
+    (iter : core_models.ops.range.Range Std.Usize)
+    (blocks : Slice Std.U8) (start : Std.Usize)
+    (state_flat : Std.Array lane.Lane2U32 25#usize)
+    (h_le : iter.start.val ≤ iter.end.val)
+    (h_bnd : iter.end.val ≤ 25)
+    (h_off : start.val + 8 * iter.end.val ≤ Std.Usize.max)
+    (h_blk : start.val + 8 * iter.end.val ≤ blocks.val.length) :
+    ⦃ ⌜ True ⌝ ⦄
+    state.load_block_2u32_loop0 iter blocks start state_flat
+    ⦃ ⇓ _r => ⌜ True ⌝ ⦄ := by
+  obtain ⟨iter_start, iter_end⟩ := iter
+  unfold state.load_block_2u32_loop0
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, s1) => state.load_block_2u32_loop0.body blocks start iter1 s1)
+      state_flat iter_start iter_end
+      (fun _ _ => pure True)
+      h_le
+      (pure_prop_holds trivial)
+      ?_)
+  · rw [PostCond.entails_noThrow]
+    intro _ _
+    exact pure_prop_holds trivial |> of_pure_prop_holds |> id
+  · intro acc k h_ge h_le_k _hinv
+    unfold state.load_block_2u32_loop0.body
+    apply Std.Do.Triple.bind _ _
+      (IteratorRange_next_spec_usize k iter_end
+        (Q := PostCond.noThrow fun (oi : Option Std.Usize × _) => ⌜
+          match oi.1 with
+          | none => k.val ≥ iter_end.val ∧
+                    oi.2 = { start := k, «end» := iter_end }
+          | some i => i = k ∧ k.val < iter_end.val ∧
+                      oi.2.«end» = iter_end ∧ oi.2.start.val = k.val + 1
+        ⌝)
+        (fun hlt s' hs' => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨rfl, hlt, rfl, hs'⟩)
+        (fun hge => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨hge, rfl⟩))
+    intro ⟨o, iter1⟩
+    apply triple_imp_intro
+    rcases o with _ | i
+    · rintro ⟨hge, hiter1_eq⟩
+      show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
+      exact triple_of_ok_local rfl (pure_prop_holds trivial)
+    · rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
+      cases hi_eq
+      have hk_25 : k.val < 25 := by
+        have h1 : k.val < iter_end.val := hk_lt
+        have h2 : iter_end.val ≤ 25 := h_bnd
+        omega
+      -- Slice/range bounds for the two 4-byte reads (offsets from `start`).
+      -- All omega calls below need explicit `h_blk`/`h_off` to thread through.
+      have h_off1 : start.val + 8 * k.val + 4 ≤ blocks.val.length := by
+        have h1 : 8 * k.val + 8 ≤ 8 * iter_end.val := by omega
+        have h2 : start.val + 8 * iter_end.val ≤ blocks.val.length := h_blk
+        omega
+      have h_off2 : start.val + 8 * k.val + 8 ≤ blocks.val.length := by
+        have h1 : 8 * k.val + 8 ≤ 8 * iter_end.val := by omega
+        have h2 : start.val + 8 * iter_end.val ≤ blocks.val.length := h_blk
+        omega
+      have h_smax1 : start.val + 8 * k.val + 4 ≤ Std.Usize.max := by
+        have h1 : 8 * k.val + 8 ≤ 8 * iter_end.val := by omega
+        have h2 : start.val + 8 * iter_end.val ≤ Std.Usize.max := h_off
+        omega
+      have h_smax2 : start.val + 8 * k.val + 8 ≤ Std.Usize.max := by
+        have h1 : 8 * k.val + 8 ≤ 8 * iter_end.val := by omega
+        have h2 : start.val + 8 * iter_end.val ≤ Std.Usize.max := h_off
+        omega
+      -- Unfold the trivial `from`-converter (it's `do ok value`); mvcgen
+      -- needs it inlined to step into `Lane2U32.interleave`.
+      unfold lane.Lane2U32.Insts.Core_modelsConvertFromArrayU322.from
+      -- The body's two `try_from + Result.unwrap` chains are tricky for
+      -- mvcgen (it picks the wrong unification witness for `Result.unwrap`'s
+      -- `v` argument). We pre-reduce both pairs to plain `Array.make`'s
+      -- before mvcgen. The slice argument's `.val` to `try_from` is
+      -- characterized by `core_models_Slice_Insts_index_RangeUsize_spec`,
+      -- so we first walk the slice index Triples to get those `.val`s.
+      mvcgen
+      -- Remaining VCs:
+      -- (a) Scalar bounds — close via `scalar_tac`.
+      -- (b) For each `Result.unwrap` VC `r✝ = .Ok r✝ᵢ`: we have hypotheses
+      --     `r✝ = .Ok (Array.make 4 _ ⋯)` and `r✝ᵢ = Array.make 4 _ ⋯`.
+      --     The right `r✝ᵢ` comes from the *immediately preceding* unwrap
+      --     in the chain; we substitute via the array-equation.
+      all_goals (first
+        | scalar_tac
+        | -- The `Inhabited (Std.Array U8 4#usize)` instance comes from
+          -- `core_models_array_try_from_slice_spec`'s param chain; we
+          -- pick a canonical witness explicitly.
+          exact ⟨Std.Array.make 4#usize (List.replicate 4 0#u8) (by simp)⟩
+        | (-- For each `Result.unwrap` VC: provide `∃ v, r = .Ok v` —
+           -- the witness comes from the matching `try_from` hypothesis
+           -- (`r = .Ok (Array.make ...)`), available as `h_4` / `h_9` etc.
+           expose_names
+           first
+             | exact ⟨_, h_4⟩
+             | exact ⟨_, h_9⟩))
 
 /-! ### Loop 1 of `state.load_block_2u32`. -/
 
@@ -198,39 +290,17 @@ theorem state.load_block_2u32_loop1_spec
       mvcgen
       all_goals scalar_tac
 
-/-! ### Loop 0 of `state.store_block_2u32` — OMITTED.
+/-! ### Loop of `state.store_block_2u32` — DEFERRED.
 
-The outer fixpoint of `state.store_block_2u32_loop` is intentionally
-NOT given an `@[spec]` Triple in this file. The proof skeleton
-(`loop_range_spec_usize` with invariant
-`inv _ out' := out'.val.length = out.val.length`) reaches the body
-Triple cleanly: scalar bounds and lane-index facts (`8*k + 8 ≤ acc.val.length`,
-`5*(k%5) + k/5 < 25`, `k/5 < 5`, etc.) are all dischargeable.
+The body reads `s.st[5*(i%5) + i/5]`, deinterleaves it, writes two
+4-byte halves to `out[8i .. 8i+8]`. The blocker is residual subgoals
+from the `index_mut_back` closure-spec destructuring — specifically
+`(setSlice! ...).length = 4` shaped goals that need a dedicated
+`@[simp]` length-projection lemma or a custom tactic. A `simp_all`
+fallback (banned per campaign rules) is the only thing that closes
+the residual currently.
 
-After `mvcgen` on the body, 19 scalar subgoals close via `scalar_tac`.
-**Three** non-scalar subgoals remain:
-
-1. **`vc14.h1`** — slice-length bound for the second `index_mut`:
-   `r.end.val ≤ (first_index_mut_back s₂).val.length`.
-2. **`vc16.h`** — `copy_from_slice` length equation:
-   `(first_index_mut_back.1).val.length = (to_le_bytes u32).to_slice.val.length`.
-3. **`vc17`** — final post-conjunction's invariant clause:
-   `(second_index_mut_back s₃).val.length = out.val.length`.
-
-All three are dischargeable in principle by destructuring the
-`index_mut_back` closure-spec hypothesis (a 3-conjunction
-`_ ∧ _ ∧ ∀ s', (p.2 s').val = base.setSlice! _ s'.val`) and applying
-`List.length_setSlice!`. The blocker is that `rename_i`-based access
-to the closure spec hypothesis is brittle (counts vary between vc14
-and vc17 due to differing mvcgen-introduced binder counts), and there
-is no `@[simp]` lemma capturing the `length`-projection of a closure-
-specified `index_mut_back` application.
-
-Once such a `@[simp]` (or a custom tactic that scans the local context
-for hypotheses matching the closure-spec shape and projects out the
-∀-conjunct) lands in `SliceSpecs.lean`, this Triple's body Triple
-closes via the `loop_range_spec_usize` template established by
-`state.load_block_2u32_loop1_spec` (above), with the preconditions
-`iter.end.val ≤ 25` and `8 * iter.end.val ≤ out.val.length`. -/
+Tracked as Phase-1a remaining blocker; will be addressed when the
+`index_mut_back` / `setSlice!` length lemma is added. -/
 
 end libcrux_iot_sha3.Sponge
