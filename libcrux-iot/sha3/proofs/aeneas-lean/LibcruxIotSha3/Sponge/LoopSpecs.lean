@@ -736,9 +736,235 @@ def store_block_byte_at
   let off : Nat := 8 * (b % 8)
   ⟨BitVec.ofNat 8 ((bv.toNat >>> off) &&& 0xff)⟩
 
+/-- Two `Std.U8`s are equal iff their `BitVec` payloads are. -/
+private theorem u8_bv_inj (x y : BitVec 8) :
+    (⟨x⟩ : Std.U8) = ⟨y⟩ ↔ x = y := by
+  constructor
+  · intro h; cases h; rfl
+  · intro h; rw [h]
+
+/-- Pure-BV byte-bridge for the `lo` half (in `setWidth 8` form). Closed by
+    `bv_decide` (one call per byte index). -/
+private theorem deinterleave_bv_lo_setWidth_eq_0 (e o : BitVec 32) :
+    (deinterleave_bv e o).1.setWidth 8 = ((lift_lane_bv e o) >>> 0).setWidth 8 := by
+  simp only [deinterleave_bv, lift_lane_bv, spread_to_even]; bv_decide
+
+private theorem deinterleave_bv_lo_setWidth_eq_1 (e o : BitVec 32) :
+    ((deinterleave_bv e o).1 >>> 8).setWidth 8
+      = ((lift_lane_bv e o) >>> 8).setWidth 8 := by
+  simp only [deinterleave_bv, lift_lane_bv, spread_to_even]; bv_decide
+
+private theorem deinterleave_bv_lo_setWidth_eq_2 (e o : BitVec 32) :
+    ((deinterleave_bv e o).1 >>> 16).setWidth 8
+      = ((lift_lane_bv e o) >>> 16).setWidth 8 := by
+  simp only [deinterleave_bv, lift_lane_bv, spread_to_even]; bv_decide
+
+private theorem deinterleave_bv_lo_setWidth_eq_3 (e o : BitVec 32) :
+    ((deinterleave_bv e o).1 >>> 24).setWidth 8
+      = ((lift_lane_bv e o) >>> 24).setWidth 8 := by
+  simp only [deinterleave_bv, lift_lane_bv, spread_to_even]; bv_decide
+
+private theorem deinterleave_bv_hi_setWidth_eq_0 (e o : BitVec 32) :
+    (deinterleave_bv e o).2.setWidth 8 = ((lift_lane_bv e o) >>> 32).setWidth 8 := by
+  simp only [deinterleave_bv, lift_lane_bv, spread_to_even]; bv_decide
+
+private theorem deinterleave_bv_hi_setWidth_eq_1 (e o : BitVec 32) :
+    ((deinterleave_bv e o).2 >>> 8).setWidth 8
+      = ((lift_lane_bv e o) >>> 40).setWidth 8 := by
+  simp only [deinterleave_bv, lift_lane_bv, spread_to_even]; bv_decide
+
+private theorem deinterleave_bv_hi_setWidth_eq_2 (e o : BitVec 32) :
+    ((deinterleave_bv e o).2 >>> 16).setWidth 8
+      = ((lift_lane_bv e o) >>> 48).setWidth 8 := by
+  simp only [deinterleave_bv, lift_lane_bv, spread_to_even]; bv_decide
+
+private theorem deinterleave_bv_hi_setWidth_eq_3 (e o : BitVec 32) :
+    ((deinterleave_bv e o).2 >>> 24).setWidth 8
+      = ((lift_lane_bv e o) >>> 56).setWidth 8 := by
+  simp only [deinterleave_bv, lift_lane_bv, spread_to_even]; bv_decide
+
+/-- Convert `BitVec.ofNat 8 (b.toNat >>> off &&& 0xff)` to a pure-BitVec
+    `(b >>> off).setWidth 8` form (the latter is `bv_decide`-friendly). -/
+private theorem bv_ofNat_byte_shift_and_eq_setWidth (b : BitVec 64) (off : Nat) :
+    BitVec.ofNat 8 ((b.toNat >>> off) &&& 0xff) = (b >>> off).setWidth 8 := by
+  apply BitVec.eq_of_toNat_eq
+  simp only [BitVec.toNat_ofNat, BitVec.toNat_setWidth, BitVec.toNat_ushiftRight]
+  -- Goal: `((b.toNat >>> off) &&& 0xff) % 2^8 = (b.toNat >>> off) % 2^8`.
+  have h_and_eq_mod : ∀ x : Nat, x &&& 0xff = x % 256 := by
+    intro x
+    show x &&& 255 = x % 256
+    rw [show (255 : Nat) = 2^8 - 1 from by decide,
+        show (256 : Nat) = 2^8 from by decide]
+    exact Nat.and_two_pow_sub_one_eq_mod x 8
+  rw [h_and_eq_mod]
+  show (b.toNat >>> off % 256) % 256 = b.toNat >>> off % 256
+  rw [Nat.mod_mod]
+
+/-- Per-byte-index helper: case-splits `i < 4` into the four concrete cases. -/
+private theorem nat_lt_4_cases (i : Nat) (hi : i < 4) :
+    i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 := by omega
+
+/-- Equality of two 8-bit BitVecs reduces to `Nat.testBit`-equality of their
+    `toNat`s for every bit in `[0,8)`. Combined with
+    `BitVec.toLEBytes_getElem!_testBit`, this lets us discharge `lo`/`hi`
+    byte equalities by `bv_decide` per bit. -/
+private theorem bv8_eq_of_testBit_eq (x y : BitVec 8)
+    (h : ∀ j : Nat, j < 8 → x.toNat.testBit j = y.toNat.testBit j) :
+    x = y := by
+  apply BitVec.eq_of_toNat_eq
+  apply Nat.eq_of_testBit_eq
+  intro j
+  by_cases hj : j < 8
+  · exact h j hj
+  · have hx : x.toNat < 256 := by
+      have := x.isLt; simpa using this
+    have hy : y.toNat < 256 := by
+      have := y.isLt; simpa using this
+    have hjj : 8 ≤ j := by omega
+    have h_pow : 2 ^ 8 = 256 := by decide
+    have hxbit : x.toNat.testBit j = false := by
+      rw [Nat.testBit_eq_false_of_lt]
+      calc x.toNat < 256 := hx
+        _ = 2 ^ 8 := h_pow.symm
+        _ ≤ 2 ^ j := Nat.pow_le_pow_right (by decide) hjj
+    have hybit : y.toNat.testBit j = false := by
+      rw [Nat.testBit_eq_false_of_lt]
+      calc y.toNat < 256 := hy
+        _ = 2 ^ 8 := h_pow.symm
+        _ ≤ 2 ^ j := Nat.pow_le_pow_right (by decide) hjj
+    rw [hxbit, hybit]
+
+/-- Helper: bv-getElem of a `setWidth 8` of a shifted BV equals the original
+    bit. -/
+private theorem setWidth8_shift_getElem (b : BitVec 32) (off j : Nat) (hj : j < 8) :
+    ((b >>> off).setWidth 8)[j]! = b[off + j]! := by
+  rw [BitVec.getElem!_eq_testBit_toNat]
+  simp only [BitVec.toNat_setWidth, BitVec.toNat_ushiftRight]
+  rw [Nat.testBit_mod_two_pow]
+  simp only [decide_true, Bool.true_and, hj]
+  rw [Nat.testBit_shiftRight]
+  rw [BitVec.getElem!_eq_testBit_toNat]
+
+/-- General byte-bridge for the `lo` half via the `setWidth_eq` family.
+    Conjugate the LE-byte projection with the BV `setWidth`-shift form. -/
+private theorem byte_bridge_lo (e o : BitVec 32) (i : Nat) (_hi : i < 4)
+    (h_setW : ((deinterleave_bv e o).1 >>> (8 * i)).setWidth 8
+                = ((lift_lane_bv e o) >>> (8 * i)).setWidth 8) :
+    (deinterleave_bv e o).1.toLEBytes[i]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> (8 * i)) &&& 0xff)) := by
+  rw [bv_ofNat_byte_shift_and_eq_setWidth, ← h_setW]
+  apply bv8_eq_of_testBit_eq
+  intro j hj
+  show ((deinterleave_bv e o).1.toLEBytes[i]!).testBit j = _
+  rw [BitVec.testBit_getElem!_toLEBytes _ _ _ hj]
+  -- RHS is `.toNat.testBit j`. Convert to `[j]!` first.
+  rw [show (((deinterleave_bv e o).1 >>> (8 * i)).setWidth 8).toNat.testBit j
+        = (((deinterleave_bv e o).1 >>> (8 * i)).setWidth 8)[j]! from
+        (BitVec.getElem!_eq_testBit_toNat _ _).symm]
+  rw [setWidth8_shift_getElem _ _ _ hj]
+
+private theorem byte_bridge_hi (e o : BitVec 32) (i : Nat) (_hi : i < 4)
+    (h_setW : ((deinterleave_bv e o).2 >>> (8 * i)).setWidth 8
+                = ((lift_lane_bv e o) >>> (8 * (i + 4))).setWidth 8) :
+    (deinterleave_bv e o).2.toLEBytes[i]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> (8 * (i + 4))) &&& 0xff)) := by
+  rw [bv_ofNat_byte_shift_and_eq_setWidth, ← h_setW]
+  apply bv8_eq_of_testBit_eq
+  intro j hj
+  show ((deinterleave_bv e o).2.toLEBytes[i]!).testBit j = _
+  rw [BitVec.testBit_getElem!_toLEBytes _ _ _ hj]
+  rw [show (((deinterleave_bv e o).2 >>> (8 * i)).setWidth 8).toNat.testBit j
+        = (((deinterleave_bv e o).2 >>> (8 * i)).setWidth 8)[j]! from
+        (BitVec.getElem!_eq_testBit_toNat _ _).symm]
+  rw [setWidth8_shift_getElem _ _ _ hj]
+
+/-- Byte-level bridge for byte `0` of the `lo` half. -/
+private theorem deinterleave_bv_lo_toLEBytes_byte_0 (e o : BitVec 32) :
+    (deinterleave_bv e o).1.toLEBytes[0]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> 0) &&& 0xff)) := by
+  have h_setW : ((deinterleave_bv e o).1 >>> (8 * 0)).setWidth 8
+                  = ((lift_lane_bv e o) >>> (8 * 0)).setWidth 8 := by
+    simp only [Nat.mul_zero, BitVec.ushiftRight_zero]
+    exact deinterleave_bv_lo_setWidth_eq_0 e o
+  have := byte_bridge_lo e o 0 (by decide) h_setW
+  simpa using this
+
+private theorem deinterleave_bv_lo_toLEBytes_byte_1 (e o : BitVec 32) :
+    (deinterleave_bv e o).1.toLEBytes[1]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> 8) &&& 0xff)) := by
+  have h_setW : ((deinterleave_bv e o).1 >>> (8 * 1)).setWidth 8
+                  = ((lift_lane_bv e o) >>> (8 * 1)).setWidth 8 := by
+    simp only [Nat.mul_one]
+    exact deinterleave_bv_lo_setWidth_eq_1 e o
+  have := byte_bridge_lo e o 1 (by decide) h_setW
+  simpa using this
+
+private theorem deinterleave_bv_lo_toLEBytes_byte_2 (e o : BitVec 32) :
+    (deinterleave_bv e o).1.toLEBytes[2]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> 16) &&& 0xff)) := by
+  have h_setW : ((deinterleave_bv e o).1 >>> (8 * 2)).setWidth 8
+                  = ((lift_lane_bv e o) >>> (8 * 2)).setWidth 8 := by
+    show ((deinterleave_bv e o).1 >>> 16).setWidth 8 = _
+    exact deinterleave_bv_lo_setWidth_eq_2 e o
+  have := byte_bridge_lo e o 2 (by decide) h_setW
+  simpa using this
+
+private theorem deinterleave_bv_lo_toLEBytes_byte_3 (e o : BitVec 32) :
+    (deinterleave_bv e o).1.toLEBytes[3]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> 24) &&& 0xff)) := by
+  have h_setW : ((deinterleave_bv e o).1 >>> (8 * 3)).setWidth 8
+                  = ((lift_lane_bv e o) >>> (8 * 3)).setWidth 8 := by
+    show ((deinterleave_bv e o).1 >>> 24).setWidth 8 = _
+    exact deinterleave_bv_lo_setWidth_eq_3 e o
+  have := byte_bridge_lo e o 3 (by decide) h_setW
+  simpa using this
+
+private theorem deinterleave_bv_hi_toLEBytes_byte_0 (e o : BitVec 32) :
+    (deinterleave_bv e o).2.toLEBytes[0]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> 32) &&& 0xff)) := by
+  have h_setW : ((deinterleave_bv e o).2 >>> (8 * 0)).setWidth 8
+                  = ((lift_lane_bv e o) >>> (8 * (0 + 4))).setWidth 8 := by
+    simp only [Nat.mul_zero, BitVec.ushiftRight_zero, Nat.zero_add]
+    exact deinterleave_bv_hi_setWidth_eq_0 e o
+  have := byte_bridge_hi e o 0 (by decide) h_setW
+  simpa using this
+
+private theorem deinterleave_bv_hi_toLEBytes_byte_1 (e o : BitVec 32) :
+    (deinterleave_bv e o).2.toLEBytes[1]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> 40) &&& 0xff)) := by
+  have h_setW : ((deinterleave_bv e o).2 >>> (8 * 1)).setWidth 8
+                  = ((lift_lane_bv e o) >>> (8 * (1 + 4))).setWidth 8 := by
+    show ((deinterleave_bv e o).2 >>> 8).setWidth 8 = _
+    exact deinterleave_bv_hi_setWidth_eq_1 e o
+  have := byte_bridge_hi e o 1 (by decide) h_setW
+  simpa using this
+
+private theorem deinterleave_bv_hi_toLEBytes_byte_2 (e o : BitVec 32) :
+    (deinterleave_bv e o).2.toLEBytes[2]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> 48) &&& 0xff)) := by
+  have h_setW : ((deinterleave_bv e o).2 >>> (8 * 2)).setWidth 8
+                  = ((lift_lane_bv e o) >>> (8 * (2 + 4))).setWidth 8 := by
+    show ((deinterleave_bv e o).2 >>> 16).setWidth 8 = _
+    exact deinterleave_bv_hi_setWidth_eq_2 e o
+  have := byte_bridge_hi e o 2 (by decide) h_setW
+  simpa using this
+
+private theorem deinterleave_bv_hi_toLEBytes_byte_3 (e o : BitVec 32) :
+    (deinterleave_bv e o).2.toLEBytes[3]!
+      = (BitVec.ofNat 8 (((lift_lane_bv e o).toNat >>> 56) &&& 0xff)) := by
+  have h_setW : ((deinterleave_bv e o).2 >>> (8 * 3)).setWidth 8
+                  = ((lift_lane_bv e o) >>> (8 * (3 + 4))).setWidth 8 := by
+    show ((deinterleave_bv e o).2 >>> 24).setWidth 8 = _
+    exact deinterleave_bv_hi_setWidth_eq_3 e o
+  have := byte_bridge_hi e o 3 (by decide) h_setW
+  simpa using this
+
 /-- The outer fixpoint of `state.store_block_2u32_loop` terminates with
-    `.ok` and preserves the length of the output slice, provided the
-    preconditions hold. -/
+    `.ok`, preserves the length of the output slice, and at every byte
+    position `b ∈ [0, 8 * iter.end.val)` carries the byte `store_block_byte_at s b`
+    (i.e. byte `b % 8` of the LE split of `lift_lane (s.st[5*((b/8)%5) + (b/8)/5])`).
+    Untouched bytes are not characterized; downstream `store_block_spec`
+    threads `iter.start.val = 0` (`h_zero`) so the entire range is touched. -/
 @[spec]
 theorem state.store_block_2u32_loop_spec
     (iter : core_models.ops.range.Range Std.Usize)
@@ -746,25 +972,41 @@ theorem state.store_block_2u32_loop_spec
     (h_le : iter.start.val ≤ iter.end.val)
     (h_bnd : iter.end.val ≤ 25)
     (h_off : 8 * iter.end.val ≤ Std.Usize.max)
-    (h_blk : 8 * iter.end.val ≤ out.val.length) :
+    (h_blk : 8 * iter.end.val ≤ out.val.length)
+    (h_zero : iter.start.val = 0) :
     ⦃ ⌜ True ⌝ ⦄
     state.store_block_2u32_loop iter s out
-    ⦃ ⇓ r => ⌜ r.val.length = out.val.length ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜
+        r.val.length = out.val.length
+        ∧ (∀ b : Nat, b < 8 * iter.end.val → b < 8 * 25 →
+             r.val[b]! = store_block_byte_at s b)
+    ⌝ ⦄ := by
   obtain ⟨iter_start, iter_end⟩ := iter
+  simp only at h_zero h_le
   unfold state.store_block_2u32_loop
   apply Std.Do.Triple.of_entails_right _
     (loop_range_spec_usize
       (fun (iter1, out1) => state.store_block_2u32_loop.body s iter1 out1)
       out iter_start iter_end
-      (fun _ out1 => pure (out1.val.length = out.val.length))
+      (fun k out1 => pure (
+          out1.val.length = out.val.length
+          ∧ (∀ b : Nat, b < 8 * k.val → b < 8 * 25 →
+               out1.val[b]! = store_block_byte_at s b)
+          ∧ (∀ b : Nat, 8 * k.val ≤ b → b < out.val.length →
+               out1.val[b]! = out.val[b]!)))
       h_le
-      (pure_prop_holds rfl)
+      (pure_prop_holds ⟨rfl,
+        fun b hb _ => by rw [h_zero] at hb; exact absurd hb (Nat.not_lt_zero b),
+        fun _ _ _ => rfl⟩)
       ?_)
   · rw [PostCond.entails_noThrow]
     intro r h
-    exact of_pure_prop_holds h
+    obtain ⟨h_len, h_done, _h_undone⟩ := of_pure_prop_holds h
+    refine ⟨h_len, ?_⟩
+    intro b hb_end hb_25
+    exact h_done b hb_end hb_25
   · intro acc k h_ge h_le_k hinv
-    have h_acc_len : acc.val.length = out.val.length := of_pure_prop_holds hinv
+    obtain ⟨h_acc_len, h_acc_done, h_acc_undone⟩ := of_pure_prop_holds hinv
     unfold state.store_block_2u32_loop.body
     apply Std.Do.Triple.bind _ _
       (IteratorRange_next_spec_usize k iter_end
@@ -786,7 +1028,13 @@ theorem state.store_block_2u32_loop_spec
     rcases o with _ | i
     · rintro ⟨hge, hiter1_eq⟩
       show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
-      exact triple_of_ok_local rfl (pure_prop_holds h_acc_len)
+      -- Loop exhaustion: `k = iter_end`. Inv's `b < 8*k` clause covers the post.
+      have hk_eq : k.val = iter_end.val := Nat.le_antisymm h_le_k hge
+      refine triple_of_ok_local rfl (pure_prop_holds ⟨h_acc_len, ?_, ?_⟩)
+      · intro b hb_end hb_25
+        exact h_acc_done b (hk_eq ▸ hb_end) hb_25
+      · intro b hb_ge hb_25
+        exact h_acc_undone b (hk_eq ▸ hb_ge) hb_25
     · rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
       cases hi_eq
       have hk_25 : k.val < 25 := by
@@ -822,10 +1070,7 @@ theorem state.store_block_2u32_loop_spec
       --   `vc16.h`:  `(r_14.1.val).length = (r_16.to_slice).length`
       --              — `h_14.2.1` gives LHS = 4, `Array.length_to_slice`
       --              gives RHS = 4.
-      --   `vc17`:    `pure ((r_14.2 r_17).val.length = out.val.length)`
-      --              `r_14.2 r_17 = (r_8.2 r_11).setSlice! r_12 r_17` and
-      --              `r_8.2 r_11 = acc.setSlice! r_6 r_11`. Two
-      --              `List.length_setSlice!` rewrites close it.
+      --   `vc17`:    strong-invariant preservation VC.
       -- All other VCs are scalar bounds, dispatched by `scalar_tac`.
       case vc14.h1 =>
         expose_names
@@ -833,9 +1078,6 @@ theorem state.store_block_2u32_loop_spec
         scalar_tac
       case vc16.h =>
         expose_names
-        -- Goal: `(↑r_14.1).length = (↑r_16.to_slice).length`. The LHS reduces to
-        -- `r_13 - r_12 = 4` via `h_14.2.1`; the RHS reduces to `4` since
-        -- `r_16 : Array U8 4#usize` and `to_slice` preserves `.val`.
         rw [h_14.2.1]
         simp only [Aeneas.Std.Array.to_slice, Aeneas.Std.Array.length_eq]
         scalar_tac
@@ -843,9 +1085,189 @@ theorem state.store_block_2u32_loop_spec
         expose_names
         refine ⟨hk_lt, hiter1_end, hiter1_start, ?_⟩
         apply pure_prop_holds
-        rw [h_14.2.2 r_17, List.length_setSlice!, h_8.2.2 r_11,
-            List.length_setSlice!]
-        exact h_acc_len
+        -- Scalar identities for offsets.
+        have h_r : r.val = k.val / 5 := by scalar_tac
+        have h_r1 : r_1.val = k.val % 5 := by scalar_tac
+        have h_r2 : r_2.val = 5 * (k.val % 5) := by scalar_tac
+        have h_r3 : r_3.val = 5 * (k.val % 5) + k.val / 5 := by scalar_tac
+        have h_r6 : r_6.val = 8 * k.val := by scalar_tac
+        have h_r7 : r_7.val = 8 * k.val + 4 := by scalar_tac
+        have h_r12 : r_12.val = 8 * k.val + 4 := by scalar_tac
+        have h_r13 : r_13.val = 8 * k.val + 8 := by scalar_tac
+        -- The two 4-byte slices have length 4.
+        have h_r11_len : r_11.val.length = 4 := by
+          rw [h_11]
+          show r_10.to_slice.val.length = 4
+          simp only [Aeneas.Std.Array.to_slice]
+          show r_10.val.length = 4
+          rw [Aeneas.Std.Array.length_eq]; rfl
+        have h_r17_len : r_17.val.length = 4 := by
+          rw [h_17]
+          show r_16.to_slice.val.length = 4
+          simp only [Aeneas.Std.Array.to_slice]
+          show r_16.val.length = 4
+          rw [Aeneas.Std.Array.length_eq]; rfl
+        -- The new accumulator's `.val` is two-fold-`setSlice!` of `acc.val`.
+        have h_r14_val :
+            (r_14.2 r_17).val
+              = ((acc.val.setSlice! r_6.val r_11.val)).setSlice! r_12.val r_17.val := by
+          rw [h_14.2.2 r_17, h_8.2.2 r_11]
+        -- Length is preserved.
+        have h_outer_len : (r_14.2 r_17).val.length = out.val.length := by
+          rw [h_r14_val, List.length_setSlice!, List.length_setSlice!]
+          exact h_acc_len
+        refine ⟨h_outer_len, ?_, ?_⟩
+        · -- Strong invariant: ∀ b < 8(k+1), (r_14.2 r_17)[b]! = store_block_byte_at s b
+          intro b hb_start hb_25
+          have hb_lt_next : b < 8 * (k.val + 1) := by
+            have : b < 8 * iter1.start.val := hb_start
+            rw [hiter1_start] at this; exact this
+          rw [h_r14_val]
+          -- Region split: b < 8k (untouched), 8k ≤ b < 8k+4, 8k+4 ≤ b < 8k+8.
+          by_cases hb_lt_8k : b < 8 * k.val
+          · -- Untouched by both setSlice!s: prefix of both.
+            rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inl (by rw [h_r12]; omega))]
+            rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inl (by rw [h_r6]; exact hb_lt_8k))]
+            exact h_acc_done b hb_lt_8k hb_25
+          · push_neg at hb_lt_8k
+            by_cases hb_lt_p1 : b < 8 * k.val + 4
+            · -- Middle of FIRST setSlice (offset 8k, length 4), prefix of SECOND.
+              rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inl (by rw [h_r12]; omega))]
+              -- Now: `(acc.val.setSlice! 8k r_11.val)[b]! = store_block_byte_at s b`.
+              rw [List.getElem!_setSlice!_middle _ _ _ _
+                  (by rw [h_r6, h_r11_len]; refine ⟨hb_lt_8k, ?_, ?_⟩ <;>
+                      (try rw [h_acc_len]) <;> omega)]
+              -- Goal: `r_11.val[b - 8k]! = store_block_byte_at s b`.
+              -- `r_11 = r_10.to_slice`, `r_10 = to_le_bytes r_9`, `r_9 = (r_5)[0]!`.
+              rw [h_11]
+              show r_10.to_slice.val[b - r_6.val]! = _
+              simp only [Aeneas.Std.Array.to_slice]
+              show r_10.val[b - r_6.val]! = _
+              rw [h_10]
+              -- (to_le_bytes r_9).val = r_9.bv.toLEBytes.map (@UScalar.mk U8)
+              show (core.num.U32.to_le_bytes r_9).val[b - r_6.val]! = _
+              -- Unfold to_le_bytes via its def
+              have h_le_val : (core.num.U32.to_le_bytes r_9).val
+                                = r_9.bv.toLEBytes.map (@Std.UScalar.mk Std.UScalarTy.U8) := by
+                show (⟨r_9.bv.toLEBytes.map (@Std.UScalar.mk Std.UScalarTy.U8),
+                         _⟩ : Std.Array Std.U8 4#usize).val
+                       = r_9.bv.toLEBytes.map (@Std.UScalar.mk Std.UScalarTy.U8)
+                rfl
+              rw [h_le_val]
+              -- `(map UScalar.mk lst)[i]! = UScalar.mk lst[i]!` for `i < length`.
+              have h_toLE_len : r_9.bv.toLEBytes.length = 4 := by
+                rw [BitVec.toLEBytes_length _ (by decide)]
+              have h_b_lt_len : b - r_6.val < r_9.bv.toLEBytes.length := by
+                rw [h_toLE_len, h_r6]; omega
+              have h_map_get :
+                  (r_9.bv.toLEBytes.map (@Std.UScalar.mk Std.UScalarTy.U8))[b - r_6.val]!
+                    = (@Std.UScalar.mk Std.UScalarTy.U8) (r_9.bv.toLEBytes[b - r_6.val]!) :=
+                List.getElem!_map_eq _ _ _ h_b_lt_len
+              rw [h_map_get]
+              -- Goal: `UScalar.mk (r_9.bv.toLEBytes[b - r_6.val]!) = store_block_byte_at s b`.
+              -- Unfold store_block_byte_at; it's `⟨BitVec.ofNat 8 (...)⟩`.
+              unfold store_block_byte_at
+              -- Both sides are `Std.U8 = UScalar UScalarTy.U8 = ⟨BitVec 8⟩`.
+              refine u8_bv_inj _ _ |>.mpr ?_
+              -- r_9.bv = (r_5)[0]!.bv  (from h_9: r_9 = (r_5)[0]!).
+              have h_r9_bv : r_9.bv = (r_5.val[0]!).bv := by rw [h_9]; rfl
+              rw [h_r9_bv]
+              -- Now: `(r_5)[0]!.bv.toLEBytes[b - 8k]! = BitVec.ofNat 8 (lift_lane.bv.toNat >>> (8*(b%8)) &&& 0xff)`.
+              -- `(r_5)[0]!.bv = (deinterleave_bv (r_4)[0]!.bv (r_4)[1]!.bv).1` (from h_5).
+              have h_r5_lo : (r_5.val[0]!).bv
+                                = (deinterleave_bv (r_4.val[0]!).bv (r_4.val[1]!.bv)).1 := by
+                have := h_5
+                exact (Prod.mk.injEq .. |>.mp this).1
+              rw [h_r5_lo]
+              -- Also lift_lane (s.st.val[p]!).bv = lift_lane_bv r_4.val[0]!.bv r_4.val[1]!.bv.
+              -- where p = 5 * ((b / 8) % 5) + (b / 8) / 5 and b/8 = k.val (since 8k ≤ b < 8k+4 < 8k+8).
+              have hb_div_8 : b / 8 = k.val := by omega
+              have hb_mod_8_lt_4 : b % 8 < 4 := by omega
+              have hb_mod_8 : b % 8 = b - 8 * k.val := by omega
+              -- And r_4 = s.st.val[r_3]! = s.st.val[5*(k%5)+k/5]!
+              have h_r4 : r_4 = (s.st.val)[5 * (k.val % 5) + k.val / 5]! := by
+                rw [h_4]; show s.st.val[r_3.val]! = _; rw [h_r3]
+              -- Use hb_div_8 + h_r4 to identify the two lanes' lift.
+              rw [hb_div_8, ← h_r4]
+              rw [show lift_lane r_4 = ⟨lift_lane_bv (r_4.val[0]!).bv (r_4.val[1]!).bv⟩ from rfl]
+              -- lift_lane.bv = lift_lane_bv ...
+              rw [hb_mod_8, h_r6]
+              -- Goal: lo half byte (b - 8k) ∈ [0,4), bridge via the 4 byte_i helpers.
+              rcases (show b - 8 * k.val = 0 ∨ b - 8 * k.val = 1
+                          ∨ b - 8 * k.val = 2 ∨ b - 8 * k.val = 3 from by omega) with
+                heq | heq | heq | heq <;>
+                ( rw [heq]
+                  first
+                  | exact deinterleave_bv_lo_toLEBytes_byte_0 _ _
+                  | exact deinterleave_bv_lo_toLEBytes_byte_1 _ _
+                  | exact deinterleave_bv_lo_toLEBytes_byte_2 _ _
+                  | exact deinterleave_bv_lo_toLEBytes_byte_3 _ _)
+            · -- Middle of SECOND setSlice (offset 8k+4, length 4).
+              push_neg at hb_lt_p1
+              have hb_lt_p2 : b < 8 * k.val + 8 := by omega
+              rw [List.getElem!_setSlice!_middle _ _ _ _
+                  (by rw [h_r12, h_r17_len]; refine ⟨hb_lt_p1, ?_, ?_⟩ <;>
+                      (try rw [List.length_setSlice!, h_acc_len]) <;> omega)]
+              -- Goal: `r_17.val[b - (8k+4)]! = store_block_byte_at s b`.
+              rw [h_17]
+              show r_16.to_slice.val[b - r_12.val]! = _
+              simp only [Aeneas.Std.Array.to_slice]
+              show r_16.val[b - r_12.val]! = _
+              rw [h_16]
+              show (core.num.U32.to_le_bytes r_15).val[b - r_12.val]! = _
+              have h_le_val : (core.num.U32.to_le_bytes r_15).val
+                                = r_15.bv.toLEBytes.map (@Std.UScalar.mk Std.UScalarTy.U8) := rfl
+              rw [h_le_val]
+              have h_toLE_len : r_15.bv.toLEBytes.length = 4 := by
+                rw [BitVec.toLEBytes_length _ (by decide)]
+              have h_b_lt_len : b - r_12.val < r_15.bv.toLEBytes.length := by
+                rw [h_toLE_len, h_r12]; omega
+              have h_map_get :
+                  (r_15.bv.toLEBytes.map (@Std.UScalar.mk Std.UScalarTy.U8))[b - r_12.val]!
+                    = (@Std.UScalar.mk Std.UScalarTy.U8) (r_15.bv.toLEBytes[b - r_12.val]!) :=
+                List.getElem!_map_eq _ _ _ h_b_lt_len
+              rw [h_map_get]
+              unfold store_block_byte_at
+              refine u8_bv_inj _ _ |>.mpr ?_
+              have h_r15_bv : r_15.bv = (r_5.val[1]!).bv := by rw [h_15]; rfl
+              rw [h_r15_bv]
+              have h_r5_hi : (r_5.val[1]!).bv
+                                = (deinterleave_bv (r_4.val[0]!).bv (r_4.val[1]!.bv)).2 := by
+                have := h_5
+                exact (Prod.mk.injEq .. |>.mp this).2
+              rw [h_r5_hi]
+              have hb_div_8 : b / 8 = k.val := by omega
+              have hb_mod_8 : b % 8 = b - 8 * k.val := by omega
+              have h_r4 : r_4 = (s.st.val)[5 * (k.val % 5) + k.val / 5]! := by
+                rw [h_4]; show s.st.val[r_3.val]! = _; rw [h_r3]
+              rw [hb_div_8, ← h_r4]
+              rw [show lift_lane r_4 = ⟨lift_lane_bv (r_4.val[0]!).bv (r_4.val[1]!).bv⟩ from rfl]
+              rw [hb_mod_8, h_r12]
+              -- Goal: hi half byte (b - 8k - 4) ∈ [0,4), bridge via byte_hi_i.
+              -- The byte index `b - (8k+4)` in `r_16` maps to `b - 8k` in the
+              -- big-endian shift `8 * (b - 8k)`. We rewrite `b - 8k` to `(b - 8k - 4) + 4`.
+              have hb_decomp : 8 * (b - 8 * k.val)
+                                  = 8 * ((b - (8 * k.val + 4)) + 4) := by omega
+              rw [hb_decomp]
+              rcases (show b - (8 * k.val + 4) = 0 ∨ b - (8 * k.val + 4) = 1
+                          ∨ b - (8 * k.val + 4) = 2 ∨ b - (8 * k.val + 4) = 3 from by omega) with
+                heq | heq | heq | heq <;>
+                ( rw [heq]
+                  first
+                  | exact deinterleave_bv_hi_toLEBytes_byte_0 _ _
+                  | exact deinterleave_bv_hi_toLEBytes_byte_1 _ _
+                  | exact deinterleave_bv_hi_toLEBytes_byte_2 _ _
+                  | exact deinterleave_bv_hi_toLEBytes_byte_3 _ _)
+        · -- Untouched bytes: 8(k+1) ≤ b → preserved.
+          intro b hb_ge hb_25
+          have hb_ge_8k1 : 8 * (k.val + 1) ≤ b := by
+            have : 8 * iter1.start.val ≤ b := hb_ge
+            rw [hiter1_start] at this; exact this
+          rw [h_r14_val]
+          -- Suffix of both setSlice!s.
+          rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inr (by rw [h_r12, h_r17_len]; omega))]
+          rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inr (by rw [h_r6, h_r11_len]; omega))]
+          exact h_acc_undone b (by omega) hb_25
       all_goals scalar_tac
 
 end libcrux_iot_sha3.Sponge

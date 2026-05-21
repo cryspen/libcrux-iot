@@ -355,10 +355,10 @@ theorem state.KeccakState.store_block_spec
     rw [h_div_val]; omega
   have h_loop_blk : 8 * i_div.val ≤ out.val.length := by
     rw [h_div_val]; omega
-  obtain ⟨r, h_r_eq, h_r_len⟩ :=
+  obtain ⟨r, h_r_eq, h_r_len, _h_r_bytes⟩ :=
     triple_exists_ok_bytes
       (state.store_block_2u32_loop_spec ⟨0#usize, i_div⟩ s out
-        h_loop_le h_loop_bnd h_loop_off h_loop_blk)
+        h_loop_le h_loop_bnd h_loop_off h_loop_blk (by rfl))
   apply triple_of_ok_bytes (v := r) _ h_r_len
   show state.KeccakState.store_block RATE s out = .ok r
   unfold state.KeccakState.store_block state.store_block_2u32
