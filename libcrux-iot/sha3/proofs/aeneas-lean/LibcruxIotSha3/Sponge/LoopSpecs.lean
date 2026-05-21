@@ -203,7 +203,70 @@ theorem state.load_block_2u32_loop0_spec
              | exact ⟨_, h_4⟩
              | exact ⟨_, h_9⟩))
 
+/-! Helper definitions for Loop0's strengthened invariant.
+
+After Loop0's k-th iteration, `state_flat[j]` (for `j < k`) is the
+two-`U32` halves obtained by reading two 4-byte LE windows from
+`blocks` at offsets `start+8j` and `start+8j+4` and pairing them. -/
+
+/-- The `Lane2U32` constructed at iteration `j` of Loop0: reads two
+    4-byte LE windows from `blocks` at offsets `start+8j` and `start+8j+4`,
+    interpreting each as a `U32`, then pairs them (then later
+    `Lane2U32.interleave` is applied to this pair in the body — we
+    capture the *pre-interleave* pair here, since the interleave step
+    is uniform). -/
+def Lane2U32_from_4byte_LE_pairs
+    (blocks : Slice Std.U8) (start : Std.Usize) (j : Nat) : lane.Lane2U32 :=
+  let lo_bytes : Std.Array Std.U8 4#usize :=
+    ⟨((blocks.val.drop (start.val + 8 * j)).take 4) ++
+       List.replicate (4 - ((blocks.val.drop (start.val + 8 * j)).take 4).length) (0#u8),
+     by
+       have : ((blocks.val.drop (start.val + 8 * j)).take 4).length ≤ 4 := by
+         simp [List.length_take]
+       have hlen :
+           (((blocks.val.drop (start.val + 8 * j)).take 4) ++
+             List.replicate (4 - ((blocks.val.drop (start.val + 8 * j)).take 4).length) (0#u8)).length
+           = 4 := by
+         rw [List.length_append, List.length_replicate]; omega
+       simp [hlen]⟩
+  let hi_bytes : Std.Array Std.U8 4#usize :=
+    ⟨((blocks.val.drop (start.val + 8 * j + 4)).take 4) ++
+       List.replicate (4 - ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length) (0#u8),
+     by
+       have : ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length ≤ 4 := by
+         simp [List.length_take]
+       have hlen :
+           (((blocks.val.drop (start.val + 8 * j + 4)).take 4) ++
+             List.replicate (4 - ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length) (0#u8)).length
+           = 4 := by
+         rw [List.length_append, List.length_replicate]; omega
+       simp [hlen]⟩
+  Std.Array.make 2#usize
+    [Std.core.num.U32.from_le_bytes lo_bytes,
+     Std.core.num.U32.from_le_bytes hi_bytes]
+    (by simp)
+
 /-! ### Loop 1 of `state.load_block_2u32`. -/
+
+/-! Helper definitions for Loop1's strengthened invariant.
+
+After Loop1's k-th iteration the touched lanes (at impl-flat-index
+`5*(j%5) + j/5` for `j < k`) carry a XOR-of-halves formula, while the
+untouched lanes preserve their initial values. We name these as `def`s
+so the loop's `inv` is fold-form (per SKILL §8.2 no inline computation
+in posts). -/
+
+/-- The lane-XOR value at impl-flat-index `5*(j%5) + j/5` produced by
+    one iteration of Loop1 at iteration `j`. Encoded as a `BitVec 64`
+    via `lift_lane_bv`. -/
+def loop1_lane_at
+    (s : state.KeccakState) (state_flat : Std.Array lane.Lane2U32 25#usize)
+    (j : Nat) : BitVec 64 :=
+  let p := 5 * (j % 5) + j / 5
+  let s_lane := s.st.val[p]!
+  lift_lane_bv
+    ((s_lane.val[0]!).bv ^^^ (state_flat.val[j]!.val[0]!).bv)
+    ((s_lane.val[1]!).bv ^^^ (state_flat.val[j]!.val[1]!).bv)
 
 /-- The outer fixpoint of `state.load_block_2u32_loop1` terminates with
     `.ok`, provided `iter.start.val ≤ iter.end.val ≤ 25`.
@@ -291,6 +354,27 @@ The body reads `s.st[5*(i%5) + i/5]`, deinterleaves it, writes two
 4-byte halves to `out[8i .. 8i+8]`. After mvcgen, three residual
 `(setSlice! ...).length = 4` subgoals remain; these dispatch by
 `List.length_setSlice!` + `List.length_slice` + omega (no `simp_all`). -/
+
+/-! Helper definition for the store loop's strengthened invariant.
+
+After Loop's k-th iteration, for each byte index `b ∈ [0, 8k)`:
+`out1.val[b]! = ((lift s).val[5*((b/8)%5) + (b/8)/5]!).bv.toLEBytes[b%8]!`.
+
+The `store_block_byte_at` def captures the RHS in fold-form so the
+invariant can be stated without inline if/let/conditional in posts
+(per SKILL §8.2). -/
+
+/-- The byte produced at position `b` of the store output: takes byte
+    `b % 8` of the LE-byte split of the impl-lane at impl-flat-index
+    `5*((b/8)%5) + (b/8)/5`, in its `lift`-recovered `U64` form. -/
+def store_block_byte_at
+    (s : state.KeccakState) (b : Nat) : Std.U8 :=
+  let p := 5 * ((b / 8) % 5) + (b / 8) / 5
+  let u64 : Std.U64 := lift_lane (s.st.val[p]!)
+  -- Take byte `b % 8` (LE) from the 8-byte split of `u64.bv`.
+  let bv : BitVec 64 := u64.bv
+  let off : Nat := 8 * (b % 8)
+  ⟨BitVec.ofNat 8 ((bv.toNat >>> off) &&& 0xff)⟩
 
 /-- The outer fixpoint of `state.store_block_2u32_loop` terminates with
     `.ok` and preserves the length of the output slice, provided the

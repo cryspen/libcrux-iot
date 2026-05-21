@@ -43,6 +43,22 @@
     `xor_block_value_at state block rate i`. Axioms: propext,
     Classical.choice, Quot.sound.
 
+  - **Helper defs for loop invariants — LANDED (2026-05-21)** in
+    `Sponge/LoopSpecs.lean`:
+      * `Lane2U32_from_4byte_LE_pairs blocks start j` — fold-form
+        value of `state_flat[j]` *before* the `interleave` step in
+        Loop0's body. Two 4-byte LE U32 reads paired into a
+        `Lane2U32`.
+      * `loop1_lane_at s state_flat j` — fold-form `BitVec 64` value
+        produced at impl-flat-index `5*(j%5) + j/5` by Loop1's
+        per-iteration XOR (`lift_lane_bv` of the XOR'd halves).
+      * `store_block_byte_at s b` — fold-form `U8` at byte index `b`
+        of the store loop's output (`lift_lane`-derived LE byte
+        split).
+    These are the SKILL §8.2-compliant named values used by the
+    strengthened invariants. The invariants themselves are still
+    deferred (see below).
+
   - **Tasks 2-4 (loop strong invariants) — DEFERRED.** The current
     weak invariants (`True` / `r.i = s.i` / length-preservation) are
     closed by mvcgen + `scalar_tac`/witness-exhibition tactics that
@@ -52,7 +68,23 @@
     that close via `Array.update`/`set_lane`/`setSlice!` characterizations
     plus the BV bridges (`interleave_bv_lift_eq`, `lift_lane_bv_xor`,
     `deinterleave_bv_lift_eq`). Estimated 200-400 lines per loop.
-    See "Remaining post strength" below for the textbook target shape.
+    Helper defs (above) are in place; the remaining work is the
+    body-VC closer for each loop.
+
+    **Precise blocker (2026-05-21):** After strengthening Loop1's `inv`
+    to `inv k acc := acc.i = s.i ∧ (∀ j ≥ k.val, j < 25 →
+    acc.st.val[5*(j%5)+j/5]! = s.st.val[5*(j%5)+j/5]!) ∧ ...`, the body's
+    inv-preservation VC for the *untouched-lane* clause becomes
+    `(Array.update acc.st (5*(k%5)+k/5) lu1).val[5*(j%5)+j/5]! =
+       acc.st.val[5*(j%5)+j/5]!` for `j > k`. This requires
+    `List.getElem!_set!_ne` plus an *involution-injectivity* lemma:
+    `j ↦ 5*(j%5)+j/5` is injective on `{0,...,24}`. The injectivity
+    is closed by `decide` (it's a finite check). The same pattern
+    applies to Loop0 (`Array.update state_flat k lu1`) and to Store
+    (`(out.setSlice! _ _).setSlice! _ _`). Each loop body requires
+    ~200-300 lines of `scalar_tac` + targeted rewriting at each
+    branching VC. **Total remaining effort:** ~900-1200 lines across
+    LoopSpecs.lean and Bytes.lean.
 
   - **Tasks 5-7 (textbook posts here) — DEFERRED.** Each chains on
     Tasks 2-4 via a monadic-in-post shape that connects impl-side
