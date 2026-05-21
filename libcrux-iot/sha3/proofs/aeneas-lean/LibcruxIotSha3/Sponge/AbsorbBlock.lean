@@ -347,7 +347,7 @@ private theorem triple_exists_ok_ab {α : Type} {x : Result α}
     `blocks.val.slice start (start+RATE)`. This is the `<block>` argument
     to `sponge.absorb_block` in the textbook post of
     `keccak.absorb_block_spec`. -/
-private def block_of_blocks
+def block_of_blocks
     (blocks : Slice Std.U8) (start RATE : Std.Usize)
     (h_blk : start.val + RATE.val ≤ blocks.val.length) :
     Slice Std.U8 :=
