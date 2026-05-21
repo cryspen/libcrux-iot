@@ -231,7 +231,7 @@ forward-iteration loop. -/
 /-- Pure `Nat.fold` form analogous to `absorb_fold` but parameterized
     by the spec-state directly (no `lift` indirection) and a `Slice U8`
     message. Identical body to `absorb_fold`. -/
-private def absorb_fold_spec (state : Std.Array Std.U64 25#usize)
+def absorb_fold_spec (state : Std.Array Std.U64 25#usize)
     (msg : Slice Std.U8) (rate : Std.Usize) (k : Nat) :
     Result (Std.Array Std.U64 25#usize) :=
   Nat.fold k (init := (.ok state : Result _))
@@ -376,7 +376,7 @@ absorb_blocks have already produced `lift state'`. -/
     `j*RATE + RATE ≤ data.length`). If the slice is out-of-range for any
     `j`, `absorb_block` will fail — but the impl-side loop only iterates
     `j < n` so the relevant `j`'s are always in range. -/
-private def absorb_fold (s : state.KeccakState) (data : Slice Std.U8)
+def absorb_fold (s : state.KeccakState) (data : Slice Std.U8)
     (RATE : Std.Usize) (k : Nat) :
     Result (Std.Array Std.U64 25#usize) :=
   Nat.fold k (init := (.ok (Equivalence.lift s) : Result _))
@@ -386,6 +386,16 @@ private def absorb_fold (s : state.KeccakState) (data : Slice Std.U8)
           unfold List.slice
           rw [List.length_take, List.length_drop]
           have := data.property; omega⟩ RATE)
+
+/-- Bridge: `absorb_fold` (impl-side, parameterized by `KeccakState`) and
+    `absorb_fold_spec` (spec-side, parameterized by `Array U64 25`) are the
+    same fold when the initial spec state is `lift s`. -/
+theorem absorb_fold_eq_spec
+    (s : state.KeccakState) (data : Slice Std.U8) (RATE : Std.Usize) (k : Nat) :
+    absorb_fold s data RATE k
+      = absorb_fold_spec (Equivalence.lift s) data RATE k := by
+  unfold absorb_fold absorb_fold_spec
+  rfl
 
 @[spec]
 theorem keccak.keccak_loop0_spec
