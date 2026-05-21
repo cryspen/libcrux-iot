@@ -136,11 +136,19 @@ hit.
 > - Preconditions inside `⦃ ⦄` are ALWAYS `⌜ True ⌝`. Side conditions
 >   (size bounds, alignment, etc.) go as REGULAR Lean hypotheses
 >   outside the brackets. Template: see `Sponge/Opaque.lean:90`.
-> - **Monadic-in-post for spec results** (SKILL §5.4.1). When the
->   post couples impl to spec, embed a NESTED Triple:
->   `⦃ True ⦄ impl x ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ∧ ⦃ True ⦄ spec (lift x) ⦃ ⇓ s' => ⌜ s' = lift r ⌝ ⦄ ⦄`
->   `hax_mvcgen` recurses into nested Triples — avoiding the need to
->   manually evaluate the spec via `createi_pure_spec` adaptation.
+> - **Default: equality-form posts for spec results.** Empirical
+>   evidence from Phases 2-5 of this campaign: equality-form composes
+>   simpler than monadic-in-post (Phase 2 monadic took 3 dispatches /
+>   135 min; Phases 3/4/5 equality first-try in 12/12/30 min). Use:
+>     `⦃ True ⦄ impl x ⦃ ⇓ r => ⌜ <i-preservation> ∧ ∃ s_spec,
+>        spec (lift x) = .ok s_spec ∧ s_spec = lift r ⌝ ⦄`
+>   or with a named fold-form `def`:
+>     `⦃ ⇓ r => ⌜ <i-preservation> ∧ fold_form_def ... = .ok (lift r) ⌝ ⦄`
+>   Reserve **monadic-in-post** (SKILL §5.4.1) for cases where
+>   `hax_mvcgen` recursion *actually* simplifies the proof. None have
+>   materialized in this campaign so far. (Phase 2's `absorb_block_spec`
+>   is monadic; the rest are equality. Both interoperate fine — Phase 7
+>   destructures either via `triple_exists_ok_*` helpers.)
 >
 > **hax_mvcgen discipline** (SKILL §5.4.1):
 > - **ONE** `hax_mvcgen` call per Triple — it's a fixed-point loop
