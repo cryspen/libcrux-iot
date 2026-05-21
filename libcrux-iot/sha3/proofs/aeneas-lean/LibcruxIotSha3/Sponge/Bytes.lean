@@ -14,26 +14,58 @@
   - `state.KeccakState.load_block_full_spec` — delegates to
     `load_block_spec` after `Array.to_slice` coercion.
 
-  ## Post strength (Phase 1a deliverable, 2026-05-21)
+  ## Post strength (Phase 1a, after 2026-05-21 strengthening pass)
 
-  The three Triples here have **termination-only** posts (matching the
-  strength of the loop Triples they consume in `Sponge/LoopSpecs.lean`):
+  The three Triples here carry the **`i`-preservation** clause needed
+  by Phase 2's absorb/squeeze chaining (`r.i.val = 0` precondition on
+  the next `keccakf1600` call). Specifically:
 
-  - `load_block_spec`: `⌜ True ⌝`
-  - `store_block_spec`: `⌜ r.val.length = out.val.length ⌝` (the only
-     non-trivial post extractable from `store_block_2u32_loop_spec`).
-  - `load_block_full_spec`: `⌜ True ⌝`
+  - `load_block_spec`: `⌜ r.i = s.i ⌝` (loop1 invariant carries it).
+  - `store_block_spec`: `⌜ r.val.length = out.val.length ⌝` (returns a
+     `Slice U8`, no state component).
+  - `load_block_full_spec`: `⌜ r.i = s.i ⌝` (delegates to `load_block`).
 
-  Strengthening these to the textbook posts in Plan.lean § 1 lines
-  244–324 (`sponge.xor_block_into_state (lift s) block RATE = .ok
-  (lift r)`, per-byte `r.val[k]!` projection, etc.) requires first
-  strengthening the loop invariants in `LoopSpecs.lean` from the
-  no-information `inv _ _ := True` to a fold-over-body invariant
-  threading `(blocks.drop start).take RATE` content into `state_flat`
-  and then into `lift s`. That is a follow-up phase: the present
-  Triples close the *control-flow* gap so downstream `absorb_block`
-  /`squeeze` chaining can step past `load_block`/`store_block`
-  using `hax_mvcgen` without re-deriving termination side-conditions.
+  Inputs to the strengthening pass:
+
+  - **Loop1** (`state.load_block_2u32_loop1_spec`) now uses the
+    invariant `inv k s' := s'.i = s.i`, which is preserved unconditionally
+    by the body (the body's only `state.KeccakState` update is
+    `set_lane`, which is `{ self with st := a }`).
+  - Loop0 (`state.load_block_2u32_loop0_spec`) is unchanged
+    (`inv _ _ := True`): loop0 operates on `state_flat`, never touching
+    `s`, so `r.i = s.i` for the chain only requires Loop1's invariant.
+
+  ## Remaining post strength (deferred — full "textbook" form)
+
+  The full posts targeted by Plan.lean § 1 lines 244–324 also include:
+
+  - `load_block_spec`:
+    `sponge.xor_block_into_state (lift s)
+       (Slice.from_list ((blocks.val.drop start.val).take RATE.val))
+       RATE = .ok (Equivalence.lift r)`
+  - `store_block_spec`:
+    `∀ k < RATE.val, r.val[k]! =
+       ((Equivalence.lift s).val[5*((k/8)%5) + (k/8)/5]!).bv.toLEBytes[k%8]!`
+  - `load_block_full_spec`: identical to `load_block_spec` after the
+    `Array.to_slice` coercion.
+
+  These require:
+
+  1. Strengthening Loop0's invariant to characterize `state_flat[k]`
+     as `interleave_bv (u32_le b1) (u32_le b2)` for each iterated `k`.
+  2. Strengthening Loop1's invariant to characterize each touched
+     `s'.st[5*(j%5) + j/5]` via `lift_lane_bv_xor`.
+  3. Driving `createi_pure_spec` on `xor_block_into_state`'s closure,
+     which has an `if b < i2` branch. This requires either a
+     conditional generalization of `createi_pure_spec` or a per-cell
+     `@[spec]` for the closure with the conditional in the post.
+
+  The current Triples close the *control-flow* gap and pass through
+  the `r.i = s.i` invariant needed for the next-`keccakf1600`'s
+  precondition. Phase 2 can now compose against them via `hax_mvcgen`
+  to drive the absorb/squeeze loops at the impl side. The remaining
+  spec-equation half is deferred to a follow-up pass once the loop-0
+  /loop-1 strong invariants land.
 
   The BV-pure identity layer (`interleave_bv`, `deinterleave_bv`,
   `lift_lane_bv_xor`, `interleave_bv_lift_eq`,
@@ -162,7 +194,7 @@ theorem state.KeccakState.load_block_spec
     (h_off  : start.val + RATE.val ≤ Std.Usize.max) :
     ⦃ ⌜ True ⌝ ⦄
     state.KeccakState.load_block RATE s blocks start
-    ⦃ ⇓ _r => ⌜ True ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by
   have h_blk_len : RATE.val ≤ blocks.val.length := by omega
   have h_RATE_div_le : RATE.val / 8 ≤ 25 := by omega
   have h_RATE_div_mul : 8 * (RATE.val / 8) = RATE.val := by
@@ -191,12 +223,12 @@ theorem state.KeccakState.load_block_spec
       (state.load_block_2u32_loop0_spec
         ⟨0#usize, i2⟩ blocks start state_flat
         h_loop0_le h_loop0_bnd h_loop0_off h_loop0_blk)
-  obtain ⟨r_final, h_loop1_eq, _⟩ :=
+  obtain ⟨r_final, h_loop1_eq, h_r_i⟩ :=
     triple_exists_ok_bytes
       (state.load_block_2u32_loop1_spec
         ⟨0#usize, i2⟩ state_flat1 s h_loop0_le h_loop0_bnd)
   -- Assemble: walk the body of `load_block`, rewriting each step.
-  apply triple_of_ok_bytes (v := r_final) _ trivial
+  apply triple_of_ok_bytes (v := r_final) _ h_r_i
   show state.KeccakState.load_block RATE s blocks start = .ok r_final
   unfold state.KeccakState.load_block state.load_block_2u32
   -- Chain rewrites of the pure `.ok`-steps.
@@ -267,14 +299,14 @@ theorem state.KeccakState.load_block_full_spec
     (h_off : start.val + RATE.val ≤ Std.Usize.max) :
     ⦃ ⌜ True ⌝ ⦄
     state.KeccakState.load_block_full RATE s blocks start
-    ⦃ ⇓ _r => ⌜ True ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by
   -- `Array.to_slice` preserves `.val`; the array has length 200.
   have h_to_slice_val : (Std.Array.to_slice blocks).val = blocks.val := rfl
   have h_to_slice_len : (Std.Array.to_slice blocks).val.length = 200 := by
     rw [h_to_slice_val]; exact blocks.property
   have h_blk' : start.val + RATE.val ≤ (Std.Array.to_slice blocks).val.length := by
     rw [h_to_slice_len]; exact h_blk
-  obtain ⟨r_final, h_inner_eq, _⟩ :=
+  obtain ⟨r_final, h_inner_eq, h_r_i⟩ :=
     triple_exists_ok_bytes
       (state.KeccakState.load_block_spec RATE s
         (Std.Array.to_slice blocks) start
@@ -282,7 +314,7 @@ theorem state.KeccakState.load_block_full_spec
   have h_inner_unfold :
       state.load_block_2u32 RATE s (Std.Array.to_slice blocks) start = .ok r_final := by
     have := h_inner_eq; unfold state.KeccakState.load_block at this; exact this
-  apply triple_of_ok_bytes (v := r_final) _ trivial
+  apply triple_of_ok_bytes (v := r_final) _ h_r_i
   show state.KeccakState.load_block_full RATE s blocks start = .ok r_final
   unfold state.KeccakState.load_block_full state.load_block_full_2u32
   -- The body is `do s1 ← lift (Array.to_slice blocks); load_block_2u32 RATE s s1 start`.

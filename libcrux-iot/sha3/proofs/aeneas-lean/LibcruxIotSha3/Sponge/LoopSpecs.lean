@@ -215,7 +215,9 @@ theorem state.load_block_2u32_loop0_spec
     so the inner `state.KeccakState.set_lane` / `get_lane` calls succeed.
     We propagate the bound `iter.end.val ≤ 25` to discharge those bounds.
 
-    Proof: `loop_range_spec_usize` with `inv _ _ := True`. -/
+    Proof: `loop_range_spec_usize` with `inv k acc := acc.i = s.i`. The
+    body only calls `set_lane` which is `{ self with st := a }`, preserving
+    the `i` field. -/
 @[spec]
 theorem state.load_block_2u32_loop1_spec
     (iter : core_models.ops.range.Range Std.Usize)
@@ -225,31 +227,24 @@ theorem state.load_block_2u32_loop1_spec
     (h_bnd : iter.end.val ≤ 25) :
     ⦃ ⌜ True ⌝ ⦄
     state.load_block_2u32_loop1 iter s state_flat
-    ⦃ ⇓ _r => ⌜ True ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by
   obtain ⟨iter_start, iter_end⟩ := iter
   unfold state.load_block_2u32_loop1
-  -- Apply `loop_range_spec_usize` with `inv _ _ := True`. The post then
-  -- reduces to `True`, matching the desired Triple post.
+  -- Apply `loop_range_spec_usize` with `inv k acc := acc.i = s.i`.
   apply Std.Do.Triple.of_entails_right _
     (loop_range_spec_usize
       (fun (iter1, s1) => state.load_block_2u32_loop1.body state_flat iter1 s1)
       s iter_start iter_end
-      (fun _ _ => pure True)
+      (fun _ s1 => pure (s1.i = s.i))
       h_le
-      (pure_prop_holds trivial)
+      (pure_prop_holds rfl)
       ?_)
-  · -- Post-entailment: `(pure True).holds ⊢ True`.
-    rw [PostCond.entails_noThrow]
-    intro _ _
-    exact pure_prop_holds trivial |> of_pure_prop_holds |> id
-  · intro acc k h_ge h_le_k _hinv
-    -- The body has shape:
-    --   let (o, iter1) ← IteratorRange.next ...
-    --   match o with
-    --   | None => ok (done acc)
-    --   | Some i => ... ; ok (cont (iter1, s_new))
+  · rw [PostCond.entails_noThrow]
+    intro r h
+    exact of_pure_prop_holds h
+  · intro acc k h_ge h_le_k hinv
+    have h_acc_i : acc.i = s.i := of_pure_prop_holds hinv
     unfold state.load_block_2u32_loop1.body
-    -- Run IteratorRange_next_spec_usize.
     apply Std.Do.Triple.bind _ _
       (IteratorRange_next_spec_usize k iter_end
         (Q := PostCond.noThrow fun (oi : Option Std.Usize × _) => ⌜
@@ -268,12 +263,10 @@ theorem state.load_block_2u32_loop1_spec
     intro ⟨o, iter1⟩
     apply triple_imp_intro
     rcases o with _ | i
-    · -- None branch: k.val ≥ iter_end.val, body returns done acc.
-      rintro ⟨hge, hiter1_eq⟩
+    · rintro ⟨hge, hiter1_eq⟩
       show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
-      exact triple_of_ok_local rfl (pure_prop_holds trivial)
-    · -- Some i branch: i = k, body runs the per-step update.
-      rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
+      exact triple_of_ok_local rfl (pure_prop_holds h_acc_i)
+    · rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
       cases hi_eq
       have hk_25 : k.val < 25 := by
         have h1 : k.val < iter_end.val := hk_lt
@@ -281,12 +274,15 @@ theorem state.load_block_2u32_loop1_spec
         omega
       have hk_div : k.val / 5 < 5 := by omega
       have hk_mod : k.val % 5 < 5 := Nat.mod_lt _ (by decide)
-      -- Unfold the body and the inner KeccakState helpers.
       unfold state.KeccakState.get_lane state.KeccakState.set_lane
              lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index
              lane.Lane2U32.from_ints
-      -- Now everything's in terms of primitive Aeneas Std ops.
       mvcgen
+      -- Every VC is a scalar bound; the inv-preservation VC is also
+      -- closed by `scalar_tac` because the body's update lifts to
+      -- `{ acc with st := ... }` whose `.i` field is `acc.i = s.i` (the
+      -- `h_acc_i` hypothesis from the prior iteration is in scope, and
+      -- `scalar_tac` lifts the struct-update through equality).
       all_goals scalar_tac
 
 /-! ### Loop of `state.store_block_2u32`.
