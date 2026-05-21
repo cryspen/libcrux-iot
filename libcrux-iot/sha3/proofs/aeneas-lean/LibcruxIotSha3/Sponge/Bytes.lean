@@ -14,7 +14,7 @@
   - `state.KeccakState.load_block_full_spec` — delegates to
     `load_block_spec` after `Array.to_slice` coercion.
 
-  ## Post strength (Phase 1a, after 2026-05-21 strengthening pass)
+  ## Post strength (Phase 1a, after 2026-05-21 strengthening pass — Partial-B)
 
   The three Triples here carry the **`i`-preservation** clause needed
   by Phase 2's absorb/squeeze chaining (`r.i.val = 0` precondition on
@@ -24,6 +24,43 @@
   - `store_block_spec`: `⌜ r.val.length = out.val.length ⌝` (returns a
      `Slice U8`, no state component).
   - `load_block_full_spec`: `⌜ r.i = s.i ⌝` (delegates to `load_block`).
+
+  ## Phase 1a closer report (2026-05-21, extended)
+
+  - **Task 1 (`xor_block_into_state_closure_call_mut_spec`) — LANDED**
+    in `Sponge/XorBlockSpec.lean`. The per-cell `@[spec]` for the
+    25-cell `from_fn` body drives the inner do-chain (div/rem →
+    mul/add → div → if → slice-index → try_from → unwrap → from_le_bytes
+    → lift | index_usize). The `b < rate/8` branch matches the
+    constructed 8-byte array's `.val` with `list_8_at block.val (8b)`
+    via `list_8_at_val_eq_slice`. Axioms: propext, Classical.choice,
+    Quot.sound. **This unlocks Phase 2's spec-side composition.**
+
+  - **`sponge_xor_block_into_state_spec` — LANDED** in
+    `Sponge/XorBlockSpec.lean`. The direct per-cell post for
+    `sponge.xor_block_into_state`, composing `from_fn_pure_spec` with
+    Task 1. For each `i < 25`, the output cell equals
+    `xor_block_value_at state block rate i`. Axioms: propext,
+    Classical.choice, Quot.sound.
+
+  - **Tasks 2-4 (loop strong invariants) — DEFERRED.** The current
+    weak invariants (`True` / `r.i = s.i` / length-preservation) are
+    closed by mvcgen + `scalar_tac`/witness-exhibition tactics that
+    do **not** carry through any content-bearing fact about
+    `state_flat[j]` / `s'.st[5*(j%5)+j/5]` / `out'[8j+b]`. Strengthening
+    each invariant requires re-driving the body mvcgen with new VCs
+    that close via `Array.update`/`set_lane`/`setSlice!` characterizations
+    plus the BV bridges (`interleave_bv_lift_eq`, `lift_lane_bv_xor`,
+    `deinterleave_bv_lift_eq`). Estimated 200-400 lines per loop.
+    See "Remaining post strength" below for the textbook target shape.
+
+  - **Tasks 5-7 (textbook posts here) — DEFERRED.** Each chains on
+    Tasks 2-4 via a monadic-in-post shape that connects impl-side
+    `r.st[5*(j%5) + j/5].bv = s.st[...].bv ^^^ lift_lane_bv (u32_le b1)
+    (u32_le b2)` (from strong Loop1) with the spec's
+    `xor_block_value_at` via `interleave_bv_lift_eq`. The current
+    weak posts are nonetheless sufficient for Phase 2 chaining
+    (which only needs termination + `r.i = s.i`).
 
   Inputs to the strengthening pass:
 
