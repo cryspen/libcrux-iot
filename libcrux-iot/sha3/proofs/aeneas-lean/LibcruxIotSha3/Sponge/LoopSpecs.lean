@@ -486,6 +486,8 @@ theorem state.load_block_2u32_loop1_spec
              lift_lane_bv (r.st.val[5*(j%5) + j/5]!).val[0]!.bv
                           (r.st.val[5*(j%5) + j/5]!).val[1]!.bv
              = loop1_lane_at s state_flat j)
+        ∧ (∀ j : Nat, iter.end.val ≤ j → j < 25 →
+             r.st.val[5*(j%5) + j/5]! = s.st.val[5*(j%5) + j/5]!)
     ⌝ ⦄ := by
   obtain ⟨iter_start, iter_end⟩ := iter
   simp only at h_zero h_le
@@ -517,10 +519,12 @@ theorem state.load_block_2u32_loop1_spec
       ?_)
   · rw [PostCond.entails_noThrow]
     intro r h
-    obtain ⟨hri, hri_lanes, _hri_unchanged⟩ := of_pure_prop_holds h
-    refine ⟨hri, ?_⟩
-    intro j hj_end hj_25
-    exact hri_lanes j hj_end hj_25
+    obtain ⟨hri, hri_lanes, hri_unchanged⟩ := of_pure_prop_holds h
+    refine ⟨hri, ?_, ?_⟩
+    · intro j hj_end hj_25
+      exact hri_lanes j hj_end hj_25
+    · intro j hj_ge hj_25
+      exact hri_unchanged j hj_ge hj_25
   · intro acc k h_ge h_le_k hinv
     obtain ⟨h_acc_i, h_acc_done, h_acc_undone⟩ := of_pure_prop_holds hinv
     unfold state.load_block_2u32_loop1.body
