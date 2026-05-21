@@ -449,6 +449,50 @@ def lift_theta_applied (s : state.KeccakState) : Std.Array Std.U64 25#usize :=
     lta (st.val[23]!).val[0]! (st.val[23]!).val[1]! (d.val[4]!).val[0]! (d.val[4]!).val[1]!,
     lta (st.val[24]!).val[0]! (st.val[24]!).val[1]! (d.val[4]!).val[0]! (d.val[4]!).val[1]!]
 
+/-! ## Perm/swap-aware lift_theta_applied (rounds 1–3)
+
+`lift_theta_applied` (above) is correct only when the input convention is
+the canonical `lift s` (round 0). For round k ≥ 1, the spec input is
+`lift_perm s (impl_perm^[k]) (impl_swap_k k)`, and the spec output of theta
+matches a **permuted/swap-aware** view of `(post-theta r_impl).st ⊕ r_impl.d`:
+
+  spec lane i = lift_lane_maybe_swap (r_impl.st[p i]) (sw (p i))
+              ⊕ lift_lane (r_impl.d[i/5])
+
+where `p = impl_perm^[k]` and `sw = impl_swap_k k`. The d-side stays canonical
+because theta computes interleaved column XORs in canonical halves regardless
+of the input layout (cf. round-1's `theta_c_*` reads swap-aware halves so that
+their XOR equals the canonical bit-interleaved column-XOR of the spec view).
+
+This generalization specialises to the existing `lift_theta_applied` at
+`(id, swZero)` — see `lift_theta_applied_perm_id` below.
+
+  Empirically verified 2026-05-19: for the post-round-1-theta probe state,
+  `theta_unrolled (lift_perm s impl_perm (impl_swap_k 1))
+   = .ok (lift_theta_applied_perm r_impl impl_perm (impl_swap_k 1))`. -/
+def lift_theta_applied_perm
+    (s : state.KeccakState) (p : Fin 25 → Fin 25) (sw : Fin 25 → Bool) :
+    Std.Array Std.U64 25#usize :=
+  ⟨List.ofFn (fun i : Fin 25 =>
+    (lift_lane_maybe_swap (s.st.val[(p i).val]!) (sw (p i))) ^^^
+      (lift_lane (s.d.val[i.val / 5]!))),
+   by simp⟩
+
+/-- `lift_theta_applied_perm` at `(id, swZero)` equals `lift_theta_applied`.
+    Bridges the round-0 proofs to the new perm-aware machinery. -/
+theorem lift_theta_applied_perm_id (s : state.KeccakState) :
+    lift_theta_applied_perm s id (fun _ => false) = lift_theta_applied s := by
+  apply Subtype.ext
+  unfold lift_theta_applied_perm lift_theta_applied
+  show List.ofFn _ = _
+  simp only [Std.Array.make, id_eq, lift_lane_maybe_swap]
+  -- 25 cells, each `lift_lane (s.st[i]) ^^^ lift_lane (s.d[i/5])` = `lta` cell.
+  repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
+  all_goals (apply Std.U64.bv_eq_imp_eq)
+  all_goals (
+    show (lift_lane _ ^^^ lift_lane _).bv = _
+    simp [lift_lane, Std.UScalar.bv_xor, lift_xor])
+
 /-- Bridge from the lift definition: indexing `lift s` at a `Fin 25` returns
     the lifted interleaved halves of `s.st[k]`. Used to rewrite the spec-side
     chain hypotheses `r✝ = (lift s)[k]!` into BitVec form. Stated over `Fin 25`
