@@ -251,6 +251,7 @@ theorem keccak.keccak_loop1_invariant
     (h_i : s.i.val = 0)
     (h_RATE_mod : RATE.val % 8 = 0)
     (h_RATE_bnd : RATE.val ≤ 200)
+    (h_RATE_pos : 1 ≤ RATE.val)
     (h_blocks_pos : 1 ≤ blocks.val)
     (h_offset : offset.val + (blocks.val - 1) * RATE.val ≤ out.val.length)
     (h_offset_max : offset.val + (blocks.val - 1) * RATE.val ≤ Std.Usize.max) :
@@ -262,6 +263,11 @@ theorem keccak.keccak_loop1_invariant
         ∧ s_final.i.val = 0
         ∧ offset_final.val = offset.val + (blocks.val - 1) * RATE.val
         ∧ squeeze_fold s (blocks.val - 1) = .ok (Equivalence.lift s_final)
+        ∧ (∀ j : Nat, j < (blocks.val - 1) * RATE.val →
+            ∃ s_bj : Std.Array Std.U64 25#usize,
+              squeeze_fold s ((j / RATE.val) + 1) = .ok s_bj
+              ∧ out_final.val[offset.val + j]! = squeeze_byte_at s_bj (j % RATE.val))
+        ∧ ∀ j : Nat, j < offset.val → out_final.val[j]! = out.val[j]!
     ⌝ ⦄ := by
   unfold keccak.keccak_loop1
   apply Std.Do.Triple.of_entails_right _
@@ -273,9 +279,15 @@ theorem keccak.keccak_loop1_invariant
           acc.1.val.length = out.val.length
           ∧ acc.2.1.i.val = 0
           ∧ acc.2.2.val = offset.val + (k.val - 1) * RATE.val
-          ∧ squeeze_fold s (k.val - 1) = .ok (Equivalence.lift acc.2.1)))
+          ∧ squeeze_fold s (k.val - 1) = .ok (Equivalence.lift acc.2.1)
+          ∧ (∀ j : Nat, j < (k.val - 1) * RATE.val →
+              ∃ s_bj : Std.Array Std.U64 25#usize,
+                squeeze_fold s ((j / RATE.val) + 1) = .ok s_bj
+                ∧ acc.1.val[offset.val + j]! = squeeze_byte_at s_bj (j % RATE.val))
+          ∧ ∀ j : Nat, j < offset.val → acc.1.val[j]! = out.val[j]!))
       h_blocks_pos
-      (pure_prop_holds ⟨rfl, h_i, by
+      (pure_prop_holds ⟨rfl, h_i,
+        by
           show offset.val = offset.val + ((1#usize : Std.Usize).val - 1) * RATE.val
           show offset.val = offset.val + (1 - 1) * RATE.val
           simp,
@@ -284,16 +296,29 @@ theorem keccak.keccak_loop1_invariant
           show squeeze_fold s (1 - 1) = _
           show squeeze_fold s 0 = _
           unfold squeeze_fold iterate_keccak_f_fold
+          rfl,
+        by
+          intro j hj
+          exfalso
+          have : (((1#usize : Std.Usize).val - 1) * RATE.val) = 0 := by
+            show (1 - 1) * RATE.val = 0
+            simp
+          omega,
+        by
+          intro j _
           rfl⟩)
       ?_)
   · rw [PostCond.entails_noThrow]
     intro r h
-    obtain ⟨h1, h2, h3, h4⟩ := of_pure_prop_holds h
-    refine ⟨h1, h2, ?_, ?_⟩
+    obtain ⟨h1, h2, h3, h4, h5, h6⟩ := of_pure_prop_holds h
+    refine ⟨h1, h2, ?_, ?_, ?_, ?_⟩
     · rw [h3]
     · exact h4
+    · exact h5
+    · exact h6
   · intro acc k h_ge h_le_k hinv
-    obtain ⟨h_acc_len, h_acc_i, h_acc_offset, h_fold_acc⟩ := of_pure_prop_holds hinv
+    obtain ⟨h_acc_len, h_acc_i, h_acc_offset, h_fold_acc, h_acc_bytes, h_acc_prefix⟩ :=
+      of_pure_prop_holds hinv
     obtain ⟨out_acc, s_acc, offset_acc⟩ := acc
     -- Body: keccak.keccak_loop1.body RATE { start := k, end := blocks } out_acc s_acc offset_acc.
     unfold keccak.keccak_loop1.body
@@ -319,9 +344,10 @@ theorem keccak.keccak_loop1_invariant
       have hk_eq : k.val = blocks.val := Nat.le_antisymm h_le_k hge
       simp only [Triple, WP.wp]
       apply SPred.pure_intro
-      refine pure_prop_holds ⟨h_acc_len, h_acc_i, ?_, ?_⟩
+      refine pure_prop_holds ⟨h_acc_len, h_acc_i, ?_, ?_, ?_, h_acc_prefix⟩
       · rw [h_acc_offset, hk_eq]
       · rw [← hk_eq]; exact h_fold_acc
+      · rw [← hk_eq]; exact h_acc_bytes
     · rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
       cases hi_eq
       -- Side-condition: `offset_acc + RATE ≤ out_acc.length`.
@@ -365,24 +391,7 @@ theorem keccak.keccak_loop1_invariant
       obtain ⟨h_snb_i, h_snb_len, s_spec, h_snb_spec, h_snb_lift, h_snb_bytes⟩ := h_1
       refine ⟨hk_lt, hiter1_end, hiter1_start, ?_⟩
       apply pure_prop_holds
-      refine ⟨?_, h_snb_i, ?_, ?_⟩
-      · -- Length: `(back snb_out).val.length = out.val.length`.
-        rw [h_back]
-        rw [List.length_setSlice!]
-        exact h_acc_len
-      · -- offset_new.val = offset.val + (iter1.start.val - 1) * RATE.val.
-        rw [h_2, h_acc_offset, hiter1_start]
-        have hk_ge_1 : 1 ≤ k.val := h_ge
-        have h_arith : (k.val - 1) * RATE.val + RATE.val
-                      = (k.val + 1 - 1) * RATE.val := by
-          have h1 : k.val + 1 - 1 = k.val := by omega
-          rw [h1]
-          have h2 : k.val = (k.val - 1) + 1 := by omega
-          conv_rhs => rw [h2]
-          rw [Nat.add_mul]; ring
-        omega
-      · -- squeeze_fold s (iter1.start.val - 1) = .ok (lift r_snb.1).
-        rw [hiter1_start]
+      have h_new_fold : squeeze_fold s ((k.val + 1) - 1) = .ok (Equivalence.lift r_1.1) := by
         show squeeze_fold s (k.val + 1 - 1) = _
         have hk_ge_1 : 1 ≤ k.val := h_ge
         have h_idx : k.val + 1 - 1 = (k.val - 1) + 1 := by omega
@@ -399,6 +408,135 @@ theorem keccak.keccak_loop1_invariant
         rw [h_inner]; simp only [bind_tc_ok]
         rw [h_snb_spec]
         rw [h_snb_lift]
+      refine ⟨?_, h_snb_i, ?_, ?_, ?_, ?_⟩
+      · -- Length: `(back snb_out).val.length = out.val.length`.
+        rw [h_back]
+        rw [List.length_setSlice!]
+        exact h_acc_len
+      · -- offset_new.val = offset.val + (iter1.start.val - 1) * RATE.val.
+        rw [h_2, h_acc_offset, hiter1_start]
+        have hk_ge_1 : 1 ≤ k.val := h_ge
+        have h_arith : (k.val - 1) * RATE.val + RATE.val
+                      = (k.val + 1 - 1) * RATE.val := by
+          have h1 : k.val + 1 - 1 = k.val := by omega
+          rw [h1]
+          have h2 : k.val = (k.val - 1) + 1 := by omega
+          conv_rhs => rw [h2]
+          rw [Nat.add_mul]; ring
+        omega
+      · -- squeeze_fold s (iter1.start.val - 1) = .ok (lift r_1.1).
+        rw [hiter1_start]; exact h_new_fold
+      · -- Per-byte clause for the new iteration: j < ((k.val + 1) - 1) * RATE.val = k.val * RATE.val.
+        rw [hiter1_start]
+        intro j hj
+        have hk_ge_1 : 1 ≤ k.val := h_ge
+        have h_kp1m1 : (k.val + 1) - 1 = k.val := by omega
+        rw [h_kp1m1] at hj
+        -- hj : j < k.val * RATE.val. Split on j < (k.val - 1) * RATE.val.
+        rw [h_back]
+        by_cases h_j_old : j < (k.val - 1) * RATE.val
+        · -- Preserved from previous invariant: j is in the prefix.
+          obtain ⟨s_bj, h_fold_bj, h_byte_bj⟩ := h_acc_bytes j h_j_old
+          refine ⟨s_bj, h_fold_bj, ?_⟩
+          -- Show: (out_acc.val.setSlice! offset_acc.val r_1.2.val)[offset.val + j]!
+          --     = out_acc.val[offset.val + j]! = squeeze_byte_at s_bj (j % RATE.val).
+          rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inl ?_)]
+          · exact h_byte_bj
+          · -- offset.val + j < offset_acc.val = offset.val + (k.val - 1) * RATE.val.
+            rw [h_acc_offset]; omega
+        · -- New write region: j in [(k.val - 1)*RATE.val, k.val*RATE.val).
+          push_neg at h_j_old
+          -- Set j' := j - (k.val - 1) * RATE.val. Then 0 ≤ j' < RATE.val.
+          have h_jrate_split : j = (k.val - 1) * RATE.val + (j % RATE.val) := by
+            -- Since (k-1)*RATE ≤ j < k*RATE and j = (k-1)*RATE + (j - (k-1)*RATE),
+            -- need to show j - (k-1)*RATE = j % RATE.
+            have h_kRate : k.val * RATE.val = (k.val - 1) * RATE.val + RATE.val := by
+              have h2 : k.val = (k.val - 1) + 1 := by omega
+              conv_lhs => rw [h2]
+              rw [Nat.add_mul]; ring
+            -- j / RATE = k - 1, j % RATE = j - (k-1)*RATE.
+            have h_div : j / RATE.val = k.val - 1 := by
+              apply Nat.div_eq_of_lt_le
+              · exact h_j_old
+              · rw [show (k.val - 1 + 1) * RATE.val = k.val * RATE.val by
+                    have : k.val - 1 + 1 = k.val := by omega
+                    rw [this]]
+                omega
+            have h_mod_eq : j % RATE.val = j - (k.val - 1) * RATE.val := by
+              have := Nat.div_add_mod' j RATE.val
+              rw [h_div] at this; omega
+            omega
+          have h_div_RATE : j / RATE.val = k.val - 1 := by
+            apply Nat.div_eq_of_lt_le
+            · exact h_j_old
+            · rw [show (k.val - 1 + 1) * RATE.val = k.val * RATE.val by
+                  have : k.val - 1 + 1 = k.val := by omega
+                  rw [this]]
+              omega
+          have h_mod_lt : j % RATE.val < RATE.val := Nat.mod_lt _ (by omega)
+          -- The "new" s_b is `lift r_1.1`.
+          refine ⟨Equivalence.lift r_1.1, ?_, ?_⟩
+          · -- squeeze_fold s ((j / RATE.val) + 1) = .ok (lift r_1.1).
+            rw [h_div_RATE]
+            have : k.val - 1 + 1 = k.val := by omega
+            rw [this]
+            -- Goal: squeeze_fold s k.val = .ok (lift r_1.1).
+            -- We have h_new_fold : squeeze_fold s ((k.val + 1) - 1) = .ok (lift r_1.1).
+            -- and (k.val + 1) - 1 = k.val.
+            have : (k.val + 1) - 1 = k.val := by omega
+            rw [this] at h_new_fold
+            exact h_new_fold
+          · -- (out_acc.val.setSlice! offset_acc.val r_1.2.val)[offset.val + j]!
+            --   = squeeze_byte_at (lift r_1.1) (j % RATE.val).
+            -- The byte falls in the middle of the setSlice!.
+            have h_off_rel : offset.val + j - offset_acc.val = j % RATE.val := by
+              rw [h_acc_offset]
+              -- offset.val + j - (offset.val + (k.val - 1) * RATE.val) = j - (k.val - 1) * RATE.val.
+              have h_eq : offset.val + j - (offset.val + (k.val - 1) * RATE.val)
+                        = j - (k.val - 1) * RATE.val := by omega
+              rw [h_eq]
+              -- j - (k.val - 1) * RATE.val = j % RATE.val (from h_jrate_split).
+              omega
+            rw [List.getElem!_setSlice!_middle _ _ _ _ ?_]
+            · -- Goal: r_1.2.val[offset.val + j - offset_acc.val]!
+              --     = squeeze_byte_at (lift r_1.1) (j % RATE.val).
+              rw [h_off_rel]
+              -- Use h_snb_bytes (j % RATE.val).
+              have h_byte := h_snb_bytes (j % RATE.val) h_mod_lt
+              rw [h_byte]
+              -- h_snb_lift : s_spec = lift r_1.1. The byte uses s_spec; rewrite.
+              unfold squeeze_byte_at
+              rw [h_snb_lift]
+            · -- Side condition for setSlice!_middle: indices in range.
+              -- Common bound: offset.val + k.val * RATE.val ≤ out.val.length.
+              have h_kRATE_le : offset.val + k.val * RATE.val ≤ out.val.length := by
+                have h_step : k.val * RATE.val ≤ (blocks.val - 1) * RATE.val :=
+                  Nat.mul_le_mul_right RATE.val (by omega)
+                omega
+              have h_r1_len : r_1.2.val.length = out_acc.val.length - offset_acc.val := by
+                rw [h_snb_len, h_idx_len]
+              refine ⟨?_, ?_, ?_⟩
+              · -- offset_acc.val ≤ offset.val + j.
+                rw [h_acc_offset]; omega
+              · -- offset.val + j - offset_acc.val < r_1.2.val.length.
+                rw [h_r1_len, h_acc_len, h_acc_offset]
+                -- Goal: offset.val + j - (offset.val + (k.val - 1) * RATE.val)
+                --     < out.val.length - (offset.val + (k.val - 1) * RATE.val).
+                -- Since offset.val + j < offset.val + k.val * RATE.val ≤ out.val.length,
+                -- and (k.val - 1) * RATE.val ≤ j, this is OK by omega.
+                omega
+              · -- offset.val + j < out_acc.val.length.
+                rw [h_acc_len]
+                omega
+      · -- Prefix preservation: for j < offset.val, out_acc.val[j]! is unchanged
+        -- by the setSlice! at offset_acc.val ≥ offset.val.
+        intro j hj
+        rw [h_back]
+        have hk_ge_1 : 1 ≤ k.val := h_ge
+        have h_off_ge_offset : offset.val ≤ offset_acc.val := by
+          rw [h_acc_offset]; omega
+        rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inl (by omega))]
+        exact h_acc_prefix j hj
 
 /-! ### Theorem: `sponge_squeeze_byte_eq` — block-wise characterization of
 `sponge.squeeze`.
