@@ -624,7 +624,7 @@ private theorem createi_foldlM_pure_aux
 
 /-- Lean-level equation for `createi` over pure closures. Used to power
     `createi_pure_spec` (Triple form). -/
-private theorem createi_pure_eq
+theorem createi_pure_eq
     {T F : Type} (N : Std.Usize)
     (inst : core_models.ops.function.Fn F Std.Usize T) (c : F) (f : Nat → T)
     (hpure : ∀ k : Nat, k < N.val →
