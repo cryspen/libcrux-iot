@@ -4,31 +4,172 @@
 
   Bridges the impl's 13-stage bit-deposit code (`Extraction/Funs.lean` lines
   116-163 and 3993-4065) to the pure-`BitVec` models `interleave_bv` /
-  `deinterleave_bv` already proved in `Sponge/Bytes.lean`.
+  `deinterleave_bv` defined at the top of this file.
 
   Both Triples post:
   - `interleave_spec`:  the two output halves equal `interleave_bv  lo hi`.
   - `deinterleave_spec`: the two output halves equal `deinterleave_bv e o`.
 
-  Composing with `interleave_bv_lift_eq` / `deinterleave_bv_lift_eq` in
-  `Sponge/Bytes.lean` recovers the LE-concatenated `u64` form for the
-  byte-bridge layer.
+  Composing with `interleave_bv_lift_eq` / `deinterleave_bv_lift_eq` (also
+  in this file) recovers the LE-concatenated `u64` form consumed by the
+  byte-bridge layer in `Sponge/Bytes.lean`.
 
   Technique: the proof is a pure `hax_mvcgen` walk through ~30 `Std.U32`/
   `Std.U64` ops, finishing with a single `BitVec` equality closed by
   `bv_decide` (after exposing the underlying `.bv` content through
   `Std.U32.bv_eq_imp_eq` / `Std.U64.bv_eq_imp_eq` + `UScalar.bv_*`).
+
+  ## Layout note (2026-05-21)
+
+  The BV-pure identity layer (`interleave_bv`, `deinterleave_bv`,
+  `lift_lane_bv_xor`, `interleave_bv_lift_eq`, `deinterleave_bv_lift_eq`)
+  was hoisted from `Sponge/Bytes.lean` into this file so that
+  `Sponge/Bytes.lean` may depend on `Sponge/LoopSpecs.lean` (which itself
+  imports this file) when installing the top-level
+  `load_block_spec` / `store_block_spec` / `load_block_full_spec` Triples,
+  without introducing an import cycle.
 -/
-import LibcruxIotSha3.Sponge.Bytes
+import LibcruxIotSha3.Sponge.Opaque
 
 open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
+open libcrux_iot_sha3.Equivalence
+
 -- Defensive seal re-issue: no proof in this file may unfold either side
 -- of Bridge 1.
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
+
+/-! ## Load-bearing bit-level identities (BV form)
+
+Three pure-BitVec identities anchor the byte ↔ interleaved-lane bridge:
+
+1. **`lift_lane_bv_xor`** — `lift_lane_bv` distributes over per-half XOR.
+2. **`interleave_bv_lift_eq`** — the impl's 13-stage even/odd-bit deposit
+   (computing `Lane2U32.interleave (lo, hi)`'s halves) round-trips
+   through `lift_lane_bv` to recover `(hi <<32) ||| lo`, i.e.
+   `u64_from_le_bytes (lo.toLEBytes ++ hi.toLEBytes)`.
+3. **`deinterleave_bv_lift_eq`** — the dual: deinterleave's two output
+   halves equal the LE-byte split of `lift_lane_bv even_bits odd_bits`.
+
+All three are discharged purely by `bv_decide` after the relevant unfold.
+These are the load-bearing crux of Plan.lean § 1 lines 222–224 and
+274–279. -/
+
+/-- `lift_lane_bv` distributes over per-half XOR.  Pure `bv_decide`. -/
+theorem lift_lane_bv_xor (z0 z1 w0 w1 : BitVec 32) :
+    lift_lane_bv z0 z1 ^^^ lift_lane_bv w0 w1 =
+      lift_lane_bv (z0 ^^^ w0) (z1 ^^^ w1) := by
+  unfold lift_lane_bv spread_to_even
+  bv_decide
+
+/-- Pure-BitVec model of the impl's `Lane2U32.interleave` body
+    (Extraction/Funs.lean:116-163), expressed as a function from
+    `(lo, hi) : BitVec 32 × BitVec 32` to the resulting `(even, odd)`
+    halves.
+
+    This mirrors the 13-stage bit-deposit (six per parity) applied to
+    `lane_u64 := (hi << 32) ||| lo`. -/
+def interleave_bv (lo hi : BitVec 32) : BitVec 32 × BitVec 32 :=
+  let lane_u64 : BitVec 64 := (hi.zeroExtend 64) <<< 32 ||| lo.zeroExtend 64
+  let even_bits := lane_u64 &&& 6148914691236517205#64
+  let even_bits := even_bits ^^^ (even_bits >>> 1)
+  let even_bits := even_bits &&& 3689348814741910323#64
+  let even_bits := even_bits ^^^ (even_bits >>> 2)
+  let even_bits := even_bits &&& 1085102592571150095#64
+  let even_bits := even_bits ^^^ (even_bits >>> 4)
+  let even_bits := even_bits &&& 71777214294589695#64
+  let even_bits := even_bits ^^^ (even_bits >>> 8)
+  let even_bits := even_bits &&& 281470681808895#64
+  let even_bits := even_bits ^^^ (even_bits >>> 16)
+  let even_bits := even_bits &&& 4294967295#64
+  let odd_bits := (lane_u64 >>> 1) &&& 6148914691236517205#64
+  let odd_bits := odd_bits ^^^ (odd_bits >>> 1)
+  let odd_bits := odd_bits &&& 3689348814741910323#64
+  let odd_bits := odd_bits ^^^ (odd_bits >>> 2)
+  let odd_bits := odd_bits &&& 1085102592571150095#64
+  let odd_bits := odd_bits ^^^ (odd_bits >>> 4)
+  let odd_bits := odd_bits &&& 71777214294589695#64
+  let odd_bits := odd_bits ^^^ (odd_bits >>> 8)
+  let odd_bits := odd_bits &&& 281470681808895#64
+  let odd_bits := odd_bits ^^^ (odd_bits >>> 16)
+  let odd_bits := odd_bits &&& 4294967295#64
+  (even_bits.truncate 32, odd_bits.truncate 32)
+
+/-- Pure-BitVec model of the impl's `Lane2U32.deinterleave` body
+    (Extraction/Funs.lean:3993-4065), expressed as a function from
+    `(even, odd) : BitVec 32 × BitVec 32` (the two halves of an
+    interleaved lane) to the resulting `(lo, hi)` 32-bit pair that an
+    LE-byte split of the lifted u64 would yield. -/
+def deinterleave_bv (even_bits odd_bits : BitVec 32) : BitVec 32 × BitVec 32 :=
+  let evlo := even_bits &&& 65535#32
+  let evlo := evlo ^^^ (evlo <<< 16)
+  let evlo := evlo &&& 65535#32
+  let evlo := evlo ^^^ (evlo <<< 8)
+  let evlo := evlo &&& 16711935#32
+  let evlo := evlo ^^^ (evlo <<< 4)
+  let evlo := evlo &&& 252645135#32
+  let evlo := evlo ^^^ (evlo <<< 2)
+  let evlo := evlo &&& 858993459#32
+  let evlo := evlo ^^^ (evlo <<< 1)
+  let evlo5 := evlo &&& 1431655765#32
+  let evhi := even_bits >>> 16
+  let evhi := evhi ^^^ (evhi <<< 16)
+  let evhi := evhi &&& 65535#32
+  let evhi := evhi ^^^ (evhi <<< 8)
+  let evhi := evhi &&& 16711935#32
+  let evhi := evhi ^^^ (evhi <<< 4)
+  let evhi := evhi &&& 252645135#32
+  let evhi := evhi ^^^ (evhi <<< 2)
+  let evhi := evhi &&& 858993459#32
+  let evhi := evhi ^^^ (evhi <<< 1)
+  let evhi5 := evhi &&& 1431655765#32
+  let odlo := odd_bits &&& 65535#32
+  let odlo := odlo ^^^ (odlo <<< 16)
+  let odlo := odlo &&& 65535#32
+  let odlo := odlo ^^^ (odlo <<< 8)
+  let odlo := odlo &&& 16711935#32
+  let odlo := odlo ^^^ (odlo <<< 4)
+  let odlo := odlo &&& 252645135#32
+  let odlo := odlo ^^^ (odlo <<< 2)
+  let odlo := odlo &&& 858993459#32
+  let odlo := odlo ^^^ (odlo <<< 1)
+  let odlo5 := odlo &&& 1431655765#32
+  let odhi := odd_bits >>> 16
+  let odhi := odhi ^^^ (odhi <<< 16)
+  let odhi := odhi &&& 65535#32
+  let odhi := odhi ^^^ (odhi <<< 8)
+  let odhi := odhi &&& 16711935#32
+  let odhi := odhi ^^^ (odhi <<< 4)
+  let odhi := odhi &&& 252645135#32
+  let odhi := odhi ^^^ (odhi <<< 2)
+  let odhi := odhi &&& 858993459#32
+  let odhi := odhi ^^^ (odhi <<< 1)
+  let odhi5 := odhi &&& 1431655765#32
+  let lo_out := evlo5 ||| (odlo5 <<< 1)
+  let hi_out := evhi5 ||| (odhi5 <<< 1)
+  (lo_out, hi_out)
+
+/-- Load-bearing bit-level bridge: lifting the two halves produced by
+    `interleave_bv lo hi` recovers the LE-concatenated 64-bit form
+    `(hi << 32) ||| lo`.  Discharged by `bv_decide`. -/
+theorem interleave_bv_lift_eq (lo hi : BitVec 32) :
+    let (e, o) := interleave_bv lo hi
+    lift_lane_bv e o = (hi.zeroExtend 64) <<< 32 ||| lo.zeroExtend 64 := by
+  simp only [interleave_bv, lift_lane_bv, spread_to_even]
+  bv_decide
+
+/-- Load-bearing bit-level bridge: lifting two interleaved halves equals
+    the LE-concatenated form of the deinterleave halves.  Discharged by
+    `bv_decide`. -/
+theorem deinterleave_bv_lift_eq (even_bits odd_bits : BitVec 32) :
+    let (lo, hi) := deinterleave_bv even_bits odd_bits
+    (hi.zeroExtend 64) <<< 32 ||| lo.zeroExtend 64 =
+      lift_lane_bv even_bits odd_bits := by
+  simp only [deinterleave_bv, lift_lane_bv, spread_to_even]
+  bv_decide
 
 /-! ## Aeneas-`Result` lift of `Lane2U32.interleave`.
 
