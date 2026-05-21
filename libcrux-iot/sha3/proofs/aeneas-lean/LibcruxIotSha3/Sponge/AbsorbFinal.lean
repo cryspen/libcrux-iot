@@ -2,32 +2,43 @@
   # Phase 6 — `keccak.absorb_final` ↔ `sponge.absorb_final`
 
   This file delivers the Phase 6 main Triple `keccak.absorb_final_spec`
-  with the **Partial-B post**:
+  with the **full textbook (equality-form) post**:
 
   * termination of `keccak.absorb_final`;
   * `r.i.val = 0` on the result (consumed by Phase 7's squeeze-first-block
-    precondition).
+    precondition);
+  * the spec equation
+    `sponge.absorb_final (lift s) last start len RATE DELIM = .ok (lift r)`.
 
-  The Plan-targeted full textbook post — adding the spec equation
-  `sponge.absorb_final (lift s) last start len RATE DELIM = .ok (lift r)`
-  — requires walking both the impl-side 4-step buffer construction and
-  the spec-side `sponge.pad_last_block` in lock-step. This file lays the
-  infrastructure (`padded_buf` def + Array `index_mut` Triple) needed to
-  close that gap in a follow-up, but the final lock-step composition is
-  deferred.
+  ## Strategy
+
+  Both impl and spec follow the same 4-step buffer recipe (zero-init,
+  copy `last[start..start+len]` into buf[0..len], `buf[len] := DELIM`,
+  OR `0x80` into `buf[RATE-1]`), then load and permute. The impl uses
+  `if len > 0` to skip the `copy_from_slice` of an empty slice; the
+  spec always takes the index_mut path, which is identity when
+  `len = 0` (empty slice + `setSlice! 0 []` = no-op). Both yield the
+  *same* `buf3`.
+
+  We avoid the prior agent's `__do_jp`/`hax_mvcgen` friction by walking
+  impl and spec sides as **independent `.ok`-equation chains** and
+  composing at the end:
+
+  1. `h_impl_eq : keccak.absorb_final ... = .ok r`
+  2. `h_pad_eq  : sponge.pad_last_block ... = .ok buf3`
+  3. `h_block_idx_eq` — the spec's `block[0..rate]` indexing.
+  4. Compose via `h_r_spec` from `keccak.absorb_block_spec`.
 
   ## Post landed here
 
   ```
   @[spec]
   theorem keccak.absorb_final_spec
-      (RATE DELIM s last start len)
-      (h_i : s.i.val = 0) (h_len_lt_RATE : len.val < RATE.val)
-      (h_RATE_mod : RATE.val % 8 = 0) (h_RATE_ge_1 : 1 ≤ RATE.val)
-      (h_RATE_le_200 : RATE.val ≤ 200)
-      (h_last_len : start.val + len.val ≤ last.val.length)
-      (h_off : start.val + len.val ≤ Std.Usize.max) :
-      ⦃⌜True⌝⦄ keccak.absorb_final RATE DELIM s last start len ⦃⇓ r => ⌜r.i.val = 0⌝⦄
+      (RATE DELIM s last start len) (...side conds...) :
+      ⦃⌜True⌝⦄ keccak.absorb_final RATE DELIM s last start len
+      ⦃⇓ r => ⌜ r.i.val = 0
+              ∧ sponge.absorb_final (lift s) last start len RATE DELIM
+                  = .ok (lift r) ⌝⦄
   ```
 
   ## See also
@@ -159,10 +170,14 @@ def padded_buf
     write `DELIM` at offset `len`, OR `0x80` into byte `RATE-1`), then
     load-and-permute the rate-window.
 
-    **Partial-B post**: termination, `r.i.val = 0`. The Plan's textbook
-    spec equation `sponge.absorb_final (lift s) ... = .ok (lift r)` is
-    deferred to a follow-up commit (the infrastructure `padded_buf` and
-    `core_models_Array_Insts_index_mut_RangeUsize_spec` are landed above).
+    **Textbook post** (full equality form): termination, `r.i.val = 0`,
+    plus the spec equation
+    `sponge.absorb_final (lift s) last start len RATE DELIM = .ok (lift r)`.
+
+    Strategy: walk impl and spec side independently as explicit
+    `.ok`-equations, then compose. Both sides produce the *same* shared
+    buffer `buf3` (the impl's manual 4-step chain and the spec's
+    `sponge.pad_last_block` chain match step-for-step).
 
     Preconditions match the impl's `massert (len < RATE)` plus the
     standard `RATE.val % 8 = 0`, `1 ≤ RATE.val ≤ 200`, and bounds for the
@@ -180,7 +195,9 @@ theorem keccak.absorb_final_spec
     (h_off : start.val + len.val ≤ Std.Usize.max) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.absorb_final RATE DELIM s last start len
-    ⦃ ⇓ r => ⌜ r.i.val = 0 ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r.i.val = 0
+              ∧ sponge.absorb_final (Equivalence.lift s) last start len RATE DELIM
+                  = .ok (Equivalence.lift r) ⌝ ⦄ := by
   -- Common: RATE.val ≤ Std.Usize.max.
   have h_RATE_max : RATE.val ≤ Std.Usize.max := by
     have h200 : (200 : Nat) ≤ Std.Usize.max := by scalar_tac
@@ -197,13 +214,16 @@ theorem keccak.absorb_final_spec
     have h1 : (1#usize : Std.Usize).val = 1 := by decide
     rw [h1]
   have h_i_r1_lt_200 : i_r1.val < 200 := by rw [h_i_r1_val]; omega
-  -- Show existence: ∃ buf3 r, keccak.absorb_final = .ok r ∧ r.i.val = 0.
+  -- Show existence: ∃ r, keccak.absorb_final = .ok r ∧ r.i.val = 0 ∧
+  -- sponge.absorb_final (lift s) ... = .ok (lift r).
   suffices h_exists :
       ∃ (r : state.KeccakState),
         keccak.absorb_final RATE DELIM s last start len = .ok r ∧
-        r.i.val = 0 by
-    obtain ⟨r, h_r_eq, h_r_i⟩ := h_exists
-    exact triple_of_ok_af (v := r) h_r_eq h_r_i
+        r.i.val = 0 ∧
+        sponge.absorb_final (Equivalence.lift s) last start len RATE DELIM
+          = .ok (Equivalence.lift r) by
+    obtain ⟨r, h_r_eq, h_r_i, h_r_spec⟩ := h_exists
+    exact triple_of_ok_af (v := r) h_r_eq ⟨h_r_i, h_r_spec⟩
   -- Compute the buffer chain's `.ok` value.
   -- Step values shared across branches.
   set buf0 : Std.Array Std.U8 200#usize := Std.Array.repeat 200#usize 0#u8 with hbuf0_def
@@ -258,7 +278,7 @@ theorem keccak.absorb_final_spec
     triple_exists_ok_af
       (keccak.absorb_block_spec RATE s (Std.Array.to_slice buf3) 0#usize
         h_i h_RATE_mod h_RATE_le_200 h_blk h_off')
-  obtain ⟨h_r_i, _h_r_spec⟩ := h_r_post
+  obtain ⟨h_r_i, h_r_spec⟩ := h_r_post
   -- absorb_block = load_block_full + keccakf1600 (after to_slice).
   have h_absorb_eq :
       (do
@@ -387,8 +407,183 @@ theorem keccak.absorb_final_spec
       show buf1.val = buf0.val
       rw [hbuf1_def]; show buf1_val = buf0.val
       rw [hbuf1_val_def, if_neg (by omega : ¬ 0 < len.val)]
+  -- Spec-side: `sponge.pad_last_block ... = .ok buf3`.
+  -- The spec has no `if len > 0` — it always takes the index_mut path.
+  -- When len = 0, the path's slice is empty and the write_back is identity,
+  -- which still produces `buf1` (= buf0 in that case).
+  -- `sponge.pad_last_block last start len RATE DELIM = .ok buf3`.
+  have h_pad_eq :
+      sponge.pad_last_block last start len RATE DELIM = .ok buf3 := by
+    unfold sponge.pad_last_block
+    -- Reduce `let buffer := Array.repeat 200 0` to `buf0`.
+    simp only [hbuf0_def.symm]
+    -- Compute the index_mut/copy prefix to `.ok buf1` via `h_spec_chain_eq`.
+    -- First reform the prefix to match h_spec_chain_eq's exact shape. Note
+    -- the spec's chain is `... ; let buffer1 := index_mut_back s2; ...`,
+    -- which Lean's `do`-notation desugars as a pure let. We turn it into
+    -- `let buffer1 ← ok (...)` so it joins the monadic chain, then split.
+    show (do
+            let (s, index_mut_back) ←
+              core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+                (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
+                  (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+                    Std.U8)) buf0 { start := 0#usize, «end» := len }
+            let i ← start + len
+            let s1 ← core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+              (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+                Std.U8) last { start := start, «end» := i }
+            let s2 ← core_models.slice.Slice.copy_from_slice
+              core_models.U8.Insts.Core_modelsMarkerCopy s s1
+            let buffer1 := index_mut_back s2
+            let buffer2 ← Std.Array.update buffer1 len DELIM
+            let i1 ← RATE - 1#usize
+            let i2 ← Std.Array.index_usize buffer2 i1
+            let i3 ← Std.lift (i2 ||| 128#u8)
+            Std.Array.update buffer2 i1 i3) = .ok buf3
+    -- Use the unwrapped form of the IndexMut instance.
+    have h_wrap_eq_im :
+        core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
+          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
+        = core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8 := rfl
+    rw [h_wrap_eq_im]
+    -- Build the unfolded prefix result.
+    have h_im_le : ((0#usize : Std.Usize).val) ≤ len.val := by show 0 ≤ len.val; omega
+    have h_im_bnd : len.val ≤ (200#usize : Std.Usize).val := by show len.val ≤ 200; omega
+    obtain ⟨p_im, h_pim_eq, h_pim_val, h_pim_len, h_pim_back⟩ :=
+      triple_exists_ok_af
+        (core_models_Array_Insts_index_mut_RangeUsize_spec
+          buf0 { start := 0#usize, «end» := len } h_im_le h_im_bnd)
+    rw [h_pim_eq]; simp only [bind_tc_ok]
+    obtain ⟨s_im, write_back⟩ := p_im
+    simp only at h_pim_val h_pim_len h_pim_back ⊢
+    show (do
+            let i ← start + len
+            let s1 ← core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+              (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+                Std.U8) last { start := start, «end» := i }
+            let s2 ← core_models.slice.Slice.copy_from_slice
+              core_models.U8.Insts.Core_modelsMarkerCopy s_im s1
+            let buffer1 := write_back s2
+            let buffer2 ← Std.Array.update buffer1 len DELIM
+            let i1 ← RATE - 1#usize
+            let i2 ← Std.Array.index_usize buffer2 i1
+            let i3 ← Std.lift (i2 ||| 128#u8)
+            Std.Array.update buffer2 i1 i3) = .ok buf3
+    obtain ⟨i_sl, h_i_sl_eq, h_i_sl_val_eq, _⟩ :=
+      Std.WP.spec_imp_exists
+        (Std.UScalar.add_bv_spec (x := start) (y := len) (by scalar_tac))
+    have h_i_sl_val : i_sl.val = start.val + len.val := h_i_sl_val_eq
+    rw [h_i_sl_eq]; simp only [bind_tc_ok]
+    have h_idx_le : start.val ≤ i_sl.val := by rw [h_i_sl_val]; omega
+    have h_idx_bnd : i_sl.val ≤ last.val.length := by rw [h_i_sl_val]; omega
+    obtain ⟨q, hq_eq, hq_val, hq_len⟩ :=
+      triple_exists_ok_af
+        (core_models_Slice_Insts_index_RangeUsize_spec
+          last { start := start, «end» := i_sl } h_idx_le h_idx_bnd)
+    rw [hq_eq]; simp only [bind_tc_ok]
+    have h_p_q_len : s_im.val.length = q.val.length := by
+      rw [h_pim_len, hq_len]
+      show len.val - (0#usize : Std.Usize).val = i_sl.val - start.val
+      rw [show ((0#usize : Std.Usize).val : Nat) = 0 from rfl, Nat.sub_zero, h_i_sl_val]
+      omega
+    obtain ⟨w, hw_eq, hw_val⟩ :=
+      triple_exists_ok_af
+        (core_models_slice_Slice_copy_from_slice_spec
+          core_models.U8.Insts.Core_modelsMarkerCopy s_im q h_p_q_len)
+    rw [hw_eq]; simp only [bind_tc_ok]
+    have h_w_val_len : w.val.length = len.val - (0#usize : Std.Usize).val := by
+      rw [hw_val, hq_len]
+      rw [show ((0#usize : Std.Usize).val : Nat) = 0 from rfl]
+      rw [show i_sl.val - start.val = len.val from by rw [h_i_sl_val]; omega]
+      rw [show len.val - 0 = len.val from by omega]
+    have h_pback := h_pim_back w h_w_val_len
+    have h_q_val_eq : q.val = last.val.slice start.val (start.val + len.val) := by
+      rw [hq_val]
+      show last.val.slice start.val i_sl.val = _
+      rw [show i_sl.val = start.val + len.val from h_i_sl_val]
+    -- Now `write_back w = buf1`.
+    have h_wb_buf1 : write_back w = buf1 := by
+      apply Subtype.ext
+      show (write_back w).val = buf1.val
+      rw [h_pback, hw_val, h_q_val_eq]
+      rw [hbuf1_def]
+      show _ = buf1_val
+      rw [hbuf1_val_def]
+      by_cases hlen0 : 0 < len.val
+      · rw [if_pos hlen0]
+        show buf0.val.setSlice! ((0#usize : Std.Usize).val) _ = _
+        rfl
+      · rw [if_neg hlen0]
+        have hlen_zero : len.val = 0 := by omega
+        have h_q_empty : last.val.slice start.val (start.val + len.val) = [] := by
+          rw [hlen_zero]
+          show last.val.slice start.val (start.val + 0) = []
+          rw [Nat.add_zero]
+          unfold List.slice
+          rw [show start.val - start.val = 0 from by omega, List.take_zero]
+        show buf0.val.setSlice! ((0#usize : Std.Usize).val) _ = buf0.val
+        rw [h_q_empty]
+        show buf0.val.setSlice! 0 [] = buf0.val
+        unfold List.setSlice!
+        simp
+    -- Continue: write_back w = buf1, then update buf1 len DELIM = .ok buf2, etc.
+    rw [h_wb_buf1]
+    rw [h_buf2_eq]; simp only [bind_tc_ok]
+    rw [h_i_r1_eq]; simp only [bind_tc_ok]
+    rw [h_idx_eq]; simp only [bind_tc_ok]
+    rw [h_lift_or_eq delim_byte]; simp only [bind_tc_ok]
+    exact h_buf3_eq
+  -- Spec-side: `block[0..rate]` (Array index on buf3) = .ok (block_of_blocks (to_slice buf3) 0 RATE _).
+  have h_block_idx_eq :
+      core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+        (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+            Std.U8)) buf3 { start := 0#usize, «end» := RATE }
+        = .ok (block_of_blocks (Std.Array.to_slice buf3) 0#usize RATE h_blk) := by
+    -- Unfold Array index → slice index over to_slice.
+    unfold core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+    -- The body is `core.slice.index.Slice.index inst (to_slice buf3) r`.
+    -- This is the same as `core_models.Slice.Insts.Core_modelsOpsIndexIndex.index`
+    -- after the wrapper is collapsed.
+    have h_wrap_eq :
+        core_models.Slice.Insts.Core_modelsOpsIndexIndex
+          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
+        = core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8 := rfl
+    rw [h_wrap_eq]
+    have h0' : ((0#usize : Std.Usize).val) ≤ RATE.val := by show 0 ≤ RATE.val; omega
+    have h1' : RATE.val ≤ (Std.Array.to_slice buf3).val.length := by
+      have hlen : (Std.Array.to_slice buf3).val.length = 200 := by
+        rw [Std.Array.val_to_slice]; exact buf3.property
+      rw [hlen]; exact h_RATE_le_200
+    obtain ⟨q, hq_eq, hq_val, hq_len⟩ :=
+      triple_exists_ok_af
+        (core_models_Slice_Insts_index_RangeUsize_spec
+          (Std.Array.to_slice buf3) { start := 0#usize, «end» := RATE } h0' h1')
+    have h_slice_eq :
+        core.slice.index.Slice.index
+          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
+          (Std.Array.to_slice buf3) { start := 0#usize, «end» := RATE } = .ok q := by
+      have := hq_eq
+      unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index at this
+      exact this
+    rw [h_slice_eq]
+    apply congrArg
+    apply Subtype.ext
+    show q.val = (block_of_blocks (Std.Array.to_slice buf3) 0#usize RATE h_blk).val
+    rw [hq_val]
+    show (Std.Array.to_slice buf3).val.slice (0#usize : Std.Usize).val RATE.val
+        = (Std.Array.to_slice buf3).val.slice 0 (0 + RATE.val)
+    rw [show ((0#usize : Std.Usize).val : Nat) = 0 from rfl, Nat.zero_add]
+  -- Compose spec sides.
+  have h_spec_eq :
+      sponge.absorb_final (Equivalence.lift s) last start len RATE DELIM
+        = .ok (Equivalence.lift r) := by
+    unfold sponge.absorb_final
+    rw [h_pad_eq]; simp only [bind_tc_ok]
+    rw [h_block_idx_eq]; simp only [bind_tc_ok]
+    exact h_r_spec
   -- Assemble the impl-side equation.
-  refine ⟨r, ?_, h_r_i⟩
+  refine ⟨r, ?_, h_r_i, h_spec_eq⟩
   unfold keccak.absorb_final
   -- Skip the `show` — work directly with the desugared form.
   rw [h_ma]; simp only [bind_tc_ok]
