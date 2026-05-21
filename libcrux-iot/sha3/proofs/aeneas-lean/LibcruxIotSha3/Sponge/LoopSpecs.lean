@@ -95,12 +95,63 @@ Preconditions:
 - `start.val + 8 * iter.end.val ≤ blocks.val.length`  (slice bound)
 - `iter.end.val ≤ 25` (Array.update bound on the 25-cell `state_flat`).
 
-Proof: `loop_range_spec_usize` with `inv _ _ := True` — body Triple
-closes via `hax_mvcgen` once all sub-Triples (`try_from`, `from_le_bytes`,
+Proof: `loop_range_spec_usize` with a strong invariant that records the
+post-`interleave` BV pair at every touched cell.  The body Triple closes
+via `mvcgen` once all sub-Triples (`try_from`, `from_le_bytes`,
 `Result.unwrap`, slice subindexing, `interleave`) are in scope. -/
 
+/-! Helper definitions for Loop0's strengthened invariant.
+
+After Loop0's k-th iteration, `state_flat[j]` (for `j < k`) is the
+post-`interleave` Lane2U32 obtained from the two-`U32` halves recovered
+from two 4-byte LE windows from `blocks` at offsets `start+8j` and
+`start+8j+4`.  We capture the *pre-interleave* pair in
+`Lane2U32_from_4byte_LE_pairs` and then state the post in terms of
+`interleave_bv` applied to its two halves (so `interleave_spec`'s
+pair-equality on `.bv`s plugs in directly). -/
+
+/-- The `Lane2U32` pre-interleave pair constructed at iteration `j`
+    of Loop0: reads two 4-byte LE windows from `blocks` at offsets
+    `start+8j` and `start+8j+4`, interpreting each as a `U32`, then
+    pairs them.  The body's `Lane2U32.interleave` step is applied to
+    this pair to obtain the actual lane stored in `state_flat[j]`. -/
+def Lane2U32_from_4byte_LE_pairs
+    (blocks : Slice Std.U8) (start : Std.Usize) (j : Nat) : lane.Lane2U32 :=
+  let lo_bytes : Std.Array Std.U8 4#usize :=
+    ⟨((blocks.val.drop (start.val + 8 * j)).take 4) ++
+       List.replicate (4 - ((blocks.val.drop (start.val + 8 * j)).take 4).length) (0#u8),
+     by
+       have : ((blocks.val.drop (start.val + 8 * j)).take 4).length ≤ 4 := by
+         simp [List.length_take]
+       have hlen :
+           (((blocks.val.drop (start.val + 8 * j)).take 4) ++
+             List.replicate (4 - ((blocks.val.drop (start.val + 8 * j)).take 4).length) (0#u8)).length
+           = 4 := by
+         rw [List.length_append, List.length_replicate]; omega
+       simp [hlen]⟩
+  let hi_bytes : Std.Array Std.U8 4#usize :=
+    ⟨((blocks.val.drop (start.val + 8 * j + 4)).take 4) ++
+       List.replicate (4 - ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length) (0#u8),
+     by
+       have : ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length ≤ 4 := by
+         simp [List.length_take]
+       have hlen :
+           (((blocks.val.drop (start.val + 8 * j + 4)).take 4) ++
+             List.replicate (4 - ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length) (0#u8)).length
+           = 4 := by
+         rw [List.length_append, List.length_replicate]; omega
+       simp [hlen]⟩
+  Std.Array.make 2#usize
+    [Std.core.num.U32.from_le_bytes lo_bytes,
+     Std.core.num.U32.from_le_bytes hi_bytes]
+    (by simp)
+
 /-- The outer fixpoint of `state.load_block_2u32_loop0` terminates with
-    `.ok`, provided the preconditions hold. -/
+    `.ok`, and at every touched index `j ∈ [0, iter.end)` the resulting
+    `state_flat[j]` carries the post-`interleave` BV pair derived from
+    the two 4-byte LE windows of `blocks` at offsets `start+8j` and
+    `start+8j+4`.  Stated in BitVec form so the `interleave_spec`
+    output (a pair-equality on `.bv`s) plugs in directly. -/
 @[spec]
 theorem state.load_block_2u32_loop0_spec
     (iter : core_models.ops.range.Range Std.Usize)
@@ -109,24 +160,49 @@ theorem state.load_block_2u32_loop0_spec
     (h_le : iter.start.val ≤ iter.end.val)
     (h_bnd : iter.end.val ≤ 25)
     (h_off : start.val + 8 * iter.end.val ≤ Std.Usize.max)
-    (h_blk : start.val + 8 * iter.end.val ≤ blocks.val.length) :
+    (h_blk : start.val + 8 * iter.end.val ≤ blocks.val.length)
+    (h_zero : iter.start.val = 0) :
     ⦃ ⌜ True ⌝ ⦄
     state.load_block_2u32_loop0 iter blocks start state_flat
-    ⦃ ⇓ _r => ⌜ True ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜
+        ∀ j : Nat, j < iter.end.val → j < 25 →
+          ((r.val[j]!).val[0]!.bv, (r.val[j]!).val[1]!.bv)
+            = interleave_bv
+                ((Lane2U32_from_4byte_LE_pairs blocks start j).val[0]!).bv
+                ((Lane2U32_from_4byte_LE_pairs blocks start j).val[1]!).bv
+    ⌝ ⦄ := by
   obtain ⟨iter_start, iter_end⟩ := iter
+  simp only at h_zero h_le
   unfold state.load_block_2u32_loop0
+  -- Strong invariant: at iteration `k`, every touched cell (`j < k`)
+  -- carries the post-`interleave` BV pair, and every untouched cell
+  -- (`j ≥ k`) equals its initial value in `state_flat`. `h_zero` makes
+  -- the `j < k` clause vacuous at `k = iter_start`.
   apply Std.Do.Triple.of_entails_right _
     (loop_range_spec_usize
       (fun (iter1, s1) => state.load_block_2u32_loop0.body blocks start iter1 s1)
       state_flat iter_start iter_end
-      (fun _ _ => pure True)
+      (fun k s' => pure (
+          (∀ j : Nat, j < k.val → j < 25 →
+              ((s'.val[j]!).val[0]!.bv, (s'.val[j]!).val[1]!.bv)
+                = interleave_bv
+                    ((Lane2U32_from_4byte_LE_pairs blocks start j).val[0]!).bv
+                    ((Lane2U32_from_4byte_LE_pairs blocks start j).val[1]!).bv)
+          ∧ (∀ j : Nat, k.val ≤ j → j < 25 →
+                s'.val[j]! = state_flat.val[j]!)))
       h_le
-      (pure_prop_holds trivial)
+      (pure_prop_holds ⟨
+        fun j hjk _ => by
+          rw [h_zero] at hjk; exact absurd hjk (Nat.not_lt_zero j),
+        fun _ _ _ => rfl⟩)
       ?_)
   · rw [PostCond.entails_noThrow]
-    intro _ _
-    exact pure_prop_holds trivial |> of_pure_prop_holds |> id
-  · intro acc k h_ge h_le_k _hinv
+    intro r h
+    obtain ⟨h_done, _h_undone⟩ := of_pure_prop_holds h
+    intro j hj_end hj_25
+    exact h_done j hj_end hj_25
+  · intro acc k h_ge h_le_k hinv
+    obtain ⟨h_acc_done, h_acc_undone⟩ := of_pure_prop_holds hinv
     unfold state.load_block_2u32_loop0.body
     apply Std.Do.Triple.bind _ _
       (IteratorRange_next_spec_usize k iter_end
@@ -148,7 +224,14 @@ theorem state.load_block_2u32_loop0_spec
     rcases o with _ | i
     · rintro ⟨hge, hiter1_eq⟩
       show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
-      exact triple_of_ok_local rfl (pure_prop_holds trivial)
+      -- Loop-exhaustion branch: `k = iter_end`, so the inv's `j < k`
+      -- clause already gives the post.
+      have hk_eq : k.val = iter_end.val := Nat.le_antisymm h_le_k hge
+      refine triple_of_ok_local rfl (pure_prop_holds ⟨?_, ?_⟩)
+      · intro j hj_end hj_25
+        exact h_acc_done j (hk_eq ▸ hj_end) hj_25
+      · intro j hj_ge hj_25
+        exact h_acc_undone j (hk_eq ▸ hj_ge) hj_25
     · rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
       cases hi_eq
       have hk_25 : k.val < 25 := by
@@ -189,7 +272,9 @@ theorem state.load_block_2u32_loop0_spec
       --     `r✝ = .Ok (Array.make 4 _ ⋯)` and `r✝ᵢ = Array.make 4 _ ⋯`.
       --     The right `r✝ᵢ` comes from the *immediately preceding* unwrap
       --     in the chain; we substitute via the array-equation.
-      all_goals (first
+      -- (c) ONE strong-invariant preservation VC — handled separately
+      --     after `try`-closing the structural VCs.
+      all_goals (try (first
         | scalar_tac
         | -- The `Inhabited (Std.Array U8 4#usize)` instance comes from
           -- `core_models_array_try_from_slice_spec`'s param chain; we
@@ -201,50 +286,154 @@ theorem state.load_block_2u32_loop0_spec
            expose_names
            first
              | exact ⟨_, h_4⟩
-             | exact ⟨_, h_9⟩))
-
-/-! Helper definitions for Loop0's strengthened invariant.
-
-After Loop0's k-th iteration, `state_flat[j]` (for `j < k`) is the
-two-`U32` halves obtained by reading two 4-byte LE windows from
-`blocks` at offsets `start+8j` and `start+8j+4` and pairing them. -/
-
-/-- The `Lane2U32` constructed at iteration `j` of Loop0: reads two
-    4-byte LE windows from `blocks` at offsets `start+8j` and `start+8j+4`,
-    interpreting each as a `U32`, then pairs them (then later
-    `Lane2U32.interleave` is applied to this pair in the body — we
-    capture the *pre-interleave* pair here, since the interleave step
-    is uniform). -/
-def Lane2U32_from_4byte_LE_pairs
-    (blocks : Slice Std.U8) (start : Std.Usize) (j : Nat) : lane.Lane2U32 :=
-  let lo_bytes : Std.Array Std.U8 4#usize :=
-    ⟨((blocks.val.drop (start.val + 8 * j)).take 4) ++
-       List.replicate (4 - ((blocks.val.drop (start.val + 8 * j)).take 4).length) (0#u8),
-     by
-       have : ((blocks.val.drop (start.val + 8 * j)).take 4).length ≤ 4 := by
-         simp [List.length_take]
-       have hlen :
-           (((blocks.val.drop (start.val + 8 * j)).take 4) ++
-             List.replicate (4 - ((blocks.val.drop (start.val + 8 * j)).take 4).length) (0#u8)).length
-           = 4 := by
-         rw [List.length_append, List.length_replicate]; omega
-       simp [hlen]⟩
-  let hi_bytes : Std.Array Std.U8 4#usize :=
-    ⟨((blocks.val.drop (start.val + 8 * j + 4)).take 4) ++
-       List.replicate (4 - ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length) (0#u8),
-     by
-       have : ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length ≤ 4 := by
-         simp [List.length_take]
-       have hlen :
-           (((blocks.val.drop (start.val + 8 * j + 4)).take 4) ++
-             List.replicate (4 - ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length) (0#u8)).length
-           = 4 := by
-         rw [List.length_append, List.length_replicate]; omega
-       simp [hlen]⟩
-  Std.Array.make 2#usize
-    [Std.core.num.U32.from_le_bytes lo_bytes,
-     Std.core.num.U32.from_le_bytes hi_bytes]
-    (by simp)
+             | exact ⟨_, h_9⟩)))
+      -- Remaining: the strong-invariant preservation VC. The body's
+      -- final step is `Array.update state_flat k lu1`; we expose names
+      -- and case-split on j < k vs j = k.
+      expose_names
+      refine ⟨hk_lt, hiter1_end, hiter1_start, ?_⟩
+      apply pure_prop_holds
+      -- Goal: ∀ j < iter1.start, ((r_13[j]!)[0]!.bv, (r_13[j]!)[1]!.bv) =
+      --         interleave_bv ((Lane2U32_from_4byte_LE_pairs ... j)[0]!.bv)
+      --                       ((Lane2U32_from_4byte_LE_pairs ... j)[1]!.bv)
+      -- AND ∀ j ≥ iter1.start, r_13[j]! = state_flat[j]!
+      -- where r_13 = acc.set k r_12 and h_12 gives the BV pair of r_12.
+      have h_r13_acc_length : acc.val.length = 25 := by
+        rw [Aeneas.Std.Array.length_eq]; rfl
+      refine ⟨?_, ?_⟩
+      · -- j < iter1.start → ...
+        intro j hj_start hj_25
+        have hj_le_k : j ≤ k.val := by
+          have : j < k.val + 1 := by rw [← hiter1_start]; exact hj_start
+          scalar_tac
+        rcases Nat.lt_or_eq_of_le hj_le_k with hj_lt_k | hj_eq_k
+        · -- j < k: unchanged by the set.
+          have h_ne : k.val ≠ j := Nat.ne_of_gt hj_lt_k
+          have h_set_ne : (r_13.val)[j]! = (acc.val)[j]! := by
+            have : (r_13)[j]! = (acc)[j]! := by
+              rw [h_13]
+              exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+          rw [h_set_ne]
+          exact h_acc_done j hj_lt_k hj_25
+        · -- j = k: the new lane is r_12, whose BV pair is given by h_12.
+          subst hj_eq_k
+          have h_lt_acc : k.val < acc.val.length := by rw [h_r13_acc_length]; exact hk_25
+          have h_set_eq : (r_13.val)[k.val]! = r_12 := by
+            have : (r_13)[k.val]! = r_12 := by
+              rw [h_13]
+              exact Aeneas.Std.Array.getElem!_Nat_set_eq _ _ _ _ ⟨rfl, h_lt_acc⟩
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+          rw [h_set_eq]
+          -- Now: ((r_12)[0]!.bv, (r_12)[1]!.bv) =
+          --      interleave_bv ((Lane2U32_from_4byte_LE_pairs ... k.val)[0]!.bv)
+          --                    ((Lane2U32_from_4byte_LE_pairs ... k.val)[1]!.bv)
+          -- h_12 gives: ((r_12)[0]!.bv, (r_12)[1]!.bv) =
+          --             interleave_bv ((Array.make 2 [r_6, r_11])[0]!.bv)
+          --                           ((Array.make 2 [r_6, r_11])[1]!.bv)
+          -- So it remains to show the helper's halves match r_6/r_11.
+          rw [h_12]
+          -- Reduce both sides' `Array.make 2 [_, _]` `.val[i]!` projections.
+          have h_make0 :
+              ((Std.Array.make 2#usize [r_6, r_11] (by simp)
+                  : lane.Lane2U32).val[0]!) = r_6 := by
+            simp [Aeneas.Std.Array.make]
+          have h_make1 :
+              ((Std.Array.make 2#usize [r_6, r_11] (by simp)
+                  : lane.Lane2U32).val[1]!) = r_11 := by
+            simp [Aeneas.Std.Array.make]
+          rw [h_make0, h_make1]
+          -- Now show r_6 = U32.from_le_bytes lo_bytes(helper) and
+          -- r_11 = U32.from_le_bytes hi_bytes(helper).
+          -- h_6: r_6 = from_le_bytes r_5  where r_5 = Array.make 4 r_3 (h_5)
+          -- and h_3: r_3.val = List.slice r_1 r_2 blocks ∧ length = r_2 - r_1.
+          -- The helper's lo_bytes = Array.make 4 ((blocks.drop (start+8k)).take 4 ++ pad).
+          -- We need r_5 = helper's lo_bytes (as Array U8 4).
+          -- Auxiliary scalar identities:
+          have h_r : r.val = 8 * k.val := by scalar_tac
+          have h_r1 : r_1.val = start.val + 8 * k.val := by scalar_tac
+          have h_r2 : r_2.val = start.val + 8 * k.val + 4 := by scalar_tac
+          have h_r7 : r_7.val = start.val + 8 * k.val + 8 := by scalar_tac
+          -- Length of the take-4 slice from blocks:
+          have h_len_lo : ((blocks.val.drop (start.val + 8 * k.val)).take 4).length = 4 := by
+            rw [List.length_take, List.length_drop]; omega
+          have h_len_hi :
+              ((blocks.val.drop (start.val + 8 * k.val + 4)).take 4).length = 4 := by
+            rw [List.length_take, List.length_drop]; omega
+          -- r_3.val unfolded to a take-form:
+          have h_r3_val : r_3.val = (blocks.val.drop (start.val + 8 * k.val)).take 4 := by
+            have := h_3.1
+            unfold List.slice at this
+            rw [h_r1, h_r2] at this
+            rw [show start.val + 8 * k.val + 4 - (start.val + 8 * k.val) = 4 from by omega] at this
+            exact this
+          have h_r8_val : r_8.val = (blocks.val.drop (start.val + 8 * k.val + 4)).take 4 := by
+            have := h_8.1
+            unfold List.slice at this
+            rw [h_r2, h_r7] at this
+            rw [show start.val + 8 * k.val + 8 - (start.val + 8 * k.val + 4) = 4 from by omega] at this
+            exact this
+          -- Reduce both Array.make 4 _ to equal forms.
+          -- r_5 is `Array.make 4 r_3.val` (from h_4 vs h_5 of the unwrap chain).
+          have h_r5_val : r_5.val =
+              ((blocks.val.drop (start.val + 8 * k.val)).take 4)
+              ++ List.replicate
+                  (4 - ((blocks.val.drop (start.val + 8 * k.val)).take 4).length) (0#u8) := by
+            have h_45 := h_5.symm.trans h_4
+            have h_r5_eq : r_5 = Std.Array.make 4#usize r_3.val (by rw [h_3.2]; scalar_tac) :=
+              core_models.result.Result.Ok.inj h_45
+            rw [h_r5_eq]
+            -- (Array.make 4 r_3.val _).val = r_3.val by defn
+            show r_3.val = _
+            rw [h_r3_val, h_len_lo]
+            simp
+          have h_r10_val : r_10.val =
+              ((blocks.val.drop (start.val + 8 * k.val + 4)).take 4)
+              ++ List.replicate
+                  (4 - ((blocks.val.drop (start.val + 8 * k.val + 4)).take 4).length) (0#u8) := by
+            have h_910 := h_10.symm.trans h_9
+            have h_r10_eq : r_10 = Std.Array.make 4#usize r_8.val (by rw [h_8.2]; scalar_tac) :=
+              core_models.result.Result.Ok.inj h_910
+            rw [h_r10_eq]
+            show r_8.val = _
+            rw [h_r8_val, h_len_hi]
+            simp
+          -- Now show the helper's lo_bytes/hi_bytes equal r_5/r_10 (as Std.Array U8 4).
+          have h_helper_lo :
+              (Lane2U32_from_4byte_LE_pairs blocks start k.val).val[0]! = r_6 := by
+            unfold Lane2U32_from_4byte_LE_pairs
+            -- The def's Std.Array.make 2 [from_le_bytes lo_bytes, from_le_bytes hi_bytes]
+            -- has val[0]! = from_le_bytes lo_bytes.
+            simp only [Aeneas.Std.Array.make, List.getElem!_cons_zero]
+            rw [h_6]
+            -- Goal: from_le_bytes lo_bytes_helper = from_le_bytes r_5
+            congr 1
+            apply Subtype.ext
+            show _ = r_5.val
+            rw [h_r5_val]
+          have h_helper_hi :
+              (Lane2U32_from_4byte_LE_pairs blocks start k.val).val[1]! = r_11 := by
+            unfold Lane2U32_from_4byte_LE_pairs
+            simp only [Aeneas.Std.Array.make, List.getElem!_cons_succ, List.getElem!_cons_zero]
+            rw [h_11]
+            congr 1
+            apply Subtype.ext
+            show _ = r_10.val
+            rw [h_r10_val]
+          rw [h_helper_lo, h_helper_hi]
+      · -- j ≥ iter1.start → r_13[j]! = state_flat[j]!.
+        intro j hj_ge hj_25
+        have hj_gt_k : k.val < j := by
+          have : k.val + 1 ≤ j := by rw [← hiter1_start]; exact hj_ge
+          scalar_tac
+        have h_ne : k.val ≠ j := Nat.ne_of_lt hj_gt_k
+        have h_set_ne : (r_13.val)[j]! = (acc.val)[j]! := by
+          have : (r_13)[j]! = (acc)[j]! := by
+            rw [h_13]
+            exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+        rw [h_set_ne]
+        exact h_acc_undone j (Nat.le_of_lt hj_gt_k) hj_25
 
 /-! ### Loop 1 of `state.load_block_2u32`. -/
 

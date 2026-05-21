@@ -297,11 +297,11 @@ theorem state.KeccakState.load_block_spec
     rw [h_i2_val]; omega
   let state_flat : Std.Array lane.Lane2U32 25#usize :=
     Std.Array.repeat 25#usize (⟨[0#u32, 0#u32], by decide⟩ : lane.Lane2U32)
-  obtain ⟨state_flat1, h_loop0_eq, _⟩ :=
+  obtain ⟨state_flat1, h_loop0_eq, _h_state_flat1⟩ :=
     triple_exists_ok_bytes
       (state.load_block_2u32_loop0_spec
         ⟨0#usize, i2⟩ blocks start state_flat
-        h_loop0_le h_loop0_bnd h_loop0_off h_loop0_blk)
+        h_loop0_le h_loop0_bnd h_loop0_off h_loop0_blk (by rfl))
   obtain ⟨r_final, h_loop1_eq, h_r_i, _h_lanes⟩ :=
     triple_exists_ok_bytes
       (state.load_block_2u32_loop1_spec
