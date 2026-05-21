@@ -20,17 +20,15 @@
     keccak_f.keccak_f state1
   ```
 
-  ## Post strength (Phase 2 — Partial-B landed 2026-05-21)
+  ## Post strength (Phase 2 — Textbook post landed 2026-05-21)
 
-  The Triple here carries the `r.i.val = 0` clause needed by Phase 3's
-  chain (the next `absorb_block`'s precondition).
+  The Triple here carries the **full textbook post**: termination,
+  `r.i.val = 0`, AND the spec-side equation
+  `sponge.absorb_block (lift s) <block> RATE = .ok (lift r)`
+  where `<block> := block_of_blocks blocks start RATE _` is the
+  rate-window slice of `blocks`.
 
-  The full "textbook" post
-
-      ⦃ True ⦄ sponge.absorb_block (lift s) <block> RATE
-        ⦃ ⇓ s' => s' = lift r ⦄
-
-  is **bridged below** by the helper lemmas added 2026-05-22:
+  Bridge infrastructure (landed 2026-05-21):
 
     - `fromLEBytes_8_split_4_4`         — pure BV identity (bv_decide).
     - `padded4_eq_explicit` /
@@ -40,30 +38,35 @@
     - `block_take{4,8}_eq_blocks_take{4,8}`
                                         — `block.val = blocks.slice ...`
                                           ⇒ inner-window readouts match.
-    - `load_block_to_xor_block_bridge`  — combines the three above into
-                                          the per-cell U64-equality
+    - `UScalar_bv_of_U{32,64}_from_le_bytes_eq`
+                                        — `Subtype.ext`-based reduction
+                                          closing the `BitVec.cast` layer
+                                          (the prior `congr`-based
+                                          attempt tripped a 200k delab
+                                          heartbeat cap).
+    - `load_block_to_xor_block_bridge`  — combines the above into the
+                                          per-cell U64-equality
                                           connecting `load_block_spec`'s
                                           `Lane2U32_from_4byte_LE_pairs`
                                           BV form to
                                           `xor_block_value_at`'s
                                           `U64.from_le_bytes ∘ list_8_at`
-                                          form. **(Stated; the final BV
-                                          assembly is staged but the
-                                          combined Subtype.ext + cast
-                                          handling kept tripping `congr`
-                                          past heartbeat. The clean
-                                          BV-level identity
-                                          `fromLEBytes_8_split_4_4` is
-                                          closed; the missing piece is
-                                          the `U32→U64.bv` cast
-                                          unification.)**
+                                          form.
 
-  Status: bridge infrastructure landed; the textbook post is **still
-  deferred** behind a single remaining `Subtype.ext + BitVec.cast`
-  unification step that out-grew the dispatch budget. Current weak post
-  (`r.i.val = 0`) is sufficient for Phase 3 chaining. See the
-  staged bridge lemmas above the Triple for the exact obligation
-  remaining.
+  Composition (`keccak.absorb_block_spec`):
+
+    1. `state.KeccakState.load_block_spec` (Bytes.lean) — yields impl
+       `s1` with `s1.i = s.i` and per-cell BV-equation.
+    2. `keccakf1600_seal_spec` (Opaque.lean) — yields impl `r` with
+       `keccak_f.keccak_f (lift s1) = .ok (lift r)` and `r.i.val = 0`.
+    3. `sponge_xor_block_into_state_spec` (XorBlockSpec.lean) — yields
+       spec `s_spec_1` with per-cell `xor_block_value_at` equation.
+    4. **Bridge**: `s_spec_1 = lift s1` by per-cell BV-equality
+       (List.ext_getElem + UScalar.eq_of_val_eq + the per-cell bridge).
+    5. Compose: `sponge.absorb_block (lift s) block RATE`
+                = `keccak_f.keccak_f s_spec_1`
+                = `keccak_f.keccak_f (lift s1)`
+                = `.ok (lift r)`.
 
   ## See also
 
@@ -172,6 +175,152 @@ private theorem block_take4_eq_blocks_take4
   rw [show start.val + RATE.val - start.val = RATE.val from by omega]
   rw [List.drop_take, List.drop_drop, List.take_take]; congr 1; omega
 
+/-- `(Std.core.num.U64.from_le_bytes a).bv = BitVec.fromLEBytes [b0.bv, ..., b7.bv]`
+    when `a.val` is the explicit 8-byte list. Closes the `BitVec.cast` layer
+    via the fact that `8 * 8 = 64` reduces definitionally, going via
+    `Subtype.ext` to avoid a motive-not-type-correct rewrite. -/
+private theorem UScalar_bv_of_U64_from_le_bytes_eq
+    (a : Std.Array Std.U8 8#usize)
+    (b0 b1 b2 b3 b4 b5 b6 b7 : Std.U8)
+    (h_a_val : a.val = [b0, b1, b2, b3, b4, b5, b6, b7]) :
+    (Std.core.num.U64.from_le_bytes a).bv =
+      BitVec.fromLEBytes
+        [b0.bv, b1.bv, b2.bv, b3.bv, b4.bv, b5.bv, b6.bv, b7.bv] := by
+  -- Pull the equality into a `Subtype.ext`-style equality on the whole array
+  -- (the length proof becomes trivial under `h_a_val`).
+  have h_arr :
+      a = (⟨[b0, b1, b2, b3, b4, b5, b6, b7], rfl⟩ : Std.Array Std.U8 8#usize) :=
+    Subtype.ext h_a_val
+  rw [h_arr]
+  -- Now both sides have a concrete list, so the `.cast` is trivially `id`.
+  show ((BitVec.fromLEBytes
+            (List.map Std.U8.bv [b0, b1, b2, b3, b4, b5, b6, b7])).cast (by simp))
+       = _
+  simp only [List.map_cons, List.map_nil]
+  rfl
+
+/-- `(Std.core.num.U32.from_le_bytes a).bv = BitVec.fromLEBytes [b0.bv, ..., b3.bv]`
+    when `a.val` is the explicit 4-byte list. -/
+private theorem UScalar_bv_of_U32_from_le_bytes_eq
+    (a : Std.Array Std.U8 4#usize)
+    (b0 b1 b2 b3 : Std.U8)
+    (h_a_val : a.val = [b0, b1, b2, b3]) :
+    (Std.core.num.U32.from_le_bytes a).bv =
+      BitVec.fromLEBytes [b0.bv, b1.bv, b2.bv, b3.bv] := by
+  have h_arr :
+      a = (⟨[b0, b1, b2, b3], rfl⟩ : Std.Array Std.U8 4#usize) :=
+    Subtype.ext h_a_val
+  rw [h_arr]
+  show ((BitVec.fromLEBytes
+            (List.map Std.U8.bv [b0, b1, b2, b3])).cast (by simp)) = _
+  simp only [List.map_cons, List.map_nil]
+  rfl
+
+/-- **The bridge:** the per-cell U64 value produced by `load_block_spec`'s
+    BV-interleave form equals the per-cell U64 value used in
+    `xor_block_value_at`'s `U64.from_le_bytes` form, for the same 8 LE bytes
+    read out of `blocks`. -/
+private theorem load_block_to_xor_block_bridge
+    (blocks : Slice Std.U8) (start RATE : Std.Usize) (b : Nat)
+    (block : Slice Std.U8)
+    (h_block_val : block.val = blocks.val.slice start.val (start.val + RATE.val))
+    (h_blk : start.val + RATE.val ≤ blocks.val.length)
+    (h_8b : 8 * b + 8 ≤ RATE.val) :
+    ((BitVec.zeroExtend 64
+        ((Lane2U32_from_4byte_LE_pairs blocks start b).val[1]!.bv)) <<< 32)
+      ||| BitVec.zeroExtend 64
+            ((Lane2U32_from_4byte_LE_pairs blocks start b).val[0]!.bv)
+      = (Std.core.num.U64.from_le_bytes (list_8_at block.val (8 * b))).bv := by
+  -- Names for the 8 bytes read out of `blocks` at offset `start.val + 8b`.
+  set p := start.val + 8 * b with hp_def
+  -- `blocks.val.length` is large enough for the 8-byte window.
+  have h_p_8 : p + 8 ≤ blocks.val.length := by rw [hp_def]; omega
+  -- Loop0's two 4-byte halves: at offsets `p` and `p + 4`.
+  have h_p_4 : p + 4 ≤ blocks.val.length := by omega
+  have h_p4_4 : p + 4 + 4 ≤ blocks.val.length := by omega
+  -- ## Unfold `Lane2U32_from_4byte_LE_pairs` and reduce its `.val`s.
+  have h_lo_val :
+      (Lane2U32_from_4byte_LE_pairs blocks start b).val[0]! =
+        Std.core.num.U32.from_le_bytes
+          ⟨((blocks.val.drop p).take 4) ++
+              List.replicate (4 - ((blocks.val.drop p).take 4).length) (0#u8),
+           by
+             have : ((blocks.val.drop p).take 4).length ≤ 4 := by
+               simp [List.length_take]
+             simp [List.length_append, List.length_replicate]⟩ := by
+    unfold Lane2U32_from_4byte_LE_pairs
+    rfl
+  have h_hi_val :
+      (Lane2U32_from_4byte_LE_pairs blocks start b).val[1]! =
+        Std.core.num.U32.from_le_bytes
+          ⟨((blocks.val.drop (p + 4)).take 4) ++
+              List.replicate (4 - ((blocks.val.drop (p + 4)).take 4).length) (0#u8),
+           by
+             have : ((blocks.val.drop (p + 4)).take 4).length ≤ 4 := by
+               simp [List.length_take]
+             simp [List.length_append, List.length_replicate]⟩ := by
+    unfold Lane2U32_from_4byte_LE_pairs
+    rfl
+  -- ## Reduce the U32 byte-lists via `padded4_eq_explicit`.
+  have h_lo_bytes :
+      ((blocks.val.drop p).take 4) ++
+        List.replicate (4 - ((blocks.val.drop p).take 4).length) (0#u8)
+      = [blocks.val[p]!, blocks.val[p+1]!, blocks.val[p+2]!, blocks.val[p+3]!] :=
+    padded4_eq_explicit blocks.val p h_p_4
+  have h_hi_bytes :
+      ((blocks.val.drop (p+4)).take 4) ++
+        List.replicate (4 - ((blocks.val.drop (p+4)).take 4).length) (0#u8)
+      = [blocks.val[p+4]!, blocks.val[p+5]!, blocks.val[p+6]!, blocks.val[p+7]!] := by
+    have h_eq := padded4_eq_explicit blocks.val (p + 4) h_p4_4
+    -- Indices `(p+4)+i` simplify to `p + (4+i)`.
+    simpa [show p + 4 + 1 = p + 5 from by omega,
+           show p + 4 + 2 = p + 6 from by omega,
+           show p + 4 + 3 = p + 7 from by omega] using h_eq
+  -- ## Build the `bv` rewrite for each U32.
+  have h_lo_bv :
+      ((Lane2U32_from_4byte_LE_pairs blocks start b).val[0]!).bv
+        = BitVec.fromLEBytes
+            [blocks.val[p]!.bv, blocks.val[p+1]!.bv,
+             blocks.val[p+2]!.bv, blocks.val[p+3]!.bv] := by
+    rw [h_lo_val]
+    exact UScalar_bv_of_U32_from_le_bytes_eq _ _ _ _ _ h_lo_bytes
+  have h_hi_bv :
+      ((Lane2U32_from_4byte_LE_pairs blocks start b).val[1]!).bv
+        = BitVec.fromLEBytes
+            [blocks.val[p+4]!.bv, blocks.val[p+5]!.bv,
+             blocks.val[p+6]!.bv, blocks.val[p+7]!.bv] := by
+    rw [h_hi_val]
+    exact UScalar_bv_of_U32_from_le_bytes_eq _ _ _ _ _ h_hi_bytes
+  -- ## Reduce `list_8_at block.val (8*b)`.
+  have h_block_take8_blocks :
+      (block.val.drop (8 * b)).take 8 = (blocks.val.drop p).take 8 := by
+    rw [hp_def]
+    exact block_take8_eq_blocks_take8 blocks start RATE b block h_block_val h_8b
+  -- `list_8_at block.val (8*b)` unfolds to padded 8-byte list, which after
+  -- the inner-window equality equals the explicit 8-byte list at `blocks`.
+  have h_l8_val :
+      (list_8_at block.val (8 * b)).val =
+        [blocks.val[p]!, blocks.val[p+1]!, blocks.val[p+2]!, blocks.val[p+3]!,
+         blocks.val[p+4]!, blocks.val[p+5]!, blocks.val[p+6]!, blocks.val[p+7]!] := by
+    unfold list_8_at
+    show ((block.val.drop (8 * b)).take 8) ++
+         List.replicate (8 - ((block.val.drop (8 * b)).take 8).length) (0#u8) = _
+    rw [h_block_take8_blocks]
+    exact padded8_eq_explicit blocks.val p h_p_8
+  -- ## Apply `UScalar_bv_of_U64_from_le_bytes_eq`.
+  have h_u64_bv :
+      (Std.core.num.U64.from_le_bytes (list_8_at block.val (8 * b))).bv
+        = BitVec.fromLEBytes
+            [blocks.val[p]!.bv, blocks.val[p+1]!.bv,
+             blocks.val[p+2]!.bv, blocks.val[p+3]!.bv,
+             blocks.val[p+4]!.bv, blocks.val[p+5]!.bv,
+             blocks.val[p+6]!.bv, blocks.val[p+7]!.bv] :=
+    UScalar_bv_of_U64_from_le_bytes_eq _ _ _ _ _ _ _ _ _ h_l8_val
+  -- ## Close: LHS = the 4+4 split version, RHS = the 8-byte version. Use
+  -- `fromLEBytes_8_split_4_4` to bridge.
+  rw [h_lo_bv, h_hi_bv, h_u64_bv]
+  exact (fromLEBytes_8_split_4_4 _ _ _ _ _ _ _ _).symm
+
 /-! ## Phase 2 — `keccak.absorb_block` ↔ `sponge.absorb_block`. -/
 
 /-- Local triple-of-ok helper. -/
@@ -194,14 +343,34 @@ private theorem triple_exists_ok_ab {α : Type} {x : Result α}
   | .div =>
       exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
 
+/-- The spec-side block window: a `Slice U8` whose `.val` is
+    `blocks.val.slice start (start+RATE)`. This is the `<block>` argument
+    to `sponge.absorb_block` in the textbook post of
+    `keccak.absorb_block_spec`. -/
+private def block_of_blocks
+    (blocks : Slice Std.U8) (start RATE : Std.Usize)
+    (h_blk : start.val + RATE.val ≤ blocks.val.length) :
+    Slice Std.U8 :=
+  ⟨blocks.val.slice start.val (start.val + RATE.val), by
+    -- `blocks.val.slice a b ` is `(blocks.val.drop a).take (b - a)`, length ≤ blocks.val.length.
+    have h_len : (blocks.val.slice start.val (start.val + RATE.val)).length ≤ blocks.val.length := by
+      unfold List.slice
+      rw [List.length_take, List.length_drop]; omega
+    have := blocks.property; omega⟩
+
 /-- `keccak.absorb_block RATE s blocks start` — XOR a `RATE`-byte block
     from `blocks` (at offset `start`) into the state, then apply the
     Keccak-f permutation.
 
-    Phase 2 post (Partial-B): termination plus `r.i.val = 0`. The
-    `r.i.val = 0` clause is what the next `absorb_block`'s precondition
-    consumes in Phase 3. The full textbook post (spec-equality via
-    `sponge.absorb_block`) is deferred — see file header. -/
+    Phase 2 textbook post: termination, `r.i.val = 0`, and the spec-side
+    equation
+
+        sponge.absorb_block (lift s) (block_of_blocks blocks start RATE _) RATE
+          = .ok (lift r)
+
+    matching the "Real post" target of `Plan.lean` § 2. The `r.i.val = 0`
+    clause is what Phase 3's chain consumes; the spec equation feeds
+    `absorb_rec` accumulation. -/
 @[spec]
 theorem keccak.absorb_block_spec
     (RATE : Std.Usize) (s : state.KeccakState) (blocks : Slice Std.U8)
@@ -213,24 +382,120 @@ theorem keccak.absorb_block_spec
     (h_off : start.val + RATE.val ≤ Std.Usize.max) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.absorb_block RATE s blocks start
-    ⦃ ⇓ r => ⌜ r.i.val = 0 ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r.i.val = 0
+              ∧ sponge.absorb_block (Equivalence.lift s)
+                    (block_of_blocks blocks start RATE h_blk) RATE
+                  = .ok (Equivalence.lift r) ⌝ ⦄ := by
   -- Step 1: discharge `load_block` via its @[spec] in Bytes.lean.
   obtain ⟨s1, h_s1_eq, h_s1_post⟩ :=
     triple_exists_ok_ab
       (state.KeccakState.load_block_spec RATE s blocks start
         h_RATE_mod h_RATE_bnd h_blk h_off)
-  obtain ⟨h_s1_i, _h_s1_lanes⟩ := h_s1_post
+  obtain ⟨h_s1_i, h_s1_lanes⟩ := h_s1_post
   -- Step 2: discharge `keccakf1600` via its @[spec] in Opaque.lean.
   -- Need: s1.i.val = 0. We have s1.i = s.i, and s.i.val = 0 via h_i.
   have h_s1_i_val : s1.i.val = 0 := by rw [h_s1_i]; exact h_i
   obtain ⟨r, h_r_eq, h_r_post⟩ :=
     triple_exists_ok_ab (keccakf1600_seal_spec s1 h_s1_i_val)
-  obtain ⟨_h_r_spec, h_r_i⟩ := h_r_post
-  -- Step 3: assemble.
-  apply triple_of_ok_ab (v := r) _ h_r_i
-  show keccak.absorb_block RATE s blocks start = .ok r
-  unfold keccak.absorb_block
-  rw [h_s1_eq]; simp only [bind_tc_ok]
-  exact h_r_eq
+  obtain ⟨h_r_spec, h_r_i⟩ := h_r_post
+  -- Step 3a: assemble impl-side equality `keccak.absorb_block ... = .ok r`.
+  have h_impl_eq : keccak.absorb_block RATE s blocks start = .ok r := by
+    unfold keccak.absorb_block
+    rw [h_s1_eq]; simp only [bind_tc_ok]
+    exact h_r_eq
+  -- Step 4: spec-side composition.
+  -- Let `block := block_of_blocks blocks start RATE h_blk`. We need:
+  --   sponge.absorb_block (lift s) block RATE = .ok (lift r)
+  -- via:
+  --   (a) `sponge.xor_block_into_state (lift s) block RATE = .ok (lift s1)`
+  --       — from `sponge_xor_block_into_state_spec` + per-cell rewrite
+  --         using `load_block_to_xor_block_bridge`.
+  --   (b) `keccak_f.keccak_f (lift s1) = .ok (lift r)` — from
+  --       `keccakf1600_seal_spec`.
+  let block := block_of_blocks blocks start RATE h_blk
+  -- block.val = blocks.val.slice start.val (start.val + RATE.val) by defn.
+  have h_block_val : block.val = blocks.val.slice start.val (start.val + RATE.val) := rfl
+  have h_block_len : block.val.length = RATE.val := by
+    rw [h_block_val]; unfold List.slice
+    rw [List.length_take, List.length_drop]; omega
+  -- Apply `sponge_xor_block_into_state_spec`.
+  obtain ⟨s_spec_1, h_xbs_eq, h_xbs_post⟩ :=
+    triple_exists_ok_ab
+      (sponge_xor_block_into_state_spec RATE (Equivalence.lift s) block
+        h_RATE_bnd h_RATE_mod h_block_len)
+  -- We claim `s_spec_1 = Equivalence.lift s1` by per-cell equality.
+  have h_spec_lift_s1 : s_spec_1 = Equivalence.lift s1 := by
+    -- Both are `Array U64 25#usize = { val : List U64 // val.length = 25 }`.
+    -- Reduce to list equality, then per-cell.
+    apply Subtype.ext
+    apply List.ext_getElem
+    · -- Lengths.
+      have h1 : s_spec_1.val.length = 25 := s_spec_1.property
+      have h2 : (Equivalence.lift s1).val.length = 25 := (Equivalence.lift s1).property
+      omega
+    intro k hk_lhs _
+    have hk_25 : k < 25 := by
+      have hlen : s_spec_1.val.length = 25 := s_spec_1.property
+      omega
+    -- Replace `[k]` with `[k]!` using `getElem!_pos`.
+    have h_len1 : s_spec_1.val.length = 25 := s_spec_1.property
+    have h_len2 : (Equivalence.lift s1).val.length = 25 := (Equivalence.lift s1).property
+    rw [show s_spec_1.val[k] = s_spec_1.val[k]! from
+          (getElem!_pos s_spec_1.val k (by rw [h_len1]; exact hk_25)).symm]
+    rw [show (Equivalence.lift s1).val[k] = (Equivalence.lift s1).val[k]! from
+          (getElem!_pos (Equivalence.lift s1).val k (by rw [h_len2]; exact hk_25)).symm]
+    -- Use h_xbs_post and h_s1_lanes.
+    rw [h_xbs_post k hk_25]
+    -- Compare with h_s1_lanes k hk_25.
+    have h_lane := h_s1_lanes k hk_25
+    -- Two `U64`s: equal iff their `.bv` are equal (single-field structure).
+    apply Std.UScalar.eq_of_val_eq
+    -- The goal is now on `.bv.toNat`. Apply `BitVec.toNat`-injectivity by
+    -- reducing to a `.bv` equality.
+    show (xor_block_value_at (Equivalence.lift s) block RATE k).bv.toNat
+         = ((Equivalence.lift s1).val[k]!).bv.toNat
+    -- Show the `.bv`-equality first, then transport via `congrArg`.
+    suffices h_bv : (xor_block_value_at (Equivalence.lift s) block RATE k).bv
+                      = ((Equivalence.lift s1).val[k]!).bv by
+      rw [h_bv]
+    -- Now we have a clean BitVec 64 = BitVec UScalarTy.U64.numBits goal —
+    -- but `UScalarTy.U64.numBits` reduces to `64` definitionally.
+    rw [h_lane]
+    -- Unfold `xor_block_value_at`.
+    unfold xor_block_value_at
+    set b := 5 * (k % 5) + k / 5 with hb_def
+    by_cases h_b_lt : b < RATE.val / 8
+    · -- Active cell: `b < RATE.val / 8`.
+      rw [if_pos h_b_lt, if_pos h_b_lt]
+      -- LHS at `.bv`: `(state[k]! ^^^ from_le_bytes ...).bv`.
+      -- `UScalar.bv_xor` (refl-defined): `(x ^^^ y).bv = x.bv ^^^ y.bv`.
+      -- The `U64.bv` abbrev unfolds to `UScalar.bv`.
+      show (_ ^^^ _ : Std.U64).bv = _
+      rw [Std.UScalar.bv_xor]
+      -- Reduce `8 * b + 8 ≤ RATE.val` from `h_b_lt : b < RATE.val / 8`.
+      have h_RATE_div_mul : 8 * (RATE.val / 8) ≤ RATE.val := by
+        have h_decomp : RATE.val = 8 * (RATE.val / 8) + RATE.val % 8 :=
+          (Nat.div_add_mod _ _).symm
+        omega
+      have h_8b : 8 * b + 8 ≤ RATE.val := by
+        have : b + 1 ≤ RATE.val / 8 := h_b_lt
+        have h_mul : 8 * (b + 1) ≤ 8 * (RATE.val / 8) :=
+          Nat.mul_le_mul_left 8 this
+        omega
+      -- Use the bridge to convert.
+      have h_bridge := load_block_to_xor_block_bridge
+        blocks start RATE b block h_block_val h_blk h_8b
+      rw [h_bridge]
+    · -- Inactive cell.
+      rw [if_neg h_b_lt, if_neg h_b_lt]
+  -- Step 5: substitute `s_spec_1 = lift s1` into the do-chain.
+  -- Goal: ⦃True⦄ keccak.absorb_block ... ⦃⇓r => r.i.val = 0 ∧ sponge.absorb_block (lift s) block RATE = .ok (lift r)⦄
+  have h_spec_compose :
+      sponge.absorb_block (Equivalence.lift s) block RATE = .ok (Equivalence.lift r) := by
+    unfold sponge.absorb_block
+    rw [h_xbs_eq]; simp only [bind_tc_ok]
+    rw [h_spec_lift_s1]
+    exact h_r_spec
+  apply triple_of_ok_ab (v := r) h_impl_eq ⟨h_r_i, h_spec_compose⟩
 
 end libcrux_iot_sha3.Sponge
