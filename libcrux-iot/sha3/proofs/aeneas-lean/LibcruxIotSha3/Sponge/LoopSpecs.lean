@@ -287,26 +287,53 @@ theorem state.load_block_2u32_loop1_spec
     (state_flat : Std.Array lane.Lane2U32 25#usize)
     (s : state.KeccakState)
     (h_le : iter.start.val ≤ iter.end.val)
-    (h_bnd : iter.end.val ≤ 25) :
+    (h_bnd : iter.end.val ≤ 25)
+    (h_zero : iter.start.val = 0) :
     ⦃ ⌜ True ⌝ ⦄
     state.load_block_2u32_loop1 iter s state_flat
-    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜
+        r.i = s.i
+        ∧ (∀ j : Nat, j < iter.end.val → j < 25 →
+             lift_lane_bv (r.st.val[5*(j%5) + j/5]!).val[0]!.bv
+                          (r.st.val[5*(j%5) + j/5]!).val[1]!.bv
+             = loop1_lane_at s state_flat j)
+    ⌝ ⦄ := by
   obtain ⟨iter_start, iter_end⟩ := iter
+  simp only at h_zero h_le
   unfold state.load_block_2u32_loop1
-  -- Apply `loop_range_spec_usize` with `inv k acc := acc.i = s.i`.
+  -- Strong invariant: at iteration `k`, `acc.i = s.i`, every touched
+  -- lane (`j < k`) carries the XOR'd `loop1_lane_at s state_flat j`
+  -- value, and every untouched lane (`j ≥ k`) equals its initial value
+  -- in `s.st`. We track both pieces of information to thread the
+  -- preservation step. The `h_zero : iter.start.val = 0` hypothesis
+  -- ensures the initial `j < k.val` clause is vacuous.
   apply Std.Do.Triple.of_entails_right _
     (loop_range_spec_usize
       (fun (iter1, s1) => state.load_block_2u32_loop1.body state_flat iter1 s1)
       s iter_start iter_end
-      (fun _ s1 => pure (s1.i = s.i))
+      (fun k s' => pure (
+          s'.i = s.i
+          ∧ (∀ j : Nat, j < k.val → j < 25 →
+               lift_lane_bv (s'.st.val[5*(j%5) + j/5]!).val[0]!.bv
+                            (s'.st.val[5*(j%5) + j/5]!).val[1]!.bv
+               = loop1_lane_at s state_flat j)
+          ∧ (∀ j : Nat, k.val ≤ j → j < 25 →
+               s'.st.val[5*(j%5) + j/5]! = s.st.val[5*(j%5) + j/5]!)))
       h_le
-      (pure_prop_holds rfl)
+      (pure_prop_holds ⟨rfl,
+        fun j hjk _ => by
+          -- `j < iter_start.val = 0` is impossible.
+          rw [h_zero] at hjk; exact absurd hjk (Nat.not_lt_zero j),
+        fun _ _ _ => rfl⟩)
       ?_)
   · rw [PostCond.entails_noThrow]
     intro r h
-    exact of_pure_prop_holds h
+    obtain ⟨hri, hri_lanes, _hri_unchanged⟩ := of_pure_prop_holds h
+    refine ⟨hri, ?_⟩
+    intro j hj_end hj_25
+    exact hri_lanes j hj_end hj_25
   · intro acc k h_ge h_le_k hinv
-    have h_acc_i : acc.i = s.i := of_pure_prop_holds hinv
+    obtain ⟨h_acc_i, h_acc_done, h_acc_undone⟩ := of_pure_prop_holds hinv
     unfold state.load_block_2u32_loop1.body
     apply Std.Do.Triple.bind _ _
       (IteratorRange_next_spec_usize k iter_end
@@ -328,7 +355,17 @@ theorem state.load_block_2u32_loop1_spec
     rcases o with _ | i
     · rintro ⟨hge, hiter1_eq⟩
       show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
-      exact triple_of_ok_local rfl (pure_prop_holds h_acc_i)
+      -- We have `k ≥ iter_end` in the loop-exhaustion branch and
+      -- `k ≤ iter_end` from `loop_range_spec_usize`, so `k = iter_end`.
+      -- The inv's `j < k` clause then weakens to `j < iter_end`, and
+      -- the `k ≤ j` clause weakens to `iter_end ≤ j`.
+      have hk_eq : k.val = iter_end.val := Nat.le_antisymm h_le_k hge
+      refine triple_of_ok_local rfl (pure_prop_holds
+        ⟨h_acc_i, ?_, ?_⟩)
+      · intro j hj_end hj_25
+        exact h_acc_done j (Nat.lt_of_lt_of_le hj_end hge) hj_25
+      · intro j hj_ge hj_25
+        exact h_acc_undone j (hk_eq ▸ hj_ge) hj_25
     · rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
       cases hi_eq
       have hk_25 : k.val < 25 := by
@@ -341,12 +378,146 @@ theorem state.load_block_2u32_loop1_spec
              lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index
              lane.Lane2U32.from_ints
       mvcgen
-      -- Every VC is a scalar bound; the inv-preservation VC is also
-      -- closed by `scalar_tac` because the body's update lifts to
-      -- `{ acc with st := ... }` whose `.i` field is `acc.i = s.i` (the
-      -- `h_acc_i` hypothesis from the prior iteration is in scope, and
-      -- `scalar_tac` lifts the struct-update through equality).
-      all_goals scalar_tac
+      -- All scalar-bound VCs close via `scalar_tac`. The remaining VC
+      -- is the inv-preservation goal: we expose names and discharge it
+      -- below.
+      all_goals (try scalar_tac)
+      expose_names
+      -- Goal shape: `k.val < iter_end.val ∧ iter1.end = iter_end ∧
+      --   iter1.start.val = k.val + 1 ∧ (pure (... new state inv)).holds`.
+      refine ⟨hk_lt, hiter1_end, hiter1_start, ?_⟩
+      apply pure_prop_holds
+      -- The new state's `.st` is `r_12 = acc.st.set r_11 (Array.make ...)`
+      -- where `r_11.val = 5*(k%5) + k/5`. Other than that one cell, the
+      -- array agrees with `acc.st`.
+      expose_names
+      -- Auxiliary scalar identities for the set index.
+      have hr_idx : r_11.val = 5 * (k.val % 5) + k.val / 5 := by
+        scalar_tac
+      have hr_3_idx : r_3.val = 5 * (k.val % 5) + k.val / 5 := by
+        scalar_tac
+      have hr_idx_25 : r_11.val < 25 := by
+        rw [hr_idx]; scalar_tac
+      -- Cell-index injectivity on [0, 25): the map j ↦ 5*(j%5)+j/5 is
+      -- injective. We package this as a small named hypothesis, proved
+      -- by `decide` on the bounded statement.
+      have h_inj_dec :
+          ∀ (a b : Fin 25), a ≠ b →
+            5 * (a.val % 5) + a.val / 5 ≠ 5 * (b.val % 5) + b.val / 5 := by
+        decide
+      have h_inj : ∀ (j : Nat), j < 25 → j ≠ k.val →
+          5 * (j % 5) + j / 5 ≠ 5 * (k.val % 5) + k.val / 5 := by
+        intro j hj_25 hjk_ne
+        have h_a : (⟨j, hj_25⟩ : Fin 25) ≠ ⟨k.val, hk_25⟩ := by
+          intro h; apply hjk_ne; exact Fin.mk.inj_iff.mp h
+        exact h_inj_dec ⟨j, hj_25⟩ ⟨k.val, hk_25⟩ h_a
+      refine ⟨h_acc_i, ?_, ?_⟩
+      · -- ∀ j < k+1, j < 25 → lift_lane_bv (r_12[...][0]!.bv) (r_12[...][1]!.bv) = loop1_lane_at s state_flat j
+        intro j hj_start hj_25
+        have hj_le_k : j ≤ k.val := by
+          have : j < k.val + 1 := by rw [← hiter1_start]; exact hj_start
+          scalar_tac
+        have hp_lt_25 : 5 * (j % 5) + j / 5 < 25 := by
+          have h1 : j % 5 < 5 := Nat.mod_lt _ (by decide)
+          have h2 : j / 5 < 5 :=
+            (Nat.div_lt_iff_lt_mul (by decide : 0 < 5)).mpr (by scalar_tac)
+          scalar_tac
+        rcases Nat.lt_or_eq_of_le hj_le_k with hj_lt_k | hj_eq_k
+        · -- j < k: lane unchanged by the set since `5*(j%5)+j/5 ≠ r_11.val`.
+          have hjk_ne : j ≠ k.val := Nat.ne_of_lt hj_lt_k
+          have h_pq_ne :
+              5 * (j % 5) + j / 5 ≠ 5 * (k.val % 5) + k.val / 5 :=
+            h_inj j hj_25 hjk_ne
+          have h_ne : r_11.val ≠ 5 * (j % 5) + j / 5 := by
+            rw [hr_idx]; exact (Ne.symm h_pq_ne)
+          -- The Std.Array `set/getElem!` lemmas apply directly.
+          have h_set_ne :
+              (r_12.val)[5 * (j % 5) + j / 5]!
+                = (acc.st.val)[5 * (j % 5) + j / 5]! := by
+            have : (r_12)[5 * (j % 5) + j / 5]! = (acc.st)[5 * (j % 5) + j / 5]! := by
+              rw [h_12]
+              exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+          rw [h_set_ne]
+          exact h_acc_done j hj_lt_k hj_25
+        · -- j = k: the lane is the newly written `Array.make 2 [r_5^^^r_7, r_8^^^r_9]`.
+          subst hj_eq_k
+          have h_lt_acc : 5 * (k.val % 5) + k.val / 5 < acc.st.length := by
+            show 5 * (k.val % 5) + k.val / 5 < acc.st.val.length
+            rw [Aeneas.Std.Array.length_eq]
+            scalar_tac
+          have h_set_eq :
+              (r_12.val)[5 * (k.val % 5) + k.val / 5]!
+                = (Array.make 2#usize [r_5 ^^^ r_7, r_8 ^^^ r_9] (by simp)
+                    : lane.Lane2U32) := by
+            have : (r_12)[5 * (k.val % 5) + k.val / 5]!
+                = (Array.make 2#usize [r_5 ^^^ r_7, r_8 ^^^ r_9] (by simp)
+                    : lane.Lane2U32) := by
+              rw [h_12]
+              exact Aeneas.Std.Array.getElem!_Nat_set_eq _ _ _ _
+                ⟨hr_idx, h_lt_acc⟩
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+          rw [h_set_eq]
+          -- The new lane's halves: val[0]! = r_5 ^^^ r_7, val[1]! = r_8 ^^^ r_9.
+          -- The Array.make construction has its .val as the explicit list.
+          have h_make_v0 :
+              ((Array.make 2#usize [r_5 ^^^ r_7, r_8 ^^^ r_9] (by simp)
+                  : lane.Lane2U32).val[0]!) = r_5 ^^^ r_7 := by
+            simp [Aeneas.Std.Array.make]
+          have h_make_v1 :
+              ((Array.make 2#usize [r_5 ^^^ r_7, r_8 ^^^ r_9] (by simp)
+                  : lane.Lane2U32).val[1]!) = r_8 ^^^ r_9 := by
+            simp [Aeneas.Std.Array.make]
+          rw [h_make_v0, h_make_v1]
+          -- r_5 = acc.st[r_3][0]!, r_7 = state_flat[k][0]!, etc.
+          -- And acc.st[r_3.val]! = s.st[5*(k%5)+k/5]! via h_acc_undone (k ≤ k).
+          have h_acc_lane :
+              (acc.st.val)[5 * (k.val % 5) + k.val / 5]!
+                = (s.st.val)[5 * (k.val % 5) + k.val / 5]! :=
+            h_acc_undone k.val (Nat.le_refl _) hk_25
+          have h_r4 : r_4 = (s.st.val)[5 * (k.val % 5) + k.val / 5]! := by
+            rw [h_4]
+            show (acc.st.val)[r_3.val]! = (s.st.val)[5 * (k.val % 5) + k.val / 5]!
+            rw [hr_3_idx, h_acc_lane]
+          have h_r5 : r_5.bv =
+              ((s.st.val)[5 * (k.val % 5) + k.val / 5]!).val[0]!.bv := by
+            rw [h_5, h_r4]
+            rfl
+          have h_r8 : r_8.bv =
+              ((s.st.val)[5 * (k.val % 5) + k.val / 5]!).val[1]!.bv := by
+            rw [h_8, h_r4]
+            rfl
+          have h_r6 : r_6 = state_flat.val[k.val]! := by
+            rw [h_6]
+          have h_r7 : r_7.bv = (state_flat.val[k.val]!).val[0]!.bv := by
+            rw [h_7, h_r6]
+            rfl
+          have h_r9 : r_9.bv = (state_flat.val[k.val]!).val[1]!.bv := by
+            rw [h_9, h_r6]
+            rfl
+          -- Unfold loop1_lane_at and use Std.U32 xor's .bv = xor of .bv.
+          unfold loop1_lane_at
+          simp only [Aeneas.Std.UScalar.bv_xor, h_r5, h_r7, h_r8, h_r9]
+      · -- ∀ j, k+1 ≤ j → j < 25 → r_12[5*(j%5)+j/5]! = s.st[5*(j%5)+j/5]!
+        intro j hj_ge hj_25
+        have hj_gt_k : k.val < j := by
+          have : k.val + 1 ≤ j := by rw [← hiter1_start]; exact hj_ge
+          scalar_tac
+        have hjk_ne : j ≠ k.val := (Nat.ne_of_lt hj_gt_k).symm
+        have h_pq_ne :
+            5 * (j % 5) + j / 5 ≠ 5 * (k.val % 5) + k.val / 5 :=
+          h_inj j hj_25 hjk_ne
+        have h_ne : r_11.val ≠ 5 * (j % 5) + j / 5 := by
+          rw [hr_idx]; exact (Ne.symm h_pq_ne)
+        have h_set_ne :
+            (r_12.val)[5 * (j % 5) + j / 5]!
+              = (acc.st.val)[5 * (j % 5) + j / 5]! := by
+          have : (r_12)[5 * (j % 5) + j / 5]! = (acc.st)[5 * (j % 5) + j / 5]! := by
+            rw [h_12]
+            exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+        rw [h_set_ne]
+        exact h_acc_undone j (Nat.le_of_lt hj_gt_k) hj_25
 
 /-! ### Loop of `state.store_block_2u32`.
 
