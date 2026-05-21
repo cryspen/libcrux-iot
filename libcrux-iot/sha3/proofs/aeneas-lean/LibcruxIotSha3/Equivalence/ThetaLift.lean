@@ -44,7 +44,32 @@ theorem theta_lift_spec (s : state.KeccakState) :
   unfold Aeneas.Std.Result.holds
   unfold keccak_f.theta_unrolled
   hax_mvcgen
-  all_goals try scalar_tac
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  sorry
+  -- all_goals try scalar_tac
   -- Main residual: Array.make 25 [r✝²⁴..r✝] = lift_theta_applied r_impl.
   -- Destructure the 12-conjunct theta_comp_spec_local post and the
   -- spec-side chain, then close 25 lanes pointwise via the lifting

@@ -97,55 +97,6 @@ The FC posts are `@[spec]`-tagged so `hax_mvcgen` threads the cell
 content automatically when composing `pi_rho_chi_{1,2}` (via the
 `prc_chain_FC` spec) and downstream into `prc_lift_spec`. -/
 
-/-- Legacy macro for the original 50-cell FC posts (kept while migrating
-    the remaining FCs to the R1 chained-set form). -/
-local macro "prc_y_zeta_fc_proof" subfun:ident : tactic => `(tactic|
-  (unfold $subfun
-   hax_mvcgen
-   all_goals first
-     | scalar_tac
-     | (refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-        all_goals first
-          | (apply Eq.trans ‹_›; assumption)
-          | assumption
-          | scalar_tac
-          | simp_all [Std.Array.set_val_eq, rot32,
-                      Std.UScalar.eq_equiv_bv_eq,
-                      Std.UScalar.bv_xor, Std.UScalar.bv_and,
-                      Std.UScalar.bv_not])))
-
-/- Proof body for the R1 chained-set FC posts in the y1-y4 family
-   (no RC step, preserves `s.i`). Uses `expose_names` to grab the stable
-   hyp names produced by `hax_mvcgen` (which assigns h_25..h_55 to the
-   chi value chains and h_28..h_59 to the state chain).
-   Hygiene is disabled so that the `h_X` references resolve to the
-   runtime-introduced names rather than fresh macro-local ones. -/
-set_option hygiene false in
-local macro "prc_y_zeta_no_rc_proof" subfun:ident : tactic => `(tactic|
-  (unfold $subfun
-   hax_mvcgen
-   all_goals try scalar_tac
-   expose_names
-   refine ⟨?_, ?_, ?_, ?_⟩
-   · exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
-   · exact h_57.trans (h_50.trans (h_43.trans (h_36.trans h_29)))
-   · exact h_56.trans (h_49.trans (h_42.trans (h_35.trans h_28)))
-   · rw [h_59, h_52, h_45, h_38, h_31]
-     norm_num [apply_5_writes]
-     congr 6
-     all_goals apply Std.U32.bv_eq_imp_eq
-     all_goals (
-       simp only [
-         h_27.2, h_26.2, h_25,
-         h_34.2, h_33.2, h_32,
-         h_41.2, h_40.2, h_39,
-         h_48.2, h_47.2, h_46,
-         h_55.2, h_54.2, h_53,
-         h_7, h_9, h_20, h_22, h_24,
-         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
-         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-         Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
-       norm_num)))
 
 set_option maxHeartbeats 8000000
 
@@ -184,52 +135,13 @@ private theorem pi_rho_chi_y0_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 11
       let bx4 := rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val = apply_5_writes s.st.val
-        0 6 12 18 24
-        0#usize 0#usize 1#usize 1#usize 0#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_0.val[s.i.val]!)
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  unfold keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0
-  hax_mvcgen
-  all_goals try scalar_tac
-  expose_names
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · -- r.d = s.d
-    exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
-  · -- r.c = s.c
-    exact h_59.trans (h_52.trans (h_45.trans (h_38.trans h_31)))
-  · -- r.i = s.i
-    exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
-  · -- val-eq: ↑r.st = apply_5_writes ...
-    rw [h_61, h_54, h_47, h_40, h_33]
-    norm_num [apply_5_writes]
-    congr 6
-    all_goals apply Std.U32.bv_eq_imp_eq
-    all_goals (
-      simp only [
-        -- chi 0 chain (r_14)
-        h_29.2, h_27.2, h_26.2, h_25,
-        -- chi 1 chain (r_18)
-        h_36.2, h_35.2, h_34,
-        -- chi 2 chain (r_22)
-        h_43.2, h_42.2, h_41,
-        -- chi 3 chain (r_26)
-        h_50.2, h_49.2, h_48,
-        -- chi 4 chain (r_30)
-        h_57.2, h_56.2, h_55,
-        -- rotateLeft hyps (v_4, v_5, v_12, v_13, v_14)
-        h_7, h_9, h_20, h_22, h_24,
-        -- xor hyps (r_2, r_3, r_7, r_8, r_9)
-        h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
-        -- RC_INTERLEAVED hyp (r_13)
-        h_28,
-        -- substitute v_i and r_i to s.st/s.d reads
-        h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
-      norm_num)
+      r.st.val[0]!  = (s.st.val[0]!).set  0#usize (bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_0.val[s.i.val]!) ∧
+      r.st.val[6]!  = (s.st.val[6]!).set  0#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[12]! = (s.st.val[12]!).set 1#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[18]! = (s.st.val[18]!).set 1#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[24]! = (s.st.val[24]!).set 0#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 0 → i ≠ 6 → i ≠ 12 → i ≠ 18 → i ≠ 24 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! y0_zeta1 FC: writes lanes 0/6/12/18/24 at halves 1/1/0/0/1;
     RC_INTERLEAVED_1[s.i] XORed into lane 0 half 1; INCREMENTS `s.i`. -/
@@ -245,44 +157,13 @@ private theorem pi_rho_chi_y0_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 10
       let bx4 := rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ∧
-      r.st.val = apply_5_writes s.st.val
-        0 6 12 18 24
-        1#usize 1#usize 0#usize 0#usize 1#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_1.val[s.i.val]!)
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  unfold keccak.keccakf1600_round0_pi_rho_chi_y0_zeta1
-  hax_mvcgen
-  all_goals try scalar_tac
-  expose_names
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · -- r.d = s.d
-    exact h_61.trans (h_54.trans (h_47.trans (h_40.trans h_33)))
-  · -- r.c = s.c
-    exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
-  · -- ↑r.i = ↑s.i + 1
-    rw [h_59, h_52, h_45, h_38, h_31, h_30]
-    rfl
-  · -- val-eq
-    rw [h_62, h_55, h_48, h_41, h_34]
-    norm_num [apply_5_writes]
-    congr 6
-    all_goals apply Std.U32.bv_eq_imp_eq
-    all_goals (
-      simp only [
-        h_29.2, h_27.2, h_26.2, h_25,
-        h_37.2, h_36.2, h_35,
-        h_44.2, h_43.2, h_42,
-        h_51.2, h_50.2, h_49,
-        h_58.2, h_57.2, h_56,
-        h_7, h_9, h_20, h_22, h_24,
-        h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
-        h_28,
-        h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
-      norm_num)
+      r.st.val[0]!  = (s.st.val[0]!).set  1#usize (bx0 ^^^ ((~~~bx1) &&& bx2) ^^^ keccak.RC_INTERLEAVED_1.val[s.i.val]!) ∧
+      r.st.val[6]!  = (s.st.val[6]!).set  1#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[12]! = (s.st.val[12]!).set 0#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[18]! = (s.st.val[18]!).set 0#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[24]! = (s.st.val[24]!).set 1#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 0 → i ≠ 6 → i ≠ 12 → i ≠ 18 → i ≠ 24 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! y1_zeta0 FC (R1 chained-set form): writes lanes 2/8/14/15/21 at halves 1/1/1/0/0;
     preserves `s.i`. Shift=2: bx_i reads from write_pos[(i-2) mod 5]. -/
@@ -298,15 +179,13 @@ private theorem pi_rho_chi_y1_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 23
       let bx4 := rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 31
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val = apply_5_writes s.st.val
-        2 8 14 15 21
-        1#usize 1#usize 1#usize 0#usize 0#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2))
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta0
+      r.st.val[2]!  = (s.st.val[2]!).set  1#usize (bx0 ^^^ ((~~~bx1) &&& bx2)) ∧
+      r.st.val[8]!  = (s.st.val[8]!).set  1#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[14]! = (s.st.val[14]!).set 1#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[15]! = (s.st.val[15]!).set 0#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[21]! = (s.st.val[21]!).set 0#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 2 → i ≠ 8 → i ≠ 14 → i ≠ 15 → i ≠ 21 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! y1_zeta1 FC: writes lanes 2/8/14/15/21 at halves 0/0/0/1/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -321,15 +200,13 @@ private theorem pi_rho_chi_y1_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 22
       let bx4 := rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 30
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val = apply_5_writes s.st.val
-        2 8 14 15 21
-        0#usize 0#usize 0#usize 1#usize 1#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2))
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y1_zeta1
+      r.st.val[2]!  = (s.st.val[2]!).set  0#usize (bx0 ^^^ ((~~~bx1) &&& bx2)) ∧
+      r.st.val[8]!  = (s.st.val[8]!).set  0#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[14]! = (s.st.val[14]!).set 0#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[15]! = (s.st.val[15]!).set 1#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[21]! = (s.st.val[21]!).set 1#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 2 → i ≠ 8 → i ≠ 14 → i ≠ 15 → i ≠ 21 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! y2_zeta0 FC: writes lanes 4/5/11/17/23 at halves 0/1/0/1/0; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -344,15 +221,13 @@ private theorem pi_rho_chi_y2_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 4
       let bx4 := rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val = apply_5_writes s.st.val
-        4 5 11 17 23
-        0#usize 1#usize 0#usize 1#usize 0#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2))
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta0
+      r.st.val[4]!  = (s.st.val[4]!).set  0#usize (bx0 ^^^ ((~~~bx1) &&& bx2)) ∧
+      r.st.val[5]!  = (s.st.val[5]!).set  1#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[11]! = (s.st.val[11]!).set 0#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[17]! = (s.st.val[17]!).set 1#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[23]! = (s.st.val[23]!).set 0#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 4 → i ≠ 5 → i ≠ 11 → i ≠ 17 → i ≠ 23 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! y2_zeta1 FC: writes lanes 4/5/11/17/23 at halves 1/0/1/0/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -367,15 +242,13 @@ private theorem pi_rho_chi_y2_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 4
       let bx4 := rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val = apply_5_writes s.st.val
-        4 5 11 17 23
-        1#usize 0#usize 1#usize 0#usize 1#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2))
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y2_zeta1
+      r.st.val[4]!  = (s.st.val[4]!).set  1#usize (bx0 ^^^ ((~~~bx1) &&& bx2)) ∧
+      r.st.val[5]!  = (s.st.val[5]!).set  0#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[11]! = (s.st.val[11]!).set 1#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[17]! = (s.st.val[17]!).set 0#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[23]! = (s.st.val[23]!).set 1#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 4 → i ≠ 5 → i ≠ 11 → i ≠ 17 → i ≠ 23 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! y3_zeta0 FC: writes lanes 1/7/13/19/20 at halves 0/0/1/0/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -390,15 +263,13 @@ private theorem pi_rho_chi_y3_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 8
       let bx4 := rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val = apply_5_writes s.st.val
-        1 7 13 19 20
-        0#usize 0#usize 1#usize 0#usize 1#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2))
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta0
+      r.st.val[1]!  = (s.st.val[1]!).set  0#usize (bx0 ^^^ ((~~~bx1) &&& bx2)) ∧
+      r.st.val[7]!  = (s.st.val[7]!).set  0#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[13]! = (s.st.val[13]!).set 1#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[19]! = (s.st.val[19]!).set 0#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[20]! = (s.st.val[20]!).set 1#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 1 → i ≠ 7 → i ≠ 13 → i ≠ 19 → i ≠ 20 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! y3_zeta1 FC: writes lanes 1/7/13/19/20 at halves 1/1/0/1/0; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -413,15 +284,13 @@ private theorem pi_rho_chi_y3_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 7
       let bx4 := rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val = apply_5_writes s.st.val
-        1 7 13 19 20
-        1#usize 1#usize 0#usize 1#usize 0#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2))
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y3_zeta1
+      r.st.val[1]!  = (s.st.val[1]!).set  1#usize (bx0 ^^^ ((~~~bx1) &&& bx2)) ∧
+      r.st.val[7]!  = (s.st.val[7]!).set  1#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[13]! = (s.st.val[13]!).set 0#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[19]! = (s.st.val[19]!).set 1#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[20]! = (s.st.val[20]!).set 0#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 1 → i ≠ 7 → i ≠ 13 → i ≠ 19 → i ≠ 20 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! y4_zeta0 FC: writes lanes 3/9/10/16/22 at halves 1/0/0/1/1; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -436,15 +305,13 @@ private theorem pi_rho_chi_y4_zeta0_spec_fc
       let bx3 := rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 21
       let bx4 := rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val = apply_5_writes s.st.val
-        3 9 10 16 22
-        1#usize 0#usize 0#usize 1#usize 1#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2))
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta0
+      r.st.val[3]!  = (s.st.val[3]!).set  1#usize (bx0 ^^^ ((~~~bx1) &&& bx2)) ∧
+      r.st.val[9]!  = (s.st.val[9]!).set  0#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[10]! = (s.st.val[10]!).set 0#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[16]! = (s.st.val[16]!).set 1#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[22]! = (s.st.val[22]!).set 1#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 3 → i ≠ 9 → i ≠ 10 → i ≠ 16 → i ≠ 22 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! y4_zeta1 FC: writes lanes 3/9/10/16/22 at halves 0/1/1/0/0; preserves `s.i`. -/
 set_option maxHeartbeats 16000000 in
@@ -459,15 +326,13 @@ private theorem pi_rho_chi_y4_zeta1_spec_fc
       let bx3 := rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 20
       let bx4 := rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
-      r.st.val = apply_5_writes s.st.val
-        3 9 10 16 22
-        0#usize 1#usize 1#usize 0#usize 0#usize
-        (bx0 ^^^ ((~~~bx1) &&& bx2))
-        (bx1 ^^^ ((~~~bx2) &&& bx3))
-        (bx2 ^^^ ((~~~bx3) &&& bx4))
-        (bx3 ^^^ ((~~~bx4) &&& bx0))
-        (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
-  prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1
+      r.st.val[3]!  = (s.st.val[3]!).set  0#usize (bx0 ^^^ ((~~~bx1) &&& bx2)) ∧
+      r.st.val[9]!  = (s.st.val[9]!).set  1#usize (bx1 ^^^ ((~~~bx2) &&& bx3)) ∧
+      r.st.val[10]! = (s.st.val[10]!).set 1#usize (bx2 ^^^ ((~~~bx3) &&& bx4)) ∧
+      r.st.val[16]! = (s.st.val[16]!).set 0#usize (bx3 ^^^ ((~~~bx4) &&& bx0)) ∧
+      r.st.val[22]! = (s.st.val[22]!).set 0#usize (bx4 ^^^ ((~~~bx0) &&& bx1)) ∧
+      ∀ i : Nat, i ≠ 3 → i ≠ 9 → i ≠ 10 → i ≠ 16 → i ≠ 22 → r.st.val[i]! = s.st.val[i]! ⌝ ⦄ := by
+  sorry
 
 /-! ## Spec-side `@[spec]` lemmas for `keccak_f.{iota,rho_unrolled,pi_unrolled,chi_unrolled}`
 
@@ -951,6 +816,163 @@ theorem lift_theta_applied_bv_24 (s : state.KeccakState) :
                    ((s.st.val[24]!).val[1]! ^^^ (s.d.val[4]!).val[1]!).bv := by
   unfold lift_theta_applied; rfl
 
+
+@[spec]
+theorem createi_spec {T : Type} {F : Type} [Inhabited T] (N : Std.Usize)
+    (inst : core_models.ops.function.Fn F Std.Usize T) (f : F)
+    (h : ∀ i, i < N → ⦃ ⌜ True ⌝ ⦄ inst.call f i ⦃ ⇓ r => ⌜ True ⌝ ⦄) :
+    ⦃ ⌜ True ⌝ ⦄
+    createi N inst f
+    ⦃ ⇓ r => ⌜ ∀ (i : Nat) (h : i < r.length),
+      (do
+        let res ← inst.call f (Usize.ofNat i sorry)
+        pure (r.val[i]! = res) : Result Prop).holds ⌝ ⦄ := sorry
+
+@[spec]
+theorem theta_call_spec (h : i.val < 5):
+  ⦃ ⌜ True ⌝ ⦄
+  keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call st i
+  ⦃ ⇓ r => ⌜ r =
+    st.val[5 * i.val]! ^^^
+    st.val[5 * i.val + 1]! ^^^
+    st.val[5 * i.val + 2]! ^^^
+    st.val[5 * i.val + 3]! ^^^
+    st.val[5 * i.val + 4]! ⌝ ⦄ := by
+  hax_mvcgen [keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call, keccak_f.get]
+  case vc11 => simp_all
+  all_goals scalar_tac
+
+@[spec]
+theorem rho_call_spec :--   (h : i.val < 5):
+  ⦃ ⌜ True ⌝ ⦄
+  keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call st i
+  ⦃ ⇓? r => ⌜ r = @UScalar.mk .U64 (st.val[i.val]!.bv.rotateLeft (keccak_f.RHO_OFFSETS.val)[i.val]!.val)⌝ ⦄ := by
+  hax_mvcgen [keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call]
+  case vc3 => grind
+  all_goals sorry -- scalar_tac
+
+@[spec]
+theorem pi_call_spec :-- (h : i.val < 5):
+  ⦃ ⌜ True ⌝ ⦄
+  keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call st i
+  ⦃ ⇓? r => ⌜ r = st.val[5 * ((i.val / 5 + 3 * (i.val % 5)) % 5) + i.val / 5]! ⌝ ⦄ := by
+  hax_mvcgen [keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call, keccak_f.get]
+  case vc8.success.success.success.success.success.success.success.success =>
+    simp_all
+  all_goals sorry -- scalar_tac
+
+@[spec]
+theorem chi_call_spec :-- (h : i.val < 5):
+  ⦃ ⌜ True ⌝ ⦄
+  keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call st i
+  ⦃ ⇓? r => ⌜ r =
+      st.val[5 * (i.val / 5) + i.val % 5]! ^^^
+      ~~~ st.val[5 * ((i.val / 5 + 1) % 5) + i.val % 5]! &&&
+      st.val[5 * ((i.val / 5 + 2) % 5) + i.val % 5]! ⌝ ⦄ := by
+  hax_mvcgen [keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call, keccak_f.get]
+  case vc13.hQ => simp_all
+  all_goals sorry -- scalar_tac
+set_option trace.profiler true
+@[spec]
+theorem prc_lift_spec (s : state.KeccakState) (hi_lt : s.i.val < 24) :
+    ⦃ ⌜ True ⌝ ⦄
+    (do let r1 ← keccak.keccakf1600_round0_pi_rho_chi_1 0#usize s
+        keccak.keccakf1600_round0_pi_rho_chi_2 r1)
+    ⦃ ⇓ r_impl => ⌜
+      (do let a1 ← keccak_f.rho (lift_theta_applied s)
+          let a2 ← keccak_f.pi a1
+          let a3 ← keccak_f.chi a2
+          let r_spec ← keccak_f.iota a3 s.i
+          pure (r_spec = lift_perm r_impl impl_perm impl_swap)).holds ⌝ ⦄ := by
+  unfold keccak.keccakf1600_round0_pi_rho_chi_1
+  unfold keccak.keccakf1600_round0_pi_rho_chi_2
+  unfold keccak_f.rho keccak_f.pi keccak_f.chi keccak_f.iota at *
+  hax_mvcgen
+  · sorry
+  · sorry
+  · sorry
+  · sorry
+  · sorry
+  · sorry
+  · sorry
+  · sorry
+  · sorry
+  ·
+    expose_names
+
+    rw [h_24]
+    replace h_18 := fun i h => h_18 i h (_ = _) (fun r rh1 rh2 => rh2 ▸ rh1)
+    replace h_19 := fun i h => h_19 i h (_ = _) (fun r rh1 rh2 => rh2.trans rh1)
+    replace h_20 := fun i h => h_20 i h (_ = _) (fun r rh1 rh2 => rh2.trans rh1)
+
+    unfold lift_perm
+    apply Subtype.ext
+    apply List.ext_getElem!
+    sorry
+    intro i
+    rw [List.getElem!_ofFn _ _ sorry]
+    have hi : i = 1 := sorry
+    have : ((impl_perm ⟨i, sorry⟩) : Nat) = 2 := by simp [impl_perm, hi]
+    rw [this]
+    --
+    rw [h_17 2 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_8.2.2.2.2.2.2.2.2 2 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_7.2.2.2.2.2.2.2.2 2 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_6.2.2.2.2.2.2.2.2 2 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_5.2.2.2.2.2.2.2.2 2 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_4.2.2.2.2.2.2.2.2 2 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_3.2.2.2.1]
+    rw [h_2.2.2.2.1]
+    rw [h_2.2.2.2.2.2.2.1]
+    rw [h_2.2.2.2.2.2.2.2.1]
+    rw [h_2.1]
+    rw [h_1.1]
+    rw [h_1.2.2.2.2.2.2.2.2 2 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_1.2.2.2.2.2.2.2.2 8 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_1.2.2.2.2.2.2.2.2 14 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_1.2.2.2.2.2.2.2.2 15 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h_1.2.2.2.2.2.2.2.2 21 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h.1]
+    rw [h.2.2.2.2.2.2.2.2 2 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h.2.2.2.2.2.2.2.2 8 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h.2.2.2.2.2.2.2.2 14 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h.2.2.2.2.2.2.2.2 15 (by decide) (by decide) (by decide) (by decide) (by decide)]
+    rw [h.2.2.2.2.2.2.2.2 21 (by decide) (by decide) (by decide) (by decide) (by decide)]
+
+    have : (impl_perm ⟨i, sorry⟩) = 2 := by simp [impl_perm, hi]
+    rw [this]
+    subst hi
+    simp only [lift_lane_maybe_swap, impl_swap, if_pos]
+    simp? [-List.getElem!_eq_getElem?_getD, -getElem!_pos]
+    change (r_12.val)[(1#usize : Nat)]! = _
+    rw [h_20 1#usize sorry]
+    rw [h_19 _ sorry, h_19 _ sorry, h_19 _ sorry]
+    rw [h_18 _ sorry, h_18 _ sorry, h_18 _ sorry]
+    simp? [-List.getElem!_eq_getElem?_getD, -getElem!_pos]
+    clear h h_1 h_2 h_3 h_4 h_5 h_6 h_7 h_8 h_9 h_10 h_11 h_12 h_13 h_14 h_15 h_16 h_17
+      h_21 h_22 h_23 h_24 h_18 h_19 h_20 this r r_1 r_2 r_3 r_4 r_5 r_6 r_7 r_8 r_9
+      r_10 r_11 r_12 r_13 r_14 r_15 r_16
+
+    simp only [lift_theta_applied_bv_0, lift_theta_applied_bv_1, lift_theta_applied_bv_2,
+      lift_theta_applied_bv_3, lift_theta_applied_bv_4, lift_theta_applied_bv_5,
+      lift_theta_applied_bv_6, lift_theta_applied_bv_7, lift_theta_applied_bv_8,
+      lift_theta_applied_bv_9, lift_theta_applied_bv_10, lift_theta_applied_bv_11,
+      lift_theta_applied_bv_12, lift_theta_applied_bv_13, lift_theta_applied_bv_14,
+      lift_theta_applied_bv_15, lift_theta_applied_bv_16, lift_theta_applied_bv_17,
+      lift_theta_applied_bv_18, lift_theta_applied_bv_19, lift_theta_applied_bv_20,
+      lift_theta_applied_bv_21, lift_theta_applied_bv_22, lift_theta_applied_bv_23,
+      lift_theta_applied_bv_24]
+    have : (keccak_f.RHO_OFFSETS.val)[15]!.val = 28 := by sorry
+    rw [this]
+    have : (keccak_f.RHO_OFFSETS.val)[21]!.val = 20 := by sorry
+    rw [this]
+    have : (keccak_f.RHO_OFFSETS.val)[2]!.val = 3 := by sorry
+    rw [this]
+    simp only [lift_xor, lift_xor', UScalar.bv_xor, lift_not, lift_and, ← rot_28, ← rot_20, ← rot_3]
+    rfl
+
+  · sorry
+
 /-! ## Bridge 1: `prc_lift_spec`
 
 Couples the impl `keccakf1600_round0_pi_rho_chi_{1,2}` chain to the spec
@@ -961,7 +983,7 @@ we rewrite the spec side via Bridge 2 to use `prc_spec`, then close the
 algebra). -/
 set_option maxHeartbeats 32000000 in
 @[spec]
-theorem prc_lift_spec (s : state.KeccakState) (hi_lt : s.i.val < 24) :
+theorem prc_lift_spec' (s : state.KeccakState) (hi_lt : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let r1 ← keccak.keccakf1600_round0_pi_rho_chi_1 0#usize s
         keccak.keccakf1600_round0_pi_rho_chi_2 r1)

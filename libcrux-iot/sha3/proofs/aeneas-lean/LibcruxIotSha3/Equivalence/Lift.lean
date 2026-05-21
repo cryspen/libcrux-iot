@@ -234,6 +234,11 @@ theorem lift_xor (a0 a1 b0 b1 : BitVec 32) :
   unfold lift_lane_bv spread_to_even; bv_decide
 
 @[agrind =, grind =]
+theorem lift_xor' (a0 a1 b0 b1 : BitVec UScalarTy.U32.numBits) :
+    lift_lane_bv (a0 ^^^ b0) (a1 ^^^ b1) = lift_lane_bv a0 a1 ^^^ lift_lane_bv b0 b1 :=
+  lift_xor _ _ _ _
+
+@[agrind =, grind =]
 theorem lift_and (a0 a1 b0 b1 : BitVec 32) :
     lift_lane_bv (a0 &&& b0) (a1 &&& b1) = lift_lane_bv a0 a1 &&& lift_lane_bv b0 b1 := by
   unfold lift_lane_bv spread_to_even; bv_decide

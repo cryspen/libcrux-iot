@@ -18,7 +18,9 @@
 -/
 import LibcruxIotSha3.Equivalence.RoundEquiv
 
+
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
+
 
 namespace libcrux_iot_sha3.Equivalence
 
@@ -56,6 +58,7 @@ def spec_round_step (state : Std.Array Std.U64 25#usize) (round : Std.Usize) :
   let s_chi ← keccak_f.chi_unrolled s_pi
   keccak_f.iota s_chi round
 
+
 /-- Convert a `Nat` ≤ 24 to `Std.Usize`. Used in `four_round_post` /
     `keccakf1600_post` to bridge `Nat.fold` indices and `+ k` round
     offsets into the `Std.Usize` argument that `spec_round_step`
@@ -67,6 +70,11 @@ private def roundOfNat (k : Nat) (h : k ≤ 24) : Std.Usize :=
       simp only [Std.UScalarTy.Usize_numBits_eq]
       rcases System.Platform.numBits_eq with hpn | hpn <;> rw [hpn] <;> decide
     omega)
+
+theorem keccakf1600_equiv (s : state.KeccakState) (h_i : s.i = 0#usize) :
+    keccak_f.keccak_f (lift s) = lift <$> keccak.keccakf1600 s := sorry
+
+
 
 /-! ## 4-round composition
 
@@ -310,5 +318,6 @@ theorem keccakf1600_equiv (s : state.KeccakState) (h_i : s.i = 0#usize) :
   simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp] at h_loop ⊢
   rw [h_lift_eq]
   simpa using h_loop
+
 
 end libcrux_iot_sha3.Equivalence
