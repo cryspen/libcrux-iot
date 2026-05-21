@@ -11,8 +11,7 @@
     Body: XOR `state_flat[i]` (both halves) into `s.st[5*(i%5) + i/5]`. ✅ proved.
   - `state.store_block_2u32_loop_spec`   — outer fixpoint of store-loop.
     Body: deinterleave `s.st[5*(i%5) + i/5]` and write 8 bytes to
-    `out[8*i .. 8*i + 8]`. ⛔ deferred: needs a `(setSlice! ...).length = _`
-    rewrite / `index_mut_back` projection lemma to dispatch the final residual.
+    `out[8*i .. 8*i + 8]`. ✅ proved with slice-length-preservation post.
 
   Each loop runs over the range `iter.start..iter.end` with step 1.
 
@@ -290,17 +289,123 @@ theorem state.load_block_2u32_loop1_spec
       mvcgen
       all_goals scalar_tac
 
-/-! ### Loop of `state.store_block_2u32` — DEFERRED.
+/-! ### Loop of `state.store_block_2u32`.
 
 The body reads `s.st[5*(i%5) + i/5]`, deinterleaves it, writes two
-4-byte halves to `out[8i .. 8i+8]`. The blocker is residual subgoals
-from the `index_mut_back` closure-spec destructuring — specifically
-`(setSlice! ...).length = 4` shaped goals that need a dedicated
-`@[simp]` length-projection lemma or a custom tactic. A `simp_all`
-fallback (banned per campaign rules) is the only thing that closes
-the residual currently.
+4-byte halves to `out[8i .. 8i+8]`. After mvcgen, three residual
+`(setSlice! ...).length = 4` subgoals remain; these dispatch by
+`List.length_setSlice!` + `List.length_slice` + omega (no `simp_all`). -/
 
-Tracked as Phase-1a remaining blocker; will be addressed when the
-`index_mut_back` / `setSlice!` length lemma is added. -/
+/-- The outer fixpoint of `state.store_block_2u32_loop` terminates with
+    `.ok` and preserves the length of the output slice, provided the
+    preconditions hold. -/
+@[spec]
+theorem state.store_block_2u32_loop_spec
+    (iter : core_models.ops.range.Range Std.Usize)
+    (s : state.KeccakState) (out : Slice Std.U8)
+    (h_le : iter.start.val ≤ iter.end.val)
+    (h_bnd : iter.end.val ≤ 25)
+    (h_off : 8 * iter.end.val ≤ Std.Usize.max)
+    (h_blk : 8 * iter.end.val ≤ out.val.length) :
+    ⦃ ⌜ True ⌝ ⦄
+    state.store_block_2u32_loop iter s out
+    ⦃ ⇓ r => ⌜ r.val.length = out.val.length ⌝ ⦄ := by
+  obtain ⟨iter_start, iter_end⟩ := iter
+  unfold state.store_block_2u32_loop
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, out1) => state.store_block_2u32_loop.body s iter1 out1)
+      out iter_start iter_end
+      (fun _ out1 => pure (out1.val.length = out.val.length))
+      h_le
+      (pure_prop_holds rfl)
+      ?_)
+  · rw [PostCond.entails_noThrow]
+    intro r h
+    exact of_pure_prop_holds h
+  · intro acc k h_ge h_le_k hinv
+    have h_acc_len : acc.val.length = out.val.length := of_pure_prop_holds hinv
+    unfold state.store_block_2u32_loop.body
+    apply Std.Do.Triple.bind _ _
+      (IteratorRange_next_spec_usize k iter_end
+        (Q := PostCond.noThrow fun (oi : Option Std.Usize × _) => ⌜
+          match oi.1 with
+          | none => k.val ≥ iter_end.val ∧
+                    oi.2 = { start := k, «end» := iter_end }
+          | some i => i = k ∧ k.val < iter_end.val ∧
+                      oi.2.«end» = iter_end ∧ oi.2.start.val = k.val + 1
+        ⌝)
+        (fun hlt s' hs' => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨rfl, hlt, rfl, hs'⟩)
+        (fun hge => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨hge, rfl⟩))
+    intro ⟨o, iter1⟩
+    apply triple_imp_intro
+    rcases o with _ | i
+    · rintro ⟨hge, hiter1_eq⟩
+      show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
+      exact triple_of_ok_local rfl (pure_prop_holds h_acc_len)
+    · rintro ⟨hi_eq, hk_lt, hiter1_end, hiter1_start⟩
+      cases hi_eq
+      have hk_25 : k.val < 25 := by
+        have h1 : k.val < iter_end.val := hk_lt
+        have h2 : iter_end.val ≤ 25 := h_bnd
+        omega
+      have hk_div : k.val / 5 < 5 := by omega
+      have hk_mod : k.val % 5 < 5 := Nat.mod_lt _ (by decide)
+      -- Bounds for the two 4-byte writes (offsets 8*k and 8*k+4).
+      have h_b1 : 8 * k.val + 4 ≤ acc.val.length := by
+        have h1 : 8 * k.val + 8 ≤ 8 * iter_end.val := by omega
+        have h2 : 8 * iter_end.val ≤ out.val.length := h_blk
+        omega
+      have h_b2 : 8 * k.val + 8 ≤ acc.val.length := by
+        have h1 : 8 * k.val + 8 ≤ 8 * iter_end.val := by omega
+        have h2 : 8 * iter_end.val ≤ out.val.length := h_blk
+        omega
+      have h_smax1 : 8 * k.val + 4 ≤ Std.Usize.max := by
+        have h1 : 8 * k.val + 8 ≤ 8 * iter_end.val := by omega
+        have h2 : 8 * iter_end.val ≤ Std.Usize.max := h_off
+        omega
+      have h_smax2 : 8 * k.val + 8 ≤ Std.Usize.max := by
+        have h1 : 8 * k.val + 8 ≤ 8 * iter_end.val := by omega
+        have h2 : 8 * iter_end.val ≤ Std.Usize.max := h_off
+        omega
+      unfold state.KeccakState.get_lane
+             lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index
+      mvcgen
+      -- Remaining VCs after `mvcgen`:
+      --   `vc14.h1`: `↑r_13 ≤ ((r_8.2 r_11).val).length` — rewrite via
+      --              `h_8.2.2`, then `List.length_setSlice!` reduces to
+      --              the `acc`-length bound `h_b2`.
+      --   `vc16.h`:  `(r_14.1.val).length = (r_16.to_slice).length`
+      --              — `h_14.2.1` gives LHS = 4, `Array.length_to_slice`
+      --              gives RHS = 4.
+      --   `vc17`:    `pure ((r_14.2 r_17).val.length = out.val.length)`
+      --              `r_14.2 r_17 = (r_8.2 r_11).setSlice! r_12 r_17` and
+      --              `r_8.2 r_11 = acc.setSlice! r_6 r_11`. Two
+      --              `List.length_setSlice!` rewrites close it.
+      -- All other VCs are scalar bounds, dispatched by `scalar_tac`.
+      case vc14.h1 =>
+        expose_names
+        rw [h_8.2.2 r_11, List.length_setSlice!]
+        scalar_tac
+      case vc16.h =>
+        expose_names
+        -- Goal: `(↑r_14.1).length = (↑r_16.to_slice).length`. The LHS reduces to
+        -- `r_13 - r_12 = 4` via `h_14.2.1`; the RHS reduces to `4` since
+        -- `r_16 : Array U8 4#usize` and `to_slice` preserves `.val`.
+        rw [h_14.2.1]
+        simp only [Aeneas.Std.Array.to_slice, Aeneas.Std.Array.length_eq]
+        scalar_tac
+      case vc17 =>
+        expose_names
+        refine ⟨hk_lt, hiter1_end, hiter1_start, ?_⟩
+        apply pure_prop_holds
+        rw [h_14.2.2 r_17, List.length_setSlice!, h_8.2.2 r_11,
+            List.length_setSlice!]
+        exact h_acc_len
+      all_goals scalar_tac
 
 end libcrux_iot_sha3.Sponge
