@@ -251,6 +251,119 @@ private theorem rate_div_8_ok (RATE : Std.Usize) :
   have h8 : (8#usize : Std.Usize).val = 8 := by decide
   rw [h8]
 
+/-! ### Helpers for textbook-form posts. -/
+
+/-- Indexing `Equivalence.lift s` at a `Fin 25` returns the lifted
+    interleaved halves of `s.st[k]`.  Public companion to the `private`
+    `lift_getElem` in `Equivalence/ThetaLiftDefs.lean`. -/
+private theorem lift_getElem_bytes (s : state.KeccakState) (k : Fin 25) :
+    (Equivalence.lift s).val[k.val]! =
+      (⟨lift_lane_bv ((s.st.val[k.val]!).val[0]!.bv)
+                     ((s.st.val[k.val]!).val[1]!.bv)⟩ : Std.U64) := by
+  unfold Equivalence.lift Equivalence.lift_lane
+  change (List.ofFn _)[k.val]! = _
+  rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
+
+/-- Bytewise readout for `BitVec.toLEBytes` over 64-bit values: byte `i` is
+    `BitVec.ofNat 8 ((bv.toNat >>> (8*i)) &&& 0xff)`. Stated at the
+    BitVec level. -/
+private theorem toLEBytes64_getElem!_eq_ofNat_shift_and
+    (bv : BitVec 64) (i : Nat) (hi : i < 8) :
+    bv.toLEBytes[i]! = BitVec.ofNat 8 ((bv.toNat >>> (8 * i)) &&& 0xff) := by
+  -- Each side is determined by its 8 bits (as Nats).
+  apply BitVec.eq_of_toNat_eq
+  apply Nat.eq_of_testBit_eq
+  intro j
+  by_cases hj : j < 8
+  · -- LHS bit j: use `BitVec.toLEBytes_getElem!_testBit`.
+    -- RHS bit j: shift/and gives the (8i+j)-th bit of `bv.toNat`.
+    have h_LHS_bit : (bv.toLEBytes[i]!).toNat.testBit j = bv.toNat.testBit (8 * i + j) := by
+      have h := BitVec.toLEBytes_getElem!_testBit bv i j hj
+      -- `h : Byte.testBit (toLEBytes[i]!) j = bv[8*i+j]!`
+      -- `Byte.testBit b j = Nat.testBit b.toNat j` (by definition).
+      -- `bv[8*i+j]! = bv.toNat.testBit (8*i+j)`.
+      show Nat.testBit (bv.toLEBytes[i]!).toNat j = bv.toNat.testBit (8 * i + j)
+      rw [show Nat.testBit (bv.toLEBytes[i]!).toNat j = Byte.testBit bv.toLEBytes[i]! j from rfl]
+      rw [h, BitVec.getElem!_eq_testBit_toNat]
+    rw [h_LHS_bit]
+    -- RHS: `(BitVec.ofNat 8 ...).toNat = ... % 256`.
+    simp only [BitVec.toNat_ofNat]
+    have h_and_eq_mod : (bv.toNat >>> (8 * i)) &&& 0xff
+                          = (bv.toNat >>> (8 * i)) % 256 := by
+      show _ &&& 255 = _ % 256
+      rw [show (255 : Nat) = 2^8 - 1 from by decide,
+          show (256 : Nat) = 2^8 from by decide]
+      exact Nat.and_two_pow_sub_one_eq_mod _ 8
+    rw [h_and_eq_mod]
+    rw [show (2^8 : Nat) = 256 from by decide]
+    -- Goal: bv.toNat.testBit (8 * i + j) = (bv.toNat >>> (8 * i) % 256 % 256).testBit j
+    have h_mm : (bv.toNat >>> (8 * i)) % 256 % 256 = (bv.toNat >>> (8 * i)) % 256 := by
+      rw [Nat.mod_mod]
+    rw [h_mm]
+    rw [show (256 : Nat) = 2^8 from by decide]
+    rw [Nat.testBit_mod_two_pow]
+    simp only [decide_true, Bool.true_and, hj, Nat.testBit_shiftRight]
+  · -- Bits j ≥ 8 are 0 on both sides.
+    have hLHS_isLt : (bv.toLEBytes[i]!).toNat < 256 := by
+      have := bv.toLEBytes[i]!.isLt; simpa using this
+    have h_jj : 8 ≤ j := by omega
+    have h_pow : (256 : Nat) = 2^8 := by decide
+    have hRHS_isLt : (BitVec.ofNat 8 ((bv.toNat >>> (8 * i)) &&& 0xff)).toNat < 256 := by
+      have := (BitVec.ofNat 8 ((bv.toNat >>> (8 * i)) &&& 0xff)).isLt
+      have h_pow2 : (2 ^ 8 : Nat) = 256 := by decide
+      omega
+    have hLHS : (bv.toLEBytes[i]!).toNat.testBit j = false := by
+      rw [Nat.testBit_eq_false_of_lt]
+      calc (bv.toLEBytes[i]!).toNat < 256 := hLHS_isLt
+        _ = 2 ^ 8 := h_pow
+        _ ≤ 2 ^ j := Nat.pow_le_pow_right (by decide) h_jj
+    have hRHS : (BitVec.ofNat 8 ((bv.toNat >>> (8 * i)) &&& 0xff)).toNat.testBit j = false := by
+      rw [Nat.testBit_eq_false_of_lt]
+      calc (BitVec.ofNat 8 ((bv.toNat >>> (8 * i)) &&& 0xff)).toNat < 256 := hRHS_isLt
+        _ = 2 ^ 8 := h_pow
+        _ ≤ 2 ^ j := Nat.pow_le_pow_right (by decide) h_jj
+    rw [hLHS, hRHS]
+
+/-- `store_block_byte_at s b` (the value the strong store-loop produces at
+    byte position `b`) equals byte `b%8` of the LE-byte split of the spec-side
+    `(Equivalence.lift s).val[5*((b/8)%5) + (b/8)/5]!`. -/
+private theorem store_block_byte_at_eq_toLEBytes
+    (s : state.KeccakState) (b : Nat) (hb : b / 8 < 25) :
+    store_block_byte_at s b =
+      ⟨(BitVec.toLEBytes
+          ((Equivalence.lift s).val[5 * ((b / 8) % 5) + (b / 8) / 5]!).bv)[b % 8]!⟩ := by
+  -- Unfold store_block_byte_at; LHS is ⟨BitVec.ofNat 8 ((u64.bv.toNat >>> (8*(b%8))) &&& 0xff)⟩.
+  unfold store_block_byte_at
+  -- p < 25.
+  have hp_lt : 5 * ((b / 8) % 5) + (b / 8) / 5 < 25 := by
+    have h1 : (b / 8) % 5 < 5 := Nat.mod_lt _ (by decide)
+    have h2 : (b / 8) / 5 < 5 :=
+      (Nat.div_lt_iff_lt_mul (by decide : 0 < 5)).mpr (by omega)
+    omega
+  -- (Equivalence.lift s).val[p]!.bv = lift_lane_bv ...
+  have h_lift : ((Equivalence.lift s).val[5 * ((b / 8) % 5) + (b / 8) / 5]!).bv =
+      lift_lane_bv
+        ((s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!).val[0]!).bv
+        ((s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!).val[1]!).bv := by
+    rw [lift_getElem_bytes s ⟨_, hp_lt⟩]
+  -- `lift_lane (s.st.val[p]!)).bv = lift_lane_bv ...` (by lift_lane def).
+  have h_ll_bv :
+      (Equivalence.lift_lane (s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!)).bv =
+        lift_lane_bv
+          ((s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!).val[0]!).bv
+          ((s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!).val[1]!).bv := rfl
+  have hb_mod : b % 8 < 8 := Nat.mod_lt _ (by decide)
+  -- Both sides are `⟨BitVec 8⟩ = Std.U8`; reduce to the BitVec equality.
+  apply Std.UScalar.eq_of_val_eq
+  show (BitVec.ofNat 8 _).toNat = _
+  -- Reduce the RHS via the toLEBytes lemma.
+  have h_bytes := toLEBytes64_getElem!_eq_ofNat_shift_and
+    ((Equivalence.lift s).val[5 * ((b / 8) % 5) + (b / 8) / 5]!).bv
+    (b % 8) hb_mod
+  rw [h_bytes, h_lift]
+  -- Both sides are now `BitVec.ofNat 8 ((lift_lane_bv _ _).toNat >>> (8*(b%8)) &&& 0xff)`.
+  rfl
+
 /-! ### Top-level Triples. -/
 
 /-- `state.KeccakState.load_block RATE s blocks start` terminates with
@@ -273,7 +386,20 @@ theorem state.KeccakState.load_block_spec
     (h_off  : start.val + RATE.val ≤ Std.Usize.max) :
     ⦃ ⌜ True ⌝ ⦄
     state.KeccakState.load_block RATE s blocks start
-    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜
+        r.i = s.i
+        ∧ ∀ k : Nat, k < 25 →
+            ((Equivalence.lift r).val[k]!).bv =
+              (if 5 * (k % 5) + k / 5 < RATE.val / 8 then
+                  ((Equivalence.lift s).val[k]!).bv ^^^
+                    (BitVec.zeroExtend 64
+                        (((Lane2U32_from_4byte_LE_pairs blocks start
+                            (5 * (k % 5) + k / 5)).val[1]!).bv) <<< 32
+                     ||| BitVec.zeroExtend 64
+                        (((Lane2U32_from_4byte_LE_pairs blocks start
+                            (5 * (k % 5) + k / 5)).val[0]!).bv))
+               else ((Equivalence.lift s).val[k]!).bv)
+    ⌝ ⦄ := by
   have h_blk_len : RATE.val ≤ blocks.val.length := by omega
   have h_RATE_div_le : RATE.val / 8 ≤ 25 := by omega
   have h_RATE_div_mul : 8 * (RATE.val / 8) = RATE.val := by
@@ -297,17 +423,101 @@ theorem state.KeccakState.load_block_spec
     rw [h_i2_val]; omega
   let state_flat : Std.Array lane.Lane2U32 25#usize :=
     Std.Array.repeat 25#usize (⟨[0#u32, 0#u32], by decide⟩ : lane.Lane2U32)
-  obtain ⟨state_flat1, h_loop0_eq, _h_state_flat1⟩ :=
+  obtain ⟨state_flat1, h_loop0_eq, h_state_flat1⟩ :=
     triple_exists_ok_bytes
       (state.load_block_2u32_loop0_spec
         ⟨0#usize, i2⟩ blocks start state_flat
         h_loop0_le h_loop0_bnd h_loop0_off h_loop0_blk (by rfl))
-  obtain ⟨r_final, h_loop1_eq, h_r_i, _h_lanes⟩ :=
+  obtain ⟨r_final, h_loop1_eq, h_post⟩ :=
     triple_exists_ok_bytes
       (state.load_block_2u32_loop1_spec
         ⟨0#usize, i2⟩ state_flat1 s h_loop0_le h_loop0_bnd rfl)
+  obtain ⟨h_r_i, h_post2⟩ := h_post
+  obtain ⟨h_lanes, h_unchanged⟩ := h_post2
+  -- Build the per-cell BV post.
+  have h_per_cell : ∀ k : Nat, k < 25 →
+      ((Equivalence.lift r_final).val[k]!).bv =
+        (if 5 * (k % 5) + k / 5 < RATE.val / 8 then
+            ((Equivalence.lift s).val[k]!).bv ^^^
+              (BitVec.zeroExtend 64
+                  (((Lane2U32_from_4byte_LE_pairs blocks start
+                      (5 * (k % 5) + k / 5)).val[1]!).bv) <<< 32
+               ||| BitVec.zeroExtend 64
+                  (((Lane2U32_from_4byte_LE_pairs blocks start
+                      (5 * (k % 5) + k / 5)).val[0]!).bv))
+         else ((Equivalence.lift s).val[k]!).bv) := by
+    intro k hk_25
+    -- Apply lift_getElem_bytes at k.
+    rw [lift_getElem_bytes r_final ⟨k, hk_25⟩,
+        lift_getElem_bytes s ⟨k, hk_25⟩]
+    show lift_lane_bv (r_final.st.val[k]!.val[0]!.bv) (r_final.st.val[k]!.val[1]!.bv) = _
+    -- Let b = 5*(k%5) + k/5. By involution, k = 5*(b%5) + b/5.
+    set b := 5 * (k % 5) + k / 5 with hb_def
+    have hk_div_5 : k / 5 < 5 := by
+      have : k < 5 * 5 := by omega
+      exact (Nat.div_lt_iff_lt_mul (by decide : 0 < 5)).mpr this
+    have hk_mod_5 : k % 5 < 5 := Nat.mod_lt _ (by decide)
+    have hb_lt_25 : b < 25 := by show 5 * (k % 5) + k / 5 < 25; omega
+    -- k = 5 * (b % 5) + b / 5.
+    have h_b_mod : b % 5 = k / 5 := by
+      show (5 * (k % 5) + k / 5) % 5 = k / 5
+      rw [Nat.add_comm, Nat.add_mul_mod_self_left]
+      exact Nat.mod_eq_of_lt hk_div_5
+    have h_b_div : b / 5 = k % 5 := by
+      show (5 * (k % 5) + k / 5) / 5 = k % 5
+      rw [Nat.add_comm, Nat.add_mul_div_left _ _ (by decide : 0 < 5)]
+      have : k / 5 / 5 = 0 := Nat.div_eq_of_lt hk_div_5
+      omega
+    have h_inv : 5 * (b % 5) + b / 5 = k := by
+      rw [h_b_mod, h_b_div]; omega
+    by_cases h_b_lt : b < RATE.val / 8
+    · -- The lane was touched in Loop1. Use h_lanes and the interleave identity.
+      rw [if_pos h_b_lt]
+      have h_b_lt_i2 : b < i2.val := by rw [h_i2_val]; exact h_b_lt
+      -- Loop1's strong post for j = b: lift_lane_bv r.st[5*(b%5)+b/5] = loop1_lane_at s state_flat1 b.
+      have h_lane := h_lanes b h_b_lt_i2 hb_lt_25
+      -- The index 5*(b%5)+b/5 = k.
+      rw [h_inv] at h_lane
+      -- Loop0's post for j = b: state_flat1[b] is the interleave_bv pair.
+      have h_sf := h_state_flat1 b h_b_lt_i2 hb_lt_25
+      -- Unfold loop1_lane_at and apply lift_lane_bv_xor.
+      rw [h_lane]
+      unfold loop1_lane_at
+      -- Goal: lift_lane_bv (s_lane[0].bv ^^^ state_flat1[b][0].bv)
+      --                    (s_lane[1].bv ^^^ state_flat1[b][1].bv)
+      --     = lift_lane_bv s.st[k].val[0].bv s.st[k].val[1].bv ^^^
+      --       (((Lane2U32_from_4byte_LE_pairs...).val[1].bv.zeroExtend 64) <<< 32 |||
+      --        (Lane2U32_from_4byte_LE_pairs...).val[0].bv.zeroExtend 64)
+      simp only [h_inv]
+      rw [← lift_lane_bv_xor]
+      apply congrArg ((lift_lane_bv (s.st.val[k]!.val[0]!.bv) (s.st.val[k]!.val[1]!.bv)) ^^^ ·)
+      -- Goal: lift_lane_bv state_flat1[b].val[0].bv state_flat1[b].val[1].bv = ...zeroExtend...
+      -- From h_sf: ((state_flat1[b])[0].bv, (state_flat1[b])[1].bv) = interleave_bv (...) (...).
+      have h_sf1 : (state_flat1.val[b]!).val[0]!.bv =
+          (interleave_bv ((Lane2U32_from_4byte_LE_pairs blocks start b).val[0]!).bv
+                         ((Lane2U32_from_4byte_LE_pairs blocks start b).val[1]!).bv).1 := by
+        have := h_sf; exact (Prod.mk.injEq .. |>.mp this).1
+      have h_sf2 : (state_flat1.val[b]!).val[1]!.bv =
+          (interleave_bv ((Lane2U32_from_4byte_LE_pairs blocks start b).val[0]!).bv
+                         ((Lane2U32_from_4byte_LE_pairs blocks start b).val[1]!).bv).2 := by
+        have := h_sf; exact (Prod.mk.injEq .. |>.mp this).2
+      rw [h_sf1, h_sf2]
+      -- Apply interleave_bv_lift_eq.
+      have h_ib := interleave_bv_lift_eq
+        ((Lane2U32_from_4byte_LE_pairs blocks start b).val[0]!).bv
+        ((Lane2U32_from_4byte_LE_pairs blocks start b).val[1]!).bv
+      -- h_ib is `let (e,o) := ... in lift_lane_bv e o = ...`.
+      simp only at h_ib
+      exact h_ib
+    · -- Untouched lane. Use h_unchanged.
+      rw [if_neg h_b_lt]
+      have h_b_ge_i2 : i2.val ≤ b := by rw [h_i2_val]; omega
+      have h_unch := h_unchanged b h_b_ge_i2 hb_lt_25
+      -- h_unch : r_final.st.val[5*(b%5)+b/5]! = s.st.val[5*(b%5)+b/5]!
+      rw [h_inv] at h_unch
+      rw [h_unch]
   -- Assemble: walk the body of `load_block`, rewriting each step.
-  apply triple_of_ok_bytes (v := r_final) _ h_r_i
+  apply triple_of_ok_bytes (v := r_final) _ ⟨h_r_i, h_per_cell⟩
   show state.KeccakState.load_block RATE s blocks start = .ok r_final
   unfold state.KeccakState.load_block state.load_block_2u32
   -- Chain rewrites of the pure `.ok`-steps.
@@ -341,7 +551,12 @@ theorem state.KeccakState.store_block_spec
     (h_off  : RATE.val ≤ Std.Usize.max) :
     ⦃ ⌜ True ⌝ ⦄
     state.KeccakState.store_block RATE s out
-    ⦃ ⇓ r => ⌜ r.val.length = out.val.length ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜
+        r.val.length = out.val.length
+        ∧ ∀ k : Nat, k < RATE.val →
+            r.val[k]! = ⟨(BitVec.toLEBytes
+              ((Equivalence.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
+    ⌝ ⦄ := by
   have h_RATE_div_le : RATE.val / 8 ≤ 25 := by omega
   have h_RATE_div_mul : 8 * (RATE.val / 8) = RATE.val := by
     have : RATE.val = 8 * (RATE.val / 8) + RATE.val % 8 :=
@@ -355,11 +570,27 @@ theorem state.KeccakState.store_block_spec
     rw [h_div_val]; omega
   have h_loop_blk : 8 * i_div.val ≤ out.val.length := by
     rw [h_div_val]; omega
-  obtain ⟨r, h_r_eq, h_r_len, _h_r_bytes⟩ :=
+  obtain ⟨r, h_r_eq, h_r_len, h_r_bytes⟩ :=
     triple_exists_ok_bytes
       (state.store_block_2u32_loop_spec ⟨0#usize, i_div⟩ s out
         h_loop_le h_loop_bnd h_loop_off h_loop_blk (by rfl))
-  apply triple_of_ok_bytes (v := r) _ h_r_len
+  -- The loop's strong post gives `r.val[b]! = store_block_byte_at s b`
+  -- for `b < 8 * i_div.val = 8 * (RATE.val / 8) = RATE.val` (when RATE.val%8=0).
+  -- We rewrite via `store_block_byte_at_eq_toLEBytes`.
+  have h_r_textbook : ∀ k : Nat, k < RATE.val →
+      r.val[k]! = ⟨(BitVec.toLEBytes
+        ((Equivalence.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩ := by
+    intro k hk_RATE
+    have hk_8idiv : k < 8 * i_div.val := by rw [h_div_val]; omega
+    have hk_200 : k < 8 * 25 := by omega
+    have hk_div : k / 8 < 25 := by
+      have : k < 8 * 25 := hk_200
+      omega
+    have h_loop := h_r_bytes k hk_8idiv hk_200
+    -- h_loop : r.val[k]! = store_block_byte_at s k
+    rw [h_loop]
+    exact store_block_byte_at_eq_toLEBytes s k hk_div
+  apply triple_of_ok_bytes (v := r) _ ⟨h_r_len, h_r_textbook⟩
   show state.KeccakState.store_block RATE s out = .ok r
   unfold state.KeccakState.store_block state.store_block_2u32
   simp only [h_div_eq, bind_tc_ok]
@@ -378,22 +609,36 @@ theorem state.KeccakState.load_block_full_spec
     (h_off : start.val + RATE.val ≤ Std.Usize.max) :
     ⦃ ⌜ True ⌝ ⦄
     state.KeccakState.load_block_full RATE s blocks start
-    ⦃ ⇓ r => ⌜ r.i = s.i ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜
+        r.i = s.i
+        ∧ ∀ k : Nat, k < 25 →
+            ((Equivalence.lift r).val[k]!).bv =
+              (if 5 * (k % 5) + k / 5 < RATE.val / 8 then
+                  ((Equivalence.lift s).val[k]!).bv ^^^
+                    (BitVec.zeroExtend 64
+                        (((Lane2U32_from_4byte_LE_pairs (Std.Array.to_slice blocks) start
+                            (5 * (k % 5) + k / 5)).val[1]!).bv) <<< 32
+                     ||| BitVec.zeroExtend 64
+                        (((Lane2U32_from_4byte_LE_pairs (Std.Array.to_slice blocks) start
+                            (5 * (k % 5) + k / 5)).val[0]!).bv))
+               else ((Equivalence.lift s).val[k]!).bv)
+    ⌝ ⦄ := by
   -- `Array.to_slice` preserves `.val`; the array has length 200.
   have h_to_slice_val : (Std.Array.to_slice blocks).val = blocks.val := rfl
   have h_to_slice_len : (Std.Array.to_slice blocks).val.length = 200 := by
     rw [h_to_slice_val]; exact blocks.property
   have h_blk' : start.val + RATE.val ≤ (Std.Array.to_slice blocks).val.length := by
     rw [h_to_slice_len]; exact h_blk
-  obtain ⟨r_final, h_inner_eq, h_r_i⟩ :=
+  obtain ⟨r_final, h_inner_eq, h_post⟩ :=
     triple_exists_ok_bytes
       (state.KeccakState.load_block_spec RATE s
         (Std.Array.to_slice blocks) start
         h_RATE_mod h_RATE_bnd h_blk' h_off)
+  obtain ⟨h_r_i, h_r_per_cell⟩ := h_post
   have h_inner_unfold :
       state.load_block_2u32 RATE s (Std.Array.to_slice blocks) start = .ok r_final := by
     have := h_inner_eq; unfold state.KeccakState.load_block at this; exact this
-  apply triple_of_ok_bytes (v := r_final) _ h_r_i
+  apply triple_of_ok_bytes (v := r_final) _ ⟨h_r_i, h_r_per_cell⟩
   show state.KeccakState.load_block_full RATE s blocks start = .ok r_final
   unfold state.KeccakState.load_block_full state.load_block_full_2u32
   -- The body is `do s1 ← lift (Array.to_slice blocks); load_block_2u32 RATE s s1 start`.
