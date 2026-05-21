@@ -302,10 +302,10 @@ theorem state.KeccakState.load_block_spec
       (state.load_block_2u32_loop0_spec
         ⟨0#usize, i2⟩ blocks start state_flat
         h_loop0_le h_loop0_bnd h_loop0_off h_loop0_blk)
-  obtain ⟨r_final, h_loop1_eq, h_r_i⟩ :=
+  obtain ⟨r_final, h_loop1_eq, h_r_i, _h_lanes⟩ :=
     triple_exists_ok_bytes
       (state.load_block_2u32_loop1_spec
-        ⟨0#usize, i2⟩ state_flat1 s h_loop0_le h_loop0_bnd)
+        ⟨0#usize, i2⟩ state_flat1 s h_loop0_le h_loop0_bnd rfl)
   -- Assemble: walk the body of `load_block`, rewriting each step.
   apply triple_of_ok_bytes (v := r_final) _ h_r_i
   show state.KeccakState.load_block RATE s blocks start = .ok r_final
