@@ -108,76 +108,105 @@
       HacspecBridge.lean       ← top-level (Campaign 3) coupling
   ```
 
-  ## KNOWN BLOCKER (Phase 0 prerequisite) — Three extraction gaps
+  ## Phase 0 status (post-2026-05-22 — matrix-boundary extraction landed)
 
-  ### (a) `LibcruxIotMlKem.Extraction.Funs` does not compile
+  Phase 0 originally listed three extraction gaps. As of commits
+  `d6c0bca` / `993b381` / `047b07b` (peer session) plus `4b23f33` /
+  `e978e3b` (S01), the gaps are resolved as follows.
 
-  The auto-generated `Extraction/Funs.lean` references symbols that
-  don't exist in the pinned `rust-core-models` rev `b67ccf1`:
+  ### (a) Root file mis-import + Funs.lean compile ✅ LANDED
 
-  ```text
-  Unknown constant `Aeneas.Std.I16.Insts.Libcrux_secretsIntCastOps.as_i32`
-  Unknown constant `Aeneas.Std.I32.Insts.Libcrux_secretsIntCastOps.as_i16`
-  Unknown identifier `libcrux_secrets.traits.Classify.Blanket.classify`
-  Unknown identifier `core_models.num.I16.wrapping_neg`
-  ```
+  - Root `LibcruxIotMlKem.lean` now imports `Plan` + `Extraction.Funs`
+    + `Equivalence.L0_FieldArith` (commit `4b23f33`).
+  - The `libcrux_secrets` Classify / Declassify /
+    `Libcrux_secretsIntCastOps` constants that the older pin lacked
+    are now provided by the vendored `LibcruxSecrets` Lean lib
+    (commit `047b07b`, `vendored/libcrux-secrets/proofs/aeneas-lean/`).
+    `Extraction/Missing.lean` retains only the few shims
+    `LibcruxSecrets` doesn't cover (search for
+    `PHASE0B-MISSING-PATCH` for the patch fence in Funs.lean).
 
-  These are the `libcrux_secrets` classify/declassify shims that
-  newer rust-core-models exports as Aeneas instances; the current
-  pin predates them. To unblock:
-  - Bump the rust-core-models pin in
-    `.lake/packages/Hax/lakefile.toml` to a rev that has the
-    Libcrux_secretsIntCastOps instances, OR
-  - Re-run hax extraction against the current pin (this will
-    produce a Funs.lean that uses only the constants the pin
-    exports).
+  ### (b) Impl extraction — widened to matrix boundary ✅ LANDED
 
-  Until then, the typed `import LibcruxIotMlKem.Extraction.Funs` at
-  the top of `LibcruxIotMlKem.lean` doesn't resolve, and every Plan
-  lemma that referenced `libcrux_iot_ml_kem.<symbol>` had to be
-  commented out below.
+  `libcrux-iot/ml-kem/hax_aeneas.py` now extracts (commit `993b381`):
+  `crate::vector::*`, `crate::ntt::*`, `crate::invert_ntt::*`,
+  `crate::polynomial::*`, `crate::matrix::*`. This covers Plan
+  Layers 0–3 (field arith → NTT/iNTT) + 6–7 (polynomial / matrix).
+  The generated `Extraction/Funs.lean` is ~5525 LOC (~212 defs);
+  some sampling functions also appear via transitive reachability
+  from `ntt::ntt_binomially_sampled_ring_element` and
+  `matrix::sample_matrix_entry`.
 
-  ### (b) Impl extraction is partial
+  **Pending — outside the matrix boundary** (the user is handling
+  these in another session):
 
-  Even if (a) is fixed, the current `Extraction/Funs.lean` (~1063
-  LOC, 52 top-level defs) covers ONLY the NTT / iNTT layer
-  (`vector.portable.{arithmetic, ntt}`, `ntt.ntt_at_layer_*`,
-  `ntt.ntt_binomially_sampled_ring_element`, `ntt.ntt_vector_u`,
-  `polynomial.{zeta, PolynomialRingElement, poly_barrett_reduce}`,
-  `vector.portable.ntt.accumulating_ntt_multiply*`). It does NOT
-  contain:
+  - `ind_cpa.*` (K-PKE; Layer 8) — body present in Rust source, not
+    yet extracted.
+  - `ind_cca.*` (FO transform; Layer 9) — same.
+  - `mlkem512::*`, `mlkem768::*`, `mlkem1024::*` (per-variant entry
+    points; Layer 10) — same.
+  - `types.*` (key / ciphertext newtype wrappers).
+  - `hash_functions.*` (SHA-3 / SHAKE coupling; the aeneas-lean
+    backend rejects `shake128_squeeze_*` for nested mutable borrows
+    — marked `#[hax_lib::opaque]` and forwarded to charon via the
+    `OPAQUE` list in `hax_aeneas.py`).
+  - `constant_time_ops.*` (used by FO transform).
+  - `sampling::sample_from_binomial_distribution` (top-level CBD
+    sampler — Layer 4.3). Only `sample_from_xof` and
+    `sample_from_uniform_distribution_next` are extracted today.
+  - Top-level serialization: `serialize::serialize_uncompressed_ring_element`,
+    `serialize::deserialize_to_uncompressed_ring_element`,
+    `serialize::deserialize_ring_elements_reduced` (the per-poly
+    `serialize::deserialize_to_reduced_ring_element` IS extracted).
 
-  - `vector.portable.arithmetic.{add, sub, negate,
-     multiply_by_constant, bitwise_and_with_constant, shift_right,
-     cond_subtract_3329, barrett_reduce,
-     montgomery_multiply_by_constant, get_n_least_significant_bits,
-     reducing_from_i32_array}`
-  - `vector.portable.{sampling, compress, serialize}.*`
-  - `invert_ntt.*`
-  - `sampling.*`, `matrix.*`, `serialize.*`, `compress.*`
-  - `ind_cpa.*`, `ind_cca.*`, `mlkem{512,768,1024}.*`
-  - `types.*` (key/ciphertext newtype wrappers)
-  - `hash_functions.*`, `constant_time_ops.*`
+  Per the peer's commit message, the full-crate extraction surfaces
+  ~33 Lean errors across 7 stub categories (Hash trait,
+  UnbufferedXofState, shake128_*, StepBy iterator, SharedAArray
+  IntoIterator, Iter.next, plus several "overloaded" elaboration
+  issues). Filed for follow-up; the matrix boundary is the current
+  scope.
 
-  To trigger full extraction the verification engineer should author
-  `libcrux-iot/ml-kem/hax_aeneas.py` (analogous to
-  `libcrux-iot/sha3/hax_aeneas.py`) — mirroring the SHA-3 one and
-  adjusting the bundle list to cover all ml-kem modules.
+  ### (c) Hacspec aeneas-lean extraction ✅ LANDED IN FULL
 
-  ### (c) Hacspec aeneas-lean extraction missing
+  `specs/ml-kem/proofs/aeneas-lean/HacspecMlKem` (commit `d6c0bca`)
+  is the Lean lib for the FIPS-203 spec. ~6677 LOC, ~250+ defs,
+  covers the entire spec including `ind_cpa.*`, `ind_cca.*`, the
+  full byte-level serialization stack, and Algorithm 6–21. Spec
+  references in this Plan that read `Spec.foo` resolve to
+  `hacspec_ml_kem.foo` in the generated names (the
+  `hacspec_ml_kem.` prefix replaces `Spec.` from older Plan
+  drafts).
 
-  The hacspec ML-KEM spec in `specs/ml-kem/src/` currently extracts
-  only to F* (under `specs/ml-kem/proofs/fstar/extraction/`). There
-  is no `specs/ml-kem/proofs/aeneas-lean/` analog yet. The SHA-3
-  tree has both (`HacspecSha3` is a Lean lib used by the iot SHA-3
-  proofs). **Before Campaign 2 can begin**, we need the
-  `HacspecMlKem` Lean lib generated by running `hax → aeneas →
-  aeneas-lean` against `specs/ml-kem/`.
+  ## Triple skeleton naming — actual vs generated function names
 
-  Until that exists, all spec references in this plan are
-  pseudo-Lean references of the form `Spec.<fn>` in doc-comments.
-  Campaign 1 work can start in parallel (it's impl-internal, no
-  spec dependency, but is blocked on (a) and (b) first).
+  Some Triple skeletons below were written before the matrix-
+  boundary extraction landed and reference names that don't exactly
+  match the generated `Extraction/Funs.lean` defs:
+
+  - **L4.3** (`sample_from_binomial_distribution_spec`) — correctly
+    marked "extraction missing" since the symbol is outside the
+    matrix boundary today.
+  - **L6.2** lists `add_to_ring_element` as a 4th fused-add variant,
+    but it does NOT exist in the impl Rust source — only
+    `add_message_error_reduce`, `add_error_reduce`,
+    `add_standard_error_reduce` do. The
+    `hacspec_ml_kem.polynomial.add_to_ring_element` is a spec-only
+    pure poly add used in `polynomial.rs`'s `cross_spec` tests.
+    Treat L6.2 as a 3-lemma group.
+  - **L6.3 Triple skeleton** is named `PolynomialRingElement_ntt_multiply_spec`
+    and targets the symbol `polynomial.PolynomialRingElement.ntt_multiply`;
+    the generated def is `polynomial.PolynomialRingElement.accumulating_ntt_multiply`.
+    Use the generated name when opening the proof.
+  - **L6.5 / L6.6 / L6.7** (`serialize_uncompressed_ring_element` /
+    `deserialize_*_ring_element` / `deserialize_ring_elements_reduced`)
+    — outside matrix boundary today. The per-poly
+    `serialize.deserialize_to_reduced_ring_element` IS extracted and
+    is a valid Triple target.
+
+  Cross-reference any L1/L5/L6/L7 Triple's impl symbol against
+  `Extraction/Funs.lean` before opening a proof; if the name
+  diverges from what Plan says, prefer the actual generated name
+  and update the skeleton.
 
   ## Layer summary
 
@@ -204,10 +233,11 @@
   Total: ~103 @[spec]s + ~50 Layer-M lemmas, ~15 top theorems.
 -/
 
--- Lean imports. Note: the natural `import LibcruxIotMlKem.Extraction.Funs`
--- is currently impossible due to the KNOWN BLOCKER above. Once it is
--- fixed (Phase 0), replace the two imports below with that single
--- import.
+-- Lean imports. Phase 0 done — `Extraction.Funs` builds; this Plan
+-- file is consumed by `LibcruxIotMlKem.lean` only for its `modq_eq`
+-- export and the doc-comment sketches. The actual impl Triples are
+-- being moved out into `Equivalence/L<layer>_*.lean` files as they
+-- close (see e.g. `Equivalence/L0_FieldArith.lean`).
 import Aeneas
 import Hax
 import LibcruxIotMlKem.Util.ModularArith
@@ -719,7 +749,9 @@ generic plumbing already passes its tests in the SHA-3 tree.
     ## Complexity tier
     bv-decide-close (~2 hours)
 -/
-/- Triple (extraction missing for `get_n_least_significant_bits`):
+/- Triple (extraction PRESENT — generated def is
+   `libcrux_iot_ml_kem.vector.portable.arithmetic.get_n_least_significant_bits`
+   in `Extraction/Funs.lean`):
 @[spec]
 theorem get_n_least_significant_bits_spec
     (n : Std.U8) (value : Std.U32) (hn : n.val ≤ 16) :
@@ -871,9 +903,14 @@ theorem barrett_reduce_element_spec
      this identically; each L1.x is a 5-line instantiation. Total
      L1 effort: ~2 days for the macro + 10 × 30 min.]
 
-    All Layer-1 lemmas are [stub-only — extraction missing]: the
-    underlying `vector.portable.arithmetic.{add, sub, …}` defs are
-    not yet in `Funs.lean`.
+    All Layer-1 lemmas: extraction PRESENT as of the matrix-boundary
+    extraction (commit `993b381`). The 10 underlying defs
+    `vector.portable.arithmetic.{add, sub, negate, multiply_by_constant,
+    bitwise_and_with_constant, shift_right, cond_subtract_3329,
+    barrett_reduce, montgomery_multiply_by_constant,
+    reducing_from_i32_array}` are in `Funs.lean`. Each Triple
+    skeleton below labelled "extraction missing" should be re-read
+    as "extraction PRESENT, Triple still to close".
 
     Each Triple skeleton below ports the upstream `traits.rs` `*_pre` /
     `*_post` predicate verbatim. `add_pre`/`sub_pre` are stated *on the
@@ -1711,7 +1748,9 @@ theorem ntt_vector_u_spec
      port via ZMod 3329 cast in ~10 Lean lines. ~4 days incl. the
      opaque predicate design.]
     Tier: algebraic-close-required (~4 days).
-    [extraction missing for invert_ntt.*]
+    [extraction PRESENT for invert_ntt.*: invert_ntt_at_layer_{1,2,3,4_plus},
+     invert_ntt_montgomery, inv_ntt_layer_int_vec_step_reduce are in
+     `Funs.lean` since commit `993b381`.]
     [F*-bound: invert_ntt.rs:660-665 `invert_ntt_montgomery` pre:
      `K ≤ 4 ∧ is_bounded_poly (K*3328) re` (poly-vector accumulated
      summand from K matrix products); post: `is_bounded_poly 3328
@@ -1760,7 +1799,15 @@ theorem invert_ntt_montgomery_spec
      coupling. Est. 2–3 weeks for L4 (independent of any upstream
      proof work). Plan accordingly.]
 
-    [extraction missing] None of L4.x is extracted.
+    [extraction status, post-2026-05-22]:
+    - L4.1 `vector.portable.sampling.rej_sample`: PRESENT.
+    - L4.2 `sampling.sample_from_xof`: PRESENT (pulled in via
+      `ntt::ntt_binomially_sampled_ring_element` transitive reachability).
+    - L4.3 `sampling.sample_from_binomial_distribution`: MISSING
+      (top-level CBD sampler; only `sample_from_uniform_distribution_next`
+      and `sample_from_xof` come in via reachability — the CBD sampler
+      is invoked from `ind_cpa::sample_vector_cbd_then_ntt` which is
+      outside the current matrix boundary).
 
     ## L4.1 `vector.portable.sampling.rej_sample` — per-vector
     rejection sampling. Takes 24 bytes, returns up to 16 sampled
@@ -1878,7 +1925,15 @@ theorem sample_from_binomial_distribution_spec
        into Lean's `BitVec` flatten. Total L5.4+L5.5 effort: ~1 week
        for all 12 proofs.]
 
-    [extraction missing] None of L5.x is extracted.
+    [extraction status, post-2026-05-22]:
+    - `vector.portable.compress.{compress_1, compress, decompress_ciphertext_coefficient,
+      compress_message_coefficient, compress_ciphertext_coefficient}`: PRESENT.
+    - `vector.portable.serialize.{serialize_d, deserialize_d}` for d ∈ {1,4,5,10,11,12}:
+      PRESENT (12 def pairs).
+    - `serialize.deserialize_to_reduced_ring_element` (the per-poly variant): PRESENT.
+    - `serialize.{serialize_uncompressed_ring_element, deserialize_to_uncompressed_ring_element,
+      deserialize_ring_elements_reduced}` (the vector-wide / uncompressed variants):
+      MISSING (outside matrix boundary; called from ind_cpa).
 
     ## L5.1 `compress_1` — d=1 (1 bit per coefficient).
     Tier: bv-decide-close.
@@ -2009,9 +2064,17 @@ theorem PortableVector_deserialize_D_spec
     in the spec poly equals the L1.x application to
     `re.coefficients[i]`".
 
-    The Layer-6 driver `PolynomialRingElement.poly_barrett_reduce` IS
-    extracted (Funs.lean lines 483, 505, 519); the rest are
-    [extraction missing].
+    [extraction PRESENT for L6.1-L6.4]:
+    `PolynomialRingElement.{poly_barrett_reduce, add_message_error_reduce,
+     add_error_reduce, add_standard_error_reduce, accumulating_ntt_multiply
+     (+ _use_cache, _fill_cache), subtract_reduce, reducing_from_i32_array,
+     from_i16_array}` — all in `Funs.lean` since commit `993b381`.
+
+    [extraction missing for L6.5-L6.7]: `serialize_uncompressed_ring_element`,
+    `deserialize_to_uncompressed_ring_element`, `deserialize_ring_elements_reduced`
+    — outside the matrix boundary (called from ind_cpa). The per-poly
+    `serialize.deserialize_to_reduced_ring_element` IS extracted and
+    is the L6.6-equivalent at the per-poly level.
 -/
 
 /- **L6.1 `PolynomialRingElement.poly_barrett_reduce`** — apply
@@ -2057,10 +2120,24 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
    Each lane independently barrett-reduces (L1.3); the upper 28296 bound
    is the worst-case prior to barrett.] -/
 
-/- **L6.2 `PolynomialRingElement.{add_to_ring_element, add_error_reduce,
-    add_message_error_reduce, add_standard_error_reduce}`** — the 4
-    fused-add-reduce variants. Spec anchors are the corresponding
-    `Spec.add_*` in `specs/ml-kem/src/polynomial.rs:19-91`.
+/- **L6.2 `PolynomialRingElement.{add_error_reduce,
+    add_message_error_reduce, add_standard_error_reduce}`** — the
+    three fused-add-reduce variants. Spec anchors are the
+    corresponding spec `add_*` in
+    `specs/ml-kem/src/polynomial.rs:19-91`.
+
+    NOTE (2026-05-22): an earlier Plan draft also listed
+    `add_to_ring_element`, but the impl Rust source
+    (`libcrux-iot/ml-kem/src/polynomial.rs`) does NOT have such a
+    method on `PolynomialRingElement`; the only `add_*` on the impl
+    type are the three fused-reduce variants. The
+    `hacspec_ml_kem.polynomial.add_to_ring_element` spec function
+    IS in the generated `HacspecMlKem` and gets used by the spec-
+    side composition lemmas, but there is no impl Triple to prove
+    here. (Plan's original 4-conjunct F*-bound block at
+    `polynomial.rs:442-444` cited an outdated upstream where the
+    impl had that method; libcrux-iot's impl inlines it into the
+    fused-reduce variants.)
 
     [F*-port: `Libcrux_ml_kem.Polynomial.{add_*}` (Polynomial.fst:
      303–369, 570–928). `add_standard_error_reduce` is the longest at
@@ -2091,9 +2168,6 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
     loop-induction + algebraic-close-required (~5 days for all 4)
 
     [F*-bound:
-     - polynomial.rs:442-444 `add_to_ring_element` pre:
-       `_bound ≤ 4*3328 ∧ is_bounded_poly _bound self ∧ is_bounded_poly 3328 rhs`,
-       post: `is_bounded_poly (_bound + 3328) future(self)`.
      - polynomial.rs:755-756 `add_message_error_reduce` pre:
        `is_bounded_poly 3328 self ∧ is_bounded_poly 3328 message`, post:
        `is_bounded_poly 3328 result`.
@@ -2106,24 +2180,8 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
        `is_bounded_poly 3328 future(self)`. (Self is post-NTT t̂, bounded
        3328 by accumulated matrix mul.)]
 -/
-/- Triple skeletons:
-@[spec]
-theorem PolynomialRingElement_add_to_ring_element_spec
-    {Vector : Type}
-    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
-    (myself rhs : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
-    (bound : Std.Usize) (h_bnd : bound.val ≤ 4 * 3328)
-    (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
-      myself.coefficients[i].elements[j].val.natAbs ≤ bound.val)
-    (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
-      rhs.coefficients[i].elements[j].val.natAbs ≤ 3328) :
-    ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_to_ring_element
-      OpsInst myself rhs bound
-    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
-                r.coefficients[i].elements[j].val.natAbs ≤ bound.val + 3328 ⌝ ⦄ := by
-  sorry
-
+/- Triple skeletons (L6.2 — 3 variants; `add_to_ring_element` has no
+   impl Triple; see note above):
 @[spec]
 theorem PolynomialRingElement_add_message_error_reduce_spec
     {Vector : Type}
@@ -2208,9 +2266,15 @@ theorem PolynomialRingElement_add_standard_error_reduce_spec
      wrap is `assume val` (Chunk.fst:1311); Lean port must prove this
      wrap; FC bound itself is closed at the integer-pair level.]
 -/
-/- Triple skeleton (extraction missing):
+/- Triple skeleton (extraction PRESENT — generated def is
+   `polynomial.PolynomialRingElement.accumulating_ntt_multiply`; note
+   the Triple takes an external `accumulator : Slice Std.I32` and
+   mutates it, so the spec must be in terms of the accumulator slice
+   contents, not a fresh return value. Original draft below assumed a
+   return-by-value shape — re-read `Funs.lean` around the generated
+   def before opening the proof):
 @[spec]
-theorem PolynomialRingElement_ntt_multiply_spec
+theorem PolynomialRingElement_accumulating_ntt_multiply_spec
     {Vector : Type}
     (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
     (myself rhs : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
@@ -2219,7 +2283,7 @@ theorem PolynomialRingElement_ntt_multiply_spec
     (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
       rhs.coefficients[i].elements[j].val.natAbs ≤ 3328) :
     ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.ntt_multiply OpsInst myself rhs
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply OpsInst myself rhs
     ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
                 r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
   sorry
@@ -2355,7 +2419,9 @@ theorem deserialize_ring_elements_reduced_spec
      (compose L6.3 + L6.2 / L6.4 + L3.8). Total: ~1 week for L7.2–L7.5
      + L7.1 ≈ 1 week once L4 closes.]
 
-    [extraction missing] None of `matrix.*` is in Funs.lean.
+    [extraction PRESENT for `matrix.*`: sample_matrix_A, sample_matrix_entry,
+     compute_vector_u, compute_ring_element_v, compute_message, compute_As_plus_e,
+     entry — all in `Funs.lean` since commit `993b381`.]
 
     ## L7.1 `sample_matrix_A` — generates `K × K` Â via SHAKE128.
     Spec: `Spec.expand_a(rho, transpose)`. Nested 2-level loop K × K.
