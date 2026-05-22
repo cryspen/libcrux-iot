@@ -41,6 +41,17 @@ private theorem triple_of_ok_l0 {α : Type} {x : Result α} {v : α}
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
   subst hx; simp [Std.Do.Triple, WP.wp, hp]
 
+/-- Extract the `.ok` witness from a true-pre Triple — mirror of the
+    SKILL §13.5 helper, scoped to this file. Used by L0.4 to consume
+    L0.3's `@[spec]` without reaching into L0.3's privates. -/
+private theorem triple_exists_ok_l0 {α : Type} {x : Result α} {P : α → Prop}
+    (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄) :
+    ∃ v, x = .ok v ∧ P v := by
+  match hx : x with
+  | .ok v => exact ⟨v, rfl, (by subst hx; simpa [Std.Do.Triple, WP.wp] using h)⟩
+  | .fail _ => exact absurd h (by simp [Std.Do.Triple, WP.wp])
+  | .div => exact absurd h (by simp [Std.Do.Triple, WP.wp])
+
 /-- BV-level spec for `IScalar.shiftRight_UScalar` — the
     arithmetic-shift-right operation on signed integers. The `bv`
     representation is `BitVec.sshiftRight`; on `Int` this is
@@ -52,6 +63,49 @@ theorem IScalar.shiftRight_UScalar_bv_eq
     Aeneas.Std.IScalar.shiftRight_UScalar x s = .ok ⟨x.bv.sshiftRight s.val⟩ := by
   simp only [Aeneas.Std.IScalar.shiftRight_UScalar, Aeneas.Std.IScalar.shiftRight]
   rw [if_pos hs]
+
+/-- **Bridge: old → new Montgomery modq form.**
+
+    Given the old-form modular equation `r * 2^16 ≡ v (mod 3329)`,
+    derive the new-form `r ≡ v * 169 (mod 3329)` via the
+    `mont_R_inv_q` keystone `(2^16 * 169) % 3329 = 1`.
+
+    The keystone implies `r * (2^16 * 169) ≡ r (mod 3329)`, hence
+    multiplying both sides of the old form by 169 yields the new form. -/
+private theorem modq_R_to_169
+    (r v : Int) (h : modq_eq (r * (2^16 : Int)) v 3329) :
+    modq_eq r (v * 169) 3329 := by
+  -- h : (r * 2^16 - v) % 3329 = 0
+  unfold modq_eq at h ⊢
+  -- Show (r - v * 169) % 3329 = 0 via the identity
+  --   r - v * 169 = -(v - r * 2^16) * 169 + r * (1 - 2^16 * 169)
+  -- and 2^16 * 169 ≡ 1 (mod 3329).
+  have h_dvd_diff : (3329 : Int) ∣ (r * (2^16 : Int) - v) := Int.dvd_of_emod_eq_zero h
+  have h_keystone : ((2^16 : Int) * 169) % 3329 = 1 := by decide
+  have h_dvd_keystone : (3329 : Int) ∣ ((2^16 : Int) * 169 - 1) := by
+    have : ((2^16 : Int) * 169 - 1) % 3329 = 0 := by
+      rw [Int.sub_emod, h_keystone]; decide
+    exact Int.dvd_of_emod_eq_zero this
+  -- r * (2^16 * 169) - r = r * (2^16 * 169 - 1), divisible by 3329.
+  have h_dvd_r : (3329 : Int) ∣ (r * ((2^16 : Int) * 169) - r) := by
+    have h_eq : r * ((2^16 : Int) * 169) - r = r * ((2^16 : Int) * 169 - 1) := by ring
+    rw [h_eq]
+    exact Dvd.dvd.mul_left h_dvd_keystone r
+  -- (r * 2^16 - v) * 169 divisible by 3329.
+  have h_dvd_169 : (3329 : Int) ∣ ((r * (2^16 : Int) - v) * 169) :=
+    Dvd.dvd.mul_right h_dvd_diff 169
+  -- Combine: r - v * 169 = r * (2^16 * 169) - r - (r * 2^16 - v) * 169 ... up to sign.
+  -- Algebra: (r * 2^16 - v) * 169 = r * (2^16 * 169) - v * 169.
+  -- So r * (2^16 * 169) - v * 169 = (r * 2^16 - v) * 169, divisible by 3329.
+  -- And r * (2^16 * 169) - r divisible by 3329.
+  -- Subtracting: (r - v * 169) = (r * (2^16 * 169) - v * 169) - (r * (2^16 * 169) - r)
+  --                            = (r * 2^16 - v) * 169 - r * (2^16 * 169 - 1).
+  have h_dvd_final : (3329 : Int) ∣ (r - v * 169) := by
+    have h_eq : (r - v * 169)
+              = (r * (2^16 : Int) - v) * 169 - (r * ((2^16 : Int) * 169) - r) := by ring
+    rw [h_eq]
+    exact dvd_sub h_dvd_169 h_dvd_r
+  exact Int.emod_eq_zero_of_dvd h_dvd_final
 
 /-! ## L0.3 — `montgomery_reduce_element_spec`
 
@@ -99,10 +153,10 @@ private theorem mont_reduce_core
     refine ⟨?_, ?_⟩
     · have h1 : -(v.natAbs : Int) ≤ v := by rw [← h_abs]; exact h_v_lt_abs.1
       have h2 : ((2^16 * 3328 : Nat) : Int) = (2^16 : Int) * 3328 := by norm_cast
-      omega
+      scalar_tac
     · have h1 : v ≤ (v.natAbs : Int) := by rw [← h_abs]; exact h_v_lt_abs.2
       have h2 : ((2^16 * 3328 : Nat) : Int) = (2^16 : Int) * 3328 := by norm_cast
-      omega
+      scalar_tac
   set v16 := Int.bmod v (2^16)
   set k16 := Int.bmod (v16 * 62209) (2^16)
   set km := k16 * 3329
@@ -141,7 +195,10 @@ private theorem mont_reduce_core
       rw [hq]; exact Int.mul_ediv_cancel_left q (by decide)
     rw [h_vm_div]
     -- v - km = 2^16 * q, so q * 2^16 - v = -km = -(k16 * 3329).
-    have h_q_eq : q * (2^16 : Int) - v = -km := by linarith [hq]
+    have h_q_eq : q * (2^16 : Int) - v = -km := by
+      have h1 : v - km = (2 : Int) ^ 16 * q := hq
+      have h2 : q * (2^16 : Int) - v = -(v - km - (2^16 : Int) * q) + (-km) := by ring
+      rw [h2, h1]; ring
     rw [h_q_eq]
     show -(k16 * 3329) % 3329 = 0
     rw [show -(k16 * 3329) = (-k16) * 3329 by ring]
@@ -153,17 +210,17 @@ private theorem mont_reduce_core
       · have h := Int.ediv_le_ediv (a := -((2^16 : Int) * 3328)) (b := v)
                     (c := (2^16 : Int)) (by decide) hl
         have h_const : (-(2^16 * 3328) : Int) / (2^16 : Int) = -3328 := by decide
-        omega
+        scalar_tac
       · have h := Int.ediv_le_ediv (a := v) (b := (2^16 : Int) * 3328)
                     (c := (2^16 : Int)) (by decide) hu
         have h_const : ((2^16 * 3328 : Int)) / (2^16 : Int) = 3328 := by decide
-        omega
+        scalar_tac
     have h_km_bounds : -(2^15 * 3329 : Int) ≤ km ∧ km ≤ ((2^15 - 1) * 3329 : Int) := by
       refine ⟨?_, ?_⟩
       · -- -(2^15) ≤ k16, so -(2^15) * 3329 ≤ k16 * 3329 = km
         have h := mul_le_mul_of_nonneg_right h_k16_lb (by decide : (0 : Int) ≤ 3329)
         have h_eq : (-(2^15 : Int)) * 3329 = -(2^15 * 3329) := by ring
-        linarith [h, h_eq]
+        rw [h_eq] at h; exact h
       · -- k16 ≤ 2^15 - 1, so km = k16 * 3329 ≤ (2^15 - 1) * 3329
         have h_k16_le : k16 ≤ 2^15 - 1 := by omega
         have h := mul_le_mul_of_nonneg_right h_k16_le (by decide : (0 : Int) ≤ 3329)
@@ -174,15 +231,28 @@ private theorem mont_reduce_core
       · have h := Int.ediv_le_ediv (a := -(2^15 * 3329 : Int)) (b := km)
                     (c := (2^16 : Int)) (by decide) hl
         have h_const : -(2^15 * 3329 : Int) / (2^16 : Int) = -1665 := by decide
-        omega
+        scalar_tac
       · have h := Int.ediv_le_ediv (a := km) (b := ((2^15 - 1) * 3329 : Int))
                     (c := (2^16 : Int)) (by decide) hu
         have h_const : (((2^15 - 1) * 3329 : Int)) / (2^16 : Int) = 1664 := by decide
-        omega
+        scalar_tac
     obtain ⟨h_vl, h_vu⟩ := h_v_div_bounds
     obtain ⟨h_kml, h_kmu⟩ := h_km_div_bounds
-    have h_res_l : -(3328 + 1665 : Int) ≤ v / (2^16 : Int) - km / (2^16 : Int) := by linarith
-    have h_res_u : v / (2^16 : Int) - km / (2^16 : Int) ≤ (3328 + 1665 : Int) := by linarith
+    have h_res_l : -(3328 + 1665 : Int) ≤ v / (2^16 : Int) - km / (2^16 : Int) := by
+      have := add_le_add h_vl (neg_le_neg h_kmu)
+      have h_simp : (-3328 : Int) + -1664 = -(3328 + 1665) + 1 := by ring
+      have h_simp2 : v / (2^16 : Int) + -(km / (2^16 : Int)) = v / (2^16 : Int) - km / (2^16 : Int) :=
+        by ring
+      have h_chain : -(3328 + 1665 : Int) ≤ -3328 + -1664 := by decide
+      have := le_trans h_chain this
+      rw [h_simp2] at this; exact this
+    have h_res_u : v / (2^16 : Int) - km / (2^16 : Int) ≤ (3328 + 1665 : Int) := by
+      have := add_le_add h_vu (neg_le_neg h_kml)
+      have h_simp2 : v / (2^16 : Int) + -(km / (2^16 : Int)) = v / (2^16 : Int) - km / (2^16 : Int) :=
+        by ring
+      have h_chain : (3328 : Int) + -(-1665) ≤ (3328 + 1665) := by decide
+      have := le_trans this h_chain
+      rw [h_simp2] at this; exact this
     -- Bridge to natAbs via the |.|-natAbs identity.
     have h_abs_eq : (((v / (2^16 : Int) - km / (2^16 : Int)).natAbs : Int))
                     = |v / (2^16 : Int) - km / (2^16 : Int)| := by
@@ -191,7 +261,7 @@ private theorem mont_reduce_core
       rw [abs_le]; exact ⟨h_res_l, h_res_u⟩
     have h_int_le : ((v / (2^16 : Int) - km / (2^16 : Int)).natAbs : Int) ≤ (3328 + 1665 : Int) := by
       rw [h_abs_eq]; exact h_abs_le
-    omega
+    scalar_tac
 
 /-- Closed-form value computed by the impl, as an `IScalar.I16`. -/
 private def mont_reduce_impl_value (value : Std.I32) : Std.I16 :=
@@ -267,7 +337,7 @@ private theorem mont_reduce_impl_value_val
     rw [Int.abs_eq_natAbs]
     have : (v.natAbs : Int) ≤ ((2^16 * 3328 : Nat) : Int) := by exact_mod_cast hb
     have h2 : ((2^16 * 3328 : Nat) : Int) = (2^16 * 3328 : Int) := by norm_cast
-    omega
+    scalar_tac
   -- (cast .I16 value).val = bmod v (2^16) = v16
   have h_v16_eq : (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I16 value).val = v16 := by
     rw [Aeneas.Std.IScalar.cast_val_eq]; rfl
@@ -285,13 +355,13 @@ private theorem mont_reduce_impl_value_val
       rw [h_red, h_v16_eq]
       have h_v16_lb : -(2^15 : Int) ≤ v16 := h_v16_bounds.1
       have h_const : -((2 : Int)^31) ≤ -((2 : Int)^15) := by decide
-      omega
+      scalar_tac
     have h_ub : (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I16 value).val
                   < ((2 : Int)^(Aeneas.Std.IScalarTy.I32.numBits - 1)) := by
       rw [h_red, h_v16_eq]
       have h_v16_ub : v16 < (2^15 : Int) := h_v16_bounds.2
       have h_const : (2 : Int)^15 ≤ (2 : Int)^31 := by decide
-      omega
+      scalar_tac
     rw [Aeneas.Std.IScalar.val_mod_pow_inBounds _ _ h_lb h_ub]
     exact h_v16_eq
   -- (UScalar.hcast .I32 (62209#u32)).val = 62209
@@ -334,12 +404,12 @@ private theorem mont_reduce_impl_value_val
       have h_lb : (-(2^15 : Int)) * 62209 ≤ v16 * 62209 :=
         mul_le_mul_of_nonneg_right h_v16_bounds.1 (by decide : (0 : Int) ≤ 62209)
       have h_const : -((2 : Int)^(32-1)) ≤ -((2 : Int)^15) * 62209 := by decide
-      omega
+      scalar_tac
     · -- v16 * 62209 < 2^(32-1).
       have h_ub : v16 * 62209 < (2^15 : Int) * 62209 :=
         mul_lt_mul_of_pos_right h_v16_bounds.2 (by decide : (0 : Int) < 62209)
       have h_const : (2^15 : Int) * 62209 ≤ (2 : Int)^(32-1) := by decide
-      omega
+      scalar_tac
   -- Now (cast .I16 k).val = bmod k.val (2^16) = bmod (v16 * 62209) (2^16) = k16
   set k16 := Int.bmod (v16 * 62209) (2^16)
   have h_k16_eq : (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I16 k).val = k16 := by
@@ -357,13 +427,13 @@ private theorem mont_reduce_impl_value_val
       rw [h_red, h_k16_eq]
       have h_k16_lb : -(2^15 : Int) ≤ k16 := h_k16_bounds.1
       have h_const : -((2 : Int)^31) ≤ -((2 : Int)^15) := by decide
-      omega
+      scalar_tac
     have h_ub : (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I16 k).val
                   < ((2 : Int)^(Aeneas.Std.IScalarTy.I32.numBits - 1)) := by
       rw [h_red, h_k16_eq]
       have h_k16_ub : k16 < (2^15 : Int) := h_k16_bounds.2
       have h_const : (2 : Int)^15 ≤ (2 : Int)^31 := by decide
-      omega
+      scalar_tac
     rw [Aeneas.Std.IScalar.val_mod_pow_inBounds _ _ h_lb h_ub]
     exact h_k16_eq
   -- (cast .I32 (3329#i16)).val = 3329
@@ -390,10 +460,10 @@ private theorem mont_reduce_impl_value_val
     apply Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
     · have h_lb := mul_le_mul_of_nonneg_right h_k16_bounds.1 (by decide : (0 : Int) ≤ 3329)
       have h_const : -((2 : Int)^(32-1)) ≤ -((2 : Int)^15) * 3329 := by decide
-      omega
+      scalar_tac
     · have h_ub := mul_lt_mul_of_pos_right h_k16_bounds.2 (by decide : (0 : Int) < 3329)
       have h_const : (2^15 : Int) * 3329 ≤ (2 : Int)^(32-1) := by decide
-      omega
+      scalar_tac
   -- The two arithmetic shifts: i9 = km >> 16, i11 = value >> 16.
   -- |km.val| < 2^15 * 3329 < 2^27, so |i9.val| < 2^11 < 2^15 (fits in i16).
   -- |value.val| ≤ 3328 * 2^16, so |i11.val| ≤ 3328 < 2^15 (fits in i16).
@@ -415,7 +485,7 @@ private theorem mont_reduce_impl_value_val
     have hl : -(2^15 * 3329 : Int) ≤ k16 * 3329 := by
       have h_lb := mul_le_mul_of_nonneg_right h_k16_bounds.1 (by decide : (0 : Int) ≤ 3329)
       have : (-(2^15 : Int)) * 3329 = -(2^15 * 3329 : Int) := by ring
-      linarith
+      scalar_tac +nonLin
     have hu : k16 * 3329 ≤ ((2^15 - 1) * 3329 : Int) := by
       have h_le : k16 ≤ 2^15 - 1 := by omega
       exact mul_le_mul_of_nonneg_right h_le (by decide)
@@ -424,12 +494,12 @@ private theorem mont_reduce_impl_value_val
                   (c := (2^16 : Int)) (by decide) hl
       have h_const : -(2^15 * 3329 : Int) / (2^16 : Int) = -1665 := by decide
       have : (-1665 : Int) ≥ -(2^15) := by decide
-      omega
+      scalar_tac
     · have h := Int.ediv_le_ediv (a := k16 * 3329) (b := ((2^15 - 1) * 3329 : Int))
                   (c := (2^16 : Int)) (by decide) hu
       have h_const : (((2^15 - 1) * 3329 : Int)) / (2^16 : Int) = 1664 := by decide
       have : (1664 : Int) < 2^15 := by decide
-      omega
+      scalar_tac
   have h_i11_bounds : -(2^15 : Int) ≤ i11.val ∧ i11.val < (2^15 : Int) := by
     rw [h_i11_val]
     have hl : -((2^16 : Int) * 3328) ≤ v := by
@@ -437,24 +507,24 @@ private theorem mont_reduce_impl_value_val
       have h_abs : |v| = (v.natAbs : Int) := Int.abs_eq_natAbs v
       have h_v_lt_abs : -|v| ≤ v := neg_abs_le v
       have h2 : ((2^16 * 3328 : Nat) : Int) = (2^16 : Int) * 3328 := by norm_cast
-      omega
+      scalar_tac
     have hu : v ≤ (2^16 : Int) * 3328 := by
       have h_nat : (v.natAbs : Int) ≤ ((2^16 * 3328 : Nat) : Int) := by exact_mod_cast hb
       have h_abs : |v| = (v.natAbs : Int) := Int.abs_eq_natAbs v
       have h_v_lt_abs : v ≤ |v| := le_abs_self v
       have h2 : ((2^16 * 3328 : Nat) : Int) = (2^16 : Int) * 3328 := by norm_cast
-      omega
+      scalar_tac
     refine ⟨?_, ?_⟩
     · have h := Int.ediv_le_ediv (a := -((2^16 : Int) * 3328)) (b := v)
                   (c := (2^16 : Int)) (by decide) hl
       have h_const : (-((2^16 : Int) * 3328)) / (2^16 : Int) = -3328 := by decide
       have : (-3328 : Int) ≥ -(2^15) := by decide
-      omega
+      scalar_tac
     · have h := Int.ediv_le_ediv (a := v) (b := (2^16 : Int) * 3328)
                   (c := (2^16 : Int)) (by decide) hu
       have h_const : ((2^16 : Int) * 3328) / (2^16 : Int) = 3328 := by decide
       have : (3328 : Int) < 2^15 := by decide
-      omega
+      scalar_tac
   -- (cast .I16 i9).val = i9.val (since |i9.val| < 2^15)
   have h_c_val : (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I16 i9).val = i9.val := by
     have h_lb : -((2 : Int)^(Aeneas.Std.IScalarTy.I16.numBits - 1)) ≤ i9.val := by
@@ -506,47 +576,57 @@ private theorem mont_reduce_impl_value_val
           have h_abs : |v| = (v.natAbs : Int) := Int.abs_eq_natAbs v
           have h_v_lt_abs : -|v| ≤ v := neg_abs_le v
           have h2 : ((2^16 * 3328 : Nat) : Int) = (2^16 : Int) * 3328 := by norm_cast
-          omega
+          scalar_tac
         have h := Int.ediv_le_ediv (a := -((2^16 : Int) * 3328)) (b := v)
                     (c := (2^16 : Int)) (by decide) hl
         have h_const2 : (-((2^16 : Int) * 3328)) / (2^16 : Int) = -3328 := by decide
-        omega
+        scalar_tac
       · have hu : v ≤ (2^16 : Int) * 3328 := by
           have h_nat : (v.natAbs : Int) ≤ ((2^16 * 3328 : Nat) : Int) := by exact_mod_cast hb
           have h_abs : |v| = (v.natAbs : Int) := Int.abs_eq_natAbs v
           have h_v_lt_abs : v ≤ |v| := le_abs_self v
           have h2 : ((2^16 * 3328 : Nat) : Int) = (2^16 : Int) * 3328 := by norm_cast
-          omega
+          scalar_tac
         have h := Int.ediv_le_ediv (a := v) (b := (2^16 : Int) * 3328)
                     (c := (2^16 : Int)) (by decide) hu
         have h_const : ((2^16 : Int) * 3328) / (2^16 : Int) = 3328 := by decide
-        omega
+        scalar_tac
     have h_km_div : -1665 ≤ k16 * 3329 / (2^16 : Int) ∧ k16 * 3329 / (2^16 : Int) ≤ 1664 := by
       refine ⟨?_, ?_⟩
       · have hl : -(2^15 * 3329 : Int) ≤ k16 * 3329 := by
           have h_lb := mul_le_mul_of_nonneg_right h_k16_bounds.1 (by decide : (0 : Int) ≤ 3329)
           have : (-(2^15 : Int)) * 3329 = -(2^15 * 3329 : Int) := by ring
-          linarith
+          scalar_tac +nonLin
         have h := Int.ediv_le_ediv (a := -(2^15 * 3329 : Int)) (b := k16 * 3329)
                     (c := (2^16 : Int)) (by decide) hl
         have h_const : -(2^15 * 3329 : Int) / (2^16 : Int) = -1665 := by decide
-        omega
+        scalar_tac
       · have hu : k16 * 3329 ≤ ((2^15 - 1) * 3329 : Int) := by
           have h_le : k16 ≤ 2^15 - 1 := by omega
           exact mul_le_mul_of_nonneg_right h_le (by decide)
         have h := Int.ediv_le_ediv (a := k16 * 3329) (b := ((2^15 - 1) * 3329 : Int))
                     (c := (2^16 : Int)) (by decide) hu
         have h_const : (((2^15 - 1) * 3329 : Int)) / (2^16 : Int) = 1664 := by decide
-        omega
+        scalar_tac
     -- Goal: `-(2^(16-1)) ≤ ↑value / 2^16 - k16 * 3329 / 2^16`.
-    -- Substitute `v = ↑value` so linarith can use h_v_div.
+    -- Substitute `v = ↑value` so the named bounds in scope discharge it.
     show -((2 : Int)^(16-1)) ≤ v / 2^16 - k16 * 3329 / 2^16
     have h_2_15 : ((2 : Int)^(16-1)) = ((2 : Int)^15) := by decide
     rw [h_2_15]
     have h_15_le : (-(2^15) : Int) ≤ -4993 := by decide
     have hl1 : -3328 ≤ v / (2^16 : Int) := h_v_div.1
     have hl2 : k16 * 3329 / (2^16 : Int) ≤ 1664 := h_km_div.2
-    linarith
+    -- Combine: v/R - km/R ≥ -3328 - 1664 = -4992 ≥ -4993 ≥ -2^15.
+    have h_sum : -3328 - 1664 ≤ v / 2^16 - k16 * 3329 / 2^16 := by
+      have := add_le_add hl1 (neg_le_neg hl2)
+      have h_simp : (-3328 : Int) + (-1664) = -3328 - 1664 := by ring
+      have h_simp2 : v / (2^16 : Int) + -(k16 * 3329 / (2^16 : Int))
+                    = v / (2^16 : Int) - k16 * 3329 / (2^16 : Int) := by ring
+      rw [h_simp] at this
+      rw [h_simp2] at this
+      exact this
+    have h_chain : (-(2^15) : Int) ≤ -3328 - 1664 := by decide
+    exact le_trans h_chain h_sum
   · have h_v_div : -3328 ≤ v / (2^16 : Int) ∧ v / (2^16 : Int) ≤ 3328 := by
       refine ⟨?_, ?_⟩
       · have hl : -((2^16 : Int) * 3328) ≤ v := by
@@ -554,58 +634,178 @@ private theorem mont_reduce_impl_value_val
           have h_abs : |v| = (v.natAbs : Int) := Int.abs_eq_natAbs v
           have h_v_lt_abs : -|v| ≤ v := neg_abs_le v
           have h2 : ((2^16 * 3328 : Nat) : Int) = (2^16 : Int) * 3328 := by norm_cast
-          omega
+          scalar_tac
         have h := Int.ediv_le_ediv (a := -((2^16 : Int) * 3328)) (b := v)
                     (c := (2^16 : Int)) (by decide) hl
         have h_const : (-((2^16 : Int) * 3328)) / (2^16 : Int) = -3328 := by decide
-        omega
+        scalar_tac
       · have hu : v ≤ (2^16 : Int) * 3328 := by
           have h_nat : (v.natAbs : Int) ≤ ((2^16 * 3328 : Nat) : Int) := by exact_mod_cast hb
           have h_abs : |v| = (v.natAbs : Int) := Int.abs_eq_natAbs v
           have h_v_lt_abs : v ≤ |v| := le_abs_self v
           have h2 : ((2^16 * 3328 : Nat) : Int) = (2^16 : Int) * 3328 := by norm_cast
-          omega
+          scalar_tac
         have h := Int.ediv_le_ediv (a := v) (b := (2^16 : Int) * 3328)
                     (c := (2^16 : Int)) (by decide) hu
         have h_const : ((2^16 : Int) * 3328) / (2^16 : Int) = 3328 := by decide
-        omega
+        scalar_tac
     have h_km_div : -1665 ≤ k16 * 3329 / (2^16 : Int) ∧ k16 * 3329 / (2^16 : Int) ≤ 1664 := by
       refine ⟨?_, ?_⟩
       · have hl : -(2^15 * 3329 : Int) ≤ k16 * 3329 := by
           have h_lb := mul_le_mul_of_nonneg_right h_k16_bounds.1 (by decide : (0 : Int) ≤ 3329)
           have : (-(2^15 : Int)) * 3329 = -(2^15 * 3329 : Int) := by ring
-          linarith
+          scalar_tac +nonLin
         have h := Int.ediv_le_ediv (a := -(2^15 * 3329 : Int)) (b := k16 * 3329)
                     (c := (2^16 : Int)) (by decide) hl
         have h_const : -(2^15 * 3329 : Int) / (2^16 : Int) = -1665 := by decide
-        omega
+        scalar_tac
       · have hu : k16 * 3329 ≤ ((2^15 - 1) * 3329 : Int) := by
           have h_le : k16 ≤ 2^15 - 1 := by omega
           exact mul_le_mul_of_nonneg_right h_le (by decide)
         have h := Int.ediv_le_ediv (a := k16 * 3329) (b := ((2^15 - 1) * 3329 : Int))
                     (c := (2^16 : Int)) (by decide) hu
         have h_const : (((2^15 - 1) * 3329 : Int)) / (2^16 : Int) = 1664 := by decide
-        omega
+        scalar_tac
     -- Goal: `↑value / 2^16 - k16 * 3329 / 2^16 < 2^(16-1)`.
     show v / 2^16 - k16 * 3329 / 2^16 < (2 : Int)^(16-1)
     have h_2_15 : ((2 : Int)^(16-1)) = ((2 : Int)^15) := by decide
     rw [h_2_15]
     have hu1 : v / (2^16 : Int) ≤ 3328 := h_v_div.2
     have hl2 : -1665 ≤ k16 * 3329 / (2^16 : Int) := h_km_div.1
-    have : (3328 + 1665 : Int) < 2^15 := by decide
-    linarith
+    have h_bound : (3328 + 1665 : Int) < 2^15 := by decide
+    -- v/R - km/R ≤ 3328 - (-1665) = 4993 < 2^15.
+    have h_sum : v / 2^16 - k16 * 3329 / 2^16 ≤ 3328 + 1665 := by
+      have := add_le_add hu1 (neg_le_neg hl2)
+      have h_simp : (3328 : Int) + (-(-1665)) = 3328 + 1665 := by ring
+      have h_simp2 : v / (2^16 : Int) + -(k16 * 3329 / (2^16 : Int))
+                    = v / (2^16 : Int) - k16 * 3329 / (2^16 : Int) := by ring
+      rw [h_simp] at this
+      rw [h_simp2] at this
+      exact this
+    exact lt_of_le_of_lt h_sum h_bound
+
+/-- **Tight bound for the conditional half of L0.3.**
+
+    When `|value| ≤ 2^15 * 3328`, `(mont_reduce_impl_value value).val.natAbs ≤ 3328`.
+
+    Triangle-inequality argument: since `v ≡ km (mod R)` (the
+    `mont_reduce_core` `h_km_mod` keystone), `res * R = v - km` *exactly*.
+    Hence `|res| * R = |v - km| ≤ |v| + |km| ≤ 2^15·3328 + 2^15·3329 =
+    2^15·6657`, so `|res| ≤ 6657/2 = 3328` (Int division). -/
+private theorem mont_reduce_tight_3328
+    (v : Std.I32) (h_v : v.val.natAbs ≤ 2^15 * 3328) :
+    (mont_reduce_impl_value v).val.natAbs ≤ 3328 := by
+  -- Loosen the precondition for `mont_reduce_impl_value_val`.
+  have h_loose : v.val.natAbs ≤ 2^16 * 3328 :=
+    le_trans h_v (by decide : (2^15 * 3328 : Nat) ≤ 2^16 * 3328)
+  rw [mont_reduce_impl_value_val v h_loose]
+  set vi : Int := v.val with hvi_def
+  set v16 : Int := Int.bmod vi (2^16) with hv16_def
+  set k16 : Int := Int.bmod (v16 * 62209) (2^16) with hk16_def
+  set km  : Int := k16 * 3329 with hkm_def
+  set res : Int := vi / (2^16 : Int) - km / (2^16 : Int) with hres_def
+  -- Bound on |vi| as an Int.
+  have h_vi_abs : |vi| ≤ ((2^15 : Int) * 3328) := by
+    rw [Int.abs_eq_natAbs]
+    have h_nat : (vi.natAbs : Int) ≤ ((2^15 * 3328 : Nat) : Int) := by exact_mod_cast h_v
+    have h_nat_int : ((2^15 * 3328 : Nat) : Int) = (2^15 : Int) * 3328 := by norm_cast
+    rw [← h_nat_int]; exact h_nat
+  -- Bound on |k16| as an Int (from bmod 2^16 bounds).
+  have h_k16_lb : -(2^15 : Int) ≤ k16 := (Arith.Int.bmod_pow2_bounds 16 (v16 * 62209)).1
+  have h_k16_ub : k16 < (2^15 : Int) := (Arith.Int.bmod_pow2_bounds 16 (v16 * 62209)).2
+  have h_k16_abs : |k16| ≤ (2^15 : Int) := abs_le.mpr ⟨h_k16_lb, le_of_lt h_k16_ub⟩
+  -- Re-derive the keystone `(vi - km) % R = 0`.
+  have h_km_mod : (vi - km) % (2^16 : Int) = 0 := by
+    have h_keystone_int : (62209 * 3329 : Int) % (2^16) = 1 := by decide
+    have h_k16_emod : k16 % (2^16 : Int) = (v16 * 62209) % (2^16 : Int) := by
+      change (Int.bmod (v16 * 62209) (2^16)) % (2^16 : Int) = (v16 * 62209) % (2^16 : Int)
+      exact_mod_cast Int.bmod_emod
+    have h_step1 : km % (2^16 : Int) = (v16 * (62209 * 3329)) % (2^16 : Int) := by
+      change (k16 * 3329) % _ = _
+      rw [Int.mul_emod, h_k16_emod, ← Int.mul_emod]
+      congr 1; ring
+    have h_step2 : km % (2^16 : Int) = v16 % (2^16 : Int) := by
+      rw [h_step1, Int.mul_emod, h_keystone_int, mul_one, Int.emod_emod_of_dvd _ (dvd_refl _)]
+    have h_v_emod : vi % (2^16 : Int) = v16 % (2^16 : Int) := by
+      change vi % (2^16 : Int) = (Int.bmod vi (2^16)) % (2^16 : Int)
+      exact_mod_cast Int.bmod_emod.symm
+    rw [Int.sub_emod, h_v_emod, ← h_step2]; simp
+  -- Key identity: `res * R = vi - km` exactly.
+  have h_res_R : res * (2^16 : Int) = vi - km := by
+    have h_R_dvd : (2^16 : Int) ∣ (vi - km) := Int.dvd_of_emod_eq_zero h_km_mod
+    obtain ⟨q, hq⟩ := h_R_dvd
+    have h_vm_div : (vi - km) / (2^16 : Int) = q := by
+      rw [hq]; exact Int.mul_ediv_cancel_left q (by decide)
+    have h_div_split : vi / (2^16 : Int) - km / (2^16 : Int) = (vi - km) / (2^16 : Int) :=
+      libcrux_iot_ml_kem.Util.sub_div_of_emod_eq_zero vi km (2^16) (by decide) h_km_mod
+    show (vi / (2^16 : Int) - km / (2^16 : Int)) * (2^16 : Int) = vi - km
+    rw [h_div_split, h_vm_div, hq]; ring
+  -- Triangle inequality + bounds: |vi - km| ≤ 2^15 * 6657.
+  have h_km_abs : |km| ≤ (2^15 : Int) * 3329 := by
+    show |k16 * 3329| ≤ _
+    rw [abs_mul]
+    have h_3329 : |(3329 : Int)| = 3329 := by decide
+    rw [h_3329]
+    exact mul_le_mul_of_nonneg_right h_k16_abs (by decide)
+  have h_diff_abs : |vi - km| ≤ (2^15 : Int) * (3328 + 3329) := by
+    have h_tri : |vi - km| ≤ |vi| + |km| := abs_sub vi km
+    have h_sum : |vi| + |km| ≤ (2^15 : Int) * 3328 + (2^15 : Int) * 3329 :=
+      add_le_add h_vi_abs h_km_abs
+    have h_factor : (2^15 : Int) * 3328 + (2^15 : Int) * 3329 = (2^15 : Int) * (3328 + 3329) := by
+      ring
+    rw [h_factor] at h_sum
+    exact le_trans h_tri h_sum
+  -- |res| * R ≤ 2^15 * 6657, hence |res| ≤ 3328.
+  have h_res_R_factor : |res * (2^16 : Int)| = |res| * (2^16 : Int) := by
+    rw [abs_mul, show |(2^16 : Int)| = (2^16 : Int) from by decide]
+  have h_res_R_ge : |res| * (2^16 : Int) ≤ (2^15 : Int) * (3328 + 3329) := by
+    rw [← h_res_R_factor, h_res_R]; exact h_diff_abs
+  have h_res_le_3328 : |res| ≤ (3328 : Int) := by
+    -- Suppose |res| ≥ 3329; then |res| * 2^16 ≥ 3329 * 2^16 > 2^15 * 6657. Contradiction.
+    by_contra h_gt
+    push_neg at h_gt
+    have h_ge : (3329 : Int) ≤ |res| := h_gt
+    have h_mul : (3329 : Int) * (2^16 : Int) ≤ |res| * (2^16 : Int) :=
+      mul_le_mul_of_nonneg_right h_ge (by decide)
+    have h_chain : (3329 : Int) * (2^16 : Int) ≤ (2^15 : Int) * (3328 + 3329) :=
+      le_trans h_mul h_res_R_ge
+    have h_eval : ((2^15 : Int) * (3328 + 3329) < (3329 : Int) * (2^16 : Int)) := by decide
+    exact absurd (lt_of_le_of_lt h_chain h_eval) (lt_irrefl _)
+  have h_abs_eq : |res| = (res.natAbs : Int) := Int.abs_eq_natAbs res
+  rw [h_abs_eq] at h_res_le_3328
+  exact_mod_cast h_res_le_3328
+
+/-! ### L0.3 Triple. -/
 
 @[spec]
 theorem montgomery_reduce_element_spec
-    (value : Std.I32) (hb : value.val.natAbs ≤ 2^16 * 3328) :
+    (value : Std.I32) (hb : value.val.natAbs ≤ 3328 * 2^16) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element value
-    ⦃ ⇓ r => ⌜ modq_eq (r.val * (2^16 : Int)) value.val 3329
-              ∧ r.val.natAbs ≤ 3328 + 1665 ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r.val.natAbs ≤ 3328 + 1665
+              ∧ (value.val.natAbs ≤ 3328 * 2^15 → r.val.natAbs ≤ 3328)
+              ∧ modq_eq r.val (value.val * 169) 3329 ⌝ ⦄ := by
+  -- Normalise to the form `mont_reduce_core` / `mont_reduce_impl_value_val` use.
+  have hb' : value.val.natAbs ≤ 2^16 * 3328 := by
+    have h_eq : (3328 * 2^16 : Nat) = 2^16 * 3328 := by decide
+    rw [← h_eq]; exact hb
   apply triple_of_ok_l0 (v := mont_reduce_impl_value value)
     (mont_reduce_element_eq_ok value)
-  rw [mont_reduce_impl_value_val value hb]
-  exact mont_reduce_core value.val hb
+  -- Three conjuncts: weak bound, conditional tight bound, modq new form.
+  refine ⟨?_, ?_, ?_⟩
+  · -- Weak bound: `(mont_reduce_impl_value value).val.natAbs ≤ 4993`.
+    rw [mont_reduce_impl_value_val value hb']
+    exact (mont_reduce_core value.val hb').2
+  · -- Conditional tight bound: derived from the same `mont_reduce_impl_value_val`
+    --   but under the stronger precondition `|value| ≤ 3328 * 2^15`.
+    intro h_tight
+    have h_tight' : value.val.natAbs ≤ 2^15 * 3328 := by
+      have h_eq : (3328 * 2^15 : Nat) = 2^15 * 3328 := by decide
+      rw [← h_eq]; exact h_tight
+    exact mont_reduce_tight_3328 value h_tight'
+  · -- New modq form: derived from the old one via `modq_R_to_169`.
+    rw [mont_reduce_impl_value_val value hb']
+    exact modq_R_to_169 _ _ (mont_reduce_core value.val hb').1
 
 /-! ## L0.4 — `montgomery_multiply_fe_by_fer_spec`
 
@@ -689,146 +889,22 @@ private theorem mmfbf_product_val
   · have h_const : ((2 : Int)^15 * 1664) < ((2 : Int)^(32-1)) := by decide
     exact lt_of_le_of_lt h_prod_ub h_const
 
-/-- Tight bound on `mont_reduce_impl_value v` when `|v| ≤ 2^15 * 1664`:
-    `|res| ≤ 832 + 1665 = 2497 ≤ 3328`. This is the key fact L0.3's
-    public `@[spec]` does not expose (it gives only `≤ 4993`). Derived
-    by reusing `mont_reduce_impl_value_val` and re-bounding `v/R`. -/
-private theorem mont_reduce_tight_bound
-    (v : Std.I32) (h_v : v.val.natAbs ≤ 2^15 * 1664) :
-    (mont_reduce_impl_value v).val.natAbs ≤ 3328 := by
-  -- Loose precondition for `mont_reduce_impl_value_val`: 2^15*1664 ≤ 2^16*3328.
-  have h_loose : v.val.natAbs ≤ 2^16 * 3328 := by
-    have h_step : (2^15 * 1664 : Nat) ≤ (2^16 * 3328 : Nat) := by decide
-    exact le_trans h_v h_step
-  rw [mont_reduce_impl_value_val v h_loose]
-  set vi : Int := v.val
-  set v16 : Int := Int.bmod vi (2^16)
-  set k16 : Int := Int.bmod (v16 * 62209) (2^16)
-  have h_k16_lb : -(2^15 : Int) ≤ k16 := (Arith.Int.bmod_pow2_bounds 16 (v16 * 62209)).1
-  have h_k16_ub : k16 < (2^15 : Int) := (Arith.Int.bmod_pow2_bounds 16 (v16 * 62209)).2
-  -- Tight bound on |v/R|: |v| ≤ 2^15 * 1664 = 2^16 * 832, so |v/R| ≤ 832.
-  have h_v_abs : -((2^15 : Int) * 1664) ≤ vi ∧ vi ≤ ((2^15 : Int) * 1664) := by
-    have h_nat : (vi.natAbs : Int) ≤ ((2^15 * 1664 : Nat) : Int) := by exact_mod_cast h_v
-    have h_abs : |vi| = (vi.natAbs : Int) := Int.abs_eq_natAbs vi
-    have h_v_lt_abs : -|vi| ≤ vi ∧ vi ≤ |vi| := ⟨neg_abs_le vi, le_abs_self vi⟩
-    have h_nat_int : ((2^15 * 1664 : Nat) : Int) = (2^15 : Int) * 1664 := by norm_cast
-    refine ⟨?_, ?_⟩
-    · have h1 : -(vi.natAbs : Int) ≤ vi := by rw [← h_abs]; exact h_v_lt_abs.1
-      have : -((2^15 * 1664 : Nat) : Int) ≤ -(vi.natAbs : Int) := by
-        have := h_nat; have h_neg : -((2^15 * 1664 : Nat) : Int) ≤ -(vi.natAbs : Int) := by
-          have := h_nat; have := neg_le_neg this; exact this
-        exact h_neg
-      have h_chain : -((2^15 * 1664 : Nat) : Int) ≤ vi := le_trans this h1
-      rw [h_nat_int] at h_chain; exact h_chain
-    · have h1 : vi ≤ (vi.natAbs : Int) := by rw [← h_abs]; exact h_v_lt_abs.2
-      have h_chain : vi ≤ ((2^15 * 1664 : Nat) : Int) := le_trans h1 h_nat
-      rw [h_nat_int] at h_chain; exact h_chain
-  have h_v_div_lb : -832 ≤ vi / (2^16 : Int) := by
-    have h := Int.ediv_le_ediv (a := -((2^15 : Int) * 1664)) (b := vi)
-                (c := (2^16 : Int)) (by decide) h_v_abs.1
-    have h_const : -((2^15 : Int) * 1664) / (2^16 : Int) = -832 := by decide
-    have : -((2^15 : Int) * 1664) / (2^16 : Int) ≤ vi / (2^16 : Int) := h
-    rw [h_const] at this; exact this
-  have h_v_div_ub : vi / (2^16 : Int) ≤ 832 := by
-    have h := Int.ediv_le_ediv (a := vi) (b := (2^15 : Int) * 1664)
-                (c := (2^16 : Int)) (by decide) h_v_abs.2
-    have h_const : ((2^15 : Int) * 1664) / (2^16 : Int) = 832 := by decide
-    have : vi / (2^16 : Int) ≤ ((2^15 : Int) * 1664) / (2^16 : Int) := h
-    rw [h_const] at this; exact this
-  -- |km/R| ≤ 1665 (general — same as L0.3).
-  have h_km_div_lb : -1665 ≤ (k16 * 3329) / (2^16 : Int) := by
-    have hl : -(2^15 * 3329 : Int) ≤ k16 * 3329 := by
-      have h_lb := mul_le_mul_of_nonneg_right h_k16_lb (by decide : (0 : Int) ≤ 3329)
-      have h_eq : (-(2^15 : Int)) * 3329 = -(2^15 * 3329 : Int) := by ring
-      have := h_lb; rw [h_eq] at this; exact this
-    have h := Int.ediv_le_ediv (a := -(2^15 * 3329 : Int)) (b := k16 * 3329)
-                (c := (2^16 : Int)) (by decide) hl
-    have h_const : -(2^15 * 3329 : Int) / (2^16 : Int) = -1665 := by decide
-    have : -(2^15 * 3329 : Int) / (2^16 : Int) ≤ k16 * 3329 / (2^16 : Int) := h
-    rw [h_const] at this; exact this
-  have h_km_div_ub : (k16 * 3329) / (2^16 : Int) ≤ 1664 := by
-    have h_k16_le : k16 ≤ 2^15 - 1 := by
-      have h_ub' : k16 < (2^15 : Int) := h_k16_ub
-      have h_int : k16 ≤ (2^15 : Int) - 1 := by
-        have h := h_ub'
-        have h_one : k16 + 1 ≤ (2^15 : Int) := h
-        have : k16 ≤ (2^15 : Int) - 1 := by
-          have := h_one
-          have h_sub : k16 + 1 - 1 ≤ (2^15 : Int) - 1 := sub_le_sub_right this 1
-          have h_simp : k16 + 1 - 1 = k16 := by ring
-          rw [h_simp] at h_sub; exact h_sub
-        exact this
-      exact h_int
-    have hu : k16 * 3329 ≤ ((2^15 - 1) * 3329 : Int) :=
-      mul_le_mul_of_nonneg_right h_k16_le (by decide)
-    have h := Int.ediv_le_ediv (a := k16 * 3329) (b := ((2^15 - 1) * 3329 : Int))
-                (c := (2^16 : Int)) (by decide) hu
-    have h_const : (((2^15 - 1) * 3329 : Int)) / (2^16 : Int) = 1664 := by decide
-    have : k16 * 3329 / (2^16 : Int) ≤ (((2^15 - 1) * 3329 : Int)) / (2^16 : Int) := h
-    rw [h_const] at this; exact this
-  -- Combine: -2497 ≤ res ≤ 2497, hence natAbs ≤ 2497 ≤ 3328.
-  set res : Int := vi / (2^16 : Int) - (k16 * 3329) / (2^16 : Int)
-  have h_res_lb : -(2497 : Int) ≤ res := by
-    have : -(2497 : Int) = -832 + (-1665) := by decide
-    have h1 : -832 ≤ vi / (2^16 : Int) := h_v_div_lb
-    have h2 : (k16 * 3329) / (2^16 : Int) ≤ 1664 := h_km_div_ub
-    have h_n_one : -((k16 * 3329) / (2^16 : Int)) ≥ -1664 := by
-      have := h2; have h_neg := neg_le_neg this; exact h_neg
-    show -(2497 : Int) ≤ vi / (2^16 : Int) - (k16 * 3329) / (2^16 : Int)
-    have : -2497 = -832 + (-1665 : Int) := by decide
-    -- Use a cleaner sub bound: from h1, h2 (with -1665 ≥ -...): need
-    -- vi/R + (-1664) ≥ -832 + (-1664) = -2496, and ≥ -832 + (-1665) = -2497.
-    have h_sub_bound : -832 - 1664 ≤ vi / (2^16 : Int) - (k16 * 3329) / (2^16 : Int) := by
-      have h_a : -832 ≤ vi / (2^16 : Int) := h1
-      have h_b : -1664 ≤ -((k16 * 3329) / (2^16 : Int)) := by
-        have := h2; have h_neg := neg_le_neg this; exact h_neg
-      have h_combined : (-832) + (-1664) ≤ vi / (2^16 : Int) + (-((k16 * 3329) / (2^16 : Int))) :=
-        add_le_add h_a h_b
-      have h_sub_eq : vi / (2^16 : Int) + (-((k16 * 3329) / (2^16 : Int)))
-                      = vi / (2^16 : Int) - (k16 * 3329) / (2^16 : Int) := by ring
-      rw [h_sub_eq] at h_combined
-      have h_lhs_eq : (-832 : Int) + (-1664) = -832 - 1664 := by ring
-      rw [h_lhs_eq] at h_combined; exact h_combined
-    have h_chain : -2497 ≤ -832 - (1664 : Int) := by decide
-    exact le_trans h_chain h_sub_bound
-  have h_res_ub : res ≤ (2497 : Int) := by
-    show vi / (2^16 : Int) - (k16 * 3329) / (2^16 : Int) ≤ 2497
-    have h_a : vi / (2^16 : Int) ≤ 832 := h_v_div_ub
-    have h_b : -((k16 * 3329) / (2^16 : Int)) ≤ 1665 := by
-      have := h_km_div_lb; have h_neg := neg_le_neg this
-      have h_simp : -(-(1665 : Int)) = 1665 := by ring
-      rw [h_simp] at h_neg; exact h_neg
-    have h_combined : vi / (2^16 : Int) + (-((k16 * 3329) / (2^16 : Int))) ≤ 832 + 1665 :=
-      add_le_add h_a h_b
-    have h_sub_eq : vi / (2^16 : Int) + (-((k16 * 3329) / (2^16 : Int)))
-                    = vi / (2^16 : Int) - (k16 * 3329) / (2^16 : Int) := by ring
-    rw [h_sub_eq] at h_combined
-    have h_rhs_eq : (832 : Int) + 1665 = 2497 := by decide
-    rw [h_rhs_eq] at h_combined; exact h_combined
-  -- Convert to natAbs.
-  have h_abs_eq : |res| = (res.natAbs : Int) := Int.abs_eq_natAbs res
-  have h_abs_le : |res| ≤ (2497 : Int) := abs_le.mpr ⟨h_res_lb, h_res_ub⟩
-  have h_int_le : (res.natAbs : Int) ≤ (2497 : Int) := by rw [← h_abs_eq]; exact h_abs_le
-  have h_nat_le : res.natAbs ≤ 2497 := by exact_mod_cast h_int_le
-  have h_const : (2497 : Nat) ≤ 3328 := by decide
-  exact le_trans h_nat_le h_const
-
 @[spec]
 theorem montgomery_multiply_fe_by_fer_spec
     (fe : Std.I16) (fer : Std.I16) (hfer : fer.val.natAbs ≤ 1664) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_multiply_fe_by_fer fe fer
-    ⦃ ⇓ r => ⌜ modq_eq (r.val * (2^16 : Int)) (fe.val * fer.val) 3329
-              ∧ r.val.natAbs ≤ 3328 ⌝ ⦄ := by
-  -- Reduce the do-block to a single mont_reduce_element call on the exact product.
+    ⦃ ⇓ r => ⌜ r.val.natAbs ≤ 3328
+              ∧ modq_eq r.val (fe.val * fer.val * 169) 3329 ⌝ ⦄ := by
+  -- Reduce L0.4's impl to a single `montgomery_reduce_element` call on the exact product.
   set product : Std.I32 :=
     Aeneas.Std.I32.wrapping_mul
       (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 fe)
       (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 fer)
   have h_product_val : product.val = fe.val * fer.val := mmfbf_product_val fe fer hfer
+  -- Bound the product: |fe·fer| ≤ 2^15 · 1664.
   have h_product_natAbs : product.val.natAbs ≤ 2^15 * 1664 := by
     rw [h_product_val]
-    -- |fe.val| ≤ 2^15, |fer.val| ≤ 1664, so |fe.val * fer.val| ≤ 2^15 * 1664.
     have h_fe_bounds := fe.hBounds
     have h_red : (Aeneas.Std.IScalarTy.I16.numBits - 1) = 15 := by decide
     have h_fe_lb : -((2 : Int)^15) ≤ fe.val := by
@@ -837,29 +913,28 @@ theorem montgomery_multiply_fe_by_fer_spec
       have := h_fe_bounds.2; rw [h_red] at this; exact this
     have h_fe_abs : (fe.val.natAbs : Int) ≤ ((2 : Int)^15) := by
       rw [← Int.abs_eq_natAbs]; exact abs_le.mpr ⟨h_fe_lb, le_of_lt h_fe_ub⟩
-    have h_fer_abs : (fer.val.natAbs : Int) ≤ (1664 : Int) := by exact_mod_cast hfer
-    -- (fe.val * fer.val).natAbs = fe.val.natAbs * fer.val.natAbs
     rw [Int.natAbs_mul]
     have h_nat_fe : fe.val.natAbs ≤ 2^15 := by exact_mod_cast h_fe_abs
-    have h_nat_fer : fer.val.natAbs ≤ 1664 := hfer
-    have h_mul : fe.val.natAbs * fer.val.natAbs ≤ (2^15) * 1664 :=
-      Nat.mul_le_mul h_nat_fe h_nat_fer
-    exact h_mul
-  apply triple_of_ok_l0 (v := mont_reduce_impl_value product)
-    (by rw [mmfbf_eq_ok]; exact mont_reduce_element_eq_ok product)
+    exact Nat.mul_le_mul h_nat_fe hfer
+  -- Preconditions for L0.3:
+  --   weak: product.val.natAbs ≤ 3328 * 2^16 (always true here).
+  --   tight: product.val.natAbs ≤ 3328 * 2^15 (used to extract the |r| ≤ 3328 bound).
+  have h_pre_weak : product.val.natAbs ≤ 3328 * 2^16 := by
+    have h_step : (2^15 * 1664 : Nat) ≤ (3328 * 2^16 : Nat) := by decide
+    exact le_trans h_product_natAbs h_step
+  have h_pre_tight : product.val.natAbs ≤ 3328 * 2^15 := by
+    have h_step : (2^15 * 1664 : Nat) ≤ (3328 * 2^15 : Nat) := by decide
+    exact le_trans h_product_natAbs h_step
+  -- Extract L0.3's conclusion via `triple_exists_ok_l0` (depending only on L0.3's
+  -- public `@[spec]`, never reaching into L0.3 privates).
+  obtain ⟨r0, h_eq_ok, _h_weak, h_cond, h_modq_new⟩ :=
+    triple_exists_ok_l0 (montgomery_reduce_element_spec product h_pre_weak)
+  -- The L0.4 impl reduces to .ok r0; close via triple_of_ok_l0.
+  apply triple_of_ok_l0 (v := r0) (by rw [mmfbf_eq_ok]; exact h_eq_ok)
   refine ⟨?_, ?_⟩
-  · -- modq_eq part: reuse mont_reduce_core's modq_eq output and rewrite product.val.
-    have h_loose : product.val.natAbs ≤ 2^16 * 3328 := by
-      have h_step : (2^15 * 1664 : Nat) ≤ (2^16 * 3328 : Nat) := by decide
-      exact le_trans h_product_natAbs h_step
-    have h_core := (mont_reduce_core product.val h_loose).1
-    rw [mont_reduce_impl_value_val product h_loose]
-    -- Goal: modq_eq ((v/R - km/R) * R) (fe.val * fer.val) 3329.
-    -- We have h_core : modq_eq ((v/R - km/R) * R) product.val 3329.
-    -- Substitute product.val = fe.val * fer.val.
-    rw [← h_product_val]
-    exact h_core
-  · -- Tight bound: |r| ≤ 2497 ≤ 3328.
-    exact mont_reduce_tight_bound product h_product_natAbs
+  · -- Tight bound: feed the antecedent to L0.3's conditional post.
+    exact h_cond h_pre_tight
+  · -- modq_new: rewrite product.val to fe.val * fer.val.
+    rw [← h_product_val]; exact h_modq_new
 
 end libcrux_iot_ml_kem.Equivalence
