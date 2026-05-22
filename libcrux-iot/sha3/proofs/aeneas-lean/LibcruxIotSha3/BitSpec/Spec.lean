@@ -6,8 +6,8 @@
   `KState` record (no `Result` monad, no `Aeneas.Std.UScalar`, no
   `Lane2U32` wrappers).
 
-  This is the *impl side* of Campaign 2's domain — the Campaign-1
-  equivalence (`StructEquiv.lean`) proves `keccakf1600_round*_*` ≡
+  This is the *impl side* of the algebraic equivalence's domain — the the structural-equivalence
+  equivalence (`StructuralEquiv.lean`) proves `keccakf1600_round*_*` ≡
   the corresponding `bit_*` definition here via `hax_mvcgen`.
 
   Phase 1 Step A (rosetta stone): only `bit_pi_rho_chi_y0_zeta0` is
@@ -16,10 +16,10 @@
 
   Plan: `~/.claude/plans/fancy-gliding-swan.md`, Phase 1 Step 1.3.
 -/
-import LibcruxIotSha3.BitKeccak.State
+import LibcruxIotSha3.BitSpec.State
 import LibcruxIotSha3.Extraction.Funs
 
-namespace libcrux_iot_sha3.BitKeccak
+namespace libcrux_iot_sha3.BitSpec
 
 open Aeneas Aeneas.Std libcrux_iot_sha3
 
@@ -728,7 +728,7 @@ def bit_keccakf1600_round1_pi_rho_chi_2 (s : KState) : KState :=
 Round-2 zeta-pattern derives from `impl_perm` applied twice to round-0's
 column-read pattern. The per-lane `z0`/`z1` choice (transcribed from
 `keccakf1600_round2_theta_c_x{X}_z{Z}` in `Extraction/Funs.lean`) is
-recorded below — see `StructEquiv.lean` for the equivalence proofs. -/
+recorded below — see `StructuralEquiv.lean` for the equivalence proofs. -/
 
 def bit_round2_theta_c_x0_z0 (s : KState) : KState :=
   let v := s.st[0].z0 ^^^ s.st[1].z1 ^^^ s.st[2].z1 ^^^ s.st[3].z1 ^^^ s.st[4].z1
@@ -1046,7 +1046,7 @@ def bit_keccakf1600_round2_pi_rho_chi_2 (s : KState) : KState :=
 Round-3 zeta-pattern derives from `impl_perm` applied three times to
 round-0's column-read pattern. The per-lane `z0`/`z1` choice
 (transcribed from `keccakf1600_round3_theta_c_x{X}_z{Z}` in
-`Extraction/Funs.lean`) is recorded below — see `StructEquiv.lean`
+`Extraction/Funs.lean`) is recorded below — see `StructuralEquiv.lean`
 for the equivalence proofs. -/
 
 def bit_round3_theta_c_x0_z0 (s : KState) : KState :=
@@ -1362,7 +1362,7 @@ def bit_keccakf1600_round3_pi_rho_chi_2 (s : KState) : KState :=
   let s5 := bit_round3_pi_rho_chi_y4_zeta0 s4
   bit_round3_pi_rho_chi_y4_zeta1 s5
 
-/-! ## 4-round bundle (Campaign-1 mid-level composition)
+/-! ## 4-round bundle (the structural-equivalence mid-level composition)
 
     Mirrors the structure of `keccak.keccakf1600_4rounds`: 12 sub-piece
     calls chained `round0_theta → round0_pi_rho_chi_1 → _2 → round1_…
@@ -1393,4 +1393,4 @@ def bit_keccak_spec (s : KState) : KState :=
   let s' := Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 s
   { s' with i := 0#usize }
 
-end libcrux_iot_sha3.BitKeccak
+end libcrux_iot_sha3.BitSpec

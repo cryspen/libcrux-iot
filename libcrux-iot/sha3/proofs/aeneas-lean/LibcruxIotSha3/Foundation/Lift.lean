@@ -37,7 +37,7 @@ import Std.Tactic.BVDecide
 
 open Aeneas Aeneas.Std
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 /-- The interleaved lane representation has a canonical default
     (both halves zero) — needed for the `_!` accessors used below. -/
@@ -387,4 +387,4 @@ theorem usize_bv_ofNat_val (k : Nat) (h : k < 2^Std.UScalarTy.Usize.numBits) :
   rw [BitVec.toNat_ofNat]
   exact Nat.mod_eq_of_lt h
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

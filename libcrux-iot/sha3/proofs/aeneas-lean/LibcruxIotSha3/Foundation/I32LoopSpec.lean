@@ -7,20 +7,20 @@
   - `loop_range_spec_i32` — induction principle for `loop` over
     `core.ops.range.Range I32`, parameterised by an invariant `inv`.
 
-  Used by `BitKeccak/StructEquiv.lean` to verify the 6-iteration
+  Used by `StructuralEquiv.lean` to verify the 6-iteration
   `keccakf1600` round-bundle loop.
 
   ## History (2026-05-20 cleanup)
 
-  Extracted from the former `Equivalence/Keccakf1600Loop.lean`. The
+  Extracted from the former `Foundation/Keccakf1600Loop.lean`. The
   spec-chain + `Result Prop` helpers from the same file now live in
-  `Equivalence/SpecChain.lean`.
+  `Foundation/SpecChain.lean`.
 -/
-import LibcruxIotSha3.Equivalence.Keccakf1600
+import LibcruxIotSha3.Foundation.SpecStep
 
 open Aeneas Aeneas.Std Result ControlFlow Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
@@ -201,4 +201,4 @@ theorem loop_range_spec_i32 {β : Type}
       exact ih acc' iter'.start
         (by rw [hstart]; omega) (by rw [hstart]; omega) (by rw [hstart]; omega) hinv'
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

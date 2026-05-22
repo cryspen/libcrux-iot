@@ -13,14 +13,14 @@
   Editing `theta_lift_spec`'s proof body in `ThetaLift.lean` does not
   invalidate this file's cache.
 -/
-import LibcruxIotSha3.Equivalence.Lift
-import LibcruxIotSha3.Equivalence.UScalarAC
+import LibcruxIotSha3.Foundation.Lift
+import LibcruxIotSha3.Foundation.UScalarAC
 import HacspecSha3
 import Hax
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
@@ -632,4 +632,4 @@ how we bridge "spec d-cell content" with "impl r.d cell content".
 -/
 
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

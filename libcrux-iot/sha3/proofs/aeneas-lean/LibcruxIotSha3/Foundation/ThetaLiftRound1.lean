@@ -21,11 +21,11 @@
   - `theta_lift_spec_1` then closes with the same `Subtype.ext` +
     25-cell `congr` strategy as round 0, but on the `_perm`-shaped RHS.
 -/
-import LibcruxIotSha3.Equivalence.ThetaLift
+import LibcruxIotSha3.Foundation.ThetaLift
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
@@ -825,4 +825,4 @@ theorem theta_lift_spec_1 (s : state.KeccakState) :
           | (apply congrArg (HXor.hXor (α := BitVec 32) _);
              try simp only [← rotateLeft1_xor_bv32]; ac_rfl)
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

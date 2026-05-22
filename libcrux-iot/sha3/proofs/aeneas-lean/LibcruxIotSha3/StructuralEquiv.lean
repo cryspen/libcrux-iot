@@ -1,5 +1,5 @@
 /-
-  Rosetta-stone Campaign-1 equivalence: one sub-fn at a time.
+  Rosetta-stone the structural-equivalence equivalence: one sub-fn at a time.
 
   Proves `keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0` is observationally
   equal to the pure-Lean `bit_pi_rho_chi_y0_zeta0` under `KState.fromAeneas`.
@@ -12,18 +12,20 @@
     iso-projection lemmas (`Lane.fromAeneas_*`, `stateArray*FromAeneas_getElem`
     in `Project.lean`) are in scope; `c`/`d`/`i` are trivial chain rewrites.
 -/
-import LibcruxIotSha3.BitKeccak.Spec
-import LibcruxIotSha3.BitKeccak.StateIso
-import LibcruxIotSha3.BitKeccak.Project
-import LibcruxIotSha3.Equivalence.PrcLift
-import LibcruxIotSha3.Equivalence.ThetaLiftDefs
-import LibcruxIotSha3.Equivalence.I32LoopSpec
-import LibcruxIotSha3.Equivalence.SpecChain
+import LibcruxIotSha3.BitSpec.Spec
+import LibcruxIotSha3.BitSpec.StateIso
+import LibcruxIotSha3.BitSpec.Project
+import LibcruxIotSha3.Foundation.PrcLift
+import LibcruxIotSha3.Foundation.ThetaLiftDefs
+import LibcruxIotSha3.Foundation.I32LoopSpec
+import LibcruxIotSha3.Foundation.SpecChain
 import Hax
 
-namespace libcrux_iot_sha3.BitKeccak
+namespace libcrux_iot_sha3.Structural
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3
+open libcrux_iot_sha3.Foundation
+open libcrux_iot_sha3.BitSpec
 
 set_option mvcgen.warning false
 
@@ -551,7 +553,7 @@ theorem bit_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd00]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd01]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -561,7 +563,7 @@ theorem bit_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd10]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd11]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -571,7 +573,7 @@ theorem bit_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd20]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd21]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -581,7 +583,7 @@ theorem bit_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd30]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd31]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -591,7 +593,7 @@ theorem bit_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd40]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd41]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -603,7 +605,7 @@ theorem bit_theta_d_eq (s : state.KeccakState) :
 With the 11 sub-fn equivalences tagged `@[spec high]`, `mvcgen` threads
 them through the 11-step do-chain of `keccak.keccakf1600_round0_theta`
 (the `high` priority overrides the FC default-priority `@[spec]`s in
-`Equivalence/ThetaLiftDefs.lean` that target the same sub-fns). The
+`Foundation/ThetaLiftDefs.lean` that target the same sub-fns). The
 residual after `mvcgen` is the definitional unfolding of
 `bit_keccakf1600_round0_theta` applied to `KState.fromAeneas s`. -/
 
@@ -691,8 +693,8 @@ end PrcLiftComp
 
 Same template as the round-0 proofs above, but on the round-1
 sub-functions, whose lane addressing follows `impl_perm` (see
-`BitKeccak/Spec.lean` round-1 defs for the per-sub-fn mapping). No
-round-1 FC `@[spec]` lemmas exist in `Equivalence/`, so `mvcgen` chains
+`BitSpec/Spec.lean` round-1 defs for the per-sub-fn mapping). No
+round-1 FC `@[spec]` lemmas exist in `Foundation/`, so `mvcgen` chains
 the primitive `get_with_zeta_spec` / `set_with_zeta_spec` /
 `set_lane_value_spec` / `rotate_left_u32_spec` / etc. as it threads the
 body. -/
@@ -826,8 +828,8 @@ theorem bit_round1_theta_c_x4_z1_eq (s : state.KeccakState) :
 /-! ## θ-stage d-cell sub-fn (round 1)
 
 Round 1's `keccakf1600_round1_theta_d` body is a long Array-update chain
-(no FC sub-fn `@[spec]` exists in `Equivalence/`); we publish a local
-FC `@[spec]` mirroring `Equivalence/ThetaLiftDefs.lean:theta_d_spec` so
+(no FC sub-fn `@[spec]` exists in `Foundation/`); we publish a local
+FC `@[spec]` mirroring `Foundation/ThetaLiftDefs.lean:theta_d_spec` so
 the `bit_round1_theta_d_eq` proof can reuse the round-0 template. The
 formulas are identical to round 0 (same XOR-rotate-1 pattern on `s.c`);
 only the function name differs. -/
@@ -838,23 +840,23 @@ private theorem round1_theta_d_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_theta_d s
     ⦃ ⇓ r => ⌜ r.st = s.st ∧ r.i = s.i ∧ r.c = s.c ∧
         r.d.val[0]!.val[0]! =
-          s.c.val[4]!.val[0]! ^^^ Equivalence.rot32 s.c.val[1]!.val[1]! 1 ∧
+          s.c.val[4]!.val[0]! ^^^ Foundation.rot32 s.c.val[1]!.val[1]! 1 ∧
         r.d.val[0]!.val[1]! =
           s.c.val[4]!.val[1]! ^^^ s.c.val[1]!.val[0]! ∧
         r.d.val[1]!.val[0]! =
-          s.c.val[0]!.val[0]! ^^^ Equivalence.rot32 s.c.val[2]!.val[1]! 1 ∧
+          s.c.val[0]!.val[0]! ^^^ Foundation.rot32 s.c.val[2]!.val[1]! 1 ∧
         r.d.val[1]!.val[1]! =
           s.c.val[0]!.val[1]! ^^^ s.c.val[2]!.val[0]! ∧
         r.d.val[2]!.val[0]! =
-          s.c.val[1]!.val[0]! ^^^ Equivalence.rot32 s.c.val[3]!.val[1]! 1 ∧
+          s.c.val[1]!.val[0]! ^^^ Foundation.rot32 s.c.val[3]!.val[1]! 1 ∧
         r.d.val[2]!.val[1]! =
           s.c.val[1]!.val[1]! ^^^ s.c.val[3]!.val[0]! ∧
         r.d.val[3]!.val[0]! =
-          s.c.val[2]!.val[0]! ^^^ Equivalence.rot32 s.c.val[4]!.val[1]! 1 ∧
+          s.c.val[2]!.val[0]! ^^^ Foundation.rot32 s.c.val[4]!.val[1]! 1 ∧
         r.d.val[3]!.val[1]! =
           s.c.val[2]!.val[1]! ^^^ s.c.val[4]!.val[0]! ∧
         r.d.val[4]!.val[0]! =
-          s.c.val[3]!.val[0]! ^^^ Equivalence.rot32 s.c.val[0]!.val[1]! 1 ∧
+          s.c.val[3]!.val[0]! ^^^ Foundation.rot32 s.c.val[0]!.val[1]! 1 ∧
         r.d.val[4]!.val[1]! =
           s.c.val[3]!.val[1]! ^^^ s.c.val[0]!.val[0]! ⌝ ⦄ := by
   unfold keccak.keccakf1600_round1_theta_d
@@ -866,7 +868,7 @@ private theorem round1_theta_d_spec_fc (s : state.KeccakState) :
        all_goals first | trivial | assumption | (
          simp only [Std.WP.predn] at *
          try apply Std.U32.bv_eq_imp_eq
-         simp_all [Std.UScalar.bv_xor, Equivalence.rot32]))
+         simp_all [Std.UScalar.bv_xor, Foundation.rot32]))
 
 set_option maxHeartbeats 8000000 in
 @[spec high]
@@ -894,7 +896,7 @@ theorem bit_round1_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd00]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd01]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -904,7 +906,7 @@ theorem bit_round1_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd10]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd11]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -914,7 +916,7 @@ theorem bit_round1_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd20]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd21]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -924,7 +926,7 @@ theorem bit_round1_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd30]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd31]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -934,7 +936,7 @@ theorem bit_round1_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd40]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd41]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -943,12 +945,12 @@ theorem bit_round1_theta_d_eq (s : state.KeccakState) :
 
 /-! ## PrcLift sub-fns (round 1)
 
-Round-1 PrcLift sub-fns have no FC `@[spec]` in `Equivalence/PrcLift.lean`,
+Round-1 PrcLift sub-fns have no FC `@[spec]` in `Foundation/PrcLift.lean`,
 so we publish private FC specs locally (mirroring the R1-chained-set form
 in PrcLift.lean) and then prove the bit-side equivalences using those
 FCs as the `mvcgen` consumers. -/
 
-/-- Local copy of `Equivalence.PrcLift.apply_5_writes` (which is `private`
+/-- Local copy of `Foundation.PrcLift.apply_5_writes` (which is `private`
     and not re-exported). Used by the round-1 PrcLift FC posts to express
     the 5-write chain compactly. -/
 @[reducible]
@@ -972,7 +974,7 @@ proof bodies of the FC specs below are byte-identical to round 0's
 PrcLift.lean templates except for `_round0_` → `_round1_` and the
 constants in the post (lanes/halves/rotations). -/
 
-/- Local copy of `Equivalence.PrcLift`'s `prc_y_zeta_no_rc_proof` macro
+/- Local copy of `Foundation.PrcLift`'s `prc_y_zeta_no_rc_proof` macro
    (which is `private` and not re-exported). Discharges the 4-conjunct
    FC post for any round's y1..y4 PrcLift sub-fn (no RC step, preserves
    `s.i`). Hygiene disabled so the `h_25..h_55` names produced by
@@ -1001,7 +1003,7 @@ local macro "round1_prc_y_zeta_no_rc_proof" subfun:ident : tactic => `(tactic|
          h_7, h_9, h_20, h_22, h_24,
          h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
          h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-         Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Equivalence.rot32]
+         Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Foundation.rot32]
        norm_num)))
 
 set_option maxHeartbeats 16000000 in
@@ -1010,11 +1012,11 @@ private theorem round1_pi_rho_chi_y0_zeta0_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y0_zeta0 BR s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[0]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 0
-      let bx1 := Equivalence.rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
-      let bx2 := Equivalence.rot32 (s.st.val[11]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 22
-      let bx3 := Equivalence.rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 11
-      let bx4 := Equivalence.rot32 (s.st.val[22]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 7
+      let bx0 := Foundation.rot32 (s.st.val[0]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 0
+      let bx1 := Foundation.rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
+      let bx2 := Foundation.rot32 (s.st.val[11]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 22
+      let bx3 := Foundation.rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 11
+      let bx4 := Foundation.rot32 (s.st.val[22]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         0 8 11 19 22
@@ -1047,7 +1049,7 @@ private theorem round1_pi_rho_chi_y0_zeta0_spec_fc
         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
         h_28,
         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Equivalence.rot32]
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Foundation.rot32]
       norm_num)
 
 /- Round-1 y0_zeta1 FC (RC + s.i++): same proof shape as round-0's
@@ -1058,11 +1060,11 @@ private theorem round1_pi_rho_chi_y0_zeta1_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y0_zeta1 BR s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[0]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 0
-      let bx1 := Equivalence.rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 22
-      let bx2 := Equivalence.rot32 (s.st.val[11]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 21
-      let bx3 := Equivalence.rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 10
-      let bx4 := Equivalence.rot32 (s.st.val[22]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 7
+      let bx0 := Foundation.rot32 (s.st.val[0]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 0
+      let bx1 := Foundation.rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 22
+      let bx2 := Foundation.rot32 (s.st.val[11]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 21
+      let bx3 := Foundation.rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 10
+      let bx4 := Foundation.rot32 (s.st.val[22]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ∧
       r.st.val = apply_5_writes s.st.val
         0 8 11 19 22
@@ -1096,7 +1098,7 @@ private theorem round1_pi_rho_chi_y0_zeta1_spec_fc
         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
         h_28,
         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Equivalence.rot32]
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Foundation.rot32]
       norm_num)
 
 /-! Round-1 y1..y4 × ζ0/ζ1 FCs (no RC; preserve `s.i`). -/
@@ -1106,11 +1108,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round1_pi_rho_chi_y1_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y1_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 14
-      let bx1 := Equivalence.rot32 (s.st.val[21]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 10
-      let bx2 := Equivalence.rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 2
-      let bx3 := Equivalence.rot32 (s.st.val[7]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 23
-      let bx4 := Equivalence.rot32 (s.st.val[10]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 31
+      let bx0 := Foundation.rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 14
+      let bx1 := Foundation.rot32 (s.st.val[21]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 10
+      let bx2 := Foundation.rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 2
+      let bx3 := Foundation.rot32 (s.st.val[7]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 23
+      let bx4 := Foundation.rot32 (s.st.val[10]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 31
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         4 7 10 18 21
@@ -1127,11 +1129,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round1_pi_rho_chi_y1_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y1_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 14
-      let bx1 := Equivalence.rot32 (s.st.val[21]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 10
-      let bx2 := Equivalence.rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 1
-      let bx3 := Equivalence.rot32 (s.st.val[7]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 22
-      let bx4 := Equivalence.rot32 (s.st.val[10]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 30
+      let bx0 := Foundation.rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 14
+      let bx1 := Foundation.rot32 (s.st.val[21]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 10
+      let bx2 := Foundation.rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 1
+      let bx3 := Foundation.rot32 (s.st.val[7]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 22
+      let bx4 := Foundation.rot32 (s.st.val[10]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 30
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         4 7 10 18 21
@@ -1148,11 +1150,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round1_pi_rho_chi_y2_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y2_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[6]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
-      let bx1 := Equivalence.rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 3
-      let bx2 := Equivalence.rot32 (s.st.val[17]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 13
-      let bx3 := Equivalence.rot32 (s.st.val[20]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 4
-      let bx4 := Equivalence.rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 9
+      let bx0 := Foundation.rot32 (s.st.val[6]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
+      let bx1 := Foundation.rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 3
+      let bx2 := Foundation.rot32 (s.st.val[17]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 13
+      let bx3 := Foundation.rot32 (s.st.val[20]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 4
+      let bx4 := Foundation.rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         3 6 14 17 20
@@ -1169,11 +1171,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round1_pi_rho_chi_y2_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y2_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[6]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 0
-      let bx1 := Equivalence.rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 3
-      let bx2 := Equivalence.rot32 (s.st.val[17]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 12
-      let bx3 := Equivalence.rot32 (s.st.val[20]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 4
-      let bx4 := Equivalence.rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 9
+      let bx0 := Foundation.rot32 (s.st.val[6]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 0
+      let bx1 := Foundation.rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 3
+      let bx2 := Foundation.rot32 (s.st.val[17]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 12
+      let bx3 := Foundation.rot32 (s.st.val[20]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 4
+      let bx4 := Foundation.rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         3 6 14 17 20
@@ -1190,11 +1192,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round1_pi_rho_chi_y3_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y3_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 14
-      let bx1 := Equivalence.rot32 (s.st.val[2]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 18
-      let bx2 := Equivalence.rot32 (s.st.val[5]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 5
-      let bx3 := Equivalence.rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 8
-      let bx4 := Equivalence.rot32 (s.st.val[16]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 28
+      let bx0 := Foundation.rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 14
+      let bx1 := Foundation.rot32 (s.st.val[2]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 18
+      let bx2 := Foundation.rot32 (s.st.val[5]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 5
+      let bx3 := Foundation.rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 8
+      let bx4 := Foundation.rot32 (s.st.val[16]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         2 5 13 16 24
@@ -1211,11 +1213,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round1_pi_rho_chi_y3_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y3_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 13
-      let bx1 := Equivalence.rot32 (s.st.val[2]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 18
-      let bx2 := Equivalence.rot32 (s.st.val[5]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 5
-      let bx3 := Equivalence.rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 7
-      let bx4 := Equivalence.rot32 (s.st.val[16]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
+      let bx0 := Foundation.rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 13
+      let bx1 := Foundation.rot32 (s.st.val[2]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 18
+      let bx2 := Foundation.rot32 (s.st.val[5]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 5
+      let bx3 := Foundation.rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 7
+      let bx4 := Foundation.rot32 (s.st.val[16]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         2 5 13 16 24
@@ -1232,11 +1234,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round1_pi_rho_chi_y4_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y4_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[12]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 31
-      let bx1 := Equivalence.rot32 (s.st.val[15]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 28
-      let bx2 := Equivalence.rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 20
-      let bx3 := Equivalence.rot32 (s.st.val[1]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 21
-      let bx4 := Equivalence.rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
+      let bx0 := Foundation.rot32 (s.st.val[12]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 31
+      let bx1 := Foundation.rot32 (s.st.val[15]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 28
+      let bx2 := Foundation.rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 20
+      let bx3 := Foundation.rot32 (s.st.val[1]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 21
+      let bx4 := Foundation.rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         1 9 12 15 23
@@ -1253,11 +1255,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round1_pi_rho_chi_y4_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round1_pi_rho_chi_y4_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[12]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
-      let bx1 := Equivalence.rot32 (s.st.val[15]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 27
-      let bx2 := Equivalence.rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 19
-      let bx3 := Equivalence.rot32 (s.st.val[1]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 20
-      let bx4 := Equivalence.rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
+      let bx0 := Foundation.rot32 (s.st.val[12]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
+      let bx1 := Foundation.rot32 (s.st.val[15]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 27
+      let bx2 := Foundation.rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 19
+      let bx3 := Foundation.rot32 (s.st.val[1]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 20
+      let bx4 := Foundation.rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         1 9 12 15 23
@@ -1677,23 +1679,23 @@ private theorem round2_theta_d_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_theta_d s
     ⦃ ⇓ r => ⌜ r.st = s.st ∧ r.i = s.i ∧ r.c = s.c ∧
         r.d.val[0]!.val[0]! =
-          s.c.val[4]!.val[0]! ^^^ Equivalence.rot32 s.c.val[1]!.val[1]! 1 ∧
+          s.c.val[4]!.val[0]! ^^^ Foundation.rot32 s.c.val[1]!.val[1]! 1 ∧
         r.d.val[0]!.val[1]! =
           s.c.val[4]!.val[1]! ^^^ s.c.val[1]!.val[0]! ∧
         r.d.val[1]!.val[0]! =
-          s.c.val[0]!.val[0]! ^^^ Equivalence.rot32 s.c.val[2]!.val[1]! 1 ∧
+          s.c.val[0]!.val[0]! ^^^ Foundation.rot32 s.c.val[2]!.val[1]! 1 ∧
         r.d.val[1]!.val[1]! =
           s.c.val[0]!.val[1]! ^^^ s.c.val[2]!.val[0]! ∧
         r.d.val[2]!.val[0]! =
-          s.c.val[1]!.val[0]! ^^^ Equivalence.rot32 s.c.val[3]!.val[1]! 1 ∧
+          s.c.val[1]!.val[0]! ^^^ Foundation.rot32 s.c.val[3]!.val[1]! 1 ∧
         r.d.val[2]!.val[1]! =
           s.c.val[1]!.val[1]! ^^^ s.c.val[3]!.val[0]! ∧
         r.d.val[3]!.val[0]! =
-          s.c.val[2]!.val[0]! ^^^ Equivalence.rot32 s.c.val[4]!.val[1]! 1 ∧
+          s.c.val[2]!.val[0]! ^^^ Foundation.rot32 s.c.val[4]!.val[1]! 1 ∧
         r.d.val[3]!.val[1]! =
           s.c.val[2]!.val[1]! ^^^ s.c.val[4]!.val[0]! ∧
         r.d.val[4]!.val[0]! =
-          s.c.val[3]!.val[0]! ^^^ Equivalence.rot32 s.c.val[0]!.val[1]! 1 ∧
+          s.c.val[3]!.val[0]! ^^^ Foundation.rot32 s.c.val[0]!.val[1]! 1 ∧
         r.d.val[4]!.val[1]! =
           s.c.val[3]!.val[1]! ^^^ s.c.val[0]!.val[0]! ⌝ ⦄ := by
   unfold keccak.keccakf1600_round2_theta_d
@@ -1705,7 +1707,7 @@ private theorem round2_theta_d_spec_fc (s : state.KeccakState) :
        all_goals first | trivial | assumption | (
          simp only [Std.WP.predn] at *
          try apply Std.U32.bv_eq_imp_eq
-         simp_all [Std.UScalar.bv_xor, Equivalence.rot32]))
+         simp_all [Std.UScalar.bv_xor, Foundation.rot32]))
 
 set_option maxHeartbeats 8000000 in
 @[spec high]
@@ -1733,7 +1735,7 @@ theorem bit_round2_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd00]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd01]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -1743,7 +1745,7 @@ theorem bit_round2_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd10]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd11]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -1753,7 +1755,7 @@ theorem bit_round2_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd20]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd21]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -1763,7 +1765,7 @@ theorem bit_round2_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd30]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd31]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -1773,7 +1775,7 @@ theorem bit_round2_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd40]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd41]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -1791,11 +1793,11 @@ private theorem round2_pi_rho_chi_y0_zeta0_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y0_zeta0 BR s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[0]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 0
-      let bx1 := Equivalence.rot32 (s.st.val[7]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
-      let bx2 := Equivalence.rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 22
-      let bx3 := Equivalence.rot32 (s.st.val[16]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 11
-      let bx4 := Equivalence.rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 7
+      let bx0 := Foundation.rot32 (s.st.val[0]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 0
+      let bx1 := Foundation.rot32 (s.st.val[7]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
+      let bx2 := Foundation.rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 22
+      let bx3 := Foundation.rot32 (s.st.val[16]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 11
+      let bx4 := Foundation.rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         0 7 14 16 23
@@ -1828,7 +1830,7 @@ private theorem round2_pi_rho_chi_y0_zeta0_spec_fc
         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
         h_28,
         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Equivalence.rot32]
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Foundation.rot32]
       norm_num)
 
 set_option maxHeartbeats 16000000 in
@@ -1837,11 +1839,11 @@ private theorem round2_pi_rho_chi_y0_zeta1_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y0_zeta1 BR s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[0]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 0
-      let bx1 := Equivalence.rot32 (s.st.val[7]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 22
-      let bx2 := Equivalence.rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 21
-      let bx3 := Equivalence.rot32 (s.st.val[16]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 10
-      let bx4 := Equivalence.rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 7
+      let bx0 := Foundation.rot32 (s.st.val[0]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 0
+      let bx1 := Foundation.rot32 (s.st.val[7]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 22
+      let bx2 := Foundation.rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 21
+      let bx3 := Foundation.rot32 (s.st.val[16]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 10
+      let bx4 := Foundation.rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ∧
       r.st.val = apply_5_writes s.st.val
         0 7 14 16 23
@@ -1875,7 +1877,7 @@ private theorem round2_pi_rho_chi_y0_zeta1_spec_fc
         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
         h_28,
         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Equivalence.rot32]
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Foundation.rot32]
       norm_num)
 
 set_option maxHeartbeats 16000000 in
@@ -1883,11 +1885,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round2_pi_rho_chi_y1_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y1_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 14
-      let bx1 := Equivalence.rot32 (s.st.val[21]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 10
-      let bx2 := Equivalence.rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 2
-      let bx3 := Equivalence.rot32 (s.st.val[5]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 23
-      let bx4 := Equivalence.rot32 (s.st.val[12]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
+      let bx0 := Foundation.rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 14
+      let bx1 := Foundation.rot32 (s.st.val[21]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 10
+      let bx2 := Foundation.rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 2
+      let bx3 := Foundation.rot32 (s.st.val[5]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 23
+      let bx4 := Foundation.rot32 (s.st.val[12]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         3 5 12 19 21
@@ -1904,11 +1906,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round2_pi_rho_chi_y1_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y1_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 14
-      let bx1 := Equivalence.rot32 (s.st.val[21]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 10
-      let bx2 := Equivalence.rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 1
-      let bx3 := Equivalence.rot32 (s.st.val[5]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
-      let bx4 := Equivalence.rot32 (s.st.val[12]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 30
+      let bx0 := Foundation.rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 14
+      let bx1 := Foundation.rot32 (s.st.val[21]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 10
+      let bx2 := Foundation.rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 1
+      let bx3 := Foundation.rot32 (s.st.val[5]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
+      let bx4 := Foundation.rot32 (s.st.val[12]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 30
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         3 5 12 19 21
@@ -1925,11 +1927,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round2_pi_rho_chi_y2_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y2_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 1
-      let bx1 := Equivalence.rot32 (s.st.val[10]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 3
-      let bx2 := Equivalence.rot32 (s.st.val[17]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 13
-      let bx3 := Equivalence.rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 4
-      let bx4 := Equivalence.rot32 (s.st.val[1]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 9
+      let bx0 := Foundation.rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 1
+      let bx1 := Foundation.rot32 (s.st.val[10]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 3
+      let bx2 := Foundation.rot32 (s.st.val[17]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 13
+      let bx3 := Foundation.rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 4
+      let bx4 := Foundation.rot32 (s.st.val[1]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         1 8 10 17 24
@@ -1946,11 +1948,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round2_pi_rho_chi_y2_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y2_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 0
-      let bx1 := Equivalence.rot32 (s.st.val[10]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 3
-      let bx2 := Equivalence.rot32 (s.st.val[17]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 12
-      let bx3 := Equivalence.rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 4
-      let bx4 := Equivalence.rot32 (s.st.val[1]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 9
+      let bx0 := Foundation.rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 0
+      let bx1 := Foundation.rot32 (s.st.val[10]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 3
+      let bx2 := Foundation.rot32 (s.st.val[17]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 12
+      let bx3 := Foundation.rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 4
+      let bx4 := Foundation.rot32 (s.st.val[1]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         1 8 10 17 24
@@ -1967,11 +1969,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round2_pi_rho_chi_y3_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y3_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[22]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 14
-      let bx1 := Equivalence.rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 18
-      let bx2 := Equivalence.rot32 (s.st.val[6]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 5
-      let bx3 := Equivalence.rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 8
-      let bx4 := Equivalence.rot32 (s.st.val[15]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 28
+      let bx0 := Foundation.rot32 (s.st.val[22]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 14
+      let bx1 := Foundation.rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 18
+      let bx2 := Foundation.rot32 (s.st.val[6]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 5
+      let bx3 := Foundation.rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 8
+      let bx4 := Foundation.rot32 (s.st.val[15]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         4 6 13 15 22
@@ -1988,11 +1990,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round2_pi_rho_chi_y3_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y3_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[22]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 13
-      let bx1 := Equivalence.rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 18
-      let bx2 := Equivalence.rot32 (s.st.val[6]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 5
-      let bx3 := Equivalence.rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 7
-      let bx4 := Equivalence.rot32 (s.st.val[15]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
+      let bx0 := Foundation.rot32 (s.st.val[22]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 13
+      let bx1 := Foundation.rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 18
+      let bx2 := Foundation.rot32 (s.st.val[6]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 5
+      let bx3 := Foundation.rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 7
+      let bx4 := Foundation.rot32 (s.st.val[15]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         4 6 13 15 22
@@ -2009,11 +2011,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round2_pi_rho_chi_y4_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y4_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[11]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 31
-      let bx1 := Equivalence.rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
-      let bx2 := Equivalence.rot32 (s.st.val[20]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 20
-      let bx3 := Equivalence.rot32 (s.st.val[2]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 21
-      let bx4 := Equivalence.rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
+      let bx0 := Foundation.rot32 (s.st.val[11]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 31
+      let bx1 := Foundation.rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
+      let bx2 := Foundation.rot32 (s.st.val[20]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 20
+      let bx3 := Foundation.rot32 (s.st.val[2]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 21
+      let bx4 := Foundation.rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         2 9 11 18 20
@@ -2030,11 +2032,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round2_pi_rho_chi_y4_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round2_pi_rho_chi_y4_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[11]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
-      let bx1 := Equivalence.rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 27
-      let bx2 := Equivalence.rot32 (s.st.val[20]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 19
-      let bx3 := Equivalence.rot32 (s.st.val[2]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 20
-      let bx4 := Equivalence.rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
+      let bx0 := Foundation.rot32 (s.st.val[11]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
+      let bx1 := Foundation.rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 27
+      let bx2 := Foundation.rot32 (s.st.val[20]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 19
+      let bx3 := Foundation.rot32 (s.st.val[2]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 20
+      let bx4 := Foundation.rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         2 9 11 18 20
@@ -2444,23 +2446,23 @@ private theorem round3_theta_d_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_theta_d s
     ⦃ ⇓ r => ⌜ r.st = s.st ∧ r.i = s.i ∧ r.c = s.c ∧
         r.d.val[0]!.val[0]! =
-          s.c.val[4]!.val[0]! ^^^ Equivalence.rot32 s.c.val[1]!.val[1]! 1 ∧
+          s.c.val[4]!.val[0]! ^^^ Foundation.rot32 s.c.val[1]!.val[1]! 1 ∧
         r.d.val[0]!.val[1]! =
           s.c.val[4]!.val[1]! ^^^ s.c.val[1]!.val[0]! ∧
         r.d.val[1]!.val[0]! =
-          s.c.val[0]!.val[0]! ^^^ Equivalence.rot32 s.c.val[2]!.val[1]! 1 ∧
+          s.c.val[0]!.val[0]! ^^^ Foundation.rot32 s.c.val[2]!.val[1]! 1 ∧
         r.d.val[1]!.val[1]! =
           s.c.val[0]!.val[1]! ^^^ s.c.val[2]!.val[0]! ∧
         r.d.val[2]!.val[0]! =
-          s.c.val[1]!.val[0]! ^^^ Equivalence.rot32 s.c.val[3]!.val[1]! 1 ∧
+          s.c.val[1]!.val[0]! ^^^ Foundation.rot32 s.c.val[3]!.val[1]! 1 ∧
         r.d.val[2]!.val[1]! =
           s.c.val[1]!.val[1]! ^^^ s.c.val[3]!.val[0]! ∧
         r.d.val[3]!.val[0]! =
-          s.c.val[2]!.val[0]! ^^^ Equivalence.rot32 s.c.val[4]!.val[1]! 1 ∧
+          s.c.val[2]!.val[0]! ^^^ Foundation.rot32 s.c.val[4]!.val[1]! 1 ∧
         r.d.val[3]!.val[1]! =
           s.c.val[2]!.val[1]! ^^^ s.c.val[4]!.val[0]! ∧
         r.d.val[4]!.val[0]! =
-          s.c.val[3]!.val[0]! ^^^ Equivalence.rot32 s.c.val[0]!.val[1]! 1 ∧
+          s.c.val[3]!.val[0]! ^^^ Foundation.rot32 s.c.val[0]!.val[1]! 1 ∧
         r.d.val[4]!.val[1]! =
           s.c.val[3]!.val[1]! ^^^ s.c.val[0]!.val[0]! ⌝ ⦄ := by
   unfold keccak.keccakf1600_round3_theta_d
@@ -2472,7 +2474,7 @@ private theorem round3_theta_d_spec_fc (s : state.KeccakState) :
        all_goals first | trivial | assumption | (
          simp only [Std.WP.predn] at *
          try apply Std.U32.bv_eq_imp_eq
-         simp_all [Std.UScalar.bv_xor, Equivalence.rot32]))
+         simp_all [Std.UScalar.bv_xor, Foundation.rot32]))
 
 set_option maxHeartbeats 8000000 in
 @[spec high]
@@ -2500,7 +2502,7 @@ theorem bit_round3_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd00]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd01]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -2510,7 +2512,7 @@ theorem bit_round3_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd10]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd11]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -2520,7 +2522,7 @@ theorem bit_round3_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd20]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd21]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -2530,7 +2532,7 @@ theorem bit_round3_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd30]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd31]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -2540,7 +2542,7 @@ theorem bit_round3_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd40]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Equivalence.rot32]
+          stateArray5FromAeneas_getElem!, Foundation.rot32]
       · rw [hd41]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
           stateArray5FromAeneas_getElem!]
@@ -2558,11 +2560,11 @@ private theorem round3_pi_rho_chi_y0_zeta0_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y0_zeta0 BR s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[0]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 0
-      let bx1 := Equivalence.rot32 (s.st.val[5]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 22
-      let bx2 := Equivalence.rot32 (s.st.val[10]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 22
-      let bx3 := Equivalence.rot32 (s.st.val[15]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 11
-      let bx4 := Equivalence.rot32 (s.st.val[20]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 7
+      let bx0 := Foundation.rot32 (s.st.val[0]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 0
+      let bx1 := Foundation.rot32 (s.st.val[5]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 22
+      let bx2 := Foundation.rot32 (s.st.val[10]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 22
+      let bx3 := Foundation.rot32 (s.st.val[15]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 11
+      let bx4 := Foundation.rot32 (s.st.val[20]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         0 5 10 15 20
@@ -2595,7 +2597,7 @@ private theorem round3_pi_rho_chi_y0_zeta0_spec_fc
         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
         h_28,
         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Equivalence.rot32]
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Foundation.rot32]
       norm_num)
 
 set_option maxHeartbeats 16000000 in
@@ -2604,11 +2606,11 @@ private theorem round3_pi_rho_chi_y0_zeta1_spec_fc
     (BR : Std.Usize) (s : state.KeccakState) (hi : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y0_zeta1 BR s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[0]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 0
-      let bx1 := Equivalence.rot32 (s.st.val[5]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 22
-      let bx2 := Equivalence.rot32 (s.st.val[10]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 21
-      let bx3 := Equivalence.rot32 (s.st.val[15]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 10
-      let bx4 := Equivalence.rot32 (s.st.val[20]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 7
+      let bx0 := Foundation.rot32 (s.st.val[0]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 0
+      let bx1 := Foundation.rot32 (s.st.val[5]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 22
+      let bx2 := Foundation.rot32 (s.st.val[10]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 21
+      let bx3 := Foundation.rot32 (s.st.val[15]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 10
+      let bx4 := Foundation.rot32 (s.st.val[20]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 7
       r.d = s.d ∧ r.c = s.c ∧ r.i.val = s.i.val + 1 ∧
       r.st.val = apply_5_writes s.st.val
         0 5 10 15 20
@@ -2642,7 +2644,7 @@ private theorem round3_pi_rho_chi_y0_zeta1_spec_fc
         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
         h_28,
         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
-        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Equivalence.rot32]
+        Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, Foundation.rot32]
       norm_num)
 
 set_option maxHeartbeats 16000000 in
@@ -2650,11 +2652,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round3_pi_rho_chi_y1_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y1_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[16]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 14
-      let bx1 := Equivalence.rot32 (s.st.val[21]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 10
-      let bx2 := Equivalence.rot32 (s.st.val[1]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 2
-      let bx3 := Equivalence.rot32 (s.st.val[6]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 23
-      let bx4 := Equivalence.rot32 (s.st.val[11]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
+      let bx0 := Foundation.rot32 (s.st.val[16]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 14
+      let bx1 := Foundation.rot32 (s.st.val[21]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 10
+      let bx2 := Foundation.rot32 (s.st.val[1]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 2
+      let bx3 := Foundation.rot32 (s.st.val[6]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 23
+      let bx4 := Foundation.rot32 (s.st.val[11]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 31
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         1 6 11 16 21
@@ -2671,11 +2673,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round3_pi_rho_chi_y1_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y1_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[16]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 14
-      let bx1 := Equivalence.rot32 (s.st.val[21]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 10
-      let bx2 := Equivalence.rot32 (s.st.val[1]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 1
-      let bx3 := Equivalence.rot32 (s.st.val[6]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
-      let bx4 := Equivalence.rot32 (s.st.val[11]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 30
+      let bx0 := Foundation.rot32 (s.st.val[16]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 14
+      let bx1 := Foundation.rot32 (s.st.val[21]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 10
+      let bx2 := Foundation.rot32 (s.st.val[1]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 1
+      let bx3 := Foundation.rot32 (s.st.val[6]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 22
+      let bx4 := Foundation.rot32 (s.st.val[11]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 30
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         1 6 11 16 21
@@ -2692,11 +2694,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round3_pi_rho_chi_y2_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y2_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[7]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 1
-      let bx1 := Equivalence.rot32 (s.st.val[12]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 3
-      let bx2 := Equivalence.rot32 (s.st.val[17]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 13
-      let bx3 := Equivalence.rot32 (s.st.val[22]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 4
-      let bx4 := Equivalence.rot32 (s.st.val[2]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 9
+      let bx0 := Foundation.rot32 (s.st.val[7]!.val[0]! ^^^ s.d.val[1]!.val[1]!) 1
+      let bx1 := Foundation.rot32 (s.st.val[12]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 3
+      let bx2 := Foundation.rot32 (s.st.val[17]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 13
+      let bx3 := Foundation.rot32 (s.st.val[22]!.val[0]! ^^^ s.d.val[4]!.val[0]!) 4
+      let bx4 := Foundation.rot32 (s.st.val[2]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         2 7 12 17 22
@@ -2713,11 +2715,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round3_pi_rho_chi_y2_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y2_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[7]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 0
-      let bx1 := Equivalence.rot32 (s.st.val[12]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 3
-      let bx2 := Equivalence.rot32 (s.st.val[17]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 12
-      let bx3 := Equivalence.rot32 (s.st.val[22]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 4
-      let bx4 := Equivalence.rot32 (s.st.val[2]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 9
+      let bx0 := Foundation.rot32 (s.st.val[7]!.val[1]! ^^^ s.d.val[1]!.val[0]!) 0
+      let bx1 := Foundation.rot32 (s.st.val[12]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 3
+      let bx2 := Foundation.rot32 (s.st.val[17]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 12
+      let bx3 := Foundation.rot32 (s.st.val[22]!.val[1]! ^^^ s.d.val[4]!.val[1]!) 4
+      let bx4 := Foundation.rot32 (s.st.val[2]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 9
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         2 7 12 17 22
@@ -2734,11 +2736,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round3_pi_rho_chi_y3_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y3_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 14
-      let bx1 := Equivalence.rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 18
-      let bx2 := Equivalence.rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 5
-      let bx3 := Equivalence.rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 8
-      let bx4 := Equivalence.rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 28
+      let bx0 := Foundation.rot32 (s.st.val[23]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 14
+      let bx1 := Foundation.rot32 (s.st.val[3]!.val[0]! ^^^ s.d.val[0]!.val[0]!) 18
+      let bx2 := Foundation.rot32 (s.st.val[8]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 5
+      let bx3 := Foundation.rot32 (s.st.val[13]!.val[0]! ^^^ s.d.val[2]!.val[1]!) 8
+      let bx4 := Foundation.rot32 (s.st.val[18]!.val[0]! ^^^ s.d.val[3]!.val[0]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         3 8 13 18 23
@@ -2755,11 +2757,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round3_pi_rho_chi_y3_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y3_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 13
-      let bx1 := Equivalence.rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 18
-      let bx2 := Equivalence.rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 5
-      let bx3 := Equivalence.rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 7
-      let bx4 := Equivalence.rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 28
+      let bx0 := Foundation.rot32 (s.st.val[23]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 13
+      let bx1 := Foundation.rot32 (s.st.val[3]!.val[1]! ^^^ s.d.val[0]!.val[1]!) 18
+      let bx2 := Foundation.rot32 (s.st.val[8]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 5
+      let bx3 := Foundation.rot32 (s.st.val[13]!.val[1]! ^^^ s.d.val[2]!.val[0]!) 7
+      let bx4 := Foundation.rot32 (s.st.val[18]!.val[1]! ^^^ s.d.val[3]!.val[1]!) 28
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         3 8 13 18 23
@@ -2776,11 +2778,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round3_pi_rho_chi_y4_zeta0_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y4_zeta0 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 31
-      let bx1 := Equivalence.rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
-      let bx2 := Equivalence.rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 20
-      let bx3 := Equivalence.rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 21
-      let bx4 := Equivalence.rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
+      let bx0 := Foundation.rot32 (s.st.val[14]!.val[0]! ^^^ s.d.val[2]!.val[0]!) 31
+      let bx1 := Foundation.rot32 (s.st.val[19]!.val[0]! ^^^ s.d.val[3]!.val[1]!) 28
+      let bx2 := Foundation.rot32 (s.st.val[24]!.val[0]! ^^^ s.d.val[4]!.val[1]!) 20
+      let bx3 := Foundation.rot32 (s.st.val[4]!.val[0]! ^^^ s.d.val[0]!.val[1]!) 21
+      let bx4 := Foundation.rot32 (s.st.val[9]!.val[0]! ^^^ s.d.val[1]!.val[0]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         4 9 14 19 24
@@ -2797,11 +2799,11 @@ set_option maxHeartbeats 16000000 in
 private theorem round3_pi_rho_chi_y4_zeta1_spec_fc (s : state.KeccakState) :
     ⦃ ⌜ True ⌝ ⦄ keccak.keccakf1600_round3_pi_rho_chi_y4_zeta1 s
     ⦃ ⇓ r => ⌜
-      let bx0 := Equivalence.rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 31
-      let bx1 := Equivalence.rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 27
-      let bx2 := Equivalence.rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 19
-      let bx3 := Equivalence.rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 20
-      let bx4 := Equivalence.rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
+      let bx0 := Foundation.rot32 (s.st.val[14]!.val[1]! ^^^ s.d.val[2]!.val[1]!) 31
+      let bx1 := Foundation.rot32 (s.st.val[19]!.val[1]! ^^^ s.d.val[3]!.val[0]!) 27
+      let bx2 := Foundation.rot32 (s.st.val[24]!.val[1]! ^^^ s.d.val[4]!.val[0]!) 19
+      let bx3 := Foundation.rot32 (s.st.val[4]!.val[1]! ^^^ s.d.val[0]!.val[0]!) 20
+      let bx4 := Foundation.rot32 (s.st.val[9]!.val[1]! ^^^ s.d.val[1]!.val[1]!) 1
       r.d = s.d ∧ r.c = s.c ∧ r.i = s.i ∧
       r.st.val = apply_5_writes s.st.val
         4 9 14 19 24
@@ -3106,7 +3108,7 @@ end Round3PrcLiftComp
 
 /-! # Loop bridge — Phase 1 Step B
 
-Closes Campaign 1 by lifting the 12 round-level `_eq` theorems through
+Closes the structural equivalence by lifting the 12 round-level `_eq` theorems through
 the impl's 4-round bundle, then through the 6-iteration outer loop,
 landing the top-level `keccakf1600 s ≡ bit_keccak_spec (KState.fromAeneas s)`.
 
@@ -3484,7 +3486,7 @@ The bit-side equality threading is straightforward: each step rewrites
 final conclusion follows by `unfold bit_keccakf1600_4rounds; rfl`-style
 collapse over the 12 chained equalities. -/
 
-open libcrux_iot_sha3.Equivalence (triple_imp_intro triple_conj_post
+open libcrux_iot_sha3.Foundation (triple_imp_intro triple_conj_post
   loop_range_spec_i32 IteratorRange_next_spec_i32
   pure_prop_holds of_pure_prop_holds)
 
@@ -3599,7 +3601,7 @@ and the bit-side equality (`KState.fromAeneas s_iter = f^[k] (...)`).
 
 This is the bit-side analogue of the former `keccakf1600_loop_equiv`
 (removed during the 2026-05-20 cleanup; spec-chain + I32 loop helpers
-extracted into `Equivalence/SpecChain.lean` + `Equivalence/I32LoopSpec.lean`),
+extracted into `Foundation/SpecChain.lean` + `Foundation/I32LoopSpec.lean`),
 but without the `Balanced` / `lift_perm` machinery: the bit-side defs
 already chain structurally. -/
 
@@ -3735,4 +3737,4 @@ theorem keccakf1600_eq (s : state.KeccakState) (h_i : s.i = 0#usize) :
 
 end LoopBridge
 
-end libcrux_iot_sha3.BitKeccak
+end libcrux_iot_sha3.Structural

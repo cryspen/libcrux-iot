@@ -4,16 +4,16 @@
   - `spec_round_step` / `roundOfNat` bundle the 5-step spec round used
     by the `Nat.fold 24` chain in `keccakf1600_post_canonical`.
   - `keccakf1600_post_canonical` is the top-level post shape used by
-    `BitKeccak/AlgEquiv.lean`'s `keccakf1600_equiv_via_bit` and the
+    `AlgebraicEquiv.lean`'s `keccakf1600_equiv_via_bit` and the
     hacspec coupling in `HacspecBridge.lean`.
   - `holds_chain_eq_ok` extracts a Result equation from a
     `(do C; pure (r = X)).holds` hypothesis.
 -/
-import LibcruxIotSha3.Equivalence.RoundEquiv
+import LibcruxIotSha3.Foundation.RoundEquiv
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 /-- From a `.holds` claim of the form `(do let r ← C; pure (r = X)).holds`
     derive the underlying Result equation `C = .ok X`. -/
@@ -52,7 +52,7 @@ def roundOfNat (k : Nat) (h : k ≤ 24) : Std.Usize :=
 `keccakf1600_post_canonical` compares the 24-fold spec output against
 the canonical `lift r_impl` (no swap). This is the statement proven
 via the time-varying `impl_swap_k` architecture in
-`BitKeccak/AlgEquiv.lean` — at round 24 (= round 0 mod 4) the polarity
+`AlgebraicEquiv.lean` — at round 24 (= round 0 mod 4) the polarity
 cycle returns to `swZero`, so the spec output is read canonically. -/
 @[irreducible]
 def keccakf1600_post_canonical (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
@@ -62,4 +62,4 @@ def keccakf1600_post_canonical (s : state.KeccakState) (r_impl : state.KeccakSta
       (pure (lift s))
     pure (lifted_final = lift r_impl)).holds
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

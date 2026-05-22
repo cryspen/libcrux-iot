@@ -13,15 +13,15 @@
   deferred — it requires 25-cell post-conditions on each sub-function
   and is gated on the M2 spec re-extraction.
 -/
-import LibcruxIotSha3.Equivalence.Lift
-import LibcruxIotSha3.Equivalence.ThetaLift
-import LibcruxIotSha3.Equivalence.RcEquiv
+import LibcruxIotSha3.Foundation.Lift
+import LibcruxIotSha3.Foundation.ThetaLift
+import LibcruxIotSha3.Foundation.RcEquiv
 import Hax
 import Lean
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
@@ -1034,4 +1034,4 @@ theorem prc_lift_spec (s : state.KeccakState) (hi_lt : s.i.val < 24) :
       ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
       ← rc_equiv _ hi_lt])
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

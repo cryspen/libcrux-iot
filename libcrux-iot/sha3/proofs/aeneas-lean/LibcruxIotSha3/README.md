@@ -16,7 +16,7 @@ There are two layers of top theorem:
 
 ### Layer 1 — Keccak-f[1600] permutation equivalence (Bridge 1)
 
-[`Equivalence/HacspecBridge.lean:1257`](Equivalence/HacspecBridge.lean#L1257):
+[`Composition/HacspecBridge.lean`](Composition/HacspecBridge.lean):
 
 ```lean
 theorem keccakf1600_equiv_hacspec (s : state.KeccakState)
@@ -69,38 +69,10 @@ byte sequence as the hacspec `sponge.keccak`. Direct corollaries
 
 Both layers' top theorems report only standard Lean axioms (`propext`,
 `Classical.choice`, `Quot.sound`) plus `Lean.ofReduceBool` /
-`Lean.trustCompiler` inherited transitively from a single `native_decide`
-in [`Equivalence/RcEquiv.lean:29`](Equivalence/RcEquiv.lean#L29)
-(24-entry round-constant identity check under `@[irreducible]` arrays).
-
-## Underlying bit-interleaved post
-
-[`BitKeccak/AlgEquiv.lean:617`](BitKeccak/AlgEquiv.lean#L617):
-
-```lean
-theorem keccakf1600_equiv_via_bit (s : state.KeccakState)
-    (h_i : s.i = 0#usize) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600 s
-    ⦃ ⇓ r_impl => ⌜ keccakf1600_post_canonical s r_impl ⌝ ⦄
-```
-
-where ([`Equivalence/Keccakf1600.lean`](Equivalence/Keccakf1600.lean))
-
-```lean
-def keccakf1600_post_canonical (s r_impl : state.KeccakState) : Prop :=
-  (do let lifted_final ← Nat.fold 24 (fun i _ acc =>
-        acc >>= fun st => spec_round_step st (roundOfNat i ...))
-        (pure (lift s))
-      pure (lifted_final = lift r_impl)).holds
-```
-
-The bit-interleaved post characterises the impl through the
-`_unrolled` spec chain. The hacspec-level theorem composes this with
-`spec_chain_hacspec_eq_spec_chain` (Bridge 1's loop-body equivalence:
-non-`_unrolled` hacspec functions equal their `_unrolled` counterparts)
-and `keccak_f_loop_eq_spec_chain_hacspec` (24-step unroll of the
-hacspec loop into `Nat.fold`).
+`Lean.trustCompiler` inherited transitively from a single
+`native_decide` in
+[`Foundation/RcEquiv.lean`](Foundation/RcEquiv.lean) (24-entry
+round-constant identity check under `@[irreducible]` arrays).
 
 ## Proof architecture
 
@@ -112,31 +84,52 @@ relabeling for π: each round reads from a different physical layout.
 The relabeling permutation `impl_perm : Fin 25 → Fin 25` has order 4.
 
 The bridge `lift : KeccakState → Array u64 25` (in
-[`Equivalence/Lift.lean`](Equivalence/Lift.lean)) interleaves halves
+[`Foundation/Lift.lean`](Foundation/Lift.lean)) interleaves halves
 back into `u64`s. A generalised `lift_perm s p sw` reads each lane
-through a permutation `p` and an optional half-swap `sw` (`Fin 25 → Bool`).
-
-### Two campaigns
+through a permutation `p` and an optional half-swap `sw : Fin 25 → Bool`.
 
 The proof factors through a **pure-Lean intermediate spec**
-`bit_keccak_spec : KState → KState` (in [`BitKeccak/Spec.lean`](BitKeccak/Spec.lean))
-that mirrors the impl's bit-side data flow without the Aeneas monad:
+`bit_keccak_spec : KState → KState` (in
+[`BitSpec/Spec.lean`](BitSpec/Spec.lean)) that mirrors the impl's
+bit-side data flow without the Aeneas monad. The chain of theorems
+runs:
 
-1. **Campaign 1** (impl ↔ `bit_keccak_spec`) — proves the Rust
-   extraction equals the pure-Lean bit spec under `KState.fromAeneas`.
-   See `BitKeccak/StructEquiv.lean`. ~3000 lines, no algebraic
-   reasoning; mostly mvcgen.
+```
+              StructuralEquiv          AlgebraicEquiv          Composition.HacspecBridge
+impl ─────────────────────→ bit_keccak_spec ──────→ spec_chain (lift s) 24 ─────→ keccak_f.keccak_f (lift s)
+   keccakf1600_eq               bit_keccak_spec_alg_eq          spec_chain_hacspec_eq_spec_chain
+   (mvcgen + structural)        (algebraic, lift-aware)         + keccak_f_loop_eq_spec_chain_hacspec
+                            \____________________________/
+                             Composition/ViaBit.lean
+                          (keccakf1600_equiv_via_bit)
+```
 
-2. **Campaign 2** (`bit_keccak_spec` ↔ hacspec) — proves the pure-Lean
-   bit spec, lifted to `u64`, equals the hacspec round application.
-   This is the algebraic content. See `BitKeccak/AlgEquiv.lean` and the
-   per-round files in `Equivalence/`.
+Three named pieces (one file each at the top of the proof tree):
 
-The top-level theorem composes them at the end of `AlgEquiv.lean`.
+- **`StructuralEquiv.lean`** (impl ≡ `bit_keccak_spec`). Proves the
+  Rust extraction equals the pure-Lean bit spec under
+  `KState.fromAeneas`. ~3700 lines, no algebraic reasoning; mostly
+  `mvcgen` + structural induction.
+
+- **`AlgebraicEquiv.lean`** (`bit_keccak_spec` lifted ≡ hacspec
+  unrolled chain). Proves the pure-Lean bit spec, lifted to `u64`,
+  equals the spec round application. Per-round identities
+  `bit_round{k}_alg_eq` compose into the 24-round
+  `bit_keccak_spec_alg_eq`. This is the algebraic content
+  (`lift_lane_bv`, `impl_perm`, `impl_swap_k` cycle).
+
+- **`Composition/`**:
+  - **`ViaBit.lean`** — composes the two equivalences above to
+    produce a Triple on `keccak.keccakf1600` with post against
+    `spec_round_step` iterated 24 times.
+  - **`HacspecBridge.lean`** — couples the `_unrolled` spec functions
+    to the non-`_unrolled` hacspec top-level `keccak_f.keccak_f` and
+    its `Usize` loop, then composes with `ViaBit` to yield the top
+    theorem `keccakf1600_equiv_hacspec`.
 
 ### Time-varying polarity (the load-bearing architectural pivot)
 
-Campaign 2's per-round identities use a time-varying half-swap
+`AlgebraicEquiv`'s per-round identities use a time-varying half-swap
 function `impl_swap_k : Nat → Fin 25 → Bool` with a 4-cycle:
 `impl_swap_k 0 = swZero`, `impl_swap_k 1 = impl_swap`, `impl_swap_k 2`
 and `impl_swap_k 3` track intermediate polarities, `impl_swap_k 4 =
@@ -146,92 +139,61 @@ unconditionally. An earlier attempt used a `BalancedAt` precondition;
 it was abandoned after empirical evidence that `Balanced` is not
 preserved across rounds 1–3.
 
-### Per-round building blocks
-
-For each round `k ∈ {0, 1, 2, 3}`:
-
-- `theta_lift_spec_k` — the impl's θ step produces a state whose lift
-  matches the spec's `theta_unrolled` of the perm/swap-aware input.
-- `prc_lift_spec_k` — the impl's `pi_rho_chi_1 ; pi_rho_chi_2` step,
-  combined with iota, matches the spec's `ρ ∘ π ∘ χ ∘ ι`.
-- `round_k_equiv_spec` — composes the two via `mvcgen` on
-  `round_k_post`.
-- `bit_round_k_alg_eq` — the algebraic identity `spec_round_step (lift_perm
-  s ...) s.i = .ok (lift_perm (bit_round_k s) ...)`.
-
-Round 0 is the baseline (uses canonical `lift`, `impl_swap_k 0 = swZero`,
-no permutation). Rounds 1, 2, 3 mirror the same architecture with
-`(impl_perm^k, impl_swap_k k)` parameters.
-
-`bit_4rounds_alg_eq` composes the four `bit_round_k_alg_eq`s via
-`Result.bind`. `bit_keccak_spec_alg_eq` iterates that 6 times to cover
-24 rounds.
-
 ## File map
 
 ```
 LibcruxIotSha3/
-├── README.md                        ← you are here
+├── README.md                    ← you are here
 │
-├── BitKeccak/                       ← pure-Lean bit-keccak intermediate spec
-│   ├── State.lean                   ← KState definition (pure-Lean version of
-│   │                                  state.KeccakState)
-│   ├── StateIso.lean                ← KState ↔ state.KeccakState round-trips
-│   ├── Spec.lean                    ← bit_keccak_spec + bit_round_k pure-Lean step
-│   │                                  functions (bit_round0, ..., bit_round3)
-│   ├── Project.lean                 ← projections / accessors
-│   ├── StructEquiv.lean             ← Campaign 1: impl ≡ bit_keccak_spec
-│   │                                  via mvcgen + structural induction (~3000 LOC)
-│   └── AlgEquiv.lean                ← Campaign 2 finale: bit_round_k_alg_eq
-│                                      + bit_4rounds_alg_eq + bit_keccak_spec_alg_eq
-│                                      + keccakf1600_equiv_via_bit (top theorem)
+├── Foundation/                  ← shared infrastructure (used by all three
+│   │                              of StructuralEquiv, AlgebraicEquiv,
+│   │                              Composition)
+│   ├── Lift.lean                ← lift_lane_bv, lift, lift_perm, impl_perm,
+│   │                              impl_swap, impl_swap_k + 4-cycle lemmas,
+│   │                              ~40 bv_decide-closed `rot_N` lemmas
+│   ├── UScalarAC.lean           ← Std.Associative/Commutative on
+│   │                              Std.UScalar.xor/and/or (Aeneas surface fill)
+│   ├── RcEquiv.lean             ← rc_equiv: bit-interleaved round constants
+│   │                              match the spec's ROUND_CONSTANTS
+│   ├── SpecStep.lean            ← spec_round_step, roundOfNat,
+│   │                              keccakf1600_post_canonical, holds_chain_eq_ok
+│   ├── SpecChain.lean           ← spec_chain Nat.fold wrapper + helpers
+│   ├── I32LoopSpec.lean         ← I32 iterator + loop_range_spec_i32
+│   ├── ThetaLiftDefs.lean       ← 11 round-0 θ sub-fn @[spec]s
+│   │                              + theta_comp_spec_local
+│   │                              + lift_theta_applied(_perm) defs
+│   │                              + theta_c_proof macro
+│   ├── ThetaLift.lean           ← round-0 theta_lift_spec
+│   ├── ThetaLiftRound{1,2,3}.lean ← per-round θ specs
+│   ├── PrcLift.lean             ← 10 round-0 πρχι sub-fn @[spec]s
+│   │                              + prc_y_zeta_no_rc_proof macro
+│   │                              + prc_lift_spec
+│   ├── PrcLiftRound{1,2,3}.lean ← per-round πρχι specs
+│   └── RoundEquiv.lean          ← round_k_equiv_spec for k=0..3 +
+│                                  triple combinators
 │
-├── Equivalence/                     ← algebraic infrastructure for Campaign 2
-│   ├── README.md                    ← extraction pipeline + build/iteration tips
-│   │
-│   ├── Lift.lean                    ← lift_lane_bv, lift, lift_perm, impl_perm,
-│   │                                  impl_swap, impl_swap_k + 4-cycle lemmas,
-│   │                                  lift_lane_maybe_swap_{true,false}_bv,
-│   │                                  rotateLeft1_xor_bv32, generic lift_perm_getElem
-│   ├── UScalarAC.lean               ← Std.Associative / Std.Commutative instances
-│   │                                  for Std.UScalar.xor/and/or (Aeneas surface fill)
-│   ├── RcEquiv.lean                 ← rc_equiv: bit-interleaved round constants
-│   │                                  match the spec's ROUND_CONSTANTS
-│   ├── I32LoopSpec.lean             ← I32 iterator + loop_range_spec_i32 (used by
-│   │                                  StructEquiv's 6-iteration loop spec)
-│   ├── SpecChain.lean               ← spec_round_step_at + spec_chain (Nat.fold
-│   │                                  wrapper) + pure_prop_holds helpers
-│   ├── StepSpecs.lean               ← preservation specs for impl rounds 1–3
-│   │                                  (82 declarations via step_preserve_proof macro)
-│   │
-│   ├── ThetaLiftDefs.lean           ← 11 round-0 θ sub-fn @[spec]s
-│   │                                  + theta_comp_spec_local
-│   │                                  + lift_theta_applied(_perm) definitions
-│   │                                  + theta_c_proof macro (reused by rounds 1–3)
-│   ├── ThetaLift.lean               ← round-0 theta_lift_spec
-│   ├── ThetaLiftRound1.lean         ← round-1 11 sub-fn @[spec]s + 25 lta_perm_bv_*_1
-│   ├── ThetaLiftRound2.lean         ← round-2 analog
-│   ├── ThetaLiftRound3.lean         ← round-3 analog
-│   │
-│   ├── PrcLift.lean                 ← 10 round-0 πρχι sub-fn @[spec]s
-│   │                                  + prc_y_zeta_no_rc_proof macro (reused)
-│   │                                  + prc_lift_spec (round 0)
-│   ├── PrcLiftRound1.lean           ← round-1 10 sub-fn @[spec]s + 25 input lemmas
-│   │                                  + prc_lift_spec_1 (uses prc_spec shared across rounds)
-│   ├── PrcLiftRound2.lean           ← round-2 analog
-│   ├── PrcLiftRound3.lean           ← round-3 analog
-│   │
-│   ├── RoundEquiv.lean              ← round_k_equiv_spec for k=0,1,2,3 + per-round
-│   │                                  i-increment lemmas + chain wrappers
-│   ├── Keccakf1600.lean             ← keccakf1600_post + keccakf1600_post_canonical
-│   │                                  definitions (the public post shapes)
-│   ├── SpecChain.lean               ← spec_chain over _unrolled functions
-│   └── HacspecBridge.lean           ← Bridge 1: hacspec coupling. createi_pure_spec,
-│                                      6 per-closure [spec] Triples, 4 function
-│                                      equalities keccak_f.X = keccak_f.X_unrolled,
-│                                      spec_chain_hacspec_eq_spec_chain, Usize
-│                                      iterator/loop specs, keccak_f_loop_eq_*,
-│                                      and the top theorem keccakf1600_equiv_hacspec
+├── BitSpec/                     ← pure-Lean intermediate spec (defs only)
+│   ├── State.lean               ← KState
+│   ├── StateIso.lean            ← KState ↔ state.KeccakState round-trips
+│   ├── Project.lean             ← projections / accessors
+│   └── Spec.lean                ← bit_keccak_spec + bit_keccakf1600_*
+│                                  pure-Lean step functions
+│
+├── StructuralEquiv.lean         ← impl ≡ bit_keccak_spec (via mvcgen +
+│                                  structural induction, ~3700 LOC)
+│
+├── AlgebraicEquiv.lean          ← bit_round_k_alg_eq + bit_4rounds_alg_eq
+│                                  + bit_keccak_spec_alg_eq (24-round closure)
+│
+├── Composition/                 ← composition of the two equivalences
+│   ├── ViaBit.lean              ← keccakf1600_equiv_via_bit (StructuralEquiv
+│   │                              ∘ AlgebraicEquiv) — Triple on the impl
+│   └── HacspecBridge.lean       ← hacspec coupling: createi_pure_spec,
+│                                  per-closure [spec] Triples, four
+│                                  keccak_f.X = keccak_f.X_unrolled equalities,
+│                                  spec_chain_hacspec_eq_spec_chain, Usize
+│                                  iterator/loop specs, keccak_f_loop_eq_*,
+│                                  and the top theorem keccakf1600_equiv_hacspec
 │
 ├── Sponge/                          ← Campaign 3: SHA-3 sponge / SHAKE / SHA3-ema
 │   ├── Opaque.lean                  ← § 0: keccakf1600_seal_spec (seals
@@ -270,9 +232,19 @@ LibcruxIotSha3/
 │                                      (direct instantiations of keccak_keccak_spec)
 │
 └── Extraction/
-    ├── Funs.lean                    ← Rust impl extraction (generated; do not edit)
-    └── Missing.lean                 ← hand-written aeneas surface fills
+    ├── Funs.lean                ← Rust impl extraction (generated; do not edit)
+    └── Missing.lean             ← hand-written aeneas surface fills
 ```
+
+### Namespaces
+
+| Directory                | Namespace                            |
+|--------------------------|--------------------------------------|
+| `Foundation/`            | `libcrux_iot_sha3.Foundation`        |
+| `BitSpec/`               | `libcrux_iot_sha3.BitSpec`           |
+| `StructuralEquiv.lean`   | `libcrux_iot_sha3.Structural`        |
+| `AlgebraicEquiv.lean`    | `libcrux_iot_sha3.Algebraic`         |
+| `Composition/`           | `libcrux_iot_sha3.Composition`       |
 
 ## Verifying
 
@@ -301,7 +273,5 @@ grep -rn "by sorry\|^  sorry" LibcruxIotSha3/   # must be empty
 
 ## See also
 
-- [`Equivalence/README.md`](Equivalence/README.md) — extraction pipeline,
-  per-file build/iteration tips, re-extraction commands.
-- `Plan: ~/.claude/plans/fancy-gliding-swan.md` (referenced from
-  `BitKeccak/AlgEquiv.lean`) — historical plan; partially outdated.
+- [`Foundation/README.md`](Foundation/README.md) — extraction pipeline
+  and per-file iteration tips.

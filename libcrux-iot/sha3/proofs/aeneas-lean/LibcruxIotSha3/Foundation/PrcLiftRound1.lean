@@ -13,11 +13,11 @@
   - The intermediate `prc_spec_1` mirroring impl's fused per-cell structure.
   - Main composition `prc_lift_spec_1`.
 -/
-import LibcruxIotSha3.Equivalence.PrcLift
+import LibcruxIotSha3.Foundation.PrcLift
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
@@ -707,4 +707,4 @@ theorem prc_lift_spec_1 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
       ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
       ← rc_equiv _ hi_lt])
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

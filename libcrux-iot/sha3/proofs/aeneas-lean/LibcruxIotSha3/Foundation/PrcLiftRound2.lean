@@ -11,11 +11,11 @@
   - 25 input access lemmas `lift_theta_applied_perm_bv_K_2`.
   - Main composition `prc_lift_spec_2`.
 -/
-import LibcruxIotSha3.Equivalence.PrcLift
+import LibcruxIotSha3.Foundation.PrcLift
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
@@ -716,4 +716,4 @@ theorem prc_lift_spec_2 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
       ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
       ← rc_equiv _ hi_lt])
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

@@ -4,18 +4,18 @@
   After round 3, the cumulative permutation is `impl_perm^[4] = id`
   (`impl_perm_pow4_eq_id`) and `impl_swap_k 4 = swZero`, so the output
   collapses from `lift_perm r_impl (impl_perm^[4]) (impl_swap_k 4)` to
-  the canonical `Equivalence.lift r_impl`.
+  the canonical `Foundation.lift r_impl`.
 
   Structure mirrors round 1:
   - 10 per-FC `@[spec]` lemmas `pi_rho_chi_y{0..4}_zeta{0,1}_spec_fc_3`.
   - 25 input access lemmas `lift_theta_applied_perm_bv_K_3`.
   - Main composition `prc_lift_spec_3`.
 -/
-import LibcruxIotSha3.Equivalence.PrcLift
+import LibcruxIotSha3.Foundation.PrcLift
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
@@ -629,16 +629,16 @@ theorem lift_theta_applied_perm_bv_24_3 (s : state.KeccakState) :
 /-! ## Main composition: `prc_lift_spec_3`
 
 Mirrors `prc_lift_spec_1` (round 1) but with `(impl_perm ∘ impl_perm ∘ impl_perm)`
-for input and the canonical `Equivalence.lift r_impl` for output.
+for input and the canonical `Foundation.lift r_impl` for output.
 
 Output collapse: `impl_perm^[4] = id` and `impl_swap_k 4 = swZero`, so
-`lift_perm r_impl (impl_perm^[4]) (impl_swap_k 4) = Equivalence.lift r_impl`. -/
+`lift_perm r_impl (impl_perm^[4]) (impl_swap_k 4) = Foundation.lift r_impl`. -/
 
 /-- Bridge: canonical `lift` equals `lift_perm` at `(impl_perm^[4], impl_swap_k 4)`. -/
 private theorem lift_eq_lift_perm_pow4 (r : state.KeccakState) :
-    Equivalence.lift r =
+    Foundation.lift r =
       lift_perm r (impl_perm ∘ impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 4) := by
-  unfold lift_perm Equivalence.lift
+  unfold lift_perm Foundation.lift
   apply Subtype.ext
   show List.ofFn _ = List.ofFn _
   congr 1
@@ -664,7 +664,7 @@ theorem prc_lift_spec_3 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
           let a2 ← keccak_f.pi_unrolled a1
           let a3 ← keccak_f.chi_unrolled a2
           let r_spec ← keccak_f.iota a3 s.i
-          pure (r_spec = Equivalence.lift r_impl)).holds ⌝ ⦄ := by
+          pure (r_spec = Foundation.lift r_impl)).holds ⌝ ⦄ := by
   unfold keccak.keccakf1600_round3_pi_rho_chi_1
   unfold keccak.keccakf1600_round3_pi_rho_chi_2
   hax_mvcgen
@@ -734,4 +734,4 @@ theorem prc_lift_spec_3 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
       ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
       ← rc_equiv _ hi_lt])
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

@@ -4,10 +4,10 @@
   per-lane equalities reduce to pure `BitVec 32` equations closable by
   `bv_decide`.
 -/
-import LibcruxIotSha3.BitKeccak.StateIso
-import LibcruxIotSha3.Equivalence.Lift
+import LibcruxIotSha3.BitSpec.StateIso
+import LibcruxIotSha3.Foundation.Lift
 
-namespace libcrux_iot_sha3.BitKeccak
+namespace libcrux_iot_sha3.BitSpec
 
 open Aeneas Aeneas.Std libcrux_iot_sha3
 
@@ -77,4 +77,4 @@ theorem stateArray5FromAeneas_getElem!
     have := a.property; omega
   rw [stateArray5FromAeneas_getElem _ k hk, getElem!_pos a.val k hp]
 
-end libcrux_iot_sha3.BitKeccak
+end libcrux_iot_sha3.BitSpec

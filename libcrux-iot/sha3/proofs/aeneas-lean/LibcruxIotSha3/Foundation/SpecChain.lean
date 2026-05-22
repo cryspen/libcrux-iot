@@ -3,28 +3,28 @@
 
   Provides:
   - `spec_round_step_at` and `spec_chain` (with `spec_chain_zero` /
-    `spec_chain_succ`) — used by `BitKeccak/AlgEquiv.lean` to express
+    `spec_chain_succ`) — used by `AlgebraicEquiv.lean` to express
     the 24-round canonical post as a `Nat.fold` of single-round spec
     steps.
   - `pure_prop_holds` / `of_pure_prop_holds` — `(pure P : Result Prop).holds ↔ P`
-    convenience lemmas used by `BitKeccak/StructEquiv.lean` and the
-    loop-invariant unpacking in `BitKeccak/AlgEquiv.lean`.
+    convenience lemmas used by `StructuralEquiv.lean` and the
+    loop-invariant unpacking in `AlgebraicEquiv.lean`.
 
   ## History (2026-05-20 cleanup)
 
-  Extracted from the former `Equivalence/Keccakf1600Loop.lean`, whose
+  Extracted from the former `Foundation/Keccakf1600Loop.lean`, whose
   OLD `keccakf1600_equiv` path (structured around `Balanced` preservation
   across rounds 1-3) was empirically false and has been superseded by
-  `BitKeccak.keccakf1600_equiv_via_bit` (canonical `lift r_impl`, no
+  `Composition.keccakf1600_equiv_via_bit` (canonical `lift r_impl`, no
   `Balanced` precondition, via the time-varying `impl_swap_k`
   architecture). The I32 iterator + range-loop helpers from the same
-  file now live in `Equivalence/I32LoopSpec.lean`.
+  file now live in `Foundation/I32LoopSpec.lean`.
 -/
-import LibcruxIotSha3.Equivalence.Keccakf1600
+import LibcruxIotSha3.Foundation.SpecStep
 
 open Aeneas Aeneas.Std Result ControlFlow Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
@@ -58,8 +58,8 @@ theorem spec_chain_succ (s_lift : Std.Array Std.U64 25#usize) (n : Nat) :
 
 /-! ## `pure P` ↔ `P` for `Result Prop`
 
-Used by `BitKeccak/StructEquiv.lean` and the loop-invariant unpacking
-in `BitKeccak/AlgEquiv.lean`. -/
+Used by `StructuralEquiv.lean` and the loop-invariant unpacking
+in `AlgebraicEquiv.lean`. -/
 
 theorem pure_prop_holds {P : Prop} (h : P) : (pure P : Result Prop).holds := by
   simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp]
@@ -70,4 +70,4 @@ theorem of_pure_prop_holds {P : Prop} (h : (pure P : Result Prop).holds) : P := 
   simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp] at h
   exact h trivial
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

@@ -1,6 +1,7 @@
 /-
-  Campaign 2 (algebraic): the pure-Lean bit_keccak_spec equals the hacspec
-  24-round application under the canonical lift.
+  Algebraic equivalence: the pure-Lean `bit_keccak_spec` (from
+  `BitSpec/Spec.lean`) equals the hacspec 24-round application under
+  the canonical lift, modulo a time-varying half-swap polarity.
 
   Outline:
 
@@ -10,10 +11,11 @@
      bit_round3 (bit_round2 (bit_round1 (bit_round0 s)))`) — by `rfl`,
      since both sides unfold to the same 12-call let-chain.
   3. KState round-trip `KState.toAeneas (KState.fromAeneas s) = s` — bridges
-     Campaign 1's pure-Lean output back into the Aeneas universe for the
-     spec equation. Needed at the top-level composition.
+     the structural equivalence's pure-Lean output back into the Aeneas
+     universe for the spec equation. Needed at the top-level composition
+     (`Composition/ViaBit.lean`).
   4. Time-varying `impl_swap_k` polarity tracking (see
-     `Equivalence/Lift.lean`) — a 4-cycle
+     `Foundation/Lift.lean`) — a 4-cycle
      `swZero → impl_swap → sw2 → sw3 → swZero` that tracks the actual
      polarity layout at each round. Replaces the earlier static-`impl_swap`
      architecture that needed a `BalancedAt k` precondition (pivoted out
@@ -22,8 +24,8 @@
      4-round chunk use `impl_swap_k 0 = impl_swap_k 4 = (fun _ => false)`,
      so the canonical lift threads through unconditionally.
   5. Per-round algebraic correspondence theorems
-     `bit_round{k}_alg_eq` (k ∈ {0,1,2,3}) — the load-bearing algebra
-     of Campaign 2. Each says (unconditionally, no state precondition)
+     `bit_round{k}_alg_eq` (k ∈ {0,1,2,3}) — the load-bearing algebra.
+     Each says (unconditionally, no state precondition)
      `spec_round_step (lift_perm s.toAeneas (impl_perm^[k]) (impl_swap_k k)) s.i`
      `  = .ok (lift_perm (bit_round{k} s).toAeneas (impl_perm^[k+1]) (impl_swap_k (k+1)))`.
   6. 4-round closure `bit_4rounds_alg_eq` — composes the 4 per-round
@@ -34,20 +36,19 @@
      over `Nat.iterate (bit_keccakf1600_4rounds 0) 6`. Threads the
      `s.i.val = 4k` chain (for iota constants); no `BalancedAt`
      invariant needed.
-  8. Top-level `keccakf1600_equiv_via_bit` — composes Campaign 1's
-     `keccakf1600_eq` with Campaign 2's `bit_keccak_spec_alg_eq` to
-     retarget the impl-level `keccakf1600_post`. The canonical-lift
-     shape (with `lift r_impl`, no `lift_perm`) follows from the
-     swap cycle reaching `swZero` at round 24.
 
-  Plan: `~/.claude/plans/fancy-gliding-swan.md`, Phase 3.
+  Composition with the structural equivalence (impl ≡ `bit_keccak_spec`)
+  to produce a Triple on `keccak.keccakf1600` lives in
+  `Composition/ViaBit.lean`.
 -/
-import LibcruxIotSha3.BitKeccak.StructEquiv
-import LibcruxIotSha3.Equivalence.SpecChain
+import LibcruxIotSha3.StructuralEquiv
+import LibcruxIotSha3.Foundation.SpecChain
 
-namespace libcrux_iot_sha3.BitKeccak
+namespace libcrux_iot_sha3.Algebraic
 
-open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 libcrux_iot_sha3.Equivalence
+open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 libcrux_iot_sha3.Foundation
+open libcrux_iot_sha3.BitSpec
+open libcrux_iot_sha3.Structural
 
 /-! ## Per-round step on `KState` (theta + pi_rho_chi_1 + pi_rho_chi_2). -/
 
@@ -79,14 +80,14 @@ theorem bit_keccakf1600_4rounds_eq_chain (s : KState) :
 
 /-! ## KState ↔ state.KeccakState round-trip
 
-    Required for the top-level composition: Campaign 1's `keccakf1600_eq`
+    Required for the top-level composition: the structural equivalence's `keccakf1600_eq`
     outputs `KState.fromAeneas r = bit_keccak_spec (KState.fromAeneas s)`,
-    and Campaign 2's `bit_keccak_alg_eq` reads its input via `KState.toAeneas`.
+    and the algebraic equivalence's `bit_keccak_alg_eq` reads its input via `KState.toAeneas`.
     The bridge `KState.toAeneas (KState.fromAeneas s) = s` (for the cases
     where the input is the impl's initial state with well-formed lanes)
     closes the loop. -/
 
-private theorem stateArray25_toAeneas_fromAeneas
+theorem stateArray25_toAeneas_fromAeneas
     (a : Aeneas.Std.Array lane.Lane2U32 25#usize) :
     stateArray25ToAeneas (stateArray25FromAeneas a) = a := by
   obtain ⟨vals, hlen⟩ := a
@@ -97,7 +98,7 @@ private theorem stateArray25_toAeneas_fromAeneas
         funext (fun l => Lane.toAeneas_fromAeneas l)]
   exact List.map_id vals
 
-private theorem stateArray5_toAeneas_fromAeneas
+theorem stateArray5_toAeneas_fromAeneas
     (a : Aeneas.Std.Array lane.Lane2U32 5#usize) :
     stateArray5ToAeneas (stateArray5FromAeneas a) = a := by
   obtain ⟨vals, hlen⟩ := a
@@ -118,7 +119,7 @@ theorem KState.toAeneas_fromAeneas (s : state.KeccakState) :
   · exact stateArray5_toAeneas_fromAeneas d
 
 /-- Reverse round-trip: `KState.fromAeneas (KState.toAeneas s) = s`.
-    Used by the algebraic correspondence proofs to turn Campaign 1's
+    Used by the algebraic correspondence proofs to turn the structural equivalence's
     bit-side equation `KState.fromAeneas r_impl = bit_round{k} (KState.fromAeneas s.toAeneas)`
     into `bit_round{k} s` (collapsing the inner round-trip). -/
 theorem KState.fromAeneas_toAeneas (s : KState) :
@@ -138,7 +139,7 @@ theorem KState.fromAeneas_toAeneas (s : KState) :
 
 /-- Converting `(⟨s.i.bv + 1⟩ : Std.Usize).val` to `s.i.val + 1` under
     a tame upper bound on `s.i.val`. The structural `_i` lemmas in
-    `StructEquiv.lean` give the bit-side increment in `⟨_ + 1⟩` form;
+    `StructuralEquiv.lean` give the bit-side increment in `⟨_ + 1⟩` form;
     this bridges to `.val + 1` form. -/
 private theorem usize_succ_val (s : Aeneas.Std.Usize) (hi : s.val < 24) :
     (⟨s.bv + (1 : BitVec System.Platform.numBits)⟩ : Aeneas.Std.Usize).val = s.val + 1 := by
@@ -196,7 +197,7 @@ theorem bit_round3_i (s : KState) (hi : s.i.val < 24) :
     The earlier static-`impl_swap` architecture required a
     `BalancedAt k` precondition that was *not* preserved across rounds
     1–3 (empirical counter-example, 2026-05-19). The fix is the
-    time-varying `impl_swap_k` in `Equivalence/Lift.lean`: a 4-cycle
+    time-varying `impl_swap_k` in `Foundation/Lift.lean`: a 4-cycle
     `swZero → impl_swap → sw2 → sw3 → swZero` that tracks the actual
     polarity layout at each round so the canonical lift recovers the
     spec U64.
@@ -222,7 +223,7 @@ theorem bit_round3_i (s : KState) (hi : s.i.val < 24) :
 /-! ### Generic extractors
 
     Each round's algebra proof uses the same pattern: combine the spec
-    `round{k}_equiv_spec` Triple with the Campaign 1 chain Triple
+    `round{k}_equiv_spec` Triple with the structural-side chain Triple
     `round{k}_full_bit_eq`, weaken the post into the goal Prop, and
     extract via `triple_imp_prop` (a Triple whose post is a
     `r`-independent Prop yields the Prop). -/
@@ -238,7 +239,7 @@ private theorem triple_imp_prop {α : Type} {C : Aeneas.Std.Result α} {P : Prop
 
 /-! ### Round-0 chain Triple (bit-side equivalence over the 3-step impl) -/
 
-/-- Campaign 1 bundled at the 3-step round-0 chain: the impl call
+/-- Structural side bundled at the 3-step round-0 chain: the impl call
     `do { theta; prc_1; prc_2 }` on `s` produces some `r` such that
     `KState.fromAeneas r = bit_round0 (KState.fromAeneas s)`.
 
@@ -276,7 +277,7 @@ private theorem round0_full_bit_eq (s : state.KeccakState) (hi : s.i.val < 24) :
   rw [h_prc2, h_prc1, h_theta]
 
 /-- Round 0 algebraic equivalence (unconditional). Composes
-    `round0_equiv_spec` (impl ⇔ spec `θ;ρ;π;χ;ι`) with Campaign 1's
+    `round0_equiv_spec` (impl ⇔ spec `θ;ρ;π;χ;ι`) with the structural equivalence's
     bit-side chain Triple `round0_full_bit_eq`. Input convention is
     `impl_swap_k 0 = (fun _ => false)`, i.e. the canonical `lift`;
     output convention is `impl_swap_k 1 = impl_swap`, matching the
@@ -293,11 +294,11 @@ theorem bit_round0_alg_eq (s : KState) (hi : s.i.val < 24) :
   have h_r_eq : r = (bit_round0 s).toAeneas := by
     rw [← KState.toAeneas_fromAeneas r, h_from_eq, KState.fromAeneas_toAeneas]
   unfold round0_post at h_round0_post
-  have h_spec_eq : spec_round_step (Equivalence.lift s.toAeneas) s.toAeneas.i
+  have h_spec_eq : spec_round_step (Foundation.lift s.toAeneas) s.toAeneas.i
                  = .ok (lift_perm r impl_perm impl_swap) := by
     unfold spec_round_step
     exact holds_chain_eq_ok h_round0_post
-  show spec_round_step (Equivalence.lift s.toAeneas) s.i
+  show spec_round_step (Foundation.lift s.toAeneas) s.i
      = .ok (lift_perm (bit_round0 s).toAeneas impl_perm impl_swap)
   rw [show s.i = s.toAeneas.i from rfl, h_spec_eq, h_r_eq]
 
@@ -454,12 +455,12 @@ theorem bit_round3_alg_eq (s : KState) (hi : s.i.val < 24) :
   have h_spec_eq :
       spec_round_step
           (lift_perm s.toAeneas (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) s.toAeneas.i
-        = .ok (Equivalence.lift r) := by
+        = .ok (Foundation.lift r) := by
     unfold spec_round_step
     exact holds_chain_eq_ok h_round3_post
   show spec_round_step
           (lift_perm s.toAeneas (impl_perm ∘ impl_perm ∘ impl_perm) (impl_swap_k 3)) s.i
-        = .ok (Equivalence.lift (bit_round3 s).toAeneas)
+        = .ok (Foundation.lift (bit_round3 s).toAeneas)
   rw [show s.i = s.toAeneas.i from rfl, h_spec_eq, h_r_eq]
 
 /-! ## 4-round closure (unconditional)
@@ -543,7 +544,7 @@ theorem bit_keccakf1600_4rounds_i (s : KState) (hi : s.i.val + 4 ≤ 24) :
     rw [bit_round2_i _ (by rw [h1]; omega), h1]
   rw [bit_round3_i _ (by rw [h2]; omega), h2]
 
-/-! ## 24-round closure (the Campaign 2 target)
+/-! ## 24-round closure (the top-level algebraic equivalence target)
 
     Induct over 6 iterations of `bit_keccakf1600_4rounds 0`, threading
     the `s.i.val = 4k` chain to align spec_round_step indices. -/
@@ -560,7 +561,7 @@ private theorem nat_iterate_i (s : KState) (h_i : s.i.val = 0) (k : Nat) (hk : k
     rw [hIH]; ring
 
 set_option maxHeartbeats 4000000 in
-/-- The 24-round Campaign 2 closure on the pure-Lean side (unconditional).
+/-- The 24-round algebraic closure on the pure-Lean side (unconditional).
     With the time-varying `impl_swap_k` cycle, no `BalancedAt`
     precondition is needed — both ends of each 4-round chunk use the
     canonical `lift` view. -/
@@ -603,72 +604,4 @@ theorem bit_keccak_spec_alg_eq (s : KState) (h_i : s.i = 0#usize) :
                dif_pos (show 4 * n + 3 < 24 by omega),
                bind_assoc]
     exact h_chain
-
-/-! ## Top-level composition with Campaign 1
-
-    Combines `keccakf1600_eq` (Campaign 1: impl ≡ bit_keccak_spec on
-    pure-Lean side) with `bit_keccak_spec_alg_eq` (Campaign 2: 24-fold
-    spec on `lift s` equals `lift` of bit_keccak_spec output). The
-    `keccakf1600_post` shape (with the canonical `lift r_impl` on the
-    spec equality, no `lift_perm`) follows from the time-varying
-    `impl_swap_k` cycle reaching `swZero` at round 24. No `BalancedAt`
-    precondition needed. -/
-
-theorem keccakf1600_equiv_via_bit (s : state.KeccakState)
-    (h_i : s.i = 0#usize) :
-    ⦃ ⌜ True ⌝ ⦄
-    keccak.keccakf1600 s
-    ⦃ ⇓ r_impl => ⌜ keccakf1600_post_canonical s r_impl ⌝ ⦄ := by
-  apply Std.Do.Triple.of_entails_right _ (keccakf1600_eq s h_i)
-  rw [PostCond.entails_noThrow]
-  intro r h_fromAeneas
-  dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_fromAeneas ⊢
-  unfold keccakf1600_post_canonical
-  -- Bridge: the Nat.fold IS `spec_chain` (just inlined).
-  have h_post_eq :
-      (do let lifted_final ← Nat.fold 24
-            (fun i h acc => acc >>= fun st => spec_round_step st (roundOfNat i (by omega)))
-            (pure (Equivalence.lift s))
-          pure (lifted_final = Equivalence.lift r)).holds
-      = (do let lifted_final ← spec_chain (Equivalence.lift s) 24
-            pure (lifted_final = Equivalence.lift r)).holds := by
-    unfold spec_chain spec_round_step_at
-    congr 1
-  rw [h_post_eq]
-  -- Bridge lift s → lift (toAeneas (fromAeneas s)) via toAeneas_fromAeneas round-trip.
-  rw [show (Equivalence.lift s : Array Std.U64 25#usize)
-        = Equivalence.lift (KState.toAeneas (KState.fromAeneas s)) from by
-        rw [KState.toAeneas_fromAeneas]]
-  -- Apply Campaign 2 (unconditional).
-  have h_i' : (KState.fromAeneas s).i = 0#usize := by
-    show (KState.fromAeneas s).i = 0#usize
-    unfold KState.fromAeneas
-    exact h_i
-  rw [bit_keccak_spec_alg_eq (KState.fromAeneas s) h_i']
-  unfold bit_keccak_spec at h_fromAeneas
-  -- Bridge: r.st = (toAeneas (iter^[6] (fromAeneas s))).st (since `lift`
-  -- reads only .st, and `with i := 0` preserves `.st` on both sides).
-  have h_lift_st_only :
-      ∀ (a b : state.KeccakState), a.st = b.st →
-        Equivalence.lift a = Equivalence.lift b := by
-    intro a b hab
-    unfold Equivalence.lift
-    apply Subtype.ext
-    show List.ofFn (fun i : Fin 25 => lift_lane (a.st.val[i.val]!))
-       = List.ofFn (fun i : Fin 25 => lift_lane (b.st.val[i.val]!))
-    rw [hab]
-  have h_r_eq_iter_st :
-      r.st = (KState.toAeneas
-                (Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 (KState.fromAeneas s))).st := by
-    have hrt : r.st = stateArray25ToAeneas (KState.fromAeneas r).st :=
-      (stateArray25_toAeneas_fromAeneas r.st).symm
-    rw [hrt]
-    have h_from_st : (KState.fromAeneas r).st
-                   = (Nat.iterate (bit_keccakf1600_4rounds 0#usize) 6 (KState.fromAeneas s)).st := by
-      rw [h_fromAeneas]
-    rw [h_from_st]
-    rfl
-  apply pure_prop_holds
-  exact h_lift_st_only _ _ h_r_eq_iter_st.symm
-
-end libcrux_iot_sha3.BitKeccak
+end libcrux_iot_sha3.Algebraic

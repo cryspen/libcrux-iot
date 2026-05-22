@@ -8,12 +8,12 @@
   combination of the two halves to equal the spec constant at every
   round.
 -/
-import LibcruxIotSha3.Equivalence.Lift
+import LibcruxIotSha3.Foundation.Lift
 import HacspecSha3
 
 open Aeneas Aeneas.Std libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 /-- Auxiliary `Fin 24` form. Closed by `native_decide` after a `revert` —
     every concrete index reduces both sides to a closed `BitVec 64`
@@ -36,4 +36,4 @@ theorem rc_equiv (i : Nat) (hi : i < 24) :
     (keccak_f.ROUND_CONSTANTS.val[i]!).bv :=
   rc_equiv_aux ⟨i, hi⟩
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

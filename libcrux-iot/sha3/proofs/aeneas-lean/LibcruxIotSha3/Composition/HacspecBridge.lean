@@ -7,7 +7,7 @@
   The impl's `keccak.keccakf1600` iterates `keccakf1600_4rounds` 6 times
   over an `I32` range `[0, 6)`. The hacspec's `keccak_f.keccak_f` iterates
   the body `theta ; rho ; pi ; chi ; iota round` 24 times over a `Usize`
-  range `[0, 24)`. Our `BitKeccak.keccakf1600_equiv_via_bit` proves that
+  range `[0, 24)`. Our `Composition.keccakf1600_equiv_via_bit` proves that
   the impl's output equals a 24-fold spec chain (`spec_chain (lift s) 24`)
   using the `_unrolled` variants of the spec functions.
 
@@ -23,12 +23,13 @@
   the hacspec function (using a `Usize` range loop over single-round
   body).
 -/
-import LibcruxIotSha3.BitKeccak.AlgEquiv
-import LibcruxIotSha3.Equivalence.I32LoopSpec
+import LibcruxIotSha3.Composition.ViaBit
+import LibcruxIotSha3.Foundation.I32LoopSpec
 
 open Aeneas Aeneas.Std Result ControlFlow Std.Do libcrux_iot_sha3 hacspec_sha3
+open libcrux_iot_sha3.Foundation
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Composition
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
@@ -1176,7 +1177,7 @@ theorem spec_chain_hacspec_eq_spec_chain
 
 `keccak.keccakf1600 s` succeeds and produces `r_impl` such that the
 hacspec `keccak_f.keccak_f` applied to `lift s` succeeds with
-`lift r_impl`. Composes `keccakf1600_equiv_via_bit` (Campaign 1+2
+`lift r_impl`. Composes `keccakf1600_equiv_via_bit` (the structural + algebraic equivalences
 canonical post) with `spec_chain_hacspec ↔ spec_chain` (Bridge 1) and
 `keccak_f_loop_eq_spec_chain_hacspec` (loop bridge). -/
 
@@ -1186,7 +1187,7 @@ theorem keccakf1600_equiv_hacspec (s : state.KeccakState)
     keccak.keccakf1600 s
     ⦃ ⇓ r_impl => ⌜ keccak_f.keccak_f (lift s) = .ok (lift r_impl) ⌝ ⦄ := by
   -- Start from `keccakf1600_equiv_via_bit`'s canonical post.
-  apply Std.Do.Triple.of_entails_right _ (BitKeccak.keccakf1600_equiv_via_bit s h_i)
+  apply Std.Do.Triple.of_entails_right _ (keccakf1600_equiv_via_bit s h_i)
   rw [PostCond.entails_noThrow]
   intro r h_post
   dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure] at h_post ⊢
@@ -1195,24 +1196,24 @@ theorem keccakf1600_equiv_hacspec (s : state.KeccakState)
   unfold keccakf1600_post_canonical at h_post
   -- Convert the `Nat.fold` form to `spec_chain`.
   have h_chain :
-      (do let lifted_final ← spec_chain (Equivalence.lift s) 24
-          pure (lifted_final = Equivalence.lift r)).holds := by
+      (do let lifted_final ← spec_chain (Foundation.lift s) 24
+          pure (lifted_final = Foundation.lift r)).holds := by
     have h_eq :
         (do let lifted_final ← Nat.fold 24
               (fun i h acc => acc >>= fun st => spec_round_step st (roundOfNat i (by omega)))
-              (pure (Equivalence.lift s))
-            pure (lifted_final = Equivalence.lift r)).holds
-        = (do let lifted_final ← spec_chain (Equivalence.lift s) 24
-              pure (lifted_final = Equivalence.lift r)).holds := by
+              (pure (Foundation.lift s))
+            pure (lifted_final = Foundation.lift r)).holds
+        = (do let lifted_final ← spec_chain (Foundation.lift s) 24
+              pure (lifted_final = Foundation.lift r)).holds := by
       unfold spec_chain spec_round_step_at
       congr 1
     rw [h_eq] at h_post
     exact h_post
   -- Extract spec_chain (lift s) 24 = .ok (lift r).
-  have h_spec_chain : spec_chain (Equivalence.lift s) 24 = .ok (Equivalence.lift r) :=
+  have h_spec_chain : spec_chain (Foundation.lift s) 24 = .ok (Foundation.lift r) :=
     holds_chain_eq_ok h_chain
   -- Bridge via spec_chain_hacspec and keccak_f_loop_eq_spec_chain_hacspec.
   rw [keccak_f_loop_eq_spec_chain_hacspec, spec_chain_hacspec_eq_spec_chain]
   exact h_spec_chain
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Composition

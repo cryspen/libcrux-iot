@@ -46,22 +46,22 @@
   `theta_lift_spec_k` and `prc_lift_spec_k` lemmas (see
   `ThetaLiftRound{1,2,3}.lean`, `PrcLiftRound{1,2,3}.lean`). All four
   round specs are tagged `@[spec]` and consumed by the 24-round
-  composition in `BitKeccak/AlgEquiv.lean`.
+  composition in `AlgebraicEquiv.lean`.
 -/
-import LibcruxIotSha3.Equivalence.ThetaLift
-import LibcruxIotSha3.Equivalence.ThetaLiftRound1
-import LibcruxIotSha3.Equivalence.ThetaLiftRound2
-import LibcruxIotSha3.Equivalence.ThetaLiftRound3
-import LibcruxIotSha3.Equivalence.PrcLift
-import LibcruxIotSha3.Equivalence.PrcLiftRound1
-import LibcruxIotSha3.Equivalence.PrcLiftRound2
-import LibcruxIotSha3.Equivalence.PrcLiftRound3
-import LibcruxIotSha3.Equivalence.Lift
+import LibcruxIotSha3.Foundation.ThetaLift
+import LibcruxIotSha3.Foundation.ThetaLiftRound1
+import LibcruxIotSha3.Foundation.ThetaLiftRound2
+import LibcruxIotSha3.Foundation.ThetaLiftRound3
+import LibcruxIotSha3.Foundation.PrcLift
+import LibcruxIotSha3.Foundation.PrcLiftRound1
+import LibcruxIotSha3.Foundation.PrcLiftRound2
+import LibcruxIotSha3.Foundation.PrcLiftRound3
+import LibcruxIotSha3.Foundation.Lift
 import Hax
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
@@ -268,7 +268,7 @@ theorem keccakf1600_round3_pi_rho_chi_chain_spec
           let r_spec ← keccak_f.iota a3 s.i
           -- Round 3 output uses canonical `lift` (= `lift_perm _ id swZero`,
           -- via `impl_perm^[4] = id` and `impl_swap_k 4 = swZero`).
-          pure (r_spec = Equivalence.lift r_impl)).holds ⌝ ⦄ := by
+          pure (r_spec = Foundation.lift r_impl)).holds ⌝ ⦄ := by
   unfold keccakf1600_round3_pi_rho_chi_chain
   exact prc_lift_spec_3 s hi
 
@@ -337,7 +337,7 @@ def round3_post (s : state.KeccakState) (r_impl : state.KeccakState) : Prop :=
     let r_spec ← keccak_f.iota s_chi s.i
     -- Output uses `impl_swap_k 4 = (fun _ => false)`, i.e. the canonical
     -- `lift` (after `impl_perm^[4] = id`). Equivalent to `lift r_impl`.
-    pure (r_spec = Equivalence.lift r_impl)).holds
+    pure (r_spec = Foundation.lift r_impl)).holds
 
 set_option maxHeartbeats 16000000 in
 theorem round3_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
@@ -356,8 +356,8 @@ theorem round3_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
 
 /-! ## Triple combinators
 
-Used by the round-chain compositions in `BitKeccak/StructEquiv.lean` and
-`BitKeccak/AlgEquiv.lean` to combine per-round algebraic posts with
+Used by the round-chain compositions in `StructuralEquiv.lean` and
+`AlgebraicEquiv.lean` to combine per-round algebraic posts with
 i-increment facts and to lift pure-prop preconditions into proof-context
 hypotheses. -/
 
@@ -382,4 +382,4 @@ theorem triple_imp_intro {α} {e : Aeneas.Std.Result α} {P : Prop} {Q : α → 
   · simp_all [Std.Do.Triple, WP.wp]
   · simp_all [Std.Do.Triple, WP.wp]
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation

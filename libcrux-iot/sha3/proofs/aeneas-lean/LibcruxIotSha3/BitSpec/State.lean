@@ -9,7 +9,7 @@
 
   The naming-discipline rule from the plan: this file mentions no `lift`,
   `lift_perm`, `impl_perm`, `impl_swap`. Those concepts only enter at the
-  Campaign-2 bridge to the hacspec (`AlgEquiv.lean`).
+  algebraic-equivalence bridge to the hacspec (`AlgebraicEquiv.lean`).
 
   The one Aeneas-side type we keep is `Std.Usize` for the round counter
   `i` — it's a thin `BitVec`-wrapping data type (no `Triple`, `Result`,
@@ -21,7 +21,7 @@ import Init.Data.Vector.Basic
 import Aeneas.Std.Scalar.Core
 import Aeneas.Std.Scalar.Notations
 
-namespace libcrux_iot_sha3.BitKeccak
+namespace libcrux_iot_sha3.BitSpec
 
 /-- A single Keccak lane in bit-interleaved form: two 32-bit halves
     storing the even-bit (`z0`) and odd-bit (`z1`) bits of the lane's
@@ -60,4 +60,4 @@ def KState.zero : KState :=
     d  := Vector.replicate 5 Lane.zero,
     i  := 0#usize }
 
-end libcrux_iot_sha3.BitKeccak
+end libcrux_iot_sha3.BitSpec

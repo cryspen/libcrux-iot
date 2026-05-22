@@ -8,11 +8,11 @@
   does not invalidate downstream caches (`PrcLift` etc.) that only need
   the definitions.
 -/
-import LibcruxIotSha3.Equivalence.ThetaLiftDefs
+import LibcruxIotSha3.Foundation.ThetaLiftDefs
 
 open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 
-namespace libcrux_iot_sha3.Equivalence
+namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
@@ -98,4 +98,4 @@ theorem theta_lift_spec (s : state.KeccakState) :
       lift_getElem_bv_24]
   all_goals simp only [Std.UScalarTy.U64_numBits_eq, ← lift_xor, ← lift_td]
 
-end libcrux_iot_sha3.Equivalence
+end libcrux_iot_sha3.Foundation
