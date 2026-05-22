@@ -289,8 +289,8 @@ private theorem barrett_reduce_core
 
     Stages the BV-level result of unfolding `barrett_reduce_element` so the
     Triple proof can apply `triple_of_ok_l0` against it. Mirrors L0.3's
-    `mont_reduce_impl_value`. -/
-private def barrett_reduce_impl_value (value : Std.I16) : Std.I16 :=
+    `mont_reduce_impl_value`. Exposed (non-private) for L1.3 totality use. -/
+def barrett_reduce_impl_value (value : Std.I16) : Std.I16 :=
   let i : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 value
   let i1 : Std.I32 := Aeneas.Std.I32.wrapping_mul i (20159#i32)
   let i3 : Std.I32 := ⟨(1#i32 : Std.I32).bv.shiftLeft 26 |>.sshiftRight 1⟩
@@ -300,8 +300,12 @@ private def barrett_reduce_impl_value (value : Std.I16) : Std.I16 :=
   let i6 : Std.I16 := Aeneas.Std.I16.wrapping_mul quotient (3329#i16)
   Aeneas.Std.I16.wrapping_sub value i6
 
-/-- The `do`-block reduces to `Result.ok (barrett_reduce_impl_value value)`. -/
-private theorem barrett_reduce_element_eq_ok (value : Std.I16) :
+/-- The `do`-block reduces to `Result.ok (barrett_reduce_impl_value value)`.
+
+    Exposed (non-private) so that L1.3 `barrett_reduce_spec` can establish
+    totality of `barrett_reduce_element` independent of the per-element
+    bound precondition. -/
+theorem barrett_reduce_element_eq_ok (value : Std.I16) :
     libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce_element value
       = .ok (barrett_reduce_impl_value value) := by
   unfold libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce_element

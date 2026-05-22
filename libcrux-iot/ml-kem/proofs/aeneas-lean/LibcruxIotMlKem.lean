@@ -8,4 +8,6 @@ import LibcruxIotMlKem.Extraction.Funs
 import LibcruxIotMlKem.Util.SliceSpecs
 import LibcruxIotMlKem.Util.LoopSpecs
 import LibcruxIotMlKem.Util.CreateI
+import LibcruxIotMlKem.Util.PortableVector
 import LibcruxIotMlKem.Equivalence.L0_FieldArith
+import LibcruxIotMlKem.Equivalence.L1_VectorElementOps
