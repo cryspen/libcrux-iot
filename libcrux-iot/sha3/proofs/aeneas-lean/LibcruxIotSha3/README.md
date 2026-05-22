@@ -303,5 +303,3 @@ grep -rn "by sorry\|^  sorry" LibcruxIotSha3/   # must be empty
 
 - [`Equivalence/README.md`](Equivalence/README.md) — extraction pipeline,
   per-file build/iteration tips, re-extraction commands.
-- `Plan: ~/.claude/plans/fancy-gliding-swan.md` (referenced from
-  `BitKeccak/AlgEquiv.lean`) — historical plan; partially outdated.

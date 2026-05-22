@@ -59,21 +59,26 @@ in informal form:
 >     keccak_f.keccakf1600 (lift s) = ok r_spec  →
 >     r_spec = lift r_impl.
 
-## Status (2026-05-12)
+## Status (2026-05-21)
 
-| File | Lines | Status |
-|---|---|---|
-| `Lift.lean` | 265 | ✅ done — interleaved-lane lifting definitions + bv_decide-closed algebra (25 `rot_N` + `lift_xor`/`lift_and`/`lift_not`/`lift_chi`/`lift_theta_apply`/`lift_td`/`lift_rot1`/`lift_xor5`). Consolidated from prior `Lift`/`LiftLemmas` split. |
-| `UScalarAC.lean` | new | ✅ Tier 1.5 local `Std.Associative`/`Std.Commutative` instances on `Std.UScalar.xor`/`and`/`or` (filling an Aeneas surface gap) |
-| `ThetaLift.lean` | 685 | ✅ done — `theta_comp_spec_local` (10 d-cell values + st/i preservation) AND `theta_lift_spec` (algebraic close via `simp only [Std.UScalarTy.U64_numBits_eq, ← lift_xor, ← lift_td]`) |
-| `RcEquiv.lean` | 39 | ✅ done — `rc_equiv` for `i < 24` via `native_decide` |
-| `PrcLift.lean` | 160 | ✅ impl side preservation — `pi_rho_chi_{1,2}_spec_local` register d/c/i; spec-side coupling pending |
-| `StepSpecs.lean` | 500 | ✅ done — round 1–3 step preservation specs (82 declarations via one `step_preserve_proof` macro) |
-| Spec-coupling files | — | ✅ done — `prc_lift_spec`, `round_k_equiv_spec` (`RoundEquiv.lean`), top 24-round in `BitKeccak/AlgEquiv.lean` |
-| `SpecChain.lean` | — | ✅ `spec_chain` over the four `_unrolled` spec functions |
-| `HacspecBridge.lean` | ~1290 | ✅ Bridge 1 — couples impl to hacspec top-level `keccak_f.keccak_f` via `createi_pure_spec` (`@[spec]` for pure-closure `createi`), 6 per-closure `[spec]` Triples (θ×3, ρ/π/χ), 4 function equalities `keccak_f.X = keccak_f.X_unrolled`, `spec_chain_hacspec_eq_spec_chain`, `Usize` iterator/loop specs, `keccak_f_loop_eq_spec_chain_hacspec`, and the top theorem `keccakf1600_equiv_hacspec` |
+All files in this directory are complete with **0 sorries**.
 
-Sorry hygiene: **0 sorries** in this directory.
+| File | Role |
+|---|---|
+| `Lift.lean` | Interleaved-lane lifting (`lift_lane_bv`, `lift`, `lift_perm`, `impl_perm`, `impl_swap`, `impl_swap_k` 4-cycle) + bv_decide-closed algebra (25 `rot_N` + `lift_xor`/`lift_and`/`lift_not`/`lift_chi`/`lift_theta_apply`/`lift_td`/`lift_rot1`/`lift_xor5`). |
+| `UScalarAC.lean` | Tier 1.5 local `Std.Associative`/`Std.Commutative` instances on `Std.UScalar.xor`/`and`/`or` (Aeneas surface fill). |
+| `RcEquiv.lean` | `rc_equiv` for `i < 24` via `native_decide` (the only `native_decide` site in the tree). |
+| `SpecChain.lean` | `spec_round_step` + `spec_chain` (`Nat.fold` wrapper) over the four `_unrolled` spec functions. |
+| `I32LoopSpec.lean` | I32 iterator + `loop_range_spec_i32` (used by StructEquiv's 6-iteration loop spec). |
+| `ThetaLiftDefs.lean` | 11 round-0 θ sub-fn `@[spec]`s + `theta_comp_spec_local` + `lift_theta_applied(_perm)` defs + reusable `theta_c_proof` macro. |
+| `ThetaLift.lean` | Round-0 `theta_lift_spec` (algebraic close via `simp only [Std.UScalarTy.U64_numBits_eq, ← lift_xor, ← lift_td]`). |
+| `ThetaLiftRound{1,2,3}.lean` | Round-k θ sub-fn `@[spec]`s + 25 `lta_perm_bv_*_k` input lemmas + `theta_lift_spec_k`. |
+| `PrcLift.lean` | 10 round-0 πρχι sub-fn `@[spec]`s + `prc_y_zeta_no_rc_proof` macro + `prc_lift_spec` (round 0). |
+| `PrcLiftRound{1,2,3}.lean` | Round-k πρχι sub-fn `@[spec]`s + 25 input lemmas + `prc_lift_spec_k`. |
+| `StepSpecs.lean` | Round 1–3 step preservation specs (82 declarations via one `step_preserve_proof` macro). |
+| `RoundEquiv.lean` | `round_k_equiv_spec` for k=0,1,2,3 + per-round i-increment lemmas + chain wrappers. |
+| `Keccakf1600.lean` | `keccakf1600_post` / `keccakf1600_post_canonical` (the public post shapes). |
+| `HacspecBridge.lean` | Bridge 1 — couples impl to hacspec top-level `keccak_f.keccak_f` via `createi_pure_spec`, 6 per-closure `[spec]` Triples (θ×3, ρ/π/χ), 4 function equalities `keccak_f.X = keccak_f.X_unrolled`, `spec_chain_hacspec_eq_spec_chain`, `Usize` iterator/loop specs, `keccak_f_loop_eq_spec_chain_hacspec`, and the top theorem `keccakf1600_equiv_hacspec`. |
 
 ```bash
 grep -rn sorry libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/
@@ -88,12 +93,24 @@ ranges from 1.8 s (`RcEquiv`) to 75 s (`StepSpecs`).
 
 ```
 LibcruxIotSha3/Equivalence/
-├── Lift.lean          Bit-interleaved → u64 lifting (defs + bv_decide algebra)
-├── UScalarAC.lean     Local Std.Associative/Commutative on Std.UScalar.xor/and/or (Aeneas surface fill)
-├── ThetaLift.lean     impl-side spec for θ + spec-coupling theta_lift_spec
-├── RcEquiv.lean       lift_lane_bv RC_INTERLEAVED_{0,1}[i] = ROUND_CONSTANTS[i]
-├── PrcLift.lean       impl-side spec for ρ∘π∘χ∘ι: d/c/i preservation
-└── StepSpecs.lean     Preservation specs for rounds 1, 2, 3 (rounds 0 in Theta/PrcLift)
+├── Lift.lean              Bit-interleaved → u64 lifting (defs + bv_decide algebra)
+├── UScalarAC.lean         Local Std.Associative/Commutative on Std.UScalar.xor/and/or
+├── RcEquiv.lean           lift_lane_bv RC_INTERLEAVED_{0,1}[i] = ROUND_CONSTANTS[i]
+├── SpecChain.lean         spec_round_step + spec_chain over _unrolled spec functions
+├── I32LoopSpec.lean       I32 iterator + loop_range_spec_i32
+├── ThetaLiftDefs.lean     Round-0 θ sub-fn @[spec]s + theta_comp_spec_local + lift_theta_applied(_perm)
+├── ThetaLift.lean         Round-0 theta_lift_spec (spec-coupling algebraic close)
+├── ThetaLiftRound1.lean   Round-1 θ analog
+├── ThetaLiftRound2.lean   Round-2 θ analog
+├── ThetaLiftRound3.lean   Round-3 θ analog
+├── PrcLift.lean           Round-0 πρχι sub-fn @[spec]s + prc_lift_spec
+├── PrcLiftRound1.lean     Round-1 πρχι analog
+├── PrcLiftRound2.lean     Round-2 πρχι analog
+├── PrcLiftRound3.lean     Round-3 πρχι analog
+├── StepSpecs.lean         Preservation specs for rounds 1, 2, 3 (rounds 0 in Theta/PrcLift)
+├── RoundEquiv.lean        round_k_equiv_spec for k=0..3 + i-increment + chain wrappers
+├── Keccakf1600.lean       keccakf1600_post / keccakf1600_post_canonical
+└── HacspecBridge.lean     Bridge 1: hacspec coupling + keccakf1600_equiv_hacspec
 ```
 
 Each file uses the established Hax `Std.Do.Triple` idiom:
@@ -148,19 +165,14 @@ From `libcrux-iot/sha3/proofs/aeneas-lean/`:
 
 ```bash
 lake exe cache get                                    # one-time prime
-lake build                                            # ~2 min from clean
+lake build                                            # full tree
 # or per-file (faster feedback):
-lake env lean LibcruxIotSha3/Equivalence/Lift.lean
-lake env lean LibcruxIotSha3/Equivalence/UScalarAC.lean
-lake env lean LibcruxIotSha3/Equivalence/ThetaLift.lean
-lake env lean LibcruxIotSha3/Equivalence/RcEquiv.lean
-lake env lean LibcruxIotSha3/Equivalence/PrcLift.lean
-lake env lean LibcruxIotSha3/Equivalence/StepSpecs.lean
+lake env lean LibcruxIotSha3/Equivalence/<File>.lean
 ```
 
-A clean `lake build` should exit 0 with at most cosmetic warnings (one
-`<;>` style in `lane_index_spec`, one unused `simp_all` branch in
-`set_with_zeta_spec`).
+A clean `lake build` should exit 0 with at most cosmetic warnings
+(unused-tactic linter on a few `(try trivial)` calls in
+`StepSpecs.lean`).
 
 ### Sorry-hygiene check
 
@@ -218,11 +230,6 @@ must report `aeneas b5c45e84`.
 
 ## See also
 
-- `~/.claude/skills/lean-for-libcrux/SKILL.md` — Aeneas Lean idioms,
-  `@[spec]` lemma conventions, `WP.predn` destructuring, `Array.set`
-  simp lemmas.
-- `~/.claude/plans/this-folder-contains-an-gentle-nebula-stage2.md` —
-  full stage plan with step ordering and resumption prompts.
 - `../Extraction/Funs.lean` — the impl extraction (generated; do not
   hand-edit).
 - `../../../specs/sha3/proofs/aeneas-lean/HacspecSha3/Extraction/Funs.lean`

@@ -13,8 +13,6 @@
   Phase 1 Step A (rosetta stone): only `bit_pi_rho_chi_y0_zeta0` is
   defined here. Scaling to the remaining ~29 sub-fns is mechanical
   and happens in subsequent sessions.
-
-  Plan: `~/.claude/plans/fancy-gliding-swan.md`, Phase 1 Step 1.3.
 -/
 import LibcruxIotSha3.BitKeccak.State
 import LibcruxIotSha3.Extraction.Funs

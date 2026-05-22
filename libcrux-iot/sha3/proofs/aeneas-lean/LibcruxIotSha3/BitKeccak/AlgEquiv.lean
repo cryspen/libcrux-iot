@@ -39,8 +39,6 @@
      retarget the impl-level `keccakf1600_post`. The canonical-lift
      shape (with `lift r_impl`, no `lift_perm`) follows from the
      swap cycle reaching `swZero` at round 24.
-
-  Plan: `~/.claude/plans/fancy-gliding-swan.md`, Phase 3.
 -/
 import LibcruxIotSha3.BitKeccak.StructEquiv
 import LibcruxIotSha3.Equivalence.SpecChain

@@ -8,8 +8,6 @@
   needed if Campaign 1's per-sub-fn proofs use them (TBD in Phase 2).
   Adding them later is cheap; over-engineering the iso now risks
   fighting Lean's elaborator on irrelevant `Vector`/`Array` plumbing.
-
-  Plan: ~/.claude/plans/fancy-gliding-swan.md, Phase 1 Step 1.2.
 -/
 import LibcruxIotSha3.BitKeccak.State
 import LibcruxIotSha3.Extraction.Funs
