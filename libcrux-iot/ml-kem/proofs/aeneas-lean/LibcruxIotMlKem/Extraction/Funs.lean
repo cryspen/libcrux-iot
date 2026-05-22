@@ -2,13 +2,11 @@
 -- [libcrux_iot_ml_kem]
 import Aeneas
 import CoreModels
--- BEGIN PHASE0B-MISSING-PATCH (Phase 0(b), hand-applied 2026-05-22)
--- Pulls in `LibcruxIotMlKem/Extraction/Missing.lean` which stubs the
--- five symbols left dangling by the current hax/aeneas pin (I16↔I32,
--- U32→I32 casts, libcrux_secrets classify, core_models I16
--- wrapping_neg). When hax_aeneas.py is authored in Phase 0(c) it
--- should re-insert this single import after any `import CoreModels`
--- line on re-extraction. Search marker: PHASE0B-MISSING-PATCH.
+-- BEGIN PHASE0B-MISSING-PATCH (re-inserted by hax_aeneas.py)
+-- Stubs five symbols dangling under the current rust-core-models
+-- pin: I16↔I32 / U32→I32 casts, libcrux_secrets Classify.Blanket,
+-- and core_models.num.I16.wrapping_neg. See Missing.lean for the
+-- full list.
 import LibcruxIotMlKem.Extraction.Missing
 -- END PHASE0B-MISSING-PATCH
 open core_models
@@ -139,7 +137,7 @@ def ntt.ntt_at_layer_1_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done (zeta_i, re))
   | core_models.option.Option.Some round =>
@@ -195,7 +193,7 @@ def ntt.ntt_at_layer_2_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done (zeta_i, re))
   | core_models.option.Option.Some round =>
@@ -247,7 +245,7 @@ def ntt.ntt_at_layer_3_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done (zeta_i, re))
   | core_models.option.Option.Some round =>
@@ -330,7 +328,7 @@ def ntt.ntt_at_layer_4_plus_loop0_loop0.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done (re, scratch))
   | core_models.option.Option.Some j =>
@@ -371,7 +369,7 @@ def ntt.ntt_at_layer_4_plus_loop0.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done (zeta_i, re, scratch))
   | core_models.option.Option.Some round =>
@@ -441,7 +439,7 @@ def ntt.ntt_at_layer_7_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done (re, scratch))
   | core_models.option.Option.Some j =>
@@ -499,7 +497,7 @@ def polynomial.PolynomialRingElement.poly_barrett_reduce_loop.body
   := do
   let (o, iter1) ←
     core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
-      Usize.Insts.Core_modelsIterRangeStep iter
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
   match o with
   | core_models.option.Option.None => ok (done self)
   | core_models.option.Option.Some i =>
@@ -640,7 +638,7 @@ def vector.traits.FIELD_MODULUS : Std.I16 := 3329#i16
     Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 124:0-131:1 -/
 def vector.portable.arithmetic.barrett_reduce_element
   (value : Std.I16) : Result Std.I16 := do
-  let i ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 value
+  let i ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 value
   let i1 ←
     core_models.num.I32.wrapping_mul i
       vector.portable.arithmetic.BARRETT_MULTIPLIER
@@ -649,7 +647,8 @@ def vector.portable.arithmetic.barrett_reduce_element
   let t ← core_models.num.I32.wrapping_add i1 i3
   let i4 ← lift (IScalar.hcast .U32 vector.traits.BARRETT_SHIFT)
   let i5 ← t >>> i4
-  let quotient ← I32.Insts.Libcrux_secretsIntCastOps.as_i16 i5
+  let quotient ←
+    libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16 i5
   let i6 ←
     core_models.num.I16.wrapping_mul quotient vector.traits.FIELD_MODULUS
   core_models.num.I16.wrapping_sub value i6
@@ -664,36 +663,37 @@ def vector.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R : Std.U32 := 62209#u32
     Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 156:0-170:1 -/
 def vector.portable.arithmetic.montgomery_reduce_element
   (value : Std.I32) : Result Std.I16 := do
-  let i ← I32.Insts.Libcrux_secretsIntCastOps.as_i16 value
-  let i1 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 i
+  let i ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16 value
+  let i1 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 i
   let i2 ←
     libcrux_secrets.traits.Classify.Blanket.classify
       vector.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R
-  let i3 ← U32.Insts.Libcrux_secretsIntCastOps.as_i32 i2
+  let i3 ← libcrux_secrets.U32.Insts.Libcrux_secretsIntCastOps.as_i32 i2
   let k ← core_models.num.I32.wrapping_mul i1 i3
-  let i4 ← I32.Insts.Libcrux_secretsIntCastOps.as_i16 k
-  let i5 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 i4
+  let i4 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16 k
+  let i5 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 i4
   let i6 ←
     libcrux_secrets.traits.Classify.Blanket.classify
       vector.traits.FIELD_MODULUS
-  let i7 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 i6
+  let i7 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 i6
   let k_times_modulus ← core_models.num.I32.wrapping_mul i5 i7
   let i8 ←
     lift (UScalar.cast .U32 vector.portable.arithmetic.MONTGOMERY_SHIFT)
   let i9 ← k_times_modulus >>> i8
-  let c ← I32.Insts.Libcrux_secretsIntCastOps.as_i16 i9
+  let c ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16 i9
   let i10 ←
     lift (UScalar.cast .U32 vector.portable.arithmetic.MONTGOMERY_SHIFT)
   let i11 ← value >>> i10
-  let value_high ← I32.Insts.Libcrux_secretsIntCastOps.as_i16 i11
+  let value_high ←
+    libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16 i11
   core_models.num.I16.wrapping_sub value_high c
 
 /-- [libcrux_iot_ml_kem::vector::portable::arithmetic::montgomery_multiply_fe_by_fer]:
     Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 181:0-187:1 -/
 def vector.portable.arithmetic.montgomery_multiply_fe_by_fer
   (fe : Std.I16) (fer : Std.I16) : Result Std.I16 := do
-  let i ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 fe
-  let i1 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 fer
+  let i ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 fe
+  let i1 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 fer
   let product ← core_models.num.I32.wrapping_mul i i1
   vector.portable.arithmetic.montgomery_reduce_element product
 
@@ -849,16 +849,16 @@ def vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
   let aj ← Array.index_usize a.elements i2
   let i3 ← i1 + 1#usize
   let bj ← Array.index_usize b.elements i3
-  let i4 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 ai
-  let i5 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 bi
+  let i4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 ai
+  let i5 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bi
   let ai_bi ← core_models.num.I32.wrapping_mul i4 i5
-  let i6 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj
-  let i7 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 zeta
+  let i6 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj
+  let i7 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 zeta
   let bj_zeta_ ← core_models.num.I32.wrapping_mul i6 i7
   let bj_zeta ← vector.portable.arithmetic.montgomery_reduce_element bj_zeta_
   let a1 ← Array.update cache.elements i bj_zeta
-  let i8 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 aj
-  let i9 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj_zeta
+  let i8 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 aj
+  let i9 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj_zeta
   let aj_bj_zeta ← core_models.num.I32.wrapping_mul i8 i9
   let ai_bi_aj_bj ← core_models.num.I32.wrapping_add ai_bi aj_bj_zeta
   let ai_bj ← core_models.num.I32.wrapping_mul i4 i6
@@ -889,15 +889,15 @@ def vector.portable.ntt.accumulating_ntt_multiply_binomials_use_cache
   let aj ← Array.index_usize a.elements i2
   let i3 ← i1 + 1#usize
   let bj ← Array.index_usize b.elements i3
-  let i4 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 ai
-  let i5 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 bi
+  let i4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 ai
+  let i5 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bi
   let ai_bi ← core_models.num.I32.wrapping_mul i4 i5
-  let i6 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 aj
+  let i6 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 aj
   let i7 ← Array.index_usize cache.elements i
-  let i8 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 i7
+  let i8 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 i7
   let aj_bj_zeta ← core_models.num.I32.wrapping_mul i6 i8
   let ai_bi_aj_bj ← core_models.num.I32.wrapping_add ai_bi aj_bj_zeta
-  let i9 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj
+  let i9 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj
   let ai_bj ← core_models.num.I32.wrapping_mul i4 i9
   let aj_bi ← core_models.num.I32.wrapping_mul i6 i5
   let ai_bj_aj_bi ← core_models.num.I32.wrapping_add ai_bj aj_bi
@@ -925,15 +925,15 @@ def vector.portable.ntt.accumulating_ntt_multiply_binomials
   let aj ← Array.index_usize a.elements i2
   let i3 ← i1 + 1#usize
   let bj ← Array.index_usize b.elements i3
-  let i4 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 ai
-  let i5 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 bi
+  let i4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 ai
+  let i5 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bi
   let ai_bi ← core_models.num.I32.wrapping_mul i4 i5
-  let i6 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj
-  let i7 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 zeta
+  let i6 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj
+  let i7 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 zeta
   let bj_zeta_ ← core_models.num.I32.wrapping_mul i6 i7
   let bj_zeta ← vector.portable.arithmetic.montgomery_reduce_element bj_zeta_
-  let i8 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 aj
-  let i9 ← I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj_zeta
+  let i8 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 aj
+  let i9 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj_zeta
   let aj_bj_zeta ← core_models.num.I32.wrapping_mul i8 i9
   let ai_bi_aj_bj ← core_models.num.I32.wrapping_add ai_bi aj_bj_zeta
   let ai_bj ← core_models.num.I32.wrapping_mul i4 i6

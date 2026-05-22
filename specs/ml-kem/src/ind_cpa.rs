@@ -14,7 +14,6 @@ use crate::{
 };
 
 /// Helper to sample a polynomial from CBD with dynamic eta.
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(eta == 2 || eta == 3)]
 fn sample_secret(eta: usize, prf_input: &[u8; 33]) -> Polynomial {
     match eta {
@@ -95,7 +94,6 @@ pub type IndCpaKeypairUnpacked<const RANK: usize> =
 /// pair.  The packed `generate_keypair` is a thin serialization
 /// wrapper around this function.
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && (params.eta1 == 2 || params.eta1 == 3)
@@ -165,7 +163,6 @@ pub fn generate_keypair_unpacked<const RANK: usize>(
 /// dkₚₖₑ ← ByteEncode₁₂(ŝ)
 /// ```
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && EK_SIZE == RANK * BYTES_PER_RING_ELEMENT + 32
@@ -234,7 +231,6 @@ pub fn generate_keypair<const RANK: usize, const EK_SIZE: usize, const DK_PKE_SI
 /// return c ← (c₁ ‖ c₂)
 /// ```
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && U_SIZE == (RANK * COEFFICIENTS_IN_RING_ELEMENT * params.du) / 8
@@ -289,7 +285,6 @@ pub fn encrypt<
 /// and consumes the already-decoded `t_as_ntt` and `A_as_ntt`
 /// directly.  The packed `encrypt` is a thin decoding wrapper.
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && U_SIZE == (RANK * COEFFICIENTS_IN_RING_ELEMENT * params.du) / 8
@@ -372,7 +367,6 @@ pub fn encrypt_unpacked<
 /// return m
 /// ```
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && dk.len() == RANK * BYTES_PER_RING_ELEMENT
@@ -398,7 +392,6 @@ pub fn decrypt<const RANK: usize>(params: &MlKemParams, dk: &[u8], ciphertext: &
 /// `secret_as_ntt` directly.  The packed `decrypt` is a thin
 /// decoding wrapper.
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && ciphertext.len() == (RANK * COEFFICIENTS_IN_RING_ELEMENT * params.du + COEFFICIENTS_IN_RING_ELEMENT * params.dv) / 8

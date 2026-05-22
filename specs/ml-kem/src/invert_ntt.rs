@@ -52,7 +52,23 @@ pub fn inv_butterfly(
 ///
 /// This is FIPS 203 Algorithm 9 lines 3-8 applied once at butterfly
 /// half-size `len`.
-#[hax_lib::fstar::options("--z3rlimit 150")]
+/// Per-index body of the `createi` in `ntt_inverse_layer_n`, hoisted to
+/// dodge Aeneas issue https://github.com/AeneasVerif/aeneas/issues/924.
+fn ntt_inverse_layer_n_at<const N: usize>(
+    p: &[FieldElement; N],
+    len: usize,
+    zetas: &[FieldElement],
+    i: usize,
+) -> FieldElement {
+    let group = i / (2 * len);
+    let idx = i % (2 * len);
+    if idx < len {
+        inv_butterfly(zetas[group], p[i], p[i + len]).0
+    } else {
+        inv_butterfly(zetas[group], p[i - len], p[i]).1
+    }
+}
+
 #[hax_lib::requires(
     len >= 1 && len < 1024 && zetas.len() < 1024 && zetas.len() * 2 * len == N
 )]
@@ -61,15 +77,21 @@ pub fn ntt_inverse_layer_n<const N: usize>(
     len: usize,
     zetas: &[FieldElement],
 ) -> [FieldElement; N] {
-    createi(|i| {
-        let group = i / (2 * len);
-        let idx = i % (2 * len);
-        if idx < len {
-            inv_butterfly(zetas[group], p[i], p[i + len]).0
-        } else {
-            inv_butterfly(zetas[group], p[i - len], p[i]).1
-        }
-    })
+    createi(|i| ntt_inverse_layer_n_at::<N>(&p, len, zetas, i))
+}
+
+/// Per-index body of the `createi` in `ntt_inverse_layer`, hoisted to
+/// dodge Aeneas issue https://github.com/AeneasVerif/aeneas/issues/924
+/// (capturing closure with `if`-then-`else` body fails the `Fn::call`
+/// extraction path). With the body lifted into a free function, the
+/// remaining closure is a single non-branching call, which aeneas
+/// translates fine.
+fn ntt_inverse_layer_zeta(groups: usize, round: usize) -> FieldElement {
+    if round < groups {
+        ZETAS[2 * groups - 1 - round]
+    } else {
+        FieldElement::new(0)
+    }
 }
 
 /// One layer of the 256-coefficient inverse NTT.
@@ -77,19 +99,12 @@ pub fn ntt_inverse_layer_n<const N: usize>(
 /// Follows FIPS 203 Algorithm 9.  Butterfly half-size `len = 2^layer`,
 /// groups = `128 / len`, zetas used = `ZETAS[groups .. 2·groups]` reversed
 /// (the inverse NTT consumes the zeta table top-down).
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(layer >= 1 && layer <= 7)]
 fn ntt_inverse_layer(p: Polynomial, layer: usize) -> Polynomial {
     let len = 1 << layer;
     let groups = 128 / len;
     // ZETAS[groups .. 2·groups] reversed: zetas[round] = ZETAS[2·groups − 1 − round]
-    let zetas: [FieldElement; 128] = createi(|round| {
-        if round < groups {
-            ZETAS[2 * groups - 1 - round]
-        } else {
-            FieldElement::new(0)
-        }
-    });
+    let zetas: [FieldElement; 128] = createi(|round| ntt_inverse_layer_zeta(groups, round));
     ntt_inverse_layer_n(p, len, &zetas[0..groups])
 }
 
@@ -111,7 +126,6 @@ pub fn reduce_polynomial(p: Polynomial) -> Polynomial {
 ///
 /// The fully-finalized FIPS-203 INTT (`ntt_inverse` above) factors as
 /// `reduce_polynomial ∘ ntt_inverse_butterflies`.
-#[hax_lib::fstar::options("--z3rlimit 150")]
 pub fn ntt_inverse_butterflies(p: Polynomial) -> Polynomial {
     let p = ntt_inverse_layer(p, 1);
     let p = ntt_inverse_layer(p, 2);
@@ -123,7 +137,6 @@ pub fn ntt_inverse_butterflies(p: Polynomial) -> Polynomial {
     p
 }
 
-#[hax_lib::fstar::options("--z3rlimit 150")]
 pub fn ntt_inverse(p: Polynomial) -> Polynomial {
     reduce_polynomial(ntt_inverse_butterflies(p))
 }

@@ -214,7 +214,23 @@ pub fn butterfly(
 /// `len`.  The within-chunk case (N = 16, len ∈ {2, 4, 8}) corresponds to the
 /// trait's `ntt_layer_{1,2,3}_step`; the full-polynomial case (N = 256,
 /// len = 2^layer) is what `ntt_layer` below instantiates.
-#[hax_lib::fstar::options("--z3rlimit 150")]
+/// Per-index body of the `createi` in `ntt_layer_n`, hoisted to dodge
+/// Aeneas issue https://github.com/AeneasVerif/aeneas/issues/924.
+fn ntt_layer_n_at<const N: usize>(
+    p: &[FieldElement; N],
+    len: usize,
+    zetas: &[FieldElement],
+    i: usize,
+) -> FieldElement {
+    let group = i / (2 * len);
+    let idx = i % (2 * len);
+    if idx < len {
+        butterfly(zetas[group], p[i], p[i + len]).0
+    } else {
+        butterfly(zetas[group], p[i - len], p[i]).1
+    }
+}
+
 #[hax_lib::requires(
     len >= 1 && len < 1024 && zetas.len() < 1024 && zetas.len() * 2 * len == N
 )]
@@ -223,15 +239,7 @@ pub fn ntt_layer_n<const N: usize>(
     len: usize,
     zetas: &[FieldElement],
 ) -> [FieldElement; N] {
-    createi(|i| {
-        let group = i / (2 * len);
-        let idx = i % (2 * len);
-        if idx < len {
-            butterfly(zetas[group], p[i], p[i + len]).0
-        } else {
-            butterfly(zetas[group], p[i - len], p[i]).1
-        }
-    })
+    createi(|i| ntt_layer_n_at::<N>(&p, len, zetas, i))
 }
 
 /// One layer of the 256-coefficient NTT.  Thin wrapper over `ntt_layer_n`
@@ -240,7 +248,6 @@ pub fn ntt_layer_n<const N: usize>(
 ///
 /// Follows FIPS 203 Algorithm 8.  Butterfly half-size `len = 2^layer`,
 /// groups = `128 / len`, zetas used = `ZETAS[groups .. 2·groups]`.
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(layer >= 1 && layer <= 7)]
 fn ntt_layer(p: Polynomial, layer: usize) -> Polynomial {
     let len = 1 << layer;
@@ -277,7 +284,6 @@ fn ntt(p: Polynomial) -> Polynomial {
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
-#[hax_lib::fstar::options("--z3rlimit 150")]
 fn base_case_multiply_even(
     a0: FieldElement,
     a1: FieldElement,
@@ -334,26 +340,34 @@ fn base_case_multiply_odd(
 /// When instantiated at N=256 with `zetas = ZETAS[64..128]` this is the
 /// full `multiply_ntts` below.  When instantiated at N=16 with 4 zetas
 /// this is the trait's `ntt_multiply(lhs, rhs, z0, z1, z2, z3)`.
-#[hax_lib::fstar::options("--z3rlimit 150")]
+/// Per-index body of the `createi` in `ntt_multiply_n`, hoisted to
+/// dodge Aeneas issue https://github.com/AeneasVerif/aeneas/issues/924.
+fn ntt_multiply_n_at<const N: usize>(
+    p1: &[FieldElement; N],
+    p2: &[FieldElement; N],
+    zetas: &[FieldElement],
+    i: usize,
+) -> FieldElement {
+    let group = i / 4;
+    let zeta = if i % 4 < 2 {
+        zetas[group]
+    } else {
+        zetas[group].neg()
+    };
+    if i % 2 == 0 {
+        base_case_multiply_even(p1[i], p1[i + 1], p2[i], p2[i + 1], zeta)
+    } else {
+        base_case_multiply_odd(p1[i - 1], p1[i], p2[i - 1], p2[i])
+    }
+}
+
 #[hax_lib::requires(zetas.len() < 1024 && zetas.len() * 4 == N)]
 pub fn ntt_multiply_n<const N: usize>(
     p1: &[FieldElement; N],
     p2: &[FieldElement; N],
     zetas: &[FieldElement],
 ) -> [FieldElement; N] {
-    createi(|i| {
-        let group = i / 4;
-        let zeta = if i % 4 < 2 {
-            zetas[group]
-        } else {
-            zetas[group].neg()
-        };
-        if i % 2 == 0 {
-            base_case_multiply_even(p1[i], p1[i + 1], p2[i], p2[i + 1], zeta)
-        } else {
-            base_case_multiply_odd(p1[i - 1], p1[i], p2[i - 1], p2[i])
-        }
-    })
+    createi(|i| ntt_multiply_n_at::<N>(p1, p2, zetas, i))
 }
 
 pub fn multiply_ntts(p1: &Polynomial, p2: &Polynomial) -> Polynomial {

@@ -7,7 +7,6 @@ use hax_lib::ToProp;
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(bits_per_compressed_coefficient < 12)]
 pub fn compress(re: Polynomial, bits_per_compressed_coefficient: usize) -> Polynomial {
     createi(|i| compress_d(re[i], bits_per_compressed_coefficient))
@@ -19,7 +18,6 @@ pub fn compress(re: Polynomial, bits_per_compressed_coefficient: usize) -> Polyn
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires((bits_per_compressed_coefficient < 12).to_prop() &
         hax_lib::forall(|i: usize|
             hax_lib::implies(i < 256, re[i].val < (1u16 << bits_per_compressed_coefficient))))]
@@ -47,7 +45,6 @@ pub fn decompress(re: Polynomial, bits_per_compressed_coefficient: usize) -> Pol
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(to_bit_size < 12)]
 fn compress_d(fe: FieldElement, to_bit_size: usize) -> FieldElement {
     hax_lib::debug_assert!(to_bit_size < 12);
@@ -79,7 +76,6 @@ fn compress_d(fe: FieldElement, to_bit_size: usize) -> FieldElement {
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(to_bit_size < 12 && fe.val < (1u16 << to_bit_size))]
 fn decompress_d(fe: FieldElement, to_bit_size: usize) -> FieldElement {
     hax_lib::debug_assert!(to_bit_size < 12 && fe.val < (1u16 << to_bit_size));

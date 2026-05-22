@@ -306,11 +306,25 @@ pub mod hash_functions {
 /// An ML-KEM field element:
 /// - after reduction modulo FIELD_MODULUS, it is an integer in the range [0, FIELD_MODULUS - 1]
 /// - it is represented as a u16
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+// `Debug` is provided as a manual impl gated on `not(hax)` (below)
+// rather than derived: the auto-derived Debug extracts to a
+// `Core_modelsFmtDebug.fmt` def whose `debug_struct_field1_finish`
+// call trips dependent-type elaboration in aeneas-Lean. Debug
+// formatting has no verification value, but Rust tests rely on it
+// (e.g., `assert_eq!` failure messages), so we provide it manually
+// outside the hax cfg.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[hax_lib::attributes]
 pub struct FieldElement {
     #[refine(val < FIELD_MODULUS)]
     pub val: u16,
+}
+
+#[cfg(all(not(hax), test))]
+impl core::fmt::Debug for FieldElement {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("FieldElement").field("val", &self.val).finish()
+    }
 }
 
 #[hax_lib::attributes]
@@ -365,25 +379,6 @@ pub type Vector<const RANK: usize> = [Polynomial; RANK];
 pub type Matrix<const RANK: usize> = [Vector<RANK>; RANK];
 
 /// Utility function to create an array of size `N` by applying a function `f` to each index.
-#[hax_lib::fstar::replace(
-    r#"
-assume val createi
-      (#v_T: Type0)
-      (v_N: usize)
-      (#v_F: Type0)
-      (f: (x:usize{x <. v_N}) -> v_T)
-    : t_Array v_T v_N
-
-assume val createi_lemma 
-      (#v_T: Type0)
-      (v_N: usize)
-      (#v_F: Type0)
-      (f: (x:usize{x <. v_N}) -> v_T)
-      (i: usize{i <. v_N})
-     : Lemma (Seq.index (createi #v_T v_N #v_F f) (v i) == f i)
-       [SMTPat (Seq.index (createi #v_T v_N #v_F f) (v i))]
-"#
-)]
 pub fn createi<T, const N: usize, F: Fn(usize) -> T>(f: F) -> [T; N] {
     core::array::from_fn(f)
 }

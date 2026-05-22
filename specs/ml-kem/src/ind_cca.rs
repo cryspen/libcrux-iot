@@ -17,7 +17,6 @@ use crate::{ind_cpa, serialize};
 /// dk ← (dkₚₖₑ ‖ ek ‖ H(ek) ‖ z)
 /// return (ek, dk)
 /// ```
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && EK_SIZE == RANK * BYTES_PER_RING_ELEMENT + 32
@@ -64,7 +63,6 @@ fn keygen_internal<
 /// c ← K-PKE.Encrypt(ek, m, r)
 /// return (K, c)
 /// ```
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && U_SIZE == (RANK * COEFFICIENTS_IN_RING_ELEMENT * params.du) / 8
@@ -127,7 +125,6 @@ fn encaps_internal<
 /// end if
 /// return K′
 /// ```
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && EK_SIZE == RANK * BYTES_PER_RING_ELEMENT + 32
@@ -210,7 +207,6 @@ fn decaps_internal<
 /// Algorithm 19: ML-KEM.KeyGen
 ///
 /// Generates an encapsulation key and a corresponding decapsulation key.
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && EK_SIZE == RANK * BYTES_PER_RING_ELEMENT + 32
@@ -240,7 +236,6 @@ pub fn generate_keypair<
 /// Modulus check for encapsulation key validation (FIPS 203 Section 7.2).
 ///
 /// Verifies that ByteEncode₁₂(ByteDecode₁₂(ek[..384k])) == ek[..384k].
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     params.rank <= 4
     && EK_SIZE == params.rank * BYTES_PER_RING_ELEMENT + 32
@@ -268,7 +263,6 @@ pub fn public_key_modulus_check<const EK_SIZE: usize>(
 ///
 /// Uses the encapsulation key to generate a shared key and ciphertext.
 /// Includes modulus check on ek per FIPS 203 Section 7.2.
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && EK_SIZE == RANK * BYTES_PER_RING_ELEMENT + 32
@@ -307,7 +301,6 @@ pub fn encapsulate<
 /// Algorithm 21: ML-KEM.Decaps
 ///
 /// Uses the decapsulation key to produce a shared key from a ciphertext.
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && EK_SIZE == RANK * BYTES_PER_RING_ELEMENT + 32
@@ -372,7 +365,6 @@ pub type IndCcaUnpackedKeyPair<const RANK: usize> = (
 /// `MlKemKeyPairUnpacked` in the libcrux impl, instead of the
 /// serialized `(ek, dk)` pair.
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && EK_SIZE == RANK * BYTES_PER_RING_ELEMENT + 32
@@ -415,7 +407,6 @@ pub fn ind_cca_unpack_generate_keypair<const RANK: usize, const EK_SIZE: usize>(
 /// `public_key_hash`, `t_as_ntt`, and `m_A` (libcrux-transposed form)
 /// directly.
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && U_SIZE == (RANK * COEFFICIENTS_IN_RING_ELEMENT * params.du) / 8
@@ -465,7 +456,6 @@ pub fn ind_cca_unpack_encapsulate<
 /// directly.  Re-encrypts via `ind_cpa::encrypt_unpacked` to check the
 /// FO transform's c == c′ condition.
 #[allow(non_snake_case)]
-#[hax_lib::fstar::options("--z3rlimit 1500")]
 #[hax_lib::requires(
     RANK <= 4 && params.rank == RANK
     && U_SIZE == (RANK * COEFFICIENTS_IN_RING_ELEMENT * params.du) / 8

@@ -1,7 +1,15 @@
 use crate::{parameters::*, serialize::*};
 
-#[derive(Debug)]
+// `Debug` provided as a manual impl gated on `not(hax)`: see comment on
+// `FieldElement` in `parameters.rs` for the rationale.
 pub struct BadRejectionSamplingRandomnessError;
+
+#[cfg(all(not(hax), test))]
+impl core::fmt::Debug for BadRejectionSamplingRandomnessError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str("BadRejectionSamplingRandomnessError")
+    }
+}
 
 /// If `bytes` contains a set of uniformly random bytes, this function
 /// uniformly samples a ring element `â` that is treated as being the NTT representation
@@ -150,7 +158,6 @@ fn sum_coins(eta: usize, coins: &[bool]) -> FieldElement {
 ///
 /// The NIST FIPS 203 standard can be found at
 /// <https://csrc.nist.gov/pubs/fips/203/ipd>.
-#[hax_lib::fstar::options("--z3rlimit 150")]
 #[hax_lib::requires(eta <= 4 && ETA64 == eta * 64 && ETA512 == eta * 512)]
 pub fn sample_poly_cbd<const ETA64: usize, const ETA512: usize>(
     eta: usize,

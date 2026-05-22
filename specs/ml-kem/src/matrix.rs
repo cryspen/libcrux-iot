@@ -30,18 +30,31 @@ pub fn add_vectors<const RANK: usize>(v1: &Vector<RANK>, v2: &Vector<RANK>) -> V
     createi(|i| add_polynomials(&v1[i], &v2[i]))
 }
 
+/// Per-index body of the `createi` in `multiply_matrix_by_column`,
+/// hoisted to dodge Aeneas issue
+/// https://github.com/AeneasVerif/aeneas/issues/924.
+///
+/// NOTE: the matrix parameter is named `m` (not `matrix`) so the
+/// aeneas-Lean extraction's call to `matrix.add_polynomials` doesn't
+/// get mis-parsed as a dot-projection on the local `matrix` value.
+fn multiply_matrix_by_column_at<const RANK: usize>(
+    m: &Matrix<RANK>,
+    vector: &Vector<RANK>,
+    i: usize,
+) -> Polynomial {
+    let mut result = [FieldElement::new(0); 256];
+    for j in 0..RANK {
+        let product = multiply_ntts(&m[j][i], &vector[j]);
+        result = add_polynomials(&result, &product);
+    }
+    result
+}
+
 pub fn multiply_matrix_by_column<const RANK: usize>(
-    matrix: &Matrix<RANK>,
+    m: &Matrix<RANK>,
     vector: &Vector<RANK>,
 ) -> Vector<RANK> {
-    createi(|i| {
-        let mut result = [FieldElement::new(0); 256];
-        for j in 0..RANK {
-            let product = multiply_ntts(&matrix[j][i], &vector[j]);
-            result = add_polynomials(&result, &product);
-        }
-        result
-    })
+    createi(|i| multiply_matrix_by_column_at::<RANK>(m, vector, i))
 }
 
 pub fn multiply_vectors<const RANK: usize>(v1: &Vector<RANK>, v2: &Vector<RANK>) -> Polynomial {
@@ -53,8 +66,11 @@ pub fn multiply_vectors<const RANK: usize>(v1: &Vector<RANK>, v2: &Vector<RANK>)
     result
 }
 
-pub fn transpose<const RANK: usize>(matrix: &Matrix<RANK>) -> Matrix<RANK> {
-    createi(|i| createi(|j| matrix[j][i]))
+// NOTE: the parameter is named `m` (not `matrix`) so the aeneas-Lean
+// extraction's `matrix.transpose.closure.Insts.…` references don't get
+// mis-parsed as a dot-projection on the local `matrix` value.
+pub fn transpose<const RANK: usize>(m: &Matrix<RANK>) -> Matrix<RANK> {
+    createi(|i| createi(|j| m[j][i]))
 }
 
 // ── Decomposed operations matching the implementation's matrix.rs ──
@@ -63,6 +79,32 @@ pub fn transpose<const RANK: usize>(matrix: &Matrix<RANK>) -> Matrix<RANK> {
 ///
 /// When `transpose` is true, A_transpose[j][i] = sampled(i, j).
 /// When `transpose` is false, A_transpose[i][j] = sampled(i, j).
+/// Inner `for j` loop of `sample_matrix_A`, hoisted out so the `?`
+/// (early-return on rejection-sampling failure) lives inside a single
+/// non-nested loop. Aeneas can't yet handle early returns inside
+/// nested loops — see https://github.com/AeneasVerif/aeneas/issues/822.
+#[allow(non_snake_case)]
+#[hax_lib::requires(RANK <= 4)]
+fn sample_matrix_A_row<const RANK: usize>(
+    xof_input: &mut [u8; 34],
+    i: usize,
+    transpose: bool,
+    A_as_ntt: &mut Matrix<RANK>,
+) -> Result<(), BadRejectionSamplingRandomnessError> {
+    for j in 0..RANK {
+        xof_input[32] = i as u8;
+        xof_input[33] = j as u8;
+        let xof_bytes: [u8; REJECTION_SAMPLING_SEED_SIZE] = XOF(xof_input);
+        let sampled = crate::sampling::sample_ntt::<70, 560, 840, 6720>(xof_bytes)?;
+        if transpose {
+            A_as_ntt[j][i] = sampled;
+        } else {
+            A_as_ntt[i][j] = sampled;
+        }
+    }
+    Ok(())
+}
+
 #[allow(non_snake_case)]
 #[hax_lib::requires(seed_for_A.len() == 32  && RANK <= 4)]
 pub fn sample_matrix_A<const RANK: usize>(
@@ -73,17 +115,7 @@ pub fn sample_matrix_A<const RANK: usize>(
     let mut xof_input = [0u8; 34];
     xof_input[..32].copy_from_slice(seed_for_A);
     for i in 0..RANK {
-        for j in 0..RANK {
-            xof_input[32] = i as u8;
-            xof_input[33] = j as u8;
-            let xof_bytes: [u8; REJECTION_SAMPLING_SEED_SIZE] = XOF(&xof_input);
-            let sampled = crate::sampling::sample_ntt::<70, 560, 840, 6720>(xof_bytes)?;
-            if transpose {
-                A_as_ntt[j][i] = sampled;
-            } else {
-                A_as_ntt[i][j] = sampled;
-            }
-        }
+        sample_matrix_A_row::<RANK>(&mut xof_input, i, transpose, &mut A_as_ntt)?;
     }
     Ok(A_as_ntt)
 }

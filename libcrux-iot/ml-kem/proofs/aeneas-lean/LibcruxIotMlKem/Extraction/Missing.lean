@@ -45,6 +45,29 @@ def U32.Insts.Libcrux_secretsIntCastOps.as_i32 (x : U32) : Result I32 :=
 
 end Aeneas.Std
 
+-- Newer hax-evit (post-7b4bd97) emits these cast ops as fully qualified
+-- `libcrux_secrets.{I16,I32,U32}.Insts.Libcrux_secretsIntCastOps.as_*`
+-- in `Funs.lean` instead of relying on `open Aeneas.Std` to resolve the
+-- bare `{I16,…}.Insts.…` form. The `abbrev`s below forward to the
+-- Aeneas.Std defs above so existing `simp only [Aeneas.Std.…]` lists
+-- (e.g. in `Equivalence/L0_FieldArith.lean`) keep working via
+-- definitional equality.
+namespace libcrux_secrets
+
+abbrev I16.Insts.Libcrux_secretsIntCastOps.as_i32 (x : Aeneas.Std.I16) :
+    Aeneas.Std.Result Aeneas.Std.I32 :=
+  Aeneas.Std.I16.Insts.Libcrux_secretsIntCastOps.as_i32 x
+
+abbrev I32.Insts.Libcrux_secretsIntCastOps.as_i16 (x : Aeneas.Std.I32) :
+    Aeneas.Std.Result Aeneas.Std.I16 :=
+  Aeneas.Std.I32.Insts.Libcrux_secretsIntCastOps.as_i16 x
+
+abbrev U32.Insts.Libcrux_secretsIntCastOps.as_i32 (x : Aeneas.Std.U32) :
+    Aeneas.Std.Result Aeneas.Std.I32 :=
+  Aeneas.Std.U32.Insts.Libcrux_secretsIntCastOps.as_i32 x
+
+end libcrux_secrets
+
 namespace core_models
 
 def num.I16.wrapping_neg (x : Std.I16) : Result Std.I16 :=
