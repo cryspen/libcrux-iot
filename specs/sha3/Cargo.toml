@@ -9,7 +9,6 @@ hax-lib = "=0.3.6"
 [dev-dependencies]
 hex = "0.4.3"
 proptest = "1.2.0"
-libcrux-iot-sha3 = { path = "../../libcrux-iot/sha3" }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(hax)', 'cfg(charon)'] }

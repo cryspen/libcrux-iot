@@ -126,9 +126,8 @@ fn parse_shake_variable_out_rsp(path: &Path) -> (usize, Vec<ShakeVariableOutTest
 // ---------------------------------------------------------------------------
 
 fn tv_path(name: &str) -> std::path::PathBuf {
-    // From specs/sha3/ to libcrux-iot/sha3/tests/tv/
     Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../libcrux-iot/sha3/tests/tv")
+        .join("tests/tv")
         .join(name)
 }
 
