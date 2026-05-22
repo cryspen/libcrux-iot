@@ -45,8 +45,8 @@
   Each `round{k}_equiv_spec` discharges via the underlying
   `theta_lift_spec_k` and `prc_lift_spec_k` lemmas (see
   `ThetaLiftRound{1,2,3}.lean`, `PrcLiftRound{1,2,3}.lean`). All four
-  round specs are tagged `@[spec]` so the top-level `four_round_equiv`
-  fires them automatically.
+  round specs are tagged `@[spec]` and consumed by the 24-round
+  composition in `BitKeccak/AlgEquiv.lean`.
 -/
 import LibcruxIotSha3.Equivalence.ThetaLift
 import LibcruxIotSha3.Equivalence.ThetaLiftRound1
@@ -354,15 +354,15 @@ theorem round3_equiv_spec (s : state.KeccakState) (hi : s.i.val < 24) :
        hax_mvcgen
        all_goals first | scalar_tac | simp_all)
 
-/-! ## Triple combinator: conjunction of posts (deterministic monad)
+/-! ## Triple combinators
 
-For `Result α` (a deterministic monad), if we have two Triples
-proving distinct posts about the same computation, their conjunction
-also holds. Used in `four_round_equiv` to combine each round's
-algebraic `round_k_post` with the `r_impl.i.val = s.i.val + 1`
-i-increment fact, so the subsequent round's `s.i.val < 24`
-precondition can be discharged. -/
+Used by the round-chain compositions in `BitKeccak/StructEquiv.lean` and
+`BitKeccak/AlgEquiv.lean` to combine per-round algebraic posts with
+i-increment facts and to lift pure-prop preconditions into proof-context
+hypotheses. -/
 
+/-- For `Result α` (a deterministic monad), if two Triples prove distinct
+posts about the same computation, their conjunction also holds. -/
 theorem triple_conj_post {α} {e : Aeneas.Std.Result α} {Q R : α → Prop}
     (hQ : ⦃⌜True⌝⦄ e ⦃⇓ r => ⌜Q r⌝⦄)
     (hR : ⦃⌜True⌝⦄ e ⦃⇓ r => ⌜R r⌝⦄) :
@@ -372,11 +372,8 @@ theorem triple_conj_post {α} {e : Aeneas.Std.Result α} {Q R : α → Prop}
   · simp_all [Std.Do.Triple, WP.wp]
   · simp_all [Std.Do.Triple, WP.wp]
 
-/-- Lift a pure-prop precondition `⌜P⌝` of a `Triple` into a `Lean`-level
-hypothesis. Used in `four_round_equiv` so that the post of each round
-(threaded into the next round's `Triple` as a pure precondition) can
-be destructured to extract the i-increment chain
-(`r0.i.val = s.i.val + 1`, `r1.i.val = r0.i.val + 1`, …). -/
+/-- Lift a pure-prop precondition `⌜P⌝` of a `Triple` into a Lean-level
+hypothesis. -/
 theorem triple_imp_intro {α} {e : Aeneas.Std.Result α} {P : Prop} {Q : α → Prop}
     (h : P → ⦃⌜True⌝⦄ e ⦃⇓ r => ⌜Q r⌝⦄) :
     ⦃⌜P⌝⦄ e ⦃⇓ r => ⌜Q r⌝⦄ := by
@@ -384,76 +381,5 @@ theorem triple_imp_intro {α} {e : Aeneas.Std.Result α} {P : Prop} {Q : α → 
   · simp_all [Std.Do.Triple, WP.wp]
   · simp_all [Std.Do.Triple, WP.wp]
   · simp_all [Std.Do.Triple, WP.wp]
-
-/-- Weaken precondition of a `Triple` from `⌜True⌝` to any `P`. Trivial
-because `P ⊢ ⌜True⌝` always holds. Used in `four_round_equiv` to thread
-the post of each round (a non-trivial precondition) into the next
-round's `Triple` (which has `⌜True⌝` precondition). -/
-theorem triple_weaken_precond {α} {e : Aeneas.Std.Result α}
-    {P : Std.Do.Assertion
-      (Std.Do.PostShape.except Aeneas.Std.Error
-        (Std.Do.PostShape.except PUnit.{1} Std.Do.PostShape.pure))}
-    {Q : α → Prop} (h : ⦃⌜True⌝⦄ e ⦃⇓ r => ⌜Q r⌝⦄) :
-    ⦃P⦄ e ⦃⇓ r => ⌜Q r⌝⦄ := by
-  apply Std.Do.Triple.of_entails_left _ h
-  intro _
-  trivial
-
-/-! ## Per-round i-increment sidecars
-
-The `round_k_equiv_spec` post (`round_k_post`) gives the algebraic
-equivalence but does not expose `r_impl.i.val = s.i.val + 1`. The
-impl bumps `i` by 1 per round (the `pi_rho_chi_y0_zeta1` step in
-each `pi_rho_chi_1`). These sidecar lemmas expose that fact so
-`four_round_equiv` can discharge each subsequent round's precondition
-`s.i.val < 24`. -/
-
-set_option maxHeartbeats 16000000 in
-theorem round0_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    (do let s1 ← keccak.keccakf1600_round0_theta s
-        keccakf1600_round0_pi_rho_chi_chain s1)
-    ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
-  unfold keccakf1600_round0_pi_rho_chi_chain
-  unfold keccak.keccakf1600_round0_pi_rho_chi_1
-  unfold keccak.keccakf1600_round0_pi_rho_chi_2
-  hax_mvcgen
-  all_goals scalar_tac
-
-set_option maxHeartbeats 16000000 in
-theorem round1_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    (do let s1 ← keccak.keccakf1600_round1_theta s
-        keccakf1600_round1_pi_rho_chi_chain s1)
-    ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
-  unfold keccakf1600_round1_pi_rho_chi_chain
-  unfold keccak.keccakf1600_round1_pi_rho_chi_1
-  unfold keccak.keccakf1600_round1_pi_rho_chi_2
-  hax_mvcgen
-  all_goals scalar_tac
-
-set_option maxHeartbeats 16000000 in
-theorem round2_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    (do let s1 ← keccak.keccakf1600_round2_theta s
-        keccakf1600_round2_pi_rho_chi_chain s1)
-    ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
-  unfold keccakf1600_round2_pi_rho_chi_chain
-  unfold keccak.keccakf1600_round2_pi_rho_chi_1
-  unfold keccak.keccakf1600_round2_pi_rho_chi_2
-  hax_mvcgen
-  all_goals scalar_tac
-
-set_option maxHeartbeats 16000000 in
-theorem round3_i_inc (s : state.KeccakState) (hi : s.i.val < 24) :
-    ⦃ ⌜ True ⌝ ⦄
-    (do let s1 ← keccak.keccakf1600_round3_theta s
-        keccakf1600_round3_pi_rho_chi_chain s1)
-    ⦃ ⇓ r_impl => ⌜ r_impl.i.val = s.i.val + 1 ⌝ ⦄ := by
-  unfold keccakf1600_round3_pi_rho_chi_chain
-  unfold keccak.keccakf1600_round3_pi_rho_chi_1
-  unfold keccak.keccakf1600_round3_pi_rho_chi_2
-  hax_mvcgen
-  all_goals scalar_tac
 
 end libcrux_iot_sha3.Equivalence
