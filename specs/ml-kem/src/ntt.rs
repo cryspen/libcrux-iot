@@ -2,41 +2,6 @@ use crate::parameters::*;
 
 const ZETA: FieldElement = FieldElement::new(17);
 
-/// Montgomery constant R = 2^16 mod q.
-/// In the implementation, coefficients are stored in Montgomery form (a * R mod q).
-/// In the spec, we use plain modular arithmetic, so R is conceptually 1.
-/// This constant documents the correspondence.
-#[allow(dead_code)]
-pub const MONTGOMERY_R: i32 = 1; // Identity in the spec
-
-/// In the implementation, zetas are pre-multiplied by Montgomery R.
-/// In the spec, ZETAS are plain values, so ZETAS_TIMES_MONTGOMERY_R == ZETAS.
-/// This alias documents the correspondence with the implementation's `ZETAS_TIMES_MONTGOMERY_R`.
-#[allow(dead_code)]
-pub const ZETAS_TIMES_MONTGOMERY_R: [FieldElement; 128] = ZETAS;
-
-/// Montgomery domain conversion: identity in the spec.
-///
-/// In the implementation, `to_standard_domain(a)` converts from Montgomery form
-/// by computing `a * MONTGOMERY_R_INV mod q`. Since the spec uses plain arithmetic
-/// (effectively MONTGOMERY_R = 1), this is an identity operation.
-///
-/// Documenting this correspondence enables function-by-function verification by
-/// showing that the implementation's Montgomery conversions compose to identity.
-#[allow(dead_code)]
-pub fn to_standard_domain(a: FieldElement) -> FieldElement {
-    a
-}
-
-/// Montgomery multiplication: identity wrapper in the spec.
-///
-/// In the implementation, `montgomery_multiply_by_constant(a, c)` computes
-/// `a * c * R^{-1} mod q`. In the spec, this simplifies to `a * c mod q` since R = 1.
-#[allow(dead_code)]
-pub fn montgomery_multiply_by_constant(a: FieldElement, c: FieldElement) -> FieldElement {
-    FieldElement::new(((a.val as u32 * c.val as u32) % FIELD_MODULUS as u32) as u16)
-}
-
 /// Convert a field element to its unsigned representative in [0, q).
 /// Corresponds to `to_unsigned_field_modulus` / `Vector::to_unsigned_representative`
 /// in the implementation.
