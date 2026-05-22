@@ -727,8 +727,13 @@ private theorem mont_reduce_core
       rw [h_abs_eq]; exact h_abs_le
     scalar_tac
 
-/-- Closed-form value computed by the impl, as an `IScalar.I16`. -/
-private def mont_reduce_impl_value (value : Std.I32) : Std.I16 :=
+/-- Closed-form value computed by the impl, as an `IScalar.I16`.
+
+    Exposed (non-private) so that L1.10 `reducing_from_i32_array_spec`
+    can establish totality of `montgomery_reduce_element` independent
+    of the per-element bound precondition (mirrors L1.3's use of
+    `barrett_reduce_impl_value`). -/
+def mont_reduce_impl_value (value : Std.I32) : Std.I16 :=
   let k := Aeneas.Std.I32.wrapping_mul
             (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32
               (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I16 value))
@@ -745,8 +750,12 @@ private def mont_reduce_impl_value (value : Std.I32) : Std.I16 :=
     (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I16 i11)
     (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I16 i9)
 
-/-- The `do`-block reduces to `Result.ok (mont_reduce_impl_value value)`. -/
-private theorem mont_reduce_element_eq_ok (value : Std.I32) :
+/-- The `do`-block reduces to `Result.ok (mont_reduce_impl_value value)`.
+
+    Exposed (non-private) so that L1.10 `reducing_from_i32_array_spec`
+    can establish totality of `montgomery_reduce_element` independent
+    of the per-element bound precondition. -/
+theorem mont_reduce_element_eq_ok (value : Std.I32) :
     libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element value
       = .ok (mont_reduce_impl_value value) := by
   unfold libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element

@@ -1240,4 +1240,120 @@ theorem shift_right_spec
   rw [h_acc]
   exact h_P
 
+/-! ## L1.10 — `reducing_from_i32_array_spec`
+
+    The Vector.Portable.Arithmetic.reducing_from_i32_array impl is a
+    16-iteration loop that reads `array[i] : I32`, runs L0.3
+    `montgomery_reduce_element` (I32 → I16), and writes the result to
+    `out.elements[i] : I16`. Differs from the unary family in that the
+    input/output types differ — uses the `io_loop_*` macro family from
+    `Util/PortableVector.lean`. -/
+
+/-- Per-element predicate (guarded form): under the L0.3 precondition
+    `|x| ≤ 3328 * 2^16`, the output satisfies the L1.10-shaped bound
+    and Montgomery congruence. -/
+private def reducing_per_elem_P (x : Std.I32) (y : Std.I16) : Prop :=
+  x.val.natAbs ≤ 3328 * 2 ^ 16 →
+    y.val.natAbs ≤ 3328 + 1665
+    ∧ libcrux_iot_ml_kem.Util.modq_eq
+        (y.val * (2 ^ 16 : Int)) x.val 3329
+
+/-- Per-element Triple: `montgomery_reduce_element` is total (returns
+    `.ok` unconditionally via `mont_reduce_element_eq_ok`); under the
+    L0.3 precondition `|x| ≤ 3328 * 2^16`, the post-weakening to L1.10's
+    Montgomery congruence uses the same identity as L1.4
+    (`169 * 2^16 ≡ 1 (mod 3329)`). -/
+private theorem reducing_per_elem_spec (x : Std.I32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element x
+    ⦃ ⇓ r => ⌜ reducing_per_elem_P x r ⌝ ⦄ := by
+  -- Reduce to the .ok form via the totality theorem.
+  have h_ok := mont_reduce_element_eq_ok x
+  rw [show libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element x
+        = .ok (mont_reduce_impl_value x) from h_ok]
+  simp only [Std.Do.Triple, WP.wp]
+  intro _
+  show reducing_per_elem_P x (mont_reduce_impl_value x)
+  unfold reducing_per_elem_P
+  intro hb
+  -- Now invoke L0.3 under hb to extract the post.
+  have hT := montgomery_reduce_element_spec x hb
+  rw [h_ok] at hT
+  simp only [Std.Do.Triple, WP.wp] at hT
+  have h_inner := hT trivial
+  obtain ⟨h_weak, _h_tight, h_modq⟩ := h_inner
+  refine ⟨h_weak, ?_⟩
+  -- Convert L0.3's `modq_eq r.val (x.val * 169) 3329` to
+  -- `modq_eq (r.val * 2^16) x.val 3329` (same algebra as L1.4).
+  unfold libcrux_iot_ml_kem.Util.modq_eq at h_modq ⊢
+  have h_dvd : (3329 : Int) ∣ ((mont_reduce_impl_value x).val - x.val * 169) :=
+    Int.dvd_of_emod_eq_zero h_modq
+  have h_dvd2 : (3329 : Int)
+                  ∣ ((mont_reduce_impl_value x).val * (2 ^ 16 : Int)
+                      - x.val * 169 * (2 ^ 16 : Int)) := by
+    have h_eq2 : ((mont_reduce_impl_value x).val * (2 ^ 16 : Int)
+                    - x.val * 169 * (2 ^ 16 : Int))
+                = ((mont_reduce_impl_value x).val - x.val * 169) * (2 ^ 16 : Int) := by ring
+    rw [h_eq2]; exact Dvd.dvd.mul_right h_dvd _
+  have h_inv : (169 : Int) * (2 ^ 16 : Int) - 1 = 3329 * 3327 := by decide
+  have h_dvd3 : (3329 : Int)
+                  ∣ (x.val * 169 * (2 ^ 16 : Int) - x.val) := by
+    have h_eq3 : (x.val * 169 * (2 ^ 16 : Int) - x.val)
+                = x.val * ((169 : Int) * (2 ^ 16 : Int) - 1) := by ring
+    rw [h_eq3, h_inv]
+    exact ⟨x.val * 3327, by ring⟩
+  have h_dvd4 : (3329 : Int)
+                  ∣ ((mont_reduce_impl_value x).val * (2 ^ 16 : Int) - x.val) := by
+    have h_sum : ((mont_reduce_impl_value x).val * (2 ^ 16 : Int) - x.val)
+                = ((mont_reduce_impl_value x).val * (2 ^ 16 : Int)
+                    - x.val * 169 * (2 ^ 16 : Int))
+                  + (x.val * 169 * (2 ^ 16 : Int) - x.val) := by ring
+    rw [h_sum]; exact dvd_add h_dvd2 h_dvd3
+  exact Int.emod_eq_zero_of_dvd h_dvd4
+
+@[spec]
+theorem reducing_from_i32_array_spec
+    (array : Aeneas.Std.Slice Std.I32)
+    (out : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_len : array.val.length = 16)
+    (hpre : ∀ i : Nat, i < 16 → (array.val[i]!).val.natAbs ≤ 3328 * 2 ^ 16) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array array out
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
+                (r.elements.val[i]!).val.natAbs ≤ 3328 + 1665
+              ∧ libcrux_iot_ml_kem.Util.modq_eq
+                  ((r.elements.val[i]!).val * (2 ^ 16 : Int))
+                  (array.val[i]!).val 3329 ⌝ ⦄ := by
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array_loop
+  -- Bridge `reducing_from_i32_array_loop.body array` to `io_loop_body`.
+  have h_body_eq :
+      (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array_loop.body
+          array p.1 p.2)
+      = (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        io_loop_body
+          libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element
+          array p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, vec1⟩
+    unfold libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array_loop.body
+    unfold io_loop_body
+    rfl
+  rw [h_body_eq]
+  have h_len_ge : 16 ≤ array.val.length := by rw [h_len]
+  apply Std.Do.Triple.of_entails_right _
+    (elementwise_io_spec
+      libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element
+      reducing_per_elem_P
+      reducing_per_elem_spec
+      array out h_len_ge)
+  rw [PostCond.entails_noThrow]
+  intro r hh j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := hh j hj
+  rw [h_acc]
+  exact h_P (hpre j hj)
+
 end libcrux_iot_ml_kem.Equivalence
