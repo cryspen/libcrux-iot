@@ -7,7 +7,7 @@ macro_rules! sha3_test {
         #[test]
         #[allow(non_snake_case)]
         fn $file() {
-            let file = "tests/tv/".to_string();
+            let file = "../../specs/sha3/tests/tv/".to_string();
             let file = file + stringify!($file) + ".rsp";
             let tv: TestVector<cavp::Sha3> = read_file(&file).unwrap();
 
@@ -39,7 +39,7 @@ macro_rules! shake_test {
         #[allow(non_snake_case)]
         fn $file() {
             let _ = pretty_env_logger::try_init();
-            let file = "tests/tv/".to_string();
+            let file = "../../specs/sha3/tests/tv/".to_string();
             let file = file + stringify!($file) + ".rsp";
             let tv: TestVector<cavp::ShakeMsg> = read_file(&file).unwrap();
 
@@ -70,7 +70,7 @@ macro_rules! shake_vo_test {
         #[allow(non_snake_case)]
         fn $file() {
             let _ = pretty_env_logger::try_init();
-            let file = "tests/tv/".to_string();
+            let file = "../../specs/sha3/tests/tv/".to_string();
             let file = file + stringify!($file) + ".rsp";
             let tv: TestVector<cavp::ShakeVariableOut> = read_file(&file).unwrap();
 
