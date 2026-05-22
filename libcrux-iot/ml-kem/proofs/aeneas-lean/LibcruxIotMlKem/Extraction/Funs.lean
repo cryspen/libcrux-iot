@@ -28,6 +28,34 @@ namespace libcrux_iot_ml_kem
 @[global_simps, irreducible]
 def constants.COEFFICIENTS_IN_RING_ELEMENT : Std.Usize := 256#usize
 
+/-- [libcrux_iot_ml_kem::constants::BITS_PER_RING_ELEMENT]
+    Source: 'ml-kem/src/constants.rs', lines 8:0-8:82 -/
+@[global_simps, irreducible]
+def constants.BITS_PER_RING_ELEMENT : Result Std.Usize :=
+  constants.COEFFICIENTS_IN_RING_ELEMENT * 12#usize
+
+/-- [libcrux_iot_ml_kem::constants::BYTES_PER_RING_ELEMENT]
+    Source: 'ml-kem/src/constants.rs', lines 11:0-11:75 -/
+@[global_simps, irreducible]
+def constants.BYTES_PER_RING_ELEMENT : Result Std.Usize := do
+  let i ← constants.BITS_PER_RING_ELEMENT
+  i / 8#usize
+
+/-- Trait declaration: [libcrux_iot_ml_kem::hash_functions::Hash]
+    Source: 'ml-kem/src/hash_functions.rs', lines 26:0-69:1 -/
+structure hash_functions.Hash (Self : Type) where
+  G : Slice Std.U8 → Slice Std.U8 → Result (Slice Std.U8)
+  H : Slice Std.U8 → Slice Std.U8 → Result (Slice Std.U8)
+  PRF : forall (LEN : Std.Usize), Slice Std.U8 → Slice Std.U8 → Result
+    (Slice Std.U8)
+  PRFxN : Slice (Array Std.U8 33#usize) → Slice Std.U8 → Std.Usize →
+    Result (Slice Std.U8)
+  shake128_init_absorb_final : Slice (Array Std.U8 34#usize) → Result Self
+  shake128_squeeze_first_three_blocks : Self → Slice (Array Std.U8 504#usize)
+    → Result (Self × (Slice (Array Std.U8 504#usize)))
+  shake128_squeeze_next_block : Self → Slice (Array Std.U8 168#usize) →
+    Result (Self × (Slice (Array Std.U8 168#usize)))
+
 /-- Trait declaration: [libcrux_iot_ml_kem::vector::traits::Repr]
     Source: 'ml-kem/src/vector/traits.rs', lines 22:0-22:17
     Visibility: public -/
@@ -123,6 +151,2095 @@ def polynomial.ZETAS_TIMES_MONTGOMERY_R : Array Std.I16 128#usize :=
     Visibility: public -/
 def polynomial.zeta (i : Std.Usize) : Result Std.I16 := do
   Array.index_usize polynomial.ZETAS_TIMES_MONTGOMERY_R i
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_1]: loop body 0:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 14:4-26:5 -/
+@[rust_loop_body]
+def invert_ntt.invert_ntt_at_layer_1_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (zeta_i : Std.Usize)
+  (re : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × Std.Usize ×
+    (polynomial.PolynomialRingElement Vector)) (Std.Usize ×
+    (polynomial.PolynomialRingElement Vector)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (zeta_i, re))
+  | core_models.option.Option.Some round =>
+    let zeta_i1 ← zeta_i - 1#usize
+    let (t, index_mut_back) ← Array.index_mut_usize re.coefficients round
+    let i ← polynomial.zeta zeta_i1
+    let i1 ← zeta_i1 - 1#usize
+    let i2 ← polynomial.zeta i1
+    let i3 ← zeta_i1 - 2#usize
+    let i4 ← polynomial.zeta i3
+    let i5 ← zeta_i1 - 3#usize
+    let i6 ← polynomial.zeta i5
+    let t1 ← vectortraitsOperationsInst.inv_ntt_layer_1_step t i i2 i4 i6
+    let a := index_mut_back t1
+    ok (cont (iter1, i5, { coefficients := a }))
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_1]: loop 0:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 14:4-26:5 -/
+@[rust_loop]
+def invert_ntt.invert_ntt_at_layer_1_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (zeta_i : Std.Usize)
+  (re : polynomial.PolynomialRingElement Vector) :
+  Result (Std.Usize × (polynomial.PolynomialRingElement Vector))
+  := do
+  loop
+    (fun (iter1, zeta_i1, re1) => invert_ntt.invert_ntt_at_layer_1_loop.body
+      vectortraitsOperationsInst iter1 zeta_i1 re1)
+    (iter, zeta_i, re)
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_1]:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 10:0-27:1 -/
+@[reducible]
+def invert_ntt.invert_ntt_at_layer_1
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (zeta_i : Std.Usize) (re : polynomial.PolynomialRingElement Vector) :
+  Result (Std.Usize × (polynomial.PolynomialRingElement Vector))
+  := do
+  invert_ntt.invert_ntt_at_layer_1_loop vectortraitsOperationsInst
+    { start := 0#usize, «end» := 16#usize } zeta_i re
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_2]: loop body 0:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 36:4-47:5 -/
+@[rust_loop_body]
+def invert_ntt.invert_ntt_at_layer_2_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (zeta_i : Std.Usize)
+  (re : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × Std.Usize ×
+    (polynomial.PolynomialRingElement Vector)) (Std.Usize ×
+    (polynomial.PolynomialRingElement Vector)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (zeta_i, re))
+  | core_models.option.Option.Some round =>
+    let zeta_i1 ← zeta_i - 1#usize
+    let (t, index_mut_back) ← Array.index_mut_usize re.coefficients round
+    let i ← polynomial.zeta zeta_i1
+    let i1 ← zeta_i1 - 1#usize
+    let i2 ← polynomial.zeta i1
+    let t1 ← vectortraitsOperationsInst.inv_ntt_layer_2_step t i i2
+    let a := index_mut_back t1
+    ok (cont (iter1, i1, { coefficients := a }))
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_2]: loop 0:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 36:4-47:5 -/
+@[rust_loop]
+def invert_ntt.invert_ntt_at_layer_2_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (zeta_i : Std.Usize)
+  (re : polynomial.PolynomialRingElement Vector) :
+  Result (Std.Usize × (polynomial.PolynomialRingElement Vector))
+  := do
+  loop
+    (fun (iter1, zeta_i1, re1) => invert_ntt.invert_ntt_at_layer_2_loop.body
+      vectortraitsOperationsInst iter1 zeta_i1 re1)
+    (iter, zeta_i, re)
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_2]:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 32:0-48:1 -/
+@[reducible]
+def invert_ntt.invert_ntt_at_layer_2
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (zeta_i : Std.Usize) (re : polynomial.PolynomialRingElement Vector) :
+  Result (Std.Usize × (polynomial.PolynomialRingElement Vector))
+  := do
+  invert_ntt.invert_ntt_at_layer_2_loop vectortraitsOperationsInst
+    { start := 0#usize, «end» := 16#usize } zeta_i re
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_3]: loop body 0:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 57:4-62:5 -/
+@[rust_loop_body]
+def invert_ntt.invert_ntt_at_layer_3_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (zeta_i : Std.Usize)
+  (re : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × Std.Usize ×
+    (polynomial.PolynomialRingElement Vector)) (Std.Usize ×
+    (polynomial.PolynomialRingElement Vector)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (zeta_i, re))
+  | core_models.option.Option.Some round =>
+    let zeta_i1 ← zeta_i - 1#usize
+    let (t, index_mut_back) ← Array.index_mut_usize re.coefficients round
+    let i ← polynomial.zeta zeta_i1
+    let t1 ← vectortraitsOperationsInst.inv_ntt_layer_3_step t i
+    let a := index_mut_back t1
+    ok (cont (iter1, zeta_i1, { coefficients := a }))
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_3]: loop 0:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 57:4-62:5 -/
+@[rust_loop]
+def invert_ntt.invert_ntt_at_layer_3_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (zeta_i : Std.Usize)
+  (re : polynomial.PolynomialRingElement Vector) :
+  Result (Std.Usize × (polynomial.PolynomialRingElement Vector))
+  := do
+  loop
+    (fun (iter1, zeta_i1, re1) => invert_ntt.invert_ntt_at_layer_3_loop.body
+      vectortraitsOperationsInst iter1 zeta_i1 re1)
+    (iter, zeta_i, re)
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_3]:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 53:0-63:1 -/
+@[reducible]
+def invert_ntt.invert_ntt_at_layer_3
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (zeta_i : Std.Usize) (re : polynomial.PolynomialRingElement Vector) :
+  Result (Std.Usize × (polynomial.PolynomialRingElement Vector))
+  := do
+  invert_ntt.invert_ntt_at_layer_3_loop vectortraitsOperationsInst
+    { start := 0#usize, «end» := 16#usize } zeta_i re
+
+/-- [libcrux_iot_ml_kem::vector::traits::montgomery_multiply_fe]:
+    Source: 'ml-kem/src/vector/traits.rs', lines 168:0-170:1
+    Visibility: public -/
+def vector.traits.montgomery_multiply_fe
+  {T : Type} (OperationsInst : vector.traits.Operations T) (v : T)
+  (fer : Std.I16) :
+  Result T
+  := do
+  OperationsInst.montgomery_multiply_by_constant v fer
+
+/-- [libcrux_iot_ml_kem::invert_ntt::inv_ntt_layer_int_vec_step_reduce]:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 67:0-84:1 -/
+def invert_ntt.inv_ntt_layer_int_vec_step_reduce
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (coefficients : Array Vector 16#usize) (a : Std.Usize)
+  (b : Std.Usize) (scratch : Vector) (zeta_r : Std.I16) :
+  Result ((Array Vector 16#usize) × Vector)
+  := do
+  let scratch1 ← Array.index_usize coefficients a
+  let t ← Array.index_usize coefficients b
+  let scratch2 ← vectortraitsOperationsInst.add scratch1 t
+  let scratch3 ← vectortraitsOperationsInst.barrett_reduce scratch2
+  let coefficients1 ← Array.update coefficients a scratch3
+  let scratch4 ← vectortraitsOperationsInst.negate scratch3
+  let t1 ← Array.index_usize coefficients1 b
+  let scratch5 ← vectortraitsOperationsInst.add scratch4 t1
+  let scratch6 ← vectortraitsOperationsInst.add scratch5 t1
+  let scratch7 ←
+    vector.traits.montgomery_multiply_fe vectortraitsOperationsInst scratch6
+      zeta_r
+  let coefficients2 ← Array.update coefficients1 b scratch7
+  ok (coefficients2, scratch7)
+
+/-- [libcrux_iot_ml_kem::vector::traits::FIELD_ELEMENTS_IN_VECTOR]
+    Source: 'ml-kem/src/vector/traits.rs', lines 5:0-5:47
+    Visibility: public -/
+@[global_simps, irreducible]
+def vector.traits.FIELD_ELEMENTS_IN_VECTOR : Std.Usize := 16#usize
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_4_plus]: loop body 1:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 106:8-115:9 -/
+@[rust_loop_body]
+def invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (zeta_i : Std.Usize) (a_offset : Std.Usize) (b_offset : Std.Usize)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (re : polynomial.PolynomialRingElement Vector) (scratch : Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector) × Vector)
+    ((polynomial.PolynomialRingElement Vector) × Vector))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (re, scratch))
+  | core_models.option.Option.Some j =>
+    let i ← a_offset + j
+    let i1 ← b_offset + j
+    let i2 ← polynomial.zeta zeta_i
+    let (a, scratch1) ←
+      invert_ntt.inv_ntt_layer_int_vec_step_reduce vectortraitsOperationsInst
+        re.coefficients i i1 scratch i2
+    ok (cont (iter1, { coefficients := a }, scratch1))
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_4_plus]: loop 1:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 106:8-115:9 -/
+@[rust_loop]
+def invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (zeta_i : Std.Usize)
+  (re : polynomial.PolynomialRingElement Vector) (scratch : Vector)
+  (a_offset : Std.Usize) (b_offset : Std.Usize) :
+  Result ((polynomial.PolynomialRingElement Vector) × Vector)
+  := do
+  loop
+    (fun (iter1, re1, scratch1) =>
+      invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
+      vectortraitsOperationsInst zeta_i a_offset b_offset iter1 re1 scratch1)
+    (iter, re, scratch)
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_4_plus]: loop body 0:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 99:4-116:5 -/
+@[rust_loop_body]
+def invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (step_vec : Std.Usize) (iter : core_models.ops.range.Range Std.Usize)
+  (zeta_i : Std.Usize) (re : polynomial.PolynomialRingElement Vector)
+  (scratch : Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × Std.Usize ×
+    (polynomial.PolynomialRingElement Vector) × Vector) (Std.Usize ×
+    (polynomial.PolynomialRingElement Vector) × Vector))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (zeta_i, re, scratch))
+  | core_models.option.Option.Some round =>
+    let zeta_i1 ← zeta_i - 1#usize
+    let i ← round * 2#usize
+    let a_offset ← i * step_vec
+    let b_offset ← a_offset + step_vec
+    let (re1, scratch1) ←
+      invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0
+        vectortraitsOperationsInst { start := 0#usize, «end» := step_vec }
+        zeta_i1 re scratch a_offset b_offset
+    ok (cont (iter1, zeta_i1, re1, scratch1))
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_4_plus]: loop 0:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 99:4-116:5 -/
+@[rust_loop]
+def invert_ntt.invert_ntt_at_layer_4_plus_loop0
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (zeta_i : Std.Usize)
+  (re : polynomial.PolynomialRingElement Vector) (scratch : Vector)
+  (step_vec : Std.Usize) :
+  Result (Std.Usize × (polynomial.PolynomialRingElement Vector) × Vector)
+  := do
+  loop
+    (fun (iter1, zeta_i1, re1, scratch1) =>
+      invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
+      vectortraitsOperationsInst step_vec iter1 zeta_i1 re1 scratch1)
+    (iter, zeta_i, re, scratch)
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_at_layer_4_plus]:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 90:0-117:1 -/
+def invert_ntt.invert_ntt_at_layer_4_plus
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (zeta_i : Std.Usize) (re : polynomial.PolynomialRingElement Vector)
+  (layer : Std.Usize) (scratch : Vector) :
+  Result (Std.Usize × (polynomial.PolynomialRingElement Vector) × Vector)
+  := do
+  let step ← 1#usize <<< layer
+  let step_vec ← step / vector.traits.FIELD_ELEMENTS_IN_VECTOR
+  let i ← 128#usize >>> layer
+  invert_ntt.invert_ntt_at_layer_4_plus_loop0 vectortraitsOperationsInst
+    { start := 0#usize, «end» := i } zeta_i re scratch step_vec
+
+/-- [libcrux_iot_ml_kem::invert_ntt::invert_ntt_montgomery]:
+    Source: 'ml-kem/src/invert_ntt.rs', lines 120:0-138:1 -/
+def invert_ntt.invert_ntt_montgomery
+  {Vector : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (re : polynomial.PolynomialRingElement Vector) (scratch : Vector) :
+  Result ((polynomial.PolynomialRingElement Vector) × Vector)
+  := do
+  let zeta_i ← constants.COEFFICIENTS_IN_RING_ELEMENT / 2#usize
+  let (zeta_i1, re1) ←
+    invert_ntt.invert_ntt_at_layer_1 vectortraitsOperationsInst zeta_i re
+  let (zeta_i2, re2) ←
+    invert_ntt.invert_ntt_at_layer_2 vectortraitsOperationsInst zeta_i1 re1
+  let (zeta_i3, re3) ←
+    invert_ntt.invert_ntt_at_layer_3 vectortraitsOperationsInst zeta_i2 re2
+  let (zeta_i4, re4, scratch1) ←
+    invert_ntt.invert_ntt_at_layer_4_plus vectortraitsOperationsInst zeta_i3
+      re3 4#usize scratch
+  let (zeta_i5, re5, scratch2) ←
+    invert_ntt.invert_ntt_at_layer_4_plus vectortraitsOperationsInst zeta_i4
+      re4 5#usize scratch1
+  let (zeta_i6, re6, scratch3) ←
+    invert_ntt.invert_ntt_at_layer_4_plus vectortraitsOperationsInst zeta_i5
+      re5 6#usize scratch2
+  let (_, re7, scratch4) ←
+    invert_ntt.invert_ntt_at_layer_4_plus vectortraitsOperationsInst zeta_i6
+      re6 7#usize scratch3
+  ok (re7, scratch4)
+
+/-- [libcrux_iot_ml_kem::matrix::entry]:
+    Source: 'ml-kem/src/matrix.rs', lines 10:0-22:1 -/
+def matrix.entry
+  {Vector : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (matrix : Slice (polynomial.PolynomialRingElement Vector)) (i : Std.Usize)
+  (j : Std.Usize) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  let i1 ← core_models.slice.Slice.len matrix
+  let i2 ← K * K
+  massert (i1 = i2)
+  massert (i < K)
+  massert (j < K)
+  let i3 ← i * K
+  let i4 ← i3 + j
+  Slice.index_usize matrix i4
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_uniform_distribution_next]: loop body 1:
+    Source: 'ml-kem/src/sampling.rs', lines 67:8-93:9 -/
+@[rust_loop_body]
+def sampling.sample_from_uniform_distribution_next_loop0_loop0.body
+  {Vector : Type} {N : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (randomness : Slice (Array Std.U8 N))
+  (i : Std.Usize) (iter : core_models.ops.range.Range Std.Usize)
+  (sampled_coefficients : Slice Std.Usize)
+  (out : Slice (Array Std.I16 272#usize)) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Slice
+    Std.Usize) × (Slice (Array Std.I16 272#usize))) ((Slice Std.Usize) ×
+    (Slice (Array Std.I16 272#usize))))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (sampled_coefficients, out))
+  | core_models.option.Option.Some r =>
+    let i1 ← Slice.index_usize sampled_coefficients i
+    if i1 < constants.COEFFICIENTS_IN_RING_ELEMENT
+    then
+      let a ← Slice.index_usize randomness i
+      let i2 ← r * 24#usize
+      let i3 ← i2 + 24#usize
+      let s ←
+        core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+          Std.U8)) a { start := i2, «end» := i3 }
+      let (a1, index_mut_back) ← Slice.index_mut_usize out i
+      let i4 ← i1 + 16#usize
+      let (s1, index_mut_back1) ←
+        core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
+          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+          Std.I16)) a1 { start := i1, «end» := i4 }
+      let (sampled, s2) ← vectortraitsOperationsInst.rej_sample s s1
+      let i5 ← core_models.num.Usize.wrapping_add i1 sampled
+      let s3 ← Slice.update sampled_coefficients i i5
+      let a2 := index_mut_back1 s2
+      let s4 := index_mut_back a2
+      ok (cont (iter1, s3, s4))
+    else ok (cont (iter1, sampled_coefficients, out))
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_uniform_distribution_next]: loop 1:
+    Source: 'ml-kem/src/sampling.rs', lines 67:8-93:9 -/
+@[rust_loop]
+def sampling.sample_from_uniform_distribution_next_loop0_loop0
+  {Vector : Type} {N : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (randomness : Slice (Array Std.U8 N))
+  (sampled_coefficients : Slice Std.Usize)
+  (out : Slice (Array Std.I16 272#usize)) (i : Std.Usize) :
+  Result ((Slice Std.Usize) × (Slice (Array Std.I16 272#usize)))
+  := do
+  loop
+    (fun (iter1, sampled_coefficients1, out1) =>
+      sampling.sample_from_uniform_distribution_next_loop0_loop0.body
+      vectortraitsOperationsInst randomness i iter1 sampled_coefficients1 out1)
+    (iter, sampled_coefficients, out)
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_uniform_distribution_next]: loop body 0:
+    Source: 'ml-kem/src/sampling.rs', lines 65:4-94:5 -/
+@[rust_loop_body]
+def sampling.sample_from_uniform_distribution_next_loop0.body
+  {Vector : Type} {N : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (randomness : Slice (Array Std.U8 N))
+  (iter : core_models.ops.range.Range Std.Usize)
+  (sampled_coefficients : Slice Std.Usize)
+  (out : Slice (Array Std.I16 272#usize)) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Slice
+    Std.Usize) × (Slice (Array Std.I16 272#usize))) ((Slice Std.Usize) ×
+    (Slice (Array Std.I16 272#usize))))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (sampled_coefficients, out))
+  | core_models.option.Option.Some i =>
+    let i1 ← N / 24#usize
+    let (sampled_coefficients1, out1) ←
+      sampling.sample_from_uniform_distribution_next_loop0_loop0
+        vectortraitsOperationsInst { start := 0#usize, «end» := i1 }
+        randomness sampled_coefficients out i
+    ok (cont (iter1, sampled_coefficients1, out1))
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_uniform_distribution_next]: loop 0:
+    Source: 'ml-kem/src/sampling.rs', lines 65:4-94:5 -/
+@[rust_loop]
+def sampling.sample_from_uniform_distribution_next_loop0
+  {Vector : Type} {N : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (randomness : Slice (Array Std.U8 N))
+  (sampled_coefficients : Slice Std.Usize)
+  (out : Slice (Array Std.I16 272#usize)) :
+  Result ((Slice Std.Usize) × (Slice (Array Std.I16 272#usize)))
+  := do
+  loop
+    (fun (iter1, sampled_coefficients1, out1) =>
+      sampling.sample_from_uniform_distribution_next_loop0.body
+      vectortraitsOperationsInst randomness iter1 sampled_coefficients1 out1)
+    (iter, sampled_coefficients, out)
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_uniform_distribution_next]: loop body 2:
+    Source: 'ml-kem/src/sampling.rs', lines 96:4-103:5 -/
+@[rust_loop_body]
+def sampling.sample_from_uniform_distribution_next_loop1.body
+  (iter : core_models.ops.range.Range Std.Usize)
+  (sampled_coefficients : Slice Std.Usize) (done1 : Bool) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Slice
+    Std.Usize) × Bool) ((Slice Std.Usize) × Bool))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (sampled_coefficients, done1))
+  | core_models.option.Option.Some i =>
+    let i1 ← Slice.index_usize sampled_coefficients i
+    if i1 >= constants.COEFFICIENTS_IN_RING_ELEMENT
+    then
+      let s ←
+        Slice.update sampled_coefficients i
+          constants.COEFFICIENTS_IN_RING_ELEMENT
+      ok (cont (iter1, s, done1))
+    else ok (cont (iter1, sampled_coefficients, false))
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_uniform_distribution_next]: loop 2:
+    Source: 'ml-kem/src/sampling.rs', lines 96:4-103:5 -/
+@[rust_loop]
+def sampling.sample_from_uniform_distribution_next_loop1
+  (iter : core_models.ops.range.Range Std.Usize)
+  (sampled_coefficients : Slice Std.Usize) (done1 : Bool) :
+  Result ((Slice Std.Usize) × Bool)
+  := do
+  loop
+    (fun (iter1, sampled_coefficients1, done2) =>
+      sampling.sample_from_uniform_distribution_next_loop1.body iter1
+      sampled_coefficients1 done2)
+    (iter, sampled_coefficients, done1)
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_uniform_distribution_next]:
+    Source: 'ml-kem/src/sampling.rs', lines 59:0-105:1 -/
+def sampling.sample_from_uniform_distribution_next
+  {Vector : Type} (K : Std.Usize) {N : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (randomness : Slice (Array Std.U8 N))
+  (sampled_coefficients : Slice Std.Usize)
+  (out : Slice (Array Std.I16 272#usize)) :
+  Result (Bool × (Slice Std.Usize) × (Slice (Array Std.I16 272#usize)))
+  := do
+  let (sampled_coefficients1, out1) ←
+    sampling.sample_from_uniform_distribution_next_loop0
+      vectortraitsOperationsInst { start := 0#usize, «end» := K } randomness
+      sampled_coefficients out
+  let (sampled_coefficients2, done1) ←
+    sampling.sample_from_uniform_distribution_next_loop1
+      { start := 0#usize, «end» := K } sampled_coefficients1 true
+  ok (done1, sampled_coefficients2, out1)
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_xof]: loop body 0:
+    Source: 'ml-kem/src/sampling.rs', lines 134:4-144:5 -/
+@[rust_loop_body]
+def sampling.sample_from_xof_loop.body
+  {Vector : Type} {Hasher : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (sampled_coefficients : Slice Std.Usize)
+  (out : Slice (Array Std.I16 272#usize)) (xof_state : Hasher)
+  (randomness_blocksize : Array (Array Std.U8 168#usize) K) (done1 : Bool) :
+  Result (ControlFlow ((Slice Std.Usize) × (Slice (Array Std.I16 272#usize))
+    × Hasher × (Array (Array Std.U8 168#usize) K) × Bool) ((Slice Std.Usize)
+    × (Slice (Array Std.I16 272#usize))))
+  := do
+  if done1
+  then ok (done (sampled_coefficients, out))
+  else
+    let (s, to_slice_mut_back) ←
+      lift (Array.to_slice_mut randomness_blocksize)
+    let (xof_state1, s1) ←
+      hash_functionsHashInst.shake128_squeeze_next_block xof_state s
+    let randomness_blocksize1 := to_slice_mut_back s1
+    let s2 ← lift (Array.to_slice randomness_blocksize1)
+    let (done2, sampled_coefficients1, out1) ←
+      sampling.sample_from_uniform_distribution_next K
+        vectortraitsOperationsInst s2 sampled_coefficients out
+    ok (cont (sampled_coefficients1, out1, xof_state1, randomness_blocksize1,
+      done2))
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_xof]: loop 0:
+    Source: 'ml-kem/src/sampling.rs', lines 134:4-144:5 -/
+@[rust_loop]
+def sampling.sample_from_xof_loop
+  {Vector : Type} {Hasher : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (sampled_coefficients : Slice Std.Usize)
+  (out : Slice (Array Std.I16 272#usize)) (xof_state : Hasher)
+  (randomness_blocksize : Array (Array Std.U8 168#usize) K) (done1 : Bool) :
+  Result ((Slice Std.Usize) × (Slice (Array Std.I16 272#usize)))
+  := do
+  loop
+    (fun (sampled_coefficients1, out1, xof_state1, randomness_blocksize1,
+      done2) => sampling.sample_from_xof_loop.body vectortraitsOperationsInst
+      hash_functionsHashInst sampled_coefficients1 out1 xof_state1
+      randomness_blocksize1 done2)
+    (sampled_coefficients, out, xof_state, randomness_blocksize, done1)
+
+/-- [libcrux_iot_ml_kem::sampling::sample_from_xof]:
+    Source: 'ml-kem/src/sampling.rs', lines 113:0-145:1 -/
+def sampling.sample_from_xof
+  {Vector : Type} {Hasher : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (seeds : Slice (Array Std.U8 34#usize))
+  (sampled_coefficients : Slice Std.Usize)
+  (out : Slice (Array Std.I16 272#usize)) :
+  Result ((Slice Std.Usize) × (Slice (Array Std.I16 272#usize)))
+  := do
+  let xof_state ← hash_functionsHashInst.shake128_init_absorb_final seeds
+  let a := Array.repeat 504#usize 0#u8
+  let randomness := Array.repeat K a
+  let a1 := Array.repeat 168#usize 0#u8
+  let randomness_blocksize := Array.repeat K a1
+  let (s, to_slice_mut_back) ← lift (Array.to_slice_mut randomness)
+  let (xof_state1, s1) ←
+    hash_functionsHashInst.shake128_squeeze_first_three_blocks xof_state s
+  let randomness1 := to_slice_mut_back s1
+  let s2 ← lift (Array.to_slice randomness1)
+  let (done1, sampled_coefficients1, out1) ←
+    sampling.sample_from_uniform_distribution_next K vectortraitsOperationsInst
+      s2 sampled_coefficients out
+  sampling.sample_from_xof_loop vectortraitsOperationsInst
+    hash_functionsHashInst sampled_coefficients1 out1 xof_state1
+    randomness_blocksize done1
+
+/-- [libcrux_iot_ml_kem::polynomial::VECTORS_IN_RING_ELEMENT]
+    Source: 'ml-kem/src/polynomial.rs', lines 26:0-27:78 -/
+@[global_simps, irreducible]
+def polynomial.VECTORS_IN_RING_ELEMENT : Result Std.Usize :=
+  constants.COEFFICIENTS_IN_RING_ELEMENT /
+    vector.traits.FIELD_ELEMENTS_IN_VECTOR
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::from_i16_array]: loop body 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 48:8-50:9 -/
+@[rust_loop_body]
+def polynomial.PolynomialRingElement.from_i16_array_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (a : Slice Std.I16) (iter : core_models.ops.range.Range Std.Usize)
+  (out : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector))
+    (polynomial.PolynomialRingElement Vector))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done out)
+  | core_models.option.Option.Some i =>
+    let i1 ← i * 16#usize
+    let i2 ← i + 1#usize
+    let i3 ← i2 * 16#usize
+    let s ←
+      core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+        Std.I16) a { start := i1, «end» := i3 }
+    let (t, index_mut_back) ← Array.index_mut_usize out.coefficients i
+    let t1 ← vectortraitsOperationsInst.from_i16_array s t
+    let a1 := index_mut_back t1
+    ok (cont (iter1, { coefficients := a1 }))
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::from_i16_array]: loop 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 48:8-50:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.from_i16_array_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (a : Slice Std.I16)
+  (out : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  loop
+    (fun (iter1, out1) =>
+      polynomial.PolynomialRingElement.from_i16_array_loop.body
+      vectortraitsOperationsInst a iter1 out1)
+    (iter, out)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::from_i16_array]:
+    Source: 'ml-kem/src/polynomial.rs', lines 47:4-51:5 -/
+def polynomial.PolynomialRingElement.from_i16_array
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (a : Slice Std.I16) (out : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  let i ← polynomial.VECTORS_IN_RING_ELEMENT
+  polynomial.PolynomialRingElement.from_i16_array_loop
+    vectortraitsOperationsInst { start := 0#usize, «end» := i } a out
+
+/-- [libcrux_iot_ml_kem::matrix::sample_matrix_entry]:
+    Source: 'ml-kem/src/matrix.rs', lines 26:0-43:1 -/
+def matrix.sample_matrix_entry
+  {Vector : Type} {Hasher : Type} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (out : polynomial.PolynomialRingElement Vector)
+  (seed : Slice Std.U8) (i : Std.Usize) (j : Std.Usize) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  let i1 ← core_models.slice.Slice.len seed
+  massert (i1 = 32#usize)
+  let seed_ij := Array.repeat 34#usize 0#u8
+  let (s, index_mut_back) ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8)) seed_ij { start := 0#usize, «end» := 32#usize }
+  let s1 ←
+    core_models.slice.Slice.copy_from_slice
+      core_models.U8.Insts.Core_modelsMarkerCopy s seed
+  let seed_ij1 := index_mut_back s1
+  let i2 ← lift (UScalar.cast .U8 i)
+  let seed_ij2 ← Array.update seed_ij1 32#usize i2
+  let i3 ← lift (UScalar.cast .U8 j)
+  let seed_ij3 ← Array.update seed_ij2 33#usize i3
+  let sampled_coefficients := Array.repeat 1#usize 0#usize
+  let a := Array.repeat 272#usize 0#i16
+  let out_raw := Array.repeat 1#usize a
+  let s2 ← lift (Array.to_slice (Array.make 1#usize [ seed_ij3 ]))
+  let (s3, _) ← lift (Array.to_slice_mut sampled_coefficients)
+  let (s4, to_slice_mut_back) ← lift (Array.to_slice_mut out_raw)
+  let (_, s5) ←
+    sampling.sample_from_xof 1#usize vectortraitsOperationsInst
+      hash_functionsHashInst s2 s3 s4
+  let out_raw1 := to_slice_mut_back s5
+  let a1 ← Array.index_usize out_raw1 0#usize
+  let a2 ← libcrux_secrets.traits.Classify.Blanket.classify a1
+  let s6 ← core_models.array.Array.as_slice a2
+  polynomial.PolynomialRingElement.from_i16_array vectortraitsOperationsInst s6
+    out
+
+/-- [libcrux_iot_ml_kem::matrix::sample_matrix_A]: loop body 1:
+    Source: 'ml-kem/src/matrix.rs', lines 60:8-64:9 -/
+@[rust_loop_body]
+def matrix.sample_matrix_A_loop0_loop0.body
+  {K : Std.Usize} (i : Std.Usize)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (seeds : Array (Array Std.U8 34#usize) K) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Array (Array
+    Std.U8 34#usize) K)) (Array (Array Std.U8 34#usize) K))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done seeds)
+  | core_models.option.Option.Some j =>
+    let (a, index_mut_back) ← Array.index_mut_usize seeds j
+    let i1 ← lift (UScalar.cast .U8 i)
+    let a1 ← Array.update a 32#usize i1
+    let seeds1 := index_mut_back a1
+    let (a2, index_mut_back1) ← Array.index_mut_usize seeds1 j
+    let i2 ← lift (UScalar.cast .U8 j)
+    let a3 ← Array.update a2 33#usize i2
+    let a4 := index_mut_back1 a3
+    ok (cont (iter1, a4))
+
+/-- [libcrux_iot_ml_kem::matrix::sample_matrix_A]: loop 1:
+    Source: 'ml-kem/src/matrix.rs', lines 60:8-64:9 -/
+@[rust_loop]
+def matrix.sample_matrix_A_loop0_loop0
+  {K : Std.Usize} (iter : core_models.ops.range.Range Std.Usize)
+  (i : Std.Usize) (seeds : Array (Array Std.U8 34#usize) K) :
+  Result (Array (Array Std.U8 34#usize) K)
+  := do
+  loop
+    (fun (iter1, seeds1) => matrix.sample_matrix_A_loop0_loop0.body i iter1
+      seeds1)
+    (iter, seeds)
+
+/-- [libcrux_iot_ml_kem::matrix::sample_matrix_A]: loop body 2:
+    Source: 'ml-kem/src/helper.rs', lines 50:13-50:55 -/
+@[rust_loop_body]
+def matrix.sample_matrix_A_loop0_loop1.body
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (i : Std.Usize)
+  (iter : core_models.iter.adapters.enumerate.Enumerate
+  (core_models.array.iter.IntoIter (Array Std.I16 272#usize) K))
+  (A_transpose : Slice (polynomial.PolynomialRingElement Vector))
+  (transpose : Bool) :
+  Result (ControlFlow ((core_models.iter.adapters.enumerate.Enumerate
+    (core_models.array.iter.IntoIter (Array Std.I16 272#usize) K)) × (Slice
+    (polynomial.PolynomialRingElement Vector)) × Bool) ((Slice
+    (polynomial.PolynomialRingElement Vector)) × Bool))
+  := do
+  let (o, iter1) ←
+    core_models.iter.adapters.enumerate.Enumerate.Insts.Core_modelsIterTraitsIteratorIteratorPairUsizeClause0_Item.next
+      (core_models.array.iter.IntoIter.Insts.Core_modelsIterTraitsIteratorIterator
+      (Array Std.I16 272#usize) K) iter
+  match o with
+  | core_models.option.Option.None => ok (done (A_transpose, transpose))
+  | core_models.option.Option.Some p =>
+    let (j, sample) := p
+    if transpose
+    then
+      let s ←
+        core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+          (core_models.ops.range.RangeToUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+          Std.I16)) sample { «end» := 256#usize }
+      let s1 ←
+        libcrux_secrets.SharedASlice.Insts.Libcrux_secretsTraitsClassifyRefSharedASlice.classify_ref
+          libcrux_secrets.I16.Insts.Libcrux_secretsTraitsScalar s
+      let i1 ← j * K
+      let i2 ← i1 + i
+      let (pre, index_mut_back) ← Slice.index_mut_usize A_transpose i2
+      let pre1 ←
+        polynomial.PolynomialRingElement.from_i16_array
+          vectortraitsOperationsInst s1 pre
+      let s2 := index_mut_back pre1
+      ok (cont (iter1, s2, true))
+    else
+      let s ←
+        core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+          (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+          (core_models.ops.range.RangeToUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+          Std.I16)) sample { «end» := 256#usize }
+      let s1 ←
+        libcrux_secrets.SharedASlice.Insts.Libcrux_secretsTraitsClassifyRefSharedASlice.classify_ref
+          libcrux_secrets.I16.Insts.Libcrux_secretsTraitsScalar s
+      let i1 ← i * K
+      let i2 ← i1 + j
+      let (pre, index_mut_back) ← Slice.index_mut_usize A_transpose i2
+      let pre1 ←
+        polynomial.PolynomialRingElement.from_i16_array
+          vectortraitsOperationsInst s1 pre
+      let s2 := index_mut_back pre1
+      ok (cont (iter1, s2, false))
+
+/-- [libcrux_iot_ml_kem::matrix::sample_matrix_A]: loop 2:
+    Source: 'ml-kem/src/helper.rs', lines 50:13-50:55 -/
+@[rust_loop]
+def matrix.sample_matrix_A_loop0_loop1
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (iter : core_models.iter.adapters.enumerate.Enumerate
+  (core_models.array.iter.IntoIter (Array Std.I16 272#usize) K))
+  (A_transpose : Slice (polynomial.PolynomialRingElement Vector))
+  (transpose : Bool) (i : Std.Usize) :
+  Result ((Slice (polynomial.PolynomialRingElement Vector)) × Bool)
+  := do
+  loop
+    (fun (iter1, A_transpose1, transpose1) =>
+      matrix.sample_matrix_A_loop0_loop1.body vectortraitsOperationsInst i
+      iter1 A_transpose1 transpose1)
+    (iter, A_transpose, transpose)
+
+/-- [libcrux_iot_ml_kem::matrix::sample_matrix_A]: loop body 0:
+    Source: 'ml-kem/src/matrix.rs', lines 57:8-67:90 -/
+@[rust_loop_body]
+def matrix.sample_matrix_A_loop0.body
+  {Vector : Type} {Hasher : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (seed : Array Std.U8 34#usize)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (A_transpose : Slice (polynomial.PolynomialRingElement Vector))
+  (transpose : Bool) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Slice
+    (polynomial.PolynomialRingElement Vector)) × Bool) (Slice
+    (polynomial.PolynomialRingElement Vector)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done A_transpose)
+  | core_models.option.Option.Some i =>
+    let seeds := Array.repeat K seed
+    let seeds1 ←
+      matrix.sample_matrix_A_loop0_loop0 { start := 0#usize, «end» := K } i
+        seeds
+    let sampled_coefficients := Array.repeat K 0#usize
+    let a := Array.repeat 272#usize 0#i16
+    let out := Array.repeat K a
+    let s ← lift (Array.to_slice seeds1)
+    let (s1, _) ← lift (Array.to_slice_mut sampled_coefficients)
+    let (s2, to_slice_mut_back) ← lift (Array.to_slice_mut out)
+    let (_, s3) ←
+      sampling.sample_from_xof K vectortraitsOperationsInst
+        hash_functionsHashInst s s1 s2
+    let out1 := to_slice_mut_back s3
+    let ii ←
+      core_models.Array.Insts.Core_modelsIterTraitsCollectIntoIteratorTIntoIter.into_iter
+        out1
+    let iter2 ←
+      core_models.array.iter.IntoIter.Insts.Core_modelsIterTraitsIteratorIterator.enumerate
+        ii
+    let (A_transpose1, transpose1) ←
+      matrix.sample_matrix_A_loop0_loop1 vectortraitsOperationsInst iter2
+        A_transpose transpose i
+    ok (cont (iter1, A_transpose1, transpose1))
+
+/-- [libcrux_iot_ml_kem::matrix::sample_matrix_A]: loop 0:
+    Source: 'ml-kem/src/matrix.rs', lines 57:8-67:90 -/
+@[rust_loop]
+def matrix.sample_matrix_A_loop0
+  {Vector : Type} {Hasher : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (iter : core_models.ops.range.Range Std.Usize)
+  (A_transpose : Slice (polynomial.PolynomialRingElement Vector))
+  (seed : Array Std.U8 34#usize) (transpose : Bool) :
+  Result (Slice (polynomial.PolynomialRingElement Vector))
+  := do
+  loop
+    (fun (iter1, A_transpose1, transpose1) => matrix.sample_matrix_A_loop0.body
+      K vectortraitsOperationsInst hash_functionsHashInst seed iter1
+      A_transpose1 transpose1)
+    (iter, A_transpose, transpose)
+
+/-- [libcrux_iot_ml_kem::matrix::sample_matrix_A]:
+    Source: 'ml-kem/src/matrix.rs', lines 49:0-80:1 -/
+def matrix.sample_matrix_A
+  {Vector : Type} {Hasher : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher)
+  (A_transpose : Slice (polynomial.PolynomialRingElement Vector))
+  (seed : Array Std.U8 34#usize) (transpose : Bool) :
+  Result (Slice (polynomial.PolynomialRingElement Vector))
+  := do
+  let i ← core_models.slice.Slice.len A_transpose
+  let i1 ← K * K
+  massert (i = i1)
+  matrix.sample_matrix_A_loop0 K vectortraitsOperationsInst
+    hash_functionsHashInst { start := 0#usize, «end» := K } A_transpose seed
+    transpose
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::accumulating_ntt_multiply]: loop body 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 125:8-135:9 -/
+@[rust_loop_body]
+def polynomial.PolynomialRingElement.accumulating_ntt_multiply_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (rhs : polynomial.PolynomialRingElement Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Array
+    Std.I32 256#usize)) (Array Std.I32 256#usize))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done accumulator)
+  | core_models.option.Option.Some i =>
+    let t ← Array.index_usize self.coefficients i
+    let t1 ← Array.index_usize rhs.coefficients i
+    let i1 ← i * 16#usize
+    let i2 ← i + 1#usize
+    let i3 ← i2 * 16#usize
+    let (s, index_mut_back) ←
+      core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+        (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
+        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+        Std.I32)) accumulator { start := i1, «end» := i3 }
+    let i4 ← 4#usize * i
+    let i5 ← 64#usize + i4
+    let i6 ← polynomial.zeta i5
+    let i7 ← 64#usize + i4
+    let i8 ← i7 + 1#usize
+    let i9 ← polynomial.zeta i8
+    let i10 ← 64#usize + i4
+    let i11 ← i10 + 2#usize
+    let i12 ← polynomial.zeta i11
+    let i13 ← 64#usize + i4
+    let i14 ← i13 + 3#usize
+    let i15 ← polynomial.zeta i14
+    let s1 ←
+      vectortraitsOperationsInst.accumulating_ntt_multiply t t1 s i6 i9 i12 i15
+    let accumulator1 := index_mut_back s1
+    ok (cont (iter1, accumulator1))
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::accumulating_ntt_multiply]: loop 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 125:8-135:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.accumulating_ntt_multiply_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize)
+  (self : polynomial.PolynomialRingElement Vector)
+  (rhs : polynomial.PolynomialRingElement Vector)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (Array Std.I32 256#usize)
+  := do
+  loop
+    (fun (iter1, accumulator1) =>
+      polynomial.PolynomialRingElement.accumulating_ntt_multiply_loop.body
+      vectortraitsOperationsInst self rhs iter1 accumulator1)
+    (iter, accumulator)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::accumulating_ntt_multiply]:
+    Source: 'ml-kem/src/polynomial.rs', lines 124:4-136:5 -/
+def polynomial.PolynomialRingElement.accumulating_ntt_multiply
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (rhs : polynomial.PolynomialRingElement Vector)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (Array Std.I32 256#usize)
+  := do
+  let i ← polynomial.VECTORS_IN_RING_ELEMENT
+  polynomial.PolynomialRingElement.accumulating_ntt_multiply_loop
+    vectortraitsOperationsInst { start := 0#usize, «end» := i } self rhs
+    accumulator
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::subtract_reduce]: loop body 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 70:8-77:9 -/
+@[rust_loop_body]
+def polynomial.PolynomialRingElement.subtract_reduce_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (b : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector))
+    (polynomial.PolynomialRingElement Vector))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done b)
+  | core_models.option.Option.Some i =>
+    let (t, index_mut_back) ← Array.index_mut_usize b.coefficients i
+    let t1 ←
+      vectortraitsOperationsInst.montgomery_multiply_by_constant t 1441#i16
+    let a := index_mut_back t1
+    let (t2, index_mut_back1) ← Array.index_mut_usize a i
+    let t3 ← Array.index_usize self.coefficients i
+    let t4 ← vectortraitsOperationsInst.sub t2 t3
+    let a1 := index_mut_back1 t4
+    let (t5, index_mut_back2) ← Array.index_mut_usize a1 i
+    let t6 ← vectortraitsOperationsInst.negate t5
+    let a2 := index_mut_back2 t6
+    let (t7, index_mut_back3) ← Array.index_mut_usize a2 i
+    let t8 ← vectortraitsOperationsInst.barrett_reduce t7
+    let a3 := index_mut_back3 t8
+    ok (cont (iter1, { coefficients := a3 }))
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::subtract_reduce]: loop 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 70:8-77:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.subtract_reduce_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize)
+  (self : polynomial.PolynomialRingElement Vector)
+  (b : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  loop
+    (fun (iter1, b1) =>
+      polynomial.PolynomialRingElement.subtract_reduce_loop.body
+      vectortraitsOperationsInst self iter1 b1)
+    (iter, b)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::subtract_reduce]:
+    Source: 'ml-kem/src/polynomial.rs', lines 69:4-78:5 -/
+def polynomial.PolynomialRingElement.subtract_reduce
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (b : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  let i ← polynomial.VECTORS_IN_RING_ELEMENT
+  polynomial.PolynomialRingElement.subtract_reduce_loop
+    vectortraitsOperationsInst { start := 0#usize, «end» := i } self b
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::reducing_from_i32_array]: loop body 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 56:8-58:9 -/
+@[rust_loop_body]
+def polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (a : Slice Std.I32) (iter : core_models.ops.range.Range Std.Usize)
+  (out : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector))
+    (polynomial.PolynomialRingElement Vector))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done out)
+  | core_models.option.Option.Some i =>
+    let i1 ← i * 16#usize
+    let i2 ← i + 1#usize
+    let i3 ← i2 * 16#usize
+    let s ←
+      core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+        Std.I32) a { start := i1, «end» := i3 }
+    let (t, index_mut_back) ← Array.index_mut_usize out.coefficients i
+    let t1 ← vectortraitsOperationsInst.reducing_from_i32_array s t
+    let a1 := index_mut_back t1
+    ok (cont (iter1, { coefficients := a1 }))
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::reducing_from_i32_array]: loop 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 56:8-58:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.reducing_from_i32_array_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize) (a : Slice Std.I32)
+  (out : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  loop
+    (fun (iter1, out1) =>
+      polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
+      vectortraitsOperationsInst a iter1 out1)
+    (iter, out)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::reducing_from_i32_array]:
+    Source: 'ml-kem/src/polynomial.rs', lines 55:4-59:5 -/
+def polynomial.PolynomialRingElement.reducing_from_i32_array
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (a : Slice Std.I32) (out : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  let i ← polynomial.VECTORS_IN_RING_ELEMENT
+  polynomial.PolynomialRingElement.reducing_from_i32_array_loop
+    vectortraitsOperationsInst { start := 0#usize, «end» := i } a out
+
+/-- [libcrux_iot_ml_kem::matrix::compute_message]: loop body 0:
+    Source: 'ml-kem/src/matrix.rs', lines 97:4-99:5 -/
+@[rust_loop_body]
+def matrix.compute_message_loop.body
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (secret_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (u_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Array
+    Std.I32 256#usize)) (Array Std.I32 256#usize))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done accumulator)
+  | core_models.option.Option.Some i =>
+    let pre ← Array.index_usize secret_as_ntt i
+    let pre1 ← Array.index_usize u_as_ntt i
+    let accumulator1 ←
+      polynomial.PolynomialRingElement.accumulating_ntt_multiply
+        vectortraitsOperationsInst pre pre1 accumulator
+    ok (cont (iter1, accumulator1))
+
+/-- [libcrux_iot_ml_kem::matrix::compute_message]: loop 0:
+    Source: 'ml-kem/src/matrix.rs', lines 97:4-99:5 -/
+@[rust_loop]
+def matrix.compute_message_loop
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (secret_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (u_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (Array Std.I32 256#usize)
+  := do
+  loop
+    (fun (iter1, accumulator1) => matrix.compute_message_loop.body
+      vectortraitsOperationsInst secret_as_ntt u_as_ntt iter1 accumulator1)
+    (iter, accumulator)
+
+/-- [libcrux_iot_ml_kem::matrix::compute_message]:
+    Source: 'ml-kem/src/matrix.rs', lines 88:0-104:1 -/
+def matrix.compute_message
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (v : polynomial.PolynomialRingElement Vector)
+  (secret_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (u_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (result : polynomial.PolynomialRingElement Vector) (scratch : Vector)
+  (accumulator : Array Std.I32 256#usize) :
+  Result ((polynomial.PolynomialRingElement Vector) × Vector × (Array Std.I32
+    256#usize))
+  := do
+  let i ← libcrux_secrets.traits.Classify.Blanket.classify 0#i32
+  let accumulator1 := Array.repeat 256#usize i
+  let accumulator2 ←
+    matrix.compute_message_loop vectortraitsOperationsInst
+      { start := 0#usize, «end» := K } secret_as_ntt u_as_ntt accumulator1
+  let s ← lift (Array.to_slice accumulator2)
+  let result1 ←
+    polynomial.PolynomialRingElement.reducing_from_i32_array
+      vectortraitsOperationsInst s result
+  let (result2, scratch1) ←
+    invert_ntt.invert_ntt_montgomery K vectortraitsOperationsInst result1
+      scratch
+  let result3 ←
+    polynomial.PolynomialRingElement.subtract_reduce vectortraitsOperationsInst
+      v result2
+  ok (result3, scratch1, accumulator2)
+
+/-- [libcrux_iot_ml_kem::serialize::deserialize_to_reduced_ring_element]: loop body 0:
+    Source: 'ml-kem/src/helper.rs', lines 44:13-44:75 -/
+@[rust_loop_body]
+def serialize.deserialize_to_reduced_ring_element_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector)
+  (iter : core_models.iter.adapters.enumerate.Enumerate
+  (core_models.slice.iter.ChunksExact Std.U8))
+  (re : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.iter.adapters.enumerate.Enumerate
+    (core_models.slice.iter.ChunksExact Std.U8)) ×
+    (polynomial.PolynomialRingElement Vector))
+    (polynomial.PolynomialRingElement Vector))
+  := do
+  let (o, iter1) ←
+    core_models.iter.adapters.enumerate.Enumerate.Insts.Core_modelsIterTraitsIteratorIteratorPairUsizeClause0_Item.next
+      (core_models.slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice
+      Std.U8) iter
+  match o with
+  | core_models.option.Option.None => ok (done re)
+  | core_models.option.Option.Some p =>
+    let (i, bytes) := p
+    let (t, index_mut_back) ← Array.index_mut_usize re.coefficients i
+    let t1 ← vectortraitsOperationsInst.deserialize_12 bytes t
+    let a := index_mut_back t1
+    let (t2, index_mut_back1) ← Array.index_mut_usize a i
+    let t3 ← vectortraitsOperationsInst.cond_subtract_3329 t2
+    let a1 := index_mut_back1 t3
+    ok (cont (iter1, { coefficients := a1 }))
+
+/-- [libcrux_iot_ml_kem::serialize::deserialize_to_reduced_ring_element]: loop 0:
+    Source: 'ml-kem/src/helper.rs', lines 44:13-44:75 -/
+@[rust_loop]
+def serialize.deserialize_to_reduced_ring_element_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector)
+  (iter : core_models.iter.adapters.enumerate.Enumerate
+  (core_models.slice.iter.ChunksExact Std.U8))
+  (re : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  loop
+    (fun (iter1, re1) =>
+      serialize.deserialize_to_reduced_ring_element_loop.body
+      vectortraitsOperationsInst iter1 re1)
+    (iter, re)
+
+/-- [libcrux_iot_ml_kem::serialize::deserialize_to_reduced_ring_element]:
+    Source: 'ml-kem/src/serialize.rs', lines 83:0-93:1 -/
+def serialize.deserialize_to_reduced_ring_element
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (serialized : Slice Std.U8)
+  (re : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  let ce ← core_models.slice.Slice.chunks_exact serialized 24#usize
+  let iter ←
+    core_models.slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice.enumerate
+      ce
+  serialize.deserialize_to_reduced_ring_element_loop vectortraitsOperationsInst
+    iter re
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::accumulating_ntt_multiply_use_cache]: loop body 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 166:8-173:9 -/
+@[rust_loop_body]
+def
+  polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (rhs : polynomial.PolynomialRingElement Vector)
+  (cache : polynomial.PolynomialRingElement Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Array
+    Std.I32 256#usize)) (Array Std.I32 256#usize))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done accumulator)
+  | core_models.option.Option.Some i =>
+    let t ← Array.index_usize self.coefficients i
+    let t1 ← Array.index_usize rhs.coefficients i
+    let i1 ← i * 16#usize
+    let i2 ← i + 1#usize
+    let i3 ← i2 * 16#usize
+    let (s, index_mut_back) ←
+      core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+        (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
+        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+        Std.I32)) accumulator { start := i1, «end» := i3 }
+    let t2 ← Array.index_usize cache.coefficients i
+    let s1 ←
+      vectortraitsOperationsInst.accumulating_ntt_multiply_use_cache t t1 s t2
+    let accumulator1 := index_mut_back s1
+    ok (cont (iter1, accumulator1))
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::accumulating_ntt_multiply_use_cache]: loop 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 166:8-173:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize)
+  (self : polynomial.PolynomialRingElement Vector)
+  (rhs : polynomial.PolynomialRingElement Vector)
+  (accumulator : Array Std.I32 256#usize)
+  (cache : polynomial.PolynomialRingElement Vector) :
+  Result (Array Std.I32 256#usize)
+  := do
+  loop
+    (fun (iter1, accumulator1) =>
+      polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache_loop.body
+      vectortraitsOperationsInst self rhs cache iter1 accumulator1)
+    (iter, accumulator)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::accumulating_ntt_multiply_use_cache]:
+    Source: 'ml-kem/src/polynomial.rs', lines 160:4-174:5 -/
+def polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (rhs : polynomial.PolynomialRingElement Vector)
+  (accumulator : Array Std.I32 256#usize)
+  (cache : polynomial.PolynomialRingElement Vector) :
+  Result (Array Std.I32 256#usize)
+  := do
+  let i ← polynomial.VECTORS_IN_RING_ELEMENT
+  polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache_loop
+    vectortraitsOperationsInst { start := 0#usize, «end» := i } self rhs
+    accumulator cache
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::add_message_error_reduce]: loop body 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 87:8-95:9 -/
+@[rust_loop_body]
+def polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (message : polynomial.PolynomialRingElement Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (result : polynomial.PolynomialRingElement Vector) (scratch : Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector) × Vector)
+    ((polynomial.PolynomialRingElement Vector) × Vector))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (result, scratch))
+  | core_models.option.Option.Some i =>
+    let (t, index_mut_back) ← Array.index_mut_usize result.coefficients i
+    let t1 ←
+      vectortraitsOperationsInst.montgomery_multiply_by_constant t 1441#i16
+    let scratch1 ← Array.index_usize self.coefficients i
+    let t2 ← Array.index_usize message.coefficients i
+    let scratch2 ← vectortraitsOperationsInst.add scratch1 t2
+    let a := index_mut_back t1
+    let (t3, index_mut_back1) ← Array.index_mut_usize a i
+    let t4 ← vectortraitsOperationsInst.add t3 scratch2
+    let a1 := index_mut_back1 t4
+    let (t5, index_mut_back2) ← Array.index_mut_usize a1 i
+    let t6 ← vectortraitsOperationsInst.barrett_reduce t5
+    let a2 := index_mut_back2 t6
+    ok (cont (iter1, { coefficients := a2 }, scratch2))
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::add_message_error_reduce]: loop 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 87:8-95:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.add_message_error_reduce_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize)
+  (self : polynomial.PolynomialRingElement Vector)
+  (message : polynomial.PolynomialRingElement Vector)
+  (result : polynomial.PolynomialRingElement Vector) (scratch : Vector) :
+  Result ((polynomial.PolynomialRingElement Vector) × Vector)
+  := do
+  loop
+    (fun (iter1, result1, scratch1) =>
+      polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
+      vectortraitsOperationsInst self message iter1 result1 scratch1)
+    (iter, result, scratch)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::add_message_error_reduce]:
+    Source: 'ml-kem/src/polynomial.rs', lines 81:4-96:5 -/
+def polynomial.PolynomialRingElement.add_message_error_reduce
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (message : polynomial.PolynomialRingElement Vector)
+  (result : polynomial.PolynomialRingElement Vector) (scratch : Vector) :
+  Result ((polynomial.PolynomialRingElement Vector) × Vector)
+  := do
+  let i ← polynomial.VECTORS_IN_RING_ELEMENT
+  polynomial.PolynomialRingElement.add_message_error_reduce_loop
+    vectortraitsOperationsInst { start := 0#usize, «end» := i } self message
+    result scratch
+
+/-- [libcrux_iot_ml_kem::matrix::compute_ring_element_v]: loop body 0:
+    Source: 'ml-kem/src/helper.rs', lines 44:13-44:75 -/
+@[rust_loop_body]
+def matrix.compute_ring_element_v_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (cache : Slice (polynomial.PolynomialRingElement Vector))
+  (iter : core_models.iter.adapters.enumerate.Enumerate
+  (core_models.slice.iter.ChunksExact Std.U8))
+  (t_as_ntt_entry : polynomial.PolynomialRingElement Vector)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.iter.adapters.enumerate.Enumerate
+    (core_models.slice.iter.ChunksExact Std.U8)) ×
+    (polynomial.PolynomialRingElement Vector) × (Array Std.I32 256#usize))
+    ((polynomial.PolynomialRingElement Vector) × (Array Std.I32 256#usize)))
+  := do
+  let (o, iter1) ←
+    core_models.iter.adapters.enumerate.Enumerate.Insts.Core_modelsIterTraitsIteratorIteratorPairUsizeClause0_Item.next
+      (core_models.slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice
+      Std.U8) iter
+  match o with
+  | core_models.option.Option.None => ok (done (t_as_ntt_entry, accumulator))
+  | core_models.option.Option.Some p =>
+    let (i, ring_element) := p
+    let s ←
+      libcrux_secrets.SharedASlice.Insts.Libcrux_secretsTraitsClassifyRefSharedASlice.classify_ref
+        libcrux_secrets.U8.Insts.Libcrux_secretsTraitsScalar ring_element
+    let t_as_ntt_entry1 ←
+      serialize.deserialize_to_reduced_ring_element vectortraitsOperationsInst
+        s t_as_ntt_entry
+    let pre ← Slice.index_usize r_as_ntt i
+    let pre1 ← Slice.index_usize cache i
+    let accumulator1 ←
+      polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache
+        vectortraitsOperationsInst t_as_ntt_entry1 pre accumulator pre1
+    ok (cont (iter1, t_as_ntt_entry1, accumulator1))
+
+/-- [libcrux_iot_ml_kem::matrix::compute_ring_element_v]: loop 0:
+    Source: 'ml-kem/src/helper.rs', lines 44:13-44:75 -/
+@[rust_loop]
+def matrix.compute_ring_element_v_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector)
+  (iter : core_models.iter.adapters.enumerate.Enumerate
+  (core_models.slice.iter.ChunksExact Std.U8))
+  (t_as_ntt_entry : polynomial.PolynomialRingElement Vector)
+  (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (cache : Slice (polynomial.PolynomialRingElement Vector))
+  (accumulator : Array Std.I32 256#usize) :
+  Result ((polynomial.PolynomialRingElement Vector) × (Array Std.I32
+    256#usize))
+  := do
+  loop
+    (fun (iter1, t_as_ntt_entry1, accumulator1) =>
+      matrix.compute_ring_element_v_loop.body vectortraitsOperationsInst
+      r_as_ntt cache iter1 t_as_ntt_entry1 accumulator1)
+    (iter, t_as_ntt_entry, accumulator)
+
+/-- [libcrux_iot_ml_kem::matrix::compute_ring_element_v]:
+    Source: 'ml-kem/src/matrix.rs', lines 109:0-131:1 -/
+def matrix.compute_ring_element_v
+  {Vector : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (public_key : Slice Std.U8)
+  (t_as_ntt_entry : polynomial.PolynomialRingElement Vector)
+  (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (error_2 : polynomial.PolynomialRingElement Vector)
+  (message : polynomial.PolynomialRingElement Vector)
+  (result : polynomial.PolynomialRingElement Vector) (scratch : Vector)
+  (cache : Slice (polynomial.PolynomialRingElement Vector))
+  (accumulator : Array Std.I32 256#usize) :
+  Result ((polynomial.PolynomialRingElement Vector) ×
+    (polynomial.PolynomialRingElement Vector) × Vector × (Array Std.I32
+    256#usize))
+  := do
+  let i ← libcrux_secrets.traits.Classify.Blanket.classify 0#i32
+  let accumulator1 := Array.repeat 256#usize i
+  let i1 ← constants.BYTES_PER_RING_ELEMENT
+  let ce ← core_models.slice.Slice.chunks_exact public_key i1
+  let iter ←
+    core_models.slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice.enumerate
+      ce
+  let (t_as_ntt_entry1, accumulator2) ←
+    matrix.compute_ring_element_v_loop vectortraitsOperationsInst iter
+      t_as_ntt_entry r_as_ntt cache accumulator1
+  let s ← lift (Array.to_slice accumulator2)
+  let result1 ←
+    polynomial.PolynomialRingElement.reducing_from_i32_array
+      vectortraitsOperationsInst s result
+  let (result2, scratch1) ←
+    invert_ntt.invert_ntt_montgomery K vectortraitsOperationsInst result1
+      scratch
+  let (result3, scratch2) ←
+    polynomial.PolynomialRingElement.add_message_error_reduce
+      vectortraitsOperationsInst error_2 message result2 scratch1
+  ok (t_as_ntt_entry1, result3, scratch2, accumulator2)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::accumulating_ntt_multiply_fill_cache]: loop body 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 145:8-156:9 -/
+@[rust_loop_body]
+def
+  polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (rhs : polynomial.PolynomialRingElement Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (accumulator : Array Std.I32 256#usize)
+  (cache : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Array
+    Std.I32 256#usize) × (polynomial.PolynomialRingElement Vector)) ((Array
+    Std.I32 256#usize) × (polynomial.PolynomialRingElement Vector)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (accumulator, cache))
+  | core_models.option.Option.Some i =>
+    let t ← Array.index_usize self.coefficients i
+    let t1 ← Array.index_usize rhs.coefficients i
+    let i1 ← i * 16#usize
+    let i2 ← i + 1#usize
+    let i3 ← i2 * 16#usize
+    let (s, index_mut_back) ←
+      core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+        (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
+        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+        Std.I32)) accumulator { start := i1, «end» := i3 }
+    let (t2, index_mut_back1) ← Array.index_mut_usize cache.coefficients i
+    let i4 ← 4#usize * i
+    let i5 ← 64#usize + i4
+    let i6 ← polynomial.zeta i5
+    let i7 ← 64#usize + i4
+    let i8 ← i7 + 1#usize
+    let i9 ← polynomial.zeta i8
+    let i10 ← 64#usize + i4
+    let i11 ← i10 + 2#usize
+    let i12 ← polynomial.zeta i11
+    let i13 ← 64#usize + i4
+    let i14 ← i13 + 3#usize
+    let i15 ← polynomial.zeta i14
+    let (s1, t3) ←
+      vectortraitsOperationsInst.accumulating_ntt_multiply_fill_cache t t1 s t2
+        i6 i9 i12 i15
+    let accumulator1 := index_mut_back s1
+    let a := index_mut_back1 t3
+    ok (cont (iter1, accumulator1, { coefficients := a }))
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::accumulating_ntt_multiply_fill_cache]: loop 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 145:8-156:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize)
+  (self : polynomial.PolynomialRingElement Vector)
+  (rhs : polynomial.PolynomialRingElement Vector)
+  (accumulator : Array Std.I32 256#usize)
+  (cache : polynomial.PolynomialRingElement Vector) :
+  Result ((Array Std.I32 256#usize) × (polynomial.PolynomialRingElement
+    Vector))
+  := do
+  loop
+    (fun (iter1, accumulator1, cache1) =>
+      polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop.body
+      vectortraitsOperationsInst self rhs iter1 accumulator1 cache1)
+    (iter, accumulator, cache)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::accumulating_ntt_multiply_fill_cache]:
+    Source: 'ml-kem/src/polynomial.rs', lines 139:4-157:5 -/
+def polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (rhs : polynomial.PolynomialRingElement Vector)
+  (accumulator : Array Std.I32 256#usize)
+  (cache : polynomial.PolynomialRingElement Vector) :
+  Result ((Array Std.I32 256#usize) × (polynomial.PolynomialRingElement
+    Vector))
+  := do
+  let i ← polynomial.VECTORS_IN_RING_ELEMENT
+  polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop
+    vectortraitsOperationsInst { start := 0#usize, «end» := i } self rhs
+    accumulator cache
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::add_error_reduce]: loop body 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 100:8-106:9 -/
+@[rust_loop_body]
+def polynomial.PolynomialRingElement.add_error_reduce_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (error : polynomial.PolynomialRingElement Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (self : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector))
+    (polynomial.PolynomialRingElement Vector))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done self)
+  | core_models.option.Option.Some j =>
+    let (t, index_mut_back) ← Array.index_mut_usize self.coefficients j
+    let t1 ←
+      vectortraitsOperationsInst.montgomery_multiply_by_constant t 1441#i16
+    let a := index_mut_back t1
+    let (t2, index_mut_back1) ← Array.index_mut_usize a j
+    let t3 ← Array.index_usize error.coefficients j
+    let t4 ← vectortraitsOperationsInst.add t2 t3
+    let a1 := index_mut_back1 t4
+    let (t5, index_mut_back2) ← Array.index_mut_usize a1 j
+    let t6 ← vectortraitsOperationsInst.barrett_reduce t5
+    let a2 := index_mut_back2 t6
+    ok (cont (iter1, { coefficients := a2 }))
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::add_error_reduce]: loop 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 100:8-106:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.add_error_reduce_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize)
+  (self : polynomial.PolynomialRingElement Vector)
+  (error : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  loop
+    (fun (iter1, self1) =>
+      polynomial.PolynomialRingElement.add_error_reduce_loop.body
+      vectortraitsOperationsInst error iter1 self1)
+    (iter, self)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::add_error_reduce]:
+    Source: 'ml-kem/src/polynomial.rs', lines 99:4-107:5 -/
+def polynomial.PolynomialRingElement.add_error_reduce
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (error : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  let i ← polynomial.VECTORS_IN_RING_ELEMENT
+  polynomial.PolynomialRingElement.add_error_reduce_loop
+    vectortraitsOperationsInst { start := 0#usize, «end» := i } self error
+
+/-- [libcrux_iot_ml_kem::matrix::compute_vector_u]: loop body 0:
+    Source: 'ml-kem/src/matrix.rs', lines 163:4-167:5 -/
+@[rust_loop_body]
+def matrix.compute_vector_u_loop0.body
+  {Vector : Type} {Hasher : Type} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (seed : Slice Std.U8)
+  (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (iter : core_models.ops.range.Range Std.Usize)
+  (matrix_entry : polynomial.PolynomialRingElement Vector)
+  (cache : Slice (polynomial.PolynomialRingElement Vector))
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector) × (Slice
+    (polynomial.PolynomialRingElement Vector)) × (Array Std.I32 256#usize))
+    ((polynomial.PolynomialRingElement Vector) × (Slice
+    (polynomial.PolynomialRingElement Vector)) × (Array Std.I32 256#usize)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None =>
+    ok (done (matrix_entry, cache, accumulator))
+  | core_models.option.Option.Some j =>
+    let matrix_entry1 ←
+      matrix.sample_matrix_entry vectortraitsOperationsInst
+        hash_functionsHashInst matrix_entry seed 0#usize j
+    let pre ← Slice.index_usize r_as_ntt j
+    let (pre1, index_mut_back) ← Slice.index_mut_usize cache j
+    let (accumulator1, pre2) ←
+      polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache
+        vectortraitsOperationsInst matrix_entry1 pre accumulator pre1
+    let s := index_mut_back pre2
+    ok (cont (iter1, matrix_entry1, s, accumulator1))
+
+/-- [libcrux_iot_ml_kem::matrix::compute_vector_u]: loop 0:
+    Source: 'ml-kem/src/matrix.rs', lines 163:4-167:5 -/
+@[rust_loop]
+def matrix.compute_vector_u_loop0
+  {Vector : Type} {Hasher : Type} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (iter : core_models.ops.range.Range Std.Usize)
+  (matrix_entry : polynomial.PolynomialRingElement Vector)
+  (seed : Slice Std.U8)
+  (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (cache : Slice (polynomial.PolynomialRingElement Vector))
+  (accumulator : Array Std.I32 256#usize) :
+  Result ((polynomial.PolynomialRingElement Vector) × (Slice
+    (polynomial.PolynomialRingElement Vector)) × (Array Std.I32 256#usize))
+  := do
+  loop
+    (fun (iter1, matrix_entry1, cache1, accumulator1) =>
+      matrix.compute_vector_u_loop0.body vectortraitsOperationsInst
+      hash_functionsHashInst seed r_as_ntt iter1 matrix_entry1 cache1
+      accumulator1)
+    (iter, matrix_entry, cache, accumulator)
+
+/-- [libcrux_iot_ml_kem::matrix::compute_vector_u]: loop body 2:
+    Source: 'ml-kem/src/matrix.rs', lines 175:8-179:9 -/
+@[rust_loop_body]
+def matrix.compute_vector_u_loop1_loop0.body
+  {Vector : Type} {Hasher : Type} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (seed : Slice Std.U8)
+  (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (cache : Slice (polynomial.PolynomialRingElement Vector)) (i : Std.Usize)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (matrix_entry : polynomial.PolynomialRingElement Vector)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector) × (Array Std.I32 256#usize))
+    ((polynomial.PolynomialRingElement Vector) × (Array Std.I32 256#usize)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (matrix_entry, accumulator))
+  | core_models.option.Option.Some j =>
+    let matrix_entry1 ←
+      matrix.sample_matrix_entry vectortraitsOperationsInst
+        hash_functionsHashInst matrix_entry seed i j
+    let pre ← Slice.index_usize r_as_ntt j
+    let pre1 ← Slice.index_usize cache j
+    let accumulator1 ←
+      polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache
+        vectortraitsOperationsInst matrix_entry1 pre accumulator pre1
+    ok (cont (iter1, matrix_entry1, accumulator1))
+
+/-- [libcrux_iot_ml_kem::matrix::compute_vector_u]: loop 2:
+    Source: 'ml-kem/src/matrix.rs', lines 175:8-179:9 -/
+@[rust_loop]
+def matrix.compute_vector_u_loop1_loop0
+  {Vector : Type} {Hasher : Type} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (iter : core_models.ops.range.Range Std.Usize)
+  (matrix_entry : polynomial.PolynomialRingElement Vector)
+  (seed : Slice Std.U8)
+  (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (cache : Slice (polynomial.PolynomialRingElement Vector))
+  (accumulator : Array Std.I32 256#usize) (i : Std.Usize) :
+  Result ((polynomial.PolynomialRingElement Vector) × (Array Std.I32
+    256#usize))
+  := do
+  loop
+    (fun (iter1, matrix_entry1, accumulator1) =>
+      matrix.compute_vector_u_loop1_loop0.body vectortraitsOperationsInst
+      hash_functionsHashInst seed r_as_ntt cache i iter1 matrix_entry1
+      accumulator1)
+    (iter, matrix_entry, accumulator)
+
+/-- [libcrux_iot_ml_kem::matrix::compute_vector_u]: loop body 1:
+    Source: 'ml-kem/src/matrix.rs', lines 172:4-184:5 -/
+@[rust_loop_body]
+def matrix.compute_vector_u_loop1.body
+  {Vector : Type} {Hasher : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (i : Std.I32) (seed : Slice Std.U8)
+  (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (error_1 : Slice (polynomial.PolynomialRingElement Vector))
+  (cache : Slice (polynomial.PolynomialRingElement Vector))
+  (iter : core_models.ops.range.Range Std.Usize)
+  (matrix_entry : polynomial.PolynomialRingElement Vector)
+  (result : Slice (polynomial.PolynomialRingElement Vector)) (scratch : Vector)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector) × (Slice
+    (polynomial.PolynomialRingElement Vector)) × Vector × (Array Std.I32
+    256#usize)) ((polynomial.PolynomialRingElement Vector) × (Slice
+    (polynomial.PolynomialRingElement Vector)) × Vector × (Array Std.I32
+    256#usize)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None =>
+    ok (done (matrix_entry, result, scratch, accumulator))
+  | core_models.option.Option.Some i1 =>
+    let accumulator1 := Array.repeat 256#usize i
+    let (matrix_entry1, accumulator2) ←
+      matrix.compute_vector_u_loop1_loop0 vectortraitsOperationsInst
+        hash_functionsHashInst { start := 0#usize, «end» := K } matrix_entry
+        seed r_as_ntt cache accumulator1 i1
+    let s ← lift (Array.to_slice accumulator2)
+    let (pre, index_mut_back) ← Slice.index_mut_usize result i1
+    let pre1 ←
+      polynomial.PolynomialRingElement.reducing_from_i32_array
+        vectortraitsOperationsInst s pre
+    let result1 := index_mut_back pre1
+    let (pre2, index_mut_back1) ← Slice.index_mut_usize result1 i1
+    let (pre3, scratch1) ←
+      invert_ntt.invert_ntt_montgomery K vectortraitsOperationsInst pre2
+        scratch
+    let result2 := index_mut_back1 pre3
+    let (pre4, index_mut_back2) ← Slice.index_mut_usize result2 i1
+    let pre5 ← Slice.index_usize error_1 i1
+    let pre6 ←
+      polynomial.PolynomialRingElement.add_error_reduce
+        vectortraitsOperationsInst pre4 pre5
+    let s1 := index_mut_back2 pre6
+    ok (cont (iter1, matrix_entry1, s1, scratch1, accumulator2))
+
+/-- [libcrux_iot_ml_kem::matrix::compute_vector_u]: loop 1:
+    Source: 'ml-kem/src/matrix.rs', lines 172:4-184:5 -/
+@[rust_loop]
+def matrix.compute_vector_u_loop1
+  {Vector : Type} {Hasher : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher) (i : Std.I32)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (matrix_entry : polynomial.PolynomialRingElement Vector)
+  (seed : Slice Std.U8)
+  (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (error_1 : Slice (polynomial.PolynomialRingElement Vector))
+  (result : Slice (polynomial.PolynomialRingElement Vector)) (scratch : Vector)
+  (cache : Slice (polynomial.PolynomialRingElement Vector))
+  (accumulator : Array Std.I32 256#usize) :
+  Result ((polynomial.PolynomialRingElement Vector) × (Slice
+    (polynomial.PolynomialRingElement Vector)) × Vector × (Array Std.I32
+    256#usize))
+  := do
+  loop
+    (fun (iter1, matrix_entry1, result1, scratch1, accumulator1) =>
+      matrix.compute_vector_u_loop1.body K vectortraitsOperationsInst
+      hash_functionsHashInst i seed r_as_ntt error_1 cache iter1 matrix_entry1
+      result1 scratch1 accumulator1)
+    (iter, matrix_entry, result, scratch, accumulator)
+
+/-- [libcrux_iot_ml_kem::matrix::compute_vector_u]:
+    Source: 'ml-kem/src/matrix.rs', lines 147:0-185:1 -/
+def matrix.compute_vector_u
+  {Vector : Type} {Hasher : Type} (K : Std.Usize) (vectortraitsOperationsInst :
+  vector.traits.Operations Vector) (hash_functionsHashInst :
+  hash_functions.Hash Hasher)
+  (matrix_entry : polynomial.PolynomialRingElement Vector)
+  (seed : Slice Std.U8)
+  (r_as_ntt : Slice (polynomial.PolynomialRingElement Vector))
+  (error_1 : Slice (polynomial.PolynomialRingElement Vector))
+  (result : Slice (polynomial.PolynomialRingElement Vector)) (scratch : Vector)
+  (cache : Slice (polynomial.PolynomialRingElement Vector))
+  (accumulator : Array Std.I32 256#usize) :
+  Result ((polynomial.PolynomialRingElement Vector) × (Slice
+    (polynomial.PolynomialRingElement Vector)) × Vector × (Slice
+    (polynomial.PolynomialRingElement Vector)) × (Array Std.I32 256#usize))
+  := do
+  let i ← core_models.slice.Slice.len r_as_ntt
+  massert (i = K)
+  let i1 ← core_models.slice.Slice.len error_1
+  massert (i1 = K)
+  let i2 ← libcrux_secrets.traits.Classify.Blanket.classify 0#i32
+  let accumulator1 := Array.repeat 256#usize i2
+  let (matrix_entry1, cache1, accumulator2) ←
+    matrix.compute_vector_u_loop0 vectortraitsOperationsInst
+      hash_functionsHashInst { start := 0#usize, «end» := K } matrix_entry
+      seed r_as_ntt cache accumulator1
+  let s ← lift (Array.to_slice accumulator2)
+  let (pre, index_mut_back) ← Slice.index_mut_usize result 0#usize
+  let pre1 ←
+    polynomial.PolynomialRingElement.reducing_from_i32_array
+      vectortraitsOperationsInst s pre
+  let result1 := index_mut_back pre1
+  let (pre2, index_mut_back1) ← Slice.index_mut_usize result1 0#usize
+  let (pre3, scratch1) ←
+    invert_ntt.invert_ntt_montgomery K vectortraitsOperationsInst pre2 scratch
+  let result2 := index_mut_back1 pre3
+  let (pre4, index_mut_back2) ← Slice.index_mut_usize result2 0#usize
+  let pre5 ← Slice.index_usize error_1 0#usize
+  let pre6 ←
+    polynomial.PolynomialRingElement.add_error_reduce
+      vectortraitsOperationsInst pre4 pre5
+  let s1 := index_mut_back2 pre6
+  let (matrix_entry2, result3, scratch2, accumulator3) ←
+    matrix.compute_vector_u_loop1 K vectortraitsOperationsInst
+      hash_functionsHashInst i2 { start := 1#usize, «end» := K }
+      matrix_entry1 seed r_as_ntt error_1 s1 scratch1 cache1 accumulator2
+  ok (matrix_entry2, result3, scratch2, cache1, accumulator3)
+
+/-- [libcrux_iot_ml_kem::vector::traits::MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS]
+    Source: 'ml-kem/src/vector/traits.rs', lines 3:0-3:61
+    Visibility: public -/
+@[global_simps, irreducible]
+def vector.traits.MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS : Std.I16 := 1353#i16
+
+/-- [libcrux_iot_ml_kem::vector::traits::to_standard_domain]:
+    Source: 'ml-kem/src/vector/traits.rs', lines 173:0-175:1
+    Visibility: public -/
+def vector.traits.to_standard_domain
+  {T : Type} (OperationsInst : vector.traits.Operations T) (v : T) :
+  Result T
+  := do
+  OperationsInst.montgomery_multiply_by_constant v
+    vector.traits.MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::add_standard_error_reduce]: loop body 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 111:8-119:9 -/
+@[rust_loop_body]
+def polynomial.PolynomialRingElement.add_standard_error_reduce_loop.body
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (error : polynomial.PolynomialRingElement Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (self : polynomial.PolynomialRingElement Vector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    (polynomial.PolynomialRingElement Vector))
+    (polynomial.PolynomialRingElement Vector))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done self)
+  | core_models.option.Option.Some j =>
+    let (t, index_mut_back) ← Array.index_mut_usize self.coefficients j
+    let t1 ← vector.traits.to_standard_domain vectortraitsOperationsInst t
+    let a := index_mut_back t1
+    let (t2, index_mut_back1) ← Array.index_mut_usize a j
+    let t3 ← Array.index_usize error.coefficients j
+    let t4 ← vectortraitsOperationsInst.add t2 t3
+    let a1 := index_mut_back1 t4
+    let (t5, index_mut_back2) ← Array.index_mut_usize a1 j
+    let t6 ← vectortraitsOperationsInst.barrett_reduce t5
+    let a2 := index_mut_back2 t6
+    ok (cont (iter1, { coefficients := a2 }))
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::add_standard_error_reduce]: loop 0:
+    Source: 'ml-kem/src/polynomial.rs', lines 111:8-119:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.add_standard_error_reduce_loop
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (iter : core_models.ops.range.Range Std.Usize)
+  (self : polynomial.PolynomialRingElement Vector)
+  (error : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  loop
+    (fun (iter1, self1) =>
+      polynomial.PolynomialRingElement.add_standard_error_reduce_loop.body
+      vectortraitsOperationsInst error iter1 self1)
+    (iter, self)
+
+/-- [libcrux_iot_ml_kem::polynomial::{libcrux_iot_ml_kem::polynomial::PolynomialRingElement<Vector>}::add_standard_error_reduce]:
+    Source: 'ml-kem/src/polynomial.rs', lines 110:4-120:5 -/
+def polynomial.PolynomialRingElement.add_standard_error_reduce
+  {Vector : Type} (vectortraitsOperationsInst : vector.traits.Operations
+  Vector) (self : polynomial.PolynomialRingElement Vector)
+  (error : polynomial.PolynomialRingElement Vector) :
+  Result (polynomial.PolynomialRingElement Vector)
+  := do
+  let i ← polynomial.VECTORS_IN_RING_ELEMENT
+  polynomial.PolynomialRingElement.add_standard_error_reduce_loop
+    vectortraitsOperationsInst { start := 0#usize, «end» := i } self error
+
+/-- [libcrux_iot_ml_kem::matrix::compute_As_plus_e]: loop body 0:
+    Source: 'ml-kem/src/matrix.rs', lines 201:4-207:5 -/
+@[rust_loop_body]
+def matrix.compute_As_plus_e_loop0.body
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (matrix_A : Slice (polynomial.PolynomialRingElement Vector))
+  (s_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (s_cache : Array (polynomial.PolynomialRingElement Vector) K)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Array
+    (polynomial.PolynomialRingElement Vector) K) × (Array Std.I32 256#usize))
+    ((Array (polynomial.PolynomialRingElement Vector) K) × (Array Std.I32
+    256#usize)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (s_cache, accumulator))
+  | core_models.option.Option.Some j =>
+    let pre ← matrix.entry K vectortraitsOperationsInst matrix_A 0#usize j
+    let pre1 ← Array.index_usize s_as_ntt j
+    let (pre2, index_mut_back) ← Array.index_mut_usize s_cache j
+    let (accumulator1, pre3) ←
+      polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache
+        vectortraitsOperationsInst pre pre1 accumulator pre2
+    let a := index_mut_back pre3
+    ok (cont (iter1, a, accumulator1))
+
+/-- [libcrux_iot_ml_kem::matrix::compute_As_plus_e]: loop 0:
+    Source: 'ml-kem/src/matrix.rs', lines 201:4-207:5 -/
+@[rust_loop]
+def matrix.compute_As_plus_e_loop0
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (matrix_A : Slice (polynomial.PolynomialRingElement Vector))
+  (s_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (s_cache : Array (polynomial.PolynomialRingElement Vector) K)
+  (accumulator : Array Std.I32 256#usize) :
+  Result ((Array (polynomial.PolynomialRingElement Vector) K) × (Array Std.I32
+    256#usize))
+  := do
+  loop
+    (fun (iter1, s_cache1, accumulator1) => matrix.compute_As_plus_e_loop0.body
+      vectortraitsOperationsInst matrix_A s_as_ntt iter1 s_cache1 accumulator1)
+    (iter, s_cache, accumulator)
+
+/-- [libcrux_iot_ml_kem::matrix::compute_As_plus_e]: loop body 2:
+    Source: 'ml-kem/src/matrix.rs', lines 215:8-221:9 -/
+@[rust_loop_body]
+def matrix.compute_As_plus_e_loop1_loop0.body
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (matrix_A : Slice (polynomial.PolynomialRingElement Vector))
+  (s_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (s_cache : Array (polynomial.PolynomialRingElement Vector) K) (i : Std.Usize)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Array
+    Std.I32 256#usize)) (Array Std.I32 256#usize))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done accumulator)
+  | core_models.option.Option.Some j =>
+    let pre ← matrix.entry K vectortraitsOperationsInst matrix_A i j
+    let pre1 ← Array.index_usize s_as_ntt j
+    let pre2 ← Array.index_usize s_cache j
+    let accumulator1 ←
+      polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache
+        vectortraitsOperationsInst pre pre1 accumulator pre2
+    ok (cont (iter1, accumulator1))
+
+/-- [libcrux_iot_ml_kem::matrix::compute_As_plus_e]: loop 2:
+    Source: 'ml-kem/src/matrix.rs', lines 215:8-221:9 -/
+@[rust_loop]
+def matrix.compute_As_plus_e_loop1_loop0
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (matrix_A : Slice (polynomial.PolynomialRingElement Vector))
+  (s_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (s_cache : Array (polynomial.PolynomialRingElement Vector) K)
+  (accumulator : Array Std.I32 256#usize) (i : Std.Usize) :
+  Result (Array Std.I32 256#usize)
+  := do
+  loop
+    (fun (iter1, accumulator1) => matrix.compute_As_plus_e_loop1_loop0.body
+      vectortraitsOperationsInst matrix_A s_as_ntt s_cache i iter1
+      accumulator1)
+    (iter, accumulator)
+
+/-- [libcrux_iot_ml_kem::matrix::compute_As_plus_e]: loop body 1:
+    Source: 'ml-kem/src/matrix.rs', lines 213:4-225:5 -/
+@[rust_loop_body]
+def matrix.compute_As_plus_e_loop1.body
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (matrix_A : Slice (polynomial.PolynomialRingElement Vector))
+  (s_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (error_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (s_cache : Array (polynomial.PolynomialRingElement Vector) K)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (t_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (accumulator : Array Std.I32 256#usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Array
+    (polynomial.PolynomialRingElement Vector) K) × (Array Std.I32 256#usize))
+    ((Array (polynomial.PolynomialRingElement Vector) K) × (Array Std.I32
+    256#usize)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (t_as_ntt, accumulator))
+  | core_models.option.Option.Some i =>
+    let i1 ← libcrux_secrets.traits.Classify.Blanket.classify 0#i32
+    let accumulator1 := Array.repeat 256#usize i1
+    let accumulator2 ←
+      matrix.compute_As_plus_e_loop1_loop0 vectortraitsOperationsInst
+        { start := 0#usize, «end» := K } matrix_A s_as_ntt s_cache
+        accumulator1 i
+    let s ← lift (Array.to_slice accumulator2)
+    let (pre, index_mut_back) ← Array.index_mut_usize t_as_ntt i
+    let pre1 ←
+      polynomial.PolynomialRingElement.reducing_from_i32_array
+        vectortraitsOperationsInst s pre
+    let t_as_ntt1 := index_mut_back pre1
+    let (pre2, index_mut_back1) ← Array.index_mut_usize t_as_ntt1 i
+    let pre3 ← Array.index_usize error_as_ntt i
+    let pre4 ←
+      polynomial.PolynomialRingElement.add_standard_error_reduce
+        vectortraitsOperationsInst pre2 pre3
+    let a := index_mut_back1 pre4
+    ok (cont (iter1, a, accumulator2))
+
+/-- [libcrux_iot_ml_kem::matrix::compute_As_plus_e]: loop 1:
+    Source: 'ml-kem/src/matrix.rs', lines 213:4-225:5 -/
+@[rust_loop]
+def matrix.compute_As_plus_e_loop1
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (t_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (matrix_A : Slice (polynomial.PolynomialRingElement Vector))
+  (s_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (error_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (s_cache : Array (polynomial.PolynomialRingElement Vector) K)
+  (accumulator : Array Std.I32 256#usize) :
+  Result ((Array (polynomial.PolynomialRingElement Vector) K) × (Array Std.I32
+    256#usize))
+  := do
+  loop
+    (fun (iter1, t_as_ntt1, accumulator1) =>
+      matrix.compute_As_plus_e_loop1.body vectortraitsOperationsInst matrix_A
+      s_as_ntt error_as_ntt s_cache iter1 t_as_ntt1 accumulator1)
+    (iter, t_as_ntt, accumulator)
+
+/-- [libcrux_iot_ml_kem::matrix::compute_As_plus_e]:
+    Source: 'ml-kem/src/matrix.rs', lines 191:0-226:1 -/
+def matrix.compute_As_plus_e
+  {Vector : Type} {K : Std.Usize} (vectortraitsOperationsInst :
+  vector.traits.Operations Vector)
+  (t_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (matrix_A : Slice (polynomial.PolynomialRingElement Vector))
+  (s_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (error_as_ntt : Array (polynomial.PolynomialRingElement Vector) K)
+  (s_cache : Array (polynomial.PolynomialRingElement Vector) K)
+  (accumulator : Array Std.I32 256#usize) :
+  Result ((Array (polynomial.PolynomialRingElement Vector) K) × (Array
+    (polynomial.PolynomialRingElement Vector) K) × (Array Std.I32 256#usize))
+  := do
+  let (s_cache1, accumulator1) ←
+    matrix.compute_As_plus_e_loop0 vectortraitsOperationsInst
+      { start := 0#usize, «end» := K } matrix_A s_as_ntt s_cache accumulator
+  let s ← lift (Array.to_slice accumulator1)
+  let (pre, index_mut_back) ← Array.index_mut_usize t_as_ntt 0#usize
+  let pre1 ←
+    polynomial.PolynomialRingElement.reducing_from_i32_array
+      vectortraitsOperationsInst s pre
+  let t_as_ntt1 := index_mut_back pre1
+  let (pre2, index_mut_back1) ← Array.index_mut_usize t_as_ntt1 0#usize
+  let pre3 ← Array.index_usize error_as_ntt 0#usize
+  let pre4 ←
+    polynomial.PolynomialRingElement.add_standard_error_reduce
+      vectortraitsOperationsInst pre2 pre3
+  let a := index_mut_back1 pre4
+  let (t_as_ntt2, accumulator2) ←
+    matrix.compute_As_plus_e_loop1 vectortraitsOperationsInst
+      { start := 1#usize, «end» := K } a matrix_A s_as_ntt error_as_ntt
+      s_cache1 accumulator1
+  ok (t_as_ntt2, s_cache1, accumulator2)
 
 /-- [libcrux_iot_ml_kem::ntt::ntt_at_layer_1]: loop body 0:
     Source: 'ml-kem/src/ntt.rs', lines 14:4-25:5 -/
@@ -282,16 +2399,6 @@ def ntt.ntt_at_layer_3
   ntt.ntt_at_layer_3_loop vectortraitsOperationsInst
     { start := 0#usize, «end» := 16#usize } zeta_i re
 
-/-- [libcrux_iot_ml_kem::vector::traits::montgomery_multiply_fe]:
-    Source: 'ml-kem/src/vector/traits.rs', lines 168:0-170:1
-    Visibility: public -/
-def vector.traits.montgomery_multiply_fe
-  {T : Type} (OperationsInst : vector.traits.Operations T) (v : T)
-  (fer : Std.I16) :
-  Result T
-  := do
-  OperationsInst.montgomery_multiply_by_constant v fer
-
 /-- [libcrux_iot_ml_kem::ntt::ntt_layer_int_vec_step]:
     Source: 'ml-kem/src/ntt.rs', lines 63:0-75:1 -/
 def ntt.ntt_layer_int_vec_step
@@ -412,19 +2519,6 @@ def ntt.ntt_at_layer_4_plus
   let i ← 128#usize >>> layer
   ntt.ntt_at_layer_4_plus_loop0 vectortraitsOperationsInst
     { start := 0#usize, «end» := i } zeta_i re scratch step_vec
-
-/-- [libcrux_iot_ml_kem::vector::traits::FIELD_ELEMENTS_IN_VECTOR]
-    Source: 'ml-kem/src/vector/traits.rs', lines 5:0-5:47
-    Visibility: public -/
-@[global_simps, irreducible]
-def vector.traits.FIELD_ELEMENTS_IN_VECTOR : Std.Usize := 16#usize
-
-/-- [libcrux_iot_ml_kem::polynomial::VECTORS_IN_RING_ELEMENT]
-    Source: 'ml-kem/src/polynomial.rs', lines 26:0-27:78 -/
-@[global_simps, irreducible]
-def polynomial.VECTORS_IN_RING_ELEMENT : Result Std.Usize :=
-  constants.COEFFICIENTS_IN_RING_ELEMENT /
-    vector.traits.FIELD_ELEMENTS_IN_VECTOR
 
 /-- [libcrux_iot_ml_kem::ntt::ntt_at_layer_7]: loop body 0:
     Source: 'ml-kem/src/ntt.rs', lines 116:4-122:5 -/
@@ -615,49 +2709,31 @@ def vector.portable.arithmetic.MONTGOMERY_SHIFT : Std.U8 := 16#u8
 @[global_simps, irreducible]
 def vector.portable.arithmetic.BARRETT_MULTIPLIER : Std.I32 := 20159#i32
 
-/-- [libcrux_iot_ml_kem::vector::traits::BARRETT_SHIFT]
-    Source: 'ml-kem/src/vector/traits.rs', lines 7:0-7:34
-    Visibility: public -/
-@[global_simps, irreducible]
-def vector.traits.BARRETT_SHIFT : Std.I32 := 26#i32
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::get_n_least_significant_bits]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 28:0-32:1 -/
+def vector.portable.arithmetic.get_n_least_significant_bits
+  (n : Std.U8) (value : Std.U32) : Result Std.U32 := do
+  let i ← 1#u32 <<< n
+  let i1 ← core_models.num.U32.wrapping_sub i 1#u32
+  ok (value &&& i1)
 
-/-- [libcrux_iot_ml_kem::vector::traits::BARRETT_R]
-    Source: 'ml-kem/src/vector/traits.rs', lines 8:0-8:46
+/-- [libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector]
+    Source: 'ml-kem/src/vector/portable/vector_type.rs', lines 9:0-11:1
     Visibility: public -/
-@[global_simps, irreducible]
-def vector.traits.BARRETT_R : Result Std.I32 :=
-  1#i32 <<< vector.traits.BARRETT_SHIFT
-
-/-- [libcrux_iot_ml_kem::vector::traits::FIELD_MODULUS]
-    Source: 'ml-kem/src/vector/traits.rs', lines 4:0-4:36
-    Visibility: public -/
-@[global_simps, irreducible]
-def vector.traits.FIELD_MODULUS : Std.I16 := 3329#i16
-
-/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::barrett_reduce_element]:
-    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 124:0-131:1 -/
-def vector.portable.arithmetic.barrett_reduce_element
-  (value : Std.I16) : Result Std.I16 := do
-  let i ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 value
-  let i1 ←
-    core_models.num.I32.wrapping_mul i
-      vector.portable.arithmetic.BARRETT_MULTIPLIER
-  let i2 ← vector.traits.BARRETT_R
-  let i3 ← i2 >>> 1#i32
-  let t ← core_models.num.I32.wrapping_add i1 i3
-  let i4 ← lift (IScalar.hcast .U32 vector.traits.BARRETT_SHIFT)
-  let i5 ← t >>> i4
-  let quotient ←
-    libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16 i5
-  let i6 ←
-    core_models.num.I16.wrapping_mul quotient vector.traits.FIELD_MODULUS
-  core_models.num.I16.wrapping_sub value i6
+structure vector.portable.vector_type.PortableVector where
+  elements : Array Std.I16 16#usize
 
 /-- [libcrux_iot_ml_kem::vector::traits::INVERSE_OF_MODULUS_MOD_MONTGOMERY_R]
     Source: 'ml-kem/src/vector/traits.rs', lines 6:0-6:59
     Visibility: public -/
 @[global_simps, irreducible]
 def vector.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R : Std.U32 := 62209#u32
+
+/-- [libcrux_iot_ml_kem::vector::traits::FIELD_MODULUS]
+    Source: 'ml-kem/src/vector/traits.rs', lines 4:0-4:36
+    Visibility: public -/
+@[global_simps, irreducible]
+def vector.traits.FIELD_MODULUS : Std.I16 := 3329#i16
 
 /-- [libcrux_iot_ml_kem::vector::portable::arithmetic::montgomery_reduce_element]:
     Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 156:0-170:1 -/
@@ -688,6 +2764,456 @@ def vector.portable.arithmetic.montgomery_reduce_element
     libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16 i11
   core_models.num.I16.wrapping_sub value_high c
 
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::reducing_from_i32_array]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 37:4-39:5
+    Visibility: public -/
+@[rust_loop_body]
+def vector.portable.arithmetic.reducing_from_i32_array_loop.body
+  (array : Slice Std.I32) (iter : core_models.ops.range.Range Std.Usize)
+  (out : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done out)
+  | core_models.option.Option.Some i =>
+    let i1 ← Slice.index_usize array i
+    let i2 ← vector.portable.arithmetic.montgomery_reduce_element i1
+    let a ← Array.update out.elements i i2
+    ok (cont (iter1, { elements := a }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::reducing_from_i32_array]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 37:4-39:5
+    Visibility: public -/
+@[rust_loop]
+def vector.portable.arithmetic.reducing_from_i32_array_loop
+  (iter : core_models.ops.range.Range Std.Usize) (array : Slice Std.I32)
+  (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, out1) =>
+      vector.portable.arithmetic.reducing_from_i32_array_loop.body array iter1
+      out1)
+    (iter, out)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::reducing_from_i32_array]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 36:0-40:1
+    Visibility: public -/
+@[reducible]
+def vector.portable.arithmetic.reducing_from_i32_array
+  (array : Slice Std.I32) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.reducing_from_i32_array_loop
+    { start := 0#usize, «end» := 16#usize } array out
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::add]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 46:4-48:5 -/
+@[rust_loop_body]
+def vector.portable.arithmetic.add_loop.body
+  (rhs : vector.portable.vector_type.PortableVector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (lhs : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done lhs)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize lhs.elements i
+    let i2 ← Array.index_usize rhs.elements i
+    let i3 ← core_models.num.I16.wrapping_add i1 i2
+    let a ← Array.update lhs.elements i i3
+    ok (cont (iter1, { elements := a }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::add]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 46:4-48:5 -/
+@[rust_loop]
+def vector.portable.arithmetic.add_loop
+  (iter : core_models.ops.range.Range Std.Usize)
+  (lhs : vector.portable.vector_type.PortableVector)
+  (rhs : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, lhs1) => vector.portable.arithmetic.add_loop.body rhs iter1
+      lhs1)
+    (iter, lhs)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::add]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 43:0-49:1 -/
+@[reducible]
+def vector.portable.arithmetic.add
+  (lhs : vector.portable.vector_type.PortableVector)
+  (rhs : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.add_loop
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } lhs
+    rhs
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::sub]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 55:4-57:5 -/
+@[rust_loop_body]
+def vector.portable.arithmetic.sub_loop.body
+  (rhs : vector.portable.vector_type.PortableVector)
+  (iter : core_models.ops.range.Range Std.Usize)
+  (lhs : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done lhs)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize lhs.elements i
+    let i2 ← Array.index_usize rhs.elements i
+    let i3 ← core_models.num.I16.wrapping_sub i1 i2
+    let a ← Array.update lhs.elements i i3
+    ok (cont (iter1, { elements := a }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::sub]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 55:4-57:5 -/
+@[rust_loop]
+def vector.portable.arithmetic.sub_loop
+  (iter : core_models.ops.range.Range Std.Usize)
+  (lhs : vector.portable.vector_type.PortableVector)
+  (rhs : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, lhs1) => vector.portable.arithmetic.sub_loop.body rhs iter1
+      lhs1)
+    (iter, lhs)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::sub]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 52:0-58:1 -/
+@[reducible]
+def vector.portable.arithmetic.sub
+  (lhs : vector.portable.vector_type.PortableVector)
+  (rhs : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.sub_loop
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } lhs
+    rhs
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::negate]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 65:4-67:5 -/
+@[rust_loop_body]
+def vector.portable.arithmetic.negate_loop.body
+  (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done vec)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize vec.elements i
+    let i2 ← core_models.num.I16.wrapping_neg i1
+    let a ← Array.update vec.elements i i2
+    ok (cont (iter1, { elements := a }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::negate]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 65:4-67:5 -/
+@[rust_loop]
+def vector.portable.arithmetic.negate_loop
+  (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, vec1) => vector.portable.arithmetic.negate_loop.body iter1
+      vec1)
+    (iter, vec)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::negate]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 61:0-68:1 -/
+@[reducible]
+def vector.portable.arithmetic.negate
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.negate_loop
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } vec
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::multiply_by_constant]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 74:4-76:5 -/
+@[rust_loop_body]
+def vector.portable.arithmetic.multiply_by_constant_loop.body
+  (c : Std.I16) (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done vec)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize vec.elements i
+    let i2 ← core_models.num.I16.wrapping_mul i1 c
+    let a ← Array.update vec.elements i i2
+    ok (cont (iter1, { elements := a }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::multiply_by_constant]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 74:4-76:5 -/
+@[rust_loop]
+def vector.portable.arithmetic.multiply_by_constant_loop
+  (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) (c : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, vec1) =>
+      vector.portable.arithmetic.multiply_by_constant_loop.body c iter1 vec1)
+    (iter, vec)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::multiply_by_constant]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 71:0-77:1 -/
+@[reducible]
+def vector.portable.arithmetic.multiply_by_constant
+  (vec : vector.portable.vector_type.PortableVector) (c : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.multiply_by_constant_loop
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } vec
+    c
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::bitwise_and_with_constant]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 83:4-85:5 -/
+@[rust_loop_body]
+def vector.portable.arithmetic.bitwise_and_with_constant_loop.body
+  (c : Std.I16) (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done vec)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize vec.elements i
+    let i2 ← lift (i1 &&& c)
+    let a ← Array.update vec.elements i i2
+    ok (cont (iter1, { elements := a }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::bitwise_and_with_constant]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 83:4-85:5 -/
+@[rust_loop]
+def vector.portable.arithmetic.bitwise_and_with_constant_loop
+  (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) (c : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, vec1) =>
+      vector.portable.arithmetic.bitwise_and_with_constant_loop.body c iter1
+      vec1)
+    (iter, vec)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::bitwise_and_with_constant]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 80:0-86:1 -/
+@[reducible]
+def vector.portable.arithmetic.bitwise_and_with_constant
+  (vec : vector.portable.vector_type.PortableVector) (c : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.bitwise_and_with_constant_loop
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } vec
+    c
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::shift_right]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 93:4-95:5 -/
+@[rust_loop_body]
+def vector.portable.arithmetic.shift_right_loop.body
+  (SHIFT_BY : Std.I32) (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done vec)
+  | core_models.option.Option.Some i =>
+    let i1 ← lift (IScalar.hcast .U32 SHIFT_BY)
+    let i2 ← Array.index_usize vec.elements i
+    let i3 ← i2 >>> i1
+    let a ← Array.update vec.elements i i3
+    ok (cont (iter1, { elements := a }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::shift_right]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 93:4-95:5 -/
+@[rust_loop]
+def vector.portable.arithmetic.shift_right_loop
+  (SHIFT_BY : Std.I32) (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, vec1) => vector.portable.arithmetic.shift_right_loop.body
+      SHIFT_BY iter1 vec1)
+    (iter, vec)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::shift_right]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 90:0-96:1 -/
+@[reducible]
+def vector.portable.arithmetic.shift_right
+  (SHIFT_BY : Std.I32) (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.shift_right_loop SHIFT_BY
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } vec
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::cond_subtract_3329]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 104:4-108:5 -/
+@[rust_loop_body]
+def vector.portable.arithmetic.cond_subtract_3329_loop.body
+  (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done vec)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize vec.elements i
+    let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
+    if i2 >= 3329#i16
+    then
+      let i3 ← core_models.num.I16.wrapping_sub i1 3329#i16
+      let a ← Array.update vec.elements i i3
+      ok (cont (iter1, { elements := a }))
+    else ok (cont (iter1, vec))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::cond_subtract_3329]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 104:4-108:5 -/
+@[rust_loop]
+def vector.portable.arithmetic.cond_subtract_3329_loop
+  (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, vec1) =>
+      vector.portable.arithmetic.cond_subtract_3329_loop.body iter1 vec1)
+    (iter, vec)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::cond_subtract_3329]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 101:0-109:1 -/
+@[reducible]
+def vector.portable.arithmetic.cond_subtract_3329
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.cond_subtract_3329_loop
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } vec
+
+/-- [libcrux_iot_ml_kem::vector::traits::BARRETT_SHIFT]
+    Source: 'ml-kem/src/vector/traits.rs', lines 7:0-7:34
+    Visibility: public -/
+@[global_simps, irreducible]
+def vector.traits.BARRETT_SHIFT : Std.I32 := 26#i32
+
+/-- [libcrux_iot_ml_kem::vector::traits::BARRETT_R]
+    Source: 'ml-kem/src/vector/traits.rs', lines 8:0-8:46
+    Visibility: public -/
+@[global_simps, irreducible]
+def vector.traits.BARRETT_R : Result Std.I32 :=
+  1#i32 <<< vector.traits.BARRETT_SHIFT
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::barrett_reduce_element]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 124:0-131:1 -/
+def vector.portable.arithmetic.barrett_reduce_element
+  (value : Std.I16) : Result Std.I16 := do
+  let i ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 value
+  let i1 ←
+    core_models.num.I32.wrapping_mul i
+      vector.portable.arithmetic.BARRETT_MULTIPLIER
+  let i2 ← vector.traits.BARRETT_R
+  let i3 ← i2 >>> 1#i32
+  let t ← core_models.num.I32.wrapping_add i1 i3
+  let i4 ← lift (IScalar.hcast .U32 vector.traits.BARRETT_SHIFT)
+  let i5 ← t >>> i4
+  let quotient ←
+    libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16 i5
+  let i6 ←
+    core_models.num.I16.wrapping_mul quotient vector.traits.FIELD_MODULUS
+  core_models.num.I16.wrapping_sub value i6
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::barrett_reduce]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 137:4-140:5 -/
+@[rust_loop_body]
+def vector.portable.arithmetic.barrett_reduce_loop.body
+  (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done vec)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize vec.elements i
+    let vi ← vector.portable.arithmetic.barrett_reduce_element i1
+    let a ← Array.update vec.elements i vi
+    ok (cont (iter1, { elements := a }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::barrett_reduce]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 137:4-140:5 -/
+@[rust_loop]
+def vector.portable.arithmetic.barrett_reduce_loop
+  (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, vec1) => vector.portable.arithmetic.barrett_reduce_loop.body
+      iter1 vec1)
+    (iter, vec)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::barrett_reduce]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 134:0-141:1 -/
+@[reducible]
+def vector.portable.arithmetic.barrett_reduce
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.barrett_reduce_loop
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } vec
+
 /-- [libcrux_iot_ml_kem::vector::portable::arithmetic::montgomery_multiply_fe_by_fer]:
     Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 181:0-187:1 -/
 def vector.portable.arithmetic.montgomery_multiply_fe_by_fer
@@ -697,11 +3223,233 @@ def vector.portable.arithmetic.montgomery_multiply_fe_by_fer
   let product ← core_models.num.I32.wrapping_mul i i1
   vector.portable.arithmetic.montgomery_reduce_element product
 
-/-- [libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector]
-    Source: 'ml-kem/src/vector/portable/vector_type.rs', lines 9:0-11:1
-    Visibility: public -/
-structure vector.portable.vector_type.PortableVector where
-  elements : Array Std.I16 16#usize
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::montgomery_multiply_by_constant]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 193:4-195:5 -/
+@[rust_loop_body]
+def vector.portable.arithmetic.montgomery_multiply_by_constant_loop.body
+  (c : Std.I16) (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done vec)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize vec.elements i
+    let i2 ← vector.portable.arithmetic.montgomery_multiply_fe_by_fer i1 c
+    let a ← Array.update vec.elements i i2
+    ok (cont (iter1, { elements := a }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::montgomery_multiply_by_constant]: loop 0:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 193:4-195:5 -/
+@[rust_loop]
+def vector.portable.arithmetic.montgomery_multiply_by_constant_loop
+  (iter : core_models.ops.range.Range Std.Usize)
+  (vec : vector.portable.vector_type.PortableVector) (c : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, vec1) =>
+      vector.portable.arithmetic.montgomery_multiply_by_constant_loop.body c
+      iter1 vec1)
+    (iter, vec)
+
+/-- [libcrux_iot_ml_kem::vector::portable::arithmetic::montgomery_multiply_by_constant]:
+    Source: 'ml-kem/src/vector/portable/arithmetic.rs', lines 190:0-196:1 -/
+@[reducible]
+def vector.portable.arithmetic.montgomery_multiply_by_constant
+  (vec : vector.portable.vector_type.PortableVector) (c : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.montgomery_multiply_by_constant_loop
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } vec
+    c
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::compress_message_coefficient]:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 28:0-56:1 -/
+def vector.portable.compress.compress_message_coefficient
+  (fe : Std.U16) : Result Std.U8 := do
+  let i ← libcrux_secrets.traits.Classify.Blanket.classify 1664#i16
+  let i1 ← libcrux_secrets.U16.Insts.Libcrux_secretsIntCastOps.as_i16 fe
+  let shifted ← core_models.num.I16.wrapping_sub i i1
+  let mask ← shifted >>> 15#i32
+  let shifted_to_positive ← lift (mask ^^^ shifted)
+  let shifted_positive_in_range ←
+    core_models.num.I16.wrapping_sub shifted_to_positive 832#i16
+  let r0 ← shifted_positive_in_range >>> 15#i32
+  let r1 ← lift (r0 &&& 1#i16)
+  libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 r1
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::compress_ciphertext_coefficient]:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 60:0-70:1 -/
+def vector.portable.compress.compress_ciphertext_coefficient
+  (coefficient_bits : Std.U8) (fe : Std.U16) : Result Std.I16 := do
+  let i ← libcrux_secrets.U16.Insts.Libcrux_secretsIntCastOps.as_u64 fe
+  let compressed ← i <<< coefficient_bits
+  let compressed1 ← core_models.num.U64.wrapping_add compressed 1664#u64
+  let compressed2 ← core_models.num.U64.wrapping_mul compressed1 10321340#u64
+  let compressed3 ← compressed2 >>> 35#i32
+  let i1 ←
+    libcrux_secrets.U64.Insts.Libcrux_secretsIntCastOps.as_u32 compressed3
+  let i2 ←
+    vector.portable.arithmetic.get_n_least_significant_bits coefficient_bits i1
+  libcrux_secrets.U32.Insts.Libcrux_secretsIntCastOps.as_i16 i2
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::compress_1]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 74:4-76:5 -/
+@[rust_loop_body]
+def vector.portable.compress.compress_1_loop.body
+  (iter : core_models.ops.range.Range Std.Usize)
+  (a : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done a)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize a.elements i
+    let i2 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u16 i1
+    let i3 ← vector.portable.compress.compress_message_coefficient i2
+    let i4 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i3
+    let a1 ← Array.update a.elements i i4
+    ok (cont (iter1, { elements := a1 }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::compress_1]: loop 0:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 74:4-76:5 -/
+@[rust_loop]
+def vector.portable.compress.compress_1_loop
+  (iter : core_models.ops.range.Range Std.Usize)
+  (a : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, a1) => vector.portable.compress.compress_1_loop.body iter1 a1)
+    (iter, a)
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::compress_1]:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 73:0-77:1 -/
+@[reducible]
+def vector.portable.compress.compress_1
+  (a : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.compress.compress_1_loop
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } a
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::compress]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 82:4-86:5 -/
+@[rust_loop_body]
+def vector.portable.compress.compress_loop.body
+  (COEFFICIENT_BITS : Std.I32) (iter : core_models.ops.range.Range Std.Usize)
+  (a : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done a)
+  | core_models.option.Option.Some i =>
+    let i1 ← lift (IScalar.hcast .U8 COEFFICIENT_BITS)
+    let i2 ← Array.index_usize a.elements i
+    let i3 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u16 i2
+    let i4 ← vector.portable.compress.compress_ciphertext_coefficient i1 i3
+    let i5 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i16 i4
+    let a1 ← Array.update a.elements i i5
+    ok (cont (iter1, { elements := a1 }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::compress]: loop 0:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 82:4-86:5 -/
+@[rust_loop]
+def vector.portable.compress.compress_loop
+  (COEFFICIENT_BITS : Std.I32) (iter : core_models.ops.range.Range Std.Usize)
+  (a : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, a1) => vector.portable.compress.compress_loop.body
+      COEFFICIENT_BITS iter1 a1)
+    (iter, a)
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::compress]:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 81:0-87:1 -/
+@[reducible]
+def vector.portable.compress.compress
+  (COEFFICIENT_BITS : Std.I32) (a : vector.portable.vector_type.PortableVector)
+  :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.compress.compress_loop COEFFICIENT_BITS
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } a
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::decompress_ciphertext_coefficient]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 94:4-104:5 -/
+@[rust_loop_body]
+def vector.portable.compress.decompress_ciphertext_coefficient_loop.body
+  (COEFFICIENT_BITS : Std.I32) (iter : core_models.ops.range.Range Std.Usize)
+  (a : vector.portable.vector_type.PortableVector) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) ×
+    vector.portable.vector_type.PortableVector)
+    vector.portable.vector_type.PortableVector)
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done a)
+  | core_models.option.Option.Some i =>
+    let i1 ← Array.index_usize a.elements i
+    let i2 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 i1
+    let i3 ←
+      libcrux_secrets.traits.Classify.Blanket.classify
+        vector.traits.FIELD_MODULUS
+    let i4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 i3
+    let decompressed ← core_models.num.I32.wrapping_mul i2 i4
+    let i5 ← decompressed <<< 1#i32
+    let i6 ← 1#i32 <<< COEFFICIENT_BITS
+    let decompressed1 ← core_models.num.I32.wrapping_add i5 i6
+    let i7 ← COEFFICIENT_BITS + 1#i32
+    let decompressed2 ← decompressed1 >>> i7
+    let i8 ←
+      libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16 decompressed2
+    let a1 ← Array.update a.elements i i8
+    ok (cont (iter1, { elements := a1 }))
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::decompress_ciphertext_coefficient]: loop 0:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 94:4-104:5 -/
+@[rust_loop]
+def vector.portable.compress.decompress_ciphertext_coefficient_loop
+  (COEFFICIENT_BITS : Std.I32) (iter : core_models.ops.range.Range Std.Usize)
+  (a : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  loop
+    (fun (iter1, a1) =>
+      vector.portable.compress.decompress_ciphertext_coefficient_loop.body
+      COEFFICIENT_BITS iter1 a1)
+    (iter, a)
+
+/-- [libcrux_iot_ml_kem::vector::portable::compress::decompress_ciphertext_coefficient]:
+    Source: 'ml-kem/src/vector/portable/compress.rs', lines 91:0-105:1 -/
+@[reducible]
+def vector.portable.compress.decompress_ciphertext_coefficient
+  (COEFFICIENT_BITS : Std.I32) (a : vector.portable.vector_type.PortableVector)
+  :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.compress.decompress_ciphertext_coefficient_loop
+    COEFFICIENT_BITS
+    { start := 0#usize, «end» := vector.traits.FIELD_ELEMENTS_IN_VECTOR } a
 
 /-- [libcrux_iot_ml_kem::vector::portable::ntt::ntt_step]:
     Source: 'ml-kem/src/vector/portable/ntt.rs', lines 7:0-15:1 -/
@@ -1068,5 +3816,1710 @@ def vector.portable.ntt.accumulating_ntt_multiply_use_cache
       6#usize out6 cache
   vector.portable.ntt.accumulating_ntt_multiply_binomials_use_cache lhs rhs
     7#usize out7 cache
+
+/-- [libcrux_iot_ml_kem::vector::portable::sampling::rej_sample]: loop body 0:
+    Source: 'ml-kem/src/vector/portable/sampling.rs', lines 8:4-26:5 -/
+@[rust_loop_body]
+def vector.portable.sampling.rej_sample_loop.body
+  (a : Slice Std.U8) (iter : core_models.ops.range.Range Std.Usize)
+  (out : Slice Std.I16) (sampled : Std.Usize) :
+  Result (ControlFlow ((core_models.ops.range.Range Std.Usize) × (Slice
+    Std.I16) × Std.Usize) (Std.Usize × (Slice Std.I16)))
+  := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done (sampled, out))
+  | core_models.option.Option.Some i =>
+    let i1 ← i * 3#usize
+    let i2 ← i1 + 0#usize
+    let i3 ← Slice.index_usize a i2
+    let b1 ← lift (UScalar.hcast .I16 i3)
+    let i4 ← i1 + 1#usize
+    let i5 ← Slice.index_usize a i4
+    let b2 ← lift (UScalar.hcast .I16 i5)
+    let i6 ← i1 + 2#usize
+    let i7 ← Slice.index_usize a i6
+    let b3 ← lift (UScalar.hcast .I16 i7)
+    let i8 ← lift (b2 &&& 15#i16)
+    let i9 ← i8 <<< 8#i32
+    let d1 ← lift (i9 ||| b1)
+    let i10 ← b3 <<< 4#i32
+    let i11 ← b2 >>> 4#i32
+    let d2 ← lift (i10 ||| i11)
+    let (out1, sampled1, iter2) ←
+      if d1 < vector.traits.FIELD_MODULUS
+      then
+        do
+        let (s, i12) ←
+          if sampled < 16#usize
+          then
+            do
+            let s1 ← Slice.update out sampled d1
+            let sampled2 ← sampled + 1#usize
+            ok (s1, sampled2)
+          else ok (out, sampled)
+        ok (s, i12, iter1)
+      else ok (out, sampled, iter1)
+    if d2 < vector.traits.FIELD_MODULUS
+    then
+      if sampled1 < 16#usize
+      then
+        let s ← Slice.update out1 sampled1 d2
+        let sampled2 ← sampled1 + 1#usize
+        ok (cont (iter2, s, sampled2))
+      else ok (cont (iter2, out1, sampled1))
+    else ok (cont (iter2, out1, sampled1))
+
+/-- [libcrux_iot_ml_kem::vector::portable::sampling::rej_sample]: loop 0:
+    Source: 'ml-kem/src/vector/portable/sampling.rs', lines 8:4-26:5 -/
+@[rust_loop]
+def vector.portable.sampling.rej_sample_loop
+  (iter : core_models.ops.range.Range Std.Usize) (a : Slice Std.U8)
+  (out : Slice Std.I16) (sampled : Std.Usize) :
+  Result (Std.Usize × (Slice Std.I16))
+  := do
+  loop
+    (fun (iter1, out1, sampled1) =>
+      vector.portable.sampling.rej_sample_loop.body a iter1 out1 sampled1)
+    (iter, out, sampled)
+
+/-- [libcrux_iot_ml_kem::vector::portable::sampling::rej_sample]:
+    Source: 'ml-kem/src/vector/portable/sampling.rs', lines 6:0-28:1 -/
+def vector.portable.sampling.rej_sample
+  (a : Slice Std.U8) (out : Slice Std.I16) :
+  Result (Std.Usize × (Slice Std.I16))
+  := do
+  let i ← core_models.slice.Slice.len a
+  let i1 ← i / 3#usize
+  vector.portable.sampling.rej_sample_loop { start := 0#usize, «end» := i1 }
+    a out 0#usize
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_1]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 21:0-42:1 -/
+def vector.portable.serialize.serialize_1
+  (v : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  let i ← core_models.slice.Slice.len out
+  massert (i = 2#usize)
+  let i1 ← Array.index_usize v.elements 0#usize
+  let i2 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i1
+  let i3 ← Array.index_usize v.elements 1#usize
+  let i4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i3
+  let i5 ← i4 <<< 1#i32
+  let i6 ← lift (i2 ||| i5)
+  let i7 ← Array.index_usize v.elements 2#usize
+  let i8 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i7
+  let i9 ← i8 <<< 2#i32
+  let i10 ← lift (i6 ||| i9)
+  let i11 ← Array.index_usize v.elements 3#usize
+  let i12 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i11
+  let i13 ← i12 <<< 3#i32
+  let i14 ← lift (i10 ||| i13)
+  let i15 ← Array.index_usize v.elements 4#usize
+  let i16 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i15
+  let i17 ← i16 <<< 4#i32
+  let i18 ← lift (i14 ||| i17)
+  let i19 ← Array.index_usize v.elements 5#usize
+  let i20 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i19
+  let i21 ← i20 <<< 5#i32
+  let i22 ← lift (i18 ||| i21)
+  let i23 ← Array.index_usize v.elements 6#usize
+  let i24 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i23
+  let i25 ← i24 <<< 6#i32
+  let i26 ← lift (i22 ||| i25)
+  let i27 ← Array.index_usize v.elements 7#usize
+  let i28 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i27
+  let i29 ← i28 <<< 7#i32
+  let i30 ← lift (i26 ||| i29)
+  let out1 ← Slice.update out 0#usize i30
+  let i31 ← Array.index_usize v.elements 8#usize
+  let i32 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i31
+  let i33 ← Array.index_usize v.elements 9#usize
+  let i34 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i33
+  let i35 ← i34 <<< 1#i32
+  let i36 ← lift (i32 ||| i35)
+  let i37 ← Array.index_usize v.elements 10#usize
+  let i38 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i37
+  let i39 ← i38 <<< 2#i32
+  let i40 ← lift (i36 ||| i39)
+  let i41 ← Array.index_usize v.elements 11#usize
+  let i42 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i41
+  let i43 ← i42 <<< 3#i32
+  let i44 ← lift (i40 ||| i43)
+  let i45 ← Array.index_usize v.elements 12#usize
+  let i46 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i45
+  let i47 ← i46 <<< 4#i32
+  let i48 ← lift (i44 ||| i47)
+  let i49 ← Array.index_usize v.elements 13#usize
+  let i50 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i49
+  let i51 ← i50 <<< 5#i32
+  let i52 ← lift (i48 ||| i51)
+  let i53 ← Array.index_usize v.elements 14#usize
+  let i54 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i53
+  let i55 ← i54 <<< 6#i32
+  let i56 ← lift (i52 ||| i55)
+  let i57 ← Array.index_usize v.elements 15#usize
+  let i58 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i57
+  let i59 ← i58 <<< 7#i32
+  let i60 ← lift (i56 ||| i59)
+  Slice.update out1 1#usize i60
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_1]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 48:0-65:1 -/
+def vector.portable.serialize.deserialize_1
+  (v : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let i ← Slice.index_usize v 0#usize
+  let i1 ← lift (i &&& 1#u8)
+  let i2 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i1
+  let a ← Array.update out.elements 0#usize i2
+  let i3 ← i >>> 1#i32
+  let i4 ← lift (i3 &&& 1#u8)
+  let i5 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i4
+  let a1 ← Array.update a 1#usize i5
+  let i6 ← i >>> 2#i32
+  let i7 ← lift (i6 &&& 1#u8)
+  let i8 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i7
+  let a2 ← Array.update a1 2#usize i8
+  let i9 ← i >>> 3#i32
+  let i10 ← lift (i9 &&& 1#u8)
+  let i11 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i10
+  let a3 ← Array.update a2 3#usize i11
+  let i12 ← i >>> 4#i32
+  let i13 ← lift (i12 &&& 1#u8)
+  let i14 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i13
+  let a4 ← Array.update a3 4#usize i14
+  let i15 ← i >>> 5#i32
+  let i16 ← lift (i15 &&& 1#u8)
+  let i17 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i16
+  let a5 ← Array.update a4 5#usize i17
+  let i18 ← i >>> 6#i32
+  let i19 ← lift (i18 &&& 1#u8)
+  let i20 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i19
+  let a6 ← Array.update a5 6#usize i20
+  let i21 ← i >>> 7#i32
+  let i22 ← lift (i21 &&& 1#u8)
+  let i23 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i22
+  let a7 ← Array.update a6 7#usize i23
+  let i24 ← Slice.index_usize v 1#usize
+  let i25 ← lift (i24 &&& 1#u8)
+  let i26 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i25
+  let a8 ← Array.update a7 8#usize i26
+  let i27 ← i24 >>> 1#i32
+  let i28 ← lift (i27 &&& 1#u8)
+  let i29 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i28
+  let a9 ← Array.update a8 9#usize i29
+  let i30 ← i24 >>> 2#i32
+  let i31 ← lift (i30 &&& 1#u8)
+  let i32 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i31
+  let a10 ← Array.update a9 10#usize i32
+  let i33 ← i24 >>> 3#i32
+  let i34 ← lift (i33 &&& 1#u8)
+  let i35 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i34
+  let a11 ← Array.update a10 11#usize i35
+  let i36 ← i24 >>> 4#i32
+  let i37 ← lift (i36 &&& 1#u8)
+  let i38 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i37
+  let a12 ← Array.update a11 12#usize i38
+  let i39 ← i24 >>> 5#i32
+  let i40 ← lift (i39 &&& 1#u8)
+  let i41 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i40
+  let a13 ← Array.update a12 13#usize i41
+  let i42 ← i24 >>> 6#i32
+  let i43 ← lift (i42 &&& 1#u8)
+  let i44 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i43
+  let a14 ← Array.update a13 14#usize i44
+  let i45 ← i24 >>> 7#i32
+  let i46 ← lift (i45 &&& 1#u8)
+  let i47 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i46
+  let a15 ← Array.update a14 15#usize i47
+  ok { elements := a15 }
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_4_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 69:0-80:1 -/
+def vector.portable.serialize.serialize_4_int
+  (v : Slice Std.I16) : Result (Std.U8 × Std.U8 × Std.U8 × Std.U8) := do
+  let i ← Slice.index_usize v 1#usize
+  let i1 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i
+  let i2 ← i1 <<< 4#i32
+  let i3 ← Slice.index_usize v 0#usize
+  let i4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i3
+  let result0 ← lift (i2 ||| i4)
+  let i5 ← Slice.index_usize v 3#usize
+  let i6 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i5
+  let i7 ← i6 <<< 4#i32
+  let i8 ← Slice.index_usize v 2#usize
+  let i9 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i8
+  let result1 ← lift (i7 ||| i9)
+  let i10 ← Slice.index_usize v 5#usize
+  let i11 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i10
+  let i12 ← i11 <<< 4#i32
+  let i13 ← Slice.index_usize v 4#usize
+  let i14 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i13
+  let result2 ← lift (i12 ||| i14)
+  let i15 ← Slice.index_usize v 7#usize
+  let i16 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i15
+  let i17 ← i16 <<< 4#i32
+  let i18 ← Slice.index_usize v 6#usize
+  let i19 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i18
+  let result3 ← lift (i17 ||| i19)
+  let i20 ← libcrux_secrets.traits.Declassify.Blanket.declassify result0
+  let i21 ← libcrux_secrets.traits.Declassify.Blanket.declassify result1
+  let i22 ← libcrux_secrets.traits.Declassify.Blanket.declassify result2
+  let i23 ← libcrux_secrets.traits.Declassify.Blanket.declassify result3
+  ok (i20, i21, i22, i23)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_4]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 85:0-90:1 -/
+def vector.portable.serialize.serialize_4
+  (v : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  let i ← core_models.slice.Slice.len out
+  massert (i = 8#usize)
+  let s ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 0#usize, «end» := 8#usize }
+  let (i1, i2, i3, i4) ← vector.portable.serialize.serialize_4_int s
+  let out1 ← Slice.update out 0#usize i1
+  let out2 ← Slice.update out1 1#usize i2
+  let out3 ← Slice.update out2 2#usize i3
+  let out4 ← Slice.update out3 3#usize i4
+  let s1 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 8#usize, «end» := 16#usize }
+  let (i5, i6, i7, i8) ← vector.portable.serialize.serialize_4_int s1
+  let out5 ← Slice.update out4 4#usize i5
+  let out6 ← Slice.update out5 5#usize i6
+  let out7 ← Slice.update out6 6#usize i7
+  Slice.update out7 7#usize i8
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_4_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 94:0-104:1 -/
+def vector.portable.serialize.deserialize_4_int
+  (bytes : Slice Std.U8) :
+  Result (Std.I16 × Std.I16 × Std.I16 × Std.I16 × Std.I16 × Std.I16 ×
+    Std.I16 × Std.I16)
+  := do
+  let i ← Slice.index_usize bytes 0#usize
+  let i1 ← lift (i &&& 15#u8)
+  let v0 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i1
+  let i2 ← i >>> 4#i32
+  let i3 ← lift (i2 &&& 15#u8)
+  let v1 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i3
+  let i4 ← Slice.index_usize bytes 1#usize
+  let i5 ← lift (i4 &&& 15#u8)
+  let v2 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i5
+  let i6 ← i4 >>> 4#i32
+  let i7 ← lift (i6 &&& 15#u8)
+  let v3 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i7
+  let i8 ← Slice.index_usize bytes 2#usize
+  let i9 ← lift (i8 &&& 15#u8)
+  let v4 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i9
+  let i10 ← i8 >>> 4#i32
+  let i11 ← lift (i10 &&& 15#u8)
+  let v5 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i11
+  let i12 ← Slice.index_usize bytes 3#usize
+  let i13 ← lift (i12 &&& 15#u8)
+  let v6 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i13
+  let i14 ← i12 >>> 4#i32
+  let i15 ← lift (i14 &&& 15#u8)
+  let v7 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i15
+  ok (v0, v1, v2, v3, v4, v5, v6, v7)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_4]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 108:0-129:1 -/
+def vector.portable.serialize.deserialize_4
+  (bytes : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let s ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 0#usize, «end» := 4#usize }
+  let (i, i1, i2, i3, i4, i5, i6, i7) ←
+    vector.portable.serialize.deserialize_4_int s
+  let a ← Array.update out.elements 0#usize i
+  let a1 ← Array.update a 1#usize i1
+  let a2 ← Array.update a1 2#usize i2
+  let a3 ← Array.update a2 3#usize i3
+  let a4 ← Array.update a3 4#usize i4
+  let a5 ← Array.update a4 5#usize i5
+  let a6 ← Array.update a5 6#usize i6
+  let a7 ← Array.update a6 7#usize i7
+  let s1 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 4#usize, «end» := 8#usize }
+  let (i8, i9, i10, i11, i12, i13, i14, i15) ←
+    vector.portable.serialize.deserialize_4_int s1
+  let a8 ← Array.update a7 8#usize i8
+  let a9 ← Array.update a8 9#usize i9
+  let a10 ← Array.update a9 10#usize i10
+  let a11 ← Array.update a10 11#usize i11
+  let a12 ← Array.update a11 12#usize i12
+  let a13 ← Array.update a12 13#usize i13
+  let a14 ← Array.update a13 14#usize i14
+  let a15 ← Array.update a14 15#usize i15
+  ok { elements := a15 }
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_5_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 133:0-146:1 -/
+def vector.portable.serialize.serialize_5_int
+  (v : Slice Std.I16) :
+  Result (Std.U8 × Std.U8 × Std.U8 × Std.U8 × Std.U8)
+  := do
+  let i ← Slice.index_usize v 0#usize
+  let i1 ← Slice.index_usize v 1#usize
+  let i2 ← i1 <<< 5#i32
+  let i3 ← lift (i ||| i2)
+  let r0 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i3
+  let i4 ← i1 >>> 3#i32
+  let i5 ← Slice.index_usize v 2#usize
+  let i6 ← i5 <<< 2#i32
+  let i7 ← lift (i4 ||| i6)
+  let i8 ← Slice.index_usize v 3#usize
+  let i9 ← i8 <<< 7#i32
+  let i10 ← lift (i7 ||| i9)
+  let r1 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i10
+  let i11 ← i8 >>> 1#i32
+  let i12 ← Slice.index_usize v 4#usize
+  let i13 ← i12 <<< 4#i32
+  let i14 ← lift (i11 ||| i13)
+  let r2 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i14
+  let i15 ← i12 >>> 4#i32
+  let i16 ← Slice.index_usize v 5#usize
+  let i17 ← i16 <<< 1#i32
+  let i18 ← lift (i15 ||| i17)
+  let i19 ← Slice.index_usize v 6#usize
+  let i20 ← i19 <<< 6#i32
+  let i21 ← lift (i18 ||| i20)
+  let r3 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i21
+  let i22 ← i19 >>> 2#i32
+  let i23 ← Slice.index_usize v 7#usize
+  let i24 ← i23 <<< 3#i32
+  let i25 ← lift (i22 ||| i24)
+  let r4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i25
+  let i26 ← libcrux_secrets.traits.Declassify.Blanket.declassify r0
+  let i27 ← libcrux_secrets.traits.Declassify.Blanket.declassify r1
+  let i28 ← libcrux_secrets.traits.Declassify.Blanket.declassify r2
+  let i29 ← libcrux_secrets.traits.Declassify.Blanket.declassify r3
+  let i30 ← libcrux_secrets.traits.Declassify.Blanket.declassify r4
+  ok (i26, i27, i28, i29, i30)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_5]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 151:0-156:1 -/
+def vector.portable.serialize.serialize_5
+  (v : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  let i ← core_models.slice.Slice.len out
+  massert (i = 10#usize)
+  let s ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 0#usize, «end» := 8#usize }
+  let (i1, i2, i3, i4, i5) ← vector.portable.serialize.serialize_5_int s
+  let out1 ← Slice.update out 0#usize i1
+  let out2 ← Slice.update out1 1#usize i2
+  let out3 ← Slice.update out2 2#usize i3
+  let out4 ← Slice.update out3 3#usize i4
+  let out5 ← Slice.update out4 4#usize i5
+  let s1 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 8#usize, «end» := 16#usize }
+  let (i6, i7, i8, i9, i10) ← vector.portable.serialize.serialize_5_int s1
+  let out6 ← Slice.update out5 5#usize i6
+  let out7 ← Slice.update out6 6#usize i7
+  let out8 ← Slice.update out7 7#usize i8
+  let out9 ← Slice.update out8 8#usize i9
+  Slice.update out9 9#usize i10
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_5_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 160:0-170:1 -/
+def vector.portable.serialize.deserialize_5_int
+  (bytes : Slice Std.U8) :
+  Result (Std.I16 × Std.I16 × Std.I16 × Std.I16 × Std.I16 × Std.I16 ×
+    Std.I16 × Std.I16)
+  := do
+  let i ← Slice.index_usize bytes 0#usize
+  let i1 ← lift (i &&& 31#u8)
+  let v0 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i1
+  let i2 ← Slice.index_usize bytes 1#usize
+  let i3 ← lift (i2 &&& 3#u8)
+  let i4 ← i3 <<< 3#i32
+  let i5 ← i >>> 5#i32
+  let i6 ← lift (i4 ||| i5)
+  let v1 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i6
+  let i7 ← i2 >>> 2#i32
+  let i8 ← lift (i7 &&& 31#u8)
+  let v2 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i8
+  let i9 ← Slice.index_usize bytes 2#usize
+  let i10 ← lift (i9 &&& 15#u8)
+  let i11 ← i10 <<< 1#i32
+  let i12 ← i2 >>> 7#i32
+  let i13 ← lift (i11 ||| i12)
+  let v3 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i13
+  let i14 ← Slice.index_usize bytes 3#usize
+  let i15 ← lift (i14 &&& 1#u8)
+  let i16 ← i15 <<< 4#i32
+  let i17 ← i9 >>> 4#i32
+  let i18 ← lift (i16 ||| i17)
+  let v4 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i18
+  let i19 ← i14 >>> 1#i32
+  let i20 ← lift (i19 &&& 31#u8)
+  let v5 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i20
+  let i21 ← Slice.index_usize bytes 4#usize
+  let i22 ← lift (i21 &&& 7#u8)
+  let i23 ← i22 <<< 2#i32
+  let i24 ← i14 >>> 6#i32
+  let i25 ← lift (i23 ||| i24)
+  let v6 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i25
+  let i26 ← i21 >>> 3#i32
+  let v7 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i26
+  ok (v0, v1, v2, v3, v4, v5, v6, v7)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_5]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 174:0-195:1 -/
+def vector.portable.serialize.deserialize_5
+  (bytes : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let s ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 0#usize, «end» := 5#usize }
+  let (i, i1, i2, i3, i4, i5, i6, i7) ←
+    vector.portable.serialize.deserialize_5_int s
+  let a ← Array.update out.elements 0#usize i
+  let a1 ← Array.update a 1#usize i1
+  let a2 ← Array.update a1 2#usize i2
+  let a3 ← Array.update a2 3#usize i3
+  let a4 ← Array.update a3 4#usize i4
+  let a5 ← Array.update a4 5#usize i5
+  let a6 ← Array.update a5 6#usize i6
+  let a7 ← Array.update a6 7#usize i7
+  let s1 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 5#usize, «end» := 10#usize }
+  let (i8, i9, i10, i11, i12, i13, i14, i15) ←
+    vector.portable.serialize.deserialize_5_int s1
+  let a8 ← Array.update a7 8#usize i8
+  let a9 ← Array.update a8 9#usize i9
+  let a10 ← Array.update a9 10#usize i10
+  let a11 ← Array.update a10 11#usize i11
+  let a12 ← Array.update a11 12#usize i12
+  let a13 ← Array.update a12 13#usize i13
+  let a14 ← Array.update a13 14#usize i14
+  let a15 ← Array.update a14 15#usize i15
+  ok { elements := a15 }
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_10_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 199:0-212:1 -/
+def vector.portable.serialize.serialize_10_int
+  (v : Slice Std.I16) :
+  Result (Std.U8 × Std.U8 × Std.U8 × Std.U8 × Std.U8)
+  := do
+  let i ← Slice.index_usize v 0#usize
+  let i1 ← lift (i &&& 255#i16)
+  let r0 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i1
+  let i2 ← Slice.index_usize v 1#usize
+  let i3 ← lift (i2 &&& 63#i16)
+  let i4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i3
+  let i5 ← i4 <<< 2#i32
+  let i6 ← i >>> 8#i32
+  let i7 ← lift (i6 &&& 3#i16)
+  let i8 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i7
+  let r1 ← lift (i5 ||| i8)
+  let i9 ← Slice.index_usize v 2#usize
+  let i10 ← lift (i9 &&& 15#i16)
+  let i11 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i10
+  let i12 ← i11 <<< 4#i32
+  let i13 ← i2 >>> 6#i32
+  let i14 ← lift (i13 &&& 15#i16)
+  let i15 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i14
+  let r2 ← lift (i12 ||| i15)
+  let i16 ← Slice.index_usize v 3#usize
+  let i17 ← lift (i16 &&& 3#i16)
+  let i18 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i17
+  let i19 ← i18 <<< 6#i32
+  let i20 ← i9 >>> 4#i32
+  let i21 ← lift (i20 &&& 63#i16)
+  let i22 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i21
+  let r3 ← lift (i19 ||| i22)
+  let i23 ← i16 >>> 2#i32
+  let i24 ← lift (i23 &&& 255#i16)
+  let r4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i24
+  let i25 ← libcrux_secrets.traits.Declassify.Blanket.declassify r0
+  let i26 ← libcrux_secrets.traits.Declassify.Blanket.declassify r1
+  let i27 ← libcrux_secrets.traits.Declassify.Blanket.declassify r2
+  let i28 ← libcrux_secrets.traits.Declassify.Blanket.declassify r3
+  let i29 ← libcrux_secrets.traits.Declassify.Blanket.declassify r4
+  ok (i25, i26, i27, i28, i29)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_10]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 217:0-224:1 -/
+def vector.portable.serialize.serialize_10
+  (v : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  let i ← core_models.slice.Slice.len out
+  massert (i = 20#usize)
+  let s ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 0#usize, «end» := 4#usize }
+  let (i1, i2, i3, i4, i5) ← vector.portable.serialize.serialize_10_int s
+  let out1 ← Slice.update out 0#usize i1
+  let out2 ← Slice.update out1 1#usize i2
+  let out3 ← Slice.update out2 2#usize i3
+  let out4 ← Slice.update out3 3#usize i4
+  let out5 ← Slice.update out4 4#usize i5
+  let s1 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 4#usize, «end» := 8#usize }
+  let (i6, i7, i8, i9, i10) ← vector.portable.serialize.serialize_10_int s1
+  let out6 ← Slice.update out5 5#usize i6
+  let out7 ← Slice.update out6 6#usize i7
+  let out8 ← Slice.update out7 7#usize i8
+  let out9 ← Slice.update out8 8#usize i9
+  let out10 ← Slice.update out9 9#usize i10
+  let s2 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 8#usize, «end» := 12#usize }
+  let (i11, i12, i13, i14, i15) ←
+    vector.portable.serialize.serialize_10_int s2
+  let out11 ← Slice.update out10 10#usize i11
+  let out12 ← Slice.update out11 11#usize i12
+  let out13 ← Slice.update out12 12#usize i13
+  let out14 ← Slice.update out13 13#usize i14
+  let out15 ← Slice.update out14 14#usize i15
+  let s3 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 12#usize, «end» := 16#usize }
+  let (i16, i17, i18, i19, i20) ←
+    vector.portable.serialize.serialize_10_int s3
+  let out16 ← Slice.update out15 15#usize i16
+  let out17 ← Slice.update out16 16#usize i17
+  let out18 ← Slice.update out17 17#usize i18
+  let out19 ← Slice.update out18 18#usize i19
+  Slice.update out19 19#usize i20
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_10_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 228:0-238:1 -/
+def vector.portable.serialize.deserialize_10_int
+  (bytes : Slice Std.U8) :
+  Result (Std.I16 × Std.I16 × Std.I16 × Std.I16 × Std.I16 × Std.I16 ×
+    Std.I16 × Std.I16)
+  := do
+  let i ← Slice.index_usize bytes 1#usize
+  let i1 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i
+  let i2 ← lift (i1 &&& 3#i16)
+  let i3 ← i2 <<< 8#i32
+  let i4 ← Slice.index_usize bytes 0#usize
+  let i5 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i4
+  let i6 ← lift (i5 &&& 255#i16)
+  let i7 ← lift (i3 ||| i6)
+  let r0 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i16 i7
+  let i8 ← Slice.index_usize bytes 2#usize
+  let i9 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i8
+  let i10 ← lift (i9 &&& 15#i16)
+  let i11 ← i10 <<< 6#i32
+  let i12 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i
+  let i13 ← i12 >>> 2#i32
+  let i14 ← lift (i11 ||| i13)
+  let r1 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i16 i14
+  let i15 ← Slice.index_usize bytes 3#usize
+  let i16 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i15
+  let i17 ← lift (i16 &&& 63#i16)
+  let i18 ← i17 <<< 4#i32
+  let i19 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i8
+  let i20 ← i19 >>> 4#i32
+  let i21 ← lift (i18 ||| i20)
+  let r2 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i16 i21
+  let i22 ← Slice.index_usize bytes 4#usize
+  let i23 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i22
+  let i24 ← i23 <<< 2#i32
+  let i25 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i15
+  let i26 ← i25 >>> 6#i32
+  let i27 ← lift (i24 ||| i26)
+  let r3 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i16 i27
+  let i28 ← Slice.index_usize bytes 6#usize
+  let i29 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i28
+  let i30 ← lift (i29 &&& 3#i16)
+  let i31 ← i30 <<< 8#i32
+  let i32 ← Slice.index_usize bytes 5#usize
+  let i33 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i32
+  let i34 ← lift (i33 &&& 255#i16)
+  let i35 ← lift (i31 ||| i34)
+  let r4 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i16 i35
+  let i36 ← Slice.index_usize bytes 7#usize
+  let i37 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i36
+  let i38 ← lift (i37 &&& 15#i16)
+  let i39 ← i38 <<< 6#i32
+  let i40 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i28
+  let i41 ← i40 >>> 2#i32
+  let i42 ← lift (i39 ||| i41)
+  let r5 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i16 i42
+  let i43 ← Slice.index_usize bytes 8#usize
+  let i44 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i43
+  let i45 ← lift (i44 &&& 63#i16)
+  let i46 ← i45 <<< 4#i32
+  let i47 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i36
+  let i48 ← i47 >>> 4#i32
+  let i49 ← lift (i46 ||| i48)
+  let r6 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i16 i49
+  let i50 ← Slice.index_usize bytes 9#usize
+  let i51 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i50
+  let i52 ← i51 <<< 2#i32
+  let i53 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i43
+  let i54 ← i53 >>> 6#i32
+  let i55 ← lift (i52 ||| i54)
+  let r7 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i16 i55
+  ok (r0, r1, r2, r3, r4, r5, r6, r7)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_10]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 242:0-263:1 -/
+def vector.portable.serialize.deserialize_10
+  (bytes : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let s ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 0#usize, «end» := 10#usize }
+  let (i, i1, i2, i3, i4, i5, i6, i7) ←
+    vector.portable.serialize.deserialize_10_int s
+  let a ← Array.update out.elements 0#usize i
+  let a1 ← Array.update a 1#usize i1
+  let a2 ← Array.update a1 2#usize i2
+  let a3 ← Array.update a2 3#usize i3
+  let a4 ← Array.update a3 4#usize i4
+  let a5 ← Array.update a4 5#usize i5
+  let a6 ← Array.update a5 6#usize i6
+  let a7 ← Array.update a6 7#usize i7
+  let s1 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 10#usize, «end» := 20#usize }
+  let (i8, i9, i10, i11, i12, i13, i14, i15) ←
+    vector.portable.serialize.deserialize_10_int s1
+  let a8 ← Array.update a7 8#usize i8
+  let a9 ← Array.update a8 9#usize i9
+  let a10 ← Array.update a9 10#usize i10
+  let a11 ← Array.update a10 11#usize i11
+  let a12 ← Array.update a11 12#usize i12
+  let a13 ← Array.update a12 13#usize i13
+  let a14 ← Array.update a13 14#usize i14
+  let a15 ← Array.update a14 15#usize i15
+  ok { elements := a15 }
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_11_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 267:0-292:1 -/
+def vector.portable.serialize.serialize_11_int
+  (v : Slice Std.I16) :
+  Result (Std.U8 × Std.U8 × Std.U8 × Std.U8 × Std.U8 × Std.U8 × Std.U8 ×
+    Std.U8 × Std.U8 × Std.U8 × Std.U8)
+  := do
+  let i ← Slice.index_usize v 0#usize
+  let r0 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i
+  let i1 ← Slice.index_usize v 1#usize
+  let i2 ← lift (i1 &&& 31#i16)
+  let i3 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i2
+  let i4 ← i3 <<< 3#i32
+  let i5 ← i >>> 8#i32
+  let i6 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i5
+  let r1 ← lift (i4 ||| i6)
+  let i7 ← Slice.index_usize v 2#usize
+  let i8 ← lift (i7 &&& 3#i16)
+  let i9 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i8
+  let i10 ← i9 <<< 6#i32
+  let i11 ← i1 >>> 5#i32
+  let i12 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i11
+  let r2 ← lift (i10 ||| i12)
+  let i13 ← i7 >>> 2#i32
+  let i14 ← lift (i13 &&& 255#i16)
+  let r3 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i14
+  let i15 ← Slice.index_usize v 3#usize
+  let i16 ← lift (i15 &&& 127#i16)
+  let i17 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i16
+  let i18 ← i17 <<< 1#i32
+  let i19 ← i7 >>> 10#i32
+  let i20 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i19
+  let r4 ← lift (i18 ||| i20)
+  let i21 ← Slice.index_usize v 4#usize
+  let i22 ← lift (i21 &&& 15#i16)
+  let i23 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i22
+  let i24 ← i23 <<< 4#i32
+  let i25 ← i15 >>> 7#i32
+  let i26 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i25
+  let r5 ← lift (i24 ||| i26)
+  let i27 ← Slice.index_usize v 5#usize
+  let i28 ← lift (i27 &&& 1#i16)
+  let i29 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i28
+  let i30 ← i29 <<< 7#i32
+  let i31 ← i21 >>> 4#i32
+  let i32 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i31
+  let r6 ← lift (i30 ||| i32)
+  let i33 ← i27 >>> 1#i32
+  let i34 ← lift (i33 &&& 255#i16)
+  let r7 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i34
+  let i35 ← Slice.index_usize v 6#usize
+  let i36 ← lift (i35 &&& 63#i16)
+  let i37 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i36
+  let i38 ← i37 <<< 2#i32
+  let i39 ← i27 >>> 9#i32
+  let i40 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i39
+  let r8 ← lift (i38 ||| i40)
+  let i41 ← Slice.index_usize v 7#usize
+  let i42 ← lift (i41 &&& 7#i16)
+  let i43 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i42
+  let i44 ← i43 <<< 5#i32
+  let i45 ← i35 >>> 6#i32
+  let i46 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i45
+  let r9 ← lift (i44 ||| i46)
+  let i47 ← i41 >>> 3#i32
+  let r10 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i47
+  let i48 ← libcrux_secrets.traits.Declassify.Blanket.declassify r0
+  let i49 ← libcrux_secrets.traits.Declassify.Blanket.declassify r1
+  let i50 ← libcrux_secrets.traits.Declassify.Blanket.declassify r2
+  let i51 ← libcrux_secrets.traits.Declassify.Blanket.declassify r3
+  let i52 ← libcrux_secrets.traits.Declassify.Blanket.declassify r4
+  let i53 ← libcrux_secrets.traits.Declassify.Blanket.declassify r5
+  let i54 ← libcrux_secrets.traits.Declassify.Blanket.declassify r6
+  let i55 ← libcrux_secrets.traits.Declassify.Blanket.declassify r7
+  let i56 ← libcrux_secrets.traits.Declassify.Blanket.declassify r8
+  let i57 ← libcrux_secrets.traits.Declassify.Blanket.declassify r9
+  let i58 ← libcrux_secrets.traits.Declassify.Blanket.declassify r10
+  ok (i48, i49, i50, i51, i52, i53, i54, i55, i56, i57, i58)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_11]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 297:0-307:1 -/
+def vector.portable.serialize.serialize_11
+  (v : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  let i ← core_models.slice.Slice.len out
+  massert (i = 22#usize)
+  let s ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 0#usize, «end» := 8#usize }
+  let (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11) ←
+    vector.portable.serialize.serialize_11_int s
+  let out1 ← Slice.update out 0#usize i1
+  let out2 ← Slice.update out1 1#usize i2
+  let out3 ← Slice.update out2 2#usize i3
+  let out4 ← Slice.update out3 3#usize i4
+  let out5 ← Slice.update out4 4#usize i5
+  let out6 ← Slice.update out5 5#usize i6
+  let out7 ← Slice.update out6 6#usize i7
+  let out8 ← Slice.update out7 7#usize i8
+  let out9 ← Slice.update out8 8#usize i9
+  let out10 ← Slice.update out9 9#usize i10
+  let out11 ← Slice.update out10 10#usize i11
+  let s1 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 8#usize, «end» := 16#usize }
+  let (i12, i13, i14, i15, i16, i17, i18, i19, i20, i21, i22) ←
+    vector.portable.serialize.serialize_11_int s1
+  let out12 ← Slice.update out11 11#usize i12
+  let out13 ← Slice.update out12 12#usize i13
+  let out14 ← Slice.update out13 13#usize i14
+  let out15 ← Slice.update out14 14#usize i15
+  let out16 ← Slice.update out15 15#usize i16
+  let out17 ← Slice.update out16 16#usize i17
+  let out18 ← Slice.update out17 17#usize i18
+  let out19 ← Slice.update out18 18#usize i19
+  let out20 ← Slice.update out19 19#usize i20
+  let out21 ← Slice.update out20 20#usize i21
+  Slice.update out21 21#usize i22
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_11_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 311:0-323:1 -/
+def vector.portable.serialize.deserialize_11_int
+  (bytes : Slice Std.U8) :
+  Result (Std.I16 × Std.I16 × Std.I16 × Std.I16 × Std.I16 × Std.I16 ×
+    Std.I16 × Std.I16)
+  := do
+  let i ← Slice.index_usize bytes 1#usize
+  let i1 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i
+  let i2 ← lift (i1 &&& 7#i16)
+  let i3 ← i2 <<< 8#i32
+  let i4 ← Slice.index_usize bytes 0#usize
+  let i5 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i4
+  let r0 ← lift (i3 ||| i5)
+  let i6 ← Slice.index_usize bytes 2#usize
+  let i7 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i6
+  let i8 ← lift (i7 &&& 63#i16)
+  let i9 ← i8 <<< 5#i32
+  let i10 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i
+  let i11 ← i10 >>> 3#i32
+  let r1 ← lift (i9 ||| i11)
+  let i12 ← Slice.index_usize bytes 4#usize
+  let i13 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i12
+  let i14 ← lift (i13 &&& 1#i16)
+  let i15 ← i14 <<< 10#i32
+  let i16 ← Slice.index_usize bytes 3#usize
+  let i17 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i16
+  let i18 ← i17 <<< 2#i32
+  let i19 ← lift (i15 ||| i18)
+  let i20 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i6
+  let i21 ← i20 >>> 6#i32
+  let r2 ← lift (i19 ||| i21)
+  let i22 ← Slice.index_usize bytes 5#usize
+  let i23 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i22
+  let i24 ← lift (i23 &&& 15#i16)
+  let i25 ← i24 <<< 7#i32
+  let i26 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i12
+  let i27 ← i26 >>> 1#i32
+  let r3 ← lift (i25 ||| i27)
+  let i28 ← Slice.index_usize bytes 6#usize
+  let i29 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i28
+  let i30 ← lift (i29 &&& 127#i16)
+  let i31 ← i30 <<< 4#i32
+  let i32 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i22
+  let i33 ← i32 >>> 4#i32
+  let r4 ← lift (i31 ||| i33)
+  let i34 ← Slice.index_usize bytes 8#usize
+  let i35 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i34
+  let i36 ← lift (i35 &&& 3#i16)
+  let i37 ← i36 <<< 9#i32
+  let i38 ← Slice.index_usize bytes 7#usize
+  let i39 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i38
+  let i40 ← i39 <<< 1#i32
+  let i41 ← lift (i37 ||| i40)
+  let i42 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i28
+  let i43 ← i42 >>> 7#i32
+  let r5 ← lift (i41 ||| i43)
+  let i44 ← Slice.index_usize bytes 9#usize
+  let i45 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i44
+  let i46 ← lift (i45 &&& 31#i16)
+  let i47 ← i46 <<< 6#i32
+  let i48 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i34
+  let i49 ← i48 >>> 2#i32
+  let r6 ← lift (i47 ||| i49)
+  let i50 ← Slice.index_usize bytes 10#usize
+  let i51 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i50
+  let i52 ← i51 <<< 3#i32
+  let i53 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i44
+  let i54 ← i53 >>> 5#i32
+  let r7 ← lift (i52 ||| i54)
+  ok (r0, r1, r2, r3, r4, r5, r6, r7)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_11]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 327:0-348:1 -/
+def vector.portable.serialize.deserialize_11
+  (bytes : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let s ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 0#usize, «end» := 11#usize }
+  let (i, i1, i2, i3, i4, i5, i6, i7) ←
+    vector.portable.serialize.deserialize_11_int s
+  let a ← Array.update out.elements 0#usize i
+  let a1 ← Array.update a 1#usize i1
+  let a2 ← Array.update a1 2#usize i2
+  let a3 ← Array.update a2 3#usize i3
+  let a4 ← Array.update a3 4#usize i4
+  let a5 ← Array.update a4 5#usize i5
+  let a6 ← Array.update a5 6#usize i6
+  let a7 ← Array.update a6 7#usize i7
+  let s1 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 11#usize, «end» := 22#usize }
+  let (i8, i9, i10, i11, i12, i13, i14, i15) ←
+    vector.portable.serialize.deserialize_11_int s1
+  let a8 ← Array.update a7 8#usize i8
+  let a9 ← Array.update a8 9#usize i9
+  let a10 ← Array.update a9 10#usize i10
+  let a11 ← Array.update a10 11#usize i11
+  let a12 ← Array.update a11 12#usize i12
+  let a13 ← Array.update a12 13#usize i13
+  let a14 ← Array.update a13 14#usize i14
+  let a15 ← Array.update a14 15#usize i15
+  ok { elements := a15 }
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_12_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 352:0-357:1 -/
+def vector.portable.serialize.serialize_12_int
+  (v : Slice Std.I16) : Result (Std.U8 × Std.U8 × Std.U8) := do
+  let i ← Slice.index_usize v 0#usize
+  let i1 ← lift (i &&& 255#i16)
+  let r0 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i1
+  let i2 ← i >>> 8#i32
+  let i3 ← Slice.index_usize v 1#usize
+  let i4 ← lift (i3 &&& 15#i16)
+  let i5 ← i4 <<< 4#i32
+  let i6 ← lift (i2 ||| i5)
+  let r1 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i6
+  let i7 ← i3 >>> 4#i32
+  let i8 ← lift (i7 &&& 255#i16)
+  let r2 ← libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_u8 i8
+  ok (r0, r1, r2)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::serialize_12]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 362:0-373:1 -/
+def vector.portable.serialize.serialize_12
+  (v : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  let i ← core_models.slice.Slice.len out
+  massert (i = 24#usize)
+  let s ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 0#usize, «end» := 2#usize }
+  let (i1, i2, i3) ← vector.portable.serialize.serialize_12_int s
+  let out1 ← Slice.update out 0#usize i1
+  let out2 ← Slice.update out1 1#usize i2
+  let out3 ← Slice.update out2 2#usize i3
+  let s1 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 2#usize, «end» := 4#usize }
+  let (i4, i5, i6) ← vector.portable.serialize.serialize_12_int s1
+  let out4 ← Slice.update out3 3#usize i4
+  let out5 ← Slice.update out4 4#usize i5
+  let out6 ← Slice.update out5 5#usize i6
+  let s2 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 4#usize, «end» := 6#usize }
+  let (i7, i8, i9) ← vector.portable.serialize.serialize_12_int s2
+  let out7 ← Slice.update out6 6#usize i7
+  let out8 ← Slice.update out7 7#usize i8
+  let out9 ← Slice.update out8 8#usize i9
+  let s3 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 6#usize, «end» := 8#usize }
+  let (i10, i11, i12) ← vector.portable.serialize.serialize_12_int s3
+  let out10 ← Slice.update out9 9#usize i10
+  let out11 ← Slice.update out10 10#usize i11
+  let out12 ← Slice.update out11 11#usize i12
+  let s4 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 8#usize, «end» := 10#usize }
+  let (i13, i14, i15) ← vector.portable.serialize.serialize_12_int s4
+  let out13 ← Slice.update out12 12#usize i13
+  let out14 ← Slice.update out13 13#usize i14
+  let out15 ← Slice.update out14 14#usize i15
+  let s5 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 10#usize, «end» := 12#usize }
+  let (i16, i17, i18) ← vector.portable.serialize.serialize_12_int s5
+  let out16 ← Slice.update out15 15#usize i16
+  let out17 ← Slice.update out16 16#usize i17
+  let out18 ← Slice.update out17 17#usize i18
+  let s6 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 12#usize, «end» := 14#usize }
+  let (i19, i20, i21) ← vector.portable.serialize.serialize_12_int s6
+  let out19 ← Slice.update out18 18#usize i19
+  let out20 ← Slice.update out19 19#usize i20
+  let out21 ← Slice.update out20 20#usize i21
+  let s7 ←
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16)) v.elements { start := 14#usize, «end» := 16#usize }
+  let (i22, i23, i24) ← vector.portable.serialize.serialize_12_int s7
+  let out22 ← Slice.update out21 21#usize i22
+  let out23 ← Slice.update out22 22#usize i23
+  Slice.update out23 23#usize i24
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_12_int]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 377:0-384:1 -/
+def vector.portable.serialize.deserialize_12_int
+  (bytes : Slice Std.U8) : Result (Std.I16 × Std.I16) := do
+  let i ← Slice.index_usize bytes 0#usize
+  let byte0 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i
+  let i1 ← Slice.index_usize bytes 1#usize
+  let byte1 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i1
+  let i2 ← Slice.index_usize bytes 2#usize
+  let byte2 ← libcrux_secrets.U8.Insts.Libcrux_secretsIntCastOps.as_i16 i2
+  let i3 ← lift (byte1 &&& 15#i16)
+  let i4 ← i3 <<< 8#i32
+  let i5 ← lift (byte0 &&& 255#i16)
+  let r0 ← lift (i4 ||| i5)
+  let i6 ← byte2 <<< 4#i32
+  let i7 ← byte1 >>> 4#i32
+  let i8 ← lift (i7 &&& 15#i16)
+  let r1 ← lift (i6 ||| i8)
+  ok (r0, r1)
+
+/-- [libcrux_iot_ml_kem::vector::portable::serialize::deserialize_12]:
+    Source: 'ml-kem/src/vector/portable/serialize.rs', lines 388:0-397:1 -/
+def vector.portable.serialize.deserialize_12
+  (bytes : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let s ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 0#usize, «end» := 3#usize }
+  let (i, i1) ← vector.portable.serialize.deserialize_12_int s
+  let a ← Array.update out.elements 0#usize i
+  let a1 ← Array.update a 1#usize i1
+  let s1 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 3#usize, «end» := 6#usize }
+  let (i2, i3) ← vector.portable.serialize.deserialize_12_int s1
+  let a2 ← Array.update a1 2#usize i2
+  let a3 ← Array.update a2 3#usize i3
+  let s2 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 6#usize, «end» := 9#usize }
+  let (i4, i5) ← vector.portable.serialize.deserialize_12_int s2
+  let a4 ← Array.update a3 4#usize i4
+  let a5 ← Array.update a4 5#usize i5
+  let s3 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 9#usize, «end» := 12#usize }
+  let (i6, i7) ← vector.portable.serialize.deserialize_12_int s3
+  let a6 ← Array.update a5 6#usize i6
+  let a7 ← Array.update a6 7#usize i7
+  let s4 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 12#usize, «end» := 15#usize }
+  let (i8, i9) ← vector.portable.serialize.deserialize_12_int s4
+  let a8 ← Array.update a7 8#usize i8
+  let a9 ← Array.update a8 9#usize i9
+  let s5 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 15#usize, «end» := 18#usize }
+  let (i10, i11) ← vector.portable.serialize.deserialize_12_int s5
+  let a10 ← Array.update a9 10#usize i10
+  let a11 ← Array.update a10 11#usize i11
+  let s6 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 18#usize, «end» := 21#usize }
+  let (i12, i13) ← vector.portable.serialize.deserialize_12_int s6
+  let a12 ← Array.update a11 12#usize i12
+  let a13 ← Array.update a12 13#usize i13
+  let s7 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.U8) bytes { start := 21#usize, «end» := 24#usize }
+  let (i14, i15) ← vector.portable.serialize.deserialize_12_int s7
+  let a14 ← Array.update a13 14#usize i14
+  let a15 ← Array.update a14 15#usize i15
+  ok { elements := a15 }
+
+/-- [libcrux_iot_ml_kem::vector::portable::vector_type::{core::clone::Clone for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::clone]:
+    Source: 'ml-kem/src/vector/portable/vector_type.rs', lines 8:9-8:14
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Core_modelsCloneClone.clone
+  (self : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  ok self
+
+/-- Trait implementation: [libcrux_iot_ml_kem::vector::portable::vector_type::{core::clone::Clone for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}]
+    Source: 'ml-kem/src/vector/portable/vector_type.rs', lines 8:9-8:14 -/
+@[reducible]
+def vector.portable.vector_type.PortableVector.Insts.Core_modelsCloneClone :
+  core_models.clone.Clone vector.portable.vector_type.PortableVector := {
+  clone :=
+    vector.portable.vector_type.PortableVector.Insts.Core_modelsCloneClone.clone
+}
+
+/-- Trait implementation: [libcrux_iot_ml_kem::vector::portable::vector_type::{core::marker::Copy for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}]
+    Source: 'ml-kem/src/vector/portable/vector_type.rs', lines 8:16-8:20 -/
+@[reducible]
+def vector.portable.vector_type.PortableVector.Insts.Core_modelsMarkerCopy :
+  core_models.marker.Copy vector.portable.vector_type.PortableVector := {
+  cloneCloneInst :=
+    vector.portable.vector_type.PortableVector.Insts.Core_modelsCloneClone
+}
+
+/-- [libcrux_iot_ml_kem::vector::portable::vector_type::zero]:
+    Source: 'ml-kem/src/vector/portable/vector_type.rs', lines 14:0-18:1
+    Visibility: public -/
+def vector.portable.vector_type.zero
+  : Result vector.portable.vector_type.PortableVector := do
+  let a := Array.repeat 16#usize 0#i16
+  let a1 ← libcrux_secrets.traits.Classify.Blanket.classify a
+  ok { elements := a1 }
+
+/-- [libcrux_iot_ml_kem::vector::portable::vector_type::from_i16_array]:
+    Source: 'ml-kem/src/vector/portable/vector_type.rs', lines 22:0-24:1
+    Visibility: public -/
+def vector.portable.vector_type.from_i16_array
+  (array : Slice Std.I16) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let (s, to_slice_mut_back) ← lift (Array.to_slice_mut out.elements)
+  let s1 ←
+    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      Std.I16) array { start := 0#usize, «end» := 16#usize }
+  let s2 ←
+    core_models.slice.Slice.copy_from_slice
+      core_models.I16.Insts.Core_modelsMarkerCopy s s1
+  let a := to_slice_mut_back s2
+  ok { elements := a }
+
+/-- Trait implementation: [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Repr for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}]
+    Source: 'ml-kem/src/vector/portable.rs', lines 30:0-30:54 -/
+@[reducible]
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsRepr
+  : vector.traits.Repr vector.portable.vector_type.PortableVector := {
+}
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::rej_sample]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 270:4-272:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.rej_sample
+  (a : Slice Std.U8) (out : Slice Std.I16) :
+  Result (Std.Usize × (Slice Std.I16))
+  := do
+  vector.portable.sampling.rej_sample a out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::deserialize_12]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 263:4-265:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_12
+  (a : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.serialize.deserialize_12 a out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::serialize_12]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 257:4-259:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_12
+  (a : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  vector.portable.serialize.serialize_12 a out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::deserialize_11]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 250:4-252:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_11
+  (a : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let s ←
+    libcrux_secrets.SharedASlice.Insts.Libcrux_secretsTraitsClassifyRefSharedASlice.classify_ref
+      libcrux_secrets.U8.Insts.Libcrux_secretsTraitsScalar a
+  vector.portable.serialize.deserialize_11 s out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::serialize_11]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 244:4-246:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_11
+  (a : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  vector.portable.serialize.serialize_11 a out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::deserialize_10]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 237:4-239:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_10
+  (a : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let s ←
+    libcrux_secrets.SharedASlice.Insts.Libcrux_secretsTraitsClassifyRefSharedASlice.classify_ref
+      libcrux_secrets.U8.Insts.Libcrux_secretsTraitsScalar a
+  vector.portable.serialize.deserialize_10 s out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::serialize_10]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 231:4-233:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_10
+  (a : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  vector.portable.serialize.serialize_10 a out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::deserialize_5]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 224:4-226:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_5
+  (a : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let s ←
+    libcrux_secrets.SharedASlice.Insts.Libcrux_secretsTraitsClassifyRefSharedASlice.classify_ref
+      libcrux_secrets.U8.Insts.Libcrux_secretsTraitsScalar a
+  vector.portable.serialize.deserialize_5 s out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::serialize_5]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 218:4-220:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_5
+  (a : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  vector.portable.serialize.serialize_5 a out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::deserialize_4]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 211:4-213:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_4
+  (a : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let s ←
+    libcrux_secrets.SharedASlice.Insts.Libcrux_secretsTraitsClassifyRefSharedASlice.classify_ref
+      libcrux_secrets.U8.Insts.Libcrux_secretsTraitsScalar a
+  vector.portable.serialize.deserialize_4 s out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::serialize_4]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 205:4-207:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_4
+  (a : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  vector.portable.serialize.serialize_4 a out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::deserialize_1]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 198:4-200:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_1
+  (a : Slice Std.U8) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.serialize.deserialize_1 a out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::serialize_1]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 192:4-194:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_1
+  (a : vector.portable.vector_type.PortableVector) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  vector.portable.serialize.serialize_1 a out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::accumulating_ntt_multiply_use_cache]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 185:4-187:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.accumulating_ntt_multiply_use_cache
+  (lhs : vector.portable.vector_type.PortableVector)
+  (rhs : vector.portable.vector_type.PortableVector) (out : Slice Std.I32)
+  (cache : vector.portable.vector_type.PortableVector) :
+  Result (Slice Std.I32)
+  := do
+  vector.portable.ntt.accumulating_ntt_multiply_use_cache lhs rhs out cache
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::accumulating_ntt_multiply_fill_cache]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 169:4-180:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.accumulating_ntt_multiply_fill_cache
+  (lhs : vector.portable.vector_type.PortableVector)
+  (rhs : vector.portable.vector_type.PortableVector) (out : Slice Std.I32)
+  (cache : vector.portable.vector_type.PortableVector) (zeta0 : Std.I16)
+  (zeta1 : Std.I16) (zeta2 : Std.I16) (zeta3 : Std.I16) :
+  Result ((Slice Std.I32) × vector.portable.vector_type.PortableVector)
+  := do
+  vector.portable.ntt.accumulating_ntt_multiply_fill_cache lhs rhs out cache
+    zeta0 zeta1 zeta2 zeta3
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::accumulating_ntt_multiply]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 154:4-164:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.accumulating_ntt_multiply
+  (lhs : vector.portable.vector_type.PortableVector)
+  (rhs : vector.portable.vector_type.PortableVector) (out : Slice Std.I32)
+  (zeta0 : Std.I16) (zeta1 : Std.I16) (zeta2 : Std.I16) (zeta3 : Std.I16) :
+  Result (Slice Std.I32)
+  := do
+  vector.portable.ntt.accumulating_ntt_multiply lhs rhs out zeta0 zeta1 zeta2
+    zeta3
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::inv_ntt_layer_3_step]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 147:4-149:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.inv_ntt_layer_3_step
+  (a : vector.portable.vector_type.PortableVector) (zeta : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.ntt.inv_ntt_layer_3_step a zeta
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::inv_ntt_layer_2_step]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 142:4-144:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.inv_ntt_layer_2_step
+  (a : vector.portable.vector_type.PortableVector) (zeta0 : Std.I16)
+  (zeta1 : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.ntt.inv_ntt_layer_2_step a zeta0 zeta1
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::inv_ntt_layer_1_step]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 137:4-139:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.inv_ntt_layer_1_step
+  (a : vector.portable.vector_type.PortableVector) (zeta0 : Std.I16)
+  (zeta1 : Std.I16) (zeta2 : Std.I16) (zeta3 : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.ntt.inv_ntt_layer_1_step a zeta0 zeta1 zeta2 zeta3
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::ntt_layer_3_step]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 132:4-134:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.ntt_layer_3_step
+  (a : vector.portable.vector_type.PortableVector) (zeta : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.ntt.ntt_layer_3_step a zeta
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::ntt_layer_2_step]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 127:4-129:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.ntt_layer_2_step
+  (a : vector.portable.vector_type.PortableVector) (zeta0 : Std.I16)
+  (zeta1 : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.ntt.ntt_layer_2_step a zeta0 zeta1
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::ntt_layer_1_step]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 122:4-124:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.ntt_layer_1_step
+  (a : vector.portable.vector_type.PortableVector) (zeta0 : Std.I16)
+  (zeta1 : Std.I16) (zeta2 : Std.I16) (zeta3 : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.ntt.ntt_layer_1_step a zeta0 zeta1 zeta2 zeta3
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::decompress_ciphertext_coefficient]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 117:4-119:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.decompress_ciphertext_coefficient
+  (COEFFICIENT_BITS : Std.I32) (a : vector.portable.vector_type.PortableVector)
+  :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.compress.decompress_ciphertext_coefficient COEFFICIENT_BITS a
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::compress]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 111:4-113:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.compress
+  (COEFFICIENT_BITS : Std.I32) (a : vector.portable.vector_type.PortableVector)
+  :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.compress.compress COEFFICIENT_BITS a
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::compress_1]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 105:4-107:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.compress_1
+  (a : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.compress.compress_1 a
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::montgomery_multiply_by_constant]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 100:4-102:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.montgomery_multiply_by_constant
+  (vec : vector.portable.vector_type.PortableVector) (r : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  let i ← libcrux_secrets.traits.Classify.Blanket.classify r
+  vector.portable.arithmetic.montgomery_multiply_by_constant vec i
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::barrett_reduce]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 95:4-97:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.barrett_reduce
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.barrett_reduce vec
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::cond_subtract_3329]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 90:4-92:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.cond_subtract_3329
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.cond_subtract_3329 vec
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::shift_right]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 85:4-87:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.shift_right
+  (SHIFT_BY : Std.I32) (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.shift_right SHIFT_BY vec
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::bitwise_and_with_constant]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 79:4-81:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.bitwise_and_with_constant
+  (vec : vector.portable.vector_type.PortableVector) (c : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.bitwise_and_with_constant vec c
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::multiply_by_constant]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 74:4-76:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.multiply_by_constant
+  (vec : vector.portable.vector_type.PortableVector) (c : Std.I16) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.multiply_by_constant vec c
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::negate]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 69:4-71:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.negate
+  (vec : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.negate vec
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::sub]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 64:4-66:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.sub
+  (lhs : vector.portable.vector_type.PortableVector)
+  (rhs : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.sub lhs rhs
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::add]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 59:4-61:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.add
+  (lhs : vector.portable.vector_type.PortableVector)
+  (rhs : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.add lhs rhs
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::reducing_from_i32_array]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 54:4-56:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.reducing_from_i32_array
+  (array : Slice Std.I32) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.arithmetic.reducing_from_i32_array array out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::from_i16_array]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 41:4-43:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.from_i16_array
+  (array : Slice Std.I16) (out : vector.portable.vector_type.PortableVector) :
+  Result vector.portable.vector_type.PortableVector
+  := do
+  vector.portable.vector_type.from_i16_array array out
+
+/-- [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}::ZERO]:
+    Source: 'ml-kem/src/vector/portable.rs', lines 35:4-37:5
+    Visibility: public -/
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.ZERO
+  : Result vector.portable.vector_type.PortableVector := do
+  vector.portable.vector_type.zero
+
+/-- Trait implementation: [libcrux_iot_ml_kem::vector::portable::{libcrux_iot_ml_kem::vector::traits::Operations for libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}]
+    Source: 'ml-kem/src/vector/portable.rs', lines 33:0-273:1 -/
+@[reducible]
+def
+  vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
+  : vector.traits.Operations vector.portable.vector_type.PortableVector := {
+  core_modelsmarkerCopyInst :=
+    vector.portable.vector_type.PortableVector.Insts.Core_modelsMarkerCopy
+  core_modelscloneCloneInst :=
+    vector.portable.vector_type.PortableVector.Insts.Core_modelsCloneClone
+  ReprInst :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsRepr
+  ZERO :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.ZERO
+  from_i16_array :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.from_i16_array
+  reducing_from_i32_array :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.reducing_from_i32_array
+  add :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.add
+  sub :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.sub
+  negate :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.negate
+  multiply_by_constant :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.multiply_by_constant
+  bitwise_and_with_constant :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.bitwise_and_with_constant
+  shift_right := fun (SHIFT_BY : Std.I32) =>
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.shift_right
+    SHIFT_BY
+  cond_subtract_3329 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.cond_subtract_3329
+  barrett_reduce :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.barrett_reduce
+  montgomery_multiply_by_constant :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.montgomery_multiply_by_constant
+  compress_1 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.compress_1
+  compress := fun (COEFFICIENT_BITS : Std.I32) =>
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.compress
+    COEFFICIENT_BITS
+  decompress_ciphertext_coefficient := fun (COEFFICIENT_BITS : Std.I32) =>
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.decompress_ciphertext_coefficient
+    COEFFICIENT_BITS
+  ntt_layer_1_step :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.ntt_layer_1_step
+  ntt_layer_2_step :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.ntt_layer_2_step
+  ntt_layer_3_step :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.ntt_layer_3_step
+  inv_ntt_layer_1_step :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.inv_ntt_layer_1_step
+  inv_ntt_layer_2_step :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.inv_ntt_layer_2_step
+  inv_ntt_layer_3_step :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.inv_ntt_layer_3_step
+  accumulating_ntt_multiply :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.accumulating_ntt_multiply
+  accumulating_ntt_multiply_fill_cache :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.accumulating_ntt_multiply_fill_cache
+  accumulating_ntt_multiply_use_cache :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.accumulating_ntt_multiply_use_cache
+  serialize_1 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_1
+  deserialize_1 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_1
+  serialize_4 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_4
+  deserialize_4 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_4
+  serialize_5 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_5
+  deserialize_5 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_5
+  serialize_10 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_10
+  deserialize_10 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_10
+  serialize_11 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_11
+  deserialize_11 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_11
+  serialize_12 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.serialize_12
+  deserialize_12 :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.deserialize_12
+  rej_sample :=
+    vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.rej_sample
+}
+
+/-- [libcrux_iot_ml_kem::vector::traits::to_unsigned_representative]:
+    Source: 'ml-kem/src/vector/traits.rs', lines 178:0-185:1
+    Visibility: public -/
+def vector.traits.to_unsigned_representative
+  {T : Type} (OperationsInst : vector.traits.Operations T) (a : T) (out : T) :
+  Result T
+  := do
+  let a1 ← OperationsInst.shift_right 15#i32 a
+  let a2 ←
+    OperationsInst.bitwise_and_with_constant a1 vector.traits.FIELD_MODULUS
+  OperationsInst.add a2 a
+
+/-- [libcrux_iot_ml_kem::vector::traits::decompress_1]:
+    Source: 'ml-kem/src/vector/traits.rs', lines 188:0-191:1
+    Visibility: public -/
+def vector.traits.decompress_1
+  {T : Type} (OperationsInst : vector.traits.Operations T) (vec : T) :
+  Result T
+  := do
+  let vec1 ← OperationsInst.negate vec
+  OperationsInst.bitwise_and_with_constant vec1 1665#i16
 
 end libcrux_iot_ml_kem

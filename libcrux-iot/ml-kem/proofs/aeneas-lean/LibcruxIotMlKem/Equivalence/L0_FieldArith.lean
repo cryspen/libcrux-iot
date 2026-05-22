@@ -301,9 +301,10 @@ private theorem mont_reduce_element_eq_ok (value : Std.I32) :
                       < Aeneas.Std.IScalarTy.I32.numBits := by
     rw [h_shift_val]; decide
   simp only [libcrux_secrets.traits.Classify.Blanket.classify,
-             Aeneas.Std.I16.Insts.Libcrux_secretsIntCastOps.as_i32,
-             Aeneas.Std.I32.Insts.Libcrux_secretsIntCastOps.as_i16,
-             Aeneas.Std.U32.Insts.Libcrux_secretsIntCastOps.as_i32,
+             libcrux_secrets.traits.Declassify.Blanket.declassify,
+             libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32,
+             libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i16,
+             libcrux_secrets.U32.Insts.Libcrux_secretsIntCastOps.as_i32,
              Aeneas.Std.bind_tc_ok, Aeneas.Std.lift,
              core_models.num.I32.wrapping_mul,
              core_models.num.I16.wrapping_sub,
@@ -828,10 +829,12 @@ private theorem mmfbf_eq_ok (fe fer : Std.I16) :
             (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 fe)
             (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 fer)) := by
   unfold libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_multiply_fe_by_fer
-  simp only [Aeneas.Std.I16.Insts.Libcrux_secretsIntCastOps.as_i32,
+  simp only [libcrux_secrets.traits.Classify.Blanket.classify,
+             libcrux_secrets.traits.Declassify.Blanket.declassify,
+             libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32,
              core_models.num.I32.wrapping_mul,
              rust_primitives.arithmetic.wrapping_mul_i32,
-             Aeneas.Std.bind_tc_ok]
+             Aeneas.Std.bind_tc_ok, Aeneas.Std.lift]
 
 /-- Under `|fer| ≤ 1664`, the I32 product is exact (no wrap): its
     `.val` is `fe.val * fer.val` (in `Int`). -/

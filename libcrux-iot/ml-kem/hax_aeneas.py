@@ -37,8 +37,36 @@ AENEAS_VERSION = "b5c45e84"
 #   "crate::ind_cpa::*", "crate::ind_cca::*",
 #   "crate::mlkem512::*", "crate::mlkem768::*", "crate::mlkem1024::*".
 START_FROM = [
+    # Matrix/polynomial layer and below — covers Plan.lean Layers 0–3
+    # (field arith → NTT) + 6–7 (polynomial / matrix). Excludes IND-CPA,
+    # IND-CCA, hash_functions, sampling, and per-variant entry points
+    # because the full-crate extraction surfaces ~33 Lean errors across
+    # 7 stub categories (Hash trait, UnbufferedXofState, shake128_*,
+    # StepBy iterator, SharedAArray IntoIterator, Iter.next, plus
+    # several "overloaded" elaboration issues). See HAX_AENEAS_PATCHES.md
+    # "Boundary widening" for the inventory.
+    "crate::vector::*",
     "crate::ntt::*",
-    "crate::vector::portable::ntt::*",
+    "crate::invert_ntt::*",
+    "crate::polynomial::*",
+    "crate::matrix::*",
+]
+
+# Items to keep opaque (extract signature only, skip body). The aeneas-
+# lean backend does not honor `#[hax_lib::opaque]` source annotations,
+# so we have to forward the patterns to charon explicitly. Today: the
+# `hash_functions::portable::shake128_squeeze_*` family is opaque on
+# the Rust side already (`#[hax_lib::opaque]` at `src/hash_functions.rs:151,
+# 182`) because its body uses nested mutable borrows that aeneas
+# rejects with "Nested borrows are not supported yet". We mirror those
+# at the charon level here.
+OPAQUE = [
+    "crate::hash_functions::portable::shake128_squeeze_first_three_blocks",
+    "crate::hash_functions::portable::shake128_squeeze_next_block",
+    # `serialize_public_key_mut` trips aeneas with "Unimplemented" — see
+    # the inline note in `src/ind_cpa.rs` lines 80-108. Marking opaque
+    # so the rest of the crate extracts. Investigation TBD.
+    "crate::ind_cpa::serialize_public_key_mut",
 ]
 
 
@@ -67,7 +95,10 @@ HAND_WRITTEN_GUARDED = [
 ]
 guarded_snapshots = {p: p.read_bytes() for p in HAND_WRITTEN_GUARDED if p.exists()}
 
-charon_args = " ".join(f"--start-from {root}" for root in START_FROM)
+charon_args = " ".join(
+    [f"--start-from {root}" for root in START_FROM] +
+    [f"--opaque {item}" for item in OPAQUE]
+)
 # NOTE: deliberately NOT setting `RUSTFLAGS=--cfg charon` here (unlike
 # sha3/hax_aeneas.py). ml-kem source has no `#[cfg(charon)]` items, and
 # enabling the cfg causes the sha3 dep to fail to compile because

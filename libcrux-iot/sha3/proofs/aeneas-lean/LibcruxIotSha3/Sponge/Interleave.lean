@@ -187,6 +187,11 @@ theorem lane.Lane2U32.interleave_spec (self : lane.Lane2U32) :
   unfold lane.Lane2U32.interleave
   unfold libcrux_secrets.U32.Insts.Libcrux_secretsIntCastOps.as_u64
   unfold libcrux_secrets.U64.Insts.Libcrux_secretsIntCastOps.as_u32
+  -- LibcruxSecrets's cast ops are `declassify → IScalar.cast → classify`
+  -- (vs the older hand-stub which was a direct cast). Unfold the
+  -- Blanket impls to expose the inner cast.
+  unfold libcrux_secrets.traits.Classify.Blanket.classify
+  unfold libcrux_secrets.traits.Declassify.Blanket.declassify
   unfold lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index
   unfold lane.Lane2U32.from_ints
   hax_mvcgen

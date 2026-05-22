@@ -3,6 +3,14 @@
  "packages":
  [{"type": "path",
    "scope": "",
+   "name": "LibcruxSecrets",
+   "manifestFile": "lake-manifest.json",
+   "inherited": false,
+   "dir":
+   "/Users/karthik/libcrux-ml-kem-proofs/crates/utils/secrets/proofs/aeneas-lean",
+   "configFile": "lakefile.toml"},
+  {"type": "path",
+   "scope": "",
    "name": "HacspecSha3",
    "manifestFile": "lake-manifest.json",
    "inherited": false,

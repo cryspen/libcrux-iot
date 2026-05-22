@@ -1,24 +1,17 @@
 import Aeneas
 import CoreModels
 import HacspecSha3.Missing
+import LibcruxSecrets
 
 open Aeneas Aeneas.Std Result
 
 noncomputable section
 
-namespace libcrux_secrets.traits.Classify.Blanket
-def classify {T : Type} (a : T) : Aeneas.Std.Result T := ok a
-end libcrux_secrets.traits.Classify.Blanket
-
-namespace libcrux_secrets
-
-def U32.Insts.Libcrux_secretsIntCastOps.as_u64 (x : U32) : Result U64 :=
-  ok (UScalar.cast .U64 x)
-
-def U64.Insts.Libcrux_secretsIntCastOps.as_u32 (x : U64) : Result U32 :=
-  ok (UScalar.cast .U32 x)
-
-end libcrux_secrets
+-- `libcrux_secrets.{traits.Classify.Blanket.classify, U32.…as_u64,
+-- U64.…as_u32}` used to be hand-stubbed here. The `LibcruxSecrets`
+-- Lake dep (imported above) now provides the full
+-- `libcrux_secrets.*` surface — every integer cast op + classify /
+-- declassify Blankets — so the local stubs are redundant.
 
 namespace core_models
 
