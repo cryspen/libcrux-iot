@@ -5,4 +5,7 @@
 -- import patch (search marker: PHASE0B-MISSING-PATCH).
 import LibcruxIotMlKem.Plan
 import LibcruxIotMlKem.Extraction.Funs
+import LibcruxIotMlKem.Util.SliceSpecs
+import LibcruxIotMlKem.Util.LoopSpecs
+import LibcruxIotMlKem.Util.CreateI
 import LibcruxIotMlKem.Equivalence.L0_FieldArith
