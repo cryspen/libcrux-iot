@@ -807,16 +807,9 @@ theorem barrett_reduce_element_spec
      pre `is_i32b (3328 * pow2 16) value`, post `is_i16b (3328 + 1665) result ∧
      v result * pow2 16 % 3329 = v value % 3329`.]
 -/
-/- Triple (extraction exists in Funs.lean but blocked by (a)):
-@[spec]
-theorem montgomery_reduce_element_spec
-    (value : Std.I32) (hb : value.val.natAbs ≤ 2^16 * 3328) :
-    ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element value
-    ⦃ ⇓ r => ⌜ modq_eq (r.val * (2^16 : Int)) value.val 3329
-              ∧ r.val.natAbs ≤ 3328 + 1665 ⌝ ⦄ := by
-  sorry
--/
+-- L0.3 montgomery_reduce_element_spec closed in Equivalence/L0_FieldArith.lean
+-- (2026-05-22; campaign's first proof-bearing Triple; 0 axioms beyond
+-- propext / Classical.choice / Quot.sound).
 
 /- **L0.4 `vector.portable.arithmetic.montgomery_multiply_fe_by_fer`** — Montgomery multiply.
 

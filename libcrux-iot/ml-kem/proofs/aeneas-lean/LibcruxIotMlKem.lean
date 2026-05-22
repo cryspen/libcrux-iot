@@ -5,3 +5,4 @@
 -- import patch (search marker: PHASE0B-MISSING-PATCH).
 import LibcruxIotMlKem.Plan
 import LibcruxIotMlKem.Extraction.Funs
+import LibcruxIotMlKem.Equivalence.L0_FieldArith
