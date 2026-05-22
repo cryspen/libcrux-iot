@@ -88,4 +88,40 @@ theorem sub_div_of_emod_eq_zero
   rw [h_a, Int.add_mul_ediv_left b q hRne]
   ring
 
+/-- **Bridge: old → new Montgomery modq form.**
+
+    Given the old-form modular equation `r * 2^16 ≡ v (mod 3329)`,
+    derive the new-form `r ≡ v * 169 (mod 3329)` via the
+    `mont_R_inv_q` keystone `(2^16 * 169) % 3329 = 1`.
+
+    The keystone implies `r * (2^16 * 169) ≡ r (mod 3329)`, hence
+    multiplying both sides of the old form by 169 yields the new form.
+
+    Used by L0.4 `montgomery_multiply_fe_by_fer_spec` and any
+    downstream Triple that needs to convert from the
+    `r·R ≡ v (mod q)` shape (impl-native) to the
+    `r ≡ v·R⁻¹ (mod q)` shape (F*-native, with `R⁻¹ = 169`). -/
+theorem modq_R_to_169
+    (r v : Int) (h : modq_eq (r * (2^16 : Int)) v 3329) :
+    modq_eq r (v * 169) 3329 := by
+  unfold modq_eq at h ⊢
+  have h_dvd_diff : (3329 : Int) ∣ (r * (2^16 : Int) - v) := Int.dvd_of_emod_eq_zero h
+  have h_keystone : ((2^16 : Int) * 169) % 3329 = 1 := by decide
+  have h_dvd_keystone : (3329 : Int) ∣ ((2^16 : Int) * 169 - 1) := by
+    have : ((2^16 : Int) * 169 - 1) % 3329 = 0 := by
+      rw [Int.sub_emod, h_keystone]; decide
+    exact Int.dvd_of_emod_eq_zero this
+  have h_dvd_r : (3329 : Int) ∣ (r * ((2^16 : Int) * 169) - r) := by
+    have h_eq : r * ((2^16 : Int) * 169) - r = r * ((2^16 : Int) * 169 - 1) := by ring
+    rw [h_eq]
+    exact Dvd.dvd.mul_left h_dvd_keystone r
+  have h_dvd_169 : (3329 : Int) ∣ ((r * (2^16 : Int) - v) * 169) :=
+    Dvd.dvd.mul_right h_dvd_diff 169
+  have h_dvd_final : (3329 : Int) ∣ (r - v * 169) := by
+    have h_eq : (r - v * 169)
+              = (r * (2^16 : Int) - v) * 169 - (r * ((2^16 : Int) * 169) - r) := by ring
+    rw [h_eq]
+    exact dvd_sub h_dvd_169 h_dvd_r
+  exact Int.emod_eq_zero_of_dvd h_dvd_final
+
 end libcrux_iot_ml_kem.Util

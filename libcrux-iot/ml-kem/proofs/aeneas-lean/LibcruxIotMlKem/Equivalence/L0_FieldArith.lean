@@ -65,48 +65,10 @@ theorem IScalar.shiftRight_UScalar_bv_eq
   simp only [Aeneas.Std.IScalar.shiftRight_UScalar, Aeneas.Std.IScalar.shiftRight]
   rw [if_pos hs]
 
-/-- **Bridge: old → new Montgomery modq form.**
-
-    Given the old-form modular equation `r * 2^16 ≡ v (mod 3329)`,
-    derive the new-form `r ≡ v * 169 (mod 3329)` via the
-    `mont_R_inv_q` keystone `(2^16 * 169) % 3329 = 1`.
-
-    The keystone implies `r * (2^16 * 169) ≡ r (mod 3329)`, hence
-    multiplying both sides of the old form by 169 yields the new form. -/
-private theorem modq_R_to_169
-    (r v : Int) (h : modq_eq (r * (2^16 : Int)) v 3329) :
-    modq_eq r (v * 169) 3329 := by
-  -- h : (r * 2^16 - v) % 3329 = 0
-  unfold modq_eq at h ⊢
-  -- Show (r - v * 169) % 3329 = 0 via the identity
-  --   r - v * 169 = -(v - r * 2^16) * 169 + r * (1 - 2^16 * 169)
-  -- and 2^16 * 169 ≡ 1 (mod 3329).
-  have h_dvd_diff : (3329 : Int) ∣ (r * (2^16 : Int) - v) := Int.dvd_of_emod_eq_zero h
-  have h_keystone : ((2^16 : Int) * 169) % 3329 = 1 := by decide
-  have h_dvd_keystone : (3329 : Int) ∣ ((2^16 : Int) * 169 - 1) := by
-    have : ((2^16 : Int) * 169 - 1) % 3329 = 0 := by
-      rw [Int.sub_emod, h_keystone]; decide
-    exact Int.dvd_of_emod_eq_zero this
-  -- r * (2^16 * 169) - r = r * (2^16 * 169 - 1), divisible by 3329.
-  have h_dvd_r : (3329 : Int) ∣ (r * ((2^16 : Int) * 169) - r) := by
-    have h_eq : r * ((2^16 : Int) * 169) - r = r * ((2^16 : Int) * 169 - 1) := by ring
-    rw [h_eq]
-    exact Dvd.dvd.mul_left h_dvd_keystone r
-  -- (r * 2^16 - v) * 169 divisible by 3329.
-  have h_dvd_169 : (3329 : Int) ∣ ((r * (2^16 : Int) - v) * 169) :=
-    Dvd.dvd.mul_right h_dvd_diff 169
-  -- Combine: r - v * 169 = r * (2^16 * 169) - r - (r * 2^16 - v) * 169 ... up to sign.
-  -- Algebra: (r * 2^16 - v) * 169 = r * (2^16 * 169) - v * 169.
-  -- So r * (2^16 * 169) - v * 169 = (r * 2^16 - v) * 169, divisible by 3329.
-  -- And r * (2^16 * 169) - r divisible by 3329.
-  -- Subtracting: (r - v * 169) = (r * (2^16 * 169) - v * 169) - (r * (2^16 * 169) - r)
-  --                            = (r * 2^16 - v) * 169 - r * (2^16 * 169 - 1).
-  have h_dvd_final : (3329 : Int) ∣ (r - v * 169) := by
-    have h_eq : (r - v * 169)
-              = (r * (2^16 : Int) - v) * 169 - (r * ((2^16 : Int) * 169) - r) := by ring
-    rw [h_eq]
-    exact dvd_sub h_dvd_169 h_dvd_r
-  exact Int.emod_eq_zero_of_dvd h_dvd_final
+-- `modq_R_to_169` (old↔new Montgomery modq form bridge) moved to
+-- `LibcruxIotMlKem.Util.Montgomery`; referenced unqualified below
+-- via the `open libcrux_iot_ml_kem.Util` declaration at the top of
+-- this file.
 
 /-! ## L0.1 — `get_n_least_significant_bits_spec`
 
