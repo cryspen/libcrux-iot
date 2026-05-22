@@ -6,8 +6,7 @@
    "name": "LibcruxSecrets",
    "manifestFile": "lake-manifest.json",
    "inherited": false,
-   "dir":
-   "/Users/karthik/libcrux-ml-kem-proofs/crates/utils/secrets/proofs/aeneas-lean",
+   "dir": "../../../../vendored/libcrux-secrets/proofs/aeneas-lean",
    "configFile": "lakefile.toml"},
   {"type": "path",
    "scope": "",

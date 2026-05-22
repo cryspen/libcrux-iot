@@ -22,4 +22,4 @@ path = "../../../../specs/sha3/proofs/aeneas-lean"
 # sister repo `libcrux-ml-kem-proofs`.
 [[require]]
 name = "LibcruxSecrets"
-path = "/Users/karthik/libcrux-ml-kem-proofs/crates/utils/secrets/proofs/aeneas-lean"
+path = "../../../../vendored/libcrux-secrets/proofs/aeneas-lean"
