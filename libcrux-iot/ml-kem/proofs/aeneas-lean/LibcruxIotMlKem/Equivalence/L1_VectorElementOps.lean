@@ -751,4 +751,307 @@ theorem cond_subtract_3329_spec
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L1_5.cond_step_post] using hP
 
+/-! ## L1.7 — `multiply_by_constant_spec`
+
+    The Vector.Portable.Arithmetic.multiply_by_constant impl is a
+    16-iteration loop that calls `core_models.num.I16.wrapping_mul`
+    on each element, with the constant `c` captured by the body
+    lambda (same structure as L1.4's `montgomery_multiply_by_constant`).
+    Under the per-element no-overflow bound
+    `|x.val * c.val| ≤ 2^15 - 1`, the wrap is a no-op and
+    `(wrapping_mul x c).val = x.val * c.val`. -/
+
+/-- Per-element predicate (guarded form): given the no-overflow bound
+    on `x * c`, the output value equals the product and is in range. -/
+private def multiply_by_constant_per_elem_P (c x y : Std.I16) : Prop :=
+  (x.val * c.val : Int).natAbs ≤ 2 ^ 15 - 1 →
+    y.val = x.val * c.val ∧ y.val.natAbs ≤ 2 ^ 15 - 1
+
+/-- Per-element Triple: `core_models.num.I16.wrapping_mul x c` reduces
+    to `.ok (Std.I16.wrapping_mul x c)`, whose `.val` is the bmod of
+    `x.val * c.val` mod `2^16`. Under the no-overflow bound,
+    `Int.bmod` is the identity. -/
+private theorem multiply_by_constant_per_elem_spec
+    (c : Std.I16) (x : Std.I16) :
+    ⦃ ⌜ True ⌝ ⦄
+    core_models.num.I16.wrapping_mul x c
+    ⦃ ⇓ r => ⌜ multiply_by_constant_per_elem_P c x r ⌝ ⦄ := by
+  -- Reduce `wrapping_mul` to `.ok (Std.I16.wrapping_mul x c)`.
+  have h_ok :
+      core_models.num.I16.wrapping_mul x c
+        = .ok (Aeneas.Std.I16.wrapping_mul x c) := by
+    unfold core_models.num.I16.wrapping_mul
+    unfold rust_primitives.arithmetic.wrapping_mul_i16
+    rfl
+  rw [h_ok]
+  simp only [Std.Do.Triple, WP.wp]
+  intro _
+  show multiply_by_constant_per_elem_P c x (Aeneas.Std.I16.wrapping_mul x c)
+  unfold multiply_by_constant_per_elem_P
+  intro hb
+  -- `(wrapping_mul x c).val = Int.bmod (x.val * c.val) (2^16)`.
+  have h_val := Aeneas.Std.I16.wrapping_mul_val_eq x c
+  -- Under `|x*c| ≤ 2^15 - 1`, Int.bmod is the identity.
+  -- omega handles `Int.natAbs ≤ N → -N ≤ a ∧ a ≤ N` directly.
+  have h_lb : -(2 ^ 15 : Int) ≤ x.val * c.val := by
+    have h_abs : (x.val * c.val : Int).natAbs ≤ 2 ^ 15 - 1 := hb
+    omega
+  have h_ub : x.val * c.val < (2 ^ 15 : Int) := by
+    have h_abs : (x.val * c.val : Int).natAbs ≤ 2 ^ 15 - 1 := hb
+    omega
+  have h_bmod : Int.bmod (x.val * c.val) (2 ^ 16) = x.val * c.val := by
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
+    · have h_const : -((2 : Int) ^ (16 - 1)) ≤ -(2 ^ 15 : Int) := by decide
+      exact le_trans h_const h_lb
+    · have h_const : (2 ^ 15 : Int) ≤ (2 : Int) ^ (16 - 1) := by decide
+      exact lt_of_lt_of_le h_ub h_const
+  -- Combine.
+  refine ⟨?_, ?_⟩
+  · -- (wrapping_mul x c).val = x.val * c.val
+    rw [h_val, h_bmod]
+  · -- (wrapping_mul x c).val.natAbs ≤ 2^15 - 1
+    rw [h_val, h_bmod]; exact hb
+
+@[spec]
+theorem multiply_by_constant_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (c : Std.I16)
+    (hpre : ∀ i : Nat, i < 16 →
+      ((vec.elements.val[i]!).val * c.val : Int).natAbs ≤ 2 ^ 15 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.multiply_by_constant vec c
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
+                (r.elements.val[i]!).val = (vec.elements.val[i]!).val * c.val
+              ∧ (r.elements.val[i]!).val.natAbs ≤ 2 ^ 15 - 1 ⌝ ⦄ := by
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.multiply_by_constant
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.multiply_by_constant_loop
+  have h_field : libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+                  = (16#usize : Std.Usize) := by
+    unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR; rfl
+  rw [h_field]
+  -- Bridge `multiply_by_constant_loop.body c` to `unary_loop_body
+  -- (fun x => core_models.num.I16.wrapping_mul x c)`.
+  have h_body_eq :
+      (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        libcrux_iot_ml_kem.vector.portable.arithmetic.multiply_by_constant_loop.body
+          c p.1 p.2)
+      = (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        unary_loop_body
+          (fun x => core_models.num.I16.wrapping_mul x c)
+          p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, vec1⟩
+    unfold libcrux_iot_ml_kem.vector.portable.arithmetic.multiply_by_constant_loop.body
+    unfold unary_loop_body
+    rfl
+  rw [h_body_eq]
+  apply Std.Do.Triple.of_entails_right _
+    (elementwise_unary_spec
+      (fun x => core_models.num.I16.wrapping_mul x c)
+      (multiply_by_constant_per_elem_P c)
+      (fun x => multiply_by_constant_per_elem_spec c x)
+      vec)
+  rw [PostCond.entails_noThrow]
+  intro r hh j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := hh j hj
+  rw [h_acc]
+  exact h_P (hpre j hj)
+
+/-! ## L1.8 — `bitwise_and_with_constant_spec`
+
+    The Vector.Portable.Arithmetic.bitwise_and_with_constant impl is a
+    16-iter loop where each iter computes `i1 &&& c` via the
+    `lift`-then-bv operation. The per-element op is pure
+    (no `Result`-level branching beyond `.ok`), so the Triple closes by
+    direct reduction. -/
+
+/-- Per-element predicate: `.bv = x.bv &&& c.bv`. -/
+private def bitwise_and_per_elem_P (c x y : Std.I16) : Prop :=
+  y.bv = x.bv &&& c.bv
+
+/-- Per-element Triple: `lift (x &&& c)` reduces to `.ok (x &&& c)`,
+    whose `.bv` is `x.bv &&& c.bv` by definition of `IScalar.and`. -/
+private theorem bitwise_and_per_elem_spec (c : Std.I16) (x : Std.I16) :
+    ⦃ ⌜ True ⌝ ⦄
+    lift (x &&& c)
+    ⦃ ⇓ r => ⌜ bitwise_and_per_elem_P c x r ⌝ ⦄ := by
+  -- `lift v = .ok v`, definitionally.
+  have h_ok : (lift (x &&& c) : Result Std.I16) = .ok (x &&& c) := rfl
+  rw [h_ok]
+  simp only [Std.Do.Triple, WP.wp]
+  intro _
+  show bitwise_and_per_elem_P c x (x &&& c)
+  unfold bitwise_and_per_elem_P
+  -- `(x &&& c).bv = x.bv &&& c.bv` by definition of `IScalar.and`.
+  rfl
+
+@[spec]
+theorem bitwise_and_with_constant_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (c : Std.I16) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.bitwise_and_with_constant vec c
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
+                (r.elements.val[i]!).bv = (vec.elements.val[i]!).bv &&& c.bv ⌝ ⦄ := by
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.bitwise_and_with_constant
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.bitwise_and_with_constant_loop
+  have h_field : libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+                  = (16#usize : Std.Usize) := by
+    unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR; rfl
+  rw [h_field]
+  have h_body_eq :
+      (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        libcrux_iot_ml_kem.vector.portable.arithmetic.bitwise_and_with_constant_loop.body
+          c p.1 p.2)
+      = (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        unary_loop_body
+          (fun x => lift (x &&& c))
+          p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, vec1⟩
+    unfold libcrux_iot_ml_kem.vector.portable.arithmetic.bitwise_and_with_constant_loop.body
+    unfold unary_loop_body
+    rfl
+  rw [h_body_eq]
+  apply Std.Do.Triple.of_entails_right _
+    (elementwise_unary_spec
+      (fun x => lift (x &&& c))
+      (bitwise_and_per_elem_P c)
+      (fun x => bitwise_and_per_elem_spec c x)
+      vec)
+  rw [PostCond.entails_noThrow]
+  intro r hh j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := hh j hj
+  rw [h_acc]
+  exact h_P
+
+/-! ## L1.9 — `shift_right_spec`
+
+    The Vector.Portable.Arithmetic.shift_right impl is a 16-iter loop
+    where each body lifts the captured `SHIFT_BY : I32` to `U32` via
+    `IScalar.hcast`, then `>>>`-shifts the i-th lane. The per-element
+    op is `i2 >>> (IScalar.hcast .U32 SHIFT_BY)` =
+    `IScalar.shiftRight_UScalar i2 _`. The body's structure differs
+    from `unary_loop_body` in that the `lift (IScalar.hcast …)`
+    statement is the first do-binding (before `index_usize`); but since
+    `lift v = .ok v` is a pure no-op with no side effects, swapping
+    the order is `rfl` after a `simp only [lift]`. -/
+
+/-- Per-element predicate: `.bv = x.bv.sshiftRight SHIFT_BY.val.toNat`. -/
+private def shift_right_per_elem_P (SHIFT_BY : Std.I32) (x y : Std.I16) : Prop :=
+  y.bv = x.bv.sshiftRight SHIFT_BY.val.toNat
+
+/-- Per-element Triple: `x >>> (IScalar.hcast .U32 SHIFT_BY)` reduces
+    via `IScalar.shiftRight_UScalar_bv_eq` to
+    `.ok ⟨x.bv.sshiftRight (hcast SHIFT_BY).val⟩`; the hcast preserves
+    the value when `0 ≤ SHIFT_BY.val < 2^32`, so its `.val = SHIFT_BY.val.toNat`. -/
+private theorem shift_right_per_elem_spec
+    (SHIFT_BY : Std.I32) (hs : 0 ≤ SHIFT_BY.val ∧ SHIFT_BY.val < 16) (x : Std.I16) :
+    ⦃ ⌜ True ⌝ ⦄
+    (x >>> (IScalar.hcast .U32 SHIFT_BY) : Result Std.I16)
+    ⦃ ⇓ r => ⌜ shift_right_per_elem_P SHIFT_BY x r ⌝ ⦄ := by
+  -- `x >>> u` unfolds to `IScalar.shiftRight_UScalar x u`.
+  show ⦃ ⌜ True ⌝ ⦄
+        Aeneas.Std.IScalar.shiftRight_UScalar x (IScalar.hcast .U32 SHIFT_BY)
+        ⦃ ⇓ r => ⌜ shift_right_per_elem_P SHIFT_BY x r ⌝ ⦄
+  -- `(hcast .U32 SHIFT_BY).val ≤ 32` needs to be derived from `SHIFT_BY.val < 16`.
+  obtain ⟨hs_nn, hs_lt⟩ := hs
+  -- `(hcast .U32 SHIFT_BY).val = SHIFT_BY.val.toNat`. Use the in-bounds
+  -- spec for `hcast`: under `0 ≤ SHIFT_BY.val ≤ U32.max`, hcast preserves value.
+  have h_max : SHIFT_BY.val ≤ Aeneas.Std.UScalar.max .U32 := by
+    -- scalar_tac knows UScalar.max .U32 = 4294967295 (via max_eq simp).
+    scalar_tac
+  have h_hcast_spec := Aeneas.Std.IScalar.hcast_inBounds_spec .U32 SHIFT_BY ⟨hs_nn, h_max⟩
+  -- The `lift` post-only spec is `spec (lift v) p`, and `lift v = .ok v`,
+  -- so `spec_ok` collapses it to `p v` directly.
+  have h_eq_int : ((IScalar.hcast .U32 SHIFT_BY : Std.U32).val : Int) = SHIFT_BY.val := by
+    -- h_hcast_spec : spec (lift (hcast .U32 SHIFT_BY)) (fun y => y.val = SHIFT_BY.val)
+    -- Reduce lift → .ok, then spec_ok.
+    have h_ok_lift : (lift (Aeneas.Std.IScalar.hcast .U32 SHIFT_BY)
+                      : Result Std.U32)
+                    = .ok (Aeneas.Std.IScalar.hcast .U32 SHIFT_BY) := rfl
+    rw [h_ok_lift] at h_hcast_spec
+    rw [Aeneas.Std.WP.spec_ok] at h_hcast_spec
+    exact h_hcast_spec
+  -- Bridge: `((n : Nat) : Int) = SHIFT_BY.val` and `0 ≤ SHIFT_BY.val` → `n = SHIFT_BY.val.toNat`.
+  have h_hcast_val : (IScalar.hcast .U32 SHIFT_BY : Std.U32).val = SHIFT_BY.val.toNat := by
+    have h_inj : ((IScalar.hcast .U32 SHIFT_BY : Std.U32).val : Int).toNat
+                  = SHIFT_BY.val.toNat := by rw [h_eq_int]
+    simpa using h_inj
+  -- Now invoke `IScalar.shiftRight_UScalar_bv_eq`.
+  have h_lt_numBits : (IScalar.hcast .U32 SHIFT_BY : Std.U32).val
+                        < Aeneas.Std.IScalarTy.I16.numBits := by
+    rw [h_hcast_val]
+    have h_red : (Aeneas.Std.IScalarTy.I16.numBits : Nat) = 16 := by decide
+    rw [h_red]
+    -- `SHIFT_BY.val.toNat < 16` since `SHIFT_BY.val < 16` and `0 ≤ SHIFT_BY.val`.
+    have h_le : (SHIFT_BY.val.toNat : Int) = SHIFT_BY.val := Int.toNat_of_nonneg hs_nn
+    omega
+  have h_sr := IScalar.shiftRight_UScalar_bv_eq x (IScalar.hcast .U32 SHIFT_BY) h_lt_numBits
+  rw [h_sr]
+  simp only [Std.Do.Triple, WP.wp]
+  intro _
+  show shift_right_per_elem_P SHIFT_BY x ⟨x.bv.sshiftRight (IScalar.hcast .U32 SHIFT_BY : Std.U32).val⟩
+  unfold shift_right_per_elem_P
+  show (⟨x.bv.sshiftRight (IScalar.hcast .U32 SHIFT_BY : Std.U32).val⟩ : Std.I16).bv
+        = x.bv.sshiftRight SHIFT_BY.val.toNat
+  show x.bv.sshiftRight (IScalar.hcast .U32 SHIFT_BY : Std.U32).val
+        = x.bv.sshiftRight SHIFT_BY.val.toNat
+  rw [h_hcast_val]
+
+@[spec]
+theorem shift_right_spec
+    (SHIFT_BY : Std.I32) (hs : 0 ≤ SHIFT_BY.val ∧ SHIFT_BY.val < 16)
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.shift_right SHIFT_BY vec
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
+                (r.elements.val[i]!).bv =
+                  (vec.elements.val[i]!).bv.sshiftRight SHIFT_BY.val.toNat ⌝ ⦄ := by
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.shift_right
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.shift_right_loop
+  have h_field : libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+                  = (16#usize : Std.Usize) := by
+    unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR; rfl
+  rw [h_field]
+  -- Bridge `shift_right_loop.body SHIFT_BY` to
+  -- `unary_loop_body (fun x => x >>> (IScalar.hcast .U32 SHIFT_BY))`.
+  -- The two body shapes differ in that the impl computes the hcast
+  -- *before* the index_usize. Since `lift v = .ok v` is pure,
+  -- the bind chain reorders by `bind_tc_ok` rewriting.
+  have h_body_eq :
+      (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        libcrux_iot_ml_kem.vector.portable.arithmetic.shift_right_loop.body
+          SHIFT_BY p.1 p.2)
+      = (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        unary_loop_body
+          (fun x => x >>> (IScalar.hcast .U32 SHIFT_BY))
+          p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, vec1⟩
+    unfold libcrux_iot_ml_kem.vector.portable.arithmetic.shift_right_loop.body
+    unfold unary_loop_body
+    -- After unfolding, the impl body has `let i1 ← lift (hcast …); let i2 ← index; let i3 ← i2 >>> i1`,
+    -- and `unary_loop_body` has `let i1 ← index; let vi ← (i1 >>> hcast …); …`.
+    -- `lift v = .ok v` is definitional; reduce the leading `lift` bind.
+    rfl
+  rw [h_body_eq]
+  apply Std.Do.Triple.of_entails_right _
+    (elementwise_unary_spec
+      (fun x => x >>> (IScalar.hcast .U32 SHIFT_BY))
+      (shift_right_per_elem_P SHIFT_BY)
+      (fun x => shift_right_per_elem_spec SHIFT_BY hs x)
+      vec)
+  rw [PostCond.entails_noThrow]
+  intro r hh j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := hh j hj
+  rw [h_acc]
+  exact h_P
+
 end libcrux_iot_ml_kem.Equivalence
