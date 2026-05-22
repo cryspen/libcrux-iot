@@ -22,6 +22,7 @@
   See `Plan.lean § L3.1` (lines 1458-1514) and `§ L3.2 / L3.3` (lines
   1516-1525) for F*-port references.
 -/
+import LibcruxIotMlKem.Equivalence.L1_VectorElementOps
 import LibcruxIotMlKem.Equivalence.L2_NTTSteps
 
 set_option mvcgen.warning false
@@ -1077,5 +1078,653 @@ theorem ntt_at_layer_3_spec
     · have hP : L3_3.step_post re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L3_3.step_post] using hP
+
+/-! ## L3.5 — `ntt_at_layer_7_spec`
+
+Outermost layer of the forward NTT. No `zeta_i` (single fixed Montgomery
+multiplier `-1600`). Driver loop runs 8 iterations (`step = 16/2 = 8`)
+over the first half of `re.coefficients`; per iter touches lanes `j`
+and `j+8`. Per-coefficient bound goes `3 → 4803` (= `3 + 1600·3`).
+
+Per-iter body (j = k.val, i = j+8, all reads/writes from re/acc):
+  scratch1 := re[i]
+  scratch2 := -1600 * scratch1                       (L1.7)
+  re[i]    := re[j]                                  (lane swap)
+  t2       := re[j] + scratch2                       (L1.1)
+  re[j]    := t2
+  t4       := <re[i] now holds old re[j]> - scratch2 (L1.2)
+  re[i]    := t4
+So new re[j] = old re[j] + (-1600) * old re[i]; new re[i] = old re[j] -
+(-1600) * old re[i] = old re[j] + 1600 * old re[i]. Both bounded by
+3 + 4800 = 4803 in absolute value under |old re[*][ℓ]| ≤ 3.
+
+See `Plan.lean § L3.5` (lines 1621–1664) for the F*-port reference. -/
+
+/-! ### Local helpers: `Usize.div` reduction + generic-`«end»` iter-next. -/
+
+private theorem usize_div_ok_eq (x y : Std.Usize) (hy : y.val ≠ 0) :
+    ∃ z : Std.Usize, (x / y : Result Std.Usize) = .ok z ∧ z.val = x.val / y.val := by
+  have hT := Std.UScalar.div_spec x hy
+  obtain ⟨z, h_eq, h_v⟩ := hT
+  exact ⟨z, h_eq, h_v⟩
+
+/-- `i.val < e.val`: `IteratorRange.next` returns `.ok (some i, iter')` with
+    `iter'.end = e` and `iter'.start.val = i.val + 1`. Generic version of
+    `iter_next_some_eq` (which is specialised to `«end» := 16#usize`). -/
+private theorem iter_next_some_eq_gen
+    (i e : Std.Usize) (h_lt : i.val < e.val) :
+    ∃ s : Std.Usize, s.val = i.val + 1 ∧
+      core_models.iter.range.IteratorRange.next
+        core_models.Usize.Insts.Core_modelsIterRangeStep
+        ({ start := i, «end» := e } : core_models.ops.range.Range Std.Usize)
+      = .ok (some i,
+          ({ start := s, «end» := e } : core_models.ops.range.Range Std.Usize)) := by
+  have hT := IteratorRange_next_spec_usize i e
+    (Q := PostCond.noThrow fun (oi : Option Std.Usize × _) => ⌜
+      ∃ s : Std.Usize, s.val = i.val + 1
+        ∧ oi = (some i,
+                ({ start := s, «end» := e }
+                  : core_models.ops.range.Range Std.Usize)) ⌝)
+    (fun _ s hs => by
+      dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+      exact ⟨s, hs, rfl⟩)
+    (fun hge => absurd h_lt (Nat.not_lt.mpr hge))
+  obtain ⟨v, hveq, hP⟩ := triple_exists_ok_l3 hT
+  obtain ⟨s, hs_val, hpair⟩ := hP
+  exact ⟨s, hs_val, by rw [hveq, hpair]⟩
+
+/-- `i.val ≥ e.val`: `IteratorRange.next` returns `.ok (none, _)`. Generic
+    version of `iter_next_none_eq`. -/
+private theorem iter_next_none_eq_gen
+    (i e : Std.Usize) (h_ge : i.val ≥ e.val) :
+    core_models.iter.range.IteratorRange.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep
+      ({ start := i, «end» := e } : core_models.ops.range.Range Std.Usize)
+    = .ok ((none : Option Std.Usize),
+            ({ start := i, «end» := e }
+              : core_models.ops.range.Range Std.Usize)) := by
+  have hT := IteratorRange_next_spec_usize i e
+    (Q := PostCond.noThrow fun (oi : Option Std.Usize × _) => ⌜
+      oi = ((none : Option Std.Usize),
+            ({ start := i, «end» := e }
+              : core_models.ops.range.Range Std.Usize)) ⌝)
+    (fun hlt => absurd hlt (Nat.not_lt.mpr h_ge))
+    (fun _ => by
+      dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure])
+  obtain ⟨v, hveq, hP⟩ := triple_exists_ok_l3 hT
+  rw [hveq, hP]
+
+namespace L3_5
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+
+/-- Step-local accumulator: a `PolynomialRingElement × scratch`. -/
+abbrev Acc :=
+  libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector ×
+  libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector
+
+/-- Loop invariant after `k` iterations (`k.val ∈ [0, 8]`):
+    - Lanes `j ∈ [0, k.val)` are processed: bounded by 4803.
+    - Lanes `j ∈ [8, 8 + k.val)` are processed: bounded by 4803.
+    - Lanes `j ∈ [k.val, 8)` are untouched: bounded by 3 (from `re`).
+    - Lanes `j ∈ [8 + k.val, 16)` are untouched: bounded by 3 (from `re`). -/
+def inv
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    Std.Usize → Acc → Result Prop :=
+  fun k acc => pure (
+    (∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.1.coefficients.val[j]!).elements.val[ℓ]!).val.natAbs ≤ 4803)
+    ∧ (∀ j : Nat, 8 ≤ j → j < 8 + k.val → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.1.coefficients.val[j]!).elements.val[ℓ]!).val.natAbs ≤ 4803)
+    ∧ (∀ j : Nat, k.val ≤ j → j < 8 →
+        acc.1.coefficients.val[j]! = re.coefficients.val[j]!)
+    ∧ (∀ j : Nat, 8 + k.val ≤ j → j < 16 →
+        acc.1.coefficients.val[j]! = re.coefficients.val[j]!))
+
+/-- Per-iter step post. -/
+def step_post
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × Acc) Acc) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (8#usize : Std.Usize).val ∧ iter'.«end» = 8#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (inv re iter'.start acc').holds
+  | .done y => (inv re 8#usize y).holds
+
+end L3_5
+
+set_option maxHeartbeats 16000000 in
+private theorem ntt_at_layer_7_step_lemma
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3)
+    (acc : L3_5.Acc)
+    (k : Std.Usize) (h_le : k.val ≤ (8#usize : Std.Usize).val)
+    (h_done_lo : ∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.1.coefficients.val[j]!).elements.val[ℓ]!).val.natAbs ≤ 4803)
+    (h_done_hi : ∀ j : Nat, 8 ≤ j → j < 8 + k.val → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.1.coefficients.val[j]!).elements.val[ℓ]!).val.natAbs ≤ 4803)
+    (h_undone_lo : ∀ j : Nat, k.val ≤ j → j < 8 →
+        acc.1.coefficients.val[j]! = re.coefficients.val[j]!)
+    (h_undone_hi : ∀ j : Nat, 8 + k.val ≤ j → j < 16 →
+        acc.1.coefficients.val[j]! = re.coefficients.val[j]!) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
+      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
+      8#usize { start := k, «end» := 8#usize } acc.1 acc.2
+    ⦃ ⇓ r => ⌜ L3_5.step_post re k r ⌝ ⦄ := by
+  have h8 : (8#usize : Std.Usize).val = 8 := rfl
+  have h_coef_len : acc.1.coefficients.length = 16 :=
+    Std.Array.length_eq _
+  unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
+  by_cases h_lt : k.val < (8#usize : Std.Usize).val
+  · -- Some round = k branch.
+    have hk_8 : k.val < 8 := by rw [h8] at h_lt; exact h_lt
+    have hk_16 : k.val < 16 := by omega
+    obtain ⟨s, hs_val, h_iter_some⟩ := iter_next_some_eq_gen k 8#usize h_lt
+    -- 1) `i = j + 8`: where j = k.
+    have h_um8 : (8#usize : Std.Usize).val = 8 := rfl
+    have h_i_max : k.val + (8#usize : Std.Usize).val ≤ Std.Usize.max := by
+      rw [h_um8]; scalar_tac
+    obtain ⟨i, h_i_eq, h_i_val⟩ := usize_add_ok_eq k 8#usize h_i_max
+    have h_i_val_arith : i.val = k.val + 8 := by rw [h_i_val, h_um8]
+    have h_i_lt_16 : i.val < 16 := by rw [h_i_val_arith]; omega
+    have h_i_lt_coef : i.val < acc.1.coefficients.length := by rw [h_coef_len]; exact h_i_lt_16
+    -- 2) Read scratch1 = acc.1[i].
+    have h_idx_i :
+        Aeneas.Std.Array.index_usize acc.1.coefficients i
+          = .ok (acc.1.coefficients.val[i.val]!) :=
+      array_index_usize_ok_eq acc.1.coefficients i h_i_lt_coef
+    have h_acc_i_eq : acc.1.coefficients.val[i.val]! = re.coefficients.val[i.val]! := by
+      apply h_undone_hi i.val
+      · rw [h_i_val_arith]; omega
+      · exact h_i_lt_16
+    have h_scratch1_bd : ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs ≤ 3 := by
+      intro ℓ hℓ
+      rw [h_acc_i_eq]
+      exact h_pre i.val h_i_lt_16 ℓ hℓ
+    -- 3) scratch2 = multiply_by_constant scratch1 (-1600). L1.7.
+    have h_neg1600_val : ((-1600)#i16 : Std.I16).val = -1600 := by decide
+    have h_mul_pre : ∀ ℓ : Nat, ℓ < 16 →
+        (((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val
+            * ((-1600)#i16 : Std.I16).val : Int).natAbs ≤ 2 ^ 15 - 1 := by
+      intro ℓ hℓ
+      have h_x_abs : ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs ≤ 3 :=
+        h_scratch1_bd ℓ hℓ
+      rw [h_neg1600_val]
+      have h_abs_mul : (((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val * (-1600) : Int).natAbs
+                       = ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs * 1600 := by
+        rw [Int.natAbs_mul]; rfl
+      rw [h_abs_mul]
+      have h_mul : ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs * 1600
+                    ≤ 3 * 1600 :=
+        Nat.mul_le_mul_right 1600 h_x_abs
+      omega
+    obtain ⟨scratch2, h_scratch2_eq, h_scratch2_post⟩ :=
+      triple_exists_ok_l3 (multiply_by_constant_spec (acc.1.coefficients.val[i.val]!)
+                            ((-1600)#i16 : Std.I16) h_mul_pre)
+    have h_scratch2_bd : ∀ ℓ : Nat, ℓ < 16 →
+        (scratch2.elements.val[ℓ]!).val
+          = (acc.1.coefficients.val[i.val]!).elements.val[ℓ]!.val * (-1600 : Int)
+        ∧ (scratch2.elements.val[ℓ]!).val.natAbs ≤ 4800 := by
+      intro ℓ hℓ
+      have h_per := h_scratch2_post ℓ hℓ
+      have h_v_eq : (scratch2.elements.val[ℓ]!).val
+                      = (acc.1.coefficients.val[i.val]!).elements.val[ℓ]!.val * (-1600 : Int) := by
+        rw [h_per.1, h_neg1600_val]
+      refine ⟨h_v_eq, ?_⟩
+      have h_x_abs : ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs ≤ 3 :=
+        h_scratch1_bd ℓ hℓ
+      have h_abs_eq : (scratch2.elements.val[ℓ]!).val.natAbs
+                      = ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs * 1600 := by
+        rw [h_v_eq, Int.natAbs_mul]; rfl
+      rw [h_abs_eq]
+      have h_mul : ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs * 1600
+                    ≤ 3 * 1600 :=
+        Nat.mul_le_mul_right 1600 h_x_abs
+      omega
+    -- 4) t = re.coefficients[j] = acc.1.coef[k]!
+    have h_k_lt_coef : k.val < acc.1.coefficients.length := by rw [h_coef_len]; exact hk_16
+    have h_idx_k :
+        Aeneas.Std.Array.index_usize acc.1.coefficients k
+          = .ok (acc.1.coefficients.val[k.val]!) :=
+      array_index_usize_ok_eq acc.1.coefficients k h_k_lt_coef
+    have h_acc_k_eq : acc.1.coefficients.val[k.val]! = re.coefficients.val[k.val]! :=
+      h_undone_lo k.val (Nat.le_refl _) hk_8
+    -- Per-element bound at lane k: ≤ 3 from h_pre via h_acc_k_eq.
+    have h_t_bd : ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.1.coefficients.val[k.val]!).elements.val[ℓ]!).val.natAbs ≤ 3 := by
+      intro ℓ hℓ
+      rw [h_acc_k_eq]
+      exact h_pre k.val hk_16 ℓ hℓ
+    -- Set t (for readability in downstream bounds).
+    set t : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+      acc.1.coefficients.val[k.val]! with ht_def
+    -- 5) a = acc.1.coef.set i t.
+    have h_upd_i :
+        Aeneas.Std.Array.update acc.1.coefficients i t
+          = .ok (acc.1.coefficients.set i t) :=
+      array_update_ok_eq acc.1.coefficients i t h_i_lt_coef
+    set a : Std.Array
+        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
+      acc.1.coefficients.set i t with ha_def
+    -- 6) (t1, back1) = index_mut_usize a j.
+    have h_a_k_lt : k.val < a.length := by
+      change k.val < (acc.1.coefficients.set i t).length
+      rw [Std.Array.set_length]; rw [h_coef_len]; exact hk_16
+    have h_a_k_idx :
+        Aeneas.Std.Array.index_usize a k = .ok (a.val[k.val]!) :=
+      array_index_usize_ok_eq a k h_a_k_lt
+    have h_imt_a_k :
+        Aeneas.Std.Array.index_mut_usize a k = .ok (a.val[k.val]!, a.set k) := by
+      unfold Aeneas.Std.Array.index_mut_usize
+      rw [h_a_k_idx]; rfl
+    have h_k_ne_i : k.val ≠ i.val := by rw [h_i_val_arith]; omega
+    have h_i_ne_k : i.val ≠ k.val := fun h => h_k_ne_i h.symm
+    have h_a_k_val_eq : a.val[k.val]! = acc.1.coefficients.val[k.val]! := by
+      change (acc.1.coefficients.set i t).val[k.val]! = acc.1.coefficients.val[k.val]!
+      have h_ne : (acc.1.coefficients.set i t)[k.val]! = (acc.1.coefficients)[k.val]! :=
+        Aeneas.Std.Array.getElem!_Nat_set_ne acc.1.coefficients i k.val t h_i_ne_k
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_ne
+    -- t1 = a.val[k.val]! (result of index_mut). Bound: t1 = acc.1.coef[k]! = t.
+    have h_t1_eq_t : a.val[k.val]! = t := by
+      change a.val[k.val]! = acc.1.coefficients.val[k.val]!
+      exact h_a_k_val_eq
+    have h_add_pre : ∀ ℓ : Nat, ℓ < 16 →
+        (((a.val[k.val]!).elements.val[ℓ]!).val + (scratch2.elements.val[ℓ]!).val : Int).natAbs
+          ≤ 2 ^ 15 - 1 := by
+      intro ℓ hℓ
+      rw [h_t1_eq_t]
+      have h_t_b := h_t_bd ℓ hℓ
+      have h_s2_b := (h_scratch2_bd ℓ hℓ).2
+      have h_t_int_lb : -(3 : Int) ≤ (t.elements.val[ℓ]!).val := by omega
+      have h_t_int_ub : (t.elements.val[ℓ]!).val ≤ (3 : Int) := by omega
+      have h_s2_int_lb : -(4800 : Int) ≤ (scratch2.elements.val[ℓ]!).val := by omega
+      have h_s2_int_ub : (scratch2.elements.val[ℓ]!).val ≤ (4800 : Int) := by omega
+      omega
+    obtain ⟨t2, h_t2_eq, h_t2_post⟩ :=
+      triple_exists_ok_l3 (add_spec (a.val[k.val]!) scratch2 h_add_pre)
+    have h_t2_bd : ∀ ℓ : Nat, ℓ < 16 → (t2.elements.val[ℓ]!).val.natAbs ≤ 4803 := by
+      intro ℓ hℓ
+      have h_per := h_t2_post ℓ hℓ
+      have h_v := h_per.1
+      rw [h_t1_eq_t] at h_v
+      have h_t_b := h_t_bd ℓ hℓ
+      have h_s2_b := (h_scratch2_bd ℓ hℓ).2
+      have h_t_int_lb : -(3 : Int) ≤ (t.elements.val[ℓ]!).val := by omega
+      have h_t_int_ub : (t.elements.val[ℓ]!).val ≤ (3 : Int) := by omega
+      have h_s2_int_lb : -(4800 : Int) ≤ (scratch2.elements.val[ℓ]!).val := by omega
+      have h_s2_int_ub : (scratch2.elements.val[ℓ]!).val ≤ (4800 : Int) := by omega
+      omega
+    -- 8/9) a1 = a.set k t2 (definitional); (t3, back2) = index_mut_usize a1 i.
+    -- Use `have ... : ... := ` to define a1 as a syntactically-distinct term,
+    -- but state the index_mut hypothesis directly with `a.set k t2` so simp
+    -- can match the goal pattern.
+    have h_a1_i_lt : i.val < (a.set k t2).length := by
+      rw [Std.Array.set_length]
+      change i.val < (acc.1.coefficients.set i t).length
+      rw [Std.Array.set_length, h_coef_len]; exact h_i_lt_16
+    have h_a1_i_idx :
+        Aeneas.Std.Array.index_usize (a.set k t2) i
+          = .ok ((a.set k t2).val[i.val]!) :=
+      array_index_usize_ok_eq (a.set k t2) i h_a1_i_lt
+    have h_imt_a1_i :
+        Aeneas.Std.Array.index_mut_usize (a.set k t2) i
+          = .ok ((a.set k t2).val[i.val]!, (a.set k t2).set i) := by
+      unfold Aeneas.Std.Array.index_mut_usize
+      rw [h_a1_i_idx]; rfl
+    have h_a1_i_val_eq : (a.set k t2).val[i.val]! = t := by
+      have h_set_k_ne : (a.set k t2)[i.val]! = a[i.val]! :=
+        Aeneas.Std.Array.getElem!_Nat_set_ne a k i.val t2 h_k_ne_i
+      have h_a_i_eq : a[i.val]! = t := by
+        change (acc.1.coefficients.set i t)[i.val]! = t
+        exact Aeneas.Std.Array.getElem!_Nat_set_eq acc.1.coefficients i i.val t ⟨rfl, h_i_lt_coef⟩
+      have h_chain : (a.set k t2).val[i.val]! = a.val[i.val]! := by
+        simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_k_ne
+      rw [h_chain]
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_a_i_eq
+    -- 10) t4 = sub t3 scratch2. State with the raw `a.set k t2` term (no `let a1`).
+    have h_sub_pre : ∀ ℓ : Nat, ℓ < 16 →
+        ((((a.set k t2).val[i.val]!).elements.val[ℓ]!).val
+          - (scratch2.elements.val[ℓ]!).val : Int).natAbs ≤ 2 ^ 15 - 1 := by
+      intro ℓ hℓ
+      rw [h_a1_i_val_eq]
+      have h_t_b := h_t_bd ℓ hℓ
+      have h_s2_b := (h_scratch2_bd ℓ hℓ).2
+      have h_t_int_lb : -(3 : Int) ≤ (t.elements.val[ℓ]!).val := by omega
+      have h_t_int_ub : (t.elements.val[ℓ]!).val ≤ (3 : Int) := by omega
+      have h_s2_int_lb : -(4800 : Int) ≤ (scratch2.elements.val[ℓ]!).val := by omega
+      have h_s2_int_ub : (scratch2.elements.val[ℓ]!).val ≤ (4800 : Int) := by omega
+      omega
+    obtain ⟨t4, h_t4_eq, h_t4_post⟩ :=
+      triple_exists_ok_l3 (sub_spec ((a.set k t2).val[i.val]!) scratch2 h_sub_pre)
+    have h_t4_bd : ∀ ℓ : Nat, ℓ < 16 → (t4.elements.val[ℓ]!).val.natAbs ≤ 4803 := by
+      intro ℓ hℓ
+      have h_per := h_t4_post ℓ hℓ
+      have h_v := h_per.1
+      rw [h_a1_i_val_eq] at h_v
+      have h_t_b := h_t_bd ℓ hℓ
+      have h_s2_b := (h_scratch2_bd ℓ hℓ).2
+      have h_t_int_lb : -(3 : Int) ≤ (t.elements.val[ℓ]!).val := by omega
+      have h_t_int_ub : (t.elements.val[ℓ]!).val ≤ (3 : Int) := by omega
+      have h_s2_int_lb : -(4800 : Int) ≤ (scratch2.elements.val[ℓ]!).val := by omega
+      have h_s2_int_ub : (scratch2.elements.val[ℓ]!).val ≤ (4800 : Int) := by omega
+      omega
+    -- Introduce a1 alias AFTER stating h_t4_eq (so h_t4_eq has raw form).
+    let a1 : Std.Array
+        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
+      a.set k t2
+    have ha1_def : a1 = a.set k t2 := rfl
+    -- 11) a2 = a1.set i t4.
+    set a2 : Std.Array
+        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
+      a1.set i t4 with ha2_def
+    set acc' : L3_5.Acc := ({ coefficients := a2 }, scratch2) with hacc'_def
+    -- Compose into a single .ok equation.
+    have h_body :
+        libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
+          8#usize { start := k, «end» := 8#usize } acc.1 acc.2
+        = .ok (cont (({ start := s, «end» := 8#usize }
+                        : core_models.ops.range.Range Std.Usize),
+                     acc')) := by
+      unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 8#usize } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 8#usize }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      -- L3.1's pattern: full `simp` reduces match-on-Some + lets + Prod-binds
+      -- and threads all arithmetic equations in one call. Disable two simp
+      -- lemmas that would push the goal into a form our hypotheses don't match:
+      --  * `List.getElem!_eq_getElem?_getD` — would unfold `[i]!` to `?.getD default`.
+      --  * `Std.Array.set_val_eq` — would push `↑` inside `(a.set i x)` to
+      --    yield `(↑a).set (↑i) x`, breaking the `(a.set k t2).val[i.val]!`
+      --    pattern in our index_mut hypothesis.
+      simp [-List.getElem!_eq_getElem?_getD, -Std.Array.set_val_eq,
+        bind_tc_ok,
+        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.multiply_by_constant,
+        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.add,
+        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations.sub,
+        h_i_eq, h_idx_i, h_scratch2_eq, h_idx_k, h_upd_i, h_imt_a_k, h_t2_eq,
+        h_imt_a1_i, h_t4_eq]
+      -- Goal collapses to `({coefficients := (a.set k t2).set i t4}, scratch2) = acc'`;
+      -- `acc'` is `({coefficients := (a.set k t2).set i t4}, scratch2)` definitionally
+      -- (via the `let`-chain a1 = a.set k t2, a2 = a1.set i t4).
+      rfl
+    apply triple_of_ok_l3 h_body
+    show L3_5.step_post re k
+      (.cont (({ start := s, «end» := 8#usize }
+                : core_models.ops.range.Range Std.Usize),
+              acc'))
+    unfold L3_5.step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    apply pure_prop_holds_l3
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · -- Lanes j ∈ [0, s.val): processed.
+      intro j hj ℓ hℓ
+      rw [hs_val] at hj
+      rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj_lt_k | hj_eq_k
+      · -- j < k: unchanged by both writes.
+        have h_k_ne_j : k.val ≠ j := Nat.ne_of_gt hj_lt_k
+        have h_i_ne_j : i.val ≠ j := by rw [h_i_val_arith]; omega
+        have h_chain :
+            acc'.1.coefficients.val[j]! = acc.1.coefficients.val[j]! := by
+          show (a1.set i t4).val[j]! = acc.1.coefficients.val[j]!
+          have h1 : (a1.set i t4)[j]! = a1[j]! :=
+            Aeneas.Std.Array.getElem!_Nat_set_ne a1 i j t4 h_i_ne_j
+          have h2 : (a.set k t2)[j]! = a[j]! :=
+            Aeneas.Std.Array.getElem!_Nat_set_ne a k j t2 h_k_ne_j
+          have h3 : (acc.1.coefficients.set i t)[j]! = (acc.1.coefficients)[j]! :=
+            Aeneas.Std.Array.getElem!_Nat_set_ne acc.1.coefficients i j t h_i_ne_j
+          have h1' : (a1.set i t4).val[j]! = a1.val[j]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h1
+          have h2' : a1.val[j]! = a.val[j]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h2
+          have h3' : a.val[j]! = acc.1.coefficients.val[j]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h3
+          rw [h1', h2', h3']
+        rw [h_chain]
+        exact h_done_lo j hj_lt_k ℓ hℓ
+      · -- j = k: new value is t2.
+        subst hj_eq_k
+        have h_chain : acc'.1.coefficients.val[k.val]! = t2 := by
+          show (a1.set i t4).val[k.val]! = t2
+          have h1 : (a1.set i t4)[k.val]! = a1[k.val]! :=
+            Aeneas.Std.Array.getElem!_Nat_set_ne a1 i k.val t4 h_i_ne_k
+          have h1' : (a1.set i t4).val[k.val]! = a1.val[k.val]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h1
+          rw [h1']
+          show (a.set k t2).val[k.val]! = t2
+          have h2 : (a.set k t2)[k.val]! = t2 :=
+            Aeneas.Std.Array.getElem!_Nat_set_eq a k k.val t2 ⟨rfl, h_a_k_lt⟩
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h2
+        rw [h_chain]
+        exact h_t2_bd ℓ hℓ
+    · -- Lanes j ∈ [8, 8 + s.val): processed.
+      intro j hj_lo hj_hi ℓ hℓ
+      rw [hs_val] at hj_hi
+      have hj_lt : j < 8 + k.val + 1 := by omega
+      rcases Nat.lt_succ_iff_lt_or_eq.mp hj_lt with hj_lt_ki | hj_eq_ki
+      · -- j ∈ [8, 8 + k.val): unchanged by both writes.
+        have h_k_ne_j : k.val ≠ j := by omega
+        have h_i_ne_j : i.val ≠ j := by rw [h_i_val_arith]; omega
+        have h_chain :
+            acc'.1.coefficients.val[j]! = acc.1.coefficients.val[j]! := by
+          show (a1.set i t4).val[j]! = acc.1.coefficients.val[j]!
+          have h1 : (a1.set i t4)[j]! = a1[j]! :=
+            Aeneas.Std.Array.getElem!_Nat_set_ne a1 i j t4 h_i_ne_j
+          have h2 : (a.set k t2)[j]! = a[j]! :=
+            Aeneas.Std.Array.getElem!_Nat_set_ne a k j t2 h_k_ne_j
+          have h3 : (acc.1.coefficients.set i t)[j]! = (acc.1.coefficients)[j]! :=
+            Aeneas.Std.Array.getElem!_Nat_set_ne acc.1.coefficients i j t h_i_ne_j
+          have h1' : (a1.set i t4).val[j]! = a1.val[j]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h1
+          have h2' : a1.val[j]! = a.val[j]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h2
+          have h3' : a.val[j]! = acc.1.coefficients.val[j]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h3
+          rw [h1', h2', h3']
+        rw [h_chain]
+        exact h_done_hi j hj_lo hj_lt_ki ℓ hℓ
+      · -- j = 8 + k.val = i.val: new value is t4.
+        have hj_eq_i : j = i.val := by rw [h_i_val_arith]; omega
+        subst hj_eq_i
+        have h_chain : acc'.1.coefficients.val[i.val]! = t4 := by
+          show (a1.set i t4).val[i.val]! = t4
+          have h1 : (a1.set i t4)[i.val]! = t4 :=
+            Aeneas.Std.Array.getElem!_Nat_set_eq a1 i i.val t4 ⟨rfl, h_a1_i_lt⟩
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h1
+        rw [h_chain]
+        exact h_t4_bd ℓ hℓ
+    · -- Lanes j ∈ [s.val, 8): untouched.
+      intro j hj_ge hj_lt
+      rw [hs_val] at hj_ge
+      have h_k_lt_j : k.val < j := by omega
+      have h_k_ne_j : k.val ≠ j := by omega
+      have h_i_ne_j : i.val ≠ j := by rw [h_i_val_arith]; omega
+      have h_chain :
+          acc'.1.coefficients.val[j]! = acc.1.coefficients.val[j]! := by
+        show (a1.set i t4).val[j]! = acc.1.coefficients.val[j]!
+        have h1 : (a1.set i t4)[j]! = a1[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne a1 i j t4 h_i_ne_j
+        have h2 : (a.set k t2)[j]! = a[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne a k j t2 h_k_ne_j
+        have h3 : (acc.1.coefficients.set i t)[j]! = (acc.1.coefficients)[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne acc.1.coefficients i j t h_i_ne_j
+        have h1' : (a1.set i t4).val[j]! = a1.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h1
+        have h2' : a1.val[j]! = a.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h2
+        have h3' : a.val[j]! = acc.1.coefficients.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h3
+        rw [h1', h2', h3']
+      rw [h_chain]
+      have h_undone_j : k.val ≤ j := by omega
+      exact h_undone_lo j h_undone_j hj_lt
+    · -- Lanes j ∈ [8 + s.val, 16): untouched.
+      intro j hj_ge hj_lt
+      rw [hs_val] at hj_ge
+      have h_i_lt_j : i.val < j := by rw [h_i_val_arith]; omega
+      have h_k_ne_j : k.val ≠ j := by omega
+      have h_i_ne_j : i.val ≠ j := by omega
+      have h_chain :
+          acc'.1.coefficients.val[j]! = acc.1.coefficients.val[j]! := by
+        show (a1.set i t4).val[j]! = acc.1.coefficients.val[j]!
+        have h1 : (a1.set i t4)[j]! = a1[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne a1 i j t4 h_i_ne_j
+        have h2 : (a.set k t2)[j]! = a[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne a k j t2 h_k_ne_j
+        have h3 : (acc.1.coefficients.set i t)[j]! = (acc.1.coefficients)[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne acc.1.coefficients i j t h_i_ne_j
+        have h1' : (a1.set i t4).val[j]! = a1.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h1
+        have h2' : a1.val[j]! = a.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h2
+        have h3' : a.val[j]! = acc.1.coefficients.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h3
+        rw [h1', h2', h3']
+      rw [h_chain]
+      have h_undone_j : 8 + k.val ≤ j := by omega
+      exact h_undone_hi j h_undone_j hj_lt
+  · -- None branch (k ≥ 8).
+    have hk_ge : k.val ≥ (8#usize : Std.Usize).val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = 8 := by rw [h8] at hk_ge; omega
+    have h_iter_none := iter_next_none_eq_gen k 8#usize hk_ge
+    have h_body :
+        libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
+          8#usize { start := k, «end» := 8#usize } acc.1 acc.2
+        = .ok (done (acc.1, acc.2)) := by
+      unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 8#usize } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 8#usize }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    have h_acc_eq : (acc.1, acc.2) = acc := rfl
+    rw [h_acc_eq] at h_body
+    apply triple_of_ok_l3 h_body
+    show L3_5.step_post re k (.done acc)
+    unfold L3_5.step_post
+    show (L3_5.inv re 8#usize acc).holds
+    apply pure_prop_holds_l3
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · intro j hj ℓ hℓ
+      rw [show (8#usize : Std.Usize).val = 8 from rfl] at hj
+      apply h_done_lo j _ ℓ hℓ; rw [hk_eq]; exact hj
+    · intro j hj_lo hj_hi ℓ hℓ
+      rw [show (8#usize : Std.Usize).val = 8 from rfl] at hj_hi
+      apply h_done_hi j hj_lo _ ℓ hℓ; rw [hk_eq]; exact hj_hi
+    · intro j hj_ge hj_lt
+      rw [show (8#usize : Std.Usize).val = 8 from rfl] at hj_ge
+      apply h_undone_lo j _ hj_lt; rw [hk_eq]; exact hj_ge
+    · intro j hj_ge hj_lt
+      rw [show (8#usize : Std.Usize).val = 8 from rfl] at hj_ge
+      apply h_undone_hi j _ hj_lt; rw [hk_eq]; exact hj_ge
+
+private theorem vectors_in_ring_element_eq :
+    libcrux_iot_ml_kem.polynomial.VECTORS_IN_RING_ELEMENT = .ok (16#usize : Std.Usize) := by
+  unfold libcrux_iot_ml_kem.polynomial.VECTORS_IN_RING_ELEMENT
+  unfold libcrux_iot_ml_kem.constants.COEFFICIENTS_IN_RING_ELEMENT
+  unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+  rfl
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+theorem ntt_at_layer_7_spec
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_7
+      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
+      re scratch
+    ⦃ ⇓ p => ⌜ ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                ((p.1.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 4803 ⌝ ⦄ := by
+  -- Reduce the top wrapper: i = VECTORS_IN_RING_ELEMENT = 16#usize, step = i/2 = 8#usize.
+  unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_7
+  rw [vectors_in_ring_element_eq]
+  simp only [bind_tc_ok]
+  -- step = 16#usize / 2#usize = 8#usize.
+  have h_two_nz : (2#usize : Std.Usize).val ≠ 0 := by decide
+  obtain ⟨step, h_step_eq, h_step_val⟩ :=
+    usize_div_ok_eq (16#usize : Std.Usize) (2#usize : Std.Usize) h_two_nz
+  have h_step_val_8 : step.val = 8 := by
+    rw [h_step_val]; decide
+  have h_step_eq_8 : step = 8#usize := by
+    apply Std.UScalar.eq_of_val_eq
+    rw [h_step_val_8]; rfl
+  rw [h_step_eq]
+  simp only [bind_tc_ok]
+  rw [h_step_eq_8]
+  unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, acc1) =>
+        libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
+          8#usize iter1 acc1.1 acc1.2)
+      (β := L3_5.Acc)
+      (re, scratch)
+      0#usize 8#usize
+      (L3_5.inv re)
+      (by decide : (0#usize : Std.Usize).val ≤ (8#usize : Std.Usize).val)
+      (pure_prop_holds_l3
+        ⟨fun j hj _ _ => absurd hj (Nat.not_lt_zero j),
+         fun j _hj_lo hj_hi _ _ => by
+            have h0 : (0#usize : Std.Usize).val = 0 := rfl
+            rw [h0] at hj_hi
+            omega,
+         fun _ _ _ => rfl,
+         fun _ _ _ => rfl⟩)
+      ?_)
+  · -- Post entailment.
+    rw [PostCond.entails_noThrow]
+    intro r h
+    obtain ⟨h_done_lo, h_done_hi, _h_undone_lo, _h_undone_hi⟩ := of_pure_prop_holds_l3 h
+    intro i hi j hj
+    have h8 : (8#usize : Std.Usize).val = 8 := rfl
+    by_cases hi_lt_8 : i < 8
+    · apply h_done_lo i (by rw [h8]; exact hi_lt_8) j hj
+    · have hi_ge_8 : 8 ≤ i := Nat.not_lt.mp hi_lt_8
+      apply h_done_hi i hi_ge_8 (by rw [h8]; omega) j hj
+  · -- Step lemma application.
+    intro acc k h_ge h_le hinv
+    obtain ⟨h_done_lo, h_done_hi, h_undone_lo, h_undone_hi⟩ := of_pure_prop_holds_l3 hinv
+    have h_step := ntt_at_layer_7_step_lemma re h_pre acc k h_le
+                    h_done_lo h_done_hi h_undone_lo h_undone_hi
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : L3_5.step_post re k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L3_5.step_post] using hP
+    · have hP : L3_5.step_post re k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L3_5.step_post] using hP
 
 end libcrux_iot_ml_kem.Equivalence
