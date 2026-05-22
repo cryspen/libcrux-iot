@@ -33,6 +33,192 @@ namespace libcrux_iot_ml_kem.Equivalence
 open Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Util
 
+/-! ## L1.1 — `add_spec`
+
+    The Vector.Portable.Arithmetic.add impl is a 16-iter loop that
+    calls `core_models.num.I16.wrapping_add lhs[i] rhs[i]` and writes
+    the result back to `lhs[i]`. Under the per-element no-overflow
+    bound `|lhs.val + rhs.val| ≤ 2^15 - 1`, the wrap is the identity
+    and `(wrapping_add lhs rhs).val = lhs.val + rhs.val`. -/
+
+/-- Per-element predicate (guarded form): given the no-overflow bound
+    on `x + y`, the output value equals the sum and is in range. -/
+private def add_per_elem_P (x y r : Std.I16) : Prop :=
+  ((x.val + y.val : Int)).natAbs ≤ 2 ^ 15 - 1 →
+    r.val = x.val + y.val ∧ r.val.natAbs ≤ 2 ^ 15 - 1
+
+/-- Per-element Triple: `core_models.num.I16.wrapping_add x y` reduces
+    to `.ok (Std.I16.wrapping_add x y)`, whose `.val` is the bmod of
+    `x.val + y.val` mod `2^16`. Under the no-overflow bound,
+    `Int.bmod` is the identity. -/
+private theorem add_per_elem_spec (x y : Std.I16) :
+    ⦃ ⌜ True ⌝ ⦄
+    core_models.num.I16.wrapping_add x y
+    ⦃ ⇓ r => ⌜ add_per_elem_P x y r ⌝ ⦄ := by
+  have h_ok :
+      core_models.num.I16.wrapping_add x y
+        = .ok (Aeneas.Std.I16.wrapping_add x y) := by
+    unfold core_models.num.I16.wrapping_add
+    unfold rust_primitives.arithmetic.wrapping_add_i16
+    rfl
+  rw [h_ok]
+  simp only [Std.Do.Triple, WP.wp]
+  intro _
+  show add_per_elem_P x y (Aeneas.Std.I16.wrapping_add x y)
+  unfold add_per_elem_P
+  intro hb
+  have h_val := Aeneas.Std.I16.wrapping_add_val_eq x y
+  have h_lb : -(2 ^ 15 : Int) ≤ x.val + y.val := by
+    have h_abs : ((x.val + y.val : Int)).natAbs ≤ 2 ^ 15 - 1 := hb
+    omega
+  have h_ub : x.val + y.val < (2 ^ 15 : Int) := by
+    have h_abs : ((x.val + y.val : Int)).natAbs ≤ 2 ^ 15 - 1 := hb
+    omega
+  have h_bmod : Int.bmod (x.val + y.val) (2 ^ 16) = x.val + y.val := by
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
+    · have h_const : -((2 : Int) ^ (16 - 1)) ≤ -(2 ^ 15 : Int) := by decide
+      exact le_trans h_const h_lb
+    · have h_const : (2 ^ 15 : Int) ≤ (2 : Int) ^ (16 - 1) := by decide
+      exact lt_of_lt_of_le h_ub h_const
+  refine ⟨?_, ?_⟩
+  · rw [h_val, h_bmod]
+  · rw [h_val, h_bmod]; exact hb
+
+@[spec]
+theorem add_spec
+    (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Nat, i < 16 →
+      ((lhs.elements.val[i]!).val + (rhs.elements.val[i]!).val : Int).natAbs ≤ 2 ^ 15 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.add lhs rhs
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
+                (r.elements.val[i]!).val
+                  = (lhs.elements.val[i]!).val + (rhs.elements.val[i]!).val
+              ∧ (r.elements.val[i]!).val.natAbs ≤ 2 ^ 15 - 1 ⌝ ⦄ := by
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.add
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.add_loop
+  have h_field : libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+                  = (16#usize : Std.Usize) := by
+    unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR; rfl
+  rw [h_field]
+  -- Bridge `add_loop.body rhs` to
+  -- `binary_loop_body core_models.num.I16.wrapping_add rhs`.
+  have h_body_eq :
+      (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        libcrux_iot_ml_kem.vector.portable.arithmetic.add_loop.body rhs p.1 p.2)
+      = (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        binary_loop_body core_models.num.I16.wrapping_add rhs p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, vec1⟩
+    unfold libcrux_iot_ml_kem.vector.portable.arithmetic.add_loop.body
+    unfold binary_loop_body
+    rfl
+  rw [h_body_eq]
+  apply Std.Do.Triple.of_entails_right _
+    (elementwise_binary_spec
+      core_models.num.I16.wrapping_add
+      add_per_elem_P
+      add_per_elem_spec
+      lhs rhs)
+  rw [PostCond.entails_noThrow]
+  intro r hh j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := hh j hj
+  rw [h_acc]
+  exact h_P (hpre j hj)
+
+/-! ## L1.2 — `sub_spec`
+
+    The Vector.Portable.Arithmetic.sub impl is a 16-iter loop that
+    calls `core_models.num.I16.wrapping_sub lhs[i] rhs[i]`. Same
+    structure as `add_spec` but with `-` instead of `+`. -/
+
+/-- Per-element predicate (guarded form): given the no-overflow bound
+    on `x - y`, the output value equals the difference and is in range. -/
+private def sub_per_elem_P (x y r : Std.I16) : Prop :=
+  ((x.val - y.val : Int)).natAbs ≤ 2 ^ 15 - 1 →
+    r.val = x.val - y.val ∧ r.val.natAbs ≤ 2 ^ 15 - 1
+
+/-- Per-element Triple: `core_models.num.I16.wrapping_sub x y` reduces
+    to `.ok (Std.I16.wrapping_sub x y)`, whose `.val` is the bmod of
+    `x.val - y.val` mod `2^16`. Under the no-overflow bound,
+    `Int.bmod` is the identity. -/
+private theorem sub_per_elem_spec (x y : Std.I16) :
+    ⦃ ⌜ True ⌝ ⦄
+    core_models.num.I16.wrapping_sub x y
+    ⦃ ⇓ r => ⌜ sub_per_elem_P x y r ⌝ ⦄ := by
+  have h_ok :
+      core_models.num.I16.wrapping_sub x y
+        = .ok (Aeneas.Std.I16.wrapping_sub x y) := by
+    unfold core_models.num.I16.wrapping_sub
+    unfold rust_primitives.arithmetic.wrapping_sub_i16
+    rfl
+  rw [h_ok]
+  simp only [Std.Do.Triple, WP.wp]
+  intro _
+  show sub_per_elem_P x y (Aeneas.Std.I16.wrapping_sub x y)
+  unfold sub_per_elem_P
+  intro hb
+  have h_val := Aeneas.Std.I16.wrapping_sub_val_eq x y
+  have h_lb : -(2 ^ 15 : Int) ≤ x.val - y.val := by
+    have h_abs : ((x.val - y.val : Int)).natAbs ≤ 2 ^ 15 - 1 := hb
+    omega
+  have h_ub : x.val - y.val < (2 ^ 15 : Int) := by
+    have h_abs : ((x.val - y.val : Int)).natAbs ≤ 2 ^ 15 - 1 := hb
+    omega
+  have h_bmod : Int.bmod (x.val - y.val) (2 ^ 16) = x.val - y.val := by
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
+    · have h_const : -((2 : Int) ^ (16 - 1)) ≤ -(2 ^ 15 : Int) := by decide
+      exact le_trans h_const h_lb
+    · have h_const : (2 ^ 15 : Int) ≤ (2 : Int) ^ (16 - 1) := by decide
+      exact lt_of_lt_of_le h_ub h_const
+  refine ⟨?_, ?_⟩
+  · rw [h_val, h_bmod]
+  · rw [h_val, h_bmod]; exact hb
+
+@[spec]
+theorem sub_spec
+    (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Nat, i < 16 →
+      ((lhs.elements.val[i]!).val - (rhs.elements.val[i]!).val : Int).natAbs ≤ 2 ^ 15 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.sub lhs rhs
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
+                (r.elements.val[i]!).val
+                  = (lhs.elements.val[i]!).val - (rhs.elements.val[i]!).val
+              ∧ (r.elements.val[i]!).val.natAbs ≤ 2 ^ 15 - 1 ⌝ ⦄ := by
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.sub
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.sub_loop
+  have h_field : libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+                  = (16#usize : Std.Usize) := by
+    unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR; rfl
+  rw [h_field]
+  have h_body_eq :
+      (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        libcrux_iot_ml_kem.vector.portable.arithmetic.sub_loop.body rhs p.1 p.2)
+      = (fun (p : (core_models.ops.range.Range Std.Usize)
+            × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) =>
+        binary_loop_body core_models.num.I16.wrapping_sub rhs p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, vec1⟩
+    unfold libcrux_iot_ml_kem.vector.portable.arithmetic.sub_loop.body
+    unfold binary_loop_body
+    rfl
+  rw [h_body_eq]
+  apply Std.Do.Triple.of_entails_right _
+    (elementwise_binary_spec
+      core_models.num.I16.wrapping_sub
+      sub_per_elem_P
+      sub_per_elem_spec
+      lhs rhs)
+  rw [PostCond.entails_noThrow]
+  intro r hh j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := hh j hj
+  rw [h_acc]
+  exact h_P (hpre j hj)
+
 /-! ## L1.3 — `barrett_reduce_spec`
 
     Implements the upstream `Vector.Portable.Arithmetic.barrett_reduce`

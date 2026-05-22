@@ -445,4 +445,301 @@ theorem elementwise_unary_spec
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [unary_step_post] using hP
 
+/-! ## Binary loop body / invariant / step / spec.
+
+Mirror of the unary family but with **two** input vectors. Only `lhs` is
+the loop accumulator; `rhs` is captured in the body lambda. The per-element
+op now has type `I16 → I16 → Result I16` and reads from both inputs at the
+same index `i` before writing back to `acc.elements[i]`.
+
+The bind chain inside the body has one extra `index_usize` step for `rhs`
+compared to `unary_loop_body`, but the structure is otherwise identical. -/
+
+/-- Binary loop body: reads `acc.elements[i]` and `rhs.elements[i]`,
+    applies `per_elem`, writes back to `acc.elements[i]`. -/
+def binary_loop_body
+    (per_elem : Std.I16 → Std.I16 → Result Std.I16)
+    (rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (iter : core_models.ops.range.Range Std.Usize)
+    (acc : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    Result (ControlFlow
+      ((core_models.ops.range.Range Std.Usize)
+        × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) := do
+  let (o, iter1) ←
+    core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+      core_models.Usize.Insts.Core_modelsIterRangeStep iter
+  match o with
+  | core_models.option.Option.None => ok (done acc)
+  | core_models.option.Option.Some i =>
+    let i1 ← Aeneas.Std.Array.index_usize acc.elements i
+    let i2 ← Aeneas.Std.Array.index_usize rhs.elements i
+    let vi ← per_elem i1 i2
+    let a ← Aeneas.Std.Array.update acc.elements i vi
+    ok (cont (iter1, { elements := a }))
+
+/-- 2-conjunct binary invariant:
+    - For `j < k`, `acc.elements[j]` equals the per-elem-op output `r`
+      for inputs `input_lhs.elements[j]` and `input_rhs.elements[j]`.
+    - For `j ≥ k`, `acc.elements[j] = input_lhs.elements[j]` (rhs is
+      read-only, so its invariant is implicit). -/
+def binary_loop_inv
+    (per_elem : Std.I16 → Std.I16 → Result Std.I16)
+    (P : Std.I16 → Std.I16 → Std.I16 → Prop)
+    (input_lhs input_rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    Std.Usize →
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector →
+    Result Prop :=
+  fun k acc => pure (
+    (∀ j : Nat, j < k.val →
+      ∃ r, per_elem (input_lhs.elements.val[j]!) (input_rhs.elements.val[j]!) = .ok r
+            ∧ acc.elements.val[j]! = r
+            ∧ P (input_lhs.elements.val[j]!) (input_rhs.elements.val[j]!) r)
+    ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
+        acc.elements.val[j]! = input_lhs.elements.val[j]!))
+
+/-- Per-iteration post for `binary_loop_body`. -/
+def binary_step_post
+    (per_elem : Std.I16 → Std.I16 → Result Std.I16)
+    (P : Std.I16 → Std.I16 → Std.I16 → Prop)
+    (input_lhs input_rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize)
+        × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (16#usize : Std.Usize).val ∧ iter'.«end» = 16#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (binary_loop_inv per_elem P input_lhs input_rhs iter'.start acc').holds
+  | .done y => (binary_loop_inv per_elem P input_lhs input_rhs 16#usize y).holds
+
+set_option maxHeartbeats 4000000 in
+theorem elementwise_binary_step
+    (per_elem : Std.I16 → Std.I16 → Result Std.I16)
+    (P : Std.I16 → Std.I16 → Std.I16 → Prop)
+    (per_elem_spec :
+      ∀ (x y : Std.I16),
+        ⦃ ⌜ True ⌝ ⦄ per_elem x y ⦃ ⇓ r => ⌜ P x y r ⌝ ⦄)
+    (input_lhs input_rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (acc : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize)
+    (h_le : k.val ≤ (16#usize : Std.Usize).val)
+    (h_inv : (binary_loop_inv per_elem P input_lhs input_rhs k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    binary_loop_body per_elem input_rhs { start := k, «end» := 16#usize } acc
+    ⦃ ⇓ r => ⌜ binary_step_post per_elem P input_lhs input_rhs k r ⌝ ⦄ := by
+  obtain ⟨h_acc_done, h_acc_undone⟩ := of_pure_prop_holds_pv h_inv
+  have h_acc_len : acc.elements.length = 16 := PortableVector_elements_length acc
+  have h_rhs_len : input_rhs.elements.length = 16 := PortableVector_elements_length input_rhs
+  have h_16 : (16#usize : Std.Usize).val = 16 := rfl
+  unfold binary_loop_body
+  by_cases h_lt : k.val < (16#usize : Std.Usize).val
+  · -- Some i = k branch.
+    have hk_16 : k.val < 16 := by rw [h_16] at h_lt; exact h_lt
+    obtain ⟨s, hs_val, h_iter_some⟩ := iter_next_some_eq k h_lt
+    have h_idx_lhs :
+        Aeneas.Std.Array.index_usize acc.elements k = .ok (acc.elements.val[k.val]!) :=
+      array_index_usize_ok_eq acc.elements k (by rw [h_acc_len]; exact hk_16)
+    have h_idx_rhs :
+        Aeneas.Std.Array.index_usize input_rhs.elements k
+          = .ok (input_rhs.elements.val[k.val]!) :=
+      array_index_usize_ok_eq input_rhs.elements k (by rw [h_rhs_len]; exact hk_16)
+    obtain ⟨r, h_per_eq, h_per_P⟩ :=
+      triple_exists_ok_pv (per_elem_spec (acc.elements.val[k.val]!)
+                                          (input_rhs.elements.val[k.val]!))
+    have h_upd :
+        Aeneas.Std.Array.update acc.elements k r
+        = .ok (acc.elements.set k r) :=
+      array_update_ok_eq acc.elements k r (by rw [h_acc_len]; exact hk_16)
+    have h_body :
+        (do
+          let (o, iter1) ←
+            core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize)
+          match o with
+          | core_models.option.Option.None =>
+              (Result.ok (ControlFlow.done acc) :
+                Result (ControlFlow
+                  ((core_models.ops.range.Range Std.Usize)
+                    × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+                  libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+          | core_models.option.Option.Some i =>
+            let i1 ← Aeneas.Std.Array.index_usize acc.elements i
+            let i2 ← Aeneas.Std.Array.index_usize input_rhs.elements i
+            let vi ← per_elem i1 i2
+            let a ← Aeneas.Std.Array.update acc.elements i vi
+            ok (cont (iter1, { elements := a })))
+        = .ok (cont
+            (({ start := s, «end» := 16#usize }
+                : core_models.ops.range.Range Std.Usize),
+             { elements := acc.elements.set k r })) := by
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp only [bind_tc_ok]
+      rw [h_idx_lhs]
+      simp only [bind_tc_ok]
+      rw [h_idx_rhs]
+      simp only [bind_tc_ok]
+      rw [h_per_eq]
+      simp only [bind_tc_ok]
+      rw [h_upd]
+      rfl
+    apply triple_of_ok_pv h_body
+    show binary_step_post per_elem P input_lhs input_rhs k
+            (.cont (({ start := s, «end» := 16#usize }
+                       : core_models.ops.range.Range Std.Usize),
+                    { elements := acc.elements.set k r }))
+    unfold binary_step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    show (binary_loop_inv per_elem P input_lhs input_rhs s
+            { elements := acc.elements.set k r }).holds
+    apply pure_prop_holds_pv
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      rw [hs_val] at hj
+      rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj_lt_k | hj_eq_k
+      · obtain ⟨r_j, h_per_j, h_acc_j, h_P_j⟩ := h_acc_done j hj_lt_k
+        refine ⟨r_j, h_per_j, ?_, h_P_j⟩
+        have h_ne : k.val ≠ j := Nat.ne_of_gt hj_lt_k
+        have h_set_ne : (acc.elements.set k r)[j]! = (acc.elements)[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne acc.elements k j r h_ne
+        have : (acc.elements.set k r).val[j]! = acc.elements.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+        show (acc.elements.set k r).val[j]! = r_j
+        rw [this]; exact h_acc_j
+      · subst hj_eq_k
+        refine ⟨r, ?_, ?_, ?_⟩
+        · have h_eq : acc.elements.val[k.val]! = input_lhs.elements.val[k.val]! :=
+            h_acc_undone k.val (Nat.le_refl _) hk_16
+          rw [← h_eq]; exact h_per_eq
+        · have h_lt'' : k.val < acc.elements.length := by rw [h_acc_len]; exact hk_16
+          have h_set_eq : (acc.elements.set k r)[k.val]! = r :=
+            Aeneas.Std.Array.getElem!_Nat_set_eq acc.elements k k.val r ⟨rfl, h_lt''⟩
+          have : (acc.elements.set k r).val[k.val]! = r := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_eq
+          show (acc.elements.set k r).val[k.val]! = r
+          exact this
+        · have h_eq : acc.elements.val[k.val]! = input_lhs.elements.val[k.val]! :=
+            h_acc_undone k.val (Nat.le_refl _) hk_16
+          rw [← h_eq]; exact h_per_P
+    · intro j hj_ge hj_lt
+      rw [hs_val] at hj_ge
+      have h_ne : k.val ≠ j := by omega
+      have h_ge' : k.val ≤ j := by omega
+      have h_set_ne : (acc.elements.set k r)[j]! = (acc.elements)[j]! :=
+        Aeneas.Std.Array.getElem!_Nat_set_ne acc.elements k j r h_ne
+      have : (acc.elements.set k r).val[j]! = acc.elements.val[j]! := by
+        simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+      show (acc.elements.set k r).val[j]! = input_lhs.elements.val[j]!
+      rw [this]
+      exact h_acc_undone j h_ge' hj_lt
+  · -- None branch.
+    have hk_ge : k.val ≥ (16#usize : Std.Usize).val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = 16 := by rw [h_16] at hk_ge; omega
+    have h_iter_none := iter_next_none_eq k hk_ge
+    have h_body :
+        (do
+          let (o, iter1) ←
+            core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize)
+          match o with
+          | core_models.option.Option.None =>
+              (Result.ok (ControlFlow.done acc) :
+                Result (ControlFlow
+                  ((core_models.ops.range.Range Std.Usize)
+                    × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+                  libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+          | core_models.option.Option.Some i =>
+            let i1 ← Aeneas.Std.Array.index_usize acc.elements i
+            let i2 ← Aeneas.Std.Array.index_usize input_rhs.elements i
+            let vi ← per_elem i1 i2
+            let a ← Aeneas.Std.Array.update acc.elements i vi
+            ok (cont (iter1, { elements := a })))
+        = .ok (done acc) := by
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    apply triple_of_ok_pv h_body
+    show binary_step_post per_elem P input_lhs input_rhs k (.done acc)
+    unfold binary_step_post
+    show (binary_loop_inv per_elem P input_lhs input_rhs 16#usize acc).holds
+    apply pure_prop_holds_pv
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      apply h_acc_done j
+      rw [hk_eq]; rw [h_16] at hj; exact hj
+    · intro j hj_ge hj_lt
+      apply h_acc_undone j _ hj_lt
+      rw [hk_eq]; rw [h_16] at hj_ge; exact hj_ge
+
+/-! ## Top-level binary elementwise spec wrapper -/
+
+set_option maxHeartbeats 2000000 in
+theorem elementwise_binary_spec
+    (per_elem : Std.I16 → Std.I16 → Result Std.I16)
+    (P : Std.I16 → Std.I16 → Std.I16 → Prop)
+    (per_elem_spec :
+      ∀ (x y : Std.I16),
+        ⦃ ⌜ True ⌝ ⦄ per_elem x y ⦃ ⇓ r => ⌜ P x y r ⌝ ⦄)
+    (input_lhs input_rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    ⦃ ⌜ True ⌝ ⦄
+    loop (fun p => binary_loop_body per_elem input_rhs p.1 p.2)
+      (({ start := 0#usize, «end» := 16#usize }
+        : core_models.ops.range.Range Std.Usize), input_lhs)
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
+              ∃ ri, per_elem (input_lhs.elements.val[i]!) (input_rhs.elements.val[i]!) = .ok ri
+                    ∧ r.elements.val[i]! = ri
+                    ∧ P (input_lhs.elements.val[i]!) (input_rhs.elements.val[i]!) ri ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, vec1) => binary_loop_body per_elem input_rhs iter1 vec1)
+      input_lhs 0#usize 16#usize
+      (binary_loop_inv per_elem P input_lhs input_rhs)
+      (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
+      (pure_prop_holds_pv ⟨
+        fun j hj => by
+          have h0 : (0#usize : Std.Usize).val = 0 := rfl
+          rw [h0] at hj; exact absurd hj (Nat.not_lt_zero j),
+        fun _ _ _ => rfl⟩)
+      ?_)
+  · rw [PostCond.entails_noThrow]
+    intro r h
+    obtain ⟨h_done, _h_undone⟩ := of_pure_prop_holds_pv h
+    intro j hj
+    apply h_done j
+    show j < (16#usize : Std.Usize).val
+    exact hj
+  · intro acc k h_ge h_le hinv
+    have h_step :=
+      elementwise_binary_step per_elem P per_elem_spec input_lhs input_rhs acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : binary_step_post per_elem P input_lhs input_rhs k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [binary_step_post] using hP
+    · have hP : binary_step_post per_elem P input_lhs input_rhs k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [binary_step_post] using hP
+
 end libcrux_iot_ml_kem.Util
