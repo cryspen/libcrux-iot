@@ -760,6 +760,9 @@ theorem get_n_least_significant_bits_spec
     ⦃ ⇓ r => ⌜ r.val < 2 ^ n.val ∧ r.val = value.val % (2 ^ n.val) ⌝ ⦄ := by
   sorry
 -/
+-- L0.1 get_n_least_significant_bits_spec closed in Equivalence/L0_FieldArith.lean
+-- (S03 commit 82ac1bf; staged `_eq_ok` + `interval_cases n.val <;> decide` mask;
+-- 0 axioms beyond propext / Classical.choice / Quot.sound).
 
 /- **L0.2 `vector.portable.arithmetic.barrett_reduce_element`** — signed Barrett reduction.
 
@@ -801,6 +804,9 @@ theorem barrett_reduce_element_spec
               ∧ r.val.natAbs ≤ 3328 ⌝ ⦄ := by
   sorry
 -/
+-- L0.2 barrett_reduce_element_spec closed in Equivalence/L0_FieldArith.lean
+-- (S03 commit f050fef; Int-level core via keystone 20159*3329 = 2^26 + 447,
+-- 439 LOC, axiom-clean; flagged for follow-up golf to bv_decide form).
 
 /- **L0.3 `vector.portable.arithmetic.montgomery_reduce_element`** — signed Montgomery reduction.
 
