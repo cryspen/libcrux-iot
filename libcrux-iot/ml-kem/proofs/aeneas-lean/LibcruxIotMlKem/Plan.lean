@@ -219,6 +219,37 @@ namespace libcrux_iot_ml_kem.Plan
 
 open Aeneas Aeneas.Std Std.Do
 
+/-! ## `modq_eq` — canonical modular-equality predicate
+
+  Every L0–L9 Triple postcondition that asserts a congruence
+  `a ≡ b (mod q)` (where `q = 3329`) uses this single named predicate.
+  We define `modq_eq a b q` as `(a - b) % q = 0` (the subtraction-mod
+  spelling rather than `a % q = b % q`) for two reasons:
+
+  1. It composes additively (`modq_eq a b q ∧ modq_eq c d q → modq_eq
+     (a + c) (b + d) q`) without any side conditions, matching the way
+     `lemma_mod_add_distr` is invoked in the upstream F* proofs.
+  2. The `(_ - _) % q = 0` shape is what `scalar_tac` / `bv_decide` can
+     close directly on small numeric instances, so leaf lemmas avoid
+     having to unfold a `ZMod` cast.
+
+  Standard lemmas about `modq_eq` (`refl`, `symm`, `trans`, `add`, `mul`,
+  `const_mul`, and the `ZMod q` bridge `modq_eq a b q ↔ (a : ZMod q) =
+  (b : ZMod q)`) should be proved once in `Util.ModularArith` (see
+  "Reusable infrastructure" Tier 1 below) and used selectively where
+  Lean's automation needs the algebraic API.
+
+  NOTE (low priority — future revisit): mathlib's `ring` tactic could in
+  principle simplify many `modq_eq` proof obligations after a single
+  `unfold modq_eq` + cast to `ZMod 3329`. In practice most of our
+  L0–L4 sites close via concrete low-level arithmetic (`decide` on a
+  Nat keystone like `(62209 * 3329) % 2^16 = 1`, `bv_decide` on a
+  16-bit identity, or `scalar_tac +nonLin` on a quotient bound), so the
+  named predicate plus a small fact base often suffices and `ring` is
+  not on the critical path. Flag this for re-evaluation once L5/L6
+  closes — the byte-pack / NTT-domain proofs there might benefit. -/
+def modq_eq (a b : Int) (q : Int) : Prop := (a - b) % q = 0
+
 /-! ## How to read each lemma sketch
 
 Each lemma below appears as:
@@ -298,57 +329,297 @@ L3+ file. (Deep-review §4 has the full discussion.)
    Apply to every L5.4/L5.5 spec.
 -/
 
-/-! ## Recommended Lean infrastructure (build BEFORE Triple campaign)
+/-! ## Reusable infrastructure (build BEFORE Triple campaign)
 
-The deep-review (§5) identifies 7 helper modules whose absence blocks
-every L3+ proof. Build these first; they are NOT optional. Citation:
-`~/.claude/plans/iot-mlkem-fstar-proof-bodies-deep.md` §5.
+This section catalogues the proof infrastructure the campaign needs.
+It is split into four **tiers** by *where the code should live*:
 
-- **`IotMlKem.Util.NumericKeystones`** (~30 LOC, 30 min). The 6 `decide`-
-  closed numeric mod-q identities. **STATUS: 4/6 DONE in this Plan**
-  (see B.1–B.4 below). Add the missing two: `mont_qinv_R`
-  (`(62209 * 3329) % 2^16 = 1`) and `mont_128_169_512`
-  (`(128 * 169 * 512) % 3329 = 1`).
+  - **Tier 1** — `libcrux-iot-utils/` (or analogous new Lean crate),
+    shared across `libcrux-iot/{sha3, ml-kem, ml-dsa}` proof trees.
+  - **Tier 2** — `abentkamp/aeneas` (upstream Aeneas Std library).
+  - **Tier 3** — `cryspen/hax-evit` (upstream Hax Triple/mvcgen helpers).
+  - **Tier 4** — Algorithm-specific reusables that stay per-algorithm
+    but should follow a *parallel structure* across SHA-3 / ML-KEM /
+    ML-DSA so a verifier can move between them without re-learning the
+    naming conventions.
 
-- **`IotMlKem.Util.Montgomery`** (~200 LOC, 1 day). Int.emod ↔ ZMod
-  3329 bridges. The key lemma is `mont_reduce_int_form` — given
-  `(value - km) % 2^16 = 0`, the canonical Mont identity holds. Every
-  L0 Triple closes by `apply mont_reduce_int_eq_id; scalar_tac`. See
-  deep-review §2 (L0.3 entry) for the F* keystone proof shape.
+The deep-review (§5) identifies the per-algorithm helper modules whose
+absence blocks every L3+ ML-KEM proof. Below each tier we name the
+lemma surface, cite the current SHA-3 location (where the prototype
+exists), enumerate ML-KEM Plan layers that depend on it, and label a
+**verdict**: `[Lift verbatim]` / `[Refactor before lift]` /
+`[Pattern-only]` (per-algo specifics differ; only the architecture
+generalises).
 
-- **`IotMlKem.Util.ModQ`** (~100 LOC, 4 h). Opaque `mod_q_eq` predicate
-  + intro/reveal/refl/trans/sym helpers. Direct port of upstream
-  `Hacspec_ml_kem.ModQ.fst` (57 LOC F*).
+### Tier 1 — iot-local reusable libraries
 
-- **`IotMlKem.Util.FieldElement`** (~150 LOC, 1 day). FE type +
+These should live in a new `libcrux-iot-utils/` crate. Once factored,
+the three iot algorithms each `import LibcruxIotUtils.<Module>` rather
+than re-deriving the helper.
+
+- **`Util.ModularArith`** — `modq_eq` (defined above) + the standard
+  lemma set. Concretely:
+  ```lean
+  @[simp] theorem modq_eq_refl  : modq_eq a a q
+  theorem modq_eq_symm  : modq_eq a b q → modq_eq b a q
+  theorem modq_eq_trans : modq_eq a b q → modq_eq b c q → modq_eq a c q
+  theorem modq_eq_add   : modq_eq a b q → modq_eq c d q →
+                          modq_eq (a + c) (b + d) q
+  theorem modq_eq_sub   : modq_eq a b q → modq_eq c d q →
+                          modq_eq (a - c) (b - d) q
+  theorem modq_eq_const_mul : modq_eq a b q → modq_eq (k * a) (k * b) q
+  theorem modq_eq_iff_zmod : modq_eq a b q ↔ (a : ZMod q) = b
+  ```
+  *Used by*: every L0–L3 ML-KEM lemma + likely all ML-DSA arithmetic
+  (same `q = 8380417` style modular equality at the integer level).
+  *Current SHA-3 location*: N/A — SHA-3 has no FE arithmetic; this is
+  the first instance.
+  *Verdict*: **Lift verbatim** once L0.3 closes (the lemma surface is
+  algorithm-independent; only the modulus changes).
+
+- **`Util.Montgomery`** — Montgomery-form bridges: `R = 2^16`, the
+  per-algorithm `q`, the `mont_R_inv_q`, `mont_qinv_R`,
+  `mont_reduce_int_form` helper (the L0.3 keystone — "given
+  `(value - km) % 2^16 = 0`, the canonical Mont identity holds"),
+  `to_standard_domain` lemmas. The 4 typed bridge theorems already at
+  Plan.lean B.1–B.4 (`mont_R_inv_q`, `mont_1441_eq_inv128`,
+  `mont_2285_eq_R_mod_q`, `mont_1353_eq_RR_mod_q`) move here, plus
+  the 2 missing `mont_qinv_R`, `mont_128_169_512`.
+  *Used by*: every L0/L2/L3/L6 ML-KEM lemma. ML-DSA has a different
+  q = 8380417 but the same `R = 2^32` structure — file should be
+  parameterized on `q, R` so the same lemmas serve both.
+  *Current SHA-3 location*: N/A (SHA-3 has no Montgomery layer).
+  *Verdict*: **Refactor before lift** — parameterize over `q, R`
+  before factoring; ML-KEM's concrete-`q = 3329` instances stay in
+  the ML-KEM tree as 1-line `def`s pointing at the generic.
+
+- **`Util.BVDecide`** — common `bv_decide` macro patterns for U16/U32
+  bit-vector identities used by serialize/compress hierarchies:
+  rotation, masking, `get_n_least_significant_bits`, deinterleave,
+  `BitVec.flatten` ↔ `int_t_array` shape lemmas. ML-KEM's
+  `serialize_D` / `deserialize_D` (L5.4/L5.5) generate ~12 such
+  obligations; SHA-3's theta-pi-chi pipeline has analogous bit-twiddle
+  lemmas at every step.
+  *Used by*: ML-KEM L0.1, L1.8, L1.9, all of L5; SHA-3 Theta/Rho/Chi.
+  *Current SHA-3 location*:
+  `libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/BitKeccak/StructEquiv.lean`
+  and `Equivalence/Lift.lean` contain ~30 `bv_decide`-shaped
+  patterns the ML-KEM port can mine.
+  *Verdict*: **Pattern-only** — the *technique* (apply
+  `Std.UN.bv_eq_imp_eq` then `bv_decide`) generalises; the concrete
+  lemmas differ per bit-pattern. Factor the *helper tactic* + a small
+  set of generic combinators (`BitVec.flatten`, slice extraction),
+  but keep algorithm-specific bit identities in the algorithm tree.
+
+- **`Util.LoopSpecs`** — Aeneas `loop_range_spec_usize`,
+  `loop_range_spec_i32`, fold-form loop invariants. The "16-iter loop
+  with per-element invariant" pattern (L1.x's elementwise proof
+  macro) and the "K-loop with running bound" pattern (L7.x matrix
+  ops) both ride on top of this.
+  *Used by*: every L1.x, L3.x, L6.x, L7.x ML-KEM lemma; SHA-3
+  Absorb/Squeeze blockwise loops.
+  *Current SHA-3 location*:
+  `libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Sponge/LoopSpecs.lean`
+  — has both `loop_range_spec_usize` and a per-iter step-spec
+  combinator. The 200 LOC there are ~90% reusable.
+  *Verdict*: **Lift verbatim**. This is the single highest-ROI
+  candidate to factor first — every Triple from L1 upward depends
+  on it and the SHA-3 implementation is already battle-tested.
+
+- **`Util.SliceSpecs`** — Aeneas Std bridges: `Slice.len`, `massert`,
+  slice/array indexing over `Range`, U32/U64 LE byte conversions,
+  `try_from`, `Result.unwrap`, `copy_from_slice`. Every L5 byte
+  encode/decode + every L8/L9 byte concatenation routes through
+  these.
+  *Used by*: ML-KEM L5.x, L6.5–L6.7, all of L8, all of L9; SHA-3
+  block I/O.
+  *Current SHA-3 location*:
+  `libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Sponge/SliceSpecs.lean`
+  + `Sponge/Bytes.lean`. ~250 LOC total.
+  *Verdict*: **Lift verbatim** — pure Aeneas-Std plumbing, zero
+  algorithm-specific content. Should land *before* any L5 work
+  starts.
+
+- **`Util.CreateI`** — `createi_pure_spec` (the pure-closure-array-
+  builder Triple) + `from_fn_pure_spec` (FnMut analog). Every "build a
+  16-element array from a closure" in the impl extracts to a
+  `createi` call; without this spec the Triple has nothing to land
+  on.
+  *Used by*: every ML-KEM polynomial / matrix / sample construction
+  (L1.x output writes, L4 sampling array builds, L7.1 matrix
+  population). SHA-3 uses it for block packing.
+  *Current SHA-3 location*: split between
+  `libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/HacspecBridge.lean`
+  (the `createi_pure_spec` shape) and
+  `libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Sponge/XorBlockSpec.lean`
+  (the `from_fn_pure_spec` FnMut variant).
+  *Verdict*: **Refactor before lift** — the two definitions should
+  be merged into one `Util.CreateI.lean` with consistent naming
+  (current SHA-3 names are inconsistent across the two files).
+
+- **`Util.NumericKeystones`** — the small set of `decide`-closed
+  arithmetic identities each algorithm needs (ML-KEM's 6 modular
+  keystones B.1–B.6, ML-DSA's analogous `q⁻¹ mod 2^32` keystone,
+  SHA-3's `IOTAS[i]` literal table). One file per algorithm but the
+  *pattern* — "list of `theorem foo : N1 % N2 = N3 := by decide`" —
+  is universal.
+  *Verdict*: **Pattern-only** — each algorithm has its own table; the
+  factoring is the directory convention "always store keystones in
+  `<Algo>/Util/NumericKeystones.lean`" rather than the lemmas.
+
+- **`Util.ModQ`** (~100 LOC, 4 h) — opaque `mod_q_eq` predicate +
+  intro/reveal/refl/trans/sym helpers wrapping `modq_eq`. Direct
+  port of upstream `Hacspec_ml_kem.ModQ.fst` (57 LOC F*).
+  *Verdict*: **Lift verbatim** once parameterised on `q` — the
+  opaque/reveal API is identical across ML-KEM and ML-DSA.
+
+- **`Util.FieldElement`** (~150 LOC, 1 day) — FE type +
   `i16_to_spec_fe` + `mont_i16_to_spec_fe` + the ~20 per-element
   `lemma_*_fe_commute_*` bridges from upstream Chunk.fst:36-180,
-  closed via ZMod-cast + `ring` (much shorter than F*'s manual
-  `lemma_mod_mul_distr_*` chains).
+  closed via ZMod-cast + `ring`. **Pattern-only**: the bridge lemmas
+  are algorithm-specific (ML-DSA uses `i32` lanes); only the
+  architecture lifts.
 
-- **`IotMlKem.Util.PortableVector`** (~300 LOC, 2 days). The
+- **`Util.PortableVector`** (~300 LOC, 2 days) — the
   `elementwise_proof` macro. Takes a per-element Triple + per-element
   post predicate, yields a 16-iter loop Triple. Each of L1.1–L1.10
-  becomes a 5-line instantiation.
-
-- **`IotMlKem.BitMlKem.Spec`** (~400 LOC, 1 week). The intermediate
-  pure-Lean spec — analog of SHA-3's `BitKeccak/Spec.lean`. Defines
-  `MontPoly`, `to_spec_poly_plain`, `to_spec_poly_mont`, and `bit_<op>`
-  intermediate functions for each hacspec function. Plus the opaque
-  algebraic predicates `bit_intt_mont_form`, `bit_mont_form`.
-
-- **`IotMlKem.BitMlKem.Commute`** (~600 LOC, 2 weeks). Port of the
-  entire upstream `commute/` tree (Chunk.fst 2711 LOC, Bridges.fst
-  1241 LOC, Serialize.fst 202 LOC). Most lemmas port 1-to-1; ZMod
-  simplification shortens Block A by ~40%, Array.ext shortens Block
-  B by ~30%. See deep-review §3.2 for the Block A/B/C/D structure.
+  becomes a 5-line instantiation. **Refactor before lift** — the
+  macro should be parameterized on lane count (ML-DSA's
+  `Coefficients` arrays are 256 not 16).
 
 The total upfront infra cost is ~3 weeks but unblocks the entire L3+
 campaign. The single biggest insight from the deep-review (§6
 scorecard): **do NOT attempt to prove impl ↔ hacspec equivalence
-directly**. Build BitMlKem.Spec + BitMlKem.Commute first; every
-subsequent layer is then a clean two-phase composition (Campaign 1:
-impl ↔ bit_*; Campaign 2: bit_* ↔ hacspec).
+directly**. Build the per-algorithm `BitMlKem.Spec` +
+`BitMlKem.Commute` first (Tier 4 below); every subsequent layer is
+then a clean two-phase composition (Campaign 1: impl ↔ bit_*;
+Campaign 2: bit_* ↔ hacspec).
+
+### Tier 2 — Aeneas-upstream candidates
+
+Lemmas that should arguably live in upstream Aeneas
+(`abentkamp/aeneas`) rather than per-algorithm. From the F* deep-
+review and the SHA-3 work, the following are PR-ready:
+
+- **Generic `UScalar.bv_xor` / `bv_and` / `bv_or` + congruence
+  lemmas.** The SHA-3 campaign filled these locally as
+  `Equivalence/UScalarAC.lean` (`Std.Associative` /
+  `Std.Commutative` instances on `UScalar.xor`, plus the
+  `bv_eq_imp_val_eq`-style lifts that lower a BitVec identity to a
+  UScalar identity). Flagged in `HAX_AENEAS_PITFALLS.md` L13(1) /
+  L13(4).
+  *Current local-fill*:
+  `libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/UScalarAC.lean`
+  (~60 LOC).
+  *Upstream signature*: ~`Aeneas.Std.UScalar.{N}.bv_xor : (x.xor y).bv = x.bv ^^^ y.bv`,
+  symmetric for `and`, `or`. The `Std.Associative` / `Std.Commutative`
+  instances follow.
+  *PR-readiness*: **HIGH** — the proofs are 1-line `bv_decide` each;
+  zero algorithm-specific content. SHA-3 has been using these for
+  months with no churn.
+
+- **`@[simp] Usize.val_ofNat_lit (n h) : (Usize.ofNat n h).val = n`**
+  (`HAX_AENEAS_PITFALLS.md` L13(1)). Without this, every concrete
+  literal `16#usize` is opaque to `simp`/`scalar_tac`.
+  *Current local-fill*: scattered `decide`-closed unfold lemmas in
+  every SHA-3 `Sponge/*.lean` file.
+  *PR-readiness*: **HIGH** — one-line `rfl` proof.
+
+- **`@[simp] Array.getElem!_Nat_eq_via_coe`** (PITFALLS L13(4)) —
+  bridges `arr[i]!` between `Fin n` and `Nat` indexing so `simp` can
+  rewrite freely. Currently the L1.x / L7.x ML-KEM Triple
+  postconditions awkwardly carry `i : Fin K.val` instead of
+  `i : Nat ∧ i < K.val` precisely because of this gap.
+  *PR-readiness*: **HIGH** after a small design discussion (does it
+  unify with mathlib `Fin.coe_lt`?).
+
+- **`Array.set_val_eq`, `Array.make` simp lemmas** — also flagged in
+  PITFALLS. ML-KEM's L6.5 byte-buffer writes need
+  `(Std.Array.update arr i x).val[i]! = x` as `@[simp]`.
+  *Current local-fill*: each SHA-3 ThetaLift file unfolds manually.
+  *PR-readiness*: **MEDIUM** — straightforward but interacts with
+  the existing `Array.update` simp set; needs a quick audit.
+
+### Tier 3 — Hax-upstream candidates
+
+Hax-specific (`cryspen/hax-evit`) Triple / mvcgen helpers worth
+promoting. These are *not* algorithm-specific; they belong in
+`hax-evit`'s Lean target library next to `hax_mvcgen`.
+
+- **`triple_conj_post`, `triple_imp_intro`, `triple_weaken_precond`**
+  — the three combinators every multi-clause Triple uses.
+  `triple_conj_post` splits `⦃ pre ⦄ m ⦃ ⇓ r => P r ∧ Q r ⦄` into
+  two sub-goals; `triple_imp_intro` discharges a hypothesis-shaped
+  precondition into the goal's local context; `triple_weaken_precond`
+  weakens a Triple precondition (the "I have a stronger pre than the
+  spec asks for" pattern that shows up at every spec invocation
+  site).
+  *Current SHA-3 location*: triplicated in
+  `libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Equivalence/RoundEquiv.lean`,
+  `Sponge/Absorb.lean`, `Sponge/Squeeze.lean`. ~40 LOC of pure boiler-
+  plate that should live once in hax-evit.
+  *PR-readiness*: **HIGH** — the proofs are 5-line bind/return chains;
+  the API is universal.
+
+- **A `derive_spec_from_step` macro** (PITFALLS L7 wishlist). Given
+  `@[step]` chained smaller `@[spec]` lemmas, derives a composite
+  `@[spec]` over the larger function. Today verifiers hand-roll
+  this composition every time.
+  *PR-readiness*: **MEDIUM** — the macro design is straightforward
+  but the `@[step]` ↔ `@[spec]` priority interaction is subtle (see
+  `lean-for-libcrux` §5.7 on `@[spec high]` priority).
+
+- **A `triple_bind_spec impl_side_spec` tactic** (PITFALLS L9). The
+  bind boilerplate "given `impl_side_spec` for an inner call, weave
+  it into the outer Triple goal" is currently 5 lines per spec-
+  coupling proof, hand-typed at every L7/L8/L9 site. The tactic
+  would compress this to one line and eliminate the most common
+  manual error (forgetting to discharge the spec's precondition).
+  *PR-readiness*: **MEDIUM-HIGH** — the SHA-3 Sponge campaign used
+  this pattern ~60 times; the tactic is a clear win.
+
+### Tier 4 — Algorithm-specific reusables (parallel structure)
+
+These stay per-algorithm but should be **designed for parallel
+structure** across SHA-3 / ML-KEM / ML-DSA so a verifier can move
+between them without re-learning naming conventions.
+
+- **`<Algo>.Spec` / `<Algo>.Commute` intermediate-spec pattern.**
+  SHA-3 introduced this in Campaign 1 (§6.5):
+    - `BitKeccak.Spec`        — pure-Lean intermediate spec
+    - `BitKeccak.Commute`     — per-vector / per-poly commute lemmas
+    - `BitKeccak.StateIso`    — impl ↔ MontPoly round-trip
+    - `BitKeccak.AlgEquiv`    — bit_* ↔ Spec.* algebraic equivs
+  ML-KEM uses the parallel naming (Layer M of this Plan):
+    - `BitMlKem.Spec`
+    - `BitMlKem.Commute`
+    - `BitMlKem.StateIso`
+    - `BitMlKem.AlgEquiv`
+  ML-DSA when it starts should use `BitMlDsa.{Spec,Commute,StateIso,
+  AlgEquiv}`. A verifier who knows one tree can navigate any of the
+  three.
+
+- **Per-algorithm `Equivalence/L<N>_*.lean` Triple closure files.**
+  SHA-3 has `Equivalence/{ThetaLift, RoundEquiv, ...}.lean`; ML-KEM
+  Plan §"Recommended directory layout" mandates `Equivalence/{L0_,
+  L1_, L2_, ...}.lean`. The pattern: each layer file imports the
+  Layer-M defs, opens the algorithm's `BitX.Spec` namespace,
+  and closes ~5–20 `@[spec]` Triples via the §5.7 composition idiom.
+
+- **Per-algorithm `Spec/` mirror.** Each algorithm should ship a
+  `<Algo>Spec/` Lean library that is the hacspec-extracted target
+  (the right-hand side of the equivalence). SHA-3 has
+  `libcrux-iot/specs/sha3/proofs/aeneas-lean/`; ML-KEM needs
+  `libcrux-iot/specs/ml-kem/proofs/aeneas-lean/` (BLOCKER (c)).
+  ML-DSA will need its own.
+
+The Tier 4 architectural observation: **once `Util.ModularArith` +
+`Util.Montgomery` + `Util.LoopSpecs` + `Util.SliceSpecs` are
+factored into a shared crate, each algorithm's per-algorithm reusable
+collapses to ~20% of its current footprint**. The Plan estimates
+2-3 weeks for Layer M (BitMlKem.{Spec,Commute,StateIso,AlgEquiv}); a
+crate-factored version would cut that to ~1.5 weeks because the
+generic plumbing already passes its tests in the SHA-3 tree.
 -/
 
 /-! ============================================================
@@ -453,9 +724,11 @@ theorem get_n_least_significant_bits_spec
 
 /- **L0.2 `vector.portable.arithmetic.barrett_reduce_element`** — signed Barrett reduction.
 
-    Hax post (`vector/portable/arithmetic.rs:111-130`):
-    `|result| ≤ FIELD_MODULUS / 2 · (|value|/BARRETT_R + 1)` and
-    `result ≡ value (mod FIELD_MODULUS)`.
+    Hax pre (`vector/portable/arithmetic.rs:260`): `Spec.Utils.is_i16b 28296 value`,
+    i.e. `value.val.natAbs ≤ 28296`.
+    Hax post (`vector/portable/arithmetic.rs:261-262`):
+    `Spec.Utils.is_i16b 3328 result ∧ result ≡ value (mod 3329)`,
+    i.e. `result.val.natAbs ≤ 3328 ∧ (result.val - value.val) % 3329 = 0`.
 
     [F*-port: `Vector.Portable.Arithmetic.barrett_reduce_element`
      (lines 319–356, `--z3rlimit 150`). The F* proof is a 5-step `calc`
@@ -464,6 +737,8 @@ theorem get_n_least_significant_bits_spec
      using `Int.emod_sub_emod_cancel` + the closed-form quotient bound
      `barrett_quot_bound` (a fresh helper proved by `omega` after
      `interval_cases`). Est ~4 hours.]
+    [F*-bound: Libcrux_ml_kem.Vector.Portable.Arithmetic.fsti `barrett_reduce_element`:
+     pre `is_i16b 28296 value`, post `is_i16b 3328 result ∧ v r % 3329 = v value % 3329`.]
 
     ## Sketch
     Bound the quotient `q = (value · 20159 + 2^25) >>> 26` analytically.
@@ -479,18 +754,22 @@ theorem get_n_least_significant_bits_spec
 -/
 /- Triple (extraction exists in Funs.lean but blocked by (a)):
 @[spec]
-theorem barrett_reduce_element_spec (value : Std.I16) :
+theorem barrett_reduce_element_spec
+    (value : Std.I16) (hb : value.val.natAbs ≤ 28296) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce_element value
-    ⦃ ⇓ r => ⌜ (r.val - value.val) % 3329 = 0
-              ∧ -1665 ≤ r.val ∧ r.val ≤ 1665 ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ modq_eq r.val value.val 3329
+              ∧ r.val.natAbs ≤ 3328 ⌝ ⦄ := by
   sorry
 -/
 
 /- **L0.3 `vector.portable.arithmetic.montgomery_reduce_element`** — signed Montgomery reduction.
 
-    Hax post (`vector/portable/arithmetic.rs:143-169`):
-    `o ≡ value · MONTGOMERY_R⁻¹ (mod FIELD_MODULUS)` and a bound.
+    Hax pre (`vector/portable/arithmetic.rs:348`): `Spec.Utils.is_i32b (3328 * pow2 16) value`,
+    i.e. `value.val.natAbs ≤ 3328 * 2^16`.
+    Hax post (`vector/portable/arithmetic.rs:349-352`):
+    `Spec.Utils.is_i16b (3328 + 1665) result ∧
+     v result * pow2 16 ≡ v value (mod 3329)` (the Montgomery reduction identity).
 
     [F*-port: `Vector.Portable.Arithmetic.montgomery_reduce_element`
      (lines 416–544, `--z3rlimit 300`). The headline F* result. Two
@@ -516,6 +795,10 @@ theorem barrett_reduce_element_spec (value : Std.I16) :
 
     ## Complexity tier
     needs-new-helper-tier (Util.Montgomery + Util.NumericKeystones) — ~30 lines Triple body, ~1 day total
+
+    [F*-bound: Libcrux_ml_kem.Vector.Portable.Arithmetic.fsti `montgomery_reduce_element`:
+     pre `is_i32b (3328 * pow2 16) value`, post `is_i16b (3328 + 1665) result ∧
+     v result * pow2 16 % 3329 = v value % 3329`.]
 -/
 /- Triple (extraction exists in Funs.lean but blocked by (a)):
 @[spec]
@@ -523,16 +806,19 @@ theorem montgomery_reduce_element_spec
     (value : Std.I32) (hb : value.val.natAbs ≤ 2^16 * 3328) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element value
-    ⦃ ⇓ r => ⌜ (r.val * (2^16 : Int) - value.val) % 3329 = 0
+    ⦃ ⇓ r => ⌜ modq_eq (r.val * (2^16 : Int)) value.val 3329
               ∧ r.val.natAbs ≤ 3328 + 1665 ⌝ ⦄ := by
   sorry
 -/
 
 /- **L0.4 `vector.portable.arithmetic.montgomery_multiply_fe_by_fer`** — Montgomery multiply.
 
-    Hax post (`vector/portable/arithmetic.rs:172-187`):
-    `result ≡ fe · fer · R⁻¹ (mod q)`, i.e. `≡ x · y (mod q)` when
-    `fer ≡ y · R (mod q)`.
+    Hax pre (`vector/portable/arithmetic.rs:464`): `Spec.Utils.is_i16b 1664 fer`,
+    i.e. `fer.val.natAbs ≤ 1664`.
+    Hax post (`vector/portable/arithmetic.rs:465-467`):
+    `Spec.Utils.is_i16b 3328 result ∧
+     v result * pow2 16 ≡ v fe * v fer (mod 3329)`
+    (the Montgomery-multiply identity: result = fe·fer·R⁻¹ mod q).
 
     [F*-port: `Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer`
      (lines 549–555). Trivial F* composition (4 lines using
@@ -549,16 +835,20 @@ theorem montgomery_reduce_element_spec
 
     ## Complexity tier
     mvcgen-trivial (~30 min)
+
+    [F*-bound: Libcrux_ml_kem.Vector.Portable.Arithmetic.fsti `montgomery_multiply_fe_by_fer`:
+     pre `is_i16b 1664 fer`, post `is_i16b 3328 result ∧
+     v result * pow2 16 % 3329 = (v fe * v fer) % 3329`. Pre is asymmetric —
+     only `fer` is bounded; `fe` can be any `i16`.]
 -/
 /- Triple (extraction exists in Funs.lean but blocked by (a)):
 @[spec]
 theorem montgomery_multiply_fe_by_fer_spec
-    (fe : Std.I16) (fer : Std.I16)
-    (hfe : fe.val.natAbs ≤ 3328) (hfer : fer.val.natAbs ≤ 3328) :
+    (fe : Std.I16) (fer : Std.I16) (hfer : fer.val.natAbs ≤ 1664) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_multiply_fe_by_fer fe fer
-    ⦃ ⇓ r => ⌜ (r.val * (2^16 : Int) - fe.val * fer.val) % 3329 = 0
-              ∧ r.val.natAbs ≤ 3328 + 1665 ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ modq_eq (r.val * (2^16 : Int)) (fe.val * fer.val) 3329
+              ∧ r.val.natAbs ≤ 3328 ⌝ ⦄ := by
   sorry
 -/
 
@@ -594,38 +884,210 @@ theorem montgomery_multiply_fe_by_fer_spec
     underlying `vector.portable.arithmetic.{add, sub, …}` defs are
     not yet in `Funs.lean`.
 
-    ## L1.1 `PortableVector.add` — pointwise wrapping_add. Spec post:
-    `∀ i < 16, r.elements[i].val % 2^16 = (lhs[i].val + rhs[i].val) % 2^16`.
-    Tier: loop-induction.
+    Each Triple skeleton below ports the upstream `traits.rs` `*_pre` /
+    `*_post` predicate verbatim. `add_pre`/`sub_pre` are stated *on the
+    elementwise sum/difference* (`is_intb (pow2 15 - 1) (v lhs[i] +
+    v rhs[i])`) rather than separately on `lhs` / `rhs`, matching the
+    upstream "callers establish the elementwise sum bound" idiom
+    (traits.rs:633-646). The `*_post`s bundle the equation + the i16
+    output bound under a single `forall` (traits.rs:648-663) to avoid
+    splitting Z3's quantifier-instantiation budget.
 
-    ## L1.2 `PortableVector.sub` — pointwise wrapping_sub. Mirror of L1.1.
+    ## L1.1 `PortableVector.add` — pointwise wrapping_add.
+    [F*-bound: traits.rs:640 `add_pre` + traits.rs:656 `add_post`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_add_spec
+    (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Fin 16,
+      ((lhs.elements[i].val + rhs.elements[i].val : Int).natAbs) ≤ 2^15 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.add lhs rhs
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                r.elements[i].val = lhs.elements[i].val + rhs.elements[i].val
+              ∧ r.elements[i].val.natAbs ≤ 2^15 - 1 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L1.3 `PortableVector.barrett_reduce` — each lane via L0.2.
+/- ## L1.2 `PortableVector.sub` — pointwise wrapping_sub. Mirror of L1.1.
+    [F*-bound: traits.rs:667 `sub_pre` + traits.rs:675 `sub_post` — same
+     elementwise-difference-bound shape as L1.1.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_sub_spec
+    (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Fin 16,
+      ((lhs.elements[i].val - rhs.elements[i].val : Int).natAbs) ≤ 2^15 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.sub lhs rhs
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                r.elements[i].val = lhs.elements[i].val - rhs.elements[i].val
+              ∧ r.elements[i].val.natAbs ≤ 2^15 - 1 ⌝ ⦄ := by
+  sorry
+-/
+
+/- ## L1.3 `PortableVector.barrett_reduce` — each lane via L0.2.
     Tier: loop-induction. Depends on L0.2.
+    [F*-bound: traits.rs:763 `barrett_reduce_pre` (`is_i16b_array_opaque
+     28296 vec`) + traits.rs:767 `barrett_reduce_post` (`is_i16b_array_opaque
+     3328 result ∧ ∀ i, barrett_reduce_lane_post (vec[i]) (result[i])`).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_barrett_reduce_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 28296) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce vec
+    ⦃ ⇓ r => ⌜ (∀ i : Fin 16, r.elements[i].val.natAbs ≤ 3328)
+              ∧ (∀ i : Fin 16,
+                  modq_eq r.elements[i].val vec.elements[i].val 3329) ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L1.4 `PortableVector.montgomery_multiply_by_constant` — each
-    lane via L0.4 with the fer constant `c`. Pre: `|c| ≤ 3328`,
-    `|vec[i]| ≤ 3328 ∀ i`. Tier: loop-induction. Depends on L0.4.
+/- ## L1.4 `PortableVector.montgomery_multiply_by_constant` — each lane via L0.4.
+    Tier: loop-induction. Depends on L0.4.
+    [F*-bound: traits.rs:781 `montgomery_multiply_by_constant_pre` (asymmetric:
+     only `is_i16b 1664 c`, vec unconstrained — matches L0.4's pre asymmetry) +
+     traits.rs:785 `montgomery_multiply_by_constant_post` (`is_i16b_array_opaque
+     3328 result ∧ ∀ i, montgomery_multiply_lane_post (vec[i]) c (result[i])`).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_montgomery_multiply_by_constant_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (c : Std.I16) (hc : c.val.natAbs ≤ 1664) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_multiply_by_constant vec c
+    ⦃ ⇓ r => ⌜ (∀ i : Fin 16, r.elements[i].val.natAbs ≤ 3328)
+              ∧ (∀ i : Fin 16,
+                  modq_eq (r.elements[i].val * (2^16 : Int)) (vec.elements[i].val * c.val) 3329)
+              ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L1.5 `PortableVector.cond_subtract_3329` — per-element
+/- ## L1.5 `PortableVector.cond_subtract_3329` — per-element
     `if x ≥ 3329 then x - 3329 else x`. Tier: loop-induction.
+    [F*-bound: traits.rs:743 `cond_subtract_3329_pre` (`is_i16b_array_opaque
+     (pow2 12 - 1) vec`, i.e. `vec[i].val.natAbs ≤ 4095`) + traits.rs:747
+     `cond_subtract_3329_post` (each lane: `v y = v x - 3329 ∨ v y = v x`
+     ∧ `mod_q_eq (v y) (v x)`). Output bound implied: `v y ≤ pow2 12 - 1 - 3329
+     = 766` on the subtract branch, `v y ≤ 4095` on the no-op branch.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_cond_subtract_3329_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 2^12 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329 vec
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                (r.elements[i].val = vec.elements[i].val - 3329 ∨
+                 r.elements[i].val = vec.elements[i].val)
+              ∧ modq_eq r.elements[i].val vec.elements[i].val 3329 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L1.6 `PortableVector.negate` — pointwise `wrapping_neg`.
+/- ## L1.6 `PortableVector.negate` — pointwise `wrapping_neg`.
     Tier: loop-induction.
+    [F*-bound: traits.rs:684 `negate_pre` (`is_intb (pow2 15 - 1) (v vec[i])`,
+     i.e. no `i16.MIN`) + traits.rs:691 `negate_post` (`v r = -v vec[i] ∧
+     is_intb (pow2 15 - 1) (v r)`).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_negate_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 2^15 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.negate vec
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                r.elements[i].val = - vec.elements[i].val
+              ∧ r.elements[i].val.natAbs ≤ 2^15 - 1 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L1.7 `PortableVector.multiply_by_constant` — pointwise
+/- ## L1.7 `PortableVector.multiply_by_constant` — pointwise
     `wrapping_mul(c)` (different from L1.4 — no Montgomery).
     Tier: loop-induction.
+    [F*-bound: traits.rs:700 `multiply_by_constant_pre` (`is_intb (pow2 15 - 1)
+     (v vec[i] * v c)`) + traits.rs:707 `multiply_by_constant_post`
+     (`v r = v vec[i] * v c ∧ is_intb (pow2 15 - 1) (v r)`).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_multiply_by_constant_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (c : Std.I16)
+    (hpre : ∀ i : Fin 16,
+      (vec.elements[i].val * c.val : Int).natAbs ≤ 2^15 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.multiply_by_constant vec c
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                r.elements[i].val = vec.elements[i].val * c.val
+              ∧ r.elements[i].val.natAbs ≤ 2^15 - 1 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L1.8 `PortableVector.bitwise_and_with_constant` — pointwise AND.
+/- ## L1.8 `PortableVector.bitwise_and_with_constant` — pointwise AND.
     Tier: loop-induction + bv_decide per element.
+    [F*-bound: traits.rs:147 `bitwise_and_with_constant_constant_post`
+     (`r = map_array (fun x => x &&& c) vec`). No precondition — the AND
+     fits in i16 unconditionally. Note: no bound is propagated on `r`
+     because callers track it via `Util.AndMask.lemma_and_mask_le` derived
+     from `vector/portable/serialize.rs:23` (`v (x &&& y) ≤ v y` for non-neg).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_bitwise_and_with_constant_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (c : Std.I16) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.bitwise_and_with_constant vec c
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                r.elements[i].bv = vec.elements[i].bv &&& c.bv ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L1.9 `PortableVector.shift_right` — pointwise `>>` by const.
+/- ## L1.9 `PortableVector.shift_right` — pointwise `>>` by const.
     Tier: loop-induction.
+    [F*-bound: traits.rs:173-174 `shift_right` `requires SHIFT_BY ∈ [0, 16)`,
+     `shift_right_post` (`r = map_array (fun x => x >>! shift_by) vec`).
+     No output bound stated — caller derives `|r[i]| ≤ |vec[i]| >> SHIFT_BY`
+     externally where needed.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_shift_right_spec
+    (SHIFT_BY : Std.I32) (hs : 0 ≤ SHIFT_BY.val ∧ SHIFT_BY.val < 16)
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.shift_right SHIFT_BY vec
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                r.elements[i].bv = vec.elements[i].bv.sshiftRight SHIFT_BY.val.toNat ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L1.10 `PortableVector.reducing_from_i32_array` — per-lane
+/- ## L1.10 `PortableVector.reducing_from_i32_array` — per-lane
     `montgomery_reduce_element` (L0.3) from a 16-element I32 slice.
     Tier: loop-induction. Depends on L0.3.
+    [F*-bound: hax-side pre `forall i. is_i32b (3328 * pow2 16) a[i]`
+     (mirror of L0.3 pre, propagated per-lane), post bundles
+     `forall i. is_i16b (3328 + 1665) r[i] ∧ v r[i] * pow2 16 ≡ v a[i] (mod 3329)`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_reducing_from_i32_array_spec
+    (a : Aeneas.Std.Array Std.I32 16#usize)
+    (hpre : ∀ i : Fin 16, a.val[i].val.natAbs ≤ 3328 * 2^16) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array a
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                r.elements[i].val.natAbs ≤ 3328 + 1665
+              ∧ modq_eq (r.elements[i].val * (2^16 : Int)) (a.val[i].val) 3329 ⌝ ⦄ := by
+  sorry
 -/
 
 /-! ============================================================
@@ -691,13 +1153,25 @@ theorem montgomery_multiply_fe_by_fer_spec
 @[spec]
 theorem ntt_step_spec
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (zeta : Std.I16) (a_idx b_idx : Std.Usize) :
-    ⦃ ⌜ a_idx.val < 16 ∧ b_idx.val < 16 ⌝ ⦄
+    (zeta : Std.I16) (a_idx b_idx : Std.Usize)
+    (h_idx : a_idx.val < 16 ∧ b_idx.val < 16 ∧ a_idx.val ≠ b_idx.val)
+    (h_zeta : zeta.val.natAbs ≤ 1664)
+    (h_a : vec.elements[a_idx.val]!.val.natAbs ≤ 3 * 3328)
+    (h_b : vec.elements[b_idx.val]!.val.natAbs ≤ 3 * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.ntt.ntt_step vec zeta a_idx b_idx
-    ⦃ ⇓ _r => ⌜ True -- butterfly equivalence to Spec.lift_field_mont
-              ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ (∀ k : Fin 16, k.val ≠ a_idx.val → k.val ≠ b_idx.val →
+                  r.elements[k]! = vec.elements[k]!)
+              ∧ r.elements[a_idx.val]!.val.natAbs ≤ 4 * 3328
+              ∧ r.elements[b_idx.val]!.val.natAbs ≤ 4 * 3328 ⌝ ⦄ := by
   sorry
 -/
+/- [F*-bound: vector/portable/ntt.rs:7-15 `ntt_step` pre: `v i < 16 ∧ v j < 16 ∧
+   v i ≠ v j ∧ is_i16b 1664 zeta ∧ |vec[i]|, |vec[j]| ≤ 3·3328`, post:
+   unchanged lanes + the two touched lanes are `≤ 4·3328`. (Inner butterfly
+   pre is symmetric in both lanes because Montgomery-multiply absorbs one
+   3328 → 3328 step and add/sub of two ≤3·3328 entries plus a ≤3328 lift
+   yields the ≤4·3328 bound.)] -/
 
 /- **L2.2 `vector.portable.ntt.ntt_layer_1_step`** — 4 butterflies on
     distinct (a, b, ζ) index pairs within one PortableVector at
@@ -722,29 +1196,140 @@ theorem ntt_step_spec
 
     ## Complexity tier
     mvcgen-trivial (chains L2.1 × 4, ~4 hours)
+
+    [F*-bound: vector/portable/ntt.rs:64-70 `ntt_layer_1_step` pre:
+     `is_i16b 1664 zeta0..3 ∧ is_i16b_array (7*3328) vec.f_elements`, post:
+     `is_i16b_array (8*3328) result.f_elements`. The chunked layer-1
+     applies 4 butterflies, each adds one ≤3328 to the bound.]
+-/
+/- Triple skeleton (extraction blocked by (a)):
+@[spec]
+theorem ntt_layer_1_step_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 zeta2 zeta3 : Std.I16)
+    (hz : zeta0.val.natAbs ≤ 1664 ∧ zeta1.val.natAbs ≤ 1664 ∧
+          zeta2.val.natAbs ≤ 1664 ∧ zeta3.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 7 * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_1_step vec zeta0 zeta1 zeta2 zeta3
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, r.elements[i].val.natAbs ≤ 8 * 3328 ⌝ ⦄ := by
+  sorry
 -/
 
 /- **L2.3 `ntt_layer_2_step`** — 2 butterflies. Depends on L2.1.
     [F*-port: `Vector.Portable.Ntt.ntt_layer_2_step` lines 146–215;
      same shape as L2.2 with different index table.] ~3 hours.
+    [F*-bound: vector/portable/ntt.rs:96-101 `ntt_layer_2_step` pre:
+     `is_i16b 1664 zeta0,1 ∧ is_i16b_array (6*3328) vec`, post:
+     `is_i16b_array (7*3328) result`.]
+-/
+/- Triple skeleton:
+@[spec]
+theorem ntt_layer_2_step_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 : Std.I16)
+    (hz : zeta0.val.natAbs ≤ 1664 ∧ zeta1.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 6 * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_2_step vec zeta0 zeta1
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, r.elements[i].val.natAbs ≤ 7 * 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    **L2.4 `ntt_layer_3_step`** — 1 butterfly. Depends on L2.1.
+/- **L2.4 `ntt_layer_3_step`** — 1 butterfly. Depends on L2.1.
     [F*-port: ibid, same structure.] ~3 hours.
+    [F*-bound: vector/portable/ntt.rs:120-124 `ntt_layer_3_step` pre:
+     `is_i16b 1664 zeta ∧ is_i16b_array (5*3328) vec`, post:
+     `is_i16b_array (6*3328) result`.]
+-/
+/- Triple skeleton:
+@[spec]
+theorem ntt_layer_3_step_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta : Std.I16) (hz : zeta.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 5 * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_3_step vec zeta
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, r.elements[i].val.natAbs ≤ 6 * 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    **L2.5 `inv_ntt_step`** — Gentleman–Sande inverse butterfly.
+/- **L2.5 `inv_ntt_step`** — Gentleman–Sande inverse butterfly.
     Computes `(a, b) := (a + b, montgomery_multiply((a - b), ζ))`.
     Spec anchor: `Spec.inv_butterfly`. Mirror of L2.1. Depends on L0.4.
     [F*-port: `Vector.Portable.Ntt.inv_ntt_step` lines 221–280;
      forward uses `montgomery_multiply` on b then add/sub, inverse
      uses `barrett_reduce` on sum then `montgomery_multiply` on diff.]
+    [F*-bound: vector/portable/ntt.rs:144-152 `inv_ntt_step` pre:
+     `v i < 16 ∧ v j < 16 ∧ v i ≠ v j ∧ is_i16b 1664 zeta ∧
+     is_i16b_array (4*3328) vec` (already-reduced lane bound on touched
+     pair), post: `is_i16b_array (4*3328) result` (Gentleman–Sande sum
+     barrett-reduces, mont-mult drops diff back).]
+-/
+/- Triple skeleton:
+@[spec]
+theorem inv_ntt_step_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta : Std.I16) (a_idx b_idx : Std.Usize)
+    (h_idx : a_idx.val < 16 ∧ b_idx.val < 16 ∧ a_idx.val ≠ b_idx.val)
+    (h_zeta : zeta.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 4 * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_step vec zeta a_idx b_idx
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, r.elements[i].val.natAbs ≤ 4 * 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    **L2.6 `inv_ntt_layer_1_step`** — bundled 4 inverse butterflies.
+/- **L2.6 `inv_ntt_layer_1_step`** — bundled 4 inverse butterflies.
     [F*-port: lines 285–360, mirror of L2.2.]
+    [F*-bound: vector/portable/ntt.rs:189-194 `inv_ntt_layer_1_step` pre:
+     `is_i16b 1664 zeta0..3 ∧ is_i16b_array 3328 vec`, post:
+     `is_i16b_array (2*3328) result`.]
+-/
+/- Triple skeleton:
+@[spec]
+theorem inv_ntt_layer_1_step_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 zeta2 zeta3 : Std.I16)
+    (hz : zeta0.val.natAbs ≤ 1664 ∧ zeta1.val.natAbs ≤ 1664 ∧
+          zeta2.val.natAbs ≤ 1664 ∧ zeta3.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_1_step
+      vec zeta0 zeta1 zeta2 zeta3
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, r.elements[i].val.natAbs ≤ 2 * 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    **L2.7 `inv_ntt_layer_2_step` / `inv_ntt_layer_3_step`** — analogous.
+/- **L2.7 `inv_ntt_layer_2_step` / `inv_ntt_layer_3_step`** — analogous.
     [F*-port: lines 365–430.]
+    [F*-bound: vector/portable/ntt.rs:240-246 `inv_ntt_layer_2_step` pre:
+     `is_i16b 1664 zeta0,1 ∧ is_i16b_array (2*3328) vec`, post:
+     `is_i16b_array (4*3328) result`. Ditto for layer_3 with single zeta.]
 
     All [extraction exists, blocked by (a)]. Total L2.5–L2.7: ~6 hours.
+-/
+/- Triple skeletons:
+@[spec]
+theorem inv_ntt_layer_2_step_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 : Std.I16)
+    (hz : zeta0.val.natAbs ≤ 1664 ∧ zeta1.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 2 * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_2_step vec zeta0 zeta1
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, r.elements[i].val.natAbs ≤ 4 * 3328 ⌝ ⦄ := by
+  sorry
+
+@[spec]
+theorem inv_ntt_layer_3_step_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta : Std.I16) (hz : zeta.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Fin 16, vec.elements[i].val.natAbs ≤ 2 * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_3_step vec zeta
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, r.elements[i].val.natAbs ≤ 4 * 3328 ⌝ ⦄ := by
+  sorry
 -/
 
 /- **L2.8 `vector.portable.ntt.accumulating_ntt_multiply`** — base-case
@@ -785,6 +1370,27 @@ theorem ntt_step_spec
 
     ## Complexity tier
     needs-new-helper-tier (~2 days)
+
+    [F*-bound: vector/portable/ntt.rs:339-345 `accumulating_ntt_multiply`
+     pre: `v i < 8 ∧ is_i16b 1664 zeta ∧ is_i16b_array 3328 lhs.f_elements ∧
+     is_i16b_array 3328 rhs.f_elements ∧ each accumulator lane within i32
+     range`. Post: `accumulator[2i], accumulator[2i+1] ∈ [-2^31, 2^31)` and
+     the two-lane formula equals the per-pair base-case mul mod (X²−ζ²).]
+-/
+/- Triple skeleton (extraction exists, blocked by (a)):
+@[spec]
+theorem accumulating_ntt_multiply_spec
+    (i : Std.Usize) (hi : i.val < 8) (zeta : Std.I16) (hz : zeta.val.natAbs ≤ 1664)
+    (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (acc : Aeneas.Std.Array Std.I32 16#usize)
+    (hlhs : ∀ j : Fin 16, lhs.elements[j].val.natAbs ≤ 3328)
+    (hrhs : ∀ j : Fin 16, rhs.elements[j].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply
+      i zeta lhs rhs acc
+    ⦃ ⇓ r => ⌜ -- per-pair accumulator stays within i32 (Montgomery-reducible later).
+              True ⌝ ⦄ := by
+  sorry
 -/
 
 /-! ============================================================
@@ -857,12 +1463,21 @@ theorem ntt_at_layer_1_spec
     (zeta_i : Std.Usize)
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
     (bnd : Std.Usize)
-    (h_zeta : zeta_i.val = 63) :
+    (h_zeta : zeta_i.val = 63)
+    (h_bnd : bnd.val = 7 * 3328)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      (re.coefficients[i].elements[j].val.natAbs : Int) ≤ 7 * 3328) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_1 OpsInst zeta_i re bnd
-    ⦃ ⇓ r => ⌜ r.1.val = 127 ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ r.1.val = 127
+              ∧ (∀ i : Fin 16, ∀ j : Fin 16,
+                  (r.2.coefficients[i].elements[j].val.natAbs : Int) ≤ 8 * 3328) ⌝ ⦄ := by
   sorry
 -/
+/- [F*-bound: ntt.rs:22-24 `ntt_at_layer_1` requires `is_bounded_poly (7*3328) re ∧
+   *zeta_i == 63` (with `_initial_coefficient_bound == 7*3328`); ensures
+   `is_bounded_poly (7*3328 + 3328) future(re)` and `*future(zeta_i) == 127`.
+   Each layer-1 application bumps the per-coefficient bound by exactly 3328.] -/
 
 /- **L3.2 `ntt.ntt_at_layer_2`** — same shape with zeta_i 31→63.
     **L3.3 `ntt.ntt_at_layer_3`** — same shape with zeta_i 15→31.
@@ -870,6 +1485,45 @@ theorem ntt_at_layer_1_spec
     [F*-port: `Libcrux_ml_kem.Ntt.ntt_at_layer_{2,3}_` (lines 132–336);
      structural duplication of L3.1.]
     ## Tier: loop-induction. ~2 days each.
+    [F*-bound: ntt.rs:153-156 `ntt_at_layer_2` pre `is_bounded_poly (6*3328) re ∧
+     *zeta_i == 31`, post `is_bounded_poly (7*3328) future(re)`.
+     ntt.rs:266-268 `ntt_at_layer_3` pre `is_bounded_poly (5*3328) re ∧
+     *zeta_i == 15`, post `is_bounded_poly (6*3328) future(re)`.]
+-/
+/- Triple skeletons:
+@[spec]
+theorem ntt_at_layer_2_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (bnd : Std.Usize)
+    (h_zeta : zeta_i.val = 31) (h_bnd : bnd.val = 6 * 3328)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ 6 * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_2 OpsInst zeta_i re bnd
+    ⦃ ⇓ r => ⌜ r.1.val = 63
+              ∧ (∀ i : Fin 16, ∀ j : Fin 16,
+                  r.2.coefficients[i].elements[j].val.natAbs ≤ 7 * 3328) ⌝ ⦄ := by
+  sorry
+
+@[spec]
+theorem ntt_at_layer_3_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (bnd : Std.Usize)
+    (h_zeta : zeta_i.val = 15) (h_bnd : bnd.val = 5 * 3328)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ 5 * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_3 OpsInst zeta_i re bnd
+    ⦃ ⇓ r => ⌜ r.1.val = 31
+              ∧ (∀ i : Fin 16, ∀ j : Fin 16,
+                  r.2.coefficients[i].elements[j].val.natAbs ≤ 6 * 3328) ⌝ ⦄ := by
+  sorry
 -/
 
 /- **L3.4 `ntt.ntt_at_layer_4_plus`** — generic outer NTT layer (the
@@ -901,6 +1555,33 @@ theorem ntt_at_layer_1_spec
 
     ## Complexity tier
     loop-induction (nested; expect 100-150 lines, ~1.5 weeks)
+
+    [F*-bound: ntt.rs:385-396 `ntt_at_layer_4_plus` pre:
+     `is_bounded_poly (_initial_coefficient_bound) re ∧
+     _initial_coefficient_bound ≤ 5*3328 ∧
+     *zeta_i == (1 << (7 - layer)) - 1 ∧ layer ∈ [4, 7]`,
+     post: `is_bounded_poly (_initial_coefficient_bound + 3328) future(re) ∧
+     *future(zeta_i) = old(*zeta_i) + (steps_per_round)`. Same per-call
+     +3328 bound bump as L3.1–L3.3.]
+-/
+/- Triple skeleton:
+@[spec]
+theorem ntt_at_layer_4_plus_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (layer zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (bnd : Std.Usize)
+    (h_layer : 4 ≤ layer.val ∧ layer.val ≤ 7)
+    (h_zeta : zeta_i.val = (1 <<< (7 - layer.val)) - 1)
+    (h_bnd : bnd.val ≤ 5 * 3328)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ bnd.val) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus OpsInst layer zeta_i re bnd
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.2.coefficients[i].elements[j].val.natAbs ≤ bnd.val + 3328 ⌝ ⦄ := by
+  sorry
 -/
 
 /- **L3.5 `ntt.ntt_at_layer_7`** — outermost layer (no zeta_i).
@@ -926,6 +1607,26 @@ theorem ntt_at_layer_1_spec
 
     ## Complexity tier
     loop-induction (~3 days)
+
+    [F*-bound: ntt.rs:473-474 `ntt_at_layer_7` pre: `is_bounded_poly 3 re`
+     (binomially-sampled CBD bound, |x| ≤ η ≤ 3); post:
+     `is_bounded_poly 4803 future(re)` (`= 3 + 4800 = 3 + |mont(zeta_7)|·k`,
+     where mont(zeta_7) = -1600). The +4800 bump reflects the lone-multiplier
+     layer with no barrett reduce at the end.]
+-/
+/- Triple skeleton:
+@[spec]
+theorem ntt_at_layer_7_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ 3) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_7 OpsInst re
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 4803 ⌝ ⦄ := by
+  sorry
 -/
 
 /- **L3.6 `ntt.ntt_binomially_sampled_ring_element`** — full 7-layer
@@ -960,14 +1661,52 @@ theorem ntt_at_layer_1_spec
 
     ## Complexity tier
     algebraic-close-required (Montgomery↔standard bridge) — ~3 days
+
+    [F*-bound: ntt.rs:517-518 `ntt_binomially_sampled_ring_element` pre:
+     `is_bounded_poly 3 re` (CBD η ≤ 3); post: `is_bounded_poly 3328
+     future(re)` (final `poly_barrett_reduce` collapses the running
+     7-layer bound down to canonical 3328).]
+-/
+/- Triple skeleton:
+@[spec]
+theorem ntt_binomially_sampled_ring_element_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ 3) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_binomially_sampled_ring_element OpsInst re
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
 -/
 
 /- **L3.7 `ntt.ntt_vector_u`** — same shape as L3.6 with different
     initial coefficient bound + initial zeta_i = 0 (skip layer 7).
     [F*-port: `Libcrux_ml_kem.Ntt.ntt_vector_u`, ~80 LOC F*; mirror
      of L3.6.] Tier: algebraic-close-required, ~3 days.
+    [F*-bound: ntt.rs:560-561 `ntt_vector_u` pre: `is_bounded_poly 3328 re`
+     (already-decompressed); post: `is_bounded_poly 3328 future(re)`
+     (terminal barrett-reduce). Same +3328-per-layer ladder as L3.6
+     but starting from a tighter initial bound.]
+-/
+/- Triple skeleton:
+@[spec]
+theorem ntt_vector_u_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_vector_u OpsInst re
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    **L3.8 `invert_ntt_montgomery`** — full 7-layer iNTT. Spec anchor:
+/- **L3.8 `invert_ntt_montgomery`** — full 7-layer iNTT. Spec anchor:
     `Spec.ntt_inverse(p)`. Mirror of L3.6; final iNTT layer
     multiplies by `1441 = R · (1/128 mod q)` to absorb the 1/N
     normalization factor.
@@ -982,6 +1721,25 @@ theorem ntt_at_layer_1_spec
      opaque predicate design.]
     Tier: algebraic-close-required (~4 days).
     [extraction missing for invert_ntt.*]
+    [F*-bound: invert_ntt.rs:660-665 `invert_ntt_montgomery` pre:
+     `K ≤ 4 ∧ is_bounded_poly (K*3328) re` (poly-vector accumulated
+     summand from K matrix products); post: `is_bounded_poly 3328
+     future(re)`. The K-loop in the caller accumulates K terms each
+     bounded by 3328, then this driver INTT's and reduces to 3328.]
+-/
+/- Triple skeleton:
+@[spec]
+theorem invert_ntt_montgomery_spec
+    {Vector : Type} (K : Std.Usize) (hK : K.val ≤ 4)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ K.val * 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.invert_ntt_montgomery OpsInst K re
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
 -/
 
 /-! ============================================================
@@ -1020,17 +1778,71 @@ theorem ntt_at_layer_1_spec
     12-bit candidates `d1, d2` from `(b₀ | b₁<<8 | b₂<<16)` via L0.1,
     accept if `< 3329`. Depends on L0.1, `Spec.rej_sample_step`.
     Tier: loop-induction.
+    [F*-bound: vector/portable/sampling.rs:8-9 `rej_sample` pre:
+     `a.len() == 24 ∧ result.len() == 16`, post: `future(result).len() ==
+     result.len() ∧ res ≤ 16 ∧ ∀ j < res, 0 ≤ result[j] ∧ result[j] < 3329`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem rej_sample_spec
+    (bytes : Aeneas.Std.Slice Std.U8) (out : Aeneas.Std.Slice Std.I16)
+    (h_bytes : bytes.val.length = 24) (h_out : out.val.length = 16) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.sampling.rej_sample bytes out
+    ⦃ ⇓ r => ⌜ r.1.val ≤ 16
+              ∧ r.2.val.length = 16
+              ∧ ∀ j : Fin r.1.val.toNat, 0 ≤ r.2.val[j]!.val ∧ r.2.val[j]!.val < 3329 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L4.2 `sampling.sample_from_xof` — drives L4.1 over SHAKE128
+/- ## L4.2 `sampling.sample_from_xof` — drives L4.1 over SHAKE128
     stream until 256 coefficients accepted. Spec anchor:
     `Spec.sample_ntt`. Couples to
     `LibcruxIotSha3.Sponge.Shake.shake128_spec` for the bytes.
     Tier: loop-induction + SHA-3 coupling.
+    [F*-bound: PANIC-FREE-ONLY in upstream `Sampling.fst` (admits at
+     `admit () (* Panic freedom *)`). FC bound = "each output
+     polynomial is_bounded_poly 3328" is the Lean campaign's open
+     obligation; we state the panic-free shape (Result is .ok) plus
+     the per-coefficient bound 0 ≤ coeff < 3329 as our target post.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem sample_from_xof_spec
+    {Vector : Type} (K : Std.Usize) (hK : K.val ≤ 4)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (seeds : Aeneas.Std.Array (Aeneas.Std.Array Std.U8 34#usize) K) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.sampling.sample_from_xof OpsInst seeds
+    ⦃ ⇓ r => ⌜ ∀ k : Fin K.val,
+                ∀ i : Fin 16, ∀ j : Fin 16,
+                  0 ≤ r[k]!.coefficients[i].elements[j].val
+                ∧ r[k]!.coefficients[i].elements[j].val ≤ 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L4.3 `sampling.sample_poly_cbd` — centered binomial. Per byte:
+/- ## L4.3 `sampling.sample_poly_cbd` — centered binomial. Per byte:
     extract bits via shift+mask; centered sum in [-η, η]. Spec
     anchor: `Spec.sample_poly_cbd eta prf_output`.
     Tier: loop-induction.
+    [F*-bound: sampling.rs:328-331 `sample_from_binomial_distribution`
+     pre: `(ETA == 2 ∨ ETA == 3) ∧ randomness.len() == ETA * 64`;
+     post: `is_bounded_poly 3 result ∧
+     poly_to_spec result == Hacspec.Sampling.sample_poly_cbd ...`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem sample_from_binomial_distribution_spec
+    {Vector : Type} (ETA : Std.Usize)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (randomness : Aeneas.Std.Slice Std.U8)
+    (h_eta : ETA.val = 2 ∨ ETA.val = 3)
+    (h_rnd : randomness.val.length = ETA.val * 64) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.sampling.sample_from_binomial_distribution OpsInst ETA randomness
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3 ⌝ ⦄ := by
+  sorry
 -/
 
 /-! ============================================================
@@ -1079,23 +1891,118 @@ theorem ntt_at_layer_1_spec
 
     ## L5.1 `compress_1` — d=1 (1 bit per coefficient).
     Tier: bv-decide-close.
+    [F*-bound: vector/portable/compress.rs:29 `compress_message_coefficient`
+     pre: `fe < FIELD_MODULUS` (u16); post: `(833 ≤ v fe ≤ 2496) ⇒ v result == 1
+     ∧ (v fe ≤ 832 ∨ v fe ≥ 2497) ⇒ v result == 0`. Plus
+     vector/portable/compress.rs:187-196 `compress_1` (vector wrap):
+     pre `∀ i, v vec[i] ≥ 0 ∧ v vec[i] < FIELD_MODULUS`, post per-lane.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_compress_1_spec
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Fin 16, 0 ≤ vec.elements[i].val ∧ vec.elements[i].val < 3329) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.compress.compress_1 vec
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                (833 ≤ vec.elements[i].val ∧ vec.elements[i].val ≤ 2496 →
+                  r.elements[i].val = 1)
+              ∧ ((vec.elements[i].val ≤ 832 ∨ vec.elements[i].val ≥ 2497) →
+                  r.elements[i].val = 0) ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L5.2 `compress<D>` — generic D ∈ {4, 5, 10, 11}.
+/- ## L5.2 `compress<D>` — generic D ∈ {4, 5, 10, 11}.
     Tier: scalar-tac-close (nonlinear).
+    [F*-bound: vector/portable/compress.rs:239-256 `compress<D>` pre:
+     `D ∈ {4, 5, 10, 11} ∧ ∀ i, 0 ≤ vec[i] < FIELD_MODULUS`, post:
+     `∀ i, 0 ≤ result[i] < 2^D ∧
+     v result[i] = compress_d (v vec[i]) D` (the integer-level Algo 4 formula).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_compress_spec
+    (COEFFICIENT_BITS : Std.U8) (h_bits : COEFFICIENT_BITS.val ∈ ({4,5,10,11} : Finset _))
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Fin 16, 0 ≤ vec.elements[i].val ∧ vec.elements[i].val < 3329) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.compress.compress COEFFICIENT_BITS vec
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                0 ≤ r.elements[i].val ∧ r.elements[i].val < 2 ^ COEFFICIENT_BITS.val ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L5.3 `decompress_ciphertext_coefficient<D>` — inverse of L5.2.
+/- ## L5.3 `decompress_ciphertext_coefficient<D>` — inverse of L5.2.
     Tier: scalar-tac-close.
+    [F*-bound: vector/portable/compress.rs:305-315 `decompress_ciphertext_coefficient<D>`
+     pre: `∀ i, 0 ≤ vec[i] < 2^D`, post: `∀ i, 0 ≤ result[i] < FIELD_MODULUS
+     ∧ v result[i] = decompress_d (v vec[i]) D` (the Algo 5 inverse formula).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_decompress_ciphertext_coefficient_spec
+    (COEFFICIENT_BITS : Std.U8) (h_bits : COEFFICIENT_BITS.val ∈ ({4,5,10,11} : Finset _))
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Fin 16, 0 ≤ vec.elements[i].val ∧
+                          vec.elements[i].val < 2 ^ COEFFICIENT_BITS.val) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.compress.decompress_ciphertext_coefficient
+      COEFFICIENT_BITS vec
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                0 ≤ r.elements[i].val ∧ r.elements[i].val < 3329 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L5.4 `serialize_D` for D ∈ {1, 4, 5, 10, 11, 12} — pack 16
+/- ## L5.4 `serialize_D` for D ∈ {1, 4, 5, 10, 11, 12} — pack 16
     field elements of bit width D into D·2 bytes.
     Tier: bv-decide-close (one per D).
+    [F*-bound: vector/portable/serialize.rs:57-58 `serialize_1` /
+     206-207 `serialize_4` / 360-361 `serialize_5` / 506-507 `serialize_10` /
+     663-664 `serialize_11` / 811-812 `serialize_12`. Each pre:
+     `∀ i, Rust_primitives.bounded inputs[i] D` (i.e. 0 ≤ x < 2^D);
+     each post: bit-vector flatten equality
+     `bit_vec_of_int_t_array result 8 == bit_vec_of_int_t_array inputs D`.]
+-/
+/- Triple skeleton (extraction missing) — one per D, shape identical:
+@[spec]
+theorem PortableVector_serialize_D_spec
+    (D : Nat) (h_D : D ∈ ({1,4,5,10,11,12} : Finset Nat))
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Fin 16, 0 ≤ vec.elements[i].val ∧ vec.elements[i].val < 2 ^ D) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.serialize.«serialize_D» vec
+    ⦃ ⇓ r => ⌜ r.val.length = 2 * D
+              -- ∧ BitVec.flatten r.val 8 = BitVec.flatten (vec.elements.map .val) D
+              ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L5.5 `deserialize_D` for D ∈ {1, 4, 5, 10, 11, 12} — inverse
+/- ## L5.5 `deserialize_D` for D ∈ {1, 4, 5, 10, 11, 12} — inverse
     of L5.4. Tier: bv-decide-close.
+    [F*-bound: serialize.rs:123 `deserialize_1` / 289 `deserialize_4` /
+     435 `deserialize_5` / 586 `deserialize_10` / 742 `deserialize_11` /
+     893 `deserialize_12`. Each pre: `bytes.len() == 2*D`; each post:
+     `∀ i, 0 ≤ result[i] < 2^D` (the bit-vector inverse identity).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PortableVector_deserialize_D_spec
+    (D : Nat) (h_D : D ∈ ({1,4,5,10,11,12} : Finset Nat))
+    (bytes : Aeneas.Std.Slice Std.U8) (h_len : bytes.val.length = 2 * D) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.serialize.«deserialize_D» bytes
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16,
+                0 ≤ r.elements[i].val ∧ r.elements[i].val < 2 ^ D ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L5.6 `byte_encode (byte_decode x) = x` — round-trip identity at
+/- ## L5.6 `byte_encode (byte_decode x) = x` — round-trip identity at
     D=12 (needed for `public_key_modulus_check`, FIPS-203 §7.2).
     Tier: bv-decide-close + new pure-Lean Roundtrip helper.
+    [F*-bound: derived corollary of L5.4 + L5.5 at D=12; no separate
+     upstream lemma — F* tactic `prove_bit_vector_equality'` discharges
+     both directions in one call. Lean: bv_decide on the composed
+     map after a round-trip rewrite.]
 -/
 
 /-! ============================================================
@@ -1145,13 +2052,19 @@ theorem ntt_at_layer_1_spec
 theorem PolynomialRingElement_poly_barrett_reduce_spec
     {Vector : Type}
     (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
-    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector) :
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (hpre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ 28296) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce OpsInst re
-    ⦃ ⇓ _r => ⌜ True -- each lane is barrett-reduced
-              ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
   sorry
 -/
+/- [F*-bound: polynomial.rs:504-505 `poly_barrett_reduce` pre:
+   `is_bounded_poly 28296 self`, post: `is_bounded_poly 3328 future(self)`.
+   Each lane independently barrett-reduces (L1.3); the upper 28296 bound
+   is the worst-case prior to barrett.] -/
 
 /- **L6.2 `PolynomialRingElement.{add_to_ring_element, add_error_reduce,
     add_message_error_reduce, add_standard_error_reduce}`** — the 4
@@ -1185,6 +2098,84 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
 
     ## Complexity tier
     loop-induction + algebraic-close-required (~5 days for all 4)
+
+    [F*-bound:
+     - polynomial.rs:442-444 `add_to_ring_element` pre:
+       `_bound ≤ 4*3328 ∧ is_bounded_poly _bound self ∧ is_bounded_poly 3328 rhs`,
+       post: `is_bounded_poly (_bound + 3328) future(self)`.
+     - polynomial.rs:755-756 `add_message_error_reduce` pre:
+       `is_bounded_poly 3328 self ∧ is_bounded_poly 3328 message`, post:
+       `is_bounded_poly 3328 result`.
+     - polynomial.rs:821-822 `add_error_reduce` pre:
+       `is_bounded_poly 7 error`, post:
+       `is_bounded_poly 3328 future(self)`. (Note the *low* error bound 7 —
+       error is fresh CBD output, η ≤ 3, but the impl bounds it loosely.)
+     - polynomial.rs:933-934 `add_standard_error_reduce` pre:
+       `is_bounded_poly 3328 error`, post:
+       `is_bounded_poly 3328 future(self)`. (Self is post-NTT t̂, bounded
+       3328 by accumulated matrix mul.)]
+-/
+/- Triple skeletons:
+@[spec]
+theorem PolynomialRingElement_add_to_ring_element_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (myself rhs : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (bound : Std.Usize) (h_bnd : bound.val ≤ 4 * 3328)
+    (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
+      myself.coefficients[i].elements[j].val.natAbs ≤ bound.val)
+    (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
+      rhs.coefficients[i].elements[j].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_to_ring_element
+      OpsInst myself rhs bound
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ bound.val + 3328 ⌝ ⦄ := by
+  sorry
+
+@[spec]
+theorem PolynomialRingElement_add_message_error_reduce_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (myself message error : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
+      myself.coefficients[i].elements[j].val.natAbs ≤ 3328)
+    (h_msg : ∀ i : Fin 16, ∀ j : Fin 16,
+      message.coefficients[i].elements[j].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce
+      OpsInst myself message error
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+
+@[spec]
+theorem PolynomialRingElement_add_error_reduce_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (myself error : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_err : ∀ i : Fin 16, ∀ j : Fin 16,
+      error.coefficients[i].elements[j].val.natAbs ≤ 7) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_error_reduce
+      OpsInst myself error
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+
+@[spec]
+theorem PolynomialRingElement_add_standard_error_reduce_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (myself error : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_err : ∀ i : Fin 16, ∀ j : Fin 16,
+      error.coefficients[i].elements[j].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_standard_error_reduce
+      OpsInst myself error
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
 -/
 
 /- **L6.3 `PolynomialRingElement.accumulating_ntt_multiply`** (+
@@ -1219,6 +2210,28 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
 
     ## Complexity tier
     structural-inspiration + new-proof (~1 week)
+
+    [F*-bound: polynomial.rs:1011-1012 `ntt_multiply` pre:
+     `is_bounded_poly 3328 myself ∧ is_bounded_poly 3328 rhs`, post:
+     `is_bounded_poly 3328 result`. WARNING: upstream's per-vector
+     wrap is `assume val` (Chunk.fst:1311); Lean port must prove this
+     wrap; FC bound itself is closed at the integer-pair level.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem PolynomialRingElement_ntt_multiply_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (myself rhs : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
+      myself.coefficients[i].elements[j].val.natAbs ≤ 3328)
+    (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
+      rhs.coefficients[i].elements[j].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.ntt_multiply OpsInst myself rhs
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
 -/
 
 /- **L6.4 `PolynomialRingElement.subtract_reduce`** — `b ← (1441·b −
@@ -1234,8 +2247,31 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
      this. Lean: ~150 lines, ~1 week. Pattern matches L6.2 structure
      but for INTT-Mont track.]
     Tier: loop-induction + algebraic-close-required (~1 week).
+    [F*-bound: polynomial.rs:1106-1107 `subtract_reduce` pre:
+     `is_bounded_poly 3328 self ∧ is_bounded_poly 3328 message` (where
+     `message` is the post-INTT impl input that's `bit_intt_mont_form`),
+     post: `is_bounded_poly 3328 result` (`1441·b - a`-reduce collapses
+     down to canonical 3328).]
+-/
+/- Triple skeleton:
+@[spec]
+theorem PolynomialRingElement_subtract_reduce_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (myself message : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
+      myself.coefficients[i].elements[j].val.natAbs ≤ 3328)
+    (h_msg : ∀ i : Fin 16, ∀ j : Fin 16,
+      message.coefficients[i].elements[j].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.subtract_reduce
+      OpsInst myself message
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    **L6.5 `serialize_uncompressed_ring_element`** /
+/- **L6.5 `serialize_uncompressed_ring_element`** /
     **`compress_then_serialize_message`** /
     **`compress_then_serialize_ring_element`** — the byte serializers
     at ring-element granularity. Each is a 16-iter loop:
@@ -1246,13 +2282,67 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
     slices; `Std.Array.set_val_eq` simp lemmas collapse. Depends on
     L5.2, L5.4 + new helper `to_unsigned_field_modulus_spec`. Tier:
     loop-induction + bv-decide-close per element.
+    [F*-bound: serialize.rs:16-18 `serialize_uncompressed_ring_element`
+     pre: `is_bounded_vector 3328 a` (each coefficient in canonical
+     positive range), post: `∀ i, result[i] is the D=12 byte-encoded
+     coefficient`. Plus serialize.rs:27-28 `compress_then_serialize_message`
+     pre: `is_bounded_poly 3328 re`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem serialize_uncompressed_ring_element_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (hpre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.serialize.serialize_uncompressed_ring_element OpsInst re
+    ⦃ ⇓ r => ⌜ r.val.length = 384 ⌝ ⦄ := by
+  sorry
+-/
 
-    **L6.6 `deserialize_*_ring_element`** — inverse of L6.5. Same
+/- **L6.6 `deserialize_*_ring_element`** — inverse of L6.5. Same
     structure with L5.3 + L5.5 chained. Tier: loop-induction.
+    [F*-bound: serialize.rs:515-518 `deserialize_to_uncompressed_ring_element`
+     pre: `serialized.len() == 384`, post: `is_bounded_poly 4095 result`
+     (= 2^12 - 1, the raw D=12 bit-decoded output before mod-q reduction).]
+-/
+/- Triple skeleton:
+@[spec]
+theorem deserialize_to_uncompressed_ring_element_spec
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (serialized : Aeneas.Std.Slice Std.U8) (h_len : serialized.val.length = 384) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.serialize.deserialize_to_uncompressed_ring_element OpsInst serialized
+    ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
+                0 ≤ r.coefficients[i].elements[j].val
+              ∧ r.coefficients[i].elements[j].val ≤ 4095 ⌝ ⦄ := by
+  sorry
+-/
 
-    **L6.7 `deserialize_ring_elements_reduced`** — outer K-loop over
+/- **L6.7 `deserialize_ring_elements_reduced`** — outer K-loop over
     L6.6. Used by `ind_cpa::serialize_public_key` and
     `validate_public_key`. Tier: loop-induction.
+    [F*-bound: serialize.rs:559-562 `deserialize_ring_elements_reduced` pre:
+     `K ≤ 4 ∧ public_key.len() == K * 384`, post:
+     `∀ i < K, is_bounded_vector 4095 result[i]` (raw decode bound; mod-q
+     reduction is performed outside this fn by the caller).]
+-/
+/- Triple skeleton:
+@[spec]
+theorem deserialize_ring_elements_reduced_spec
+    {Vector : Type} (K : Std.Usize) (hK : K.val ≤ 4)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (public_key : Aeneas.Std.Slice Std.U8)
+    (h_len : public_key.val.length = K.val * 384) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.serialize.deserialize_ring_elements_reduced OpsInst K public_key
+    ⦃ ⇓ r => ⌜ ∀ k : Fin K.val, ∀ i : Fin 16, ∀ j : Fin 16,
+                0 ≤ r[k]!.coefficients[i].elements[j].val
+              ∧ r[k]!.coefficients[i].elements[j].val ≤ 4095 ⌝ ⦄ := by
+  sorry
 -/
 
 /-! ============================================================
@@ -1280,23 +2370,143 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
     Spec: `Spec.expand_a(rho, transpose)`. Nested 2-level loop K × K.
     Per-iter: L4.2 + `PolynomialRingElement::from_i16_array_spec`
     (new). Depends on L4.2. Tier: nested loop-induction.
+    [F*-bound: matrix.rs:18-21 `sample_matrix_A` pre: `K ≤ 4`; post:
+     `∀ i < K, ∀ j < K, is_bounded_poly 3328 future(A_transpose)[i][j]`.
+     (Note: sample output is non-negative ≤ 3328, suitable for direct
+     consumption by NTT layers.)]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem sample_matrix_A_spec
+    {Vector : Type} (K : Std.Usize) (hK : K.val ≤ 4)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (A_transpose : Aeneas.Std.Array (Aeneas.Std.Array
+                     (libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector) K) K)
+    (seed : Aeneas.Std.Array Std.U8 34#usize) (transpose : Bool) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.matrix.sample_matrix_A OpsInst A_transpose seed transpose
+    ⦃ ⇓ r => ⌜ ∀ i : Fin K.val, ∀ j : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+                r[i]![j]!.coefficients[a].elements[b].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L7.2 `compute_As_plus_e` — `t̂ = Â◦ŝ + ê`. K-loop over inner
+/- ## L7.2 `compute_As_plus_e` — `t̂ = Â◦ŝ + ê`. K-loop over inner
     `accumulating_ntt_multiply` calls + outer
     `add_standard_error_reduce`. Depends on L6.3, L6.2. Tier:
     loop-induction.
+    [F*-bound: matrix.rs:233-240 `compute_As_plus_e` pre: `K ≤ 4 ∧
+     (∀ i < K, is_bounded_poly 3328 error_as_ntt[i] ∧ is_bounded_poly 3328
+     s_as_ntt[i] ∧ ∀ j < K, is_bounded_poly 3328 matrix_A[i][j])`;
+     post: `∀ i < K, is_bounded_poly 3328 future(t_as_ntt)[i]`.
+     Inner loop invariant accumulates ≤ j*3328, outer
+     `add_standard_error_reduce` collapses back to 3328.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem compute_As_plus_e_spec
+    {Vector : Type} (K : Std.Usize) (hK : K.val ≤ 4)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (t_as_ntt matrix_A s_as_ntt error_as_ntt : Aeneas.Std.Array _ K)
+    (h_s : ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      s_as_ntt[i]!.coefficients[a].elements[b].val.natAbs ≤ 3328)
+    (h_e : ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      error_as_ntt[i]!.coefficients[a].elements[b].val.natAbs ≤ 3328)
+    (h_A : ∀ i : Fin K.val, ∀ j : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      matrix_A[i]![j]!.coefficients[a].elements[b].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.matrix.compute_As_plus_e OpsInst K t_as_ntt matrix_A s_as_ntt error_as_ntt
+    ⦃ ⇓ r => ⌜ ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+                r[i]!.coefficients[a].elements[b].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L7.3 `compute_vector_u` — `u = NTT⁻¹(Aᵀ◦r̂) + e₁`. Similar
+/- ## L7.3 `compute_vector_u` — `u = NTT⁻¹(Aᵀ◦r̂) + e₁`. Similar
     K-loop with inverse NTT and `add_error_reduce`. Depends on L6.3,
     L6.2, L3.8. Tier: loop-induction.
+    [F*-bound: matrix.rs:183-190 `compute_vector_u` pre: `K ≤ 4 ∧
+     ∀ i < K, is_bounded_poly 7 error_1[i] ∧ is_bounded_poly 3328 r_as_ntt[i] ∧
+     ∀ j < K, is_bounded_poly 3328 a_as_ntt[i][j]`;
+     post: `∀ i < K, is_bounded_poly 3328 result[i]`. The low `7` bound
+     on error_1 reflects fresh CBD output (η ≤ 3, loosely bounded).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem compute_vector_u_spec
+    {Vector : Type} (K : Std.Usize) (hK : K.val ≤ 4)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (a_as_ntt : Aeneas.Std.Array (Aeneas.Std.Array _ K) K)
+    (r_as_ntt error_1 : Aeneas.Std.Array _ K)
+    (h_e : ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      error_1[i]!.coefficients[a].elements[b].val.natAbs ≤ 7)
+    (h_r : ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      r_as_ntt[i]!.coefficients[a].elements[b].val.natAbs ≤ 3328)
+    (h_A : ∀ i : Fin K.val, ∀ j : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      a_as_ntt[i]![j]!.coefficients[a].elements[b].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.matrix.compute_vector_u OpsInst K a_as_ntt r_as_ntt error_1
+    ⦃ ⇓ r => ⌜ ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+                r[i]!.coefficients[a].elements[b].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L7.4 `compute_ring_element_v` — `v = NTT⁻¹(t̂ᵀ◦r̂) + e₂ + m`.
+/- ## L7.4 `compute_ring_element_v` — `v = NTT⁻¹(t̂ᵀ◦r̂) + e₂ + m`.
     Depends on L6.3, L6.2 `add_message_error_reduce`, L3.8. Tier:
     loop-induction.
+    [F*-bound: matrix.rs:151-158 `compute_ring_element_v` pre: `K ≤ 4 ∧
+     is_bounded_poly 3328 message ∧ is_bounded_poly 3328 error_2 ∧
+     ∀ i < K, is_bounded_poly 3328 t_as_ntt[i] ∧ is_bounded_poly 3328 r_as_ntt[i]`;
+     post: `is_bounded_poly 3328 result`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem compute_ring_element_v_spec
+    {Vector : Type} (K : Std.Usize) (hK : K.val ≤ 4)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (t_as_ntt r_as_ntt : Aeneas.Std.Array _ K)
+    (error_2 message : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_msg : ∀ a : Fin 16, ∀ b : Fin 16,
+      message.coefficients[a].elements[b].val.natAbs ≤ 3328)
+    (h_e2 : ∀ a : Fin 16, ∀ b : Fin 16,
+      error_2.coefficients[a].elements[b].val.natAbs ≤ 3328)
+    (h_t : ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      t_as_ntt[i]!.coefficients[a].elements[b].val.natAbs ≤ 3328)
+    (h_r : ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      r_as_ntt[i]!.coefficients[a].elements[b].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.matrix.compute_ring_element_v OpsInst K t_as_ntt r_as_ntt error_2 message
+    ⦃ ⇓ r => ⌜ ∀ a : Fin 16, ∀ b : Fin 16,
+                r.coefficients[a].elements[b].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L7.5 `compute_message` — `m̂ = v − NTT⁻¹(sᵀ◦û)` (decrypt
+/- ## L7.5 `compute_message` — `m̂ = v − NTT⁻¹(sᵀ◦û)` (decrypt
     side). Depends on L6.3, L3.8, L6.4 `subtract_reduce`. Tier:
     loop-induction.
+    [F*-bound: matrix.rs:119-125 `compute_message` pre: `K ≤ 4 ∧
+     is_bounded_poly 4095 v ∧ ∀ i < K, is_bounded_poly 3328 secret_as_ntt[i] ∧
+     is_bounded_poly 3328 u_as_ntt[i]`; post: `is_bounded_poly 3328 result`.
+     (v is the raw decoded ciphertext element with 4095 = 2^12-1 bound,
+     directly out of `deserialize_to_uncompressed_ring_element`.)]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem compute_message_spec
+    {Vector : Type} (K : Std.Usize) (hK : K.val ≤ 4)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (v : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (secret_as_ntt u_as_ntt : Aeneas.Std.Array _ K)
+    (h_v : ∀ a : Fin 16, ∀ b : Fin 16,
+      0 ≤ v.coefficients[a].elements[b].val ∧
+      v.coefficients[a].elements[b].val ≤ 4095)
+    (h_s : ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      secret_as_ntt[i]!.coefficients[a].elements[b].val.natAbs ≤ 3328)
+    (h_u : ∀ i : Fin K.val, ∀ a : Fin 16, ∀ b : Fin 16,
+      u_as_ntt[i]!.coefficients[a].elements[b].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.matrix.compute_message OpsInst K v secret_as_ntt u_as_ntt
+    ⦃ ⇓ r => ⌜ ∀ a : Fin 16, ∀ b : Fin 16,
+                r.coefficients[a].elements[b].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
 -/
 
 /-! ============================================================
@@ -1333,17 +2543,109 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
     7. `dk = ByteEncode₁₂(ŝ)`         (L5.4)
     Depends on L7.1, L4.3, L3.6, L7.2, L5.4 + SHA-3 G/PRF.
     Tier: needs-new-helper-tier (multi-stage equation chain).
+    [F*-bound: PANIC-FREE-ONLY in upstream `Ind_cpa.fst` (admits at
+     `admit () (* Panic freedom *)`); FC bound is the Lean campaign's
+     open obligation. Target post = hacspec-equivalence on (ek, dk) byte
+     strings up to the L8.5 spec call. Pre cites:
+     ind_cpa.rs:408-414 `generate_keypair` pre: `is_rank K ∧ PRIVATE_KEY_SIZE
+     == cpa_private_key_size K ∧ PUBLIC_KEY_SIZE == cpa_public_key_size K ∧
+     ETA1 == eta1 K ∧ ETA1_RANDOMNESS_SIZE == eta1_randomness_size K ∧
+     key_generation_seed.len() == CPA_KEY_GENERATION_SEED_SIZE`. Hacspec
+     post: `Spec.kpke_keygen K key_generation_seed = .ok (ek, dk) ⇒
+     result.0 == dk ∧ result.1 == ek`.]
+-/
+/- Triple skeleton (extraction missing; output is .ok of byte tuple):
+@[spec]
+theorem ind_cpa_generate_keypair_spec
+    {Vector Hasher : Type} (K ETA1 ETA1_RANDOMNESS_SIZE
+      PRIVATE_KEY_SIZE PUBLIC_KEY_SIZE : Std.Usize)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (HashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher K)
+    (key_generation_seed : Aeneas.Std.Slice Std.U8)
+    (h_rank : K.val ∈ ({2,3,4} : Finset Nat))
+    (h_eta1 : ETA1.val = if K.val = 2 then 3 else 2)
+    (h_pksz : PUBLIC_KEY_SIZE.val = K.val * 384 + 32)
+    (h_sksz : PRIVATE_KEY_SIZE.val = K.val * 384)
+    (h_eta1sz : ETA1_RANDOMNESS_SIZE.val = ETA1.val * 64)
+    (h_seed : key_generation_seed.val.length = 32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ind_cpa.generate_keypair
+      OpsInst HashInst K ETA1 ETA1_RANDOMNESS_SIZE PRIVATE_KEY_SIZE PUBLIC_KEY_SIZE
+      key_generation_seed
+    ⦃ ⇓ r => ⌜ -- Panic-freedom: result is .ok with conforming sizes; FC equivalence
+              -- to `Spec.kpke_keygen K key_generation_seed` is the open obligation.
+              r.1.val.length = PRIVATE_KEY_SIZE.val ∧ r.2.val.length = PUBLIC_KEY_SIZE.val ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L8.2 `ind_cpa.encrypt` — K-PKE.Encrypt (Algorithm 13). 9 steps
+/- ## L8.2 `ind_cpa.encrypt` — K-PKE.Encrypt (Algorithm 13). 9 steps
     mixing L4.3, L3.6, L7.3, L7.4, L5.3, L6.5. Tier:
     needs-new-helper-tier.
+    [F*-bound: PANIC-FREE-ONLY in upstream `Ind_cpa.fst`; FC bound is
+     the Lean campaign's open obligation. Pre cites ind_cpa.rs:828-842
+     `encrypt` pre: many const-generic conformance equations including
+     `is_rank K ∧ ETA1 == eta1 K ∧ ETA2 == eta2 K ∧ public_key.len() ==
+     cpa_public_key_size K ∧ randomness.len() == SHARED_SECRET_SIZE ∧
+     CIPHERTEXT_SIZE == cpa_ciphertext_size K ∧ U_COMPRESSION_FACTOR ==
+     vector_u_compression_factor K ∧ V_COMPRESSION_FACTOR ==
+     vector_v_compression_factor K`. Hacspec post: `Spec.kpke_encrypt =
+     .ok expected ⇒ result == expected`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem ind_cpa_encrypt_spec
+    {Vector Hasher : Type} (K CIPHERTEXT_SIZE U_COMPRESSION_FACTOR
+      V_COMPRESSION_FACTOR ETA1 ETA2 ETA1_RANDOMNESS_SIZE ETA2_RANDOMNESS_SIZE : Std.Usize)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (HashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher K)
+    (public_key : Aeneas.Std.Slice Std.U8)
+    (message : Aeneas.Std.Array Std.U8 32#usize)
+    (randomness : Aeneas.Std.Slice Std.U8)
+    (h_rank : K.val ∈ ({2,3,4} : Finset Nat))
+    (h_pk : public_key.val.length = K.val * 384 + 32)
+    (h_rnd : randomness.val.length = 32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ind_cpa.encrypt OpsInst HashInst K
+      CIPHERTEXT_SIZE U_COMPRESSION_FACTOR V_COMPRESSION_FACTOR
+      ETA1 ETA2 ETA1_RANDOMNESS_SIZE ETA2_RANDOMNESS_SIZE
+      public_key message randomness
+    ⦃ ⇓ r => ⌜ r.val.length = CIPHERTEXT_SIZE.val ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L8.3 / L8.4 `encrypt_c1` / `encrypt_c2` — split variants of
+/- ## L8.3 / L8.4 `encrypt_c1` / `encrypt_c2` — split variants of
     L8.2. Direct corollaries via ciphertext-half projection.
+    [F*-bound: PANIC-FREE-ONLY in upstream; same pre/post shape as L8.2
+     restricted to one ciphertext half. Lean campaign treats these as
+     restriction lemmas of L8.2, not separate top-level Triples.]
+-/
 
-    ## L8.5 `ind_cpa.decrypt` — K-PKE.Decrypt (Algorithm 14). Chain
+/- ## L8.5 `ind_cpa.decrypt` — K-PKE.Decrypt (Algorithm 14). Chain
     L6.6 + L5.3 + L6.7 + L7.5 + L6.5 + L5.1. Tier:
     needs-new-helper-tier.
+    [F*-bound: PANIC-FREE-ONLY in upstream `Ind_cpa.fst`; FC bound is
+     the Lean campaign's open obligation. Pre: `is_rank K ∧
+     CIPHERTEXT_SIZE == cpa_ciphertext_size K ∧ U_COMPRESSION_FACTOR ==
+     vector_u_compression_factor K ∧ V_COMPRESSION_FACTOR ==
+     vector_v_compression_factor K`. Target post: `result ==
+     Spec.kpke_decrypt secret_key ciphertext`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem ind_cpa_decrypt_spec
+    {Vector : Type} (K CIPHERTEXT_SIZE VECTOR_U_ENCODED_SIZE
+      U_COMPRESSION_FACTOR V_COMPRESSION_FACTOR : Std.Usize)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (secret_key : Aeneas.Std.Slice Std.U8)
+    (ciphertext : Aeneas.Std.Array Std.U8 CIPHERTEXT_SIZE)
+    (h_rank : K.val ∈ ({2,3,4} : Finset Nat))
+    (h_sk : secret_key.val.length = K.val * 384) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ind_cpa.decrypt OpsInst K
+      CIPHERTEXT_SIZE VECTOR_U_ENCODED_SIZE U_COMPRESSION_FACTOR V_COMPRESSION_FACTOR
+      secret_key ciphertext
+    ⦃ ⇓ r => ⌜ r.val.length = 32 ⌝ ⦄ := by
+  sorry
 -/
 
 /-! ============================================================
@@ -1379,13 +2681,38 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
     chunk via L6.7, re-encode via L5.4 (D=12), compare to original
     bytes. Close via per-chunk L5.6 round-trip identity. Depends on
     L6.7, L5.4, L5.6. Tier: loop-induction.
+    [F*-bound: PANIC-FREE-ONLY in upstream `Ind_cca.fst` (admit at line
+     362); FC bound is the Lean campaign's open obligation. Target post:
+     `result == Spec.public_key_modulus_check K public_key`.
+     Pre: `is_rank K ∧ public_key.len() == cpa_public_key_size K`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem ind_cca_validate_public_key_spec
+    {Vector Hasher : Type} (K PUBLIC_KEY_SIZE T_AS_NTT_ENCODED_SIZE : Std.Usize)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (HashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher K)
+    (public_key : Aeneas.Std.Array Std.U8 PUBLIC_KEY_SIZE)
+    (h_rank : K.val ∈ ({2,3,4} : Finset Nat))
+    (h_size : PUBLIC_KEY_SIZE.val = K.val * 384 + 32)
+    (h_t : T_AS_NTT_ENCODED_SIZE.val = K.val * 384) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ind_cca.validate_public_key
+      OpsInst HashInst K PUBLIC_KEY_SIZE T_AS_NTT_ENCODED_SIZE public_key
+    ⦃ ⇓ r => ⌜ r = True ∨ r = False ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L9.2 `ind_cca.validate_private_key` — verify dk well-formed AND
+/- ## L9.2 `ind_cca.validate_private_key` — verify dk well-formed AND
     embedded H(ek) matches. Couples to
     `LibcruxIotSha3.Sponge.Shake.sha256_ema_spec`. Depends on L9.1.
     Tier: needs-new-helper-tier.
+    [F*-bound: PANIC-FREE-ONLY in upstream; FC bound is the Lean
+     campaign's open obligation. Target post: `result ==
+     Spec.private_key_modulus_check K private_key`.]
+-/
 
-    ## L9.3 `ind_cca.generate_keypair` — ML-KEM.KeyGen (Algorithm 19).
+/- ## L9.3 `ind_cca.generate_keypair` — ML-KEM.KeyGen (Algorithm 19).
     Sequence:
     1. Split `randomness[64]` into `(d, z)` (32 bytes each)
     2. K-PKE.KeyGen(d) → (ek, ind_cpa_sk)  (L8.1)
@@ -1393,16 +2720,78 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
     4. Output (ek, dk)
     Depends on L8.1, sha256_ema_spec, `Spec.mlkem_keygen`. Tier:
     needs-new-helper-tier.
+    [F*-bound: PANIC-FREE-ONLY in upstream `Ind_cca.fst` (admit at line
+     452, `generate_keypair`); FC bound is the Lean campaign's open
+     obligation. Pre cites ind_cca.rs:881-886: `is_rank K ∧
+     ETA1_RANDOMNESS_SIZE == eta1_randomness_size K ∧ ETA1 == eta1 K ∧
+     PUBLIC_KEY_SIZE == cpa_public_key_size K`. Target post: hacspec
+     equivalence to `Spec.mlkem_keygen K randomness` on (ek, dk).]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem ind_cca_generate_keypair_spec
+    {Vector Hasher : Type} (K ETA1 ETA1_RANDOMNESS_SIZE
+      CPA_PRIVATE_KEY_SIZE PRIVATE_KEY_SIZE PUBLIC_KEY_SIZE : Std.Usize)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (HashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher K)
+    (randomness : Aeneas.Std.Array Std.U8 64#usize)
+    (h_rank : K.val ∈ ({2,3,4} : Finset Nat))
+    (h_pksz : PUBLIC_KEY_SIZE.val = K.val * 384 + 32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ind_cca.generate_keypair
+      OpsInst HashInst K ETA1 ETA1_RANDOMNESS_SIZE
+      CPA_PRIVATE_KEY_SIZE PRIVATE_KEY_SIZE PUBLIC_KEY_SIZE randomness
+    ⦃ ⇓ r => ⌜ -- Panic-freedom: shape conformance; full Spec.mlkem_keygen
+              -- equivalence is the open obligation.
+              r.1.value.val.length = PUBLIC_KEY_SIZE.val ∧
+              r.2.value.val.length = PRIVATE_KEY_SIZE.val ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L9.4 `ind_cca.encapsulate` — ML-KEM.Encaps (Algorithm 20).
+/- ## L9.4 `ind_cca.encapsulate` — ML-KEM.Encaps (Algorithm 20).
     Sequence:
     1. K̄ = G(m || H(ek)) → (K, r)  (SHA3-512)
     2. c = K-PKE.Encrypt(ek, m, r)  (L8.2)
     3. Output (c, K)
     Depends on L8.2, sha3_512_ema_spec, sha256_ema_spec,
     `Spec.mlkem_encaps`. Tier: needs-new-helper-tier.
+    [F*-bound: PANIC-FREE-ONLY in upstream `Ind_cca.fst` (panic_free
+     wrapper at line 939, `encapsulate`); FC bound is the Lean
+     campaign's open obligation. Pre cites ind_cca.rs:939-953:
+     `is_rank K ∧ ETA1 == eta1 K ∧ ETA2 == eta2 K ∧ CIPHERTEXT_SIZE ==
+     cpa_ciphertext_size K ∧ ... ∧ is_bounded_polynomial_matrix 3328
+     public_key.A ∧ is_bounded_polynomial_vector 3328
+     public_key.t_as_ntt`. Target post: `(c, K) == Spec.mlkem_encaps ...`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem ind_cca_encapsulate_spec
+    {Vector Hasher : Type} (K CIPHERTEXT_SIZE PUBLIC_KEY_SIZE
+      T_AS_NTT_ENCODED_SIZE C1_SIZE C2_SIZE
+      VECTOR_U_COMPRESSION_FACTOR VECTOR_V_COMPRESSION_FACTOR
+      VECTOR_U_BLOCK_LEN ETA1 ETA1_RANDOMNESS_SIZE
+      ETA2 ETA2_RANDOMNESS_SIZE : Std.Usize)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (HashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher K)
+    (public_key : libcrux_iot_ml_kem.types.MlKemPublicKey PUBLIC_KEY_SIZE)
+    (randomness : Aeneas.Std.Array Std.U8 32#usize)
+    (h_rank : K.val ∈ ({2,3,4} : Finset Nat))
+    -- The bounded-matrix / bounded-vector preconditions on public_key
+    -- internals are upstream-tracked via `is_bounded_polynomial_*`;
+    -- here they show up as Lean-side typeclass / explicit-argument hypotheses
+    -- once the unpacked-public-key Triple lands.
+    :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ind_cca.encapsulate OpsInst HashInst K
+      CIPHERTEXT_SIZE PUBLIC_KEY_SIZE T_AS_NTT_ENCODED_SIZE
+      C1_SIZE C2_SIZE VECTOR_U_COMPRESSION_FACTOR VECTOR_V_COMPRESSION_FACTOR
+      VECTOR_U_BLOCK_LEN ETA1 ETA1_RANDOMNESS_SIZE ETA2 ETA2_RANDOMNESS_SIZE
+      public_key randomness
+    ⦃ ⇓ r => ⌜ r.1.value.val.length = CIPHERTEXT_SIZE.val ∧ r.2.val.length = 32 ⌝ ⦄ := by
+  sorry
+-/
 
-    ## L9.5 `ind_cca.decapsulate` — ML-KEM.Decaps (Algorithm 21).
+/- ## L9.5 `ind_cca.decapsulate` — ML-KEM.Decaps (Algorithm 21).
     Sequence:
     1. Extract (ind_cpa_sk, ek, H(ek), z) from dk
     2. m' = K-PKE.Decrypt(ind_cpa_sk, c) (L8.5)
@@ -1413,6 +2802,39 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
     Depends on L8.2, L8.5, sha3_512_ema_spec, shake256_spec,
     constant_time_ops, `Spec.mlkem_decaps`. Tier:
     needs-new-helper-tier (longest equation chain in the plan).
+    [F*-bound: PANIC-FREE-ONLY in upstream `Ind_cca.fst` (admit at line
+     643, `decapsulate`); FC bound is the Lean campaign's open
+     obligation. Pre cites ind_cca.rs:1038-1056: a long bag of const-
+     generic conformance equations PLUS
+     `is_bounded_polynomial_vector 3328 secret_as_ntt ∧
+     is_bounded_polynomial_matrix 3328 A ∧
+     is_bounded_polynomial_vector 3328 t_as_ntt` on the key_pair internals.
+     Target post: `result == Spec.mlkem_decaps key_pair ciphertext`.]
+-/
+/- Triple skeleton (extraction missing):
+@[spec]
+theorem ind_cca_decapsulate_spec
+    {Vector Hasher : Type} (K CIPHERTEXT_SIZE PRIVATE_KEY_SIZE PUBLIC_KEY_SIZE
+      T_AS_NTT_ENCODED_SIZE CPA_SECRET_KEY_SIZE C1_SIZE C2_SIZE C1_BLOCK_SIZE
+      VECTOR_U_COMPRESSION_FACTOR VECTOR_V_COMPRESSION_FACTOR
+      ETA1 ETA1_RANDOMNESS_SIZE ETA2 ETA2_RANDOMNESS_SIZE
+      IMPLICIT_REJECTION_HASH_INPUT_SIZE : Std.Usize)
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (HashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher K)
+    (key_pair : libcrux_iot_ml_kem.types.MlKemKeyPair PRIVATE_KEY_SIZE PUBLIC_KEY_SIZE)
+    (ciphertext : libcrux_iot_ml_kem.types.MlKemCiphertext CIPHERTEXT_SIZE)
+    (h_rank : K.val ∈ ({2,3,4} : Finset Nat))
+    :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ind_cca.decapsulate OpsInst HashInst K
+      CIPHERTEXT_SIZE PRIVATE_KEY_SIZE PUBLIC_KEY_SIZE T_AS_NTT_ENCODED_SIZE
+      CPA_SECRET_KEY_SIZE C1_SIZE C2_SIZE C1_BLOCK_SIZE
+      VECTOR_U_COMPRESSION_FACTOR VECTOR_V_COMPRESSION_FACTOR
+      ETA1 ETA1_RANDOMNESS_SIZE ETA2 ETA2_RANDOMNESS_SIZE
+      IMPLICIT_REJECTION_HASH_INPUT_SIZE
+      key_pair ciphertext
+    ⦃ ⇓ r => ⌜ r.val.length = 32 ⌝ ⦄ := by
+  sorry
 -/
 
 /-! ============================================================
