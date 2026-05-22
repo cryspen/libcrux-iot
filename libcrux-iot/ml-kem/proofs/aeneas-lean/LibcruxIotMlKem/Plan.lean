@@ -210,6 +210,8 @@
 -- import.
 import Aeneas
 import Hax
+import LibcruxIotMlKem.Util.ModularArith
+import LibcruxIotMlKem.Util.NumericKeystones
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
@@ -248,7 +250,12 @@ open Aeneas Aeneas.Std Std.Do
   named predicate plus a small fact base often suffices and `ring` is
   not on the critical path. Flag this for re-evaluation once L5/L6
   closes — the byte-pack / NTT-domain proofs there might benefit. -/
-def modq_eq (a b : Int) (q : Int) : Prop := (a - b) % q = 0
+-- `def modq_eq` and its standard lemma surface (refl/symm/trans/add/sub/
+-- const_mul/iff_zmod) moved to `LibcruxIotMlKem.Util.ModularArith`.
+-- The qualified name is `libcrux_iot_ml_kem.Util.modq_eq`; references
+-- in the lemma sketches below resolve via the `import` at the top of
+-- this file.
+export libcrux_iot_ml_kem.Util (modq_eq)
 
 /-! ## How to read each lemma sketch
 
@@ -2928,22 +2935,13 @@ theorem ind_cca_decapsulate_spec
     extraction fixes.
 -/
 
-/-- **B.1 `mont_R_inv_q`** — `R · 169 ≡ 1 (mod q)`. -/
-theorem mont_R_inv_q : ((2^16 : Nat) * 169) % 3329 = 1 := by decide
-
-/-- **B.2 `mont_1441_eq_inv128`** — `1441 · 128 ≡ R² (mod q)`. Combined
-    with one Montgomery reduce (× R⁻¹), the net factor on the value
-    after `montgomery_multiply(b, 1441)` is `R / 128 mod q`. This is
-    exactly the "Montgomery-scale-by-1/128" used in `add_error_reduce`,
-    `subtract_reduce`, etc. to absorb the deferred 1/N normalization
-    of inverse NTT. -/
-theorem mont_1441_eq_inv128 : (1441 * 128) % 3329 = (2^16 * 2^16) % 3329 := by decide
-
-/-- **B.3 `mont_2285_eq_R_mod_q`** — `2285 ≡ 2^16 (mod q)`. -/
-theorem mont_2285_eq_R_mod_q : 2285 = (2^16 : Nat) % 3329 := by decide
-
-/-- **B.4 `mont_1353_eq_RR_mod_q`** — `1353 ≡ R² (mod q)`. -/
-theorem mont_1353_eq_RR_mod_q : 1353 = (2^16 * 2^16) % 3329 := by decide
+-- The four typed bridge theorems B.1–B.4 (`mont_R_inv_q`,
+-- `mont_1441_eq_inv128`, `mont_2285_eq_R_mod_q`,
+-- `mont_1353_eq_RR_mod_q`) and the two new keystones
+-- (`mont_qinv_R`, `mont_128_169_512`) live in
+-- `LibcruxIotMlKem.Util.NumericKeystones`. References in the lemma
+-- sketches above (B.1–B.4 by short name) resolve via the `import` at
+-- the top of this file plus the namespace `libcrux_iot_ml_kem.Util`.
 
 /-! ============================================================
     # PROOF ORDER FOR THE VERIFICATION ENGINEER
