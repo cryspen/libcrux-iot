@@ -841,16 +841,7 @@ theorem barrett_reduce_element_spec
      v result * pow2 16 % 3329 = (v fe * v fer) % 3329`. Pre is asymmetric —
      only `fer` is bounded; `fe` can be any `i16`.]
 -/
-/- Triple (extraction exists in Funs.lean but blocked by (a)):
-@[spec]
-theorem montgomery_multiply_fe_by_fer_spec
-    (fe : Std.I16) (fer : Std.I16) (hfer : fer.val.natAbs ≤ 1664) :
-    ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_multiply_fe_by_fer fe fer
-    ⦃ ⇓ r => ⌜ modq_eq (r.val * (2^16 : Int)) (fe.val * fer.val) 3329
-              ∧ r.val.natAbs ≤ 3328 ⌝ ⦄ := by
-  sorry
--/
+-- L0.4 montgomery_multiply_fe_by_fer_spec closed in Equivalence/L0_FieldArith.lean
 
 /-! ============================================================
     # LAYER 1 — `PortableVector` element-wise ops
