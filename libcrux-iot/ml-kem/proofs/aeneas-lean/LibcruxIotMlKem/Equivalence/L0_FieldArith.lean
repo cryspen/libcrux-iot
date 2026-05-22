@@ -16,6 +16,7 @@
 import LibcruxIotMlKem.Plan
 import LibcruxIotMlKem.Extraction.Funs
 import LibcruxIotMlKem.Util.Montgomery
+import Mathlib.Tactic.IntervalCases
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
@@ -106,6 +107,65 @@ private theorem modq_R_to_169
     rw [h_eq]
     exact dvd_sub h_dvd_169 h_dvd_r
   exact Int.emod_eq_zero_of_dvd h_dvd_final
+
+/-! ## L0.1 — `get_n_least_significant_bits_spec`
+
+    Implements the upstream
+    `Vector.Portable.Arithmetic.get_n_least_significant_bits` correctness
+    theorem. See `Plan.lean:734-762`. The impl computes
+    `value & ((1 <<< n) - 1)`; the postcondition asserts the resulting
+    Nat is in `[0, 2^n)` and equals `value.val % 2^n.val`.
+-/
+
+/-- The `do`-block reduces to `Result.ok ⟨value.bv &&& ((1#32 <<< n.val) - 1#32)⟩`
+    under the precondition `n.val ≤ 16` (which implies `n.val < 32`).  -/
+private theorem get_n_least_significant_bits_eq_ok
+    (n : Std.U8) (value : Std.U32) (hn : n.val ≤ 16) :
+    libcrux_iot_ml_kem.vector.portable.arithmetic.get_n_least_significant_bits n value
+      = .ok ⟨value.bv &&& ((1#32 <<< n.val) - 1#32)⟩ := by
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.get_n_least_significant_bits
+  -- n.val < 32 since n.val ≤ 16 < 32.
+  have hn_lt : n.val < Aeneas.Std.UScalarTy.U32.numBits := by
+    have h_red : (Aeneas.Std.UScalarTy.U32.numBits : Nat) = 32 := by decide
+    rw [h_red]; omega
+  -- Unfold the shift-left and the bind.
+  simp only [HShiftLeft.hShiftLeft, Aeneas.Std.UScalar.shiftLeft_UScalar,
+             Aeneas.Std.UScalar.shiftLeft, hn_lt, reduceIte,
+             core_models.num.U32.wrapping_sub,
+             rust_primitives.arithmetic.wrapping_sub_u32,
+             Aeneas.Std.bind_tc_ok]
+  rfl
+
+@[spec]
+theorem get_n_least_significant_bits_spec
+    (n : Std.U8) (value : Std.U32) (hn : n.val ≤ 16) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.get_n_least_significant_bits n value
+    ⦃ ⇓ r => ⌜ r.val < 2 ^ n.val ∧ r.val = value.val % (2 ^ n.val) ⌝ ⦄ := by
+  apply triple_of_ok_l0 (v := ⟨value.bv &&& ((1#32 <<< n.val) - 1#32)⟩)
+    (get_n_least_significant_bits_eq_ok n value hn)
+  -- Two conjuncts: bound and modulo identity. Reduce both to Nat-level claims
+  -- about `(value.bv &&& (1 <<< n - 1)).toNat`.
+  have hn_lt : n.val < 32 := by omega
+  have h_pow_pos : 0 < (2 : Nat) ^ n.val := Nat.two_pow_pos _
+  -- The mask `(1#32 <<< n.val) - 1#32 : BitVec 32` has `.toNat = 2^n.val - 1`.
+  -- Discharge by case analysis on n.val ∈ {0, …, 16} — each case is a concrete BV decide.
+  have h_mask_toNat : ((1#32 <<< n.val) - 1#32).toNat = 2 ^ n.val - 1 := by
+    interval_cases n.val <;> decide
+  -- r.val = (value.bv &&& mask_bv).toNat = value.val &&& (2^n.val - 1)
+  have h_r_val : (⟨value.bv &&& (1#32 <<< n.val - 1#32)⟩ : Std.U32).val
+                  = value.val &&& (2 ^ n.val - 1) := by
+    show (value.bv &&& (1#32 <<< n.val - 1#32)).toNat = _
+    rw [BitVec.toNat_and, h_mask_toNat]; rfl
+  refine ⟨?_, ?_⟩
+  · -- Bound: r.val < 2^n.val.
+    rw [h_r_val]
+    have h_and_le : value.val &&& (2 ^ n.val - 1) ≤ 2 ^ n.val - 1 := Nat.and_le_right
+    -- `2^n.val ≥ 1`, so `2^n.val - 1 < 2^n.val`, and the `&&&` is ≤ the mask.
+    scalar_tac
+  · -- Mod identity: r.val = value.val % 2^n.val.
+    rw [h_r_val]
+    exact Nat.and_two_pow_sub_one_eq_mod value.val n.val
 
 /-! ## L0.3 — `montgomery_reduce_element_spec`
 
