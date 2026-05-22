@@ -1,6 +1,7 @@
--- Phase 0(b) note: `import LibcruxIotMlKem.Extraction.Funs` currently
--- fails — Funs.lean references libcrux_secrets / core_models shims
--- that the pinned rust-core-models rev doesn't export. Re-add the
--- direct Funs import after Phase 0(b) lands (a hax re-extraction or
--- a Missing.lean stub set).
+-- Phase 0(b) (2026-05-22): Funs.lean is now in the import chain via
+-- `LibcruxIotMlKem.Extraction.Missing` (see Missing.lean's header for
+-- the five identifiers it stubs). The next plumbing step is Phase
+-- 0(c) — author `hax_aeneas.py` so re-extraction preserves the
+-- import patch (search marker: PHASE0B-MISSING-PATCH).
 import LibcruxIotMlKem.Plan
+import LibcruxIotMlKem.Extraction.Funs

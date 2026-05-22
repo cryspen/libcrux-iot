@@ -2,6 +2,15 @@
 -- [libcrux_iot_ml_kem]
 import Aeneas
 import CoreModels
+-- BEGIN PHASE0B-MISSING-PATCH (Phase 0(b), hand-applied 2026-05-22)
+-- Pulls in `LibcruxIotMlKem/Extraction/Missing.lean` which stubs the
+-- five symbols left dangling by the current hax/aeneas pin (I16↔I32,
+-- U32→I32 casts, libcrux_secrets classify, core_models I16
+-- wrapping_neg). When hax_aeneas.py is authored in Phase 0(c) it
+-- should re-insert this single import after any `import CoreModels`
+-- line on re-extraction. Search marker: PHASE0B-MISSING-PATCH.
+import LibcruxIotMlKem.Extraction.Missing
+-- END PHASE0B-MISSING-PATCH
 open core_models
 open Aeneas Aeneas.Std Result ControlFlow Error
 set_option linter.dupNamespace false
