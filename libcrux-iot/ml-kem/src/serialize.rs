@@ -337,3 +337,93 @@ pub(super) fn deserialize_then_decompress_ring_element_v<
         _ => unreachable!(),
     }
 }
+
+#[cfg(test)]
+mod cross_spec {
+    //! Sub-API cross-spec: impl serialize/deserialize against spec
+    //! `byte_encode` / `byte_decode` (FIPS-203 Algorithms 4 & 5) and
+    //! `compress_then_serialize_message` / `deserialize_then_decompress_message`
+    //! (FIPS-203 Algorithms 4 with d=1 + compress/decompress).
+    use super::*;
+    use crate::polynomial::cross_spec::{lift_poly, unlift_poly};
+    use crate::vector::portable::PortableVector;
+    use libcrux_secrets::{Classify, Declassify, DeclassifyRef as _};
+    use hacspec_ml_kem::parameters::{self as spec, FieldElement, Polynomial};
+
+    /// impl `serialize_uncompressed_ring_element` (=ByteEncode₁₂) matches
+    /// spec `byte_encode::<384, 3072>(_, 12)` on the same input.
+    #[test]
+    fn serialize_12_matches_spec() {
+        let spec_poly: Polynomial =
+            spec::createi(|i| FieldElement::new((i as u16 * 13) % spec::FIELD_MODULUS));
+
+        // Spec
+        let spec_encoded =
+            hacspec_ml_kem::serialize::byte_encode::<384, 3072>(spec_poly, 12);
+
+        // Impl
+        let impl_poly = unlift_poly(&spec_poly);
+        let mut impl_encoded = [0u8.classify(); BYTES_PER_RING_ELEMENT];
+        let mut scratch = PortableVector::ZERO();
+        serialize_uncompressed_ring_element::<PortableVector>(
+            &impl_poly,
+            &mut scratch,
+            &mut impl_encoded,
+        );
+        let mut impl_encoded_pub = [0u8; BYTES_PER_RING_ELEMENT];
+        for i in 0..BYTES_PER_RING_ELEMENT {
+            impl_encoded_pub[i] = impl_encoded[i].declassify();
+        }
+
+        assert_eq!(&impl_encoded_pub[..], &spec_encoded[..]);
+    }
+
+    /// impl `deserialize_to_reduced_ring_element` (=ByteDecode₁₂)
+    /// matches spec `byte_decode::<384, 3072>(_, 12)` on identical bytes.
+    #[test]
+    fn deserialize_12_matches_spec() {
+        // Build canonical bytes by going through the spec first.
+        let spec_poly: Polynomial =
+            spec::createi(|i| FieldElement::new((i as u16 * 17 + 3) % spec::FIELD_MODULUS));
+        let bytes = hacspec_ml_kem::serialize::byte_encode::<384, 3072>(spec_poly, 12);
+
+        let spec_decoded =
+            hacspec_ml_kem::serialize::byte_decode::<384, 3072>(&bytes, 12);
+
+        let mut impl_decoded = PolynomialRingElement::<PortableVector>::ZERO();
+        let bytes_classified: [U8; BYTES_PER_RING_ELEMENT] = bytes.classify();
+        deserialize_to_reduced_ring_element::<PortableVector>(
+            &bytes_classified[..],
+            &mut impl_decoded,
+        );
+
+        assert_eq!(lift_poly(&impl_decoded), spec_decoded);
+    }
+
+    /// Roundtrip the message-compression-and-serialize path through impl,
+    /// and verify the resulting bytes equal a spec roundtrip
+    /// (`compress_then_serialize_message ∘ deserialize_then_decompress_message`).
+    /// Anchors FIPS-203 §6.2 message compression.
+    #[test]
+    fn message_serialize_roundtrip_matches_spec() {
+        let msg_bytes: [u8; 32] = [0xABu8; 32];
+
+        // Spec roundtrip.
+        let spec_round = hacspec_ml_kem::serialize::compress_then_serialize_message(
+            hacspec_ml_kem::serialize::deserialize_then_decompress_message(&msg_bytes),
+        );
+        assert_eq!(msg_bytes, spec_round, "spec message roundtrip must be id");
+
+        // Impl roundtrip.
+        let msg_classified: [U8; 32] = msg_bytes.classify();
+        let mut impl_poly = PolynomialRingElement::<PortableVector>::ZERO();
+        deserialize_then_decompress_message::<PortableVector>(&msg_classified, &mut impl_poly);
+
+        let mut impl_out = [0u8.classify(); 32];
+        let mut scratch = PortableVector::ZERO();
+        compress_then_serialize_message::<PortableVector>(&impl_poly, &mut impl_out, &mut scratch);
+
+        let impl_out_decl = impl_out.declassify_ref().to_vec();
+        assert_eq!(&impl_out_decl[..], &msg_bytes[..]);
+    }
+}

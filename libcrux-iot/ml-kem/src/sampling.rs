@@ -265,3 +265,57 @@ pub(super) fn sample_from_binomial_distribution<const ETA: usize, Vector: Operat
         _ => unreachable!(),
     };
 }
+
+#[cfg(test)]
+mod cross_spec {
+    //! Sub-API cross-spec: impl `sample_from_binomial_distribution` against
+    //! spec `sample_poly_cbd` on the same raw byte input. Anchors FIPS-203
+    //! Algorithm 7 (SamplePolyCBD).
+    use super::*;
+    use crate::vector::portable::PortableVector;
+    use libcrux_secrets::{ClassifyRef, Declassify};
+
+    fn impl_cbd<const ETA: usize, const ETA64: usize>(bytes: &[u8; ETA64]) -> [i16; 256] {
+        let mut out = [0i16.classify(); 256];
+        sample_from_binomial_distribution::<ETA, PortableVector>(bytes.classify_ref(), &mut out);
+        let mut out_pub = [0i16; 256];
+        for i in 0..256 {
+            out_pub[i] = out[i].declassify();
+        }
+        out_pub
+    }
+
+    /// CBD eta=2: impl matches spec on a deterministic byte pattern.
+    #[test]
+    fn cbd_eta2_matches_spec() {
+        let bytes = [0x55u8; 128];
+        let impl_out = impl_cbd::<2, 128>(&bytes);
+        let spec_out = hacspec_ml_kem::sampling::sample_poly_cbd::<128, 1024>(2, &bytes);
+        for i in 0..256 {
+            // The impl returns a centered representative in {-2,-1,0,1,2}.
+            // The spec returns the same value mod q in {0,1,2, q-2,q-1}.
+            let impl_v = impl_out[i].rem_euclid(3329) as u16;
+            assert_eq!(
+                impl_v, spec_out[i].val,
+                "CBD eta=2 mismatch at index {}: impl={} spec={}",
+                i, impl_v, spec_out[i].val
+            );
+        }
+    }
+
+    /// CBD eta=3: impl matches spec on a deterministic byte pattern.
+    #[test]
+    fn cbd_eta3_matches_spec() {
+        let bytes = [0xAAu8; 192];
+        let impl_out = impl_cbd::<3, 192>(&bytes);
+        let spec_out = hacspec_ml_kem::sampling::sample_poly_cbd::<192, 1536>(3, &bytes);
+        for i in 0..256 {
+            let impl_v = impl_out[i].rem_euclid(3329) as u16;
+            assert_eq!(
+                impl_v, spec_out[i].val,
+                "CBD eta=3 mismatch at index {}: impl={} spec={}",
+                i, impl_v, spec_out[i].val
+            );
+        }
+    }
+}

@@ -163,3 +163,52 @@ pub(crate) fn ntt_vector_u<const VECTOR_U_COMPRESSION_FACTOR: usize, Vector: Ope
 
     re.poly_barrett_reduce()
 }
+
+#[cfg(test)]
+mod cross_spec {
+    //! Impl-side NTT primitive sanity checks against the `hacspec_ml_kem`
+    //! spec. NTT cross-spec proper (impl-vs-spec NTT byte equality after
+    //! Montgomery cancellation) is tied to the spec's exact normalization
+    //! convention and is exercised end-to-end by `tests/cross_spec.rs`'s
+    //! `full_roundtrip_matches_spec`. Here we keep narrower invariants:
+    //!
+    //! - the impl's NTT followed by inverse-NTT (+ Montgomery scale) is
+    //!   the identity, matching the spec's NTT/iNTT identity;
+    //! - on the all-zero polynomial, impl NTT yields the zero polynomial.
+    //!
+    //! Anchored to FIPS-203 Algorithm 9 (NTT) and Algorithm 10 (iNTT).
+    use super::*;
+    use crate::polynomial::cross_spec::{lift_poly, unlift_poly};
+    use crate::vector::portable::PortableVector;
+    use crate::vector::Operations;
+    use hacspec_ml_kem::parameters::{self as spec, FieldElement, Polynomial};
+
+    /// Impl NTT of the zero polynomial is the zero polynomial.
+    /// (Spec analog of `ntt_zero_is_zero`.)
+    #[test]
+    fn impl_ntt_zero_is_zero() {
+        let zero: Polynomial = spec::createi(|_| FieldElement::new(0));
+        let mut impl_poly = unlift_poly(&zero);
+        let mut scratch = PortableVector::ZERO();
+        ntt_binomially_sampled_ring_element::<PortableVector>(&mut impl_poly, &mut scratch);
+        for c in lift_poly(&impl_poly).iter() {
+            assert_eq!(c.val, 0);
+        }
+    }
+
+    /// Spec NTT then iNTT is the identity. This is a pure-spec invariant
+    /// that the impl is morally aligned with, but the impl carries a
+    /// Montgomery scale factor through `ntt_vector_u` / `invert_ntt_montgomery`
+    /// that requires variant-specific cancellation (e.g., the multiplier
+    /// in `subtract_reduce`) which lives outside the per-primitive surface.
+    /// Top-level cross-spec coverage is in `tests/cross_spec.rs`.
+    #[test]
+    fn spec_ntt_inverse_is_identity() {
+        let spec_poly: Polynomial =
+            spec::createi(|i| FieldElement::new((i as u16 * 13 + 7) % spec::FIELD_MODULUS));
+        let spec_round = hacspec_ml_kem::invert_ntt::ntt_inverse(
+            hacspec_ml_kem::ntt::vector_ntt([spec_poly])[0],
+        );
+        assert_eq!(spec_round, spec_poly);
+    }
+}

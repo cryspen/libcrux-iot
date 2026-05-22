@@ -99,14 +99,14 @@ mod ind_cca;
 mod ind_cpa;
 mod invert_ntt;
 mod matrix;
-mod ntt;
-mod polynomial;
-mod sampling;
-mod serialize;
+pub(crate) mod ntt;
+pub(crate) mod polynomial;
+pub(crate) mod sampling;
+pub(crate) mod serialize;
 mod types;
 mod utils;
 mod variant;
-mod vector;
+pub(crate) mod vector;
 
 #[cfg(feature = "pqcp")]
 pub(crate) mod pqcp;

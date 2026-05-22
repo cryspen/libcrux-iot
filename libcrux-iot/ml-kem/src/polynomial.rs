@@ -173,3 +173,89 @@ impl<Vector: Operations> PolynomialRingElement<Vector> {
         }
     }
 }
+
+#[cfg(test)]
+pub(crate) mod cross_spec {
+    //! Shared lift / unlift helpers between the impl's vector-based
+    //! `PolynomialRingElement<Vector>` and the spec's pure-functional
+    //! `hacspec_ml_kem::parameters::Polynomial = [FieldElement; 256]`.
+    //!
+    //! Used by the inline `cross_spec` modules in `ntt.rs`, `serialize.rs`,
+    //! `sampling.rs`, and `vector.rs` to compare against `hacspec_ml_kem`.
+
+    use super::*;
+    use crate::vector::portable::PortableVector;
+    use hacspec_ml_kem::parameters::{self as spec, FieldElement, Polynomial};
+    use libcrux_secrets::{Classify, Declassify};
+
+    /// Lift an impl PolynomialRingElement to a spec Polynomial.
+    ///
+    /// Each i16 coefficient c is mapped to `FieldElement::new(c.rem_euclid(3329))`.
+    /// Valid for Barrett-reduced or time-domain polynomials.
+    pub(crate) fn lift_poly(p: &PolynomialRingElement<PortableVector>) -> Polynomial {
+        core::array::from_fn(|i| {
+            let c = p.coefficients[i / 16].elements[i % 16].declassify() as i32;
+            FieldElement::new(c.rem_euclid(3329) as u16)
+        })
+    }
+
+    /// Build an impl PolynomialRingElement from a spec Polynomial.
+    pub(crate) fn unlift_poly(p: &Polynomial) -> PolynomialRingElement<PortableVector> {
+        let mut result = PolynomialRingElement::<PortableVector>::ZERO();
+        for i in 0..16 {
+            for j in 0..16 {
+                result.coefficients[i].elements[j] = (p[i * 16 + j].val as i16).classify();
+            }
+        }
+        result
+    }
+
+    /// Sanity check: unlift then lift is the identity on canonical spec polys.
+    #[test]
+    fn lift_unlift_roundtrip() {
+        let spec_poly: Polynomial =
+            spec::createi(|i| FieldElement::new((i as u16 * 13 + 7) % spec::FIELD_MODULUS));
+        let impl_poly = unlift_poly(&spec_poly);
+        let recovered = lift_poly(&impl_poly);
+        assert_eq!(spec_poly, recovered);
+    }
+
+    /// Lift of the zero poly is the spec zero polynomial.
+    #[test]
+    fn lift_zero_is_zero() {
+        let zero = PolynomialRingElement::<PortableVector>::ZERO();
+        let lifted = lift_poly(&zero);
+        for c in lifted.iter() {
+            assert_eq!(c.val, 0);
+        }
+    }
+
+    /// Spec polynomial addition matches impl `Vector::add` lifted through
+    /// the lift helpers, modulo Barrett reduction.
+    #[test]
+    fn add_matches_spec() {
+        use crate::vector::Operations;
+
+        let spec_a: Polynomial =
+            spec::createi(|i| FieldElement::new((i as u16 * 7) % spec::FIELD_MODULUS));
+        let spec_b: Polynomial =
+            spec::createi(|i| FieldElement::new((i as u16 * 13 + 100) % spec::FIELD_MODULUS));
+
+        // Spec: pure pointwise add mod q.
+        let spec_sum = hacspec_ml_kem::polynomial::add_to_ring_element(&spec_a, &spec_b);
+
+        // Impl: pointwise Vector::add followed by Barrett reduction.
+        let impl_a = unlift_poly(&spec_a);
+        let mut impl_b = unlift_poly(&spec_b);
+        for i in 0..16 {
+            // The impl convention is add into the second argument (mut).
+            // We add `impl_a` into `impl_b` so the sum lives in `impl_b`.
+            let mut a_copy = impl_a.coefficients[i];
+            PortableVector::add(&mut a_copy, &impl_b.coefficients[i]);
+            impl_b.coefficients[i] = a_copy;
+        }
+        impl_b.poly_barrett_reduce();
+
+        assert_eq!(lift_poly(&impl_b), spec_sum);
+    }
+}
