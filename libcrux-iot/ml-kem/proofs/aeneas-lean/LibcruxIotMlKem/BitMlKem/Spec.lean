@@ -72,6 +72,7 @@ import LibcruxIotMlKem.Util.NumericKeystones
 import LibcruxIotMlKem.Util.ModularArith
 import LibcruxIotMlKem.Util.Montgomery
 import LibcruxIotMlKem.Extraction.Funs
+import HacspecMlKem.Extraction.Funs
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Tactic.Ring
 
@@ -114,6 +115,44 @@ local instance instInhabitedPolynomialRingElement_bitMlKem
     bridges) is deferred to M.4 — see the "DEVIATION FROM ARCH DOC
     §A.2" note in the file header. -/
 abbrev MontPoly : Type := Vector (ZMod 3329) 256
+
+/-! ## §B.5 — `SpecPoly` + lane coercions (landed after Phase-0
+    `HacspecSha3.Common` factor; arch doc §A.2 design). -/
+
+/-- The hacspec interface type: a 256-coefficient vector of
+    `parameters.FieldElement` (which wraps a `Std.U16` carrying a
+    canonical-form residue mod q). M.4 AlgEquiv lemmas bridge between
+    `bit_<op>` (on `MontPoly`) and `Spec.<op>` (on `SpecPoly`). -/
+abbrev SpecPoly : Type :=
+  Vector hacspec_ml_kem.parameters.FieldElement 256
+
+/-- `parameters.FieldElement → ZMod 3329` lane coercion. -/
+def zmodOfFE (fe : hacspec_ml_kem.parameters.FieldElement) : ZMod 3329 :=
+  (fe.val.val : ZMod 3329)
+
+/-- `ZMod 3329 → parameters.FieldElement` lane coercion. Takes
+    `z.val : Fin 3329 ⊂ Fin 65536`, lifts to a `Std.U16`, and wraps. -/
+def feOfZMod (z : ZMod 3329) : hacspec_ml_kem.parameters.FieldElement :=
+  { val := ⟨BitVec.ofNat 16 z.val⟩ }
+
+/-- Round-trip identity: lifting `z : ZMod 3329` to a FieldElement and
+    back yields `z`. Bridges M.4's "M.1 def equals hacspec spec value"
+    statements through the FE lift. -/
+theorem zmodOfFE_feOfZMod (z : ZMod 3329) : zmodOfFE (feOfZMod z) = z := by
+  unfold zmodOfFE feOfZMod
+  -- z.val < 3329 ≤ 65535, so BitVec.ofNat 16 z.val .toNat = z.val.
+  have h_lt : z.val < 65536 :=
+    Nat.lt_of_lt_of_le (ZMod.val_lt z) (by decide)
+  have h_unfold : (BitVec.ofNat 16 z.val).toNat = z.val := by
+    simp [BitVec.toNat_ofNat, Nat.mod_eq_of_lt h_lt]
+  change ((BitVec.ofNat 16 z.val).toNat : ZMod 3329) = z
+  rw [h_unfold]; exact ZMod.natCast_zmod_val z
+
+/-- `MontPoly → SpecPoly` via per-lane `feOfZMod`. -/
+def MontPoly.toSpecPoly (m : MontPoly) : SpecPoly := m.map feOfZMod
+
+/-- `SpecPoly → MontPoly` via per-lane `zmodOfFE`. -/
+def SpecPoly.toMontPoly (s : SpecPoly) : MontPoly := s.map zmodOfFE
 
 /-! ## §B.4 (part) Lane-level lifts from `Std.I16` (impl side) -/
 
