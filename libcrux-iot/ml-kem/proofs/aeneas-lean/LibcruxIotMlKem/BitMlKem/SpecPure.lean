@@ -121,40 +121,66 @@ noncomputable def polynomial.subtract_reduce_pure
 
 /-! ## Side lemmas — panic-freedom (Phase 1.1 of FC campaign).
 
-    Partial closure 2026-05-23: `add_eq_ok` and `mul_eq_ok` are
-    UNCONDITIONALLY true because U32 widening prevents overflow
-    in both cases (`a.val + b.val ≤ 2·(2^16 - 1) < 2^17 < 2^32`,
+    `add_eq_ok` and `mul_eq_ok` are UNCONDITIONALLY true because U32
+    widening prevents overflow in both cases (`a.val + b.val < 2^17`,
     `a.val * b.val ≤ (2^16 - 1)² < 2^32`).
 
-    `sub_eq_ok` and `neg_eq_ok` are GENUINELY FALSE in the current
-    extraction — the Rust source carries `#[refine(val < FIELD_MODULUS)]`
-    on `parameters.FieldElement::new` (see
-    `specs/ml-kem/src/parameters.rs:319`), but the Aeneas extraction
-    drops the refinement, leaving the Lean `parameters.FieldElement`
-    as `{ val : Std.U16 }` with any U16 admissible.
+    `sub_eq_ok` and `neg_eq_ok` require a CANONICITY PRECONDITION
+    `Canonical a := a.val.val < q`. The Aeneas extraction dropped the
+    Rust source's `#[refine(val < FIELD_MODULUS)]` refinement on
+    `parameters.FieldElement::new` (see `specs/ml-kem/src/parameters.rs:319`),
+    leaving any `U16` admissible. Counterexamples for arbitrary U16
+    (verified via `#eval`):
+    * `sub ⟨0#u16⟩ ⟨65535#u16⟩ = .fail` (U32 underflow after `+ q`).
+    * `neg ⟨65535#u16⟩ = .fail` (U16 underflow `q - val`, no widening).
 
-    Counterexamples (verified via `#eval`):
-    * `parameters.FieldElement.sub ⟨0#u16⟩ ⟨65535#u16⟩ = .fail` —
-      the impl computes `i = 0`, `i1 = 3329`, `i2 = 3329`, then
-      `i2 - 65535` panics in U32.
-    * `parameters.FieldElement.neg ⟨65535#u16⟩ = .fail` —
-      the impl computes `3329 - 65535` directly in U16 (no widening),
-      panicking immediately when `self.val > 3329`.
+    Audit (2026-05-23) of the 3 call-sites of `sub`/`neg` in the
+    hacspec extraction confirms ALL callers feed canonical inputs:
+    * `ntt.butterfly` and `invert_ntt.inv_butterfly` — inputs `a, b`
+      assumed canonical by caller; `mul`'s output is always canonical
+      by construction.
+    * `ntt.base_case_multiply_n` — `neg fe` where `fe` is from the
+      compile-time zetas table (all canonical).
 
-    STOP triggered per campaign discipline D.9 — awaiting decision:
-    (a) add `(ha : a.val.val < q) (hb : b.val.val < q)` precondition
-        to `sub_eq_ok` / `neg_eq_ok`, OR
-    (b) strengthen `parameters.FieldElement` to carry the refinement
-        (requires spec-side edit), OR
-    (c) establish global canonicity invariant propagated through
-        bit-side proofs.
+    Canonicity is also the natural invariant of the bit-side lifts:
+    `feOfZMod : ZMod 3329 → FieldElement` produces canonical FEs by
+    construction (the lift packs `z.val < 3329 < 2^16` into a U16).
 
-    Option (a) is the smallest delta and matches the Rust contract;
-    pending user decision. -/
+    Canonicity preservation lemmas (`Canonical_add_pure`,
+    `Canonical_mul_pure`, etc.) are deferred to Phase 1.2 when the
+    poly-wrapper side lemmas need them; the U16-cast simp residue
+    requires non-trivial unfolding that's better tackled with
+    downstream context. -/
+
+/-- A `parameters.FieldElement` is canonical iff its underlying U16
+    holds a value strictly below the field modulus `q = 3329`. This
+    is the invariant the Rust source maintains via
+    `#[refine(val < FIELD_MODULUS)]` on `FieldElement::new` — the
+    Aeneas extraction drops the refinement, so we carry canonicity
+    as an explicit predicate.
+
+    The bit-side lift `feOfZMod` produces canonical FEs by
+    construction; downstream wrappers (`butterfly`, etc.) take
+    canonical inputs and produce canonical outputs. -/
+def Canonical (fe : parameters.FieldElement) : Prop :=
+  fe.val.val < parameters.FIELD_MODULUS.val
 
 private theorem uscalar_rem_ok_U32 (z m : Std.U32) (hm : m.val ≠ 0) :
     ∃ w : Std.U32, (z % m : Result Std.U32) = .ok w ∧ w.val = z.val % m.val := by
   have heq : (z % m : Result Std.U32) = Std.UScalar.rem z m := rfl
+  unfold Std.UScalar.rem at heq
+  simp [hm] at heq
+  refine ⟨_, heq, ?_⟩
+  show (BitVec.umod z.bv m.bv).toNat = z.val % m.val
+  unfold BitVec.umod
+  simp only [BitVec.toNat_ofNatLT]
+  rfl
+
+/-- U16 variant of `uscalar_rem_ok_U32` — used by `neg_eq_ok` whose
+    `% q` step is at U16 width (no widening). -/
+private theorem uscalar_rem_ok_U16 (z m : Std.U16) (hm : m.val ≠ 0) :
+    ∃ w : Std.U16, (z % m : Result Std.U16) = .ok w ∧ w.val = z.val % m.val := by
+  have heq : (z % m : Result Std.U16) = Std.UScalar.rem z m := rfl
   unfold Std.UScalar.rem at heq
   simp [hm] at heq
   refine ⟨_, heq, ?_⟩
@@ -242,9 +268,95 @@ theorem FieldElement.mul_eq_ok (a b : parameters.FieldElement) :
     omega
   | div => rw [heqmul] at hxy; rw [hxy] at hae; exact hae.elim
 
--- `FieldElement.sub_eq_ok` and `FieldElement.neg_eq_ok` are BLOCKED;
--- see `STOP` block above. They are deliberately omitted (not added
--- as `sorry`) to keep the file's axiom report clean. Resume after
--- user decides between options (a) / (b) / (c).
+/-- `parameters.FieldElement.sub` is panic-free for CANONICAL inputs.
+    The U32 sum `a.val + q` reaches `q + (q-1) < 2·q` without overflow
+    (q = 3329), and the subsequent `% q` is well-defined since q ≠ 0.
+
+    For non-canonical inputs the impl can panic — see the doc block
+    above and `parameters.FieldElement.sub ⟨0⟩ ⟨65535⟩` counterexample. -/
+theorem FieldElement.sub_eq_ok (a b : parameters.FieldElement)
+    (ha : Canonical a) (hb : Canonical b) :
+    parameters.FieldElement.sub a b = .ok (FieldElement.sub_pure a b) := by
+  unfold Canonical at ha hb
+  unfold parameters.FIELD_MODULUS at ha hb
+  simp at ha hb
+  unfold FieldElement.sub_pure
+  suffices h : ∃ r, parameters.FieldElement.sub a b = .ok r by
+    obtain ⟨r, hr⟩ := h; rw [hr]
+  unfold parameters.FieldElement.sub
+  simp only [lift, bind_tc_ok]
+  have hA := a.val.hBounds; have hB := b.val.hBounds
+  simp [Std.UScalarTy.numBits] at hA hB
+  set x : Std.U32 := Std.UScalar.cast .U32 a.val
+  set y : Std.U32 := Std.UScalar.cast .U32 b.val
+  set q : Std.U32 := Std.UScalar.cast .U32 parameters.FIELD_MODULUS
+  have hxval : x.val = a.val.val := Std.U16.cast_U32_val_eq a.val
+  have hyval : y.val = b.val.val := Std.U16.cast_U32_val_eq b.val
+  have hqval : q.val = 3329 := by
+    show (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val = 3329
+    unfold parameters.FIELD_MODULUS; simp
+  have hae := Std.UScalar.add_equiv x q
+  cases hxq : (x + q : Result Std.U32) with
+  | ok s =>
+    rw [hxq] at hae; simp at hae
+    obtain ⟨_, hsval, _⟩ := hae
+    simp only [bind_tc_ok]
+    have hae2 := Std.UScalar.sub_equiv s y
+    cases hsy : (s - y : Result Std.U32) with
+    | ok u =>
+      rw [hsy] at hae2; simp at hae2
+      simp only [bind_tc_ok]
+      have hq_ne : q.val ≠ 0 := by rw [hqval]; decide
+      obtain ⟨w, hw_eq, _⟩ := uscalar_rem_ok_U32 u q hq_ne
+      rw [hw_eq]; simp only [bind_tc_ok]
+      exact ⟨_, rfl⟩
+    | fail e =>
+      rw [hsy] at hae2; simp [Std.UScalar.inBounds] at hae2
+      rw [hsval, hxval, hqval, hyval] at hae2
+      omega
+    | div => rw [hsy] at hae2; exact hae2.elim
+  | fail e =>
+    rw [hxq] at hae; simp [Std.UScalar.inBounds] at hae
+    rw [hxval, hqval] at hae
+    omega
+  | div => rw [hxq] at hae; exact hae.elim
+
+/-- `parameters.FieldElement.neg` is panic-free for CANONICAL input.
+    The impl computes `q - self.val` in U16 (NO widening), which only
+    avoids underflow when `self.val ≤ q`. The subsequent `% q` is
+    well-defined since q ≠ 0.
+
+    For non-canonical inputs the impl can panic — see the doc block
+    above and `parameters.FieldElement.neg ⟨65535⟩` counterexample. -/
+theorem FieldElement.neg_eq_ok (a : parameters.FieldElement)
+    (ha : Canonical a) :
+    parameters.FieldElement.neg a = .ok (FieldElement.neg_pure a) := by
+  unfold Canonical at ha
+  unfold parameters.FIELD_MODULUS at ha
+  simp at ha
+  unfold FieldElement.neg_pure
+  suffices h : ∃ r, parameters.FieldElement.neg a = .ok r by
+    obtain ⟨r, hr⟩ := h; rw [hr]
+  unfold parameters.FieldElement.neg
+  have hA := a.val.hBounds
+  simp [Std.UScalarTy.numBits] at hA
+  have hqval : (parameters.FIELD_MODULUS : Std.U16).val = 3329 := by
+    unfold parameters.FIELD_MODULUS; simp
+  have hae := Std.UScalar.sub_equiv (parameters.FIELD_MODULUS : Std.U16) a.val
+  cases hqa : ((parameters.FIELD_MODULUS : Std.U16) - a.val : Result Std.U16) with
+  | ok i =>
+    rw [hqa] at hae; simp at hae
+    obtain ⟨_, _, _⟩ := hae
+    simp only [bind_tc_ok]
+    have hq_ne : (parameters.FIELD_MODULUS : Std.U16).val ≠ 0 := by
+      rw [hqval]; decide
+    obtain ⟨w, hw_eq, _⟩ := uscalar_rem_ok_U16 i parameters.FIELD_MODULUS hq_ne
+    rw [hw_eq]; simp only [bind_tc_ok]
+    exact ⟨_, rfl⟩
+  | fail e =>
+    rw [hqa] at hae; simp [Std.UScalar.inBounds] at hae
+    rw [hqval] at hae
+    omega
+  | div => rw [hqa] at hae; exact hae.elim
 
 end libcrux_iot_ml_kem.BitMlKem.SpecPure
