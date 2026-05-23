@@ -258,13 +258,21 @@ noncomputable def Spec.mont_reduce_pure (x : hacspec_ml_kem.parameters.FieldElem
     hacspec_ml_kem.parameters.FieldElement :=
   feOfZMod (zmodOfFE x * 169 * 169)
 
-/-- Pure projection of Montgomery `fe · fer / R`: given two FEs,
-    one in plain domain (`fe`) and one in Mont domain (`fer = c · R`),
-    returns `fe · c`. Composes `FieldElement.mul_pure` after one
-    `mont_reduce`. -/
+/-- Pure projection of Montgomery `fe · fer / R`: given two FEs, returns
+    `fe · fer · R⁻¹` in canonical domain (i.e., `zmodOfFE fe · zmodOfFE fer · 169`
+    in ZMod 3329). The factor `169 = R⁻¹ mod q` comes from the impl's
+    Montgomery reduction step (the L0.3 calculation gave 169² because the
+    INPUT was plain-via-`lift_fe_int`, whereas here `fer` is already
+    interpreted in Mont domain through `lift_fe_mont`, so only ONE R⁻¹
+    factor is needed). The math intent of the impl: given fe (plain, math
+    value = fe) and fer (Mont, math value = fer · R⁻¹), output Mont-encoded
+    fe · (fer · R⁻¹) = fe · fer · R⁻¹ in Mont. The Mont encoding is then
+    stripped by `lift_fe_mont`, giving the canonical math value
+    fe · fer · R⁻¹. -/
 noncomputable def Spec.montgomery_multiply_fe_by_fer_pure
     (fe fer : hacspec_ml_kem.parameters.FieldElement) :
-    hacspec_ml_kem.parameters.FieldElement := sorry
+    hacspec_ml_kem.parameters.FieldElement :=
+  feOfZMod (zmodOfFE fe * zmodOfFE fer * 169)
 
 /-- Pure projection of `get_n_least_significant_bits` — pure modular
     truncation on `Std.U32`. -/
@@ -591,9 +599,34 @@ theorem montgomery_reduce_element_fc
   push_cast at h_zmod
   rw [h_zmod]
 
+/-! ### L0.4 — `montgomery_multiply_fe_by_fer`.
+
+    Proof sketch:
+    1. Helper `mmfbf_pure_lift_fe_lift_fe_mont` unfolds
+       `Spec.montgomery_multiply_fe_by_fer_pure (lift_fe fe) (lift_fe_mont fer)`
+       to `feOfZMod ((fe.val : ZMod 3329) * ((fer.val : ZMod 3329) * 169) * 169)`
+       via `zmodOfFE_feOfZMod` (applied twice).
+    2. Legacy `Equivalence.montgomery_multiply_fe_by_fer_spec` gives
+       `r.val.natAbs ≤ 3328 ∧ modq_eq r.val (fe.val * fer.val * 169) 3329`.
+       Note the legacy bound is TIGHTER than our locked post (3328 vs
+       3328 + 1665), so the bound conjunct closes by transitivity:
+       `exact le_trans h_bnd_tight (by decide)`.
+    3. Translate `modq_eq` to a ZMod equation via `modq_eq_cast_zmod`.
+    4. Unfold `lift_fe_mont`/`i16_to_spec_fe_mont`, `congr 1` reduces to a
+       ZMod equation closed by the modq cast + `ring`. -/
+
+/-- Helper: `Spec.montgomery_multiply_fe_by_fer_pure` composed with the
+    lifts simplifies via `zmodOfFE_feOfZMod`. -/
+private theorem mmfbf_pure_lift_fe_lift_fe_mont (fe fer : Std.I16) :
+    Spec.montgomery_multiply_fe_by_fer_pure (lift_fe fe) (lift_fe_mont fer)
+      = feOfZMod ((fe.val : ZMod 3329) * ((fer.val : ZMod 3329) * 169) * 169) := by
+  unfold Spec.montgomery_multiply_fe_by_fer_pure lift_fe lift_fe_mont
+    i16_to_spec_fe_plain i16_to_spec_fe_mont
+  rw [zmodOfFE_feOfZMod, zmodOfFE_feOfZMod]
+
 /-- L0.4 — `montgomery_multiply_fe_by_fer`.
-    Spec: `fe · c` (where `fer = c · R`). -/
-@[spec]
+    Spec: `fe · c` (where `fer = c · R`), encoded via `· R⁻¹` in canonical. -/
+@[spec high]
 theorem montgomery_multiply_fe_by_fer_fc
     (fe fer : Std.I16)
     (hfe : fe.val.natAbs ≤ 32767) (hfer : fer.val.natAbs ≤ 1664) :
@@ -603,7 +636,22 @@ theorem montgomery_multiply_fe_by_fer_fc
                 ∧ lift_fe_mont r
                     = Spec.montgomery_multiply_fe_by_fer_pure
                         (lift_fe fe) (lift_fe_mont fer) ⌝ ⦄ := by
-  sorry
+  have h_legacy :=
+    libcrux_iot_ml_kem.Equivalence.montgomery_multiply_fe_by_fer_spec fe fer hfer
+  obtain ⟨r0, h_eq, h_bnd_tight, h_modq⟩ := triple_exists_ok_fc h_legacy
+  apply triple_of_ok_fc (v := r0) h_eq
+  refine ⟨?_, ?_⟩
+  · -- Weaken legacy ≤ 3328 to locked-post ≤ 3328 + 1665.
+    exact le_trans h_bnd_tight (by decide)
+  · rw [mmfbf_pure_lift_fe_lift_fe_mont]
+    unfold lift_fe_mont i16_to_spec_fe_mont
+    congr 1
+    have h_zmod : ((r0.val : Int) : ZMod 3329)
+        = ((fe.val * fer.val * 169 : Int) : ZMod 3329) :=
+      modq_eq_cast_zmod _ _ h_modq
+    push_cast at h_zmod
+    rw [h_zmod]
+    ring
 
 /-! ## §L1 — chunk-level vector ops (10 theorems). -/
 
