@@ -323,4 +323,237 @@ theorem lemma_inv_butterfly_pair_commute
     exact (lemma_add_fe_commute_mont_mod vec_i vec_j result_i hr_i').symm
   · exact lemma_inv_butterfly_fe_commute_mul_diff vec_i vec_j zeta result_j hr_j
 
+/-! ## Block B — chunk-level commutes.
+
+    Port of `Hacspec_ml_kem.Commute.Chunk.fst` lines 671–950. Each
+    Block-B lemma takes the impl post as an explicit per-lane
+    hypothesis `hr : ∀ j : Fin 16, …` (in lieu of the F* `Operations`
+    trait `T.f_repr`/`T.f_*` machinery — see M.1 Spec.lean note I.2)
+    and lifts the corresponding Block-A scalar commute to the
+    `Vector.ofFn (n := 16) (fun j => …)` shape used by M.4's poly-level
+    aggregation.
+
+    The shape is uniformly:
+        Vector.ofFn (lift ∘ getLane r) = Vector.ofFn (combine ∘ lift ∘ getLane lhs ∘ …)
+    closed by `Vector.ext` + `Vector.getElem_ofFn` + one Block-A apply.
+
+    ### Deviation from dispatch brief — `@[scoped grind]` omitted.
+
+    The Block-A scalar lemmas accept `@[scoped grind]` because
+    `grind` can pattern on `i16_to_spec_fe_X _` directly in the
+    conclusion. The Block-B conclusions wrap the lifts inside a
+    `Vector.ofFn (n := 16) (fun j => i16_to_spec_fe_X ...)`, which puts
+    the only candidate pattern under a binder; `grind` rejects this
+    with "failed to find an usable pattern using different modifiers"
+    regardless of `=`/`←`/`→` modifier or `grind_pattern` (the binders
+    leave `lhs`/`rhs`/`r` un-instantiable). Block-B lemmas are
+    therefore consumed explicitly by Block-C / M.4 poly aggregation
+    via `exact`/`apply` rather than via `grind`, which matches their
+    actual call pattern (one-shot aggregation per op, not a recurring
+    `grind`-set obligation). The Block-A K.1 discipline is preserved
+    for the scalar lemmas that drive Triple-body proofs.
+
+    B.11–B.14 (compress/decompress chunks) deferred per arch plan §C.2
+    / Open Question I.4: see comment block at end of file.
+-/
+
+/-! ### B.1 / B.2 — pointwise addition (plain and Mont). -/
+
+/-- B.1 `lemma_add_chunk_commutes_plain` (F*: Chunk.fst:671). -/
+theorem lemma_add_chunk_commutes_plain
+    (lhs rhs r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ j : Fin 16,
+            (r.elements.val[j.val]!).val =
+            (lhs.elements.val[j.val]!).val + (rhs.elements.val[j.val]!).val) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (lhs.elements.val[j.val]!) +
+        i16_to_spec_fe_plain (rhs.elements.val[j.val]!)) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact (lemma_add_fe_commute_plain _ _ _ (hr ⟨j, hj⟩)).symm
+
+/-- B.2 `lemma_add_chunk_commutes_mont` (F*: Chunk.fst:700). -/
+theorem lemma_add_chunk_commutes_mont
+    (lhs rhs r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ j : Fin 16,
+            (r.elements.val[j.val]!).val =
+            (lhs.elements.val[j.val]!).val + (rhs.elements.val[j.val]!).val) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_mont (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_mont (lhs.elements.val[j.val]!) +
+        i16_to_spec_fe_mont (rhs.elements.val[j.val]!)) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact (lemma_add_fe_commute_mont _ _ _ (hr ⟨j, hj⟩)).symm
+
+/-! ### B.3 / B.4 — pointwise subtraction (plain and Mont). -/
+
+/-- B.3 `lemma_sub_chunk_commutes_plain` (F*: Chunk.fst:729). -/
+theorem lemma_sub_chunk_commutes_plain
+    (lhs rhs r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ j : Fin 16,
+            (r.elements.val[j.val]!).val =
+            (lhs.elements.val[j.val]!).val - (rhs.elements.val[j.val]!).val) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (lhs.elements.val[j.val]!) -
+        i16_to_spec_fe_plain (rhs.elements.val[j.val]!)) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact (lemma_sub_fe_commute_plain _ _ _ (hr ⟨j, hj⟩)).symm
+
+/-- B.4 `lemma_sub_chunk_commutes_mont` (F*: Chunk.fst:758). -/
+theorem lemma_sub_chunk_commutes_mont
+    (lhs rhs r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ j : Fin 16,
+            (r.elements.val[j.val]!).val =
+            (lhs.elements.val[j.val]!).val - (rhs.elements.val[j.val]!).val) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_mont (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_mont (lhs.elements.val[j.val]!) -
+        i16_to_spec_fe_mont (rhs.elements.val[j.val]!)) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact (lemma_sub_fe_commute_mont _ _ _ (hr ⟨j, hj⟩)).symm
+
+/-! ### B.5 — multiply-by-constant (plain × plain). -/
+
+/-- B.5 `lemma_multiply_by_constant_chunk_commutes` (F*: Chunk.fst:790). -/
+theorem lemma_multiply_by_constant_chunk_commutes
+    (vec r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (c : Std.I16)
+    (hr : ∀ j : Fin 16,
+            (r.elements.val[j.val]!).val =
+            (vec.elements.val[j.val]!).val * c.val) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (vec.elements.val[j.val]!) *
+        i16_to_spec_fe_plain c) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact (lemma_mul_const_fe_commute_plain _ _ _ (hr ⟨j, hj⟩)).symm
+
+/-! ### B.6 / B.7 — Montgomery multiply-by-constant. -/
+
+/-- B.6 `lemma_montgomery_multiply_by_constant_chunk_commutes_mont_mont`
+    (F*: Chunk.fst:818). Both operands lifted Mont; result lifted Mont. -/
+theorem lemma_montgomery_multiply_by_constant_chunk_commutes_mont_mont
+    (vec r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (c : Std.I16)
+    (hr : ∀ j : Fin 16,
+            ((r.elements.val[j.val]!).val : ZMod 3329) =
+            ((vec.elements.val[j.val]!).val : ZMod 3329) *
+            (c.val : ZMod 3329) * 169) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_mont (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_mont (vec.elements.val[j.val]!) *
+        i16_to_spec_fe_mont c) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact (lemma_mont_mul_fe_commute_mont_mont _ _ _ (hr ⟨j, hj⟩)).symm
+
+/-- B.7 `lemma_montgomery_multiply_by_constant_chunk_commutes_mont_plain`
+    (F*: Chunk.fst:847). `vec` lifted Mont, `c` lifted plain, result
+    lifted plain. -/
+theorem lemma_montgomery_multiply_by_constant_chunk_commutes_mont_plain
+    (vec r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (c : Std.I16)
+    (hr : ∀ j : Fin 16,
+            ((r.elements.val[j.val]!).val : ZMod 3329) =
+            ((vec.elements.val[j.val]!).val : ZMod 3329) *
+            (c.val : ZMod 3329) * 169) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_mont (vec.elements.val[j.val]!) *
+        i16_to_spec_fe_plain c) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact (lemma_mont_mul_fe_commute_mont_plain _ _ _ (hr ⟨j, hj⟩)).symm
+
+/-! ### B.8 / B.9 / B.10 — identity-on-plain-lift ops.
+
+    Barrett reduce, conditional `q`-subtract, and "to unsigned
+    representative" all preserve the residue class mod q. Their chunk
+    commutes have a simpler shape: both sides of the equation are the
+    same `Vector.ofFn (i16_to_spec_fe_plain ∘ getLane _)` modulo a
+    `(r.val : ZMod 3329) = (vec.val : ZMod 3329)` per-lane precond. -/
+
+/-- B.8 `lemma_barrett_reduce_chunk_commutes` (F*: Chunk.fst:878). -/
+theorem lemma_barrett_reduce_chunk_commutes
+    (vec r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ j : Fin 16,
+            ((r.elements.val[j.val]!).val : ZMod 3329) =
+            ((vec.elements.val[j.val]!).val : ZMod 3329)) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (vec.elements.val[j.val]!)) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact lemma_barrett_fe_commute _ _ (hr ⟨j, hj⟩)
+
+/-- B.9 `lemma_cond_subtract_3329_chunk_commutes` (F*: Chunk.fst:902).
+    Same shape as B.8 — the impl conditionally subtracts q, which is a
+    no-op mod q. -/
+theorem lemma_cond_subtract_3329_chunk_commutes
+    (vec r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ j : Fin 16,
+            ((r.elements.val[j.val]!).val : ZMod 3329) =
+            ((vec.elements.val[j.val]!).val : ZMod 3329)) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (vec.elements.val[j.val]!)) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact lemma_barrett_fe_commute _ _ (hr ⟨j, hj⟩)
+
+/-- B.10 `lemma_to_unsigned_representative_chunk_commutes`
+    (F*: Chunk.fst:925). The impl projects to canonical `[0, q)`
+    representative — identity mod q. -/
+theorem lemma_to_unsigned_representative_chunk_commutes
+    (vec r : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ j : Fin 16,
+            ((r.elements.val[j.val]!).val : ZMod 3329) =
+            ((vec.elements.val[j.val]!).val : ZMod 3329)) :
+    Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (r.elements.val[j.val]!))
+    = Vector.ofFn (n := 16) (fun (j : Fin 16) =>
+        i16_to_spec_fe_plain (vec.elements.val[j.val]!)) := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_ofFn]
+  exact lemma_barrett_fe_commute _ _ (hr ⟨j, hj⟩)
+
+/-! ### B.11–B.14 deferred per arch plan §C.2 / Open Question I.4.
+
+    The compress / decompress chunk commutes
+    (`lemma_compress_chunk_commutes`, `lemma_decompress_chunk_commutes`,
+    `lemma_compress_message_chunk_commutes`,
+    `lemma_decompress_message_chunk_commutes`) are blocked by Open
+    Question I.4: `HacspecMlKem.compress.compress_d` is
+    `Result`-monadic, and the lift design (pure-vs-Result return type,
+    `Vector (Fin (2^d)) 256` vs `Vector (ZMod 3329) 256` shape) is not
+    pinned down. M.1's `bit_compress` / `bit_decompress` are
+    placeholder stubs, so any chunk commute stated against them would
+    be vacuous. They land in a follow-up dispatch once I.4 is resolved.
+-/
+
 end libcrux_iot_ml_kem.BitMlKem.Commute
