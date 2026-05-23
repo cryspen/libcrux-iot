@@ -167,6 +167,79 @@ private theorem sub_no_overflow_value (a t : Std.I16)
       ∧ (Std.I16.wrapping_sub a t).val.natAbs ≤ 4 * 3328 :=
   sub_no_overflow_value_B a t 3 h_a h_t (by decide)
 
+/-! ### Truly bnd-parameterised no-overflow lemmas.
+
+    `add_no_overflow_value_B` / `sub_no_overflow_value_B` are convenient when
+    the lane bound has the multiplicative shape `B * 3328`. The L3.{1,2,3}_B
+    parameterisation upstream (Phase 1.2) needs an arbitrary `Nat` bound. The
+    `_bnd` variants below replace `(B + 1) * 3328` with `bnd + 3328` and the
+    `B + 1 ≤ 9` bridge with `bnd + 3328 ≤ 32767` directly (equivalent to
+    `bnd ≤ 29439`). Numerically `29439 + 3328 = 32767 < 2^15`, so the I16
+    wrapping is the identity. -/
+
+/-- Under `|a.val| ≤ bnd`, `|t.val| ≤ 3328`, and `bnd ≤ 29439`, the I16-wrapped
+    sum `a + t` has `.val = a.val + t.val` and `.val.natAbs ≤ bnd + 3328`. -/
+private theorem add_no_overflow_value_bnd (a t : Std.I16) (bnd : Nat)
+    (h_a : a.val.natAbs ≤ bnd) (h_t : t.val.natAbs ≤ 3328) (h_bnd : bnd ≤ 29439) :
+    (Std.I16.wrapping_add a t).val = a.val + t.val
+      ∧ (Std.I16.wrapping_add a t).val.natAbs ≤ bnd + 3328 := by
+  -- |a + t| ≤ |a| + |t| ≤ bnd + 3328 ≤ 29439 + 3328 = 32767 < 2^15.
+  have h_sum_abs : ((a.val + t.val : Int)).natAbs ≤ bnd + 3328 := by
+    have h_tri : (a.val + t.val).natAbs ≤ a.val.natAbs + t.val.natAbs := Int.natAbs_add_le _ _
+    omega
+  -- No-overflow ⇒ bmod is identity.
+  have h_lb : -(2 ^ 15 : Int) ≤ a.val + t.val := by
+    have h_natAbs : ((a.val + t.val : Int)).natAbs ≤ bnd + 3328 := h_sum_abs
+    have h_bound : bnd + 3328 ≤ 32767 := by omega
+    omega
+  have h_ub : a.val + t.val < (2 ^ 15 : Int) := by
+    have h_natAbs : ((a.val + t.val : Int)).natAbs ≤ bnd + 3328 := h_sum_abs
+    have h_bound : bnd + 3328 ≤ 32767 := by omega
+    omega
+  have h_bmod : Int.bmod (a.val + t.val) (2 ^ 16) = a.val + t.val := by
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
+    · have h_const : -((2 : Int) ^ (16 - 1)) ≤ -(2 ^ 15 : Int) := by decide
+      exact le_trans h_const h_lb
+    · have h_const : (2 ^ 15 : Int) ≤ (2 : Int) ^ (16 - 1) := by decide
+      exact lt_of_lt_of_le h_ub h_const
+  have h_val := Std.I16.wrapping_add_val_eq a t
+  refine ⟨?_, ?_⟩
+  · rw [h_val, h_bmod]
+  · rw [h_val, h_bmod]; exact h_sum_abs
+
+/-- Under `|a.val| ≤ bnd`, `|t.val| ≤ 3328`, and `bnd ≤ 29439`, the I16-wrapped
+    diff `a - t` has `.val = a.val - t.val` and `.val.natAbs ≤ bnd + 3328`. -/
+private theorem sub_no_overflow_value_bnd (a t : Std.I16) (bnd : Nat)
+    (h_a : a.val.natAbs ≤ bnd) (h_t : t.val.natAbs ≤ 3328) (h_bnd : bnd ≤ 29439) :
+    (Std.I16.wrapping_sub a t).val = a.val - t.val
+      ∧ (Std.I16.wrapping_sub a t).val.natAbs ≤ bnd + 3328 := by
+  have h_diff_abs : ((a.val - t.val : Int)).natAbs ≤ bnd + 3328 := by
+    have h_neg_natAbs : (-t.val).natAbs = t.val.natAbs := Int.natAbs_neg _
+    have h_eq : a.val - t.val = a.val + (-t.val) := by ring
+    rw [h_eq]
+    have h_tri : (a.val + (-t.val)).natAbs ≤ a.val.natAbs + (-t.val).natAbs :=
+      Int.natAbs_add_le _ _
+    rw [h_neg_natAbs] at h_tri
+    omega
+  have h_lb : -(2 ^ 15 : Int) ≤ a.val - t.val := by
+    have h_natAbs : ((a.val - t.val : Int)).natAbs ≤ bnd + 3328 := h_diff_abs
+    have h_bound : bnd + 3328 ≤ 32767 := by omega
+    omega
+  have h_ub : a.val - t.val < (2 ^ 15 : Int) := by
+    have h_natAbs : ((a.val - t.val : Int)).natAbs ≤ bnd + 3328 := h_diff_abs
+    have h_bound : bnd + 3328 ≤ 32767 := by omega
+    omega
+  have h_bmod : Int.bmod (a.val - t.val) (2 ^ 16) = a.val - t.val := by
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
+    · have h_const : -((2 : Int) ^ (16 - 1)) ≤ -(2 ^ 15 : Int) := by decide
+      exact le_trans h_const h_lb
+    · have h_const : (2 ^ 15 : Int) ≤ (2 : Int) ^ (16 - 1) := by decide
+      exact lt_of_lt_of_le h_ub h_const
+  have h_val := Std.I16.wrapping_sub_val_eq a t
+  refine ⟨?_, ?_⟩
+  · rw [h_val, h_bmod]
+  · rw [h_val, h_bmod]; exact h_diff_abs
+
 @[spec]
 theorem ntt_step_spec
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
@@ -394,6 +467,129 @@ theorem ntt_step_spec_B
     exact h_add.2
   · show (final_vec.elements.val[j.val]!).val.natAbs ≤ (B + 1) * 3328
     show (((vec.elements.set j a_minus_t).set i a_plus_t).val[j.val]!).val.natAbs ≤ (B + 1) * 3328
+    have h_eq1 :
+        ((vec.elements.set j a_minus_t).set i a_plus_t).val[j.val]!
+          = ((vec.elements.set j a_minus_t).set i a_plus_t)[j.val]! := by
+      simp [Std.Array.getElem!_Nat_eq]
+    have h_ne_ij : i.val ≠ j.val := h_ne
+    have h_set_i_ne :
+        ((vec.elements.set j a_minus_t).set i a_plus_t)[j.val]!
+          = (vec.elements.set j a_minus_t)[j.val]! :=
+      Aeneas.Std.Array.getElem!_Nat_set_ne _ i j.val _ h_ne_ij
+    have h_set_j_eq :
+        (vec.elements.set j a_minus_t)[j.val]! = a_minus_t := by
+      exact Aeneas.Std.Array.getElem!_Nat_set_eq _ j j.val _ ⟨rfl, by rw [h_vec_len]; exact h_j⟩
+    have h_eq2 :
+        (vec.elements.set j a_minus_t)[j.val]!
+          = (vec.elements.set j a_minus_t).val[j.val]! := by
+      simp [Std.Array.getElem!_Nat_eq]
+    rw [h_eq1, h_set_i_ne, h_set_j_eq]
+    exact h_sub.2
+
+/-! ## Truly bnd-parameterised L2.1 — `ntt_step_spec_bnd`
+
+    Same shape as `ntt_step_spec_B` but with the lane bound stated as a raw
+    `Nat` `bnd` (instead of `B * 3328`). Used by the Phase-1.2
+    `L3.{1,2,3}_B` parameterisations which carry an `bnd : Nat` invariant
+    rather than a multiplicative `B * 3328` shape.
+
+    The proof body mirrors `ntt_step_spec_B` exactly, swapping the calls to
+    `add_no_overflow_value_B` / `sub_no_overflow_value_B` for their `_bnd`
+    counterparts and the `B ≤ 8` precondition for `bnd ≤ 29439`.
+
+    The bound `29439 = 32767 - 3328` ensures `(bnd + 3328) ≤ 32767 < 2^15`,
+    so the I16 wrapping is the identity for both `a + t` and `a - t`. -/
+
+@[spec]
+theorem ntt_step_spec_bnd
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta : Std.I16) (i j : Std.Usize) (bnd : Nat)
+    (h_i : i.val < 16) (h_j : j.val < 16) (h_ne : i.val ≠ j.val)
+    (h_zeta : zeta.val.natAbs ≤ 1664)
+    (h_a : (vec.elements.val[i.val]!).val.natAbs ≤ bnd)
+    (h_b : (vec.elements.val[j.val]!).val.natAbs ≤ bnd)
+    (h_bnd : bnd ≤ 29439) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.ntt_step vec zeta i j
+    ⦃ ⇓ r => ⌜ (∀ k : Nat, k < 16 → k ≠ i.val → k ≠ j.val →
+                  r.elements.val[k]! = vec.elements.val[k]!)
+              ∧ (r.elements.val[i.val]!).val.natAbs ≤ bnd + 3328
+              ∧ (r.elements.val[j.val]!).val.natAbs ≤ bnd + 3328 ⌝ ⦄ := by
+  have h_vec_len : vec.elements.length = 16 := PortableVector_elements_length vec
+  have h_idx_j :
+      Aeneas.Std.Array.index_usize vec.elements j = .ok (vec.elements.val[j.val]!) :=
+    array_index_usize_ok_eq vec.elements j (by rw [h_vec_len]; exact h_j)
+  have h_classify : libcrux_secrets.traits.Classify.Blanket.classify zeta = .ok zeta :=
+    classify_ok_eq zeta
+  set b : Std.I16 := vec.elements.val[j.val]! with hb_def
+  obtain ⟨t, h_t_eq_ok, h_t_bd, _h_t_mod⟩ :=
+    triple_exists_ok_l2 (montgomery_multiply_fe_by_fer_spec b zeta h_zeta)
+  have h_idx_i :
+      Aeneas.Std.Array.index_usize vec.elements i = .ok (vec.elements.val[i.val]!) :=
+    array_index_usize_ok_eq vec.elements i (by rw [h_vec_len]; exact h_i)
+  set a : Std.I16 := vec.elements.val[i.val]! with ha_def
+  have h_sub_eq : core_models.num.I16.wrapping_sub a t = .ok (Std.I16.wrapping_sub a t) :=
+    cm_wrapping_sub_ok_eq a t
+  have h_add_eq : core_models.num.I16.wrapping_add a t = .ok (Std.I16.wrapping_add a t) :=
+    cm_wrapping_add_ok_eq a t
+  set a_minus_t : Std.I16 := Std.I16.wrapping_sub a t with hamt_def
+  set a_plus_t  : Std.I16 := Std.I16.wrapping_add a t with hapt_def
+  have h_upd_j :
+      Aeneas.Std.Array.update vec.elements j a_minus_t
+        = .ok (vec.elements.set j a_minus_t) :=
+    array_update_ok_eq vec.elements j a_minus_t (by rw [h_vec_len]; exact h_j)
+  have h_upd_i :
+      Aeneas.Std.Array.update (vec.elements.set j a_minus_t) i a_plus_t
+        = .ok ((vec.elements.set j a_minus_t).set i a_plus_t) := by
+    have h_len : (vec.elements.set j a_minus_t).length = 16 := by
+      rw [Std.Array.set_length]; exact h_vec_len
+    exact array_update_ok_eq _ i a_plus_t (by rw [h_len]; exact h_i)
+  set final_elements : Std.Array Std.I16 16#usize :=
+    (vec.elements.set j a_minus_t).set i a_plus_t with hfe_def
+  set final_vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+    { elements := final_elements } with hfv_def
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.ntt_step vec zeta i j = .ok final_vec := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.ntt_step
+    rw [h_idx_j]; simp only [bind_tc_ok]
+    rw [h_classify]; simp only [bind_tc_ok]
+    rw [h_t_eq_ok]; simp only [bind_tc_ok]
+    rw [h_idx_i]; simp only [bind_tc_ok]
+    rw [h_sub_eq]; simp only [bind_tc_ok]
+    rw [h_add_eq]; simp only [bind_tc_ok]
+    rw [h_upd_j]; simp only [bind_tc_ok]
+    rw [h_upd_i]; simp only [bind_tc_ok]; rfl
+  have h_add := add_no_overflow_value_bnd a t bnd h_a h_t_bd h_bnd
+  have h_sub := sub_no_overflow_value_bnd a t bnd h_a h_t_bd h_bnd
+  apply triple_of_ok_l2 h_body
+  refine ⟨?_, ?_, ?_⟩
+  · intro k hk_lt hk_ne_i hk_ne_j
+    have h_set_i_ne :
+        ((vec.elements.set j a_minus_t).set i a_plus_t)[k]!
+          = (vec.elements.set j a_minus_t)[k]! :=
+      Aeneas.Std.Array.getElem!_Nat_set_ne _ i k _ (Ne.symm hk_ne_i)
+    have h_set_j_ne :
+        (vec.elements.set j a_minus_t)[k]! = (vec.elements)[k]! :=
+      Aeneas.Std.Array.getElem!_Nat_set_ne _ j k _ (Ne.symm hk_ne_j)
+    show final_vec.elements.val[k]! = vec.elements.val[k]!
+    show ((vec.elements.set j a_minus_t).set i a_plus_t).val[k]! = vec.elements.val[k]!
+    rw [← Aeneas.Std.Array.getElem!_Nat_eq, ← Aeneas.Std.Array.getElem!_Nat_eq,
+        h_set_i_ne, h_set_j_ne]
+  · show (final_vec.elements.val[i.val]!).val.natAbs ≤ bnd + 3328
+    show (((vec.elements.set j a_minus_t).set i a_plus_t).val[i.val]!).val.natAbs ≤ bnd + 3328
+    have h_eq1 :
+        ((vec.elements.set j a_minus_t).set i a_plus_t).val[i.val]!
+          = ((vec.elements.set j a_minus_t).set i a_plus_t)[i.val]! := by
+      simp [Std.Array.getElem!_Nat_eq]
+    have h_set_i_eq :
+        ((vec.elements.set j a_minus_t).set i a_plus_t)[i.val]! = a_plus_t := by
+      have h_len : (vec.elements.set j a_minus_t).length = 16 := by
+        rw [Std.Array.set_length]; exact h_vec_len
+      exact Aeneas.Std.Array.getElem!_Nat_set_eq _ i i.val _ ⟨rfl, by rw [h_len]; exact h_i⟩
+    rw [h_eq1, h_set_i_eq]
+    exact h_add.2
+  · show (final_vec.elements.val[j.val]!).val.natAbs ≤ bnd + 3328
+    show (((vec.elements.set j a_minus_t).set i a_plus_t).val[j.val]!).val.natAbs ≤ bnd + 3328
     have h_eq1 :
         ((vec.elements.set j a_minus_t).set i a_plus_t).val[j.val]!
           = ((vec.elements.set j a_minus_t).set i a_plus_t)[j.val]! := by
