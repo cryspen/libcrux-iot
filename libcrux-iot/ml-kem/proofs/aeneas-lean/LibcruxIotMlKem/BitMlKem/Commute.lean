@@ -39,6 +39,24 @@ namespace libcrux_iot_ml_kem.BitMlKem.Commute
 open Aeneas Aeneas.Std
 open libcrux_iot_ml_kem.BitMlKem
 
+/-! ### Local `Inhabited` instances (mirror of `BitMlKem/Spec.lean`).
+
+    The `PolynomialRingElement V`-and-`PortableVector` chunk types
+    need an `Inhabited` instance for the `coefficients.val[i]!` /
+    `elements.val[j]!` indexing patterns used by Block-C poly lemma
+    statements. `Spec.lean` declares the same instances as `local`, so
+    they don't propagate here; we redeclare them `local` for this file. -/
+
+local instance instInhabitedPortableVector_bitMlKemCommute :
+    Inhabited libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+  ⟨{ elements := Std.Array.make 16#usize (List.replicate 16 (0#i16 : Std.I16))
+        (by simp) }⟩
+
+local instance instInhabitedPolynomialRingElement_bitMlKemCommute
+    {Vector : Type} [Inhabited Vector] :
+    Inhabited (libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector) :=
+  ⟨{ coefficients := Std.Array.make 16#usize (List.replicate 16 default) (by simp) }⟩
+
 /-! ## A.1 / A.2 — pointwise addition commutes (plain and Mont). -/
 
 /-- A.1 `lemma_add_fe_commute_plain` (F*: Chunk.fst:35). Strict
@@ -554,6 +572,263 @@ theorem lemma_to_unsigned_representative_chunk_commutes
     pinned down. M.1's `bit_compress` / `bit_decompress` are
     placeholder stubs, so any chunk commute stated against them would
     be vacuous. They land in a follow-up dispatch once I.4 is resolved.
+-/
+
+/-! ## Block C — poly-level commutes.
+
+    Port of `Hacspec_ml_kem.Commute.Chunk.fst` lines 1376-2583. Each
+    Block-C lemma takes the impl post as an explicit per-lane
+    hypothesis `hr : ∀ i j : Fin 16, …` and conclusion is stated in
+    BIT-SIDE terms (`bit_<op>` from M.1), not in `HP.<op>` terms (those
+    are `Result`-monadic in the hacspec spec; M.4 will bridge
+    `bit_*` ↔ `HP.*`).
+
+    ### `@[scoped grind]` policy (matches Block B).
+
+    Block-C conclusions wrap the lifts inside `to_spec_poly_*` (which
+    is itself a `Vector.ofFn (n := 256)`); the only candidate pattern
+    is under a binder, which `grind` rejects. We therefore omit
+    `@[scoped grind]` and consume these lemmas via explicit
+    `exact`/`apply` from M.4 poly aggregation.
+
+    The main hammer is `lemma_to_spec_poly_*_eq_of_coeffs` (M.1 spec).
+    Each Block-C statement reduces to "per-lane Block-A/B lemma gives
+    the same value on both sides".
+-/
+
+/-! ### C.1 — Barrett reduce is identity at the poly level. -/
+
+/-- C.1 `lemma_poly_barrett_reduce_id` (F*: Chunk.fst:1376). Since
+    `bit_barrett_reduce p = p` definitionally in M.1, this is `rfl`. -/
+theorem lemma_poly_barrett_reduce_id (p : MontPoly) :
+    bit_barrett_reduce p = p := rfl
+
+/-! ### C.2 — Barrett reduce poly commute (per-lane residue ↦ plain
+        lift identity). -/
+
+/-- C.2 `lemma_poly_barrett_reduce_commute` (F*: Chunk.fst:1401). The
+    per-lane residue equality lifts to the plain-domain poly equality
+    via `lemma_to_spec_poly_plain_eq_of_coeffs` + per-lane A.5
+    (`lemma_barrett_fe_commute`). Combined with C.1 the conclusion can
+    equivalently be stated as
+    `to_spec_poly_plain result = to_spec_poly_plain myself`. -/
+theorem lemma_poly_barrett_reduce_commute
+    (myself result :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ i j : Fin 16,
+            ((result.coefficients.val[i.val]!).elements.val[j.val]!).val
+              = ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val
+            ∨
+            (((result.coefficients.val[i.val]!).elements.val[j.val]!).val
+              : ZMod 3329)
+              = (((myself.coefficients.val[i.val]!).elements.val[j.val]!).val
+                  : ZMod 3329)) :
+    to_spec_poly_plain result
+      = bit_barrett_reduce (to_spec_poly_plain myself) := by
+  rw [lemma_poly_barrett_reduce_id]
+  apply lemma_to_spec_poly_plain_eq_of_coeffs
+  intro i j
+  rcases hr i j with h | h
+  · exact lemma_barrett_fe_commute _ _ (by rw [h])
+  · exact lemma_barrett_fe_commute _ _ h
+
+/-! ### C.3 — pointwise addition at the poly level (plain domain). -/
+
+/-- C.3 `lemma_add_to_ring_element_commute` (F*: Chunk.fst:1447). Per-lane
+    strict-add hypothesis lifts to the plain-domain poly equality
+    `to_spec_poly_plain result = bit_add (to_spec_poly_plain myself)
+    (to_spec_poly_plain rhs)` via `Vector.ext` + per-lane A.1.
+
+    `maxRecDepth 2000` is required because the per-lane unifier
+    threads through three nested `Vector.ofFn` bodies (LHS
+    `to_spec_poly_plain` + two RHS `to_spec_poly_plain` inside
+    `bit_add`'s `Vector.ofFn`). -/
+theorem lemma_add_to_ring_element_commute
+    (myself rhs result :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ i j : Fin 16,
+            ((result.coefficients.val[i.val]!).elements.val[j.val]!).val
+              = ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val
+              + ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val) :
+    to_spec_poly_plain result
+      = bit_add (to_spec_poly_plain myself) (to_spec_poly_plain rhs) := by
+  unfold to_spec_poly_plain bit_add
+  apply Vector.ext
+  intro k hk
+  -- After unfolding both sides we have nested `Vector.ofFn`s. The outer
+  -- `Vector.ofFn` of `bit_add` indexes at `[k]'hk`; reducing it via
+  -- `Vector.getElem_ofFn` substitutes `⟨k, hk⟩` into the body, which then
+  -- contains `(Vector.ofFn _)[⟨k, hk⟩]` for the two `to_spec_poly_plain`
+  -- arguments. Those Fin-indexed accesses are definitionally `[k]'hk`
+  -- accesses, so rewrite via `rfl` then fire the simp lemma again.
+  simp only [Vector.getElem_ofFn]
+  -- Introduce the Fin-form lemma `(Vector.ofFn f)[⟨k, hk⟩] = (Vector.ofFn f)[k]'hk`
+  -- as a local hypothesis via `rfl`, since the two forms are definitionally equal.
+  have my_eq :
+      (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_plain
+              ((myself.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[(⟨k, hk⟩ : Fin 256)]
+        = (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_plain
+              ((myself.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[k]'hk := rfl
+  have rhs_eq :
+      (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_plain
+              ((rhs.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[(⟨k, hk⟩ : Fin 256)]
+        = (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_plain
+              ((rhs.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[k]'hk := rfl
+  rw [my_eq, rhs_eq]
+  simp only [Vector.getElem_ofFn]
+  have hdiv_lt : k / 16 < 16 := by omega
+  have hmod_lt : k % 16 < 16 := Nat.mod_lt k (by decide)
+  exact (lemma_add_fe_commute_plain _ _ _
+            (hr ⟨k / 16, hdiv_lt⟩ ⟨k % 16, hmod_lt⟩)).symm
+
+/-! ### C.4 — INTT-Mont finalize core (KEYSTONE). -/
+
+/-- C.4 `lemma_intt_mont_form_post` (F*: Chunk.fst:1540). KEYSTONE. The
+    per-lane INTT-Mont finalize identity: given the INTT-Mont form
+    precondition `(b.val : ZMod 3329) * 2285 = b_real_val * 128`
+    (i.e., `b` represents `b_real_val * 128 * R⁻¹` post-INTT) and the
+    `mont_mul(b, 1441)` post `(r.val : ZMod 3329) = (b.val : ZMod 3329)
+    * 1441 * 169`, conclude `(r.val : ZMod 3329) = b_real_val`.
+
+    Proof via three keystones (all `by decide`):
+    - `(1441 * 169 : ZMod 3329) = 512`
+    - `(2285 * 169 : ZMod 3329) = 1`
+    - `(128 * 169 * 512 : ZMod 3329) = 1`
+    plus `ring` glue. -/
+theorem lemma_intt_mont_form_post
+    (b r : Std.I16) (b_real_val : ZMod 3329)
+    (hb : (b.val : ZMod 3329) * 2285 = b_real_val * 128)
+    (hr : (r.val : ZMod 3329) = (b.val : ZMod 3329) * 1441 * 169) :
+    (r.val : ZMod 3329) = b_real_val := by
+  have k1 : (1441 * 169 : ZMod 3329) = 512 := by decide
+  have k2 : (2285 * 169 : ZMod 3329) = 1 := by decide
+  have k3 : (128 * 169 * 512 : ZMod 3329) = 1 := by decide
+  -- From hb: multiply both sides by 169.
+  -- (b.val * 2285) * 169 = (b_real_val * 128) * 169
+  -- ⇒ b.val * (2285 * 169) = b_real_val * (128 * 169)
+  -- ⇒ b.val = b_real_val * 128 * 169                         (since 2285·169=1)
+  have hb2 : (b.val : ZMod 3329) = b_real_val * 128 * 169 := by
+    have := congrArg (· * (169 : ZMod 3329)) hb
+    simp only at this
+    -- this : (b.val * 2285) * 169 = (b_real_val * 128) * 169
+    have h1 : (b.val : ZMod 3329) * 2285 * 169
+            = (b.val : ZMod 3329) * (2285 * 169) := by ring
+    rw [h1, k2, mul_one] at this
+    exact this
+  -- Now substitute into hr and reduce via k1 and k3.
+  rw [hr, hb2]
+  -- Goal: b_real_val * 128 * 169 * 1441 * 169 = b_real_val
+  have h2 : b_real_val * 128 * 169 * 1441 * 169
+          = b_real_val * (128 * 169 * (1441 * 169)) := by ring
+  rw [h2, k1]
+  -- Goal: b_real_val * (128 * 169 * 512) = b_real_val
+  rw [k3, mul_one]
+
+/-! ### C.5 — Per-lane INTT-Mont finalize wrapper. -/
+
+/-- C.5 `lemma_intt_mont_finalize_fe` (F*: Chunk.fst:1666). Per-lane
+    wrap of C.4: given the same hypotheses, the plain-domain lift
+    `i16_to_spec_fe_plain r` equals the `b_real_val`. -/
+theorem lemma_intt_mont_finalize_fe
+    (b r : Std.I16) (b_real_val : ZMod 3329)
+    (hb : (b.val : ZMod 3329) * 2285 = b_real_val * 128)
+    (hr : (r.val : ZMod 3329) = (b.val : ZMod 3329) * 1441 * 169) :
+    i16_to_spec_fe_plain r = b_real_val := by
+  unfold i16_to_spec_fe_plain
+  exact lemma_intt_mont_form_post b r b_real_val hb hr
+
+/-! ### C.7 — to_standard_domain finalize at the FE level. -/
+
+/-- C.7 `lemma_to_standard_domain_finalize_fe` (F*: Chunk.fst:2019).
+    Given the standard-domain form `(myself.val : ZMod 3329) * 2285
+    = plain_real_val` (i.e., `myself` represents `α · R⁻¹`) and the
+    `mont_mul(myself, 1353)` post `(r.val : ZMod 3329) = (myself.val
+    : ZMod 3329) * 1353 * 169`, conclude `i16_to_spec_fe_mont r
+    = plain_real_val * 2285` (the "Mont-lift of `r` recovers `α · R`").
+
+    Note: we state the conclusion via `i16_to_spec_fe_mont` (×169) on
+    the Mont domain lift. The keystone `(1353 * 169 : ZMod 3329) = 2285`
+    (R² · R⁻¹ = R) combined with the precondition gives the result. -/
+theorem lemma_to_standard_domain_finalize_fe
+    (myself r : Std.I16) (plain_real_val : ZMod 3329)
+    (hm : (myself.val : ZMod 3329) * 2285 = plain_real_val)
+    (hr : (r.val : ZMod 3329)
+            = (myself.val : ZMod 3329) * 1353 * 169) :
+    i16_to_spec_fe_plain r = plain_real_val := by
+  have k1 : (1353 * 169 : ZMod 3329) = 2285 := by decide
+  unfold i16_to_spec_fe_plain
+  rw [hr]
+  -- Goal: myself.val * 1353 * 169 = plain_real_val
+  have h1 : (myself.val : ZMod 3329) * 1353 * 169
+          = (myself.val : ZMod 3329) * (1353 * 169) := by ring
+  rw [h1, k1, hm]
+
+/-! ### C.8 — Mont form post (standard-domain analogue of C.4). -/
+
+/-- C.8 `lemma_mont_form_post` (F*: Chunk.fst:1943). Analogous to C.4
+    but for the standard-domain (matrix-mul track) form. Given
+    `(myself.val : ZMod 3329) * 2285 = plain_real_val` (standard-domain
+    form) and `(r.val : ZMod 3329) = (myself.val : ZMod 3329) * 1353
+    * 169` (mont_mul-by-1353), conclude `(r.val : ZMod 3329)
+    = plain_real_val`.
+
+    Keystone: `(1353 * 169 : ZMod 3329) = 2285`. -/
+theorem lemma_mont_form_post
+    (myself r : Std.I16) (plain_real_val : ZMod 3329)
+    (hm : (myself.val : ZMod 3329) * 2285 = plain_real_val)
+    (hr : (r.val : ZMod 3329)
+            = (myself.val : ZMod 3329) * 1353 * 169) :
+    (r.val : ZMod 3329) = plain_real_val := by
+  have k1 : (1353 * 169 : ZMod 3329) = 2285 := by decide
+  rw [hr]
+  have h1 : (myself.val : ZMod 3329) * 1353 * 169
+          = (myself.val : ZMod 3329) * (1353 * 169) := by ring
+  rw [h1, k1, hm]
+
+/-! ## Block C deferrals
+
+    The following Block-C lemmas are deferred:
+
+    - **C.6 (`lemma_subtract_reduce_commute`)** — combines the
+      subtract-then-finalize-INTT chain at the poly level. Per-lane
+      this is the composition `myself - mont_mul(b, 1441)` followed
+      by barrett, with the `b` operand in INTT-Mont form. The lemma
+      requires routing a hypothesis of the form
+      `(result.coef[i,j].val : ZMod 3329)
+        = myself.coef[i,j].val - b.coef[i,j].val * 1441 * 169`
+      together with an `intt_mont_form_lane` precondition on `b`, and
+      stating the conclusion against `bit_subtract_reduce`'s
+      `(q[i] - p[i]) * 512` body via lift-aggregation. The Lean
+      conclusion requires deciding whether to state against `Vector`
+      shape directly or via a `to_spec_poly_*` form on the LHS — the
+      cleanest framing depends on how M.4 will consume this. Deferred
+      to a follow-up dispatch once the M.4 caller chain is sketched.
+
+    - **C.9 (`lemma_add_standard_error_reduce_commute`)** — same
+      framing concern as C.6 (per-poly Mont-form precondition + add
+      + mont_mul finalize + barrett, stated against
+      `bit_add_to_ring_element ∘ bit_to_standard_domain` or similar
+      composite). Deferred along with C.6.
+
+    - **C.10 (`lemma_subtract_reduce_scaled_eq`)** — an internal
+      "createi equality" bridge in F* that exists specifically to
+      paper over Z3 not auto-deriving equality of `P.createi`s. The
+      Lean analogue is essentially `congrArg (Vector.ofFn ∘ fun f i =>
+      f i * 1441) (to_spec_poly_mont_eq_of_coeffs ...)` which is
+      trivial in Lean once C.6's framing is pinned. Deferred along
+      with C.6.
+
+    Each of these is independently addressable in a follow-up dispatch
+    once the M.4 caller chain pins the exact conclusion shape (this
+    determines whether to state against `Vector` or against
+    `to_spec_poly_*`, and whether to inline the `*512` finalize factor
+    directly or to factor it through `bit_subtract_reduce`'s body).
 -/
 
 end libcrux_iot_ml_kem.BitMlKem.Commute
