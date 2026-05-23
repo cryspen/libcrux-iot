@@ -549,7 +549,7 @@ end L3_1_B
 private theorem ntt_at_layer_1_step_lemma_B
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd)
     (acc : L3_1_B.Acc)
@@ -775,7 +775,7 @@ theorem ntt_at_layer_1_spec_B
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (initial_coefficient_bound : Std.Usize)
-    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (h_zeta : zeta_i.val = 63)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd) :
@@ -1172,7 +1172,7 @@ end L3_2_B
 private theorem ntt_at_layer_2_step_lemma_B
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd)
     (acc : L3_2_B.Acc)
@@ -1367,7 +1367,7 @@ theorem ntt_at_layer_2_spec_B
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (initial_coefficient_bound : Std.Usize)
-    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (h_zeta : zeta_i.val = 31)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd) :
@@ -1751,7 +1751,7 @@ end L3_3_B
 private theorem ntt_at_layer_3_step_lemma_B
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd)
     (acc : L3_3_B.Acc)
@@ -1935,7 +1935,7 @@ theorem ntt_at_layer_3_spec_B
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (initial_coefficient_bound : Std.Usize)
-    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (h_zeta : zeta_i.val = 15)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd) :

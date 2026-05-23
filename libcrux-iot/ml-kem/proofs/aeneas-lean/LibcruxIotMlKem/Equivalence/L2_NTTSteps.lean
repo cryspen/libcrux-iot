@@ -906,7 +906,7 @@ theorem ntt_layer_1_step_spec
 theorem ntt_layer_1_step_spec_bnd
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (zeta0 zeta1 zeta2 zeta3 : Std.I16)
-    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (hz0 : zeta0.val.natAbs ≤ 1664) (hz1 : zeta1.val.natAbs ≤ 1664)
     (hz2 : zeta2.val.natAbs ≤ 1664) (hz3 : zeta3.val.natAbs ≤ 1664)
     (hpre : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ bnd) :
@@ -1447,7 +1447,7 @@ theorem ntt_layer_2_step_spec
 theorem ntt_layer_2_step_spec_bnd
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (zeta0 zeta1 : Std.I16)
-    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (hz0 : zeta0.val.natAbs ≤ 1664) (hz1 : zeta1.val.natAbs ≤ 1664)
     (hpre : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ bnd) :
     ⦃ ⌜ True ⌝ ⦄
@@ -1978,7 +1978,7 @@ theorem ntt_layer_3_step_spec
 theorem ntt_layer_3_step_spec_bnd
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (zeta : Std.I16)
-    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (hz : zeta.val.natAbs ≤ 1664)
     (hpre : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ bnd) :
     ⦃ ⌜ True ⌝ ⦄
