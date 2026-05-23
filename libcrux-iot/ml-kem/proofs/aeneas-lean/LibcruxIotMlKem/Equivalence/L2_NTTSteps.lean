@@ -889,6 +889,287 @@ theorem ntt_layer_1_step_spec
   -- Lane 15: touched in step 8 as j-lane.
   · exact h_v8_j
 
+/-! ## L2.2.bnd — `ntt_layer_1_step_spec_bnd`
+
+    Nat-bnd parameterised mirror of `ntt_layer_1_step_spec` (L2.2): same eight
+    disjoint butterflies on pairs `(0,2)ζ0`, `(1,3)ζ0`, `(4,6)ζ1`, `(5,7)ζ1`,
+    `(8,10)ζ2`, `(9,11)ζ2`, `(12,14)ζ3`, `(13,15)ζ3`, dispatched via the
+    `_bnd` form of the per-butterfly Triple. Each call raises the two touched
+    lanes from `≤ bnd` to `≤ bnd + 3328`.
+
+    Precondition `bnd ≤ 8 * 3328 = 26624` keeps the output bound
+    `bnd + 3328 ≤ 9 * 3328 = 29952` within `ntt_step_spec_bnd`'s safe range
+    (`bnd' ≤ 29439` for the I16 no-overflow argument); `26624 ≤ 29439`.
+-/
+
+@[spec]
+theorem ntt_layer_1_step_spec_bnd
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 zeta2 zeta3 : Std.I16)
+    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (hz0 : zeta0.val.natAbs ≤ 1664) (hz1 : zeta1.val.natAbs ≤ 1664)
+    (hz2 : zeta2.val.natAbs ≤ 1664) (hz3 : zeta3.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ bnd) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_1_step vec zeta0 zeta1 zeta2 zeta3
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 → (r.elements.val[i]!).val.natAbs ≤ bnd + 3328 ⌝ ⦄ := by
+  -- Index abbreviations.
+  have h0lt : (0#usize : Std.Usize).val < 16 := by decide
+  have h1lt : (1#usize : Std.Usize).val < 16 := by decide
+  have h2lt : (2#usize : Std.Usize).val < 16 := by decide
+  have h3lt : (3#usize : Std.Usize).val < 16 := by decide
+  have h4lt : (4#usize : Std.Usize).val < 16 := by decide
+  have h5lt : (5#usize : Std.Usize).val < 16 := by decide
+  have h6lt : (6#usize : Std.Usize).val < 16 := by decide
+  have h7lt : (7#usize : Std.Usize).val < 16 := by decide
+  have h8lt : (8#usize : Std.Usize).val < 16 := by decide
+  have h9lt : (9#usize : Std.Usize).val < 16 := by decide
+  have h10lt : (10#usize : Std.Usize).val < 16 := by decide
+  have h11lt : (11#usize : Std.Usize).val < 16 := by decide
+  have h12lt : (12#usize : Std.Usize).val < 16 := by decide
+  have h13lt : (13#usize : Std.Usize).val < 16 := by decide
+  have h14lt : (14#usize : Std.Usize).val < 16 := by decide
+  have h15lt : (15#usize : Std.Usize).val < 16 := by decide
+  -- Bridge: bnd ≤ 8*3328 = 26624 ≤ 29439 (= ntt_step_spec_bnd's max input bound).
+  have h_bnd29439 : bnd ≤ 29439 := by omega
+  -- Initial bounds: hpre gives ≤ bnd on all lanes.
+  have hb_init : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ bnd := hpre
+  -- Step 1: (0, 2) ζ0. Pair untouched ⇒ both lanes ≤ bnd from hpre.
+  obtain ⟨v1, h_v1_eq, h_v1_unc, h_v1_i, h_v1_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd vec zeta0 0#usize 2#usize bnd
+      h0lt h2lt (by decide) hz0 (hb_init 0 h0lt) (hb_init 2 h2lt) h_bnd29439)
+  -- After step 1: lane 0 and lane 2 are ≤ bnd + 3328 (h_v1_i, h_v1_j); other lanes
+  -- unchanged from vec (h_v1_unc), so still ≤ bnd from hpre.
+  -- Step 2: (1, 3) ζ0. Disjoint from {0, 2}, so lanes 1, 3 are still vec[1], vec[3] ≤ bnd.
+  have h_v1_1 : (v1.elements.val[1]!).val.natAbs ≤ bnd := by
+    rw [h_v1_unc 1 h1lt (by decide) (by decide)]; exact hb_init 1 h1lt
+  have h_v1_3 : (v1.elements.val[3]!).val.natAbs ≤ bnd := by
+    rw [h_v1_unc 3 h3lt (by decide) (by decide)]; exact hb_init 3 h3lt
+  obtain ⟨v2, h_v2_eq, h_v2_unc, h_v2_i, h_v2_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v1 zeta0 1#usize 3#usize bnd
+      h1lt h3lt (by decide) hz0 h_v1_1 h_v1_3 h_bnd29439)
+  -- Step 3: (4, 6) ζ1. v2[4], v2[6] not touched in steps 1,2 ⇒ = vec[4], vec[6] ≤ bnd.
+  have h_v2_4 : (v2.elements.val[4]!).val.natAbs ≤ bnd := by
+    rw [h_v2_unc 4 h4lt (by decide) (by decide), h_v1_unc 4 h4lt (by decide) (by decide)]
+    exact hb_init 4 h4lt
+  have h_v2_6 : (v2.elements.val[6]!).val.natAbs ≤ bnd := by
+    rw [h_v2_unc 6 h6lt (by decide) (by decide), h_v1_unc 6 h6lt (by decide) (by decide)]
+    exact hb_init 6 h6lt
+  obtain ⟨v3, h_v3_eq, h_v3_unc, h_v3_i, h_v3_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v2 zeta1 4#usize 6#usize bnd
+      h4lt h6lt (by decide) hz1 h_v2_4 h_v2_6 h_bnd29439)
+  -- Step 4: (5, 7) ζ1.
+  have h_v3_5 : (v3.elements.val[5]!).val.natAbs ≤ bnd := by
+    rw [h_v3_unc 5 h5lt (by decide) (by decide),
+        h_v2_unc 5 h5lt (by decide) (by decide),
+        h_v1_unc 5 h5lt (by decide) (by decide)]
+    exact hb_init 5 h5lt
+  have h_v3_7 : (v3.elements.val[7]!).val.natAbs ≤ bnd := by
+    rw [h_v3_unc 7 h7lt (by decide) (by decide),
+        h_v2_unc 7 h7lt (by decide) (by decide),
+        h_v1_unc 7 h7lt (by decide) (by decide)]
+    exact hb_init 7 h7lt
+  obtain ⟨v4, h_v4_eq, h_v4_unc, h_v4_i, h_v4_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v3 zeta1 5#usize 7#usize bnd
+      h5lt h7lt (by decide) hz1 h_v3_5 h_v3_7 h_bnd29439)
+  -- Step 5: (8, 10) ζ2.
+  have h_v4_8 : (v4.elements.val[8]!).val.natAbs ≤ bnd := by
+    rw [h_v4_unc 8 h8lt (by decide) (by decide),
+        h_v3_unc 8 h8lt (by decide) (by decide),
+        h_v2_unc 8 h8lt (by decide) (by decide),
+        h_v1_unc 8 h8lt (by decide) (by decide)]
+    exact hb_init 8 h8lt
+  have h_v4_10 : (v4.elements.val[10]!).val.natAbs ≤ bnd := by
+    rw [h_v4_unc 10 h10lt (by decide) (by decide),
+        h_v3_unc 10 h10lt (by decide) (by decide),
+        h_v2_unc 10 h10lt (by decide) (by decide),
+        h_v1_unc 10 h10lt (by decide) (by decide)]
+    exact hb_init 10 h10lt
+  obtain ⟨v5, h_v5_eq, h_v5_unc, h_v5_i, h_v5_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v4 zeta2 8#usize 10#usize bnd
+      h8lt h10lt (by decide) hz2 h_v4_8 h_v4_10 h_bnd29439)
+  -- Step 6: (9, 11) ζ2.
+  have h_v5_9 : (v5.elements.val[9]!).val.natAbs ≤ bnd := by
+    rw [h_v5_unc 9 h9lt (by decide) (by decide),
+        h_v4_unc 9 h9lt (by decide) (by decide),
+        h_v3_unc 9 h9lt (by decide) (by decide),
+        h_v2_unc 9 h9lt (by decide) (by decide),
+        h_v1_unc 9 h9lt (by decide) (by decide)]
+    exact hb_init 9 h9lt
+  have h_v5_11 : (v5.elements.val[11]!).val.natAbs ≤ bnd := by
+    rw [h_v5_unc 11 h11lt (by decide) (by decide),
+        h_v4_unc 11 h11lt (by decide) (by decide),
+        h_v3_unc 11 h11lt (by decide) (by decide),
+        h_v2_unc 11 h11lt (by decide) (by decide),
+        h_v1_unc 11 h11lt (by decide) (by decide)]
+    exact hb_init 11 h11lt
+  obtain ⟨v6, h_v6_eq, h_v6_unc, h_v6_i, h_v6_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v5 zeta2 9#usize 11#usize bnd
+      h9lt h11lt (by decide) hz2 h_v5_9 h_v5_11 h_bnd29439)
+  -- Step 7: (12, 14) ζ3.
+  have h_v6_12 : (v6.elements.val[12]!).val.natAbs ≤ bnd := by
+    rw [h_v6_unc 12 h12lt (by decide) (by decide),
+        h_v5_unc 12 h12lt (by decide) (by decide),
+        h_v4_unc 12 h12lt (by decide) (by decide),
+        h_v3_unc 12 h12lt (by decide) (by decide),
+        h_v2_unc 12 h12lt (by decide) (by decide),
+        h_v1_unc 12 h12lt (by decide) (by decide)]
+    exact hb_init 12 h12lt
+  have h_v6_14 : (v6.elements.val[14]!).val.natAbs ≤ bnd := by
+    rw [h_v6_unc 14 h14lt (by decide) (by decide),
+        h_v5_unc 14 h14lt (by decide) (by decide),
+        h_v4_unc 14 h14lt (by decide) (by decide),
+        h_v3_unc 14 h14lt (by decide) (by decide),
+        h_v2_unc 14 h14lt (by decide) (by decide),
+        h_v1_unc 14 h14lt (by decide) (by decide)]
+    exact hb_init 14 h14lt
+  obtain ⟨v7, h_v7_eq, h_v7_unc, h_v7_i, h_v7_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v6 zeta3 12#usize 14#usize bnd
+      h12lt h14lt (by decide) hz3 h_v6_12 h_v6_14 h_bnd29439)
+  -- Step 8: (13, 15) ζ3.
+  have h_v7_13 : (v7.elements.val[13]!).val.natAbs ≤ bnd := by
+    rw [h_v7_unc 13 h13lt (by decide) (by decide),
+        h_v6_unc 13 h13lt (by decide) (by decide),
+        h_v5_unc 13 h13lt (by decide) (by decide),
+        h_v4_unc 13 h13lt (by decide) (by decide),
+        h_v3_unc 13 h13lt (by decide) (by decide),
+        h_v2_unc 13 h13lt (by decide) (by decide),
+        h_v1_unc 13 h13lt (by decide) (by decide)]
+    exact hb_init 13 h13lt
+  have h_v7_15 : (v7.elements.val[15]!).val.natAbs ≤ bnd := by
+    rw [h_v7_unc 15 h15lt (by decide) (by decide),
+        h_v6_unc 15 h15lt (by decide) (by decide),
+        h_v5_unc 15 h15lt (by decide) (by decide),
+        h_v4_unc 15 h15lt (by decide) (by decide),
+        h_v3_unc 15 h15lt (by decide) (by decide),
+        h_v2_unc 15 h15lt (by decide) (by decide),
+        h_v1_unc 15 h15lt (by decide) (by decide)]
+    exact hb_init 15 h15lt
+  obtain ⟨v8, h_v8_eq, h_v8_unc, h_v8_i, h_v8_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v7 zeta3 13#usize 15#usize bnd
+      h13lt h15lt (by decide) hz3 h_v7_13 h_v7_15 h_bnd29439)
+  -- Compose the whole 8-step chain into one `.ok v8` equation.
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_1_step vec zeta0 zeta1 zeta2 zeta3
+        = .ok v8 := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_1_step
+    rw [h_v1_eq]; simp only [bind_tc_ok]
+    rw [h_v2_eq]; simp only [bind_tc_ok]
+    rw [h_v3_eq]; simp only [bind_tc_ok]
+    rw [h_v4_eq]; simp only [bind_tc_ok]
+    rw [h_v5_eq]; simp only [bind_tc_ok]
+    rw [h_v6_eq]; simp only [bind_tc_ok]
+    rw [h_v7_eq]; simp only [bind_tc_ok]
+    exact h_v8_eq
+  -- Close the Triple: prove every lane ≤ bnd + 3328 by case-split on which step touched it.
+  -- Strategy: for each lane ℓ, identify the step that touched it (giving h_v{k}_i or h_v{k}_j
+  -- with bound ≤ bnd + 3328), then propagate v_k[ℓ] = ... = v8[ℓ] via the later steps' h_v{m}_unc.
+  apply triple_of_ok_l2 h_body
+  intro i hi
+  interval_cases i
+  -- Lane 0: touched in step 1 as i-lane ⇒ v1[0] ≤ bnd + 3328. v8[0] = v1[0].
+  · have h_eq : v8.elements.val[0]! = v1.elements.val[0]! := by
+      rw [h_v8_unc 0 h0lt (by decide) (by decide),
+          h_v7_unc 0 h0lt (by decide) (by decide),
+          h_v6_unc 0 h0lt (by decide) (by decide),
+          h_v5_unc 0 h0lt (by decide) (by decide),
+          h_v4_unc 0 h0lt (by decide) (by decide),
+          h_v3_unc 0 h0lt (by decide) (by decide),
+          h_v2_unc 0 h0lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v1_i
+  -- Lane 1: touched in step 2 as i-lane.
+  · have h_eq : v8.elements.val[1]! = v2.elements.val[1]! := by
+      rw [h_v8_unc 1 h1lt (by decide) (by decide),
+          h_v7_unc 1 h1lt (by decide) (by decide),
+          h_v6_unc 1 h1lt (by decide) (by decide),
+          h_v5_unc 1 h1lt (by decide) (by decide),
+          h_v4_unc 1 h1lt (by decide) (by decide),
+          h_v3_unc 1 h1lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v2_i
+  -- Lane 2: touched in step 1 as j-lane.
+  · have h_eq : v8.elements.val[2]! = v1.elements.val[2]! := by
+      rw [h_v8_unc 2 h2lt (by decide) (by decide),
+          h_v7_unc 2 h2lt (by decide) (by decide),
+          h_v6_unc 2 h2lt (by decide) (by decide),
+          h_v5_unc 2 h2lt (by decide) (by decide),
+          h_v4_unc 2 h2lt (by decide) (by decide),
+          h_v3_unc 2 h2lt (by decide) (by decide),
+          h_v2_unc 2 h2lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v1_j
+  -- Lane 3: touched in step 2 as j-lane.
+  · have h_eq : v8.elements.val[3]! = v2.elements.val[3]! := by
+      rw [h_v8_unc 3 h3lt (by decide) (by decide),
+          h_v7_unc 3 h3lt (by decide) (by decide),
+          h_v6_unc 3 h3lt (by decide) (by decide),
+          h_v5_unc 3 h3lt (by decide) (by decide),
+          h_v4_unc 3 h3lt (by decide) (by decide),
+          h_v3_unc 3 h3lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v2_j
+  -- Lane 4: touched in step 3 as i-lane.
+  · have h_eq : v8.elements.val[4]! = v3.elements.val[4]! := by
+      rw [h_v8_unc 4 h4lt (by decide) (by decide),
+          h_v7_unc 4 h4lt (by decide) (by decide),
+          h_v6_unc 4 h4lt (by decide) (by decide),
+          h_v5_unc 4 h4lt (by decide) (by decide),
+          h_v4_unc 4 h4lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v3_i
+  -- Lane 5: touched in step 4 as i-lane.
+  · have h_eq : v8.elements.val[5]! = v4.elements.val[5]! := by
+      rw [h_v8_unc 5 h5lt (by decide) (by decide),
+          h_v7_unc 5 h5lt (by decide) (by decide),
+          h_v6_unc 5 h5lt (by decide) (by decide),
+          h_v5_unc 5 h5lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v4_i
+  -- Lane 6: touched in step 3 as j-lane.
+  · have h_eq : v8.elements.val[6]! = v3.elements.val[6]! := by
+      rw [h_v8_unc 6 h6lt (by decide) (by decide),
+          h_v7_unc 6 h6lt (by decide) (by decide),
+          h_v6_unc 6 h6lt (by decide) (by decide),
+          h_v5_unc 6 h6lt (by decide) (by decide),
+          h_v4_unc 6 h6lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v3_j
+  -- Lane 7: touched in step 4 as j-lane.
+  · have h_eq : v8.elements.val[7]! = v4.elements.val[7]! := by
+      rw [h_v8_unc 7 h7lt (by decide) (by decide),
+          h_v7_unc 7 h7lt (by decide) (by decide),
+          h_v6_unc 7 h7lt (by decide) (by decide),
+          h_v5_unc 7 h7lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v4_j
+  -- Lane 8: touched in step 5 as i-lane.
+  · have h_eq : v8.elements.val[8]! = v5.elements.val[8]! := by
+      rw [h_v8_unc 8 h8lt (by decide) (by decide),
+          h_v7_unc 8 h8lt (by decide) (by decide),
+          h_v6_unc 8 h8lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v5_i
+  -- Lane 9: touched in step 6 as i-lane.
+  · have h_eq : v8.elements.val[9]! = v6.elements.val[9]! := by
+      rw [h_v8_unc 9 h9lt (by decide) (by decide),
+          h_v7_unc 9 h9lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v6_i
+  -- Lane 10: touched in step 5 as j-lane.
+  · have h_eq : v8.elements.val[10]! = v5.elements.val[10]! := by
+      rw [h_v8_unc 10 h10lt (by decide) (by decide),
+          h_v7_unc 10 h10lt (by decide) (by decide),
+          h_v6_unc 10 h10lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v5_j
+  -- Lane 11: touched in step 6 as j-lane.
+  · have h_eq : v8.elements.val[11]! = v6.elements.val[11]! := by
+      rw [h_v8_unc 11 h11lt (by decide) (by decide),
+          h_v7_unc 11 h11lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v6_j
+  -- Lane 12: touched in step 7 as i-lane.
+  · have h_eq : v8.elements.val[12]! = v7.elements.val[12]! := by
+      rw [h_v8_unc 12 h12lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v7_i
+  -- Lane 13: touched in step 8 as i-lane.
+  · exact h_v8_i
+  -- Lane 14: touched in step 7 as j-lane.
+  · have h_eq : v8.elements.val[14]! = v7.elements.val[14]! := by
+      rw [h_v8_unc 14 h14lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v7_j
+  -- Lane 15: touched in step 8 as j-lane.
+  · exact h_v8_j
+
 /-! ## L2.3 — `ntt_layer_2_step_spec`
 
     Eight disjoint butterflies on pairs `(0,4)ζ0`, `(1,5)ζ0`, `(2,6)ζ0`,
@@ -1154,6 +1435,275 @@ theorem ntt_layer_2_step_spec
   -- Lane 15: step 8 j-lane.
   · exact h_v8_j
 
+/-! ## L2.3.bnd — `ntt_layer_2_step_spec_bnd`
+
+    Nat-bnd parameterised mirror of `ntt_layer_2_step_spec` (L2.3): same
+    eight disjoint butterflies on pairs `(0,4)ζ0`, `(1,5)ζ0`, `(2,6)ζ0`,
+    `(3,7)ζ0`, `(8,12)ζ1`, `(9,13)ζ1`, `(10,14)ζ1`, `(11,15)ζ1`, dispatched
+    via the `_bnd` form. Same `bnd ≤ 8 * 3328` precondition as
+    `ntt_layer_1_step_spec_bnd`. -/
+
+@[spec]
+theorem ntt_layer_2_step_spec_bnd
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 : Std.I16)
+    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (hz0 : zeta0.val.natAbs ≤ 1664) (hz1 : zeta1.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ bnd) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_2_step vec zeta0 zeta1
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 → (r.elements.val[i]!).val.natAbs ≤ bnd + 3328 ⌝ ⦄ := by
+  have h0lt : (0#usize : Std.Usize).val < 16 := by decide
+  have h1lt : (1#usize : Std.Usize).val < 16 := by decide
+  have h2lt : (2#usize : Std.Usize).val < 16 := by decide
+  have h3lt : (3#usize : Std.Usize).val < 16 := by decide
+  have h4lt : (4#usize : Std.Usize).val < 16 := by decide
+  have h5lt : (5#usize : Std.Usize).val < 16 := by decide
+  have h6lt : (6#usize : Std.Usize).val < 16 := by decide
+  have h7lt : (7#usize : Std.Usize).val < 16 := by decide
+  have h8lt : (8#usize : Std.Usize).val < 16 := by decide
+  have h9lt : (9#usize : Std.Usize).val < 16 := by decide
+  have h10lt : (10#usize : Std.Usize).val < 16 := by decide
+  have h11lt : (11#usize : Std.Usize).val < 16 := by decide
+  have h12lt : (12#usize : Std.Usize).val < 16 := by decide
+  have h13lt : (13#usize : Std.Usize).val < 16 := by decide
+  have h14lt : (14#usize : Std.Usize).val < 16 := by decide
+  have h15lt : (15#usize : Std.Usize).val < 16 := by decide
+  -- Bridge: bnd ≤ 8*3328 = 26624 ≤ 29439 (= ntt_step_spec_bnd's max input bound).
+  have h_bnd29439 : bnd ≤ 29439 := by omega
+  have hb_init : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ bnd := hpre
+  -- Step 1: (0, 4) ζ0.
+  obtain ⟨v1, h_v1_eq, h_v1_unc, h_v1_i, h_v1_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd vec zeta0 0#usize 4#usize bnd
+      h0lt h4lt (by decide) hz0 (hb_init 0 h0lt) (hb_init 4 h4lt) h_bnd29439)
+  -- Step 2: (1, 5) ζ0.
+  have h_v1_1 : (v1.elements.val[1]!).val.natAbs ≤ bnd := by
+    rw [h_v1_unc 1 h1lt (by decide) (by decide)]; exact hb_init 1 h1lt
+  have h_v1_5 : (v1.elements.val[5]!).val.natAbs ≤ bnd := by
+    rw [h_v1_unc 5 h5lt (by decide) (by decide)]; exact hb_init 5 h5lt
+  obtain ⟨v2, h_v2_eq, h_v2_unc, h_v2_i, h_v2_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v1 zeta0 1#usize 5#usize bnd
+      h1lt h5lt (by decide) hz0 h_v1_1 h_v1_5 h_bnd29439)
+  -- Step 3: (2, 6) ζ0.
+  have h_v2_2 : (v2.elements.val[2]!).val.natAbs ≤ bnd := by
+    rw [h_v2_unc 2 h2lt (by decide) (by decide), h_v1_unc 2 h2lt (by decide) (by decide)]
+    exact hb_init 2 h2lt
+  have h_v2_6 : (v2.elements.val[6]!).val.natAbs ≤ bnd := by
+    rw [h_v2_unc 6 h6lt (by decide) (by decide), h_v1_unc 6 h6lt (by decide) (by decide)]
+    exact hb_init 6 h6lt
+  obtain ⟨v3, h_v3_eq, h_v3_unc, h_v3_i, h_v3_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v2 zeta0 2#usize 6#usize bnd
+      h2lt h6lt (by decide) hz0 h_v2_2 h_v2_6 h_bnd29439)
+  -- Step 4: (3, 7) ζ0.
+  have h_v3_3 : (v3.elements.val[3]!).val.natAbs ≤ bnd := by
+    rw [h_v3_unc 3 h3lt (by decide) (by decide),
+        h_v2_unc 3 h3lt (by decide) (by decide),
+        h_v1_unc 3 h3lt (by decide) (by decide)]
+    exact hb_init 3 h3lt
+  have h_v3_7 : (v3.elements.val[7]!).val.natAbs ≤ bnd := by
+    rw [h_v3_unc 7 h7lt (by decide) (by decide),
+        h_v2_unc 7 h7lt (by decide) (by decide),
+        h_v1_unc 7 h7lt (by decide) (by decide)]
+    exact hb_init 7 h7lt
+  obtain ⟨v4, h_v4_eq, h_v4_unc, h_v4_i, h_v4_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v3 zeta0 3#usize 7#usize bnd
+      h3lt h7lt (by decide) hz0 h_v3_3 h_v3_7 h_bnd29439)
+  -- Step 5: (8, 12) ζ1.
+  have h_v4_8 : (v4.elements.val[8]!).val.natAbs ≤ bnd := by
+    rw [h_v4_unc 8 h8lt (by decide) (by decide),
+        h_v3_unc 8 h8lt (by decide) (by decide),
+        h_v2_unc 8 h8lt (by decide) (by decide),
+        h_v1_unc 8 h8lt (by decide) (by decide)]
+    exact hb_init 8 h8lt
+  have h_v4_12 : (v4.elements.val[12]!).val.natAbs ≤ bnd := by
+    rw [h_v4_unc 12 h12lt (by decide) (by decide),
+        h_v3_unc 12 h12lt (by decide) (by decide),
+        h_v2_unc 12 h12lt (by decide) (by decide),
+        h_v1_unc 12 h12lt (by decide) (by decide)]
+    exact hb_init 12 h12lt
+  obtain ⟨v5, h_v5_eq, h_v5_unc, h_v5_i, h_v5_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v4 zeta1 8#usize 12#usize bnd
+      h8lt h12lt (by decide) hz1 h_v4_8 h_v4_12 h_bnd29439)
+  -- Step 6: (9, 13) ζ1.
+  have h_v5_9 : (v5.elements.val[9]!).val.natAbs ≤ bnd := by
+    rw [h_v5_unc 9 h9lt (by decide) (by decide),
+        h_v4_unc 9 h9lt (by decide) (by decide),
+        h_v3_unc 9 h9lt (by decide) (by decide),
+        h_v2_unc 9 h9lt (by decide) (by decide),
+        h_v1_unc 9 h9lt (by decide) (by decide)]
+    exact hb_init 9 h9lt
+  have h_v5_13 : (v5.elements.val[13]!).val.natAbs ≤ bnd := by
+    rw [h_v5_unc 13 h13lt (by decide) (by decide),
+        h_v4_unc 13 h13lt (by decide) (by decide),
+        h_v3_unc 13 h13lt (by decide) (by decide),
+        h_v2_unc 13 h13lt (by decide) (by decide),
+        h_v1_unc 13 h13lt (by decide) (by decide)]
+    exact hb_init 13 h13lt
+  obtain ⟨v6, h_v6_eq, h_v6_unc, h_v6_i, h_v6_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v5 zeta1 9#usize 13#usize bnd
+      h9lt h13lt (by decide) hz1 h_v5_9 h_v5_13 h_bnd29439)
+  -- Step 7: (10, 14) ζ1.
+  have h_v6_10 : (v6.elements.val[10]!).val.natAbs ≤ bnd := by
+    rw [h_v6_unc 10 h10lt (by decide) (by decide),
+        h_v5_unc 10 h10lt (by decide) (by decide),
+        h_v4_unc 10 h10lt (by decide) (by decide),
+        h_v3_unc 10 h10lt (by decide) (by decide),
+        h_v2_unc 10 h10lt (by decide) (by decide),
+        h_v1_unc 10 h10lt (by decide) (by decide)]
+    exact hb_init 10 h10lt
+  have h_v6_14 : (v6.elements.val[14]!).val.natAbs ≤ bnd := by
+    rw [h_v6_unc 14 h14lt (by decide) (by decide),
+        h_v5_unc 14 h14lt (by decide) (by decide),
+        h_v4_unc 14 h14lt (by decide) (by decide),
+        h_v3_unc 14 h14lt (by decide) (by decide),
+        h_v2_unc 14 h14lt (by decide) (by decide),
+        h_v1_unc 14 h14lt (by decide) (by decide)]
+    exact hb_init 14 h14lt
+  obtain ⟨v7, h_v7_eq, h_v7_unc, h_v7_i, h_v7_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v6 zeta1 10#usize 14#usize bnd
+      h10lt h14lt (by decide) hz1 h_v6_10 h_v6_14 h_bnd29439)
+  -- Step 8: (11, 15) ζ1.
+  have h_v7_11 : (v7.elements.val[11]!).val.natAbs ≤ bnd := by
+    rw [h_v7_unc 11 h11lt (by decide) (by decide),
+        h_v6_unc 11 h11lt (by decide) (by decide),
+        h_v5_unc 11 h11lt (by decide) (by decide),
+        h_v4_unc 11 h11lt (by decide) (by decide),
+        h_v3_unc 11 h11lt (by decide) (by decide),
+        h_v2_unc 11 h11lt (by decide) (by decide),
+        h_v1_unc 11 h11lt (by decide) (by decide)]
+    exact hb_init 11 h11lt
+  have h_v7_15 : (v7.elements.val[15]!).val.natAbs ≤ bnd := by
+    rw [h_v7_unc 15 h15lt (by decide) (by decide),
+        h_v6_unc 15 h15lt (by decide) (by decide),
+        h_v5_unc 15 h15lt (by decide) (by decide),
+        h_v4_unc 15 h15lt (by decide) (by decide),
+        h_v3_unc 15 h15lt (by decide) (by decide),
+        h_v2_unc 15 h15lt (by decide) (by decide),
+        h_v1_unc 15 h15lt (by decide) (by decide)]
+    exact hb_init 15 h15lt
+  obtain ⟨v8, h_v8_eq, h_v8_unc, h_v8_i, h_v8_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v7 zeta1 11#usize 15#usize bnd
+      h11lt h15lt (by decide) hz1 h_v7_11 h_v7_15 h_bnd29439)
+  -- Compose into one `.ok v8` equation.
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_2_step vec zeta0 zeta1
+        = .ok v8 := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_2_step
+    rw [h_v1_eq]; simp only [bind_tc_ok]
+    rw [h_v2_eq]; simp only [bind_tc_ok]
+    rw [h_v3_eq]; simp only [bind_tc_ok]
+    rw [h_v4_eq]; simp only [bind_tc_ok]
+    rw [h_v5_eq]; simp only [bind_tc_ok]
+    rw [h_v6_eq]; simp only [bind_tc_ok]
+    rw [h_v7_eq]; simp only [bind_tc_ok]
+    exact h_v8_eq
+  -- Close: per-lane case split.
+  apply triple_of_ok_l2 h_body
+  intro i hi
+  interval_cases i
+  -- Lane 0: step 1 i-lane.
+  · have h_eq : v8.elements.val[0]! = v1.elements.val[0]! := by
+      rw [h_v8_unc 0 h0lt (by decide) (by decide),
+          h_v7_unc 0 h0lt (by decide) (by decide),
+          h_v6_unc 0 h0lt (by decide) (by decide),
+          h_v5_unc 0 h0lt (by decide) (by decide),
+          h_v4_unc 0 h0lt (by decide) (by decide),
+          h_v3_unc 0 h0lt (by decide) (by decide),
+          h_v2_unc 0 h0lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v1_i
+  -- Lane 1: step 2 i-lane.
+  · have h_eq : v8.elements.val[1]! = v2.elements.val[1]! := by
+      rw [h_v8_unc 1 h1lt (by decide) (by decide),
+          h_v7_unc 1 h1lt (by decide) (by decide),
+          h_v6_unc 1 h1lt (by decide) (by decide),
+          h_v5_unc 1 h1lt (by decide) (by decide),
+          h_v4_unc 1 h1lt (by decide) (by decide),
+          h_v3_unc 1 h1lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v2_i
+  -- Lane 2: step 3 i-lane.
+  · have h_eq : v8.elements.val[2]! = v3.elements.val[2]! := by
+      rw [h_v8_unc 2 h2lt (by decide) (by decide),
+          h_v7_unc 2 h2lt (by decide) (by decide),
+          h_v6_unc 2 h2lt (by decide) (by decide),
+          h_v5_unc 2 h2lt (by decide) (by decide),
+          h_v4_unc 2 h2lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v3_i
+  -- Lane 3: step 4 i-lane.
+  · have h_eq : v8.elements.val[3]! = v4.elements.val[3]! := by
+      rw [h_v8_unc 3 h3lt (by decide) (by decide),
+          h_v7_unc 3 h3lt (by decide) (by decide),
+          h_v6_unc 3 h3lt (by decide) (by decide),
+          h_v5_unc 3 h3lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v4_i
+  -- Lane 4: step 1 j-lane.
+  · have h_eq : v8.elements.val[4]! = v1.elements.val[4]! := by
+      rw [h_v8_unc 4 h4lt (by decide) (by decide),
+          h_v7_unc 4 h4lt (by decide) (by decide),
+          h_v6_unc 4 h4lt (by decide) (by decide),
+          h_v5_unc 4 h4lt (by decide) (by decide),
+          h_v4_unc 4 h4lt (by decide) (by decide),
+          h_v3_unc 4 h4lt (by decide) (by decide),
+          h_v2_unc 4 h4lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v1_j
+  -- Lane 5: step 2 j-lane.
+  · have h_eq : v8.elements.val[5]! = v2.elements.val[5]! := by
+      rw [h_v8_unc 5 h5lt (by decide) (by decide),
+          h_v7_unc 5 h5lt (by decide) (by decide),
+          h_v6_unc 5 h5lt (by decide) (by decide),
+          h_v5_unc 5 h5lt (by decide) (by decide),
+          h_v4_unc 5 h5lt (by decide) (by decide),
+          h_v3_unc 5 h5lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v2_j
+  -- Lane 6: step 3 j-lane.
+  · have h_eq : v8.elements.val[6]! = v3.elements.val[6]! := by
+      rw [h_v8_unc 6 h6lt (by decide) (by decide),
+          h_v7_unc 6 h6lt (by decide) (by decide),
+          h_v6_unc 6 h6lt (by decide) (by decide),
+          h_v5_unc 6 h6lt (by decide) (by decide),
+          h_v4_unc 6 h6lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v3_j
+  -- Lane 7: step 4 j-lane.
+  · have h_eq : v8.elements.val[7]! = v4.elements.val[7]! := by
+      rw [h_v8_unc 7 h7lt (by decide) (by decide),
+          h_v7_unc 7 h7lt (by decide) (by decide),
+          h_v6_unc 7 h7lt (by decide) (by decide),
+          h_v5_unc 7 h7lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v4_j
+  -- Lane 8: step 5 i-lane.
+  · have h_eq : v8.elements.val[8]! = v5.elements.val[8]! := by
+      rw [h_v8_unc 8 h8lt (by decide) (by decide),
+          h_v7_unc 8 h8lt (by decide) (by decide),
+          h_v6_unc 8 h8lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v5_i
+  -- Lane 9: step 6 i-lane.
+  · have h_eq : v8.elements.val[9]! = v6.elements.val[9]! := by
+      rw [h_v8_unc 9 h9lt (by decide) (by decide),
+          h_v7_unc 9 h9lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v6_i
+  -- Lane 10: step 7 i-lane.
+  · have h_eq : v8.elements.val[10]! = v7.elements.val[10]! := by
+      rw [h_v8_unc 10 h10lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v7_i
+  -- Lane 11: step 8 i-lane.
+  · exact h_v8_i
+  -- Lane 12: step 5 j-lane.
+  · have h_eq : v8.elements.val[12]! = v5.elements.val[12]! := by
+      rw [h_v8_unc 12 h12lt (by decide) (by decide),
+          h_v7_unc 12 h12lt (by decide) (by decide),
+          h_v6_unc 12 h12lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v5_j
+  -- Lane 13: step 6 j-lane.
+  · have h_eq : v8.elements.val[13]! = v6.elements.val[13]! := by
+      rw [h_v8_unc 13 h13lt (by decide) (by decide),
+          h_v7_unc 13 h13lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v6_j
+  -- Lane 14: step 7 j-lane.
+  · have h_eq : v8.elements.val[14]! = v7.elements.val[14]! := by
+      rw [h_v8_unc 14 h14lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v7_j
+  -- Lane 15: step 8 j-lane.
+  · exact h_v8_j
+
 /-! ## L2.4 — `ntt_layer_3_step_spec`
 
     Eight disjoint butterflies on pairs `(0,8)`, `(1,9)`, `(2,10)`, `(3,11)`,
@@ -1298,6 +1848,273 @@ theorem ntt_layer_3_step_spec
   obtain ⟨v8, h_v8_eq, h_v8_unc, h_v8_i, h_v8_j⟩ :=
     triple_exists_ok_l2 (ntt_step_spec_B v7 zeta 7#usize 15#usize 5
       h7lt h15lt (by decide) hz h_v7_7 h_v7_15 (by decide))
+  -- Compose into one `.ok v8` equation.
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_3_step vec zeta = .ok v8 := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_3_step
+    rw [h_v1_eq]; simp only [bind_tc_ok]
+    rw [h_v2_eq]; simp only [bind_tc_ok]
+    rw [h_v3_eq]; simp only [bind_tc_ok]
+    rw [h_v4_eq]; simp only [bind_tc_ok]
+    rw [h_v5_eq]; simp only [bind_tc_ok]
+    rw [h_v6_eq]; simp only [bind_tc_ok]
+    rw [h_v7_eq]; simp only [bind_tc_ok]
+    exact h_v8_eq
+  -- Close: per-lane case split.
+  apply triple_of_ok_l2 h_body
+  intro i hi
+  interval_cases i
+  -- Lane 0: step 1 i-lane.
+  · have h_eq : v8.elements.val[0]! = v1.elements.val[0]! := by
+      rw [h_v8_unc 0 h0lt (by decide) (by decide),
+          h_v7_unc 0 h0lt (by decide) (by decide),
+          h_v6_unc 0 h0lt (by decide) (by decide),
+          h_v5_unc 0 h0lt (by decide) (by decide),
+          h_v4_unc 0 h0lt (by decide) (by decide),
+          h_v3_unc 0 h0lt (by decide) (by decide),
+          h_v2_unc 0 h0lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v1_i
+  -- Lane 1: step 2 i-lane.
+  · have h_eq : v8.elements.val[1]! = v2.elements.val[1]! := by
+      rw [h_v8_unc 1 h1lt (by decide) (by decide),
+          h_v7_unc 1 h1lt (by decide) (by decide),
+          h_v6_unc 1 h1lt (by decide) (by decide),
+          h_v5_unc 1 h1lt (by decide) (by decide),
+          h_v4_unc 1 h1lt (by decide) (by decide),
+          h_v3_unc 1 h1lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v2_i
+  -- Lane 2: step 3 i-lane.
+  · have h_eq : v8.elements.val[2]! = v3.elements.val[2]! := by
+      rw [h_v8_unc 2 h2lt (by decide) (by decide),
+          h_v7_unc 2 h2lt (by decide) (by decide),
+          h_v6_unc 2 h2lt (by decide) (by decide),
+          h_v5_unc 2 h2lt (by decide) (by decide),
+          h_v4_unc 2 h2lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v3_i
+  -- Lane 3: step 4 i-lane.
+  · have h_eq : v8.elements.val[3]! = v4.elements.val[3]! := by
+      rw [h_v8_unc 3 h3lt (by decide) (by decide),
+          h_v7_unc 3 h3lt (by decide) (by decide),
+          h_v6_unc 3 h3lt (by decide) (by decide),
+          h_v5_unc 3 h3lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v4_i
+  -- Lane 4: step 5 i-lane.
+  · have h_eq : v8.elements.val[4]! = v5.elements.val[4]! := by
+      rw [h_v8_unc 4 h4lt (by decide) (by decide),
+          h_v7_unc 4 h4lt (by decide) (by decide),
+          h_v6_unc 4 h4lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v5_i
+  -- Lane 5: step 6 i-lane.
+  · have h_eq : v8.elements.val[5]! = v6.elements.val[5]! := by
+      rw [h_v8_unc 5 h5lt (by decide) (by decide),
+          h_v7_unc 5 h5lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v6_i
+  -- Lane 6: step 7 i-lane.
+  · have h_eq : v8.elements.val[6]! = v7.elements.val[6]! := by
+      rw [h_v8_unc 6 h6lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v7_i
+  -- Lane 7: step 8 i-lane.
+  · exact h_v8_i
+  -- Lane 8: step 1 j-lane.
+  · have h_eq : v8.elements.val[8]! = v1.elements.val[8]! := by
+      rw [h_v8_unc 8 h8lt (by decide) (by decide),
+          h_v7_unc 8 h8lt (by decide) (by decide),
+          h_v6_unc 8 h8lt (by decide) (by decide),
+          h_v5_unc 8 h8lt (by decide) (by decide),
+          h_v4_unc 8 h8lt (by decide) (by decide),
+          h_v3_unc 8 h8lt (by decide) (by decide),
+          h_v2_unc 8 h8lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v1_j
+  -- Lane 9: step 2 j-lane.
+  · have h_eq : v8.elements.val[9]! = v2.elements.val[9]! := by
+      rw [h_v8_unc 9 h9lt (by decide) (by decide),
+          h_v7_unc 9 h9lt (by decide) (by decide),
+          h_v6_unc 9 h9lt (by decide) (by decide),
+          h_v5_unc 9 h9lt (by decide) (by decide),
+          h_v4_unc 9 h9lt (by decide) (by decide),
+          h_v3_unc 9 h9lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v2_j
+  -- Lane 10: step 3 j-lane.
+  · have h_eq : v8.elements.val[10]! = v3.elements.val[10]! := by
+      rw [h_v8_unc 10 h10lt (by decide) (by decide),
+          h_v7_unc 10 h10lt (by decide) (by decide),
+          h_v6_unc 10 h10lt (by decide) (by decide),
+          h_v5_unc 10 h10lt (by decide) (by decide),
+          h_v4_unc 10 h10lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v3_j
+  -- Lane 11: step 4 j-lane.
+  · have h_eq : v8.elements.val[11]! = v4.elements.val[11]! := by
+      rw [h_v8_unc 11 h11lt (by decide) (by decide),
+          h_v7_unc 11 h11lt (by decide) (by decide),
+          h_v6_unc 11 h11lt (by decide) (by decide),
+          h_v5_unc 11 h11lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v4_j
+  -- Lane 12: step 5 j-lane.
+  · have h_eq : v8.elements.val[12]! = v5.elements.val[12]! := by
+      rw [h_v8_unc 12 h12lt (by decide) (by decide),
+          h_v7_unc 12 h12lt (by decide) (by decide),
+          h_v6_unc 12 h12lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v5_j
+  -- Lane 13: step 6 j-lane.
+  · have h_eq : v8.elements.val[13]! = v6.elements.val[13]! := by
+      rw [h_v8_unc 13 h13lt (by decide) (by decide),
+          h_v7_unc 13 h13lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v6_j
+  -- Lane 14: step 7 j-lane.
+  · have h_eq : v8.elements.val[14]! = v7.elements.val[14]! := by
+      rw [h_v8_unc 14 h14lt (by decide) (by decide)]
+    rw [h_eq]; exact h_v7_j
+  -- Lane 15: step 8 j-lane.
+  · exact h_v8_j
+
+/-! ## L2.4.bnd — `ntt_layer_3_step_spec_bnd`
+
+    Nat-bnd parameterised mirror of `ntt_layer_3_step_spec` (L2.4): same
+    eight disjoint butterflies on pairs `(0,8)`, `(1,9)`, `(2,10)`, `(3,11)`,
+    `(4,12)`, `(5,13)`, `(6,14)`, `(7,15)` — single ζ. Same
+    `bnd ≤ 8 * 3328` precondition as `ntt_layer_{1,2}_step_spec_bnd`. -/
+
+@[spec]
+theorem ntt_layer_3_step_spec_bnd
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta : Std.I16)
+    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
+    (hz : zeta.val.natAbs ≤ 1664)
+    (hpre : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ bnd) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_3_step vec zeta
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 → (r.elements.val[i]!).val.natAbs ≤ bnd + 3328 ⌝ ⦄ := by
+  have h0lt : (0#usize : Std.Usize).val < 16 := by decide
+  have h1lt : (1#usize : Std.Usize).val < 16 := by decide
+  have h2lt : (2#usize : Std.Usize).val < 16 := by decide
+  have h3lt : (3#usize : Std.Usize).val < 16 := by decide
+  have h4lt : (4#usize : Std.Usize).val < 16 := by decide
+  have h5lt : (5#usize : Std.Usize).val < 16 := by decide
+  have h6lt : (6#usize : Std.Usize).val < 16 := by decide
+  have h7lt : (7#usize : Std.Usize).val < 16 := by decide
+  have h8lt : (8#usize : Std.Usize).val < 16 := by decide
+  have h9lt : (9#usize : Std.Usize).val < 16 := by decide
+  have h10lt : (10#usize : Std.Usize).val < 16 := by decide
+  have h11lt : (11#usize : Std.Usize).val < 16 := by decide
+  have h12lt : (12#usize : Std.Usize).val < 16 := by decide
+  have h13lt : (13#usize : Std.Usize).val < 16 := by decide
+  have h14lt : (14#usize : Std.Usize).val < 16 := by decide
+  have h15lt : (15#usize : Std.Usize).val < 16 := by decide
+  -- Bridge: bnd ≤ 8*3328 = 26624 ≤ 29439 (= ntt_step_spec_bnd's max input bound).
+  have h_bnd29439 : bnd ≤ 29439 := by omega
+  have hb_init : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ bnd := hpre
+  -- Step 1: (0, 8).
+  obtain ⟨v1, h_v1_eq, h_v1_unc, h_v1_i, h_v1_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd vec zeta 0#usize 8#usize bnd
+      h0lt h8lt (by decide) hz (hb_init 0 h0lt) (hb_init 8 h8lt) h_bnd29439)
+  -- Step 2: (1, 9).
+  have h_v1_1 : (v1.elements.val[1]!).val.natAbs ≤ bnd := by
+    rw [h_v1_unc 1 h1lt (by decide) (by decide)]; exact hb_init 1 h1lt
+  have h_v1_9 : (v1.elements.val[9]!).val.natAbs ≤ bnd := by
+    rw [h_v1_unc 9 h9lt (by decide) (by decide)]; exact hb_init 9 h9lt
+  obtain ⟨v2, h_v2_eq, h_v2_unc, h_v2_i, h_v2_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v1 zeta 1#usize 9#usize bnd
+      h1lt h9lt (by decide) hz h_v1_1 h_v1_9 h_bnd29439)
+  -- Step 3: (2, 10).
+  have h_v2_2 : (v2.elements.val[2]!).val.natAbs ≤ bnd := by
+    rw [h_v2_unc 2 h2lt (by decide) (by decide), h_v1_unc 2 h2lt (by decide) (by decide)]
+    exact hb_init 2 h2lt
+  have h_v2_10 : (v2.elements.val[10]!).val.natAbs ≤ bnd := by
+    rw [h_v2_unc 10 h10lt (by decide) (by decide), h_v1_unc 10 h10lt (by decide) (by decide)]
+    exact hb_init 10 h10lt
+  obtain ⟨v3, h_v3_eq, h_v3_unc, h_v3_i, h_v3_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v2 zeta 2#usize 10#usize bnd
+      h2lt h10lt (by decide) hz h_v2_2 h_v2_10 h_bnd29439)
+  -- Step 4: (3, 11).
+  have h_v3_3 : (v3.elements.val[3]!).val.natAbs ≤ bnd := by
+    rw [h_v3_unc 3 h3lt (by decide) (by decide),
+        h_v2_unc 3 h3lt (by decide) (by decide),
+        h_v1_unc 3 h3lt (by decide) (by decide)]
+    exact hb_init 3 h3lt
+  have h_v3_11 : (v3.elements.val[11]!).val.natAbs ≤ bnd := by
+    rw [h_v3_unc 11 h11lt (by decide) (by decide),
+        h_v2_unc 11 h11lt (by decide) (by decide),
+        h_v1_unc 11 h11lt (by decide) (by decide)]
+    exact hb_init 11 h11lt
+  obtain ⟨v4, h_v4_eq, h_v4_unc, h_v4_i, h_v4_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v3 zeta 3#usize 11#usize bnd
+      h3lt h11lt (by decide) hz h_v3_3 h_v3_11 h_bnd29439)
+  -- Step 5: (4, 12).
+  have h_v4_4 : (v4.elements.val[4]!).val.natAbs ≤ bnd := by
+    rw [h_v4_unc 4 h4lt (by decide) (by decide),
+        h_v3_unc 4 h4lt (by decide) (by decide),
+        h_v2_unc 4 h4lt (by decide) (by decide),
+        h_v1_unc 4 h4lt (by decide) (by decide)]
+    exact hb_init 4 h4lt
+  have h_v4_12 : (v4.elements.val[12]!).val.natAbs ≤ bnd := by
+    rw [h_v4_unc 12 h12lt (by decide) (by decide),
+        h_v3_unc 12 h12lt (by decide) (by decide),
+        h_v2_unc 12 h12lt (by decide) (by decide),
+        h_v1_unc 12 h12lt (by decide) (by decide)]
+    exact hb_init 12 h12lt
+  obtain ⟨v5, h_v5_eq, h_v5_unc, h_v5_i, h_v5_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v4 zeta 4#usize 12#usize bnd
+      h4lt h12lt (by decide) hz h_v4_4 h_v4_12 h_bnd29439)
+  -- Step 6: (5, 13).
+  have h_v5_5 : (v5.elements.val[5]!).val.natAbs ≤ bnd := by
+    rw [h_v5_unc 5 h5lt (by decide) (by decide),
+        h_v4_unc 5 h5lt (by decide) (by decide),
+        h_v3_unc 5 h5lt (by decide) (by decide),
+        h_v2_unc 5 h5lt (by decide) (by decide),
+        h_v1_unc 5 h5lt (by decide) (by decide)]
+    exact hb_init 5 h5lt
+  have h_v5_13 : (v5.elements.val[13]!).val.natAbs ≤ bnd := by
+    rw [h_v5_unc 13 h13lt (by decide) (by decide),
+        h_v4_unc 13 h13lt (by decide) (by decide),
+        h_v3_unc 13 h13lt (by decide) (by decide),
+        h_v2_unc 13 h13lt (by decide) (by decide),
+        h_v1_unc 13 h13lt (by decide) (by decide)]
+    exact hb_init 13 h13lt
+  obtain ⟨v6, h_v6_eq, h_v6_unc, h_v6_i, h_v6_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v5 zeta 5#usize 13#usize bnd
+      h5lt h13lt (by decide) hz h_v5_5 h_v5_13 h_bnd29439)
+  -- Step 7: (6, 14).
+  have h_v6_6 : (v6.elements.val[6]!).val.natAbs ≤ bnd := by
+    rw [h_v6_unc 6 h6lt (by decide) (by decide),
+        h_v5_unc 6 h6lt (by decide) (by decide),
+        h_v4_unc 6 h6lt (by decide) (by decide),
+        h_v3_unc 6 h6lt (by decide) (by decide),
+        h_v2_unc 6 h6lt (by decide) (by decide),
+        h_v1_unc 6 h6lt (by decide) (by decide)]
+    exact hb_init 6 h6lt
+  have h_v6_14 : (v6.elements.val[14]!).val.natAbs ≤ bnd := by
+    rw [h_v6_unc 14 h14lt (by decide) (by decide),
+        h_v5_unc 14 h14lt (by decide) (by decide),
+        h_v4_unc 14 h14lt (by decide) (by decide),
+        h_v3_unc 14 h14lt (by decide) (by decide),
+        h_v2_unc 14 h14lt (by decide) (by decide),
+        h_v1_unc 14 h14lt (by decide) (by decide)]
+    exact hb_init 14 h14lt
+  obtain ⟨v7, h_v7_eq, h_v7_unc, h_v7_i, h_v7_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v6 zeta 6#usize 14#usize bnd
+      h6lt h14lt (by decide) hz h_v6_6 h_v6_14 h_bnd29439)
+  -- Step 8: (7, 15).
+  have h_v7_7 : (v7.elements.val[7]!).val.natAbs ≤ bnd := by
+    rw [h_v7_unc 7 h7lt (by decide) (by decide),
+        h_v6_unc 7 h7lt (by decide) (by decide),
+        h_v5_unc 7 h7lt (by decide) (by decide),
+        h_v4_unc 7 h7lt (by decide) (by decide),
+        h_v3_unc 7 h7lt (by decide) (by decide),
+        h_v2_unc 7 h7lt (by decide) (by decide),
+        h_v1_unc 7 h7lt (by decide) (by decide)]
+    exact hb_init 7 h7lt
+  have h_v7_15 : (v7.elements.val[15]!).val.natAbs ≤ bnd := by
+    rw [h_v7_unc 15 h15lt (by decide) (by decide),
+        h_v6_unc 15 h15lt (by decide) (by decide),
+        h_v5_unc 15 h15lt (by decide) (by decide),
+        h_v4_unc 15 h15lt (by decide) (by decide),
+        h_v3_unc 15 h15lt (by decide) (by decide),
+        h_v2_unc 15 h15lt (by decide) (by decide),
+        h_v1_unc 15 h15lt (by decide) (by decide)]
+    exact hb_init 15 h15lt
+  obtain ⟨v8, h_v8_eq, h_v8_unc, h_v8_i, h_v8_j⟩ :=
+    triple_exists_ok_l2 (ntt_step_spec_bnd v7 zeta 7#usize 15#usize bnd
+      h7lt h15lt (by decide) hz h_v7_7 h_v7_15 h_bnd29439)
   -- Compose into one `.ok v8` equation.
   have h_body :
       libcrux_iot_ml_kem.vector.portable.ntt.ntt_layer_3_step vec zeta = .ok v8 := by
