@@ -501,15 +501,88 @@ noncomputable def Spec.chunk_inv_ntt_step_pure
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
   libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
 
-/-- Pure projection of the full hacspec `ntt.ntt`. -/
+/-- Local `Inhabited` for 16-element FE arrays, used by `[!]` indexing
+    inside `Spec.flatten_chunks`. -/
+private noncomputable instance instInhabitedFEChunk_fcTargets :
+    Inhabited (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :=
+  ⟨Std.Array.make 16#usize (List.replicate 16 defaultFE) (by simp)⟩
+
+/-- Per-index zeta lookup: project lane `i` of
+    `polynomial.ZETAS_TIMES_MONTGOMERY_R` into a canonical-domain FE.
+    The Mont-domain table holds `Std.I16` values; `lift_fe_mont` strips
+    one factor of R (yielding the canonical zeta). Out-of-range lookups
+    default to `lift_fe_mont 0 = 0` via `[!]`. -/
+noncomputable def Spec.zeta_at (i : Nat) : hacspec_ml_kem.parameters.FieldElement :=
+  lift_fe_mont (libcrux_iot_ml_kem.polynomial.ZETAS_TIMES_MONTGOMERY_R.val[i]!)
+
+/-- Chunk projection: extract the `k`-th 16-element chunk of a 256-array.
+    Used to address the impl's `re.coefficients[k]` chunk slot at the
+    spec level. -/
+noncomputable def Spec.chunk_at
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) (k : Nat) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize ((List.range 16).map (fun j => p.val[16 * k + j]!))
+    (by simp)
+
+/-- Flatten 16 chunks of 16 FEs into a 256-array. Inverse of
+    `Spec.chunk_at` under the `lift_poly` decomposition. -/
+noncomputable def Spec.flatten_chunks
+    (chunks : Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+                16#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Std.Array.make 256#usize ((List.range 256).map (fun j =>
+    (chunks.val[j / 16]!).val[j % 16]!)) (by simp)
+
+/-- Pure projection of `ntt_at_layer_1` driver: 16 chunks, each chunk
+    transformed by `chunk_ntt_layer_1_step_pure` with 4 zetas drawn
+    from positions `zeta_i + 4k + {1..4}` in the global ZETAS table. -/
+noncomputable def Spec.ntt_layer_1_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (zeta_i : Std.Usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_ntt_layer_1_step_pure (Spec.chunk_at p k)
+        (Spec.zeta_at (zeta_i.val + 4 * k + 1))
+        (Spec.zeta_at (zeta_i.val + 4 * k + 2))
+        (Spec.zeta_at (zeta_i.val + 4 * k + 3))
+        (Spec.zeta_at (zeta_i.val + 4 * k + 4))))
+      (by simp))
+
+/-- Pure projection of `ntt_at_layer_2` driver: 16 chunks, each chunk
+    transformed by `chunk_ntt_layer_2_step_pure` with 2 zetas at
+    positions `zeta_i + 2k + {1, 2}`. -/
+noncomputable def Spec.ntt_layer_2_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (zeta_i : Std.Usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_ntt_layer_2_step_pure (Spec.chunk_at p k)
+        (Spec.zeta_at (zeta_i.val + 2 * k + 1))
+        (Spec.zeta_at (zeta_i.val + 2 * k + 2))))
+      (by simp))
+
+/-- Pure projection of `ntt_at_layer_3` driver: 16 chunks, each chunk
+    transformed by `chunk_ntt_layer_3_step_pure` with 1 zeta at
+    position `zeta_i + k + 1`. -/
+noncomputable def Spec.ntt_layer_3_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (zeta_i : Std.Usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_ntt_layer_3_step_pure (Spec.chunk_at p k)
+        (Spec.zeta_at (zeta_i.val + k + 1))))
+      (by simp))
+
+/-- Pure projection of the full hacspec `ntt.ntt`. Defined as a 7-layer
+    composition with cumulative zeta offsets + final barrett.
+    **STUB**: layers 4-7 require additional helpers (nested loop
+    pattern in `ntt_at_layer_4_plus`); deferred to a follow-up phase.
+    Used by `ntt_binomially_sampled_ring_element_fc` / `ntt_vector_u_fc`. -/
 noncomputable def Spec.ntt_pure
     (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize := sorry
-
-/-- Pure projection of the layer-N driver `ntt.ntt_layer_n`. -/
-noncomputable def Spec.ntt_layer_n_pure
-    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
-    (n : Std.Usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize := sorry
 
 /-- Pure projection of `polynomial.add_error_reduce`. The hacspec spec
@@ -3791,34 +3864,47 @@ theorem ntt_at_layer_1_fc
   -- is the one used by callers; see `ntt_at_layer_1_portable_fc` below.
 
 /-- L3.1' — `ntt_at_layer_1` PortableVector-specialised FC equation.
-    The impl returns `(zeta_i_after, re_after)`; we project on `re_after`. -/
-@[spec]
+    The impl returns `(zeta_i_after, re_after)`; we project on `re_after`.
+
+    **Preconditions** (load-bearing, beyond the locked True-pre form):
+    - `h_bnd : ∀ chunk < 16, ∀ k < 16, |re.coefficients[chunk].elements[k]| ≤ 29439`
+      — every input lane satisfies the `ntt_layer_1_step` bound. Caller
+      sites guarantee this from the prior layer's output range.
+    - `h_zeta : zeta_i.val + 64 ≤ 128` — the loop reads zetas at
+      positions `zeta_i+1 .. zeta_i+64`, all of which must be in the
+      128-entry ZETAS table to avoid `.fail`. -/
+@[spec high]
 theorem ntt_at_layer_1_portable_fc
     (zeta_i : Std.Usize)
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (initial_bound : Std.Usize)
-    (hpre : True) :
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 29439)
+    (h_zeta : zeta_i.val + 64 ≤ 128) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_1
       (vectortraitsOperationsInst := portable_ops_inst)
       zeta_i re initial_bound
-    ⦃ ⇓ p => ⌜ lift_poly p.2 = Spec.ntt_layer_n_pure (lift_poly re) 1#usize ⌝ ⦄ := by
+    ⦃ ⇓ p => ⌜ lift_poly p.2 = Spec.ntt_layer_1_pure (lift_poly re) zeta_i ⌝ ⦄ := by
   sorry
 
-/-- L3.2 — `ntt_at_layer_2/3/4_plus/7` collapsed into a single
-    PortableVector FC theorem family. We split by layer for the
-    follow-up dispatch, but encode the same post-shape. -/
-@[spec]
+/-- L3.2 — `ntt_at_layer_2` PortableVector FC. Same precondition shape
+    as L3.1 (per-lane bound + zeta-index bound) but layer 2 consumes 2
+    zetas per chunk so `zeta_i + 32 ≤ 128`. -/
+@[spec high]
 theorem ntt_at_layer_2_portable_fc
     (zeta_i : Std.Usize)
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (initial_bound : Std.Usize) :
+    (initial_bound : Std.Usize)
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 29439)
+    (h_zeta : zeta_i.val + 32 ≤ 128) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_2
       (vectortraitsOperationsInst := portable_ops_inst) zeta_i re initial_bound
-    ⦃ ⇓ p => ⌜ lift_poly p.2 = Spec.ntt_layer_n_pure (lift_poly re) 2#usize ⌝ ⦄ := by
+    ⦃ ⇓ p => ⌜ lift_poly p.2 = Spec.ntt_layer_2_pure (lift_poly re) zeta_i ⌝ ⦄ := by
   sorry
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (5 layer
