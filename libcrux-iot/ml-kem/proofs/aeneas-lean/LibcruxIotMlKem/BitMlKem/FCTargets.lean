@@ -245,15 +245,18 @@ noncomputable def Spec.barrett_pure (x : hacspec_ml_kem.parameters.FieldElement)
 
 /-- Pure projection of Montgomery reduction at the FE level. The impl
     `montgomery_reduce_element` takes an `Std.I32` and returns an `Std.I16`
-    in Mont domain; the spec analogue here strips one `R` factor: given
-    a FE viewed as `x · R²`, returns `x · R`. The hacspec spec has no
-    direct counterpart (compute is done implicitly by add/sub/mul) —
-    the closest semantic match is `FieldElement.mul a (R⁻¹ in plain)`,
-    which `bit_mont_reduce_pure` below will exercise. -/
+    in Mont domain (encoding `a · R`). The hacspec spec has no direct
+    counterpart at the FE level. The FC equation
+    `lift_fe_mont r = Spec.mont_reduce_pure (lift_fe_int value.val)`
+    combines two factors of R⁻¹:
+      (i) the impl's invariant `r ≡ value · R⁻¹ (mod q)`, and
+      (ii) `lift_fe_mont`'s own R-stripping (it returns `(r.val : ZMod 3329) · 169`).
+    The TOTAL effect is `value.val · R⁻² mod q`. Since `R⁻¹ = 169 mod q`,
+    `R⁻² = 169² mod q`. So `Spec.mont_reduce_pure` multiplies its
+    ZMod-projected argument by `169 · 169`. -/
 noncomputable def Spec.mont_reduce_pure (x : hacspec_ml_kem.parameters.FieldElement) :
-    hacspec_ml_kem.parameters.FieldElement := sorry
-    -- NO DIRECT HACSPEC EQUIVALENT at the FE level — semantic match is
-    -- "multiply by R⁻¹ = 169 in canonical domain".
+    hacspec_ml_kem.parameters.FieldElement :=
+  feOfZMod (zmodOfFE x * 169 * 169)
 
 /-- Pure projection of Montgomery `fe · fer / R`: given two FEs,
     one in plain domain (`fe`) and one in Mont domain (`fer = c · R`),
@@ -538,16 +541,55 @@ theorem barrett_reduce_element_fc
   show (r0.val : ZMod 3329) = (value.val : ZMod 3329)
   exact modq_eq_cast_zmod _ _ h_modq
 
+/-! ### L0.3 — `montgomery_reduce_element`.
+
+    Proof sketch:
+    1. `Spec.mont_reduce_pure x := feOfZMod (zmodOfFE x · 169 · 169)`.
+       Helper `mont_reduce_pure_lift_fe_int` unfolds this composed with
+       `lift_fe_int v` to `feOfZMod ((v : ZMod 3329) · 169 · 169)`.
+    2. Legacy `Equivalence.montgomery_reduce_element_spec` gives
+       `r.val.natAbs ≤ 3328 + 1665 ∧ (tight-bound conditional)
+       ∧ modq_eq r.val (value.val * 169) 3329`. We extract via
+       `triple_exists_ok_fc` and drop the tight-bound conditional clause.
+    3. Translate `modq_eq r.val (value.val * 169) 3329` to a ZMod equality
+       `(r.val : ZMod 3329) = (value.val * 169 : ZMod 3329)` via
+       `modq_eq_cast_zmod`.
+    4. Unfold `lift_fe_mont` and `i16_to_spec_fe_mont`, then `congr 1`
+       reduces the goal to a ZMod equation closed by the step-3 hypothesis
+       plus `push_cast`. -/
+
+/-- Helper: `mont_reduce_pure` composed with `lift_fe_int` simplifies. -/
+private theorem mont_reduce_pure_lift_fe_int (v : Int) :
+    Spec.mont_reduce_pure (lift_fe_int v) = feOfZMod ((v : ZMod 3329) * 169 * 169) := by
+  unfold Spec.mont_reduce_pure lift_fe_int
+  rw [zmodOfFE_feOfZMod]
+
 /-- L0.3 — `montgomery_reduce_element`.
-    Spec: strip one Mont factor (multiply by R⁻¹ = 169 in `ZMod 3329`). -/
-@[spec]
+    Spec: strip TWO Mont factors (the impl's R⁻¹ + the `lift_fe_mont`
+    R-stripping). See the `Spec.mont_reduce_pure` docstring for the
+    derivation of `· 169²`. -/
+@[spec high]
 theorem montgomery_reduce_element_fc
     (value : Std.I32) (hv : value.val.natAbs ≤ 2^16 * 3328) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_reduce_element value
     ⦃ ⇓ r => ⌜ r.val.natAbs ≤ 3328 + 1665
                 ∧ lift_fe_mont r = Spec.mont_reduce_pure (lift_fe_int value.val) ⌝ ⦄ := by
-  sorry
+  have hv' : value.val.natAbs ≤ 3328 * 2^16 := by
+    have h_eq : (3328 * 2^16 : Nat) = 2^16 * 3328 := by decide
+    rw [h_eq]; exact hv
+  have h_legacy :=
+    libcrux_iot_ml_kem.Equivalence.montgomery_reduce_element_spec value hv'
+  obtain ⟨r0, h_eq, h_bnd, _h_tight, h_modq⟩ := triple_exists_ok_fc h_legacy
+  apply triple_of_ok_fc (v := r0) h_eq
+  refine ⟨h_bnd, ?_⟩
+  rw [mont_reduce_pure_lift_fe_int]
+  unfold lift_fe_mont i16_to_spec_fe_mont
+  congr 1
+  have h_zmod : ((r0.val : Int) : ZMod 3329) = ((value.val * 169 : Int) : ZMod 3329) :=
+    modq_eq_cast_zmod _ _ h_modq
+  push_cast at h_zmod
+  rw [h_zmod]
 
 /-- L0.4 — `montgomery_multiply_fe_by_fer`.
     Spec: `fe · c` (where `fer = c · R`). -/
