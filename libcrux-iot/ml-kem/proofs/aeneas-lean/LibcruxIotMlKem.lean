@@ -15,4 +15,5 @@ import LibcruxIotMlKem.Equivalence.L2_NTTSteps
 import LibcruxIotMlKem.Equivalence.L3_NTTDrivers
 import LibcruxIotMlKem.Equivalence.L6_PolyOps
 import LibcruxIotMlKem.BitMlKem.Spec
+import LibcruxIotMlKem.BitMlKem.Commute
 import LibcruxIotMlKem.Util.AutomationSandbox
