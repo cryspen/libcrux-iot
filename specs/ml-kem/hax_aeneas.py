@@ -6,16 +6,35 @@ Mirrors `specs/sha3/hax_aeneas.py`. Extracts the *entire* spec crate
 `libcrux-iot/ml-kem/hax_aeneas.py`) and patches the generated
 `HacspecMlKem/Extraction/Funs.lean` to import `HacspecMlKem.Missing`
 and to apply known mis-extraction workarounds.
+
+## Toolchain setup (matched cargo-hax + hax-engine pair)
+
+This script auto-runs `cargo-hax` and `aeneas` inside the `hax-evit`
+opam switch via `opam exec --switch=hax-evit -- …`, so you do NOT need
+to `eval $(opam env --switch=hax-evit)` first. The switch provides a
+matched `cargo-hax` + `hax-engine` pair (commit ee467e6ac3) — the
+plain `hax` switch contains a 0.3.7 hax-engine that would produce
+wrong output.
+
+Override the switch with `HAX_OPAM_SWITCH=<other-switch>` in env if
+you need a different one.
 """
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-HAX_VERSION = "7b4bd97058e0fcbf9135b76297ca91942f2327a6"
+HAX_VERSION = "ee467e6ac3f107047427b696878d0b5f76560d84"
 AENEAS_VERSION = "b5c45e84"
+HAX_OPAM_SWITCH = os.environ.get("HAX_OPAM_SWITCH", "hax-evit")
+
+
+def in_hax_switch(cmd: list[str]) -> list[str]:
+    """Wrap `cmd` to execute under the configured opam switch."""
+    return ["opam", "exec", f"--switch={HAX_OPAM_SWITCH}", "--"] + cmd
 
 
 def check_version(cmd: list[str], expected: str) -> None:
@@ -29,8 +48,12 @@ def check_version(cmd: list[str], expected: str) -> None:
         sys.exit(1)
 
 
-check_version(["cargo", "hax", "--version"], HAX_VERSION)
-check_version(["aeneas", "-version"], AENEAS_VERSION)
+if shutil.which("opam") is None:
+    print("error: `opam` not found on PATH; install opam or set HAX_OPAM_SWITCH=", file=sys.stderr)
+    sys.exit(1)
+
+check_version(in_hax_switch(["cargo", "hax", "--version"]), HAX_VERSION)
+check_version(in_hax_switch(["aeneas", "-version"]), AENEAS_VERSION)
 
 # Snapshot any hand-written files that aeneas might overwrite.
 # `HacspecMlKem/Missing.lean` lives one level up from `Extraction/`
@@ -50,7 +73,7 @@ guarded_snapshots = {p: p.read_bytes() for p in HAND_WRITTEN_GUARDED if p.exists
 # feature gate. Restore RUSTFLAGS if ml-kem spec ever gains
 # charon-gated annotations.
 result = subprocess.run(
-    ["cargo", "hax", "into", "aeneas-lean"],
+    in_hax_switch(["cargo", "hax", "into", "aeneas-lean"]),
     env=os.environ.copy(),
     capture_output=True,
     text=True,

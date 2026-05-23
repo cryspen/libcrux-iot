@@ -16,16 +16,30 @@ To widen the extraction boundary, append entries to `START_FROM`
 below. Each `crate::<path>::*` becomes a Charon translation root;
 Charon transitively pulls in every callee. Plan.lean's KNOWN BLOCKER
 (b) lists the per-layer roots that unblock each L0–L10 lemma cluster.
+
+## Toolchain setup (matched cargo-hax + hax-engine pair)
+
+This script auto-runs `cargo-hax` and `aeneas` inside the `hax-evit`
+opam switch via `opam exec --switch=hax-evit -- …`, so you do NOT need
+to `eval $(opam env --switch=hax-evit)` first. The switch provides a
+matched `cargo-hax` + `hax-engine` pair (commit ee467e6ac3) — the
+plain `hax` switch contains a 0.3.7 hax-engine that would produce
+wrong output.
+
+Override the switch with `HAX_OPAM_SWITCH=<other-switch>` in env if
+you need a different one.
 """
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-HAX_VERSION = "7b4bd97058e0fcbf9135b76297ca91942f2327a6"
+HAX_VERSION = "ee467e6ac3f107047427b696878d0b5f76560d84"
 AENEAS_VERSION = "b5c45e84"
+HAX_OPAM_SWITCH = os.environ.get("HAX_OPAM_SWITCH", "hax-evit")
 
 # Charon translation roots. Anything not reachable from these is
 # dropped from `Funs.lean`. Today's NTT-only boundary matches the
@@ -52,22 +66,32 @@ START_FROM = [
     "crate::matrix::*",
 ]
 
-# Items to keep opaque (extract signature only, skip body). The aeneas-
-# lean backend does not honor `#[hax_lib::opaque]` source annotations,
-# so we have to forward the patterns to charon explicitly. Today: the
-# `hash_functions::portable::shake128_squeeze_*` family is opaque on
-# the Rust side already (`#[hax_lib::opaque]` at `src/hash_functions.rs:151,
-# 182`) because its body uses nested mutable borrows that aeneas
-# rejects with "Nested borrows are not supported yet". We mirror those
-# at the charon level here.
+# Items to keep opaque (extract signature only, skip body).
+#
+# The aeneas-lean backend does not honor `#[hax_lib::opaque]` source
+# annotations, so we forward patterns to charon explicitly.
+#
+# **Whole hash_functions module is opaque.** SHA-3 verification is the
+# SHA-3 campaign's job, not ours; the ML-KEM tree treats every hash
+# function (G, H, PRF, PRFxN, shake128_init_absorb_final,
+# shake128_squeeze_{first_three,next}_block, PortableHash) as a black
+# box. Their abstract spec contract is supplied via local axioms in
+# `LibcruxIotMlKem/Extraction/Missing.lean` (or a dedicated
+# `HashFunctionAxioms.lean`). This also avoids re-extracting new
+# trait-impl plumbing whenever the SHA-3 side widens (cf. the
+# `impl_digest_trait` widening observed under hax-evit ee467e6).
 OPAQUE = [
-    "crate::hash_functions::portable::shake128_squeeze_first_three_blocks",
-    "crate::hash_functions::portable::shake128_squeeze_next_block",
+    "crate::hash_functions::portable::*",
     # `serialize_public_key_mut` trips aeneas with "Unimplemented" — see
     # the inline note in `src/ind_cpa.rs` lines 80-108. Marking opaque
     # so the rest of the crate extracts. Investigation TBD.
     "crate::ind_cpa::serialize_public_key_mut",
 ]
+
+
+def in_hax_switch(cmd: list[str]) -> list[str]:
+    """Wrap `cmd` to execute under the configured opam switch."""
+    return ["opam", "exec", f"--switch={HAX_OPAM_SWITCH}", "--"] + cmd
 
 
 def check_version(cmd: list[str], expected: str) -> None:
@@ -81,8 +105,12 @@ def check_version(cmd: list[str], expected: str) -> None:
         sys.exit(1)
 
 
-check_version(["cargo", "hax", "--version"], HAX_VERSION)
-check_version(["aeneas", "-version"], AENEAS_VERSION)
+if shutil.which("opam") is None:
+    print("error: `opam` not found on PATH; install opam or set HAX_OPAM_SWITCH=", file=sys.stderr)
+    sys.exit(1)
+
+check_version(in_hax_switch(["cargo", "hax", "--version"]), HAX_VERSION)
+check_version(in_hax_switch(["aeneas", "-version"]), AENEAS_VERSION)
 
 # Snapshot any hand-written files that aeneas might overwrite.
 # `LibcruxIotMlKem/Extraction/Missing.lean` lives *inside* `Extraction/`
@@ -108,7 +136,7 @@ charon_args = " ".join(
 # in our Cargo.toml) only under `not(eurydice)`. Restore the RUSTFLAGS
 # line if ml-kem ever needs charon-gated annotations of its own.
 result = subprocess.run(
-    ["cargo", "hax", "into", "aeneas-lean", f"--charon-args={charon_args}"],
+    in_hax_switch(["cargo", "hax", "into", "aeneas-lean", f"--charon-args={charon_args}"]),
     env=os.environ.copy(),
     capture_output=True,
     text=True,
