@@ -14,4 +14,5 @@ import LibcruxIotMlKem.Equivalence.L1_VectorElementOps
 import LibcruxIotMlKem.Equivalence.L2_NTTSteps
 import LibcruxIotMlKem.Equivalence.L3_NTTDrivers
 import LibcruxIotMlKem.Equivalence.L6_PolyOps
+import LibcruxIotMlKem.BitMlKem.Spec
 import LibcruxIotMlKem.Util.AutomationSandbox
