@@ -791,44 +791,190 @@ theorem lemma_mont_form_post
           = (myself.val : ZMod 3329) * (1353 * 169) := by ring
   rw [h1, k1, hm]
 
-/-! ## Block C deferrals
+/-! ## Block C Tier 2 — poly-level lemmas with composite ops.
 
-    The following Block-C lemmas are deferred:
+    These three lemmas extend Block C with the "composite" poly-level
+    commutes that thread through more than one impl op (subtract +
+    mont_mul-by-1441, add + mont_mul-by-1353 + barrett, and the
+    `createi`-equality bridge that pairs with C.6).
 
-    - **C.6 (`lemma_subtract_reduce_commute`)** — combines the
-      subtract-then-finalize-INTT chain at the poly level. Per-lane
-      this is the composition `myself - mont_mul(b, 1441)` followed
-      by barrett, with the `b` operand in INTT-Mont form. The lemma
-      requires routing a hypothesis of the form
-      `(result.coef[i,j].val : ZMod 3329)
-        = myself.coef[i,j].val - b.coef[i,j].val * 1441 * 169`
-      together with an `intt_mont_form_lane` precondition on `b`, and
-      stating the conclusion against `bit_subtract_reduce`'s
-      `(q[i] - p[i]) * 512` body via lift-aggregation. The Lean
-      conclusion requires deciding whether to state against `Vector`
-      shape directly or via a `to_spec_poly_*` form on the LHS — the
-      cleanest framing depends on how M.4 will consume this. Deferred
-      to a follow-up dispatch once the M.4 caller chain is sketched.
+    ### Framing decision: post-keystone form on the impl precondition.
 
-    - **C.9 (`lemma_add_standard_error_reduce_commute`)** — same
-      framing concern as C.6 (per-poly Mont-form precondition + add
-      + mont_mul finalize + barrett, stated against
-      `bit_add_to_ring_element ∘ bit_to_standard_domain` or similar
-      composite). Deferred along with C.6.
+    For C.6, the impl chain is `result_lane = mont_mul(rhs - myself, 1441)`,
+    which in `ZMod 3329` collapses to `result_lane.val = (rhs.val -
+    myself.val) · 1441 · 169 = (rhs.val - myself.val) · 512` (via the
+    C.4 keystone `1441 · 169 = 512`). We state the per-lane impl
+    precondition in the **post-keystone form** `result.val =
+    (rhs.val - myself.val) · 512` so the conclusion against M.1's
+    `bit_subtract_reduce` (whose body is `(q[i] - p[i]) · 512` on
+    `MontPoly`) reduces by pure `ring`. Callers chain through C.4 first.
 
-    - **C.10 (`lemma_subtract_reduce_scaled_eq`)** — an internal
-      "createi equality" bridge in F* that exists specifically to
-      paper over Z3 not auto-deriving equality of `P.createi`s. The
-      Lean analogue is essentially `congrArg (Vector.ofFn ∘ fun f i =>
-      f i * 1441) (to_spec_poly_mont_eq_of_coeffs ...)` which is
-      trivial in Lean once C.6's framing is pinned. Deferred along
-      with C.6.
+    For C.9, the impl chain is `result_lane = barrett (myself + error)`,
+    with the per-lane post being a `ZMod 3329` residue equality. We
+    state it directly as `result.val ≡ myself.val + error.val (mod q)`
+    and conclude `to_spec_poly_plain result = bit_add_to_ring_element
+    (to_spec_poly_plain myself) (to_spec_poly_plain error)`.
 
-    Each of these is independently addressable in a follow-up dispatch
-    once the M.4 caller chain pins the exact conclusion shape (this
-    determines whether to state against `Vector` or against
-    `to_spec_poly_*`, and whether to inline the `*512` finalize factor
-    directly or to factor it through `bit_subtract_reduce`'s body).
--/
+    For C.10, this is the `Vector.ofFn`-equality bridge — given two
+    impl polys with equal coefficients, the scaled-by-1441 createis
+    coincide. In Lean this is essentially `congrArg` on top of
+    `lemma_to_spec_poly_mont_eq_of_coeffs`. -/
+
+/-! ### C.6 — subtract-reduce poly commute (post-keystone form). -/
+
+/-- C.6 `lemma_subtract_reduce_commute` (F*: Chunk.fst:1852). Poly-level
+    commute for the subtract-then-finalize-INTT chain.
+
+    Per-lane impl precondition is stated in **post-keystone form**: the
+    impl's `mont_mul(rhs - myself, 1441)` already collapses to
+    `(rhs.val - myself.val) · 512` in `ZMod 3329` via the C.4 keystone
+    `(1441 · 169 : ZMod 3329) = 512`. Callers (M.4) apply C.4 once per
+    lane and feed the post-keystone equality here, avoiding redoing the
+    1441-keystone chain inside this lemma.
+
+    Conclusion is stated against M.1's `bit_subtract_reduce` (which is
+    itself `(q[i] - p[i]) · 512` on `MontPoly`) lifted through
+    `to_spec_poly_mont` on both sides. -/
+theorem lemma_subtract_reduce_commute
+    (myself rhs result :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ i j : Fin 16,
+            ((result.coefficients.val[i.val]!).elements.val[j.val]!).val
+              = (((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val
+                  - ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val)
+                * 512) :
+    to_spec_poly_mont result
+      = bit_subtract_reduce (to_spec_poly_mont myself) (to_spec_poly_mont rhs) := by
+  unfold to_spec_poly_mont bit_subtract_reduce
+  apply Vector.ext
+  intro k hk
+  -- Strip the outer `Vector.ofFn` on both sides; LHS body is
+  --   `i16_to_spec_fe_mont (result.coef[k/16].elt[k%16])`
+  -- and RHS body is
+  --   `((to_spec_poly_mont rhs)[k] - (to_spec_poly_mont myself)[k]) * 512`.
+  simp only [Vector.getElem_ofFn]
+  -- The two `(Vector.ofFn _)[⟨k, hk⟩]` accesses inside the RHS body are
+  -- definitionally `[k]'hk` accesses; identify the two `Fin`-form
+  -- accesses to the plain `[k]'hk` form (same trick as C.3).
+  have my_eq :
+      (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_mont
+              ((myself.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[(⟨k, hk⟩ : Fin 256)]
+        = (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_mont
+              ((myself.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[k]'hk := rfl
+  have rhs_eq :
+      (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_mont
+              ((rhs.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[(⟨k, hk⟩ : Fin 256)]
+        = (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_mont
+              ((rhs.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[k]'hk := rfl
+  rw [my_eq, rhs_eq]
+  simp only [Vector.getElem_ofFn]
+  -- Goal:  i16_to_spec_fe_mont result.coef[k/16].elt[k%16]
+  --      = (i16_to_spec_fe_mont rhs.coef[k/16].elt[k%16]
+  --         - i16_to_spec_fe_mont myself.coef[k/16].elt[k%16]) * 512
+  -- Unfold the Mont lift to expose the `· 169` factor on each lane,
+  -- then substitute `hr` on the LHS and close with `ring`.
+  unfold i16_to_spec_fe_mont
+  have hdiv_lt : k / 16 < 16 := by omega
+  have hmod_lt : k % 16 < 16 := Nat.mod_lt k (by decide)
+  have h := hr ⟨k / 16, hdiv_lt⟩ ⟨k % 16, hmod_lt⟩
+  -- `h : result.val = (rhs.val - myself.val) * 512` as `Int`.
+  -- Cast to `ZMod 3329` and combine with `ring`.
+  have hz :
+      ((((result.coefficients.val[k / 16]!).elements.val[k % 16]!).val : ZMod 3329))
+        = ((((rhs.coefficients.val[k / 16]!).elements.val[k % 16]!).val : ZMod 3329)
+            - (((myself.coefficients.val[k / 16]!).elements.val[k % 16]!).val : ZMod 3329))
+          * 512 := by
+    have := congrArg (Int.cast (R := ZMod 3329)) h
+    push_cast at this
+    exact this
+  rw [hz]; ring
+
+/-! ### C.9 — add-standard-error-reduce poly commute. -/
+
+/-- C.9 `lemma_add_standard_error_reduce_commute` (F*: Chunk.fst:2135).
+    Poly-level commute for the `add + barrett` chain. Per-lane impl
+    precondition is the residue equality
+    `result.val ≡ myself.val + error.val (mod q)` (the impl's barrett
+    reduction collapses to identity at the `ZMod` level — A.7's shape).
+
+    Conclusion: `to_spec_poly_plain result = bit_add_to_ring_element
+    (to_spec_poly_plain myself) (to_spec_poly_plain error)`, where
+    `bit_add_to_ring_element = bit_add` is the M.1 pointwise add on
+    `MontPoly`. -/
+theorem lemma_add_standard_error_reduce_commute
+    (myself error result :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hr : ∀ i j : Fin 16,
+            (((result.coefficients.val[i.val]!).elements.val[j.val]!).val
+                : ZMod 3329)
+              = (((myself.coefficients.val[i.val]!).elements.val[j.val]!).val
+                  : ZMod 3329)
+                + (((error.coefficients.val[i.val]!).elements.val[j.val]!).val
+                  : ZMod 3329)) :
+    to_spec_poly_plain result
+      = bit_add_to_ring_element
+          (to_spec_poly_plain myself) (to_spec_poly_plain error) := by
+  unfold bit_add_to_ring_element bit_add to_spec_poly_plain
+  apply Vector.ext
+  intro k hk
+  simp only [Vector.getElem_ofFn]
+  have my_eq :
+      (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_plain
+              ((myself.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[(⟨k, hk⟩ : Fin 256)]
+        = (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_plain
+              ((myself.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[k]'hk := rfl
+  have err_eq :
+      (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_plain
+              ((error.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[(⟨k, hk⟩ : Fin 256)]
+        = (Vector.ofFn fun (j : Fin 256) =>
+            i16_to_spec_fe_plain
+              ((error.coefficients.val[j.val / 16]!).elements.val[j.val % 16]!))[k]'hk := rfl
+  rw [my_eq, err_eq]
+  simp only [Vector.getElem_ofFn]
+  -- Goal: i16_to_spec_fe_plain result.coef[k/16].elt[k%16]
+  --     = i16_to_spec_fe_plain myself.coef[k/16].elt[k%16]
+  --       + i16_to_spec_fe_plain error.coef[k/16].elt[k%16]
+  unfold i16_to_spec_fe_plain
+  have hdiv_lt : k / 16 < 16 := by omega
+  have hmod_lt : k % 16 < 16 := Nat.mod_lt k (by decide)
+  exact hr ⟨k / 16, hdiv_lt⟩ ⟨k % 16, hmod_lt⟩
+
+/-! ### C.10 — `Vector.ofFn`-equality bridge for the C.6 conclusion. -/
+
+/-- C.10 `lemma_subtract_reduce_scaled_eq` (F*: Chunk.fst:2533). The F*
+    version exists to paper over Z3 not auto-deriving equality of two
+    `createi`s from equality of their per-lane bodies. In Lean,
+    `Vector.ofFn` already enjoys congruence under `funext`, so once we
+    know the inner `to_spec_poly_mont` lifts coincide (by
+    `lemma_to_spec_poly_mont_eq_of_coeffs`), the outer scaled-by-1441
+    `Vector.ofFn`s coincide by `congrArg`.
+
+    Stated against the M.1 idiom (pointwise multiply via `*` in
+    `ZMod 3329`, not the F* `impl_FieldElement__mul`). -/
+theorem lemma_subtract_reduce_scaled_eq
+    (p q :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h : ∀ i j : Fin 16,
+            i16_to_spec_fe_mont
+              ((p.coefficients.val[i.val]!).elements.val[j.val]!)
+            = i16_to_spec_fe_mont
+              ((q.coefficients.val[i.val]!).elements.val[j.val]!)) :
+    (Vector.ofFn (n := 256) fun (j : Fin 256) =>
+        (to_spec_poly_mont p)[j.val]'j.isLt * (1441 : ZMod 3329))
+      = (Vector.ofFn (n := 256) fun (j : Fin 256) =>
+        (to_spec_poly_mont q)[j.val]'j.isLt * (1441 : ZMod 3329)) := by
+  have hpq : to_spec_poly_mont p = to_spec_poly_mont q :=
+    lemma_to_spec_poly_mont_eq_of_coeffs p q h
+  rw [hpq]
 
 end libcrux_iot_ml_kem.BitMlKem.Commute
