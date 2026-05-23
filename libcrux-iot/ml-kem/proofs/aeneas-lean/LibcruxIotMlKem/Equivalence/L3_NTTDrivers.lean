@@ -24,6 +24,7 @@
 -/
 import LibcruxIotMlKem.Equivalence.L1_VectorElementOps
 import LibcruxIotMlKem.Equivalence.L2_NTTSteps
+import LibcruxIotMlKem.Equivalence.L6_PolyOps
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
@@ -3734,8 +3735,9 @@ theorem ntt_at_layer_4_plus_spec
     libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       zeta_i re layer scratch bnd
-    ⦃ ⇓ p => ⌜ ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
-                ((p.2.1.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd.val + 3328 ⌝ ⦄ := by
+    ⦃ ⇓ p => ⌜ p.1.val = zeta_i.val + 128 >>> layer.val
+              ∧ ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.2.1.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd.val + 3328 ⌝ ⦄ := by
   obtain ⟨h_layer_ge, h_layer_le⟩ := h_layer
   unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus
   -- Compute step = 1 <<< layer.
@@ -3814,8 +3816,290 @@ theorem ntt_at_layer_4_plus_spec
   rw [PostCond.entails_noThrow]
   intro r h
   -- h : (⌜post⌝).down — a plain Prop, not a pure_prop_holds.
-  obtain ⟨_h_zeta_post, h_bd_post⟩ := h
+  obtain ⟨h_zeta_post, h_bd_post⟩ := h
+  refine ⟨?_, ?_⟩
+  · -- h_zeta_post : r.1.val = zeta_i.val + outer_count.val.
+    -- outer_count.val = 128 >>> layer.val (h_oc_val_clean).
+    rw [h_zeta_post, h_oc_val_clean]
+  · intro i hi j hj
+    exact h_bd_post i hi j hj
+
+/-! ## L3.6 — `ntt_binomially_sampled_ring_element_spec`
+
+Composes the eight forward-NTT driver stages plus the terminal
+`poly_barrett_reduce`:
+
+  L3.5 → L3.4(layer=6) → L3.4(layer=5) → L3.4(layer=4)
+       → L3.3_B → L3.2_B → L3.1_B → L6.1
+
+Bound cascade (per coefficient):
+  ≤ 3 → ≤ 4803 → ≤ 14535 → ≤ 17863 → ≤ 21191
+        → ≤ 24519 → ≤ 27847 → ≤ 31175 → ≤ 3328.
+
+Implements the §13.4 "independent equation chains" pattern: each step's
+`.ok`-equation derived independently via `triple_exists_ok_l3`, then
+composed via `rw` against the unfolded impl `do`-block. -/
+
+set_option maxHeartbeats 32000000 in
+@[spec]
+theorem ntt_binomially_sampled_ring_element_spec
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_binomially_sampled_ring_element
+      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
+      re scratch
+    ⦃ ⇓ p => ⌜ ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                ((p.1.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3328 ⌝ ⦄ := by
+  -- ============================================================
+  -- Step 1: L3.5 (ntt_at_layer_7).  re → re1, |re1| ≤ 4803.
+  -- ============================================================
+  obtain ⟨⟨re1, scratch1⟩, h_step1_eq, h_re1_bd⟩ :=
+    triple_exists_ok_l3 (ntt_at_layer_7_spec re scratch h_pre)
+  dsimp only at h_re1_bd
+  -- ============================================================
+  -- Step 2: L3.4(layer=6, zeta_i=1, bnd=11207).  re1 → re2.
+  -- zeta_i out: 1 + 128 >>> 6 = 1 + 2 = 3.  |re2| ≤ 14535.
+  -- ============================================================
+  have h_re1_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re1.coefficients.val[i]!).elements.val[j]!).val.natAbs
+        ≤ (11207#usize : Std.Usize).val := by
+    intro i hi j hj
+    have hb := h_re1_bd i hi j hj
+    have : (11207#usize : Std.Usize).val = 11207 := rfl
+    omega
+  obtain ⟨⟨zeta2, re2, scratch2⟩, h_step2_eq, h_zeta2_val, h_re2_bd⟩ :=
+    triple_exists_ok_l3 (ntt_at_layer_4_plus_spec
+      (layer := 6#usize) (zeta_i := 1#usize) re1 scratch1 11207#usize
+      (by decide : 4 ≤ (6#usize : Std.Usize).val ∧ (6#usize : Std.Usize).val ≤ 6)
+      (by decide : (11207#usize : Std.Usize).val ≤ 8 * 3328)
+      (by decide :
+        (1#usize : Std.Usize).val = (1 <<< (7 - (6#usize : Std.Usize).val)) - 1)
+      h_re1_loose)
+  dsimp only at h_zeta2_val h_re2_bd
+  have h_zeta2_eq3 : zeta2.val = 3 := by
+    have : (1#usize : Std.Usize).val = 1 := rfl
+    have h6 : (6#usize : Std.Usize).val = 6 := rfl
+    rw [h_zeta2_val, this, h6]; decide
+  have h_re2_bd' : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re2.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 14535 := by
+    intro i hi j hj
+    have hb := h_re2_bd i hi j hj
+    have : (11207#usize : Std.Usize).val = 11207 := rfl
+    omega
+  -- ============================================================
+  -- Step 2.5: i ← 11207 + 3328 = 14535.
+  -- ============================================================
+  have h_add1_max :
+      (11207#usize : Std.Usize).val + (3328#usize : Std.Usize).val ≤ Std.Usize.max := by
+    have : (11207#usize : Std.Usize).val = 11207 := rfl
+    have h2 : (3328#usize : Std.Usize).val = 3328 := rfl
+    rw [this, h2]; scalar_tac
+  obtain ⟨i14535, h_i14535_eq, h_i14535_val⟩ :=
+    usize_add_ok_eq (11207#usize : Std.Usize) (3328#usize : Std.Usize) h_add1_max
+  have h_i14535_eq_val : i14535.val = 14535 := by
+    rw [h_i14535_val]; decide
+  -- ============================================================
+  -- Step 3: L3.4(layer=5, zeta_i=3, bnd=14535).  re2 → re3.
+  -- zeta_i out: 3 + 128 >>> 5 = 3 + 4 = 7.  |re3| ≤ 17863.
+  -- ============================================================
+  have h_re2_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re2.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ i14535.val := by
+    intro i hi j hj
+    have hb := h_re2_bd' i hi j hj
+    omega
+  obtain ⟨⟨zeta3, re3, scratch3⟩, h_step3_eq, h_zeta3_val, h_re3_bd⟩ :=
+    triple_exists_ok_l3 (ntt_at_layer_4_plus_spec
+      (layer := 5#usize) (zeta_i := zeta2) re2 scratch2 i14535
+      (by decide : 4 ≤ (5#usize : Std.Usize).val ∧ (5#usize : Std.Usize).val ≤ 6)
+      (by
+        have h5 : (5#usize : Std.Usize).val = 5 := rfl
+        rw [h_i14535_eq_val]; decide)
+      (by
+        have h5 : (5#usize : Std.Usize).val = 5 := rfl
+        rw [h_zeta2_eq3, h5]; decide)
+      h_re2_loose)
+  dsimp only at h_zeta3_val h_re3_bd
+  have h_zeta3_eq7 : zeta3.val = 7 := by
+    have h5 : (5#usize : Std.Usize).val = 5 := rfl
+    rw [h_zeta3_val, h_zeta2_eq3, h5]; decide
+  have h_re3_bd' : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re3.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 17863 := by
+    intro i hi j hj
+    have hb := h_re3_bd i hi j hj
+    omega
+  -- ============================================================
+  -- Step 3.5: i1 ← 2 * 3328 = 6656, i2 ← 11207 + i1 = 17863.
+  -- ============================================================
+  have h_mul1_max :
+      (2#usize : Std.Usize).val * (3328#usize : Std.Usize).val ≤ Std.Usize.max := by
+    have : (2#usize : Std.Usize).val = 2 := rfl
+    have h2 : (3328#usize : Std.Usize).val = 3328 := rfl
+    rw [this, h2]; scalar_tac
+  obtain ⟨i6656, h_i6656_eq, h_i6656_val⟩ :=
+    usize_mul_ok_eq (2#usize : Std.Usize) (3328#usize : Std.Usize) h_mul1_max
+  have h_i6656_eq_val : i6656.val = 6656 := by
+    rw [h_i6656_val]; decide
+  have h_add2_max :
+      (11207#usize : Std.Usize).val + i6656.val ≤ Std.Usize.max := by
+    have : (11207#usize : Std.Usize).val = 11207 := rfl
+    rw [this, h_i6656_eq_val]; scalar_tac
+  obtain ⟨i17863, h_i17863_eq, h_i17863_val⟩ :=
+    usize_add_ok_eq (11207#usize : Std.Usize) i6656 h_add2_max
+  have h_i17863_eq_val : i17863.val = 17863 := by
+    rw [h_i17863_val, h_i6656_eq_val]; decide
+  -- ============================================================
+  -- Step 4: L3.4(layer=4, zeta_i=7, bnd=17863).  re3 → re4.
+  -- zeta_i out: 7 + 128 >>> 4 = 7 + 8 = 15.  |re4| ≤ 21191.
+  -- ============================================================
+  have h_re3_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re3.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ i17863.val := by
+    intro i hi j hj
+    have hb := h_re3_bd' i hi j hj
+    omega
+  obtain ⟨⟨zeta4, re4, scratch4⟩, h_step4_eq, h_zeta4_val, h_re4_bd⟩ :=
+    triple_exists_ok_l3 (ntt_at_layer_4_plus_spec
+      (layer := 4#usize) (zeta_i := zeta3) re3 scratch3 i17863
+      (by decide : 4 ≤ (4#usize : Std.Usize).val ∧ (4#usize : Std.Usize).val ≤ 6)
+      (by rw [h_i17863_eq_val]; decide)
+      (by
+        have h4 : (4#usize : Std.Usize).val = 4 := rfl
+        rw [h_zeta3_eq7, h4]; decide)
+      h_re3_loose)
+  dsimp only at h_zeta4_val h_re4_bd
+  have h_zeta4_eq15 : zeta4.val = 15 := by
+    have h4 : (4#usize : Std.Usize).val = 4 := rfl
+    rw [h_zeta4_val, h_zeta3_eq7, h4]; decide
+  have h_re4_bd' : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re4.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 21191 := by
+    intro i hi j hj
+    have hb := h_re4_bd i hi j hj
+    have h_iv : i17863.val = 17863 := h_i17863_eq_val
+    omega
+  -- ============================================================
+  -- Step 4.5: i3 ← 3 * 3328 = 9984, i4 ← 11207 + i3 = 21191.
+  -- ============================================================
+  have h_mul2_max :
+      (3#usize : Std.Usize).val * (3328#usize : Std.Usize).val ≤ Std.Usize.max := by
+    have : (3#usize : Std.Usize).val = 3 := rfl
+    have h2 : (3328#usize : Std.Usize).val = 3328 := rfl
+    rw [this, h2]; scalar_tac
+  obtain ⟨i9984, h_i9984_eq, h_i9984_val⟩ :=
+    usize_mul_ok_eq (3#usize : Std.Usize) (3328#usize : Std.Usize) h_mul2_max
+  have h_i9984_eq_val : i9984.val = 9984 := by
+    rw [h_i9984_val]; decide
+  have h_add3_max :
+      (11207#usize : Std.Usize).val + i9984.val ≤ Std.Usize.max := by
+    have : (11207#usize : Std.Usize).val = 11207 := rfl
+    rw [this, h_i9984_eq_val]; scalar_tac
+  obtain ⟨i21191, h_i21191_eq, h_i21191_val⟩ :=
+    usize_add_ok_eq (11207#usize : Std.Usize) i9984 h_add3_max
+  have h_i21191_eq_val : i21191.val = 21191 := by
+    rw [h_i21191_val, h_i9984_eq_val]; decide
+  -- ============================================================
+  -- Step 5: L3.3_B(zeta_i=15, bnd=21191).  re4 → re5.
+  -- zeta_i out: 31.  |re5| ≤ 24519.
+  -- ============================================================
+  have h_re4_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re4.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 21191 := h_re4_bd'
+  obtain ⟨⟨zeta5, re5⟩, h_step5_eq, h_zeta5_val, h_re5_bd⟩ :=
+    triple_exists_ok_l3 (ntt_at_layer_3_spec_B
+      (zeta_i := zeta4) re4 i21191
+      (bnd := 21191) (h_bnd := by decide)
+      (h_zeta := h_zeta4_eq15)
+      h_re4_loose)
+  dsimp only at h_zeta5_val h_re5_bd
+  -- ============================================================
+  -- Step 5.5: i5 ← 4 * 3328 = 13312, i6 ← 11207 + i5 = 24519.
+  -- ============================================================
+  have h_mul3_max :
+      (4#usize : Std.Usize).val * (3328#usize : Std.Usize).val ≤ Std.Usize.max := by
+    have : (4#usize : Std.Usize).val = 4 := rfl
+    have h2 : (3328#usize : Std.Usize).val = 3328 := rfl
+    rw [this, h2]; scalar_tac
+  obtain ⟨i13312, h_i13312_eq, h_i13312_val⟩ :=
+    usize_mul_ok_eq (4#usize : Std.Usize) (3328#usize : Std.Usize) h_mul3_max
+  have h_i13312_eq_val : i13312.val = 13312 := by
+    rw [h_i13312_val]; decide
+  have h_add4_max :
+      (11207#usize : Std.Usize).val + i13312.val ≤ Std.Usize.max := by
+    have : (11207#usize : Std.Usize).val = 11207 := rfl
+    rw [this, h_i13312_eq_val]; scalar_tac
+  obtain ⟨i24519, h_i24519_eq, h_i24519_val⟩ :=
+    usize_add_ok_eq (11207#usize : Std.Usize) i13312 h_add4_max
+  have h_i24519_eq_val : i24519.val = 24519 := by
+    rw [h_i24519_val, h_i13312_eq_val]; decide
+  -- ============================================================
+  -- Step 6: L3.2_B(zeta_i=31, bnd=24519).  re5 → re6.
+  -- zeta_i out: 63.  |re6| ≤ 27847.
+  -- ============================================================
+  obtain ⟨⟨zeta6, re6⟩, h_step6_eq, h_zeta6_val, h_re6_bd⟩ :=
+    triple_exists_ok_l3 (ntt_at_layer_2_spec_B
+      (zeta_i := zeta5) re5 i24519
+      (bnd := 24519) (h_bnd := by decide)
+      (h_zeta := h_zeta5_val)
+      h_re5_bd)
+  dsimp only at h_zeta6_val h_re6_bd
+  -- ============================================================
+  -- Step 6.5: i7 ← 5 * 3328 = 16640, i8 ← 11207 + i7 = 27847.
+  -- ============================================================
+  have h_mul4_max :
+      (5#usize : Std.Usize).val * (3328#usize : Std.Usize).val ≤ Std.Usize.max := by
+    have : (5#usize : Std.Usize).val = 5 := rfl
+    have h2 : (3328#usize : Std.Usize).val = 3328 := rfl
+    rw [this, h2]; scalar_tac
+  obtain ⟨i16640, h_i16640_eq, h_i16640_val⟩ :=
+    usize_mul_ok_eq (5#usize : Std.Usize) (3328#usize : Std.Usize) h_mul4_max
+  have h_i16640_eq_val : i16640.val = 16640 := by
+    rw [h_i16640_val]; decide
+  have h_add5_max :
+      (11207#usize : Std.Usize).val + i16640.val ≤ Std.Usize.max := by
+    have : (11207#usize : Std.Usize).val = 11207 := rfl
+    rw [this, h_i16640_eq_val]; scalar_tac
+  obtain ⟨i27847, h_i27847_eq, h_i27847_val⟩ :=
+    usize_add_ok_eq (11207#usize : Std.Usize) i16640 h_add5_max
+  have h_i27847_eq_val : i27847.val = 27847 := by
+    rw [h_i27847_val, h_i16640_eq_val]; decide
+  -- ============================================================
+  -- Step 7: L3.1_B(zeta_i=63, bnd=27847).  re6 → re7.
+  -- zeta_i out: 127.  |re7| ≤ 31175.
+  -- ============================================================
+  obtain ⟨⟨zeta7, re7⟩, h_step7_eq, _h_zeta7_val, h_re7_bd⟩ :=
+    triple_exists_ok_l3 (ntt_at_layer_1_spec_B
+      (zeta_i := zeta6) re6 i27847
+      (bnd := 27847) (h_bnd := by decide)
+      (h_zeta := h_zeta6_val)
+      h_re6_bd)
+  dsimp only at h_re7_bd
+  -- ============================================================
+  -- Step 8: L6.1 poly_barrett_reduce.  re7 → re8, |re8| ≤ 3328.
+  -- ============================================================
+  have h_re7_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re7.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 32767 := by
+    intro i hi j hj
+    have hb := h_re7_bd i hi j hj
+    omega
+  obtain ⟨re8, h_step8_eq, h_re8_bd⟩ :=
+    triple_exists_ok_l3 (PolynomialRingElement_poly_barrett_reduce_spec re7 h_re7_loose)
+  -- ============================================================
+  -- Compose: derive the full impl `do`-block equation.
+  -- ============================================================
+  have h_body :
+      libcrux_iot_ml_kem.ntt.ntt_binomially_sampled_ring_element
+        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
+        re scratch = .ok (re8, scratch4) := by
+    unfold libcrux_iot_ml_kem.ntt.ntt_binomially_sampled_ring_element
+    simp [h_step1_eq, h_step2_eq, h_step3_eq, h_step4_eq,
+          h_step5_eq, h_step6_eq, h_step7_eq, h_step8_eq,
+          h_i14535_eq, h_i6656_eq, h_i17863_eq,
+          h_i9984_eq, h_i21191_eq,
+          h_i13312_eq, h_i24519_eq,
+          h_i16640_eq, h_i27847_eq]
+  apply triple_of_ok_l3 h_body
   intro i hi j hj
-  exact h_bd_post i hi j hj
+  exact h_re8_bd i hi j hj
 
 end libcrux_iot_ml_kem.Equivalence
