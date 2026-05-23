@@ -279,59 +279,126 @@ noncomputable def Spec.montgomery_multiply_fe_by_fer_pure
 def Spec.get_n_least_significant_bits_pure (n : Std.U8) (value : Std.U32) : Std.U32 :=
   ⟨value.bv &&& ((1#32 <<< n.val) - 1#32)⟩
 
-/-- Pure pointwise add at the FE-array level (16-lane chunk). -/
+/-- Pure pointwise add at the FE-array level (16-lane chunk).
+    Lifts `FieldElement.add_pure` across the 16 lanes via `List.range 16`. -/
 noncomputable def Spec.chunk_add_pure
     (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        (a.val[i]!) (b.val[i]!)))
+    (by simp)
 
-/-- Pure pointwise sub at the FE-array level (16-lane chunk). -/
+/-- Pure pointwise sub at the FE-array level (16-lane chunk).
+    Lifts `FieldElement.sub_pure` across the 16 lanes. -/
 noncomputable def Spec.chunk_sub_pure
     (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+        (a.val[i]!) (b.val[i]!)))
+    (by simp)
 
-/-- Pure pointwise neg at the FE-array level (16-lane chunk). -/
+/-- Pure pointwise neg at the FE-array level (16-lane chunk).
+    Lifts `FieldElement.neg_pure` across the 16 lanes. -/
 noncomputable def Spec.chunk_neg_pure
     (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+        (a.val[i]!)))
+    (by simp)
 
-/-- Pure pointwise barrett-reduce at the FE-array level. -/
+/-- Pure pointwise barrett-reduce at the FE-array level.
+    Lifts `Spec.barrett_pure` (the canonical round-trip) across 16 lanes. -/
 noncomputable def Spec.chunk_barrett_reduce_pure
     (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      Spec.barrett_pure (a.val[i]!)))
+    (by simp)
 
 /-- Pure pointwise `montgomery_multiply_by_constant` at the chunk level
-    (each lane: `fe · c / R`). -/
+    (each lane: `fe · c / R`). Lifts `Spec.montgomery_multiply_fe_by_fer_pure`
+    across 16 lanes, with the second arg threaded as the constant `c`. -/
 noncomputable def Spec.chunk_montgomery_multiply_by_constant_pure
     (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
     (c : hacspec_ml_kem.parameters.FieldElement) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      Spec.montgomery_multiply_fe_by_fer_pure (a.val[i]!) c))
+    (by simp)
 
-/-- Pure pointwise plain `multiply_by_constant` at the chunk level. -/
+/-- Pure pointwise plain `multiply_by_constant` at the chunk level.
+    Lifts `FieldElement.mul_pure` across 16 lanes with the constant `c`. -/
 noncomputable def Spec.chunk_multiply_by_constant_pure
     (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
     (c : hacspec_ml_kem.parameters.FieldElement) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (a.val[i]!) c))
+    (by simp)
 
 /-- Pure pointwise `bitwise_and_with_constant` at the chunk level.
     NO HACSPEC EQUIVALENT — this is a bit-level mask used only in
-    serialize/compress paths. We state the FC equation against the
-    bit-masking definition itself. -/
+    serialize/compress paths. The body applies BV-and on each FE's
+    underlying `U16` BV.
+
+    WARNING (FC obstruction): the FC equation for `bitwise_and_with_constant_fc`
+    against `lift_chunk`-style inputs is NOT provable in general because
+    `lift_chunk` discards the bit pattern (keeping only mod-3329 residue),
+    while bit-level AND depends on the raw `I16` bit pattern. The body here
+    is the canonical FE-side BV operation; the FC proof will STOP and report
+    when attempted. Not on the L7 critical path (used only in compress/
+    serialize, which lives outside the 4 matrix-level targets). -/
 noncomputable def Spec.chunk_bitwise_and_with_constant_pure
     (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
     (c : hacspec_ml_kem.parameters.FieldElement) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      let ai_bv : BitVec Aeneas.Std.UScalarTy.U16.numBits := (a.val[i]!).val.bv
+      let c_bv  : BitVec Aeneas.Std.UScalarTy.U16.numBits := c.val.bv
+      ({ val := { bv := ai_bv &&& c_bv } } : hacspec_ml_kem.parameters.FieldElement)))
+    (by simp)
 
 /-- Pure pointwise `shift_right` at the chunk level.
-    NO HACSPEC EQUIVALENT at the FE level. -/
+    NO HACSPEC EQUIVALENT at the FE level. The body applies a logical
+    right shift on each FE's underlying `U16` BV by `SHIFT_BY.val.toNat`.
+
+    WARNING (FC obstruction): same as `chunk_bitwise_and_with_constant_pure`
+    — the FC equation is not provable through `lift_chunk` because the
+    underlying `I16` sshiftRight depends on raw bit pattern. The body here
+    serves as a placeholder; the FC proof will STOP and report. Not on
+    the L7 critical path. -/
 noncomputable def Spec.chunk_shift_right_pure
     (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
     (SHIFT_BY : Std.I32) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      let ai_bv : BitVec Aeneas.Std.UScalarTy.U16.numBits := (a.val[i]!).val.bv
+      let shift : Nat := SHIFT_BY.val.toNat
+      ({ val := { bv := ai_bv >>> shift } } : hacspec_ml_kem.parameters.FieldElement)))
+    (by simp)
 
-/-- Pure `reducing_from_i32_array` at the chunk level. -/
+/-- Pure `reducing_from_i32_array` at the chunk level. Lifts `Spec.mont_reduce_pure`
+    over 16 lanes of the input `i32` slice. Each lane: take `array[i]`,
+    project through `lift_fe_int`, apply Montgomery reduction. -/
 noncomputable def Spec.chunk_reducing_from_i32_array_pure
     (array : Slice Std.I32) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val)))
+    (by simp)
 
 /-- Pure NTT butterfly step at the chunk level: applies `ntt.butterfly`
     pointwise to the lane pair `(i, j)` with `zeta`. -/
