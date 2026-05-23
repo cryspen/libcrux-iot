@@ -1868,47 +1868,268 @@ theorem cond_subtract_3329_fc
     · -- < 3329 branch: r0[i] = vec[i], trivially mod-3329 equivalent.
       rw [h_eq_lane]
 
+/-- Local helper (mirrors `SpecPure.uscalar_rem_ok_U16` which is
+    file-private). Establishes that U16 modular remainder by a non-zero
+    divisor is always `.ok`, and exposes the underlying value. Needed
+    by `neg_pure_val_eq`, whose `% q` step is at U16 width (no widening). -/
+private theorem uscalar_rem_ok_U16_local (z m : Std.U16) (hm : m.val ≠ 0) :
+    ∃ w : Std.U16, (z % m : Result Std.U16) = .ok w ∧ w.val = z.val % m.val := by
+  have heq : (z % m : Result Std.U16) = Std.UScalar.rem z m := rfl
+  unfold Std.UScalar.rem at heq
+  simp [hm] at heq
+  refine ⟨_, heq, ?_⟩
+  show (BitVec.umod z.bv m.bv).toNat = z.val % m.val
+  unfold BitVec.umod
+  simp only [BitVec.toNat_ofNatLT]
+  rfl
+
+/-- Bridge lemma: under canonicity of the operand, the `.val.val` of
+    `FieldElement.neg_pure` is the impl's U16 modular-reduced negation
+    `(3329 - a.val.val) % 3329`. Mirrors `sub_pure_val_eq`'s trace, but
+    the impl's `neg` body is `(q - self.val) % q` operated entirely at
+    U16 width (NO widening to U32); panic-impossibility of `q - self.val`
+    is precisely `Canonical a` (i.e. `a.val.val < q`). -/
+private theorem neg_pure_val_eq
+    (a : hacspec_ml_kem.parameters.FieldElement)
+    (ha : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical a) :
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure a).val.val
+      = (3329 - a.val.val) % 3329 := by
+  have hneg :
+      hacspec_ml_kem.parameters.FieldElement.neg a
+        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure a) :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_eq_ok a ha
+  have ha' : a.val.val < 3329 := by
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at ha
+    unfold hacspec_ml_kem.parameters.FIELD_MODULUS at ha; simpa using ha
+  unfold hacspec_ml_kem.parameters.FieldElement.neg at hneg
+  have hA := a.val.hBounds
+  simp [Aeneas.Std.UScalarTy.numBits] at hA
+  have hqval : (hacspec_ml_kem.parameters.FIELD_MODULUS : Std.U16).val = 3329 := by
+    unfold hacspec_ml_kem.parameters.FIELD_MODULUS; simp
+  have hae := Std.UScalar.sub_equiv (hacspec_ml_kem.parameters.FIELD_MODULUS : Std.U16) a.val
+  cases hqa :
+      ((hacspec_ml_kem.parameters.FIELD_MODULUS : Std.U16) - a.val : Result Std.U16) with
+  | ok i =>
+    rw [hqa] at hae hneg; simp at hae
+    obtain ⟨_hale, hival, _⟩ := hae
+    simp only [Aeneas.Std.bind_tc_ok] at hneg
+    have hq_ne : (hacspec_ml_kem.parameters.FIELD_MODULUS : Std.U16).val ≠ 0 := by
+      rw [hqval]; decide
+    obtain ⟨w, hw_eq, hwval⟩ :=
+      uscalar_rem_ok_U16_local i hacspec_ml_kem.parameters.FIELD_MODULUS hq_ne
+    rw [hw_eq] at hneg; simp only [Aeneas.Std.bind_tc_ok] at hneg
+    unfold hacspec_ml_kem.parameters.FieldElement.new at hneg
+    simp at hneg
+    rw [← hneg]
+    -- Goal: w.val = (3329 - a.val.val) % 3329.
+    rw [hwval, hqval]
+    -- Goal: i.val % 3329 = (3329 - a.val.val) % 3329.
+    -- From hival : i.val + a.val.val = 3329, so i.val = 3329 - a.val.val.
+    have hi_eq : i.val = 3329 - a.val.val := by
+      rw [hqval] at hival; omega
+    rw [hi_eq]
+  | fail e =>
+    rw [hqa] at hae; simp at hae
+    rw [hqval] at hae
+    omega
+  | div => rw [hqa] at hae; exact hae.elim
+
+/-- Bridge lemma: under the no-overflow bound on `-a.val` (i.e.
+    `a.val.natAbs ≤ 2^15 - 1`, equivalently `a.val ∈ [-(2^15 - 1), 2^15 - 1]`,
+    which EXCLUDES the boundary `-2^15`), any `r : Std.I16` carrying that
+    negation lifts to `FieldElement.neg_pure (lift_fe a)`.
+
+    Pure-projection content: both sides reduce to
+    `feOfZMod ((-a.val : Int) : ZMod 3329)`. The LHS is direct from
+    `lift_fe`'s definition. The RHS uses `neg_pure_val_eq` plus canonical
+    round-trip — the result is canonical by `Canonical_neg_pure` (which
+    needs `Canonical_lift_fe`), and the `zmodOfFE`-projection reduces
+    the inner `(3329 - (lift_fe a).val.val) % 3329` to `((-a.val : Int)
+    : ZMod 3329)` via `ZMod.natCast_mod` plus integer reasoning.
+
+    Boundary excluded: at `a.val = -2^15 = -32768`, both sides would
+    diverge — `Int.bmod (-a.val) 2^16 = -32768`, but
+    `(-((-32768 : Int) : ZMod 3329)).val = 2807 ≠ 522`. The `hbnd`
+    precondition rules out this case. -/
+private theorem lift_fe_neg_pure_eq
+    (a r : Std.I16)
+    (hbnd : a.val.natAbs ≤ 2^15 - 1)
+    (hrv : r.val = -a.val) :
+    lift_fe r
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe a) := by
+  -- LHS reduction.
+  have h_lhs : lift_fe r = feOfZMod (((-a.val : Int)) : ZMod 3329) := by
+    unfold lift_fe i16_to_spec_fe_plain
+    rw [hrv]
+  -- RHS reduction.
+  set s : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe a) with hs_def
+  have h_canon : s.val.val < 3329 := by
+    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_neg_pure
+      (lift_fe a) (Canonical_lift_fe a)
+    show s.val.val < 3329
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at h_cs
+    exact h_cs
+  have h_round_trip : feOfZMod (zmodOfFE s) = s :=
+    feOfZMod_zmodOfFE_of_canonical s h_canon
+  have h_zmod_s : zmodOfFE s = (((-a.val : Int)) : ZMod 3329) := by
+    unfold zmodOfFE
+    rw [neg_pure_val_eq _ (Canonical_lift_fe a)]
+    -- Goal: ((3329 - (lift_fe a).val.val) % 3329 : Nat) : ZMod 3329
+    --       = ((-a.val : Int) : ZMod 3329)
+    rw [ZMod.natCast_mod]
+    -- (lift_fe a).val.val < 3329, so 3329 - (lift_fe a).val.val ≤ 3329.
+    have ha_lt : (lift_fe a).val.val < 3329 := by
+      have h_ca := Canonical_lift_fe a
+      unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_ca
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS at h_ca; simpa using h_ca
+    -- Cast the Nat-sub through Int-sub: 3329 - (lift_fe a).val.val (Nat) =
+    -- 3329 - (lift_fe a).val.val (Int) since the former is ≥ 0.
+    have h_zmod_eq :
+        (((3329 - (lift_fe a).val.val : Nat)) : ZMod 3329)
+          = ((((3329 : Int) - ((lift_fe a).val.val : Int)) : Int) : ZMod 3329) := by
+      have h_int_eq :
+          (((3329 - (lift_fe a).val.val : Nat)) : Int)
+            = (3329 : Int) - ((lift_fe a).val.val : Int) := by
+        omega
+      have h_route :
+          (((3329 - (lift_fe a).val.val : Nat)) : ZMod 3329)
+            = ((((3329 - (lift_fe a).val.val : Nat)) : Int) : ZMod 3329) := by
+        rfl
+      rw [h_route, h_int_eq]
+    rw [h_zmod_eq]
+    push_cast
+    rw [lift_fe_val_val a]
+    rw [ZMod.natCast_zmod_val]
+    -- After push_cast: 0 - ((a.val : Int) : ZMod 3329) = ((-a.val : Int) : ZMod 3329)
+    -- (3329 collapses to 0 via ZMod.natCast_self).
+    ring
+  rw [h_lhs, ← h_round_trip, h_zmod_s]
+
 /-- L1.6 — `negate` on a chunk.
 
-    **STOP — boundary obstruction at `vec[i].val = -2^15`.**
+    **Precondition** `hpre` mirrors the upstream F* spec `negate_pre`
+    from `libcrux-ml-kem-proofs/libcrux-ml-kem/src/vector/traits.rs:684`
+    (`forall i. is_intb (pow2 15 - 1) (v ${vec}[i])`), i.e. every lane
+    is strictly within `[-(2^15 - 1), 2^15 - 1]` — equivalently the
+    natAbs is `≤ 2^15 - 1`.
 
-    The legacy `Equivalence.negate_spec` proves the per-lane BV identity
-    `r[i].bv = -vec[i].bv`, which translates (via `IScalar.wrapping_sub_val_eq`)
-    to `r[i].val = Int.bmod (0 - vec[i].val) (2^16) = Int.bmod (-vec[i].val) 2^16`.
+    **Why this is the canonical bound**: the impl's `negate` is
+    pointwise `core_models.num.I16.wrapping_neg`, which lowers to
+    `wrapping_sub 0 vec[i]`. The lane-level value reduces to
+    `Int.bmod (-vec[i].val) 2^16`. For the FC equation
+    `(r[i].val : ZMod 3329) = -(vec[i].val : ZMod 3329)` to hold we
+    need `Int.bmod (-vec[i].val) 2^16 = -vec[i].val` (no boundary flip);
+    `bmod_pow2_eq_of_inBounds'` requires `-vec[i].val ∈ [-2^15, 2^15)`,
+    i.e. `vec[i].val ∈ (-2^15, 2^15]`. Combined with the impl's
+    `vec[i].val ∈ [-2^15, 2^15)` carrier we get `vec[i].val.natAbs
+    ≤ 2^15 - 1` — exactly `negate_pre`. The excluded value `-2^15`
+    would yield a real divergence: `2^16 mod 3329 = 2645 ≠ 0`, so
+    bmod's two-valued identification of `-2^15` and `2^15` does NOT
+    collapse mod 3329.
 
-    For the FC equation `lift_fe r[i] = FieldElement.neg_pure (lift_fe vec[i])`
-    to hold, we'd need `(r[i].val : ZMod 3329) = -(vec[i].val : ZMod 3329)`,
-    equivalently `(Int.bmod (-vec[i].val) 2^16 : ZMod 3329) = -(vec[i].val : ZMod 3329)`.
-
-    This holds for `vec[i].val ∈ [-2^15 + 1, 2^15 - 1]` (where `bmod` is the
-    identity on `-vec[i].val`), but FAILS at `vec[i].val = -2^15 = -32768`:
-      - `-vec[i].val = 32768`, `Int.bmod 32768 (2^16) = -32768`.
-      - `((-32768 : Int) : ZMod 3329).val = 522`.
-      - `(-((-32768 : Int) : ZMod 3329)).val = 2807`.
-      - `522 ≠ 2807` (`#eval` confirmed) — REAL DIVERGENCE.
-
-    The divergence root cause: `2 * 2^15 = 2^16 = 3329 * 19 + 2645`, so
-    `2^16 mod 3329 = 2645 ≠ 0`, meaning the two-valued bmod identification
-    of `-2^15` and `2^15` does not collapse mod 3329.
-
-    **Remedies (orchestrator decision):**
-    (a) Add precondition `∀ i < 16, vec[i].val.natAbs ≤ 2^15 - 1`
-        (excludes -2^15). Then `Int.bmod (-vec[i].val) 2^16 = -vec[i].val`,
-        and the FC equation closes via `Canonical_neg_pure` +
-        `feOfZMod`/`zmodOfFE` round-trip mirroring `lift_fe_add_pure_eq`.
-    (b) Leave the theorem with the documented obstruction (use a downstream
-        precondition shifter at call sites).
-
-    Per FC campaign Phase 3 dispatch brief STOP CRITERION: this `sorry`
-    is preserved pending orchestrator decision. Do NOT weaken the post
-    to bounds-only. -/
-@[spec]
+    **Callers**: every real caller of `negate` (in
+    `serialize::compress_then_serialize_*`) feeds inputs that are
+    barrett-reduced (so `|x| ≤ 1664 < 2^15 - 1`) or subtracted from
+    barrett-reduced operands (so `|x| ≤ 6656 < 2^15 - 1`); the bound
+    is trivially satisfied at every call site. -/
+@[spec high]
 theorem negate_fc
-    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hpre : ∀ i : Nat, i < 16 →
+      (vec.elements.val[i]!).val.natAbs ≤ 2^15 - 1) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.negate vec
     ⦃ ⇓ r => ⌜ lift_chunk r = Spec.chunk_neg_pure (lift_chunk vec) ⌝ ⦄ := by
-  sorry
+  -- 1. Extract per-element BV-equation from legacy `negate_spec`.
+  have h_legacy := libcrux_iot_ml_kem.Equivalence.negate_spec vec
+  obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
+  apply triple_of_ok_fc (v := r0) h_eq
+  -- 2. Reduce array equality to list equality, then to per-index lift_fe equality.
+  unfold lift_chunk Spec.chunk_neg_pure
+  apply Subtype.ext
+  show r0.elements.val.map lift_fe
+      = (List.range 16).map (fun i =>
+          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+            ((Std.Array.make 16#usize (vec.elements.val.map lift_fe)
+              (by simp)).val[i]!))
+  have h_r0_len : r0.elements.val.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+  apply List.ext_getElem
+  · simp [List.length_map, List.length_range, h_r0_len]
+  · intro i hi1 hi2
+    have hi : i < 16 := by
+      have : i < (r0.elements.val.map lift_fe).length := hi1
+      simp [List.length_map, h_r0_len] at this; exact this
+    rw [List.getElem_map]
+    rw [List.getElem_map, List.getElem_range]
+    show lift_fe r0.elements.val[i]
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+          ((vec.elements.val.map lift_fe)[i]!)
+    have h_r0_get_eq : r0.elements.val[i]
+        = r0.elements.val[i]! := by
+      have hi_r0 : i < r0.elements.val.length := by rw [h_r0_len]; exact hi
+      rw [getElem!_pos r0.elements.val i hi_r0]
+    rw [h_r0_get_eq]
+    have h_vec_len : vec.elements.val.length = 16 :=
+      libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+    have h_map_vec :
+        (vec.elements.val.map lift_fe)[i]! = lift_fe (vec.elements.val[i]!) := by
+      have hi_vec : i < vec.elements.val.length := by rw [h_vec_len]; exact hi
+      rw [getElem!_pos (vec.elements.val.map lift_fe) i (by
+        simp [List.length_map, h_vec_len]; exact hi)]
+      rw [List.getElem_map]
+      rw [getElem!_pos vec.elements.val i hi_vec]
+    rw [h_map_vec]
+    -- 3. Convert per-lane BV-equation to val-equation, then apply bridge.
+    set xi : Std.I16 := vec.elements.val[i]! with hxi
+    set ri : Std.I16 := r0.elements.val[i]! with hri
+    -- From negate_spec: ri.bv = -xi.bv.
+    have h_bv : ri.bv = -xi.bv := h_per i hi
+    -- From this BV equality + I16.bv_toInt_eq: ri.val = (-xi.bv).toInt.
+    -- The cleanest route: bridge through `Std.I16.wrapping_sub 0 xi`,
+    -- whose `.bv = 0 - xi.bv = -xi.bv` matches `ri.bv`, then use
+    -- `wrapping_sub_val_eq` to get `Int.bmod (0 - xi.val) (2^16)`.
+    have h_wsub_bv : (Aeneas.Std.I16.wrapping_sub (0#i16) xi).bv = -xi.bv := by
+      rw [Aeneas.Std.I16.wrapping_sub_bv_eq]
+      simp only [show (0#i16 : Std.I16).bv = (0 : BitVec 16) from rfl]
+      exact BitVec.zero_sub xi.bv
+    -- Convert BV equality to val equality: ri.val = (-xi.bv).toInt =
+    -- (Std.I16.wrapping_sub 0 xi).val = Int.bmod (0 - xi.val) (2^16) = -xi.val
+    -- (last step under hpre via bmod_pow2_eq_of_inBounds').
+    have h_ri_val : ri.val = -xi.val := by
+      have h_step1 : ri.val = (Aeneas.Std.I16.wrapping_sub (0#i16) xi).val := by
+        have h_toInt :
+            (ri.bv).toInt = (Aeneas.Std.I16.wrapping_sub (0#i16) xi).bv.toInt := by
+          rw [h_bv, h_wsub_bv]
+        have h_lhs : (ri.bv).toInt = ri.val := Aeneas.Std.I16.bv_toInt_eq ri
+        have h_rhs : (Aeneas.Std.I16.wrapping_sub (0#i16) xi).bv.toInt
+            = (Aeneas.Std.I16.wrapping_sub (0#i16) xi).val :=
+          Aeneas.Std.I16.bv_toInt_eq _
+        rw [h_lhs, h_rhs] at h_toInt
+        exact h_toInt
+      rw [h_step1]
+      rw [Aeneas.Std.I16.wrapping_sub_val_eq]
+      have h0 : (0#i16 : Std.I16).val = 0 := by decide
+      rw [h0]
+      -- Goal: Int.bmod (0 - xi.val) (2^16) = -xi.val.
+      have h_diff : (0 : Int) - xi.val = -xi.val := by ring
+      rw [h_diff]
+      apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
+      · have h_abs : xi.val.natAbs ≤ 2^15 - 1 := hpre i hi
+        have h_pow : -((2 : Int) ^ (16 - 1)) = -(2^15 : Int) := by decide
+        rw [h_pow]
+        omega
+      · have h_abs : xi.val.natAbs ≤ 2^15 - 1 := hpre i hi
+        have h_pow : ((2 : Int) ^ (16 - 1)) = (2^15 : Int) := by decide
+        rw [h_pow]
+        omega
+    -- 4. Apply the bridge lemma.
+    have h_abs : xi.val.natAbs ≤ 2^15 - 1 := hpre i hi
+    exact lift_fe_neg_pure_eq xi ri h_abs h_ri_val
 
 /-- L1.7 — `multiply_by_constant` (plain) on a chunk.
 
