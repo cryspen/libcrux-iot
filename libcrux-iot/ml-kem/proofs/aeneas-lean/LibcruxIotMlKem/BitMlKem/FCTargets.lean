@@ -2288,32 +2288,59 @@ theorem multiply_by_constant_fc
       h_val
 
 /-- L1.8 — `bitwise_and_with_constant` on a chunk.
-    NO HACSPEC EQUIVALENT at the FE level — this is a bit-mask used
-    only in compress/serialize paths. -/
-@[spec]
+
+    Per the upstream F* spec
+    `libcrux-ml-kem-proofs/libcrux-ml-kem/src/vector/traits.rs:720`
+    (`bitwise_and_with_constant_constant_post`), the canonical FC
+    statement for this bit-level op is the per-lane BV-equality
+    `result == map_array (fun x -> x &. c) vec`. This is the
+    "FE-level lift" formulation is NOT meaningful here because
+    `lift_fe` projects through `mod 3329`, discarding the bit pattern
+    that `&.` depends on (the FE equation would require lift_chunk to
+    preserve bit info, which it cannot without losing the ring
+    semantics). The canonical FC equation is therefore at the I16-BV
+    level — equality-form, equality-strong, just at the correct
+    abstraction layer for a bit-level op.
+
+    The §0.5 `Spec.chunk_bitwise_and_with_constant_pure` stub remains
+    in place as documentation but is NOT used in the FC equation
+    below (the canonical post is the upstream F*-aligned BV-equality). -/
+@[spec high]
 theorem bitwise_and_with_constant_fc
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (c : Std.I16) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.bitwise_and_with_constant vec c
-    ⦃ ⇓ r => ⌜ lift_chunk r
-                = Spec.chunk_bitwise_and_with_constant_pure
-                    (lift_chunk vec) (lift_fe c) ⌝ ⦄ := by
-  sorry
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
+                (r.elements.val[i]!).bv = (vec.elements.val[i]!).bv &&& c.bv ⌝ ⦄ :=
+  libcrux_iot_ml_kem.Equivalence.bitwise_and_with_constant_spec vec c
 
 /-- L1.9 — `shift_right` on a chunk.
-    NO HACSPEC EQUIVALENT at the FE level — used only in
-    compress/decompress paths. -/
-@[spec]
+
+    Per the upstream F* spec
+    `libcrux-ml-kem-proofs/libcrux-ml-kem/src/vector/traits.rs:731`
+    (`shift_right_post`), the canonical FC statement for this bit-level
+    op is the per-lane BV-equality
+    `result == map_array (fun x -> x >>! shift_by) vec` (where `>>!`
+    is signed right shift on i16). Same reasoning as `bitwise_and_with_constant_fc`:
+    the I16-BV level is the correct abstraction; lift_fe would discard
+    the bit pattern that `>>!` depends on.
+
+    The legacy `Equivalence.shift_right_spec` uses `0 ≤ SHIFT_BY.val ∧
+    SHIFT_BY.val < 16` (the same range as the upstream F* `requires
+    SHIFT_BY >= 0 && SHIFT_BY < 16` on the trait). We adopt the same
+    precondition shape. -/
+@[spec high]
 theorem shift_right_fc
     (SHIFT_BY : Std.I32)
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (hs : SHIFT_BY.val.natAbs ≤ 16) :
+    (hs : 0 ≤ SHIFT_BY.val ∧ SHIFT_BY.val < 16) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.shift_right SHIFT_BY vec
-    ⦃ ⇓ r => ⌜ lift_chunk r
-                = Spec.chunk_shift_right_pure (lift_chunk vec) SHIFT_BY ⌝ ⦄ := by
-  sorry
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
+                (r.elements.val[i]!).bv =
+                  (vec.elements.val[i]!).bv.sshiftRight SHIFT_BY.val.toNat ⌝ ⦄ :=
+  libcrux_iot_ml_kem.Equivalence.shift_right_spec SHIFT_BY hs vec
 
 /-- Per-element bridge for `reducing_from_i32_array_fc`: from the legacy
     L1.10 congruence `(r * 2^16) ≡ x (mod 3329)`, derive the FC equation
