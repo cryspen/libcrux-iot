@@ -17,4 +17,6 @@ import LibcruxIotMlKem.Equivalence.L6_PolyOps
 import LibcruxIotMlKem.BitMlKem.Spec
 import LibcruxIotMlKem.BitMlKem.Commute
 import LibcruxIotMlKem.BitMlKem.StateIso
+import LibcruxIotMlKem.BitMlKem.SpecPure
+import LibcruxIotMlKem.BitMlKem.AlgEquiv
 import LibcruxIotMlKem.Util.AutomationSandbox
