@@ -662,55 +662,157 @@ generic plumbing already passes its tests in the SHA-3 tree.
 /-! ============================================================
     # LAYER M — Bridge / Mont infrastructure (BitMlKem.* + Util.*)
 
+    **Status: NOT BUILT (as of 2026-05-23).** Plan exists at
+    `~/.claude/plans/iot-mlkem-layer-M-architecture.md`. Estimated
+    **2.5-3.5 wk, 6-8 sub-agent dispatches**, ~3650 LOC across 4 new
+    files under `LibcruxIotMlKem/BitMlKem/` plus Util.* supporting
+    additions. Direct port of upstream F* `Hacspec_ml_kem.{ModQ,
+    Commute.*}.fst` (4234 LOC).
+
     NOT a sequence of @[spec] Triples. This is the pure Lean spec /
     predicate / commute-lemma layer that every L0+ post-condition
-    references. Build it FIRST. The bulk is direct port of upstream
-    F* `Hacspec_ml_kem.{ModQ, Commute.*}.fst` (4234 LOC), which the
-    deep-review §3 walks file by file.
+    references. The deep-review §3 walks the F* tree file by file.
 
     Concretely, fill in (in order):
 
-    ## M.1 `BitMlKem/Spec.lean` — the intermediate spec
-    - `def MontPoly := Vector FieldElement 256`
-    - `def to_spec_poly_plain : PolynomialRingElement → MontPoly` (via
-      `i16_to_spec_fe` per lane, 16 lanes × 16 elements)
-    - `def to_spec_poly_mont : PolynomialRingElement → MontPoly` (via
-      `mont_i16_to_spec_fe` per lane = `(v · 169) % 3329`)
-    - `def bit_ntt_layer_1, bit_ntt_layer_2, ..., bit_invert_ntt_*`,
-      `bit_poly_barrett_reduce`, `bit_subtract_reduce`, `bit_add_*`,
-      etc. — written *as if implementing on the spec data shape*.
-    - Opaque algebraic predicates: `bit_mont_form_lane`,
-      `bit_intt_mont_form_lane`.
+    ## M.1 `BitMlKem/Spec.lean` — the intermediate spec (~830 LOC)
+
+    Single-agent dispatch; type definitions + a handful of projection
+    lemmas. Per the architecture plan §B:
+
+    - `abbrev MontPoly := Vector (ZMod 3329) 256`
+      (algebraic working type — `ring` in `ZMod 3329` collapses
+       upstream's `lemma_mod_*_distr_*` chains; D1 decision needed).
+    - `abbrev SpecPoly := Vector parameters.FieldElement 256`
+      (hacspec interface type).
+    - `def MontPoly.toSpecPoly`, `def SpecPoly.toMontPoly` (Vector.map
+      coercions + round-trip lemmas).
+    - `def i16_to_spec_fe_plain`, `def i16_to_spec_fe_mont` (per-lane
+      plain / Mont-domain coercions).
+    - `def to_spec_poly_plain`, `def to_spec_poly_mont`
+      (`PolynomialRingElement → MontPoly`).
+    - **34 `bit_<op>` defs** mirroring `HacspecMlKem`'s spec
+      surface (M.1 enumeration in arch plan §B.3). Main groups:
+        * `bit_add`, `bit_sub`, `bit_neg`, `bit_barrett_reduce`,
+          `bit_to_unsigned_representative`, `bit_to_standard_domain`
+          (scalar / poly-level FE ops)
+        * `bit_mont_mul`, `bit_multiply_by_constant`,
+          `bit_montgomery_multiply_by_constant`
+        * `bit_ntt_layer_{1,2,3}`, `bit_ntt_layer_4_to_7`, `bit_ntt`
+          (forward NTT family)
+        * `bit_invert_ntt_layer_{1,2,3}`, `bit_invert_ntt_layer_4_to_7`,
+          `bit_invert_ntt_montgomery` (inverse NTT family,
+          mirrors `Spec.ntt_inverse_butterflies`)
+        * `bit_butterfly`, `bit_inv_butterfly`,
+          `bit_base_case_multiply_{even,odd}`
+        * `bit_multiply_ntts`, `bit_ntt_multiply_chunk` (the N=16
+          per-vector chunk used by L2.8) — distinct from
+          `Spec.ntt_multiply_n` (see L2.8 note below)
+        * `bit_compress`, `bit_decompress`, `bit_compress_message`,
+          `bit_decompress_message`, `bit_byte_encode`,
+          `bit_byte_decode`
+        * `bit_add_to_ring_element`, `bit_subtract_reduce`,
+          `bit_cond_subtract_3329`, `bit_ntt_layer_int_vec_step`,
+          `bit_accumulating_ntt_multiply`
+    - **Opaque algebraic predicates** (`@[irreducible]`):
+      `bit_mont_form_lane` + chunk/poly wraps. Reveal/intro lemmas.
+      The `bit_intt_mont_form_lane` predicate from earlier Plan
+      drafts is NO LONGER NEEDED — L3.8 anchors directly against
+      `Spec.ntt_inverse_butterflies` (see L3.8 [CORRECTED] note
+      above), eliminating the opaque-predicate detour for the
+      INTT side.
 
     ## M.2 `BitMlKem/Commute.lean` — per-vector / per-poly commute lemmas
-    Mirrors upstream `commute/Chunk.fst` (2711 LOC) Block A–D:
-    - **Block A** (Layer-0 scalar FE commutes, ~20 lemmas): each
-      ~10 Lean lines via ZMod cast + `ring`. [F*-port:
+    Mirrors upstream `commute/Chunk.fst` (2711 LOC) + forward parts
+    of `commute/Bridges.fst` (1241 LOC). **~59 lemmas across 4
+    blocks, ~1840 LOC total, 4-6 sub-agent dispatches.**
+
+    - **Block A — Layer-0 scalar FE commutes** (~22 lemmas,
+      **~280 LOC**, 1 agent). Each ~10 Lean lines via ZMod cast +
+      `ring`. Covers add/sub/butterfly/mont_mul/barrett/inv_butterfly
+      and the per-pair `base_case_mult_pair` family. [F*-port:
       `Commute.Chunk.lemma_{add,sub,butterfly,mont_mul,...}_fe_commute_*`]
-    - **Block B** (Chunk / per-vector commutes, ~14 lemmas): each
-      ~30 Lean lines via `Array.ext` + Block-A lane invocation.
-      [F*-port: `Commute.Chunk.lemma_{add,sub,...}_chunk_commutes_*`]
-    - **Block C** (Poly-level commutes, ~7 lemmas): each ~30-50 lines.
-      The keystone `lemma_intt_mont_form_post` (Chunk.fst:1577) ports
-      via `ZMod 3329` casting in ~10 Lean lines vs F*'s 50.
-    - **Block D** (Forward+reverse poly NTT layer commutes): ~6
-      lemmas, each ~50 Lean lines. [F*-port: `Commute.Bridges.lemma_ntt_layer_{1,2,3}_step_to_hacspec`]
+    - **Block B — Chunk / per-vector commutes** (~14 lemmas,
+      **~405 LOC**, 1 agent). Each ~30 Lean lines via `Vector.ext` +
+      Block-A lane invocation. Covers add/sub/multiply-by-constant /
+      montgomery-multiply / barrett / cond_subtract / compress /
+      decompress at chunk granularity. [F*-port:
+      `Commute.Chunk.lemma_{add,sub,...}_chunk_commutes_*`]
+    - **Block C — Poly-level commutes** (~10 lemmas, **~325 LOC**,
+      1 agent). Each ~25-50 lines. Includes the keystone
+      `lemma_intt_mont_form_post` (Chunk.fst:1577 — F* takes 60+
+      LOC with `lemma_mod_mul_distr_*` chains; Lean closes in ~15
+      lines via `ZMod 3329` + `decide` keystones). Also covers
+      `lemma_subtract_reduce_commute`, `lemma_to_standard_domain_finalize_fe`,
+      `lemma_add_standard_error_reduce_commute`.
+    - **Block D — Forward + reverse NTT-layer commutes** (~13
+      lemmas, **~830 LOC**, 3 parallel agents). The heaviest block.
+      Covers `lemma_ntt_layer_{1,2,3}_step_to_hacspec`,
+      `lemma_inv_ntt_layer_{1,2,3}_step_to_hacspec`,
+      `lemma_inv_ntt_layer_int_vec_step_reduce_to_hacspec`, plus the
+      `ntt_layer_n_16_{2,4,8}_lane` helpers. **Includes
+      `lemma_ntt_multiply_chunk_commutes` (D.13)** — `assume val`
+      upstream (Chunk.fst:1311); Lean **must prove**, ~50 LOC via
+      `Vector.ext` + Block-A `lemma_base_case_mult_pair_commute`
+      (A.18).
 
     ## M.3 `BitMlKem/StateIso.lean` — impl ↔ MontPoly round-trip
-    - `theorem to_spec_poly_mont_injective` (well-defined on the
-      bounded subset)
-    - `theorem lift_id` (lift after unlift is identity on the impl
-      side, modulo bounded coefficients)
+    **~150 LOC, folds into the Block-A agent.** Three theorems:
+    - `theorem to_spec_poly_mont_injective` (canonical version
+      under `< 1665` bound; extended version under `< 3328`).
+    - `theorem lift_id` (lift after canonical-unlift is identity
+      on the impl side, given canonical-bounded coefficients).
+    - Auxiliary round-trip lemmas (`zmodOfFE_feOfZMod_id`,
+      `to_spec_poly_mont_of_zero`, `to_spec_poly_mont_set`).
 
     ## M.4 `BitMlKem/AlgEquiv.lean` — bit_* ↔ Spec.* algebraic equivs
+    **~830 LOC, 2 parallel agents** (rfl-class easy cluster +
+    NTT/INTT heavyweight cluster).
+
     The Campaign 2 closure. Each `bit_<op>` def from M.1 is shown
-    equivalent (under `to_spec_poly_plain`) to the corresponding
-    `Spec.<op>` from hacspec. Uses the keystones B.1–B.4 (+ the two
-    missing keystones above) plus `ring` in `ZMod 3329`.
+    equivalent (under `MontPoly ↔ SpecPoly` coercion) to the
+    corresponding `Spec.<op>` from `HacspecMlKem` (via
+    `Spec.<op>_pure` aliases stripping the `Result`-monadic
+    wrapper, per Layer-M plan §F.2 option (b)). Uses the keystones
+    B.1–B.4 (+ the two missing keystones above) plus `ring` in
+    `ZMod 3329`. ~28 alg-equiv theorems; most reduce to 1-3 line
+    `rfl`/`ring` after `Vector.ext`. Heavyweights are the NTT /
+    INTT / multiply / add-error-reduce families.
 
     All of Layer M is `theorem`/`def`, not `@[spec]` Triples — no
     `hax_mvcgen` involvement. The output is the predicate vocabulary
     every L0+ Triple post references.
+
+    ## HacspecMlKem lake-dep wiring (5-minute Phase-3 prerequisite)
+
+    `HacspecMlKem` extraction **already exists** at
+    `specs/ml-kem/proofs/aeneas-lean/HacspecMlKem/` (6677 LOC,
+    lake-buildable). It is NOT currently a `require` of this impl
+    tree's `lakefile.toml`. **First action of Phase 3 (Layer M
+    build)** is the one-line lakefile addition:
+
+    ```toml
+    [[require]]
+    name = "HacspecMlKem"
+    path = "../../../../specs/ml-kem/proofs/aeneas-lean"
+    ```
+
+    Then M.1's `import HacspecMlKem.Extraction.Funs` resolves and
+    every `bit_<op>` def in `BitMlKem/Spec.lean` can reference the
+    hacspec spec target directly. Exposes — all as `Result`-monadic
+    defs:
+    - `Spec.ntt`, `Spec.ntt_inverse_butterflies`,
+      `Spec.ntt_inverse` (the L3.8 anchor, the variant with
+      terminal `· 128⁻¹`, lives here too — but L3.8 anchors against
+      `ntt_inverse_butterflies` because that's what the impl does)
+    - `Spec.multiply_ntts`, `Spec.ntt_multiply_n`
+    - `Spec.lift_poly`, `Spec.lift_poly_mont`
+    - `Spec.compress`, `Spec.decompress`
+    - `Spec.byte_encode`, `Spec.byte_decode`
+    - `Spec.subtract_reduce`, `Spec.add_to_ring_element`, etc.
+
+    5-minute change. First action of Phase 3 (Layer M build),
+    Wave 3.0 per the master plan.
 -/
 
 /-! ============================================================
@@ -732,6 +834,7 @@ generic plumbing already passes its tests in the SHA-3 tree.
 -/
 
 /- **L0.1 `vector.portable.arithmetic.get_n_least_significant_bits`** — masking primitive.
+    [Upgrade status: post already equality-form, 0 LOC delta]
 
     Hax requires (`vector/portable/arithmetic.rs:26-32`): `n ≤ 16`.
 
@@ -765,6 +868,7 @@ theorem get_n_least_significant_bits_spec
 -- 0 axioms beyond propext / Classical.choice / Quot.sound).
 
 /- **L0.2 `vector.portable.arithmetic.barrett_reduce_element`** — signed Barrett reduction.
+    [Upgrade status: needs +20 LOC corollary; M.1 def required]
 
     Hax pre (`vector/portable/arithmetic.rs:260`): `Spec.Utils.is_i16b 28296 value`,
     i.e. `value.val.natAbs ≤ 28296`.
@@ -809,6 +913,7 @@ theorem barrett_reduce_element_spec
 -- 439 LOC, axiom-clean; flagged for follow-up golf to bv_decide form).
 
 /- **L0.3 `vector.portable.arithmetic.montgomery_reduce_element`** — signed Montgomery reduction.
+    [Upgrade status: needs +30 LOC corollary; M.1 def required]
 
     Hax pre (`vector/portable/arithmetic.rs:348`): `Spec.Utils.is_i32b (3328 * pow2 16) value`,
     i.e. `value.val.natAbs ≤ 3328 * 2^16`.
@@ -850,6 +955,7 @@ theorem barrett_reduce_element_spec
 -- propext / Classical.choice / Quot.sound).
 
 /- **L0.4 `vector.portable.arithmetic.montgomery_multiply_fe_by_fer`** — Montgomery multiply.
+    [Upgrade status: needs +15 LOC corollary; depends on L0.3]
 
     Hax pre (`vector/portable/arithmetic.rs:464`): `Spec.Utils.is_i16b 1664 fer`,
     i.e. `fer.val.natAbs ≤ 1664`.
@@ -928,6 +1034,7 @@ theorem barrett_reduce_element_spec
     splitting Z3's quantifier-instantiation budget.
 
     ## L1.1 `PortableVector.add` — pointwise wrapping_add.
+    [Upgrade status: post already equality-form, 0 LOC delta]
     [F*-bound: traits.rs:640 `add_pre` + traits.rs:656 `add_post`.]
 -/
 /- Triple skeleton (extraction missing):
@@ -945,6 +1052,7 @@ theorem PortableVector_add_spec
 -/
 
 /- ## L1.2 `PortableVector.sub` — pointwise wrapping_sub. Mirror of L1.1.
+    [Upgrade status: post already equality-form, 0 LOC delta]
     [F*-bound: traits.rs:667 `sub_pre` + traits.rs:675 `sub_post` — same
      elementwise-difference-bound shape as L1.1.]
 -/
@@ -963,6 +1071,7 @@ theorem PortableVector_sub_spec
 -/
 
 /- ## L1.3 `PortableVector.barrett_reduce` — each lane via L0.2.
+    [Upgrade status: +10 LOC; depends on L0.2]
     Tier: loop-induction. Depends on L0.2.
     [F*-bound: traits.rs:763 `barrett_reduce_pre` (`is_i16b_array_opaque
      28296 vec`) + traits.rs:767 `barrett_reduce_post` (`is_i16b_array_opaque
@@ -982,6 +1091,7 @@ theorem PortableVector_barrett_reduce_spec
 -/
 
 /- ## L1.4 `PortableVector.montgomery_multiply_by_constant` — each lane via L0.4.
+    [Upgrade status: needs +15 LOC; depends on L0.4 + M.2 Block A]
     Tier: loop-induction. Depends on L0.4.
     [F*-bound: traits.rs:781 `montgomery_multiply_by_constant_pre` (asymmetric:
      only `is_i16b 1664 c`, vec unconstrained — matches L0.4's pre asymmetry) +
@@ -1003,7 +1113,9 @@ theorem PortableVector_montgomery_multiply_by_constant_spec
 -/
 
 /- ## L1.5 `PortableVector.cond_subtract_3329` — per-element
-    `if x ≥ 3329 then x - 3329 else x`. Tier: loop-induction.
+    `if x ≥ 3329 then x - 3329 else x`.
+    [Upgrade status: +10 LOC alias; full range + cong already proved]
+    Tier: loop-induction.
     [F*-bound: traits.rs:743 `cond_subtract_3329_pre` (`is_i16b_array_opaque
      (pow2 12 - 1) vec`, i.e. `vec[i].val.natAbs ≤ 4095`) + traits.rs:747
      `cond_subtract_3329_post` (each lane: `v y = v x - 3329 ∨ v y = v x`
@@ -1025,6 +1137,7 @@ theorem PortableVector_cond_subtract_3329_spec
 -/
 
 /- ## L1.6 `PortableVector.negate` — pointwise `wrapping_neg`.
+    [Upgrade status: post already equality-form, 0 LOC delta]
     Tier: loop-induction.
     [F*-bound: traits.rs:684 `negate_pre` (`is_intb (pow2 15 - 1) (v vec[i])`,
      i.e. no `i16.MIN`) + traits.rs:691 `negate_post` (`v r = -v vec[i] ∧
@@ -1045,6 +1158,7 @@ theorem PortableVector_negate_spec
 
 /- ## L1.7 `PortableVector.multiply_by_constant` — pointwise
     `wrapping_mul(c)` (different from L1.4 — no Montgomery).
+    [Upgrade status: post already equality-form, 0 LOC delta]
     Tier: loop-induction.
     [F*-bound: traits.rs:700 `multiply_by_constant_pre` (`is_intb (pow2 15 - 1)
      (v vec[i] * v c)`) + traits.rs:707 `multiply_by_constant_post`
@@ -1066,6 +1180,7 @@ theorem PortableVector_multiply_by_constant_spec
 -/
 
 /- ## L1.8 `PortableVector.bitwise_and_with_constant` — pointwise AND.
+    [Upgrade status: post already equality-form (full bv eq), 0 LOC delta]
     Tier: loop-induction + bv_decide per element.
     [F*-bound: traits.rs:147 `bitwise_and_with_constant_constant_post`
      (`r = map_array (fun x => x &&& c) vec`). No precondition — the AND
@@ -1086,6 +1201,7 @@ theorem PortableVector_bitwise_and_with_constant_spec
 -/
 
 /- ## L1.9 `PortableVector.shift_right` — pointwise `>>` by const.
+    [Upgrade status: post already equality-form (full bv eq), 0 LOC delta]
     Tier: loop-induction.
     [F*-bound: traits.rs:173-174 `shift_right` `requires SHIFT_BY ∈ [0, 16)`,
      `shift_right_post` (`r = map_array (fun x => x >>! shift_by) vec`).
@@ -1106,6 +1222,7 @@ theorem PortableVector_shift_right_spec
 
 /- ## L1.10 `PortableVector.reducing_from_i32_array` — per-lane
     `montgomery_reduce_element` (L0.3) from a 16-element I32 slice.
+    [Upgrade status: +15 LOC; depends on L0.3]
     Tier: loop-induction. Depends on L0.3.
     [F*-bound: hax-side pre `forall i. is_i32b (3328 * pow2 16) a[i]`
      (mirror of L0.3 pre, propagated per-lane), post bundles
@@ -1156,6 +1273,7 @@ theorem PortableVector_reducing_from_i32_array_spec
 
 /- **L2.1 `vector.portable.ntt.ntt_step`** — single butterfly inside a
     PortableVector at indices (a_idx, b_idx) with the supplied ζ.
+    [Upgrade status: +25 LOC; depends on M.2 Block A]
 
     Computes `t = montgomery_multiply(vec[b_idx], ζ)`, then
     `vec[b_idx] := vec[a_idx] - t`, `vec[a_idx] := vec[a_idx] + t`.
@@ -1210,6 +1328,7 @@ theorem ntt_step_spec
 /- **L2.2 `vector.portable.ntt.ntt_layer_1_step`** — 4 butterflies on
     distinct (a, b, ζ) index pairs within one PortableVector at
     positions (0↔2, 1↔3, 4↔6, 5↔7) using ζ₀, ζ₀, ζ₁, ζ₁.
+    [Upgrade status: +80 LOC; depends on L2.1 + M.2 Block B]
 
     [F*-port: `Vector.Portable.Ntt.ntt_layer_1_step` (lines 107–140).
      Upstream chains 8 `ntt_step` calls (actually 8 pairs in the
@@ -1251,6 +1370,7 @@ theorem ntt_layer_1_step_spec
 -/
 
 /- **L2.3 `ntt_layer_2_step`** — 2 butterflies. Depends on L2.1.
+    [Upgrade status: +60 LOC; depends on L2.2]
     [F*-port: `Vector.Portable.Ntt.ntt_layer_2_step` lines 146–215;
      same shape as L2.2 with different index table.] ~3 hours.
     [F*-bound: vector/portable/ntt.rs:96-101 `ntt_layer_2_step` pre:
@@ -1271,6 +1391,7 @@ theorem ntt_layer_2_step_spec
 -/
 
 /- **L2.4 `ntt_layer_3_step`** — 1 butterfly. Depends on L2.1.
+    [Upgrade status: +40 LOC; depends on L2.2]
     [F*-port: ibid, same structure.] ~3 hours.
     [F*-bound: vector/portable/ntt.rs:120-124 `ntt_layer_3_step` pre:
      `is_i16b 1664 zeta ∧ is_i16b_array (5*3328) vec`, post:
@@ -1291,6 +1412,7 @@ theorem ntt_layer_3_step_spec
 /- **L2.5 `inv_ntt_step`** — Gentleman–Sande inverse butterfly.
     Computes `(a, b) := (a + b, montgomery_multiply((a - b), ζ))`.
     Spec anchor: `Spec.inv_butterfly`. Mirror of L2.1. Depends on L0.4.
+    [Upgrade status: +30 LOC; depends on L0.4 + M.2 Block A]
     [F*-port: `Vector.Portable.Ntt.inv_ntt_step` lines 221–280;
      forward uses `montgomery_multiply` on b then add/sub, inverse
      uses `barrett_reduce` on sum then `montgomery_multiply` on diff.]
@@ -1315,6 +1437,7 @@ theorem inv_ntt_step_spec
 -/
 
 /- **L2.6 `inv_ntt_layer_1_step`** — bundled 4 inverse butterflies.
+    [Upgrade status: +80 LOC; depends on L2.5 + M.2 Block B]
     [F*-port: lines 285–360, mirror of L2.2.]
     [F*-bound: vector/portable/ntt.rs:189-194 `inv_ntt_layer_1_step` pre:
      `is_i16b 1664 zeta0..3 ∧ is_i16b_array 3328 vec`, post:
@@ -1336,6 +1459,7 @@ theorem inv_ntt_layer_1_step_spec
 -/
 
 /- **L2.7 `inv_ntt_layer_2_step` / `inv_ntt_layer_3_step`** — analogous.
+    [Upgrade status: +100 LOC; depends on L2.6]
     [F*-port: lines 365–430.]
     [F*-bound: vector/portable/ntt.rs:240-246 `inv_ntt_layer_2_step` pre:
      `is_i16b 1664 zeta0,1 ∧ is_i16b_array (2*3328) vec`, post:
@@ -1374,6 +1498,16 @@ theorem inv_ntt_layer_3_step_spec
     that gets folded via `montgomery_reduce_element` later. Three
     variants (with cache, fill cache, use cache) optimize the inner
     constant load.
+
+    NOTE: `Spec.ntt_multiply_n` (ntt.rs:339-371) is generic over N to
+    support BOTH N=256 (full `Spec.multiply_ntts`) AND N=16 (the
+    impl's per-vector chunk). This is the spec being shaped to
+    support impl decomposition. For L2.8 per-chunk, use a fresh
+    M.1 def `bit_ntt_multiply_chunk`, NOT `Spec.ntt_multiply_n[N=16]`
+    directly — the M.1 def lives on `MontPoly`-style data and
+    composes cleanly with the rest of the bit-side spec; the
+    equivalence between `bit_ntt_multiply_chunk` and the N=16
+    instance of `Spec.ntt_multiply_n` lives in M.4 AlgEquiv.
 
     [F*-port: `Vector.Portable.Ntt.ntt_multiply_binomials` +
      `ntt_multiply` (lines 432–584; ~150 LOC F*). Each pair involves
@@ -1458,6 +1592,7 @@ theorem accumulating_ntt_multiply_spec
 /- **L3.1 `ntt.ntt_at_layer_1`** — innermost NTT layer (loop of 16
     calls to `ntt_layer_1_step`). Increments `zeta_i` by 4 per
     iteration. Hax pre: `*zeta_i == 63`; post: `*future(zeta_i) == 127`.
+    [Upgrade status: +80 LOC; depends on L2.2 + M.2 Block B/D]
 
     [F*-port: `Libcrux_ml_kem.Ntt.ntt_at_layer_1_` (lines 14–127,
      `--z3rlimit 800`, ~110 LOC). The architecturally critical
@@ -1514,7 +1649,9 @@ theorem ntt_at_layer_1_spec
    Each layer-1 application bumps the per-coefficient bound by exactly 3328.] -/
 
 /- **L3.2 `ntt.ntt_at_layer_2`** — same shape with zeta_i 31→63.
+    [Upgrade status: +60 LOC; depends on L2.3 + M.2 Block B/D]
     **L3.3 `ntt.ntt_at_layer_3`** — same shape with zeta_i 15→31.
+    [Upgrade status: +50 LOC; depends on L2.4 + M.2 Block B/D]
     Both ## Depends on L2.3/L2.4 + zeta_spec.
     [F*-port: `Libcrux_ml_kem.Ntt.ntt_at_layer_{2,3}_` (lines 132–336);
      structural duplication of L3.1.]
@@ -1564,6 +1701,8 @@ theorem ntt_at_layer_3_spec
     parameter `layer` is `∈ [4, 7]`; see Funs.lean line 396). Nested
     loop: outer over rounds, inner over `step_vec = (1 << layer) / 16`
     butterfly positions.
+    [Upgrade status: +300 LOC; nested-loop invariant cascade;
+     depends on L2.x + M.2 Block B/D]
 
     [F*-port: `Libcrux_ml_kem.Ntt.ntt_at_layer_4_plus` (lines
      363–477, ~115 LOC F*). The **largest single Triple in the
@@ -1619,6 +1758,7 @@ theorem ntt_at_layer_4_plus_spec
 -/
 
 /- **L3.5 `ntt.ntt_at_layer_7`** — outermost layer (no zeta_i).
+    [Upgrade status: +80 LOC; depends on L1.7/1.1/1.2 + M.2 Block A]
 
     Uses `Vector::multiply_by_constant(-1600)` (the Montgomery
     encoding of ζ¹ = ζ_512 with a sign trick) and add/sub. No
@@ -1701,7 +1841,7 @@ theorem ntt_at_layer_7_spec
      future(re)` (final `poly_barrett_reduce` collapses the running
      7-layer bound down to canonical 3328).]
 -/
-/- Triple skeleton:
+/- Triple skeleton (Phase-1 BOUND-ONLY target):
 @[spec]
 theorem ntt_binomially_sampled_ring_element_spec
     {Vector : Type}
@@ -1715,6 +1855,24 @@ theorem ntt_binomially_sampled_ring_element_spec
                 r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
   sorry
 -/
+/- Triple skeleton (FUNCTIONAL-CORRECTNESS UPGRADE, Phase 5 target):
+   Equality post anchored against `Spec.ntt` (NOT wrapped in
+   `Spec.poly_barrett_reduce` — that's a no-op shim per the D9
+   spec-shim audit; `Spec.lift_poly_mont` already canonicalizes).
+@[spec]
+theorem ntt_binomially_sampled_ring_element_spec_upgraded
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ 3) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_binomially_sampled_ring_element OpsInst re
+    ⦃ ⇓ r => ⌜ Spec.ntt (Spec.lift_poly_mont re) = Spec.lift_poly_mont r
+              ∧ ∀ i : Fin 16, ∀ j : Fin 16,
+                  r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+-/
 
 /- **L3.7 `ntt.ntt_vector_u`** — same shape as L3.6 with different
     initial coefficient bound + initial zeta_i = 0 (skip layer 7).
@@ -1725,7 +1883,7 @@ theorem ntt_binomially_sampled_ring_element_spec
      (terminal barrett-reduce). Same +3328-per-layer ladder as L3.6
      but starting from a tighter initial bound.]
 -/
-/- Triple skeleton:
+/- Triple skeleton (Phase-1 BOUND-ONLY target):
 @[spec]
 theorem ntt_vector_u_spec
     {Vector : Type}
@@ -1739,31 +1897,67 @@ theorem ntt_vector_u_spec
                 r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
   sorry
 -/
+/- Triple skeleton (FUNCTIONAL-CORRECTNESS UPGRADE, Phase 5 target):
+   Equality post against `Spec.ntt` directly (no `Spec.poly_barrett_reduce`
+   wrapper, per the D9 spec-shim audit).
+@[spec]
+theorem ntt_vector_u_spec_upgraded
+    {Vector : Type}
+    (OpsInst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
+    (h_pre : ∀ i : Fin 16, ∀ j : Fin 16,
+      re.coefficients[i].elements[j].val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_vector_u OpsInst re
+    ⦃ ⇓ r => ⌜ Spec.ntt (Spec.lift_poly_mont re) = Spec.lift_poly_mont r
+              ∧ ∀ i : Fin 16, ∀ j : Fin 16,
+                  r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+  sorry
+-/
 
-/- **L3.8 `invert_ntt_montgomery`** — full 7-layer iNTT. Spec anchor:
-    `Spec.ntt_inverse(p)`. Mirror of L3.6; final iNTT layer
-    multiplies by `1441 = R · (1/128 mod q)` to absorb the 1/N
-    normalization factor.
-    [F*-port: `Libcrux_ml_kem.Invert_ntt.fst` (~700 LOC). **Critical
-     difference**: the final inverse layer does NOT apply `1/128`;
-     it's deferred to consumers (L6.2, L6.4) via the
-     `montgomery_multiply 1441` step. Post must use the
-     `bit_intt_mont_form` predicate (= "lane carries
-     `R⁻¹ · 128 · spec_value mod q`"). The keystone bridge is
-     `lemma_intt_mont_finalize_fe` from upstream Chunk.fst:1703 —
-     port via ZMod 3329 cast in ~10 Lean lines. ~4 days incl. the
-     opaque predicate design.]
+/- **L3.8 `invert_ntt_montgomery`** — full 7-layer iNTT.
+    [CORRECTED 2026-05-23: was anchored against `Spec.ntt_inverse`,
+     and bound post said `≤ 3328`. Both were bugs — see audit notes.]
+    Spec anchor: `Spec.ntt_inverse_butterflies(p)`.
+
+    L3.8 anchors against `Spec.ntt_inverse_butterflies`
+    (specs/ml-kem/src/invert_ntt.rs:129-138), which is FIPS-203
+    Alg 9 lines 3-8 *without* the terminal `· 128⁻¹`. This matches
+    the impl's `invert_ntt_montgomery` exactly. The deferred
+    `· 128⁻¹` factor lives in L6.2 / L6.4 where the
+    `montgomery_multiply 1441 = R · (1/128 mod q)` step actually
+    happens — NOT inside L3.8.
+
+    Note: the `bit_intt_mont_form` opaque-predicate detour
+    referenced by older Plan drafts is no longer needed and has
+    been dropped — `Spec.ntt_inverse_butterflies` is a clean
+    direct anchor.
+
+    [F*-port: `Libcrux_ml_kem.Invert_ntt.fst` (~700 LOC). The
+     impl's `invert_ntt_montgomery` does NOT apply the terminal
+     `1/128` (that's deferred to L6.2 / L6.4). It also does NOT
+     apply a terminal barrett reduce, so the K-scaled input bound
+     survives plus a per-INTT-layer +3328 growth. The keystone
+     bridge for L6.4's downstream finalize is
+     `lemma_intt_mont_finalize_fe` (upstream Chunk.fst:1703) — port
+     via ZMod 3329 cast in ~10 Lean lines, lives in M.2 Block C.
+     ~4 days for L3.8 itself (bound-only post; functional post is
+     a Phase-5 follow-up against `Spec.ntt_inverse_butterflies`).]
     Tier: algebraic-close-required (~4 days).
     [extraction PRESENT for invert_ntt.*: invert_ntt_at_layer_{1,2,3,4_plus},
      invert_ntt_montgomery, inv_ntt_layer_int_vec_step_reduce are in
      `Funs.lean` since commit `993b381`.]
     [F*-bound: invert_ntt.rs:660-665 `invert_ntt_montgomery` pre:
      `K ≤ 4 ∧ is_bounded_poly (K*3328) re` (poly-vector accumulated
-     summand from K matrix products); post: `is_bounded_poly 3328
-     future(re)`. The K-loop in the caller accumulates K terms each
-     bounded by 3328, then this driver INTT's and reduces to 3328.]
+     summand from K matrix products); post the impl alone gives
+     `is_bounded_poly (K*3328 + 3328) future(re)` (impl performs
+     no terminal barrett or 1/128 reduce, so K-scaled input bound
+     survives + per-INTT-layer +3328 growth). The downstream
+     L6.4 `subtract_reduce` is what collapses to 3328.]
 -/
-/- Triple skeleton:
+/- Triple skeleton [CORRECTED 2026-05-23: bound `≤ 3328` was wrong
+   (no terminal barrett in the impl); spec anchor `Spec.ntt_inverse`
+   was wrong (should be `Spec.ntt_inverse_butterflies`).]:
 @[spec]
 theorem invert_ntt_montgomery_spec
     {Vector : Type} (K : Std.Usize) (hK : K.val ≤ 4)
@@ -1773,8 +1967,11 @@ theorem invert_ntt_montgomery_spec
       re.coefficients[i].elements[j].val.natAbs ≤ K.val * 3328) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_montgomery OpsInst K re
+    -- Bound is K*3328 + 3328 because the impl does NO terminal barrett
+    -- or 1/128 reduce; the K-scaled input bound survives + the
+    -- per-INTT-layer +3328 growth.
     ⦃ ⇓ r => ⌜ ∀ i : Fin 16, ∀ j : Fin 16,
-                r.coefficients[i].elements[j].val.natAbs ≤ 3328 ⌝ ⦄ := by
+                r.coefficients[i].elements[j].val.natAbs ≤ K.val * 3328 + 3328 ⌝ ⦄ := by
   sorry
 -/
 
@@ -2239,8 +2436,16 @@ theorem PolynomialRingElement_add_standard_error_reduce_spec
     (L2.8) with the per-pair zeta values from
     `ZETAS_TIMES_MONTGOMERY_R[64 + 4i + {0,1,2,3}]`.
 
-    Spec anchor: `Spec.ntt_multiply(a, b) = multiply_ntts(a, b)`
-    (`specs/ml-kem/src/ntt.rs:359`).
+    Spec anchor: `Spec.multiply_ntts(a, b)` (the N=256 instance of
+    `Spec.ntt_multiply_n`).
+
+    NOTE: `Spec.ntt_multiply_n` (ntt.rs:339-371) is generic over N to
+    support BOTH N=256 (full `Spec.multiply_ntts`) AND N=16 (the
+    impl's per-vector chunk). For L6.3 anchor against
+    `Spec.multiply_ntts` directly (the N=256 instance) — NOT against
+    `Spec.ntt_multiply_n` at generic N. The per-chunk decomposition
+    is internal to the impl and exposed via M.1's
+    `bit_ntt_multiply_chunk`, not via the N=16 instance.
 
     [F*-port: `Libcrux_ml_kem.Polynomial.ntt_multiply`
      (Polynomial.fst:853–915). **WARNING**: upstream's
@@ -2948,6 +3153,32 @@ theorem ind_cca_decapsulate_spec
     ```
 -/
 
+/-! ### Spec-side no-op shims — do not anchor posts against these
+
+    Audited 2026-05-23. The following hacspec-side functions are
+    syntactic mirrors of impl methods but contain no verification
+    content (they reduce to identity over canonical FieldElement):
+
+    - `Spec.polynomial.poly_barrett_reduce` (polynomial.rs:29-31).
+      Body: `createi(|i| FieldElement::new(p[i].val % FIELD_MODULUS))`.
+      Since `FieldElement::new` already canonicalizes via `% q`, this
+      is `id` over canonical inputs.
+    - `Spec.ntt.to_unsigned_field_modulus` (ntt.rs:11-13). Same pattern.
+
+    Implication for upgraded posts: L3.6/3.7's terminal barrett step
+    should NOT wrap in `Spec.poly_barrett_reduce`. The lift function
+    `Spec.lift_poly_mont` already canonicalizes via `FieldElement::new`,
+    so `lift ∘ impl_barrett_reduce = lift` over the bounded subset.
+    Similarly, L5.x serialization should use direct `c.val < q` checks
+    rather than `Spec.to_unsigned_field_modulus(...) = result`.
+
+    Verifying `impl_op ≡ no-op-shim` proves nothing about
+    correctness — it just proves the impl reduces.
+
+    See ~/.claude/plans/iot-mlkem-functional-correctness-master.md
+    §D9, §D10 for the full audit.
+-/
+
 /-! ============================================================
     # CRITICAL BRIDGE LEMMAS — Montgomery / data-layout divergences
 
@@ -2998,6 +3229,84 @@ theorem ind_cca_decapsulate_spec
 -- `LibcruxIotMlKem.Util.NumericKeystones`. References in the lemma
 -- sketches above (B.1–B.4 by short name) resolve via the `import` at
 -- the top of this file plus the namespace `libcrux_iot_ml_kem.Util`.
+
+/-! ============================================================
+    # FUNCTIONAL-CORRECTNESS UPGRADE PATH
+
+    **Status:** currently bound-only across L0-L3.5 (20 closed
+    Triples; Campaign-3 commits `60d53ca` `719d98f` `f5e7400`
+    `b95de0c` `ac77d55`). Functional-correctness upgrade plan
+    drafted **2026-05-23** across four sub-plans (Layer M
+    architecture, L3 spec functional-spec, existing-post upgrade
+    delta, L2.8 plan) and synthesized in
+    `~/.claude/plans/iot-mlkem-functional-correctness-master.md`.
+
+    ## The five phases
+
+    | Phase | Scope | Cost |
+    | --- | --- | --- |
+    | 1 | bnd-relax + L3.6/3.7 bound-only | ~2700 LOC, 4 dispatches, ~1 wk |
+    | 2 | L2.8 bound-only (parallel with Phase 1) | ~3000 LOC, 2 dispatches, ~1 day |
+    | 3 | Layer M scaffolding (BitMlKem.{Spec,Commute,StateIso,AlgEquiv}) | ~3650 LOC, 6-8 dispatches, 2.5-3.5 wk |
+    | 4 | Existing-post upgrade pass (20 closed Triples → equality form) | ~1535 LOC, ~10 dispatches, ~1-1.5 wk |
+    | 5 | Functional L3.6/3.7/3.8 + L6.3 (vs `Spec.ntt`, `Spec.ntt_inverse_butterflies`, `Spec.multiply_ntts`) | ~830 LOC, 3-4 dispatches, ~1 wk |
+
+    **Total: ~12K LOC, ~25 dispatches, ~6-8 weeks calendar.**
+
+    Recommended order: **A (serialized)** — Phase 1+2 → Phase 3 →
+    Phase 4 → Phase 5. The L3.6/3.7 bound-only Phase-1 closures
+    get upgraded in Phase 4; alternative interleavings are
+    detailed in the master plan §3.
+
+    ## User-blocking decisions (consolidated from sub-plans)
+
+    The master plan §4 lists 8 load-bearing decisions D1-D8 plus
+    D9-D11 from the spec-shim audit. Each has a recommendation:
+
+    - **D1 — MontPoly representation.** A+B parallel types
+      (`MontPoly := Vector (ZMod 3329) 256` + `SpecPoly := Vector
+      parameters.FieldElement 256` with `Vector.map` coercions).
+      Optimizes M.2 algebra; bridges at the L3 closure boundary
+      are ~30 LOC.
+    - **D2 — Phase ordering.** Option A (serialized).
+    - **D3 — L3.8 anchor and bound.** Anchor against
+      `Spec.ntt_inverse_butterflies`; bound post `≤ (K+1) · 3328`
+      (was `≤ 3328` per old Plan.lean — corrected; see L3.8
+      [CORRECTED 2026-05-23] note).
+    - **D4 — L2.8 timing.** Run Phase 2 in parallel with Phase 1.
+    - **D5 — L1 cosmetic alias scope.** Skip L1.1/1.2/1.6/1.7/1.8/1.9
+      `_full` aliases (already equality-form natural).
+    - **D6 — L0.2 `bv_decide` golf (campaign F1).** Defer to after
+      Phase 4; the +20 LOC corollary is independent of golf state.
+    - **D7 — M.2 dispatch granularity.** 5-6 agents (one per
+      block; Block D split into 3 parallel agents).
+    - **D8 — Lake dep wiring** (action item, not a decision).
+      `HacspecMlKem` to `lakefile.toml`; 1-line; first action of
+      Phase 3.0.
+    - **D9 — Spec.poly_barrett_reduce is a no-op shim** (audit
+      finding). L3.6/3.7's terminal barrett step should NOT wrap in
+      `Spec.poly_barrett_reduce`. See spec-shim warning above.
+    - **D10 — Spec.to_unsigned_field_modulus is a no-op shim.**
+      Same audit; L5.x serialize should use direct `< q` checks.
+    - **D11 — Spec.ntt_multiply_n is dual-purpose** (N=16 chunk and
+      N=256 full). L6.3 anchors `Spec.multiply_ntts` (N=256);
+      L2.8 uses fresh M.1 `bit_ntt_multiply_chunk`.
+
+    ## Automation pilot
+
+    P0 automation pilot in progress (bv_decide / grind feasibility
+    on L0.x / L1.x leaf-tier Triples). Results may revise
+    per-Triple LOC estimates downward by 15-25%.
+
+    ## Pointer
+
+    Master plan: `~/.claude/plans/iot-mlkem-functional-correctness-master.md`.
+    Sub-plans:
+      - `~/.claude/plans/iot-mlkem-layer-M-architecture.md` (52 KB)
+      - `~/.claude/plans/iot-mlkem-L3-poly-NTT-functional-spec.md` (46 KB)
+      - `~/.claude/plans/iot-mlkem-existing-post-upgrade-delta.md` (44 KB)
+      - `~/.claude/plans/iot-mlkem-L2-8-accumulating-ntt-multiply.md` (42 KB)
+-/
 
 /-! ============================================================
     # PROOF ORDER FOR THE VERIFICATION ENGINEER
