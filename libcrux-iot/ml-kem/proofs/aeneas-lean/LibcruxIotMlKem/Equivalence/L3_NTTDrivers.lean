@@ -1771,7 +1771,7 @@ private theorem ntt_layer_int_vec_step_spec
     (zeta_r : Std.I16)
     (h_a : a.val < 16) (h_b : b.val < 16) (h_ne : a.val ≠ b.val)
     (h_zeta : zeta_r.val.natAbs ≤ 1664)
-    (bnd : Nat) (h_bnd : bnd ≤ 4 * 3328)
+    (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
     (h_pre_a : ∀ ℓ : Nat, ℓ < 16 →
       ((coefficients.val[a.val]!).elements.val[ℓ]!).val.natAbs ≤ bnd) :
     ⦃ ⌜ True ⌝ ⦄
@@ -2097,7 +2097,7 @@ end L3_4_Inner
 private theorem ntt_at_layer_4_plus_inner_step_lemma
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (zeta_i a_offset b_offset step_vec : Std.Usize) (bnd : Nat) (h_bnd : bnd ≤ 4 * 3328)
+    (zeta_i a_offset b_offset step_vec : Std.Usize) (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
     (h_zeta_lt : zeta_i.val < 128)
     (h_ranges : a_offset.val + step_vec.val ≤ b_offset.val
                  ∧ b_offset.val + step_vec.val ≤ 16)
@@ -2329,7 +2329,7 @@ private theorem ntt_at_layer_4_plus_inner_loop_lemma
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (acc_in : L3_4_Inner.Acc)
-    (zeta_i a_offset b_offset step_vec : Std.Usize) (bnd : Nat) (h_bnd : bnd ≤ 4 * 3328)
+    (zeta_i a_offset b_offset step_vec : Std.Usize) (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
     (h_zeta_lt : zeta_i.val < 128)
     (h_step_vec_pos : 0 < step_vec.val)
     (h_step_vec_le_16 : step_vec.val ≤ 16)
@@ -2464,7 +2464,7 @@ set_option maxHeartbeats 16000000 in
 private theorem ntt_at_layer_4_plus_outer_step_lemma
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (zeta_i_init step_vec outer_count : Std.Usize) (bnd : Nat) (h_bnd : bnd ≤ 4 * 3328)
+    (zeta_i_init step_vec outer_count : Std.Usize) (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
     (h_step_vec_pos : 0 < step_vec.val)
     (h_step_vec_le_16 : step_vec.val ≤ 16)
     (h_outer_count_pos : 0 < outer_count.val)
@@ -2744,7 +2744,7 @@ private theorem ntt_at_layer_4_plus_outer_loop_lemma
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (zeta_i_init step_vec outer_count : Std.Usize) (bnd : Nat) (h_bnd : bnd ≤ 4 * 3328)
+    (zeta_i_init step_vec outer_count : Std.Usize) (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
     (h_step_vec_pos : 0 < step_vec.val)
     (h_step_vec_le_16 : step_vec.val ≤ 16)
     (h_outer_count_pos : 0 < outer_count.val)
@@ -2813,7 +2813,7 @@ theorem ntt_at_layer_4_plus_spec
     (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (bnd : Std.Usize)
     (h_layer : 4 ≤ layer.val ∧ layer.val ≤ 6)
-    (h_bnd : bnd.val ≤ 4 * 3328)
+    (h_bnd : bnd.val ≤ 8 * 3328)
     (h_zeta : zeta_i.val = (1 <<< (7 - layer.val)) - 1)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd.val) :
