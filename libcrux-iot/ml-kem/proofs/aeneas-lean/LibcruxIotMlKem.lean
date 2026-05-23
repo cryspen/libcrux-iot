@@ -19,4 +19,5 @@ import LibcruxIotMlKem.BitMlKem.Commute
 import LibcruxIotMlKem.BitMlKem.StateIso
 import LibcruxIotMlKem.BitMlKem.SpecPure
 import LibcruxIotMlKem.BitMlKem.AlgEquiv
+import LibcruxIotMlKem.BitMlKem.FCTargets
 import LibcruxIotMlKem.Util.AutomationSandbox
