@@ -227,14 +227,14 @@ theorem sub_spec
     element. The post asserts each output element is congruent to its
     input mod 3329 and bounded in absolute value by 3328.
 
-    F* pre: `∀ i < 16, is_i16b 28296 vec.elements[i]`
+    F* pre: `∀ i < 16, is_i16b 32767 vec.elements[i]`
     F* post: `∀ i < 16, is_i16b 3328 r.elements[i]
                      ∧ v r.elements[i] % 3329 = v vec.elements[i] % 3329` -/
 
 /-- Per-element predicate threading the L0.2 bound precondition into
     an implication. -/
 private def barrett_per_elem_P (x y : Std.I16) : Prop :=
-  x.val.natAbs ≤ 28296 →
+  x.val.natAbs ≤ 32767 →
     libcrux_iot_ml_kem.Util.modq_eq y.val x.val 3329
       ∧ y.val.natAbs ≤ 3328
 
@@ -272,7 +272,7 @@ private theorem barrett_per_elem_spec (x : Std.I16) :
 @[spec]
 theorem barrett_reduce_spec
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (h_bounds : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ 28296) :
+    (h_bounds : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ 32767) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce vec
     ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →

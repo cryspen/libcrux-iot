@@ -153,19 +153,19 @@ private def barrett_q (v : Int) : Int :=
 
 /-- **Pure `Int`-level core of Barrett reduction.**
 
-    Given `|value| ≤ 28296`, the residual `value - barrett_q value * 3329`
+    Given `|value| ≤ 32767`, the residual `value - barrett_q value * 3329`
     is congruent to `value` mod 3329 (trivially, since the difference is
     a multiple of 3329) and has absolute value at most 3328. -/
 private theorem barrett_reduce_core
-    (v : Int) (h_v : v.natAbs ≤ 28296) :
+    (v : Int) (h_v : v.natAbs ≤ 32767) :
     let q := barrett_q v
     let r := v - q * 3329
     modq_eq r v 3329 ∧ r.natAbs ≤ 3328 := by
-  -- |v| ≤ 28296 as an Int.
-  have h_v_abs : |v| ≤ (28296 : Int) := by
+  -- |v| ≤ 32767 as an Int.
+  have h_v_abs : |v| ≤ (32767 : Int) := by
     rw [Int.abs_eq_natAbs]; exact_mod_cast h_v
-  have h_v_lb : -(28296 : Int) ≤ v := (abs_le.mp h_v_abs).1
-  have h_v_ub : v ≤ (28296 : Int) := (abs_le.mp h_v_abs).2
+  have h_v_lb : -(32767 : Int) ≤ v := (abs_le.mp h_v_abs).1
+  have h_v_ub : v ≤ (32767 : Int) := (abs_le.mp h_v_abs).2
   -- Closed-form of barrett_q: (v * 20159 + 2^25) / 2^26.
   set s : Int := v * 20159 + (2^25 : Int) with hs_def
   set q : Int := s / (2^26 : Int) with hq_def
@@ -230,7 +230,7 @@ private theorem barrett_reduce_core
       omega
     -- Bounds on r * 2^26 from h_r_mul:
     -- (ρ - 2^25) * 3329 ∈ [-(2^25 * 3329), 2^25 * 3329 - 3329] (since ρ ∈ [0, 2^26) i.e. ρ-2^25 ∈ [-2^25, 2^25-1])
-    -- v * 447 ∈ [-(28296 * 447), 28296 * 447]
+    -- v * 447 ∈ [-(32767 * 447), 32767 * 447]
     have h_rho_diff_lb : (-(2^25) : Int) ≤ ρ - (2^25 : Int) := by
       have : (0 : Int) ≤ ρ := h_rho_lb
       omega
@@ -243,22 +243,22 @@ private theorem barrett_reduce_core
       rw [h_rearr] at h; exact h
     have h_term1_ub : (ρ - 2^25) * 3329 ≤ ((2^25 - 1) * 3329 : Int) := by
       exact mul_le_mul_of_nonneg_right h_rho_diff_ub (by decide : (0 : Int) ≤ 3329)
-    have h_term2_lb : (-(28296 * 447) : Int) ≤ v * 447 := by
+    have h_term2_lb : (-(32767 * 447) : Int) ≤ v * 447 := by
       have h := mul_le_mul_of_nonneg_right h_v_lb (by decide : (0 : Int) ≤ 447)
-      have h_rearr : -(28296 : Int) * 447 = -(28296 * 447) := by ring
+      have h_rearr : -(32767 : Int) * 447 = -(32767 * 447) := by ring
       rw [h_rearr] at h; exact h
-    have h_term2_ub : v * 447 ≤ ((28296 * 447) : Int) :=
+    have h_term2_ub : v * 447 ≤ ((32767 * 447) : Int) :=
       mul_le_mul_of_nonneg_right h_v_ub (by decide : (0 : Int) ≤ 447)
     -- Derive numerical bounds on r * 2^26.
-    have h_r_mul_lb : (-(2^25 * 3329 + 28296 * 447 : Int)) ≤ r * (2^26 : Int) := by
+    have h_r_mul_lb : (-(2^25 * 3329 + 32767 * 447 : Int)) ≤ r * (2^26 : Int) := by
       rw [h_r_mul]
       have h_t1 : -(2^25 * 3329 : Int) ≤ (ρ - 2^25) * 3329 := h_term1_lb
-      have h_t2 : v * 447 ≤ ((28296 * 447) : Int) := h_term2_ub
+      have h_t2 : v * 447 ≤ ((32767 * 447) : Int) := h_term2_ub
       omega
-    have h_r_mul_ub : r * (2^26 : Int) ≤ (((2^25 - 1) * 3329 + 28296 * 447 : Int)) := by
+    have h_r_mul_ub : r * (2^26 : Int) ≤ (((2^25 - 1) * 3329 + 32767 * 447 : Int)) := by
       rw [h_r_mul]
       have h_t1 : (ρ - 2^25) * 3329 ≤ ((2^25 - 1) * 3329 : Int) := h_term1_ub
-      have h_t2 : -(28296 * 447 : Int) ≤ v * 447 := h_term2_lb
+      have h_t2 : -(32767 * 447 : Int) ≤ v * 447 := h_term2_lb
       omega
     -- Conclude |r| ≤ 3328 by contradiction (numerical chase).
     have h_pow_pos : (0 : Int) < 2^26 := by decide
@@ -271,7 +271,7 @@ private theorem barrett_reduce_core
           have := mul_le_mul_of_nonneg_right h_r_le (le_of_lt h_pow_pos)
           exact this
         omega
-      have h_const : ((-3329) * (2^26 : Int)) < -(2^25 * 3329 + 28296 * 447 : Int) := by
+      have h_const : ((-3329) * (2^26 : Int)) < -(2^25 * 3329 + 32767 * 447 : Int) := by
         decide
       omega
     have h_r_ub : r ≤ (3328 : Int) := by
@@ -280,7 +280,7 @@ private theorem barrett_reduce_core
       have h_r_ge : (3329 : Int) ≤ r := by omega
       have h_mul_ge : ((3329) * (2^26 : Int)) ≤ r * (2^26 : Int) :=
         mul_le_mul_of_nonneg_right h_r_ge (le_of_lt h_pow_pos)
-      have h_const : (((2^25 - 1) * 3329 + 28296 * 447 : Int)) < (3329 * (2^26 : Int)) := by
+      have h_const : (((2^25 - 1) * 3329 + 32767 * 447 : Int)) < (3329 * (2^26 : Int)) := by
         decide
       omega
     have h_abs_le : |r| ≤ (3328 : Int) := abs_le.mpr ⟨h_r_lb, h_r_ub⟩
@@ -364,50 +364,50 @@ theorem barrett_reduce_element_eq_ok (value : Std.I16) :
   rfl
 
 /-- Bridge: `(barrett_reduce_impl_value value).val = value.val - barrett_q value.val * 3329`
-    (as `Int`), under `|value.val| ≤ 28296`. -/
+    (as `Int`), under `|value.val| ≤ 32767`. -/
 private theorem barrett_reduce_impl_value_val
-    (value : Std.I16) (hb : value.val.natAbs ≤ 28296) :
+    (value : Std.I16) (hb : value.val.natAbs ≤ 32767) :
     (barrett_reduce_impl_value value).val
       = value.val - barrett_q value.val * 3329 := by
   unfold barrett_reduce_impl_value barrett_q
   -- Set up the input value and key bounds.
   set v : Int := value.val with hv_def
-  have h_v_abs : |v| ≤ (28296 : Int) := by
+  have h_v_abs : |v| ≤ (32767 : Int) := by
     rw [Int.abs_eq_natAbs]; exact_mod_cast hb
-  have h_v_lb : -(28296 : Int) ≤ v := (abs_le.mp h_v_abs).1
-  have h_v_ub : v ≤ (28296 : Int) := (abs_le.mp h_v_abs).2
-  -- (cast .I32 value).val = v (since |v| ≤ 28296 < 2^31).
+  have h_v_lb : -(32767 : Int) ≤ v := (abs_le.mp h_v_abs).1
+  have h_v_ub : v ≤ (32767 : Int) := (abs_le.mp h_v_abs).2
+  -- (cast .I32 value).val = v (since |v| ≤ 32767 < 2^31).
   have h_i_val : (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 value).val = v := by
     apply Aeneas.Std.IScalar.val_mod_pow_inBounds
     · -- -2^31 ≤ v
       have h_red : (Aeneas.Std.IScalarTy.I32.numBits - 1) = 31 := by decide
       rw [h_red]
-      have h_const : -(2 : Int)^31 ≤ -(28296 : Int) := by decide
-      have : -(28296 : Int) ≤ v := h_v_lb
+      have h_const : -(2 : Int)^31 ≤ -(32767 : Int) := by decide
+      have : -(32767 : Int) ≤ v := h_v_lb
       omega
     · -- v < 2^31
       have h_red : (Aeneas.Std.IScalarTy.I32.numBits - 1) = 31 := by decide
       rw [h_red]
-      have h_const : (28296 : Int) < (2 : Int)^31 := by decide
-      have : v ≤ (28296 : Int) := h_v_ub
+      have h_const : (32767 : Int) < (2 : Int)^31 := by decide
+      have : v ≤ (32767 : Int) := h_v_ub
       omega
   -- (20159#i32 : I32).val = 20159.
   have h_20159 : (20159#i32 : Std.I32).val = 20159 := by decide
   -- i1 = wrapping_mul i 20159. i1.val = bmod (v * 20159) (2^32) = v * 20159 (since |v * 20159| < 2^31).
   set i : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 value
   set i1 : Std.I32 := Aeneas.Std.I32.wrapping_mul i (20159#i32)
-  have h_v20_abs : |v * 20159| ≤ (28296 * 20159 : Int) := by
+  have h_v20_abs : |v * 20159| ≤ (32767 * 20159 : Int) := by
     rw [abs_mul, show |(20159 : Int)| = 20159 from by decide]
-    have h_v_abs' : |v| ≤ (28296 : Int) := h_v_abs
+    have h_v_abs' : |v| ≤ (32767 : Int) := h_v_abs
     have h_nn : (0 : Int) ≤ 20159 := by decide
     exact mul_le_mul_of_nonneg_right h_v_abs' h_nn
   have h_v20_lb : -(2 : Int)^31 ≤ v * 20159 := by
-    have h_const : -(2 : Int)^31 ≤ -(28296 * 20159 : Int) := by decide
-    have h_le : -(28296 * 20159 : Int) ≤ v * 20159 := (abs_le.mp h_v20_abs).1
+    have h_const : -(2 : Int)^31 ≤ -(32767 * 20159 : Int) := by decide
+    have h_le : -(32767 * 20159 : Int) ≤ v * 20159 := (abs_le.mp h_v20_abs).1
     omega
   have h_v20_ub : v * 20159 < (2 : Int)^31 := by
-    have h_const : (28296 * 20159 : Int) < (2 : Int)^31 := by decide
-    have h_le : v * 20159 ≤ (28296 * 20159 : Int) := (abs_le.mp h_v20_abs).2
+    have h_const : (32767 * 20159 : Int) < (2 : Int)^31 := by decide
+    have h_le : v * 20159 ≤ (32767 * 20159 : Int) := (abs_le.mp h_v20_abs).2
     omega
   have h_i1_val : i1.val = v * 20159 := by
     show (Aeneas.Std.I32.wrapping_mul _ _).val = _
@@ -426,12 +426,12 @@ private theorem barrett_reduce_impl_value_val
   set i3 : Std.I32 := ⟨(1#i32 : Std.I32).bv.shiftLeft 26 |>.sshiftRight 1⟩
   set t : Std.I32 := Aeneas.Std.I32.wrapping_add i1 i3
   have h_sum_lb : -(2 : Int)^31 ≤ v * 20159 + 2^25 := by
-    have h_const : -(2 : Int)^31 ≤ -(28296 * 20159 : Int) + 2^25 := by decide
-    have h_le : -(28296 * 20159 : Int) ≤ v * 20159 := (abs_le.mp h_v20_abs).1
+    have h_const : -(2 : Int)^31 ≤ -(32767 * 20159 : Int) + 2^25 := by decide
+    have h_le : -(32767 * 20159 : Int) ≤ v * 20159 := (abs_le.mp h_v20_abs).1
     omega
   have h_sum_ub : v * 20159 + 2^25 < (2 : Int)^31 := by
-    have h_const : (28296 * 20159 : Int) + 2^25 < (2 : Int)^31 := by decide
-    have h_le : v * 20159 ≤ (28296 * 20159 : Int) := (abs_le.mp h_v20_abs).2
+    have h_const : (32767 * 20159 : Int) + 2^25 < (2 : Int)^31 := by decide
+    have h_le : v * 20159 ≤ (32767 * 20159 : Int) := (abs_le.mp h_v20_abs).2
     omega
   have h_t_val : t.val = v * 20159 + 2^25 := by
     show (Aeneas.Std.I32.wrapping_add _ _).val = _
@@ -450,28 +450,28 @@ private theorem barrett_reduce_impl_value_val
     rw [h_pow_nat]
     show t.bv.toInt / _ = t.val / _
     rfl
-  -- Bounds on i5.val: i5.val = t.val / 2^26 ∈ [-8, 8] (since t.val ∈ [-28296*20159+2^25, 28296*20159+2^25]).
+  -- Bounds on i5.val: i5.val = t.val / 2^26 ∈ [-10, 10] (since t.val ∈ [-32767*20159+2^25, 32767*20159+2^25]).
   have h_i5_bounds : -(2^15 : Int) ≤ i5.val ∧ i5.val < (2^15 : Int) := by
     rw [h_i5_val, h_t_val]
-    -- -28296*20159 + 2^25 ≤ t.val ≤ 28296*20159 + 2^25
-    have h_t_lb : -(28296 * 20159 : Int) + 2^25 ≤ v * 20159 + 2^25 := by
-      have h_le : -(28296 * 20159 : Int) ≤ v * 20159 := (abs_le.mp h_v20_abs).1
+    -- -32767*20159 + 2^25 ≤ t.val ≤ 32767*20159 + 2^25
+    have h_t_lb : -(32767 * 20159 : Int) + 2^25 ≤ v * 20159 + 2^25 := by
+      have h_le : -(32767 * 20159 : Int) ≤ v * 20159 := (abs_le.mp h_v20_abs).1
       omega
-    have h_t_ub : v * 20159 + 2^25 ≤ (28296 * 20159 : Int) + 2^25 := by
-      have h_le : v * 20159 ≤ (28296 * 20159 : Int) := (abs_le.mp h_v20_abs).2
+    have h_t_ub : v * 20159 + 2^25 ≤ (32767 * 20159 : Int) + 2^25 := by
+      have h_le : v * 20159 ≤ (32767 * 20159 : Int) := (abs_le.mp h_v20_abs).2
       omega
     refine ⟨?_, ?_⟩
-    · have h := Int.ediv_le_ediv (a := -(28296 * 20159 : Int) + 2^25)
+    · have h := Int.ediv_le_ediv (a := -(32767 * 20159 : Int) + 2^25)
                   (b := v * 20159 + 2^25) (c := (2^26 : Int)) (by decide) h_t_lb
-      have h_const : (-(28296 * 20159 : Int) + 2^25) / (2^26 : Int) = -8 := by decide
+      have h_const : (-(32767 * 20159 : Int) + 2^25) / (2^26 : Int) = -10 := by decide
       rw [h_const] at h
-      have h_2_15 : -(2 : Int)^15 ≤ -8 := by decide
+      have h_2_15 : -(2 : Int)^15 ≤ -10 := by decide
       omega
     · have h := Int.ediv_le_ediv (a := v * 20159 + 2^25)
-                  (b := (28296 * 20159 : Int) + 2^25) (c := (2^26 : Int)) (by decide) h_t_ub
-      have h_const : ((28296 * 20159 : Int) + 2^25) / (2^26 : Int) = 8 := by decide
+                  (b := (32767 * 20159 : Int) + 2^25) (c := (2^26 : Int)) (by decide) h_t_ub
+      have h_const : ((32767 * 20159 : Int) + 2^25) / (2^26 : Int) = 10 := by decide
       rw [h_const] at h
-      have h_2_15 : (8 : Int) < (2 : Int)^15 := by decide
+      have h_2_15 : (10 : Int) < (2 : Int)^15 := by decide
       omega
   -- quotient = cast .I16 i5. quotient.val = i5.val.
   set quotient : Std.I16 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I16 i5
@@ -483,66 +483,42 @@ private theorem barrett_reduce_impl_value_val
       rw [h_red]; exact h_i5_bounds.2
   -- 3329#i16 .val = 3329
   have h_3329 : (3329#i16 : Std.I16).val = 3329 := by decide
-  -- i6 = wrapping_mul quotient 3329. |i5.val * 3329| ≤ 8 * 3329 = 26632 < 2^15.
+  -- i6 = wrapping_mul quotient 3329. i6.val = Int.bmod (i5.val * 3329) (2^16).
+  -- NOTE: with K=32767, |i5.val| ≤ 10 and 10*3329 = 33290 > 2^15, so the multiplication
+  -- may wrap. We use the bmod form directly rather than claiming i6.val = i5.val * 3329.
   set i6 : Std.I16 := Aeneas.Std.I16.wrapping_mul quotient (3329#i16)
-  have h_i5_abs : |i5.val| ≤ (8 : Int) := by
-    rw [h_i5_val, h_t_val]
-    refine abs_le.mpr ⟨?_, ?_⟩
-    · have h_t_lb : -(28296 * 20159 : Int) + 2^25 ≤ v * 20159 + 2^25 := by
-        have h_le : -(28296 * 20159 : Int) ≤ v * 20159 := (abs_le.mp h_v20_abs).1
-        omega
-      have h := Int.ediv_le_ediv (a := -(28296 * 20159 : Int) + 2^25)
-                  (b := v * 20159 + 2^25) (c := (2^26 : Int)) (by decide) h_t_lb
-      have h_const : (-(28296 * 20159 : Int) + 2^25) / (2^26 : Int) = -8 := by decide
-      omega
-    · have h_t_ub : v * 20159 + 2^25 ≤ (28296 * 20159 : Int) + 2^25 := by
-        have h_le : v * 20159 ≤ (28296 * 20159 : Int) := (abs_le.mp h_v20_abs).2
-        omega
-      have h := Int.ediv_le_ediv (a := v * 20159 + 2^25)
-                  (b := (28296 * 20159 : Int) + 2^25) (c := (2^26 : Int)) (by decide) h_t_ub
-      have h_const : ((28296 * 20159 : Int) + 2^25) / (2^26 : Int) = 8 := by decide
-      omega
-  have h_prod_abs : |i5.val * 3329| ≤ (8 * 3329 : Int) := by
-    rw [abs_mul, show |(3329 : Int)| = 3329 from by decide]
-    exact mul_le_mul_of_nonneg_right h_i5_abs (by decide)
-  have h_i6_val : i6.val = i5.val * 3329 := by
+  have h_i6_val_bmod : i6.val = Int.bmod (i5.val * 3329) (2^16) := by
     show (Aeneas.Std.I16.wrapping_mul _ _).val = _
     rw [Aeneas.Std.I16.wrapping_mul_val_eq, h_quotient_val, h_3329]
-    apply Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
-    · -- -2^15 ≤ i5.val * 3329.
-      have h_lb : -(8 * 3329 : Int) ≤ i5.val * 3329 := (abs_le.mp h_prod_abs).1
-      have h_step : -((2 : Int)^(16-1)) ≤ -(8 * 3329 : Int) := by decide
-      exact le_trans h_step h_lb
-    · -- i5.val * 3329 < 2^15.
-      have h_ub : i5.val * 3329 ≤ (8 * 3329 : Int) := (abs_le.mp h_prod_abs).2
-      have h_step : (8 * 3329 : Int) < (2 : Int)^(16-1) := by decide
-      exact lt_of_le_of_lt h_ub h_step
   -- The barrett_q closed form match: i5.val = (v * 20159 + 2^25) / 2^26 = barrett_q v.
   have h_i5_eq_q : i5.val = (v * 20159 + (2^25 : Int)) / (2^26 : Int) := by
     rw [h_i5_val, h_t_val]
-  -- Final: result = wrapping_sub value i6. |value.val - i6.val| ≤ 28296 + 8*3329 = 54928 — DOES NOT fit i16.
-  -- We need to use `barrett_reduce_core` to show that the actual result is bounded.
-  -- The result.val = bmod (value.val - i6.val) (2^16). We want it to equal value.val - i6.val.
-  -- For this, we need |value.val - i6.val| < 2^15. The Int-level core proves |v - q*3329| ≤ 3328 < 2^15.
-  -- Reuse barrett_reduce_core's bound directly.
+  -- Final: result = wrapping_sub value i6.
+  -- result.val = Int.bmod (v - i6.val) (2^16)
+  --            = Int.bmod (v - Int.bmod (i5.val * 3329) (2^16)) (2^16)
+  --            = Int.bmod (v - i5.val * 3329) (2^16)   [bmod congruence]
+  --            = v - q * 3329                           [since |v - q*3329| ≤ 3328 < 2^15].
   have h_core := barrett_reduce_core v hb
-  -- h_core.2 : (v - barrett_q v * 3329).natAbs ≤ 3328
   set q : Int := barrett_q v with hq_def
   have h_q_eq_i5 : q = i5.val := by
     unfold barrett_q at hq_def
     rw [hq_def, h_i5_eq_q]
-  have h_q_3329_eq : q * 3329 = i5.val * 3329 := by rw [h_q_eq_i5]
   have h_core_bound : (v - q * 3329).natAbs ≤ 3328 := h_core.2
   have h_core_bound_int : |v - q * 3329| ≤ (3328 : Int) := by
     have h_abs : |v - q * 3329| = ((v - q * 3329).natAbs : Int) := Int.abs_eq_natAbs _
     rw [h_abs]; exact_mod_cast h_core_bound
-  -- result.val = bmod (value.val - i6.val) (2^16) = value.val - i6.val (no wrap).
-  -- i5.val * 3329 = q * 3329 (since q = i5.val), so value.val - i5.val * 3329 = v - q * 3329.
   show (Aeneas.Std.I16.wrapping_sub value i6).val = _
-  rw [Aeneas.Std.I16.wrapping_sub_val_eq, h_i6_val]
-  -- Goal: Int.bmod (value.val - i5.val * 3329) (2^16) = v - barrett_q value.val * 3329.
-  -- Substitute i5.val = q and value.val = v.
-  rw [← hv_def, ← h_q_3329_eq]
+  rw [Aeneas.Std.I16.wrapping_sub_val_eq, h_i6_val_bmod]
+  -- Goal: Int.bmod (v - Int.bmod (i5.val * 3329) (2^16)) (2^16) = v - q * 3329.
+  -- Step 1: eliminate inner bmod using congruence (a - bmod(b)(n) ≡ a - b mod n).
+  have h_bmod_elim : Int.bmod (v - Int.bmod (i5.val * 3329) (2^16)) (2^16)
+                   = Int.bmod (v - i5.val * 3329) (2^16) :=
+    Int.sub_bmod_bmod
+  rw [h_bmod_elim]
+  -- Rewrite RHS divisor to ↑i5 then ↑i5 to q so both sides involve `q * 3329`.
+  rw [show (v * 20159 + (2^25 : Int)) / (2^26 : Int) = i5.val from h_i5_eq_q.symm]
+  rw [← h_q_eq_i5]
+  -- Step 2: Int.bmod (v - q * 3329) (2^16) = v - q * 3329 since |v - q*3329| ≤ 3328 < 2^15.
   apply Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
   · -- -2^15 ≤ v - q * 3329 from |v - q*3329| ≤ 3328.
     have h_red : ((2 : Int)^(16-1)) = (2 : Int)^15 := by decide
@@ -561,7 +537,7 @@ private theorem barrett_reduce_impl_value_val
 
 @[spec]
 theorem barrett_reduce_element_spec
-    (value : Std.I16) (hb : value.val.natAbs ≤ 28296) :
+    (value : Std.I16) (hb : value.val.natAbs ≤ 32767) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce_element value
     ⦃ ⇓ r => ⌜ modq_eq r.val value.val 3329
