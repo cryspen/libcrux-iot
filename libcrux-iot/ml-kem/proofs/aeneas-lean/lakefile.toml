@@ -20,6 +20,14 @@ path = "../../../../vendored/libcrux-secrets/proofs/aeneas-lean"
 name = "HacspecSha3"
 path = "../../../../specs/sha3/proofs/aeneas-lean"
 
+# Spec ML-KEM (hacspec-style extraction) — provides `Spec.ntt`,
+# `Spec.multiply_ntts`, `Spec.lift_poly`, etc. used by Layer M's
+# `BitMlKem.{Spec,Commute,StateIso,AlgEquiv}` and the Phase-5
+# functional-correctness upgrades for L3.6/3.7/3.8 + L6.3.
+[[require]]
+name = "HacspecMlKem"
+path = "../../../../specs/ml-kem/proofs/aeneas-lean"
+
 # The full-crate ml-kem extraction (`mlkem*::*` start-from) pulls in
 # hash_functions which references `libcrux_iot_sha3.{sha256,sha512,
 # shake256}_ema` and `libcrux_iot_sha3.incremental.UnbufferedXofState`.
