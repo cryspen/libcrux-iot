@@ -74,6 +74,31 @@ open libcrux_iot_ml_kem.BitMlKem
     pieces (`i16_to_spec_fe_mont`, `feOfZMod`, `to_spec_poly_mont`)
     where convenient. -/
 
+/-- Default `FieldElement` used by `[i]!` projections inside the
+    lift bodies below. The canonical residue 0 mod q. -/
+private noncomputable def defaultFE :
+    hacspec_ml_kem.parameters.FieldElement :=
+  feOfZMod (0 : ZMod 3329)
+
+private noncomputable instance : Inhabited hacspec_ml_kem.parameters.FieldElement :=
+  ⟨defaultFE⟩
+
+/-- Local `Inhabited` instance for `PortableVector` used by `[i]!`
+    indexing in `lift_chunk` / `lift_poly`. Mirrors the `local instance`
+    in `BitMlKem/Spec.lean` (which is file-scoped). -/
+private instance instInhabitedPortableVector_fcTargets :
+    Inhabited libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+  ⟨{ elements := Std.Array.make 16#usize (List.replicate 16 (0#i16 : Std.I16))
+        (by simp) }⟩
+
+/-- Local `Inhabited` instance for `PolynomialRingElement PortableVector`
+    used by `[i]!` indexing in `lift_poly` / `lift_vec_slice`. -/
+private instance instInhabitedPolynomialRingElement_fcTargets
+    {Vector : Type} [Inhabited Vector] :
+    Inhabited (libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector) :=
+  ⟨{ coefficients :=
+       Std.Array.make 16#usize (List.replicate 16 default) (by simp) }⟩
+
 /-- Plain-domain lane lift from `Int` to a hacspec `FieldElement`.
     Used by `barrett_reduce_element_fc` (the impl carries the value
     in plain domain). -/
@@ -91,25 +116,34 @@ noncomputable def lift_fe (lane : Std.I16) : hacspec_ml_kem.parameters.FieldElem
 noncomputable def lift_fe_mont (lane : Std.I16) : hacspec_ml_kem.parameters.FieldElement :=
   feOfZMod (i16_to_spec_fe_mont lane)
 
-/-- Plain-domain poly lift `PortableVector chunk → 16 FE-array`. -/
+/-- Plain-domain poly lift `PortableVector chunk → 16 FE-array`.
+    Maps each of the 16 lanes through `lift_fe`. -/
 noncomputable def lift_chunk
     (chunk : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
-  sorry
+  Std.Array.make 16#usize (chunk.elements.val.map lift_fe) (by
+    simp [Std.Array.length_eq])
 
-/-- Mont-domain poly lift `PortableVector chunk → 16 FE-array`. -/
+/-- Mont-domain poly lift `PortableVector chunk → 16 FE-array`.
+    Maps each of the 16 lanes through `lift_fe_mont`. -/
 noncomputable def lift_chunk_mont
     (chunk : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
-  sorry
+  Std.Array.make 16#usize (chunk.elements.val.map lift_fe_mont) (by
+    simp [Std.Array.length_eq])
 
 /-- Plain-domain poly lift: `PolynomialRingElement PortableVector →
-    Array FE 256`. The result is the hacspec "ring element" type. -/
+    Array FE 256`. The result is the hacspec "ring element" type.
+    Flattens 16 chunks × 16 lanes via the standard
+    `i = j / 16`, `k = j % 16` decomposition. -/
 noncomputable def lift_poly
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
-  sorry
+  Std.Array.make 256#usize
+    ((List.range 256).map (fun j =>
+      lift_fe (re.coefficients.val[j / 16]!).elements.val[j % 16]!))
+    (by simp)
 
 /-- Mont-domain poly lift. Same shape as `lift_poly` but strips one
     `R` factor per lane via `i16_to_spec_fe_mont`. -/
@@ -117,7 +151,10 @@ noncomputable def lift_poly_mont
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
-  sorry
+  Std.Array.make 256#usize
+    ((List.range 256).map (fun j =>
+      lift_fe_mont (re.coefficients.val[j / 16]!).elements.val[j % 16]!))
+    (by simp)
 
 /-- Vector lift: `Array (PolynomialRingElement) K → Array (Array FE 256) K`. -/
 noncomputable def lift_vec {K : Std.Usize}
@@ -125,17 +162,22 @@ noncomputable def lift_vec {K : Std.Usize}
           (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K) :
     Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K :=
-  sorry
+  Std.Array.make K (v.val.map lift_poly) (by
+    simp [Std.Array.length_eq])
 
 /-- Vector-slice variant for `Slice`-typed impl args
-    (e.g. `compute_ring_element_v` takes `r_as_ntt : Slice ...`). -/
+    (e.g. `compute_ring_element_v` takes `r_as_ntt : Slice ...`).
+    The FC theorems that consume this expect `v.length = K.val` as a
+    precondition; out-of-range indices default to the unit chunk. -/
 noncomputable def lift_vec_slice
     (v : Slice
           (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
     (K : Std.Usize) :
     Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K :=
-  sorry
+  Std.Array.make K
+    ((List.range K.val).map (fun i => lift_poly v.val[i]!))
+    (by simp)
 
 /-- Matrix lift: `Array (Array (PolynomialRingElement) K) K → Array (Array (Array FE 256) K) K`. -/
 noncomputable def lift_matrix {K : Std.Usize}
@@ -145,19 +187,31 @@ noncomputable def lift_matrix {K : Std.Usize}
               libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K) K) :
     Std.Array
       (Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K) K :=
-  sorry
+  Std.Array.make K (m.val.map lift_vec) (by
+    simp [Std.Array.length_eq])
 
-/-- Matrix-from-seed lift: the impl `matrix.compute_vector_u` reconstructs
-    the matrix in-place via `sample_matrix_entry`; the hacspec spec calls
-    `matrix.sample_matrix_A` on the seed once at the top. We capture
-    "the matrix sampled from `seed`" as an existential, but here provide
-    the deterministic projection. Bodies sorry — wired in via the
-    `sample_matrix_A_fc` obligation below. -/
-noncomputable def lift_matrix_from_seed
+/-- Pure projection of `matrix.sample_matrix_A` from the public-key seed.
+    Forward-declared here (rather than in §0.5 below) so
+    `lift_matrix_from_seed` can reference it.
+
+    **Phase-1 obligation**: panic-freedom side lemma
+    `hacspec_ml_kem.matrix.sample_matrix_A seed K
+    = .ok (Spec.sample_matrix_A_pure seed K)`. -/
+noncomputable def Spec.sample_matrix_A_pure
     (seed : Slice Std.U8) (K : Std.Usize) :
     Std.Array
       (Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K) K :=
   sorry
+
+/-- Matrix-from-seed lift: the impl `matrix.compute_vector_u` reconstructs
+    the matrix in-place via `sample_matrix_entry`; the hacspec spec calls
+    `matrix.sample_matrix_A` on the seed once at the top. Defers to
+    `Spec.sample_matrix_A_pure` above for the deterministic projection. -/
+noncomputable def lift_matrix_from_seed
+    (seed : Slice Std.U8) (K : Std.Usize) :
+    Std.Array
+      (Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K) K :=
+  Spec.sample_matrix_A_pure seed K
 
 /-! ## §0.5 Spec `_pure` aliases needed beyond `SpecPure.lean`.
 
@@ -289,14 +343,15 @@ noncomputable def Spec.chunk_inv_ntt_step_pure
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
 
 /-- The PortableVector `Operations` instance used by Triples that
-    target the impl monomorphised at `PortableVector`. Body `sorry`
-    here — wired in M.4 cluster (the concrete instance lives in
-    `Extraction/Funs.lean` but its name varies; this alias decouples
-    the FC statements from the precise extraction identifier). -/
-noncomputable def portable_ops_inst :
+    target the impl monomorphised at `PortableVector`. The concrete
+    instance is `vector.portable.vector_type.PortableVector.Insts.
+    Libcrux_iot_ml_kemVectorTraitsOperations` in `Extraction/Funs.lean`;
+    this alias decouples the FC statements from the precise extraction
+    identifier in case aeneas re-mangles the name later. -/
+@[reducible] def portable_ops_inst :
     libcrux_iot_ml_kem.vector.traits.Operations
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
-  sorry
+  libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
 
 /-- Pure projection of the full hacspec `ntt.ntt`. -/
 noncomputable def Spec.ntt_pure
@@ -334,12 +389,7 @@ noncomputable def Spec.poly_reducing_from_i32_array_pure
     (array : Slice Std.I32) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize := sorry
 
-/-- Pure projection of `matrix.sample_matrix_A` from the public-key seed. -/
-noncomputable def Spec.sample_matrix_A_pure
-    (seed : Slice Std.U8) (K : Std.Usize) :
-    Std.Array
-      (Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K) K :=
-  sorry
+-- `Spec.sample_matrix_A_pure` is declared above (with `lift_matrix_from_seed`).
 
 /-! ## §L0 — FE scalar primitives (4 theorems).
 

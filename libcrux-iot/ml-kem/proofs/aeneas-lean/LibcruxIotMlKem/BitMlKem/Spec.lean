@@ -15,9 +15,8 @@
   (see plan §Section I in `~/.claude/plans/iot-mlkem-layer-M-architecture.md`):
   - **I.1**: `MontPoly := Vector (ZMod 3329) 256` is the algebraic
     working type. The parallel `SpecPoly := Vector
-    parameters.FieldElement 256` (referenced from
-    `HacspecMlKem.Extraction.Funs`) is **NOT** introduced here; see
-    "DEVIATION FROM ARCH DOC §A.2" below.
+    parameters.FieldElement 256` lives below, after the Phase-0
+    `HacspecSha3.Common` factor resolved the FmtDisplay collision.
   - **I.2**: `vector.traits.Operations` has no `repr` field; concrete
     impls (e.g. `vector.portable.vector_type.PortableVector`) carry an
     `elements : Array Std.I16 16` field accessed directly via
@@ -31,32 +30,6 @@
     placeholders so downstream code can reference them by NAME. M.4 will
     replace these stubs with real bodies and prove the algebraic
     equivalence.
-
-  ## DEVIATION FROM ARCH DOC §A.2 — `SpecPoly` deferred to M.4.
-
-  The arch doc proposes
-  `abbrev SpecPoly := Vector hacspec_ml_kem.parameters.FieldElement 256`
-  here, which would require `import HacspecMlKem.Extraction.Funs`.
-  However that import transitively pulls in `HacspecMlKem.Missing`,
-  which defines `core_models.Usize.Insts.Core_modelsFmtDisplay`
-  *and* the impl-side `LibcruxIotMlKem.Extraction.Funs` transitively
-  pulls in `LibcruxIotSha3.Extraction.Missing` which also defines
-  that same identifier. Lean's module loader rejects the combined
-  import with
-  `environment already contains 'core_models.Usize.Insts.Core_modelsFmtDisplay'`
-  regardless of order. Resolving this is a Phase-0 wiring task
-  outside the scope of M.1 (the two `Missing.lean` files need to
-  agree on the FmtDisplay instance, or one of them needs to drop
-  the duplicate).
-
-  Workaround in this file: `SpecPoly` and the `zmodOfFE` /
-  `feOfZMod` lane coercions are **omitted** from M.1 and will be
-  added in M.4 once the `HacspecMlKem.Missing` ↔ `LibcruxIotSha3`
-  collision is resolved. All `bit_<op>` defs and predicates that
-  M.1 needs to land are stated purely on `MontPoly`, so this
-  deferral does NOT block downstream usage — M.4 will define
-  `SpecPoly` + the coercions atomically with the equivalence
-  lemmas that need them.
 
   This file is the BARRIER FOR LAYER M (Mathlib-isolation discipline).
   Mathlib is imported here for `ZMod 3329` ring instances and the
@@ -108,12 +81,7 @@ local instance instInhabitedPolynomialRingElement_bitMlKem
     `lemma_mod_*_distr_*` chains directly.
 
     Lifts from the impl side (a 16 × 16 `Array (PortableVector)`)
-    project each lane via `i16_to_spec_fe_{plain,mont}` below.
-
-    The parallel `SpecPoly := Vector parameters.FieldElement 256`
-    (along with `zmodOfFE` / `feOfZMod` coercions and `Vector.map`
-    bridges) is deferred to M.4 — see the "DEVIATION FROM ARCH DOC
-    §A.2" note in the file header. -/
+    project each lane via `i16_to_spec_fe_{plain,mont}` below. -/
 abbrev MontPoly : Type := Vector (ZMod 3329) 256
 
 /-! ## §B.5 — `SpecPoly` + lane coercions (landed after Phase-0
