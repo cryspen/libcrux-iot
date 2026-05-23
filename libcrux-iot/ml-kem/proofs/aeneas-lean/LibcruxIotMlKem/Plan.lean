@@ -660,6 +660,67 @@ generic plumbing already passes its tests in the SHA-3 tree.
 -/
 
 /-! ============================================================
+    # CROSS-CUTTING DISCIPLINES (locked 2026-05-23)
+
+    Two architectural disciplines apply to all subsequent campaign work.
+    Both are enforced empirically: every dispatch brief, every new
+    file, every upgrade-pass proof must respect them.
+
+    ## §X.1 Mathlib isolation
+
+    Mathlib imports are confined to **barrier-zone files in `Util/`**.
+    All code above the barrier (`Equivalence/*`, future `BitMlKem/*`,
+    all L0-L7 proof bodies) is **Mathlib-free**. Above-barrier code
+    consumes only Mathlib-free lemma signatures exported from the
+    Util layer.
+
+    Justified Mathlib (barrier only):
+    - `Mathlib.Data.ZMod.Basic` (ZMod 3329 ring carrier)
+    - `Mathlib.Tactic.Ring` (CommRing equalities)
+    - `Mathlib.Tactic.IntervalCases` (only in `Util/BvMasks.lean`)
+
+    Above-barrier replacement rules:
+    - `linarith` → `grind` (or `omega` for pure linear int/nat)
+    - `nlinarith` → explicit `Nat.le_mul_of_pos_right` /
+      `Nat.mul_le_mul_right` + `omega` (grind does NOT reach mult
+      monotonicity)
+    - `interval_cases` → factor into a `Util/`-mediated helper
+    - `ring` → factor into a `Util/`-mediated commute lemma
+    - `push_cast` → factor into a `Util/`-mediated cast lemma if needed
+
+    Imposed in commits `3c304c6` + `dffd85c`. See
+    `~/.claude/plans/iot-mlkem-functional-correctness-master.md §0.1`.
+
+    ## §X.2 Grind composition discipline
+
+    Empirically validated by the grind pilot at
+    `~/.claude/plans/iot-mlkem-grind-discipline-style-guide.md`. Above
+    the abstraction barrier, `grind` is the standard closer for
+    symbolic commute-chain reasoning. Rules:
+
+    - **K.1** Every M.2 / M.4 commute lemma carries
+      `attribute [scoped grind]` inside the `Commute` / `AlgEquiv`
+      namespace.
+    - **K.2** NEVER annotate `bit_<op>` defs globally. Pass via
+      `grind [bit_op_name]` per-call, or `simp only [bit_op_name]`
+      before `grind`.
+    - **K.3** Opaque predicates (`bit_mont_form_lane` etc.) get
+      reveal/intro lemmas as `@[scoped grind]`.
+    - **K.4** Above-barrier proof files
+      `open libcrux_iot_ml_kem.BitMlKem.Commute` at file top when
+      using many commutes; one-off uses prefer explicit
+      `grind [Commute.lemma_name]`.
+    - **K.5** Pilot verified `attribute [local grind]` / `[scoped
+      grind]` do NOT leak across `end namespace` or module boundaries
+      — addresses the "no regret" concern.
+    - **K.6** `@[grind unfold]` on impl-side defs is a footgun
+      (destroys LHS pattern of any commute lemma mentioning that def).
+      Use `@[grind =]` for defs that appear by name in a commute LHS.
+
+    `grind` perf cost is negligible (+0.1s on a 6.0s warm baseline).
+-/
+
+/-! ============================================================
     # LAYER M — Bridge / Mont infrastructure (BitMlKem.* + Util.*)
 
     **Status: NOT BUILT (as of 2026-05-23).** Plan exists at
