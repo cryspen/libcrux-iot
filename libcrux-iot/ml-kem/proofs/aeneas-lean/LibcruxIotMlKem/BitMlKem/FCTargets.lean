@@ -1398,10 +1398,49 @@ theorem barrett_reduce_fc
       exact lift_fe_barrett_pure_eq
         (vec.elements.val[i]!) (r0.elements.val[i]!) h_modq
 
+/-- Per-element bridge for `montgomery_multiply_by_constant_fc`: from the
+    legacy L1.4 congruence `(r * 2^16) ≡ (a * c) (mod 3329)`, derive the
+    FC equation
+    `lift_fe_mont r = Spec.montgomery_multiply_fe_by_fer_pure (lift_fe a) (lift_fe_mont c)`.
+
+    Algebra: the goal (after unfolding via `mmfbf_pure_lift_fe_lift_fe_mont`
+    and `lift_fe_mont`/`i16_to_spec_fe_mont`) is the `ZMod 3329` equation
+    `r * 169 = a * (c * 169) * 169`. From the legacy hypothesis
+    `r * 2^16 = a * c` in `ZMod 3329`, multiply both sides by `169 * 169`
+    and use the Montgomery-inversion identity `2^16 * 169 = 1` in `ZMod 3329`
+    to collapse one factor on the LHS. -/
+private theorem lift_fe_mont_mmfbf_pure_eq
+    (a c r : Std.I16)
+    (h : (r.val * (2 ^ 16 : Int)) % 3329 = (a.val * c.val) % 3329) :
+    lift_fe_mont r
+      = Spec.montgomery_multiply_fe_by_fer_pure (lift_fe a) (lift_fe_mont c) := by
+  rw [mmfbf_pure_lift_fe_lift_fe_mont]
+  unfold lift_fe_mont i16_to_spec_fe_mont
+  congr 1
+  -- Goal: (r.val : ZMod 3329) * 169 = (a.val : ZMod 3329) * ((c.val : ZMod 3329) * 169) * 169
+  have h_modq : libcrux_iot_ml_kem.Util.modq_eq
+                  (r.val * (2 ^ 16 : Int)) (a.val * c.val) 3329 := by
+    unfold libcrux_iot_ml_kem.Util.modq_eq
+    rw [Int.sub_emod, h]; simp
+  have h_zmod : ((r.val * (2 ^ 16 : Int) : Int) : ZMod 3329)
+              = ((a.val * c.val : Int) : ZMod 3329) :=
+    modq_eq_cast_zmod _ _ h_modq
+  push_cast at h_zmod
+  -- After push_cast: h_zmod : (r.val : ZMod 3329) * 2285 = (a.val : ZMod 3329) * (c.val : ZMod 3329)
+  -- (Lean reduces `2^16` to its canonical residue `2285` in ZMod 3329.)
+  -- Goal: (r.val : ZMod 3329) * 169 = (a.val : ZMod 3329) * ((c.val : ZMod 3329) * 169) * 169
+  -- Normalize: 2285 * 169 = 386165 = 3329 * 116 + 1, so 2285 * 169 ≡ 1 (mod 3329).
+  have h_inv : ((2285 : ZMod 3329)) * 169 = 1 := by decide
+  calc (r.val : ZMod 3329) * 169
+      = (r.val : ZMod 3329) * ((2285 : ZMod 3329) * 169) * 169 := by rw [h_inv]; ring
+    _ = ((r.val : ZMod 3329) * 2285) * 169 * 169 := by ring
+    _ = ((a.val : ZMod 3329) * (c.val : ZMod 3329)) * 169 * 169 := by rw [h_zmod]
+    _ = (a.val : ZMod 3329) * ((c.val : ZMod 3329) * 169) * 169 := by ring
+
 /-- L1.4 — `montgomery_multiply_by_constant` on a chunk.
     Each lane: `vec[i] · c / R`. The lift uses `lift_chunk_mont` on
     the output (the result is in Mont domain). -/
-@[spec]
+@[spec high]
 theorem montgomery_multiply_by_constant_fc
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (c : Std.I16)
@@ -1412,7 +1451,52 @@ theorem montgomery_multiply_by_constant_fc
     ⦃ ⇓ r => ⌜ lift_chunk_mont r
                 = Spec.chunk_montgomery_multiply_by_constant_pure
                     (lift_chunk vec) (lift_fe_mont c) ⌝ ⦄ := by
-  sorry
+  -- 1. Extract per-element legacy fact: |r[i]| ≤ 3328 ∧ (r[i]*2^16) ≡ vec[i]*c (mod 3329).
+  have h_legacy :=
+    libcrux_iot_ml_kem.Equivalence.montgomery_multiply_by_constant_spec vec c hc
+  obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
+  apply triple_of_ok_fc (v := r0) h_eq
+  -- 2. Reduce array equality to list equality, then to per-index lift_fe_mont equality.
+  unfold lift_chunk_mont Spec.chunk_montgomery_multiply_by_constant_pure
+  apply Subtype.ext
+  show r0.elements.val.map lift_fe_mont
+      = (List.range 16).map (fun i =>
+          Spec.montgomery_multiply_fe_by_fer_pure
+            ((Std.Array.make 16#usize (vec.elements.val.map lift_fe)
+              (by simp)).val[i]!)
+            (lift_fe_mont c))
+  have h_r0_len : r0.elements.val.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+  apply List.ext_getElem
+  · simp [List.length_map, List.length_range, h_r0_len]
+  · intro i hi1 hi2
+    have hi : i < 16 := by
+      have : i < (r0.elements.val.map lift_fe_mont).length := hi1
+      simp [List.length_map, h_r0_len] at this; exact this
+    rw [List.getElem_map]
+    rw [List.getElem_map, List.getElem_range]
+    show lift_fe_mont r0.elements.val[i]
+      = Spec.montgomery_multiply_fe_by_fer_pure
+          ((vec.elements.val.map lift_fe)[i]!) (lift_fe_mont c)
+    have h_r0_get_eq : r0.elements.val[i]
+        = r0.elements.val[i]! := by
+      have hi_r0 : i < r0.elements.val.length := by rw [h_r0_len]; exact hi
+      rw [getElem!_pos r0.elements.val i hi_r0]
+    rw [h_r0_get_eq]
+    have h_vec_len : vec.elements.val.length = 16 :=
+      libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+    have h_map_vec :
+        (vec.elements.val.map lift_fe)[i]! = lift_fe (vec.elements.val[i]!) := by
+      have hi_vec : i < vec.elements.val.length := by rw [h_vec_len]; exact hi
+      rw [getElem!_pos (vec.elements.val.map lift_fe) i (by
+        simp [List.length_map, h_vec_len]; exact hi)]
+      rw [List.getElem_map]
+      rw [getElem!_pos vec.elements.val i hi_vec]
+    rw [h_map_vec]
+    obtain ⟨_h_bnd, h_mod⟩ := h_per i hi
+    exact lift_fe_mont_mmfbf_pure_eq
+      (vec.elements.val[i]!) c (r0.elements.val[i]!)
+      h_mod
 
 /-! ### L1.5 — `cond_subtract_3329` private loop machinery.
 
@@ -2231,9 +2315,41 @@ theorem shift_right_fc
                 = Spec.chunk_shift_right_pure (lift_chunk vec) SHIFT_BY ⌝ ⦄ := by
   sorry
 
+/-- Per-element bridge for `reducing_from_i32_array_fc`: from the legacy
+    L1.10 congruence `(r * 2^16) ≡ x (mod 3329)`, derive the FC equation
+    `lift_fe_mont r = Spec.mont_reduce_pure (lift_fe_int x.val)`.
+
+    Algebra: the goal (after unfolding via `mont_reduce_pure_lift_fe_int`
+    and `lift_fe_mont`/`i16_to_spec_fe_mont`) is the `ZMod 3329` equation
+    `r * 169 = x * 169 * 169`. From the legacy hypothesis `r * 2^16 = x`
+    in `ZMod 3329`, multiply both sides by `169 * 169` and use the
+    Montgomery-inversion identity `2^16 * 169 ≡ 1 (mod 3329)`
+    (numerically `2285 * 169 = 1` in `ZMod 3329`) to collapse one factor
+    on the LHS. -/
+private theorem lift_fe_mont_mont_reduce_pure_eq
+    (x : Std.I32) (r : Std.I16)
+    (h : libcrux_iot_ml_kem.Util.modq_eq
+            (r.val * (2 ^ 16 : Int)) x.val 3329) :
+    lift_fe_mont r = Spec.mont_reduce_pure (lift_fe_int x.val) := by
+  rw [mont_reduce_pure_lift_fe_int]
+  unfold lift_fe_mont i16_to_spec_fe_mont
+  congr 1
+  -- Goal: (r.val : ZMod 3329) * 169 = (x.val : ZMod 3329) * 169 * 169
+  have h_zmod : ((r.val * (2 ^ 16 : Int) : Int) : ZMod 3329)
+              = ((x.val : Int) : ZMod 3329) :=
+    modq_eq_cast_zmod _ _ h
+  push_cast at h_zmod
+  -- h_zmod : (r.val : ZMod 3329) * 2285 = (x.val : ZMod 3329)
+  -- Goal: (r.val : ZMod 3329) * 169 = (x.val : ZMod 3329) * 169 * 169
+  have h_inv : ((2285 : ZMod 3329)) * 169 = 1 := by decide
+  calc (r.val : ZMod 3329) * 169
+      = (r.val : ZMod 3329) * ((2285 : ZMod 3329) * 169) * 169 := by rw [h_inv]; ring
+    _ = ((r.val : ZMod 3329) * 2285) * 169 * 169 := by ring
+    _ = (x.val : ZMod 3329) * 169 * 169 := by rw [h_zmod]
+
 /-- L1.10 — `reducing_from_i32_array` on a chunk.
     Composes `montgomery_reduce_element` across 16 lanes. -/
-@[spec]
+@[spec high]
 theorem reducing_from_i32_array_fc
     (array : Slice Std.I32)
     (out : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
@@ -2243,7 +2359,43 @@ theorem reducing_from_i32_array_fc
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array array out
     ⦃ ⇓ r => ⌜ lift_chunk_mont r = Spec.chunk_reducing_from_i32_array_pure array ⌝ ⦄ := by
-  sorry
+  -- 1. Extract per-element legacy fact:
+  --    |r[i]| ≤ 3328+1665 ∧ (r[i]*2^16) ≡ array[i] (mod 3329).
+  have hpre' : ∀ i : Nat, i < 16 → (array.val[i]!).val.natAbs ≤ 3328 * 2 ^ 16 := by
+    intro i hi
+    have h := hbound i hi
+    rwa [show (3328 * 2 ^ 16 : Nat) = 2 ^ 16 * 3328 from by decide]
+  have hlen' : array.val.length = 16 := hlen
+  have h_legacy :=
+    libcrux_iot_ml_kem.Equivalence.reducing_from_i32_array_spec array out hlen' hpre'
+  obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
+  apply triple_of_ok_fc (v := r0) h_eq
+  -- 2. Reduce array equality to list equality, then to per-index lift_fe_mont equality.
+  unfold lift_chunk_mont Spec.chunk_reducing_from_i32_array_pure
+  apply Subtype.ext
+  show r0.elements.val.map lift_fe_mont
+      = (List.range 16).map (fun i =>
+          Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val))
+  have h_r0_len : r0.elements.val.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+  apply List.ext_getElem
+  · simp [List.length_map, List.length_range, h_r0_len]
+  · intro i hi1 hi2
+    have hi : i < 16 := by
+      have : i < (r0.elements.val.map lift_fe_mont).length := hi1
+      simp [List.length_map, h_r0_len] at this; exact this
+    rw [List.getElem_map]
+    rw [List.getElem_map, List.getElem_range]
+    show lift_fe_mont r0.elements.val[i]
+      = Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val)
+    have h_r0_get_eq : r0.elements.val[i]
+        = r0.elements.val[i]! := by
+      have hi_r0 : i < r0.elements.val.length := by rw [h_r0_len]; exact hi
+      rw [getElem!_pos r0.elements.val i hi_r0]
+    rw [h_r0_get_eq]
+    obtain ⟨_h_bnd, h_modq⟩ := h_per i hi
+    exact lift_fe_mont_mont_reduce_pure_eq
+      (array.val[i]!) (r0.elements.val[i]!) h_modq
 
 /-! ## §L2 — NTT step ops (5 theorems). -/
 
