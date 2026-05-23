@@ -21,9 +21,14 @@
   bridge for `IScalar.cast`, `wrapping_mul`, and `>>>` (arithmetic
   shift right).
 -/
+-- Mathlib footprint here is BARRIER-LAYER ONLY. Consumers above the
+-- abstraction barrier use only the `modq_eq`-shaped lemmas exported
+-- from this file; they MUST NOT import Mathlib themselves.
+-- `Linarith` dropped; both prior `linarith` calls migrated to `omega`
+-- (core Lean), which handles linear int arithmetic with the same or
+-- greater capability for the goals this file proves.
 import LibcruxIotMlKem.Util.ModularArith
 import LibcruxIotMlKem.Util.NumericKeystones
-import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
 namespace libcrux_iot_ml_kem.Util
@@ -63,7 +68,7 @@ theorem mont_reduce_int_form
   -- Goal: (m * 2^16 - value) % 3329 = 0.
   -- From `hm : value + k * 3329 = 2^16 * m`, we get
   -- `m * 2^16 - value = k * 3329`.
-  have h_eq : m * (2^16 : Int) - value = k * 3329 := by linarith [hm]
+  have h_eq : m * (2^16 : Int) - value = k * 3329 := by omega
   rw [h_eq]
   exact Int.mul_emod_left _ _
 
@@ -84,7 +89,7 @@ theorem sub_div_of_emod_eq_zero
   have hd : R ∣ (a - b) := Int.dvd_of_emod_eq_zero h_dvd
   obtain ⟨q, hq⟩ := hd
   rw [hq, Int.mul_ediv_cancel_left q hRne]
-  have h_a : a = b + R * q := by linarith
+  have h_a : a = b + R * q := by omega
   rw [h_a, Int.add_mul_ediv_left b q hRne]
   ring
 

@@ -17,8 +17,13 @@
   this module verbatim into a future `libcrux-iot-utils/` crate once
   ML-DSA's q = 8380417 instance lands.
 -/
+-- Mathlib footprint here is BARRIER-LAYER ONLY (per the campaign's
+-- Mathlib-isolation discipline). Consumers of `modq_eq` above the
+-- abstraction barrier MUST NOT import Mathlib themselves; they use
+-- only the lemmas exported by this module. The `Int.ModEq` import was
+-- removed (unused; the predicate is defined directly in terms of
+-- `% q = 0`).
 import Mathlib.Data.ZMod.Basic
-import Mathlib.Data.Int.ModEq
 import Mathlib.Tactic.Ring
 
 namespace libcrux_iot_ml_kem.Util

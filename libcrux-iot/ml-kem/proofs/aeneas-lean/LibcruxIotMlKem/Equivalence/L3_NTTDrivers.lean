@@ -2503,7 +2503,10 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma
       have : round.val * 2 ≤ outer_count.val * 2 := Nat.mul_le_mul_right 2 (Nat.le_of_lt h_lt)
       have : outer_count.val * 2 ≤ 16 := by
         have hh : 2 * outer_count.val * step_vec.val = 16 := h_two_oc_sv_eq
-        nlinarith
+        -- 2 * o ≤ 2 * o * s = 16 (using s ≥ 1 via h_step_vec_pos)
+        have : 2 * outer_count.val ≤ 2 * outer_count.val * step_vec.val :=
+          Nat.le_mul_of_pos_right _ h_step_vec_pos
+        omega
       have : (16 : Nat) ≤ Std.Usize.max := by scalar_tac
       omega
     obtain ⟨ri2, h_ri2_eq, h_ri2_val⟩ := usize_mul_ok_eq round 2#usize h_round_2_max
@@ -2512,7 +2515,7 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma
     have h_ri2_lt_oc2 : ri2.val ≤ outer_count.val * 2 := by
       rw [h_ri2_val_arith]; exact Nat.mul_le_mul_right 2 (Nat.le_of_lt h_lt)
     have h_oc2_sv : outer_count.val * 2 * step_vec.val = 16 := by
-      have := h_two_oc_sv_eq; linarith
+      have := h_two_oc_sv_eq; grind
     have h_ri2_sv_le_16 : ri2.val * step_vec.val ≤ 16 := by
       calc ri2.val * step_vec.val ≤ (outer_count.val * 2) * step_vec.val :=
             Nat.mul_le_mul_right _ h_ri2_lt_oc2
@@ -2531,9 +2534,10 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma
         have hh : 2 * (round.val + 1) * step_vec.val ≤ 16 := by
           have := h_two_oc_sv_eq
           calc 2 * (round.val + 1) * step_vec.val
-              ≤ 2 * outer_count.val * step_vec.val := by nlinarith
+              ≤ 2 * outer_count.val * step_vec.val := by
+                apply Nat.mul_le_mul_right; omega
             _ = 16 := h_two_oc_sv_eq
-        linarith
+        grind
       have : (16 : Nat) ≤ Std.Usize.max := by scalar_tac
       omega
     obtain ⟨b_off, h_bo_eq, h_bo_val⟩ := usize_add_ok_eq a_off step_vec h_bo_max
@@ -2546,9 +2550,10 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma
       rw [h_bo_val_arith, h_ao_eq_2rsv]
       have hh : 2 * (round.val + 1) * step_vec.val ≤ 16 := by
         calc 2 * (round.val + 1) * step_vec.val
-            ≤ 2 * outer_count.val * step_vec.val := by nlinarith
+            ≤ 2 * outer_count.val * step_vec.val := by
+              apply Nat.mul_le_mul_right; omega
           _ = 16 := h_two_oc_sv_eq
-      linarith
+      grind
     -- 5) Apply inner loop spec, using acc.2.1 as the "re" of the inner call.
     -- We need to prove that the inner-loop precondition holds on acc.2.1's
     -- window `[a_off, a_off+step_vec)` (a-side bound only).
@@ -2566,9 +2571,10 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma
         rw [h_ao_eq_2rsv]
         have hh : 2 * (round.val + 1) * step_vec.val ≤ 16 := by
           calc 2 * (round.val + 1) * step_vec.val
-              ≤ 2 * outer_count.val * step_vec.val := by nlinarith
+              ≤ 2 * outer_count.val * step_vec.val := by
+                apply Nat.mul_le_mul_right; omega
             _ = 16 := h_two_oc_sv_eq
-        nlinarith
+        grind
       have h_eq : acc.2.1.coefficients.val[a_off.val + ℓ']!
                     = re.coefficients.val[a_off.val + ℓ']! :=
         h_undone (a_off.val + ℓ') h_idx_ge h_idx_lt

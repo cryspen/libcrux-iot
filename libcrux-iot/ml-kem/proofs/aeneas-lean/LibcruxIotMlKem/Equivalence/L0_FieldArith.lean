@@ -13,10 +13,13 @@
   See `Plan.lean` lines 686-860 for the per-Triple sketches and the
   upstream F* port references.
 -/
+-- Mathlib-isolation discipline: no direct Mathlib imports above the
+-- abstraction barrier. The `interval_cases` use that was here is now
+-- mediated by `Util.BvMasks.mask_pow2_minus_one_toNat` (barrier file).
 import LibcruxIotMlKem.Plan
 import LibcruxIotMlKem.Extraction.Funs
 import LibcruxIotMlKem.Util.Montgomery
-import Mathlib.Tactic.IntervalCases
+import LibcruxIotMlKem.Util.BvMasks
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
@@ -112,8 +115,8 @@ theorem get_n_least_significant_bits_spec
   have h_pow_pos : 0 < (2 : Nat) ^ n.val := Nat.two_pow_pos _
   -- The mask `(1#32 <<< n.val) - 1#32 : BitVec 32` has `.toNat = 2^n.val - 1`.
   -- Discharge by case analysis on n.val ∈ {0, …, 16} — each case is a concrete BV decide.
-  have h_mask_toNat : ((1#32 <<< n.val) - 1#32).toNat = 2 ^ n.val - 1 := by
-    interval_cases n.val <;> decide
+  have h_mask_toNat : ((1#32 <<< n.val) - 1#32).toNat = 2 ^ n.val - 1 :=
+    libcrux_iot_ml_kem.Util.mask_pow2_minus_one_toNat n.val hn
   -- r.val = (value.bv &&& mask_bv).toNat = value.val &&& (2^n.val - 1)
   have h_r_val : (⟨value.bv &&& (1#32 <<< n.val - 1#32)⟩ : Std.U32).val
                   = value.val &&& (2 ^ n.val - 1) := by

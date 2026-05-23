@@ -889,11 +889,11 @@ theorem cond_subtract_3329_spec
         have h_diff_lb : -(2^15 : Int) ≤ xj.val - 3329 := by
           have h_xj_lb : (0 : Int) ≤ xj.val := h_vec_ge
           have : -(2^15 : Int) ≤ -3329 := by decide
-          linarith
+          grind
         have h_diff_ub : xj.val - 3329 < (2^15 : Int) := by
           have h_xj_ub : xj.val < 2 * 3329 := h_vec_lt
           have h_step : (2 * 3329 - 3329 : Int) < (2^15 : Int) := by decide
-          linarith
+          grind
         have h_3329_val : (3329#i16 : Std.I16).val = 3329 := by decide
         rw [h_3329_val]
         apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
@@ -904,11 +904,11 @@ theorem cond_subtract_3329_spec
       refine ⟨?_, ?_, ?_⟩
       · -- 0 ≤ xj.val - 3329 (since xj.val ≥ 3329).
         rw [h_eq, h_wsub_val]
-        have : (0 : Int) ≤ xj.val - 3329 := by linarith
+        have : (0 : Int) ≤ xj.val - 3329 := by grind
         exact this
       · -- xj.val - 3329 < 3329 (since xj.val < 2 * 3329).
         rw [h_eq, h_wsub_val]
-        have : xj.val - 3329 < (3329 : Int) := by linarith
+        have : xj.val - 3329 < (3329 : Int) := by grind
         exact this
       · rw [h_eq, h_wsub_val]
         -- (xj.val - 3329) % 3329 = xj.val % 3329 (subtracting a multiple of 3329).
