@@ -39,28 +39,12 @@ namespace core_models
     extraction (`SKIP_VERSION_CHECK=1 ./hax_aeneas.py` then `lake build`).
     ============================================================ -/
 
-/-- `SliceIndex` instance for `RangeTo<usize>` indexing into `&[T]`.
-    Mirror of the existing `Range` / `RangeFrom` variants in
-    `HacspecSha3.Missing`; the `RangeTo { end }` form translates to
-    `Range { start := 0, end }`. -/
-def cmRangeToUsizeToAeneas (r : ops.range.RangeTo Aeneas.Std.Usize) :
-    Aeneas.Std.core.ops.range.Range Aeneas.Std.Usize :=
-  { start := 0#usize, «end» := r.«end» }
-
-@[reducible] def ops.range.RangeToUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-  (T : Type) : Aeneas.Std.core.slice.index.SliceIndex
-    (ops.range.RangeTo Aeneas.Std.Usize) (Aeneas.Std.Slice T) (Aeneas.Std.Slice T) :=
-  { sealedInst := {}
-    get := fun r s =>
-      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.get (cmRangeToUsizeToAeneas r) s
-    get_mut := fun r s =>
-      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.get_mut (cmRangeToUsizeToAeneas r) s
-    get_unchecked := fun _ _ => Aeneas.Std.Result.fail Aeneas.Std.Error.undef
-    get_unchecked_mut := fun _ _ => Aeneas.Std.Result.fail Aeneas.Std.Error.undef
-    index := fun r s =>
-      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.index (cmRangeToUsizeToAeneas r) s
-    index_mut := fun r s =>
-      Aeneas.Std.core.slice.index.SliceIndexRangeUsizeSlice.index_mut (cmRangeToUsizeToAeneas r) s }
+-- `cmRangeToUsizeToAeneas` and `ops.range.RangeToUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice`
+-- moved to `HacspecSha3.Common` (factored out to share with LibcruxIotSha3).
+-- The canonical (Sha3) variant returns `RangeTo Usize → RangeTo Usize` and
+-- dispatches via `SliceIndexRangeToUsizeSlice.*` (RangeTo-faithful), rather
+-- than the prior `RangeTo → Range start=0` form. Observationally equivalent
+-- for `s[..end]` semantics.
 
 /-- `SliceIndex` for `RangeFull` (`s[..]`). The full slice is just `s`. -/
 def cmRangeFullToAeneas {T : Type} (_r : ops.range.RangeFull)
@@ -121,42 +105,9 @@ def result.Result.Insts.Core_modelsOpsTry_traitFromResidualResultInfallibleE.fro
     Aeneas.Std.Result.ok (.Err f)
   | .Ok _ => Aeneas.Std.Result.fail Aeneas.Std.Error.panic  -- Infallible has no inhabitants
 
-/-- `Slice::split_at`. Routes to Aeneas's slice split. -/
-def slice.Slice.split_at {T : Type} (s : Aeneas.Std.Slice T) (mid : Aeneas.Std.Usize) :
-    Aeneas.Std.Result (Aeneas.Std.Slice T × Aeneas.Std.Slice T) :=
-  Aeneas.Std.core.slice.Slice.split_at s mid
-
-/-- `Slice::chunks_exact`. Bundles the chunk size + the slice into a
-    `ChunksExact T`. Iteration is via `ChunksExact.…next` below.
-
-    UPSTREAM-NOTE (blocking): `core_models.slice.iter.ChunksExact` is
-    declared in rust-core-models's `Types.lean` with field
-    `elements : Slice T` — and `Slice` there resolves to the reducible
-    alias `core_models.slice.Slice T := T`, not to `Aeneas.Std.Slice T`.
-    So the field literally expects a `T`, not a slice; we cannot
-    construct a meaningful `ChunksExact T` from a real
-    `Aeneas.Std.Slice T` value in this Lean encoding. Real fix
-    requires a proper slice model upstream
-    (e.g. `abbrev slice.Slice T := Aeneas.Std.Slice T`).
-    Stubbed with `sorry`; only consumer in the current extraction is
-    `ind_cca::public_key_modulus_check`. -/
-def slice.Slice.chunks_exact {T : Type}
-    (_s : Aeneas.Std.Slice T) (_cs : Aeneas.Std.Usize) :
-    Aeneas.Std.Result (slice.iter.ChunksExact T) :=
-  Aeneas.Std.Result.fail Aeneas.Std.Error.panic
-
-/-- `Iterator::next` for `ChunksExact<T>` (item: shared `&[T]`).
-
-    UPSTREAM-NOTE: this is a *minimal* stub that terminates the iterator
-    immediately (returns `None`). It builds, but any spec consumer that
-    relies on actual chunked iteration (e.g.
-    `ind_cca::public_key_modulus_check`) will see a vacuously-true loop.
-    Real semantics require `split_at(cs)` head/tail logic and a
-    length-monus on `elements`. -/
-def slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice.next
-    {T : Type} (iter : slice.iter.ChunksExact T) :
-    Aeneas.Std.Result ((option.Option (Aeneas.Std.Slice T)) × slice.iter.ChunksExact T) :=
-  Aeneas.Std.Result.ok (option.Option.None, iter)
+-- `slice.Slice.split_at`, `slice.Slice.chunks_exact`, and
+-- `slice.iter.ChunksExact.…SharedASlice.next` moved to
+-- `HacspecSha3.Common` (factored to share with LibcruxIotMlKem).
 
 /-- `PartialEq<Bool>` for `Bool`. Mirror of the integer `PartialEq`
     instances already in `CoreModels.FunsPrologue`. -/
@@ -182,42 +133,14 @@ instance U16.Insts.Core_modelsCmpOrd : cmp.Ord Aeneas.Std.U16 :=
        | .eq => cmp.Ordering.Equal
        | .gt => cmp.Ordering.Greater) }
 
-/-- `Step` instance for `I32` ranges. Mirror of `StepUsize` in
-    `CoreModels.FunsPrologue`. Range iteration over `0..n : i32`. -/
-def iter.range.StepI32 : iter.range.Step Aeneas.Std.I32 :=
-  { cloneInst       := { clone := fun x => Aeneas.Std.Result.ok x }
-    partialOrdInst  := {
-      PartialEqInst := { eq := fun x y => Aeneas.Std.Result.ok (x == y) }
-      partial_cmp := fun x y => Aeneas.Std.Result.ok (option.Option.Some
-        (match compare x.val y.val with
-         | .lt => cmp.Ordering.Less
-         | .eq => cmp.Ordering.Equal
-         | .gt => cmp.Ordering.Greater))
-    }
-    steps_between := fun _ _ =>
-      Aeneas.Std.Result.ok (0#usize, Option.none)
-    forward_checked := fun cur step => do
-      -- step is Usize; widen to I32 via UScalar.hcast (pure cast).
-      let s := Aeneas.Std.UScalar.hcast .I32 step
-      let n ← cur + s
-      Aeneas.Std.Result.ok (Option.some n)
-    backward_checked := fun cur step => do
-      let s := Aeneas.Std.UScalar.hcast .I32 step
-      let n ← cur - s
-      Aeneas.Std.Result.ok (Option.some n) }
-
-abbrev I32.Insts.Core_modelsIterRangeStep := iter.range.StepI32
-
-/-- `Display` for `Usize`. No-op stub: `fmt.Formatter = Unit` so
-    formatting carries no information; format sites are pure
-    panic-path machinery. -/
-instance Usize.Insts.Core_modelsFmtDisplay : fmt.Display Aeneas.Std.Usize :=
-  { fmt := fun _ f => Aeneas.Std.Result.ok (result.Result.Ok (), f) }
-
-/-- `Debug` for `&T`. Forwards to the underlying `Debug T`. -/
-@[reducible] def Shared0T.Insts.Core_modelsFmtDebug
-    {T : Type} (dbg : fmt.Debug T) : fmt.Debug T :=
-  dbg
+-- `iter.range.StepI32` / `I32.Insts.Core_modelsIterRangeStep`,
+-- `Usize.Insts.Core_modelsFmtDisplay`, and
+-- `Shared0T.Insts.Core_modelsFmtDebug` moved to `HacspecSha3.Common`
+-- (factored out to share with LibcruxIotSha3). The canonical
+-- (Sha3) `I32.IterRangeStep` has real-behavior bodies for
+-- `steps_between` / `forward_checked` / `backward_checked` (ml-kem
+-- extraction does not iterate over I32 ranges, so the choice is
+-- moot at use sites).
 
 /-- `Debug` for `U16` — no-op format. -/
 instance U16.Insts.Core_modelsFmtDebug : fmt.Debug Aeneas.Std.U16 :=
@@ -244,21 +167,13 @@ def Slice.Insts.Core_modelsCmpPartialEqSlice
     cmp.PartialEq (Aeneas.Std.Slice T) (Aeneas.Std.Slice T) :=
   { eq := fun _ _ => Aeneas.Std.Result.ok true }
 
-/-- `Array::as_slice`. Routes to Aeneas's `Array.to_slice`. -/
-def array.Array.as_slice {T : Type} {N : Aeneas.Std.Usize}
-    (a : Aeneas.Std.Array T N) : Aeneas.Std.Result (Aeneas.Std.Slice T) :=
-  Aeneas.Std.Result.ok (Aeneas.Std.Array.to_slice a)
+-- `array.Array.as_slice` moved to `HacspecSha3.Common` (factored).
 
-/-- `fmt::Arguments::new` constructor. No-op since `fmt.Arguments = Unit`. -/
-def fmt.Arguments.new {N1 N2 : Aeneas.Std.Usize} {T1 T2 : Type}
-    (_pieces : Aeneas.Std.Array T1 N1) (_args : Aeneas.Std.Array T2 N2) :
-    Aeneas.Std.Result fmt.Arguments :=
-  Aeneas.Std.Result.ok ()
-
-/-- `Formatter::write_str`. No-op stub returning Ok. -/
-def fmt.Formatter.write_str (f : fmt.Formatter) (_s : Aeneas.Std.Slice Aeneas.Std.U8) :
-    Aeneas.Std.Result ((result.Result Unit fmt.Error) × fmt.Formatter) :=
-  Aeneas.Std.Result.ok (result.Result.Ok (), f)
+-- `fmt.Arguments.new` and `fmt.Formatter.write_str` moved to
+-- `HacspecSha3.Common`. The canonical `write_str` takes
+-- `Aeneas.Std.Str` (matches the live LibcruxIotSha3 callers); the
+-- prior MlKem variant took `Slice U8` but was dead code (no live
+-- caller in HacspecMlKem extraction).
 
 /-- `Formatter::debug_struct_field1_finish`. No-op stub returning Ok. -/
 def fmt.Formatter.debug_struct_field1_finish

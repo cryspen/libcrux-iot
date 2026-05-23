@@ -57,37 +57,19 @@ def num.I16.wrapping_neg (x : Std.I16) : Result Std.I16 :=
     `I32.Insts.Core_modelsIterRangeStep`; we only add what's missing
     on top: iterator ops on ChunksExact + Array.as_slice. -/
 
-/-- Routes to Aeneas's slice split. -/
-def slice.Slice.split_at {T : Type} (s : Aeneas.Std.Slice T) (mid : Aeneas.Std.Usize) :
-    Aeneas.Std.Result (Aeneas.Std.Slice T × Aeneas.Std.Slice T) :=
-  Aeneas.Std.core.slice.Slice.split_at s mid
-
-/-- `Slice::chunks_exact` — bundles into a ChunksExact iterator state.
-    UPSTREAM-NOTE: rust-core-models's `slice.Slice T := T` makes
-    `ChunksExact.elements` typed at `T` instead of `Slice T`; we cannot
-    construct a meaningful value from a real slice. Stub returns panic. -/
-def slice.Slice.chunks_exact {T : Type}
-    (_s : Aeneas.Std.Slice T) (_cs : Aeneas.Std.Usize) :
-    Aeneas.Std.Result (slice.iter.ChunksExact T) :=
-  Aeneas.Std.Result.fail Aeneas.Std.Error.panic
-
-/-- `Iterator::next` for `ChunksExact<T>`. No-op terminator stub. -/
-def slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice.next
-    {T : Type} (iter : slice.iter.ChunksExact T) :
-    Aeneas.Std.Result ((option.Option (Aeneas.Std.Slice T)) × slice.iter.ChunksExact T) :=
-  Aeneas.Std.Result.ok (option.Option.None, iter)
+-- `slice.Slice.split_at`, `slice.Slice.chunks_exact`,
+-- `slice.iter.ChunksExact.…SharedASlice.next`, and
+-- `array.Array.as_slice` moved to `HacspecSha3.Common` (factored
+-- to share with HacspecMlKem).
 
 /-- `Iterator` instance dict for `ChunksExact<T>` (item type: shared
-    slice `&[T]`). Just packages the `.next` stub above. -/
+    slice `&[T]`). Packages the `.next` stub from `HacspecSha3.Common`. -/
 @[reducible] def slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice
     (T : Type) :
     iter.traits.iterator.Iterator (slice.iter.ChunksExact T) (Aeneas.Std.Slice T) :=
   { next := slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice.next }
 
-/-- `Iterator::enumerate` for `ChunksExact<T>` — wraps as an
-    `Enumerate (ChunksExact T)` adapter starting at count 0.
-    Parameter renamed `it` (not `iter`) to avoid shadowing the
-    `core_models.iter.*` namespace when elaborating the return type. -/
+/-- `Iterator::enumerate` for `ChunksExact<T>`. -/
 def slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice.enumerate
     {T : Type} (it : slice.iter.ChunksExact T) :
     Aeneas.Std.Result (iter.adapters.enumerate.Enumerate (slice.iter.ChunksExact T)) :=
@@ -98,11 +80,6 @@ def array.iter.IntoIter.Insts.Core_modelsIterTraitsIteratorIterator.enumerate
     {T : Type} {N : Aeneas.Std.Usize} (it : array.iter.IntoIter T N) :
     Aeneas.Std.Result (iter.adapters.enumerate.Enumerate (array.iter.IntoIter T N)) :=
   Aeneas.Std.Result.ok { iter := it, count := 0#usize }
-
-/-- `Array::as_slice`. Routes to Aeneas's `Array.to_slice`. -/
-def array.Array.as_slice {T : Type} {N : Aeneas.Std.Usize}
-    (a : Aeneas.Std.Array T N) : Aeneas.Std.Result (Aeneas.Std.Slice T) :=
-  Aeneas.Std.Result.ok (Aeneas.Std.Array.to_slice a)
 
 end core_models
 

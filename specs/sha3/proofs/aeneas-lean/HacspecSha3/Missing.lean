@@ -1,5 +1,6 @@
 import Aeneas
 import CoreModels
+import HacspecSha3.Common
 
 open Aeneas Aeneas.Std Result
 
