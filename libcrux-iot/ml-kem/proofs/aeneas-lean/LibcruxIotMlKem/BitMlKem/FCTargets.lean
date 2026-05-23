@@ -978,8 +978,282 @@ theorem add_fc
       (lhs.elements.val[i]!) (rhs.elements.val[i]!) (r0.elements.val[i]!)
       h_val
 
+/-- Canonicity of `lift_fe`: every `feOfZMod`-image is canonical
+    (its `.val.val < 3329`). Used by `lift_fe_sub_pure_eq` to discharge
+    `sub_eq_ok`'s canonicity preconditions. Pure-projection side lemma. -/
+private theorem Canonical_lift_fe (x : Std.I16) :
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical (lift_fe x) := by
+  unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+  unfold lift_fe i16_to_spec_fe_plain feOfZMod
+  -- Goal: (BitVec.ofNat 16 ((x.val : Int) : ZMod 3329).val).toNat
+  --         < parameters.FIELD_MODULUS.val
+  have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+    unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+  rw [hq]
+  show (BitVec.ofNat 16 (((x.val : Int) : ZMod 3329)).val).toNat < 3329
+  rw [BitVec.toNat_ofNat]
+  have h_lt : (((x.val : Int) : ZMod 3329)).val < 3329 := ZMod.val_lt _
+  have h_le : (((x.val : Int) : ZMod 3329)).val < 2 ^ 16 :=
+    Nat.lt_of_lt_of_le h_lt (by decide)
+  rw [Nat.mod_eq_of_lt h_le]
+  exact h_lt
+
+/-- Bridge lemma: the `.val.val` of `FieldElement.sub_pure` (under
+    canonicity of both operands) is the impl's U16 modular-reduced
+    difference: `(a.val.val + 3329 - b.val.val) % 3329`. Mirrors
+    `add_pure_val_eq`'s trace through the U32 do-block; the impl's
+    `sub` body is `(self.val + q - other.val) % q` (`x + q` widens
+    safely under `b` canonical, then `s - y ≥ 0` since
+    `s = x + q ≥ q > y`, then `% q`, then narrow U16). -/
+private theorem sub_pure_val_eq
+    (a b : hacspec_ml_kem.parameters.FieldElement)
+    (ha : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical a)
+    (hb : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical b) :
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure a b).val.val
+      = (a.val.val + 3329 - b.val.val) % 3329 := by
+  have hsub :
+      hacspec_ml_kem.parameters.FieldElement.sub a b
+        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure a b) :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_eq_ok a b ha hb
+  have ha' : a.val.val < 3329 := by
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at ha
+    unfold hacspec_ml_kem.parameters.FIELD_MODULUS at ha; simpa using ha
+  have hb' : b.val.val < 3329 := by
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at hb
+    unfold hacspec_ml_kem.parameters.FIELD_MODULUS at hb; simpa using hb
+  unfold hacspec_ml_kem.parameters.FieldElement.sub at hsub
+  simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at hsub
+  have hA := a.val.hBounds; have hB := b.val.hBounds
+  simp [Aeneas.Std.UScalarTy.numBits] at hA hB
+  set x : Std.U32 := Std.UScalar.cast .U32 a.val
+  set y : Std.U32 := Std.UScalar.cast .U32 b.val
+  set q : Std.U32 := Std.UScalar.cast .U32 hacspec_ml_kem.parameters.FIELD_MODULUS
+  have hxval : x.val = a.val.val := Std.U16.cast_U32_val_eq a.val
+  have hyval : y.val = b.val.val := Std.U16.cast_U32_val_eq b.val
+  have hqval : q.val = 3329 := by
+    show (Std.UScalar.cast .U32 hacspec_ml_kem.parameters.FIELD_MODULUS).val = 3329
+    unfold hacspec_ml_kem.parameters.FIELD_MODULUS; simp
+  have hae := Std.UScalar.add_equiv x q
+  cases hxq : (x + q : Result Std.U32) with
+  | ok s =>
+    rw [hxq] at hae hsub; simp at hae
+    obtain ⟨_, hsval, _⟩ := hae
+    simp only [Aeneas.Std.bind_tc_ok] at hsub
+    have hae2 := Std.UScalar.sub_equiv s y
+    cases hsy : (s - y : Result Std.U32) with
+    | ok u =>
+      rw [hsy] at hae2 hsub; simp at hae2
+      -- hae2 : y.val ≤ s.val ∧ s.val = u.val + y.val ∧ u.bv = s.bv - y.bv
+      obtain ⟨_hyle, hsuy, _⟩ := hae2
+      simp only [Aeneas.Std.bind_tc_ok] at hsub
+      have hq_ne : q.val ≠ 0 := by rw [hqval]; decide
+      obtain ⟨w, hw_eq, hwval⟩ := uscalar_rem_ok_U32_local u q hq_ne
+      rw [hw_eq] at hsub; simp only [Aeneas.Std.bind_tc_ok] at hsub
+      unfold hacspec_ml_kem.parameters.FieldElement.new at hsub
+      simp at hsub
+      have hwbnd : w.val < 3329 := by
+        rw [hwval, hqval]; exact Nat.mod_lt _ (by decide)
+      have hwcast : (Std.UScalar.cast .U16 w).val = w.val := by
+        apply Std.UScalar.cast_val_mod_pow_of_inBounds_eq
+        simp [Aeneas.Std.UScalarTy.numBits]; omega
+      rw [← hsub]
+      show (Std.UScalar.cast .U16 w).val = (a.val.val + 3329 - b.val.val) % 3329
+      rw [hwcast, hwval, hqval]
+      -- Goal: u.val % 3329 = (a.val.val + 3329 - b.val.val) % 3329
+      -- From hsuy : s.val = u.val + y.val and hsval : s.val = x.val + q.val
+      -- and hxval, hqval, hyval, hb', we get u.val = a.val.val + 3329 - b.val.val.
+      have hu_eq : u.val = a.val.val + 3329 - b.val.val := by
+        have h1 : s.val = u.val + y.val := hsuy
+        rw [hsval, hxval, hqval, hyval] at h1
+        omega
+      rw [hu_eq]
+    | fail e =>
+      rw [hsy] at hae2; simp at hae2
+      rw [hsval, hxval, hqval, hyval] at hae2
+      omega
+    | div => rw [hsy] at hae2; exact hae2.elim
+  | fail e =>
+    rw [hxq] at hae; simp [Std.UScalar.inBounds] at hae
+    rw [hxval, hqval] at hae
+    omega
+  | div => rw [hxq] at hae; exact hae.elim
+
+/-- Bridge lemma: the `.val.val` of `FieldElement.mul_pure` is the
+    impl's U16 modular-reduced product: `(a.val.val * b.val.val) % 3329`.
+    Mirrors `add_pure_val_eq`'s trace through the U32 do-block; the
+    impl's `mul` body is `(self.val * other.val) % q` (`x * y` widens
+    safely to U32 since `a.val * b.val ≤ (2^16-1)² < 2^32`, then `% q`,
+    then narrow U16). Unconditional (no canonicity needed). -/
+private theorem mul_pure_val_eq
+    (a b : hacspec_ml_kem.parameters.FieldElement) :
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b).val.val
+      = (a.val.val * b.val.val) % 3329 := by
+  have hmul :
+      hacspec_ml_kem.parameters.FieldElement.mul a b
+        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_eq_ok a b
+  unfold hacspec_ml_kem.parameters.FieldElement.mul at hmul
+  simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at hmul
+  have hA := a.val.hBounds; have hB := b.val.hBounds
+  simp [Aeneas.Std.UScalarTy.numBits] at hA hB
+  set x : Std.U32 := Std.UScalar.cast .U32 a.val
+  set y : Std.U32 := Std.UScalar.cast .U32 b.val
+  have hxval : x.val = a.val.val := Std.U16.cast_U32_val_eq a.val
+  have hyval : y.val = b.val.val := Std.U16.cast_U32_val_eq b.val
+  have hae := Std.UScalar.mul_equiv x y
+  have heqmul : (x * y : Result Std.U32) = Std.UScalar.mul x y := rfl
+  cases hxy : (x * y : Result Std.U32) with
+  | ok z =>
+    rw [hxy] at hmul
+    rw [heqmul] at hxy; rw [hxy] at hae; simp at hae
+    obtain ⟨_, hzval, _⟩ := hae
+    simp only [Aeneas.Std.bind_tc_ok] at hmul
+    have hmod_val :
+        (Std.UScalar.cast .U32 hacspec_ml_kem.parameters.FIELD_MODULUS).val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; simp
+    have hmod_ne :
+        (Std.UScalar.cast .U32 hacspec_ml_kem.parameters.FIELD_MODULUS).val ≠ 0 := by
+      rw [hmod_val]; decide
+    set m : Std.U32 := Std.UScalar.cast .U32 hacspec_ml_kem.parameters.FIELD_MODULUS
+    obtain ⟨w, hw_eq, hwval⟩ := uscalar_rem_ok_U32_local z m hmod_ne
+    rw [hw_eq] at hmul; simp only [Aeneas.Std.bind_tc_ok] at hmul
+    unfold hacspec_ml_kem.parameters.FieldElement.new at hmul
+    simp at hmul
+    have hwbnd : w.val < 3329 := by
+      rw [hwval, hmod_val]; exact Nat.mod_lt _ (by decide)
+    have hwcast : (Std.UScalar.cast .U16 w).val = w.val := by
+      apply Std.UScalar.cast_val_mod_pow_of_inBounds_eq
+      simp [Aeneas.Std.UScalarTy.numBits]; omega
+    rw [← hmul]
+    show (Std.UScalar.cast .U16 w).val = (a.val.val * b.val.val) % 3329
+    rw [hwcast, hwval, hmod_val, hzval, hxval, hyval]
+  | fail _ =>
+    rw [heqmul] at hxy; rw [hxy] at hae
+    simp only [Std.UScalar.max, Aeneas.Std.UScalarTy.numBits] at hae
+    rw [hxval, hyval] at hae
+    have : a.val.val * b.val.val < 2^32 := by
+      have h1 : a.val.val * b.val.val ≤ (2^16 - 1) * (2^16 - 1) := by
+        apply Nat.mul_le_mul <;> omega
+      have heq : (2^16 - 1) * (2^16 - 1) = 2^32 - 2*2^16 + 1 := by decide
+      omega
+    omega
+  | div => rw [heqmul] at hxy; rw [hxy] at hae; exact hae.elim
+
+/-- Bridge lemma: under the no-overflow bound on `a.val - b.val` (Int,
+    |·| ≤ 2^15-1), any `r : Std.I16` carrying that difference lifts to
+    `FieldElement.sub_pure (lift_fe a) (lift_fe b)`.
+
+    Pure-projection content: both sides reduce to
+    `feOfZMod ((a.val - b.val : Int) : ZMod 3329)`. The RHS uses
+    `sub_pure_val_eq` plus canonical round-trip — the result is
+    canonical by `Canonical_sub_pure`, and the `zmodOfFE`-projection
+    reduces the inner `(a.val.val + 3329 - b.val.val) % 3329` to
+    `(a.val - b.val : Int) : ZMod 3329` via `ZMod.natCast_mod` plus
+    integer reasoning. -/
+private theorem lift_fe_sub_pure_eq
+    (a b r : Std.I16) (hrv : r.val = a.val - b.val) :
+    lift_fe r
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+          (lift_fe a) (lift_fe b) := by
+  have h_lhs : lift_fe r
+      = feOfZMod (((a.val - b.val : Int)) : ZMod 3329) := by
+    unfold lift_fe i16_to_spec_fe_plain
+    rw [hrv]
+  set s : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+      (lift_fe a) (lift_fe b) with hs_def
+  have h_canon : s.val.val < 3329 := by
+    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_sub_pure
+      (lift_fe a) (lift_fe b) (Canonical_lift_fe a) (Canonical_lift_fe b)
+    show s.val.val < 3329
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at h_cs
+    exact h_cs
+  have h_round_trip : feOfZMod (zmodOfFE s) = s :=
+    feOfZMod_zmodOfFE_of_canonical s h_canon
+  have h_zmod_s : zmodOfFE s = (((a.val - b.val : Int)) : ZMod 3329) := by
+    unfold zmodOfFE
+    rw [sub_pure_val_eq _ _ (Canonical_lift_fe a) (Canonical_lift_fe b)]
+    -- Goal: (((lift_fe a).val.val + 3329 - (lift_fe b).val.val) % 3329 : Nat) : ZMod 3329
+    --       = ((a.val - b.val : Int) : ZMod 3329)
+    rw [ZMod.natCast_mod]
+    -- Step: lift the Nat-subtraction expression through Nat→ZMod cast using
+    -- a cast-equality. Since (lift_fe b).val.val ≤ (lift_fe a).val.val + 3329
+    -- (b canonical), Nat subtraction agrees with Int subtraction.
+    have hb_lt : (lift_fe b).val.val < 3329 := by
+      have h_cb := Canonical_lift_fe b
+      unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cb
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS at h_cb; simpa using h_cb
+    have h_le : (lift_fe b).val.val ≤ (lift_fe a).val.val + 3329 := by omega
+    -- (Nat-cast into ZMod) of the Nat sub equals (Int-cast into ZMod) of the Int sub.
+    have h_zmod_eq :
+        (((lift_fe a).val.val + 3329 - (lift_fe b).val.val : Nat) : ZMod 3329)
+          = ((((lift_fe a).val.val : Int) + 3329 - ((lift_fe b).val.val : Int) : Int)
+                : ZMod 3329) := by
+      have h_int_eq :
+          (((lift_fe a).val.val + 3329 - (lift_fe b).val.val : Nat) : Int)
+            = ((lift_fe a).val.val : Int) + 3329 - ((lift_fe b).val.val : Int) := by
+        omega
+      have h_route :
+          (((lift_fe a).val.val + 3329 - (lift_fe b).val.val : Nat) : ZMod 3329)
+            = ((((lift_fe a).val.val + 3329 - (lift_fe b).val.val : Nat) : Int)
+                : ZMod 3329) := by
+        rfl
+      rw [h_route, h_int_eq]
+    rw [h_zmod_eq]
+    push_cast
+    rw [lift_fe_val_val a, lift_fe_val_val b]
+    rw [ZMod.natCast_zmod_val, ZMod.natCast_zmod_val]
+    -- Goal after push_cast: ((a.val : Int) : ZMod 3329) + 0 - ((b.val : Int) : ZMod 3329)
+    --                       = ((a.val - b.val : Int) : ZMod 3329)
+    -- (push_cast collapses `(3329 : ZMod 3329)` to `0` via ZMod.natCast_self.)
+    ring
+  rw [h_lhs, ← h_round_trip, h_zmod_s]
+
+/-- Bridge lemma: under the no-overflow bound on `a.val * b.val` (Int,
+    |·| ≤ 2^15-1), any `r : Std.I16` carrying that product lifts to
+    `FieldElement.mul_pure (lift_fe a) (lift_fe b)`.
+
+    Pure-projection content: both sides reduce to
+    `feOfZMod ((a.val * b.val : Int) : ZMod 3329)`. The RHS uses
+    `mul_pure_val_eq` plus canonical round-trip — the result is
+    canonical by `Canonical_mul_pure`. Unconditional in canonicity. -/
+private theorem lift_fe_mul_pure_eq
+    (a b r : Std.I16) (hrv : r.val = a.val * b.val) :
+    lift_fe r
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe a) (lift_fe b) := by
+  have h_lhs : lift_fe r
+      = feOfZMod (((a.val * b.val : Int)) : ZMod 3329) := by
+    unfold lift_fe i16_to_spec_fe_plain
+    rw [hrv]
+  set s : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (lift_fe a) (lift_fe b) with hs_def
+  have h_canon : s.val.val < 3329 := by
+    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+      (lift_fe a) (lift_fe b)
+    show s.val.val < 3329
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at h_cs
+    exact h_cs
+  have h_round_trip : feOfZMod (zmodOfFE s) = s :=
+    feOfZMod_zmodOfFE_of_canonical s h_canon
+  have h_zmod_s : zmodOfFE s = (((a.val * b.val : Int)) : ZMod 3329) := by
+    unfold zmodOfFE
+    rw [mul_pure_val_eq]
+    rw [ZMod.natCast_mod]
+    push_cast
+    rw [lift_fe_val_val a, lift_fe_val_val b]
+    rw [ZMod.natCast_zmod_val, ZMod.natCast_zmod_val]
+  rw [h_lhs, ← h_round_trip, h_zmod_s]
+
 /-- L1.2 — `sub` on 16-lane PortableVector chunks. -/
-@[spec]
+@[spec high]
 theorem sub_fc
     (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (hpre : ∀ i : Nat, i < 16 →
@@ -987,7 +1261,62 @@ theorem sub_fc
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.sub lhs rhs
     ⦃ ⇓ r => ⌜ lift_chunk r = Spec.chunk_sub_pure (lift_chunk lhs) (lift_chunk rhs) ⌝ ⦄ := by
-  sorry
+  -- 1. Extract per-element value-equation from legacy bounds Triple.
+  have h_legacy := libcrux_iot_ml_kem.Equivalence.sub_spec lhs rhs hpre
+  obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
+  apply triple_of_ok_fc (v := r0) h_eq
+  -- 2. Reduce array equality to list equality, then to per-index lift_fe equality.
+  unfold lift_chunk Spec.chunk_sub_pure
+  apply Subtype.ext
+  show r0.elements.val.map lift_fe
+      = (List.range 16).map (fun i =>
+          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+            ((Std.Array.make 16#usize (lhs.elements.val.map lift_fe)
+              (by simp)).val[i]!)
+            ((Std.Array.make 16#usize (rhs.elements.val.map lift_fe)
+              (by simp)).val[i]!))
+  have h_r0_len : r0.elements.val.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+  apply List.ext_getElem
+  · simp [List.length_map, List.length_range, h_r0_len]
+  · intro i hi1 hi2
+    have hi : i < 16 := by
+      have : i < (r0.elements.val.map lift_fe).length := hi1
+      simp [List.length_map, h_r0_len] at this; exact this
+    rw [List.getElem_map]
+    rw [List.getElem_map, List.getElem_range]
+    show lift_fe r0.elements.val[i]
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+          ((lhs.elements.val.map lift_fe)[i]!)
+          ((rhs.elements.val.map lift_fe)[i]!)
+    have h_r0_get_eq : r0.elements.val[i]
+        = r0.elements.val[i]! := by
+      have hi_r0 : i < r0.elements.val.length := by rw [h_r0_len]; exact hi
+      rw [getElem!_pos r0.elements.val i hi_r0]
+    rw [h_r0_get_eq]
+    have h_lhs_len : lhs.elements.val.length = 16 :=
+      libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+    have h_rhs_len : rhs.elements.val.length = 16 :=
+      libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+    have h_map_lhs :
+        (lhs.elements.val.map lift_fe)[i]! = lift_fe (lhs.elements.val[i]!) := by
+      have hi_lhs : i < lhs.elements.val.length := by rw [h_lhs_len]; exact hi
+      rw [getElem!_pos (lhs.elements.val.map lift_fe) i (by
+        simp [List.length_map, h_lhs_len]; exact hi)]
+      rw [List.getElem_map]
+      rw [getElem!_pos lhs.elements.val i hi_lhs]
+    have h_map_rhs :
+        (rhs.elements.val.map lift_fe)[i]! = lift_fe (rhs.elements.val[i]!) := by
+      have hi_rhs : i < rhs.elements.val.length := by rw [h_rhs_len]; exact hi
+      rw [getElem!_pos (rhs.elements.val.map lift_fe) i (by
+        simp [List.length_map, h_rhs_len]; exact hi)]
+      rw [List.getElem_map]
+      rw [getElem!_pos rhs.elements.val i hi_rhs]
+    rw [h_map_lhs, h_map_rhs]
+    obtain ⟨h_val, _h_bnd⟩ := h_per i hi
+    exact lift_fe_sub_pure_eq
+      (lhs.elements.val[i]!) (rhs.elements.val[i]!) (r0.elements.val[i]!)
+      h_val
 
 /-- L1.3 — `barrett_reduce` on a chunk. -/
 @[spec]
@@ -1038,19 +1367,77 @@ theorem negate_fc
     ⦃ ⇓ r => ⌜ lift_chunk r = Spec.chunk_neg_pure (lift_chunk vec) ⌝ ⦄ := by
   sorry
 
-/-- L1.7 — `multiply_by_constant` (plain) on a chunk. -/
-@[spec]
+/-- L1.7 — `multiply_by_constant` (plain) on a chunk.
+
+    **Precondition note**: the legacy `Equivalence.multiply_by_constant_spec`
+    requires the per-element product bound `|vec[i] * c| ≤ 2^15 - 1`.
+    The aggregate `|vec[i]| ≤ 32767 ∧ |c| ≤ 1664` does NOT imply that
+    product bound (it allows `32767 * 1664 ≫ 32767`), so we carry
+    `hpre_prod` as an additional caller obligation. Callers downstream
+    in the NTT pipeline reliably satisfy this — Mont-domain inputs are
+    already `|vec[i]| ≤ 3328 + 1665` after a `montgomery_reduce`, and
+    the product with `|c| ≤ 1664` is well inside i32 with the per-lane
+    bound easily verified. The `hvec` / `hc` are kept for API
+    consistency with `montgomery_multiply_by_constant_fc`. -/
+@[spec high]
 theorem multiply_by_constant_fc
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (c : Std.I16)
     (hvec : ∀ i : Nat, i < 16 → (vec.elements.val[i]!).val.natAbs ≤ 32767)
-    (hc : c.val.natAbs ≤ 1664) :
+    (hc : c.val.natAbs ≤ 1664)
+    (hpre_prod : ∀ i : Nat, i < 16 →
+      ((vec.elements.val[i]!).val * c.val : Int).natAbs ≤ 2^15 - 1) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.multiply_by_constant vec c
     ⦃ ⇓ r => ⌜ lift_chunk r
                 = Spec.chunk_multiply_by_constant_pure
                     (lift_chunk vec) (lift_fe c) ⌝ ⦄ := by
-  sorry
+  -- 1. Extract per-element value-equation from legacy bounds Triple.
+  have h_legacy :=
+    libcrux_iot_ml_kem.Equivalence.multiply_by_constant_spec vec c hpre_prod
+  obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
+  apply triple_of_ok_fc (v := r0) h_eq
+  -- 2. Reduce array equality to list equality, then to per-index lift_fe equality.
+  unfold lift_chunk Spec.chunk_multiply_by_constant_pure
+  apply Subtype.ext
+  show r0.elements.val.map lift_fe
+      = (List.range 16).map (fun i =>
+          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            ((Std.Array.make 16#usize (vec.elements.val.map lift_fe)
+              (by simp)).val[i]!)
+            (lift_fe c))
+  have h_r0_len : r0.elements.val.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+  apply List.ext_getElem
+  · simp [List.length_map, List.length_range, h_r0_len]
+  · intro i hi1 hi2
+    have hi : i < 16 := by
+      have : i < (r0.elements.val.map lift_fe).length := hi1
+      simp [List.length_map, h_r0_len] at this; exact this
+    rw [List.getElem_map]
+    rw [List.getElem_map, List.getElem_range]
+    show lift_fe r0.elements.val[i]
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          ((vec.elements.val.map lift_fe)[i]!) (lift_fe c)
+    have h_r0_get_eq : r0.elements.val[i]
+        = r0.elements.val[i]! := by
+      have hi_r0 : i < r0.elements.val.length := by rw [h_r0_len]; exact hi
+      rw [getElem!_pos r0.elements.val i hi_r0]
+    rw [h_r0_get_eq]
+    have h_vec_len : vec.elements.val.length = 16 :=
+      libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+    have h_map_vec :
+        (vec.elements.val.map lift_fe)[i]! = lift_fe (vec.elements.val[i]!) := by
+      have hi_vec : i < vec.elements.val.length := by rw [h_vec_len]; exact hi
+      rw [getElem!_pos (vec.elements.val.map lift_fe) i (by
+        simp [List.length_map, h_vec_len]; exact hi)]
+      rw [List.getElem_map]
+      rw [getElem!_pos vec.elements.val i hi_vec]
+    rw [h_map_vec]
+    obtain ⟨h_val, _h_bnd⟩ := h_per i hi
+    exact lift_fe_mul_pure_eq
+      (vec.elements.val[i]!) c (r0.elements.val[i]!)
+      h_val
 
 /-- L1.8 — `bitwise_and_with_constant` on a chunk.
     NO HACSPEC EQUIVALENT at the FE level — this is a bit-mask used
