@@ -29,7 +29,8 @@
      `(value, scratch, accumulator)` tuples).
   2. Bounds may appear as conjuncts but never alone.
   3. `⇓ p => …` is total correctness; the `.ok` on the RHS of each
-     FC equation implicitly demands spec-side panic-freedom.
+     FC equation is the `_eq_ok` pure-projection content (impl's
+     `.ok` value = projected `_pure` value).
   4. The lift tower is defined below. All `_pure` Spec aliases needed
      beyond `SpecPure.lean` (which has only the four FE scalars plus
      three poly wrappers) are introduced here with bodies = `sorry`.
@@ -41,8 +42,8 @@
   - We do NOT modify the existing `Equivalence/L*.lean` files; their
     bounds-only Triples remain and will be retired separately. This
     file is the FC-compliant replacement set.
-  - Each `_pure` alias defined here is intended to be the panic-stripped
-    projection of a hacspec `Result`-monadic op. Bodies are `sorry`
+  - Each `_pure` alias defined here is intended to be the `Result`-stripped
+    pure projection of a hacspec `Result`-monadic op. Bodies are `sorry`
     when the matching hacspec call chain is intricate (compress,
     decompress, ntt full driver); types are correct.
   - Where the impl op has no direct hacspec counterpart at the same
@@ -194,7 +195,7 @@ noncomputable def lift_matrix {K : Std.Usize}
     Forward-declared here (rather than in §0.5 below) so
     `lift_matrix_from_seed` can reference it.
 
-    **Phase-1 obligation**: panic-freedom side lemma
+    **Phase-1 obligation**: pure-projection side lemma
     `hacspec_ml_kem.matrix.sample_matrix_A seed K
     = .ok (Spec.sample_matrix_A_pure seed K)`. -/
 noncomputable def Spec.sample_matrix_A_pure
@@ -220,8 +221,9 @@ noncomputable def lift_matrix_from_seed
       - `polynomial.{add_to_ring_element,poly_barrett_reduce,subtract_reduce}_pure`
 
     We add here the missing `_pure` aliases referenced by FC equations
-    below. Each is the panic-stripped projection of a `Result`-monadic
-    hacspec op; bodies use the standard `match | .ok r => r | _ => default`
+    below. Each is the `Result`-stripped pure projection of a
+    `Result`-monadic hacspec op; bodies use the standard
+    `match | .ok r => r | _ => default`
     pattern (see `SpecPure.lean`). Bodies left `sorry` here for brevity
     — types are load-bearing. -/
 

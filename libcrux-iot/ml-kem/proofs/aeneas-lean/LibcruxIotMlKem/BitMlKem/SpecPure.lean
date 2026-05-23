@@ -9,15 +9,16 @@
 
   Layer M.4 alg-equiv lemmas state equations of the form
     `bit_<op> (lift hacspec_input) = lift (Spec.<op>_pure hacspec_input)`
-  where `Spec.<op>_pure` is the panic-stripped projection of the
-  hacspec `Result`-monadic spec. This file defines those `_pure`
-  aliases.
+  where `Spec.<op>_pure` is the `Result`-stripped pure projection of
+  the hacspec spec. This file defines those `_pure` aliases.
 
   Per arch plan §F.2 option (b): each alias is defined by pattern
-  match on the `Result`. The companion *side lemmas* of the form
-  `Spec.<op> args = .ok (Spec.<op>_pure args)` are panic-freedom
-  obligations and can be discharged once panic-free is established
-  for the `parameters.FieldElement.{add,sub,mul,neg}` primitives.
+  match on the `Result`. The companion **pure-projection side lemmas**
+  of the form `Spec.<op> args = .ok (Spec.<op>_pure args)` pin the
+  impl's `.ok` value to the projected `_pure` value. They are the
+  equational input to `Util.from_fn_pure_eq` (the index-wise spec
+  lifting `from_fn`) and to downstream M.2 commute lemmas — NOT
+  standalone "panic-freedom" facts.
 
   ## Scope
 
@@ -38,6 +39,7 @@
     inheriting `ZMod 3329` transitively via `BitMlKem.Spec`.
 -/
 import LibcruxIotMlKem.BitMlKem.Spec
+import LibcruxIotMlKem.Util.CreateI
 
 namespace libcrux_iot_ml_kem.BitMlKem.SpecPure
 
@@ -57,8 +59,9 @@ instance : Inhabited parameters.FieldElement := ⟨defaultFE⟩
 /-! ## Scalar `_pure` aliases. -/
 
 /-- Pure projection of `parameters.FieldElement.add`. The hacspec body
-    computes `(self.val + other.val) % q` via U32 lifts, all of which
-    are panic-free; this `_pure` extracts the `.ok` value. -/
+    computes `(self.val + other.val) % q` via U32 lifts; this `_pure`
+    extracts the `.ok` value (see `FieldElement.add_eq_ok` below for
+    the pure-projection side lemma pinning the result). -/
 noncomputable def FieldElement.add_pure
     (self other : parameters.FieldElement) : parameters.FieldElement :=
   match parameters.FieldElement.add self other with
@@ -91,9 +94,10 @@ noncomputable def FieldElement.neg_pure
 
     These wrap the 256-coefficient Aeneas-`Array` results into a pure
     `SpecPoly = Vector parameters.FieldElement 256` via per-lane
-    extraction. The wrapper is panic-free at the M.4 caller level
-    because `parameters.createi` itself is panic-free for the
-    256-element shape. -/
+    extraction. Downstream lifting through `Util.from_fn_pure_eq`
+    pins each lane to its per-element `_pure` value; see the
+    `polynomial.<op>_eq_ok` pure-projection side lemmas at the end of
+    this file. -/
 
 /-- Pure projection of `polynomial.add_to_ring_element`. -/
 noncomputable def polynomial.add_to_ring_element_pure
@@ -119,7 +123,7 @@ noncomputable def polynomial.subtract_reduce_pure
   | .ok r => r
   | _ => a
 
-/-! ## Side lemmas — panic-freedom (Phase 1.1 of FC campaign).
+/-! ## FE-primitive pure-projection side lemmas (Phase 1.1 of FC campaign).
 
     `add_eq_ok` and `mul_eq_ok` are UNCONDITIONALLY true because U32
     widening prevents overflow in both cases (`a.val + b.val < 2^17`,
@@ -189,9 +193,10 @@ private theorem uscalar_rem_ok_U16 (z m : Std.U16) (hm : m.val ≠ 0) :
   simp only [BitVec.toNat_ofNatLT]
   rfl
 
-/-- `parameters.FieldElement.add` is panic-free for ALL `FieldElement`
-    inputs (no canonicity precondition). The U32 widening bounds the
-    sum strictly below `2^32`. -/
+/-- Pure-projection side lemma for `parameters.FieldElement.add` —
+    unconditional over ALL `FieldElement` inputs (no canonicity
+    precondition). The U32 widening bounds the sum strictly below
+    `2^32` so every intermediate step is `.ok`. -/
 theorem FieldElement.add_eq_ok (a b : parameters.FieldElement) :
     parameters.FieldElement.add a b = .ok (FieldElement.add_pure a b) := by
   unfold FieldElement.add_pure
@@ -225,8 +230,9 @@ theorem FieldElement.add_eq_ok (a b : parameters.FieldElement) :
     rw [hxval, hyval] at hae; omega
   | div => rw [hxy] at hae; exact hae.elim
 
-/-- `parameters.FieldElement.mul` is panic-free for ALL `FieldElement`
-    inputs. The U32 widening bounds the product strictly below `2^32`. -/
+/-- Pure-projection side lemma for `parameters.FieldElement.mul` —
+    unconditional over ALL `FieldElement` inputs. The U32 widening
+    bounds the product strictly below `2^32`. -/
 theorem FieldElement.mul_eq_ok (a b : parameters.FieldElement) :
     parameters.FieldElement.mul a b = .ok (FieldElement.mul_pure a b) := by
   unfold FieldElement.mul_pure
@@ -268,11 +274,12 @@ theorem FieldElement.mul_eq_ok (a b : parameters.FieldElement) :
     omega
   | div => rw [heqmul] at hxy; rw [hxy] at hae; exact hae.elim
 
-/-- `parameters.FieldElement.sub` is panic-free for CANONICAL inputs.
-    The U32 sum `a.val + q` reaches `q + (q-1) < 2·q` without overflow
-    (q = 3329), and the subsequent `% q` is well-defined since q ≠ 0.
+/-- Pure-projection side lemma for `parameters.FieldElement.sub` —
+    valid only for CANONICAL inputs. The U32 sum `a.val + q` reaches
+    `q + (q-1) < 2·q` without overflow (q = 3329), and the subsequent
+    `% q` is well-defined since q ≠ 0.
 
-    For non-canonical inputs the impl can panic — see the doc block
+    For non-canonical inputs the impl can `.fail` — see the doc block
     above and `parameters.FieldElement.sub ⟨0⟩ ⟨65535⟩` counterexample. -/
 theorem FieldElement.sub_eq_ok (a b : parameters.FieldElement)
     (ha : Canonical a) (hb : Canonical b) :
@@ -321,12 +328,12 @@ theorem FieldElement.sub_eq_ok (a b : parameters.FieldElement)
     omega
   | div => rw [hxq] at hae; exact hae.elim
 
-/-- `parameters.FieldElement.neg` is panic-free for CANONICAL input.
-    The impl computes `q - self.val` in U16 (NO widening), which only
-    avoids underflow when `self.val ≤ q`. The subsequent `% q` is
-    well-defined since q ≠ 0.
+/-- Pure-projection side lemma for `parameters.FieldElement.neg` —
+    valid only for CANONICAL input. The impl computes `q - self.val`
+    in U16 (NO widening), which only avoids underflow when
+    `self.val ≤ q`. The subsequent `% q` is well-defined since q ≠ 0.
 
-    For non-canonical inputs the impl can panic — see the doc block
+    For non-canonical inputs the impl can `.fail` — see the doc block
     above and `parameters.FieldElement.neg ⟨65535⟩` counterexample. -/
 theorem FieldElement.neg_eq_ok (a : parameters.FieldElement)
     (ha : Canonical a) :
@@ -596,5 +603,334 @@ theorem Canonical_neg_pure (a : parameters.FieldElement)
     rw [hqval] at hae
     omega
   | div => rw [hqa] at hae; exact hae.elim
+
+/-! ## Poly-wrapper pure-projection side lemmas (Phase 1.2b of FC campaign).
+
+    Each `polynomial.<op>_eq_ok` pins the hacspec wrapper's `.ok` value to
+    the projected `polynomial.<op>_pure` value, on the corresponding
+    canonicity precondition (none for `add`, none for `poly_barrett_reduce`,
+    per-element canonicity for both inputs to `subtract_reduce`). These
+    are the input lemmas to `Util.from_fn_pure_eq` and to downstream M.2
+    commute lemmas; see `feedback_pure_projection_not_panic_freedom.md`
+    for why "panic-freedom" is the wrong framing. Proof shape:
+    * Unfold the wrapper through `parameters.createi` to
+      `core_models.array.from_fn`.
+    * Apply `libcrux_iot_ml_kem.Util.from_fn_pure_eq` with `f` the
+      pointwise pure projection.
+    * Discharge the per-element closure obligation by unfolding
+      `call_mut`/`call`, rewriting the leading `Array.index_usize` via
+      `Std.Array.index_usize_spec`, and matching the rest of the body
+      against the corresponding scalar `_eq_ok` lemma.
+    * Conclude by unfolding the `_pure` projection and rewriting through
+      the just-proved equation, reducing the match on `.ok`. -/
+
+/-- Local helper: `Std.Array.index_usize` on a length-`n` array at index
+    `i < n` returns `.ok v.val[i.val]!`. Mirrors `array_index_usize_ok_eq`
+    in `Util.PortableVector` but avoids pulling that file's
+    LoopSpecs/PortableVector chain through `SpecPure`. -/
+private theorem array_index_usize_ok
+    {α : Type u} {n : Std.Usize} [Inhabited α]
+    (v : Std.Array α n) (i : Std.Usize) (h_bd : i.val < v.length) :
+    Aeneas.Std.Array.index_usize v i = .ok (v.val[i.val]!) := by
+  have hT := Aeneas.Std.Array.index_usize_spec v i h_bd
+  have h_ex := Aeneas.Std.WP.spec_imp_exists hT
+  obtain ⟨v', hveq, hPv'⟩ := h_ex
+  rw [hveq, hPv']
+
+/-- Pure-projection side lemma for `polynomial.add_to_ring_element` —
+    unconditional over ALL inputs.
+
+    Proof: unfold wrapper to `core_models.array.from_fn`; apply
+    `from_fn_pure_eq` with the pointwise `FieldElement.add_pure`; the
+    pointwise closure body is the inlined `FieldElement.add` body
+    preceded by two `index_usize` ops — closed by `FieldElement.add_eq_ok`. -/
+theorem polynomial.add_to_ring_element_eq_ok
+    (lhs rhs : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    hacspec_ml_kem.polynomial.add_to_ring_element lhs rhs
+      = .ok (polynomial.add_to_ring_element_pure lhs rhs) := by
+  -- Step 1: pointwise function f.
+  set f : Nat → parameters.FieldElement :=
+    fun k => FieldElement.add_pure (lhs.val[k]!) (rhs.val[k]!) with hf_def
+  -- Step 2: pointwise closure obligation.
+  have hpure : ∀ k : Nat, k < (256#usize : Std.Usize).val →
+      (hacspec_ml_kem.polynomial.add_to_ring_element.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement
+        : core_models.ops.function.Fn _ _ _).FnMutInst.call_mut
+            (lhs, rhs) ⟨BitVec.ofNat _ k⟩
+        = .ok (f k, (lhs, rhs)) := by
+    intro k hk
+    have hk' : k < 256 := hk
+    show polynomial.add_to_ring_element.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+        (lhs, rhs) ⟨BitVec.ofNat _ k⟩ = .ok (f k, (lhs, rhs))
+    unfold polynomial.add_to_ring_element.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+    unfold polynomial.add_to_ring_element.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement.call
+    -- Index-usize obligations.
+    have hk_us : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k := by
+      show (BitVec.ofNat _ k).toNat = k
+      apply Nat.mod_eq_of_lt
+      have : k < 2^System.Platform.numBits := by
+        have hbits : 2^16 ≤ 2^System.Platform.numBits :=
+          Nat.pow_le_pow_right (by decide) (by
+            cases System.Platform.numBits_eq with
+            | inl h => rw [h]; decide
+            | inr h => rw [h]; decide)
+        omega
+      exact this
+    have hlhs_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < lhs.length := by
+      rw [hk_us]; show k < lhs.val.length
+      rw [lhs.property]; exact hk
+    have hrhs_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < rhs.length := by
+      rw [hk_us]; show k < rhs.val.length
+      rw [rhs.property]; exact hk
+    have h_lhs_idx :
+        Std.Array.index_usize lhs (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (lhs.val[k]!) := by
+      rw [array_index_usize_ok lhs _ hlhs_len, hk_us]
+    have h_rhs_idx :
+        Std.Array.index_usize rhs (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (rhs.val[k]!) := by
+      rw [array_index_usize_ok rhs _ hrhs_len, hk_us]
+    -- The remainder of the closure body is exactly the body of
+    -- `parameters.FieldElement.add lhs[k]! rhs[k]!`.
+    have h_add :=
+      FieldElement.add_eq_ok (lhs.val[k]!) (rhs.val[k]!)
+    -- The outer wrapper has shape `do let fe ← (let (a, a1) := (lhs, rhs); inner_call); ok (fe, ...)`.
+    -- Reduce the destructuring `let (a, a1) := (lhs, rhs)` to `a := lhs, a1 := rhs`.
+    change (do
+      let fe ← (do
+        let fe ← Std.Array.index_usize lhs ⟨BitVec.ofNat _ k⟩
+        let i ← lift (Std.UScalar.cast .U32 fe.val)
+        let fe1 ← Std.Array.index_usize rhs ⟨BitVec.ofNat _ k⟩
+        let i1 ← lift (Std.UScalar.cast .U32 fe1.val)
+        let i2 ← i + i1
+        let i3 ← lift (Std.UScalar.cast .U32 parameters.FIELD_MODULUS)
+        let i4 ← i2 % i3
+        let i5 ← lift (Std.UScalar.cast .U16 i4)
+        parameters.FieldElement.new i5)
+      Result.ok (fe, lhs, rhs)) = Result.ok (f k, lhs, rhs)
+    -- Now rewrite the two `index_usize`s and use `add_eq_ok` to collapse the rest.
+    rw [h_lhs_idx]; simp only [bind_tc_ok]
+    rw [h_rhs_idx]; simp only [bind_tc_ok]
+    unfold parameters.FieldElement.add at h_add
+    rw [h_add]
+    simp only [bind_tc_ok, hf_def]
+  -- Step 3: chain through `from_fn_pure_eq` to get the wrapper equation.
+  have h_from_fn :=
+    libcrux_iot_ml_kem.Util.from_fn_pure_eq
+      (T := parameters.FieldElement)
+      (F := polynomial.add_to_ring_element.closure)
+      (N := 256#usize)
+      (inst := polynomial.add_to_ring_element.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement)
+      (c := (lhs, rhs))
+      (f := f)
+      hpure
+  have h_wrap : hacspec_ml_kem.polynomial.add_to_ring_element lhs rhs
+      = .ok ⟨(List.range (256#usize : Std.Usize).val).map f,
+             by simp [List.length_map, List.length_range]⟩ := by
+    unfold hacspec_ml_kem.polynomial.add_to_ring_element
+    unfold hacspec_ml_kem.parameters.createi
+    exact h_from_fn
+  -- Step 4: reduce the `_pure` projection via the wrapper equation.
+  rw [h_wrap]
+  unfold polynomial.add_to_ring_element_pure
+  rw [h_wrap]
+
+/-- The pure-rem of a U16 by `parameters.FIELD_MODULUS` (= 3329 ≠ 0).
+    A noncomputable wrapper extracting the `.ok` witness from
+    `uscalar_rem_ok_U16`. Used as the pointwise function in
+    `poly_barrett_reduce_eq_ok`. -/
+private noncomputable def rem_q_U16 (z : Std.U16) : Std.U16 :=
+  have hq_ne : (parameters.FIELD_MODULUS : Std.U16).val ≠ 0 := by
+    unfold parameters.FIELD_MODULUS; decide
+  Classical.choose (uscalar_rem_ok_U16 z parameters.FIELD_MODULUS hq_ne)
+
+private theorem rem_q_U16_eq (z : Std.U16) :
+    (z % parameters.FIELD_MODULUS : Result Std.U16) = .ok (rem_q_U16 z) := by
+  have hq_ne : (parameters.FIELD_MODULUS : Std.U16).val ≠ 0 := by
+    unfold parameters.FIELD_MODULUS; decide
+  unfold rem_q_U16
+  exact (Classical.choose_spec
+    (uscalar_rem_ok_U16 z parameters.FIELD_MODULUS hq_ne)).1
+
+/-- Pure-projection side lemma for `polynomial.poly_barrett_reduce` —
+    unconditional over ALL inputs.
+
+    Proof: unfold wrapper to `core_models.array.from_fn`; apply
+    `from_fn_pure_eq` with `f k := ⟨rem_q_U16 (p.val[k]!).val⟩`. The
+    pointwise closure body is `index_usize p k; (fe.val % q); new` — the
+    `%` step is at U16 width (no widening) and `parameters.FIELD_MODULUS
+    ≠ 0`, so `uscalar_rem_ok_U16` discharges it. -/
+theorem polynomial.poly_barrett_reduce_eq_ok
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    hacspec_ml_kem.polynomial.poly_barrett_reduce p
+      = .ok (polynomial.poly_barrett_reduce_pure p) := by
+  -- Step 1: pointwise function f.
+  set f : Nat → parameters.FieldElement :=
+    fun k => { val := rem_q_U16 (p.val[k]!).val }
+    with hf_def
+  -- Step 2: pointwise closure obligation.
+  have hpure : ∀ k : Nat, k < (256#usize : Std.Usize).val →
+      (hacspec_ml_kem.polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement
+        : core_models.ops.function.Fn _ _ _).FnMutInst.call_mut
+            p ⟨BitVec.ofNat _ k⟩
+        = .ok (f k, p) := by
+    intro k hk
+    show polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+        p ⟨BitVec.ofNat _ k⟩ = .ok (f k, p)
+    unfold polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+    unfold polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement.call
+    -- Index-usize obligation.
+    have hk' : k < 256 := hk
+    have hk_us : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k := by
+      show (BitVec.ofNat _ k).toNat = k
+      apply Nat.mod_eq_of_lt
+      have : k < 2^System.Platform.numBits := by
+        have hbits : 2^16 ≤ 2^System.Platform.numBits :=
+          Nat.pow_le_pow_right (by decide) (by
+            cases System.Platform.numBits_eq with
+            | inl h => rw [h]; decide
+            | inr h => rw [h]; decide)
+        omega
+      exact this
+    have hp_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < p.length := by
+      rw [hk_us]; show k < p.val.length
+      rw [p.property]; exact hk
+    have h_p_idx :
+        Std.Array.index_usize p (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (p.val[k]!) := by
+      rw [array_index_usize_ok p _ hp_len, hk_us]
+    -- Close the closure body: index, then rem, then new (returned inline).
+    change (do
+      let fe ← (do
+        let fe ← Std.Array.index_usize p ⟨BitVec.ofNat _ k⟩
+        let i ← (fe.val % parameters.FIELD_MODULUS : Result Std.U16)
+        parameters.FieldElement.new i)
+      Result.ok (fe, p)) = Result.ok (f k, p)
+    rw [h_p_idx]; simp only [bind_tc_ok]
+    rw [rem_q_U16_eq]; simp only [bind_tc_ok]
+    unfold parameters.FieldElement.new
+    simp only [bind_tc_ok, hf_def]
+  -- Step 3: apply from_fn_pure_eq.
+  have h_from_fn :=
+    libcrux_iot_ml_kem.Util.from_fn_pure_eq
+      (T := parameters.FieldElement)
+      (F := polynomial.poly_barrett_reduce.closure)
+      (N := 256#usize)
+      (inst := polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement)
+      (c := p)
+      (f := f)
+      hpure
+  have h_wrap : hacspec_ml_kem.polynomial.poly_barrett_reduce p
+      = .ok ⟨(List.range (256#usize : Std.Usize).val).map f,
+             by simp [List.length_map, List.length_range]⟩ := by
+    unfold hacspec_ml_kem.polynomial.poly_barrett_reduce
+    unfold hacspec_ml_kem.parameters.createi
+    exact h_from_fn
+  -- Step 4: reduce the `_pure` projection via h_wrap.
+  rw [h_wrap]
+  unfold polynomial.poly_barrett_reduce_pure
+  rw [h_wrap]
+
+/-- Pure-projection side lemma for `polynomial.subtract_reduce` — valid
+    for per-element CANONICAL inputs. The closure body inlines
+    `parameters.FieldElement.sub`'s
+    do-block (with a moved `index_usize a1 k` in the middle); after
+    rewriting the two `index_usize` calls to `.ok` form, the remaining
+    body IS the body of `parameters.FieldElement.sub (a.val[k]!) (a1.val[k]!)`
+    so the per-element canonicity preconditions feed directly into
+    `FieldElement.sub_eq_ok`. -/
+theorem polynomial.subtract_reduce_eq_ok
+    (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (ha : ∀ k : Nat, k < 256 → Canonical (a.val[k]!))
+    (hb : ∀ k : Nat, k < 256 → Canonical (b.val[k]!)) :
+    hacspec_ml_kem.polynomial.subtract_reduce a b
+      = .ok (polynomial.subtract_reduce_pure a b) := by
+  -- Step 1: pointwise function f.
+  set f : Nat → parameters.FieldElement :=
+    fun k => FieldElement.sub_pure (a.val[k]!) (b.val[k]!) with hf_def
+  -- Step 2: pointwise closure obligation.
+  have hpure : ∀ k : Nat, k < (256#usize : Std.Usize).val →
+      (hacspec_ml_kem.polynomial.subtract_reduce.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement
+        : core_models.ops.function.Fn _ _ _).FnMutInst.call_mut
+            (a, b) ⟨BitVec.ofNat _ k⟩
+        = .ok (f k, (a, b)) := by
+    intro k hk
+    have hk' : k < 256 := hk
+    show polynomial.subtract_reduce.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+        (a, b) ⟨BitVec.ofNat _ k⟩ = .ok (f k, (a, b))
+    unfold polynomial.subtract_reduce.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+    unfold polynomial.subtract_reduce.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement.call
+    -- Index-usize obligations.
+    have hk_us : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k := by
+      show (BitVec.ofNat _ k).toNat = k
+      apply Nat.mod_eq_of_lt
+      have : k < 2^System.Platform.numBits := by
+        have hbits : 2^16 ≤ 2^System.Platform.numBits :=
+          Nat.pow_le_pow_right (by decide) (by
+            cases System.Platform.numBits_eq with
+            | inl h => rw [h]; decide
+            | inr h => rw [h]; decide)
+        omega
+      exact this
+    have ha_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < a.length := by
+      rw [hk_us]; show k < a.val.length
+      rw [a.property]; exact hk
+    have hb_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < b.length := by
+      rw [hk_us]; show k < b.val.length
+      rw [b.property]; exact hk
+    have h_a_idx :
+        Std.Array.index_usize a (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (a.val[k]!) := by
+      rw [array_index_usize_ok a _ ha_len, hk_us]
+    have h_b_idx :
+        Std.Array.index_usize b (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (b.val[k]!) := by
+      rw [array_index_usize_ok b _ hb_len, hk_us]
+    -- The `sub_eq_ok` lemma needs canonicity of both operands.
+    have h_sub :=
+      FieldElement.sub_eq_ok (a.val[k]!) (b.val[k]!) (ha k hk') (hb k hk')
+    unfold parameters.FieldElement.sub at h_sub
+    -- The outer wrapper has shape `do let fe ← (let (x, y) := (a, b); inner_call); ok (fe, ...)`.
+    -- Reduce the destructuring `let (x, y) := (a, b)`.
+    change (do
+      let fe ← (do
+        let fe ← Std.Array.index_usize a ⟨BitVec.ofNat _ k⟩
+        let i ← lift (Std.UScalar.cast .U32 fe.val)
+        let i1 ← lift (Std.UScalar.cast .U32 parameters.FIELD_MODULUS)
+        let i2 ← i + i1
+        let fe1 ← Std.Array.index_usize b ⟨BitVec.ofNat _ k⟩
+        let i3 ← lift (Std.UScalar.cast .U32 fe1.val)
+        let i4 ← i2 - i3
+        let i5 ← lift (Std.UScalar.cast .U32 parameters.FIELD_MODULUS)
+        let i6 ← i4 % i5
+        let i7 ← lift (Std.UScalar.cast .U16 i6)
+        parameters.FieldElement.new i7)
+      Result.ok (fe, a, b)) = Result.ok (f k, a, b)
+    rw [h_a_idx]; simp only [bind_tc_ok]
+    rw [h_b_idx]; simp only [bind_tc_ok]
+    -- The inner block is now exactly the body of
+    -- `parameters.FieldElement.sub (a.val[k]!) (b.val[k]!)` (with `b` re-ordered),
+    -- which equals `.ok (sub_pure …)` by `h_sub`.
+    rw [h_sub]
+    simp only [bind_tc_ok, hf_def]
+  -- Step 3: apply from_fn_pure_eq.
+  have h_from_fn :=
+    libcrux_iot_ml_kem.Util.from_fn_pure_eq
+      (T := parameters.FieldElement)
+      (F := polynomial.subtract_reduce.closure)
+      (N := 256#usize)
+      (inst := polynomial.subtract_reduce.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement)
+      (c := (a, b))
+      (f := f)
+      hpure
+  have h_wrap : hacspec_ml_kem.polynomial.subtract_reduce a b
+      = .ok ⟨(List.range (256#usize : Std.Usize).val).map f,
+             by simp [List.length_map, List.length_range]⟩ := by
+    unfold hacspec_ml_kem.polynomial.subtract_reduce
+    unfold hacspec_ml_kem.parameters.createi
+    exact h_from_fn
+  -- Step 4: reduce the `_pure` projection via h_wrap.
+  rw [h_wrap]
+  unfold polynomial.subtract_reduce_pure
+  rw [h_wrap]
 
 end libcrux_iot_ml_kem.BitMlKem.SpecPure

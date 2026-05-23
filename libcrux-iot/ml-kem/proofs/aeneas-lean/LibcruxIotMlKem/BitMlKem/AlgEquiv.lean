@@ -31,7 +31,7 @@
   - The SpecPoly-bridge variants of the form
     `bit_<op> (SpecPoly.toMontPoly p) = SpecPoly.toMontPoly (Spec.<op>_pure p)`
     are DEFERRED to M.4 NTT-cluster, because they require the
-    panic-freedom side lemmas of `parameters.FieldElement.{add,sub,mul}`
+    pure-projection side lemmas of `parameters.FieldElement.{add,sub,mul}`
     (Open Question I.8 in `iot-mlkem-layer-M-architecture.md` §F.2).
     A locked target shape for the follow-up dispatch is captured
     inline at the end of this file.
@@ -166,7 +166,7 @@ theorem bit_subtract_reduce_getElem (p q : MontPoly) (i : Nat) (h : i < 256) :
       `bit_<op> (SpecPoly.toMontPoly p) = SpecPoly.toMontPoly (Spec.<op>_pure p)`
     requires per-`bit_<op>` sub-lemmas `zmodOfFE_<op>_pure` that
     distribute `zmodOfFE` through the hacspec `_pure` projection. Each
-    sub-lemma depends on the panic-freedom side lemma for the
+    sub-lemma depends on the pure-projection side lemma for the
     underlying `parameters.FieldElement.<op>` (Open Question I.8 in
     arch plan §F.2), which is not in scope for this easy-cluster
     dispatch.
@@ -185,7 +185,7 @@ theorem bit_subtract_reduce_getElem (p q : MontPoly) (i : Nat) (h : i < 256) :
     ```
     -- closes once the deferred sub-lemma
     --   `zmodOfFE (FieldElement.add_pure a b) = zmodOfFE a + zmodOfFE b`
-    -- lands (depends on `parameters.FieldElement.add` panic-freedom).
+    -- lands (depends on `FieldElement.add_eq_ok` pure-projection).
 -/
 
 end libcrux_iot_ml_kem.BitMlKem.AlgEquiv
