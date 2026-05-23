@@ -119,22 +119,132 @@ noncomputable def polynomial.subtract_reduce_pure
   | .ok r => r
   | _ => a
 
-/-! ## Side lemmas — panic-freedom (TODO, Phase 3.8).
+/-! ## Side lemmas — panic-freedom (Phase 1.1 of FC campaign).
 
-    Each of the following lemmas should hold by a panic-freedom
-    argument over the do-block of the hacspec function, structured
-    as a chain of `simp [Spec.<op>]` + per-step `.ok`-discharge.
-    Marked deferred — landing them is part of the M.4 NTT-cluster
-    dispatch (where the panic-freedom chain is needed
-    end-to-end through `ntt.butterfly`, `ntt.ntt_layer_n`, etc.).
+    Partial closure 2026-05-23: `add_eq_ok` and `mul_eq_ok` are
+    UNCONDITIONALLY true because U32 widening prevents overflow
+    in both cases (`a.val + b.val ≤ 2·(2^16 - 1) < 2^17 < 2^32`,
+    `a.val * b.val ≤ (2^16 - 1)² < 2^32`).
 
-    The shape:
-    ```
-    theorem FieldElement.add_eq_ok (a b : FE) :
-        parameters.FieldElement.add a b = .ok (FieldElement.add_pure a b)
-    ```
-    See `iot-mlkem-campaign-continue.md` Watch-out: "decide closes
-    once `parameters.FieldElement.add` panic-freedom is established".
--/
+    `sub_eq_ok` and `neg_eq_ok` are GENUINELY FALSE in the current
+    extraction — the Rust source carries `#[refine(val < FIELD_MODULUS)]`
+    on `parameters.FieldElement::new` (see
+    `specs/ml-kem/src/parameters.rs:319`), but the Aeneas extraction
+    drops the refinement, leaving the Lean `parameters.FieldElement`
+    as `{ val : Std.U16 }` with any U16 admissible.
+
+    Counterexamples (verified via `#eval`):
+    * `parameters.FieldElement.sub ⟨0#u16⟩ ⟨65535#u16⟩ = .fail` —
+      the impl computes `i = 0`, `i1 = 3329`, `i2 = 3329`, then
+      `i2 - 65535` panics in U32.
+    * `parameters.FieldElement.neg ⟨65535#u16⟩ = .fail` —
+      the impl computes `3329 - 65535` directly in U16 (no widening),
+      panicking immediately when `self.val > 3329`.
+
+    STOP triggered per campaign discipline D.9 — awaiting decision:
+    (a) add `(ha : a.val.val < q) (hb : b.val.val < q)` precondition
+        to `sub_eq_ok` / `neg_eq_ok`, OR
+    (b) strengthen `parameters.FieldElement` to carry the refinement
+        (requires spec-side edit), OR
+    (c) establish global canonicity invariant propagated through
+        bit-side proofs.
+
+    Option (a) is the smallest delta and matches the Rust contract;
+    pending user decision. -/
+
+private theorem uscalar_rem_ok_U32 (z m : Std.U32) (hm : m.val ≠ 0) :
+    ∃ w : Std.U32, (z % m : Result Std.U32) = .ok w ∧ w.val = z.val % m.val := by
+  have heq : (z % m : Result Std.U32) = Std.UScalar.rem z m := rfl
+  unfold Std.UScalar.rem at heq
+  simp [hm] at heq
+  refine ⟨_, heq, ?_⟩
+  show (BitVec.umod z.bv m.bv).toNat = z.val % m.val
+  unfold BitVec.umod
+  simp only [BitVec.toNat_ofNatLT]
+  rfl
+
+/-- `parameters.FieldElement.add` is panic-free for ALL `FieldElement`
+    inputs (no canonicity precondition). The U32 widening bounds the
+    sum strictly below `2^32`. -/
+theorem FieldElement.add_eq_ok (a b : parameters.FieldElement) :
+    parameters.FieldElement.add a b = .ok (FieldElement.add_pure a b) := by
+  unfold FieldElement.add_pure
+  suffices h : ∃ r, parameters.FieldElement.add a b = .ok r by
+    obtain ⟨r, hr⟩ := h; rw [hr]
+  unfold parameters.FieldElement.add
+  simp only [lift, bind_tc_ok]
+  have hA := a.val.hBounds; have hB := b.val.hBounds
+  simp [Std.UScalarTy.numBits] at hA hB
+  set x : Std.U32 := Std.UScalar.cast .U32 a.val
+  set y : Std.U32 := Std.UScalar.cast .U32 b.val
+  have hxval : x.val = a.val.val := Std.U16.cast_U32_val_eq a.val
+  have hyval : y.val = b.val.val := Std.U16.cast_U32_val_eq b.val
+  have hae := Std.UScalar.add_equiv x y
+  cases hxy : (x + y) with
+  | ok z =>
+    rw [hxy] at hae; simp at hae
+    obtain ⟨_, _, _⟩ := hae
+    have hmod_val :
+        (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val = 3329 := by
+      unfold parameters.FIELD_MODULUS; simp
+    have hmod_ne :
+        (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val ≠ 0 := by
+      rw [hmod_val]; decide
+    set m : Std.U32 := Std.UScalar.cast .U32 parameters.FIELD_MODULUS
+    obtain ⟨w, hw_eq, _⟩ := uscalar_rem_ok_U32 z m hmod_ne
+    simp only [bind_tc_ok, hw_eq]
+    exact ⟨_, rfl⟩
+  | fail e =>
+    rw [hxy] at hae; simp [Std.UScalar.inBounds] at hae
+    rw [hxval, hyval] at hae; omega
+  | div => rw [hxy] at hae; exact hae.elim
+
+/-- `parameters.FieldElement.mul` is panic-free for ALL `FieldElement`
+    inputs. The U32 widening bounds the product strictly below `2^32`. -/
+theorem FieldElement.mul_eq_ok (a b : parameters.FieldElement) :
+    parameters.FieldElement.mul a b = .ok (FieldElement.mul_pure a b) := by
+  unfold FieldElement.mul_pure
+  suffices h : ∃ r, parameters.FieldElement.mul a b = .ok r by
+    obtain ⟨r, hr⟩ := h; rw [hr]
+  unfold parameters.FieldElement.mul
+  simp only [lift, bind_tc_ok]
+  have hA := a.val.hBounds; have hB := b.val.hBounds
+  simp [Std.UScalarTy.numBits] at hA hB
+  set x : Std.U32 := Std.UScalar.cast .U32 a.val
+  set y : Std.U32 := Std.UScalar.cast .U32 b.val
+  have hxval : x.val = a.val.val := Std.U16.cast_U32_val_eq a.val
+  have hyval : y.val = b.val.val := Std.U16.cast_U32_val_eq b.val
+  have hae := Std.UScalar.mul_equiv x y
+  have heqmul : (x * y : Result Std.U32) = Std.UScalar.mul x y := rfl
+  cases hxy : (x * y : Result Std.U32) with
+  | ok z =>
+    rw [heqmul] at hxy; rw [hxy] at hae; simp at hae
+    obtain ⟨_, _, _⟩ := hae
+    have hmod_val :
+        (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val = 3329 := by
+      unfold parameters.FIELD_MODULUS; simp
+    have hmod_ne :
+        (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val ≠ 0 := by
+      rw [hmod_val]; decide
+    set m : Std.U32 := Std.UScalar.cast .U32 parameters.FIELD_MODULUS
+    obtain ⟨w, hw_eq, _⟩ := uscalar_rem_ok_U32 z m hmod_ne
+    simp only [bind_tc_ok, hw_eq]
+    exact ⟨_, rfl⟩
+  | fail e =>
+    rw [heqmul] at hxy; rw [hxy] at hae
+    simp only [Std.UScalar.max, Std.UScalarTy.numBits] at hae
+    rw [hxval, hyval] at hae
+    have : a.val.val * b.val.val < 2^32 := by
+      have h1 : a.val.val * b.val.val ≤ (2^16 - 1) * (2^16 - 1) := by
+        apply Nat.mul_le_mul <;> omega
+      have heq : (2^16 - 1) * (2^16 - 1) = 2^32 - 2*2^16 + 1 := by decide
+      omega
+    omega
+  | div => rw [heqmul] at hxy; rw [hxy] at hae; exact hae.elim
+
+-- `FieldElement.sub_eq_ok` and `FieldElement.neg_eq_ok` are BLOCKED;
+-- see `STOP` block above. They are deliberately omitted (not added
+-- as `sorry`) to keep the file's axiom report clean. Resume after
+-- user decides between options (a) / (b) / (c).
 
 end libcrux_iot_ml_kem.BitMlKem.SpecPure
