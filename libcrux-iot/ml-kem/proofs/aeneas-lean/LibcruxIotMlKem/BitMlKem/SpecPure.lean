@@ -359,4 +359,242 @@ theorem FieldElement.neg_eq_ok (a : parameters.FieldElement)
     omega
   | div => rw [hqa] at hae; exact hae.elim
 
+/-! ## Canonicity preservation lemmas (Phase 1.2 of FC campaign).
+
+    Each `Canonical_<op>_pure` shows the `_pure` projection produces a
+    canonical FE. Proof shape (mirrors the corresponding `_eq_ok` side
+    lemma): chain through the do-block via `<op>_equiv`, extract `w`
+    from the final `% q` via `uscalar_rem_ok_U{32,16}`, then bound
+    `(UScalar.cast .U16 w).val = w.val < 3329` via
+    `Std.UScalar.cast_val_mod_pow_of_inBounds_eq`. -/
+
+/-- Canonicity preservation for `FieldElement.add_pure`. Unconditional:
+    the result is the modular reduction `(a.val + b.val) % q < q`.
+
+    Proof strategy: rewrite `parameters.FieldElement.add` to `.ok`
+    via `add_eq_ok`, unfold the do-block, case on the U32 `+`/`%`
+    branches (the `.ok` branch fires by assumption; `.fail`/`.div`
+    discharge via `add_equiv` + `omega`/`hae.elim`), and bound the
+    final U16 cast through `cast_val_mod_pow_of_inBounds_eq`. -/
+theorem Canonical_add_pure (a b : parameters.FieldElement) :
+    Canonical (FieldElement.add_pure a b) := by
+  have hadd : parameters.FieldElement.add a b = .ok (FieldElement.add_pure a b) :=
+    FieldElement.add_eq_ok a b
+  unfold parameters.FieldElement.add at hadd
+  simp only [lift, bind_tc_ok] at hadd
+  have hA := a.val.hBounds; have hB := b.val.hBounds
+  simp [Std.UScalarTy.numBits] at hA hB
+  set x : Std.U32 := Std.UScalar.cast .U32 a.val
+  set y : Std.U32 := Std.UScalar.cast .U32 b.val
+  have hxval : x.val = a.val.val := Std.U16.cast_U32_val_eq a.val
+  have hyval : y.val = b.val.val := Std.U16.cast_U32_val_eq b.val
+  have hae := Std.UScalar.add_equiv x y
+  cases hxy : (x + y) with
+  | ok z =>
+    rw [hxy] at hae hadd; simp at hae
+    obtain ⟨_, _, _⟩ := hae
+    simp only [bind_tc_ok] at hadd
+    have hmod_val :
+        (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val = 3329 := by
+      unfold parameters.FIELD_MODULUS; simp
+    have hmod_ne :
+        (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val ≠ 0 := by
+      rw [hmod_val]; decide
+    set m : Std.U32 := Std.UScalar.cast .U32 parameters.FIELD_MODULUS
+    obtain ⟨w, hw_eq, hwval⟩ := uscalar_rem_ok_U32 z m hmod_ne
+    rw [hw_eq] at hadd; simp only [bind_tc_ok] at hadd
+    unfold parameters.FieldElement.new at hadd
+    simp at hadd
+    have hwbnd : w.val < 3329 := by
+      rw [hwval, hmod_val]; exact Nat.mod_lt _ (by decide)
+    have hwcast : (Std.UScalar.cast .U16 w).val = w.val := by
+      apply Std.UScalar.cast_val_mod_pow_of_inBounds_eq
+      simp [Std.UScalarTy.numBits]; omega
+    unfold Canonical
+    rw [← hadd]
+    show (Std.UScalar.cast .U16 w).val < parameters.FIELD_MODULUS.val
+    unfold parameters.FIELD_MODULUS
+    simp
+    rw [hwcast]; exact hwbnd
+  | fail e =>
+    rw [hxy] at hae; simp [Std.UScalar.inBounds] at hae
+    rw [hxval, hyval] at hae; omega
+  | div => rw [hxy] at hae; exact hae.elim
+
+/-- Canonicity preservation for `FieldElement.mul_pure`. Unconditional.
+
+    Proof strategy: same shape as `Canonical_add_pure` but using
+    `mul_equiv` and the `mul`-impl's U32 product `% q`. The `.fail`
+    branch's panic-impossibility follows from
+    `a.val * b.val ≤ (2^16-1)^2 < 2^32`. -/
+theorem Canonical_mul_pure (a b : parameters.FieldElement) :
+    Canonical (FieldElement.mul_pure a b) := by
+  have hmul : parameters.FieldElement.mul a b = .ok (FieldElement.mul_pure a b) :=
+    FieldElement.mul_eq_ok a b
+  unfold parameters.FieldElement.mul at hmul
+  simp only [lift, bind_tc_ok] at hmul
+  have hA := a.val.hBounds; have hB := b.val.hBounds
+  simp [Std.UScalarTy.numBits] at hA hB
+  set x : Std.U32 := Std.UScalar.cast .U32 a.val
+  set y : Std.U32 := Std.UScalar.cast .U32 b.val
+  have hxval : x.val = a.val.val := Std.U16.cast_U32_val_eq a.val
+  have hyval : y.val = b.val.val := Std.U16.cast_U32_val_eq b.val
+  have hae := Std.UScalar.mul_equiv x y
+  have heqmul : (x * y : Result Std.U32) = Std.UScalar.mul x y := rfl
+  cases hxy : (x * y : Result Std.U32) with
+  | ok z =>
+    rw [hxy] at hmul
+    rw [heqmul] at hxy
+    rw [hxy] at hae; simp at hae
+    obtain ⟨_, _, _⟩ := hae
+    simp only [bind_tc_ok] at hmul
+    have hmod_val :
+        (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val = 3329 := by
+      unfold parameters.FIELD_MODULUS; simp
+    have hmod_ne :
+        (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val ≠ 0 := by
+      rw [hmod_val]; decide
+    set m : Std.U32 := Std.UScalar.cast .U32 parameters.FIELD_MODULUS
+    obtain ⟨w, hw_eq, hwval⟩ := uscalar_rem_ok_U32 z m hmod_ne
+    rw [hw_eq] at hmul; simp only [bind_tc_ok] at hmul
+    unfold parameters.FieldElement.new at hmul
+    simp at hmul
+    have hwbnd : w.val < 3329 := by
+      rw [hwval, hmod_val]; exact Nat.mod_lt _ (by decide)
+    have hwcast : (Std.UScalar.cast .U16 w).val = w.val := by
+      apply Std.UScalar.cast_val_mod_pow_of_inBounds_eq
+      simp [Std.UScalarTy.numBits]; omega
+    unfold Canonical
+    rw [← hmul]
+    show (Std.UScalar.cast .U16 w).val < parameters.FIELD_MODULUS.val
+    unfold parameters.FIELD_MODULUS
+    simp
+    rw [hwcast]; exact hwbnd
+  | fail e =>
+    rw [heqmul] at hxy; rw [hxy] at hae
+    simp only [Std.UScalar.max, Std.UScalarTy.numBits] at hae
+    rw [hxval, hyval] at hae
+    have : a.val.val * b.val.val < 2^32 := by
+      have h1 : a.val.val * b.val.val ≤ (2^16 - 1) * (2^16 - 1) := by
+        apply Nat.mul_le_mul <;> omega
+      have heq : (2^16 - 1) * (2^16 - 1) = 2^32 - 2*2^16 + 1 := by decide
+      omega
+    omega
+  | div => rw [heqmul] at hxy; rw [hxy] at hae; exact hae.elim
+
+/-- Canonicity preservation for `FieldElement.sub_pure`. Requires both
+    inputs canonical (the impl panics on non-canonical inputs — see
+    `sub_eq_ok`'s precondition).
+
+    Proof strategy: two-step do-block — first `x + q` (panic-impossible
+    by `hb` canonical, since `x.val + q.val ≤ q.val + (q.val-1) < 2^32`),
+    then `s - y` (panic-impossible by `hb` canonical, since
+    `s.val = x.val + q.val ≥ q.val > y.val`), then `% q` and U16 cast
+    as in `Canonical_add_pure`. -/
+theorem Canonical_sub_pure (a b : parameters.FieldElement)
+    (ha : Canonical a) (hb : Canonical b) :
+    Canonical (FieldElement.sub_pure a b) := by
+  have hsub : parameters.FieldElement.sub a b = .ok (FieldElement.sub_pure a b) :=
+    FieldElement.sub_eq_ok a b ha hb
+  unfold Canonical at ha hb
+  unfold parameters.FIELD_MODULUS at ha hb
+  simp at ha hb
+  unfold parameters.FieldElement.sub at hsub
+  simp only [lift, bind_tc_ok] at hsub
+  have hA := a.val.hBounds; have hB := b.val.hBounds
+  simp [Std.UScalarTy.numBits] at hA hB
+  set x : Std.U32 := Std.UScalar.cast .U32 a.val
+  set y : Std.U32 := Std.UScalar.cast .U32 b.val
+  set q : Std.U32 := Std.UScalar.cast .U32 parameters.FIELD_MODULUS
+  have hxval : x.val = a.val.val := Std.U16.cast_U32_val_eq a.val
+  have hyval : y.val = b.val.val := Std.U16.cast_U32_val_eq b.val
+  have hqval : q.val = 3329 := by
+    show (Std.UScalar.cast .U32 parameters.FIELD_MODULUS).val = 3329
+    unfold parameters.FIELD_MODULUS; simp
+  have hae := Std.UScalar.add_equiv x q
+  cases hxq : (x + q : Result Std.U32) with
+  | ok s =>
+    rw [hxq] at hae hsub; simp at hae
+    obtain ⟨_, hsval, _⟩ := hae
+    simp only [bind_tc_ok] at hsub
+    have hae2 := Std.UScalar.sub_equiv s y
+    cases hsy : (s - y : Result Std.U32) with
+    | ok u =>
+      rw [hsy] at hae2 hsub; simp at hae2
+      obtain ⟨_, _, _⟩ := hae2
+      simp only [bind_tc_ok] at hsub
+      have hq_ne : q.val ≠ 0 := by rw [hqval]; decide
+      obtain ⟨w, hw_eq, hwval⟩ := uscalar_rem_ok_U32 u q hq_ne
+      rw [hw_eq] at hsub; simp only [bind_tc_ok] at hsub
+      unfold parameters.FieldElement.new at hsub
+      simp at hsub
+      have hwbnd : w.val < 3329 := by
+        rw [hwval, hqval]; exact Nat.mod_lt _ (by decide)
+      have hwcast : (Std.UScalar.cast .U16 w).val = w.val := by
+        apply Std.UScalar.cast_val_mod_pow_of_inBounds_eq
+        simp [Std.UScalarTy.numBits]; omega
+      unfold Canonical
+      rw [← hsub]
+      show (Std.UScalar.cast .U16 w).val < parameters.FIELD_MODULUS.val
+      unfold parameters.FIELD_MODULUS
+      simp
+      rw [hwcast]; exact hwbnd
+    | fail e =>
+      rw [hsy] at hae2; simp at hae2
+      rw [hsval, hxval, hqval, hyval] at hae2
+      omega
+    | div => rw [hsy] at hae2; exact hae2.elim
+  | fail e =>
+    rw [hxq] at hae; simp [Std.UScalar.inBounds] at hae
+    rw [hxval, hqval] at hae
+    omega
+  | div => rw [hxq] at hae; exact hae.elim
+
+/-- Canonicity preservation for `FieldElement.neg_pure`. Requires
+    the input canonical.
+
+    Proof strategy: the impl does NOT widen to U32 — it computes
+    `q - self.val` directly in U16 (panic-impossible by `ha`
+    canonical, since `q.val > a.val.val`), then `% q` at U16 width
+    via `uscalar_rem_ok_U16`. The output IS the U16 (no narrowing
+    cast), so the canonical bound is direct from `hwbnd`. -/
+theorem Canonical_neg_pure (a : parameters.FieldElement)
+    (ha : Canonical a) :
+    Canonical (FieldElement.neg_pure a) := by
+  have hneg : parameters.FieldElement.neg a = .ok (FieldElement.neg_pure a) :=
+    FieldElement.neg_eq_ok a ha
+  unfold Canonical at ha
+  unfold parameters.FIELD_MODULUS at ha
+  simp at ha
+  unfold parameters.FieldElement.neg at hneg
+  have hA := a.val.hBounds
+  simp [Std.UScalarTy.numBits] at hA
+  have hqval : (parameters.FIELD_MODULUS : Std.U16).val = 3329 := by
+    unfold parameters.FIELD_MODULUS; simp
+  have hae := Std.UScalar.sub_equiv (parameters.FIELD_MODULUS : Std.U16) a.val
+  cases hqa : ((parameters.FIELD_MODULUS : Std.U16) - a.val : Result Std.U16) with
+  | ok i =>
+    rw [hqa] at hae hneg; simp at hae
+    obtain ⟨_, _, _⟩ := hae
+    simp only [bind_tc_ok] at hneg
+    have hq_ne : (parameters.FIELD_MODULUS : Std.U16).val ≠ 0 := by
+      rw [hqval]; decide
+    obtain ⟨w, hw_eq, hwval⟩ := uscalar_rem_ok_U16 i parameters.FIELD_MODULUS hq_ne
+    rw [hw_eq] at hneg; simp only [bind_tc_ok] at hneg
+    unfold parameters.FieldElement.new at hneg
+    simp at hneg
+    have hwbnd : w.val < 3329 := by
+      rw [hwval, hqval]; exact Nat.mod_lt _ (by decide)
+    unfold Canonical
+    rw [← hneg]
+    show w.val < parameters.FIELD_MODULUS.val
+    unfold parameters.FIELD_MODULUS
+    simp
+    exact hwbnd
+  | fail e =>
+    rw [hqa] at hae; simp at hae
+    rw [hqval] at hae
+    omega
+  | div => rw [hqa] at hae; exact hae.elim
+
 end libcrux_iot_ml_kem.BitMlKem.SpecPure
