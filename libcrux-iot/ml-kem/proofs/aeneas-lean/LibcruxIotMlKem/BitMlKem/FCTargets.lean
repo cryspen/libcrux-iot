@@ -56,6 +56,8 @@ import LibcruxIotMlKem.BitMlKem.Spec
 import LibcruxIotMlKem.BitMlKem.SpecPure
 import LibcruxIotMlKem.BitMlKem.AlgEquiv
 import LibcruxIotMlKem.Util.BvMasks
+import LibcruxIotMlKem.Util.ModularArith
+import LibcruxIotMlKem.Equivalence.L0_FieldArith
 import LibcruxIotMlKem.Extraction.Funs
 import HacspecMlKem.Extraction.Funs
 
@@ -228,12 +230,18 @@ noncomputable def lift_matrix_from_seed
     pattern (see `SpecPure.lean`). Bodies left `sorry` here for brevity
     — types are load-bearing. -/
 
-/-- Pure projection of `parameters.FieldElement.new (x % q)` —
-    canonical-residue constructor used as `barrett_pure`'s definition. -/
+/-- Pure projection of `parameters.FieldElement.new (x.val % q)` —
+    the canonical-residue constructor, here re-expressed as the round-trip
+    `feOfZMod ∘ zmodOfFE`. The two forms are equivalent: both produce
+    `{ val := ⟨BitVec.ofNat 16 (x.val.val % 3329)⟩ }` since `zmodOfFE x`
+    is `(x.val.val : ZMod 3329)` (whose underlying Nat is `x.val.val % 3329`)
+    and `parameters.FieldElement.new` always returns `.ok ⟨_⟩` unconditionally.
+    The round-trip form composes with the existing `zmodOfFE_feOfZMod`
+    identity in M.1, making the FC equation reduce to "lift_fe r = lift_fe value
+    given r ≡ value mod q". -/
 noncomputable def Spec.barrett_pure (x : hacspec_ml_kem.parameters.FieldElement) :
-    hacspec_ml_kem.parameters.FieldElement := sorry
-    -- Body: `match parameters.FieldElement.new (x.val % FIELD_MODULUS) with
-    --         | .ok r => r | _ => SpecPure.defaultFE`.
+    hacspec_ml_kem.parameters.FieldElement :=
+  feOfZMod (zmodOfFE x)
 
 /-- Pure projection of Montgomery reduction at the FE level. The impl
     `montgomery_reduce_element` takes an `Std.I32` and returns an `Std.I16`
@@ -474,16 +482,61 @@ theorem get_n_least_significant_bits_fc
   have h_pos : 0 < (2 : Nat) ^ n.val := Nat.two_pow_pos _
   omega
 
+/-! ### L0.2 — `barrett_reduce_element`.
+
+    Proof sketch:
+    1. `Spec.barrett_pure` is defined as the canonical round-trip
+       `feOfZMod ∘ zmodOfFE`. Helper `barrett_pure_lift_fe` shows that on
+       `lift_fe`-image FEs (which are canonical by construction) this is
+       the identity, so `Spec.barrett_pure (lift_fe value) = lift_fe value`.
+    2. The legacy `Equivalence.barrett_reduce_element_spec` (bounds-only)
+       gives `modq_eq r.val value.val 3329 ∧ r.val.natAbs ≤ 3328`. We
+       consume it via `triple_exists_ok_fc`; we only need its content,
+       not its `@[spec]` registration.
+    3. `modq_eq_cast_zmod` translates `modq_eq r.val value.val 3329` to
+       `(r.val : ZMod 3329) = (value.val : ZMod 3329)` via
+       `ZMod.intCast_zmod_eq_zero_iff_dvd`.
+    4. Conclude `lift_fe r = lift_fe value` by `congr 1`. -/
+
+/-- The canonical round-trip is the identity on lift_fe images. -/
+private theorem barrett_pure_lift_fe (x : Std.I16) :
+    Spec.barrett_pure (lift_fe x) = lift_fe x := by
+  unfold Spec.barrett_pure lift_fe
+  congr 1
+  exact zmodOfFE_feOfZMod _
+
+/-- Cast `modq_eq` into a `ZMod 3329` equality. The barrier-side
+    `Util.modq_eq` unfolds to `(a - b) % 3329 = 0`; via
+    `ZMod.intCast_zmod_eq_zero_iff_dvd` and `push_cast` this becomes
+    `(a : ZMod 3329) - (b : ZMod 3329) = 0`. -/
+private theorem modq_eq_cast_zmod (a b : Int)
+    (h : libcrux_iot_ml_kem.Util.modq_eq a b 3329) :
+    (a : ZMod 3329) = (b : ZMod 3329) := by
+  unfold libcrux_iot_ml_kem.Util.modq_eq at h
+  have hdvd : (3329 : Int) ∣ (a - b) := Int.dvd_of_emod_eq_zero h
+  have hzero : ((a - b : Int) : ZMod 3329) = 0 :=
+    (ZMod.intCast_zmod_eq_zero_iff_dvd (a - b) 3329).mpr (by exact_mod_cast hdvd)
+  push_cast at hzero
+  exact sub_eq_zero.mp hzero
+
 /-- L0.2 — `barrett_reduce_element`.
     Spec: canonical residue mod q via `FieldElement.new (x % q)`. -/
-@[spec]
+@[spec high]
 theorem barrett_reduce_element_fc
     (value : Std.I16) (hb : value.val.natAbs ≤ 32767) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce_element value
     ⦃ ⇓ r => ⌜ r.val.natAbs ≤ 3328
                 ∧ lift_fe r = Spec.barrett_pure (lift_fe value) ⌝ ⦄ := by
-  sorry
+  have h_legacy := libcrux_iot_ml_kem.Equivalence.barrett_reduce_element_spec value hb
+  obtain ⟨r0, h_eq, h_modq, h_bnd⟩ := triple_exists_ok_fc h_legacy
+  apply triple_of_ok_fc (v := r0) h_eq
+  refine ⟨h_bnd, ?_⟩
+  rw [barrett_pure_lift_fe]
+  unfold lift_fe
+  congr 1
+  show (r0.val : ZMod 3329) = (value.val : ZMod 3329)
+  exact modq_eq_cast_zmod _ _ h_modq
 
 /-- L0.3 — `montgomery_reduce_element`.
     Spec: strip one Mont factor (multiply by R⁻¹ = 169 in `ZMod 3329`). -/
