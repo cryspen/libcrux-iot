@@ -598,6 +598,17 @@ private theorem modq_eq_cast_zmod (a b : Int)
   push_cast at hzero
   exact sub_eq_zero.mp hzero
 
+/-- Bridge lemma: `lift_fe a = lift_fe b` from `modq_eq a.val b.val 3329`.
+    Since `lift_fe x = feOfZMod ((x.val : Int) : ZMod 3329)`, the equality
+    reduces (via `congr 1`) to the `ZMod 3329` cast equality delivered by
+    `modq_eq_cast_zmod`. Pure-projection side lemma. -/
+private theorem lift_fe_eq_of_modq (a b : Std.I16)
+    (h : libcrux_iot_ml_kem.Util.modq_eq a.val b.val 3329) :
+    lift_fe a = lift_fe b := by
+  unfold lift_fe i16_to_spec_fe_plain
+  congr 1
+  exact modq_eq_cast_zmod _ _ h
+
 /-- L0.2 — `barrett_reduce_element`.
     Spec: canonical residue mod q via `FieldElement.new (x % q)`. -/
 @[spec high]
@@ -1318,8 +1329,20 @@ theorem sub_fc
       (lhs.elements.val[i]!) (rhs.elements.val[i]!) (r0.elements.val[i]!)
       h_val
 
+/-- Per-element bridge for `barrett_reduce_fc`: under `modq_eq r vec 3329`,
+    the lift of `r` equals the spec-side `Spec.barrett_pure` applied to
+    the lift of `vec`. Combines `lift_fe_eq_of_modq` with
+    `barrett_pure_lift_fe` (which collapses the canonical round-trip on
+    `lift_fe` images to identity). -/
+private theorem lift_fe_barrett_pure_eq
+    (a r : Std.I16)
+    (h : libcrux_iot_ml_kem.Util.modq_eq r.val a.val 3329) :
+    lift_fe r = Spec.barrett_pure (lift_fe a) := by
+  rw [barrett_pure_lift_fe]
+  exact lift_fe_eq_of_modq r a h
+
 /-- L1.3 — `barrett_reduce` on a chunk. -/
-@[spec]
+@[spec high]
 theorem barrett_reduce_fc
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (hpre : ∀ i : Nat, i < 16 →
@@ -1328,7 +1351,52 @@ theorem barrett_reduce_fc
     libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce vec
     ⦃ ⇓ r => ⌜ (∀ i : Nat, i < 16 → (r.elements.val[i]!).val.natAbs ≤ 3328)
                 ∧ lift_chunk r = Spec.chunk_barrett_reduce_pure (lift_chunk vec) ⌝ ⦄ := by
-  sorry
+  -- 1. Extract per-element legacy fact: modq_eq r[i] vec[i] 3329 ∧ |r[i]| ≤ 3328.
+  have h_legacy := libcrux_iot_ml_kem.Equivalence.barrett_reduce_spec vec hpre
+  obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
+  apply triple_of_ok_fc (v := r0) h_eq
+  refine ⟨?_, ?_⟩
+  · -- Bound conjunct: extract `r[i].natAbs ≤ 3328` from per-element legacy.
+    intro i hi
+    exact (h_per i hi).2
+  · -- 2. Reduce array equality to list equality, then to per-index lift_fe equality.
+    unfold lift_chunk Spec.chunk_barrett_reduce_pure
+    apply Subtype.ext
+    show r0.elements.val.map lift_fe
+        = (List.range 16).map (fun i =>
+            Spec.barrett_pure
+              ((Std.Array.make 16#usize (vec.elements.val.map lift_fe)
+                (by simp)).val[i]!))
+    have h_r0_len : r0.elements.val.length = 16 :=
+      libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+    apply List.ext_getElem
+    · simp [List.length_map, List.length_range, h_r0_len]
+    · intro i hi1 hi2
+      have hi : i < 16 := by
+        have : i < (r0.elements.val.map lift_fe).length := hi1
+        simp [List.length_map, h_r0_len] at this; exact this
+      rw [List.getElem_map]
+      rw [List.getElem_map, List.getElem_range]
+      show lift_fe r0.elements.val[i]
+        = Spec.barrett_pure ((vec.elements.val.map lift_fe)[i]!)
+      have h_r0_get_eq : r0.elements.val[i]
+          = r0.elements.val[i]! := by
+        have hi_r0 : i < r0.elements.val.length := by rw [h_r0_len]; exact hi
+        rw [getElem!_pos r0.elements.val i hi_r0]
+      rw [h_r0_get_eq]
+      have h_vec_len : vec.elements.val.length = 16 :=
+        libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+      have h_map_vec :
+          (vec.elements.val.map lift_fe)[i]! = lift_fe (vec.elements.val[i]!) := by
+        have hi_vec : i < vec.elements.val.length := by rw [h_vec_len]; exact hi
+        rw [getElem!_pos (vec.elements.val.map lift_fe) i (by
+          simp [List.length_map, h_vec_len]; exact hi)]
+        rw [List.getElem_map]
+        rw [getElem!_pos vec.elements.val i hi_vec]
+      rw [h_map_vec]
+      obtain ⟨h_modq, _h_bnd⟩ := h_per i hi
+      exact lift_fe_barrett_pure_eq
+        (vec.elements.val[i]!) (r0.elements.val[i]!) h_modq
 
 /-- L1.4 — `montgomery_multiply_by_constant` on a chunk.
     Each lane: `vec[i] · c / R`. The lift uses `lift_chunk_mont` on
@@ -1346,19 +1414,494 @@ theorem montgomery_multiply_by_constant_fc
                     (lift_chunk vec) (lift_fe_mont c) ⌝ ⦄ := by
   sorry
 
+/-! ### L1.5 — `cond_subtract_3329` private loop machinery.
+
+    The legacy `Equivalence.cond_subtract_3329_spec` requires
+    `0 ≤ vec[i] < 2*3329` as a precondition (it's load-bearing for the
+    OUTER bound `r[i] < 3329`). The FC statement here uses NO
+    precondition — we only need `lift_chunk r = lift_chunk vec`, i.e.
+    mod-3329 equivalence per lane. The mod-3329 equivalence holds for
+    BOTH branches of the conditional WITHOUT any precondition:
+
+      - `vec[i] ≥ 3329` branch: `r[i] = wrapping_sub vec[i] 3329`.
+        Since `vec[i] ∈ [3329, 32767]` (signed), `vec[i] - 3329 ∈ [0, 29438]`
+        fits I16, so `r[i].val = vec[i].val - 3329 ≡ vec[i].val (mod 3329)`.
+      - `vec[i] < 3329` branch: `r[i] = vec[i]`, trivially mod-3329 equivalent.
+
+    Below we reproduce a stripped-down copy of the L1_5 loop machinery
+    (private to FCTargets) yielding just the per-element disjunction. The
+    full proof closely mirrors `Equivalence.L1_5.cond_step`; comments are
+    abbreviated since the structure is verbatim.
+-/
+
+namespace L1_5_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+private theorem triple_of_ok_l1
+    {α : Type} {x : Result α} {v : α} {P : α → Prop}
+    (hx : x = .ok v) (hp : P v) :
+    ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
+  subst hx; simp [Std.Do.Triple, Std.Do.WP.wp, hp]
+
+private theorem of_pure_prop_holds_l1 {P : Prop}
+    (h : (pure P : Result Prop).holds) : P := by
+  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] at h; exact h trivial
+
+private theorem pure_prop_holds_l1 {P : Prop} (h : P) : (pure P : Result Prop).holds := by
+  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]; intro _; exact h
+
+/-- Per-element invariant for `cond_subtract_3329` (FCTargets-local copy
+    of `Equivalence.L1_5.cond_inv`; precondition-free). -/
+private def cond_inv
+    (input : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    Std.Usize →
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector →
+    Result Prop :=
+  fun k acc => pure (
+    (∀ j : Nat, j < k.val →
+        (((input.elements.val[j]!).val ≥ 3329 ∧
+            (acc.elements.val[j]!) = Std.I16.wrapping_sub (input.elements.val[j]!) 3329#i16)
+          ∨ ((input.elements.val[j]!).val < 3329 ∧
+              acc.elements.val[j]! = input.elements.val[j]!)))
+    ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
+        acc.elements.val[j]! = input.elements.val[j]!))
+
+private def cond_step_post
+    (input : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize)
+        × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (16#usize : Std.Usize).val ∧ iter'.«end» = 16#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (cond_inv input iter'.start acc').holds
+  | .done y => (cond_inv input 16#usize y).holds
+
+set_option maxHeartbeats 8000000 in
+private theorem cond_step
+    (input : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (acc : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize)
+    (h_le : k.val ≤ (16#usize : Std.Usize).val)
+    (h_inv : (cond_inv input k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329_loop.body
+      { start := k, «end» := 16#usize } acc
+    ⦃ ⇓ r => ⌜ cond_step_post input k r ⌝ ⦄ := by
+  obtain ⟨h_acc_done, h_acc_undone⟩ := of_pure_prop_holds_l1 h_inv
+  have h_acc_len : acc.elements.length = 16 := PortableVector_elements_length acc
+  have h_16 : (16#usize : Std.Usize).val = 16 := rfl
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329_loop.body
+  by_cases h_lt : k.val < (16#usize : Std.Usize).val
+  · have hk_16 : k.val < 16 := by rw [h_16] at h_lt; exact h_lt
+    obtain ⟨s, hs_val, h_iter_some⟩ := iter_next_some_eq k h_lt
+    have h_idx :
+        Aeneas.Std.Array.index_usize acc.elements k = .ok (acc.elements.val[k.val]!) :=
+      array_index_usize_ok_eq acc.elements k (by rw [h_acc_len]; exact hk_16)
+    set xk : Std.I16 := acc.elements.val[k.val]! with hxk_def
+    have h_acc_xk : acc.elements.val[k.val]! = input.elements.val[k.val]! :=
+      h_acc_undone k.val (Nat.le_refl _) hk_16
+    by_cases h_ge : xk.val ≥ 3329
+    · have h_ge_lit : xk ≥ 3329#i16 := by
+        change (3329#i16 : Std.I16).val ≤ xk.val
+        have : (3329#i16 : Std.I16).val = 3329 := by decide
+        rw [this]; exact h_ge
+      have h_wsub :
+          core_models.num.I16.wrapping_sub xk 3329#i16
+            = .ok (Std.I16.wrapping_sub xk 3329#i16) := by
+        unfold core_models.num.I16.wrapping_sub
+        unfold rust_primitives.arithmetic.wrapping_sub_i16
+        rfl
+      have h_upd :
+          Aeneas.Std.Array.update acc.elements k (Std.I16.wrapping_sub xk 3329#i16)
+            = .ok (acc.elements.set k (Std.I16.wrapping_sub xk 3329#i16)) :=
+        array_update_ok_eq acc.elements k _ (by rw [h_acc_len]; exact hk_16)
+      have h_body :
+          (do
+            let (o, iter1) ←
+              core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize)
+            match o with
+            | core_models.option.Option.None =>
+                (Result.ok (ControlFlow.done acc) :
+                  Result (ControlFlow
+                    ((core_models.ops.range.Range Std.Usize)
+                      × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+            | core_models.option.Option.Some i =>
+              let i1 ← Aeneas.Std.Array.index_usize acc.elements i
+              let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
+              if i2 >= 3329#i16
+              then
+                let i3 ← core_models.num.I16.wrapping_sub i1 3329#i16
+                let a ← Aeneas.Std.Array.update acc.elements i i3
+                ok (cont (iter1, { elements := a }))
+              else ok (cont (iter1, acc)))
+          = .ok (cont
+              (({ start := s, «end» := 16#usize }
+                  : core_models.ops.range.Range Std.Usize),
+               { elements := acc.elements.set k (Std.I16.wrapping_sub xk 3329#i16) })) := by
+        conv_lhs =>
+          rw [show
+            (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+              = (core_models.iter.range.IteratorRange.next
+                  core_models.Usize.Insts.Core_modelsIterRangeStep
+                  ({ start := k, «end» := 16#usize }
+                    : core_models.ops.range.Range Std.Usize))
+            from rfl]
+        rw [h_iter_some]
+        simp only [bind_tc_ok]
+        rw [h_idx]
+        simp only [bind_tc_ok]
+        rw [show libcrux_secrets.traits.Declassify.Blanket.declassify xk = .ok xk from rfl]
+        simp only [bind_tc_ok]
+        rw [if_pos h_ge_lit]
+        rw [h_wsub]
+        simp only [bind_tc_ok]
+        rw [h_upd]
+        rfl
+      apply triple_of_ok_l1 h_body
+      show cond_step_post input k
+            (.cont (({ start := s, «end» := 16#usize }
+                       : core_models.ops.range.Range Std.Usize),
+                    { elements := acc.elements.set k (Std.I16.wrapping_sub xk 3329#i16) }))
+      unfold cond_step_post
+      refine ⟨h_lt, rfl, hs_val, ?_⟩
+      apply pure_prop_holds_l1
+      refine ⟨?_, ?_⟩
+      · intro j hj
+        rw [hs_val] at hj
+        rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj_lt_k | hj_eq_k
+        · have h_ne : k.val ≠ j := Nat.ne_of_gt hj_lt_k
+          have h_set_ne :
+              (acc.elements.set k (Std.I16.wrapping_sub xk 3329#i16))[j]!
+                = (acc.elements)[j]! :=
+            Aeneas.Std.Array.getElem!_Nat_set_ne acc.elements k j _ h_ne
+          have h_set_eq_val :
+              (acc.elements.set k (Std.I16.wrapping_sub xk 3329#i16)).val[j]!
+                = acc.elements.val[j]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+          have h_old := h_acc_done j hj_lt_k
+          rcases h_old with ⟨h_in_ge, h_acc_eq⟩ | ⟨h_in_lt, h_acc_eq⟩
+          · left; refine ⟨h_in_ge, ?_⟩; rw [h_set_eq_val]; exact h_acc_eq
+          · right; refine ⟨h_in_lt, ?_⟩; rw [h_set_eq_val]; exact h_acc_eq
+        · subst hj_eq_k
+          have h_lt'' : k.val < acc.elements.length := by rw [h_acc_len]; exact hk_16
+          have h_set_eq :
+              (acc.elements.set k (Std.I16.wrapping_sub xk 3329#i16))[k.val]!
+                = Std.I16.wrapping_sub xk 3329#i16 :=
+            Aeneas.Std.Array.getElem!_Nat_set_eq acc.elements k k.val _ ⟨rfl, h_lt''⟩
+          have h_set_eq_val :
+              (acc.elements.set k (Std.I16.wrapping_sub xk 3329#i16)).val[k.val]!
+                = Std.I16.wrapping_sub xk 3329#i16 := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_eq
+          left
+          refine ⟨?_, ?_⟩
+          · rw [← h_acc_xk]; exact h_ge
+          · rw [h_set_eq_val, ← h_acc_xk]
+      · intro j hj_ge hj_lt
+        rw [hs_val] at hj_ge
+        have h_ne : k.val ≠ j := by omega
+        have h_ge' : k.val ≤ j := by omega
+        have h_set_ne :
+            (acc.elements.set k (Std.I16.wrapping_sub xk 3329#i16))[j]!
+              = (acc.elements)[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne acc.elements k j _ h_ne
+        have h_set_eq_val :
+            (acc.elements.set k (Std.I16.wrapping_sub xk 3329#i16)).val[j]!
+              = acc.elements.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+        rw [h_set_eq_val]
+        exact h_acc_undone j h_ge' hj_lt
+    · have h_not_ge : ¬ (3329#i16 : Std.I16).val ≤ xk.val := by
+        have h_eq : (3329#i16 : Std.I16).val = 3329 := by decide
+        rw [h_eq]; exact h_ge
+      have h_not_ge' : ¬ (xk ≥ 3329#i16) := h_not_ge
+      have h_body :
+          (do
+            let (o, iter1) ←
+              core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize)
+            match o with
+            | core_models.option.Option.None =>
+                (Result.ok (ControlFlow.done acc) :
+                  Result (ControlFlow
+                    ((core_models.ops.range.Range Std.Usize)
+                      × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+            | core_models.option.Option.Some i =>
+              let i1 ← Aeneas.Std.Array.index_usize acc.elements i
+              let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
+              if i2 >= 3329#i16
+              then
+                let i3 ← core_models.num.I16.wrapping_sub i1 3329#i16
+                let a ← Aeneas.Std.Array.update acc.elements i i3
+                ok (cont (iter1, { elements := a }))
+              else ok (cont (iter1, acc)))
+          = .ok (cont
+              (({ start := s, «end» := 16#usize }
+                  : core_models.ops.range.Range Std.Usize),
+               acc)) := by
+        conv_lhs =>
+          rw [show
+            (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+              = (core_models.iter.range.IteratorRange.next
+                  core_models.Usize.Insts.Core_modelsIterRangeStep
+                  ({ start := k, «end» := 16#usize }
+                    : core_models.ops.range.Range Std.Usize))
+            from rfl]
+        rw [h_iter_some]
+        simp only [bind_tc_ok]
+        rw [h_idx]
+        simp only [bind_tc_ok]
+        rw [show libcrux_secrets.traits.Declassify.Blanket.declassify xk = .ok xk from rfl]
+        simp only [bind_tc_ok]
+        rw [if_neg h_not_ge']
+      apply triple_of_ok_l1 h_body
+      show cond_step_post input k
+            (.cont (({ start := s, «end» := 16#usize }
+                       : core_models.ops.range.Range Std.Usize),
+                    acc))
+      unfold cond_step_post
+      refine ⟨h_lt, rfl, hs_val, ?_⟩
+      apply pure_prop_holds_l1
+      refine ⟨?_, ?_⟩
+      · intro j hj
+        rw [hs_val] at hj
+        rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj_lt_k | hj_eq_k
+        · exact h_acc_done j hj_lt_k
+        · subst hj_eq_k
+          right
+          refine ⟨?_, ?_⟩
+          · rw [← h_acc_xk]; show xk.val < 3329
+            push_neg at h_ge; exact h_ge
+          · exact h_acc_xk
+      · intro j hj_ge hj_lt
+        rw [hs_val] at hj_ge
+        have h_ge' : k.val ≤ j := by omega
+        exact h_acc_undone j h_ge' hj_lt
+  · have hk_ge : k.val ≥ (16#usize : Std.Usize).val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = 16 := by rw [h_16] at hk_ge; omega
+    have h_iter_none := iter_next_none_eq k hk_ge
+    have h_body :
+        (do
+          let (o, iter1) ←
+            core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize)
+          match o with
+          | core_models.option.Option.None =>
+              (Result.ok (ControlFlow.done acc) :
+                Result (ControlFlow
+                  ((core_models.ops.range.Range Std.Usize)
+                    × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+                  libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+          | core_models.option.Option.Some i =>
+            let i1 ← Aeneas.Std.Array.index_usize acc.elements i
+            let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
+            if i2 >= 3329#i16
+            then
+              let i3 ← core_models.num.I16.wrapping_sub i1 3329#i16
+              let a ← Aeneas.Std.Array.update acc.elements i i3
+              ok (cont (iter1, { elements := a }))
+            else ok (cont (iter1, acc)))
+        = .ok (done acc) := by
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    apply triple_of_ok_l1 h_body
+    show cond_step_post input k (.done acc)
+    unfold cond_step_post
+    apply pure_prop_holds_l1
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      apply h_acc_done j
+      rw [hk_eq]; rw [h_16] at hj; exact hj
+    · intro j hj_ge hj_lt
+      apply h_acc_undone j _ hj_lt
+      rw [hk_eq]; rw [h_16] at hj_ge; exact hj_ge
+
+end L1_5_FC
+
 /-- L1.5 — `cond_subtract_3329` on a chunk.
     NO HACSPEC EQUIVALENT — the impl conditionally subtracts q to
     rebalance ranges; spec-side this is identity in `ZMod 3329`. The
-    spec target we land against is the identity at the FE-array level. -/
-@[spec]
+    spec target we land against is the identity at the FE-array level.
+
+    No precondition required: the mod-3329 equivalence holds in BOTH
+    branches of the conditional unconditionally (see `L1_5_FC` namespace
+    above for the precondition-free invariant). -/
+@[spec high]
 theorem cond_subtract_3329_fc
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329 vec
     ⦃ ⇓ r => ⌜ lift_chunk r = lift_chunk vec ⌝ ⦄ := by
-  sorry
+  -- 1. Run the loop-spec machinery to get the per-element disjunction.
+  have h_disj :
+      ⦃ ⌜ True ⌝ ⦄
+      libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329 vec
+      ⦃ ⇓ r => ⌜ ∀ j : Nat, j < 16 →
+                ((vec.elements.val[j]!).val ≥ 3329 ∧
+                    (r.elements.val[j]!)
+                      = Std.I16.wrapping_sub (vec.elements.val[j]!) 3329#i16)
+                ∨ ((vec.elements.val[j]!).val < 3329 ∧
+                    r.elements.val[j]! = vec.elements.val[j]!) ⌝ ⦄ := by
+    unfold libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329
+    unfold libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329_loop
+    have h_field : libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+                    = (16#usize : Std.Usize) := by
+      unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR; rfl
+    rw [h_field]
+    apply Std.Do.Triple.of_entails_right _
+      (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+        (fun (iter1, vec1) =>
+          libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329_loop.body
+            iter1 vec1)
+        vec 0#usize 16#usize
+        (L1_5_FC.cond_inv vec)
+        (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
+        (L1_5_FC.pure_prop_holds_l1 ⟨
+          fun j hj => by
+            have h0 : (0#usize : Std.Usize).val = 0 := rfl
+            rw [h0] at hj; exact absurd hj (Nat.not_lt_zero j),
+          fun _ _ _ => rfl⟩)
+        ?_)
+    · rw [PostCond.entails_noThrow]
+      intro r h
+      obtain ⟨h_done, _h_undone⟩ := L1_5_FC.of_pure_prop_holds_l1 h
+      intro j hj
+      exact h_done j (by rw [show (16#usize : Std.Usize).val = 16 from rfl]; exact hj)
+    · -- Step lemma.
+      intro acc k h_ge h_le hinv
+      have h_step := L1_5_FC.cond_step vec acc k h_le hinv
+      apply Std.Do.Triple.of_entails_right _ h_step
+      rw [PostCond.entails_noThrow]
+      intro r hh
+      rcases r with ⟨iter', acc'⟩ | y
+      · have hP : L1_5_FC.cond_step_post vec k (.cont (iter', acc')) := by
+          simpa [Std.Do.SPred.down_pure] using hh
+        simpa [L1_5_FC.cond_step_post] using hP
+      · have hP : L1_5_FC.cond_step_post vec k (.done y) := by
+          simpa [Std.Do.SPred.down_pure] using hh
+        simpa [L1_5_FC.cond_step_post] using hP
+  -- 2. Apply h_disj and convert per-lane disjunction to lift_fe equality.
+  obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_disj
+  apply triple_of_ok_fc (v := r0) h_eq
+  -- 3. Reduce array equality to list equality, then to per-index lift_fe equality.
+  unfold lift_chunk
+  apply Subtype.ext
+  show r0.elements.val.map lift_fe = vec.elements.val.map lift_fe
+  have h_r0_len : r0.elements.val.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+  have h_vec_len : vec.elements.val.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+  apply List.ext_getElem
+  · simp [List.length_map, h_r0_len, h_vec_len]
+  · intro i hi1 hi2
+    have hi : i < 16 := by
+      have : i < (r0.elements.val.map lift_fe).length := hi1
+      simp [List.length_map, h_r0_len] at this; exact this
+    rw [List.getElem_map, List.getElem_map]
+    -- Goal: lift_fe r0.elements.val[i] = lift_fe vec.elements.val[i].
+    have h_r0_get : r0.elements.val[i] = r0.elements.val[i]! := by
+      have hi_r0 : i < r0.elements.val.length := by rw [h_r0_len]; exact hi
+      rw [getElem!_pos r0.elements.val i hi_r0]
+    have h_vec_get : vec.elements.val[i] = vec.elements.val[i]! := by
+      have hi_vec : i < vec.elements.val.length := by rw [h_vec_len]; exact hi
+      rw [getElem!_pos vec.elements.val i hi_vec]
+    rw [h_r0_get, h_vec_get]
+    -- Apply per-lane disjunction.
+    rcases h_per i hi with ⟨h_ge, h_eq_lane⟩ | ⟨h_lt, h_eq_lane⟩
+    · -- ≥ 3329 branch: r0[i] = wrapping_sub vec[i] 3329, derive mod-3329 equality.
+      rw [h_eq_lane]
+      -- Goal: lift_fe (wrapping_sub vec[i] 3329) = lift_fe vec[i].
+      set xi : Std.I16 := vec.elements.val[i]! with hxi
+      -- Use modq_eq on (wrapping_sub xi 3329).val vs xi.val.
+      apply lift_fe_eq_of_modq
+      -- Need: modq_eq (wrapping_sub xi 3329).val xi.val 3329.
+      -- (wrapping_sub xi 3329).val = bmod (xi.val - 3329) (2^16). Since
+      -- xi.val ≥ 3329 and xi.val < 2^15, we have xi.val - 3329 ∈ [0, 2^15 - 3329],
+      -- which is in I16 range, so bmod = xi.val - 3329.
+      unfold libcrux_iot_ml_kem.Util.modq_eq
+      rw [Std.I16.wrapping_sub_val_eq]
+      have hxi_ub : xi.val < 2^15 := by
+        have h := xi.hBounds
+        simp [Aeneas.Std.IScalarTy.numBits, Aeneas.Std.IScalar.min,
+              Aeneas.Std.IScalar.max] at h
+        omega
+      have h3329 : (3329#i16 : Std.I16).val = 3329 := by decide
+      rw [h3329]
+      have hxi_lb_diff : (-(2:Int)^(16-1)) ≤ xi.val - 3329 := by
+        have h1 : (3329 : Int) ≤ xi.val := h_ge
+        have h2 : -(2:Int)^(16-1) ≤ 0 := by decide
+        have h3 : (0 : Int) ≤ xi.val - 3329 := by omega
+        omega
+      have hxi_ub_diff : xi.val - 3329 < (2:Int)^(16-1) := by
+        have h1 : xi.val < (2:Int)^15 := by exact_mod_cast hxi_ub
+        have h2 : (2:Int)^(16-1) = (2:Int)^15 := by decide
+        omega
+      rw [Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
+            hxi_lb_diff hxi_ub_diff]
+      -- Goal: (xi.val - 3329 - xi.val) % 3329 = 0.
+      have : xi.val - 3329 - xi.val = -3329 := by ring
+      rw [this]
+      decide
+    · -- < 3329 branch: r0[i] = vec[i], trivially mod-3329 equivalent.
+      rw [h_eq_lane]
 
-/-- L1.6 — `negate` on a chunk. -/
+/-- L1.6 — `negate` on a chunk.
+
+    **STOP — boundary obstruction at `vec[i].val = -2^15`.**
+
+    The legacy `Equivalence.negate_spec` proves the per-lane BV identity
+    `r[i].bv = -vec[i].bv`, which translates (via `IScalar.wrapping_sub_val_eq`)
+    to `r[i].val = Int.bmod (0 - vec[i].val) (2^16) = Int.bmod (-vec[i].val) 2^16`.
+
+    For the FC equation `lift_fe r[i] = FieldElement.neg_pure (lift_fe vec[i])`
+    to hold, we'd need `(r[i].val : ZMod 3329) = -(vec[i].val : ZMod 3329)`,
+    equivalently `(Int.bmod (-vec[i].val) 2^16 : ZMod 3329) = -(vec[i].val : ZMod 3329)`.
+
+    This holds for `vec[i].val ∈ [-2^15 + 1, 2^15 - 1]` (where `bmod` is the
+    identity on `-vec[i].val`), but FAILS at `vec[i].val = -2^15 = -32768`:
+      - `-vec[i].val = 32768`, `Int.bmod 32768 (2^16) = -32768`.
+      - `((-32768 : Int) : ZMod 3329).val = 522`.
+      - `(-((-32768 : Int) : ZMod 3329)).val = 2807`.
+      - `522 ≠ 2807` (`#eval` confirmed) — REAL DIVERGENCE.
+
+    The divergence root cause: `2 * 2^15 = 2^16 = 3329 * 19 + 2645`, so
+    `2^16 mod 3329 = 2645 ≠ 0`, meaning the two-valued bmod identification
+    of `-2^15` and `2^15` does not collapse mod 3329.
+
+    **Remedies (orchestrator decision):**
+    (a) Add precondition `∀ i < 16, vec[i].val.natAbs ≤ 2^15 - 1`
+        (excludes -2^15). Then `Int.bmod (-vec[i].val) 2^16 = -vec[i].val`,
+        and the FC equation closes via `Canonical_neg_pure` +
+        `feOfZMod`/`zmodOfFE` round-trip mirroring `lift_fe_add_pure_eq`.
+    (b) Leave the theorem with the documented obstruction (use a downstream
+        precondition shifter at call sites).
+
+    Per FC campaign Phase 3 dispatch brief STOP CRITERION: this `sorry`
+    is preserved pending orchestrator decision. Do NOT weaken the post
+    to bounds-only. -/
 @[spec]
 theorem negate_fc
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
