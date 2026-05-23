@@ -402,11 +402,22 @@ noncomputable def Spec.chunk_reducing_from_i32_array_pure
     (by simp)
 
 /-- Pure NTT butterfly step at the chunk level: applies `ntt.butterfly`
-    pointwise to the lane pair `(i, j)` with `zeta`. -/
+    pointwise to the lane pair `(i, j)` with `zeta`. Mirrors the impl's
+    write order (`a[j] := a-t`, then `a[i] := a+t`) so that when `i = j`
+    the second write wins (matching impl semantics). When `i ≠ j` the
+    `(i, j)` lanes become `(add_pure a[i] (mul_pure a[j] zeta),
+    sub_pure a[i] (mul_pure a[j] zeta))` respectively. -/
 noncomputable def Spec.chunk_ntt_step_pure
     (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
     (zeta : hacspec_ml_kem.parameters.FieldElement) (i j : Std.Usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  let t_fe :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure (a.val[j.val]!) zeta
+  let a_minus_t :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure (a.val[i.val]!) t_fe
+  let a_plus_t :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure (a.val[i.val]!) t_fe
+  (a.set j a_minus_t).set i a_plus_t
 
 /-- Pure NTT-layer-1 step at the chunk level. -/
 noncomputable def Spec.chunk_ntt_layer_1_step_pure
@@ -2426,18 +2437,353 @@ theorem reducing_from_i32_array_fc
 
 /-! ## §L2 — NTT step ops (5 theorems). -/
 
-/-- L2.1 — `ntt_step`: per-pair butterfly. -/
-@[spec]
+/-! ### L2.1 — `ntt_step` private helpers. -/
+
+/-- Reduction of `core_models.num.I16.wrapping_sub` to the underlying
+    Aeneas `Std.I16.wrapping_sub`. Mirror of L2's helper, scoped to FCTargets. -/
+private theorem ntt_step_fc.cm_wrapping_sub_ok_eq (x y : Std.I16) :
+    core_models.num.I16.wrapping_sub x y = .ok (Std.I16.wrapping_sub x y) := by
+  unfold core_models.num.I16.wrapping_sub
+  unfold rust_primitives.arithmetic.wrapping_sub_i16
+  rfl
+
+/-- Reduction of `core_models.num.I16.wrapping_add` to the underlying
+    Aeneas `Std.I16.wrapping_add`. Mirror of L2's helper. -/
+private theorem ntt_step_fc.cm_wrapping_add_ok_eq (x y : Std.I16) :
+    core_models.num.I16.wrapping_add x y = .ok (Std.I16.wrapping_add x y) := by
+  unfold core_models.num.I16.wrapping_add
+  unfold rust_primitives.arithmetic.wrapping_add_i16
+  rfl
+
+/-- Reduction of `classify` to identity. Mirror of L2's helper. -/
+private theorem ntt_step_fc.classify_ok_eq {T : Type} (x : T) :
+    libcrux_secrets.traits.Classify.Blanket.classify x = .ok x := rfl
+
+/-- Under `|a.val| ≤ bnd`, `|t.val| ≤ 3328`, and `bnd ≤ 29439`, the I16-wrapped
+    sum `a + t` has `.val = a.val + t.val` (no overflow). Mirror of L2's
+    `add_no_overflow_value_bnd`, scoped to FCTargets — only the value
+    equation is exposed (bound conjunct dropped, not needed here). -/
+private theorem ntt_step_fc.add_no_overflow_value (a t : Std.I16) (bnd : Nat)
+    (h_a : a.val.natAbs ≤ bnd) (h_t : t.val.natAbs ≤ 3328) (h_bnd : bnd ≤ 29439) :
+    (Std.I16.wrapping_add a t).val = a.val + t.val := by
+  have h_sum_abs : ((a.val + t.val : Int)).natAbs ≤ bnd + 3328 := by
+    have h_tri : (a.val + t.val).natAbs ≤ a.val.natAbs + t.val.natAbs := Int.natAbs_add_le _ _
+    omega
+  have h_lb : -(2 ^ 15 : Int) ≤ a.val + t.val := by
+    have h_bound : bnd + 3328 ≤ 32767 := by omega
+    omega
+  have h_ub : a.val + t.val < (2 ^ 15 : Int) := by
+    have h_bound : bnd + 3328 ≤ 32767 := by omega
+    omega
+  have h_bmod : Int.bmod (a.val + t.val) (2 ^ 16) = a.val + t.val := by
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
+    · have h_const : -((2 : Int) ^ (16 - 1)) ≤ -(2 ^ 15 : Int) := by decide
+      exact le_trans h_const h_lb
+    · have h_const : (2 ^ 15 : Int) ≤ (2 : Int) ^ (16 - 1) := by decide
+      exact lt_of_lt_of_le h_ub h_const
+  have h_val := Std.I16.wrapping_add_val_eq a t
+  rw [h_val, h_bmod]
+
+/-- Diff variant of `add_no_overflow_value`. -/
+private theorem ntt_step_fc.sub_no_overflow_value (a t : Std.I16) (bnd : Nat)
+    (h_a : a.val.natAbs ≤ bnd) (h_t : t.val.natAbs ≤ 3328) (h_bnd : bnd ≤ 29439) :
+    (Std.I16.wrapping_sub a t).val = a.val - t.val := by
+  have h_diff_abs : ((a.val - t.val : Int)).natAbs ≤ bnd + 3328 := by
+    have h_neg_natAbs : (-t.val).natAbs = t.val.natAbs := Int.natAbs_neg _
+    have h_eq : a.val - t.val = a.val + (-t.val) := by ring
+    rw [h_eq]
+    have h_tri : (a.val + (-t.val)).natAbs ≤ a.val.natAbs + (-t.val).natAbs :=
+      Int.natAbs_add_le _ _
+    rw [h_neg_natAbs] at h_tri
+    omega
+  have h_lb : -(2 ^ 15 : Int) ≤ a.val - t.val := by
+    have h_bound : bnd + 3328 ≤ 32767 := by omega
+    omega
+  have h_ub : a.val - t.val < (2 ^ 15 : Int) := by
+    have h_bound : bnd + 3328 ≤ 32767 := by omega
+    omega
+  have h_bmod : Int.bmod (a.val - t.val) (2 ^ 16) = a.val - t.val := by
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 16 _ (by decide)
+    · have h_const : -((2 : Int) ^ (16 - 1)) ≤ -(2 ^ 15 : Int) := by decide
+      exact le_trans h_const h_lb
+    · have h_const : (2 ^ 15 : Int) ≤ (2 : Int) ^ (16 - 1) := by decide
+      exact lt_of_lt_of_le h_ub h_const
+  have h_val := Std.I16.wrapping_sub_val_eq a t
+  rw [h_val, h_bmod]
+
+/-- Helper: `(lift_fe_mont x).val.val = (i16_to_spec_fe_mont x).val`. -/
+private theorem lift_fe_mont_val_val (x : Std.I16) :
+    (lift_fe_mont x).val.val = (i16_to_spec_fe_mont x).val := by
+  unfold lift_fe_mont feOfZMod
+  show (BitVec.ofNat 16 (i16_to_spec_fe_mont x).val).toNat = (i16_to_spec_fe_mont x).val
+  rw [BitVec.toNat_ofNat]
+  have h_lt : (i16_to_spec_fe_mont x).val < 2 ^ 16 :=
+    Nat.lt_of_lt_of_le (ZMod.val_lt _) (by decide)
+  exact Nat.mod_eq_of_lt h_lt
+
+/-- Bridge lemma for the L0.4 Mont-domain output: from the legacy modq
+    form `r.val ≡ b.val * zeta.val * 169 (mod 3329)`, derive the FE-level
+    `lift_fe r = mul_pure (lift_fe b) (lift_fe_mont zeta)`.
+
+    Algebra: both sides are canonical FEs (left by `Canonical_lift_fe`,
+    right by `Canonical_mul_pure`). Equality reduces (via the canonical
+    round-trip `feOfZMod_zmodOfFE_of_canonical`) to a `ZMod 3329` equation
+    on their `zmodOfFE`-projections, closed by the legacy modq cast
+    `modq_eq_cast_zmod` plus `ring`. -/
+private theorem lift_fe_mul_pure_mont_eq
+    (b zeta r : Std.I16)
+    (h : libcrux_iot_ml_kem.Util.modq_eq r.val (b.val * zeta.val * 169) 3329) :
+    lift_fe r
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe b) (lift_fe_mont zeta) := by
+  -- LHS: lift_fe r = feOfZMod ((r.val : Int) : ZMod 3329).
+  have h_lhs : lift_fe r = feOfZMod (((r.val : Int)) : ZMod 3329) := by
+    unfold lift_fe i16_to_spec_fe_plain
+    rfl
+  -- RHS: mul_pure is canonical; reduce via round-trip.
+  set s : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (lift_fe b) (lift_fe_mont zeta) with hs_def
+  have h_canon : s.val.val < 3329 := by
+    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+      (lift_fe b) (lift_fe_mont zeta)
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at h_cs
+    exact h_cs
+  have h_round_trip : feOfZMod (zmodOfFE s) = s :=
+    feOfZMod_zmodOfFE_of_canonical s h_canon
+  -- zmodOfFE s = (b.val * zeta.val * 169 : ZMod 3329).
+  have h_zmod_s : zmodOfFE s = (((b.val * zeta.val * 169 : Int)) : ZMod 3329) := by
+    unfold zmodOfFE
+    rw [mul_pure_val_eq]
+    rw [ZMod.natCast_mod]
+    push_cast
+    have h_lb : ((lift_fe b).val.val : ZMod 3329) = (((b.val : Int)) : ZMod 3329) := by
+      rw [lift_fe_val_val b]; exact ZMod.natCast_zmod_val _
+    have h_lz : ((lift_fe_mont zeta).val.val : ZMod 3329)
+                  = (((zeta.val : Int)) : ZMod 3329) * 169 := by
+      rw [lift_fe_mont_val_val zeta, ZMod.natCast_zmod_val]
+      rw [i16_to_spec_fe_mont_unfold]
+    rw [h_lb, h_lz]
+    ring
+  -- Cast the modq hypothesis to a ZMod equality.
+  have h_zmod_eq : (((r.val : Int)) : ZMod 3329)
+                    = (((b.val * zeta.val * 169 : Int)) : ZMod 3329) :=
+    modq_eq_cast_zmod _ _ h
+  rw [h_lhs, ← h_round_trip, h_zmod_s, h_zmod_eq]
+
+/-- L2.1 — `ntt_step`: per-pair butterfly.
+
+    **Preconditions beyond locked statement**:
+    - `hne : i.val ≠ j.val` — mirrors L2 legacy `ntt_step_spec`. Without
+      this, the impl's two writes (`a[j] := a-t` then `a[i] := a+t`) at
+      the same index yield `a+t` while the spec would also yield `a+t`
+      (via `(a.set j (a-t)).set i (a+t)` with `i = j` → same), but the
+      lift-level reasoning bifurcates messily. Real callers in L2.2/3/4
+      all use distinct `i, j`.
+    - `hvec : ∀ k, k < 16 → (vec.elements.val[k]!).val.natAbs ≤ 29439` —
+      ensures the I16 wrapping_{add,sub} at indices `i, j` do not overflow.
+      The bound `29439 = 32767 - 3328` is the tightest that keeps
+      `|vec[i] ± t| ≤ 32767` when `|t| ≤ 3328` (L0.4 output bound).
+      Universal form (not just at `i, j`) for callers' convenience —
+      they typically carry a per-lane bound. -/
+@[spec high]
 theorem ntt_step_fc
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (zeta : Std.I16) (i j : Std.Usize)
     (hi : i.val < 16) (hj : j.val < 16)
-    (hzeta : zeta.val.natAbs ≤ 1664) :
+    (hne : i.val ≠ j.val)
+    (hzeta : zeta.val.natAbs ≤ 1664)
+    (hvec : ∀ k : Nat, k < 16 →
+      (vec.elements.val[k]!).val.natAbs ≤ 29439) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.ntt.ntt_step vec zeta i j
     ⦃ ⇓ r => ⌜ lift_chunk r
                 = Spec.chunk_ntt_step_pure (lift_chunk vec) (lift_fe_mont zeta) i j ⌝ ⦄ := by
-  sorry
+  -- Step 0: vector length facts.
+  have h_vec_len : vec.elements.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+  have h_vec_val_len : vec.elements.val.length = 16 := h_vec_len
+  -- Step 1: read vec[j].
+  have h_idx_j :
+      Aeneas.Std.Array.index_usize vec.elements j = .ok (vec.elements.val[j.val]!) :=
+    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements j
+      (by rw [h_vec_len]; exact hj)
+  -- Step 2: classify ζ.
+  have h_classify : libcrux_secrets.traits.Classify.Blanket.classify zeta = .ok zeta :=
+    ntt_step_fc.classify_ok_eq zeta
+  -- Step 3: L0.4 keystone on (vec[j], ζ).
+  set b : Std.I16 := vec.elements.val[j.val]! with hb_def
+  have h_b_bnd_29439 : b.val.natAbs ≤ 29439 := hvec j.val hj
+  have h_b_bnd : b.val.natAbs ≤ 32767 := by
+    have := h_b_bnd_29439
+    omega
+  obtain ⟨t, h_t_eq_ok, h_t_bd, h_t_lift⟩ :=
+    triple_exists_ok_fc (montgomery_multiply_fe_by_fer_fc b zeta h_b_bnd hzeta)
+  -- Recover the modq form via the legacy spec (needed for `lift_fe_mul_pure_mont_eq`).
+  obtain ⟨t', h_t'_eq, h_t'_bnd_tight, h_t_modq⟩ :=
+    triple_exists_ok_fc
+      (libcrux_iot_ml_kem.Equivalence.montgomery_multiply_fe_by_fer_spec b zeta hzeta)
+  -- t' = t (same impl call, both `.ok`).
+  have h_tt' : t = t' := by
+    have : (Result.ok t : Result _) = Result.ok t' := by rw [← h_t_eq_ok, h_t'_eq]
+    cases this; rfl
+  -- Step 4: read vec[i].
+  have h_idx_i :
+      Aeneas.Std.Array.index_usize vec.elements i = .ok (vec.elements.val[i.val]!) :=
+    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements i
+      (by rw [h_vec_len]; exact hi)
+  set a : Std.I16 := vec.elements.val[i.val]! with ha_def
+  have h_a_bnd : a.val.natAbs ≤ 29439 := hvec i.val hi
+  -- Step 5,6: wrapping_sub / wrapping_add.
+  have h_sub_eq :
+      core_models.num.I16.wrapping_sub a t = .ok (Std.I16.wrapping_sub a t) :=
+    ntt_step_fc.cm_wrapping_sub_ok_eq a t
+  have h_add_eq :
+      core_models.num.I16.wrapping_add a t = .ok (Std.I16.wrapping_add a t) :=
+    ntt_step_fc.cm_wrapping_add_ok_eq a t
+  set a_minus_t : Std.I16 := Std.I16.wrapping_sub a t with hamt_def
+  set a_plus_t  : Std.I16 := Std.I16.wrapping_add a t with hapt_def
+  have h_t_bd' : t.val.natAbs ≤ 3328 := by
+    -- L0.4-FC's locked-post bound is ≤ 3328 + 1665 = 4993; the legacy
+    -- is the tighter ≤ 3328 (from `montgomery_multiply_fe_by_fer_spec`).
+    rw [h_tt']; exact h_t'_bnd_tight
+  have h_amt_val : a_minus_t.val = a.val - t.val :=
+    ntt_step_fc.sub_no_overflow_value a t 29439 h_a_bnd h_t_bd' (by decide)
+  have h_apt_val : a_plus_t.val = a.val + t.val :=
+    ntt_step_fc.add_no_overflow_value a t 29439 h_a_bnd h_t_bd' (by decide)
+  -- Step 7,8: writes.
+  have h_upd_j :
+      Aeneas.Std.Array.update vec.elements j a_minus_t
+        = .ok (vec.elements.set j a_minus_t) :=
+    libcrux_iot_ml_kem.Util.array_update_ok_eq vec.elements j a_minus_t
+      (by rw [h_vec_len]; exact hj)
+  have h_upd_i :
+      Aeneas.Std.Array.update (vec.elements.set j a_minus_t) i a_plus_t
+        = .ok ((vec.elements.set j a_minus_t).set i a_plus_t) := by
+    have h_len : (vec.elements.set j a_minus_t).length = 16 := by
+      rw [Std.Array.set_length]; exact h_vec_len
+    exact libcrux_iot_ml_kem.Util.array_update_ok_eq _ i a_plus_t
+      (by rw [h_len]; exact hi)
+  -- Compose: derive `.ok final_vec` form.
+  set final_elements : Std.Array Std.I16 16#usize :=
+    (vec.elements.set j a_minus_t).set i a_plus_t with hfe_def
+  set final_vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+    { elements := final_elements } with hfv_def
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.ntt_step vec zeta i j = .ok final_vec := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.ntt_step
+    rw [h_idx_j]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_classify]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [← h_tt'] at h_t'_eq
+    rw [h_t'_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_idx_i]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_sub_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_add_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_upd_j]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_upd_i]; simp only [Aeneas.Std.bind_tc_ok]; rfl
+  apply triple_of_ok_fc h_body
+  -- Now: prove the FC chunk equation.
+  -- Set up the abbreviations.
+  set s_t_fe : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (lift_fe b) (lift_fe_mont zeta) with hs_t_fe_def
+  set s_minus : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+      (lift_fe a) s_t_fe with hs_minus_def
+  set s_plus : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      (lift_fe a) s_t_fe with hs_plus_def
+  -- Reduce both sides to underlying lists via Subtype.ext.
+  unfold lift_chunk Spec.chunk_ntt_step_pure
+  apply Subtype.ext
+  -- Both `lift_chunk` and `Spec.chunk_ntt_step_pure` produce Std.Array FE 16.
+  -- After Subtype.ext the goal is on `.val : List FE`.
+  -- Reduce: `(Std.Array.make 16 L _).val = L` and `Std.Array.set v i x .val = v.val.set i.val x`.
+  simp only [Std.Array.set_val_eq]
+  -- The Std.Array.make .val reduces by rfl (it's `⟨L, _⟩.val = L`).
+  -- And `.val[k]!` on a `Std.Array.make _ L _` equals `L[k]!`.
+  -- LHS: final_vec.elements.val.map lift_fe (final_vec.elements is set-set).
+  show ((vec.elements.val.set j.val a_minus_t).set i.val a_plus_t).map lift_fe
+      = ((vec.elements.val.map lift_fe).set j.val
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+            ((vec.elements.val.map lift_fe)[i.val]!)
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              ((vec.elements.val.map lift_fe)[j.val]!) (lift_fe_mont zeta)))).set i.val
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          ((vec.elements.val.map lift_fe)[i.val]!)
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            ((vec.elements.val.map lift_fe)[j.val]!) (lift_fe_mont zeta)))
+  -- Bridge: `(vec.elements.val.map lift_fe)[k]! = lift_fe (vec.elements.val[k]!)` when k < 16.
+  have h_map_lift_at (k : Nat) (hk : k < 16) :
+      (vec.elements.val.map lift_fe)[k]! = lift_fe (vec.elements.val[k]!) := by
+    have hk_lhs : k < (vec.elements.val.map lift_fe).length := by
+      simp [List.length_map, h_vec_val_len]; exact hk
+    rw [getElem!_pos (vec.elements.val.map lift_fe) k hk_lhs]
+    rw [List.getElem_map]
+    have hk_vec : k < vec.elements.val.length := by rw [h_vec_val_len]; exact hk
+    rw [getElem!_pos vec.elements.val k hk_vec]
+  rw [h_map_lift_at i.val hi, h_map_lift_at j.val hj]
+  -- The RHS s_t_fe / s_plus / s_minus values match:
+  --   sub_pure (lift_fe a) (mul_pure (lift_fe b) (lift_fe_mont zeta)) = s_minus
+  --   add_pure (lift_fe a) (mul_pure (lift_fe b) (lift_fe_mont zeta)) = s_plus
+  change ((vec.elements.val.set j.val a_minus_t).set i.val a_plus_t).map lift_fe
+      = ((vec.elements.val.map lift_fe).set j.val s_minus).set i.val s_plus
+  -- Per-index proof.
+  apply List.ext_getElem
+  · simp [List.length_map, List.length_set]
+  · intro k hk1 hk2
+    have hk : k < 16 := by
+      have hk' : k < (((vec.elements.val.set j.val a_minus_t).set i.val a_plus_t).map lift_fe).length := hk1
+      simp [List.length_map, List.length_set, h_vec_val_len] at hk'
+      exact hk'
+    rw [List.getElem_map]
+    by_cases h_eq_i : k = i.val
+    · -- k = i.val: r[i] = a_plus_t, RHS = s_plus.
+      subst h_eq_i
+      rw [List.getElem_set_self]
+      rw [List.getElem_set_self]
+      -- Goal: lift_fe a_plus_t = s_plus
+      show lift_fe a_plus_t = s_plus
+      have h_step1 :
+          lift_fe a_plus_t
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (lift_fe a) (lift_fe t) :=
+        lift_fe_add_pure_eq a t a_plus_t h_apt_val
+      rw [h_step1]
+      show libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              (lift_fe a) (lift_fe t) = s_plus
+      simp only [hs_plus_def, hs_t_fe_def]
+      congr 1
+      rw [h_tt']
+      exact lift_fe_mul_pure_mont_eq b zeta t' h_t_modq
+    · -- k ≠ i.val.
+      rw [List.getElem_set_ne (Ne.symm h_eq_i)]
+      rw [List.getElem_set_ne (Ne.symm h_eq_i)]
+      by_cases h_eq_j : k = j.val
+      · -- k = j.val.
+        subst h_eq_j
+        rw [List.getElem_set_self]
+        rw [List.getElem_set_self]
+        show lift_fe a_minus_t = s_minus
+        have h_step1 :
+            lift_fe a_minus_t
+              = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+                  (lift_fe a) (lift_fe t) :=
+          lift_fe_sub_pure_eq a t a_minus_t h_amt_val
+        rw [h_step1]
+        show libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+                (lift_fe a) (lift_fe t) = s_minus
+        simp only [hs_minus_def, hs_t_fe_def]
+        congr 1
+        rw [h_tt']
+        exact lift_fe_mul_pure_mont_eq b zeta t' h_t_modq
+      · -- k ≠ i.val, k ≠ j.val: r[k] = vec[k] under lift_fe.
+        rw [List.getElem_set_ne (Ne.symm h_eq_j)]
+        rw [List.getElem_set_ne (Ne.symm h_eq_j)]
+        rw [List.getElem_map]
 
 /-- L2.2 — `ntt_layer_1_step`: 8 butterfly pairs with 4 distinct zetas. -/
 @[spec]
