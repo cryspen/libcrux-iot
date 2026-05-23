@@ -718,6 +718,41 @@ generic plumbing already passes its tests in the SHA-3 tree.
       Use `@[grind =]` for defs that appear by name in a commute LHS.
 
     `grind` perf cost is negligible (+0.1s on a 6.0s warm baseline).
+
+    ## §X.3 Strong post-conditions — no falling back to bounds
+
+    Every Triple post must express **functional content** at the
+    strongest shape that's reachable. Bound-only posts (`natAbs ≤ N`)
+    are acceptable ONLY as an intermediate state for closed-and-pending-
+    upgrade Triples. **New Triples and upgrade-pass Triples MUST aim
+    for equality-form posts** referencing `bit_<op>` / `Spec.<op>`,
+    not bounds alone.
+
+    Concretely, every dispatch brief for a new Triple or for an
+    upgrade-pass Triple must:
+
+    1. State the equality clause as the primary post (e.g.
+       `to_spec_poly (impl_op a b) = spec_op (to_spec_poly a) (to_spec_poly b)`).
+    2. Retain the bound clause as a conjunct only if needed for
+       downstream safety (typically in BV/i16 space, while the
+       equality is in the mediated MontPoly / ZMod 3329 view).
+    3. If the equality is unreachable in the dispatch budget, **stop
+       and report**. Do NOT silently weaken the post to bound-only.
+       The orchestrator can then decide whether to extend the budget,
+       add a missing Util helper, or stage the work.
+
+    Why: the campaign's bound-only L0-L3.5 work was a deliberate
+    sequence (close range/safety first, upgrade later), but the
+    "later" upgrade pass (Phase 4 of the master plan) is the
+    correctness payload. Dispatches that opportunistically drop the
+    equality clause to "make the proof close" defeat the entire
+    purpose of the upgrade campaign.
+
+    Acceptable bound-only Triples (grandfathered): L0.1-4, L1.1-10,
+    L2.1-7, L3.1-5 — these are queued for Phase 4 upgrade. Any new
+    closure (Phase 1.3 L3.6, Phase 1.4 L3.7, Phase 2 L2.8, Phase 5
+    L3.8/L6.3, and EVERY M.2/M.4 lemma) must be equality-form from
+    day one.
 -/
 
 /-! ============================================================
