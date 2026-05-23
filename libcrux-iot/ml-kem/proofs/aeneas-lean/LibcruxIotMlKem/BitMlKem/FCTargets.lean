@@ -55,6 +55,7 @@
 import LibcruxIotMlKem.BitMlKem.Spec
 import LibcruxIotMlKem.BitMlKem.SpecPure
 import LibcruxIotMlKem.BitMlKem.AlgEquiv
+import LibcruxIotMlKem.Util.BvMasks
 import LibcruxIotMlKem.Extraction.Funs
 import HacspecMlKem.Extraction.Funs
 
@@ -398,16 +399,80 @@ noncomputable def Spec.poly_reducing_from_i32_array_pure
     Each post pairs the existing bounds conjunct (load-bearing for
     callers) with the FC equation against the spec-level pure op. -/
 
+/-- The Triple `⦃True⦄ x ⦃⇓ r => ⌜P r⌝⦄` closer for `x = .ok v`.
+    Lifts a pure-Prop fact about the value into a Triple post.
+    Mirror of SKILL §13.5 helper, scoped to this file. -/
+private theorem triple_of_ok_fc {α : Type} {x : Result α} {v : α}
+    {P : α → Prop} (hx : x = .ok v) (hp : P v) :
+    ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
+  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+
+/-- Extract the `.ok` witness from a true-pre Triple.
+    Mirror of SKILL §13.5 helper, scoped to this file. -/
+private theorem triple_exists_ok_fc {α : Type} {x : Result α} {P : α → Prop}
+    (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄) :
+    ∃ v, x = .ok v ∧ P v := by
+  match hx : x with
+  | .ok v => exact ⟨v, rfl, (by subst hx; simpa [Std.Do.Triple, WP.wp] using h)⟩
+  | .fail _ => exact absurd h (by simp [Std.Do.Triple, WP.wp])
+  | .div => exact absurd h (by simp [Std.Do.Triple, WP.wp])
+
+/-! ### L0.1 — `get_n_least_significant_bits`.
+    Impl computes `value & ((1 <<< n) - 1)`; the spec
+    `Spec.get_n_least_significant_bits_pure` is precisely that BV-mask
+    expression (see §0.5 above). The post-shape is `bounds ∧ r = spec`.
+
+    Proof sketch:
+    1. Pure-projection side lemma `get_n_least_significant_bits_eq_ok_fc`
+       reduces the impl `do`-block to `.ok (Spec.<…>_pure n value)` by
+       `unfold ; simp only [shift_left_lemmas, wrapping_sub_u32, bind_tc_ok] ; rfl`.
+       The precondition `n.val ≤ 16` discharges the `n < 32` shift bound.
+    2. Apply `triple_of_ok_fc` with the side lemma to discharge the
+       monadic shell.
+    3. The FC equality is `rfl` (the spec body IS the mask expression).
+    4. The bound `r.val < 2^n.val` reduces to
+       `(value.bv &&& mask).toNat < 2^n.val` via `BitVec.toNat_and` +
+       `Util.mask_pow2_minus_one_toNat` + `Nat.and_le_right` + `omega`. -/
+
+/-- Pure-projection side lemma for `get_n_least_significant_bits`.
+    Pins the impl's `.ok` value to `Spec.get_n_least_significant_bits_pure`. -/
+private theorem get_n_least_significant_bits_eq_ok_fc
+    (n : Std.U8) (value : Std.U32) (hn : n.val ≤ 16) :
+    libcrux_iot_ml_kem.vector.portable.arithmetic.get_n_least_significant_bits n value
+      = .ok (Spec.get_n_least_significant_bits_pure n value) := by
+  unfold libcrux_iot_ml_kem.vector.portable.arithmetic.get_n_least_significant_bits
+  unfold Spec.get_n_least_significant_bits_pure
+  have hn_lt : n.val < Aeneas.Std.UScalarTy.U32.numBits := by
+    have h_red : (Aeneas.Std.UScalarTy.U32.numBits : Nat) = 32 := by decide
+    rw [h_red]; omega
+  simp only [HShiftLeft.hShiftLeft, Aeneas.Std.UScalar.shiftLeft_UScalar,
+             Aeneas.Std.UScalar.shiftLeft, hn_lt, reduceIte,
+             core_models.num.U32.wrapping_sub,
+             rust_primitives.arithmetic.wrapping_sub_u32,
+             Aeneas.Std.bind_tc_ok]
+  rfl
+
 /-- L0.1 — `get_n_least_significant_bits`.
     Spec: bitwise AND with `(1 << n) - 1`. -/
-@[spec]
+@[spec high]
 theorem get_n_least_significant_bits_fc
     (n : Std.U8) (value : Std.U32) (hn : n.val ≤ 16) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.get_n_least_significant_bits n value
     ⦃ ⇓ r => ⌜ r.val < 2 ^ n.val
                 ∧ r = Spec.get_n_least_significant_bits_pure n value ⌝ ⦄ := by
-  sorry
+  apply triple_of_ok_fc (v := Spec.get_n_least_significant_bits_pure n value)
+    (get_n_least_significant_bits_eq_ok_fc n value hn)
+  refine ⟨?_, rfl⟩
+  unfold Spec.get_n_least_significant_bits_pure
+  show (value.bv &&& ((1#32 <<< n.val) - 1#32)).toNat < 2 ^ n.val
+  rw [BitVec.toNat_and]
+  have h_mask_toNat : ((1#32 <<< n.val) - 1#32).toNat = 2 ^ n.val - 1 :=
+    libcrux_iot_ml_kem.Util.mask_pow2_minus_one_toNat n.val hn
+  rw [h_mask_toNat]
+  have h_and_le : value.bv.toNat &&& (2 ^ n.val - 1) ≤ 2 ^ n.val - 1 := Nat.and_le_right
+  have h_pos : 0 < (2 : Nat) ^ n.val := Nat.two_pow_pos _
+  omega
 
 /-- L0.2 — `barrett_reduce_element`.
     Spec: canonical residue mod q via `FieldElement.new (x % q)`. -/
