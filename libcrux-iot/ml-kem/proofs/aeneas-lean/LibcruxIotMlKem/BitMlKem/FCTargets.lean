@@ -8269,13 +8269,26 @@ theorem ntt_at_layer_4_plus_portable_fc
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L3_4_plus_outer_FC.step_post] using hP
 
-/-- L3.3 — `ntt_binomially_sampled_ring_element` driver (5 layer
-    composition + barrett reduce). Projects on the poly component. -/
+/-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
+    composition + barrett reduce). Projects on the poly component.
+
+    Input bound `≤ 3`: from the upstream binomial sampler with η₁=2,
+    which produces samples in `[-2, 2]`. We use `≤ 3` (one slack)
+    to match `ntt_at_layer_7_spec`'s legacy bound precondition.
+
+    Implementation chain: dedicated `ntt_at_layer_7` → 3× `ntt_at_layer_4_plus`
+    (layers 6, 5, 4) → `ntt_at_layer_3` → `ntt_at_layer_2` →
+    `ntt_at_layer_1` → `poly_barrett_reduce`. Each layer's FC equation
+    comes from FCTargets `ntt_at_layer_X_portable_fc`; the per-layer
+    output bound comes from legacy
+    `libcrux_iot_ml_kem.Equivalence.ntt_at_layer_X_spec(_B)`. -/
 @[spec]
 theorem ntt_binomially_sampled_ring_element_fc
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_binomially_sampled_ring_element
       (vectortraitsOperationsInst := portable_ops_inst) re scratch
@@ -8295,7 +8308,9 @@ theorem ntt_vector_u_fc
     (VECTOR_U_COMPRESSION_FACTOR : Std.Usize)
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3328) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_vector_u
       VECTOR_U_COMPRESSION_FACTOR
