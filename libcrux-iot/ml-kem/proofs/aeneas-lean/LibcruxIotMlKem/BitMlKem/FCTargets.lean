@@ -722,6 +722,27 @@ noncomputable def Spec.poly_reducing_from_i32_array_pure
     (array : Slice Std.I32) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize := sorry
 
+/-- Pure projection of `polynomial.subtract_reduce`. The hacspec spec
+    computes `self - b`, but the impl fuses a Mont-multiply on b by the
+    constant `1441#i16` BEFORE the subtract. Per the C.4 commute
+    `1441 · R⁻¹ ≡ 1441 · 169 ≡ 512 (mod q)`, this is equivalent in
+    ZMod q to computing `self - 512 · b` pointwise, NOT `self - b`.
+
+    Hence we model the impl directly: per lane `i ∈ 0..256`,
+    `result[i] := self[i] - b[i] * lift_fe_mont (1441#i16)`. Since
+    `lift_fe_mont` already absorbs the `R⁻¹` factor on the Mont-domain
+    multiplication output, this matches the impl's `montgomery_multiply_by_constant
+    b 1441` + `sub` + `negate` + `barrett` chain, with the negate-then-barrett
+    being identity on the ZMod q lift. -/
+noncomputable def Spec.subtract_reduce_pure
+    (self b : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Std.Array.make 256#usize ((List.range 256).map (fun i =>
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure (self.val[i]!)
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (b.val[i]!) (lift_fe_mont (1441#i16)))))
+    (by simp)
+
 -- `Spec.sample_matrix_A_pure` is declared above (with `lift_matrix_from_seed`).
 
 /-! ## §L0 — FE scalar primitives (4 theorems).
@@ -8128,9 +8149,13 @@ theorem poly_barrett_reduce_fc
   sorry
 
 
-/-- L6.2 — `subtract_reduce`: pointwise `(self - b · (R/128))` then
-    negate then barrett.
-    Spec target: hacspec `polynomial.subtract_reduce`. -/
+/-- L6.2 — `subtract_reduce`: per-chunk `negate(mont_mul(b, 1441) - self)`
+    then barrett. Equivalent in ZMod q to pointwise `self - 512 · b`
+    (C.4 commute: `1441 · R⁻¹ ≡ 512 mod q`), NOT to hacspec's `self - b`.
+
+    Spec target: custom `Spec.subtract_reduce_pure` modeling the
+    fused-Mont impl behavior (see §0.5). Mirrors the L6.4/5/6
+    `Spec.add_*_reduce_pure` pattern. -/
 @[spec]
 theorem subtract_reduce_fc
     (self b : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -8138,8 +8163,8 @@ theorem subtract_reduce_fc
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.subtract_reduce
       (vectortraitsOperationsInst := portable_ops_inst) self b
-    ⦃ ⇓ p => ⌜ hacspec_ml_kem.polynomial.subtract_reduce (lift_poly self) (lift_poly b)
-                = .ok (lift_poly p) ⌝ ⦄ := by
+    ⦃ ⇓ p => ⌜ lift_poly p
+                = Spec.subtract_reduce_pure (lift_poly self) (lift_poly b) ⌝ ⦄ := by
   sorry
 
 /-! ### L6.3 — `add_to_ring_element` (DOCUMENTED, NO STANDALONE FC).
