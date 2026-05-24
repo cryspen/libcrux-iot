@@ -4877,6 +4877,113 @@ theorem ntt_at_layer_2_portable_fc
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L3_2_FC.step_post] using hP
 
+/-! ### L3.3'.A — Loop scaffolding for `ntt_at_layer_3_portable_fc`.
+
+    Strengthened FC invariant for the 16-iter driver loop. Each iteration:
+      (1) advances `zeta_i` by 1 (1 zeta lookup per chunk: position
+          `zeta_i + k + 1`),
+      (2) records the FC equation `lift_chunk acc.2[j] =
+          Spec.chunk_ntt_layer_3_step_pure (lift_chunk re.coefs[j])
+          (Spec.zeta_at (zeta_i + j + 1))` for `j < k.val`,
+      (3) preserves `acc.2.coefficients[j] = re.coefficients[j]` for `j ≥ k.val`.
+
+    The step lemma chains the body's 4 sub-ops (zeta_i+1, index_mut, 1× zeta,
+    ntt_layer_3_step) using `polynomial.zeta_fc` and `ntt_layer_3_step_fc`. -/
+
+namespace L3_3_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+/-- Local `usize_add_ok_eq` helper (mirrors `L3_2_FC.usize_add_ok_eq`). -/
+private theorem usize_add_ok_eq (x y : Std.Usize)
+    (h_max : x.val + y.val ≤ Std.Usize.max) :
+    ∃ z : Std.Usize, (x + y : Result Std.Usize) = .ok z ∧ z.val = x.val + y.val := by
+  have hT := Std.Usize.add_spec h_max
+  obtain ⟨z, h_eq, h_v⟩ := Std.WP.spec_imp_exists hT
+  exact ⟨z, h_eq, h_v⟩
+
+/-- Step-local accumulator. -/
+abbrev Acc := Std.Usize ×
+  libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector
+
+/-- FC loop invariant for `ntt_at_layer_3_portable_fc`. -/
+def inv
+    (zeta_i_0 : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    Std.Usize → Acc → Result Prop :=
+  fun k acc => pure (
+    acc.1.val = zeta_i_0.val + k.val
+    ∧ (∀ j : Nat, j < k.val →
+        lift_chunk (acc.2.coefficients.val[j]!)
+          = Spec.chunk_ntt_layer_3_step_pure
+              (lift_chunk (re.coefficients.val[j]!))
+              (Spec.zeta_at (zeta_i_0.val + j + 1)))
+    ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
+        acc.2.coefficients.val[j]! = re.coefficients.val[j]!))
+
+/-- Step-post for `loop_range_spec_usize`. -/
+def step_post
+    (zeta_i_0 : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × Acc) Acc) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (16#usize : Std.Usize).val ∧ iter'.«end» = 16#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (inv zeta_i_0 re iter'.start acc').holds
+  | .done y => (inv zeta_i_0 re 16#usize y).holds
+
+end L3_3_FC
+
+set_option maxHeartbeats 16000000 in
+/-- Per-iteration FC step lemma for layer 3. Given a valid loop state
+    `(acc, k)` with `k.val < 16`, advances `zeta_i` by 1 and records the
+    FC equation for chunk `k.val`, leaving chunks `> k.val` unchanged. -/
+private theorem ntt_at_layer_3_step_lemma_fc
+    (zeta_i_0 : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_pre : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 29439)
+    (h_zeta_bnd : zeta_i_0.val + 16 ≤ 127)
+    (acc : L3_3_FC.Acc)
+    (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
+    (h_inv : (L3_3_FC.inv zeta_i_0 re k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
+      (vectortraitsOperationsInst := portable_ops_inst)
+      { start := k, «end» := 16#usize } acc.1 acc.2
+    ⦃ ⇓ r => ⌜ L3_3_FC.step_post zeta_i_0 re k r ⌝ ⦄ := by
+  sorry
+
+set_option maxHeartbeats 16000000 in
+/-- L3.3' — `ntt_at_layer_3` PortableVector-specialised FC equation.
+    The impl returns `(zeta_i_after, re_after)`; we project on `re_after`.
+
+    **Preconditions** (load-bearing, beyond the locked True-pre form):
+    - `h_bnd` : per-lane input bound 29439 across all 16 chunks × 16 lanes.
+    - `h_zeta : zeta_i.val + 16 ≤ 127` — ensures all zeta indices
+      `zeta_i+1 .. zeta_i+16` are < 128 (OOB check on ZETAS table). -/
+@[spec high]
+theorem ntt_at_layer_3_portable_fc
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (initial_bound : Std.Usize)
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 29439)
+    (h_zeta : zeta_i.val + 16 ≤ 127) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_3
+      (vectortraitsOperationsInst := portable_ops_inst) zeta_i re initial_bound
+    ⦃ ⇓ p => ⌜ lift_poly p.2 = Spec.ntt_layer_3_pure (lift_poly re) zeta_i ⌝ ⦄ := by
+  sorry
+
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (5 layer
     composition + barrett reduce). Projects on the poly component. -/
 @[spec]
