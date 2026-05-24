@@ -7760,6 +7760,7 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma_fc
         exact h_nt round' this j' hj'
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
 
+set_option maxHeartbeats 16000000 in
 /-- L3.4_plus' — `ntt_at_layer_4_plus` PortableVector-specialised FC equation,
     parameterized over `layer ∈ {4, 5, 6}`.
 
@@ -7773,7 +7774,28 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma_fc
     - `h_layer` : layer in 4..6 (validity of the nested-loop shape).
     - `h_bnd` : per-lane input bound 29439.
     - `h_zeta` : zeta_i.val + (128 >>> layer) ≤ 127 (zeta indices within
-      ZETAS table 0..127). -/
+      ZETAS table 0..127).
+
+    Proof sketch:
+    1. Unfold `ntt_at_layer_4_plus` driver. Resolve the three impl constants
+       `step ← 1#usize <<< layer`, `step_vec ← step / 16#usize`,
+       `i_end ← 128#usize >>> layer` to specific Std.Usize values via
+       `Aeneas.Std.UScalar.ShiftLeft_spec`, `UScalar.div_spec`,
+       `UScalar.ShiftRight_spec` (all sound for layer ∈ {4,5,6}).
+    2. Unfold `ntt_at_layer_4_plus_loop0` and apply
+       `loop_range_spec_usize` with invariant `L3_4_plus_outer_FC.inv`
+       (zeta-thread + per-round a/b butterflies + untouched).
+    3. Initial inv at k=0: zeta-thread trivial, no round' < 0 absurd,
+       chunks unchanged trivially.
+    4. Post entailment at k=i_end: build chunks_arr matching Spec layout
+       (`Spec.chunk_at_layer_4_plus_pure chunks0 layer zeta_fn c` per c).
+       For each c < 16, case-split on `c % (2*step_vec) < step_vec`:
+         - a-side: group := c/(2*step_vec), j' := offset. Use h_acc_a.
+         - b-side: group := c/(2*step_vec), j' := offset - step_vec.
+           Use h_acc_b. Reduce inner Spec lookups via chunk_at_lift_poly_fc.
+       Apply `flatten_chunks_eq_lift_poly_fc`.
+    5. Step dispatch: apply `ntt_at_layer_4_plus_outer_step_lemma_fc` and
+       unwrap step_post via .cont / .done branches. -/
 @[spec high]
 theorem ntt_at_layer_4_plus_portable_fc
     (zeta_i : Std.Usize)
@@ -7791,7 +7813,276 @@ theorem ntt_at_layer_4_plus_portable_fc
       (vectortraitsOperationsInst := portable_ops_inst)
       zeta_i re layer scratch initial_bound
     ⦃ ⇓ p => ⌜ lift_poly p.2.1 = Spec.ntt_at_layer_4_plus_pure (lift_poly re) zeta_i layer ⌝ ⦄ := by
-  sorry
+  -- Layer bounds.
+  obtain ⟨h_layer_lo, h_layer_hi⟩ := h_layer
+  unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus
+  -- Step 1: resolve `step ← 1#usize <<< layer`.
+  -- For layer ∈ {4,5,6}, layer.val < 64 = Usize.numBits, so shift is OK and
+  -- the value is (1 <<< layer.val) % 2^64 = 1 <<< layer.val.
+  have h_usize_bits : (Aeneas.Std.UScalarTy.Usize.numBits : Nat) = System.Platform.numBits := rfl
+  have h_layer_bits : layer.val < Aeneas.Std.UScalarTy.Usize.numBits := by
+    have h_p := System.Platform.numBits_eq
+    rcases h_p with h32 | h64
+    · rw [h_usize_bits, h32]; omega
+    · rw [h_usize_bits, h64]; omega
+  have h_size_eq : Aeneas.Std.UScalar.size Aeneas.Std.UScalarTy.Usize = 2 ^ System.Platform.numBits := by
+    simp [Std.Usize.size, Usize.numBits]
+  -- Extract step via spec_imp_exists; we want step.val = 1 <<< layer.val.
+  have h_one_shl_pow : ((1#usize : Std.Usize).val <<< layer.val) < 2 ^ System.Platform.numBits := by
+    have h_one_eq : (1#usize : Std.Usize).val = 1 := rfl
+    rw [h_one_eq, Nat.shiftLeft_eq, Nat.one_mul]
+    have h_p := System.Platform.numBits_eq
+    rcases h_p with h32 | h64
+    · rw [h32]; exact Nat.pow_lt_pow_right (by decide) (by omega)
+    · rw [h64]; exact Nat.pow_lt_pow_right (by decide) (by omega)
+  have h_step_ex : ∃ step : Std.Usize,
+      ((1#usize : Std.Usize) <<< layer : Result Std.Usize) = .ok step
+      ∧ step.val = 1 <<< layer.val := by
+    have hT := Aeneas.Std.UScalar.ShiftLeft_spec (1#usize : Std.Usize) layer
+      (Aeneas.Std.UScalar.size Aeneas.Std.UScalarTy.Usize) h_layer_bits rfl
+    obtain ⟨z, h_eq, h_v_mod, _h_bv⟩ := Std.WP.spec_imp_exists hT
+    refine ⟨z, h_eq, ?_⟩
+    have h_one_eq : (1#usize : Std.Usize).val = 1 := rfl
+    rw [h_v_mod, h_one_eq, h_size_eq, Nat.mod_eq_of_lt]
+    rw [h_one_eq] at h_one_shl_pow
+    exact h_one_shl_pow
+  obtain ⟨step, h_step_eq, h_step_val⟩ := h_step_ex
+  rw [h_step_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  -- Step 2: resolve `step_vec ← step / 16#usize`.
+  have h_16_nz : ((16#usize : Std.Usize).val : Nat) ≠ 0 := by decide
+  have h_step_pos : 1 ≤ step.val := by
+    rw [h_step_val, Nat.shiftLeft_eq, Nat.one_mul]
+    exact Nat.one_le_pow _ _ (by decide : (0:Nat) < 2)
+  obtain ⟨step_vec, h_step_vec_eq, h_step_vec_val⟩ :=
+    Aeneas.Std.UScalar.div_spec step h_16_nz
+  rw [h_step_vec_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  -- Compute step_vec.val.
+  have h_step_vec_arith : step_vec.val = (1 <<< layer.val) / 16 := by
+    have h_16_eq : (16#usize : Std.Usize).val = 16 := rfl
+    rw [h_step_vec_val, h_step_val, h_16_eq]
+  -- Step 3: resolve `i ← 128#usize >>> layer`.
+  obtain ⟨i_end, h_i_end_eq, h_i_end_val, _h_i_end_bv⟩ :=
+    Std.WP.spec_imp_exists (Aeneas.Std.UScalar.ShiftRight_spec (128#usize : Std.Usize) layer
+      h_layer_bits)
+  rw [h_i_end_eq]
+  have h_i_end_arith : i_end.val = 128 >>> layer.val := h_i_end_val
+  -- Step 4: positivity & dvd facts uniformly across layer ∈ {4,5,6}.
+  have h_step_vec_pos : 1 ≤ step_vec.val := by
+    rw [h_step_vec_arith]
+    interval_cases layer.val <;> decide
+  have h_step_vec_dvd : 2 * i_end.val * step_vec.val = 16 := by
+    rw [h_i_end_arith, h_step_vec_arith]
+    interval_cases layer.val <;> decide
+  have h_i_end_pos : 1 ≤ i_end.val := by
+    rw [h_i_end_arith]
+    interval_cases layer.val <;> decide
+  have h_zeta_bnd : zeta_i.val + i_end.val ≤ 127 := by
+    rw [h_i_end_arith]; exact h_zeta
+  -- Step 5: unfold the outer loop and apply loop_range_spec_usize.
+  unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0
+  apply Std.Do.Triple.of_entails_right _
+    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+      (fun (iter1, acc1) =>
+        libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst) step_vec
+          iter1 acc1.1 acc1.2.1 acc1.2.2)
+      (β := L3_4_plus_outer_FC.Acc)
+      (zeta_i, re, scratch)
+      0#usize i_end
+      (L3_4_plus_outer_FC.inv re zeta_i step_vec)
+      (by
+        have h_zero : (0#usize : Std.Usize).val = 0 := rfl
+        omega)
+      (by
+        -- Initial inv at k=0.
+        show (pure _ : Result Prop).holds
+        simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
+        intro _
+        refine ⟨?_, ?_, ?_, ?_⟩
+        · -- zeta-thread: zeta_i.val = zeta_i.val + 0.
+          show zeta_i.val = zeta_i.val + (0#usize : Std.Usize).val
+          show zeta_i.val = zeta_i.val + 0
+          omega
+        · -- No round' < 0 absurd.
+          intro round' hround' _ _
+          exact absurd hround' (Nat.not_lt_zero round')
+        · intro round' hround' _ _
+          exact absurd hround' (Nat.not_lt_zero round')
+        · -- All chunks unchanged trivially.
+          intro _ _ _; trivial)
+      ?_)
+  · -- Post entailment: at k = i_end, build chunks_arr matching Spec and apply
+    -- flatten_chunks_eq_lift_poly_fc.
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    have h_inv_holds : (L3_4_plus_outer_FC.inv re zeta_i step_vec i_end r).holds := by
+      simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
+    have h_inv :
+        r.1.val = zeta_i.val + i_end.val
+        ∧ (∀ round' : Nat, round' < i_end.val →
+            ∀ j' : Nat, j' < step_vec.val →
+              lift_chunk (r.2.1.coefficients.val[2 * round' * step_vec.val + j']!)
+                = Spec.chunk_pair_butterfly_a_pure
+                    (lift_chunk (re.coefficients.val[2 * round' * step_vec.val + j']!))
+                    (lift_chunk (re.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!))
+                    (Spec.zeta_at (zeta_i.val + round' + 1)))
+        ∧ (∀ round' : Nat, round' < i_end.val →
+            ∀ j' : Nat, j' < step_vec.val →
+              lift_chunk (r.2.1.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!)
+                = Spec.chunk_pair_butterfly_b_pure
+                    (lift_chunk (re.coefficients.val[2 * round' * step_vec.val + j']!))
+                    (lift_chunk (re.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!))
+                    (Spec.zeta_at (zeta_i.val + round' + 1)))
+        ∧ (∀ c : Nat, c < 16 →
+            (∀ round' : Nat, round' < i_end.val →
+              ∀ j' : Nat, j' < step_vec.val →
+                c ≠ 2 * round' * step_vec.val + j'
+                ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
+            r.2.1.coefficients.val[c]! = re.coefficients.val[c]!) := by
+      simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
+             L3_4_plus_outer_FC.inv] using h_inv_holds
+    obtain ⟨_h_zeta_done, h_done_a, h_done_b, _h_done_undone⟩ := h_inv
+    -- Build chunks_arr matching the Spec layout.
+    unfold Spec.ntt_at_layer_4_plus_pure
+    set chunks_arr : Std.Array
+        (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) 16#usize :=
+      Std.Array.make 16#usize ((List.range 16).map (fun c =>
+        Spec.chunk_at_layer_4_plus_pure
+          (Std.Array.make 16#usize ((List.range 16).map (Spec.chunk_at (lift_poly re)))
+            (by simp))
+          layer
+          (fun group => Spec.zeta_at (zeta_i.val + group + 1))
+          c))
+        (by simp) with hchunks_def
+    have h_chunks_len : chunks_arr.val.length = 16 := by
+      show ((List.range 16).map _).length = 16; simp
+    -- Inner chunks0 lookup at index k reduces via chunk_at_lift_poly_fc.
+    have h_chunks0_at : ∀ k : Nat, k < 16 →
+        (Std.Array.make 16#usize ((List.range 16).map (Spec.chunk_at (lift_poly re)))
+            (by simp)).val[k]!
+          = lift_chunk (re.coefficients.val[k]!) := by
+      intro k hk
+      have h_len_map : ((List.range 16).map (Spec.chunk_at (lift_poly re))).length = 16 := by simp
+      show ((List.range 16).map (Spec.chunk_at (lift_poly re)))[k]! = _
+      rw [getElem!_pos _ k (by rw [h_len_map]; exact hk)]
+      rw [List.getElem_map, List.getElem_range]
+      exact chunk_at_lift_poly_fc re k hk
+    -- Now prove h_chunks_get pointwise. Two cases: a-side and b-side.
+    have h_chunks_get : ∀ c : Nat, (hc : c < 16) →
+        chunks_arr.val[c]'(by rw [h_chunks_len]; exact hc)
+          = lift_chunk (r.2.1.coefficients.val[c]!) := by
+      intro c hc
+      show ((List.range 16).map (fun c =>
+        Spec.chunk_at_layer_4_plus_pure
+          (Std.Array.make 16#usize ((List.range 16).map (Spec.chunk_at (lift_poly re)))
+            (by simp))
+          layer
+          (fun group => Spec.zeta_at (zeta_i.val + group + 1))
+          c))[c]'_ = _
+      rw [List.getElem_map, List.getElem_range]
+      -- Unfold Spec.chunk_at_layer_4_plus_pure.
+      unfold Spec.chunk_at_layer_4_plus_pure
+      -- Use abbreviation for step_vec_val.
+      set sv := (1 <<< layer.val) / 16 with hsv_def
+      have hsv_eq : sv = step_vec.val := by rw [hsv_def, h_step_vec_arith]
+      -- Reveal the if condition.
+      simp only [show (1 <<< layer.val) / 16 = sv from rfl]
+      set group := c / (2 * sv)
+      set offset := c % (2 * sv)
+      have h_2sv_pos : 0 < 2 * sv := by rw [hsv_eq]; omega
+      have h_c_eq : 2 * sv * group + offset = c := by
+        show 2 * sv * (c / (2 * sv)) + c % (2 * sv) = c
+        exact Nat.div_add_mod c (2 * sv)
+      have h_off_lt : offset < 2 * sv := Nat.mod_lt _ h_2sv_pos
+      -- group < i_end.val: from c < 16 = 2 * i_end.val * sv.
+      have h_16_eq : 2 * i_end.val * sv = 16 := by
+        rw [hsv_eq]; exact h_step_vec_dvd
+      have h_group_lt : group < i_end.val := by
+        by_contra h_ge
+        push_neg at h_ge
+        have h_ge2 : 2 * sv * i_end.val ≤ 2 * sv * group := Nat.mul_le_mul_left _ h_ge
+        have : c ≥ 2 * sv * i_end.val := by
+          have : 2 * sv * group ≤ c := by omega
+          omega
+        have h_rw : 2 * sv * i_end.val = 16 := by
+          have h : 2 * i_end.val * sv = 2 * sv * i_end.val := by ring
+          omega
+        omega
+      by_cases h_off_lt_sv : offset < sv
+      · -- a-side: c = 2*sv*group + offset = 2*group*sv + offset, partner c+sv.
+        simp only [if_pos h_off_lt_sv]
+        -- Need: chunks0[c]! and chunks0[c+sv]! reduce via h_chunks0_at.
+        have h_c_lt_16 : c < 16 := hc
+        have h_c_plus_sv_lt_16 : c + sv < 16 := by
+          have h_succ : 2 * sv * (group + 1) ≤ 2 * sv * i_end.val := Nat.mul_le_mul_left _ h_group_lt
+          have h_split : 2 * sv * (group + 1) = 2 * sv * group + 2 * sv := by ring
+          have h_eq_16 : 2 * sv * i_end.val = 16 := by
+            have : 2 * i_end.val * sv = 2 * sv * i_end.val := by ring
+            omega
+          omega
+        rw [h_chunks0_at c h_c_lt_16, h_chunks0_at (c + sv) h_c_plus_sv_lt_16]
+        -- Convert to round'=group, j'=offset shape for h_done_a.
+        have h_c_eq_a : c = 2 * group * step_vec.val + offset := by
+          rw [← hsv_eq]
+          calc c = 2 * sv * group + offset := h_c_eq.symm
+            _ = 2 * group * sv + offset := by ring_nf
+        have h_csv_eq_a : c + sv = 2 * group * step_vec.val + step_vec.val + offset := by
+          rw [h_c_eq_a]; rw [hsv_eq]; ring
+        have h_off_lt_sv' : offset < step_vec.val := by rw [← hsv_eq]; exact h_off_lt_sv
+        have h_done := h_done_a group h_group_lt offset h_off_lt_sv'
+        rw [h_csv_eq_a, h_c_eq_a]
+        exact h_done.symm
+      · -- b-side: c ≥ sv. Set j' := offset - sv.
+        simp only [if_neg h_off_lt_sv]
+        push_neg at h_off_lt_sv
+        set j' := offset - sv with hj'_def
+        have hj'_lt_sv : j' < sv := by
+          show offset - sv < sv; omega
+        have h_off_eq : offset = sv + j' := by
+          show offset = sv + (offset - sv); omega
+        have h_c_lt_16 : c < 16 := hc
+        have h_c_minus_sv_lt_16 : c - sv < 16 := by omega
+        -- c = 2*sv*group + sv + j', c - sv = 2*sv*group + j'.
+        have h_c_eq_b : c = 2 * group * step_vec.val + step_vec.val + j' := by
+          rw [← hsv_eq]
+          have : c = 2 * sv * group + (sv + j') := by rw [← h_off_eq]; exact h_c_eq.symm
+          calc c = 2 * sv * group + (sv + j') := this
+            _ = 2 * group * sv + sv + j' := by ring
+        have h_cmsv_eq_b : c - sv = 2 * group * step_vec.val + j' := by
+          have h_sv_le_c : sv ≤ c := by
+            calc sv ≤ sv + j' := Nat.le_add_right _ _
+              _ = offset := h_off_eq.symm
+              _ ≤ 2 * sv * group + offset := Nat.le_add_left _ _
+              _ = c := h_c_eq
+          rw [← hsv_eq]
+          have h_full : c - sv = (2 * sv * group + (sv + j')) - sv := by rw [← h_off_eq, h_c_eq]
+          rw [h_full]
+          have h_simp : 2 * sv * group + (sv + j') - sv = 2 * sv * group + j' := by omega
+          rw [h_simp]; ring
+        rw [h_chunks0_at (c - sv) h_c_minus_sv_lt_16, h_chunks0_at c h_c_lt_16]
+        have h_j'_lt : j' < step_vec.val := by rw [← hsv_eq]; exact hj'_lt_sv
+        have h_done := h_done_b group h_group_lt j' h_j'_lt
+        rw [h_cmsv_eq_b, h_c_eq_b]
+        exact h_done.symm
+    -- Apply flatten_chunks_eq_lift_poly_fc.
+    have h_final := flatten_chunks_eq_lift_poly_fc r.2.1 chunks_arr h_chunks_len h_chunks_get
+    exact h_final.symm
+  · -- Step lemma dispatch: apply ntt_at_layer_4_plus_outer_step_lemma_fc.
+    intro acc k _h_ge h_le hinv
+    have h_step := ntt_at_layer_4_plus_outer_step_lemma_fc re zeta_i step_vec i_end
+      h_bnd h_step_vec_pos h_step_vec_dvd h_zeta_bnd acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : L3_4_plus_outer_FC.step_post re zeta_i step_vec i_end k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L3_4_plus_outer_FC.step_post] using hP
+    · have hP : L3_4_plus_outer_FC.step_post re zeta_i step_vec i_end k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L3_4_plus_outer_FC.step_post] using hP
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (5 layer
     composition + barrett reduce). Projects on the poly component. -/
