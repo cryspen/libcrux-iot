@@ -741,30 +741,106 @@ theorem Spec.zeta_at_one_eq_layer_7 :
     libcrux_iot_ml_kem.BitMlKem.i16_to_spec_fe_plain
   congr 1
 
+/-- Per-chunk pure projection of `polynomial.add_error_reduce`: for the
+    `ℓ`-th lane of a 16-lane chunk,
+    `out[ℓ] := self_chunk[ℓ] · lift_fe_mont(1441#i16) + error_chunk[ℓ]`. -/
+noncomputable def Spec.chunk_add_error_reduce_pure
+    (self_chunk error_chunk :
+        Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (self_chunk.val[ℓ]!) (lift_fe_mont (1441#i16)))
+      (error_chunk.val[ℓ]!)))
+    (by simp)
+
+/-- Per-chunk pure projection of `polynomial.add_standard_error_reduce`:
+    for the `ℓ`-th lane,
+    `out[ℓ] := self_chunk[ℓ] · lift_fe_mont(1353#i16) + error_chunk[ℓ]`,
+    where `1353 ≡ R² (mod q)` (cf. `Util.mont_1353_eq_RR_mod_q`). -/
+noncomputable def Spec.chunk_add_standard_error_reduce_pure
+    (self_chunk error_chunk :
+        Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (self_chunk.val[ℓ]!) (lift_fe_mont (1353#i16)))
+      (error_chunk.val[ℓ]!)))
+    (by simp)
+
+/-- Per-chunk pure projection of `polynomial.add_message_error_reduce`:
+    for the `ℓ`-th lane,
+    `out[ℓ] := result_chunk[ℓ] · lift_fe_mont(1441#i16)
+              + (self_chunk[ℓ] + message_chunk[ℓ])`.
+    The impl barrett-reduces this sum, but `barrett_pure` is identity
+    after `lift_fe`. -/
+noncomputable def Spec.chunk_add_message_error_reduce_pure
+    (self_chunk message_chunk result_chunk :
+        Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (result_chunk.val[ℓ]!) (lift_fe_mont (1441#i16)))
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        (self_chunk.val[ℓ]!) (message_chunk.val[ℓ]!))))
+    (by simp)
+
 /-- Pure projection of `polynomial.add_error_reduce`. The hacspec spec
     does not expose a dedicated `add_error_reduce` at the poly level —
     the impl's behaviour is "multiply by R/128 then add error then
-    barrett". The closest hacspec composition is `add_to_ring_element`
-    after the implicit Mont rescaling. -/
+    barrett". Per chunk `k ∈ 0..16` and lane `ℓ`:
+    `out_chunk[k][ℓ] := self[k][ℓ] · lift_fe_mont(1441#i16) + error[k][ℓ]`,
+    flattened to a 256-array via `Spec.flatten_chunks`. -/
 noncomputable def Spec.add_error_reduce_pure
     (self error : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_add_error_reduce_pure
+        (Spec.chunk_at self k) (Spec.chunk_at error k)))
+      (by simp))
 
-/-- Pure projection of `polynomial.add_standard_error_reduce`. -/
+/-- Pure projection of `polynomial.add_standard_error_reduce`. Per chunk
+    `k` and lane `ℓ`:
+    `out[k][ℓ] := self[k][ℓ] · lift_fe_mont(1353#i16) + error[k][ℓ]`
+    (1353 ≡ R² mod q lifts to `× R` in canonical domain). -/
 noncomputable def Spec.add_standard_error_reduce_pure
     (self error : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_add_standard_error_reduce_pure
+        (Spec.chunk_at self k) (Spec.chunk_at error k)))
+      (by simp))
 
-/-- Pure projection of `polynomial.add_message_error_reduce`. -/
+/-- Pure projection of `polynomial.add_message_error_reduce`. Per chunk
+    `k` and lane `ℓ`:
+    `out[k][ℓ] := result[k][ℓ] · lift_fe_mont(1441#i16) +
+                  (self[k][ℓ] + message[k][ℓ])`. -/
 noncomputable def Spec.add_message_error_reduce_pure
     (self message : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
     (result : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_add_message_error_reduce_pure
+        (Spec.chunk_at self k) (Spec.chunk_at message k) (Spec.chunk_at result k)))
+      (by simp))
 
-/-- Pure projection of poly-level `reducing_from_i32_array`. -/
+/-- Pure projection of poly-level `reducing_from_i32_array`. Direct 256-lane
+    construction: for `i ∈ 0..256`,
+    `out[i] := Spec.mont_reduce_pure (lift_fe_int array.val[i].val)`.
+    Mirrors `Spec.chunk_reducing_from_i32_array_pure` per chunk-of-16. -/
 noncomputable def Spec.poly_reducing_from_i32_array_pure
     (array : Slice Std.I32) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Std.Array.make 256#usize
+    ((List.range 256).map (fun i =>
+      Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val)))
+    (by simp)
 
 /-- Per-chunk pure projection of `polynomial.subtract_reduce`: for the
     `ℓ`-th lane of a 16-lane chunk,
