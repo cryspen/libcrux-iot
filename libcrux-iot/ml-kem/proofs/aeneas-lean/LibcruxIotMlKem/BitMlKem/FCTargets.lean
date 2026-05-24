@@ -11385,20 +11385,623 @@ def step_post
 
 end L6_6_FC
 
+set_option maxHeartbeats 16000000 in
+/-- Per-iteration FC step lemma for `add_message_error_reduce`. Given a
+    valid loop state `((result_acc, _scratch_acc), k)` with `k.val < 16`,
+    applies the `mont_mul(1441) + add(self+message) + barrett` chain to
+    chunk `k.val` of `result_acc`, recording the FC equation
+    `lift_chunk acc'.1[k.val] =
+      chunk_add_message_error_reduce_pure
+        (lift_chunk self_init[k.val])
+        (lift_chunk message_init[k.val])
+        (lift_chunk result_init[k.val])`
+    while preserving chunks `j ≠ k.val`. The scratch slot is overwritten
+    each iteration with `self[k] + message[k]` and remains unconstrained
+    by the invariant. -/
+private theorem add_message_error_reduce_step_lemma_fc
+    (self_init message_init result_init :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_result_bnd : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      ((result_init.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 32767)
+    (h_sum_bnd : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      (((self_init.coefficients.val[chunk]!).elements.val[ℓ]!).val
+        + ((message_init.coefficients.val[chunk]!).elements.val[ℓ]!).val
+            : Int).natAbs ≤ 29439)
+    (acc : L6_6_FC.Acc)
+    (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
+    (h_inv : (L6_6_FC.inv self_init message_init result_init k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
+      (vectortraitsOperationsInst := portable_ops_inst) self_init message_init
+      { start := k, «end» := 16#usize } acc.1 acc.2
+    ⦃ ⇓ r => ⌜ L6_6_FC.step_post self_init message_init result_init k r ⌝ ⦄ := by
+  have h16 : (16#usize : Std.Usize).val = 16 := rfl
+  have h_coef_len : acc.1.coefficients.length = 16 :=
+    Std.Array.length_eq _
+  have h_self_coef_len : self_init.coefficients.length = 16 :=
+    Std.Array.length_eq _
+  have h_msg_coef_len : message_init.coefficients.length = 16 :=
+    Std.Array.length_eq _
+  obtain ⟨h_acc_done, h_acc_undone⟩ := by
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
+  unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
+  by_cases h_lt : k.val < (16#usize : Std.Usize).val
+  · -- `Some i = k` branch.
+    have hk_16 : k.val < 16 := by rw [h16] at h_lt; exact h_lt
+    obtain ⟨s, hs_val, h_iter_some⟩ :=
+      libcrux_iot_ml_kem.Util.iter_next_some_eq k h_lt
+    -- (1) `index_mut_usize acc.1.coefficients k` → `(t, set_back) =
+    --     (acc.1.coefs[k], acc.1.coefs.set k)`.
+    set t : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+      acc.1.coefficients.val[k.val]! with ht_def
+    have h_idx_t : Aeneas.Std.Array.index_usize acc.1.coefficients k = .ok t :=
+      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq acc.1.coefficients k
+        (by rw [h_coef_len]; exact hk_16)
+    have h_imt_t : Aeneas.Std.Array.index_mut_usize acc.1.coefficients k
+        = .ok (t, acc.1.coefficients.set k) := by
+      unfold Aeneas.Std.Array.index_mut_usize
+      rw [h_idx_t]; rfl
+    -- (1a) `t = result_init.coefficients[k]` (via h_acc_undone at j=k).
+    have h_t_eq : t = result_init.coefficients.val[k.val]! := by
+      show acc.1.coefficients.val[k.val]! = result_init.coefficients.val[k.val]!
+      exact h_acc_undone k.val (Nat.le_refl _) hk_16
+    have h_t_bnd : ∀ ℓ : Nat, ℓ < 16 →
+        (t.elements.val[ℓ]!).val.natAbs ≤ 32767 := by
+      intro ℓ hℓ
+      rw [h_t_eq]; exact h_result_bnd k.val hk_16 ℓ hℓ
+    -- (2) `mont_mul(t, 1441#i16)` → `t1`. Pre: |1441| ≤ 1664 ✓; |t| ≤ 32767 ✓.
+    have h_c1441_bnd : ((1441#i16 : Std.I16).val.natAbs) ≤ 1664 := by decide
+    obtain ⟨t1, h_t1_eq, h_t1_lift_mont⟩ :=
+      triple_exists_ok_fc
+        (montgomery_multiply_by_constant_fc t (1441#i16) h_t_bnd h_c1441_bnd)
+    have h_t1_spec :=
+      libcrux_iot_ml_kem.Equivalence.montgomery_multiply_by_constant_spec
+        t (1441#i16) h_c1441_bnd
+    obtain ⟨t1', h_t1_eq', h_t1_per⟩ := triple_exists_ok_fc h_t1_spec
+    have h_t1_same : t1 = t1' := by
+      have := h_t1_eq.symm.trans h_t1_eq'
+      cases this; rfl
+    subst h_t1_same
+    have h_t1_bnd : ∀ ℓ : Nat, ℓ < 16 →
+        (t1.elements.val[ℓ]!).val.natAbs ≤ 3328 := by
+      intro ℓ hℓ; exact (h_t1_per ℓ hℓ).1
+    have h_t1_modq : ∀ ℓ : Nat, ℓ < 16 →
+        ((t1.elements.val[ℓ]!).val * (2 ^ 16 : Int)) % 3329
+          = ((t.elements.val[ℓ]!).val * (1441#i16 : Std.I16).val) % 3329 := by
+      intro ℓ hℓ; exact (h_t1_per ℓ hℓ).2
+    -- (3) `scratch1 = self_init.coefs[k]`.
+    set scratch1 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+      self_init.coefficients.val[k.val]! with hscratch1_def
+    have h_idx_scratch1 : Aeneas.Std.Array.index_usize self_init.coefficients k
+        = .ok scratch1 :=
+      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq self_init.coefficients k
+        (by rw [h_self_coef_len]; exact hk_16)
+    -- (4) `t2 = message_init.coefs[k]`.
+    set t2 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+      message_init.coefficients.val[k.val]! with ht2_def
+    have h_idx_t2 : Aeneas.Std.Array.index_usize message_init.coefficients k = .ok t2 :=
+      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq message_init.coefficients k
+        (by rw [h_msg_coef_len]; exact hk_16)
+    -- (5) `add scratch1 t2 = scratch2`. Pre: |scratch1 + t2| ≤ 32767;
+    --     from `h_sum_bnd` ≤ 29439 ≤ 32767.
+    have h_scratch2_pre : ∀ ℓ : Nat, ℓ < 16 →
+        ((scratch1.elements.val[ℓ]!).val + (t2.elements.val[ℓ]!).val : Int).natAbs
+          ≤ 2^15 - 1 := by
+      intro ℓ hℓ
+      have h_p2 : (2 : Nat)^15 - 1 = 32767 := by decide
+      rw [h_p2]
+      have h_sum := h_sum_bnd k.val hk_16 ℓ hℓ
+      show (((self_init.coefficients.val[k.val]!).elements.val[ℓ]!).val
+              + ((message_init.coefficients.val[k.val]!).elements.val[ℓ]!).val
+              : Int).natAbs ≤ 32767
+      omega
+    obtain ⟨scratch2, h_scratch2_eq, h_scratch2_lift⟩ :=
+      triple_exists_ok_fc (add_fc scratch1 t2 h_scratch2_pre)
+    have h_scratch2_spec :=
+      libcrux_iot_ml_kem.Equivalence.add_spec scratch1 t2 h_scratch2_pre
+    obtain ⟨scratch2', h_scratch2_eq', h_scratch2_per⟩ := triple_exists_ok_fc h_scratch2_spec
+    have h_scratch2_same : scratch2 = scratch2' := by
+      have := h_scratch2_eq.symm.trans h_scratch2_eq'
+      cases this; rfl
+    subst h_scratch2_same
+    have h_scratch2_val : ∀ ℓ : Nat, ℓ < 16 →
+        (scratch2.elements.val[ℓ]!).val
+          = (scratch1.elements.val[ℓ]!).val + (t2.elements.val[ℓ]!).val := by
+      intro ℓ hℓ; exact (h_scratch2_per ℓ hℓ).1
+    have h_scratch2_bnd : ∀ ℓ : Nat, ℓ < 16 →
+        (scratch2.elements.val[ℓ]!).val.natAbs ≤ 29439 := by
+      intro ℓ hℓ
+      rw [h_scratch2_val ℓ hℓ]
+      exact h_sum_bnd k.val hk_16 ℓ hℓ
+    -- (6) `a = acc.1.coefficients.set k t1`.
+    set a : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
+      acc.1.coefficients.set k t1 with ha_def
+    have h_a_len : a.length = 16 := by simp [ha_def, h_coef_len]
+    have h_a_k : a.val[k.val]! = t1 := by
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+        Aeneas.Std.Array.getElem!_Nat_set_eq acc.1.coefficients k k.val t1
+          ⟨rfl, by rw [h_coef_len]; exact hk_16⟩
+    -- (7) `index_mut_usize a k` → `(t3, _) = (t1, a.set k)`.
+    have h_idx_t3 : Aeneas.Std.Array.index_usize a k = .ok (a.val[k.val]!) :=
+      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a k
+        (by rw [h_a_len]; exact hk_16)
+    have h_imt_t3 : Aeneas.Std.Array.index_mut_usize a k = .ok (t1, a.set k) := by
+      unfold Aeneas.Std.Array.index_mut_usize
+      rw [h_idx_t3]; rw [h_a_k]; rfl
+    -- (8) `add t1 scratch2 = t4`. Pre: |t1 + scratch2| ≤ 32767;
+    --     |t1| ≤ 3328, |scratch2| ≤ 29439 ⇒ |t1 + scratch2| ≤ 32767 ✓.
+    have h_t4_pre : ∀ ℓ : Nat, ℓ < 16 →
+        ((t1.elements.val[ℓ]!).val + (scratch2.elements.val[ℓ]!).val : Int).natAbs
+          ≤ 2^15 - 1 := by
+      intro ℓ hℓ
+      have hb_t1 := h_t1_bnd ℓ hℓ
+      have hb_s2 := h_scratch2_bnd ℓ hℓ
+      have h_p2 : (2 : Nat)^15 - 1 = 32767 := by decide
+      rw [h_p2]
+      have h_abs_add : ((t1.elements.val[ℓ]!).val
+            + (scratch2.elements.val[ℓ]!).val : Int).natAbs
+          ≤ ((t1.elements.val[ℓ]!).val : Int).natAbs
+            + ((scratch2.elements.val[ℓ]!).val : Int).natAbs :=
+        Int.natAbs_add_le _ _
+      omega
+    obtain ⟨t4, h_t4_eq, h_t4_lift⟩ :=
+      triple_exists_ok_fc (add_fc t1 scratch2 h_t4_pre)
+    have h_t4_spec := libcrux_iot_ml_kem.Equivalence.add_spec t1 scratch2 h_t4_pre
+    obtain ⟨t4', h_t4_eq', h_t4_per⟩ := triple_exists_ok_fc h_t4_spec
+    have h_t4_same : t4 = t4' := by
+      have := h_t4_eq.symm.trans h_t4_eq'
+      cases this; rfl
+    subst h_t4_same
+    have h_t4_val : ∀ ℓ : Nat, ℓ < 16 →
+        (t4.elements.val[ℓ]!).val
+          = (t1.elements.val[ℓ]!).val + (scratch2.elements.val[ℓ]!).val := by
+      intro ℓ hℓ; exact (h_t4_per ℓ hℓ).1
+    have h_t4_bnd : ∀ ℓ : Nat, ℓ < 16 →
+        (t4.elements.val[ℓ]!).val.natAbs ≤ 32767 := by
+      intro ℓ hℓ; exact (h_t4_per ℓ hℓ).2
+    -- (9) `a1 = a.set k t4`.
+    set a1 : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
+      a.set k t4 with ha1_def
+    have h_a1_len : a1.length = 16 := by simp [ha1_def, h_a_len]
+    have h_a1_k : a1.val[k.val]! = t4 := by
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+        Aeneas.Std.Array.getElem!_Nat_set_eq a k k.val t4
+          ⟨rfl, by rw [h_a_len]; exact hk_16⟩
+    -- (10) `index_mut_usize a1 k` → `(t5, _) = (t4, a1.set k)`.
+    have h_idx_t5 : Aeneas.Std.Array.index_usize a1 k = .ok (a1.val[k.val]!) :=
+      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a1 k
+        (by rw [h_a1_len]; exact hk_16)
+    have h_imt_t5 : Aeneas.Std.Array.index_mut_usize a1 k = .ok (t4, a1.set k) := by
+      unfold Aeneas.Std.Array.index_mut_usize
+      rw [h_idx_t5]; rw [h_a1_k]; rfl
+    -- (11) `barrett_reduce t4 = t6`. Pre: |t4[ℓ]| ≤ 32767 ✓.
+    obtain ⟨t6, h_t6_eq, h_t6_post⟩ :=
+      triple_exists_ok_fc (barrett_reduce_fc t4 h_t4_bnd)
+    obtain ⟨_h_t6_bnd, h_t6_lift⟩ := h_t6_post
+    -- (12) Compose acc'.1 = `{ coefficients := a1.set k t6 }`, acc'.2 = scratch2.
+    set a2 : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
+      a1.set k t6 with ha2_def
+    set acc1' : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+      { coefficients := a2 } with hacc1'_def
+    set acc' : L6_6_FC.Acc := (acc1', scratch2) with hacc'_def
+    have h_body :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
+          (vectortraitsOperationsInst := portable_ops_inst) self_init message_init
+          { start := k, «end» := 16#usize } acc.1 acc.2
+        = .ok (ControlFlow.cont (({ start := s, «end» := 16#usize }
+                        : core_models.ops.range.Range Std.Usize), acc')) := by
+      unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp only [Aeneas.Std.bind_tc_ok]
+      show (do
+              let (t', index_mut_back) ←
+                Aeneas.Std.Array.index_mut_usize acc.1.coefficients k
+              let t1' ←
+                libcrux_iot_ml_kem.vector.portable.arithmetic.montgomery_multiply_by_constant
+                  t' (1441#i16)
+              let scratch1' ← Aeneas.Std.Array.index_usize self_init.coefficients k
+              let t2' ← Aeneas.Std.Array.index_usize message_init.coefficients k
+              let scratch2' ←
+                libcrux_iot_ml_kem.vector.portable.arithmetic.add scratch1' t2'
+              let (t3', index_mut_back1) ←
+                Aeneas.Std.Array.index_mut_usize (index_mut_back t1') k
+              let t4' ←
+                libcrux_iot_ml_kem.vector.portable.arithmetic.add t3' scratch2'
+              let (t5', index_mut_back2) ←
+                Aeneas.Std.Array.index_mut_usize (index_mut_back1 t4') k
+              let t6' ←
+                libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce t5'
+              .ok (ControlFlow.cont (({ start := s, «end» := 16#usize }
+                          : core_models.ops.range.Range Std.Usize),
+                        ({ coefficients := index_mut_back2 t6' }
+                          : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                              libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector),
+                        scratch2')))
+            = _
+      rw [h_imt_t]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_t1_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_idx_scratch1]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_idx_t2]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_scratch2_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_imt_t3]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_t4_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_imt_t5]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_t6_eq]
+      rfl
+    apply triple_of_ok_fc h_body
+    show L6_6_FC.step_post self_init message_init result_init k
+      (.cont (({ start := s, «end» := 16#usize }
+                : core_models.ops.range.Range Std.Usize), acc'))
+    unfold L6_6_FC.step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    show (L6_6_FC.inv self_init message_init result_init s acc').holds
+    have h_inv_pure :
+        (∀ j : Nat, j < s.val →
+          lift_chunk (acc'.1.coefficients.val[j]!)
+            = Spec.chunk_add_message_error_reduce_pure
+                (lift_chunk (self_init.coefficients.val[j]!))
+                (lift_chunk (message_init.coefficients.val[j]!))
+                (lift_chunk (result_init.coefficients.val[j]!)))
+        ∧ (∀ j : Nat, s.val ≤ j → j < 16 →
+            acc'.1.coefficients.val[j]! = result_init.coefficients.val[j]!) := by
+      refine ⟨?_, ?_⟩
+      · -- (a) j < s.val → FC equation at chunk j.
+        intro j hj
+        rw [hs_val] at hj
+        show lift_chunk ((((acc.1.coefficients.set k t1).set k t4).set k t6).val[j]!) = _
+        rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj_lt_k | hj_eq_k
+        · -- j < k.val: chunk j unchanged through all three sets.
+          have h_ne : k.val ≠ j := Nat.ne_of_gt hj_lt_k
+          have h_set1 : ((((acc.1.coefficients.set k t1).set k t4).set k t6).val[j]!)
+              = (((acc.1.coefficients.set k t1).set k t4).val[j]!) := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne
+                ((acc.1.coefficients.set k t1).set k t4) k j t6 h_ne
+          have h_set2 : (((acc.1.coefficients.set k t1).set k t4).val[j]!)
+              = ((acc.1.coefficients.set k t1).val[j]!) := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne
+                (acc.1.coefficients.set k t1) k j t4 h_ne
+          have h_set3 : ((acc.1.coefficients.set k t1).val[j]!)
+              = acc.1.coefficients.val[j]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne acc.1.coefficients k j t1 h_ne
+          rw [h_set1, h_set2, h_set3]
+          exact h_acc_done j hj_lt_k
+        · -- j = k.val: chunk j = t6. Need:
+          --   lift_chunk t6 = chunk_add_message_error_reduce_pure
+          --     (lift_chunk self_init[k]) (lift_chunk message_init[k])
+          --     (lift_chunk result_init[k]).
+          subst hj_eq_k
+          have h_set_eq : ((((acc.1.coefficients.set k t1).set k t4).set k t6).val[k.val]!)
+              = t6 := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_eq
+                ((acc.1.coefficients.set k t1).set k t4) k k.val t6
+                ⟨rfl, by simp; exact hk_16⟩
+          rw [h_set_eq]
+          rw [h_t6_lift]
+          show Spec.chunk_barrett_reduce_pure (lift_chunk t4)
+              = Spec.chunk_add_message_error_reduce_pure
+                  (lift_chunk (self_init.coefficients.val[k.val]!))
+                  (lift_chunk (message_init.coefficients.val[k.val]!))
+                  (lift_chunk (result_init.coefficients.val[k.val]!))
+          unfold Spec.chunk_barrett_reduce_pure Spec.chunk_add_message_error_reduce_pure
+          apply Subtype.ext
+          change (List.range 16).map (fun i =>
+              Spec.barrett_pure ((lift_chunk t4).val[i]!))
+            = (List.range 16).map (fun ℓ =>
+              libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk (result_init.coefficients.val[k.val]!)).val[ℓ]!)
+                  (lift_fe_mont (1441#i16)))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                  ((lift_chunk (self_init.coefficients.val[k.val]!)).val[ℓ]!)
+                  ((lift_chunk (message_init.coefficients.val[k.val]!)).val[ℓ]!)))
+          apply List.ext_getElem
+          · simp
+          · intro ℓ hℓ1 _hℓ2
+            have hℓ : ℓ < 16 := by
+              have : ℓ < (List.range 16).length := by simpa using hℓ1
+              simpa using this
+            rw [List.getElem_map, List.getElem_range,
+                List.getElem_map, List.getElem_range]
+            -- LHS: Spec.barrett_pure ((lift_chunk t4).val[ℓ]!).
+            -- Step A: ((lift_chunk t4).val[ℓ]!) = lift_fe (t4.elements.val[ℓ]!).
+            have h_t4_elems_len : t4.elements.val.length = 16 :=
+              libcrux_iot_ml_kem.Util.PortableVector_elements_length t4
+            have h_lc_t4 : ((lift_chunk t4).val[ℓ]!) = lift_fe (t4.elements.val[ℓ]!) := by
+              unfold lift_chunk
+              show ((t4.elements.val.map lift_fe)[ℓ]!) = _
+              have h_len : (t4.elements.val.map lift_fe).length = 16 := by
+                rw [List.length_map]; exact h_t4_elems_len
+              rw [getElem!_pos _ ℓ (by rw [h_len]; exact hℓ)]
+              rw [List.getElem_map]
+              rw [getElem!_pos t4.elements.val ℓ (by rw [h_t4_elems_len]; exact hℓ)]
+            rw [h_lc_t4]
+            -- Step B: barrett_pure (lift_fe t4[ℓ]) = lift_fe t4[ℓ].
+            rw [barrett_pure_lift_fe]
+            -- Step C: lift_fe t4[ℓ] = add_pure (lift_fe t1[ℓ]) (lift_fe scratch2[ℓ]).
+            have hv4 := h_t4_val ℓ hℓ
+            have h_lift_t4 :
+                lift_fe (t4.elements.val[ℓ]!)
+                  = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                      (lift_fe (t1.elements.val[ℓ]!))
+                      (lift_fe (scratch2.elements.val[ℓ]!)) :=
+              lift_fe_add_pure_eq _ _ _ hv4
+            rw [h_lift_t4]
+            -- Step D: lift_fe t1[ℓ] = mul_pure (lift_fe t[ℓ]) (lift_fe_mont 1441).
+            have h_lift_t1 :
+                lift_fe (t1.elements.val[ℓ]!)
+                  = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                      (lift_fe (t.elements.val[ℓ]!)) (lift_fe_mont (1441#i16)) :=
+              lift_fe_mont_mul_pure_eq _ _ _ (h_t1_modq ℓ hℓ)
+            rw [h_lift_t1]
+            -- Step E: lift_fe scratch2[ℓ] = add_pure (lift_fe scratch1[ℓ]) (lift_fe t2[ℓ]).
+            have hv_s2 := h_scratch2_val ℓ hℓ
+            have h_lift_s2 :
+                lift_fe (scratch2.elements.val[ℓ]!)
+                  = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                      (lift_fe (scratch1.elements.val[ℓ]!))
+                      (lift_fe (t2.elements.val[ℓ]!)) :=
+              lift_fe_add_pure_eq _ _ _ hv_s2
+            rw [h_lift_s2]
+            -- Step F: rewrite t, scratch1, t2 to result_init[k], self_init[k],
+            -- message_init[k] images via lift_chunk projection.
+            have h_result_elems_len :
+                (result_init.coefficients.val[k.val]!).elements.val.length = 16 :=
+              libcrux_iot_ml_kem.Util.PortableVector_elements_length _
+            have h_self_elems_len :
+                (self_init.coefficients.val[k.val]!).elements.val.length = 16 :=
+              libcrux_iot_ml_kem.Util.PortableVector_elements_length _
+            have h_msg_elems_len :
+                (message_init.coefficients.val[k.val]!).elements.val.length = 16 :=
+              libcrux_iot_ml_kem.Util.PortableVector_elements_length _
+            have h_lc_result : ((lift_chunk (result_init.coefficients.val[k.val]!)).val[ℓ]!)
+                = lift_fe ((result_init.coefficients.val[k.val]!).elements.val[ℓ]!) := by
+              unfold lift_chunk
+              show (((result_init.coefficients.val[k.val]!).elements.val.map lift_fe)[ℓ]!) = _
+              have h_len :
+                  ((result_init.coefficients.val[k.val]!).elements.val.map lift_fe).length = 16 := by
+                rw [List.length_map]; exact h_result_elems_len
+              rw [getElem!_pos _ ℓ (by rw [h_len]; exact hℓ)]
+              rw [List.getElem_map]
+              rw [getElem!_pos (result_init.coefficients.val[k.val]!).elements.val ℓ
+                (by rw [h_result_elems_len]; exact hℓ)]
+            have h_lc_self : ((lift_chunk (self_init.coefficients.val[k.val]!)).val[ℓ]!)
+                = lift_fe ((self_init.coefficients.val[k.val]!).elements.val[ℓ]!) := by
+              unfold lift_chunk
+              show (((self_init.coefficients.val[k.val]!).elements.val.map lift_fe)[ℓ]!) = _
+              have h_len :
+                  ((self_init.coefficients.val[k.val]!).elements.val.map lift_fe).length = 16 := by
+                rw [List.length_map]; exact h_self_elems_len
+              rw [getElem!_pos _ ℓ (by rw [h_len]; exact hℓ)]
+              rw [List.getElem_map]
+              rw [getElem!_pos (self_init.coefficients.val[k.val]!).elements.val ℓ
+                (by rw [h_self_elems_len]; exact hℓ)]
+            have h_lc_msg : ((lift_chunk (message_init.coefficients.val[k.val]!)).val[ℓ]!)
+                = lift_fe ((message_init.coefficients.val[k.val]!).elements.val[ℓ]!) := by
+              unfold lift_chunk
+              show (((message_init.coefficients.val[k.val]!).elements.val.map lift_fe)[ℓ]!) = _
+              have h_len :
+                  ((message_init.coefficients.val[k.val]!).elements.val.map lift_fe).length = 16 := by
+                rw [List.length_map]; exact h_msg_elems_len
+              rw [getElem!_pos _ ℓ (by rw [h_len]; exact hℓ)]
+              rw [List.getElem_map]
+              rw [getElem!_pos (message_init.coefficients.val[k.val]!).elements.val ℓ
+                (by rw [h_msg_elems_len]; exact hℓ)]
+            rw [h_lc_result, h_lc_self, h_lc_msg]
+            show libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    (lift_fe (t.elements.val[ℓ]!)) (lift_fe_mont (1441#i16)))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                    (lift_fe (scratch1.elements.val[ℓ]!))
+                    (lift_fe (t2.elements.val[ℓ]!)))
+                = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    (lift_fe ((result_init.coefficients.val[k.val]!).elements.val[ℓ]!))
+                    (lift_fe_mont (1441#i16)))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                    (lift_fe ((self_init.coefficients.val[k.val]!).elements.val[ℓ]!))
+                    (lift_fe ((message_init.coefficients.val[k.val]!).elements.val[ℓ]!)))
+            rw [show t = result_init.coefficients.val[k.val]! from h_t_eq,
+                show scratch1 = self_init.coefficients.val[k.val]! from hscratch1_def,
+                show t2 = message_init.coefficients.val[k.val]! from ht2_def]
+      · -- (b) s.val ≤ j < 16 → acc'.1.coefs[j] = result_init.coefs[j].
+        intro j hj_ge hj_lt
+        rw [hs_val] at hj_ge
+        have h_ne : k.val ≠ j := by omega
+        have h_ge' : k.val ≤ j := by omega
+        show ((((acc.1.coefficients.set k t1).set k t4).set k t6).val[j]!)
+            = result_init.coefficients.val[j]!
+        have h_set1 : ((((acc.1.coefficients.set k t1).set k t4).set k t6).val[j]!)
+            = (((acc.1.coefficients.set k t1).set k t4).val[j]!) := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+            Aeneas.Std.Array.getElem!_Nat_set_ne
+              ((acc.1.coefficients.set k t1).set k t4) k j t6 h_ne
+        have h_set2 : (((acc.1.coefficients.set k t1).set k t4).val[j]!)
+            = ((acc.1.coefficients.set k t1).val[j]!) := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+            Aeneas.Std.Array.getElem!_Nat_set_ne
+              (acc.1.coefficients.set k t1) k j t4 h_ne
+        have h_set3 : ((acc.1.coefficients.set k t1).val[j]!)
+            = acc.1.coefficients.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+            Aeneas.Std.Array.getElem!_Nat_set_ne acc.1.coefficients k j t1 h_ne
+        rw [h_set1, h_set2, h_set3]
+        exact h_acc_undone j h_ge' hj_lt
+    show (pure _ : Result Prop).holds
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+  · -- `None` branch: k ≥ 16, done.
+    have hk_ge : k.val ≥ (16#usize : Std.Usize).val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = 16 := by rw [h16] at hk_ge; omega
+    have h_iter_none := libcrux_iot_ml_kem.Util.iter_next_none_eq k hk_ge
+    have h_body :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
+          (vectortraitsOperationsInst := portable_ops_inst) self_init message_init
+          { start := k, «end» := 16#usize } acc.1 acc.2
+        = .ok (ControlFlow.done acc) := by
+      unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    apply triple_of_ok_fc h_body
+    show L6_6_FC.step_post self_init message_init result_init k (.done acc)
+    unfold L6_6_FC.step_post
+    show (L6_6_FC.inv self_init message_init result_init 16#usize acc).holds
+    show (pure _ : Result Prop).holds
+    have h_inv_pure :
+        (∀ j : Nat, j < (16#usize : Std.Usize).val →
+          lift_chunk (acc.1.coefficients.val[j]!)
+            = Spec.chunk_add_message_error_reduce_pure
+                (lift_chunk (self_init.coefficients.val[j]!))
+                (lift_chunk (message_init.coefficients.val[j]!))
+                (lift_chunk (result_init.coefficients.val[j]!)))
+        ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
+            acc.1.coefficients.val[j]! = result_init.coefficients.val[j]!) := by
+      refine ⟨?_, ?_⟩
+      · intro j hj; rw [h16] at hj
+        apply h_acc_done j; rw [hk_eq]; exact hj
+      · intro j hj_ge hj_lt
+        rw [h16] at hj_ge
+        apply h_acc_undone j _ hj_lt; rw [hk_eq]; exact hj_ge
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+
+set_option maxHeartbeats 16000000 in
 /-- L6.6 — `add_message_error_reduce`: combines `self · (R/128)` with
-    `result + message` then barrett. Returns `(re, scratch)` tuple. -/
+    `result + message` then barrett. Returns `(re, scratch)` tuple; we
+    project on `re`.
+
+    **Preconditions** (load-bearing, beyond the locked True-pre form):
+    - `h_result_bnd`: per-lane `|result[k][ℓ]| ≤ 32767` (consumed by
+      `mont_mul`'s legacy precondition).
+    - `h_sum_bnd`: per-lane `|self[k][ℓ] + message[k][ℓ]| ≤ 29439` (drives
+      both `add`s: first `self + message` directly; then `t1 + scratch2`
+      with |t1| ≤ 3328 + |scratch2| ≤ 29439 = 32767). -/
 @[spec]
 theorem add_message_error_reduce_fc
     (self message result : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_result_bnd : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      ((result.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 32767)
+    (h_sum_bnd : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      (((self.coefficients.val[chunk]!).elements.val[ℓ]!).val
+        + ((message.coefficients.val[chunk]!).elements.val[ℓ]!).val
+            : Int).natAbs ≤ 29439) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce
       (vectortraitsOperationsInst := portable_ops_inst) self message result scratch
     ⦃ ⇓ p => ⌜ lift_poly p.1
                 = Spec.add_message_error_reduce_pure
                     (lift_poly self) (lift_poly message) (lift_poly result) ⌝ ⦄ := by
-  sorry
+  unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce
+  have h_vre : libcrux_iot_ml_kem.polynomial.VECTORS_IN_RING_ELEMENT
+                = .ok (16#usize : Std.Usize) := by
+    unfold libcrux_iot_ml_kem.polynomial.VECTORS_IN_RING_ELEMENT
+    unfold libcrux_iot_ml_kem.constants.COEFFICIENTS_IN_RING_ELEMENT
+    unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+    rfl
+  rw [h_vre]; simp only [Aeneas.Std.bind_tc_ok]
+  unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop
+  apply Std.Do.Triple.of_entails_right _
+    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+      (fun (iter1, acc1) =>
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
+          (vectortraitsOperationsInst := portable_ops_inst) self message
+          iter1 acc1.1 acc1.2)
+      (β := L6_6_FC.Acc)
+      (result, scratch)
+      0#usize 16#usize
+      (L6_6_FC.inv self message result)
+      (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
+      (by
+        show (pure _ : Result Prop).holds
+        simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
+        intro _
+        refine ⟨?_, ?_⟩
+        · intro j hj; exact absurd hj (Nat.not_lt_zero j)
+        · intro _ _ _; trivial)
+      ?_)
+  · -- Post entailment.
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    have h_inv_holds : (L6_6_FC.inv self message result 16#usize r).holds := by
+      simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
+    have h_inv :
+        (∀ j : Nat, j < (16#usize : Std.Usize).val →
+            lift_chunk (r.1.coefficients.val[j]!)
+              = Spec.chunk_add_message_error_reduce_pure
+                  (lift_chunk (self.coefficients.val[j]!))
+                  (lift_chunk (message.coefficients.val[j]!))
+                  (lift_chunk (result.coefficients.val[j]!)))
+        ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
+            r.1.coefficients.val[j]! = result.coefficients.val[j]!) := by
+      simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
+             L6_6_FC.inv] using h_inv_holds
+    obtain ⟨h_done, _h_undone⟩ := h_inv
+    unfold Spec.add_message_error_reduce_pure
+    set chunks_arr : Std.Array
+        (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) 16#usize :=
+      Std.Array.make 16#usize ((List.range 16).map (fun k =>
+        Spec.chunk_add_message_error_reduce_pure
+          (Spec.chunk_at (lift_poly self) k)
+          (Spec.chunk_at (lift_poly message) k)
+          (Spec.chunk_at (lift_poly result) k)))
+        (by simp) with hchunks_def
+    have h_chunks_len : chunks_arr.val.length = 16 := by
+      show ((List.range 16).map _).length = 16
+      simp
+    have h_chunks_get : ∀ k : Nat, (hk : k < 16) →
+        chunks_arr.val[k]'(by rw [h_chunks_len]; exact hk)
+          = lift_chunk (r.1.coefficients.val[k]!) := by
+      intro k hk
+      show ((List.range 16).map (fun k =>
+        Spec.chunk_add_message_error_reduce_pure
+          (Spec.chunk_at (lift_poly self) k)
+          (Spec.chunk_at (lift_poly message) k)
+          (Spec.chunk_at (lift_poly result) k)))[k]'_ = _
+      rw [List.getElem_map, List.getElem_range]
+      rw [chunk_at_lift_poly_fc self k hk, chunk_at_lift_poly_fc message k hk,
+          chunk_at_lift_poly_fc result k hk]
+      exact (h_done k hk).symm
+    have h_final := flatten_chunks_eq_lift_poly_fc r.1 chunks_arr h_chunks_len h_chunks_get
+    exact h_final.symm
+  · -- Step entailment.
+    intro acc k _h_ge h_le hinv
+    have h_step :=
+      add_message_error_reduce_step_lemma_fc self message result
+        h_result_bnd h_sum_bnd acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : L6_6_FC.step_post self message result k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L6_6_FC.step_post] using hP
+    · have hP : L6_6_FC.step_post self message result k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L6_6_FC.step_post] using hP
 
 /-- L6.7 — poly-level `reducing_from_i32_array`. Returns a fresh poly
     from an `i32` slice via 16 chunkwise `reducing_from_i32_array` calls. -/
