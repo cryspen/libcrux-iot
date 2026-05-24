@@ -8357,6 +8357,108 @@ theorem ntt_at_layer_4_plus_portable_fc_strong
   subst h_rr
   exact triple_of_ok_fc h_eq ⟨h_fc', h_bd'.1, h_bd'.2⟩
 
+set_option maxHeartbeats 800000 in
+/-- L3.3-step-3 / L3.4-step-3 — layer-3 FC + bound combinator.
+    Pairs `ntt_at_layer_3_portable_fc` (FC eq) with
+    `Equivalence.ntt_at_layer_3_spec_B` (zeta-out = 31, per-lane ≤ bnd+3328). -/
+@[spec high]
+theorem ntt_at_layer_3_portable_fc_strong
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (initial_bound : Std.Usize)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
+    (h_zeta : zeta_i.val = 15)
+    (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_3
+      (vectortraitsOperationsInst := portable_ops_inst) zeta_i re initial_bound
+    ⦃ ⇓ p => ⌜ lift_poly p.2 = Spec.ntt_layer_3_pure (lift_poly re) zeta_i
+              ∧ p.1.val = 31
+              ∧ ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.2.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd + 3328 ⌝ ⦄ := by
+  have h_fc := ntt_at_layer_3_portable_fc zeta_i re initial_bound
+    (fun chunk hc k hk => by have := h_pre chunk hc k hk; omega)
+    (by rw [h_zeta]; decide)
+  have h_bd := libcrux_iot_ml_kem.Equivalence.ntt_at_layer_3_spec_B
+    zeta_i re initial_bound bnd h_bnd h_zeta h_pre
+  obtain ⟨r, h_eq, h_fc'⟩ := triple_exists_ok_fc h_fc
+  obtain ⟨r', h_eq', h_bd'⟩ := triple_exists_ok_fc h_bd
+  have h_rr : r = r' := by
+    have : (Result.ok r : Result _) = Result.ok r' := by rw [← h_eq, h_eq']
+    cases this; rfl
+  subst h_rr
+  exact triple_of_ok_fc h_eq ⟨h_fc', h_bd'.1, h_bd'.2⟩
+
+set_option maxHeartbeats 800000 in
+/-- L3.3-step-2 / L3.4-step-2 — layer-2 FC + bound combinator.
+    Pairs `ntt_at_layer_2_portable_fc` (FC eq) with
+    `Equivalence.ntt_at_layer_2_spec_B` (zeta-out = 63, per-lane ≤ bnd+3328). -/
+@[spec high]
+theorem ntt_at_layer_2_portable_fc_strong
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (initial_bound : Std.Usize)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
+    (h_zeta : zeta_i.val = 31)
+    (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_2
+      (vectortraitsOperationsInst := portable_ops_inst) zeta_i re initial_bound
+    ⦃ ⇓ p => ⌜ lift_poly p.2 = Spec.ntt_layer_2_pure (lift_poly re) zeta_i
+              ∧ p.1.val = 63
+              ∧ ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.2.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd + 3328 ⌝ ⦄ := by
+  have h_fc := ntt_at_layer_2_portable_fc zeta_i re initial_bound
+    (fun chunk hc k hk => by have := h_pre chunk hc k hk; omega)
+    (by rw [h_zeta]; decide)
+  have h_bd := libcrux_iot_ml_kem.Equivalence.ntt_at_layer_2_spec_B
+    zeta_i re initial_bound bnd h_bnd h_zeta h_pre
+  obtain ⟨r, h_eq, h_fc'⟩ := triple_exists_ok_fc h_fc
+  obtain ⟨r', h_eq', h_bd'⟩ := triple_exists_ok_fc h_bd
+  have h_rr : r = r' := by
+    have : (Result.ok r : Result _) = Result.ok r' := by rw [← h_eq, h_eq']
+    cases this; rfl
+  subst h_rr
+  exact triple_of_ok_fc h_eq ⟨h_fc', h_bd'.1, h_bd'.2⟩
+
+set_option maxHeartbeats 800000 in
+/-- L3.3-step-1 / L3.4-step-1 — layer-1 FC + bound combinator.
+    Pairs `ntt_at_layer_1_portable_fc` (FC eq) with
+    `Equivalence.ntt_at_layer_1_spec_B` (zeta-out = 127, per-lane ≤ bnd+3328). -/
+@[spec high]
+theorem ntt_at_layer_1_portable_fc_strong
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (initial_bound : Std.Usize)
+    (bnd : Nat) (h_bnd : bnd ≤ 29439)
+    (h_zeta : zeta_i.val = 63)
+    (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_1
+      (vectortraitsOperationsInst := portable_ops_inst) zeta_i re initial_bound
+    ⦃ ⇓ p => ⌜ lift_poly p.2 = Spec.ntt_layer_1_pure (lift_poly re) zeta_i
+              ∧ p.1.val = 127
+              ∧ ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.2.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd + 3328 ⌝ ⦄ := by
+  have h_fc := ntt_at_layer_1_portable_fc zeta_i re initial_bound
+    (fun chunk hc k hk => by have := h_pre chunk hc k hk; omega)
+    (by omega)
+  have h_bd := libcrux_iot_ml_kem.Equivalence.ntt_at_layer_1_spec_B
+    zeta_i re initial_bound bnd h_bnd h_zeta h_pre
+  obtain ⟨r, h_eq, h_fc'⟩ := triple_exists_ok_fc h_fc
+  obtain ⟨r', h_eq', h_bd'⟩ := triple_exists_ok_fc h_bd
+  have h_rr : r = r' := by
+    have : (Result.ok r : Result _) = Result.ok r' := by rw [← h_eq, h_eq']
+    cases this; rfl
+  subst h_rr
+  exact triple_of_ok_fc h_eq ⟨h_fc', h_bd'.1, h_bd'.2⟩
+
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
 
