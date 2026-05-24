@@ -827,6 +827,24 @@ private theorem triple_exists_ok_fc {α : Type} {x : Result α} {P : α → Prop
   | .fail _ => exact absurd h (by simp [Std.Do.Triple, WP.wp])
   | .div => exact absurd h (by simp [Std.Do.Triple, WP.wp])
 
+/-- `.val`-preserving `Std.Usize` add helper, scoped to this file.
+    Mirrors `libcrux_iot_ml_kem.Equivalence.usize_add_ok_eq`
+    (private to L3_NTTDrivers). -/
+private theorem usize_add_ok_eq_fc (x y : Std.Usize)
+    (h_max : x.val + y.val ≤ Std.Usize.max) :
+    ∃ z : Std.Usize, (x + y : Result Std.Usize) = .ok z ∧ z.val = x.val + y.val := by
+  have hT := Std.Usize.add_spec h_max
+  obtain ⟨z, h_eq, h_v⟩ := Std.WP.spec_imp_exists hT
+  exact ⟨z, h_eq, h_v⟩
+
+/-- `.val`-preserving `Std.Usize` mul helper. -/
+private theorem usize_mul_ok_eq_fc (x y : Std.Usize)
+    (h_max : x.val * y.val ≤ Std.Usize.max) :
+    ∃ z : Std.Usize, (x * y : Result Std.Usize) = .ok z ∧ z.val = x.val * y.val := by
+  have hT := Std.Usize.mul_spec h_max
+  obtain ⟨z, h_eq, h_v⟩ := Std.WP.spec_imp_exists hT
+  exact ⟨z, h_eq, h_v⟩
+
 /-! ### L0.1 — `get_n_least_significant_bits`.
     Impl computes `value & ((1 <<< n) - 1)`; the spec
     `Spec.get_n_least_significant_bits_pure` is precisely that BV-mask
