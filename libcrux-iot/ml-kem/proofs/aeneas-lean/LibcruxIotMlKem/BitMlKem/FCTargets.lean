@@ -59,6 +59,7 @@ import LibcruxIotMlKem.Util.BvMasks
 import LibcruxIotMlKem.Util.ModularArith
 import LibcruxIotMlKem.Equivalence.L0_FieldArith
 import LibcruxIotMlKem.Equivalence.L1_VectorElementOps
+import LibcruxIotMlKem.Equivalence.L3_NTTDrivers
 import LibcruxIotMlKem.Extraction.Funs
 import HacspecMlKem.Extraction.Funs
 
@@ -8268,6 +8269,43 @@ theorem ntt_at_layer_4_plus_portable_fc
     · have hP : L3_4_plus_outer_FC.step_post re zeta_i step_vec i_end k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L3_4_plus_outer_FC.step_post] using hP
+
+/-! ### Per-layer FC+bound combinators (Phase 5)
+
+    Each combinator pairs the FC equation (from FCTargets) with the
+    per-lane output bound (from legacy `Equivalence.ntt_at_layer_X_spec(_B)`),
+    so the downstream L3.3/L3.4 composition can chain them without
+    re-applying two Triples per sub-call. See SKILL §9.11. -/
+
+set_option maxHeartbeats 800000 in
+/-- L3.3-step-1 — layer-7 FC + bound combinator.
+    Input ≤ 3 (binomial-sampled), output ≤ 4803.
+    Pairs `ntt_at_layer_7_portable_fc` (FC eq) with
+    `Equivalence.ntt_at_layer_7_spec` (per-lane ≤ 4803). -/
+@[spec high]
+theorem ntt_at_layer_7_portable_fc_strong
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_7
+      (vectortraitsOperationsInst := portable_ops_inst) re scratch
+    ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.ntt_at_layer_7_pure (lift_poly re)
+              ∧ ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.1.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 4803 ⌝ ⦄ := by
+  have h_fc := ntt_at_layer_7_portable_fc re scratch
+    (fun chunk hc k hk => by
+      have := h_pre chunk hc k hk; omega)
+  have h_bd := libcrux_iot_ml_kem.Equivalence.ntt_at_layer_7_spec re scratch h_pre
+  obtain ⟨r, h_eq, h_fc'⟩ := triple_exists_ok_fc h_fc
+  obtain ⟨r', h_eq', h_bd'⟩ := triple_exists_ok_fc h_bd
+  have h_rr : r = r' := by
+    have : (Result.ok r : Result _) = Result.ok r' := by rw [← h_eq, h_eq']
+    cases this; rfl
+  subst h_rr
+  exact triple_of_ok_fc h_eq ⟨h_fc', h_bd'⟩
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
