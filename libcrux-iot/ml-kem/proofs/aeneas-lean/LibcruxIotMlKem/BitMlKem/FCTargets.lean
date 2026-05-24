@@ -8278,7 +8278,7 @@ theorem ntt_at_layer_4_plus_portable_fc
     re-applying two Triples per sub-call. See SKILL §9.11. -/
 
 set_option maxHeartbeats 800000 in
-/-- L3.3-step-1 — layer-7 FC + bound combinator.
+/-- L3.3-step-7 — layer-7 dedicated FC + bound combinator.
     Input ≤ 3 (binomial-sampled), output ≤ 4803.
     Pairs `ntt_at_layer_7_portable_fc` (FC eq) with
     `Equivalence.ntt_at_layer_7_spec` (per-lane ≤ 4803). -/
@@ -8306,6 +8306,56 @@ theorem ntt_at_layer_7_portable_fc_strong
     cases this; rfl
   subst h_rr
   exact triple_of_ok_fc h_eq ⟨h_fc', h_bd'⟩
+
+set_option maxHeartbeats 800000 in
+/-- L3.3-step-{4,5,6} + L3.4-step-7 — generic `layer_4_plus` FC + bound combinator.
+    Parametric in `layer ∈ {4,5,6,7}`. Pairs `ntt_at_layer_4_plus_portable_fc`
+    (FC eq, h_zeta strict form) with `Equivalence.ntt_at_layer_4_plus_spec`
+    (output ≤ bnd.val + 3328, zeta-out = zeta_i + 128 >>> layer). -/
+@[spec high]
+theorem ntt_at_layer_4_plus_portable_fc_strong
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (layer : Std.Usize)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (bnd : Std.Usize)
+    (h_layer : 4 ≤ layer.val ∧ layer.val ≤ 7)
+    (h_bnd : bnd.val ≤ 8 * 3328)
+    (h_zeta : zeta_i.val = (1 <<< (7 - layer.val)) - 1)
+    (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd.val) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus
+      (vectortraitsOperationsInst := portable_ops_inst)
+      zeta_i re layer scratch bnd
+    ⦃ ⇓ p => ⌜ lift_poly p.2.1 = Spec.ntt_at_layer_4_plus_pure (lift_poly re) zeta_i layer
+              ∧ p.1.val = zeta_i.val + 128 >>> layer.val
+              ∧ ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.2.1.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd.val + 3328 ⌝ ⦄ := by
+  obtain ⟨h_layer_lo, h_layer_hi⟩ := h_layer
+  -- FC theorem h_bnd ceiling = 29439. bnd.val ≤ 8 * 3328 = 26624 ≤ 29439.
+  have h_pre_29439 : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 29439 := by
+    intro chunk hc k hk
+    have := h_pre chunk hc k hk
+    omega
+  -- FC theorem h_zeta: zeta_i.val + (128 >>> layer.val) ≤ 127. Derive from
+  -- h_zeta : zeta_i.val = (1 <<< (7 - layer.val)) - 1 by interval cases on layer.
+  have h_zeta_fc : zeta_i.val + (128 >>> layer.val) ≤ 127 := by
+    rw [h_zeta]
+    interval_cases layer.val <;> decide
+  have h_fc := ntt_at_layer_4_plus_portable_fc zeta_i re layer scratch bnd
+    ⟨h_layer_lo, h_layer_hi⟩ h_pre_29439 h_zeta_fc
+  have h_bd := libcrux_iot_ml_kem.Equivalence.ntt_at_layer_4_plus_spec
+    layer zeta_i re scratch bnd ⟨h_layer_lo, h_layer_hi⟩ h_bnd h_zeta h_pre
+  obtain ⟨r, h_eq, h_fc'⟩ := triple_exists_ok_fc h_fc
+  obtain ⟨r', h_eq', h_bd'⟩ := triple_exists_ok_fc h_bd
+  have h_rr : r = r' := by
+    have : (Result.ok r : Result _) = Result.ok r' := by rw [← h_eq, h_eq']
+    cases this; rfl
+  subst h_rr
+  exact triple_of_ok_fc h_eq ⟨h_fc', h_bd'.1, h_bd'.2⟩
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
