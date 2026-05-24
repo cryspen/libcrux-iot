@@ -5365,6 +5365,62 @@ theorem ntt_at_layer_3_portable_fc
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L3_3_FC.step_post] using hP
 
+/-- L3.7' — `ntt_at_layer_7` PortableVector-specialised FC equation.
+    Single chunk-stride-8 butterfly layer with constant zeta -1600.
+
+    The impl iterates `j ∈ 0..8` and butterflies chunks `(j, j+8)` with
+    constant Mont-form zeta `-1600`; the lifted constant is
+    `Spec.zeta_layer_7 = lift_fe_mont (-1600)#i16`.
+
+    **Preconditions** (load-bearing):
+    - `h_bnd` : per-lane input bound 29439 across all 16 chunks × 16 lanes
+      (ample for the chunk-pair butterfly's 1664-magnitude Mont products). -/
+@[spec high]
+theorem ntt_at_layer_7_portable_fc
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 29439) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_7
+      (vectortraitsOperationsInst := portable_ops_inst) re scratch
+    ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.ntt_at_layer_7_pure (lift_poly re) ⌝ ⦄ := by
+  sorry
+
+/-- L3.4_plus' — `ntt_at_layer_4_plus` PortableVector-specialised FC equation,
+    parameterized over `layer ∈ {4, 5, 6}`.
+
+    Nested-loop pattern: outer over `round ∈ 0..(128 >>> layer)`, inner
+    over `j ∈ 0..((1 <<< layer) / 16)`. Each inner iter butterflies
+    chunks at positions `(round*2*step_vec + j, round*2*step_vec + step_vec + j)`
+    with `Spec.zeta_at (zeta_i + round + 1)`. zeta_i advances by `128 >>> layer`
+    across the entire call.
+
+    **Preconditions** (load-bearing):
+    - `h_layer` : layer in 4..6 (validity of the nested-loop shape).
+    - `h_bnd` : per-lane input bound 29439.
+    - `h_zeta` : zeta_i.val + (128 >>> layer) ≤ 127 (zeta indices within
+      ZETAS table 0..127). -/
+@[spec high]
+theorem ntt_at_layer_4_plus_portable_fc
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (layer : Std.Usize)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (initial_bound : Std.Usize)
+    (h_layer : 4 ≤ layer.val ∧ layer.val ≤ 6)
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 29439)
+    (h_zeta : zeta_i.val + (128 >>> layer.val) ≤ 127) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus
+      (vectortraitsOperationsInst := portable_ops_inst)
+      zeta_i re layer scratch initial_bound
+    ⦃ ⇓ p => ⌜ lift_poly p.2.1 = Spec.ntt_at_layer_4_plus_pure (lift_poly re) zeta_i layer ⌝ ⦄ := by
+  sorry
+
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (5 layer
     composition + barrett reduce). Projects on the poly component. -/
 @[spec]
