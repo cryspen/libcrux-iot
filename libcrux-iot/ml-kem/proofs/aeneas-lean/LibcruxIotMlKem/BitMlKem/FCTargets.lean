@@ -10757,6 +10757,51 @@ theorem add_error_reduce_fc
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L6_4_FC.step_post] using hP
 
+/-! ### L6.5.A — Loop scaffolding for `add_standard_error_reduce_fc`. -/
+
+namespace L6_5_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+/-- Step-local accumulator (the mutable `self` poly). -/
+abbrev Acc :=
+  libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector
+
+/-- FC loop invariant for `add_standard_error_reduce_fc`.
+    * (a) Chunks `j < k`: FC equation `lift_chunk acc[j] =
+          chunk_add_standard_error_reduce_pure (lift_chunk self_init[j])
+            (lift_chunk error[j])`.
+    * (b) Chunks `k ≤ j < 16`: `acc[j] = self_init[j]` (unchanged). -/
+def inv
+    (self_init error : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    Std.Usize → Acc → Result Prop :=
+  fun k acc => pure (
+    (∀ j : Nat, j < k.val →
+      lift_chunk (acc.coefficients.val[j]!)
+        = Spec.chunk_add_standard_error_reduce_pure
+            (lift_chunk (self_init.coefficients.val[j]!))
+            (lift_chunk (error.coefficients.val[j]!)))
+    ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
+        acc.coefficients.val[j]! = self_init.coefficients.val[j]!))
+
+/-- Step-post for `loop_range_spec_usize`. -/
+def step_post
+    (self_init error : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × Acc) Acc) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (16#usize : Std.Usize).val ∧ iter'.«end» = 16#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (inv self_init error iter'.start acc').holds
+  | .done y => (inv self_init error 16#usize y).holds
+
+end L6_5_FC
+
 /-- L6.5 — `add_standard_error_reduce`: `self · R² + error` then barrett.
     Used to take an inverse-NTT result back to "standard domain". -/
 @[spec]
