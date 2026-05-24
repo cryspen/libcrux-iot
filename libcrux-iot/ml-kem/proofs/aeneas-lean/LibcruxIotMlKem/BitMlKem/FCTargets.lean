@@ -11330,6 +11330,61 @@ theorem add_standard_error_reduce_fc
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L6_5_FC.step_post] using hP
 
+/-! ### L6.6.A — Loop scaffolding for `add_message_error_reduce_fc`.
+
+    Unlike L6.4/L6.5 (single-poly Acc), this loop carries a 2-tuple
+    `(result_acc, scratch)` because the impl reads/writes both per
+    iteration. The FC equation lives entirely on `result_acc`; `scratch`
+    is unconstrained at iteration boundaries (`scratch_15 = self[15] +
+    message[15]` at exit, but the FC theorem only projects `p.1`). -/
+
+namespace L6_6_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+/-- Step-local accumulator: `(result, scratch)`. -/
+abbrev Acc :=
+  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    × libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector
+
+/-- FC loop invariant for `add_message_error_reduce_fc`.
+    * (a) Chunks `j < k`: FC equation on `acc.1` against
+          `chunk_add_message_error_reduce_pure (self_init[j]) (message_init[j]) (result_init[j])`.
+    * (b) Chunks `k ≤ j < 16`: `acc.1[j] = result_init[j]` (unchanged).
+    The `scratch` component `acc.2` is unconstrained. -/
+def inv
+    (self_init message_init result_init :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    Std.Usize → Acc → Result Prop :=
+  fun k acc => pure (
+    (∀ j : Nat, j < k.val →
+      lift_chunk (acc.1.coefficients.val[j]!)
+        = Spec.chunk_add_message_error_reduce_pure
+            (lift_chunk (self_init.coefficients.val[j]!))
+            (lift_chunk (message_init.coefficients.val[j]!))
+            (lift_chunk (result_init.coefficients.val[j]!)))
+    ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
+        acc.1.coefficients.val[j]! = result_init.coefficients.val[j]!))
+
+/-- Step-post for `loop_range_spec_usize`. -/
+def step_post
+    (self_init message_init result_init :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × Acc) Acc) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (16#usize : Std.Usize).val ∧ iter'.«end» = 16#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (inv self_init message_init result_init iter'.start acc').holds
+  | .done y => (inv self_init message_init result_init 16#usize y).holds
+
+end L6_6_FC
+
 /-- L6.6 — `add_message_error_reduce`: combines `self · (R/128)` with
     `result + message` then barrett. Returns `(re, scratch)` tuple. -/
 @[spec]
