@@ -830,6 +830,127 @@ theorem polynomial.poly_barrett_reduce_eq_ok
   unfold polynomial.poly_barrett_reduce_pure
   rw [h_wrap]
 
+/-- Identity-on-canonical bridge for `polynomial.poly_barrett_reduce_pure`.
+
+    When every lane of `p` is canonical (`p.val[k]!.val.val < q`), the pure
+    projection is the identity: `poly_barrett_reduce_pure p = p`. Used by
+    L6.1 FC close where the input is `lift_poly self` (canonical by
+    `lift_fe`'s `feOfZMod` codomain). -/
+theorem polynomial.poly_barrett_reduce_pure_id_of_canonical
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (hcan : ∀ k : Nat, k < 256 → Canonical (p.val[k]!)) :
+    polynomial.poly_barrett_reduce_pure p = p := by
+  -- Re-derive `h_wrap` with f := fun k => p.val[k]! (canonical identity).
+  set f : Nat → parameters.FieldElement := fun k => p.val[k]! with hf_def
+  have hpure : ∀ k : Nat, k < (256#usize : Std.Usize).val →
+      (hacspec_ml_kem.polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement
+        : core_models.ops.function.Fn _ _ _).FnMutInst.call_mut
+            p ⟨BitVec.ofNat _ k⟩
+        = .ok (f k, p) := by
+    intro k hk
+    show polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+        p ⟨BitVec.ofNat _ k⟩ = .ok (f k, p)
+    unfold polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+    unfold polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement.call
+    have hk' : k < 256 := hk
+    have hk_us : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k := by
+      show (BitVec.ofNat _ k).toNat = k
+      apply Nat.mod_eq_of_lt
+      have : k < 2^System.Platform.numBits := by
+        have hbits : 2^16 ≤ 2^System.Platform.numBits :=
+          Nat.pow_le_pow_right (by decide) (by
+            cases System.Platform.numBits_eq with
+            | inl h => rw [h]; decide
+            | inr h => rw [h]; decide)
+        omega
+      exact this
+    have hp_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < p.length := by
+      rw [hk_us]; show k < p.val.length
+      rw [p.property]; exact hk
+    have h_p_idx :
+        Std.Array.index_usize p (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (p.val[k]!) := by
+      rw [array_index_usize_ok p _ hp_len, hk_us]
+    change (do
+      let fe ← (do
+        let fe ← Std.Array.index_usize p ⟨BitVec.ofNat _ k⟩
+        let i ← (fe.val % parameters.FIELD_MODULUS : Result Std.U16)
+        parameters.FieldElement.new i)
+      Result.ok (fe, p)) = Result.ok (f k, p)
+    rw [h_p_idx]; simp only [bind_tc_ok]
+    rw [rem_q_U16_eq]; simp only [bind_tc_ok]
+    unfold parameters.FieldElement.new
+    simp only [bind_tc_ok]
+    -- Goal: .ok ({ val := rem_q_U16 (p.val[k]!).val }, p) = .ok (f k, p).
+    -- Build f k = p.val[k]! identity using canonicity.
+    have hcank : Canonical (p.val[k]!) := hcan k hk'
+    unfold Canonical at hcank
+    have hq_val : parameters.FIELD_MODULUS.val = 3329 := by
+      unfold parameters.FIELD_MODULUS; decide
+    have hcank_int : (p.val[k]!).val.val < 3329 := by
+      have : (p.val[k]!).val.val < parameters.FIELD_MODULUS.val := hcank
+      rw [hq_val] at this; exact this
+    -- rem_q_U16 (p.val[k]!).val .val = (p.val[k]!).val.val % 3329 = (p.val[k]!).val.val.
+    have hq_ne : (parameters.FIELD_MODULUS : Std.U16).val ≠ 0 := by
+      unfold parameters.FIELD_MODULUS; decide
+    have h_rem_val : (rem_q_U16 (p.val[k]!).val).val = (p.val[k]!).val.val % 3329 := by
+      have ⟨w, hw_eq, hw_val⟩ :=
+        uscalar_rem_ok_U16 (p.val[k]!).val parameters.FIELD_MODULUS hq_ne
+      have h_rem_eq := rem_q_U16_eq (p.val[k]!).val
+      rw [hw_eq] at h_rem_eq
+      have h_w_eq_rem : w = rem_q_U16 (p.val[k]!).val := Result.ok.inj h_rem_eq
+      rw [← h_w_eq_rem, hw_val, hq_val]
+    have h_rem_val_eq : (rem_q_U16 (p.val[k]!).val).val = (p.val[k]!).val.val :=
+      h_rem_val.trans (Nat.mod_eq_of_lt hcank_int)
+    -- The two U16s `rem_q_U16 (p.val[k]!).val` and `(p.val[k]!).val` have equal .val.
+    -- Use Std.U16's @[ext] from .val equality, which goes via .bv equality.
+    have h_u16_eq : rem_q_U16 (p.val[k]!).val = (p.val[k]!).val := by
+      apply Std.U16.bv_eq_imp_eq
+      -- .bv equality reduces to .val (= .bv.toNat) equality via BitVec.ext + width.
+      show (rem_q_U16 (p.val[k]!).val).bv = ((p.val[k]!).val).bv
+      apply BitVec.eq_of_toNat_eq
+      show (rem_q_U16 (p.val[k]!).val).val = ((p.val[k]!).val).val
+      exact h_rem_val_eq
+    -- Plug in: ⟨rem_q_U16 (p.val[k]!).val⟩ = ⟨(p.val[k]!).val⟩ = p.val[k]! = f k.
+    have h_fe_eq : ({ val := rem_q_U16 (p.val[k]!).val } : parameters.FieldElement) = f k := by
+      rw [h_u16_eq, hf_def]
+    rw [h_fe_eq]
+  -- Apply from_fn_pure_eq with this f.
+  have h_from_fn :=
+    libcrux_iot_ml_kem.Util.from_fn_pure_eq
+      (T := parameters.FieldElement)
+      (F := polynomial.poly_barrett_reduce.closure)
+      (N := 256#usize)
+      (inst := polynomial.poly_barrett_reduce.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement)
+      (c := p)
+      (f := f)
+      hpure
+  have h_wrap : hacspec_ml_kem.polynomial.poly_barrett_reduce p
+      = .ok ⟨(List.range (256#usize : Std.Usize).val).map f,
+             by simp [List.length_map, List.length_range]⟩ := by
+    unfold hacspec_ml_kem.polynomial.poly_barrett_reduce
+    unfold hacspec_ml_kem.parameters.createi
+    exact h_from_fn
+  -- Unfold _pure via h_wrap.
+  unfold polynomial.poly_barrett_reduce_pure
+  rw [h_wrap]
+  -- Goal: ⟨(range 256).map f, _⟩ = p. Use Subtype.ext + list equality.
+  apply Subtype.ext
+  show (List.range 256).map f = p.val
+  have h_p_len : p.val.length = 256 := p.property
+  apply List.ext_getElem
+  · simp [h_p_len]
+  · intro k hk1 _hk2
+    have hk : k < 256 := by
+      have : k < (List.range 256).length := by simpa using hk1
+      simpa using this
+    rw [List.getElem_map, List.getElem_range]
+    show f k = p.val[k]
+    rw [hf_def]
+    show p.val[k]! = p.val[k]
+    -- Use getElem!_pos to align p.val[k]! with p.val[k]'_.
+    exact getElem!_pos p.val k (by rw [h_p_len]; exact hk)
+
 /-- Pure-projection side lemma for `polynomial.subtract_reduce` — valid
     for per-element CANONICAL inputs. The closure body inlines
     `parameters.FieldElement.sub`'s
