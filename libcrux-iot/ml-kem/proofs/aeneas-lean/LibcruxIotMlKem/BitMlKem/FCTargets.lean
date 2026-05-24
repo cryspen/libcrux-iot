@@ -576,14 +576,124 @@ noncomputable def Spec.ntt_layer_3_pure
         (Spec.zeta_at (zeta_i.val + k + 1))))
       (by simp))
 
-/-- Pure projection of the full hacspec `ntt.ntt`. Defined as a 7-layer
-    composition with cumulative zeta offsets + final barrett.
-    **STUB**: layers 4-7 require additional helpers (nested loop
-    pattern in `ntt_at_layer_4_plus`); deferred to a follow-up phase.
-    Used by `ntt_binomially_sampled_ring_element_fc` / `ntt_vector_u_fc`. -/
+/-! ### Spec helpers for layer 4+ (cross-chunk butterflies). -/
+
+/-- Pure NTT butterfly between TWO chunks, applied to all 16 lanes
+    simultaneously. Mirrors the impl's `ntt_layer_int_vec_step`:
+    lane ℓ in chunk_a becomes `chunk_a[ℓ] + chunk_b[ℓ] * z` (plain ZMod
+    via Montgomery cancellation in `lift_fe_mont`); lane ℓ in chunk_b
+    becomes `chunk_a[ℓ] - chunk_b[ℓ] * z`. -/
+noncomputable def Spec.chunk_pair_butterfly_a_pure
+    (chunk_a chunk_b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (z : hacspec_ml_kem.parameters.FieldElement) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure (chunk_a.val[ℓ]!)
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (chunk_b.val[ℓ]!) z)))
+    (by simp)
+
+noncomputable def Spec.chunk_pair_butterfly_b_pure
+    (chunk_a chunk_b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (z : hacspec_ml_kem.parameters.FieldElement) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure (chunk_a.val[ℓ]!)
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (chunk_b.val[ℓ]!) z)))
+    (by simp)
+
+/-- Per-chunk output for the layer-4+ driver, parameterized by zeta source.
+    For chunk position `c ∈ 0..16`:
+    - `step_vec := (1 <<< layer) / 16` (= 1, 2, 4, 8 for layers 4..7).
+    - `group := c / (2 * step_vec)`, `offset := c % (2 * step_vec)`.
+    - If `offset < step_vec`: c is the a-side; partner is `c + step_vec`.
+      New chunk = chunk_a + chunk_partner * zeta_fn group.
+    - Else: c is the b-side; partner is `c - step_vec`.
+      New chunk = chunk_partner - chunk_c * zeta_fn group.
+    The `zeta_fn : Nat → FE` lets layer-4-6 use the zeta table and
+    layer-7 use the constant `lift_fe_mont (-1600)`. -/
+noncomputable def Spec.chunk_at_layer_4_plus_pure
+    (chunks : Std.Array
+      (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) 16#usize)
+    (layer : Std.Usize) (zeta_fn : Nat → hacspec_ml_kem.parameters.FieldElement)
+    (c : Nat) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  let step_vec := (1 <<< layer.val) / 16
+  let group := c / (2 * step_vec)
+  let offset := c % (2 * step_vec)
+  let z := zeta_fn group
+  if offset < step_vec then
+    Spec.chunk_pair_butterfly_a_pure
+      (chunks.val[c]!) (chunks.val[c + step_vec]!) z
+  else
+    Spec.chunk_pair_butterfly_b_pure
+      (chunks.val[c - step_vec]!) (chunks.val[c]!) z
+
+/-- Pure projection of `ntt_at_layer_4_plus` driver for layers 4, 5, 6.
+    Iterates `2 * (128 >>> layer)` chunk-pair butterflies (= 16 chunks
+    touched once each), with zeta_offset incrementing every `step_vec`
+    inner butterflies (8 distinct zetas across the layer for layers 4-6). -/
+noncomputable def Spec.ntt_at_layer_4_plus_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (zeta_i : Std.Usize) (layer : Std.Usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  let chunks0 : Std.Array
+      (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) 16#usize :=
+    Std.Array.make 16#usize ((List.range 16).map (Spec.chunk_at p)) (by simp)
+  let zeta_fn : Nat → hacspec_ml_kem.parameters.FieldElement :=
+    fun group => Spec.zeta_at (zeta_i.val + group + 1)
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun c =>
+      Spec.chunk_at_layer_4_plus_pure chunks0 layer zeta_fn c))
+      (by simp))
+
+/-- The constant zeta used by `ntt_at_layer_7`. Impl uses
+    `multiply_by_constant scratch1 (-1600 : i16)`; lifted value is
+    `lift_fe_mont (-1600#i16)`, a fixed element of the field. -/
+noncomputable def Spec.zeta_layer_7 :
+    hacspec_ml_kem.parameters.FieldElement :=
+  lift_fe_mont ((-1600)#i16)
+
+/-- Pure projection of `ntt_at_layer_7` driver. Single layer of 8
+    chunk-pair butterflies between chunks `(j, j+8)` for j ∈ 0..8, all
+    with the constant zeta `Spec.zeta_layer_7`. -/
+noncomputable def Spec.ntt_at_layer_7_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  let chunks0 : Std.Array
+      (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) 16#usize :=
+    Std.Array.make 16#usize ((List.range 16).map (Spec.chunk_at p)) (by simp)
+  let zeta_fn : Nat → hacspec_ml_kem.parameters.FieldElement :=
+    fun _ => Spec.zeta_layer_7
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun c =>
+      Spec.chunk_at_layer_4_plus_pure chunks0 7#usize zeta_fn c))
+      (by simp))
+
+/-- Pure projection of the full hacspec `ntt.ntt`. Composes layer-7,
+    three layer-4_plus calls (layers 6, 5, 4), layer-3, layer-2, layer-1
+    + final barrett, mirroring the impl `ntt_binomially_sampled_ring_element`
+    shape with cumulative zeta_i offsets:
+    - layer 7: zeta_i unchanged (constant zeta, no table use).
+    - layer 6: zeta_i starts at 1, advances by `128 >>> 6 = 2` to 3.
+    - layer 5: starts at 3, advances by `128 >>> 5 = 4` to 7.
+    - layer 4: starts at 7, advances by `128 >>> 4 = 8` to 15.
+    - layer 3: starts at 15, advances by 16 to 31.
+    - layer 2: starts at 31, advances by 32 to 63.
+    - layer 1: starts at 63, advances by 64 to 127.
+    Total zetas: 0 + 2 + 4 + 8 + 16 + 32 + 64 = 126 (indices 1..126 used). -/
 noncomputable def Spec.ntt_pure
     (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
-    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize := sorry
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  let p7 := Spec.ntt_at_layer_7_pure p
+  let p6 := Spec.ntt_at_layer_4_plus_pure p7 1#usize 6#usize
+  let p5 := Spec.ntt_at_layer_4_plus_pure p6 3#usize 5#usize
+  let p4 := Spec.ntt_at_layer_4_plus_pure p5 7#usize 4#usize
+  let p3 := Spec.ntt_layer_3_pure p4 15#usize
+  let p2 := Spec.ntt_layer_2_pure p3 31#usize
+  let p1 := Spec.ntt_layer_1_pure p2 63#usize
+  SpecPure.polynomial.poly_barrett_reduce_pure p1
 
 /-- Pure projection of `polynomial.add_error_reduce`. The hacspec spec
     does not expose a dedicated `add_error_reduce` at the poly level —
