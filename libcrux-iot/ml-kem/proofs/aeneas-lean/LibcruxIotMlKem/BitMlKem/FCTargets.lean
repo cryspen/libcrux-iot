@@ -697,6 +697,49 @@ noncomputable def Spec.ntt_pure
   let p1 := Spec.ntt_layer_1_pure p2 63#usize
   SpecPure.polynomial.poly_barrett_reduce_pure p1
 
+/-- Pure projection of `ntt_vector_u`'s full NTT chain. Mirrors `Spec.ntt_pure`
+    but uses `Spec.ntt_at_layer_4_plus_pure p 0 7` for the first step instead
+    of `Spec.ntt_at_layer_7_pure p`. The two specs are mathematically
+    equivalent in `ZMod 3329` (see `Spec.zeta_at_one_eq_layer_7` below: the
+    Mont-multiply layer-7 step via `ZETAS_TIMES_MONTGOMERY_R[1] = -758` and
+    the plain-multiply layer-7 step with constant `-1600` produce the same
+    field element). They differ structurally because `ntt_vector_u`'s impl
+    uses the Mont path while `ntt_binomially_sampled_ring_element` uses the
+    plain path; we target each spec at the impl actually used. -/
+noncomputable def Spec.ntt_pure_vec_u
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  let p7 := Spec.ntt_at_layer_4_plus_pure p 0#usize 7#usize
+  let p6 := Spec.ntt_at_layer_4_plus_pure p7 1#usize 6#usize
+  let p5 := Spec.ntt_at_layer_4_plus_pure p6 3#usize 5#usize
+  let p4 := Spec.ntt_at_layer_4_plus_pure p5 7#usize 4#usize
+  let p3 := Spec.ntt_layer_3_pure p4 15#usize
+  let p2 := Spec.ntt_layer_2_pure p3 31#usize
+  let p1 := Spec.ntt_layer_1_pure p2 63#usize
+  SpecPure.polynomial.poly_barrett_reduce_pure p1
+
+/-- `ZETAS_TIMES_MONTGOMERY_R[1]! = -758#i16`. -/
+theorem Spec.ZETAS_TIMES_MONTGOMERY_R_get_one :
+    libcrux_iot_ml_kem.polynomial.ZETAS_TIMES_MONTGOMERY_R.val[1]!
+      = ((-758)#i16 : Std.I16) := by
+  unfold libcrux_iot_ml_kem.polynomial.ZETAS_TIMES_MONTGOMERY_R
+  decide
+
+/-- Spec-level zeta equivalence between L3.7 (plain `multiply_by_constant`)
+    and L3.4_plus at layer=7 (Mont multiply through `ZETAS_TIMES_MONTGOMERY_R[1]`).
+
+    In `ZMod 3329`: `Spec.zeta_at 1 = lift_fe_mont (-758) = lift_fe ((-758) * 169)
+    = lift_fe (-1600) = Spec.zeta_layer_7` (since `-758 * 169 ≡ -1600 mod 3329`).
+    Both equal the canonical field element 1729. -/
+theorem Spec.zeta_at_one_eq_layer_7 :
+    Spec.zeta_at 1 = Spec.zeta_layer_7 := by
+  unfold Spec.zeta_at Spec.zeta_layer_7
+  rw [Spec.ZETAS_TIMES_MONTGOMERY_R_get_one]
+  unfold lift_fe_mont lift_fe
+    libcrux_iot_ml_kem.BitMlKem.i16_to_spec_fe_mont
+    libcrux_iot_ml_kem.BitMlKem.i16_to_spec_fe_plain
+  congr 1
+
 /-- Pure projection of `polynomial.add_error_reduce`. The hacspec spec
     does not expose a dedicated `add_error_reduce` at the poly level —
     the impl's behaviour is "multiply by R/128 then add error then
@@ -7908,7 +7951,12 @@ set_option maxHeartbeats 16000000 in
     across the entire call.
 
     **Preconditions** (load-bearing):
-    - `h_layer` : layer in 4..6 (validity of the nested-loop shape).
+    - `h_layer` : layer in 4..7 (validity of the nested-loop shape). For
+      layer=7, `step_vec=8`, `i_end=1`, so the outer loop runs one iteration
+      and applies a single chunk-pair butterfly at chunks `(0+j, 8+j)` for
+      `j ∈ 0..8`, matching the dedicated `ntt_at_layer_7` impl up to the
+      zeta choice (Mont vs plain). The relaxation lets `ntt_vector_u` (L3.4)
+      reuse this theorem for its first call.
     - `h_bnd` : per-lane input bound 29439.
     - `h_zeta` : zeta_i.val + (128 >>> layer) ≤ 127 (zeta indices within
       ZETAS table 0..127).
@@ -7941,7 +7989,7 @@ theorem ntt_at_layer_4_plus_portable_fc
     (layer : Std.Usize)
     (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (initial_bound : Std.Usize)
-    (h_layer : 4 ≤ layer.val ∧ layer.val ≤ 6)
+    (h_layer : 4 ≤ layer.val ∧ layer.val ≤ 7)
     (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
       ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 29439)
     (h_zeta : zeta_i.val + (128 >>> layer.val) ≤ 127) :
@@ -8234,8 +8282,14 @@ theorem ntt_binomially_sampled_ring_element_fc
     ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.ntt_pure (lift_poly re) ⌝ ⦄ := by
   sorry
 
-/-- L3.4 — `ntt_vector_u` driver (4 layer composition + barrett reduce,
-    used for the encryption "u" vector NTT). -/
+/-- L3.4 — `ntt_vector_u` driver (4 layer_4_plus calls + 3 dedicated layers
+    + barrett reduce, used for the encryption "u" vector NTT). Note that the
+    impl's first call is `ntt_at_layer_4_plus(0, layer=7)` (Mont multiply
+    through `ZETAS_TIMES_MONTGOMERY_R[1]`), not the dedicated
+    `ntt_at_layer_7` (plain multiply with `-1600`). The two paths produce
+    the same field element in `ZMod 3329` (see `Spec.zeta_at_one_eq_layer_7`)
+    but differ structurally; we target the spec actually computed by the
+    impl, `Spec.ntt_pure_vec_u`. -/
 @[spec]
 theorem ntt_vector_u_fc
     (VECTOR_U_COMPRESSION_FACTOR : Std.Usize)
@@ -8246,7 +8300,7 @@ theorem ntt_vector_u_fc
     libcrux_iot_ml_kem.ntt.ntt_vector_u
       VECTOR_U_COMPRESSION_FACTOR
       (vectortraitsOperationsInst := portable_ops_inst) re scratch
-    ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.ntt_pure (lift_poly re) ⌝ ⦄ := by
+    ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.ntt_pure_vec_u (lift_poly re) ⌝ ⦄ := by
   sorry
 
 /-! ## §L6 — poly-level ops (6 theorems). -/
