@@ -649,11 +649,13 @@ noncomputable def Spec.ntt_at_layer_4_plus_pure
       (by simp))
 
 /-- The constant zeta used by `ntt_at_layer_7`. Impl uses
-    `multiply_by_constant scratch1 (-1600 : i16)`; lifted value is
-    `lift_fe_mont (-1600#i16)`, a fixed element of the field. -/
+    `multiply_by_constant scratch1 ((-1600)#i16)` (PLAIN multiplication,
+    not Mont — `multiply_by_constant_fc` lifts via `lift_fe`, not
+    `lift_fe_mont`). Lifted value is `lift_fe ((-1600)#i16)`, a fixed
+    element of the field. -/
 noncomputable def Spec.zeta_layer_7 :
     hacspec_ml_kem.parameters.FieldElement :=
-  lift_fe_mont ((-1600)#i16)
+  lift_fe ((-1600)#i16)
 
 /-- Pure projection of `ntt_at_layer_7` driver. Single layer of 8
     chunk-pair butterflies between chunks `(j, j+8)` for j ∈ 0..8, all
