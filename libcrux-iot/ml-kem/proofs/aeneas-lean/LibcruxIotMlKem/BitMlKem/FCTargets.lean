@@ -12003,18 +12003,474 @@ theorem add_message_error_reduce_fc
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L6_6_FC.step_post] using hP
 
+namespace L6_7_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+/-- Step-local accumulator (the mutable `out` poly). -/
+abbrev Acc :=
+  libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector
+
+/-- FC loop invariant for `poly_reducing_from_i32_array_fc` (per-lane).
+    * (a) Chunks `j < k`, lanes `ℓ < 16`: per-lane mont equality
+          `lift_fe_mont acc[j][ℓ] = Spec.mont_reduce_pure (lift_fe_int a[16*j+ℓ])`.
+    * (b) Chunks `k ≤ j < 16`: `acc[j] = out_init[j]` (unchanged).
+    Using a per-lane invariant avoids reasoning about sub-slice
+    equality at the chunk level (`lift_chunk_mont` vs sub-slice
+    `Spec.chunk_reducing_from_i32_array_pure`). -/
+def inv (a : Slice Std.I32) (out_init : Acc) :
+    Std.Usize → Acc → Result Prop :=
+  fun k acc => pure (
+    (∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
+      lift_fe_mont ((acc.coefficients.val[j]!).elements.val[ℓ]!)
+        = Spec.mont_reduce_pure (lift_fe_int (a.val[16 * j + ℓ]!).val))
+    ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
+        acc.coefficients.val[j]! = out_init.coefficients.val[j]!))
+
+/-- Step-post for `loop_range_spec_usize`. -/
+def step_post (a : Slice Std.I32) (out_init : Acc) (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × Acc) Acc) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (16#usize : Std.Usize).val ∧ iter'.«end» = 16#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (inv a out_init iter'.start acc').holds
+  | .done y => (inv a out_init 16#usize y).holds
+
+end L6_7_FC
+
+/-- Sub-slice extraction `.ok`-form. Given a slice `a` and a range
+    `[start, end] ⊆ [0, a.length]`, the `core_models`-level slice index
+    succeeds with `s.val = a.val.slice start.val end.val` and
+    `s.val.length = end.val - start.val`. -/
+private theorem slice_index_range_ok_eq_fc
+    {T : Type} (a : Slice T) (r : core_models.ops.range.Range Std.Usize)
+    (h0 : r.start.val ≤ r.end.val) (h1 : r.end.val ≤ a.val.length) :
+    ∃ s : Slice T,
+      core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice T)
+        a r = .ok s
+      ∧ s.val = a.val.slice r.start.val r.end.val
+      ∧ s.val.length = r.end.val - r.start.val := by
+  have hT := libcrux_iot_ml_kem.Util.core_models_Slice_Insts_index_RangeUsize_spec
+              (T := T) a r h0 h1
+  obtain ⟨s, h_eq, h_post⟩ := triple_exists_ok_fc hT
+  exact ⟨s, h_eq, h_post.1, h_post.2⟩
+
+set_option maxHeartbeats 16000000 in
+/-- Per-iteration FC step lemma for `poly.reducing_from_i32_array`.
+    Given a valid loop state `(acc, k)` with `k.val < 16`, the impl:
+    (i) extracts the sub-slice `s = a[16k..16(k+1)]`,
+    (ii) overwrites chunk `k` of `acc` with
+         `vector.reducing_from_i32_array s _` (the prior chunk value is
+         discarded by the vector op),
+    yielding the per-lane mont equality
+    `lift_fe_mont acc'[k][ℓ] = Spec.mont_reduce_pure (lift_fe_int a[16k+ℓ])`
+    for all ℓ, while preserving chunks `j ≠ k`. -/
+private theorem poly_reducing_from_i32_array_step_lemma_fc
+    (a : Slice Std.I32) (out_init : L6_7_FC.Acc)
+    (hlen : a.length = 256)
+    (hbound : ∀ i : Nat, i < 256 → (a.val[i]!).val.natAbs ≤ 2^16 * 3328)
+    (acc : L6_7_FC.Acc)
+    (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
+    (h_inv : (L6_7_FC.inv a out_init k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
+      (vectortraitsOperationsInst := portable_ops_inst) a
+      { start := k, «end» := 16#usize } acc
+    ⦃ ⇓ r => ⌜ L6_7_FC.step_post a out_init k r ⌝ ⦄ := by
+  have h16 : (16#usize : Std.Usize).val = 16 := rfl
+  have h_a_len : a.val.length = 256 := hlen
+  have h_coef_len : acc.coefficients.length = 16 :=
+    Std.Array.length_eq _
+  obtain ⟨h_acc_done, h_acc_undone⟩ := by
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
+  unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
+  by_cases h_lt : k.val < (16#usize : Std.Usize).val
+  · -- `Some i = k` branch.
+    have hk_16 : k.val < 16 := by rw [h16] at h_lt; exact h_lt
+    obtain ⟨s_iter, hs_val, h_iter_some⟩ :=
+      libcrux_iot_ml_kem.Util.iter_next_some_eq k h_lt
+    -- (1) i1 := k * 16.
+    have hi1_max : k.val * (16#usize : Std.Usize).val ≤ Std.Usize.max := by
+      have hk_15 : k.val ≤ 15 := by omega
+      have hum : (16#usize : Std.Usize).val = 16 := rfl
+      rw [hum]
+      have h1 : k.val * 16 ≤ 15 * 16 := Nat.mul_le_mul_right 16 hk_15
+      have : (15 * 16 : Nat) ≤ Std.Usize.max := by scalar_tac
+      omega
+    obtain ⟨i1, hi1_eq, hi1_val⟩ := usize_mul_ok_eq_fc k 16#usize hi1_max
+    have hi1_val_eq : i1.val = 16 * k.val := by
+      have hum : (16#usize : Std.Usize).val = 16 := rfl
+      rw [hi1_val, hum]; omega
+    -- (2) i2 := k + 1.
+    have hi2_max : k.val + (1#usize : Std.Usize).val ≤ Std.Usize.max := by
+      have hk_15 : k.val ≤ 15 := by omega
+      have hum : (1#usize : Std.Usize).val = 1 := rfl
+      rw [hum]
+      have : (16 : Nat) ≤ Std.Usize.max := by scalar_tac
+      omega
+    obtain ⟨i2, hi2_eq, hi2_val⟩ := usize_add_ok_eq_fc k 1#usize hi2_max
+    have hi2_val_eq : i2.val = k.val + 1 := by
+      have hum : (1#usize : Std.Usize).val = 1 := rfl
+      rw [hi2_val, hum]
+    -- (3) i3 := i2 * 16.
+    have hi3_max : i2.val * (16#usize : Std.Usize).val ≤ Std.Usize.max := by
+      have hum : (16#usize : Std.Usize).val = 16 := rfl
+      rw [hum, hi2_val_eq]
+      have : k.val + 1 ≤ 16 := by omega
+      have h1 : (k.val + 1) * 16 ≤ 16 * 16 := Nat.mul_le_mul_right 16 this
+      have : (16 * 16 : Nat) ≤ Std.Usize.max := by scalar_tac
+      omega
+    obtain ⟨i3, hi3_eq, hi3_val⟩ := usize_mul_ok_eq_fc i2 16#usize hi3_max
+    have hi3_val_eq : i3.val = 16 * (k.val + 1) := by
+      have hum : (16#usize : Std.Usize).val = 16 := rfl
+      rw [hi3_val, hi2_val_eq, hum]; omega
+    -- (4) Sub-slice extraction.
+    have h0_le : i1.val ≤ i3.val := by rw [hi1_val_eq, hi3_val_eq]; omega
+    have hi3_le : i3.val ≤ a.val.length := by
+      rw [h_a_len, hi3_val_eq]
+      have : k.val + 1 ≤ 16 := by omega
+      have h1 : 16 * (k.val + 1) ≤ 16 * 16 := Nat.mul_le_mul_left _ this
+      omega
+    obtain ⟨s, h_s_eq, h_s_val, h_s_len⟩ :=
+      slice_index_range_ok_eq_fc a { start := i1, «end» := i3 } h0_le hi3_le
+    have h_s_len16 : s.length = 16 := by
+      show s.val.length = 16
+      rw [h_s_len]
+      show i3.val - i1.val = 16
+      rw [hi3_val_eq, hi1_val_eq]; omega
+    -- (4a) Per-lane lookup: s.val[ℓ]! = a.val[16*k + ℓ]!.
+    have h_s_lane : ∀ ℓ : Nat, ℓ < 16 →
+        s.val[ℓ]! = a.val[16 * k.val + ℓ]! := by
+      intro ℓ hℓ
+      rw [h_s_val]
+      have h_idx_lt : i1.val + ℓ < i3.val := by
+        rw [hi1_val_eq, hi3_val_eq]; omega
+      have h_end_le : i3.val ≤ a.val.length := hi3_le
+      have h_bnd : i3.val ≤ a.val.length ∧ i1.val + ℓ < i3.val := ⟨h_end_le, h_idx_lt⟩
+      rw [List.getElem!_slice i1.val i3.val ℓ a.val h_bnd]
+      rw [hi1_val_eq]
+    -- (4b) Per-lane bound for the sub-slice (consumed by `reducing_from_i32_array_fc`).
+    have h_s_bnd : ∀ ℓ : Nat, ℓ < 16 →
+        (s.val[ℓ]!).val.natAbs ≤ 2^16 * 3328 := by
+      intro ℓ hℓ
+      rw [h_s_lane ℓ hℓ]
+      apply hbound (16 * k.val + ℓ)
+      have : k.val ≤ 15 := by omega
+      have : 16 * k.val ≤ 16 * 15 := Nat.mul_le_mul_left 16 this
+      omega
+    -- (5) `index_mut_usize acc.coefficients k` → `(t, set_back) = (acc.coefs[k], acc.coefs.set k)`.
+    set t : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+      acc.coefficients.val[k.val]! with ht_def
+    have h_idx_t : Aeneas.Std.Array.index_usize acc.coefficients k = .ok t :=
+      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq acc.coefficients k
+        (by rw [h_coef_len]; exact hk_16)
+    have h_imt_t : Aeneas.Std.Array.index_mut_usize acc.coefficients k
+        = .ok (t, acc.coefficients.set k) := by
+      unfold Aeneas.Std.Array.index_mut_usize
+      rw [h_idx_t]; rfl
+    -- (6) Apply `reducing_from_i32_array_fc` to get `t1` with the chunk FC equation.
+    obtain ⟨t1, h_t1_eq, h_t1_lift⟩ :=
+      triple_exists_ok_fc (reducing_from_i32_array_fc s t h_s_len16 h_s_bnd)
+    -- (7) Compose `a1 := acc.coefficients.set k t1`.
+    set a1 : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
+      acc.coefficients.set k t1 with ha1_def
+    have h_a1_len : a1.length = 16 := by simp [ha1_def, h_coef_len]
+    have h_a1_k : a1.val[k.val]! = t1 := by
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+        Aeneas.Std.Array.getElem!_Nat_set_eq acc.coefficients k k.val t1
+          ⟨rfl, by rw [h_coef_len]; exact hk_16⟩
+    -- (8) Compose acc'.
+    set acc' : L6_7_FC.Acc := { coefficients := a1 } with hacc'_def
+    -- (9) Body equation.
+    have h_body :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
+          (vectortraitsOperationsInst := portable_ops_inst) a
+          { start := k, «end» := 16#usize } acc
+        = .ok (ControlFlow.cont (({ start := s_iter, «end» := 16#usize }
+                        : core_models.ops.range.Range Std.Usize), acc')) := by
+      unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp only [Aeneas.Std.bind_tc_ok]
+      show ((do
+              let i1' ← (k * 16#usize : Result Std.Usize)
+              let i2' ← k + 1#usize
+              let i3' ← i2' * 16#usize
+              let s' ←
+                core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
+                  (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+                    Std.I32) a { start := i1', «end» := i3' }
+              let (t', index_mut_back) ←
+                Aeneas.Std.Array.index_mut_usize acc.coefficients k
+              let t1' ←
+                libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array s' t'
+              .ok (ControlFlow.cont (({ start := s_iter, «end» := 16#usize }
+                          : core_models.ops.range.Range Std.Usize),
+                        ({ coefficients := index_mut_back t1' }
+                          : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                              libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))))
+            : Result (ControlFlow _ _))
+            = _
+      rw [hi1_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [hi2_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [hi3_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_s_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_imt_t]
+      simp only [Aeneas.Std.bind_tc_ok]
+      show ((do
+              let t1' ←
+                libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array s t
+              .ok (ControlFlow.cont (({ start := s_iter, «end» := 16#usize }
+                          : core_models.ops.range.Range Std.Usize),
+                        ({ coefficients := acc.coefficients.set k t1' }
+                          : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                              libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))))
+            : Result _)
+            = _
+      rw [h_t1_eq]
+      rfl
+    apply triple_of_ok_fc h_body
+    show L6_7_FC.step_post a out_init k
+      (.cont (({ start := s_iter, «end» := 16#usize }
+                : core_models.ops.range.Range Std.Usize), acc'))
+    unfold L6_7_FC.step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    show (L6_7_FC.inv a out_init s_iter acc').holds
+    have h_inv_pure :
+        (∀ j : Nat, j < s_iter.val → ∀ ℓ : Nat, ℓ < 16 →
+          lift_fe_mont ((acc'.coefficients.val[j]!).elements.val[ℓ]!)
+            = Spec.mont_reduce_pure (lift_fe_int (a.val[16 * j + ℓ]!).val))
+        ∧ (∀ j : Nat, s_iter.val ≤ j → j < 16 →
+            acc'.coefficients.val[j]! = out_init.coefficients.val[j]!) := by
+      refine ⟨?_, ?_⟩
+      · -- (a) j < s_iter.val = k+1 → per-lane FC.
+        intro j hj ℓ hℓ
+        rw [hs_val] at hj
+        show lift_fe_mont
+              (((acc.coefficients.set k t1).val[j]!).elements.val[ℓ]!)
+            = Spec.mont_reduce_pure (lift_fe_int (a.val[16 * j + ℓ]!).val)
+        rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj_lt_k | hj_eq_k
+        · -- j < k.val: chunk unchanged.
+          have h_ne : k.val ≠ j := Nat.ne_of_gt hj_lt_k
+          have h_set : ((acc.coefficients.set k t1).val[j]!)
+              = acc.coefficients.val[j]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne acc.coefficients k j t1 h_ne
+          rw [h_set]
+          exact h_acc_done j hj_lt_k ℓ hℓ
+        · -- j = k.val: chunk = t1; pull per-lane FC out of `h_t1_lift`.
+          subst hj_eq_k
+          have h_set_eq : ((acc.coefficients.set k t1).val[k.val]!) = t1 := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_eq acc.coefficients k k.val t1
+                ⟨rfl, by rw [h_coef_len]; exact hk_16⟩
+          rw [h_set_eq]
+          -- Extract per-lane via `lift_chunk_mont t1 = Spec.chunk_reducing_from_i32_array_pure s`.
+          have h_t1_elems_len : t1.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length t1
+          -- From `lift_chunk_mont`'s .val list form and Subtype.ext on the chunk eq.
+          have h_chunk_val :
+              t1.elements.val.map lift_fe_mont
+                = (List.range 16).map (fun i =>
+                    Spec.mont_reduce_pure (lift_fe_int (s.val[i]!).val)) := by
+            have h_unfold : (lift_chunk_mont t1).val
+                  = (Spec.chunk_reducing_from_i32_array_pure s).val := by
+              rw [h_t1_lift]
+            unfold lift_chunk_mont Spec.chunk_reducing_from_i32_array_pure at h_unfold
+            exact h_unfold
+          -- Use `getElem!` form to dodge motive-not-type-correct issues.
+          have h_lhs_get :
+              (t1.elements.val.map lift_fe_mont)[ℓ]!
+                = lift_fe_mont (t1.elements.val[ℓ]!) := by
+            have h_len : (t1.elements.val.map lift_fe_mont).length = 16 := by
+              rw [List.length_map]; exact h_t1_elems_len
+            rw [getElem!_pos _ ℓ (by rw [h_len]; exact hℓ)]
+            rw [List.getElem_map]
+            congr 1
+            rw [getElem!_pos t1.elements.val ℓ (by rw [h_t1_elems_len]; exact hℓ)]
+          have h_rhs_get :
+              ((List.range 16).map (fun i =>
+                Spec.mont_reduce_pure (lift_fe_int (s.val[i]!).val)))[ℓ]!
+                = Spec.mont_reduce_pure (lift_fe_int (s.val[ℓ]!).val) := by
+            have h_len : ((List.range 16).map (fun i =>
+                Spec.mont_reduce_pure (lift_fe_int (s.val[i]!).val))).length = 16 := by
+              simp
+            rw [getElem!_pos _ ℓ (by rw [h_len]; exact hℓ)]
+            rw [List.getElem_map, List.getElem_range]
+          have h_lane :
+              lift_fe_mont (t1.elements.val[ℓ]!)
+                = Spec.mont_reduce_pure (lift_fe_int (s.val[ℓ]!).val) := by
+            rw [← h_lhs_get, h_chunk_val, h_rhs_get]
+          rw [h_lane]
+          -- Substitute s.val[ℓ]! = a.val[16*k.val + ℓ]!.
+          rw [h_s_lane ℓ hℓ]
+      · -- (b) s_iter.val ≤ j < 16 → acc'.coefs[j] = out_init.coefs[j].
+        intro j hj_ge hj_lt
+        rw [hs_val] at hj_ge
+        have h_ne : k.val ≠ j := by omega
+        have h_ge' : k.val ≤ j := by omega
+        show ((acc.coefficients.set k t1).val[j]!)
+            = out_init.coefficients.val[j]!
+        have h_set : ((acc.coefficients.set k t1).val[j]!)
+            = acc.coefficients.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+            Aeneas.Std.Array.getElem!_Nat_set_ne acc.coefficients k j t1 h_ne
+        rw [h_set]
+        exact h_acc_undone j h_ge' hj_lt
+    show (pure _ : Result Prop).holds
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+  · -- `None` branch: k ≥ 16, done.
+    have hk_ge : k.val ≥ (16#usize : Std.Usize).val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = 16 := by rw [h16] at hk_ge; omega
+    have h_iter_none := libcrux_iot_ml_kem.Util.iter_next_none_eq k hk_ge
+    have h_body :
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
+          (vectortraitsOperationsInst := portable_ops_inst) a
+          { start := k, «end» := 16#usize } acc
+        = .ok (ControlFlow.done acc) := by
+      unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := 16#usize } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := 16#usize }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    apply triple_of_ok_fc h_body
+    show L6_7_FC.step_post a out_init k (.done acc)
+    unfold L6_7_FC.step_post
+    show (L6_7_FC.inv a out_init 16#usize acc).holds
+    show (pure _ : Result Prop).holds
+    have h_inv_pure :
+        (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
+          lift_fe_mont ((acc.coefficients.val[j]!).elements.val[ℓ]!)
+            = Spec.mont_reduce_pure (lift_fe_int (a.val[16 * j + ℓ]!).val))
+        ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
+            acc.coefficients.val[j]! = out_init.coefficients.val[j]!) := by
+      refine ⟨?_, ?_⟩
+      · intro j hj ℓ hℓ; rw [h16] at hj
+        apply h_acc_done j _ ℓ hℓ; rw [hk_eq]; exact hj
+      · intro j hj_ge hj_lt
+        rw [h16] at hj_ge
+        apply h_acc_undone j _ hj_lt; rw [hk_eq]; exact hj_ge
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+
+set_option maxHeartbeats 16000000 in
 /-- L6.7 — poly-level `reducing_from_i32_array`. Returns a fresh poly
-    from an `i32` slice via 16 chunkwise `reducing_from_i32_array` calls. -/
+    from an `i32` slice via 16 chunkwise `reducing_from_i32_array` calls.
+
+    **Preconditions** (load-bearing, beyond the locked True-pre form):
+    - `hlen`: `a.length = 256` (the impl reads `a[16k..16(k+1)]` for k ∈ 0..16).
+    - `hbound`: per-lane `|a[i]| ≤ 2^16 * 3328` (consumed by the chunk-level
+      `reducing_from_i32_array_fc` precondition). -/
 @[spec]
 theorem poly_reducing_from_i32_array_fc
     (a : Slice Std.I32)
     (out : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (hlen : a.length = 256)
+    (hbound : ∀ i : Nat, i < 256 → (a.val[i]!).val.natAbs ≤ 2^16 * 3328) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array
       (vectortraitsOperationsInst := portable_ops_inst) a out
     ⦃ ⇓ p => ⌜ lift_poly_mont p = Spec.poly_reducing_from_i32_array_pure a ⌝ ⦄ := by
-  sorry
+  unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array
+  have h_vre : libcrux_iot_ml_kem.polynomial.VECTORS_IN_RING_ELEMENT
+                = .ok (16#usize : Std.Usize) := by
+    unfold libcrux_iot_ml_kem.polynomial.VECTORS_IN_RING_ELEMENT
+    unfold libcrux_iot_ml_kem.constants.COEFFICIENTS_IN_RING_ELEMENT
+    unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+    rfl
+  rw [h_vre]; simp only [Aeneas.Std.bind_tc_ok]
+  unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop
+  apply Std.Do.Triple.of_entails_right _
+    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+      (fun (iter1, out1) =>
+        libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
+          (vectortraitsOperationsInst := portable_ops_inst) a iter1 out1)
+      (β := L6_7_FC.Acc)
+      out
+      0#usize 16#usize
+      (L6_7_FC.inv a out)
+      (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
+      (by
+        show (pure _ : Result Prop).holds
+        simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
+        intro _
+        refine ⟨?_, ?_⟩
+        · intro j hj; exact absurd hj (Nat.not_lt_zero j)
+        · intro _ _ _; trivial)
+      ?_)
+  · -- Post entailment: at k=16, invariant gives per-lane FC for all 256 indices.
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    have h_inv_holds : (L6_7_FC.inv a out 16#usize r).holds := by
+      simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
+    have h_inv :
+        (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
+            lift_fe_mont ((r.coefficients.val[j]!).elements.val[ℓ]!)
+              = Spec.mont_reduce_pure (lift_fe_int (a.val[16 * j + ℓ]!).val))
+        ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
+            r.coefficients.val[j]! = out.coefficients.val[j]!) := by
+      simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
+             L6_7_FC.inv] using h_inv_holds
+    obtain ⟨h_done, _h_undone⟩ := h_inv
+    -- Goal: `lift_poly_mont r = Spec.poly_reducing_from_i32_array_pure a`.
+    -- Both sides are 256-lane `Std.Array.make` constructions; reduce to
+    -- list equality via `Subtype.ext` and per-index via `List.ext_getElem`.
+    unfold lift_poly_mont Spec.poly_reducing_from_i32_array_pure
+    apply Subtype.ext
+    show (List.range 256).map (fun j =>
+            lift_fe_mont (r.coefficients.val[j / 16]!).elements.val[j % 16]!)
+        = (List.range 256).map (fun i =>
+            Spec.mont_reduce_pure (lift_fe_int (a.val[i]!).val))
+    apply List.ext_getElem
+    · simp
+    · intro j hj1 _hj2
+      have hj : j < 256 := by
+        have : j < ((List.range 256).map (fun j' =>
+            lift_fe_mont (r.coefficients.val[j' / 16]!).elements.val[j' % 16]!)).length := hj1
+        simpa using this
+      have h_div_lt : j / 16 < 16 := Nat.div_lt_iff_lt_mul (by decide : 0 < 16) |>.mpr hj
+      have h_mod_lt : j % 16 < 16 := Nat.mod_lt _ (by decide : 0 < 16)
+      have h_decomp : 16 * (j / 16) + j % 16 = j := by
+        have := Nat.div_add_mod j 16
+        omega
+      have h16' : (16#usize : Std.Usize).val = 16 := rfl
+      have h_inv_at := h_done (j / 16) (by rw [h16']; exact h_div_lt) (j % 16) h_mod_lt
+      simp only [List.getElem_map, List.getElem_range]
+      rw [h_inv_at, h_decomp]
+  · -- Step entailment: per-iteration step lemma.
+    intro acc k _h_ge h_le hinv
+    have h_step :=
+      poly_reducing_from_i32_array_step_lemma_fc a out hlen hbound acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : L6_7_FC.step_post a out k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L6_7_FC.step_post] using hP
+    · have hP : L6_7_FC.step_post a out k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L6_7_FC.step_post] using hP
 
 /-! ## §L7 — matrix-level targets (4 theorems).
 
