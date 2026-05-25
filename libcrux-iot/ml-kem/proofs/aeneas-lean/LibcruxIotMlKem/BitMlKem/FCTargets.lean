@@ -4572,18 +4572,18 @@ theorem inv_ntt_step_fc
     Chains 8 `inv_ntt_step` calls via the private `inv_ntt_step_pair_fc`
     helper (mirror of `ntt_step_pair_fc` @ FCTargets:3440) which exposes
     both the `lift_chunk` equation AND the unchanged-lane preservation,
-    plus the per-output bound `≤ 13312` so the bound is preserved across
-    the 8-step chain on disjoint lane pairs. -/
+    plus the tight per-output bound `≤ 3328` so the bound is preserved
+    across the 8-step chain on disjoint lane pairs. -/
 
 /-- Per-lane variant of `inv_ntt_step_fc` for layer composition. Splits
     the universal precondition into per-lane bounds on `i` and `j` (only
     the two lanes actually read), and exposes:
     1. The `lift_chunk` equation (the spec-bridge).
     2. **Unchanged-lane preservation**: `r[k] = vec[k]` for `k ≠ i, j`.
-    3. **Per-output bound `≤ 13312`** at both `i` and `j` — needed to chain
-       across steps. `r[i]` is `barrett(vec[j] + vec[i])` with `|·| ≤ 3328`
-       (post-barrett); `r[j]` is `montgomery_multiply(vec[j] - vec[i], zeta)`
-       with `|·| ≤ 3328 + 1665 = 4993`. Both ≤ 13312 with margin. -/
+    3. **Tight per-output bound `≤ 3328`** at both `i` and `j`. `r[i]` is
+       `barrett(vec[j] + vec[i])` (post-barrett bound is `≤ 3328`); `r[j]`
+       is `montgomery_multiply(vec[j] - vec[i], zeta)` whose Equivalence
+       spec also gives the tight `≤ 3328` bound. -/
 private theorem inv_ntt_step_pair_fc
     (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (zeta : Std.I16) (i j : Std.Usize)
@@ -4598,8 +4598,8 @@ private theorem inv_ntt_step_pair_fc
                 = Spec.chunk_inv_ntt_step_pure (lift_chunk vec) (lift_fe_mont zeta) i j
               ∧ (∀ k : Nat, k < 16 → k ≠ i.val → k ≠ j.val →
                   (r.elements.val[k]!) = (vec.elements.val[k]!))
-              ∧ (r.elements.val[i.val]!).val.natAbs ≤ 13312
-              ∧ (r.elements.val[j.val]!).val.natAbs ≤ 13312 ⌝ ⦄ := by
+              ∧ (r.elements.val[i.val]!).val.natAbs ≤ 3328
+              ∧ (r.elements.val[j.val]!).val.natAbs ≤ 3328 ⌝ ⦄ := by
   -- Step 0: vector length facts.
   have h_vec_len : vec.elements.length = 16 :=
     libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
@@ -4813,10 +4813,9 @@ private theorem inv_ntt_step_pair_fc
     rw [List.getElem_set_ne (Ne.symm hkj)]
     rw [List.getElem_set_ne (Ne.symm hki)]
     rw [getElem!_pos vec.elements.val k (by rw [h_vec_val_len]; exact hk)]
-  · -- Bound at i: r[i] = o0 (set last) — wait, j may equal i — no, hne i ≠ j.
-    -- Actually (set i o0).set j o1 at index i: since i ≠ j, second set doesn't touch i,
-    -- so r[i] = (set i o0)[i] = o0. |o0| ≤ 3328 ≤ 13312.
-    show ((vec.elements.set i o0).set j o1).val[i.val]!.val.natAbs ≤ 13312
+  · -- Bound at i: r[i] = o0 (set last) — since i ≠ j (hne), second set doesn't touch i,
+    -- so r[i] = (set i o0)[i] = o0. |o0| ≤ 3328 (tight, from barrett_reduce).
+    show ((vec.elements.set i o0).set j o1).val[i.val]!.val.natAbs ≤ 3328
     have h_set_val_eq : ((vec.elements.set i o0).set j o1).val
         = (vec.elements.val.set i.val o0).set j.val o1 := by
       simp [Std.Array.set_val_eq]
@@ -4824,18 +4823,19 @@ private theorem inv_ntt_step_pair_fc
     rw [getElem!_pos _ i.val (by simp [List.length_set, h_vec_val_len]; exact hi)]
     rw [List.getElem_set_ne (Ne.symm hne)]
     rw [List.getElem_set_self]
-    -- now goal: o0.val.natAbs ≤ 13312. h_o0_bd : o0.val.natAbs ≤ 3328.
-    omega
-  · -- Bound at j: r[j] = o1 (second set wins). |o1| ≤ 3328+1665 = 4993 ≤ 13312.
-    show ((vec.elements.set i o0).set j o1).val[j.val]!.val.natAbs ≤ 13312
+    -- now goal: o0.val.natAbs ≤ 3328. h_o0_bd : o0.val.natAbs ≤ 3328.
+    exact h_o0_bd
+  · -- Bound at j: r[j] = o1 (second set wins). |o1| ≤ 3328 (tight, via
+    -- `montgomery_multiply_fe_by_fer_spec`).
+    show ((vec.elements.set i o0).set j o1).val[j.val]!.val.natAbs ≤ 3328
     have h_set_val_eq : ((vec.elements.set i o0).set j o1).val
         = (vec.elements.val.set i.val o0).set j.val o1 := by
       simp [Std.Array.set_val_eq]
     rw [h_set_val_eq]
     rw [getElem!_pos _ j.val (by simp [List.length_set, h_vec_val_len]; exact hj)]
     rw [List.getElem_set_self]
-    -- goal: o1.val.natAbs ≤ 13312. h_o1_bd : o1.val.natAbs ≤ 3328 + 1665.
-    omega
+    -- goal: o1.val.natAbs ≤ 3328. h_o1'_bd_tight : o1'.val.natAbs ≤ 3328 with o1 = o1'.
+    rw [h_oo1']; exact h_o1'_bd_tight
 
 /-- L2.9 — `inv_ntt_layer_1_step`: vector-level layer-1 inverse step.
     Maps `lift_chunk` of the impl output to `Spec.chunk_inv_ntt_layer_1_step_pure`
@@ -4859,7 +4859,9 @@ theorem inv_ntt_layer_1_step_fc
     ⦃ ⇓ r => ⌜ lift_chunk r
                 = Spec.chunk_inv_ntt_layer_1_step_pure (lift_chunk vec)
                     (lift_fe_mont z0) (lift_fe_mont z1)
-                    (lift_fe_mont z2) (lift_fe_mont z3) ⌝ ⦄ := by
+                    (lift_fe_mont z2) (lift_fe_mont z3)
+              ∧ (∀ k : Nat, k < 16 →
+                  (r.elements.val[k]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
   obtain ⟨hz0, hz1, hz2, hz3⟩ := hz
   have hi0 : (0 : Nat) < 16 := by decide
   have hi1 : (1 : Nat) < 16 := by decide
@@ -4878,7 +4880,7 @@ theorem inv_ntt_layer_1_step_fc
   have hi14 : (14 : Nat) < 16 := by decide
   have hi15 : (15 : Nat) < 16 := by decide
   -- Step 1: inv_ntt_step vec z0 0 2.
-  obtain ⟨v1, h_v1_eq, h_v1_lift, h_v1_unc, _, _⟩ :=
+  obtain ⟨v1, h_v1_eq, h_v1_lift, h_v1_unc, h_v1_bnd_0, h_v1_bnd_2⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc vec z0 0#usize 2#usize hi0 hi2
       (by decide) hz0 (hvec 0 hi0) (hvec 2 hi2))
   -- Step 2: inv_ntt_step v1 z0 1 3.
@@ -4886,7 +4888,7 @@ theorem inv_ntt_layer_1_step_fc
     rw [h_v1_unc 1 hi1 (by decide) (by decide)]; exact hvec 1 hi1
   have h_v1_3 : (v1.elements.val[3]!).val.natAbs ≤ 13312 := by
     rw [h_v1_unc 3 hi3 (by decide) (by decide)]; exact hvec 3 hi3
-  obtain ⟨v2, h_v2_eq, h_v2_lift, h_v2_unc, _, _⟩ :=
+  obtain ⟨v2, h_v2_eq, h_v2_lift, h_v2_unc, h_v2_bnd_1, h_v2_bnd_3⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v1 z0 1#usize 3#usize hi1 hi3
       (by decide) hz0 h_v1_1 h_v1_3)
   -- Step 3: inv_ntt_step v2 z1 4 6.
@@ -4896,7 +4898,7 @@ theorem inv_ntt_layer_1_step_fc
   have h_v2_6 : (v2.elements.val[6]!).val.natAbs ≤ 13312 := by
     rw [h_v2_unc 6 hi6 (by decide) (by decide),
         h_v1_unc 6 hi6 (by decide) (by decide)]; exact hvec 6 hi6
-  obtain ⟨v3, h_v3_eq, h_v3_lift, h_v3_unc, _, _⟩ :=
+  obtain ⟨v3, h_v3_eq, h_v3_lift, h_v3_unc, h_v3_bnd_4, h_v3_bnd_6⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v2 z1 4#usize 6#usize hi4 hi6
       (by decide) hz1 h_v2_4 h_v2_6)
   -- Step 4: inv_ntt_step v3 z1 5 7.
@@ -4908,7 +4910,7 @@ theorem inv_ntt_layer_1_step_fc
     rw [h_v3_unc 7 hi7 (by decide) (by decide),
         h_v2_unc 7 hi7 (by decide) (by decide),
         h_v1_unc 7 hi7 (by decide) (by decide)]; exact hvec 7 hi7
-  obtain ⟨v4, h_v4_eq, h_v4_lift, h_v4_unc, _, _⟩ :=
+  obtain ⟨v4, h_v4_eq, h_v4_lift, h_v4_unc, h_v4_bnd_5, h_v4_bnd_7⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v3 z1 5#usize 7#usize hi5 hi7
       (by decide) hz1 h_v3_5 h_v3_7)
   -- Step 5: inv_ntt_step v4 z2 8 10.
@@ -4922,7 +4924,7 @@ theorem inv_ntt_layer_1_step_fc
         h_v3_unc 10 hi10 (by decide) (by decide),
         h_v2_unc 10 hi10 (by decide) (by decide),
         h_v1_unc 10 hi10 (by decide) (by decide)]; exact hvec 10 hi10
-  obtain ⟨v5, h_v5_eq, h_v5_lift, h_v5_unc, _, _⟩ :=
+  obtain ⟨v5, h_v5_eq, h_v5_lift, h_v5_unc, h_v5_bnd_8, h_v5_bnd_10⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v4 z2 8#usize 10#usize hi8 hi10
       (by decide) hz2 h_v4_8 h_v4_10)
   -- Step 6: inv_ntt_step v5 z2 9 11.
@@ -4938,7 +4940,7 @@ theorem inv_ntt_layer_1_step_fc
         h_v3_unc 11 hi11 (by decide) (by decide),
         h_v2_unc 11 hi11 (by decide) (by decide),
         h_v1_unc 11 hi11 (by decide) (by decide)]; exact hvec 11 hi11
-  obtain ⟨v6, h_v6_eq, h_v6_lift, h_v6_unc, _, _⟩ :=
+  obtain ⟨v6, h_v6_eq, h_v6_lift, h_v6_unc, h_v6_bnd_9, h_v6_bnd_11⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v5 z2 9#usize 11#usize hi9 hi11
       (by decide) hz2 h_v5_9 h_v5_11)
   -- Step 7: inv_ntt_step v6 z3 12 14.
@@ -4956,7 +4958,7 @@ theorem inv_ntt_layer_1_step_fc
         h_v3_unc 14 hi14 (by decide) (by decide),
         h_v2_unc 14 hi14 (by decide) (by decide),
         h_v1_unc 14 hi14 (by decide) (by decide)]; exact hvec 14 hi14
-  obtain ⟨v7, h_v7_eq, h_v7_lift, h_v7_unc, _, _⟩ :=
+  obtain ⟨v7, h_v7_eq, h_v7_lift, h_v7_unc, h_v7_bnd_12, h_v7_bnd_14⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v6 z3 12#usize 14#usize hi12 hi14
       (by decide) hz3 h_v6_12 h_v6_14)
   -- Step 8: inv_ntt_step v7 z3 13 15.
@@ -4976,7 +4978,7 @@ theorem inv_ntt_layer_1_step_fc
         h_v3_unc 15 hi15 (by decide) (by decide),
         h_v2_unc 15 hi15 (by decide) (by decide),
         h_v1_unc 15 hi15 (by decide) (by decide)]; exact hvec 15 hi15
-  obtain ⟨v8, h_v8_eq, h_v8_lift, _, _, _⟩ :=
+  obtain ⟨v8, h_v8_eq, h_v8_lift, h_v8_unc, h_v8_bnd_13, h_v8_bnd_15⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v7 z3 13#usize 15#usize hi13 hi15
       (by decide) hz3 h_v7_13 h_v7_15)
   have h_body :
@@ -4992,8 +4994,107 @@ theorem inv_ntt_layer_1_step_fc
     rw [h_v7_eq]; simp only [Aeneas.Std.bind_tc_ok]
     exact h_v8_eq
   apply triple_of_ok_fc h_body
-  unfold Spec.chunk_inv_ntt_layer_1_step_pure
-  rw [h_v8_lift, h_v7_lift, h_v6_lift, h_v5_lift, h_v4_lift, h_v3_lift, h_v2_lift, h_v1_lift]
+  refine ⟨?_, ?_⟩
+  · -- Spec equation.
+    unfold Spec.chunk_inv_ntt_layer_1_step_pure
+    rw [h_v8_lift, h_v7_lift, h_v6_lift, h_v5_lift, h_v4_lift, h_v3_lift, h_v2_lift, h_v1_lift]
+  · -- Per-lane output bound ≤ 3328.
+    -- Each lane is touched by exactly one of the 8 steps. After that step,
+    -- the lane's natAbs is ≤ 3328 (per inv_ntt_step_pair_fc's strengthened
+    -- POST). Later steps don't touch it, so v8.elements.val[k]! preserves
+    -- that value via the unchanged-lane chain.
+    intro k hk
+    -- Lane → touching step: 0,2→1; 1,3→2; 4,6→3; 5,7→4; 8,10→5; 9,11→6;
+    -- 12,14→7; 13,15→8.
+    interval_cases k
+    · -- k=0: touched at step 1. Unchanged in steps 2..8.
+      rw [h_v8_unc 0 hi0 (by decide) (by decide),
+          h_v7_unc 0 hi0 (by decide) (by decide),
+          h_v6_unc 0 hi0 (by decide) (by decide),
+          h_v5_unc 0 hi0 (by decide) (by decide),
+          h_v4_unc 0 hi0 (by decide) (by decide),
+          h_v3_unc 0 hi0 (by decide) (by decide),
+          h_v2_unc 0 hi0 (by decide) (by decide)]
+      exact h_v1_bnd_0
+    · -- k=1: touched at step 2.
+      rw [h_v8_unc 1 hi1 (by decide) (by decide),
+          h_v7_unc 1 hi1 (by decide) (by decide),
+          h_v6_unc 1 hi1 (by decide) (by decide),
+          h_v5_unc 1 hi1 (by decide) (by decide),
+          h_v4_unc 1 hi1 (by decide) (by decide),
+          h_v3_unc 1 hi1 (by decide) (by decide)]
+      exact h_v2_bnd_1
+    · -- k=2: touched at step 1.
+      rw [h_v8_unc 2 hi2 (by decide) (by decide),
+          h_v7_unc 2 hi2 (by decide) (by decide),
+          h_v6_unc 2 hi2 (by decide) (by decide),
+          h_v5_unc 2 hi2 (by decide) (by decide),
+          h_v4_unc 2 hi2 (by decide) (by decide),
+          h_v3_unc 2 hi2 (by decide) (by decide),
+          h_v2_unc 2 hi2 (by decide) (by decide)]
+      exact h_v1_bnd_2
+    · -- k=3: touched at step 2.
+      rw [h_v8_unc 3 hi3 (by decide) (by decide),
+          h_v7_unc 3 hi3 (by decide) (by decide),
+          h_v6_unc 3 hi3 (by decide) (by decide),
+          h_v5_unc 3 hi3 (by decide) (by decide),
+          h_v4_unc 3 hi3 (by decide) (by decide),
+          h_v3_unc 3 hi3 (by decide) (by decide)]
+      exact h_v2_bnd_3
+    · -- k=4: touched at step 3.
+      rw [h_v8_unc 4 hi4 (by decide) (by decide),
+          h_v7_unc 4 hi4 (by decide) (by decide),
+          h_v6_unc 4 hi4 (by decide) (by decide),
+          h_v5_unc 4 hi4 (by decide) (by decide),
+          h_v4_unc 4 hi4 (by decide) (by decide)]
+      exact h_v3_bnd_4
+    · -- k=5: touched at step 4.
+      rw [h_v8_unc 5 hi5 (by decide) (by decide),
+          h_v7_unc 5 hi5 (by decide) (by decide),
+          h_v6_unc 5 hi5 (by decide) (by decide),
+          h_v5_unc 5 hi5 (by decide) (by decide)]
+      exact h_v4_bnd_5
+    · -- k=6: touched at step 3.
+      rw [h_v8_unc 6 hi6 (by decide) (by decide),
+          h_v7_unc 6 hi6 (by decide) (by decide),
+          h_v6_unc 6 hi6 (by decide) (by decide),
+          h_v5_unc 6 hi6 (by decide) (by decide),
+          h_v4_unc 6 hi6 (by decide) (by decide)]
+      exact h_v3_bnd_6
+    · -- k=7: touched at step 4.
+      rw [h_v8_unc 7 hi7 (by decide) (by decide),
+          h_v7_unc 7 hi7 (by decide) (by decide),
+          h_v6_unc 7 hi7 (by decide) (by decide),
+          h_v5_unc 7 hi7 (by decide) (by decide)]
+      exact h_v4_bnd_7
+    · -- k=8: touched at step 5.
+      rw [h_v8_unc 8 hi8 (by decide) (by decide),
+          h_v7_unc 8 hi8 (by decide) (by decide),
+          h_v6_unc 8 hi8 (by decide) (by decide)]
+      exact h_v5_bnd_8
+    · -- k=9: touched at step 6.
+      rw [h_v8_unc 9 hi9 (by decide) (by decide),
+          h_v7_unc 9 hi9 (by decide) (by decide)]
+      exact h_v6_bnd_9
+    · -- k=10: touched at step 5.
+      rw [h_v8_unc 10 hi10 (by decide) (by decide),
+          h_v7_unc 10 hi10 (by decide) (by decide),
+          h_v6_unc 10 hi10 (by decide) (by decide)]
+      exact h_v5_bnd_10
+    · -- k=11: touched at step 6.
+      rw [h_v8_unc 11 hi11 (by decide) (by decide),
+          h_v7_unc 11 hi11 (by decide) (by decide)]
+      exact h_v6_bnd_11
+    · -- k=12: touched at step 7.
+      rw [h_v8_unc 12 hi12 (by decide) (by decide)]
+      exact h_v7_bnd_12
+    · -- k=13: touched at step 8.
+      exact h_v8_bnd_13
+    · -- k=14: touched at step 7.
+      rw [h_v8_unc 14 hi14 (by decide) (by decide)]
+      exact h_v7_bnd_14
+    · -- k=15: touched at step 8.
+      exact h_v8_bnd_15
 
 /-- L2.10 — `inv_ntt_layer_2_step`: 8 inverse butterfly pairs (0,4)…(3,7)
     with z0 then (8,12)…(11,15) with z1. Mirror of `ntt_layer_2_step_fc`
@@ -5014,7 +5115,9 @@ theorem inv_ntt_layer_2_step_fc
     libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_2_step vec z0 z1
     ⦃ ⇓ r => ⌜ lift_chunk r
                 = Spec.chunk_inv_ntt_layer_2_step_pure (lift_chunk vec)
-                    (lift_fe_mont z0) (lift_fe_mont z1) ⌝ ⦄ := by
+                    (lift_fe_mont z0) (lift_fe_mont z1)
+              ∧ (∀ k : Nat, k < 16 →
+                  (r.elements.val[k]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
   obtain ⟨hz0, hz1⟩ := hz
   have hi0 : (0 : Nat) < 16 := by decide
   have hi1 : (1 : Nat) < 16 := by decide
@@ -5033,7 +5136,7 @@ theorem inv_ntt_layer_2_step_fc
   have hi14 : (14 : Nat) < 16 := by decide
   have hi15 : (15 : Nat) < 16 := by decide
   -- Step 1: inv_ntt_step vec z0 0 4.
-  obtain ⟨v1, h_v1_eq, h_v1_lift, h_v1_unc, _, _⟩ :=
+  obtain ⟨v1, h_v1_eq, h_v1_lift, h_v1_unc, h_v1_bnd_0, h_v1_bnd_4⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc vec z0 0#usize 4#usize hi0 hi4
       (by decide) hz0 (hvec 0 hi0) (hvec 4 hi4))
   -- Step 2: inv_ntt_step v1 z0 1 5.
@@ -5041,7 +5144,7 @@ theorem inv_ntt_layer_2_step_fc
     rw [h_v1_unc 1 hi1 (by decide) (by decide)]; exact hvec 1 hi1
   have h_v1_5 : (v1.elements.val[5]!).val.natAbs ≤ 13312 := by
     rw [h_v1_unc 5 hi5 (by decide) (by decide)]; exact hvec 5 hi5
-  obtain ⟨v2, h_v2_eq, h_v2_lift, h_v2_unc, _, _⟩ :=
+  obtain ⟨v2, h_v2_eq, h_v2_lift, h_v2_unc, h_v2_bnd_1, h_v2_bnd_5⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v1 z0 1#usize 5#usize hi1 hi5
       (by decide) hz0 h_v1_1 h_v1_5)
   -- Step 3: inv_ntt_step v2 z0 2 6.
@@ -5051,7 +5154,7 @@ theorem inv_ntt_layer_2_step_fc
   have h_v2_6 : (v2.elements.val[6]!).val.natAbs ≤ 13312 := by
     rw [h_v2_unc 6 hi6 (by decide) (by decide),
         h_v1_unc 6 hi6 (by decide) (by decide)]; exact hvec 6 hi6
-  obtain ⟨v3, h_v3_eq, h_v3_lift, h_v3_unc, _, _⟩ :=
+  obtain ⟨v3, h_v3_eq, h_v3_lift, h_v3_unc, h_v3_bnd_2, h_v3_bnd_6⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v2 z0 2#usize 6#usize hi2 hi6
       (by decide) hz0 h_v2_2 h_v2_6)
   -- Step 4: inv_ntt_step v3 z0 3 7.
@@ -5063,7 +5166,7 @@ theorem inv_ntt_layer_2_step_fc
     rw [h_v3_unc 7 hi7 (by decide) (by decide),
         h_v2_unc 7 hi7 (by decide) (by decide),
         h_v1_unc 7 hi7 (by decide) (by decide)]; exact hvec 7 hi7
-  obtain ⟨v4, h_v4_eq, h_v4_lift, h_v4_unc, _, _⟩ :=
+  obtain ⟨v4, h_v4_eq, h_v4_lift, h_v4_unc, h_v4_bnd_3, h_v4_bnd_7⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v3 z0 3#usize 7#usize hi3 hi7
       (by decide) hz0 h_v3_3 h_v3_7)
   -- Step 5: inv_ntt_step v4 z1 8 12.
@@ -5077,7 +5180,7 @@ theorem inv_ntt_layer_2_step_fc
         h_v3_unc 12 hi12 (by decide) (by decide),
         h_v2_unc 12 hi12 (by decide) (by decide),
         h_v1_unc 12 hi12 (by decide) (by decide)]; exact hvec 12 hi12
-  obtain ⟨v5, h_v5_eq, h_v5_lift, h_v5_unc, _, _⟩ :=
+  obtain ⟨v5, h_v5_eq, h_v5_lift, h_v5_unc, h_v5_bnd_8, h_v5_bnd_12⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v4 z1 8#usize 12#usize hi8 hi12
       (by decide) hz1 h_v4_8 h_v4_12)
   -- Step 6: inv_ntt_step v5 z1 9 13.
@@ -5093,7 +5196,7 @@ theorem inv_ntt_layer_2_step_fc
         h_v3_unc 13 hi13 (by decide) (by decide),
         h_v2_unc 13 hi13 (by decide) (by decide),
         h_v1_unc 13 hi13 (by decide) (by decide)]; exact hvec 13 hi13
-  obtain ⟨v6, h_v6_eq, h_v6_lift, h_v6_unc, _, _⟩ :=
+  obtain ⟨v6, h_v6_eq, h_v6_lift, h_v6_unc, h_v6_bnd_9, h_v6_bnd_13⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v5 z1 9#usize 13#usize hi9 hi13
       (by decide) hz1 h_v5_9 h_v5_13)
   -- Step 7: inv_ntt_step v6 z1 10 14.
@@ -5111,7 +5214,7 @@ theorem inv_ntt_layer_2_step_fc
         h_v3_unc 14 hi14 (by decide) (by decide),
         h_v2_unc 14 hi14 (by decide) (by decide),
         h_v1_unc 14 hi14 (by decide) (by decide)]; exact hvec 14 hi14
-  obtain ⟨v7, h_v7_eq, h_v7_lift, h_v7_unc, _, _⟩ :=
+  obtain ⟨v7, h_v7_eq, h_v7_lift, h_v7_unc, h_v7_bnd_10, h_v7_bnd_14⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v6 z1 10#usize 14#usize hi10 hi14
       (by decide) hz1 h_v6_10 h_v6_14)
   -- Step 8: inv_ntt_step v7 z1 11 15.
@@ -5131,7 +5234,7 @@ theorem inv_ntt_layer_2_step_fc
         h_v3_unc 15 hi15 (by decide) (by decide),
         h_v2_unc 15 hi15 (by decide) (by decide),
         h_v1_unc 15 hi15 (by decide) (by decide)]; exact hvec 15 hi15
-  obtain ⟨v8, h_v8_eq, h_v8_lift, _, _, _⟩ :=
+  obtain ⟨v8, h_v8_eq, h_v8_lift, h_v8_unc, h_v8_bnd_11, h_v8_bnd_15⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v7 z1 11#usize 15#usize hi11 hi15
       (by decide) hz1 h_v7_11 h_v7_15)
   have h_body :
@@ -5147,8 +5250,103 @@ theorem inv_ntt_layer_2_step_fc
     rw [h_v7_eq]; simp only [Aeneas.Std.bind_tc_ok]
     exact h_v8_eq
   apply triple_of_ok_fc h_body
-  unfold Spec.chunk_inv_ntt_layer_2_step_pure
-  rw [h_v8_lift, h_v7_lift, h_v6_lift, h_v5_lift, h_v4_lift, h_v3_lift, h_v2_lift, h_v1_lift]
+  refine ⟨?_, ?_⟩
+  · -- Spec equation.
+    unfold Spec.chunk_inv_ntt_layer_2_step_pure
+    rw [h_v8_lift, h_v7_lift, h_v6_lift, h_v5_lift, h_v4_lift, h_v3_lift, h_v2_lift, h_v1_lift]
+  · -- Per-lane output bound ≤ 3328.
+    -- Step touches: 1:(0,4), 2:(1,5), 3:(2,6), 4:(3,7), 5:(8,12), 6:(9,13),
+    -- 7:(10,14), 8:(11,15). All 16 lanes touched exactly once.
+    intro k hk
+    interval_cases k
+    · -- k=0: touched at step 1.
+      rw [h_v8_unc 0 hi0 (by decide) (by decide),
+          h_v7_unc 0 hi0 (by decide) (by decide),
+          h_v6_unc 0 hi0 (by decide) (by decide),
+          h_v5_unc 0 hi0 (by decide) (by decide),
+          h_v4_unc 0 hi0 (by decide) (by decide),
+          h_v3_unc 0 hi0 (by decide) (by decide),
+          h_v2_unc 0 hi0 (by decide) (by decide)]
+      exact h_v1_bnd_0
+    · -- k=1: touched at step 2.
+      rw [h_v8_unc 1 hi1 (by decide) (by decide),
+          h_v7_unc 1 hi1 (by decide) (by decide),
+          h_v6_unc 1 hi1 (by decide) (by decide),
+          h_v5_unc 1 hi1 (by decide) (by decide),
+          h_v4_unc 1 hi1 (by decide) (by decide),
+          h_v3_unc 1 hi1 (by decide) (by decide)]
+      exact h_v2_bnd_1
+    · -- k=2: touched at step 3.
+      rw [h_v8_unc 2 hi2 (by decide) (by decide),
+          h_v7_unc 2 hi2 (by decide) (by decide),
+          h_v6_unc 2 hi2 (by decide) (by decide),
+          h_v5_unc 2 hi2 (by decide) (by decide),
+          h_v4_unc 2 hi2 (by decide) (by decide)]
+      exact h_v3_bnd_2
+    · -- k=3: touched at step 4.
+      rw [h_v8_unc 3 hi3 (by decide) (by decide),
+          h_v7_unc 3 hi3 (by decide) (by decide),
+          h_v6_unc 3 hi3 (by decide) (by decide),
+          h_v5_unc 3 hi3 (by decide) (by decide)]
+      exact h_v4_bnd_3
+    · -- k=4: touched at step 1.
+      rw [h_v8_unc 4 hi4 (by decide) (by decide),
+          h_v7_unc 4 hi4 (by decide) (by decide),
+          h_v6_unc 4 hi4 (by decide) (by decide),
+          h_v5_unc 4 hi4 (by decide) (by decide),
+          h_v4_unc 4 hi4 (by decide) (by decide),
+          h_v3_unc 4 hi4 (by decide) (by decide),
+          h_v2_unc 4 hi4 (by decide) (by decide)]
+      exact h_v1_bnd_4
+    · -- k=5: touched at step 2.
+      rw [h_v8_unc 5 hi5 (by decide) (by decide),
+          h_v7_unc 5 hi5 (by decide) (by decide),
+          h_v6_unc 5 hi5 (by decide) (by decide),
+          h_v5_unc 5 hi5 (by decide) (by decide),
+          h_v4_unc 5 hi5 (by decide) (by decide),
+          h_v3_unc 5 hi5 (by decide) (by decide)]
+      exact h_v2_bnd_5
+    · -- k=6: touched at step 3.
+      rw [h_v8_unc 6 hi6 (by decide) (by decide),
+          h_v7_unc 6 hi6 (by decide) (by decide),
+          h_v6_unc 6 hi6 (by decide) (by decide),
+          h_v5_unc 6 hi6 (by decide) (by decide),
+          h_v4_unc 6 hi6 (by decide) (by decide)]
+      exact h_v3_bnd_6
+    · -- k=7: touched at step 4.
+      rw [h_v8_unc 7 hi7 (by decide) (by decide),
+          h_v7_unc 7 hi7 (by decide) (by decide),
+          h_v6_unc 7 hi7 (by decide) (by decide),
+          h_v5_unc 7 hi7 (by decide) (by decide)]
+      exact h_v4_bnd_7
+    · -- k=8: touched at step 5.
+      rw [h_v8_unc 8 hi8 (by decide) (by decide),
+          h_v7_unc 8 hi8 (by decide) (by decide),
+          h_v6_unc 8 hi8 (by decide) (by decide)]
+      exact h_v5_bnd_8
+    · -- k=9: touched at step 6.
+      rw [h_v8_unc 9 hi9 (by decide) (by decide),
+          h_v7_unc 9 hi9 (by decide) (by decide)]
+      exact h_v6_bnd_9
+    · -- k=10: touched at step 7.
+      rw [h_v8_unc 10 hi10 (by decide) (by decide)]
+      exact h_v7_bnd_10
+    · -- k=11: touched at step 8.
+      exact h_v8_bnd_11
+    · -- k=12: touched at step 5.
+      rw [h_v8_unc 12 hi12 (by decide) (by decide),
+          h_v7_unc 12 hi12 (by decide) (by decide),
+          h_v6_unc 12 hi12 (by decide) (by decide)]
+      exact h_v5_bnd_12
+    · -- k=13: touched at step 6.
+      rw [h_v8_unc 13 hi13 (by decide) (by decide),
+          h_v7_unc 13 hi13 (by decide) (by decide)]
+      exact h_v6_bnd_13
+    · -- k=14: touched at step 7.
+      rw [h_v8_unc 14 hi14 (by decide) (by decide)]
+      exact h_v7_bnd_14
+    · -- k=15: touched at step 8.
+      exact h_v8_bnd_15
 
 /-- L2.11 — `inv_ntt_layer_3_step`: 8 inverse butterfly pairs
     (0,8)…(7,15) with one zeta. Mirror of `ntt_layer_3_step_fc`
@@ -5169,7 +5367,9 @@ theorem inv_ntt_layer_3_step_fc
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_3_step vec z
     ⦃ ⇓ r => ⌜ lift_chunk r
-                = Spec.chunk_inv_ntt_layer_3_step_pure (lift_chunk vec) (lift_fe_mont z) ⌝ ⦄ := by
+                = Spec.chunk_inv_ntt_layer_3_step_pure (lift_chunk vec) (lift_fe_mont z)
+              ∧ (∀ k : Nat, k < 16 →
+                  (r.elements.val[k]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
   have hi0 : (0 : Nat) < 16 := by decide
   have hi1 : (1 : Nat) < 16 := by decide
   have hi2 : (2 : Nat) < 16 := by decide
@@ -5187,7 +5387,7 @@ theorem inv_ntt_layer_3_step_fc
   have hi14 : (14 : Nat) < 16 := by decide
   have hi15 : (15 : Nat) < 16 := by decide
   -- Step 1: inv_ntt_step vec z 0 8.
-  obtain ⟨v1, h_v1_eq, h_v1_lift, h_v1_unc, _, _⟩ :=
+  obtain ⟨v1, h_v1_eq, h_v1_lift, h_v1_unc, h_v1_bnd_0, h_v1_bnd_8⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc vec z 0#usize 8#usize hi0 hi8
       (by decide) hz (hvec 0 hi0) (hvec 8 hi8))
   -- Step 2: inv_ntt_step v1 z 1 9.
@@ -5195,7 +5395,7 @@ theorem inv_ntt_layer_3_step_fc
     rw [h_v1_unc 1 hi1 (by decide) (by decide)]; exact hvec 1 hi1
   have h_v1_9 : (v1.elements.val[9]!).val.natAbs ≤ 13312 := by
     rw [h_v1_unc 9 hi9 (by decide) (by decide)]; exact hvec 9 hi9
-  obtain ⟨v2, h_v2_eq, h_v2_lift, h_v2_unc, _, _⟩ :=
+  obtain ⟨v2, h_v2_eq, h_v2_lift, h_v2_unc, h_v2_bnd_1, h_v2_bnd_9⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v1 z 1#usize 9#usize hi1 hi9
       (by decide) hz h_v1_1 h_v1_9)
   -- Step 3: inv_ntt_step v2 z 2 10.
@@ -5205,7 +5405,7 @@ theorem inv_ntt_layer_3_step_fc
   have h_v2_10 : (v2.elements.val[10]!).val.natAbs ≤ 13312 := by
     rw [h_v2_unc 10 hi10 (by decide) (by decide),
         h_v1_unc 10 hi10 (by decide) (by decide)]; exact hvec 10 hi10
-  obtain ⟨v3, h_v3_eq, h_v3_lift, h_v3_unc, _, _⟩ :=
+  obtain ⟨v3, h_v3_eq, h_v3_lift, h_v3_unc, h_v3_bnd_2, h_v3_bnd_10⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v2 z 2#usize 10#usize hi2 hi10
       (by decide) hz h_v2_2 h_v2_10)
   -- Step 4: inv_ntt_step v3 z 3 11.
@@ -5217,7 +5417,7 @@ theorem inv_ntt_layer_3_step_fc
     rw [h_v3_unc 11 hi11 (by decide) (by decide),
         h_v2_unc 11 hi11 (by decide) (by decide),
         h_v1_unc 11 hi11 (by decide) (by decide)]; exact hvec 11 hi11
-  obtain ⟨v4, h_v4_eq, h_v4_lift, h_v4_unc, _, _⟩ :=
+  obtain ⟨v4, h_v4_eq, h_v4_lift, h_v4_unc, h_v4_bnd_3, h_v4_bnd_11⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v3 z 3#usize 11#usize hi3 hi11
       (by decide) hz h_v3_3 h_v3_11)
   -- Step 5: inv_ntt_step v4 z 4 12.
@@ -5231,7 +5431,7 @@ theorem inv_ntt_layer_3_step_fc
         h_v3_unc 12 hi12 (by decide) (by decide),
         h_v2_unc 12 hi12 (by decide) (by decide),
         h_v1_unc 12 hi12 (by decide) (by decide)]; exact hvec 12 hi12
-  obtain ⟨v5, h_v5_eq, h_v5_lift, h_v5_unc, _, _⟩ :=
+  obtain ⟨v5, h_v5_eq, h_v5_lift, h_v5_unc, h_v5_bnd_4, h_v5_bnd_12⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v4 z 4#usize 12#usize hi4 hi12
       (by decide) hz h_v4_4 h_v4_12)
   -- Step 6: inv_ntt_step v5 z 5 13.
@@ -5247,7 +5447,7 @@ theorem inv_ntt_layer_3_step_fc
         h_v3_unc 13 hi13 (by decide) (by decide),
         h_v2_unc 13 hi13 (by decide) (by decide),
         h_v1_unc 13 hi13 (by decide) (by decide)]; exact hvec 13 hi13
-  obtain ⟨v6, h_v6_eq, h_v6_lift, h_v6_unc, _, _⟩ :=
+  obtain ⟨v6, h_v6_eq, h_v6_lift, h_v6_unc, h_v6_bnd_5, h_v6_bnd_13⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v5 z 5#usize 13#usize hi5 hi13
       (by decide) hz h_v5_5 h_v5_13)
   -- Step 7: inv_ntt_step v6 z 6 14.
@@ -5265,7 +5465,7 @@ theorem inv_ntt_layer_3_step_fc
         h_v3_unc 14 hi14 (by decide) (by decide),
         h_v2_unc 14 hi14 (by decide) (by decide),
         h_v1_unc 14 hi14 (by decide) (by decide)]; exact hvec 14 hi14
-  obtain ⟨v7, h_v7_eq, h_v7_lift, h_v7_unc, _, _⟩ :=
+  obtain ⟨v7, h_v7_eq, h_v7_lift, h_v7_unc, h_v7_bnd_6, h_v7_bnd_14⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v6 z 6#usize 14#usize hi6 hi14
       (by decide) hz h_v6_6 h_v6_14)
   -- Step 8: inv_ntt_step v7 z 7 15.
@@ -5285,7 +5485,7 @@ theorem inv_ntt_layer_3_step_fc
         h_v3_unc 15 hi15 (by decide) (by decide),
         h_v2_unc 15 hi15 (by decide) (by decide),
         h_v1_unc 15 hi15 (by decide) (by decide)]; exact hvec 15 hi15
-  obtain ⟨v8, h_v8_eq, h_v8_lift, _, _, _⟩ :=
+  obtain ⟨v8, h_v8_eq, h_v8_lift, h_v8_unc, h_v8_bnd_7, h_v8_bnd_15⟩ :=
     triple_exists_ok_fc (inv_ntt_step_pair_fc v7 z 7#usize 15#usize hi7 hi15
       (by decide) hz h_v7_7 h_v7_15)
   have h_body :
@@ -5300,8 +5500,103 @@ theorem inv_ntt_layer_3_step_fc
     rw [h_v7_eq]; simp only [Aeneas.Std.bind_tc_ok]
     exact h_v8_eq
   apply triple_of_ok_fc h_body
-  unfold Spec.chunk_inv_ntt_layer_3_step_pure
-  rw [h_v8_lift, h_v7_lift, h_v6_lift, h_v5_lift, h_v4_lift, h_v3_lift, h_v2_lift, h_v1_lift]
+  refine ⟨?_, ?_⟩
+  · -- Spec equation.
+    unfold Spec.chunk_inv_ntt_layer_3_step_pure
+    rw [h_v8_lift, h_v7_lift, h_v6_lift, h_v5_lift, h_v4_lift, h_v3_lift, h_v2_lift, h_v1_lift]
+  · -- Per-lane output bound ≤ 3328.
+    -- Step touches: 1:(0,8), 2:(1,9), 3:(2,10), 4:(3,11), 5:(4,12), 6:(5,13),
+    -- 7:(6,14), 8:(7,15). All 16 lanes touched exactly once.
+    intro k hk
+    interval_cases k
+    · -- k=0: touched at step 1.
+      rw [h_v8_unc 0 hi0 (by decide) (by decide),
+          h_v7_unc 0 hi0 (by decide) (by decide),
+          h_v6_unc 0 hi0 (by decide) (by decide),
+          h_v5_unc 0 hi0 (by decide) (by decide),
+          h_v4_unc 0 hi0 (by decide) (by decide),
+          h_v3_unc 0 hi0 (by decide) (by decide),
+          h_v2_unc 0 hi0 (by decide) (by decide)]
+      exact h_v1_bnd_0
+    · -- k=1: touched at step 2.
+      rw [h_v8_unc 1 hi1 (by decide) (by decide),
+          h_v7_unc 1 hi1 (by decide) (by decide),
+          h_v6_unc 1 hi1 (by decide) (by decide),
+          h_v5_unc 1 hi1 (by decide) (by decide),
+          h_v4_unc 1 hi1 (by decide) (by decide),
+          h_v3_unc 1 hi1 (by decide) (by decide)]
+      exact h_v2_bnd_1
+    · -- k=2: touched at step 3.
+      rw [h_v8_unc 2 hi2 (by decide) (by decide),
+          h_v7_unc 2 hi2 (by decide) (by decide),
+          h_v6_unc 2 hi2 (by decide) (by decide),
+          h_v5_unc 2 hi2 (by decide) (by decide),
+          h_v4_unc 2 hi2 (by decide) (by decide)]
+      exact h_v3_bnd_2
+    · -- k=3: touched at step 4.
+      rw [h_v8_unc 3 hi3 (by decide) (by decide),
+          h_v7_unc 3 hi3 (by decide) (by decide),
+          h_v6_unc 3 hi3 (by decide) (by decide),
+          h_v5_unc 3 hi3 (by decide) (by decide)]
+      exact h_v4_bnd_3
+    · -- k=4: touched at step 5.
+      rw [h_v8_unc 4 hi4 (by decide) (by decide),
+          h_v7_unc 4 hi4 (by decide) (by decide),
+          h_v6_unc 4 hi4 (by decide) (by decide)]
+      exact h_v5_bnd_4
+    · -- k=5: touched at step 6.
+      rw [h_v8_unc 5 hi5 (by decide) (by decide),
+          h_v7_unc 5 hi5 (by decide) (by decide)]
+      exact h_v6_bnd_5
+    · -- k=6: touched at step 7.
+      rw [h_v8_unc 6 hi6 (by decide) (by decide)]
+      exact h_v7_bnd_6
+    · -- k=7: touched at step 8.
+      exact h_v8_bnd_7
+    · -- k=8: touched at step 1.
+      rw [h_v8_unc 8 hi8 (by decide) (by decide),
+          h_v7_unc 8 hi8 (by decide) (by decide),
+          h_v6_unc 8 hi8 (by decide) (by decide),
+          h_v5_unc 8 hi8 (by decide) (by decide),
+          h_v4_unc 8 hi8 (by decide) (by decide),
+          h_v3_unc 8 hi8 (by decide) (by decide),
+          h_v2_unc 8 hi8 (by decide) (by decide)]
+      exact h_v1_bnd_8
+    · -- k=9: touched at step 2.
+      rw [h_v8_unc 9 hi9 (by decide) (by decide),
+          h_v7_unc 9 hi9 (by decide) (by decide),
+          h_v6_unc 9 hi9 (by decide) (by decide),
+          h_v5_unc 9 hi9 (by decide) (by decide),
+          h_v4_unc 9 hi9 (by decide) (by decide),
+          h_v3_unc 9 hi9 (by decide) (by decide)]
+      exact h_v2_bnd_9
+    · -- k=10: touched at step 3.
+      rw [h_v8_unc 10 hi10 (by decide) (by decide),
+          h_v7_unc 10 hi10 (by decide) (by decide),
+          h_v6_unc 10 hi10 (by decide) (by decide),
+          h_v5_unc 10 hi10 (by decide) (by decide),
+          h_v4_unc 10 hi10 (by decide) (by decide)]
+      exact h_v3_bnd_10
+    · -- k=11: touched at step 4.
+      rw [h_v8_unc 11 hi11 (by decide) (by decide),
+          h_v7_unc 11 hi11 (by decide) (by decide),
+          h_v6_unc 11 hi11 (by decide) (by decide),
+          h_v5_unc 11 hi11 (by decide) (by decide)]
+      exact h_v4_bnd_11
+    · -- k=12: touched at step 5.
+      rw [h_v8_unc 12 hi12 (by decide) (by decide),
+          h_v7_unc 12 hi12 (by decide) (by decide),
+          h_v6_unc 12 hi12 (by decide) (by decide)]
+      exact h_v5_bnd_12
+    · -- k=13: touched at step 6.
+      rw [h_v8_unc 13 hi13 (by decide) (by decide),
+          h_v7_unc 13 hi13 (by decide) (by decide)]
+      exact h_v6_bnd_13
+    · -- k=14: touched at step 7.
+      rw [h_v8_unc 14 hi14 (by decide) (by decide)]
+      exact h_v7_bnd_14
+    · -- k=15: touched at step 8.
+      exact h_v8_bnd_15
 
 /-! ## §L3 — NTT driver loops (5 theorems). -/
 
@@ -10082,7 +10377,7 @@ abbrev Acc := Std.Usize ×
 /-- FC loop invariant for `invert_ntt_at_layer_1_portable_fc`.
     Tracks DECREASING `zeta_i`: at outer iter `k`, `acc.1.val = zeta_i_0.val - 4 * k.val`.
     Chunks `< k.val` are FC-equal to the per-chunk inverse step; chunks `≥ k.val`
-    are unchanged from `re`. -/
+    are unchanged from `re`. Per-lane output bound `≤ 3328` on every chunk. -/
 def inv
     (zeta_i_0 : Std.Usize)
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -10099,7 +10394,9 @@ def inv
               (Spec.zeta_at (zeta_i_0.val - 4 * j - 3))
               (Spec.zeta_at (zeta_i_0.val - 4 * j - 4)))
     ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
-        acc.2.coefficients.val[j]! = re.coefficients.val[j]!))
+        acc.2.coefficients.val[j]! = re.coefficients.val[j]!)
+    ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328))
 
 /-- Step-post for `loop_range_spec_usize`. -/
 def step_post
@@ -10141,7 +10438,7 @@ private theorem invert_ntt_at_layer_1_step_lemma_fc
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
-  obtain ⟨h_zeta_acc, h_acc_done, h_acc_undone⟩ := by
+  obtain ⟨h_zeta_acc, h_acc_done, h_acc_undone, h_acc_bnd⟩ := by
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_1_loop.body
   by_cases h_lt : k.val < (16#usize : Std.Usize).val
@@ -10224,7 +10521,7 @@ private theorem invert_ntt_at_layer_1_step_lemma_fc
       intro ℓ hℓ
       rw [h_t_eq]; exact h_pre k.val hk_16 ℓ hℓ
     -- @[reducible] portable_ops_inst forwards to vector.portable.ntt.inv_ntt_layer_1_step.
-    obtain ⟨t1, h_t1_eq, h_t1_lift⟩ :=
+    obtain ⟨t1, h_t1_eq, h_t1_lift, h_t1_bnd⟩ :=
       triple_exists_ok_fc (inv_ntt_layer_1_step_fc t z1 z2 z3 z4
         ⟨h_z1_bd, h_z2_bd, h_z3_bd, h_z4_bd⟩ h_t_bd)
     -- Compose entire body. Loop output for `cont` is `(iter', zi7, re')` (3-tuple in
@@ -10280,8 +10577,10 @@ private theorem invert_ntt_at_layer_1_step_lemma_fc
                   (Spec.zeta_at (zeta_i_0.val - 4 * j - 3))
                   (Spec.zeta_at (zeta_i_0.val - 4 * j - 4)))
         ∧ (∀ j : Nat, s.val ≤ j → j < 16 →
-            acc'.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
-      refine ⟨?_, ?_, ?_⟩
+            acc'.2.coefficients.val[j]! = re.coefficients.val[j]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc'.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
       · -- acc'.1 = zi7, zi7.val = acc.1.val - 4 = zeta_i_0.val - 4 * (k.val + 1).
         show zi7.val = zeta_i_0.val - 4 * s.val
         rw [h_zi7_val_arith, h_zeta_acc, hs_val]
@@ -10340,6 +10639,26 @@ private theorem invert_ntt_at_layer_1_step_lemma_fc
         show (acc.2.coefficients.set k t1).val[j]! = re.coefficients.val[j]!
         rw [h_set_ne_val]
         exact h_acc_undone j h_ge' hj_lt
+      · -- Per-lane output bound on every chunk.
+        intro c hc ℓ hℓ
+        show ((acc'.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        show (((acc.2.coefficients.set k t1).val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        by_cases h_ck : c = k.val
+        · -- At touched chunk: value is t1, bounded by h_t1_bnd.
+          have h_set_eq_val :
+              (acc.2.coefficients.set k t1).val[c]! = t1 := by
+            rw [h_ck]
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_eq acc.2.coefficients k k.val t1
+                ⟨rfl, by rw [h_coef_len]; exact hk_16⟩
+          rw [h_set_eq_val]; exact h_t1_bnd ℓ hℓ
+        · -- At untouched chunk: value preserved from acc.2, bounded by h_acc_bnd.
+          have h_ne : k.val ≠ c := Ne.symm h_ck
+          have h_set_ne_val :
+              (acc.2.coefficients.set k t1).val[c]! = acc.2.coefficients.val[c]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne acc.2.coefficients k c t1 h_ne
+          rw [h_set_ne_val]; exact h_acc_bnd c hc ℓ hℓ
     show (pure _ : Result Prop).holds
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
   · -- `None` branch: k ≥ 16, done.
@@ -10381,14 +10700,17 @@ private theorem invert_ntt_at_layer_1_step_lemma_fc
                   (Spec.zeta_at (zeta_i_0.val - 4 * j - 3))
                   (Spec.zeta_at (zeta_i_0.val - 4 * j - 4)))
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
-            acc.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
-      refine ⟨?_, ?_, ?_⟩
+            acc.2.coefficients.val[j]! = re.coefficients.val[j]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
       · rw [h_zeta_acc, hk_eq, h16]
       · intro j hj; rw [h16] at hj
         apply h_acc_done j; rw [hk_eq]; exact hj
       · intro j hj_ge hj_lt
         rw [h16] at hj_ge
         apply h_acc_undone j _ hj_lt; rw [hk_eq]; exact hj_ge
+      · exact h_acc_bnd
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
 
 set_option maxHeartbeats 16000000 in
@@ -10405,7 +10727,12 @@ set_option maxHeartbeats 16000000 in
       `zeta_i - 1` at iter k=0) is `< 128`.
     - `h_bnd` per-lane bound `≤ 13312` on `re`'s chunks — matches
       `inv_ntt_layer_1_step_fc`'s precondition, preserved across iterations
-      (per-step output ≤ 4993 ≤ 13312, unchanged chunks ≤ 13312). -/
+      (per-step output ≤ 4993 ≤ 13312, unchanged chunks ≤ 13312).
+    - `h_bnd_strict` per-lane bound `≤ 3328` on `re`'s chunks — needed for
+      the strengthened POST's output-bound conjunct: the initial state at
+      `k = 0` has `acc.2 = re`, so we need the tight bound up front. Each
+      iteration's `inv_ntt_layer_1_step_fc` re-establishes the bound at the
+      touched chunk; untouched chunks retain the input's bound. -/
 @[spec high]
 theorem invert_ntt_at_layer_1_portable_fc
     (zeta_i : Std.Usize)
@@ -10413,13 +10740,17 @@ theorem invert_ntt_at_layer_1_portable_fc
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
       ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312)
+    (h_bnd_strict : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3328)
     (h_zeta_lo : 64 ≤ zeta_i.val)
     (h_zeta_hi : zeta_i.val ≤ 128) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_1
       (vectortraitsOperationsInst := portable_ops_inst) zeta_i re
     ⦃ ⇓ p => ⌜ p.1.val = zeta_i.val - 64
-              ∧ lift_poly p.2 = Spec.invert_ntt_layer_1_pure (lift_poly re) zeta_i ⌝ ⦄ := by
+              ∧ lift_poly p.2 = Spec.invert_ntt_layer_1_pure (lift_poly re) zeta_i
+              ∧ (∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.2.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_1
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_1_loop
   apply Std.Do.Triple.of_entails_right _
@@ -10437,7 +10768,7 @@ theorem invert_ntt_at_layer_1_portable_fc
         show (pure _ : Result Prop).holds
         simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
         intro _
-        refine ⟨?_, ?_, ?_⟩
+        refine ⟨?_, ?_, ?_, ?_⟩
         · -- zeta-thread invariant at k=0: zeta_i = zeta_i - 4*0.
           show zeta_i.val = zeta_i.val - 4 * (0#usize : Std.Usize).val
           show zeta_i.val = zeta_i.val - 4 * 0
@@ -10445,7 +10776,10 @@ theorem invert_ntt_at_layer_1_portable_fc
         · intro j hj
           exact absurd hj (Nat.not_lt_zero j)
         · intro _ _ _
-          trivial)
+          trivial
+        · -- Initial bound: acc.2 = re at k=0, so bound from h_bnd_strict.
+          intro c hc ℓ hℓ
+          exact h_bnd_strict c hc ℓ hℓ)
       ?_)
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations + zeta_i = zeta_i_0 - 64.
     rw [PostCond.entails_noThrow]
@@ -10463,12 +10797,14 @@ theorem invert_ntt_at_layer_1_portable_fc
                   (Spec.zeta_at (zeta_i.val - 4 * j - 3))
                   (Spec.zeta_at (zeta_i.val - 4 * j - 4)))
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
-            r.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
+            r.2.coefficients.val[j]! = re.coefficients.val[j]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((r.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
              L3i_1_FC.inv] using h_inv_holds
-    obtain ⟨h_zeta_eq, h_done, _h_undone⟩ := h_inv
+    obtain ⟨h_zeta_eq, h_done, _h_undone, h_done_bnd⟩ := h_inv
     have h16 : (16#usize : Std.Usize).val = 16 := rfl
-    refine ⟨?_, ?_⟩
+    refine ⟨?_, ?_, ?_⟩
     · -- p.1.val = zeta_i.val - 64.
       rw [h_zeta_eq, h16]
     · -- The chunks equation.
@@ -10500,6 +10836,8 @@ theorem invert_ntt_at_layer_1_portable_fc
         exact (h_done k hk).symm
       have h_final := flatten_chunks_eq_lift_poly_fc r.2 chunks_arr h_chunks_len h_chunks_get
       exact h_final.symm
+    · -- Per-lane output bound from the loop invariant's strengthened conjunct.
+      exact h_done_bnd
   · -- Step lemma application: dispatch invert_ntt_at_layer_1_step_lemma_fc.
     intro acc k _h_ge h_le hinv
     have h_step := invert_ntt_at_layer_1_step_lemma_fc zeta_i re h_bnd h_zeta_lo h_zeta_hi
@@ -10540,7 +10878,7 @@ abbrev Acc := Std.Usize ×
 /-- FC loop invariant for `invert_ntt_at_layer_2_portable_fc`.
     Tracks DECREASING `zeta_i`: at outer iter `k`, `acc.1.val = zeta_i_0.val - 2 * k.val`.
     Chunks `< k.val` are FC-equal to the per-chunk inverse step; chunks `≥ k.val`
-    are unchanged from `re`. -/
+    are unchanged from `re`. Per-lane output bound `≤ 3328` on every chunk. -/
 def inv
     (zeta_i_0 : Std.Usize)
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -10555,7 +10893,9 @@ def inv
               (Spec.zeta_at (zeta_i_0.val - 2 * j - 1))
               (Spec.zeta_at (zeta_i_0.val - 2 * j - 2)))
     ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
-        acc.2.coefficients.val[j]! = re.coefficients.val[j]!))
+        acc.2.coefficients.val[j]! = re.coefficients.val[j]!)
+    ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328))
 
 /-- Step-post for `loop_range_spec_usize`. -/
 def step_post
@@ -10597,7 +10937,7 @@ private theorem invert_ntt_at_layer_2_step_lemma_fc
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
-  obtain ⟨h_zeta_acc, h_acc_done, h_acc_undone⟩ := by
+  obtain ⟨h_zeta_acc, h_acc_done, h_acc_undone, h_acc_bnd⟩ := by
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_2_loop.body
   by_cases h_lt : k.val < (16#usize : Std.Usize).val
@@ -10654,7 +10994,7 @@ private theorem invert_ntt_at_layer_2_step_lemma_fc
       intro ℓ hℓ
       rw [h_t_eq]; exact h_pre k.val hk_16 ℓ hℓ
     -- @[reducible] portable_ops_inst forwards to vector.portable.ntt.inv_ntt_layer_2_step.
-    obtain ⟨t1, h_t1_eq, h_t1_lift⟩ :=
+    obtain ⟨t1, h_t1_eq, h_t1_lift, h_t1_bnd⟩ :=
       triple_exists_ok_fc (inv_ntt_layer_2_step_fc t z1 z2
         ⟨h_z1_bd, h_z2_bd⟩ h_t_bd)
     -- Compose entire body. Loop output for `cont` is `(iter', zi3, re')`.
@@ -10707,8 +11047,10 @@ private theorem invert_ntt_at_layer_2_step_lemma_fc
                   (Spec.zeta_at (zeta_i_0.val - 2 * j - 1))
                   (Spec.zeta_at (zeta_i_0.val - 2 * j - 2)))
         ∧ (∀ j : Nat, s.val ≤ j → j < 16 →
-            acc'.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
-      refine ⟨?_, ?_, ?_⟩
+            acc'.2.coefficients.val[j]! = re.coefficients.val[j]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc'.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
       · -- acc'.1 = zi3, zi3.val = acc.1.val - 2 = zeta_i_0.val - 2 * (k.val + 1).
         show zi3.val = zeta_i_0.val - 2 * s.val
         rw [h_zi3_val_arith, h_zeta_acc, hs_val]
@@ -10756,6 +11098,24 @@ private theorem invert_ntt_at_layer_2_step_lemma_fc
         show (acc.2.coefficients.set k t1).val[j]! = re.coefficients.val[j]!
         rw [h_set_ne_val]
         exact h_acc_undone j h_ge' hj_lt
+      · -- Per-lane output bound on every chunk.
+        intro c hc ℓ hℓ
+        show ((acc'.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        show (((acc.2.coefficients.set k t1).val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        by_cases h_ck : c = k.val
+        · have h_set_eq_val :
+              (acc.2.coefficients.set k t1).val[c]! = t1 := by
+            rw [h_ck]
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_eq acc.2.coefficients k k.val t1
+                ⟨rfl, by rw [h_coef_len]; exact hk_16⟩
+          rw [h_set_eq_val]; exact h_t1_bnd ℓ hℓ
+        · have h_ne : k.val ≠ c := Ne.symm h_ck
+          have h_set_ne_val :
+              (acc.2.coefficients.set k t1).val[c]! = acc.2.coefficients.val[c]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne acc.2.coefficients k c t1 h_ne
+          rw [h_set_ne_val]; exact h_acc_bnd c hc ℓ hℓ
     show (pure _ : Result Prop).holds
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
   · -- `None` branch: k ≥ 16, done.
@@ -10795,14 +11155,17 @@ private theorem invert_ntt_at_layer_2_step_lemma_fc
                   (Spec.zeta_at (zeta_i_0.val - 2 * j - 1))
                   (Spec.zeta_at (zeta_i_0.val - 2 * j - 2)))
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
-            acc.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
-      refine ⟨?_, ?_, ?_⟩
+            acc.2.coefficients.val[j]! = re.coefficients.val[j]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
       · rw [h_zeta_acc, hk_eq, h16]
       · intro j hj; rw [h16] at hj
         apply h_acc_done j; rw [hk_eq]; exact hj
       · intro j hj_ge hj_lt
         rw [h16] at hj_ge
         apply h_acc_undone j _ hj_lt; rw [hk_eq]; exact hj_ge
+      · exact h_acc_bnd
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
 
 set_option maxHeartbeats 16000000 in
@@ -10819,7 +11182,9 @@ set_option maxHeartbeats 16000000 in
     - `h_zeta_hi : zeta_i.val ≤ 128` — so `polynomial.zeta` index (worst case
       `zeta_i - 1` at iter k=0) is `< 128`.
     - `h_bnd` per-lane bound `≤ 13312` on `re`'s chunks — matches
-      `inv_ntt_layer_2_step_fc`'s precondition. -/
+      `inv_ntt_layer_2_step_fc`'s precondition.
+    - `h_bnd_strict` per-lane bound `≤ 3328` on `re`'s chunks — needed for
+      the strengthened POST's output-bound conjunct. -/
 @[spec high]
 theorem invert_ntt_at_layer_2_portable_fc
     (zeta_i : Std.Usize)
@@ -10827,13 +11192,17 @@ theorem invert_ntt_at_layer_2_portable_fc
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
       ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312)
+    (h_bnd_strict : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3328)
     (h_zeta_lo : 32 ≤ zeta_i.val)
     (h_zeta_hi : zeta_i.val ≤ 128) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_2
       (vectortraitsOperationsInst := portable_ops_inst) zeta_i re
     ⦃ ⇓ p => ⌜ p.1.val = zeta_i.val - 32
-              ∧ lift_poly p.2 = Spec.invert_ntt_layer_2_pure (lift_poly re) zeta_i ⌝ ⦄ := by
+              ∧ lift_poly p.2 = Spec.invert_ntt_layer_2_pure (lift_poly re) zeta_i
+              ∧ (∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.2.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_2
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_2_loop
   apply Std.Do.Triple.of_entails_right _
@@ -10851,7 +11220,7 @@ theorem invert_ntt_at_layer_2_portable_fc
         show (pure _ : Result Prop).holds
         simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
         intro _
-        refine ⟨?_, ?_, ?_⟩
+        refine ⟨?_, ?_, ?_, ?_⟩
         · -- zeta-thread invariant at k=0: zeta_i = zeta_i - 2*0.
           show zeta_i.val = zeta_i.val - 2 * (0#usize : Std.Usize).val
           show zeta_i.val = zeta_i.val - 2 * 0
@@ -10859,7 +11228,10 @@ theorem invert_ntt_at_layer_2_portable_fc
         · intro j hj
           exact absurd hj (Nat.not_lt_zero j)
         · intro _ _ _
-          trivial)
+          trivial
+        · -- Initial bound: acc.2 = re at k=0, so bound from h_bnd_strict.
+          intro c hc ℓ hℓ
+          exact h_bnd_strict c hc ℓ hℓ)
       ?_)
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations + zeta_i = zeta_i_0 - 32.
     rw [PostCond.entails_noThrow]
@@ -10875,12 +11247,14 @@ theorem invert_ntt_at_layer_2_portable_fc
                   (Spec.zeta_at (zeta_i.val - 2 * j - 1))
                   (Spec.zeta_at (zeta_i.val - 2 * j - 2)))
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
-            r.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
+            r.2.coefficients.val[j]! = re.coefficients.val[j]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((r.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
              L3i_2_FC.inv] using h_inv_holds
-    obtain ⟨h_zeta_eq, h_done, _h_undone⟩ := h_inv
+    obtain ⟨h_zeta_eq, h_done, _h_undone, h_done_bnd⟩ := h_inv
     have h16 : (16#usize : Std.Usize).val = 16 := rfl
-    refine ⟨?_, ?_⟩
+    refine ⟨?_, ?_, ?_⟩
     · -- p.1.val = zeta_i.val - 32.
       rw [h_zeta_eq, h16]
     · -- The chunks equation.
@@ -10908,6 +11282,8 @@ theorem invert_ntt_at_layer_2_portable_fc
         exact (h_done k hk).symm
       have h_final := flatten_chunks_eq_lift_poly_fc r.2 chunks_arr h_chunks_len h_chunks_get
       exact h_final.symm
+    · -- Per-lane output bound from the loop invariant's strengthened conjunct.
+      exact h_done_bnd
   · -- Step lemma application: dispatch invert_ntt_at_layer_2_step_lemma_fc.
     intro acc k _h_ge h_le hinv
     have h_step := invert_ntt_at_layer_2_step_lemma_fc zeta_i re h_bnd h_zeta_lo h_zeta_hi
@@ -10949,7 +11325,7 @@ abbrev Acc := Std.Usize ×
 /-- FC loop invariant for `invert_ntt_at_layer_3_portable_fc`.
     Tracks DECREASING `zeta_i`: at outer iter `k`, `acc.1.val = zeta_i_0.val - k.val`.
     Chunks `< k.val` are FC-equal to the per-chunk inverse step; chunks `≥ k.val`
-    are unchanged from `re`. -/
+    are unchanged from `re`. Per-lane output bound `≤ 3328` on every chunk. -/
 def inv
     (zeta_i_0 : Std.Usize)
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -10963,7 +11339,9 @@ def inv
               (lift_chunk (re.coefficients.val[j]!))
               (Spec.zeta_at (zeta_i_0.val - j - 1)))
     ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
-        acc.2.coefficients.val[j]! = re.coefficients.val[j]!))
+        acc.2.coefficients.val[j]! = re.coefficients.val[j]!)
+    ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328))
 
 /-- Step-post for `loop_range_spec_usize`. -/
 def step_post
@@ -11005,7 +11383,7 @@ private theorem invert_ntt_at_layer_3_step_lemma_fc
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
-  obtain ⟨h_zeta_acc, h_acc_done, h_acc_undone⟩ := by
+  obtain ⟨h_zeta_acc, h_acc_done, h_acc_undone, h_acc_bnd⟩ := by
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_3_loop.body
   by_cases h_lt : k.val < (16#usize : Std.Usize).val
@@ -11050,7 +11428,7 @@ private theorem invert_ntt_at_layer_3_step_lemma_fc
       intro ℓ hℓ
       rw [h_t_eq]; exact h_pre k.val hk_16 ℓ hℓ
     -- @[reducible] portable_ops_inst forwards to vector.portable.ntt.inv_ntt_layer_3_step.
-    obtain ⟨t1, h_t1_eq, h_t1_lift⟩ :=
+    obtain ⟨t1, h_t1_eq, h_t1_lift, h_t1_bnd⟩ :=
       triple_exists_ok_fc (inv_ntt_layer_3_step_fc t z1 h_z1_bd h_t_bd)
     -- Compose entire body. Loop output for `cont` is `(iter', zi1, re')`.
     set acc' : L3i_3_FC.Acc := (zi1, { coefficients := acc.2.coefficients.set k t1 })
@@ -11100,8 +11478,10 @@ private theorem invert_ntt_at_layer_3_step_lemma_fc
                   (lift_chunk (re.coefficients.val[j]!))
                   (Spec.zeta_at (zeta_i_0.val - j - 1)))
         ∧ (∀ j : Nat, s.val ≤ j → j < 16 →
-            acc'.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
-      refine ⟨?_, ?_, ?_⟩
+            acc'.2.coefficients.val[j]! = re.coefficients.val[j]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc'.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
       · -- acc'.1 = zi1, zi1.val = acc.1.val - 1 = zeta_i_0.val - (k.val + 1).
         show zi1.val = zeta_i_0.val - s.val
         rw [h_zi1_val_arith, h_zeta_acc, hs_val]
@@ -11145,6 +11525,24 @@ private theorem invert_ntt_at_layer_3_step_lemma_fc
         show (acc.2.coefficients.set k t1).val[j]! = re.coefficients.val[j]!
         rw [h_set_ne_val]
         exact h_acc_undone j h_ge' hj_lt
+      · -- Per-lane output bound on every chunk.
+        intro c hc ℓ hℓ
+        show ((acc'.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        show (((acc.2.coefficients.set k t1).val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        by_cases h_ck : c = k.val
+        · have h_set_eq_val :
+              (acc.2.coefficients.set k t1).val[c]! = t1 := by
+            rw [h_ck]
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_eq acc.2.coefficients k k.val t1
+                ⟨rfl, by rw [h_coef_len]; exact hk_16⟩
+          rw [h_set_eq_val]; exact h_t1_bnd ℓ hℓ
+        · have h_ne : k.val ≠ c := Ne.symm h_ck
+          have h_set_ne_val :
+              (acc.2.coefficients.set k t1).val[c]! = acc.2.coefficients.val[c]! := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne acc.2.coefficients k c t1 h_ne
+          rw [h_set_ne_val]; exact h_acc_bnd c hc ℓ hℓ
     show (pure _ : Result Prop).holds
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
   · -- `None` branch: k ≥ 16, done.
@@ -11183,14 +11581,17 @@ private theorem invert_ntt_at_layer_3_step_lemma_fc
                   (lift_chunk (re.coefficients.val[j]!))
                   (Spec.zeta_at (zeta_i_0.val - j - 1)))
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
-            acc.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
-      refine ⟨?_, ?_, ?_⟩
+            acc.2.coefficients.val[j]! = re.coefficients.val[j]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
       · rw [h_zeta_acc, hk_eq, h16]
       · intro j hj; rw [h16] at hj
         apply h_acc_done j; rw [hk_eq]; exact hj
       · intro j hj_ge hj_lt
         rw [h16] at hj_ge
         apply h_acc_undone j _ hj_lt; rw [hk_eq]; exact hj_ge
+      · exact h_acc_bnd
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
 
 set_option maxHeartbeats 16000000 in
@@ -11207,7 +11608,9 @@ set_option maxHeartbeats 16000000 in
     - `h_zeta_hi : zeta_i.val ≤ 128` — so `polynomial.zeta` index (worst case
       `zeta_i - 1` at iter k=0) is `< 128`.
     - `h_bnd` per-lane bound `≤ 13312` on `re`'s chunks — matches
-      `inv_ntt_layer_3_step_fc`'s precondition. -/
+      `inv_ntt_layer_3_step_fc`'s precondition.
+    - `h_bnd_strict` per-lane bound `≤ 3328` on `re`'s chunks — needed for
+      the strengthened POST's output-bound conjunct. -/
 @[spec high]
 theorem invert_ntt_at_layer_3_portable_fc
     (zeta_i : Std.Usize)
@@ -11215,13 +11618,17 @@ theorem invert_ntt_at_layer_3_portable_fc
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
       ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312)
+    (h_bnd_strict : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3328)
     (h_zeta_lo : 16 ≤ zeta_i.val)
     (h_zeta_hi : zeta_i.val ≤ 128) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_3
       (vectortraitsOperationsInst := portable_ops_inst) zeta_i re
     ⦃ ⇓ p => ⌜ p.1.val = zeta_i.val - 16
-              ∧ lift_poly p.2 = Spec.invert_ntt_layer_3_pure (lift_poly re) zeta_i ⌝ ⦄ := by
+              ∧ lift_poly p.2 = Spec.invert_ntt_layer_3_pure (lift_poly re) zeta_i
+              ∧ (∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.2.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_3
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_3_loop
   apply Std.Do.Triple.of_entails_right _
@@ -11239,7 +11646,7 @@ theorem invert_ntt_at_layer_3_portable_fc
         show (pure _ : Result Prop).holds
         simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
         intro _
-        refine ⟨?_, ?_, ?_⟩
+        refine ⟨?_, ?_, ?_, ?_⟩
         · -- zeta-thread invariant at k=0: zeta_i = zeta_i - 0.
           show zeta_i.val = zeta_i.val - (0#usize : Std.Usize).val
           show zeta_i.val = zeta_i.val - 0
@@ -11247,7 +11654,10 @@ theorem invert_ntt_at_layer_3_portable_fc
         · intro j hj
           exact absurd hj (Nat.not_lt_zero j)
         · intro _ _ _
-          trivial)
+          trivial
+        · -- Initial bound: acc.2 = re at k=0, so bound from h_bnd_strict.
+          intro c hc ℓ hℓ
+          exact h_bnd_strict c hc ℓ hℓ)
       ?_)
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations + zeta_i = zeta_i_0 - 16.
     rw [PostCond.entails_noThrow]
@@ -11262,12 +11672,14 @@ theorem invert_ntt_at_layer_3_portable_fc
                   (lift_chunk (re.coefficients.val[j]!))
                   (Spec.zeta_at (zeta_i.val - j - 1)))
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
-            r.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
+            r.2.coefficients.val[j]! = re.coefficients.val[j]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((r.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
              L3i_3_FC.inv] using h_inv_holds
-    obtain ⟨h_zeta_eq, h_done, _h_undone⟩ := h_inv
+    obtain ⟨h_zeta_eq, h_done, _h_undone, h_done_bnd⟩ := h_inv
     have h16 : (16#usize : Std.Usize).val = 16 := rfl
-    refine ⟨?_, ?_⟩
+    refine ⟨?_, ?_, ?_⟩
     · -- p.1.val = zeta_i.val - 16.
       rw [h_zeta_eq, h16]
     · -- The chunks equation.
@@ -11293,6 +11705,8 @@ theorem invert_ntt_at_layer_3_portable_fc
         exact (h_done k hk).symm
       have h_final := flatten_chunks_eq_lift_poly_fc r.2 chunks_arr h_chunks_len h_chunks_get
       exact h_final.symm
+    · -- Per-lane output bound from the loop invariant's strengthened conjunct.
+      exact h_done_bnd
   · -- Step lemma application: dispatch invert_ntt_at_layer_3_step_lemma_fc.
     intro acc k _h_ge h_le hinv
     have h_step := invert_ntt_at_layer_3_step_lemma_fc zeta_i re h_bnd h_zeta_lo h_zeta_hi
