@@ -802,6 +802,80 @@ noncomputable def Spec.invert_ntt_layer_3_pure
         (Spec.zeta_at (zeta_i.val - k - 1))))
       (by simp))
 
+/-- Pure INVERSE NTT (Gentleman-Sande) butterfly between TWO chunks, a-side.
+    Mirrors the impl `invert_ntt.inv_ntt_layer_int_vec_step_reduce` (Funs.lean:322)
+    on the a-side write: `new_a[ℓ] := barrett_reduce(a[ℓ] + b[ℓ])`, which under
+    `lift_fe_mont`'s canonical lift is simply `a[ℓ] + b[ℓ]` (no zeta on a-side
+    for the inverse direction). -/
+noncomputable def Spec.chunk_inv_pair_butterfly_a_pure
+    (chunk_a chunk_b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      (chunk_a.val[ℓ]!) (chunk_b.val[ℓ]!)))
+    (by simp)
+
+/-- Pure INVERSE NTT (Gentleman-Sande) butterfly between TWO chunks, b-side.
+    Mirrors the impl b-side write: `new_b[ℓ] := mont_mul (2·b[ℓ] − barrett(a+b)) zeta_r`,
+    which under `lift_fe_mont`'s canonical lift collapses to
+    `(b[ℓ] − a[ℓ]) * z` (canonical, with `z = lift_fe_mont zeta_r` consuming
+    the Mont-domain `R⁻¹` of the impl's `mont_mul`). -/
+noncomputable def Spec.chunk_inv_pair_butterfly_b_pure
+    (chunk_a chunk_b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (z : hacspec_ml_kem.parameters.FieldElement) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+        (chunk_b.val[ℓ]!) (chunk_a.val[ℓ]!))
+      z))
+    (by simp)
+
+/-- Per-chunk output for the INVERSE layer-4+ driver, parameterized by zeta
+    source. Mirror of `Spec.chunk_at_layer_4_plus_pure` (FCTargets:861) but
+    using the inverse butterflies (`chunk_inv_pair_butterfly_{a,b}_pure`).
+    Chunk position `c ∈ 0..16`; step_vec/group/offset/partner relations same
+    as forward. -/
+noncomputable def Spec.chunk_inv_at_layer_4_plus_pure
+    (chunks : Std.Array
+      (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) 16#usize)
+    (layer : Std.Usize) (zeta_fn : Nat → hacspec_ml_kem.parameters.FieldElement)
+    (c : Nat) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  let step_vec := (1 <<< layer.val) / 16
+  let group := c / (2 * step_vec)
+  let offset := c % (2 * step_vec)
+  let z := zeta_fn group
+  if offset < step_vec then
+    Spec.chunk_inv_pair_butterfly_a_pure
+      (chunks.val[c]!) (chunks.val[c + step_vec]!)
+  else
+    Spec.chunk_inv_pair_butterfly_b_pure
+      (chunks.val[c - step_vec]!) (chunks.val[c]!) z
+
+/-- Pure projection of `invert_ntt.invert_ntt_at_layer_4_plus` for layers 4-7.
+    Iterates `128 >>> layer` outer rounds, each round processing `step_vec`
+    chunk-pairs at `(round*2*step_vec + j, round*2*step_vec + step_vec + j)`
+    for `j ∈ 0..step_vec`. zeta_i decrements by 1 per outer round, with the
+    constant zeta `polynomial.zeta (zeta_i_initial − 1 − round)` used across
+    each round's inner loop.
+
+    Note: unlike the forward layer-4+ which uses `zeta_i + group + 1`,
+    inverse uses `zeta_i - 1 - group` (zeta_i decrements per outer iter). -/
+noncomputable def Spec.invert_ntt_layer_4_plus_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (zeta_i : Std.Usize) (layer : Std.Usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  let chunks0 : Std.Array
+      (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) 16#usize :=
+    Std.Array.make 16#usize ((List.range 16).map (Spec.chunk_at p)) (by simp)
+  let zeta_fn : Nat → hacspec_ml_kem.parameters.FieldElement :=
+    fun group => Spec.zeta_at (zeta_i.val - 1 - group)
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun c =>
+      Spec.chunk_inv_at_layer_4_plus_pure chunks0 layer zeta_fn c))
+      (by simp))
+
 /-- Pure projection of `polynomial.PolynomialRingElement.accumulating_ntt_multiply`:
     16 chunks of accumulating NTT-multiplication. For chunk k ∈ {0..15},
     applies `chunk_accumulating_ntt_multiply_pure` with the 4 canonical-domain
@@ -11217,6 +11291,49 @@ theorem invert_ntt_at_layer_3_portable_fc
     · have hP : L3i_3_FC.step_post zeta_i re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L3i_3_FC.step_post] using hP
+
+/-! ### L3i.4 — `inv_ntt_layer_int_vec_step_reduce` helper FC.
+
+    Cross-chunk INVERSE NTT (Gentleman-Sande) butterfly between coefficient
+    chunks at positions `a` and `b` (where `b = a + step_vec`). Mirrors the
+    impl `invert_ntt.inv_ntt_layer_int_vec_step_reduce` (Funs.lean:322):
+
+    ```
+    scratch1 := coefs[a]; t := coefs[b]
+    scratch3 := barrett(scratch1 + t)                    -- new coefs[a] = canonical(a + b)
+    coefs1[a] := scratch3
+    scratch4 := −scratch3
+    scratch7 := mont(scratch4 + 2*t) zeta_r              -- new coefs[b] = (b − a) * z
+    coefs2[b] := scratch7
+    ```
+
+    Used by the layer-4+ driver. The FC theorem exposes:
+    1. lift_chunk equation on coefs[a] via `chunk_inv_pair_butterfly_a_pure`.
+    2. lift_chunk equation on coefs[b] via `chunk_inv_pair_butterfly_b_pure`.
+    3. Unchanged-chunk preservation for c ≠ a, c ≠ b.
+    4. Output bound on both touched chunks (≤ 3328 since both go through
+       barrett/mont reduction). -/
+@[spec]
+theorem inv_ntt_layer_int_vec_step_reduce_fc
+    (coefficients : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector
+                              16#usize)
+    (a b : Std.Usize) (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta_r : Std.I16) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.inv_ntt_layer_int_vec_step_reduce
+      portable_ops_inst coefficients a b scratch zeta_r
+    ⦃ ⇓ p => ⌜ lift_chunk (p.1.val[a.val]!)
+                = Spec.chunk_inv_pair_butterfly_a_pure
+                    (lift_chunk (coefficients.val[a.val]!))
+                    (lift_chunk (coefficients.val[b.val]!))
+              ∧ lift_chunk (p.1.val[b.val]!)
+                = Spec.chunk_inv_pair_butterfly_b_pure
+                    (lift_chunk (coefficients.val[a.val]!))
+                    (lift_chunk (coefficients.val[b.val]!))
+                    (lift_fe_mont zeta_r)
+              ∧ (∀ c : Nat, c < 16 → c ≠ a.val → c ≠ b.val →
+                  p.1.val[c]! = coefficients.val[c]!) ⌝ ⦄ := by
+  sorry
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
