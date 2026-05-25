@@ -566,6 +566,40 @@ noncomputable def Spec.chunk_inv_ntt_layer_1_step_pure
   let a7 := Spec.chunk_inv_ntt_step_pure a6 z3 12#usize 14#usize
   Spec.chunk_inv_ntt_step_pure a7 z3 13#usize 15#usize
 
+/-- Pure projection of `vector.portable.ntt.inv_ntt_layer_2_step` (Funs.lean:3555):
+    8 sequential `Spec.chunk_inv_ntt_step_pure` calls at disjoint lane pairs
+    `(0,4)(1,5)(2,6)(3,7)(8,12)(9,13)(10,14)(11,15)` with zetas
+    `z0,z0,z0,z0,z1,z1,z1,z1`. Mirror of `Spec.chunk_ntt_layer_2_step_pure`. -/
+noncomputable def Spec.chunk_inv_ntt_layer_2_step_pure
+    (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (z0 z1 : hacspec_ml_kem.parameters.FieldElement) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  let a1 := Spec.chunk_inv_ntt_step_pure a  z0 0#usize  4#usize
+  let a2 := Spec.chunk_inv_ntt_step_pure a1 z0 1#usize  5#usize
+  let a3 := Spec.chunk_inv_ntt_step_pure a2 z0 2#usize  6#usize
+  let a4 := Spec.chunk_inv_ntt_step_pure a3 z0 3#usize  7#usize
+  let a5 := Spec.chunk_inv_ntt_step_pure a4 z1 8#usize 12#usize
+  let a6 := Spec.chunk_inv_ntt_step_pure a5 z1 9#usize 13#usize
+  let a7 := Spec.chunk_inv_ntt_step_pure a6 z1 10#usize 14#usize
+  Spec.chunk_inv_ntt_step_pure a7 z1 11#usize 15#usize
+
+/-- Pure projection of `vector.portable.ntt.inv_ntt_layer_3_step` (Funs.lean:3571):
+    8 sequential `Spec.chunk_inv_ntt_step_pure` calls at disjoint lane pairs
+    `(0,8)(1,9)(2,10)(3,11)(4,12)(5,13)(6,14)(7,15)` with a single zeta `z`.
+    Mirror of `Spec.chunk_ntt_layer_3_step_pure`. -/
+noncomputable def Spec.chunk_inv_ntt_layer_3_step_pure
+    (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (z : hacspec_ml_kem.parameters.FieldElement) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  let a1 := Spec.chunk_inv_ntt_step_pure a  z 0#usize  8#usize
+  let a2 := Spec.chunk_inv_ntt_step_pure a1 z 1#usize  9#usize
+  let a3 := Spec.chunk_inv_ntt_step_pure a2 z 2#usize 10#usize
+  let a4 := Spec.chunk_inv_ntt_step_pure a3 z 3#usize 11#usize
+  let a5 := Spec.chunk_inv_ntt_step_pure a4 z 4#usize 12#usize
+  let a6 := Spec.chunk_inv_ntt_step_pure a5 z 5#usize 13#usize
+  let a7 := Spec.chunk_inv_ntt_step_pure a6 z 6#usize 14#usize
+  Spec.chunk_inv_ntt_step_pure a7 z 7#usize 15#usize
+
 /-- Pure accumulating NTT-multiply at the chunk level. Mirrors the impl
     `vector.portable.ntt.accumulating_ntt_multiply` (Funs.lean:3701),
     which fans out 8 calls of `accumulating_ntt_multiply_binomials` with
@@ -4814,6 +4848,314 @@ theorem inv_ntt_layer_1_step_fc
     exact h_v8_eq
   apply triple_of_ok_fc h_body
   unfold Spec.chunk_inv_ntt_layer_1_step_pure
+  rw [h_v8_lift, h_v7_lift, h_v6_lift, h_v5_lift, h_v4_lift, h_v3_lift, h_v2_lift, h_v1_lift]
+
+/-- L2.10 — `inv_ntt_layer_2_step`: 8 inverse butterfly pairs (0,4)…(3,7)
+    with z0 then (8,12)…(11,15) with z1. Mirror of `ntt_layer_2_step_fc`
+    (FCTargets:3842) on the same lane-pair sequence.
+
+    **Precondition adjustment** (beyond locked statement):
+    - `hvec : ∀ k < 16, |vec[k]| ≤ 13312` — preserved across 8 sequential
+      `inv_ntt_step_pair_fc` invocations on disjoint pairs (post-barrett
+      ≤ 3328, post-mont-mul ≤ 4993, untouched lanes preserve input). -/
+@[spec]
+theorem inv_ntt_layer_2_step_fc
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (z0 z1 : Std.I16)
+    (hz : z0.val.natAbs ≤ 1664 ∧ z1.val.natAbs ≤ 1664)
+    (hvec : ∀ k : Nat, k < 16 →
+      (vec.elements.val[k]!).val.natAbs ≤ 13312) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_2_step vec z0 z1
+    ⦃ ⇓ r => ⌜ lift_chunk r
+                = Spec.chunk_inv_ntt_layer_2_step_pure (lift_chunk vec)
+                    (lift_fe_mont z0) (lift_fe_mont z1) ⌝ ⦄ := by
+  obtain ⟨hz0, hz1⟩ := hz
+  have hi0 : (0 : Nat) < 16 := by decide
+  have hi1 : (1 : Nat) < 16 := by decide
+  have hi2 : (2 : Nat) < 16 := by decide
+  have hi3 : (3 : Nat) < 16 := by decide
+  have hi4 : (4 : Nat) < 16 := by decide
+  have hi5 : (5 : Nat) < 16 := by decide
+  have hi6 : (6 : Nat) < 16 := by decide
+  have hi7 : (7 : Nat) < 16 := by decide
+  have hi8 : (8 : Nat) < 16 := by decide
+  have hi9 : (9 : Nat) < 16 := by decide
+  have hi10 : (10 : Nat) < 16 := by decide
+  have hi11 : (11 : Nat) < 16 := by decide
+  have hi12 : (12 : Nat) < 16 := by decide
+  have hi13 : (13 : Nat) < 16 := by decide
+  have hi14 : (14 : Nat) < 16 := by decide
+  have hi15 : (15 : Nat) < 16 := by decide
+  -- Step 1: inv_ntt_step vec z0 0 4.
+  obtain ⟨v1, h_v1_eq, h_v1_lift, h_v1_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc vec z0 0#usize 4#usize hi0 hi4
+      (by decide) hz0 (hvec 0 hi0) (hvec 4 hi4))
+  -- Step 2: inv_ntt_step v1 z0 1 5.
+  have h_v1_1 : (v1.elements.val[1]!).val.natAbs ≤ 13312 := by
+    rw [h_v1_unc 1 hi1 (by decide) (by decide)]; exact hvec 1 hi1
+  have h_v1_5 : (v1.elements.val[5]!).val.natAbs ≤ 13312 := by
+    rw [h_v1_unc 5 hi5 (by decide) (by decide)]; exact hvec 5 hi5
+  obtain ⟨v2, h_v2_eq, h_v2_lift, h_v2_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v1 z0 1#usize 5#usize hi1 hi5
+      (by decide) hz0 h_v1_1 h_v1_5)
+  -- Step 3: inv_ntt_step v2 z0 2 6.
+  have h_v2_2 : (v2.elements.val[2]!).val.natAbs ≤ 13312 := by
+    rw [h_v2_unc 2 hi2 (by decide) (by decide),
+        h_v1_unc 2 hi2 (by decide) (by decide)]; exact hvec 2 hi2
+  have h_v2_6 : (v2.elements.val[6]!).val.natAbs ≤ 13312 := by
+    rw [h_v2_unc 6 hi6 (by decide) (by decide),
+        h_v1_unc 6 hi6 (by decide) (by decide)]; exact hvec 6 hi6
+  obtain ⟨v3, h_v3_eq, h_v3_lift, h_v3_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v2 z0 2#usize 6#usize hi2 hi6
+      (by decide) hz0 h_v2_2 h_v2_6)
+  -- Step 4: inv_ntt_step v3 z0 3 7.
+  have h_v3_3 : (v3.elements.val[3]!).val.natAbs ≤ 13312 := by
+    rw [h_v3_unc 3 hi3 (by decide) (by decide),
+        h_v2_unc 3 hi3 (by decide) (by decide),
+        h_v1_unc 3 hi3 (by decide) (by decide)]; exact hvec 3 hi3
+  have h_v3_7 : (v3.elements.val[7]!).val.natAbs ≤ 13312 := by
+    rw [h_v3_unc 7 hi7 (by decide) (by decide),
+        h_v2_unc 7 hi7 (by decide) (by decide),
+        h_v1_unc 7 hi7 (by decide) (by decide)]; exact hvec 7 hi7
+  obtain ⟨v4, h_v4_eq, h_v4_lift, h_v4_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v3 z0 3#usize 7#usize hi3 hi7
+      (by decide) hz0 h_v3_3 h_v3_7)
+  -- Step 5: inv_ntt_step v4 z1 8 12.
+  have h_v4_8 : (v4.elements.val[8]!).val.natAbs ≤ 13312 := by
+    rw [h_v4_unc 8 hi8 (by decide) (by decide),
+        h_v3_unc 8 hi8 (by decide) (by decide),
+        h_v2_unc 8 hi8 (by decide) (by decide),
+        h_v1_unc 8 hi8 (by decide) (by decide)]; exact hvec 8 hi8
+  have h_v4_12 : (v4.elements.val[12]!).val.natAbs ≤ 13312 := by
+    rw [h_v4_unc 12 hi12 (by decide) (by decide),
+        h_v3_unc 12 hi12 (by decide) (by decide),
+        h_v2_unc 12 hi12 (by decide) (by decide),
+        h_v1_unc 12 hi12 (by decide) (by decide)]; exact hvec 12 hi12
+  obtain ⟨v5, h_v5_eq, h_v5_lift, h_v5_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v4 z1 8#usize 12#usize hi8 hi12
+      (by decide) hz1 h_v4_8 h_v4_12)
+  -- Step 6: inv_ntt_step v5 z1 9 13.
+  have h_v5_9 : (v5.elements.val[9]!).val.natAbs ≤ 13312 := by
+    rw [h_v5_unc 9 hi9 (by decide) (by decide),
+        h_v4_unc 9 hi9 (by decide) (by decide),
+        h_v3_unc 9 hi9 (by decide) (by decide),
+        h_v2_unc 9 hi9 (by decide) (by decide),
+        h_v1_unc 9 hi9 (by decide) (by decide)]; exact hvec 9 hi9
+  have h_v5_13 : (v5.elements.val[13]!).val.natAbs ≤ 13312 := by
+    rw [h_v5_unc 13 hi13 (by decide) (by decide),
+        h_v4_unc 13 hi13 (by decide) (by decide),
+        h_v3_unc 13 hi13 (by decide) (by decide),
+        h_v2_unc 13 hi13 (by decide) (by decide),
+        h_v1_unc 13 hi13 (by decide) (by decide)]; exact hvec 13 hi13
+  obtain ⟨v6, h_v6_eq, h_v6_lift, h_v6_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v5 z1 9#usize 13#usize hi9 hi13
+      (by decide) hz1 h_v5_9 h_v5_13)
+  -- Step 7: inv_ntt_step v6 z1 10 14.
+  have h_v6_10 : (v6.elements.val[10]!).val.natAbs ≤ 13312 := by
+    rw [h_v6_unc 10 hi10 (by decide) (by decide),
+        h_v5_unc 10 hi10 (by decide) (by decide),
+        h_v4_unc 10 hi10 (by decide) (by decide),
+        h_v3_unc 10 hi10 (by decide) (by decide),
+        h_v2_unc 10 hi10 (by decide) (by decide),
+        h_v1_unc 10 hi10 (by decide) (by decide)]; exact hvec 10 hi10
+  have h_v6_14 : (v6.elements.val[14]!).val.natAbs ≤ 13312 := by
+    rw [h_v6_unc 14 hi14 (by decide) (by decide),
+        h_v5_unc 14 hi14 (by decide) (by decide),
+        h_v4_unc 14 hi14 (by decide) (by decide),
+        h_v3_unc 14 hi14 (by decide) (by decide),
+        h_v2_unc 14 hi14 (by decide) (by decide),
+        h_v1_unc 14 hi14 (by decide) (by decide)]; exact hvec 14 hi14
+  obtain ⟨v7, h_v7_eq, h_v7_lift, h_v7_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v6 z1 10#usize 14#usize hi10 hi14
+      (by decide) hz1 h_v6_10 h_v6_14)
+  -- Step 8: inv_ntt_step v7 z1 11 15.
+  have h_v7_11 : (v7.elements.val[11]!).val.natAbs ≤ 13312 := by
+    rw [h_v7_unc 11 hi11 (by decide) (by decide),
+        h_v6_unc 11 hi11 (by decide) (by decide),
+        h_v5_unc 11 hi11 (by decide) (by decide),
+        h_v4_unc 11 hi11 (by decide) (by decide),
+        h_v3_unc 11 hi11 (by decide) (by decide),
+        h_v2_unc 11 hi11 (by decide) (by decide),
+        h_v1_unc 11 hi11 (by decide) (by decide)]; exact hvec 11 hi11
+  have h_v7_15 : (v7.elements.val[15]!).val.natAbs ≤ 13312 := by
+    rw [h_v7_unc 15 hi15 (by decide) (by decide),
+        h_v6_unc 15 hi15 (by decide) (by decide),
+        h_v5_unc 15 hi15 (by decide) (by decide),
+        h_v4_unc 15 hi15 (by decide) (by decide),
+        h_v3_unc 15 hi15 (by decide) (by decide),
+        h_v2_unc 15 hi15 (by decide) (by decide),
+        h_v1_unc 15 hi15 (by decide) (by decide)]; exact hvec 15 hi15
+  obtain ⟨v8, h_v8_eq, h_v8_lift, _, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v7 z1 11#usize 15#usize hi11 hi15
+      (by decide) hz1 h_v7_11 h_v7_15)
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_2_step vec z0 z1
+        = .ok v8 := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_2_step
+    rw [h_v1_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v2_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v3_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v4_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v5_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v6_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v7_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    exact h_v8_eq
+  apply triple_of_ok_fc h_body
+  unfold Spec.chunk_inv_ntt_layer_2_step_pure
+  rw [h_v8_lift, h_v7_lift, h_v6_lift, h_v5_lift, h_v4_lift, h_v3_lift, h_v2_lift, h_v1_lift]
+
+/-- L2.11 — `inv_ntt_layer_3_step`: 8 inverse butterfly pairs
+    (0,8)…(7,15) with one zeta. Mirror of `ntt_layer_3_step_fc`
+    (FCTargets:3995) on the same lane-pair sequence.
+
+    **Precondition adjustment** (beyond locked statement):
+    - `hvec : ∀ k < 16, |vec[k]| ≤ 13312` — chained through the 8
+      inv_ntt_step calls. Pairs are disjoint (each lane touched exactly
+      once), so the per-lane bound holds at each step on the unchanged
+      lanes (touched lanes themselves stay ≤ 13312 by inv_ntt_step's
+      post-output bounds). -/
+@[spec]
+theorem inv_ntt_layer_3_step_fc
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (z : Std.I16) (hz : z.val.natAbs ≤ 1664)
+    (hvec : ∀ k : Nat, k < 16 →
+      (vec.elements.val[k]!).val.natAbs ≤ 13312) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_3_step vec z
+    ⦃ ⇓ r => ⌜ lift_chunk r
+                = Spec.chunk_inv_ntt_layer_3_step_pure (lift_chunk vec) (lift_fe_mont z) ⌝ ⦄ := by
+  have hi0 : (0 : Nat) < 16 := by decide
+  have hi1 : (1 : Nat) < 16 := by decide
+  have hi2 : (2 : Nat) < 16 := by decide
+  have hi3 : (3 : Nat) < 16 := by decide
+  have hi4 : (4 : Nat) < 16 := by decide
+  have hi5 : (5 : Nat) < 16 := by decide
+  have hi6 : (6 : Nat) < 16 := by decide
+  have hi7 : (7 : Nat) < 16 := by decide
+  have hi8 : (8 : Nat) < 16 := by decide
+  have hi9 : (9 : Nat) < 16 := by decide
+  have hi10 : (10 : Nat) < 16 := by decide
+  have hi11 : (11 : Nat) < 16 := by decide
+  have hi12 : (12 : Nat) < 16 := by decide
+  have hi13 : (13 : Nat) < 16 := by decide
+  have hi14 : (14 : Nat) < 16 := by decide
+  have hi15 : (15 : Nat) < 16 := by decide
+  -- Step 1: inv_ntt_step vec z 0 8.
+  obtain ⟨v1, h_v1_eq, h_v1_lift, h_v1_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc vec z 0#usize 8#usize hi0 hi8
+      (by decide) hz (hvec 0 hi0) (hvec 8 hi8))
+  -- Step 2: inv_ntt_step v1 z 1 9.
+  have h_v1_1 : (v1.elements.val[1]!).val.natAbs ≤ 13312 := by
+    rw [h_v1_unc 1 hi1 (by decide) (by decide)]; exact hvec 1 hi1
+  have h_v1_9 : (v1.elements.val[9]!).val.natAbs ≤ 13312 := by
+    rw [h_v1_unc 9 hi9 (by decide) (by decide)]; exact hvec 9 hi9
+  obtain ⟨v2, h_v2_eq, h_v2_lift, h_v2_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v1 z 1#usize 9#usize hi1 hi9
+      (by decide) hz h_v1_1 h_v1_9)
+  -- Step 3: inv_ntt_step v2 z 2 10.
+  have h_v2_2 : (v2.elements.val[2]!).val.natAbs ≤ 13312 := by
+    rw [h_v2_unc 2 hi2 (by decide) (by decide),
+        h_v1_unc 2 hi2 (by decide) (by decide)]; exact hvec 2 hi2
+  have h_v2_10 : (v2.elements.val[10]!).val.natAbs ≤ 13312 := by
+    rw [h_v2_unc 10 hi10 (by decide) (by decide),
+        h_v1_unc 10 hi10 (by decide) (by decide)]; exact hvec 10 hi10
+  obtain ⟨v3, h_v3_eq, h_v3_lift, h_v3_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v2 z 2#usize 10#usize hi2 hi10
+      (by decide) hz h_v2_2 h_v2_10)
+  -- Step 4: inv_ntt_step v3 z 3 11.
+  have h_v3_3 : (v3.elements.val[3]!).val.natAbs ≤ 13312 := by
+    rw [h_v3_unc 3 hi3 (by decide) (by decide),
+        h_v2_unc 3 hi3 (by decide) (by decide),
+        h_v1_unc 3 hi3 (by decide) (by decide)]; exact hvec 3 hi3
+  have h_v3_11 : (v3.elements.val[11]!).val.natAbs ≤ 13312 := by
+    rw [h_v3_unc 11 hi11 (by decide) (by decide),
+        h_v2_unc 11 hi11 (by decide) (by decide),
+        h_v1_unc 11 hi11 (by decide) (by decide)]; exact hvec 11 hi11
+  obtain ⟨v4, h_v4_eq, h_v4_lift, h_v4_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v3 z 3#usize 11#usize hi3 hi11
+      (by decide) hz h_v3_3 h_v3_11)
+  -- Step 5: inv_ntt_step v4 z 4 12.
+  have h_v4_4 : (v4.elements.val[4]!).val.natAbs ≤ 13312 := by
+    rw [h_v4_unc 4 hi4 (by decide) (by decide),
+        h_v3_unc 4 hi4 (by decide) (by decide),
+        h_v2_unc 4 hi4 (by decide) (by decide),
+        h_v1_unc 4 hi4 (by decide) (by decide)]; exact hvec 4 hi4
+  have h_v4_12 : (v4.elements.val[12]!).val.natAbs ≤ 13312 := by
+    rw [h_v4_unc 12 hi12 (by decide) (by decide),
+        h_v3_unc 12 hi12 (by decide) (by decide),
+        h_v2_unc 12 hi12 (by decide) (by decide),
+        h_v1_unc 12 hi12 (by decide) (by decide)]; exact hvec 12 hi12
+  obtain ⟨v5, h_v5_eq, h_v5_lift, h_v5_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v4 z 4#usize 12#usize hi4 hi12
+      (by decide) hz h_v4_4 h_v4_12)
+  -- Step 6: inv_ntt_step v5 z 5 13.
+  have h_v5_5 : (v5.elements.val[5]!).val.natAbs ≤ 13312 := by
+    rw [h_v5_unc 5 hi5 (by decide) (by decide),
+        h_v4_unc 5 hi5 (by decide) (by decide),
+        h_v3_unc 5 hi5 (by decide) (by decide),
+        h_v2_unc 5 hi5 (by decide) (by decide),
+        h_v1_unc 5 hi5 (by decide) (by decide)]; exact hvec 5 hi5
+  have h_v5_13 : (v5.elements.val[13]!).val.natAbs ≤ 13312 := by
+    rw [h_v5_unc 13 hi13 (by decide) (by decide),
+        h_v4_unc 13 hi13 (by decide) (by decide),
+        h_v3_unc 13 hi13 (by decide) (by decide),
+        h_v2_unc 13 hi13 (by decide) (by decide),
+        h_v1_unc 13 hi13 (by decide) (by decide)]; exact hvec 13 hi13
+  obtain ⟨v6, h_v6_eq, h_v6_lift, h_v6_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v5 z 5#usize 13#usize hi5 hi13
+      (by decide) hz h_v5_5 h_v5_13)
+  -- Step 7: inv_ntt_step v6 z 6 14.
+  have h_v6_6 : (v6.elements.val[6]!).val.natAbs ≤ 13312 := by
+    rw [h_v6_unc 6 hi6 (by decide) (by decide),
+        h_v5_unc 6 hi6 (by decide) (by decide),
+        h_v4_unc 6 hi6 (by decide) (by decide),
+        h_v3_unc 6 hi6 (by decide) (by decide),
+        h_v2_unc 6 hi6 (by decide) (by decide),
+        h_v1_unc 6 hi6 (by decide) (by decide)]; exact hvec 6 hi6
+  have h_v6_14 : (v6.elements.val[14]!).val.natAbs ≤ 13312 := by
+    rw [h_v6_unc 14 hi14 (by decide) (by decide),
+        h_v5_unc 14 hi14 (by decide) (by decide),
+        h_v4_unc 14 hi14 (by decide) (by decide),
+        h_v3_unc 14 hi14 (by decide) (by decide),
+        h_v2_unc 14 hi14 (by decide) (by decide),
+        h_v1_unc 14 hi14 (by decide) (by decide)]; exact hvec 14 hi14
+  obtain ⟨v7, h_v7_eq, h_v7_lift, h_v7_unc, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v6 z 6#usize 14#usize hi6 hi14
+      (by decide) hz h_v6_6 h_v6_14)
+  -- Step 8: inv_ntt_step v7 z 7 15.
+  have h_v7_7 : (v7.elements.val[7]!).val.natAbs ≤ 13312 := by
+    rw [h_v7_unc 7 hi7 (by decide) (by decide),
+        h_v6_unc 7 hi7 (by decide) (by decide),
+        h_v5_unc 7 hi7 (by decide) (by decide),
+        h_v4_unc 7 hi7 (by decide) (by decide),
+        h_v3_unc 7 hi7 (by decide) (by decide),
+        h_v2_unc 7 hi7 (by decide) (by decide),
+        h_v1_unc 7 hi7 (by decide) (by decide)]; exact hvec 7 hi7
+  have h_v7_15 : (v7.elements.val[15]!).val.natAbs ≤ 13312 := by
+    rw [h_v7_unc 15 hi15 (by decide) (by decide),
+        h_v6_unc 15 hi15 (by decide) (by decide),
+        h_v5_unc 15 hi15 (by decide) (by decide),
+        h_v4_unc 15 hi15 (by decide) (by decide),
+        h_v3_unc 15 hi15 (by decide) (by decide),
+        h_v2_unc 15 hi15 (by decide) (by decide),
+        h_v1_unc 15 hi15 (by decide) (by decide)]; exact hvec 15 hi15
+  obtain ⟨v8, h_v8_eq, h_v8_lift, _, _, _⟩ :=
+    triple_exists_ok_fc (inv_ntt_step_pair_fc v7 z 7#usize 15#usize hi7 hi15
+      (by decide) hz h_v7_7 h_v7_15)
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_3_step vec z = .ok v8 := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_3_step
+    rw [h_v1_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v2_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v3_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v4_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v5_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v6_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_v7_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    exact h_v8_eq
+  apply triple_of_ok_fc h_body
+  unfold Spec.chunk_inv_ntt_layer_3_step_pure
   rw [h_v8_lift, h_v7_lift, h_v6_lift, h_v5_lift, h_v4_lift, h_v3_lift, h_v2_lift, h_v1_lift]
 
 /-! ## §L3 — NTT driver loops (5 theorems). -/
