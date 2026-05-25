@@ -11981,31 +11981,1207 @@ theorem inv_ntt_layer_int_vec_step_reduce_fc
       instead of forward's `chunk_pair_butterfly_{a,b}_pure`).
     - zeta_i DECREMENTS (zeta_fn group := `Spec.zeta_at (zeta_i - 1 - group)`).
     - Dispatches to closed `inv_ntt_layer_int_vec_step_reduce_fc`
-      (Task H.0 @ FCTargets:11318) for each inner butterfly.
+      (Task H.0 @ FCTargets:11318) for each inner butterfly. -/
 
-    Expected internal structure (PROVER's responsibility):
-    - `namespace L3i_4_plus_FC` (mirror forward `L3_4_plus_outer_FC` /
-      `L3_4_plus_inner_FC` at FCTargets:~7800-8100). Acc tracks both the
-      modified poly and the scratch; inv records per-(round, j) FC
-      equations for processed chunks via `chunk_inv_pair_butterfly_*_pure`
-      plus unchanged-tail.
-    - `private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc`
-      (mirror forward `ntt_at_layer_4_plus_inner_step_lemma_fc` @ ~8097).
-    - `private theorem invert_ntt_at_layer_4_plus_outer_step_lemma_fc`
-      (mirror forward `ntt_at_layer_4_plus_outer_step_lemma_fc` @ ~8648). -/
+namespace L3i_4_plus_inner_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+/-- Inner loop accumulator: (re, scratch). -/
+abbrev Acc :=
+  libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector ×
+  libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector
+
+/-- Inverse inner loop invariant (mirror of forward `L3_4_plus_inner_FC.inv`
+    but with inverse butterflies and no `z` on a-side). -/
+def inv
+    (re0 : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (a_offset b_offset : Std.Usize)
+    (zeta : hacspec_ml_kem.parameters.FieldElement) :
+    Std.Usize → Acc → Result Prop :=
+  fun k acc => pure (
+    (∀ j' : Nat, j' < k.val →
+      lift_chunk (acc.1.coefficients.val[a_offset.val + j']!)
+        = Spec.chunk_inv_pair_butterfly_a_pure
+            (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+            (lift_chunk (re0.coefficients.val[b_offset.val + j']!)))
+    ∧ (∀ j' : Nat, j' < k.val →
+      lift_chunk (acc.1.coefficients.val[b_offset.val + j']!)
+        = Spec.chunk_inv_pair_butterfly_b_pure
+            (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+            (lift_chunk (re0.coefficients.val[b_offset.val + j']!))
+            zeta)
+    ∧ (∀ k' : Nat, k' < 16 →
+        (∀ j' : Nat, j' < k.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
+        acc.1.coefficients.val[k']! = re0.coefficients.val[k']!))
+
+/-- Step-post for the inverse inner loop. -/
+def step_post
+    (re0 : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (a_offset b_offset step_vec : Std.Usize)
+    (zeta : hacspec_ml_kem.parameters.FieldElement)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × Acc) Acc) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < step_vec.val ∧ iter'.«end» = step_vec
+        ∧ iter'.start.val = k.val + 1
+        ∧ (inv re0 a_offset b_offset zeta iter'.start acc').holds
+  | .done y => (inv re0 a_offset b_offset zeta step_vec y).holds
+
+end L3i_4_plus_inner_FC
+
+set_option maxHeartbeats 16000000 in
+/-- Per-iteration FC step lemma for the inverse inner loop. -/
+private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc
+    (re0 : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (a_offset b_offset step_vec : Std.Usize) (zeta_i1 : Std.Usize)
+    (h_zi1_lt : zeta_i1.val < 128)
+    (h_step_vec_pos : 1 ≤ step_vec.val)
+    (h_a_offset_b : a_offset.val + step_vec.val ≤ 16)
+    (h_b_offset_b : b_offset.val + step_vec.val ≤ 16)
+    (h_disjoint : a_offset.val + step_vec.val ≤ b_offset.val)
+    (h_pre_a : ∀ j : Nat, j < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
+      ((re0.coefficients.val[a_offset.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 3328)
+    (h_pre_b : ∀ j : Nat, j < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
+      ((re0.coefficients.val[b_offset.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 3328)
+    (acc : L3i_4_plus_inner_FC.Acc)
+    (k : Std.Usize) (h_le : k.val ≤ step_vec.val)
+    (h_inv : (L3i_4_plus_inner_FC.inv re0 a_offset b_offset
+              (Spec.zeta_at zeta_i1.val) k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
+      (vectortraitsOperationsInst := portable_ops_inst)
+      zeta_i1 a_offset b_offset
+      { start := k, «end» := step_vec } acc.1 acc.2
+    ⦃ ⇓ r => ⌜ L3i_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+              (Spec.zeta_at zeta_i1.val) k r ⌝ ⦄ := by
+  have h_coef_len : acc.1.coefficients.length = 16 :=
+    Std.Array.length_eq _
+  obtain ⟨h_acc_a, h_acc_b, h_acc_undone⟩ := by
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
+  unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
+  by_cases h_lt : k.val < step_vec.val
+  · -- Some j = k branch.
+    obtain ⟨s, hs_val, h_iter_some⟩ :=
+      L3_4_plus_FC.iter_next_some_eq_gen k step_vec h_lt
+    -- (1) i ← a_offset + k.
+    have h_a_max : a_offset.val + k.val ≤ Std.Usize.max := by
+      have h_ab_b : a_offset.val + k.val ≤ 16 := by omega
+      scalar_tac
+    obtain ⟨i, h_i_eq, h_i_val⟩ :=
+      L3_4_plus_FC.usize_add_ok_eq a_offset k h_a_max
+    -- (2) i1 ← b_offset + k.
+    have h_b_max : b_offset.val + k.val ≤ Std.Usize.max := by
+      have h_bb_b : b_offset.val + k.val ≤ 16 := by omega
+      scalar_tac
+    obtain ⟨i1, h_i1_eq, h_i1_val⟩ :=
+      L3_4_plus_FC.usize_add_ok_eq b_offset k h_b_max
+    -- (3) zeta lookup.
+    obtain ⟨z, h_z_eq, h_z_v, h_z_bd, h_z_lift⟩ :=
+      triple_exists_ok_fc (polynomial.zeta_fc zeta_i1 h_zi1_lt)
+    have h_i_lt_16 : i.val < 16 := by rw [h_i_val]; omega
+    have h_i1_lt_16 : i1.val < 16 := by rw [h_i1_val]; omega
+    have h_i_ne_i1 : i.val ≠ i1.val := by
+      rw [h_i_val, h_i1_val]
+      have : a_offset.val + k.val < b_offset.val + k.val := by omega
+      omega
+    -- Bounds at i and i1 via h_acc_undone.
+    have h_acc_i_undone : acc.1.coefficients.val[i.val]! = re0.coefficients.val[i.val]! := by
+      apply h_acc_undone i.val h_i_lt_16
+      intro j' hj'
+      refine ⟨?_, ?_⟩
+      · rw [h_i_val]; omega
+      · rw [h_i_val]; omega
+    have h_acc_i1_undone : acc.1.coefficients.val[i1.val]! = re0.coefficients.val[i1.val]! := by
+      apply h_acc_undone i1.val h_i1_lt_16
+      intro j' hj'
+      refine ⟨?_, ?_⟩
+      · rw [h_i1_val]; omega
+      · rw [h_i1_val]; omega
+    -- Per-lane bounds at acc.1.coefs[i] and [i1].
+    have h_acc_at_i_bnd : ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs ≤ 3328 := by
+      intro ℓ hℓ
+      rw [h_acc_i_undone, h_i_val]
+      exact h_pre_a k.val h_lt ℓ hℓ
+    have h_acc_at_i1_bnd : ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.1.coefficients.val[i1.val]!).elements.val[ℓ]!).val.natAbs ≤ 3328 := by
+      intro ℓ hℓ
+      rw [h_acc_i1_undone, h_i1_val]
+      exact h_pre_b k.val h_lt ℓ hℓ
+    have h_zeta_bnd : z.val.natAbs ≤ 1664 := h_z_bd
+    -- Apply the H.0 keystone.
+    obtain ⟨r_pair, h_r_eq, h_r_a, h_r_b, h_r_undone⟩ :=
+      triple_exists_ok_fc (inv_ntt_layer_int_vec_step_reduce_fc
+        acc.1.coefficients i i1 acc.2 z h_i_lt_16 h_i1_lt_16 h_i_ne_i1
+        h_zeta_bnd h_acc_at_i_bnd h_acc_at_i1_bnd)
+    -- Build the new accumulator.
+    set acc' : L3i_4_plus_inner_FC.Acc :=
+      (({ coefficients := r_pair.1 }
+        : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector),
+       r_pair.2) with hacc'_def
+    -- Compose body.
+    have h_body :
+        libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst)
+          zeta_i1 a_offset b_offset
+          { start := k, «end» := step_vec } acc.1 acc.2
+        = .ok (ControlFlow.cont (({ start := s, «end» := step_vec }
+                        : core_models.ops.range.Range Std.Usize), acc')) := by
+      unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := step_vec } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := step_vec }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp only [Aeneas.Std.bind_tc_ok]
+      show (do
+              let i ← a_offset + k
+              let i1 ← b_offset + k
+              let i2 ← libcrux_iot_ml_kem.polynomial.zeta zeta_i1
+              let (a, scratch1) ←
+                libcrux_iot_ml_kem.invert_ntt.inv_ntt_layer_int_vec_step_reduce portable_ops_inst
+                  acc.1.coefficients i i1 acc.2 i2
+              Result.ok (ControlFlow.cont (({ start := s, «end» := step_vec }
+                          : core_models.ops.range.Range Std.Usize),
+                        ({ coefficients := a }
+                          : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                              libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector),
+                        scratch1))) = _
+      rw [h_i_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_i1_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_z_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_r_eq]; rfl
+    apply triple_of_ok_fc h_body
+    show L3i_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+      (Spec.zeta_at zeta_i1.val) k
+      (.cont (({ start := s, «end» := step_vec }
+                : core_models.ops.range.Range Std.Usize), acc'))
+    unfold L3i_4_plus_inner_FC.step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    show (L3i_4_plus_inner_FC.inv re0 a_offset b_offset
+            (Spec.zeta_at zeta_i1.val) s acc').holds
+    have h_inv_pure :
+        (∀ j' : Nat, j' < s.val →
+          lift_chunk (acc'.1.coefficients.val[a_offset.val + j']!)
+            = Spec.chunk_inv_pair_butterfly_a_pure
+                (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+                (lift_chunk (re0.coefficients.val[b_offset.val + j']!)))
+        ∧ (∀ j' : Nat, j' < s.val →
+          lift_chunk (acc'.1.coefficients.val[b_offset.val + j']!)
+            = Spec.chunk_inv_pair_butterfly_b_pure
+                (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+                (lift_chunk (re0.coefficients.val[b_offset.val + j']!))
+                (Spec.zeta_at zeta_i1.val))
+        ∧ (∀ k' : Nat, k' < 16 →
+            (∀ j' : Nat, j' < s.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
+            acc'.1.coefficients.val[k']! = re0.coefficients.val[k']!) := by
+      refine ⟨?_, ?_, ?_⟩
+      · -- (a) a-side butterfly for j' < s.val.
+        intro j' hj'
+        rw [hs_val] at hj'
+        rcases Nat.lt_succ_iff_lt_or_eq.mp hj' with hj'_lt | hj'_eq
+        · have h_ne_i : a_offset.val + j' ≠ i.val := by rw [h_i_val]; omega
+          have h_ne_i1 : a_offset.val + j' ≠ i1.val := by rw [h_i1_val]; omega
+          have h_pos : a_offset.val + j' < 16 := by omega
+          have h_unchanged : r_pair.1.val[a_offset.val + j']!
+              = acc.1.coefficients.val[a_offset.val + j']! :=
+            h_r_undone (a_offset.val + j') h_pos h_ne_i h_ne_i1
+          show lift_chunk (acc'.1.coefficients.val[a_offset.val + j']!) = _
+          show lift_chunk (r_pair.1.val[a_offset.val + j']!) = _
+          rw [h_unchanged]
+          exact h_acc_a j' hj'_lt
+        · subst hj'_eq
+          show lift_chunk (acc'.1.coefficients.val[a_offset.val + k.val]!) = _
+          show lift_chunk (r_pair.1.val[a_offset.val + k.val]!) = _
+          have h_eq_i : a_offset.val + k.val = i.val := by rw [h_i_val]
+          rw [h_eq_i]
+          rw [h_r_a]
+          rw [h_acc_i_undone, h_acc_i1_undone]
+          rw [h_i_val, h_i1_val]
+      · -- (b) b-side butterfly for j' < s.val.
+        intro j' hj'
+        rw [hs_val] at hj'
+        rcases Nat.lt_succ_iff_lt_or_eq.mp hj' with hj'_lt | hj'_eq
+        · have h_ne_i : b_offset.val + j' ≠ i.val := by rw [h_i_val]; omega
+          have h_ne_i1 : b_offset.val + j' ≠ i1.val := by rw [h_i1_val]; omega
+          have h_pos : b_offset.val + j' < 16 := by omega
+          have h_unchanged : r_pair.1.val[b_offset.val + j']!
+              = acc.1.coefficients.val[b_offset.val + j']! :=
+            h_r_undone (b_offset.val + j') h_pos h_ne_i h_ne_i1
+          show lift_chunk (acc'.1.coefficients.val[b_offset.val + j']!) = _
+          show lift_chunk (r_pair.1.val[b_offset.val + j']!) = _
+          rw [h_unchanged]
+          exact h_acc_b j' hj'_lt
+        · subst hj'_eq
+          show lift_chunk (acc'.1.coefficients.val[b_offset.val + k.val]!) = _
+          show lift_chunk (r_pair.1.val[b_offset.val + k.val]!) = _
+          have h_eq_i1 : b_offset.val + k.val = i1.val := by rw [h_i1_val]
+          rw [h_eq_i1]
+          rw [h_r_b]
+          rw [h_acc_i_undone, h_acc_i1_undone]
+          rw [h_i_val, h_i1_val]
+          rw [h_z_lift]
+      · -- (c) Other positions unchanged from re0.
+        intro k' hk' h_not_touched
+        have hk'_ne_i : k' ≠ i.val := by
+          have h_at_k : k.val < s.val := by rw [hs_val]; omega
+          have := (h_not_touched k.val h_at_k).1
+          rw [h_i_val]; exact this
+        have hk'_ne_i1 : k' ≠ i1.val := by
+          have h_at_k : k.val < s.val := by rw [hs_val]; omega
+          have := (h_not_touched k.val h_at_k).2
+          rw [h_i1_val]; exact this
+        show acc'.1.coefficients.val[k']! = re0.coefficients.val[k']!
+        show r_pair.1.val[k']! = re0.coefficients.val[k']!
+        have h_unchanged := h_r_undone k' hk' hk'_ne_i hk'_ne_i1
+        rw [h_unchanged]
+        apply h_acc_undone k' hk'
+        intro j' hj'
+        have h_at_j' : j' < s.val := by rw [hs_val]; omega
+        exact h_not_touched j' h_at_j'
+    show (pure _ : Result Prop).holds
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+  · -- None branch: k ≥ step_vec, done.
+    have hk_ge : k.val ≥ step_vec.val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = step_vec.val := by omega
+    have h_iter_none := L3_4_plus_FC.iter_next_none_eq_gen k step_vec hk_ge
+    have h_body :
+        libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst)
+          zeta_i1 a_offset b_offset
+          { start := k, «end» := step_vec } acc.1 acc.2
+        = .ok (ControlFlow.done (acc.1, acc.2)) := by
+      unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := step_vec } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := step_vec }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    have h_acc_eq : (acc.1, acc.2) = acc := rfl
+    rw [h_acc_eq] at h_body
+    apply triple_of_ok_fc h_body
+    show L3i_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+      (Spec.zeta_at zeta_i1.val) k (.done acc)
+    unfold L3i_4_plus_inner_FC.step_post
+    show (L3i_4_plus_inner_FC.inv re0 a_offset b_offset
+            (Spec.zeta_at zeta_i1.val) step_vec acc).holds
+    show (pure _ : Result Prop).holds
+    have h_inv_pure :
+        (∀ j' : Nat, j' < step_vec.val →
+          lift_chunk (acc.1.coefficients.val[a_offset.val + j']!)
+            = Spec.chunk_inv_pair_butterfly_a_pure
+                (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+                (lift_chunk (re0.coefficients.val[b_offset.val + j']!)))
+        ∧ (∀ j' : Nat, j' < step_vec.val →
+          lift_chunk (acc.1.coefficients.val[b_offset.val + j']!)
+            = Spec.chunk_inv_pair_butterfly_b_pure
+                (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+                (lift_chunk (re0.coefficients.val[b_offset.val + j']!))
+                (Spec.zeta_at zeta_i1.val))
+        ∧ (∀ k' : Nat, k' < 16 →
+            (∀ j' : Nat, j' < step_vec.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
+            acc.1.coefficients.val[k']! = re0.coefficients.val[k']!) := by
+      refine ⟨?_, ?_, ?_⟩
+      · intro j' hj'; rw [← hk_eq] at hj'; exact h_acc_a j' hj'
+      · intro j' hj'; rw [← hk_eq] at hj'; exact h_acc_b j' hj'
+      · intro k' hk' h_not_touched
+        apply h_acc_undone k' hk'
+        intro j' hj'
+        have h_at_j' : j' < step_vec.val := by rw [← hk_eq]; exact hj'
+        exact h_not_touched j' h_at_j'
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+
+/-! ### L3i.5 — Outer loop scaffolding. -/
+
+namespace L3i_4_plus_outer_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+/-- Outer loop accumulator: (zeta_i, re, scratch). -/
+abbrev Acc := Std.Usize ×
+  libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector ×
+  libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector
+
+/-- Inverse outer loop invariant. zeta_i DECREMENTS by 1 per outer round.
+    Per-round zeta = `Spec.zeta_at (zeta_i_0.val - round' - 1)`. -/
+def inv
+    (re0 : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta_i_0 step_vec : Std.Usize) :
+    Std.Usize → Acc → Result Prop :=
+  fun k acc => pure (
+    acc.1.val = zeta_i_0.val - k.val
+    ∧ (∀ round' : Nat, round' < k.val →
+        ∀ j' : Nat, j' < step_vec.val →
+          lift_chunk (acc.2.1.coefficients.val[2 * round' * step_vec.val + j']!)
+            = Spec.chunk_inv_pair_butterfly_a_pure
+                (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + j']!))
+                (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!)))
+    ∧ (∀ round' : Nat, round' < k.val →
+        ∀ j' : Nat, j' < step_vec.val →
+          lift_chunk (acc.2.1.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!)
+            = Spec.chunk_inv_pair_butterfly_b_pure
+                (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + j']!))
+                (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!))
+                (Spec.zeta_at (zeta_i_0.val - round' - 1)))
+    ∧ (∀ c : Nat, c < 16 →
+        (∀ round' : Nat, round' < k.val →
+          ∀ j' : Nat, j' < step_vec.val →
+            c ≠ 2 * round' * step_vec.val + j'
+            ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
+        acc.2.1.coefficients.val[c]! = re0.coefficients.val[c]!))
+
+/-- Step-post for the inverse outer loop. -/
+def step_post
+    (re0 : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta_i_0 step_vec i_end : Std.Usize)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × Acc) Acc) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < i_end.val ∧ iter'.«end» = i_end
+        ∧ iter'.start.val = k.val + 1
+        ∧ (inv re0 zeta_i_0 step_vec iter'.start acc').holds
+  | .done y => (inv re0 zeta_i_0 step_vec i_end y).holds
+
+end L3i_4_plus_outer_FC
+
+/-- Inverse a-side outer helper: chunks lifted via `re0` at index
+    `2*k*step_vec + j'` are exactly the original re0 chunks (since these
+    positions have not yet been touched by outer iter `round' < k`). -/
+private theorem outer_acc_inv_a_chunk_eq_re0
+    (re0 acc : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize) (step_vec : Std.Usize)
+    (h_undone : ∀ c : Nat, c < 16 →
+        (∀ round' : Nat, round' < k.val →
+          ∀ j' : Nat, j' < step_vec.val →
+            c ≠ 2 * round' * step_vec.val + j'
+            ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
+        acc.coefficients.val[c]! = re0.coefficients.val[c]!)
+    (h_kbound : 2 * k.val * step_vec.val + 2 * step_vec.val ≤ 16)
+    (j' : Nat) (hj' : j' < step_vec.val) :
+    acc.coefficients.val[2 * k.val * step_vec.val + j']!
+      = re0.coefficients.val[2 * k.val * step_vec.val + j']! := by
+  apply h_undone (2 * k.val * step_vec.val + j') (by omega)
+  intro round' hround' j'' hj''
+  refine ⟨?_, ?_⟩
+  · have h1 : 2 * round' * step_vec.val + j'' < 2 * k.val * step_vec.val := by
+      have : 2 * round' * step_vec.val + 2 * step_vec.val ≤ 2 * k.val * step_vec.val := by
+        have : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+          apply Nat.mul_le_mul_right; omega
+        nlinarith
+      omega
+    omega
+  · have h1 : 2 * round' * step_vec.val + step_vec.val + j'' < 2 * k.val * step_vec.val := by
+      have : 2 * round' * step_vec.val + 2 * step_vec.val ≤ 2 * k.val * step_vec.val := by
+        have : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+          apply Nat.mul_le_mul_right; omega
+        nlinarith
+      omega
+    omega
+
+/-- Inverse b-side outer helper. -/
+private theorem outer_acc_inv_b_chunk_eq_re0
+    (re0 acc : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Std.Usize) (step_vec : Std.Usize)
+    (h_undone : ∀ c : Nat, c < 16 →
+        (∀ round' : Nat, round' < k.val →
+          ∀ j' : Nat, j' < step_vec.val →
+            c ≠ 2 * round' * step_vec.val + j'
+            ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
+        acc.coefficients.val[c]! = re0.coefficients.val[c]!)
+    (h_kbound : 2 * k.val * step_vec.val + 2 * step_vec.val ≤ 16)
+    (h_step_vec_pos : 1 ≤ step_vec.val)
+    (j' : Nat) (hj' : j' < step_vec.val) :
+    acc.coefficients.val[2 * k.val * step_vec.val + step_vec.val + j']!
+      = re0.coefficients.val[2 * k.val * step_vec.val + step_vec.val + j']! := by
+  apply h_undone (2 * k.val * step_vec.val + step_vec.val + j') (by omega)
+  intro round' hround' j'' hj''
+  refine ⟨?_, ?_⟩
+  · have h1 : 2 * round' * step_vec.val + j'' < 2 * k.val * step_vec.val := by
+      have : 2 * round' * step_vec.val + 2 * step_vec.val ≤ 2 * k.val * step_vec.val := by
+        have : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+          apply Nat.mul_le_mul_right; omega
+        nlinarith
+      omega
+    omega
+  · have h1 : 2 * round' * step_vec.val + step_vec.val + j'' < 2 * k.val * step_vec.val := by
+      have : 2 * round' * step_vec.val + 2 * step_vec.val ≤ 2 * k.val * step_vec.val := by
+        have : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+          apply Nat.mul_le_mul_right; omega
+        nlinarith
+      omega
+    omega
+
+set_option maxHeartbeats 16000000 in
+/-- Inverse inner loop spec wrapper: dispatches `loop_range_spec_usize` for the
+    inner loop, returning the final FC equations on the post poly. -/
+private theorem invert_ntt_at_layer_4_plus_inner_loop_fc
+    (re0 : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (a_offset b_offset step_vec : Std.Usize) (zeta_i1 : Std.Usize)
+    (h_zi1_lt : zeta_i1.val < 128)
+    (h_step_vec_pos : 1 ≤ step_vec.val)
+    (h_a_offset_b : a_offset.val + step_vec.val ≤ 16)
+    (h_b_offset_b : b_offset.val + step_vec.val ≤ 16)
+    (h_disjoint : a_offset.val + step_vec.val ≤ b_offset.val)
+    (h_pre_a : ∀ j : Nat, j < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
+      ((re0.coefficients.val[a_offset.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 3328)
+    (h_pre_b : ∀ j : Nat, j < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
+      ((re0.coefficients.val[b_offset.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0
+      (vectortraitsOperationsInst := portable_ops_inst)
+      { start := 0#usize, «end» := step_vec } zeta_i1 re0 scratch a_offset b_offset
+    ⦃ ⇓ r => ⌜
+      (∀ j' : Nat, j' < step_vec.val →
+        lift_chunk (r.1.coefficients.val[a_offset.val + j']!)
+          = Spec.chunk_inv_pair_butterfly_a_pure
+              (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+              (lift_chunk (re0.coefficients.val[b_offset.val + j']!)))
+      ∧ (∀ j' : Nat, j' < step_vec.val →
+        lift_chunk (r.1.coefficients.val[b_offset.val + j']!)
+          = Spec.chunk_inv_pair_butterfly_b_pure
+              (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+              (lift_chunk (re0.coefficients.val[b_offset.val + j']!))
+              (Spec.zeta_at zeta_i1.val))
+      ∧ (∀ k' : Nat, k' < 16 →
+          (∀ j' : Nat, j' < step_vec.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
+          r.1.coefficients.val[k']! = re0.coefficients.val[k']!)
+      ⌝ ⦄ := by
+  unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0
+  apply Std.Do.Triple.of_entails_right _
+    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+      (fun (iter1, acc1) =>
+        libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst)
+          zeta_i1 a_offset b_offset iter1 acc1.1 acc1.2)
+      (β := L3i_4_plus_inner_FC.Acc)
+      (re0, scratch)
+      0#usize step_vec
+      (L3i_4_plus_inner_FC.inv re0 a_offset b_offset (Spec.zeta_at zeta_i1.val))
+      (by
+        have : (0#usize : Std.Usize).val = 0 := rfl
+        omega)
+      (by
+        show (pure _ : Result Prop).holds
+        simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
+        intro _
+        refine ⟨?_, ?_, ?_⟩
+        · intro j' hj'; exact absurd hj' (Nat.not_lt_zero j')
+        · intro j' hj'; exact absurd hj' (Nat.not_lt_zero j')
+        · intro k' _ _; trivial)
+      ?_)
+  · -- Post entailment.
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    have h_inv_holds :
+        (L3i_4_plus_inner_FC.inv re0 a_offset b_offset
+              (Spec.zeta_at zeta_i1.val) step_vec r).holds := by
+      simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
+    have h_inv :
+        (∀ j' : Nat, j' < step_vec.val →
+          lift_chunk (r.1.coefficients.val[a_offset.val + j']!)
+            = Spec.chunk_inv_pair_butterfly_a_pure
+                (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+                (lift_chunk (re0.coefficients.val[b_offset.val + j']!)))
+        ∧ (∀ j' : Nat, j' < step_vec.val →
+          lift_chunk (r.1.coefficients.val[b_offset.val + j']!)
+            = Spec.chunk_inv_pair_butterfly_b_pure
+                (lift_chunk (re0.coefficients.val[a_offset.val + j']!))
+                (lift_chunk (re0.coefficients.val[b_offset.val + j']!))
+                (Spec.zeta_at zeta_i1.val))
+        ∧ (∀ k' : Nat, k' < 16 →
+            (∀ j' : Nat, j' < step_vec.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
+            r.1.coefficients.val[k']! = re0.coefficients.val[k']!) := by
+      simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
+             L3i_4_plus_inner_FC.inv] using h_inv_holds
+    exact h_inv
+  · -- Step lemma dispatch.
+    intro acc k _h_ge h_le hinv
+    have h_step := invert_ntt_at_layer_4_plus_inner_step_lemma_fc re0 a_offset b_offset step_vec
+      zeta_i1 h_zi1_lt h_step_vec_pos h_a_offset_b h_b_offset_b h_disjoint h_pre_a h_pre_b
+      acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : L3i_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+                  (Spec.zeta_at zeta_i1.val) k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L3i_4_plus_inner_FC.step_post] using hP
+    · have hP : L3i_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+                  (Spec.zeta_at zeta_i1.val) k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L3i_4_plus_inner_FC.step_post] using hP
+
+set_option maxHeartbeats 16000000 in
+/-- Per-iteration FC step lemma for the inverse outer loop. -/
+private theorem invert_ntt_at_layer_4_plus_outer_step_lemma_fc
+    (re0 : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta_i_0 step_vec i_end : Std.Usize)
+    (h_pre : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      ((re0.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 3328)
+    (h_step_vec_pos : 1 ≤ step_vec.val)
+    (h_step_vec_dvd : 2 * i_end.val * step_vec.val = 16)
+    (h_zeta_lo : i_end.val ≤ zeta_i_0.val)
+    (h_zeta_hi : zeta_i_0.val ≤ 128)
+    (acc : L3i_4_plus_outer_FC.Acc)
+    (k : Std.Usize) (h_le : k.val ≤ i_end.val)
+    (h_inv : (L3i_4_plus_outer_FC.inv re0 zeta_i_0 step_vec k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
+      (vectortraitsOperationsInst := portable_ops_inst)
+      step_vec { start := k, «end» := i_end } acc.1 acc.2.1 acc.2.2
+    ⦃ ⇓ r => ⌜ L3i_4_plus_outer_FC.step_post re0 zeta_i_0 step_vec i_end k r ⌝ ⦄ := by
+  obtain ⟨h_zeta_acc, h_acc_a, h_acc_b, h_acc_undone⟩ := by
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
+  unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
+  by_cases h_lt : k.val < i_end.val
+  · -- Some round = k branch.
+    obtain ⟨s, hs_val, h_iter_some⟩ :=
+      L3_4_plus_FC.iter_next_some_eq_gen k i_end h_lt
+    -- (1) zeta_i1 ← acc.1 - 1.
+    have h_um : (1#usize : Std.Usize).val = 1 := rfl
+    have h_acc1_ge_1 : 1 ≤ acc.1.val := by
+      rw [h_zeta_acc]
+      have : k.val < i_end.val := h_lt
+      have : k.val + 1 ≤ i_end.val := by omega
+      omega
+    have h_z_ge : (1#usize : Std.Usize).val ≤ acc.1.val := by rw [h_um]; omega
+    obtain ⟨zi1, h_zi1_eq, h_zi1_val⟩ :=
+      L3i_2_FC.usize_sub_ok_eq acc.1 1#usize h_z_ge
+    have h_zi1_arith : zi1.val = zeta_i_0.val - k.val - 1 := by
+      rw [h_zi1_val, h_um, h_zeta_acc]
+    have h_zi1_lt_128 : zi1.val < 128 := by
+      rw [h_zi1_arith]; omega
+    -- (2) i ← round * 2.
+    have h_um2 : (2#usize : Std.Usize).val = 2 := rfl
+    have h_i_end_le_16 : i_end.val ≤ 16 := by
+      have : i_end.val * step_vec.val * 2 = 16 := by rw [Nat.mul_assoc] at h_step_vec_dvd; nlinarith
+      nlinarith
+    have h_i_max : k.val * (2#usize : Std.Usize).val ≤ Std.Usize.max := by
+      rw [h_um2]
+      have h_k_b : k.val * 2 ≤ 16 := by
+        have : k.val ≤ 8 := by
+          have : i_end.val ≤ 8 := by
+            have : i_end.val * step_vec.val * 2 = 16 := by rw [Nat.mul_assoc] at h_step_vec_dvd; nlinarith
+            nlinarith
+          omega
+        omega
+      scalar_tac
+    obtain ⟨ii, h_ii_eq, h_ii_val⟩ :=
+      L3_4_plus_FC.usize_mul_ok_eq k 2#usize h_i_max
+    have h_ii_arith : ii.val = 2 * k.val := by rw [h_ii_val, h_um2, Nat.mul_comm]
+    -- (3) a_offset ← ii * step_vec.
+    have h_a_max : ii.val * step_vec.val ≤ Std.Usize.max := by
+      rw [h_ii_arith]
+      have h_b : 2 * k.val * step_vec.val ≤ 16 := by
+        have : (k.val + 1) * (2 * step_vec.val) ≤ i_end.val * (2 * step_vec.val) := by
+          apply Nat.mul_le_mul_right; omega
+        nlinarith
+      scalar_tac
+    obtain ⟨ao, h_ao_eq, h_ao_val⟩ :=
+      L3_4_plus_FC.usize_mul_ok_eq ii step_vec h_a_max
+    have h_ao_arith : ao.val = 2 * k.val * step_vec.val := by
+      rw [h_ao_val, h_ii_arith]
+    -- (4) b_offset ← a_offset + step_vec.
+    have h_b_max : ao.val + step_vec.val ≤ Std.Usize.max := by
+      rw [h_ao_arith]
+      have h_b : 2 * k.val * step_vec.val + step_vec.val ≤ 16 := by
+        have : (k.val + 1) * (2 * step_vec.val) ≤ i_end.val * (2 * step_vec.val) := by
+          apply Nat.mul_le_mul_right; omega
+        nlinarith
+      scalar_tac
+    obtain ⟨bo, h_bo_eq, h_bo_val⟩ :=
+      L3_4_plus_FC.usize_add_ok_eq ao step_vec h_b_max
+    have h_bo_arith : bo.val = 2 * k.val * step_vec.val + step_vec.val := by
+      rw [h_bo_val, h_ao_arith]
+    have h_a_offset_b : ao.val + step_vec.val ≤ 16 := by
+      rw [h_ao_arith]
+      have : (k.val + 1) * (2 * step_vec.val) ≤ i_end.val * (2 * step_vec.val) := by
+        apply Nat.mul_le_mul_right; omega
+      nlinarith
+    have h_b_offset_b : bo.val + step_vec.val ≤ 16 := by
+      rw [h_bo_arith]
+      have : (k.val + 1) * (2 * step_vec.val) ≤ i_end.val * (2 * step_vec.val) := by
+        apply Nat.mul_le_mul_right; omega
+      nlinarith
+    have h_disjoint : ao.val + step_vec.val ≤ bo.val := by
+      rw [h_ao_arith, h_bo_arith]
+    have h_2kstep_bnd : 2 * k.val * step_vec.val + 2 * step_vec.val ≤ 16 := by
+      have : (k.val + 1) * (2 * step_vec.val) ≤ i_end.val * (2 * step_vec.val) := by
+        apply Nat.mul_le_mul_right; omega
+      nlinarith
+    have h_acc_a_eq : ∀ j : Nat, j < step_vec.val →
+        acc.2.1.coefficients.val[ao.val + j]! = re0.coefficients.val[ao.val + j]! := by
+      intro j hj
+      rw [h_ao_arith]
+      exact outer_acc_inv_a_chunk_eq_re0 re0 acc.2.1 k step_vec h_acc_undone
+              h_2kstep_bnd j hj
+    have h_acc_b_eq : ∀ j : Nat, j < step_vec.val →
+        acc.2.1.coefficients.val[bo.val + j]! = re0.coefficients.val[bo.val + j]! := by
+      intro j hj
+      rw [h_bo_arith]
+      exact outer_acc_inv_b_chunk_eq_re0 re0 acc.2.1 k step_vec h_acc_undone
+              h_2kstep_bnd h_step_vec_pos j hj
+    have h_pre_a : ∀ j : Nat, j < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.2.1.coefficients.val[ao.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 3328 := by
+      intro j hj ℓ hℓ
+      rw [h_acc_a_eq j hj]
+      apply h_pre _ _ ℓ hℓ
+      rw [h_ao_arith]; omega
+    have h_pre_b : ∀ j : Nat, j < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.2.1.coefficients.val[bo.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 3328 := by
+      intro j hj ℓ hℓ
+      rw [h_acc_b_eq j hj]
+      apply h_pre _ _ ℓ hℓ
+      rw [h_bo_arith]; omega
+    -- Dispatch inner loop.
+    have h_inner := invert_ntt_at_layer_4_plus_inner_loop_fc acc.2.1 acc.2.2 ao bo step_vec zi1
+      h_zi1_lt_128 h_step_vec_pos h_a_offset_b h_b_offset_b h_disjoint h_pre_a h_pre_b
+    obtain ⟨r_pair, h_r_eq, h_r_a, h_r_b, h_r_undone⟩ :=
+      triple_exists_ok_fc h_inner
+    set acc' : L3i_4_plus_outer_FC.Acc :=
+      (zi1, r_pair.1, r_pair.2) with hacc'_def
+    have h_body :
+        libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst)
+          step_vec { start := k, «end» := i_end } acc.1 acc.2.1 acc.2.2
+        = .ok (ControlFlow.cont (({ start := s, «end» := i_end }
+                        : core_models.ops.range.Range Std.Usize), acc')) := by
+      unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := i_end } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := i_end }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp only [Aeneas.Std.bind_tc_ok]
+      show (do
+              let zi1' ← acc.1 - 1#usize
+              let ii' ← k * 2#usize
+              let ao' ← ii' * step_vec
+              let bo' ← ao' + step_vec
+              let (re1, scratch1) ←
+                libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0
+                  (vectortraitsOperationsInst := portable_ops_inst)
+                  { start := 0#usize, «end» := step_vec } zi1' acc.2.1 acc.2.2 ao' bo'
+              .ok (ControlFlow.cont (({ start := s, «end» := i_end }
+                          : core_models.ops.range.Range Std.Usize),
+                        zi1', re1, scratch1))) = _
+      rw [h_zi1_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_ii_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_ao_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_bo_eq]; simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_r_eq]; rfl
+    apply triple_of_ok_fc h_body
+    show L3i_4_plus_outer_FC.step_post re0 zeta_i_0 step_vec i_end k
+      (.cont (({ start := s, «end» := i_end }
+                : core_models.ops.range.Range Std.Usize), acc'))
+    unfold L3i_4_plus_outer_FC.step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    show (L3i_4_plus_outer_FC.inv re0 zeta_i_0 step_vec s acc').holds
+    have h_inv_pure :
+        acc'.1.val = zeta_i_0.val - s.val
+        ∧ (∀ round' : Nat, round' < s.val →
+            ∀ j' : Nat, j' < step_vec.val →
+              lift_chunk (acc'.2.1.coefficients.val[2 * round' * step_vec.val + j']!)
+                = Spec.chunk_inv_pair_butterfly_a_pure
+                    (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + j']!))
+                    (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!)))
+        ∧ (∀ round' : Nat, round' < s.val →
+            ∀ j' : Nat, j' < step_vec.val →
+              lift_chunk (acc'.2.1.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!)
+                = Spec.chunk_inv_pair_butterfly_b_pure
+                    (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + j']!))
+                    (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!))
+                    (Spec.zeta_at (zeta_i_0.val - round' - 1)))
+        ∧ (∀ c : Nat, c < 16 →
+            (∀ round' : Nat, round' < s.val →
+              ∀ j' : Nat, j' < step_vec.val →
+                c ≠ 2 * round' * step_vec.val + j'
+                ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
+            acc'.2.1.coefficients.val[c]! = re0.coefficients.val[c]!) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · -- zeta thread: zi1.val = zeta_i_0.val - (k.val + 1) = zeta_i_0.val - s.val.
+        show zi1.val = zeta_i_0.val - s.val
+        rw [h_zi1_arith, hs_val]; omega
+      · -- a-side butterflies for round' < s.val.
+        intro round' hround' j' hj'
+        rw [hs_val] at hround'
+        rcases Nat.lt_succ_iff_lt_or_eq.mp hround' with hround'_lt | hround'_eq
+        · have h_pos : 2 * round' * step_vec.val + j' < 16 := by
+            have h_rb : 2 * round' * step_vec.val + 2 * step_vec.val
+                ≤ 2 * k.val * step_vec.val := by
+              have h_pos : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+                apply Nat.mul_le_mul_right; omega
+              nlinarith
+            omega
+          have h_ne_a : ∀ j : Nat, j < step_vec.val →
+              2 * round' * step_vec.val + j' ≠ ao.val + j := by
+            intro j hj
+            rw [h_ao_arith]
+            have h1 : 2 * round' * step_vec.val + 2 * step_vec.val ≤ 2 * k.val * step_vec.val := by
+              have h_pos : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+                apply Nat.mul_le_mul_right; omega
+              nlinarith
+            omega
+          have h_ne_b : ∀ j : Nat, j < step_vec.val →
+              2 * round' * step_vec.val + j' ≠ bo.val + j := by
+            intro j hj
+            rw [h_bo_arith]
+            have h1 : 2 * round' * step_vec.val + 2 * step_vec.val ≤ 2 * k.val * step_vec.val := by
+              have h_pos : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+                apply Nat.mul_le_mul_right; omega
+              nlinarith
+            omega
+          have h_step_unc : r_pair.1.coefficients.val[2 * round' * step_vec.val + j']!
+              = acc.2.1.coefficients.val[2 * round' * step_vec.val + j']! :=
+            h_r_undone (2 * round' * step_vec.val + j') h_pos
+              (fun j hj => ⟨h_ne_a j hj, h_ne_b j hj⟩)
+          show lift_chunk (acc'.2.1.coefficients.val[2 * round' * step_vec.val + j']!) = _
+          show lift_chunk (r_pair.1.coefficients.val[2 * round' * step_vec.val + j']!) = _
+          rw [h_step_unc]
+          exact h_acc_a round' hround'_lt j' hj'
+        · subst hround'_eq
+          show lift_chunk (acc'.2.1.coefficients.val[2 * k.val * step_vec.val + j']!) = _
+          show lift_chunk (r_pair.1.coefficients.val[2 * k.val * step_vec.val + j']!) = _
+          rw [show (2 * k.val * step_vec.val + j' : Nat) = ao.val + j' from by rw [h_ao_arith]]
+          rw [h_r_a j' hj']
+          rw [h_acc_a_eq j' hj', h_acc_b_eq j' hj']
+          rw [show (ao.val + j' : Nat) = 2 * k.val * step_vec.val + j' from by rw [h_ao_arith]]
+          rw [show (bo.val + j' : Nat) = 2 * k.val * step_vec.val + step_vec.val + j' from by rw [h_bo_arith]]
+      · -- b-side butterflies for round' < s.val.
+        intro round' hround' j' hj'
+        rw [hs_val] at hround'
+        rcases Nat.lt_succ_iff_lt_or_eq.mp hround' with hround'_lt | hround'_eq
+        · have h_pos : 2 * round' * step_vec.val + step_vec.val + j' < 16 := by
+            have h_rb : 2 * round' * step_vec.val + 2 * step_vec.val
+                ≤ 2 * k.val * step_vec.val := by
+              have h_pos : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+                apply Nat.mul_le_mul_right; omega
+              nlinarith
+            omega
+          have h_ne_a : ∀ j : Nat, j < step_vec.val →
+              2 * round' * step_vec.val + step_vec.val + j' ≠ ao.val + j := by
+            intro j hj
+            rw [h_ao_arith]
+            have h1 : 2 * round' * step_vec.val + 2 * step_vec.val ≤ 2 * k.val * step_vec.val := by
+              have h_pos : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+                apply Nat.mul_le_mul_right; omega
+              nlinarith
+            omega
+          have h_ne_b : ∀ j : Nat, j < step_vec.val →
+              2 * round' * step_vec.val + step_vec.val + j' ≠ bo.val + j := by
+            intro j hj
+            rw [h_bo_arith]
+            have h1 : 2 * round' * step_vec.val + 2 * step_vec.val ≤ 2 * k.val * step_vec.val := by
+              have h_pos : (round' + 1) * (2 * step_vec.val) ≤ k.val * (2 * step_vec.val) := by
+                apply Nat.mul_le_mul_right; omega
+              nlinarith
+            omega
+          have h_step_unc :
+              r_pair.1.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!
+              = acc.2.1.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']! :=
+            h_r_undone (2 * round' * step_vec.val + step_vec.val + j') h_pos
+              (fun j hj => ⟨h_ne_a j hj, h_ne_b j hj⟩)
+          show lift_chunk (acc'.2.1.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!) = _
+          show lift_chunk (r_pair.1.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!) = _
+          rw [h_step_unc]
+          exact h_acc_b round' hround'_lt j' hj'
+        · subst hround'_eq
+          show lift_chunk (acc'.2.1.coefficients.val[2 * k.val * step_vec.val + step_vec.val + j']!) = _
+          show lift_chunk (r_pair.1.coefficients.val[2 * k.val * step_vec.val + step_vec.val + j']!) = _
+          rw [show (2 * k.val * step_vec.val + step_vec.val + j' : Nat) = bo.val + j' from by rw [h_bo_arith]]
+          rw [h_r_b j' hj']
+          rw [h_acc_a_eq j' hj', h_acc_b_eq j' hj']
+          rw [show (ao.val + j' : Nat) = 2 * k.val * step_vec.val + j' from by rw [h_ao_arith]]
+          rw [show (bo.val + j' : Nat) = 2 * k.val * step_vec.val + step_vec.val + j' from by rw [h_bo_arith]]
+          rw [show zi1.val = zeta_i_0.val - k.val - 1 from h_zi1_arith]
+      · -- Untouched chunks.
+        intro c hc h_not_touched
+        show acc'.2.1.coefficients.val[c]! = re0.coefficients.val[c]!
+        show r_pair.1.coefficients.val[c]! = re0.coefficients.val[c]!
+        have h_at_k : k.val < s.val := by rw [hs_val]; omega
+        have h_ne_a_k : ∀ j : Nat, j < step_vec.val → c ≠ ao.val + j := by
+          intro j hj; rw [h_ao_arith]
+          exact (h_not_touched k.val h_at_k j hj).1
+        have h_ne_b_k : ∀ j : Nat, j < step_vec.val → c ≠ bo.val + j := by
+          intro j hj; rw [h_bo_arith]
+          exact (h_not_touched k.val h_at_k j hj).2
+        have h_step_unc : r_pair.1.coefficients.val[c]! = acc.2.1.coefficients.val[c]! :=
+          h_r_undone c hc (fun j hj => ⟨h_ne_a_k j hj, h_ne_b_k j hj⟩)
+        rw [h_step_unc]
+        apply h_acc_undone c hc
+        intro round' hround' j' hj'
+        have h_at_r : round' < s.val := by rw [hs_val]; omega
+        exact h_not_touched round' h_at_r j' hj'
+    show (pure _ : Result Prop).holds
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+  · -- None branch: k ≥ i_end, done.
+    have hk_ge : k.val ≥ i_end.val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = i_end.val := by omega
+    have h_iter_none := L3_4_plus_FC.iter_next_none_eq_gen k i_end hk_ge
+    have h_body :
+        libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst)
+          step_vec { start := k, «end» := i_end } acc.1 acc.2.1 acc.2.2
+        = .ok (ControlFlow.done (acc.1, acc.2.1, acc.2.2)) := by
+      unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := i_end } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := i_end }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    have h_acc_eq : (acc.1, acc.2.1, acc.2.2) = acc := rfl
+    rw [h_acc_eq] at h_body
+    apply triple_of_ok_fc h_body
+    show L3i_4_plus_outer_FC.step_post re0 zeta_i_0 step_vec i_end k (.done acc)
+    unfold L3i_4_plus_outer_FC.step_post
+    show (L3i_4_plus_outer_FC.inv re0 zeta_i_0 step_vec i_end acc).holds
+    show (pure _ : Result Prop).holds
+    have h_inv_pure :
+        acc.1.val = zeta_i_0.val - i_end.val
+        ∧ (∀ round' : Nat, round' < i_end.val →
+            ∀ j' : Nat, j' < step_vec.val →
+              lift_chunk (acc.2.1.coefficients.val[2 * round' * step_vec.val + j']!)
+                = Spec.chunk_inv_pair_butterfly_a_pure
+                    (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + j']!))
+                    (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!)))
+        ∧ (∀ round' : Nat, round' < i_end.val →
+            ∀ j' : Nat, j' < step_vec.val →
+              lift_chunk (acc.2.1.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!)
+                = Spec.chunk_inv_pair_butterfly_b_pure
+                    (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + j']!))
+                    (lift_chunk (re0.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!))
+                    (Spec.zeta_at (zeta_i_0.val - round' - 1)))
+        ∧ (∀ c : Nat, c < 16 →
+            (∀ round' : Nat, round' < i_end.val →
+              ∀ j' : Nat, j' < step_vec.val →
+                c ≠ 2 * round' * step_vec.val + j'
+                ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
+            acc.2.1.coefficients.val[c]! = re0.coefficients.val[c]!) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · rw [h_zeta_acc, hk_eq]
+      · intro round' hround'; rw [← hk_eq] at hround'; exact h_acc_a round' hround'
+      · intro round' hround'; rw [← hk_eq] at hround'; exact h_acc_b round' hround'
+      · intro c hc h_nt
+        apply h_acc_undone c hc
+        intro round' hround' j' hj'
+        have : round' < i_end.val := by rw [← hk_eq]; exact hround'
+        exact h_nt round' this j' hj'
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+
+set_option maxHeartbeats 16000000 in
 @[spec high]
 theorem invert_ntt_at_layer_4_plus_portable_fc
     (zeta_i : Std.Usize)
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (layer : Std.Usize)
-    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_layer : 4 ≤ layer.val ∧ layer.val ≤ 7)
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3328)
+    (h_zeta : (128 >>> layer.val) ≤ zeta_i.val ∧ zeta_i.val ≤ 128) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus
       (vectortraitsOperationsInst := portable_ops_inst)
       zeta_i re layer scratch
     ⦃ ⇓ p => ⌜ lift_poly p.2.1 = Spec.invert_ntt_layer_4_plus_pure (lift_poly re) zeta_i layer ⌝ ⦄ := by
-  sorry
+  obtain ⟨h_layer_lo, h_layer_hi⟩ := h_layer
+  obtain ⟨h_zeta_lo, h_zeta_hi⟩ := h_zeta
+  unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus
+  -- Resolve step ← 1 <<< layer.
+  have h_usize_bits : (Aeneas.Std.UScalarTy.Usize.numBits : Nat) = System.Platform.numBits := rfl
+  have h_layer_bits : layer.val < Aeneas.Std.UScalarTy.Usize.numBits := by
+    have h_p := System.Platform.numBits_eq
+    rcases h_p with h32 | h64
+    · rw [h_usize_bits, h32]; omega
+    · rw [h_usize_bits, h64]; omega
+  have h_size_eq : Aeneas.Std.UScalar.size Aeneas.Std.UScalarTy.Usize = 2 ^ System.Platform.numBits := by
+    simp [Std.Usize.size, Usize.numBits]
+  have h_one_shl_pow : ((1#usize : Std.Usize).val <<< layer.val) < 2 ^ System.Platform.numBits := by
+    have h_one_eq : (1#usize : Std.Usize).val = 1 := rfl
+    rw [h_one_eq, Nat.shiftLeft_eq, Nat.one_mul]
+    have h_p := System.Platform.numBits_eq
+    rcases h_p with h32 | h64
+    · rw [h32]; exact Nat.pow_lt_pow_right (by decide) (by omega)
+    · rw [h64]; exact Nat.pow_lt_pow_right (by decide) (by omega)
+  have h_step_ex : ∃ step : Std.Usize,
+      ((1#usize : Std.Usize) <<< layer : Result Std.Usize) = .ok step
+      ∧ step.val = 1 <<< layer.val := by
+    have hT := Aeneas.Std.UScalar.ShiftLeft_spec (1#usize : Std.Usize) layer
+      (Aeneas.Std.UScalar.size Aeneas.Std.UScalarTy.Usize) h_layer_bits rfl
+    obtain ⟨z, h_eq, h_v_mod, _h_bv⟩ := Std.WP.spec_imp_exists hT
+    refine ⟨z, h_eq, ?_⟩
+    have h_one_eq : (1#usize : Std.Usize).val = 1 := rfl
+    rw [h_v_mod, h_one_eq, h_size_eq, Nat.mod_eq_of_lt]
+    rw [h_one_eq] at h_one_shl_pow
+    exact h_one_shl_pow
+  obtain ⟨step, h_step_eq, h_step_val⟩ := h_step_ex
+  rw [h_step_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  -- Unfold FIELD_ELEMENTS_IN_VECTOR (= 16#usize) so we can use UScalar.div_spec.
+  unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR
+  -- Resolve step_vec ← step / 16.
+  have h_16_nz : ((16#usize : Std.Usize).val : Nat) ≠ 0 := by decide
+  have h_step_pos : 1 ≤ step.val := by
+    rw [h_step_val, Nat.shiftLeft_eq, Nat.one_mul]
+    exact Nat.one_le_pow _ _ (by decide : (0:Nat) < 2)
+  obtain ⟨step_vec, h_step_vec_eq, h_step_vec_val⟩ :=
+    Aeneas.Std.UScalar.div_spec step h_16_nz
+  rw [h_step_vec_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  have h_step_vec_arith : step_vec.val = (1 <<< layer.val) / 16 := by
+    have h_16_eq : (16#usize : Std.Usize).val = 16 := rfl
+    rw [h_step_vec_val, h_step_val, h_16_eq]
+  -- Resolve i_end ← 128 >>> layer.
+  obtain ⟨i_end, h_i_end_eq, h_i_end_val, _h_i_end_bv⟩ :=
+    Std.WP.spec_imp_exists (Aeneas.Std.UScalar.ShiftRight_spec (128#usize : Std.Usize) layer
+      h_layer_bits)
+  rw [h_i_end_eq]
+  have h_i_end_arith : i_end.val = 128 >>> layer.val := h_i_end_val
+  have h_step_vec_pos : 1 ≤ step_vec.val := by
+    rw [h_step_vec_arith]
+    interval_cases layer.val <;> decide
+  have h_step_vec_dvd : 2 * i_end.val * step_vec.val = 16 := by
+    rw [h_i_end_arith, h_step_vec_arith]
+    interval_cases layer.val <;> decide
+  have h_i_end_pos : 1 ≤ i_end.val := by
+    rw [h_i_end_arith]
+    interval_cases layer.val <;> decide
+  have h_zeta_lo' : i_end.val ≤ zeta_i.val := by
+    rw [h_i_end_arith]; exact h_zeta_lo
+  -- Unfold outer loop and apply loop_range_spec_usize.
+  unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0
+  apply Std.Do.Triple.of_entails_right _
+    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+      (fun (iter1, acc1) =>
+        libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst) step_vec
+          iter1 acc1.1 acc1.2.1 acc1.2.2)
+      (β := L3i_4_plus_outer_FC.Acc)
+      (zeta_i, re, scratch)
+      0#usize i_end
+      (L3i_4_plus_outer_FC.inv re zeta_i step_vec)
+      (by
+        have h_zero : (0#usize : Std.Usize).val = 0 := rfl
+        omega)
+      (by
+        show (pure _ : Result Prop).holds
+        simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
+        intro _
+        refine ⟨?_, ?_, ?_, ?_⟩
+        · show zeta_i.val = zeta_i.val - (0#usize : Std.Usize).val
+          show zeta_i.val = zeta_i.val - 0
+          omega
+        · intro round' hround' _ _
+          exact absurd hround' (Nat.not_lt_zero round')
+        · intro round' hround' _ _
+          exact absurd hround' (Nat.not_lt_zero round')
+        · intro _ _ _; trivial)
+      ?_)
+  · -- Post entailment: at k = i_end, build chunks_arr matching Spec.
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    have h_inv_holds : (L3i_4_plus_outer_FC.inv re zeta_i step_vec i_end r).holds := by
+      simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
+    have h_inv :
+        r.1.val = zeta_i.val - i_end.val
+        ∧ (∀ round' : Nat, round' < i_end.val →
+            ∀ j' : Nat, j' < step_vec.val →
+              lift_chunk (r.2.1.coefficients.val[2 * round' * step_vec.val + j']!)
+                = Spec.chunk_inv_pair_butterfly_a_pure
+                    (lift_chunk (re.coefficients.val[2 * round' * step_vec.val + j']!))
+                    (lift_chunk (re.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!)))
+        ∧ (∀ round' : Nat, round' < i_end.val →
+            ∀ j' : Nat, j' < step_vec.val →
+              lift_chunk (r.2.1.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!)
+                = Spec.chunk_inv_pair_butterfly_b_pure
+                    (lift_chunk (re.coefficients.val[2 * round' * step_vec.val + j']!))
+                    (lift_chunk (re.coefficients.val[2 * round' * step_vec.val + step_vec.val + j']!))
+                    (Spec.zeta_at (zeta_i.val - round' - 1)))
+        ∧ (∀ c : Nat, c < 16 →
+            (∀ round' : Nat, round' < i_end.val →
+              ∀ j' : Nat, j' < step_vec.val →
+                c ≠ 2 * round' * step_vec.val + j'
+                ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
+            r.2.1.coefficients.val[c]! = re.coefficients.val[c]!) := by
+      simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
+             L3i_4_plus_outer_FC.inv] using h_inv_holds
+    obtain ⟨_h_zeta_done, h_done_a, h_done_b, _h_done_undone⟩ := h_inv
+    -- Build chunks_arr matching the Spec layout.
+    unfold Spec.invert_ntt_layer_4_plus_pure
+    set chunks_arr : Std.Array
+        (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) 16#usize :=
+      Std.Array.make 16#usize ((List.range 16).map (fun c =>
+        Spec.chunk_inv_at_layer_4_plus_pure
+          (Std.Array.make 16#usize ((List.range 16).map (Spec.chunk_at (lift_poly re)))
+            (by simp))
+          layer
+          (fun group => Spec.zeta_at (zeta_i.val - 1 - group))
+          c))
+        (by simp) with hchunks_def
+    have h_chunks_len : chunks_arr.val.length = 16 := by
+      show ((List.range 16).map _).length = 16; simp
+    have h_chunks0_at : ∀ k : Nat, k < 16 →
+        (Std.Array.make 16#usize ((List.range 16).map (Spec.chunk_at (lift_poly re)))
+            (by simp)).val[k]!
+          = lift_chunk (re.coefficients.val[k]!) := by
+      intro k hk
+      have h_len_map : ((List.range 16).map (Spec.chunk_at (lift_poly re))).length = 16 := by simp
+      show ((List.range 16).map (Spec.chunk_at (lift_poly re)))[k]! = _
+      rw [getElem!_pos _ k (by rw [h_len_map]; exact hk)]
+      rw [List.getElem_map, List.getElem_range]
+      exact chunk_at_lift_poly_fc re k hk
+    have h_chunks_get : ∀ c : Nat, (hc : c < 16) →
+        chunks_arr.val[c]'(by rw [h_chunks_len]; exact hc)
+          = lift_chunk (r.2.1.coefficients.val[c]!) := by
+      intro c hc
+      show ((List.range 16).map (fun c =>
+        Spec.chunk_inv_at_layer_4_plus_pure
+          (Std.Array.make 16#usize ((List.range 16).map (Spec.chunk_at (lift_poly re)))
+            (by simp))
+          layer
+          (fun group => Spec.zeta_at (zeta_i.val - 1 - group))
+          c))[c]'_ = _
+      rw [List.getElem_map, List.getElem_range]
+      unfold Spec.chunk_inv_at_layer_4_plus_pure
+      set sv := (1 <<< layer.val) / 16 with hsv_def
+      have hsv_eq : sv = step_vec.val := by rw [hsv_def, h_step_vec_arith]
+      simp only [show (1 <<< layer.val) / 16 = sv from rfl]
+      set group := c / (2 * sv)
+      set offset := c % (2 * sv)
+      have h_2sv_pos : 0 < 2 * sv := by rw [hsv_eq]; omega
+      have h_c_eq : 2 * sv * group + offset = c := by
+        show 2 * sv * (c / (2 * sv)) + c % (2 * sv) = c
+        exact Nat.div_add_mod c (2 * sv)
+      have h_off_lt : offset < 2 * sv := Nat.mod_lt _ h_2sv_pos
+      have h_16_eq : 2 * i_end.val * sv = 16 := by
+        rw [hsv_eq]; exact h_step_vec_dvd
+      have h_group_lt : group < i_end.val := by
+        by_contra h_ge
+        push_neg at h_ge
+        have h_ge2 : 2 * sv * i_end.val ≤ 2 * sv * group := Nat.mul_le_mul_left _ h_ge
+        have h_c_ge : c ≥ 2 * sv * i_end.val := by
+          have : 2 * sv * group ≤ c := by omega
+          omega
+        have h_rw : 2 * sv * i_end.val = 16 := by
+          have h : 2 * i_end.val * sv = 2 * sv * i_end.val := by ring
+          omega
+        omega
+      by_cases h_off_lt_sv : offset < sv
+      · -- a-side.
+        simp only [if_pos h_off_lt_sv]
+        have h_c_lt_16 : c < 16 := hc
+        have h_c_plus_sv_lt_16 : c + sv < 16 := by
+          have h_succ : 2 * sv * (group + 1) ≤ 2 * sv * i_end.val := Nat.mul_le_mul_left _ h_group_lt
+          have h_split : 2 * sv * (group + 1) = 2 * sv * group + 2 * sv := by ring
+          have h_eq_16 : 2 * sv * i_end.val = 16 := by
+            have : 2 * i_end.val * sv = 2 * sv * i_end.val := by ring
+            omega
+          omega
+        rw [h_chunks0_at c h_c_lt_16, h_chunks0_at (c + sv) h_c_plus_sv_lt_16]
+        have h_c_eq_a : c = 2 * group * step_vec.val + offset := by
+          rw [← hsv_eq]
+          calc c = 2 * sv * group + offset := h_c_eq.symm
+            _ = 2 * group * sv + offset := by ring_nf
+        have h_csv_eq_a : c + sv = 2 * group * step_vec.val + step_vec.val + offset := by
+          rw [h_c_eq_a]; rw [hsv_eq]; ring
+        have h_off_lt_sv' : offset < step_vec.val := by rw [← hsv_eq]; exact h_off_lt_sv
+        have h_done := h_done_a group h_group_lt offset h_off_lt_sv'
+        rw [h_csv_eq_a, h_c_eq_a]
+        exact h_done.symm
+      · -- b-side.
+        simp only [if_neg h_off_lt_sv]
+        push_neg at h_off_lt_sv
+        set j' := offset - sv with hj'_def
+        have hj'_lt_sv : j' < sv := by
+          show offset - sv < sv; omega
+        have h_off_eq : offset = sv + j' := by
+          show offset = sv + (offset - sv); omega
+        have h_c_lt_16 : c < 16 := hc
+        have h_c_minus_sv_lt_16 : c - sv < 16 := by omega
+        have h_c_eq_b : c = 2 * group * step_vec.val + step_vec.val + j' := by
+          rw [← hsv_eq]
+          have : c = 2 * sv * group + (sv + j') := by rw [← h_off_eq]; exact h_c_eq.symm
+          calc c = 2 * sv * group + (sv + j') := this
+            _ = 2 * group * sv + sv + j' := by ring
+        have h_cmsv_eq_b : c - sv = 2 * group * step_vec.val + j' := by
+          have h_sv_le_c : sv ≤ c := by
+            calc sv ≤ sv + j' := Nat.le_add_right _ _
+              _ = offset := h_off_eq.symm
+              _ ≤ 2 * sv * group + offset := Nat.le_add_left _ _
+              _ = c := h_c_eq
+          rw [← hsv_eq]
+          have h_full : c - sv = (2 * sv * group + (sv + j')) - sv := by rw [← h_off_eq, h_c_eq]
+          rw [h_full]
+          have h_simp : 2 * sv * group + (sv + j') - sv = 2 * sv * group + j' := by omega
+          rw [h_simp]; ring
+        rw [h_chunks0_at (c - sv) h_c_minus_sv_lt_16, h_chunks0_at c h_c_lt_16]
+        have h_j'_lt : j' < step_vec.val := by rw [← hsv_eq]; exact hj'_lt_sv
+        have h_done := h_done_b group h_group_lt j' h_j'_lt
+        rw [h_cmsv_eq_b, h_c_eq_b]
+        -- The zeta expression: spec uses `zeta_i.val - 1 - group`,
+        -- invariant uses `zeta_i.val - group - 1`. These are equal.
+        rw [show zeta_i.val - 1 - group = zeta_i.val - group - 1 by omega]
+        exact h_done.symm
+    have h_final := flatten_chunks_eq_lift_poly_fc r.2.1 chunks_arr h_chunks_len h_chunks_get
+    exact h_final.symm
+  · -- Step lemma dispatch.
+    intro acc k _h_ge h_le hinv
+    have h_step := invert_ntt_at_layer_4_plus_outer_step_lemma_fc re zeta_i step_vec i_end
+      h_bnd h_step_vec_pos h_step_vec_dvd h_zeta_lo' h_zeta_hi acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : L3i_4_plus_outer_FC.step_post re zeta_i step_vec i_end k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L3i_4_plus_outer_FC.step_post] using hP
+    · have hP : L3i_4_plus_outer_FC.step_post re zeta_i step_vec i_end k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L3i_4_plus_outer_FC.step_post] using hP
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
