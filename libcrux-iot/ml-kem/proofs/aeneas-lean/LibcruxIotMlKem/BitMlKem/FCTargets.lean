@@ -12743,41 +12743,6 @@ theorem matrix.entry_fc
   rw [getElem!_pos _ j.val h_j_lt_inner]
   rw [List.getElem_map, List.getElem_range]
 
-/-! ## §L6c — NTT-multiply family.
-
-    Polynomial-level FC for the three accumulating NTT-multiply variants
-    (no-cache, fill-cache, use-cache). Each is a 16-iter loop over chunks,
-    dispatching to `vector.portable.ntt.accumulating_ntt_multiply{,_fill_cache,_use_cache}`
-    which itself fans out to 8 binomial calls per chunk with alternating
-    `±zeta_k` (k ∈ {0..3}). Pure projection is
-    `Spec.accumulating_ntt_multiply_pure` (FCTargets:703).
-
-    Phase 6c. -/
-
-/-- L6c.1 — `polynomial.PolynomialRingElement.accumulating_ntt_multiply`:
-    chunked accumulating NTT-multiply (no cache). The locked POST relates
-    the output (lifted via `lift_accumulator_i32`) to
-    `Spec.accumulating_ntt_multiply_pure (lift_poly self) (lift_poly rhs)
-    (lift_accumulator_i32 accumulator)`.
-
-    Tightening preconditions (added by the proof author) restrict per-lane
-    magnitudes on `self`, `rhs`, and `accumulator` so the impl's `wrapping_*`
-    arithmetic does not overflow I32. The locked statement is the True-pre
-    + `⇓ acc' => lift_accumulator_i32 acc' = …` form. -/
-@[spec]
-theorem accumulating_ntt_multiply_fc
-    (self rhs : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-                  libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (accumulator : Std.Array Std.I32 256#usize) :
-    ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply
-      (vectortraitsOperationsInst := portable_ops_inst) self rhs accumulator
-    ⦃ ⇓ acc' => ⌜ lift_accumulator_i32 acc'
-                  = Spec.accumulating_ntt_multiply_pure
-                      (lift_poly self) (lift_poly rhs)
-                      (lift_accumulator_i32 accumulator) ⌝ ⦄ := by
-  sorry
-
 /-! ## §L7 — matrix-level targets (4 theorems).
 
     These are the ultimate FC obligations: the impl matrix functions
