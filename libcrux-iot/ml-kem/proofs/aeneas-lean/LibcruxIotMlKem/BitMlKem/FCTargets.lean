@@ -11355,7 +11355,11 @@ theorem inv_ntt_layer_int_vec_step_reduce_fc
                     (lift_chunk (coefficients.val[b.val]!))
                     (lift_fe_mont zeta_r)
               ∧ (∀ c : Nat, c < 16 → c ≠ a.val → c ≠ b.val →
-                  p.1.val[c]! = coefficients.val[c]!) ⌝ ⦄ := by
+                  p.1.val[c]! = coefficients.val[c]!)
+              ∧ (∀ k : Nat, k < 16 →
+                  ((p.1.val[a.val]!).elements.val[k]!).val.natAbs ≤ 3328)
+              ∧ (∀ k : Nat, k < 16 →
+                  ((p.1.val[b.val]!).elements.val[k]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
   -- Setup: lengths.
   have h_coef_len : coefficients.length = 16 := Std.Array.length_eq _
   -- Bind shorthand for the two source chunks.
@@ -11644,8 +11648,8 @@ theorem inv_ntt_layer_int_vec_step_reduce_fc
     rw [h_upd_b]
     simp only [Aeneas.Std.bind_tc_ok]
   apply triple_of_ok_fc h_body
-  -- Now prove the 3-conjunct post.
-  refine ⟨?_, ?_, ?_⟩
+  -- Now prove the 5-conjunct post.
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
   · -- (a) lift_chunk c2[a] = chunk_inv_pair_butterfly_a_pure (lift_chunk chunk_a) (lift_chunk chunk_b).
     -- c2 = c1.set b scratch7; at index a, since a ≠ b, c2[a] = c1[a] = scratch3.
     show lift_chunk (c2.val[a.val]!) = _
@@ -11987,6 +11991,31 @@ theorem inv_ntt_layer_int_vec_step_reduce_fc
       simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
         Aeneas.Std.Array.getElem!_Nat_set_ne coefficients a c scratch3 (fun h => hca h.symm)
     rw [h_step1, h_step2]
+  · -- (d) Chunk a bound: c2[a] = scratch3 (Barrett-reduced) → ≤ 3328.
+    intro k hk
+    show ((c2.val[a.val]!).elements.val[k]!).val.natAbs ≤ 3328
+    have h_ne_ba : b.val ≠ a.val := fun h => h_ne h.symm
+    have h_c2_a : c2.val[a.val]! = scratch3 := by
+      show (c1.set b scratch7).val[a.val]! = scratch3
+      have h_step1 : (c1.set b scratch7).val[a.val]! = c1.val[a.val]! := by
+        simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+          Aeneas.Std.Array.getElem!_Nat_set_ne c1 b a.val scratch7 h_ne_ba
+      have h_step2 : c1.val[a.val]! = scratch3 := by
+        show (coefficients.set a scratch3).val[a.val]! = scratch3
+        simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+          Aeneas.Std.Array.getElem!_Nat_set_eq coefficients a a.val scratch3
+            ⟨rfl, by rw [h_coef_len]; exact h_a⟩
+      rw [h_step1, h_step2]
+    rw [h_c2_a]; exact h_s3_bnd k hk
+  · -- (e) Chunk b bound: c2[b] = scratch7 (Mont-multiplied by zeta ≤ 1664) → ≤ 3328.
+    intro k hk
+    show ((c2.val[b.val]!).elements.val[k]!).val.natAbs ≤ 3328
+    have h_c2_b : c2.val[b.val]! = scratch7 := by
+      show (c1.set b scratch7).val[b.val]! = scratch7
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+        Aeneas.Std.Array.getElem!_Nat_set_eq c1 b b.val scratch7
+          ⟨rfl, by rw [h_c1_len]; exact h_b⟩
+    rw [h_c2_b]; exact (h_s7_per k hk).1
 
 /-! ### L3i.5 — `invert_ntt_at_layer_4_plus` driver (Task H.1).
 
@@ -12133,7 +12162,7 @@ private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc
       exact h_pre_b k.val h_lt ℓ hℓ
     have h_zeta_bnd : z.val.natAbs ≤ 1664 := h_z_bd
     -- Apply the H.0 keystone.
-    obtain ⟨r_pair, h_r_eq, h_r_a, h_r_b, h_r_undone⟩ :=
+    obtain ⟨r_pair, h_r_eq, h_r_a, h_r_b, h_r_undone, _h_r_bnd_a, _h_r_bnd_b⟩ :=
       triple_exists_ok_fc (inv_ntt_layer_int_vec_step_reduce_fc
         acc.1.coefficients i i1 acc.2 z h_i_lt_16 h_i1_lt_16 h_i_ne_i1
         h_zeta_bnd h_acc_at_i_bnd h_acc_at_i1_bnd)
