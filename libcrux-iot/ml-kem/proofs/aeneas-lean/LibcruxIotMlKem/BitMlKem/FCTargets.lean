@@ -876,6 +876,22 @@ noncomputable def Spec.invert_ntt_layer_4_plus_pure
       Spec.chunk_inv_at_layer_4_plus_pure chunks0 layer zeta_fn c))
       (by simp))
 
+/-- Pure projection of `invert_ntt.invert_ntt_montgomery` top-level composer
+    (Funs.lean:451). Initial `zeta_i = 128` (= `COEFFICIENTS_IN_RING_ELEMENT / 2`).
+    Composes seven layers in inverse order: layer 1, 2, 3, 4_plus(4),
+    4_plus(5), 4_plus(6), 4_plus(7). zeta_i thread:
+    `128 → 64 → 32 → 16 → 8 → 4 → 2 → 1` (final, discarded). -/
+noncomputable def Spec.invert_ntt_montgomery_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  let p1 := Spec.invert_ntt_layer_1_pure p 128#usize
+  let p2 := Spec.invert_ntt_layer_2_pure p1 64#usize
+  let p3 := Spec.invert_ntt_layer_3_pure p2 32#usize
+  let p4 := Spec.invert_ntt_layer_4_plus_pure p3 16#usize 4#usize
+  let p5 := Spec.invert_ntt_layer_4_plus_pure p4 8#usize 5#usize
+  let p6 := Spec.invert_ntt_layer_4_plus_pure p5 4#usize 6#usize
+  Spec.invert_ntt_layer_4_plus_pure p6 2#usize 7#usize
+
 /-- Pure projection of `polynomial.PolynomialRingElement.accumulating_ntt_multiply`:
     16 chunks of accumulating NTT-multiplication. For chunk k ∈ {0..15},
     applies `chunk_accumulating_ntt_multiply_pure` with the 4 canonical-domain
@@ -13182,6 +13198,39 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
     · have hP : L3i_4_plus_outer_FC.step_post re zeta_i step_vec i_end k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L3i_4_plus_outer_FC.step_post] using hP
+
+/-! ### L3i.6 — `invert_ntt_montgomery` composer (Task I).
+
+    Top-level inverse-NTT composer. 7-step bind chain through the closed
+    layer FC equations (F + G.2 + G.3 + H.1 instantiated at 4 different
+    layer values). Closest yardstick: forward `ntt_binomially_sampled_ring_element_fc`
+    @ FCTargets:9935 (~247 LOC).
+
+    Impl (Funs.lean:451):
+    ```
+    let zeta_i := 256 / 2 = 128
+    let (zeta_i1, re1)         := invert_ntt_at_layer_1 portable zeta_i re
+    let (zeta_i2, re2)         := invert_ntt_at_layer_2 portable zeta_i1 re1
+    let (zeta_i3, re3)         := invert_ntt_at_layer_3 portable zeta_i2 re2
+    let (zeta_i4, re4, sc1)    := invert_ntt_at_layer_4_plus portable zeta_i3 re3 4 sc
+    let (zeta_i5, re5, sc2)    := invert_ntt_at_layer_4_plus portable zeta_i4 re4 5 sc1
+    let (zeta_i6, re6, sc3)    := invert_ntt_at_layer_4_plus portable zeta_i5 re5 6 sc2
+    let (_,       re7, sc4)    := invert_ntt_at_layer_4_plus portable zeta_i6 re6 7 sc3
+    ok (re7, sc4)
+    ```
+
+    zeta_i thread: 128 → 64 → 32 → 16 → 8 → 4 → 2 → 1. -/
+@[spec]
+theorem invert_ntt_montgomery_fc
+    {K : Std.Usize}
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.invert_ntt_montgomery
+      K (vectortraitsOperationsInst := portable_ops_inst) re scratch
+    ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.invert_ntt_montgomery_pure (lift_poly re) ⌝ ⦄ := by
+  sorry
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
