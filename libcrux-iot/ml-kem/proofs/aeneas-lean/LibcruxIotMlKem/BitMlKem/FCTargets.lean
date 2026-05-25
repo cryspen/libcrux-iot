@@ -17526,24 +17526,26 @@ noncomputable def Spec.multiply_ntts_pure
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
   sorry
 
-/-- Pure algebraic helper for the L2.8 base-case NTT multiply.
+/-- Pure no-accumulate base-case NTT multiply (the "product" part).
 
-    Given Mont-domain lifts of `lhs`, `rhs` (16 lanes each), 4 Mont-domain
-    zetas, and a Mont-domain initial accumulator `acc`, computes the
-    resulting 16-lane accumulator after 8 binomial-pair updates. Each
-    pair `k ∈ 0..7` consumes effective zeta `[zeta0, -zeta0, zeta1,
-    -zeta1, zeta2, -zeta2, zeta3, -zeta3][k]` and updates
-    `acc[2k]   := acc[2k]   + a[2k]·b[2k]   + a[2k+1]·b[2k+1]·ζ_k`
-    `acc[2k+1] := acc[2k+1] + a[2k]·b[2k+1] + a[2k+1]·b[2k]`.
+    Given Mont-domain lifts of `lhs`, `rhs` (16 lanes each) and 4
+    Mont-domain zetas, computes the 16-lane product of the per-pair
+    degree-2 polynomial multiplies mod (X²−ζ²). Each pair `j ∈ 0..7`
+    consumes effective zeta `[zeta0, -zeta0, zeta1, -zeta1, zeta2,
+    -zeta2, zeta3, -zeta3][j]` and produces
+    `product[2j]   = a[2j]·b[2j]   + a[2j+1]·b[2j+1]·ζ_j`
+    `product[2j+1] = a[2j]·b[2j+1] + a[2j+1]·b[2j]`.
 
-    All arithmetic is in `FieldElement` (ZMod 3329). The relationship to
-    the I32-domain impl is: after per-lane Montgomery reduction (via
-    `Spec.chunk_reducing_from_i32_array_pure`), the impl's I32
-    accumulator slice matches this Mont-domain equation. -/
-noncomputable def ntt_multiply_base_case_alg
+    All arithmetic is in `FieldElement` (ZMod 3329). The accumulating
+    variant `ntt_multiply_base_case_alg` is the pointwise sum of this
+    product with an initial accumulator (`Spec.chunk_add_pure acc
+    product`). Separating the two simplifies the per-pair commute
+    (A.16/A.17/A.18 fire directly on the product) and makes the L7
+    bridge to hacspec `multiply_ntts` (non-accumulating) trivial when
+    the initial accumulator is zero. -/
+noncomputable def Spec.ntt_multiply_pure_no_acc
     (lhs_m rhs_m : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
-    (zeta0_m zeta1_m zeta2_m zeta3_m : hacspec_ml_kem.parameters.FieldElement)
-    (acc_m : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
+    (zeta0_m zeta1_m zeta2_m zeta3_m : hacspec_ml_kem.parameters.FieldElement) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   let neg := libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
   let add := libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
@@ -17552,19 +17554,30 @@ noncomputable def ntt_multiply_base_case_alg
     [zeta0_m, neg zeta0_m, zeta1_m, neg zeta1_m,
      zeta2_m, neg zeta2_m, zeta3_m, neg zeta3_m]
   Std.Array.make 16#usize
-    ((List.range 16).map (fun i =>
-      let pair_idx := i / 2
+    ((List.range 16).map (fun k =>
+      let pair_idx := k / 2
       let zeta := zetas[pair_idx]!
       let a0 := lhs_m.val[2 * pair_idx]!
       let a1 := lhs_m.val[2 * pair_idx + 1]!
       let b0 := rhs_m.val[2 * pair_idx]!
       let b1 := rhs_m.val[2 * pair_idx + 1]!
-      let old := acc_m.val[i]!
-      if i % 2 = 0 then
-        add old (add (mul a0 b0) (mul (mul a1 b1) zeta))
-      else
-        add old (add (mul a0 b1) (mul a1 b0))))
+      if k % 2 = 0 then add (mul a0 b0) (mul (mul a1 b1) zeta)
+      else add (mul a0 b1) (mul a1 b0)))
     (by simp)
+
+/-- Accumulating base-case NTT multiply: pointwise sum of the initial
+    accumulator with the no-acc product. Defined as
+    `chunk_add_pure acc (ntt_multiply_pure_no_acc ...)`. The L2.8 POST
+    anchors against this; downstream provers reduce to the product +
+    a single trivial additive step. -/
+noncomputable def ntt_multiply_base_case_alg
+    (lhs_m rhs_m : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (zeta0_m zeta1_m zeta2_m zeta3_m : hacspec_ml_kem.parameters.FieldElement)
+    (acc_m : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  Spec.chunk_add_pure acc_m
+    (Spec.ntt_multiply_pure_no_acc lhs_m rhs_m
+      zeta0_m zeta1_m zeta2_m zeta3_m)
 
 /-- Algebraic POST predicate for the L2.8 vector-level base-case NTT
     multiply. Relates the resulting I32 accumulator slice `r` to the
