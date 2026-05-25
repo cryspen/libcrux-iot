@@ -17495,6 +17495,147 @@ theorem matrix.entry_fc
   rw [getElem!_pos _ j.val h_j_lt_inner]
   rw [List.getElem_map, List.getElem_range]
 
+/-! ## §L2.8 / §L6.3 — Phase 6c NTT-multiply scaffolding.
+
+    Locked-statement skeletons for the NTT-domain multiplication chain
+    that the L7 matrix-level targets depend on. Bodies are `sorry`;
+    PROVER dispatches per the Phase 6c campaign plan in
+    `~/.claude/plans/iot-mlkem-fc-phase6c-decomposition.md` fill them.
+
+    Naming convention (distinguishes vector-level from polynomial-level
+    since both impl namespaces define `accumulating_ntt_multiply`):
+      L2.8 base   : `accumulating_ntt_multiply_fc`  (vector chunk, I32 slice)
+      L6.3 base   : `accumulating_ntt_multiply_poly_fc`  (polynomial, I32[256])
+
+    Helpers introduced here (also sorry-bodied, filled by sub-dispatches):
+      `ntt_multiply_base_case_post` : Prop predicate captured by L2.8.
+        Body (the per-pair degree-2 polynomial multiply mod (X²−ζ²)
+        equation) is filled by L2.8b (`ntt_multiply_base_case_alg`).
+      `Spec.multiply_ntts_pure` : pure projection of hacspec
+        `ntt.multiply_ntts`. Body is filled by an M.1 pre-stage
+        commit before L6.3b dispatches its FC equation.
+
+    Cache variants (`_fill_cache`, `_use_cache`) are deferred to L2.8d
+    / L6.3c sibling-adaptation dispatches and are NOT locked here. -/
+
+/-- Pure projection of `hacspec_ml_kem.ntt.multiply_ntts` (the N=256
+    polynomial NTT-domain multiply spec). Used by L6.3 locked POST as
+    the spec-side RHS. Body deferred to M.1 pre-stage of L6.3b. -/
+noncomputable def Spec.multiply_ntts_pure
+    (p1 p2 : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  sorry
+
+/-- Algebraic POST predicate for the L2.8 vector-level base-case NTT
+    multiply. Relates the resulting I32 accumulator slice `r` to the
+    inputs (`lhs`, `rhs`, 4 zetas, initial accumulator `out`) per the
+    per-pair degree-2 polynomial multiply equation mod (X²−ζ²).
+
+    The impl chains 8 calls to `accumulating_ntt_multiply_binomials`
+    with effective zetas `[zeta0, -zeta0, zeta1, -zeta1, zeta2, -zeta2,
+    zeta3, -zeta3]` across pairs `(out[2k], out[2k+1])` for k = 0..7.
+
+    Body deferred to L2.8b dispatch (which defines the pure algebraic
+    `ntt_multiply_base_case_alg` and unfolds this predicate to its
+    equation form). Locking as Prop here preserves the FC obligation
+    shape without prematurely committing to a specific lift idiom
+    for I32 accumulator slices. -/
+noncomputable def ntt_multiply_base_case_post
+    (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 zeta2 zeta3 : Std.I16)
+    (out r : Aeneas.Std.Slice Std.I32) : Prop :=
+  sorry
+
+/-- L2.8 — `vector.portable.ntt.accumulating_ntt_multiply`: base-case
+    NTT-domain multiply on a 16-lane vector chunk.
+
+    The impl (Funs.lean:3701-3741) chains 8
+    `accumulating_ntt_multiply_binomials` calls, each accumulating one
+    coefficient pair via the degree-2 polynomial multiply mod (X²−ζ²).
+    The 4 input zetas yield 8 effective zetas with alternating
+    positive/negative signs across consecutive pair positions.
+
+    POST defers algebraic shape to `ntt_multiply_base_case_post`.
+    Preconditions: input chunks canonical (`natAbs ≤ 3328`), zetas
+    bounded by the table range (`natAbs ≤ 1664`), accumulator slice
+    length 16 (so the 8 pair indices 0..15 are all in range).
+
+    [F*-port: Vector.Portable.Ntt.ntt_multiply_binomials + ntt_multiply
+     (lines 432-584; Chunk.fst:587-625 commute lemma).] -/
+@[spec]
+theorem accumulating_ntt_multiply_fc
+    (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (out : Aeneas.Std.Slice Std.I32)
+    (zeta0 zeta1 zeta2 zeta3 : Std.I16)
+    (h_out_len : out.length = 16)
+    (h_lhs : ∀ j : Fin 16, (lhs.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_rhs : ∀ j : Fin 16, (rhs.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_zeta0 : zeta0.val.natAbs ≤ 1664)
+    (h_zeta1 : zeta1.val.natAbs ≤ 1664)
+    (h_zeta2 : zeta2.val.natAbs ≤ 1664)
+    (h_zeta3 : zeta3.val.natAbs ≤ 1664) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply
+      lhs rhs out zeta0 zeta1 zeta2 zeta3
+    ⦃ ⇓ r => ⌜ r.length = 16 ∧
+              ntt_multiply_base_case_post lhs rhs
+                zeta0 zeta1 zeta2 zeta3 out r ⌝ ⦄ := by
+  sorry
+
+/-- Algebraic POST predicate for the L6.3 polynomial-level NTT
+    multiply. Relates the resulting I32 accumulator array `r` to the
+    polynomial inputs and the initial accumulator state, anchored
+    against `Spec.multiply_ntts_pure (lift_poly myself) (lift_poly rhs)`.
+
+    Body deferred to L6.3b dispatch — the M.1 pre-stage defines the
+    bridge between the I32 accumulator and the FE polynomial (via
+    the existing L1.10 `reducing_from_i32_array` chain at FCTargets
+    ~17272), then anchors via `Spec.multiply_ntts_pure`.
+
+    Locking as Prop avoids prematurely committing to a specific lift
+    idiom for `Std.Array I32 256` (no such lift function exists yet
+    in the lift tower; design happens during L6.3b). -/
+noncomputable def accumulating_ntt_multiply_poly_post
+    (myself rhs : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (accumulator r : Std.Array Std.I32 256#usize) : Prop :=
+  sorry
+
+/-- L6.3 — `polynomial.PolynomialRingElement.accumulating_ntt_multiply`:
+    polynomial-level NTT-domain multiply. Wraps L2.8 across all 16
+    vector chunks, computing the running sum into a 256-element I32
+    accumulator (one degree-2 polynomial multiply per chunk).
+
+    The impl (Funs.lean:1094-1104) iterates 16 times over
+    `vectortraitsOperationsInst.accumulating_ntt_multiply`, slicing
+    the accumulator as `[i*16 .. (i+1)*16]` per iteration and reading
+    zetas from `polynomial.zeta(64 + 4i + {0,1,2,3})`.
+
+    POST defers algebraic shape to `accumulating_ntt_multiply_poly_post`.
+    Preconditions: input polys canonical (all coefficients
+    `natAbs ≤ 3328`).
+
+    [F*-port: Libcrux_ml_kem.Polynomial.ntt_multiply (Polynomial.fst:
+     853-915). WARNING: upstream `lemma_ntt_multiply_chunk_commutes`
+     (Chunk.fst:1311) is `assume val` — Lean must PROVE the
+     per-vector wrap (L6.3a sub-unit).] -/
+@[spec]
+theorem accumulating_ntt_multiply_poly_fc
+    (myself rhs : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (accumulator : Std.Array Std.I32 256#usize)
+    (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
+        ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
+        ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply
+      (vectortraitsOperationsInst := portable_ops_inst)
+      myself rhs accumulator
+    ⦃ ⇓ r => ⌜ accumulating_ntt_multiply_poly_post
+                myself rhs accumulator r ⌝ ⦄ := by
+  sorry
+
 /-! ## §L7 — matrix-level targets (4 theorems).
 
     These are the ultimate FC obligations: the impl matrix functions
@@ -17624,12 +17765,14 @@ theorem compute_message_fc
       §L1 — 10
       §L2 — 5
       §L3 — 4  (four PortableVector-specialised)
-      §L6 — 6  (L6.1, L6.2, L6.4, L6.5, L6.6, L6.7 — L6.3 documented as
-                "absorbed into L6.{4,5,6} via the fused `add_*_reduce` impls")
+      §L6 — 6  (L6.1, L6.2, L6.4, L6.5, L6.6, L6.7)
+      §L2.8 — 1 (NTT-multiply vector base case, Phase 6c scaffold)
+      §L6.3 — 1 (NTT-multiply polynomial wrapper, Phase 6c scaffold)
       §L7 — 4
 
-    Total theorems: 33.
-    Total `sorry`s: 33 (one per theorem) + ~25 helper-def bodies.
+    Total theorems: 35.
+    Open sorries: 11 proof-level (= 2 prior def stubs + 3 Phase 6c def
+    stubs + 2 Phase 6c theorem bodies + 4 L7 theorem bodies).
 -/
 
 end libcrux_iot_ml_kem.BitMlKem.FCTargets
