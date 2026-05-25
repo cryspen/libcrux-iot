@@ -547,6 +547,25 @@ noncomputable def Spec.chunk_inv_ntt_step_pure
     libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure diff zeta
   (a.set i new_i).set j new_j
 
+/-- Pure projection of `vector.portable.ntt.inv_ntt_layer_1_step` (Funs.lean:3539):
+    8 sequential `Spec.chunk_inv_ntt_step_pure` calls at disjoint lane pairs
+    `(0,2)(1,3)(4,6)(5,7)(8,10)(9,11)(12,14)(13,15)` with zetas
+    `z0,z0,z1,z1,z2,z2,z3,z3`. Mirrors `Spec.chunk_ntt_layer_1_step_pure`
+    (FCTargets:482) on the same lane-pair sequence but with the inverse
+    butterfly direction (`chunk_inv_ntt_step_pure` vs `chunk_ntt_step_pure`). -/
+noncomputable def Spec.chunk_inv_ntt_layer_1_step_pure
+    (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (z0 z1 z2 z3 : hacspec_ml_kem.parameters.FieldElement) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  let a1 := Spec.chunk_inv_ntt_step_pure a  z0 0#usize  2#usize
+  let a2 := Spec.chunk_inv_ntt_step_pure a1 z0 1#usize  3#usize
+  let a3 := Spec.chunk_inv_ntt_step_pure a2 z1 4#usize  6#usize
+  let a4 := Spec.chunk_inv_ntt_step_pure a3 z1 5#usize  7#usize
+  let a5 := Spec.chunk_inv_ntt_step_pure a4 z2 8#usize 10#usize
+  let a6 := Spec.chunk_inv_ntt_step_pure a5 z2 9#usize 11#usize
+  let a7 := Spec.chunk_inv_ntt_step_pure a6 z3 12#usize 14#usize
+  Spec.chunk_inv_ntt_step_pure a7 z3 13#usize 15#usize
+
 /-- Pure accumulating NTT-multiply at the chunk level. Mirrors the impl
     `vector.portable.ntt.accumulating_ntt_multiply` (Funs.lean:3701),
     which fans out 8 calls of `accumulating_ntt_multiply_binomials` with
@@ -4364,6 +4383,32 @@ theorem inv_ntt_step_fc
         rw [List.getElem_set_ne (Ne.symm h_eq_i)]
         rw [List.getElem_set_ne (Ne.symm h_eq_i)]
         rw [List.getElem_map]
+
+/-! ### L2.9 — `inv_ntt_layer_1_step` (FC).
+
+    Phase 6d layer-1 vector-level step. Mirrors `ntt_layer_1_step_fc`
+    (FCTargets:3670) on the same lane-pair sequence
+    `(0,2)(1,3)(4,6)(5,7)(8,10)(9,11)(12,14)(13,15)` with zetas
+    `z0,z0,z1,z1,z2,z2,z3,z3` — only the butterfly direction differs.
+    Chains 8 `inv_ntt_step_fc` (FCTargets:4136) calls; the PROVER will
+    likely introduce a private `inv_ntt_step_pair_fc` helper exposing
+    both the `lift_chunk` equation AND the unchanged-lane preservation
+    (mirror of `ntt_step_pair_fc` @ FCTargets:3440). -/
+
+/-- L2.9 — `inv_ntt_layer_1_step`: vector-level layer-1 inverse step.
+    Maps `lift_chunk` of the impl output to `Spec.chunk_inv_ntt_layer_1_step_pure`
+    applied to `lift_chunk` of the input and the canonical-domain zetas. -/
+@[spec]
+theorem inv_ntt_layer_1_step_fc
+    (vec : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (z0 z1 z2 z3 : Std.I16) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.inv_ntt_layer_1_step vec z0 z1 z2 z3
+    ⦃ ⇓ r => ⌜ lift_chunk r
+                = Spec.chunk_inv_ntt_layer_1_step_pure (lift_chunk vec)
+                    (lift_fe_mont z0) (lift_fe_mont z1)
+                    (lift_fe_mont z2) (lift_fe_mont z3) ⌝ ⦄ := by
+  sorry
 
 /-! ## §L3 — NTT driver loops (5 theorems). -/
 
