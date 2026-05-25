@@ -17603,10 +17603,21 @@ noncomputable def ntt_multiply_base_case_post
     POST defers algebraic shape to `ntt_multiply_base_case_post`.
     Preconditions: input chunks canonical (`natAbs ≤ 3328`), zetas
     bounded by the table range (`natAbs ≤ 1664`), accumulator slice
-    length 16 (so the 8 pair indices 0..15 are all in range).
+    length 16 (so the 8 pair indices 0..15 are all in range), AND
+    each accumulator lane bounded by `2^30` (wrap-protection for the
+    8 `wrapping_add` calls — per-lane delta is ≤ 2^25 so output stays
+    well within I32 range; `2^30` headroom supports ~32 chained calls).
+
+    POST adds a relative bound conjunct (`|r[k]| ≤ |out[k]| + 2^25`)
+    so callers (L6.3, then L7) can chain L2.8 invocations without
+    losing track of the accumulator's I32 bound. Mirrors the Phase 6d
+    inverse-NTT bound-infra cascade (see
+    `[[project_inverse_ntt_bound_infra_asymmetry]]`).
 
     [F*-port: Vector.Portable.Ntt.ntt_multiply_binomials + ntt_multiply
-     (lines 432-584; Chunk.fst:587-625 commute lemma).] -/
+     (lines 432-584; Chunk.fst:587-625 commute lemma). F*-pre:
+     vector/portable/ntt.rs:339-345 — each accumulator lane within
+     i32 range.] -/
 @[spec]
 theorem accumulating_ntt_multiply_fc
     (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
@@ -17618,11 +17629,14 @@ theorem accumulating_ntt_multiply_fc
     (h_zeta0 : zeta0.val.natAbs ≤ 1664)
     (h_zeta1 : zeta1.val.natAbs ≤ 1664)
     (h_zeta2 : zeta2.val.natAbs ≤ 1664)
-    (h_zeta3 : zeta3.val.natAbs ≤ 1664) :
+    (h_zeta3 : zeta3.val.natAbs ≤ 1664)
+    (h_out_bnd : ∀ k : Fin 16, (out.val[k.val]!).val.natAbs ≤ 2^30) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply
       lhs rhs out zeta0 zeta1 zeta2 zeta3
     ⦃ ⇓ r => ⌜ r.length = 16 ∧
+              (∀ k : Fin 16, (r.val[k.val]!).val.natAbs
+                              ≤ (out.val[k.val]!).val.natAbs + 2^25) ∧
               ntt_multiply_base_case_post lhs rhs
                 zeta0 zeta1 zeta2 zeta3 out r ⌝ ⦄ := by
   sorry
@@ -17658,7 +17672,16 @@ noncomputable def accumulating_ntt_multiply_poly_post
 
     POST defers algebraic shape to `accumulating_ntt_multiply_poly_post`.
     Preconditions: input polys canonical (all coefficients
-    `natAbs ≤ 3328`).
+    `natAbs ≤ 3328`), AND each accumulator lane bounded by `2^30`
+    (propagates to the L2.8 per-chunk PRE — each L2.8 call's `out`
+    slice is the corresponding 16-lane window into `accumulator`).
+
+    POST adds a relative bound conjunct (`|r[n]| ≤ |accumulator[n]| +
+    2^25`) propagating L2.8's relative bound through the 16-iter
+    chunk loop. Each of the 256 lanes is updated exactly once (one
+    binomial step per lane), so the per-lane delta is bounded by
+    a single L2.8 step's growth. Mirrors the Phase 6d inverse-NTT
+    bound-infra cascade.
 
     [F*-port: Libcrux_ml_kem.Polynomial.ntt_multiply (Polynomial.fst:
      853-915). WARNING: upstream `lemma_ntt_multiply_chunk_commutes`
@@ -17672,12 +17695,15 @@ theorem accumulating_ntt_multiply_poly_fc
     (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
         ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
-        ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328) :
+        ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_acc_bnd : ∀ n : Fin 256, (accumulator.val[n.val]!).val.natAbs ≤ 2^30) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply
       (vectortraitsOperationsInst := portable_ops_inst)
       myself rhs accumulator
-    ⦃ ⇓ r => ⌜ accumulating_ntt_multiply_poly_post
+    ⦃ ⇓ r => ⌜ (∀ n : Fin 256, (r.val[n.val]!).val.natAbs
+                                ≤ (accumulator.val[n.val]!).val.natAbs + 2^25) ∧
+              accumulating_ntt_multiply_poly_post
                 myself rhs accumulator r ⌝ ⦄ := by
   sorry
 
