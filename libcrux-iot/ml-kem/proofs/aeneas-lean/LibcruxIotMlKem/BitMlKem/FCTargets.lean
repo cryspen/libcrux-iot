@@ -769,6 +769,39 @@ noncomputable def Spec.invert_ntt_layer_1_pure
         (Spec.zeta_at (zeta_i.val - 4 * k - 4))))
       (by simp))
 
+/-- Pure projection of `invert_ntt.invert_ntt_at_layer_2` driver loop
+    (Funs.lean:253). 16 chunks; for chunk `k ∈ {0..15}` reads 2 zetas at
+    Mont-table indices `[zeta_i - 2k - 1, zeta_i - 2k - 2]` (decreasing)
+    and applies `chunk_inv_ntt_layer_2_step_pure`. The impl decrements
+    `zeta_i` by 2 per chunk, so indices span `[zeta_i - 32 .. zeta_i - 1]`.
+    Natural composer entry: `zeta_i = 32`, giving indices `[0..31]`. -/
+noncomputable def Spec.invert_ntt_layer_2_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (zeta_i : Std.Usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_inv_ntt_layer_2_step_pure (Spec.chunk_at p k)
+        (Spec.zeta_at (zeta_i.val - 2 * k - 1))
+        (Spec.zeta_at (zeta_i.val - 2 * k - 2))))
+      (by simp))
+
+/-- Pure projection of `invert_ntt.invert_ntt_at_layer_3` driver loop
+    (Funs.lean:302). 16 chunks; for chunk `k ∈ {0..15}` reads 1 zeta at
+    Mont-table index `zeta_i - k - 1` (decreasing) and applies
+    `chunk_inv_ntt_layer_3_step_pure`. The impl decrements `zeta_i` by 1
+    per chunk, so indices span `[zeta_i - 16 .. zeta_i - 1]`. Natural
+    composer entry: `zeta_i = 16`, giving indices `[0..15]`. -/
+noncomputable def Spec.invert_ntt_layer_3_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (zeta_i : Std.Usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_inv_ntt_layer_3_step_pure (Spec.chunk_at p k)
+        (Spec.zeta_at (zeta_i.val - k - 1))))
+      (by simp))
+
 /-- Pure projection of `polynomial.PolynomialRingElement.accumulating_ntt_multiply`:
     16 chunks of accumulating NTT-multiplication. For chunk k ∈ {0..15},
     applies `chunk_accumulating_ntt_multiply_pure` with the 4 canonical-domain
@@ -10391,6 +10424,40 @@ theorem invert_ntt_at_layer_1_portable_fc
     · have hP : L3i_1_FC.step_post zeta_i re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L3i_1_FC.step_post] using hP
+
+/-- L3i.2 — `invert_ntt_at_layer_2` driver: 16-chunk loop, per-chunk
+    2-zeta-lookup decreasing `zeta_i` by 2. Mirror of `L3i.1` and forward
+    `ntt_at_layer_2_portable_fc` (FCTargets:6119). Locked POST exposes
+    `p.1.val = zeta_i.val - 32` (output zeta_i for composer chaining) +
+    `lift_poly p.2 = Spec.invert_ntt_layer_2_pure (lift_poly re) zeta_i`. -/
+@[spec high]
+theorem invert_ntt_at_layer_2_portable_fc
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_2
+      (vectortraitsOperationsInst := portable_ops_inst) zeta_i re
+    ⦃ ⇓ p => ⌜ p.1.val = zeta_i.val - 32
+              ∧ lift_poly p.2 = Spec.invert_ntt_layer_2_pure (lift_poly re) zeta_i ⌝ ⦄ := by
+  sorry
+
+/-- L3i.3 — `invert_ntt_at_layer_3` driver: 16-chunk loop, per-chunk
+    1-zeta-lookup decreasing `zeta_i` by 1. Mirror of `L3i.1` and forward
+    `ntt_at_layer_3_portable_fc` (FCTargets:6500). Locked POST exposes
+    `p.1.val = zeta_i.val - 16` (output zeta_i for composer chaining) +
+    `lift_poly p.2 = Spec.invert_ntt_layer_3_pure (lift_poly re) zeta_i`. -/
+@[spec high]
+theorem invert_ntt_at_layer_3_portable_fc
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_3
+      (vectortraitsOperationsInst := portable_ops_inst) zeta_i re
+    ⦃ ⇓ p => ⌜ p.1.val = zeta_i.val - 16
+              ∧ lift_poly p.2 = Spec.invert_ntt_layer_3_pure (lift_poly re) zeta_i ⌝ ⦄ := by
+  sorry
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
