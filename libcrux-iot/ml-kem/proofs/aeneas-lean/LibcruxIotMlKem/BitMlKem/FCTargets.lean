@@ -747,6 +747,28 @@ noncomputable def Spec.ntt_layer_3_pure
         (Spec.zeta_at (zeta_i.val + k + 1))))
       (by simp))
 
+/-- Pure projection of `invert_ntt.invert_ntt_at_layer_1` driver loop
+    (Funs.lean:202). 16 chunks; for chunk `k ∈ {0..15}` reads 4 zetas at
+    Mont-table indices `[zeta_i - 4k - 1, zeta_i - 4k - 2, zeta_i - 4k - 3,
+    zeta_i - 4k - 4]` (decreasing — opposite direction from the forward
+    layer-1 driver) and applies `chunk_inv_ntt_layer_1_step_pure`. The
+    impl initialises `zeta_i = 64` and decrements 4 per chunk, so the
+    indices read across all 16 chunks span `[zeta_i - 64 .. zeta_i - 1]`.
+    For the natural composer (top-level invert_ntt_montgomery) `zeta_i =
+    64`, giving indices `[0..63]`. -/
+noncomputable def Spec.invert_ntt_layer_1_pure
+    (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (zeta_i : Std.Usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_inv_ntt_layer_1_step_pure (Spec.chunk_at p k)
+        (Spec.zeta_at (zeta_i.val - 4 * k - 1))
+        (Spec.zeta_at (zeta_i.val - 4 * k - 2))
+        (Spec.zeta_at (zeta_i.val - 4 * k - 3))
+        (Spec.zeta_at (zeta_i.val - 4 * k - 4))))
+      (by simp))
+
 /-- Pure projection of `polynomial.PolynomialRingElement.accumulating_ntt_multiply`:
     16 chunks of accumulating NTT-multiplication. For chunk k ∈ {0..15},
     applies `chunk_accumulating_ntt_multiply_pure` with the 4 canonical-domain
@@ -9895,6 +9917,42 @@ theorem poly_barrett_reduce_fc
     · have hP : L6_1_FC.step_post self k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L6_1_FC.step_post] using hP
+
+/-! ## §L3i — Inverse-NTT driver loops (Phase 6d).
+
+    Mirror of §L3 for the inverse direction. Each `invert_ntt_at_layer_N`
+    is a 16-iter loop over `round ∈ [0, 16)` that DECREMENTS `zeta_i` by
+    `4` (layer 1), `2` (layer 2), or `1` (layer 3) per chunk. Layer 4+
+    is a nested cross-chunk butterfly (deferred to Task H). Each chunk
+    dispatches to the corresponding `inv_ntt_layer_N_step_fc` (FCTargets
+    L2.9-11, just closed in Phase 6d Task E).
+
+    Top-level composer `invert_ntt_montgomery` (Task I) calls these in
+    sequence: layer 1 with `zeta_i = 64`, layer 2 with `zeta_i = 32`,
+    layer 3 with `zeta_i = 16`, etc. The FC posts expose both the
+    output `zeta_i.val` (so the composer can chain) and the
+    `Spec.invert_ntt_layer_N_pure` equation. -/
+
+/-- L3i.1 — `invert_ntt_at_layer_1` driver: 16-chunk loop, per-chunk
+    4-zeta-lookup decreasing `zeta_i` by 4. Post: `p.1.val = zeta_i.val - 64`
+    (the output zeta_i, for composition) and `lift_poly p.2 =
+    Spec.invert_ntt_layer_1_pure (lift_poly re) zeta_i`.
+
+    Tightening preconditions (added by the proof author): `zeta_i.val + 64 ≤ 128`
+    (so all 64 zeta lookups stay in-bounds for `polynomial.zeta`'s `< 128`
+    requirement) and per-lane bound `≤ 13312` on `re`'s chunks (preserved
+    across `inv_ntt_layer_1_step` per-chunk). -/
+@[spec high]
+theorem invert_ntt_at_layer_1_portable_fc
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_1
+      (vectortraitsOperationsInst := portable_ops_inst) zeta_i re
+    ⦃ ⇓ p => ⌜ p.1.val = zeta_i.val - 64
+              ∧ lift_poly p.2 = Spec.invert_ntt_layer_1_pure (lift_poly re) zeta_i ⌝ ⦄ := by
+  sorry
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
