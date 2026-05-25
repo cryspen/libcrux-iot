@@ -219,6 +219,49 @@ noncomputable def lift_matrix_from_seed
       (Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K) K :=
   Spec.sample_matrix_A_pure seed K
 
+/-- Matrix-from-flat-slice lift: the impl `matrix.compute_As_plus_e` takes
+    `matrix_A : Slice (PolynomialRingElement)` as a flat K·K slice (row-major).
+    We reshape it into a 2D K×K matrix of polynomials, lifting each entry via
+    `lift_poly`. Used by L7.1's locked post. Requires the caller's
+    `matrix_A.length = K.val * K.val` precondition for the indexing to be
+    in-range (out-of-range indices default to the unit poly via the
+    `Inhabited` instance). -/
+noncomputable def lift_matrix_from_slice
+    (slice : Slice
+              (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (K : Std.Usize) :
+    Std.Array
+      (Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K) K :=
+  Std.Array.make K
+    ((List.range K.val).map (fun i =>
+      Std.Array.make K
+        ((List.range K.val).map (fun j =>
+          lift_poly slice.val[i * K.val + j]!))
+        (by simp)))
+    (by simp)
+
+/-- Pure projection of the public-key deserialization producing
+    `t_as_ntt : Array (Array FE 256) K`. The impl `matrix.compute_ring_element_v`
+    consumes `public_key : Slice U8` via `chunks_exact public_key
+    BYTES_PER_RING_ELEMENT`, deserializing each chunk into a ring element.
+    Used by L7.3's locked post. Body left `sorry` here — the explicit
+    deserialization spec is a Phase-1 obligation paralleling
+    `Spec.sample_matrix_A_pure`. -/
+noncomputable def Spec.t_as_ntt_from_public_key_pure
+    (public_key : Slice Std.U8) (K : Std.Usize) :
+    Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K :=
+  sorry
+
+/-- Public-key-bytes lift wrapping `Spec.t_as_ntt_from_public_key_pure`.
+    The impl `matrix.compute_ring_element_v` deserializes `public_key` into
+    a vector of ring elements; the hacspec spec receives this vector
+    pre-deserialized as its first argument. -/
+noncomputable def lift_t_as_ntt_from_public_key
+    (public_key : Slice Std.U8) (K : Std.Usize) :
+    Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K :=
+  Spec.t_as_ntt_from_public_key_pure public_key K
+
 /-! ## §0.5 Spec `_pure` aliases needed beyond `SpecPure.lean`.
 
     `SpecPure.lean` already provides:
@@ -12500,9 +12543,7 @@ theorem compute_As_plus_e_fc
       (vectortraitsOperationsInst := portable_ops_inst)
       t_as_ntt matrix_A s_as_ntt error_as_ntt s_cache accumulator
     ⦃ ⇓ p => ⌜ hacspec_ml_kem.matrix.compute_As_plus_e
-                  (lift_matrix (sorry : Std.Array (Std.Array
-                    (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-                      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K) K))
+                  (lift_matrix_from_slice matrix_A K)
                   (lift_vec s_as_ntt) (lift_vec error_as_ntt)
                 = .ok (lift_vec p.1) ⌝ ⦄ := by
   sorry
@@ -12566,8 +12607,7 @@ theorem compute_ring_element_v_fc
       public_key t_as_ntt_entry r_as_ntt error_2 message result scratch
       cache accumulator
     ⦃ ⇓ p => ⌜ hacspec_ml_kem.matrix.compute_ring_element_v
-                  (sorry : Std.Array
-                    (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K)
+                  (lift_t_as_ntt_from_public_key public_key K)
                   (lift_vec_slice r_as_ntt K)
                   (lift_poly error_2) (lift_poly message)
                 = .ok (lift_poly p.2.1) ⌝ ⦄ := by
