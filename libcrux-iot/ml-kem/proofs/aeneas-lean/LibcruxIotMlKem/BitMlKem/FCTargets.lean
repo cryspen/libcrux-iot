@@ -12943,7 +12943,8 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus
       (vectortraitsOperationsInst := portable_ops_inst)
       zeta_i re layer scratch
-    ⦃ ⇓ p => ⌜ lift_poly p.2.1 = Spec.invert_ntt_layer_4_plus_pure (lift_poly re) zeta_i layer ⌝ ⦄ := by
+    ⦃ ⇓ p => ⌜ p.1.val = zeta_i.val - 128 >>> layer.val
+              ∧ lift_poly p.2.1 = Spec.invert_ntt_layer_4_plus_pure (lift_poly re) zeta_i layer ⌝ ⦄ := by
   obtain ⟨h_layer_lo, h_layer_hi⟩ := h_layer
   obtain ⟨h_zeta_lo, h_zeta_hi⟩ := h_zeta
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus
@@ -13065,7 +13066,7 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
             r.2.1.coefficients.val[c]! = re.coefficients.val[c]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
              L3i_4_plus_outer_FC.inv] using h_inv_holds
-    obtain ⟨_h_zeta_done, h_done_a, h_done_b, _h_done_undone⟩ := h_inv
+    obtain ⟨h_zeta_done, h_done_a, h_done_b, _h_done_undone⟩ := h_inv
     -- Build chunks_arr matching the Spec layout.
     unfold Spec.invert_ntt_layer_4_plus_pure
     set chunks_arr : Std.Array
@@ -13183,7 +13184,7 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
         rw [show zeta_i.val - 1 - group = zeta_i.val - group - 1 by omega]
         exact h_done.symm
     have h_final := flatten_chunks_eq_lift_poly_fc r.2.1 chunks_arr h_chunks_len h_chunks_get
-    exact h_final.symm
+    exact ⟨by rw [h_zeta_done, h_i_end_arith], h_final.symm⟩
   · -- Step lemma dispatch.
     intro acc k _h_ge h_le hinv
     have h_step := invert_ntt_at_layer_4_plus_outer_step_lemma_fc re zeta_i step_vec i_end
