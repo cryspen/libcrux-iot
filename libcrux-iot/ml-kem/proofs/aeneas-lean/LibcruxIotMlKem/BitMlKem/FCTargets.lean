@@ -5747,25 +5747,6 @@ private theorem flatten_chunks_eq_lift_poly_fc
     exact List.getElem_map (f := lift_fe)
       (l := (re.coefficients.val[j / 16]!).elements.val)
 
-/-- L3.1 — `ntt_at_layer_1` driver: 16 iters × 8 butterflies per chunk
-    using 4 zetas per chunk from `ZETAS_TIMES_MONTGOMERY_R[zeta_i+1 .. zeta_i+4]`.
-    Output is the same poly with layer-1 NTT applied across all 16 chunks. -/
-@[spec]
-theorem ntt_at_layer_1_fc
-    {Vector : Type}
-    (inst : libcrux_iot_ml_kem.vector.traits.Operations Vector)
-    (zeta_i : Std.Usize)
-    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement Vector)
-    (initial_bound : Std.Usize) :
-    ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_ml_kem.ntt.ntt_at_layer_1 inst zeta_i re initial_bound
-    ⦃ ⇓ p => ⌜ True ⌝ ⦄ := by
-  sorry
-  -- TODO: FC equation requires `lift_poly` specialized to `Vector` —
-  -- the impl is poly-generic over `Vector`; we land the bare-true post
-  -- here as a placeholder. The PortableVector-specialised FC equation
-  -- is the one used by callers; see `ntt_at_layer_1_portable_fc` below.
-
 /-! ### L3.1.A — Loop scaffolding for `ntt_at_layer_1_portable_fc`.
 
     Strengthened FC invariant for the 16-iter driver loop. Each iteration:
@@ -17642,13 +17623,13 @@ theorem compute_message_fc
       §L0 — 4
       §L1 — 10
       §L2 — 5
-      §L3 — 5  (one is the type-generic placeholder + four PortableVector-specialised)
+      §L3 — 4  (four PortableVector-specialised)
       §L6 — 6  (L6.1, L6.2, L6.4, L6.5, L6.6, L6.7 — L6.3 documented as
                 "absorbed into L6.{4,5,6} via the fused `add_*_reduce` impls")
       §L7 — 4
 
-    Total theorems: 34.
-    Total `sorry`s: 34 (one per theorem) + ~25 helper-def bodies.
+    Total theorems: 33.
+    Total `sorry`s: 33 (one per theorem) + ~25 helper-def bodies.
 -/
 
 end libcrux_iot_ml_kem.BitMlKem.FCTargets
