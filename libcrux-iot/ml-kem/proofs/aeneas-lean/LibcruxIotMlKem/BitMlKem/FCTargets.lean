@@ -551,6 +551,20 @@ private noncomputable instance instInhabitedFEChunk_fcTargets :
     Inhabited (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :=
   ⟨Std.Array.make 16#usize (List.replicate 16 defaultFE) (by simp)⟩
 
+/-- Local `Inhabited` for the 256-FE poly-ring array, used by `[!]` indexing
+    inside `lift_matrix_from_slice`'s outer projection and the L6c
+    accumulator-lift family. -/
+private noncomputable instance instInhabitedFEPoly_fcTargets :
+    Inhabited (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :=
+  ⟨Std.Array.make 256#usize (List.replicate 256 defaultFE) List.length_replicate⟩
+
+/-- Local `Inhabited` for the K-shape array-of-polys, used by `[!]` indexing
+    inside `lift_matrix_from_slice`'s outer projection and `lift_vec`. -/
+private noncomputable instance instInhabitedFEPolyVec_fcTargets
+    {K : Std.Usize} :
+    Inhabited (Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K) :=
+  ⟨Std.Array.make K (List.replicate K.val default) List.length_replicate⟩
+
 /-- Per-index zeta lookup: project lane `i` of
     `polynomial.ZETAS_TIMES_MONTGOMERY_R` into a canonical-domain FE.
     The Mont-domain table holds `Std.I16` values; `lift_fe_mont` strips
@@ -12520,20 +12534,10 @@ theorem poly_reducing_from_i32_array_fc
     `matrix.entry K matrix i j` is a pure indexing op on a flat K·K slice
     of polynomial-ring elements. The FC equation lifts the result via
     `lift_poly` and matches the (i, j)-th entry of `lift_matrix_from_slice`
-    (defined at FCTargets.lean:229). -/
-
-/-- Local `Inhabited` instance for the 256-FE poly-ring array, needed by `[!]`
-    indexing inside `lift_matrix_from_slice`'s outer projection. -/
-private noncomputable instance instInhabitedFEPoly_fcTargets_L6_8 :
-    Inhabited (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :=
-  ⟨Std.Array.make 256#usize (List.replicate 256 defaultFE) (List.length_replicate)⟩
-
-/-- Local `Inhabited` instance for the outer K-shape array-of-polys, needed by
-    `[!]` indexing inside `lift_matrix_from_slice`'s outer projection. -/
-private noncomputable instance instInhabitedFEPolyVec_fcTargets_L6_8
-    {K : Std.Usize} :
-    Inhabited (Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K) :=
-  ⟨Std.Array.make K (List.replicate K.val default) (List.length_replicate)⟩
+    (defined at FCTargets.lean:229). Uses the file-scoped `Inhabited`
+    instances `instInhabitedFEPoly_fcTargets` and
+    `instInhabitedFEPolyVec_fcTargets` (declared next to
+    `instInhabitedFEChunk_fcTargets`). -/
 
 /-- Pure-projection side lemma for `matrix.entry`. Reduces the impl `do`-block
     to a single `Slice.index_usize` at row-major offset `i.val * K.val + j.val`,
