@@ -11972,6 +11972,41 @@ theorem inv_ntt_layer_int_vec_step_reduce_fc
         Aeneas.Std.Array.getElem!_Nat_set_ne coefficients a c scratch3 (fun h => hca h.symm)
     rw [h_step1, h_step2]
 
+/-! ### L3i.5 — `invert_ntt_at_layer_4_plus` driver (Task H.1).
+
+    Nested-loop driver for the inverse-NTT cross-chunk butterflies at
+    layers 4-7. Mirror of forward `ntt_at_layer_4_plus_portable_fc`
+    (FCTargets:9138) with:
+    - INVERSE butterfly direction (uses `chunk_inv_pair_butterfly_{a,b}_pure`
+      instead of forward's `chunk_pair_butterfly_{a,b}_pure`).
+    - zeta_i DECREMENTS (zeta_fn group := `Spec.zeta_at (zeta_i - 1 - group)`).
+    - Dispatches to closed `inv_ntt_layer_int_vec_step_reduce_fc`
+      (Task H.0 @ FCTargets:11318) for each inner butterfly.
+
+    Expected internal structure (PROVER's responsibility):
+    - `namespace L3i_4_plus_FC` (mirror forward `L3_4_plus_outer_FC` /
+      `L3_4_plus_inner_FC` at FCTargets:~7800-8100). Acc tracks both the
+      modified poly and the scratch; inv records per-(round, j) FC
+      equations for processed chunks via `chunk_inv_pair_butterfly_*_pure`
+      plus unchanged-tail.
+    - `private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc`
+      (mirror forward `ntt_at_layer_4_plus_inner_step_lemma_fc` @ ~8097).
+    - `private theorem invert_ntt_at_layer_4_plus_outer_step_lemma_fc`
+      (mirror forward `ntt_at_layer_4_plus_outer_step_lemma_fc` @ ~8648). -/
+@[spec high]
+theorem invert_ntt_at_layer_4_plus_portable_fc
+    (zeta_i : Std.Usize)
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (layer : Std.Usize)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus
+      (vectortraitsOperationsInst := portable_ops_inst)
+      zeta_i re layer scratch
+    ⦃ ⇓ p => ⌜ lift_poly p.2.1 = Spec.invert_ntt_layer_4_plus_pure (lift_poly re) zeta_i layer ⌝ ⦄ := by
+  sorry
+
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
 
