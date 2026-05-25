@@ -13714,17 +13714,165 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
     ```
 
     zeta_i thread: 128 → 64 → 32 → 16 → 8 → 4 → 2 → 1. -/
+set_option maxHeartbeats 16000000 in
 @[spec]
 theorem invert_ntt_montgomery_fc
     {K : Std.Usize}
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3328) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_montgomery
       K (vectortraitsOperationsInst := portable_ops_inst) re scratch
     ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.invert_ntt_montgomery_pure (lift_poly re) ⌝ ⦄ := by
-  sorry
+  -- Tighter `h_bnd_loose ≤ 13312` derived from the canonical `h_bnd ≤ 3328`.
+  have h_bnd_loose : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312 := by
+    intro chunk hc k hk
+    have := h_bnd chunk hc k hk
+    omega
+  -- =============================================================
+  -- Step 0: resolve `let zeta_i ← constants.COEFFICIENTS_IN_RING_ELEMENT / 2`
+  --         = `256#usize / 2#usize = .ok 128#usize`.
+  -- =============================================================
+  have h_div : (libcrux_iot_ml_kem.constants.COEFFICIENTS_IN_RING_ELEMENT
+                  / (2#usize : Std.Usize) : Result Std.Usize)
+                = .ok (128#usize : Std.Usize) := by
+    unfold libcrux_iot_ml_kem.constants.COEFFICIENTS_IN_RING_ELEMENT
+    have h_2_nz : ((2#usize : Std.Usize).val : Nat) ≠ 0 := by decide
+    obtain ⟨z, hz_eq, hz_v⟩ :=
+      Aeneas.Std.UScalar.div_spec (256#usize : Std.Usize) h_2_nz
+    have hz_val : (↑z : Nat) = 128 := by rw [hz_v]; decide
+    have hz_eq128 : z = (128#usize : Std.Usize) := by
+      apply Aeneas.Std.UScalar.eq_of_val_eq
+      show z.val = (128#usize : Std.Usize).val
+      rw [hz_val]; decide
+    rw [hz_eq, hz_eq128]
+  -- =============================================================
+  -- Step 1: invert_ntt_at_layer_1. zeta_i = 128 → 64. bound stays ≤ 3328.
+  -- =============================================================
+  obtain ⟨⟨zeta_i1, re1⟩, h1_eq, h1_zout, h1_fc, h1_bnd⟩ :=
+    triple_exists_ok_fc
+      (invert_ntt_at_layer_1_portable_fc (128#usize : Std.Usize) re
+        h_bnd_loose h_bnd (by decide) (by decide))
+  dsimp only at h1_zout h1_fc h1_bnd
+  have h_zeta_i1 : zeta_i1.val = 64 := by rw [h1_zout]; decide
+  -- =============================================================
+  -- Step 2: invert_ntt_at_layer_2. zeta_i = 64 → 32. bound stays ≤ 3328.
+  -- =============================================================
+  have h_re1_loose : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re1.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312 := by
+    intro chunk hc k hk
+    have := h1_bnd chunk hc k hk
+    omega
+  obtain ⟨⟨zeta_i2, re2⟩, h2_eq, h2_zout, h2_fc, h2_bnd⟩ :=
+    triple_exists_ok_fc
+      (invert_ntt_at_layer_2_portable_fc zeta_i1 re1
+        h_re1_loose h1_bnd (by rw [h_zeta_i1]; decide)
+        (by rw [h_zeta_i1]; decide))
+  dsimp only at h2_zout h2_fc h2_bnd
+  have h_zeta_i2 : zeta_i2.val = 32 := by rw [h2_zout, h_zeta_i1]
+  -- =============================================================
+  -- Step 3: invert_ntt_at_layer_3. zeta_i = 32 → 16. bound stays ≤ 3328.
+  -- =============================================================
+  have h_re2_loose : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re2.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312 := by
+    intro chunk hc k hk
+    have := h2_bnd chunk hc k hk
+    omega
+  obtain ⟨⟨zeta_i3, re3⟩, h3_eq, h3_zout, h3_fc, h3_bnd⟩ :=
+    triple_exists_ok_fc
+      (invert_ntt_at_layer_3_portable_fc zeta_i2 re2
+        h_re2_loose h2_bnd (by rw [h_zeta_i2]; decide)
+        (by rw [h_zeta_i2]; decide))
+  dsimp only at h3_zout h3_fc h3_bnd
+  have h_zeta_i3 : zeta_i3.val = 16 := by rw [h3_zout, h_zeta_i2]
+  -- =============================================================
+  -- Step 4: invert_ntt_at_layer_4_plus (layer = 4). zeta_i = 16 → 8.
+  -- 128 >>> 4 = 8.
+  -- =============================================================
+  obtain ⟨⟨zeta_i4, re4, scratch1⟩, h4_eq, h4_zout, h4_fc, h4_bnd⟩ :=
+    triple_exists_ok_fc
+      (invert_ntt_at_layer_4_plus_portable_fc zeta_i3 re3 (4#usize : Std.Usize) scratch
+        (by decide) h3_bnd
+        (by refine ⟨?_, ?_⟩ <;> · rw [h_zeta_i3]; decide))
+  dsimp only at h4_zout h4_fc h4_bnd
+  have h_zeta_i4 : zeta_i4.val = 8 := by
+    rw [h4_zout, h_zeta_i3]; decide
+  -- =============================================================
+  -- Step 5: invert_ntt_at_layer_4_plus (layer = 5). zeta_i = 8 → 4.
+  -- 128 >>> 5 = 4.
+  -- =============================================================
+  obtain ⟨⟨zeta_i5, re5, scratch2⟩, h5_eq, h5_zout, h5_fc, h5_bnd⟩ :=
+    triple_exists_ok_fc
+      (invert_ntt_at_layer_4_plus_portable_fc zeta_i4 re4 (5#usize : Std.Usize) scratch1
+        (by decide) h4_bnd
+        (by refine ⟨?_, ?_⟩ <;> · rw [h_zeta_i4]; decide))
+  dsimp only at h5_zout h5_fc h5_bnd
+  have h_zeta_i5 : zeta_i5.val = 4 := by
+    rw [h5_zout, h_zeta_i4]; decide
+  -- =============================================================
+  -- Step 6: invert_ntt_at_layer_4_plus (layer = 6). zeta_i = 4 → 2.
+  -- 128 >>> 6 = 2.
+  -- =============================================================
+  obtain ⟨⟨zeta_i6, re6, scratch3⟩, h6_eq, h6_zout, h6_fc, h6_bnd⟩ :=
+    triple_exists_ok_fc
+      (invert_ntt_at_layer_4_plus_portable_fc zeta_i5 re5 (6#usize : Std.Usize) scratch2
+        (by decide) h5_bnd
+        (by refine ⟨?_, ?_⟩ <;> · rw [h_zeta_i5]; decide))
+  dsimp only at h6_zout h6_fc h6_bnd
+  have h_zeta_i6 : zeta_i6.val = 2 := by
+    rw [h6_zout, h_zeta_i5]; decide
+  -- =============================================================
+  -- Step 7: invert_ntt_at_layer_4_plus (layer = 7). zeta_i = 2 → 1.
+  -- 128 >>> 7 = 1.
+  -- =============================================================
+  obtain ⟨⟨_zeta_i7, re7, scratch4⟩, h7_eq, _h7_zout, h7_fc, _h7_bnd⟩ :=
+    triple_exists_ok_fc
+      (invert_ntt_at_layer_4_plus_portable_fc zeta_i6 re6 (7#usize : Std.Usize) scratch3
+        (by decide) h6_bnd
+        (by refine ⟨?_, ?_⟩ <;> · rw [h_zeta_i6]; decide))
+  dsimp only at h7_fc
+  -- =============================================================
+  -- Compose: derive the full impl `do`-block equation by simp-folding
+  -- all step equations into the unfolded body.
+  -- =============================================================
+  have h_body :
+      libcrux_iot_ml_kem.invert_ntt.invert_ntt_montgomery K
+        (vectortraitsOperationsInst := portable_ops_inst) re scratch
+        = .ok (re7, scratch4) := by
+    unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_montgomery
+    simp [h_div, h1_eq, h2_eq, h3_eq, h4_eq, h5_eq, h6_eq, h7_eq]
+  apply triple_of_ok_fc h_body
+  -- =============================================================
+  -- Prove lift_poly equation by chaining FC equations through
+  -- `Spec.invert_ntt_montgomery_pure`.
+  -- =============================================================
+  show lift_poly re7 = Spec.invert_ntt_montgomery_pure (lift_poly re)
+  unfold Spec.invert_ntt_montgomery_pure
+  -- Identify each zeta_i with the spec's literal value.
+  have h_zeta_eq1 : zeta_i1 = (64#usize : Std.Usize) := by
+    apply Aeneas.Std.UScalar.eq_of_val_eq
+    rw [h_zeta_i1]; decide
+  have h_zeta_eq2 : zeta_i2 = (32#usize : Std.Usize) := by
+    apply Aeneas.Std.UScalar.eq_of_val_eq
+    rw [h_zeta_i2]; decide
+  have h_zeta_eq3 : zeta_i3 = (16#usize : Std.Usize) := by
+    apply Aeneas.Std.UScalar.eq_of_val_eq
+    rw [h_zeta_i3]; decide
+  have h_zeta_eq4 : zeta_i4 = (8#usize : Std.Usize) := by
+    apply Aeneas.Std.UScalar.eq_of_val_eq
+    rw [h_zeta_i4]; decide
+  have h_zeta_eq5 : zeta_i5 = (4#usize : Std.Usize) := by
+    apply Aeneas.Std.UScalar.eq_of_val_eq
+    rw [h_zeta_i5]; decide
+  have h_zeta_eq6 : zeta_i6 = (2#usize : Std.Usize) := by
+    apply Aeneas.Std.UScalar.eq_of_val_eq
+    rw [h_zeta_i6]; decide
+  rw [h7_fc, h6_fc, h5_fc, h4_fc, h3_fc, h2_fc, h1_fc,
+      h_zeta_eq1, h_zeta_eq2, h_zeta_eq3, h_zeta_eq4, h_zeta_eq5, h_zeta_eq6]
 
 /-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
     composition + barrett reduce). Projects on the poly component.
