@@ -17519,12 +17519,21 @@ theorem matrix.entry_fc
     / L6.3c sibling-adaptation dispatches and are NOT locked here. -/
 
 /-- Pure projection of `hacspec_ml_kem.ntt.multiply_ntts` (the N=256
-    polynomial NTT-domain multiply spec). Used by L6.3 locked POST as
-    the spec-side RHS. Body deferred to M.1 pre-stage of L6.3b. -/
+    polynomial NTT-domain multiply spec). The `.ok` value of the
+    hacspec `Result` is the spec polynomial; on `.fail` (unreachable
+    for canonical inputs) we default to the zero polynomial.
+
+    Used by L6.3 locked POST as the spec-side RHS, anchoring the
+    impl's I32 accumulator (after L1.10's Mont-reduce) to the hacspec
+    `multiply_ntts` projection. Composes with the L6.3a per-chunk
+    decomposition + L2.8's `Spec.chunk_reducing_from_i32_array_pure`
+    chain. -/
 noncomputable def Spec.multiply_ntts_pure
     (p1 p2 : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
-  sorry
+  match hacspec_ml_kem.ntt.multiply_ntts p1 p2 with
+  | .ok r => r
+  | _ => default
 
 /-- Pure no-accumulate base-case NTT multiply (the "product" part).
 
