@@ -185,6 +185,19 @@ noncomputable def lift_vec_slice
     ((List.range K.val).map (fun i => lift_poly v.val[i]!))
     (by simp)
 
+/-- Plain-domain lift from a 256-lane `Std.I32` accumulator to a
+    `FieldElement` poly. Each lane goes through `lift_fe_int` on its
+    `.val` (Int). Used by the L6c NTT-multiply family FC equations to
+    relate the impl-side I32 accumulator to a `FieldElement 256`-array.
+    Matches the `Spec.poly_reducing_from_i32_array_pure` lane shape
+    (FCTargets:880) — composes cleanly with L6.7. -/
+noncomputable def lift_accumulator_i32
+    (acc : Std.Array Std.I32 256#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Std.Array.make 256#usize
+    ((List.range 256).map (fun i => lift_fe_int (acc.val[i]!).val))
+    (by simp)
+
 /-- Matrix lift: `Array (Array (PolynomialRingElement) K) K → Array (Array (Array FE 256) K) K`. -/
 noncomputable def lift_matrix {K : Std.Usize}
     (m : Std.Array
@@ -534,6 +547,53 @@ noncomputable def Spec.chunk_inv_ntt_step_pure
     libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure diff zeta
   (a.set i new_i).set j new_j
 
+/-- Pure accumulating NTT-multiply at the chunk level. Mirrors the impl
+    `vector.portable.ntt.accumulating_ntt_multiply` (Funs.lean:3701),
+    which fans out 8 calls of `accumulating_ntt_multiply_binomials` with
+    alternating ±zeta:
+      pair i ∈ {0..7}, zeta_i = [z0, -z0, z1, -z1, z2, -z2, z3, -z3][i]
+    For lane pair (2i, 2i+1):
+      - acc[2i]   := acc[2i]   + a[2i]·b[2i]   + a[2i+1]·b[2i+1]·zeta_i
+      - acc[2i+1] := acc[2i+1] + a[2i]·b[2i+1] + a[2i+1]·b[2i]
+    All arithmetic in canonical `FieldElement` domain (the impl's
+    Montgomery `bj·ζ_mont → mont_reduce → bj·ζ_canonical` collapses
+    under `lift_fe_int`). -/
+noncomputable def Spec.chunk_accumulating_ntt_multiply_pure
+    (a b acc : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (z0 z1 z2 z3 : hacspec_ml_kem.parameters.FieldElement) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  let zeta_for_pair (i : Nat) : hacspec_ml_kem.parameters.FieldElement :=
+    if i = 0 then z0
+    else if i = 1 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z0
+    else if i = 2 then z1
+    else if i = 3 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z1
+    else if i = 4 then z2
+    else if i = 5 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z2
+    else if i = 6 then z3
+    else if i = 7 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z3
+    else defaultFE
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun ℓ =>
+      let i := ℓ / 2
+      let ζ := zeta_for_pair i
+      if ℓ % 2 = 0 then
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure (acc.val[ℓ]!)
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (a.val[ℓ]!) (b.val[ℓ]!))
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (a.val[ℓ + 1]!) (b.val[ℓ + 1]!))
+              ζ))
+      else
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure (acc.val[ℓ]!)
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (a.val[ℓ - 1]!) (b.val[ℓ]!))
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (a.val[ℓ]!) (b.val[ℓ - 1]!)))))
+    (by simp)
+
 /-- The PortableVector `Operations` instance used by Triples that
     target the impl monomorphised at `PortableVector`. The concrete
     instance is `vector.portable.vector_type.PortableVector.Insts.
@@ -632,6 +692,25 @@ noncomputable def Spec.ntt_layer_3_pure
     (Std.Array.make 16#usize ((List.range 16).map (fun k =>
       Spec.chunk_ntt_layer_3_step_pure (Spec.chunk_at p k)
         (Spec.zeta_at (zeta_i.val + k + 1))))
+      (by simp))
+
+/-- Pure projection of `polynomial.PolynomialRingElement.accumulating_ntt_multiply`:
+    16 chunks of accumulating NTT-multiplication. For chunk k ∈ {0..15},
+    applies `chunk_accumulating_ntt_multiply_pure` with the 4 canonical-domain
+    zetas at `Spec.zeta_at (64 + 4*k + m)` for `m ∈ {0..3}` (matching the
+    impl's `polynomial.zeta` lookups at `64 + 4*k + m` per chunk —
+    Funs.lean:1058-1069). -/
+noncomputable def Spec.accumulating_ntt_multiply_pure
+    (a b acc : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Spec.flatten_chunks
+    (Std.Array.make 16#usize ((List.range 16).map (fun k =>
+      Spec.chunk_accumulating_ntt_multiply_pure
+        (Spec.chunk_at a k) (Spec.chunk_at b k) (Spec.chunk_at acc k)
+        (Spec.zeta_at (64 + 4 * k))
+        (Spec.zeta_at (64 + 4 * k + 1))
+        (Spec.zeta_at (64 + 4 * k + 2))
+        (Spec.zeta_at (64 + 4 * k + 3))))
       (by simp))
 
 /-! ### Spec helpers for layer 4+ (cross-chunk butterflies). -/
