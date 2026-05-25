@@ -17526,6 +17526,46 @@ noncomputable def Spec.multiply_ntts_pure
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
   sorry
 
+/-- Pure algebraic helper for the L2.8 base-case NTT multiply.
+
+    Given Mont-domain lifts of `lhs`, `rhs` (16 lanes each), 4 Mont-domain
+    zetas, and a Mont-domain initial accumulator `acc`, computes the
+    resulting 16-lane accumulator after 8 binomial-pair updates. Each
+    pair `k ∈ 0..7` consumes effective zeta `[zeta0, -zeta0, zeta1,
+    -zeta1, zeta2, -zeta2, zeta3, -zeta3][k]` and updates
+    `acc[2k]   := acc[2k]   + a[2k]·b[2k]   + a[2k+1]·b[2k+1]·ζ_k`
+    `acc[2k+1] := acc[2k+1] + a[2k]·b[2k+1] + a[2k+1]·b[2k]`.
+
+    All arithmetic is in `FieldElement` (ZMod 3329). The relationship to
+    the I32-domain impl is: after per-lane Montgomery reduction (via
+    `Spec.chunk_reducing_from_i32_array_pure`), the impl's I32
+    accumulator slice matches this Mont-domain equation. -/
+noncomputable def ntt_multiply_base_case_alg
+    (lhs_m rhs_m : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (zeta0_m zeta1_m zeta2_m zeta3_m : hacspec_ml_kem.parameters.FieldElement)
+    (acc_m : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
+  let neg := libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+  let add := libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+  let mul := libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+  let zetas : List hacspec_ml_kem.parameters.FieldElement :=
+    [zeta0_m, neg zeta0_m, zeta1_m, neg zeta1_m,
+     zeta2_m, neg zeta2_m, zeta3_m, neg zeta3_m]
+  Std.Array.make 16#usize
+    ((List.range 16).map (fun i =>
+      let pair_idx := i / 2
+      let zeta := zetas[pair_idx]!
+      let a0 := lhs_m.val[2 * pair_idx]!
+      let a1 := lhs_m.val[2 * pair_idx + 1]!
+      let b0 := rhs_m.val[2 * pair_idx]!
+      let b1 := rhs_m.val[2 * pair_idx + 1]!
+      let old := acc_m.val[i]!
+      if i % 2 = 0 then
+        add old (add (mul a0 b0) (mul (mul a1 b1) zeta))
+      else
+        add old (add (mul a0 b1) (mul a1 b0))))
+    (by simp)
+
 /-- Algebraic POST predicate for the L2.8 vector-level base-case NTT
     multiply. Relates the resulting I32 accumulator slice `r` to the
     inputs (`lhs`, `rhs`, 4 zetas, initial accumulator `out`) per the
@@ -17535,16 +17575,21 @@ noncomputable def Spec.multiply_ntts_pure
     with effective zetas `[zeta0, -zeta0, zeta1, -zeta1, zeta2, -zeta2,
     zeta3, -zeta3]` across pairs `(out[2k], out[2k+1])` for k = 0..7.
 
-    Body deferred to L2.8b dispatch (which defines the pure algebraic
-    `ntt_multiply_base_case_alg` and unfolds this predicate to its
-    equation form). Locking as Prop here preserves the FC obligation
-    shape without prematurely committing to a specific lift idiom
-    for I32 accumulator slices. -/
+    Body uses `Spec.chunk_reducing_from_i32_array_pure` (per-lane
+    Montgomery reduction) to lift the I32 accumulator to Mont-domain
+    FE-array, then compares with `ntt_multiply_base_case_alg` applied
+    to the Mont-domain lifts of inputs. Mirrors the L1.10
+    `lift_poly_mont = Spec.poly_reducing_from_i32_array_pure` idiom. -/
 noncomputable def ntt_multiply_base_case_post
     (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (zeta0 zeta1 zeta2 zeta3 : Std.I16)
     (out r : Aeneas.Std.Slice Std.I32) : Prop :=
-  sorry
+  Spec.chunk_reducing_from_i32_array_pure r =
+    ntt_multiply_base_case_alg
+      (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+      (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+      (lift_fe_mont zeta2) (lift_fe_mont zeta3)
+      (Spec.chunk_reducing_from_i32_array_pure out)
 
 /-- L2.8 — `vector.portable.ntt.accumulating_ntt_multiply`: base-case
     NTT-domain multiply on a 16-lane vector chunk.
