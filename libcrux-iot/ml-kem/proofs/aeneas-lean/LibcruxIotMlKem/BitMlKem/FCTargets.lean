@@ -17783,7 +17783,51 @@ private theorem L2_8c.lift_fe_mont_neg_pure_eq
   rw [h_lhs, ← h_round_trip, h_zmod_s]
   congr 1; ring
 
-set_option maxHeartbeats 800000 in
+/-! ### ZMod 3329 projection lemmas — used by L2.8 / L6.3 / L7 closures.
+    These are pure-arithmetic facts about how `zmodOfFE` distributes
+    over the SpecPure FE operations and the lift functions. Factored
+    out of `mont_reduce_{even,odd}_fe_eq` so future closures (L6.3a/b/c,
+    L2.8d cache variants) can reuse them without inlining. -/
+
+/-- `zmodOfFE` of `Spec.mont_reduce_pure ∘ lift_fe_int`: in ZMod 3329,
+    `mont_reduce_pure (lift_fe_int v) = v · 169²` (i.e., `v · R⁻²`). -/
+private theorem L2_8c.zmodOfFE_mont_reduce_lift_fe_int (v : Int) :
+    zmodOfFE (Spec.mont_reduce_pure (lift_fe_int v))
+      = (v : ZMod 3329) * 169 * 169 := by
+  rw [mont_reduce_pure_lift_fe_int]
+  rw [zmodOfFE_feOfZMod]
+
+/-- `zmodOfFE` of `lift_fe_mont`: in ZMod 3329,
+    `lift_fe_mont x = x.val · 169` (i.e., `x · R⁻¹`). -/
+private theorem L2_8c.zmodOfFE_lift_fe_mont (x : Std.I16) :
+    zmodOfFE (lift_fe_mont x) = (x.val : ZMod 3329) * 169 := by
+  unfold lift_fe_mont
+  rw [zmodOfFE_feOfZMod]
+  rfl
+
+/-- `zmodOfFE` distributes over `FieldElement.mul_pure` in ZMod 3329. -/
+private theorem L2_8c.zmodOfFE_mul_pure
+    (a b : hacspec_ml_kem.parameters.FieldElement) :
+    zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b)
+      = zmodOfFE a * zmodOfFE b := by
+  unfold zmodOfFE
+  rw [mul_pure_val_eq]
+  rw [ZMod.natCast_mod]
+  push_cast
+  rfl
+
+/-- `zmodOfFE` distributes over `FieldElement.add_pure` in ZMod 3329. -/
+private theorem L2_8c.zmodOfFE_add_pure
+    (a b : hacspec_ml_kem.parameters.FieldElement) :
+    zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b)
+      = zmodOfFE a + zmodOfFE b := by
+  unfold zmodOfFE
+  rw [add_pure_val_eq]
+  rw [ZMod.natCast_mod]
+  push_cast
+  rfl
+
+set_option maxHeartbeats 400000 in
 /-- Mont-domain FE equation builder for the L2.8c per-pair Triple:
     if the new accumulator lane `r` (as I32) and the per-pair operands
     (as I16) satisfy the ZMod 3329 modular equation
@@ -17846,47 +17890,17 @@ private theorem L2_8c.mont_reduce_even_fe_eq
     exact h_cs
   have h_round_trip : feOfZMod (zmodOfFE s) = s :=
     feOfZMod_zmodOfFE_of_canonical s h_canon
-  -- zmodOfFE s as ZMod expression.
-  -- Step 1: unfold add_pure_val_eq twice + mul_pure_val_eq + mont_reduce_pure-lift_fe_int.
-  -- For add_pure_val_eq we need s.val.val = (lhs_arg.val.val + rhs_arg.val.val) % 3329.
-  -- We use the full chain to derive zmodOfFE s = E in ZMod q where E is a polynomial in
-  -- the lifts. Then we close LHS = feOfZMod E by rw [h_zmod].
-  -- Lemma: zmodOfFE (Spec.mont_reduce_pure (lift_fe_int v)) = (v : ZMod 3329) * 169 * 169.
-  have h_zmod_mr (v : Int) :
-      zmodOfFE (Spec.mont_reduce_pure (lift_fe_int v))
-        = (v : ZMod 3329) * 169 * 169 := by
-    rw [mont_reduce_pure_lift_fe_int]
-    rw [zmodOfFE_feOfZMod]
-  -- Lemma: zmodOfFE (lift_fe_mont x) = (x.val : ZMod 3329) * 169.
-  have h_zmod_lm (x : Std.I16) :
-      zmodOfFE (lift_fe_mont x) = (x.val : ZMod 3329) * 169 := by
-    unfold lift_fe_mont
-    rw [zmodOfFE_feOfZMod]
-    rfl
-  -- Lemma: zmodOfFE (mul_pure a b) = zmodOfFE a * zmodOfFE b in ZMod q.
-  have h_zmod_mul (a b : hacspec_ml_kem.parameters.FieldElement) :
-      zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b)
-        = zmodOfFE a * zmodOfFE b := by
-    unfold zmodOfFE
-    rw [mul_pure_val_eq]
-    rw [ZMod.natCast_mod]
-    push_cast
-    rfl
-  -- Lemma: zmodOfFE (add_pure a b) = zmodOfFE a + zmodOfFE b.
-  have h_zmod_add (a b : hacspec_ml_kem.parameters.FieldElement) :
-      zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b)
-        = zmodOfFE a + zmodOfFE b := by
-    unfold zmodOfFE
-    rw [add_pure_val_eq]
-    rw [ZMod.natCast_mod]
-    push_cast
-    rfl
+  -- Push s through the 4 zmodOfFE projection lemmas to get a pure ZMod expression.
   have h_zmod_s : zmodOfFE s
       = (out.val : ZMod 3329) * 169 * 169
         + ((ai.val : ZMod 3329) * 169 * ((bi.val : ZMod 3329) * 169)
           + ((aj.val : ZMod 3329) * 169 * ((bj.val : ZMod 3329) * 169))
             * ((zeta.val : ZMod 3329) * 169)) := by
-    simp only [hs_def, h_zmod_add, h_zmod_mr, h_zmod_mul, h_zmod_lm]
+    simp only [hs_def,
+      L2_8c.zmodOfFE_add_pure,
+      L2_8c.zmodOfFE_mont_reduce_lift_fe_int,
+      L2_8c.zmodOfFE_mul_pure,
+      L2_8c.zmodOfFE_lift_fe_mont]
   -- Push h_zmod through ZMod, then `ring` closes.
   -- Goal after rw [← h_round_trip]: feOfZMod (((r.val : Int) : ZMod 3329) * 169 * 169) = feOfZMod (zmodOfFE s).
   rw [← h_round_trip, h_zmod_s]
@@ -17936,7 +17950,7 @@ private theorem L2_8c.mont_reduce_even_fe_eq
   rw [h_expand, h_collapse]
   ring
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 /-- Odd-half version of `mont_reduce_even_fe_eq`. -/
 private theorem L2_8c.mont_reduce_odd_fe_eq
     (out r : Std.I32) (ai bi aj bj : Std.I16)
@@ -17976,30 +17990,15 @@ private theorem L2_8c.mont_reduce_odd_fe_eq
     exact h_cs
   have h_round_trip : feOfZMod (zmodOfFE s) = s :=
     feOfZMod_zmodOfFE_of_canonical s h_canon
-  have h_zmod_mr (v : Int) :
-      zmodOfFE (Spec.mont_reduce_pure (lift_fe_int v))
-        = (v : ZMod 3329) * 169 * 169 := by
-    rw [mont_reduce_pure_lift_fe_int]; rw [zmodOfFE_feOfZMod]
-  have h_zmod_lm (x : Std.I16) :
-      zmodOfFE (lift_fe_mont x) = (x.val : ZMod 3329) * 169 := by
-    unfold lift_fe_mont
-    rw [zmodOfFE_feOfZMod]
-    rfl
-  have h_zmod_mul (a b : hacspec_ml_kem.parameters.FieldElement) :
-      zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b)
-        = zmodOfFE a * zmodOfFE b := by
-    unfold zmodOfFE
-    rw [mul_pure_val_eq, ZMod.natCast_mod]; push_cast; rfl
-  have h_zmod_add (a b : hacspec_ml_kem.parameters.FieldElement) :
-      zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b)
-        = zmodOfFE a + zmodOfFE b := by
-    unfold zmodOfFE
-    rw [add_pure_val_eq, ZMod.natCast_mod]; push_cast; rfl
   have h_zmod_s : zmodOfFE s
       = (out.val : ZMod 3329) * 169 * 169
         + ((ai.val : ZMod 3329) * 169 * ((bj.val : ZMod 3329) * 169)
           + (aj.val : ZMod 3329) * 169 * ((bi.val : ZMod 3329) * 169)) := by
-    simp only [hs_def, h_zmod_add, h_zmod_mr, h_zmod_mul, h_zmod_lm]
+    simp only [hs_def,
+      L2_8c.zmodOfFE_add_pure,
+      L2_8c.zmodOfFE_mont_reduce_lift_fe_int,
+      L2_8c.zmodOfFE_mul_pure,
+      L2_8c.zmodOfFE_lift_fe_mont]
   rw [← h_round_trip, h_zmod_s]
   congr 1
   have h_inv : ((2285 : ZMod 3329)) * 169 = 1 := by decide
@@ -18034,7 +18033,32 @@ private theorem L2_8c.mont_reduce_odd_fe_eq
   rw [show ((2285 : ZMod 3329)) * (169 * 169 * 169) = 169 * 169 from by decide]
   ring
 
-set_option maxHeartbeats 16000000 in
+/-- Bound-propagation step for the L2.8c (and L2.8d) chained binomial
+    composition: given a per-pair-update relation between `prev` and
+    `next` slices (untouched lanes equal, touched lanes bounded), and
+    a universal bound on `prev`, conclude the universal bound on `next`.
+
+    Refactored from the 8-fold 16-way `interval_cases` boilerplate in
+    the original L2.8c body. Each step now uses a 4-arg invocation
+    instead of a 20-line case split. Also reusable by L2.8d cache
+    variants (same impl structure: 8 binomial-pair updates). -/
+private theorem L2_8c.bnd_universal_step
+    (prev next : Aeneas.Std.Slice Std.I32) (i : Nat) (hi : i < 8)
+    (h_prev_universal : ∀ k : Fin 16,
+      (prev.val[k.val]!).val.natAbs ≤ 2^30 + 2^25)
+    (h_unc : ∀ k : Nat, k < 16 → k ≠ 2 * i → k ≠ 2 * i + 1 →
+      next.val[k]! = prev.val[k]!)
+    (h_at_even : (next.val[2 * i]!).val.natAbs ≤ 2^30 + 2^25)
+    (h_at_odd : (next.val[2 * i + 1]!).val.natAbs ≤ 2^30 + 2^25) :
+    ∀ k : Fin 16, (next.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
+  intro k
+  by_cases h1 : k.val = 2 * i
+  · rw [show k.val = 2 * i from h1]; exact h_at_even
+  · by_cases h2 : k.val = 2 * i + 1
+    · rw [show k.val = 2 * i + 1 from h2]; exact h_at_odd
+    · rw [h_unc k.val k.isLt h1 h2]; exact h_prev_universal k
+
+set_option maxHeartbeats 8000000 in
 /-- Per-pair Triple for `accumulating_ntt_multiply_binomials`. Models the
     impl's per-pair contribution to the accumulator: reads `a[2i], a[2i+1]`,
     `b[2i], b[2i+1]`, multiplies + Montgomery-reduces to form an even and
@@ -18488,7 +18512,7 @@ private theorem accumulating_ntt_multiply_binomials_fc
     ring
 
 
-set_option maxHeartbeats 16000000 in
+set_option maxHeartbeats 4000000 in
 /-- L2.8 — `vector.portable.ntt.accumulating_ntt_multiply`: base-case
     NTT-domain multiply on a 16-lane vector chunk.
 
@@ -18619,26 +18643,9 @@ theorem accumulating_ntt_multiply_fc
     apply h_r0_unc k hk
     · rw [h_eq_e]; exact hke
     · rw [h_eq_o]; exact hko
-  have h_r0_bnd_universal : ∀ k : Fin 16, (r0.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
-    intro k
-    rcases k with ⟨k, hk⟩
-    interval_cases k
-    · exact h_r0_at_even
-    · exact h_r0_at_odd
-    · rw [h_r0_unc' 2 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨2, by decide⟩
-    · rw [h_r0_unc' 3 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨3, by decide⟩
-    · rw [h_r0_unc' 4 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨4, by decide⟩
-    · rw [h_r0_unc' 5 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨5, by decide⟩
-    · rw [h_r0_unc' 6 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨6, by decide⟩
-    · rw [h_r0_unc' 7 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨7, by decide⟩
-    · rw [h_r0_unc' 8 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨8, by decide⟩
-    · rw [h_r0_unc' 9 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨9, by decide⟩
-    · rw [h_r0_unc' 10 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨10, by decide⟩
-    · rw [h_r0_unc' 11 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨11, by decide⟩
-    · rw [h_r0_unc' 12 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨12, by decide⟩
-    · rw [h_r0_unc' 13 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨13, by decide⟩
-    · rw [h_r0_unc' 14 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨14, by decide⟩
-    · rw [h_r0_unc' 15 (by decide) (by decide) (by decide)]; exact h_out_bnd_universal ⟨15, by decide⟩
+  have h_r0_bnd_universal : ∀ k : Fin 16, (r0.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step out r0 0 (by decide) h_out_bnd_universal
+      h_r0_unc' h_r0_at_even h_r0_at_odd
 
   -- Call 1: pair 1 with nzeta0 (touches lanes 2, 3).
   obtain ⟨r1, h_r1_eq, h_r1_len, h_r1_unc, h_r1_bnd_e, h_r1_bnd_o,
@@ -18672,26 +18679,9 @@ theorem accumulating_ntt_multiply_fc
     apply h_r1_unc k hk
     · rw [h_eq_e]; exact hke
     · rw [h_eq_o]; exact hko
-  have h_r1_bnd_universal : ∀ k : Fin 16, (r1.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
-    intro k
-    rcases k with ⟨k, hk⟩
-    interval_cases k
-    · rw [h_r1_unc' 0 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨0, by decide⟩
-    · rw [h_r1_unc' 1 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨1, by decide⟩
-    · exact h_r1_at_even
-    · exact h_r1_at_odd
-    · rw [h_r1_unc' 4 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨4, by decide⟩
-    · rw [h_r1_unc' 5 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨5, by decide⟩
-    · rw [h_r1_unc' 6 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨6, by decide⟩
-    · rw [h_r1_unc' 7 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨7, by decide⟩
-    · rw [h_r1_unc' 8 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨8, by decide⟩
-    · rw [h_r1_unc' 9 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨9, by decide⟩
-    · rw [h_r1_unc' 10 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨10, by decide⟩
-    · rw [h_r1_unc' 11 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨11, by decide⟩
-    · rw [h_r1_unc' 12 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨12, by decide⟩
-    · rw [h_r1_unc' 13 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨13, by decide⟩
-    · rw [h_r1_unc' 14 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨14, by decide⟩
-    · rw [h_r1_unc' 15 (by decide) (by decide) (by decide)]; exact h_r0_bnd_universal ⟨15, by decide⟩
+  have h_r1_bnd_universal : ∀ k : Fin 16, (r1.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r0 r1 1 (by decide) h_r0_bnd_universal
+      h_r1_unc' h_r1_at_even h_r1_at_odd
 
   -- Call 2: pair 2 with zeta1 (touches lanes 4, 5).
   obtain ⟨r2, h_r2_eq, h_r2_len, h_r2_unc, h_r2_bnd_e, h_r2_bnd_o,
@@ -18727,26 +18717,9 @@ theorem accumulating_ntt_multiply_fc
     apply h_r2_unc k hk
     · rw [h_eq_e]; exact hke
     · rw [h_eq_o]; exact hko
-  have h_r2_bnd_universal : ∀ k : Fin 16, (r2.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
-    intro k
-    rcases k with ⟨k, hk⟩
-    interval_cases k
-    · rw [h_r2_unc' 0 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨0, by decide⟩
-    · rw [h_r2_unc' 1 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨1, by decide⟩
-    · rw [h_r2_unc' 2 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨2, by decide⟩
-    · rw [h_r2_unc' 3 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨3, by decide⟩
-    · exact h_r2_at_even
-    · exact h_r2_at_odd
-    · rw [h_r2_unc' 6 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨6, by decide⟩
-    · rw [h_r2_unc' 7 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨7, by decide⟩
-    · rw [h_r2_unc' 8 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨8, by decide⟩
-    · rw [h_r2_unc' 9 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨9, by decide⟩
-    · rw [h_r2_unc' 10 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨10, by decide⟩
-    · rw [h_r2_unc' 11 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨11, by decide⟩
-    · rw [h_r2_unc' 12 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨12, by decide⟩
-    · rw [h_r2_unc' 13 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨13, by decide⟩
-    · rw [h_r2_unc' 14 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨14, by decide⟩
-    · rw [h_r2_unc' 15 (by decide) (by decide) (by decide)]; exact h_r1_bnd_universal ⟨15, by decide⟩
+  have h_r2_bnd_universal : ∀ k : Fin 16, (r2.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r1 r2 2 (by decide) h_r1_bnd_universal
+      h_r2_unc' h_r2_at_even h_r2_at_odd
 
   -- Call 3: pair 3 with nzeta1 (touches lanes 6, 7).
   obtain ⟨r3, h_r3_eq, h_r3_len, h_r3_unc, h_r3_bnd_e, h_r3_bnd_o,
@@ -18784,26 +18757,9 @@ theorem accumulating_ntt_multiply_fc
     apply h_r3_unc k hk
     · rw [h_eq_e]; exact hke
     · rw [h_eq_o]; exact hko
-  have h_r3_bnd_universal : ∀ k : Fin 16, (r3.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
-    intro k
-    rcases k with ⟨k, hk⟩
-    interval_cases k
-    · rw [h_r3_unc' 0 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨0, by decide⟩
-    · rw [h_r3_unc' 1 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨1, by decide⟩
-    · rw [h_r3_unc' 2 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨2, by decide⟩
-    · rw [h_r3_unc' 3 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨3, by decide⟩
-    · rw [h_r3_unc' 4 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨4, by decide⟩
-    · rw [h_r3_unc' 5 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨5, by decide⟩
-    · exact h_r3_at_even
-    · exact h_r3_at_odd
-    · rw [h_r3_unc' 8 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨8, by decide⟩
-    · rw [h_r3_unc' 9 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨9, by decide⟩
-    · rw [h_r3_unc' 10 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨10, by decide⟩
-    · rw [h_r3_unc' 11 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨11, by decide⟩
-    · rw [h_r3_unc' 12 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨12, by decide⟩
-    · rw [h_r3_unc' 13 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨13, by decide⟩
-    · rw [h_r3_unc' 14 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨14, by decide⟩
-    · rw [h_r3_unc' 15 (by decide) (by decide) (by decide)]; exact h_r2_bnd_universal ⟨15, by decide⟩
+  have h_r3_bnd_universal : ∀ k : Fin 16, (r3.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r2 r3 3 (by decide) h_r2_bnd_universal
+      h_r3_unc' h_r3_at_even h_r3_at_odd
 
   -- Call 4: pair 4 with zeta2 (touches lanes 8, 9).
   obtain ⟨r4, h_r4_eq, h_r4_len, h_r4_unc, h_r4_bnd_e, h_r4_bnd_o,
@@ -18843,26 +18799,9 @@ theorem accumulating_ntt_multiply_fc
     apply h_r4_unc k hk
     · rw [h_eq_e]; exact hke
     · rw [h_eq_o]; exact hko
-  have h_r4_bnd_universal : ∀ k : Fin 16, (r4.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
-    intro k
-    rcases k with ⟨k, hk⟩
-    interval_cases k
-    · rw [h_r4_unc' 0 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨0, by decide⟩
-    · rw [h_r4_unc' 1 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨1, by decide⟩
-    · rw [h_r4_unc' 2 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨2, by decide⟩
-    · rw [h_r4_unc' 3 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨3, by decide⟩
-    · rw [h_r4_unc' 4 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨4, by decide⟩
-    · rw [h_r4_unc' 5 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨5, by decide⟩
-    · rw [h_r4_unc' 6 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨6, by decide⟩
-    · rw [h_r4_unc' 7 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨7, by decide⟩
-    · exact h_r4_at_even
-    · exact h_r4_at_odd
-    · rw [h_r4_unc' 10 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨10, by decide⟩
-    · rw [h_r4_unc' 11 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨11, by decide⟩
-    · rw [h_r4_unc' 12 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨12, by decide⟩
-    · rw [h_r4_unc' 13 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨13, by decide⟩
-    · rw [h_r4_unc' 14 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨14, by decide⟩
-    · rw [h_r4_unc' 15 (by decide) (by decide) (by decide)]; exact h_r3_bnd_universal ⟨15, by decide⟩
+  have h_r4_bnd_universal : ∀ k : Fin 16, (r4.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r3 r4 4 (by decide) h_r3_bnd_universal
+      h_r4_unc' h_r4_at_even h_r4_at_odd
 
   -- Call 5: pair 5 with nzeta2 (touches lanes 10, 11).
   obtain ⟨r5, h_r5_eq, h_r5_len, h_r5_unc, h_r5_bnd_e, h_r5_bnd_o,
@@ -18904,26 +18843,9 @@ theorem accumulating_ntt_multiply_fc
     apply h_r5_unc k hk
     · rw [h_eq_e]; exact hke
     · rw [h_eq_o]; exact hko
-  have h_r5_bnd_universal : ∀ k : Fin 16, (r5.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
-    intro k
-    rcases k with ⟨k, hk⟩
-    interval_cases k
-    · rw [h_r5_unc' 0 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨0, by decide⟩
-    · rw [h_r5_unc' 1 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨1, by decide⟩
-    · rw [h_r5_unc' 2 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨2, by decide⟩
-    · rw [h_r5_unc' 3 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨3, by decide⟩
-    · rw [h_r5_unc' 4 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨4, by decide⟩
-    · rw [h_r5_unc' 5 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨5, by decide⟩
-    · rw [h_r5_unc' 6 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨6, by decide⟩
-    · rw [h_r5_unc' 7 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨7, by decide⟩
-    · rw [h_r5_unc' 8 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨8, by decide⟩
-    · rw [h_r5_unc' 9 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨9, by decide⟩
-    · exact h_r5_at_even
-    · exact h_r5_at_odd
-    · rw [h_r5_unc' 12 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨12, by decide⟩
-    · rw [h_r5_unc' 13 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨13, by decide⟩
-    · rw [h_r5_unc' 14 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨14, by decide⟩
-    · rw [h_r5_unc' 15 (by decide) (by decide) (by decide)]; exact h_r4_bnd_universal ⟨15, by decide⟩
+  have h_r5_bnd_universal : ∀ k : Fin 16, (r5.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r4 r5 5 (by decide) h_r4_bnd_universal
+      h_r5_unc' h_r5_at_even h_r5_at_odd
 
   -- Call 6: pair 6 with zeta3 (touches lanes 12, 13).
   obtain ⟨r6, h_r6_eq, h_r6_len, h_r6_unc, h_r6_bnd_e, h_r6_bnd_o,
@@ -18967,26 +18889,9 @@ theorem accumulating_ntt_multiply_fc
     apply h_r6_unc k hk
     · rw [h_eq_e]; exact hke
     · rw [h_eq_o]; exact hko
-  have h_r6_bnd_universal : ∀ k : Fin 16, (r6.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
-    intro k
-    rcases k with ⟨k, hk⟩
-    interval_cases k
-    · rw [h_r6_unc' 0 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨0, by decide⟩
-    · rw [h_r6_unc' 1 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨1, by decide⟩
-    · rw [h_r6_unc' 2 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨2, by decide⟩
-    · rw [h_r6_unc' 3 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨3, by decide⟩
-    · rw [h_r6_unc' 4 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨4, by decide⟩
-    · rw [h_r6_unc' 5 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨5, by decide⟩
-    · rw [h_r6_unc' 6 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨6, by decide⟩
-    · rw [h_r6_unc' 7 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨7, by decide⟩
-    · rw [h_r6_unc' 8 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨8, by decide⟩
-    · rw [h_r6_unc' 9 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨9, by decide⟩
-    · rw [h_r6_unc' 10 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨10, by decide⟩
-    · rw [h_r6_unc' 11 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨11, by decide⟩
-    · exact h_r6_at_even
-    · exact h_r6_at_odd
-    · rw [h_r6_unc' 14 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨14, by decide⟩
-    · rw [h_r6_unc' 15 (by decide) (by decide) (by decide)]; exact h_r5_bnd_universal ⟨15, by decide⟩
+  have h_r6_bnd_universal : ∀ k : Fin 16, (r6.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r5 r6 6 (by decide) h_r5_bnd_universal
+      h_r6_unc' h_r6_at_even h_r6_at_odd
 
   -- Call 7: pair 7 with nzeta3 (touches lanes 14, 15).
   obtain ⟨r7, h_r7_eq, h_r7_len, h_r7_unc, h_r7_bnd_e, h_r7_bnd_o,
@@ -19032,26 +18937,9 @@ theorem accumulating_ntt_multiply_fc
     apply h_r7_unc k hk
     · rw [h_eq_e]; exact hke
     · rw [h_eq_o]; exact hko
-  have h_r7_bnd_universal : ∀ k : Fin 16, (r7.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
-    intro k
-    rcases k with ⟨k, hk⟩
-    interval_cases k
-    · rw [h_r7_unc' 0 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨0, by decide⟩
-    · rw [h_r7_unc' 1 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨1, by decide⟩
-    · rw [h_r7_unc' 2 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨2, by decide⟩
-    · rw [h_r7_unc' 3 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨3, by decide⟩
-    · rw [h_r7_unc' 4 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨4, by decide⟩
-    · rw [h_r7_unc' 5 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨5, by decide⟩
-    · rw [h_r7_unc' 6 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨6, by decide⟩
-    · rw [h_r7_unc' 7 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨7, by decide⟩
-    · rw [h_r7_unc' 8 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨8, by decide⟩
-    · rw [h_r7_unc' 9 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨9, by decide⟩
-    · rw [h_r7_unc' 10 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨10, by decide⟩
-    · rw [h_r7_unc' 11 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨11, by decide⟩
-    · rw [h_r7_unc' 12 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨12, by decide⟩
-    · rw [h_r7_unc' 13 (by decide) (by decide) (by decide)]; exact h_r6_bnd_universal ⟨13, by decide⟩
-    · exact h_r7_at_even
-    · exact h_r7_at_odd
+  have h_r7_bnd_universal : ∀ k : Fin 16, (r7.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r6 r7 7 (by decide) h_r6_bnd_universal
+      h_r7_unc' h_r7_at_even h_r7_at_odd
 
   -- Compose the monadic body.
   have h_body :
