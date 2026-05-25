@@ -12060,7 +12060,9 @@ def inv
             zeta)
     ∧ (∀ k' : Nat, k' < 16 →
         (∀ j' : Nat, j' < k.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
-        acc.1.coefficients.val[k']! = re0.coefficients.val[k']!))
+        acc.1.coefficients.val[k']! = re0.coefficients.val[k']!)
+    ∧ (∀ k' : Nat, k' < 16 → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.1.coefficients.val[k']!).elements.val[ℓ]!).val.natAbs ≤ 3328))
 
 /-- Step-post for the inverse inner loop. -/
 def step_post
@@ -12108,7 +12110,7 @@ private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc
               (Spec.zeta_at zeta_i1.val) k r ⌝ ⦄ := by
   have h_coef_len : acc.1.coefficients.length = 16 :=
     Std.Array.length_eq _
-  obtain ⟨h_acc_a, h_acc_b, h_acc_undone⟩ := by
+  obtain ⟨h_acc_a, h_acc_b, h_acc_undone, h_acc_bnd⟩ := by
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0.body
   by_cases h_lt : k.val < step_vec.val
@@ -12149,20 +12151,16 @@ private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc
       refine ⟨?_, ?_⟩
       · rw [h_i1_val]; omega
       · rw [h_i1_val]; omega
-    -- Per-lane bounds at acc.1.coefs[i] and [i1].
+    -- Per-lane bounds at acc.1.coefs[i] and [i1] via the bound conjunct in h_inv.
     have h_acc_at_i_bnd : ∀ ℓ : Nat, ℓ < 16 →
-        ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs ≤ 3328 := by
-      intro ℓ hℓ
-      rw [h_acc_i_undone, h_i_val]
-      exact h_pre_a k.val h_lt ℓ hℓ
+        ((acc.1.coefficients.val[i.val]!).elements.val[ℓ]!).val.natAbs ≤ 3328 :=
+      fun ℓ hℓ => h_acc_bnd i.val h_i_lt_16 ℓ hℓ
     have h_acc_at_i1_bnd : ∀ ℓ : Nat, ℓ < 16 →
-        ((acc.1.coefficients.val[i1.val]!).elements.val[ℓ]!).val.natAbs ≤ 3328 := by
-      intro ℓ hℓ
-      rw [h_acc_i1_undone, h_i1_val]
-      exact h_pre_b k.val h_lt ℓ hℓ
+        ((acc.1.coefficients.val[i1.val]!).elements.val[ℓ]!).val.natAbs ≤ 3328 :=
+      fun ℓ hℓ => h_acc_bnd i1.val h_i1_lt_16 ℓ hℓ
     have h_zeta_bnd : z.val.natAbs ≤ 1664 := h_z_bd
     -- Apply the H.0 keystone.
-    obtain ⟨r_pair, h_r_eq, h_r_a, h_r_b, h_r_undone, _h_r_bnd_a, _h_r_bnd_b⟩ :=
+    obtain ⟨r_pair, h_r_eq, h_r_a, h_r_b, h_r_undone, h_r_bnd_a, h_r_bnd_b⟩ :=
       triple_exists_ok_fc (inv_ntt_layer_int_vec_step_reduce_fc
         acc.1.coefficients i i1 acc.2 z h_i_lt_16 h_i1_lt_16 h_i_ne_i1
         h_zeta_bnd h_acc_at_i_bnd h_acc_at_i1_bnd)
@@ -12233,8 +12231,10 @@ private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc
                 (Spec.zeta_at zeta_i1.val))
         ∧ (∀ k' : Nat, k' < 16 →
             (∀ j' : Nat, j' < s.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
-            acc'.1.coefficients.val[k']! = re0.coefficients.val[k']!) := by
-      refine ⟨?_, ?_, ?_⟩
+            acc'.1.coefficients.val[k']! = re0.coefficients.val[k']!)
+        ∧ (∀ k' : Nat, k' < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc'.1.coefficients.val[k']!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
       · -- (a) a-side butterfly for j' < s.val.
         intro j' hj'
         rw [hs_val] at hj'
@@ -12298,6 +12298,18 @@ private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc
         intro j' hj'
         have h_at_j' : j' < s.val := by rw [hs_val]; omega
         exact h_not_touched j' h_at_j'
+      · -- (d) Per-lane output bound at every chunk.
+        intro k' hk' ℓ hℓ
+        show ((acc'.1.coefficients.val[k']!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        show ((r_pair.1.val[k']!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        by_cases h_ki : k' = i.val
+        · rw [h_ki]; exact h_r_bnd_a ℓ hℓ
+        · by_cases h_ki1 : k' = i1.val
+          · rw [h_ki1]; exact h_r_bnd_b ℓ hℓ
+          · have h_unchanged : r_pair.1.val[k']! = acc.1.coefficients.val[k']! :=
+              h_r_undone k' hk' h_ki h_ki1
+            rw [h_unchanged]
+            exact h_acc_bnd k' hk' ℓ hℓ
     show (pure _ : Result Prop).holds
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
   · -- None branch: k ≥ step_vec, done.
@@ -12345,8 +12357,10 @@ private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc
                 (Spec.zeta_at zeta_i1.val))
         ∧ (∀ k' : Nat, k' < 16 →
             (∀ j' : Nat, j' < step_vec.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
-            acc.1.coefficients.val[k']! = re0.coefficients.val[k']!) := by
-      refine ⟨?_, ?_, ?_⟩
+            acc.1.coefficients.val[k']! = re0.coefficients.val[k']!)
+        ∧ (∀ k' : Nat, k' < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc.1.coefficients.val[k']!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_⟩
       · intro j' hj'; rw [← hk_eq] at hj'; exact h_acc_a j' hj'
       · intro j' hj'; rw [← hk_eq] at hj'; exact h_acc_b j' hj'
       · intro k' hk' h_not_touched
@@ -12354,6 +12368,7 @@ private theorem invert_ntt_at_layer_4_plus_inner_step_lemma_fc
         intro j' hj'
         have h_at_j' : j' < step_vec.val := by rw [← hk_eq]; exact hj'
         exact h_not_touched j' h_at_j'
+      · exact h_acc_bnd
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
 
 /-! ### L3i.5 — Outer loop scaffolding. -/
@@ -12395,7 +12410,9 @@ def inv
           ∀ j' : Nat, j' < step_vec.val →
             c ≠ 2 * round' * step_vec.val + j'
             ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
-        acc.2.1.coefficients.val[c]! = re0.coefficients.val[c]!))
+        acc.2.1.coefficients.val[c]! = re0.coefficients.val[c]!)
+    ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+        ((acc.2.1.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328))
 
 /-- Step-post for the inverse outer loop. -/
 def step_post
@@ -12499,7 +12516,9 @@ private theorem invert_ntt_at_layer_4_plus_inner_loop_fc
     (h_pre_a : ∀ j : Nat, j < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
       ((re0.coefficients.val[a_offset.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 3328)
     (h_pre_b : ∀ j : Nat, j < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
-      ((re0.coefficients.val[b_offset.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 3328) :
+      ((re0.coefficients.val[b_offset.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 3328)
+    (h_pre_all : ∀ k' : Nat, k' < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      ((re0.coefficients.val[k']!).elements.val[ℓ]!).val.natAbs ≤ 3328) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0
       (vectortraitsOperationsInst := portable_ops_inst)
@@ -12519,6 +12538,8 @@ private theorem invert_ntt_at_layer_4_plus_inner_loop_fc
       ∧ (∀ k' : Nat, k' < 16 →
           (∀ j' : Nat, j' < step_vec.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
           r.1.coefficients.val[k']! = re0.coefficients.val[k']!)
+      ∧ (∀ k' : Nat, k' < 16 → ∀ ℓ : Nat, ℓ < 16 →
+          ((r.1.coefficients.val[k']!).elements.val[ℓ]!).val.natAbs ≤ 3328)
       ⌝ ⦄ := by
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0_loop0
   apply Std.Do.Triple.of_entails_right _
@@ -12538,10 +12559,19 @@ private theorem invert_ntt_at_layer_4_plus_inner_loop_fc
         show (pure _ : Result Prop).holds
         simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
         intro _
-        refine ⟨?_, ?_, ?_⟩
+        refine ⟨?_, ?_, ?_, ?_⟩
         · intro j' hj'; exact absurd hj' (Nat.not_lt_zero j')
         · intro j' hj'; exact absurd hj' (Nat.not_lt_zero j')
-        · intro k' _ _; trivial)
+        · intro k' _ _; trivial
+        · -- Initial bound holds via h_pre_a/h_pre_b for touched indices,
+          -- and trivially for untouched indices via the input precondition
+          -- on re0 chunks. Need a global bound on re0.
+          -- At k=0, acc.1 = re0. We need ((re0.coef.val[k']!).elem.val[ℓ]!).natAbs ≤ 3328.
+          -- This is NOT covered by h_pre_a/h_pre_b alone (those are only for
+          -- a_offset+j and b_offset+j).
+          -- We use a global precondition added below: h_pre_all.
+          intro k' hk' ℓ hℓ
+          exact h_pre_all k' hk' ℓ hℓ)
       ?_)
   · -- Post entailment.
     rw [PostCond.entails_noThrow]
@@ -12564,7 +12594,9 @@ private theorem invert_ntt_at_layer_4_plus_inner_loop_fc
                 (Spec.zeta_at zeta_i1.val))
         ∧ (∀ k' : Nat, k' < 16 →
             (∀ j' : Nat, j' < step_vec.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
-            r.1.coefficients.val[k']! = re0.coefficients.val[k']!) := by
+            r.1.coefficients.val[k']! = re0.coefficients.val[k']!)
+        ∧ (∀ k' : Nat, k' < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((r.1.coefficients.val[k']!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
              L3i_4_plus_inner_FC.inv] using h_inv_holds
     exact h_inv
@@ -12606,7 +12638,7 @@ private theorem invert_ntt_at_layer_4_plus_outer_step_lemma_fc
       (vectortraitsOperationsInst := portable_ops_inst)
       step_vec { start := k, «end» := i_end } acc.1 acc.2.1 acc.2.2
     ⦃ ⇓ r => ⌜ L3i_4_plus_outer_FC.step_post re0 zeta_i_0 step_vec i_end k r ⌝ ⦄ := by
-  obtain ⟨h_zeta_acc, h_acc_a, h_acc_b, h_acc_undone⟩ := by
+  obtain ⟨h_zeta_acc, h_acc_a, h_acc_b, h_acc_undone, h_acc_bnd⟩ := by
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus_loop0.body
   by_cases h_lt : k.val < i_end.val
@@ -12711,8 +12743,8 @@ private theorem invert_ntt_at_layer_4_plus_outer_step_lemma_fc
       rw [h_bo_arith]; omega
     -- Dispatch inner loop.
     have h_inner := invert_ntt_at_layer_4_plus_inner_loop_fc acc.2.1 acc.2.2 ao bo step_vec zi1
-      h_zi1_lt_128 h_step_vec_pos h_a_offset_b h_b_offset_b h_disjoint h_pre_a h_pre_b
-    obtain ⟨r_pair, h_r_eq, h_r_a, h_r_b, h_r_undone⟩ :=
+      h_zi1_lt_128 h_step_vec_pos h_a_offset_b h_b_offset_b h_disjoint h_pre_a h_pre_b h_acc_bnd
+    obtain ⟨r_pair, h_r_eq, h_r_a, h_r_b, h_r_undone, h_r_bnd⟩ :=
       triple_exists_ok_fc h_inner
     set acc' : L3i_4_plus_outer_FC.Acc :=
       (zi1, r_pair.1, r_pair.2) with hacc'_def
@@ -12779,8 +12811,10 @@ private theorem invert_ntt_at_layer_4_plus_outer_step_lemma_fc
               ∀ j' : Nat, j' < step_vec.val →
                 c ≠ 2 * round' * step_vec.val + j'
                 ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
-            acc'.2.1.coefficients.val[c]! = re0.coefficients.val[c]!) := by
-      refine ⟨?_, ?_, ?_, ?_⟩
+            acc'.2.1.coefficients.val[c]! = re0.coefficients.val[c]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc'.2.1.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_, ?_⟩
       · -- zeta thread: zi1.val = zeta_i_0.val - (k.val + 1) = zeta_i_0.val - s.val.
         show zi1.val = zeta_i_0.val - s.val
         rw [h_zi1_arith, hs_val]; omega
@@ -12894,6 +12928,12 @@ private theorem invert_ntt_at_layer_4_plus_outer_step_lemma_fc
         intro round' hround' j' hj'
         have h_at_r : round' < s.val := by rw [hs_val]; omega
         exact h_not_touched round' h_at_r j' hj'
+      · -- Per-lane output bound at every chunk: inner loop result already
+        -- has the bound on r_pair.1 = acc'.2.1.
+        intro c hc ℓ hℓ
+        show ((acc'.2.1.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        show ((r_pair.1.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328
+        exact h_r_bnd c hc ℓ hℓ
     show (pure _ : Result Prop).holds
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
   · -- None branch: k ≥ i_end, done.
@@ -12944,8 +12984,10 @@ private theorem invert_ntt_at_layer_4_plus_outer_step_lemma_fc
               ∀ j' : Nat, j' < step_vec.val →
                 c ≠ 2 * round' * step_vec.val + j'
                 ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
-            acc.2.1.coefficients.val[c]! = re0.coefficients.val[c]!) := by
-      refine ⟨?_, ?_, ?_, ?_⟩
+            acc.2.1.coefficients.val[c]! = re0.coefficients.val[c]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((acc.2.1.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
+      refine ⟨?_, ?_, ?_, ?_, ?_⟩
       · rw [h_zeta_acc, hk_eq]
       · intro round' hround'; rw [← hk_eq] at hround'; exact h_acc_a round' hround'
       · intro round' hround'; rw [← hk_eq] at hround'; exact h_acc_b round' hround'
@@ -12954,6 +12996,7 @@ private theorem invert_ntt_at_layer_4_plus_outer_step_lemma_fc
         intro round' hround' j' hj'
         have : round' < i_end.val := by rw [← hk_eq]; exact hround'
         exact h_nt round' this j' hj'
+      · exact h_acc_bnd
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
 
 set_option maxHeartbeats 16000000 in
@@ -12973,7 +13016,9 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
       (vectortraitsOperationsInst := portable_ops_inst)
       zeta_i re layer scratch
     ⦃ ⇓ p => ⌜ p.1.val = zeta_i.val - 128 >>> layer.val
-              ∧ lift_poly p.2.1 = Spec.invert_ntt_layer_4_plus_pure (lift_poly re) zeta_i layer ⌝ ⦄ := by
+              ∧ lift_poly p.2.1 = Spec.invert_ntt_layer_4_plus_pure (lift_poly re) zeta_i layer
+              ∧ (∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.2.1.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
   obtain ⟨h_layer_lo, h_layer_hi⟩ := h_layer
   obtain ⟨h_zeta_lo, h_zeta_hi⟩ := h_zeta
   unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_at_layer_4_plus
@@ -13057,7 +13102,7 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
         show (pure _ : Result Prop).holds
         simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
         intro _
-        refine ⟨?_, ?_, ?_, ?_⟩
+        refine ⟨?_, ?_, ?_, ?_, ?_⟩
         · show zeta_i.val = zeta_i.val - (0#usize : Std.Usize).val
           show zeta_i.val = zeta_i.val - 0
           omega
@@ -13065,7 +13110,10 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
           exact absurd hround' (Nat.not_lt_zero round')
         · intro round' hround' _ _
           exact absurd hround' (Nat.not_lt_zero round')
-        · intro _ _ _; trivial)
+        · intro _ _ _; trivial
+        · -- Initial bound: acc.2.1 = re at k=0, so bound from h_bnd.
+          intro c hc ℓ hℓ
+          exact h_bnd c hc ℓ hℓ)
       ?_)
   · -- Post entailment: at k = i_end, build chunks_arr matching Spec.
     rw [PostCond.entails_noThrow]
@@ -13092,10 +13140,12 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
               ∀ j' : Nat, j' < step_vec.val →
                 c ≠ 2 * round' * step_vec.val + j'
                 ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
-            r.2.1.coefficients.val[c]! = re.coefficients.val[c]!) := by
+            r.2.1.coefficients.val[c]! = re.coefficients.val[c]!)
+        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+            ((r.2.1.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
              L3i_4_plus_outer_FC.inv] using h_inv_holds
-    obtain ⟨h_zeta_done, h_done_a, h_done_b, _h_done_undone⟩ := h_inv
+    obtain ⟨h_zeta_done, h_done_a, h_done_b, _h_done_undone, h_done_bnd⟩ := h_inv
     -- Build chunks_arr matching the Spec layout.
     unfold Spec.invert_ntt_layer_4_plus_pure
     set chunks_arr : Std.Array
@@ -13213,7 +13263,7 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
         rw [show zeta_i.val - 1 - group = zeta_i.val - group - 1 by omega]
         exact h_done.symm
     have h_final := flatten_chunks_eq_lift_poly_fc r.2.1 chunks_arr h_chunks_len h_chunks_get
-    exact ⟨by rw [h_zeta_done, h_i_end_arith], h_final.symm⟩
+    exact ⟨by rw [h_zeta_done, h_i_end_arith], h_final.symm, h_done_bnd⟩
   · -- Step lemma dispatch.
     intro acc k _h_ge h_le hinv
     have h_step := invert_ntt_at_layer_4_plus_outer_step_lemma_fc re zeta_i step_vec i_end
