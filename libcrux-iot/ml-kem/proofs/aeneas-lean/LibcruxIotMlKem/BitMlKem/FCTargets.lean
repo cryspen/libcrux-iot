@@ -27191,6 +27191,58 @@ noncomputable def accumulating_ntt_multiply_poly_cache_post
               (Spec.zeta_at (64 + 4 * j.val + 2))
               (Spec.zeta_at (64 + 4 * j.val + 3)))
 
+namespace L6_3c_fill_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+abbrev Acc := L6_3_FC.Acc
+abbrev Poly := L6_3_FC.Poly
+
+/-- 5-conjunct invariant for the fill_cache loop. -/
+def inv (myself rhs : Poly) (acc_init : Acc) (cache_init : Poly) :
+    Std.Usize → Acc → Poly → Result Prop :=
+  fun k acc cache => pure (
+    (∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
+      Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
+        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
+            ((Spec.ntt_multiply_pure_no_acc
+                (lift_chunk_mont (myself.coefficients.val[j]!))
+                (lift_chunk_mont (rhs.coefficients.val[j]!))
+                (Spec.zeta_at (64 + 4 * j))
+                (Spec.zeta_at (64 + 4 * j + 1))
+                (Spec.zeta_at (64 + 4 * j + 2))
+                (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!))
+    ∧ (∀ j : Nat, k.val ≤ j → j < 16 → ∀ ℓ : Nat, ℓ < 16 →
+        acc.val[16 * j + ℓ]! = acc_init.val[16 * j + ℓ]!)
+    ∧ (∀ n : Nat, n < 256 →
+        (acc.val[n]!).val.natAbs ≤ (acc_init.val[n]!).val.natAbs + 2^25)
+    ∧ (∀ j : Nat, j < k.val →
+        Spec.ntt_multiply_cache_post
+          (rhs.coefficients.val[j]!)
+          libcrux_iot_ml_kem.polynomial.ZETAS_TIMES_MONTGOMERY_R.val[64 + 4 * j]!
+          libcrux_iot_ml_kem.polynomial.ZETAS_TIMES_MONTGOMERY_R.val[64 + 4 * j + 1]!
+          libcrux_iot_ml_kem.polynomial.ZETAS_TIMES_MONTGOMERY_R.val[64 + 4 * j + 2]!
+          libcrux_iot_ml_kem.polynomial.ZETAS_TIMES_MONTGOMERY_R.val[64 + 4 * j + 3]!
+          (cache.coefficients.val[j]!))
+    ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
+        cache.coefficients.val[j]! = cache_init.coefficients.val[j]!))
+
+/-- Step-post for `loop_range_spec_usize` over (acc, cache). -/
+def step_post (myself rhs : Poly) (acc_init : Acc) (cache_init : Poly)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × Acc × Poly) (Acc × Poly)) :
+    Prop :=
+  match r with
+  | .cont (iter', acc', cache') =>
+      k.val < (16#usize : Std.Usize).val ∧ iter'.«end» = 16#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (inv myself rhs acc_init cache_init iter'.start acc' cache').holds
+  | .done y => (inv myself rhs acc_init cache_init 16#usize y.1 y.2).holds
+
+end L6_3c_fill_FC
+
 /-- L6.3c — `polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache`:
     polynomial wrapper of `accumulating_ntt_multiply_fill_cache_fc`. Loops
     over the 16 chunks; per chunk j it dispatches the L2.8d
