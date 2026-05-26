@@ -753,6 +753,71 @@ generic plumbing already passes its tests in the SHA-3 tree.
     closure (Phase 1.3 L3.6, Phase 1.4 L3.7, Phase 2 L2.8, Phase 5
     L3.8/L6.3, and EVERY M.2/M.4 lemma) must be equality-form from
     day one.
+
+    ## §X.4 Campaign ledger maintenance (MANDATORY)
+
+    Every campaign maintains an append-only ledger at
+    `~/.claude/plans/iot-mlkem-campaign-ledger.md`. **The ledger is the
+    authoritative record of dispatch usage, sub-agent reliability, and
+    session pacing.** Without it, the orchestrator cannot reason about
+    budget burn, sub-agent reliability, or escalation decisions; the
+    campaign has no post-mortem record beyond commit messages (which
+    are necessary but not sufficient).
+
+    **Per-dispatch protocol (orchestrator responsibility):**
+
+    1. **Before any commit lands**, append one ledger row per
+       sub-agent return (or per orchestrator-direct close). Don't
+       batch — append per dispatch so context-window crashes don't
+       lose data.
+    2. **At every REVIEWER pass**, append a separate row with
+       `result: review`.
+    3. **At every session boundary**, append a `result: continue`
+       rollup row summarizing the session's commits + total sub-agent
+       token spend + total tool calls + total wall-clock.
+    4. **At every phase completion**, append a `result: phase-closed`
+       row with the phase's net additions (LOC, declarations, sorry
+       delta).
+
+    **Per-dispatch protocol (sub-agent brief responsibility):**
+
+    Every dispatched sub-agent's brief MUST require the agent to
+    report (at the end of its return) a one-line ledger metric
+    summary:
+
+      "LEDGER: <phase short-id> | tokens=<total> | tools=<count> |
+       dur_s=<seconds> | result=<closed|repaired|failed|STOP|infra> |
+       net_LOC=<net_added> | sorry_delta=<+N|-N|0> | axioms=<clean|custom>"
+
+    The orchestrator copies this verbatim into the ledger row.
+
+    **Required visibility:**
+
+    - Every campaign prompt at `~/.claude/plans/<campaign>-prompt.md`
+      MUST include "Update ledger after every dispatch" as a
+      non-negotiable line item in its REVIEWER / Discipline section.
+    - Every per-phase agent brief template (SKILL.md §13.2) MUST
+      include the ledger reporting clause.
+
+    **Recovery protocol** when the ledger has gone stale:
+
+    1. Surface the gap to the user concretely (session range
+       missing, last recorded timestamp, current HEAD).
+    2. Ask the user for the correct session-ID convention to
+       continue (the user maintains S-number assignment across
+       handoffs).
+    3. Append at least the current session's rows with best-effort
+       estimates for missing fields (mark estimated values with `~`
+       and note the estimation in the task description).
+    4. Open a memory entry recording the gap recovery so future
+       sessions know how to handle similar lapses.
+
+    See SKILL.md §13.12 for the full ledger format, append protocol,
+    and rationale.
+
+    Locked 2026-05-26 (after a session closed L6.3c.fill + L6.3c.use
+    without appending any ledger rows; the L6.3c campaign's token
+    spend and dispatch metrics are LOST).
 -/
 
 /-! ============================================================
