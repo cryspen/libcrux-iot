@@ -20671,6 +20671,1100 @@ noncomputable def Spec.ntt_multiply_cache_post
               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
               (lift_fe_mont zeta2) (lift_fe_mont zeta3))
 
+/-! ### L2.8d — helper lemmas (sibling-adapt of L2.8c).
+
+    Three new helpers extend the L2_8c.* infrastructure for the
+    cache-variant Triples:
+      • `L2_8d.lift_fe_mont_of_mont_reduce_modq` — translates the modq
+        relation from `montgomery_reduce_element_spec` (`r * 2^16 ≡ x * y`)
+        to a `lift_fe_mont r = mul_pure (lift_fe_mont x) (lift_fe_mont y)`
+        equation (the fill-cache POST cache equation).
+      • `L2_8d.mont_reduce_even_fe_eq_cache` and
+        `L2_8d.mont_reduce_odd_fe_eq_cache` — Mont-domain FE equation
+        builders for the use_cache per-pair Triple. Differ from
+        `L2_8c.mont_reduce_{even,odd}_fe_eq` by carrying a symbolic
+        cache-lane I16 in the RHS instead of an explicit `bj * zeta`
+        product. -/
+
+/-- Mont-reduced product → FE-projection bridge. If `r` is the
+    Montgomery reduction of `x.val * y.val` (so `r.val * 2^16 ≡
+    x.val * y.val (mod q)`), then `lift_fe_mont r = mul_pure
+    (lift_fe_mont x) (lift_fe_mont y)`. Used by `_fill_cache` per-pair
+    Triple to discharge the cache POST equation. -/
+private theorem L2_8d.lift_fe_mont_of_mont_reduce_modq
+    (r x y : Std.I16)
+    (h_canon : r.val.natAbs ≤ 3328)
+    (h_zmod : ((r.val : Int) : ZMod 3329) * (2^16 : Int)
+                = ((x.val : Int) : ZMod 3329) * ((y.val : Int) : ZMod 3329)) :
+    lift_fe_mont r
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont x) (lift_fe_mont y) := by
+  -- LHS: feOfZMod ((r.val : ZMod q) * 169).
+  -- Set up s := mul_pure (lift_fe_mont x) (lift_fe_mont y); s is canonical, so
+  -- the goal collapses (after round-trip) to a ZMod q equation.
+  set s : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (lift_fe_mont x) (lift_fe_mont y) with hs_def
+  -- Express s.val.val < 3329 via Canonical_mul_pure.
+  have h_canon_s : s.val.val < 3329 := by
+    have h_cm := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+      (lift_fe_mont x) (lift_fe_mont y)
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cm
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at h_cm
+    exact h_cm
+  have h_round_trip : feOfZMod (zmodOfFE s) = s :=
+    feOfZMod_zmodOfFE_of_canonical s h_canon_s
+  -- zmodOfFE s = (x.val : ZMod q) * 169 * ((y.val : ZMod q) * 169).
+  have h_zmod_s : zmodOfFE s
+      = ((x.val : Int) : ZMod 3329) * 169 * (((y.val : Int) : ZMod 3329) * 169) := by
+    rw [hs_def, L2_8c.zmodOfFE_mul_pure, L2_8c.zmodOfFE_lift_fe_mont,
+        L2_8c.zmodOfFE_lift_fe_mont]
+  -- Now reduce LHS to feOfZMod ((r.val : ZMod q) * 169).
+  have h_lhs : lift_fe_mont r = feOfZMod (((r.val : Int) : ZMod 3329) * 169) := by
+    unfold lift_fe_mont i16_to_spec_fe_mont; rfl
+  rw [h_lhs, ← h_round_trip, h_zmod_s]
+  congr 1
+  -- Goal: (r.val : Int : ZMod q) * 169 = (x.val : ZMod q) * 169 * (y.val : ZMod q) * 169.
+  -- From h_zmod: r * 2^16 = x * y in ZMod q.
+  -- Multiply by 169² on both sides: r * (2^16 * 169) * 169 = x * y * 169 * 169.
+  -- 2^16 * 169 ≡ 1 (since 2^16 ≡ 2285 and 2285 * 169 = 1 in ZMod q).
+  have h_inv : ((2285 : ZMod 3329)) * 169 = 1 := by decide
+  have h_2_16 : ((2^16 : Int) : ZMod 3329) = 2285 := by decide
+  -- Multiply h_zmod by 169 on both sides.
+  have h_mul_169 :
+      ((r.val : Int) : ZMod 3329) * (2^16 : Int) * 169
+        = ((x.val : Int) : ZMod 3329) * ((y.val : Int) : ZMod 3329) * 169 := by
+    rw [h_zmod]
+  rw [h_2_16] at h_mul_169
+  -- LHS rewrite: r * 169 = r * 2285 * 169 * 169 (since 2285 * 169 = 1).
+  have h_lhs :
+      ((r.val : Int) : ZMod 3329) * 169
+        = ((r.val : Int) : ZMod 3329) * 2285 * 169 * 169 := by
+    have : ((r.val : Int) : ZMod 3329) * 169 = ((r.val : Int) : ZMod 3329) * (2285 * 169) * 169 := by
+      rw [h_inv]; ring
+    rw [this]; ring
+  rw [h_lhs]
+  -- Now: r * 2285 * 169 * 169 = (x * y) * 169 * 169 from h_mul_169 (multiplied by 169 again).
+  have h_mul_169_squared :
+      ((r.val : Int) : ZMod 3329) * 2285 * 169 * 169
+        = ((x.val : Int) : ZMod 3329) * ((y.val : Int) : ZMod 3329) * 169 * 169 := by
+    have step : ((r.val : Int) : ZMod 3329) * 2285 * 169 * 169
+              = (((r.val : Int) : ZMod 3329) * 2285 * 169) * 169 := by ring
+    rw [step, h_mul_169]
+  rw [h_mul_169_squared]
+  ring
+
+/-- Associativity of `SpecPure.FieldElement.mul_pure` (Mont-domain product
+    in ZMod q). Used to reshape use_cache per-pair FE equations from
+    `mul a (mul b c)` form (cache lane = mul rhs zeta) to `mul (mul a b) c`
+    form to match the L2.8c per-pair FE shape. -/
+private theorem L2_8d.mul_pure_assoc
+    (a b c : hacspec_ml_kem.parameters.FieldElement) :
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b c)
+    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) c := by
+  -- Both sides are canonical; use round-trip + ZMod commutativity.
+  set lhs : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b c) with hlhs
+  set rhs : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) c with hrhs
+  have h_canon_lhs : lhs.val.val < 3329 := by
+    have h_cm := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure a
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b c)
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cm
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at h_cm; exact h_cm
+  have h_canon_rhs : rhs.val.val < 3329 := by
+    have h_cm := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) c
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cm
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at h_cm; exact h_cm
+  have h_rt_lhs : feOfZMod (zmodOfFE lhs) = lhs :=
+    feOfZMod_zmodOfFE_of_canonical lhs h_canon_lhs
+  have h_rt_rhs : feOfZMod (zmodOfFE rhs) = rhs :=
+    feOfZMod_zmodOfFE_of_canonical rhs h_canon_rhs
+  have h_zmod_eq : zmodOfFE lhs = zmodOfFE rhs := by
+    rw [hlhs, hrhs]
+    rw [L2_8c.zmodOfFE_mul_pure, L2_8c.zmodOfFE_mul_pure,
+        L2_8c.zmodOfFE_mul_pure, L2_8c.zmodOfFE_mul_pure]
+    ring
+  rw [← h_rt_lhs, ← h_rt_rhs, h_zmod_eq]
+
+set_option maxHeartbeats 400000 in
+/-- Use-cache variant of `L2_8c.mont_reduce_even_fe_eq`: the per-pair
+    cache lane appears symbolically (as an I16 `c`) in the RHS via
+    `lift_fe_mont c`, in place of the `bj * zeta` product. Same Mont-
+    inversion algebra (`2285 * 169 ≡ 1 (mod q)`). -/
+private theorem L2_8d.mont_reduce_even_fe_eq_cache
+    (out r : Std.I32) (ai bi aj c : Std.I16)
+    (h_zmod : ((r.val * (2 ^ 16 : Int)) : ZMod 3329)
+      = ((out.val * (2 ^ 16 : Int) + ai.val * bi.val * (2 ^ 16 : Int)
+            + aj.val * c.val * (2 ^ 16 : Int)) : ZMod 3329)) :
+    Spec.mont_reduce_pure (lift_fe_int r.val)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (Spec.mont_reduce_pure (lift_fe_int out.val))
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (lift_fe_mont ai) (lift_fe_mont bi))
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (lift_fe_mont aj) (lift_fe_mont c))) := by
+  rw [mont_reduce_pure_lift_fe_int]
+  set s : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      (Spec.mont_reduce_pure (lift_fe_int out.val))
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont ai) (lift_fe_mont bi))
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont aj) (lift_fe_mont c))) with hs_def
+  have h_canon : s.val.val < 3329 := by
+    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure
+      (Spec.mont_reduce_pure (lift_fe_int out.val))
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont ai) (lift_fe_mont bi))
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont aj) (lift_fe_mont c)))
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at h_cs
+    exact h_cs
+  have h_round_trip : feOfZMod (zmodOfFE s) = s :=
+    feOfZMod_zmodOfFE_of_canonical s h_canon
+  have h_zmod_s : zmodOfFE s
+      = (out.val : ZMod 3329) * 169 * 169
+        + ((ai.val : ZMod 3329) * 169 * ((bi.val : ZMod 3329) * 169)
+          + (aj.val : ZMod 3329) * 169 * ((c.val : ZMod 3329) * 169)) := by
+    simp only [hs_def,
+      L2_8c.zmodOfFE_add_pure,
+      L2_8c.zmodOfFE_mont_reduce_lift_fe_int,
+      L2_8c.zmodOfFE_mul_pure,
+      L2_8c.zmodOfFE_lift_fe_mont]
+  rw [← h_round_trip, h_zmod_s]
+  congr 1
+  have h_inv : ((2285 : ZMod 3329)) * 169 = 1 := by decide
+  have h_mul_169_cubed :
+      (r.val : ZMod 3329) * (2^16 : Int) * 169 * 169 * 169
+        = ((out.val : ZMod 3329) * (2^16 : Int)
+            + (ai.val : ZMod 3329) * (bi.val : ZMod 3329) * (2^16 : Int)
+            + (aj.val : ZMod 3329) * (c.val : ZMod 3329) * (2^16 : Int)) * 169 * 169 * 169 := by
+    have := h_zmod
+    push_cast at this ⊢
+    rw [this]
+  have h_2_16 : ((2^16 : Int) : ZMod 3329) = 2285 := by decide
+  rw [h_2_16] at h_mul_169_cubed
+  have h_lhs :
+      (r.val : ZMod 3329) * 169 * 169
+        = (r.val : ZMod 3329) * 2285 * 169 * 169 * 169 := by
+    have : (r.val : ZMod 3329) * 169 * 169 = (r.val : ZMod 3329) * (2285 * 169) * 169 * 169 := by
+      rw [h_inv]; ring
+    rw [this]; ring
+  rw [h_lhs, h_mul_169_cubed]
+  have h_expand : ((out.val : ZMod 3329) * 2285
+            + (ai.val : ZMod 3329) * (bi.val : ZMod 3329) * 2285
+            + (aj.val : ZMod 3329) * (c.val : ZMod 3329) * 2285)
+          * 169 * 169 * 169
+        = (out.val : ZMod 3329) * (2285 * (169 * 169 * 169))
+          + (ai.val : ZMod 3329) * (bi.val : ZMod 3329) * (2285 * (169 * 169 * 169))
+          + (aj.val : ZMod 3329) * (c.val : ZMod 3329) * (2285 * (169 * 169 * 169)) := by
+    ring
+  have h_collapse : ((2285 : ZMod 3329)) * (169 * 169 * 169) = 169 * 169 := by decide
+  rw [h_expand, h_collapse]
+  ring
+
+set_option maxHeartbeats 400000 in
+/-- Odd-half analog of `L2_8d.mont_reduce_even_fe_eq_cache`. -/
+private theorem L2_8d.mont_reduce_odd_fe_eq_cache
+    (out r : Std.I32) (ai bi aj bj : Std.I16)
+    (h_zmod : ((r.val * (2 ^ 16 : Int)) : ZMod 3329)
+      = ((out.val * (2 ^ 16 : Int)
+            + ai.val * bj.val * (2 ^ 16 : Int)
+            + aj.val * bi.val * (2 ^ 16 : Int)) : ZMod 3329)) :
+    Spec.mont_reduce_pure (lift_fe_int r.val)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (Spec.mont_reduce_pure (lift_fe_int out.val))
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (lift_fe_mont ai) (lift_fe_mont bj))
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (lift_fe_mont aj) (lift_fe_mont bi))) :=
+  -- The odd-half equation has no cache lane (the cached
+  -- `mont_reduce(b·zeta)` only enters the even-half product); it is
+  -- identical to `L2_8c.mont_reduce_odd_fe_eq`.
+  L2_8c.mont_reduce_odd_fe_eq out r ai bi aj bj h_zmod
+
+set_option maxHeartbeats 8000000 in
+/-- Per-pair Triple for `accumulating_ntt_multiply_binomials_fill_cache`.
+    Sibling of `accumulating_ntt_multiply_binomials_fc`: same 7 POST
+    conjuncts on the slice output, plus 3 POST conjuncts on the cache
+    output describing the per-pair Mont-reduced `b[2i+1]·zeta` write
+    at slot `i`. -/
+private theorem accumulating_ntt_multiply_binomials_fill_cache_fc
+    (a b : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta : Std.I16) (i : Std.Usize)
+    (out : Aeneas.Std.Slice Std.I32)
+    (cache : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_i : i.val < 8)
+    (h_out_len : out.length = 16)
+    (h_a : ∀ j : Fin 16, (a.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_b : ∀ j : Fin 16, (b.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_zeta : zeta.val.natAbs ≤ 1664)
+    (h_out_bnd : ∀ k : Fin 16, (out.val[k.val]!).val.natAbs ≤ 2^30 + 2^25) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+      a b zeta i out cache
+    ⦃ ⇓ p => ⌜ p.1.length = 16
+                ∧ (∀ k : Nat, k < 16 → k ≠ 2 * i.val → k ≠ 2 * i.val + 1 →
+                    p.1.val[k]! = out.val[k]!)
+                ∧ (p.1.val[2 * i.val]!).val.natAbs
+                    ≤ (out.val[2 * i.val]!).val.natAbs + 2^25
+                ∧ (p.1.val[2 * i.val + 1]!).val.natAbs
+                    ≤ (out.val[2 * i.val + 1]!).val.natAbs + 2^25
+                ∧ Spec.mont_reduce_pure (lift_fe_int (p.1.val[2 * i.val]!).val)
+                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                        (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val]!).val))
+                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                            (lift_fe_mont (a.elements.val[2 * i.val]!))
+                            (lift_fe_mont (b.elements.val[2 * i.val]!)))
+                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                              (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
+                              (lift_fe_mont (b.elements.val[2 * i.val + 1]!)))
+                            (lift_fe_mont zeta)))
+                ∧ Spec.mont_reduce_pure (lift_fe_int (p.1.val[2 * i.val + 1]!).val)
+                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                        (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val + 1]!).val))
+                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                            (lift_fe_mont (a.elements.val[2 * i.val]!))
+                            (lift_fe_mont (b.elements.val[2 * i.val + 1]!)))
+                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                            (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
+                            (lift_fe_mont (b.elements.val[2 * i.val]!))))
+                ∧ (p.2.elements.val[i.val]!).val.natAbs ≤ 3328
+                ∧ lift_fe_mont (p.2.elements.val[i.val]!)
+                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                        (lift_fe_mont (b.elements.val[2 * i.val + 1]!))
+                        (lift_fe_mont zeta)
+                ∧ (∀ k : Nat, k < 16 → k ≠ i.val →
+                    p.2.elements.val[k]! = cache.elements.val[k]!) ⌝ ⦄ := by
+  -- ===== Setup (identical to L2.8c binomials_fc) =====
+  have h_2i_lt : 2 * i.val < 16 := by omega
+  have h_2i1_lt : 2 * i.val + 1 < 16 := by omega
+  have h_a_len : a.elements.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length a
+  have h_b_len : b.elements.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length b
+  have h_cache_len : cache.elements.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length cache
+  have h_out_val_len : out.val.length = 16 := h_out_len
+  set ai_v : Std.I16 := a.elements.val[2 * i.val]! with hai_def
+  set bi_v : Std.I16 := b.elements.val[2 * i.val]! with hbi_def
+  set aj_v : Std.I16 := a.elements.val[2 * i.val + 1]! with haj_def
+  set bj_v : Std.I16 := b.elements.val[2 * i.val + 1]! with hbj_def
+  have h_ai : ai_v.val.natAbs ≤ 3328 := h_a ⟨2 * i.val, h_2i_lt⟩
+  have h_bi : bi_v.val.natAbs ≤ 3328 := h_b ⟨2 * i.val, h_2i_lt⟩
+  have h_aj : aj_v.val.natAbs ≤ 3328 := h_a ⟨2 * i.val + 1, h_2i1_lt⟩
+  have h_bj : bj_v.val.natAbs ≤ 3328 := h_b ⟨2 * i.val + 1, h_2i1_lt⟩
+  set old_e : Std.I32 := out.val[2 * i.val]! with hoe_def
+  set old_o : Std.I32 := out.val[2 * i.val + 1]! with hoo_def
+  have h_old_e_bnd : old_e.val.natAbs ≤ 2^30 + 2^25 := h_out_bnd ⟨2 * i.val, h_2i_lt⟩
+  have h_old_o_bnd : old_o.val.natAbs ≤ 2^30 + 2^25 := h_out_bnd ⟨2 * i.val + 1, h_2i1_lt⟩
+  -- ===== Index arithmetic =====
+  obtain ⟨i1, h_i1_eq, h_i1_val⟩ :=
+    usize_mul_ok_eq_fc 2#usize i (by scalar_tac)
+  have h_i1_val' : i1.val = 2 * i.val := by
+    rw [h_i1_val]; rfl
+  obtain ⟨i2, h_i2_eq, h_i2_val⟩ :=
+    usize_add_ok_eq_fc i1 1#usize (by scalar_tac)
+  have h_i2_val' : i2.val = 2 * i.val + 1 := by
+    rw [h_i2_val, h_i1_val']; rfl
+  -- ===== Reads (with index_usize_ok_eq) =====
+  have h_read_ai :
+      Aeneas.Std.Array.index_usize a.elements i1 = .ok ai_v := by
+    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i1
+      (by rw [h_a_len, h_i1_val']; exact h_2i_lt)
+    rw [h, h_i1_val']
+  have h_read_bi :
+      Aeneas.Std.Array.index_usize b.elements i1 = .ok bi_v := by
+    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i1
+      (by rw [h_b_len, h_i1_val']; exact h_2i_lt)
+    rw [h, h_i1_val']
+  have h_read_aj :
+      Aeneas.Std.Array.index_usize a.elements i2 = .ok aj_v := by
+    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i2
+      (by rw [h_a_len, h_i2_val']; exact h_2i1_lt)
+    rw [h, h_i2_val']
+  have h_read_bj :
+      Aeneas.Std.Array.index_usize b.elements i2 = .ok bj_v := by
+    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i2
+      (by rw [h_b_len, h_i2_val']; exact h_2i1_lt)
+    rw [h, h_i2_val']
+  -- ===== as_i32 casts =====
+  set ai32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 ai_v with hai32_def
+  set bi32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 bi_v with hbi32_def
+  set aj32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 aj_v with haj32_def
+  set bj32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 bj_v with hbj32_def
+  set zeta32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 zeta with hzeta32_def
+  have h_ai32_val : ai32.val = ai_v.val := L2_8c.cast_I32_val ai_v
+  have h_bi32_val : bi32.val = bi_v.val := L2_8c.cast_I32_val bi_v
+  have h_aj32_val : aj32.val = aj_v.val := L2_8c.cast_I32_val aj_v
+  have h_bj32_val : bj32.val = bj_v.val := L2_8c.cast_I32_val bj_v
+  have h_zeta32_val : zeta32.val = zeta.val := L2_8c.cast_I32_val zeta
+  have h_as_ai : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 ai_v = .ok ai32 :=
+    L2_8c.as_i32_val_eq ai_v
+  have h_as_bi : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bi_v = .ok bi32 :=
+    L2_8c.as_i32_val_eq bi_v
+  have h_as_aj : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 aj_v = .ok aj32 :=
+    L2_8c.as_i32_val_eq aj_v
+  have h_as_bj : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj_v = .ok bj32 :=
+    L2_8c.as_i32_val_eq bj_v
+  have h_as_zeta : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 zeta = .ok zeta32 :=
+    L2_8c.as_i32_val_eq zeta
+  -- ===== Step: ai_bi = wrapping_mul ai32 bi32 =====
+  set ai_bi : Std.I32 := Aeneas.Std.I32.wrapping_mul ai32 bi32 with habi_def
+  have h_ai_bi_eq : core_models.num.I32.wrapping_mul ai32 bi32 = .ok ai_bi :=
+    L2_8c.cm_wrapping_mul_i32_ok_eq ai32 bi32
+  have h_ai_bi_val : ai_bi.val = ai_v.val * bi_v.val := by
+    have h_bnd : (ai32.val * bi32.val).natAbs < 2^31 := by
+      rw [h_ai32_val, h_bi32_val]
+      have h := Int.natAbs_mul ai_v.val bi_v.val
+      have : ai_v.val.natAbs * bi_v.val.natAbs ≤ 3328 * 3328 := by
+        exact Nat.mul_le_mul h_ai h_bi
+      rw [h]
+      have : (3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    have := L2_8c.wrapping_mul_i32_no_overflow ai32 bi32 h_bnd
+    rw [this, h_ai32_val, h_bi32_val]
+  -- ===== Step: bj_zeta_ = wrapping_mul bj32 zeta32 =====
+  set bj_zeta_ : Std.I32 := Aeneas.Std.I32.wrapping_mul bj32 zeta32 with hbjz_def
+  have h_bj_zeta_eq : core_models.num.I32.wrapping_mul bj32 zeta32 = .ok bj_zeta_ :=
+    L2_8c.cm_wrapping_mul_i32_ok_eq bj32 zeta32
+  have h_bj_zeta_val : bj_zeta_.val = bj_v.val * zeta.val := by
+    have h_bnd : (bj32.val * zeta32.val).natAbs < 2^31 := by
+      rw [h_bj32_val, h_zeta32_val]
+      rw [Int.natAbs_mul]
+      have h_mul : bj_v.val.natAbs * zeta.val.natAbs ≤ 3328 * 1664 :=
+        Nat.mul_le_mul h_bj h_zeta
+      have : (3328 * 1664 : Nat) < 2^31 := by decide
+      omega
+    have := L2_8c.wrapping_mul_i32_no_overflow bj32 zeta32 h_bnd
+    rw [this, h_bj32_val, h_zeta32_val]
+  -- ===== Step: bj_zeta = montgomery_reduce_element bj_zeta_ =====
+  have h_bj_zeta_pre : bj_zeta_.val.natAbs ≤ 2^16 * 3328 := by
+    rw [h_bj_zeta_val]
+    rw [Int.natAbs_mul]
+    have h_mul : bj_v.val.natAbs * zeta.val.natAbs ≤ 3328 * 1664 :=
+      Nat.mul_le_mul h_bj h_zeta
+    have : (3328 * 1664 : Nat) ≤ 2^16 * 3328 := by decide
+    omega
+  obtain ⟨bj_zeta, h_bj_zeta_ok, h_bj_zeta_bnd, h_bj_zeta_lift⟩ :=
+    triple_exists_ok_fc (montgomery_reduce_element_fc bj_zeta_ h_bj_zeta_pre)
+  have h_bj_zeta_pre' : bj_zeta_.val.natAbs ≤ 3328 * 2^16 := by
+    rw [show (3328 * 2^16 : Nat) = 2^16 * 3328 from by decide]; exact h_bj_zeta_pre
+  obtain ⟨bj_zeta', h_bj_zeta_ok', _h_bnd', h_tight_imp, h_bj_zeta_modq⟩ :=
+    triple_exists_ok_fc
+      (libcrux_iot_ml_kem.Equivalence.montgomery_reduce_element_spec bj_zeta_ h_bj_zeta_pre')
+  have h_bj_zeta_eq2 : bj_zeta = bj_zeta' := by
+    have h_both : (Result.ok bj_zeta : Result _) = Result.ok bj_zeta' := by
+      rw [← h_bj_zeta_ok, h_bj_zeta_ok']
+    cases h_both; rfl
+  -- Tight canonical bound for the cache POST: |bj * zeta| ≤ 3328 * 1664 ≤ 3328 * 2^15
+  -- discharges the conditional in `montgomery_reduce_element_spec`.
+  have h_bj_zeta_tight_pre : bj_zeta_.val.natAbs ≤ 3328 * 2^15 := by
+    rw [h_bj_zeta_val, Int.natAbs_mul]
+    have h_mul : bj_v.val.natAbs * zeta.val.natAbs ≤ 3328 * 1664 :=
+      Nat.mul_le_mul h_bj h_zeta
+    have h_le : (3328 * 1664 : Nat) ≤ 3328 * 2^15 := by decide
+    omega
+  have h_bj_zeta_canon : bj_zeta.val.natAbs ≤ 3328 := by
+    rw [h_bj_zeta_eq2]; exact h_tight_imp h_bj_zeta_tight_pre
+  -- ===== Cache write step (NEW): Array.update cache.elements i bj_zeta = .ok (cache.set i bj_zeta) =====
+  have h_upd_cache :
+      Aeneas.Std.Array.update cache.elements i bj_zeta
+        = .ok (cache.elements.set i bj_zeta) :=
+    libcrux_iot_ml_kem.Util.array_update_ok_eq cache.elements i bj_zeta
+      (by rw [h_cache_len]; exact (by omega : i.val < 16))
+  set cache_new : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+    { elements := cache.elements.set i bj_zeta } with hcn_def
+  -- ===== Step: aj_bj_zeta = wrapping_mul aj32 (as_i32 bj_zeta) =====
+  set bj_zeta32 : Std.I32 :=
+    Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 bj_zeta with hbjz32_def
+  have h_bj_zeta32_val : bj_zeta32.val = bj_zeta.val := L2_8c.cast_I32_val bj_zeta
+  have h_as_bj_zeta : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj_zeta
+      = .ok bj_zeta32 := L2_8c.as_i32_val_eq bj_zeta
+  set aj_bj_zeta : Std.I32 := Aeneas.Std.I32.wrapping_mul aj32 bj_zeta32 with habjz_def
+  have h_aj_bj_zeta_eq : core_models.num.I32.wrapping_mul aj32 bj_zeta32 = .ok aj_bj_zeta :=
+    L2_8c.cm_wrapping_mul_i32_ok_eq aj32 bj_zeta32
+  have h_aj_bj_zeta_val : aj_bj_zeta.val = aj_v.val * bj_zeta.val := by
+    have h_bnd : (aj32.val * bj_zeta32.val).natAbs < 2^31 := by
+      rw [h_aj32_val, h_bj_zeta32_val, Int.natAbs_mul]
+      have h_mul : aj_v.val.natAbs * bj_zeta.val.natAbs ≤ 3328 * (3328 + 1665) :=
+        Nat.mul_le_mul h_aj h_bj_zeta_bnd
+      have : (3328 * (3328 + 1665) : Nat) < 2^31 := by decide
+      omega
+    have := L2_8c.wrapping_mul_i32_no_overflow aj32 bj_zeta32 h_bnd
+    rw [this, h_aj32_val, h_bj_zeta32_val]
+  -- ===== Step: ai_bi_aj_bj = wrapping_add ai_bi aj_bj_zeta =====
+  set ai_bi_aj_bj : Std.I32 := Aeneas.Std.I32.wrapping_add ai_bi aj_bj_zeta with hsum_e_def
+  have h_sum_e_eq : core_models.num.I32.wrapping_add ai_bi aj_bj_zeta = .ok ai_bi_aj_bj :=
+    L2_8c.cm_wrapping_add_i32_ok_eq ai_bi aj_bj_zeta
+  have h_sum_e_bnd : (ai_bi.val + aj_bj_zeta.val).natAbs ≤ 3328 * 3328 + 3328 * (3328 + 1665) := by
+    rw [h_ai_bi_val, h_aj_bj_zeta_val]
+    have h_e1 : (ai_v.val * bi_v.val).natAbs ≤ 3328 * 3328 := by
+      rw [Int.natAbs_mul]; exact Nat.mul_le_mul h_ai h_bi
+    have h_e2 : (aj_v.val * bj_zeta.val).natAbs ≤ 3328 * (3328 + 1665) := by
+      rw [Int.natAbs_mul]; exact Nat.mul_le_mul h_aj h_bj_zeta_bnd
+    have h_tri : ((ai_v.val * bi_v.val) + (aj_v.val * bj_zeta.val)).natAbs
+                  ≤ (ai_v.val * bi_v.val).natAbs + (aj_v.val * bj_zeta.val).natAbs :=
+      Int.natAbs_add_le _ _
+    omega
+  have h_sum_e_val : ai_bi_aj_bj.val = ai_bi.val + aj_bj_zeta.val := by
+    have h_bnd : (ai_bi.val + aj_bj_zeta.val).natAbs < 2^31 := by
+      have h_le : (3328 * 3328 + 3328 * (3328 + 1665) : Nat) < 2^31 := by decide
+      omega
+    exact L2_8c.wrapping_add_i32_no_overflow ai_bi aj_bj_zeta h_bnd
+  have h_delta_e_bnd : ai_bi_aj_bj.val.natAbs ≤ 2^25 := by
+    rw [h_sum_e_val]
+    have : (3328 * 3328 + 3328 * (3328 + 1665) : Nat) ≤ 2^25 := by decide
+    omega
+  -- ===== Step: ai_bj = wrapping_mul ai32 bj32 =====
+  set ai_bj_p : Std.I32 := Aeneas.Std.I32.wrapping_mul ai32 bj32 with haibj_def
+  have h_ai_bj_eq : core_models.num.I32.wrapping_mul ai32 bj32 = .ok ai_bj_p :=
+    L2_8c.cm_wrapping_mul_i32_ok_eq ai32 bj32
+  have h_ai_bj_val : ai_bj_p.val = ai_v.val * bj_v.val := by
+    have h_bnd : (ai32.val * bj32.val).natAbs < 2^31 := by
+      rw [h_ai32_val, h_bj32_val, Int.natAbs_mul]
+      have h_mul : ai_v.val.natAbs * bj_v.val.natAbs ≤ 3328 * 3328 :=
+        Nat.mul_le_mul h_ai h_bj
+      have : (3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    have := L2_8c.wrapping_mul_i32_no_overflow ai32 bj32 h_bnd
+    rw [this, h_ai32_val, h_bj32_val]
+  -- ===== Step: aj_bi = wrapping_mul aj32 bi32 =====
+  set aj_bi_p : Std.I32 := Aeneas.Std.I32.wrapping_mul aj32 bi32 with hajbi_def
+  have h_aj_bi_eq : core_models.num.I32.wrapping_mul aj32 bi32 = .ok aj_bi_p :=
+    L2_8c.cm_wrapping_mul_i32_ok_eq aj32 bi32
+  have h_aj_bi_val : aj_bi_p.val = aj_v.val * bi_v.val := by
+    have h_bnd : (aj32.val * bi32.val).natAbs < 2^31 := by
+      rw [h_aj32_val, h_bi32_val, Int.natAbs_mul]
+      have h_mul : aj_v.val.natAbs * bi_v.val.natAbs ≤ 3328 * 3328 :=
+        Nat.mul_le_mul h_aj h_bi
+      have : (3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    have := L2_8c.wrapping_mul_i32_no_overflow aj32 bi32 h_bnd
+    rw [this, h_aj32_val, h_bi32_val]
+  -- ===== Step: ai_bj_aj_bi = wrapping_add ai_bj aj_bi =====
+  set ai_bj_aj_bi : Std.I32 := Aeneas.Std.I32.wrapping_add ai_bj_p aj_bi_p with hsum_o_def
+  have h_sum_o_eq : core_models.num.I32.wrapping_add ai_bj_p aj_bi_p = .ok ai_bj_aj_bi :=
+    L2_8c.cm_wrapping_add_i32_ok_eq ai_bj_p aj_bi_p
+  have h_sum_o_bnd : (ai_bj_p.val + aj_bi_p.val).natAbs ≤ 2 * 3328 * 3328 := by
+    rw [h_ai_bj_val, h_aj_bi_val]
+    have h_e1 : (ai_v.val * bj_v.val).natAbs ≤ 3328 * 3328 := by
+      rw [Int.natAbs_mul]; exact Nat.mul_le_mul h_ai h_bj
+    have h_e2 : (aj_v.val * bi_v.val).natAbs ≤ 3328 * 3328 := by
+      rw [Int.natAbs_mul]; exact Nat.mul_le_mul h_aj h_bi
+    have h_tri := Int.natAbs_add_le (ai_v.val * bj_v.val) (aj_v.val * bi_v.val)
+    omega
+  have h_sum_o_val : ai_bj_aj_bi.val = ai_bj_p.val + aj_bi_p.val := by
+    have h_bnd : (ai_bj_p.val + aj_bi_p.val).natAbs < 2^31 := by
+      have : (2 * 3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    exact L2_8c.wrapping_add_i32_no_overflow ai_bj_p aj_bi_p h_bnd
+  have h_delta_o_bnd : ai_bj_aj_bi.val.natAbs ≤ 2^25 := by
+    rw [h_sum_o_val]
+    have : (2 * 3328 * 3328 : Nat) ≤ 2^25 := by decide
+    omega
+  -- ===== Slice reads + writes for `out` =====
+  have h_read_old_e : Aeneas.Std.Slice.index_usize out i1 = .ok old_e := by
+    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out i1
+      (by rw [h_out_val_len, h_i1_val']; exact h_2i_lt)
+    rw [h, h_i1_val']
+  set new_e : Std.I32 := Aeneas.Std.I32.wrapping_add old_e ai_bi_aj_bj with hne_def
+  have h_new_e_eq : core_models.num.I32.wrapping_add old_e ai_bi_aj_bj = .ok new_e :=
+    L2_8c.cm_wrapping_add_i32_ok_eq old_e ai_bi_aj_bj
+  have h_new_e_val : new_e.val = old_e.val + ai_bi_aj_bj.val := by
+    have h_bnd : (old_e.val + ai_bi_aj_bj.val).natAbs < 2^31 := by
+      have h_tri := Int.natAbs_add_le old_e.val ai_bi_aj_bj.val
+      have : (2^30 + 2^25 + 2^25 : Nat) < 2^31 := by decide
+      omega
+    exact L2_8c.wrapping_add_i32_no_overflow old_e ai_bi_aj_bj h_bnd
+  have h_new_e_bnd : new_e.val.natAbs ≤ old_e.val.natAbs + 2^25 := by
+    rw [h_new_e_val]
+    have h_tri := Int.natAbs_add_le old_e.val ai_bi_aj_bj.val
+    omega
+  have h_upd_e : Aeneas.Std.Slice.update out i1 new_e = .ok (out.set i1 new_e) := by
+    have hT := Aeneas.Std.Slice.update_spec out i1 new_e (by rw [h_out_len, h_i1_val']; exact h_2i_lt)
+    obtain ⟨v', h_eq, h_v'⟩ := Aeneas.Std.WP.spec_imp_exists hT
+    rw [h_eq, h_v']
+  set out1 : Aeneas.Std.Slice Std.I32 := out.set i1 new_e with hout1_def
+  have h_out1_len : out1.length = 16 := by simp [hout1_def]; exact h_out_len
+  have h_out1_val_len : out1.val.length = 16 := h_out1_len
+  have h_old_o_in_out1 : out1.val[i2.val]! = old_o := by
+    have h_set_val : out1.val = out.val.set i1.val new_e := by
+      simp [hout1_def, Aeneas.Std.Slice.set_val_eq]
+    have h_ne : 2 * i.val + 1 ≠ i1.val := by rw [h_i1_val']; omega
+    have h_lt : 2 * i.val + 1 < out.val.length := by rw [h_out_val_len]; exact h_2i1_lt
+    rw [h_set_val, h_i2_val', hoo_def]
+    have h_lt_set : 2 * i.val + 1 < (out.val.set i1.val new_e).length := by
+      rw [List.length_set]; exact h_lt
+    rw [getElem!_pos (out.val.set i1.val new_e) (2 * i.val + 1) h_lt_set]
+    rw [getElem!_pos out.val (2 * i.val + 1) h_lt]
+    rw [List.getElem_set_ne (Ne.symm h_ne)]
+  have h_read_old_o : Aeneas.Std.Slice.index_usize out1 i2 = .ok old_o := by
+    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out1 i2
+      (by rw [h_out1_val_len, h_i2_val']; exact h_2i1_lt)
+    rw [h, h_old_o_in_out1]
+  set new_o : Std.I32 := Aeneas.Std.I32.wrapping_add old_o ai_bj_aj_bi with hno_def
+  have h_new_o_eq : core_models.num.I32.wrapping_add old_o ai_bj_aj_bi = .ok new_o :=
+    L2_8c.cm_wrapping_add_i32_ok_eq old_o ai_bj_aj_bi
+  have h_new_o_val : new_o.val = old_o.val + ai_bj_aj_bi.val := by
+    have h_bnd : (old_o.val + ai_bj_aj_bi.val).natAbs < 2^31 := by
+      have h_tri := Int.natAbs_add_le old_o.val ai_bj_aj_bi.val
+      have : (2^30 + 2^25 + 2^25 : Nat) < 2^31 := by decide
+      omega
+    exact L2_8c.wrapping_add_i32_no_overflow old_o ai_bj_aj_bi h_bnd
+  have h_new_o_bnd : new_o.val.natAbs ≤ old_o.val.natAbs + 2^25 := by
+    rw [h_new_o_val]
+    have h_tri := Int.natAbs_add_le old_o.val ai_bj_aj_bi.val
+    omega
+  have h_upd_o : Aeneas.Std.Slice.update out1 i2 new_o = .ok (out1.set i2 new_o) := by
+    have hT := Aeneas.Std.Slice.update_spec out1 i2 new_o
+      (by rw [h_out1_len, h_i2_val']; exact h_2i1_lt)
+    obtain ⟨v', h_eq, h_v'⟩ := Aeneas.Std.WP.spec_imp_exists hT
+    rw [h_eq, h_v']
+  set out2 : Aeneas.Std.Slice Std.I32 := out1.set i2 new_o with hout2_def
+  -- ===== Compose the monadic body =====
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+        a b zeta i out cache = .ok (out2, cache_new) := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+    simp only [h_i1_eq, h_i2_eq, h_read_ai, h_read_bi, h_read_aj, h_read_bj,
+               h_as_ai, h_as_bi, h_as_aj, h_as_bj, h_as_zeta, h_as_bj_zeta,
+               h_ai_bi_eq, h_bj_zeta_eq, h_bj_zeta_ok, h_upd_cache, h_aj_bj_zeta_eq,
+               h_sum_e_eq, h_ai_bj_eq, h_aj_bi_eq, h_sum_o_eq,
+               h_read_old_e, h_new_e_eq, h_upd_e,
+               h_read_old_o, h_new_o_eq, h_upd_o,
+               Aeneas.Std.bind_tc_ok]
+    rfl
+  apply triple_of_ok_fc h_body
+  -- ===== POST: 10-conjunct =====
+  -- out2 unfolding (same as L2.8c).
+  have h_out2_val : out2.val = (out.val.set i1.val new_e).set i2.val new_o := by
+    show ((out.set i1 new_e).set i2 new_o).val = _
+    rw [Aeneas.Std.Slice.set_val_eq, Aeneas.Std.Slice.set_val_eq]
+  have h_out2_len : out2.length = 16 := by
+    show ((out.set i1 new_e).set i2 new_o).length = 16
+    rw [Aeneas.Std.Slice.set_length, Aeneas.Std.Slice.set_length]; exact h_out_len
+  have h_out2_val_len : out2.val.length = 16 := h_out2_len
+  have h_out2_at_2i : out2.val[2 * i.val]! = new_e := by
+    rw [h_out2_val, ← h_i1_val']
+    have h_lt_out : i1.val < out.val.length := by rw [h_out_val_len, h_i1_val']; exact h_2i_lt
+    have h_lt1 : i1.val < (out.val.set i1.val new_e).length := by
+      rw [List.length_set]; exact h_lt_out
+    have h_lt2 : i1.val < ((out.val.set i1.val new_e).set i2.val new_o).length := by
+      rw [List.length_set]; exact h_lt1
+    rw [getElem!_pos ((out.val.set i1.val new_e).set i2.val new_o) i1.val h_lt2]
+    rw [List.getElem_set_ne (by rw [h_i2_val', h_i1_val']; omega)]
+    rw [List.getElem_set_self]
+  have h_out2_at_2i1 : out2.val[2 * i.val + 1]! = new_o := by
+    rw [h_out2_val, ← h_i2_val']
+    have h_lt_out : i2.val < out.val.length := by rw [h_out_val_len, h_i2_val']; exact h_2i1_lt
+    have h_lt1 : i2.val < (out.val.set i1.val new_e).length := by
+      rw [List.length_set]; exact h_lt_out
+    have h_lt2 : i2.val < ((out.val.set i1.val new_e).set i2.val new_o).length := by
+      rw [List.length_set]; exact h_lt1
+    rw [getElem!_pos ((out.val.set i1.val new_e).set i2.val new_o) i2.val h_lt2]
+    rw [List.getElem_set_self]
+  have h_out2_untouched : ∀ k : Nat, k < 16 → k ≠ 2 * i.val → k ≠ 2 * i.val + 1 →
+      out2.val[k]! = out.val[k]! := by
+    intro k hk hki hkj
+    rw [h_out2_val]
+    have h_lt_out : k < out.val.length := by rw [h_out_val_len]; exact hk
+    have h_lt1 : k < (out.val.set i1.val new_e).length := by rw [List.length_set]; exact h_lt_out
+    have h_lt2 : k < ((out.val.set i1.val new_e).set i2.val new_o).length := by
+      rw [List.length_set]; exact h_lt1
+    rw [getElem!_pos ((out.val.set i1.val new_e).set i2.val new_o) k h_lt2]
+    rw [getElem!_pos out.val k h_lt_out]
+    rw [List.getElem_set_ne (by rw [h_i2_val']; omega)]
+    rw [List.getElem_set_ne (by rw [h_i1_val']; omega)]
+  -- ===== Cache POST conjuncts =====
+  -- cache_new.elements.val = cache.elements.val.set i.val bj_zeta.
+  have h_cache_new_val :
+      cache_new.elements.val = cache.elements.val.set i.val bj_zeta := by
+    simp [hcn_def, Aeneas.Std.Array.set_val_eq]
+  have h_cache_val_len : cache.elements.val.length = 16 := h_cache_len
+  have h_cache_at_i : cache_new.elements.val[i.val]! = bj_zeta := by
+    rw [h_cache_new_val]
+    have h_lt : i.val < cache.elements.val.length := by rw [h_cache_val_len]; omega
+    have h_lt_set : i.val < (cache.elements.val.set i.val bj_zeta).length := by
+      rw [List.length_set]; exact h_lt
+    rw [getElem!_pos (cache.elements.val.set i.val bj_zeta) i.val h_lt_set]
+    rw [List.getElem_set_self]
+  have h_cache_untouched : ∀ k : Nat, k < 16 → k ≠ i.val →
+      cache_new.elements.val[k]! = cache.elements.val[k]! := by
+    intro k hk hki
+    rw [h_cache_new_val]
+    have h_lt : k < cache.elements.val.length := by rw [h_cache_val_len]; exact hk
+    have h_lt_set : k < (cache.elements.val.set i.val bj_zeta).length := by
+      rw [List.length_set]; exact h_lt
+    rw [getElem!_pos (cache.elements.val.set i.val bj_zeta) k h_lt_set]
+    rw [getElem!_pos cache.elements.val k h_lt]
+    rw [List.getElem_set_ne (Ne.symm hki)]
+  -- The cache POST FE-equation conjunct: lift_fe_mont bj_zeta = mul (lift bj) (lift zeta).
+  have h_cache_fe :
+      lift_fe_mont bj_zeta
+        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (lift_fe_mont bj_v) (lift_fe_mont zeta) := by
+    -- Convert h_bj_zeta_modq to ZMod equation and invoke the helper.
+    have h_modq_cast : ((bj_zeta'.val : Int) : ZMod 3329)
+        = ((bj_zeta_.val * 169 : Int) : ZMod 3329) :=
+      modq_eq_cast_zmod _ _ h_bj_zeta_modq
+    rw [h_bj_zeta_eq2.symm] at h_modq_cast
+    rw [h_bj_zeta_val] at h_modq_cast
+    push_cast at h_modq_cast
+    -- h_modq_cast : (bj_zeta.val : ZMod q) = (bj.val * zeta.val * 169 : ZMod q).
+    apply L2_8d.lift_fe_mont_of_mont_reduce_modq bj_zeta bj_v zeta h_bj_zeta_canon
+    -- Goal: ((bj_zeta.val : Int) : ZMod q) * 2^16 = (bj.val : ZMod q) * (zeta.val : ZMod q).
+    push_cast
+    rw [h_modq_cast]
+    -- Goal: bj * zeta * 169 * 2^16 = bj * zeta. Use 2^16 * 169 = 1.
+    have h_inv : ((2285 : ZMod 3329)) * 169 = 1 := by decide
+    have h_2_16 : ((2^16 : Int) : ZMod 3329) = 2285 := by decide
+    push_cast [h_2_16]
+    rw [show (((bj_v.val : Int) : ZMod 3329) * ((zeta.val : Int) : ZMod 3329) * 169) * 2285
+              = ((bj_v.val : Int) : ZMod 3329) * ((zeta.val : Int) : ZMod 3329) * (169 * 2285)
+            from by ring]
+    rw [show ((169 : ZMod 3329) * 2285) = (2285 * 169 : ZMod 3329) from by ring]
+    rw [h_inv]
+    ring
+  -- ===== Assemble the 10-conjunct POST =====
+  -- Note: target POST mentions `p.2.elements.val[k]!` (where p = (out2, cache_new)),
+  -- which is `cache_new.elements.val[k]!`. The tight canonical bound for the
+  -- cache POST was established above as `h_bj_zeta_canon`.
+  refine ⟨h_out2_len, h_out2_untouched, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · -- Bound at 2*i.
+    rw [h_out2_at_2i, hoe_def] at *
+    rw [h_out2_at_2i]
+    rw [hoe_def] at h_new_e_bnd
+    exact h_new_e_bnd
+  · -- Bound at 2*i+1.
+    rw [h_out2_at_2i1]
+    rw [hoo_def] at h_new_o_bnd
+    exact h_new_o_bnd
+  · -- FE eq (even half) — identical algebra to L2.8c binomials_fc.
+    rw [h_out2_at_2i, hoe_def]
+    have h_modq_cast : ((bj_zeta'.val : Int) : ZMod 3329)
+        = ((bj_zeta_.val * 169 : Int) : ZMod 3329) :=
+      modq_eq_cast_zmod _ _ h_bj_zeta_modq
+    rw [h_bj_zeta_eq2.symm] at h_modq_cast
+    rw [h_bj_zeta_val] at h_modq_cast
+    push_cast at h_modq_cast
+    apply L2_8c.mont_reduce_even_fe_eq
+      (out := out.val[2 * i.val]!) (r := new_e)
+      (ai := ai_v) (bi := bi_v) (aj := aj_v) (bj := bj_v) (zeta := zeta)
+    rw [← hoe_def, h_new_e_val, h_sum_e_val, h_ai_bi_val, h_aj_bj_zeta_val]
+    push_cast
+    rw [h_modq_cast]
+    have h_inv : ((2285 : ZMod 3329)) * 169 = 1 := by decide
+    calc ((old_e.val : ZMod 3329) + ((ai_v.val : ZMod 3329) * (bi_v.val : ZMod 3329)
+          + (aj_v.val : ZMod 3329) * ((bj_v.val : ZMod 3329) * (zeta.val : ZMod 3329) * 169)))
+            * 2285
+        = (old_e.val : ZMod 3329) * 2285
+          + (ai_v.val : ZMod 3329) * (bi_v.val : ZMod 3329) * 2285
+          + (aj_v.val : ZMod 3329) * (bj_v.val : ZMod 3329) * (zeta.val : ZMod 3329)
+              * (2285 * 169) := by ring
+      _ = (old_e.val : ZMod 3329) * 2285
+          + (ai_v.val : ZMod 3329) * (bi_v.val : ZMod 3329) * 2285
+          + (aj_v.val : ZMod 3329) * (bj_v.val : ZMod 3329) * (zeta.val : ZMod 3329) := by
+            rw [h_inv]; ring
+  · -- FE eq (odd half).
+    rw [h_out2_at_2i1, hoo_def]
+    apply L2_8c.mont_reduce_odd_fe_eq
+      (out := out.val[2 * i.val + 1]!) (r := new_o)
+      (ai := ai_v) (bi := bi_v) (aj := aj_v) (bj := bj_v)
+    rw [← hoo_def, h_new_o_val, h_sum_o_val, h_ai_bj_val, h_aj_bi_val]
+    push_cast
+    ring
+  · -- Cache canonicity at slot i.
+    rw [h_cache_at_i]; exact h_bj_zeta_canon
+  · -- Cache FE-equation at slot i.
+    rw [h_cache_at_i, hbj_def]; exact h_cache_fe
+  · -- Cache unchanged outside slot i.
+    exact h_cache_untouched
+
+set_option maxHeartbeats 8000000 in
+/-- Per-pair Triple for `accumulating_ntt_multiply_binomials_use_cache`.
+    Reads `cache[i]` (an I16) in place of the per-pair Mont-reduced
+    `b[2i+1]·zeta`. The cache PRE conjunct asserts canonicity
+    (`|cache[i].val| ≤ 3328`); the FE equation for the even half
+    leaves the cached lane symbolic (the outer use_cache Triple
+    rewrites it using the cache PRE FE equation). -/
+private theorem accumulating_ntt_multiply_binomials_use_cache_fc
+    (a b : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (i : Std.Usize)
+    (out : Aeneas.Std.Slice Std.I32)
+    (cache : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_i : i.val < 8)
+    (h_out_len : out.length = 16)
+    (h_a : ∀ j : Fin 16, (a.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_b : ∀ j : Fin 16, (b.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_cache_i : (cache.elements.val[i.val]!).val.natAbs ≤ 3328)
+    (h_out_bnd : ∀ k : Fin 16, (out.val[k.val]!).val.natAbs ≤ 2^30 + 2^25) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_use_cache
+      a b i out cache
+    ⦃ ⇓ r => ⌜ r.length = 16
+                ∧ (∀ k : Nat, k < 16 → k ≠ 2 * i.val → k ≠ 2 * i.val + 1 →
+                    r.val[k]! = out.val[k]!)
+                ∧ (r.val[2 * i.val]!).val.natAbs
+                    ≤ (out.val[2 * i.val]!).val.natAbs + 2^25
+                ∧ (r.val[2 * i.val + 1]!).val.natAbs
+                    ≤ (out.val[2 * i.val + 1]!).val.natAbs + 2^25
+                ∧ Spec.mont_reduce_pure (lift_fe_int (r.val[2 * i.val]!).val)
+                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                        (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val]!).val))
+                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                            (lift_fe_mont (a.elements.val[2 * i.val]!))
+                            (lift_fe_mont (b.elements.val[2 * i.val]!)))
+                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                            (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
+                            (lift_fe_mont (cache.elements.val[i.val]!))))
+                ∧ Spec.mont_reduce_pure (lift_fe_int (r.val[2 * i.val + 1]!).val)
+                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                        (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val + 1]!).val))
+                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                            (lift_fe_mont (a.elements.val[2 * i.val]!))
+                            (lift_fe_mont (b.elements.val[2 * i.val + 1]!)))
+                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                            (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
+                            (lift_fe_mont (b.elements.val[2 * i.val]!)))) ⌝ ⦄ := by
+  -- ===== Setup =====
+  have h_2i_lt : 2 * i.val < 16 := by omega
+  have h_2i1_lt : 2 * i.val + 1 < 16 := by omega
+  have h_a_len : a.elements.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length a
+  have h_b_len : b.elements.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length b
+  have h_cache_len : cache.elements.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length cache
+  have h_out_val_len : out.val.length = 16 := h_out_len
+  set ai_v : Std.I16 := a.elements.val[2 * i.val]! with hai_def
+  set bi_v : Std.I16 := b.elements.val[2 * i.val]! with hbi_def
+  set aj_v : Std.I16 := a.elements.val[2 * i.val + 1]! with haj_def
+  set bj_v : Std.I16 := b.elements.val[2 * i.val + 1]! with hbj_def
+  set c_v : Std.I16 := cache.elements.val[i.val]! with hcv_def
+  have h_ai : ai_v.val.natAbs ≤ 3328 := h_a ⟨2 * i.val, h_2i_lt⟩
+  have h_bi : bi_v.val.natAbs ≤ 3328 := h_b ⟨2 * i.val, h_2i_lt⟩
+  have h_aj : aj_v.val.natAbs ≤ 3328 := h_a ⟨2 * i.val + 1, h_2i1_lt⟩
+  have h_bj : bj_v.val.natAbs ≤ 3328 := h_b ⟨2 * i.val + 1, h_2i1_lt⟩
+  have h_cv : c_v.val.natAbs ≤ 3328 := h_cache_i
+  set old_e : Std.I32 := out.val[2 * i.val]! with hoe_def
+  set old_o : Std.I32 := out.val[2 * i.val + 1]! with hoo_def
+  have h_old_e_bnd : old_e.val.natAbs ≤ 2^30 + 2^25 := h_out_bnd ⟨2 * i.val, h_2i_lt⟩
+  have h_old_o_bnd : old_o.val.natAbs ≤ 2^30 + 2^25 := h_out_bnd ⟨2 * i.val + 1, h_2i1_lt⟩
+  -- ===== Index arithmetic =====
+  obtain ⟨i1, h_i1_eq, h_i1_val⟩ :=
+    usize_mul_ok_eq_fc 2#usize i (by scalar_tac)
+  have h_i1_val' : i1.val = 2 * i.val := by
+    rw [h_i1_val]; rfl
+  obtain ⟨i2, h_i2_eq, h_i2_val⟩ :=
+    usize_add_ok_eq_fc i1 1#usize (by scalar_tac)
+  have h_i2_val' : i2.val = 2 * i.val + 1 := by
+    rw [h_i2_val, h_i1_val']; rfl
+  -- ===== Reads (with index_usize_ok_eq) =====
+  have h_read_ai :
+      Aeneas.Std.Array.index_usize a.elements i1 = .ok ai_v := by
+    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i1
+      (by rw [h_a_len, h_i1_val']; exact h_2i_lt)
+    rw [h, h_i1_val']
+  have h_read_bi :
+      Aeneas.Std.Array.index_usize b.elements i1 = .ok bi_v := by
+    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i1
+      (by rw [h_b_len, h_i1_val']; exact h_2i_lt)
+    rw [h, h_i1_val']
+  have h_read_aj :
+      Aeneas.Std.Array.index_usize a.elements i2 = .ok aj_v := by
+    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i2
+      (by rw [h_a_len, h_i2_val']; exact h_2i1_lt)
+    rw [h, h_i2_val']
+  have h_read_bj :
+      Aeneas.Std.Array.index_usize b.elements i2 = .ok bj_v := by
+    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i2
+      (by rw [h_b_len, h_i2_val']; exact h_2i1_lt)
+    rw [h, h_i2_val']
+  have h_read_cv :
+      Aeneas.Std.Array.index_usize cache.elements i = .ok c_v := by
+    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq cache.elements i
+      (by rw [h_cache_len]; exact (by omega : i.val < 16))
+    rw [h]
+  -- ===== as_i32 casts =====
+  set ai32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 ai_v with hai32_def
+  set bi32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 bi_v with hbi32_def
+  set aj32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 aj_v with haj32_def
+  set bj32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 bj_v with hbj32_def
+  set c32 : Std.I32 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 c_v with hc32_def
+  have h_ai32_val : ai32.val = ai_v.val := L2_8c.cast_I32_val ai_v
+  have h_bi32_val : bi32.val = bi_v.val := L2_8c.cast_I32_val bi_v
+  have h_aj32_val : aj32.val = aj_v.val := L2_8c.cast_I32_val aj_v
+  have h_bj32_val : bj32.val = bj_v.val := L2_8c.cast_I32_val bj_v
+  have h_c32_val : c32.val = c_v.val := L2_8c.cast_I32_val c_v
+  have h_as_ai : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 ai_v = .ok ai32 :=
+    L2_8c.as_i32_val_eq ai_v
+  have h_as_bi : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bi_v = .ok bi32 :=
+    L2_8c.as_i32_val_eq bi_v
+  have h_as_aj : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 aj_v = .ok aj32 :=
+    L2_8c.as_i32_val_eq aj_v
+  have h_as_bj : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 bj_v = .ok bj32 :=
+    L2_8c.as_i32_val_eq bj_v
+  have h_as_cv : libcrux_secrets.I16.Insts.Libcrux_secretsIntCastOps.as_i32 c_v = .ok c32 :=
+    L2_8c.as_i32_val_eq c_v
+  -- ===== Step: ai_bi = wrapping_mul ai32 bi32 =====
+  set ai_bi : Std.I32 := Aeneas.Std.I32.wrapping_mul ai32 bi32 with habi_def
+  have h_ai_bi_eq : core_models.num.I32.wrapping_mul ai32 bi32 = .ok ai_bi :=
+    L2_8c.cm_wrapping_mul_i32_ok_eq ai32 bi32
+  have h_ai_bi_val : ai_bi.val = ai_v.val * bi_v.val := by
+    have h_bnd : (ai32.val * bi32.val).natAbs < 2^31 := by
+      rw [h_ai32_val, h_bi32_val]
+      have h := Int.natAbs_mul ai_v.val bi_v.val
+      have : ai_v.val.natAbs * bi_v.val.natAbs ≤ 3328 * 3328 := by
+        exact Nat.mul_le_mul h_ai h_bi
+      rw [h]
+      have : (3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    have := L2_8c.wrapping_mul_i32_no_overflow ai32 bi32 h_bnd
+    rw [this, h_ai32_val, h_bi32_val]
+  -- ===== Step: aj_bj_zeta = wrapping_mul aj32 c32 (uses cache directly) =====
+  set aj_bj_zeta : Std.I32 := Aeneas.Std.I32.wrapping_mul aj32 c32 with habjz_def
+  have h_aj_bj_zeta_eq : core_models.num.I32.wrapping_mul aj32 c32 = .ok aj_bj_zeta :=
+    L2_8c.cm_wrapping_mul_i32_ok_eq aj32 c32
+  have h_aj_bj_zeta_val : aj_bj_zeta.val = aj_v.val * c_v.val := by
+    have h_bnd : (aj32.val * c32.val).natAbs < 2^31 := by
+      rw [h_aj32_val, h_c32_val, Int.natAbs_mul]
+      have h_mul : aj_v.val.natAbs * c_v.val.natAbs ≤ 3328 * 3328 :=
+        Nat.mul_le_mul h_aj h_cv
+      have : (3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    have := L2_8c.wrapping_mul_i32_no_overflow aj32 c32 h_bnd
+    rw [this, h_aj32_val, h_c32_val]
+  -- ===== Step: ai_bi_aj_bj = wrapping_add ai_bi aj_bj_zeta =====
+  set ai_bi_aj_bj : Std.I32 := Aeneas.Std.I32.wrapping_add ai_bi aj_bj_zeta with hsum_e_def
+  have h_sum_e_eq : core_models.num.I32.wrapping_add ai_bi aj_bj_zeta = .ok ai_bi_aj_bj :=
+    L2_8c.cm_wrapping_add_i32_ok_eq ai_bi aj_bj_zeta
+  have h_sum_e_bnd : (ai_bi.val + aj_bj_zeta.val).natAbs ≤ 2 * 3328 * 3328 := by
+    rw [h_ai_bi_val, h_aj_bj_zeta_val]
+    have h_e1 : (ai_v.val * bi_v.val).natAbs ≤ 3328 * 3328 := by
+      rw [Int.natAbs_mul]; exact Nat.mul_le_mul h_ai h_bi
+    have h_e2 : (aj_v.val * c_v.val).natAbs ≤ 3328 * 3328 := by
+      rw [Int.natAbs_mul]; exact Nat.mul_le_mul h_aj h_cv
+    have h_tri : ((ai_v.val * bi_v.val) + (aj_v.val * c_v.val)).natAbs
+                  ≤ (ai_v.val * bi_v.val).natAbs + (aj_v.val * c_v.val).natAbs :=
+      Int.natAbs_add_le _ _
+    omega
+  have h_sum_e_val : ai_bi_aj_bj.val = ai_bi.val + aj_bj_zeta.val := by
+    have h_bnd : (ai_bi.val + aj_bj_zeta.val).natAbs < 2^31 := by
+      have : (2 * 3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    exact L2_8c.wrapping_add_i32_no_overflow ai_bi aj_bj_zeta h_bnd
+  have h_delta_e_bnd : ai_bi_aj_bj.val.natAbs ≤ 2^25 := by
+    rw [h_sum_e_val]
+    have : (2 * 3328 * 3328 : Nat) ≤ 2^25 := by decide
+    omega
+  -- ===== Step: ai_bj = wrapping_mul ai32 bj32 =====
+  set ai_bj_p : Std.I32 := Aeneas.Std.I32.wrapping_mul ai32 bj32 with haibj_def
+  have h_ai_bj_eq : core_models.num.I32.wrapping_mul ai32 bj32 = .ok ai_bj_p :=
+    L2_8c.cm_wrapping_mul_i32_ok_eq ai32 bj32
+  have h_ai_bj_val : ai_bj_p.val = ai_v.val * bj_v.val := by
+    have h_bnd : (ai32.val * bj32.val).natAbs < 2^31 := by
+      rw [h_ai32_val, h_bj32_val, Int.natAbs_mul]
+      have h_mul : ai_v.val.natAbs * bj_v.val.natAbs ≤ 3328 * 3328 :=
+        Nat.mul_le_mul h_ai h_bj
+      have : (3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    have := L2_8c.wrapping_mul_i32_no_overflow ai32 bj32 h_bnd
+    rw [this, h_ai32_val, h_bj32_val]
+  -- ===== Step: aj_bi = wrapping_mul aj32 bi32 =====
+  set aj_bi_p : Std.I32 := Aeneas.Std.I32.wrapping_mul aj32 bi32 with hajbi_def
+  have h_aj_bi_eq : core_models.num.I32.wrapping_mul aj32 bi32 = .ok aj_bi_p :=
+    L2_8c.cm_wrapping_mul_i32_ok_eq aj32 bi32
+  have h_aj_bi_val : aj_bi_p.val = aj_v.val * bi_v.val := by
+    have h_bnd : (aj32.val * bi32.val).natAbs < 2^31 := by
+      rw [h_aj32_val, h_bi32_val, Int.natAbs_mul]
+      have h_mul : aj_v.val.natAbs * bi_v.val.natAbs ≤ 3328 * 3328 :=
+        Nat.mul_le_mul h_aj h_bi
+      have : (3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    have := L2_8c.wrapping_mul_i32_no_overflow aj32 bi32 h_bnd
+    rw [this, h_aj32_val, h_bi32_val]
+  -- ===== Step: ai_bj_aj_bi = wrapping_add ai_bj aj_bi =====
+  set ai_bj_aj_bi : Std.I32 := Aeneas.Std.I32.wrapping_add ai_bj_p aj_bi_p with hsum_o_def
+  have h_sum_o_eq : core_models.num.I32.wrapping_add ai_bj_p aj_bi_p = .ok ai_bj_aj_bi :=
+    L2_8c.cm_wrapping_add_i32_ok_eq ai_bj_p aj_bi_p
+  have h_sum_o_bnd : (ai_bj_p.val + aj_bi_p.val).natAbs ≤ 2 * 3328 * 3328 := by
+    rw [h_ai_bj_val, h_aj_bi_val]
+    have h_e1 : (ai_v.val * bj_v.val).natAbs ≤ 3328 * 3328 := by
+      rw [Int.natAbs_mul]; exact Nat.mul_le_mul h_ai h_bj
+    have h_e2 : (aj_v.val * bi_v.val).natAbs ≤ 3328 * 3328 := by
+      rw [Int.natAbs_mul]; exact Nat.mul_le_mul h_aj h_bi
+    have h_tri := Int.natAbs_add_le (ai_v.val * bj_v.val) (aj_v.val * bi_v.val)
+    omega
+  have h_sum_o_val : ai_bj_aj_bi.val = ai_bj_p.val + aj_bi_p.val := by
+    have h_bnd : (ai_bj_p.val + aj_bi_p.val).natAbs < 2^31 := by
+      have : (2 * 3328 * 3328 : Nat) < 2^31 := by decide
+      omega
+    exact L2_8c.wrapping_add_i32_no_overflow ai_bj_p aj_bi_p h_bnd
+  have h_delta_o_bnd : ai_bj_aj_bi.val.natAbs ≤ 2^25 := by
+    rw [h_sum_o_val]
+    have : (2 * 3328 * 3328 : Nat) ≤ 2^25 := by decide
+    omega
+  -- ===== Slice reads + writes for `out` =====
+  have h_read_old_e : Aeneas.Std.Slice.index_usize out i1 = .ok old_e := by
+    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out i1
+      (by rw [h_out_val_len, h_i1_val']; exact h_2i_lt)
+    rw [h, h_i1_val']
+  set new_e : Std.I32 := Aeneas.Std.I32.wrapping_add old_e ai_bi_aj_bj with hne_def
+  have h_new_e_eq : core_models.num.I32.wrapping_add old_e ai_bi_aj_bj = .ok new_e :=
+    L2_8c.cm_wrapping_add_i32_ok_eq old_e ai_bi_aj_bj
+  have h_new_e_val : new_e.val = old_e.val + ai_bi_aj_bj.val := by
+    have h_bnd : (old_e.val + ai_bi_aj_bj.val).natAbs < 2^31 := by
+      have h_tri := Int.natAbs_add_le old_e.val ai_bi_aj_bj.val
+      have : (2^30 + 2^25 + 2^25 : Nat) < 2^31 := by decide
+      omega
+    exact L2_8c.wrapping_add_i32_no_overflow old_e ai_bi_aj_bj h_bnd
+  have h_new_e_bnd : new_e.val.natAbs ≤ old_e.val.natAbs + 2^25 := by
+    rw [h_new_e_val]
+    have h_tri := Int.natAbs_add_le old_e.val ai_bi_aj_bj.val
+    omega
+  have h_upd_e : Aeneas.Std.Slice.update out i1 new_e = .ok (out.set i1 new_e) := by
+    have hT := Aeneas.Std.Slice.update_spec out i1 new_e (by rw [h_out_len, h_i1_val']; exact h_2i_lt)
+    obtain ⟨v', h_eq, h_v'⟩ := Aeneas.Std.WP.spec_imp_exists hT
+    rw [h_eq, h_v']
+  set out1 : Aeneas.Std.Slice Std.I32 := out.set i1 new_e with hout1_def
+  have h_out1_len : out1.length = 16 := by simp [hout1_def]; exact h_out_len
+  have h_out1_val_len : out1.val.length = 16 := h_out1_len
+  have h_old_o_in_out1 : out1.val[i2.val]! = old_o := by
+    have h_set_val : out1.val = out.val.set i1.val new_e := by
+      simp [hout1_def, Aeneas.Std.Slice.set_val_eq]
+    have h_ne : 2 * i.val + 1 ≠ i1.val := by rw [h_i1_val']; omega
+    have h_lt : 2 * i.val + 1 < out.val.length := by rw [h_out_val_len]; exact h_2i1_lt
+    rw [h_set_val, h_i2_val', hoo_def]
+    have h_lt_set : 2 * i.val + 1 < (out.val.set i1.val new_e).length := by
+      rw [List.length_set]; exact h_lt
+    rw [getElem!_pos (out.val.set i1.val new_e) (2 * i.val + 1) h_lt_set]
+    rw [getElem!_pos out.val (2 * i.val + 1) h_lt]
+    rw [List.getElem_set_ne (Ne.symm h_ne)]
+  have h_read_old_o : Aeneas.Std.Slice.index_usize out1 i2 = .ok old_o := by
+    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out1 i2
+      (by rw [h_out1_val_len, h_i2_val']; exact h_2i1_lt)
+    rw [h, h_old_o_in_out1]
+  set new_o : Std.I32 := Aeneas.Std.I32.wrapping_add old_o ai_bj_aj_bi with hno_def
+  have h_new_o_eq : core_models.num.I32.wrapping_add old_o ai_bj_aj_bi = .ok new_o :=
+    L2_8c.cm_wrapping_add_i32_ok_eq old_o ai_bj_aj_bi
+  have h_new_o_val : new_o.val = old_o.val + ai_bj_aj_bi.val := by
+    have h_bnd : (old_o.val + ai_bj_aj_bi.val).natAbs < 2^31 := by
+      have h_tri := Int.natAbs_add_le old_o.val ai_bj_aj_bi.val
+      have : (2^30 + 2^25 + 2^25 : Nat) < 2^31 := by decide
+      omega
+    exact L2_8c.wrapping_add_i32_no_overflow old_o ai_bj_aj_bi h_bnd
+  have h_new_o_bnd : new_o.val.natAbs ≤ old_o.val.natAbs + 2^25 := by
+    rw [h_new_o_val]
+    have h_tri := Int.natAbs_add_le old_o.val ai_bj_aj_bi.val
+    omega
+  have h_upd_o : Aeneas.Std.Slice.update out1 i2 new_o = .ok (out1.set i2 new_o) := by
+    have hT := Aeneas.Std.Slice.update_spec out1 i2 new_o
+      (by rw [h_out1_len, h_i2_val']; exact h_2i1_lt)
+    obtain ⟨v', h_eq, h_v'⟩ := Aeneas.Std.WP.spec_imp_exists hT
+    rw [h_eq, h_v']
+  set out2 : Aeneas.Std.Slice Std.I32 := out1.set i2 new_o with hout2_def
+  -- ===== Compose monadic body =====
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_use_cache
+        a b i out cache = .ok out2 := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_use_cache
+    simp only [h_i1_eq, h_i2_eq, h_read_ai, h_read_bi, h_read_aj, h_read_bj, h_read_cv,
+               h_as_ai, h_as_bi, h_as_aj, h_as_bj, h_as_cv,
+               h_ai_bi_eq, h_aj_bj_zeta_eq,
+               h_sum_e_eq, h_ai_bj_eq, h_aj_bi_eq, h_sum_o_eq,
+               h_read_old_e, h_new_e_eq, h_upd_e,
+               h_read_old_o, h_new_o_eq, h_upd_o,
+               Aeneas.Std.bind_tc_ok]
+  apply triple_of_ok_fc h_body
+  -- ===== POST: 7-conjunct =====
+  have h_out2_val : out2.val = (out.val.set i1.val new_e).set i2.val new_o := by
+    show ((out.set i1 new_e).set i2 new_o).val = _
+    rw [Aeneas.Std.Slice.set_val_eq, Aeneas.Std.Slice.set_val_eq]
+  have h_out2_len : out2.length = 16 := by
+    show ((out.set i1 new_e).set i2 new_o).length = 16
+    rw [Aeneas.Std.Slice.set_length, Aeneas.Std.Slice.set_length]; exact h_out_len
+  have h_out2_val_len : out2.val.length = 16 := h_out2_len
+  have h_out2_at_2i : out2.val[2 * i.val]! = new_e := by
+    rw [h_out2_val, ← h_i1_val']
+    have h_lt_out : i1.val < out.val.length := by rw [h_out_val_len, h_i1_val']; exact h_2i_lt
+    have h_lt1 : i1.val < (out.val.set i1.val new_e).length := by
+      rw [List.length_set]; exact h_lt_out
+    have h_lt2 : i1.val < ((out.val.set i1.val new_e).set i2.val new_o).length := by
+      rw [List.length_set]; exact h_lt1
+    rw [getElem!_pos ((out.val.set i1.val new_e).set i2.val new_o) i1.val h_lt2]
+    rw [List.getElem_set_ne (by rw [h_i2_val', h_i1_val']; omega)]
+    rw [List.getElem_set_self]
+  have h_out2_at_2i1 : out2.val[2 * i.val + 1]! = new_o := by
+    rw [h_out2_val, ← h_i2_val']
+    have h_lt_out : i2.val < out.val.length := by rw [h_out_val_len, h_i2_val']; exact h_2i1_lt
+    have h_lt1 : i2.val < (out.val.set i1.val new_e).length := by
+      rw [List.length_set]; exact h_lt_out
+    have h_lt2 : i2.val < ((out.val.set i1.val new_e).set i2.val new_o).length := by
+      rw [List.length_set]; exact h_lt1
+    rw [getElem!_pos ((out.val.set i1.val new_e).set i2.val new_o) i2.val h_lt2]
+    rw [List.getElem_set_self]
+  have h_out2_untouched : ∀ k : Nat, k < 16 → k ≠ 2 * i.val → k ≠ 2 * i.val + 1 →
+      out2.val[k]! = out.val[k]! := by
+    intro k hk hki hkj
+    rw [h_out2_val]
+    have h_lt_out : k < out.val.length := by rw [h_out_val_len]; exact hk
+    have h_lt1 : k < (out.val.set i1.val new_e).length := by rw [List.length_set]; exact h_lt_out
+    have h_lt2 : k < ((out.val.set i1.val new_e).set i2.val new_o).length := by
+      rw [List.length_set]; exact h_lt1
+    rw [getElem!_pos ((out.val.set i1.val new_e).set i2.val new_o) k h_lt2]
+    rw [getElem!_pos out.val k h_lt_out]
+    rw [List.getElem_set_ne (by rw [h_i2_val']; omega)]
+    rw [List.getElem_set_ne (by rw [h_i1_val']; omega)]
+  refine ⟨h_out2_len, h_out2_untouched, ?_, ?_, ?_, ?_⟩
+  · rw [h_out2_at_2i]
+    rw [hoe_def] at h_new_e_bnd
+    exact h_new_e_bnd
+  · rw [h_out2_at_2i1]
+    rw [hoo_def] at h_new_o_bnd
+    exact h_new_o_bnd
+  · -- FE eq (even half) with symbolic cache lane.
+    rw [h_out2_at_2i, hoe_def]
+    apply L2_8d.mont_reduce_even_fe_eq_cache
+      (out := out.val[2 * i.val]!) (r := new_e)
+      (ai := ai_v) (bi := bi_v) (aj := aj_v) (c := c_v)
+    rw [← hoe_def, h_new_e_val, h_sum_e_val, h_ai_bi_val, h_aj_bj_zeta_val]
+    push_cast
+    ring
+  · -- FE eq (odd half) — same as L2.8c.
+    rw [h_out2_at_2i1, hoo_def]
+    apply L2_8d.mont_reduce_odd_fe_eq_cache
+      (out := out.val[2 * i.val + 1]!) (r := new_o)
+      (ai := ai_v) (bi := bi_v) (aj := aj_v) (bj := bj_v)
+    rw [← hoo_def, h_new_o_val, h_sum_o_val, h_ai_bj_val, h_aj_bi_val]
+    push_cast
+    ring
+
+set_option maxHeartbeats 16000000 in
 /-- L2.8d — `vector.portable.ntt.accumulating_ntt_multiply_fill_cache`:
     cache-filling variant. The impl (Funs.lean:3745-3786) chains 8
     `accumulating_ntt_multiply_binomials_fill_cache` calls; each
@@ -20711,8 +21805,2424 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                 zeta0 zeta1 zeta2 zeta3 p.2 ∧
               (∀ k : Nat, k < 16 → 8 ≤ k →
                 p.2.elements.val[k]! = cache.elements.val[k]!) ⌝ ⦄ := by
-  sorry
+  have h_zeta_within (z : Std.I16) (hz : z.val.natAbs ≤ 1664) :
+      z.val.natAbs ≤ 2^15 - 1 := by omega
+  have h_n0_val := L2_8c.wrapping_neg_val_eq zeta0 (h_zeta_within _ h_zeta0)
+  have h_n1_val := L2_8c.wrapping_neg_val_eq zeta1 (h_zeta_within _ h_zeta1)
+  have h_n2_val := L2_8c.wrapping_neg_val_eq zeta2 (h_zeta_within _ h_zeta2)
+  have h_n3_val := L2_8c.wrapping_neg_val_eq zeta3 (h_zeta_within _ h_zeta3)
+  set nzeta0 : Std.I16 := Aeneas.Std.I16.wrapping_sub (0#i16) zeta0 with hn0_def
+  set nzeta1 : Std.I16 := Aeneas.Std.I16.wrapping_sub (0#i16) zeta1 with hn1_def
+  set nzeta2 : Std.I16 := Aeneas.Std.I16.wrapping_sub (0#i16) zeta2 with hn2_def
+  set nzeta3 : Std.I16 := Aeneas.Std.I16.wrapping_sub (0#i16) zeta3 with hn3_def
+  have h_nz0_bnd : nzeta0.val.natAbs ≤ 1664 := by rw [h_n0_val]; omega
+  have h_nz1_bnd : nzeta1.val.natAbs ≤ 1664 := by rw [h_n1_val]; omega
+  have h_nz2_bnd : nzeta2.val.natAbs ≤ 1664 := by rw [h_n2_val]; omega
+  have h_nz3_bnd : nzeta3.val.natAbs ≤ 1664 := by rw [h_n3_val]; omega
+  have h_n0_fe : lift_fe_mont nzeta0
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0) :=
+    L2_8c.lift_fe_mont_neg_pure_eq zeta0 nzeta0 (h_zeta_within _ h_zeta0) h_n0_val
+  have h_n1_fe : lift_fe_mont nzeta1
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1) :=
+    L2_8c.lift_fe_mont_neg_pure_eq zeta1 nzeta1 (h_zeta_within _ h_zeta1) h_n1_val
+  have h_n2_fe : lift_fe_mont nzeta2
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2) :=
+    L2_8c.lift_fe_mont_neg_pure_eq zeta2 nzeta2 (h_zeta_within _ h_zeta2) h_n2_val
+  have h_n3_fe : lift_fe_mont nzeta3
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3) :=
+    L2_8c.lift_fe_mont_neg_pure_eq zeta3 nzeta3 (h_zeta_within _ h_zeta3) h_n3_val
+  have h_wn0 : core_models.num.I16.wrapping_neg zeta0 = .ok nzeta0 :=
+    L2_8c.cm_wrapping_neg_i16_ok_eq zeta0
+  have h_wn1 : core_models.num.I16.wrapping_neg zeta1 = .ok nzeta1 :=
+    L2_8c.cm_wrapping_neg_i16_ok_eq zeta1
+  have h_wn2 : core_models.num.I16.wrapping_neg zeta2 = .ok nzeta2 :=
+    L2_8c.cm_wrapping_neg_i16_ok_eq zeta2
+  have h_wn3 : core_models.num.I16.wrapping_neg zeta3 = .ok nzeta3 :=
+    L2_8c.cm_wrapping_neg_i16_ok_eq zeta3
+  have h_cz0 : libcrux_secrets.traits.Classify.Blanket.classify zeta0 = .ok zeta0 :=
+    L2_8c.classify_ok_eq zeta0
+  have h_cnz0 : libcrux_secrets.traits.Classify.Blanket.classify nzeta0 = .ok nzeta0 :=
+    L2_8c.classify_ok_eq nzeta0
+  have h_cz1 : libcrux_secrets.traits.Classify.Blanket.classify zeta1 = .ok zeta1 :=
+    L2_8c.classify_ok_eq zeta1
+  have h_cnz1 : libcrux_secrets.traits.Classify.Blanket.classify nzeta1 = .ok nzeta1 :=
+    L2_8c.classify_ok_eq nzeta1
+  have h_cz2 : libcrux_secrets.traits.Classify.Blanket.classify zeta2 = .ok zeta2 :=
+    L2_8c.classify_ok_eq zeta2
+  have h_cnz2 : libcrux_secrets.traits.Classify.Blanket.classify nzeta2 = .ok nzeta2 :=
+    L2_8c.classify_ok_eq nzeta2
+  have h_cz3 : libcrux_secrets.traits.Classify.Blanket.classify zeta3 = .ok zeta3 :=
+    L2_8c.classify_ok_eq zeta3
+  have h_cnz3 : libcrux_secrets.traits.Classify.Blanket.classify nzeta3 = .ok nzeta3 :=
+    L2_8c.classify_ok_eq nzeta3
+  have h_out_bnd_universal : ∀ k : Fin 16, (out.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
+    intro k; have := h_out_bnd k; omega
+  have h_cache_len : cache.elements.length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length cache
+  -- ===== 8 chained calls — each returns (r{i}, cache_out{i}) =====
+  -- Call 0: pair 0 with zeta0 (touches lanes 0, 1; writes cache[0]).
+  obtain ⟨p0, h_p0_eq, h_r0_len, h_r0_unc, h_r0_bnd_e, h_r0_bnd_o,
+          h_r0_fe_e, h_r0_fe_o, h_c0_canon, h_c0_fe, h_c0_unc⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_fill_cache_fc lhs rhs zeta0 0#usize out cache
+        (by decide) h_out_len h_lhs h_rhs h_zeta0 h_out_bnd_universal)
+  set r0 : Aeneas.Std.Slice Std.I32 := p0.1 with hr0_def
+  set cache0 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector := p0.2
+    with hc0_def
+  have h_r0_at_even : (r0.val[0]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (0#usize : Std.Usize).val : Nat) = 0 := by decide
+    have h_b := h_r0_bnd_e
+    rw [h_eq] at h_b
+    have h_out_le := h_out_bnd ⟨0, by decide⟩
+    simp only at h_out_le; omega
+  have h_r0_at_odd : (r0.val[1]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (0#usize : Std.Usize).val + 1 : Nat) = 1 := by decide
+    have h_b := h_r0_bnd_o
+    rw [h_eq] at h_b
+    have h_out_le := h_out_bnd ⟨1, by decide⟩
+    simp only at h_out_le; omega
+  have h_r0_unc' : ∀ k : Nat, k < 16 → k ≠ 0 → k ≠ 1 →
+      r0.val[k]! = out.val[k]! := by
+    intro k hk hke hko
+    have h_eq_e : (2 * (0#usize : Std.Usize).val : Nat) = 0 := by decide
+    have h_eq_o : (2 * (0#usize : Std.Usize).val + 1 : Nat) = 1 := by decide
+    apply h_r0_unc k hk
+    · rw [h_eq_e]; exact hke
+    · rw [h_eq_o]; exact hko
+  have h_c0_unc' : ∀ k : Nat, k < 16 → k ≠ 0 →
+      cache0.elements.val[k]! = cache.elements.val[k]! := by
+    intro k hk hki
+    apply h_c0_unc k hk
+    show k ≠ (0#usize : Std.Usize).val; rw [show (0#usize : Std.Usize).val = 0 from rfl]; exact hki
+  have h_r0_bnd_universal : ∀ k : Fin 16, (r0.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step out r0 0 (by decide) h_out_bnd_universal
+      h_r0_unc' h_r0_at_even h_r0_at_odd
 
+  -- Call 1: pair 1 with nzeta0 (touches lanes 2, 3; writes cache[1]).
+  obtain ⟨p1, h_p1_eq, h_r1_len, h_r1_unc, h_r1_bnd_e, h_r1_bnd_o,
+          h_r1_fe_e, h_r1_fe_o, h_c1_canon, h_c1_fe, h_c1_unc⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_fill_cache_fc lhs rhs nzeta0 1#usize r0 cache0
+        (by decide) h_r0_len h_lhs h_rhs h_nz0_bnd h_r0_bnd_universal)
+  set r1 : Aeneas.Std.Slice Std.I32 := p1.1 with hr1_def
+  set cache1 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector := p1.2
+    with hc1_def
+  have h_r1_at_even : (r1.val[2]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (1#usize : Std.Usize).val : Nat) = 2 := by decide
+    have h_b := h_r1_bnd_e
+    rw [h_eq] at h_b
+    have h_r0_eq2 : r0.val[2]! = out.val[2]! := h_r0_unc' 2 (by decide) (by decide) (by decide)
+    rw [h_r0_eq2] at h_b
+    have h_out_le := h_out_bnd ⟨2, by decide⟩
+    simp only at h_out_le; omega
+  have h_r1_at_odd : (r1.val[3]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (1#usize : Std.Usize).val + 1 : Nat) = 3 := by decide
+    have h_b := h_r1_bnd_o
+    rw [h_eq] at h_b
+    have h_r0_eq3 : r0.val[3]! = out.val[3]! := h_r0_unc' 3 (by decide) (by decide) (by decide)
+    rw [h_r0_eq3] at h_b
+    have h_out_le := h_out_bnd ⟨3, by decide⟩
+    simp only at h_out_le; omega
+  have h_r1_unc' : ∀ k : Nat, k < 16 → k ≠ 2 → k ≠ 3 →
+      r1.val[k]! = r0.val[k]! := by
+    intro k hk hke hko
+    have h_eq_e : (2 * (1#usize : Std.Usize).val : Nat) = 2 := by decide
+    have h_eq_o : (2 * (1#usize : Std.Usize).val + 1 : Nat) = 3 := by decide
+    apply h_r1_unc k hk
+    · rw [h_eq_e]; exact hke
+    · rw [h_eq_o]; exact hko
+  have h_c1_unc' : ∀ k : Nat, k < 16 → k ≠ 1 →
+      cache1.elements.val[k]! = cache0.elements.val[k]! := by
+    intro k hk hki
+    apply h_c1_unc k hk
+    show k ≠ (1#usize : Std.Usize).val; rw [show (1#usize : Std.Usize).val = 1 from rfl]; exact hki
+  have h_r1_bnd_universal : ∀ k : Fin 16, (r1.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r0 r1 1 (by decide) h_r0_bnd_universal
+      h_r1_unc' h_r1_at_even h_r1_at_odd
+
+  -- Call 2: pair 2 with zeta1 (touches lanes 4, 5; writes cache[2]).
+  obtain ⟨p2, h_p2_eq, h_r2_len, h_r2_unc, h_r2_bnd_e, h_r2_bnd_o,
+          h_r2_fe_e, h_r2_fe_o, h_c2_canon, h_c2_fe, h_c2_unc⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_fill_cache_fc lhs rhs zeta1 2#usize r1 cache1
+        (by decide) h_r1_len h_lhs h_rhs h_zeta1 h_r1_bnd_universal)
+  set r2 : Aeneas.Std.Slice Std.I32 := p2.1 with hr2_def
+  set cache2 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector := p2.2
+    with hc2_def
+  have h_r2_at_even : (r2.val[4]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (2#usize : Std.Usize).val : Nat) = 4 := by decide
+    have h_b := h_r2_bnd_e
+    rw [h_eq] at h_b
+    have h_r1_eq4 : r1.val[4]! = out.val[4]! := by
+      rw [h_r1_unc' 4 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 4 (by decide) (by decide) (by decide)]
+    rw [h_r1_eq4] at h_b
+    have h_out_le := h_out_bnd ⟨4, by decide⟩
+    simp only at h_out_le; omega
+  have h_r2_at_odd : (r2.val[5]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (2#usize : Std.Usize).val + 1 : Nat) = 5 := by decide
+    have h_b := h_r2_bnd_o
+    rw [h_eq] at h_b
+    have h_r1_eq5 : r1.val[5]! = out.val[5]! := by
+      rw [h_r1_unc' 5 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 5 (by decide) (by decide) (by decide)]
+    rw [h_r1_eq5] at h_b
+    have h_out_le := h_out_bnd ⟨5, by decide⟩
+    simp only at h_out_le; omega
+  have h_r2_unc' : ∀ k : Nat, k < 16 → k ≠ 4 → k ≠ 5 →
+      r2.val[k]! = r1.val[k]! := by
+    intro k hk hke hko
+    have h_eq_e : (2 * (2#usize : Std.Usize).val : Nat) = 4 := by decide
+    have h_eq_o : (2 * (2#usize : Std.Usize).val + 1 : Nat) = 5 := by decide
+    apply h_r2_unc k hk
+    · rw [h_eq_e]; exact hke
+    · rw [h_eq_o]; exact hko
+  have h_c2_unc' : ∀ k : Nat, k < 16 → k ≠ 2 →
+      cache2.elements.val[k]! = cache1.elements.val[k]! := by
+    intro k hk hki
+    apply h_c2_unc k hk
+    show k ≠ (2#usize : Std.Usize).val; rw [show (2#usize : Std.Usize).val = 2 from rfl]; exact hki
+  have h_r2_bnd_universal : ∀ k : Fin 16, (r2.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r1 r2 2 (by decide) h_r1_bnd_universal
+      h_r2_unc' h_r2_at_even h_r2_at_odd
+
+  -- Call 3: pair 3 with nzeta1 (touches lanes 6, 7; writes cache[3]).
+  obtain ⟨p3, h_p3_eq, h_r3_len, h_r3_unc, h_r3_bnd_e, h_r3_bnd_o,
+          h_r3_fe_e, h_r3_fe_o, h_c3_canon, h_c3_fe, h_c3_unc⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_fill_cache_fc lhs rhs nzeta1 3#usize r2 cache2
+        (by decide) h_r2_len h_lhs h_rhs h_nz1_bnd h_r2_bnd_universal)
+  set r3 : Aeneas.Std.Slice Std.I32 := p3.1 with hr3_def
+  set cache3 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector := p3.2
+    with hc3_def
+  have h_r3_at_even : (r3.val[6]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (3#usize : Std.Usize).val : Nat) = 6 := by decide
+    have h_b := h_r3_bnd_e
+    rw [h_eq] at h_b
+    have h_r2_eq6 : r2.val[6]! = out.val[6]! := by
+      rw [h_r2_unc' 6 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 6 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 6 (by decide) (by decide) (by decide)]
+    rw [h_r2_eq6] at h_b
+    have h_out_le := h_out_bnd ⟨6, by decide⟩
+    simp only at h_out_le; omega
+  have h_r3_at_odd : (r3.val[7]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (3#usize : Std.Usize).val + 1 : Nat) = 7 := by decide
+    have h_b := h_r3_bnd_o
+    rw [h_eq] at h_b
+    have h_r2_eq7 : r2.val[7]! = out.val[7]! := by
+      rw [h_r2_unc' 7 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 7 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 7 (by decide) (by decide) (by decide)]
+    rw [h_r2_eq7] at h_b
+    have h_out_le := h_out_bnd ⟨7, by decide⟩
+    simp only at h_out_le; omega
+  have h_r3_unc' : ∀ k : Nat, k < 16 → k ≠ 6 → k ≠ 7 →
+      r3.val[k]! = r2.val[k]! := by
+    intro k hk hke hko
+    have h_eq_e : (2 * (3#usize : Std.Usize).val : Nat) = 6 := by decide
+    have h_eq_o : (2 * (3#usize : Std.Usize).val + 1 : Nat) = 7 := by decide
+    apply h_r3_unc k hk
+    · rw [h_eq_e]; exact hke
+    · rw [h_eq_o]; exact hko
+  have h_c3_unc' : ∀ k : Nat, k < 16 → k ≠ 3 →
+      cache3.elements.val[k]! = cache2.elements.val[k]! := by
+    intro k hk hki
+    apply h_c3_unc k hk
+    show k ≠ (3#usize : Std.Usize).val; rw [show (3#usize : Std.Usize).val = 3 from rfl]; exact hki
+  have h_r3_bnd_universal : ∀ k : Fin 16, (r3.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r2 r3 3 (by decide) h_r2_bnd_universal
+      h_r3_unc' h_r3_at_even h_r3_at_odd
+
+  -- Call 4: pair 4 with zeta2 (touches lanes 8, 9; writes cache[4]).
+  obtain ⟨p4, h_p4_eq, h_r4_len, h_r4_unc, h_r4_bnd_e, h_r4_bnd_o,
+          h_r4_fe_e, h_r4_fe_o, h_c4_canon, h_c4_fe, h_c4_unc⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_fill_cache_fc lhs rhs zeta2 4#usize r3 cache3
+        (by decide) h_r3_len h_lhs h_rhs h_zeta2 h_r3_bnd_universal)
+  set r4 : Aeneas.Std.Slice Std.I32 := p4.1 with hr4_def
+  set cache4 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector := p4.2
+    with hc4_def
+  have h_r4_at_even : (r4.val[8]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (4#usize : Std.Usize).val : Nat) = 8 := by decide
+    have h_b := h_r4_bnd_e
+    rw [h_eq] at h_b
+    have h_r3_eq8 : r3.val[8]! = out.val[8]! := by
+      rw [h_r3_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 8 (by decide) (by decide) (by decide)]
+    rw [h_r3_eq8] at h_b
+    have h_out_le := h_out_bnd ⟨8, by decide⟩
+    simp only at h_out_le; omega
+  have h_r4_at_odd : (r4.val[9]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (4#usize : Std.Usize).val + 1 : Nat) = 9 := by decide
+    have h_b := h_r4_bnd_o
+    rw [h_eq] at h_b
+    have h_r3_eq9 : r3.val[9]! = out.val[9]! := by
+      rw [h_r3_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 9 (by decide) (by decide) (by decide)]
+    rw [h_r3_eq9] at h_b
+    have h_out_le := h_out_bnd ⟨9, by decide⟩
+    simp only at h_out_le; omega
+  have h_r4_unc' : ∀ k : Nat, k < 16 → k ≠ 8 → k ≠ 9 →
+      r4.val[k]! = r3.val[k]! := by
+    intro k hk hke hko
+    have h_eq_e : (2 * (4#usize : Std.Usize).val : Nat) = 8 := by decide
+    have h_eq_o : (2 * (4#usize : Std.Usize).val + 1 : Nat) = 9 := by decide
+    apply h_r4_unc k hk
+    · rw [h_eq_e]; exact hke
+    · rw [h_eq_o]; exact hko
+  have h_c4_unc' : ∀ k : Nat, k < 16 → k ≠ 4 →
+      cache4.elements.val[k]! = cache3.elements.val[k]! := by
+    intro k hk hki
+    apply h_c4_unc k hk
+    show k ≠ (4#usize : Std.Usize).val; rw [show (4#usize : Std.Usize).val = 4 from rfl]; exact hki
+  have h_r4_bnd_universal : ∀ k : Fin 16, (r4.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r3 r4 4 (by decide) h_r3_bnd_universal
+      h_r4_unc' h_r4_at_even h_r4_at_odd
+
+  -- Call 5: pair 5 with nzeta2 (touches lanes 10, 11; writes cache[5]).
+  obtain ⟨p5, h_p5_eq, h_r5_len, h_r5_unc, h_r5_bnd_e, h_r5_bnd_o,
+          h_r5_fe_e, h_r5_fe_o, h_c5_canon, h_c5_fe, h_c5_unc⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_fill_cache_fc lhs rhs nzeta2 5#usize r4 cache4
+        (by decide) h_r4_len h_lhs h_rhs h_nz2_bnd h_r4_bnd_universal)
+  set r5 : Aeneas.Std.Slice Std.I32 := p5.1 with hr5_def
+  set cache5 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector := p5.2
+    with hc5_def
+  have h_r5_at_even : (r5.val[10]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (5#usize : Std.Usize).val : Nat) = 10 := by decide
+    have h_b := h_r5_bnd_e
+    rw [h_eq] at h_b
+    have h_r4_eq10 : r4.val[10]! = out.val[10]! := by
+      rw [h_r4_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 10 (by decide) (by decide) (by decide)]
+    rw [h_r4_eq10] at h_b
+    have h_out_le := h_out_bnd ⟨10, by decide⟩
+    simp only at h_out_le; omega
+  have h_r5_at_odd : (r5.val[11]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (5#usize : Std.Usize).val + 1 : Nat) = 11 := by decide
+    have h_b := h_r5_bnd_o
+    rw [h_eq] at h_b
+    have h_r4_eq11 : r4.val[11]! = out.val[11]! := by
+      rw [h_r4_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 11 (by decide) (by decide) (by decide)]
+    rw [h_r4_eq11] at h_b
+    have h_out_le := h_out_bnd ⟨11, by decide⟩
+    simp only at h_out_le; omega
+  have h_r5_unc' : ∀ k : Nat, k < 16 → k ≠ 10 → k ≠ 11 →
+      r5.val[k]! = r4.val[k]! := by
+    intro k hk hke hko
+    have h_eq_e : (2 * (5#usize : Std.Usize).val : Nat) = 10 := by decide
+    have h_eq_o : (2 * (5#usize : Std.Usize).val + 1 : Nat) = 11 := by decide
+    apply h_r5_unc k hk
+    · rw [h_eq_e]; exact hke
+    · rw [h_eq_o]; exact hko
+  have h_c5_unc' : ∀ k : Nat, k < 16 → k ≠ 5 →
+      cache5.elements.val[k]! = cache4.elements.val[k]! := by
+    intro k hk hki
+    apply h_c5_unc k hk
+    show k ≠ (5#usize : Std.Usize).val; rw [show (5#usize : Std.Usize).val = 5 from rfl]; exact hki
+  have h_r5_bnd_universal : ∀ k : Fin 16, (r5.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r4 r5 5 (by decide) h_r4_bnd_universal
+      h_r5_unc' h_r5_at_even h_r5_at_odd
+
+  -- Call 6: pair 6 with zeta3 (touches lanes 12, 13; writes cache[6]).
+  obtain ⟨p6, h_p6_eq, h_r6_len, h_r6_unc, h_r6_bnd_e, h_r6_bnd_o,
+          h_r6_fe_e, h_r6_fe_o, h_c6_canon, h_c6_fe, h_c6_unc⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_fill_cache_fc lhs rhs zeta3 6#usize r5 cache5
+        (by decide) h_r5_len h_lhs h_rhs h_zeta3 h_r5_bnd_universal)
+  set r6 : Aeneas.Std.Slice Std.I32 := p6.1 with hr6_def
+  set cache6 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector := p6.2
+    with hc6_def
+  have h_r6_at_even : (r6.val[12]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (6#usize : Std.Usize).val : Nat) = 12 := by decide
+    have h_b := h_r6_bnd_e
+    rw [h_eq] at h_b
+    have h_r5_eq12 : r5.val[12]! = out.val[12]! := by
+      rw [h_r5_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r4_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 12 (by decide) (by decide) (by decide)]
+    rw [h_r5_eq12] at h_b
+    have h_out_le := h_out_bnd ⟨12, by decide⟩
+    simp only at h_out_le; omega
+  have h_r6_at_odd : (r6.val[13]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (6#usize : Std.Usize).val + 1 : Nat) = 13 := by decide
+    have h_b := h_r6_bnd_o
+    rw [h_eq] at h_b
+    have h_r5_eq13 : r5.val[13]! = out.val[13]! := by
+      rw [h_r5_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r4_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 13 (by decide) (by decide) (by decide)]
+    rw [h_r5_eq13] at h_b
+    have h_out_le := h_out_bnd ⟨13, by decide⟩
+    simp only at h_out_le; omega
+  have h_r6_unc' : ∀ k : Nat, k < 16 → k ≠ 12 → k ≠ 13 →
+      r6.val[k]! = r5.val[k]! := by
+    intro k hk hke hko
+    have h_eq_e : (2 * (6#usize : Std.Usize).val : Nat) = 12 := by decide
+    have h_eq_o : (2 * (6#usize : Std.Usize).val + 1 : Nat) = 13 := by decide
+    apply h_r6_unc k hk
+    · rw [h_eq_e]; exact hke
+    · rw [h_eq_o]; exact hko
+  have h_c6_unc' : ∀ k : Nat, k < 16 → k ≠ 6 →
+      cache6.elements.val[k]! = cache5.elements.val[k]! := by
+    intro k hk hki
+    apply h_c6_unc k hk
+    show k ≠ (6#usize : Std.Usize).val; rw [show (6#usize : Std.Usize).val = 6 from rfl]; exact hki
+  have h_r6_bnd_universal : ∀ k : Fin 16, (r6.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r5 r6 6 (by decide) h_r5_bnd_universal
+      h_r6_unc' h_r6_at_even h_r6_at_odd
+
+  -- Call 7: pair 7 with nzeta3 (touches lanes 14, 15; writes cache[7]).
+  obtain ⟨p7, h_p7_eq, h_r7_len, h_r7_unc, h_r7_bnd_e, h_r7_bnd_o,
+          h_r7_fe_e, h_r7_fe_o, h_c7_canon, h_c7_fe, h_c7_unc⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_fill_cache_fc lhs rhs nzeta3 7#usize r6 cache6
+        (by decide) h_r6_len h_lhs h_rhs h_nz3_bnd h_r6_bnd_universal)
+  set r7 : Aeneas.Std.Slice Std.I32 := p7.1 with hr7_def
+  set cache7 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector := p7.2
+    with hc7_def
+  have h_r7_at_even : (r7.val[14]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (7#usize : Std.Usize).val : Nat) = 14 := by decide
+    have h_b := h_r7_bnd_e
+    rw [h_eq] at h_b
+    have h_r6_eq14 : r6.val[14]! = out.val[14]! := by
+      rw [h_r6_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r5_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r4_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 14 (by decide) (by decide) (by decide)]
+    rw [h_r6_eq14] at h_b
+    have h_out_le := h_out_bnd ⟨14, by decide⟩
+    simp only at h_out_le; omega
+  have h_r7_at_odd : (r7.val[15]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (7#usize : Std.Usize).val + 1 : Nat) = 15 := by decide
+    have h_b := h_r7_bnd_o
+    rw [h_eq] at h_b
+    have h_r6_eq15 : r6.val[15]! = out.val[15]! := by
+      rw [h_r6_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r5_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r4_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 15 (by decide) (by decide) (by decide)]
+    rw [h_r6_eq15] at h_b
+    have h_out_le := h_out_bnd ⟨15, by decide⟩
+    simp only at h_out_le; omega
+  have h_r7_unc' : ∀ k : Nat, k < 16 → k ≠ 14 → k ≠ 15 →
+      r7.val[k]! = r6.val[k]! := by
+    intro k hk hke hko
+    have h_eq_e : (2 * (7#usize : Std.Usize).val : Nat) = 14 := by decide
+    have h_eq_o : (2 * (7#usize : Std.Usize).val + 1 : Nat) = 15 := by decide
+    apply h_r7_unc k hk
+    · rw [h_eq_e]; exact hke
+    · rw [h_eq_o]; exact hko
+  have h_c7_unc' : ∀ k : Nat, k < 16 → k ≠ 7 →
+      cache7.elements.val[k]! = cache6.elements.val[k]! := by
+    intro k hk hki
+    apply h_c7_unc k hk
+    show k ≠ (7#usize : Std.Usize).val; rw [show (7#usize : Std.Usize).val = 7 from rfl]; exact hki
+
+  -- Compose the monadic body.
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_fill_cache
+        lhs rhs out cache zeta0 zeta1 zeta2 zeta3 = .ok (r7, cache7) := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_fill_cache
+    -- The result of each call is `pK = (rK, cacheK)`. The impl binds these as
+    -- `let (outK, cacheK) ← ...`, which expects a destructured pattern.
+    -- Convert the .ok pK into the destructured form via pair eta.
+    have h_p0_eq' :
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs zeta0 0#usize out cache = .ok (r0, cache0) := by
+      rw [h_p0_eq]
+    have h_p1_eq' :
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs nzeta0 1#usize r0 cache0 = .ok (r1, cache1) := by
+      rw [h_p1_eq]
+    have h_p2_eq' :
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs zeta1 2#usize r1 cache1 = .ok (r2, cache2) := by
+      rw [h_p2_eq]
+    have h_p3_eq' :
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs nzeta1 3#usize r2 cache2 = .ok (r3, cache3) := by
+      rw [h_p3_eq]
+    have h_p4_eq' :
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs zeta2 4#usize r3 cache3 = .ok (r4, cache4) := by
+      rw [h_p4_eq]
+    have h_p5_eq' :
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs nzeta2 5#usize r4 cache4 = .ok (r5, cache5) := by
+      rw [h_p5_eq]
+    have h_p6_eq' :
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs zeta3 6#usize r5 cache5 = .ok (r6, cache6) := by
+      rw [h_p6_eq]
+    have h_p7_eq' :
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs nzeta3 7#usize r6 cache6 = .ok (r7, cache7) := by
+      rw [h_p7_eq]
+    rw [h_wn0]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_wn1]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_wn2]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_wn3]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_cz0]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_p0_eq']
+    simp only [Aeneas.Std.bind_tc_ok]
+    change (do
+      let i1 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta0
+      let (out2, cache2) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i1 1#usize r0 cache0
+      let i2 ← libcrux_secrets.traits.Classify.Blanket.classify zeta1
+      let (out3, cache3) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i2 2#usize out2 cache2
+      let i3 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta1
+      let (out4, cache4) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i3 3#usize out3 cache3
+      let i4 ← libcrux_secrets.traits.Classify.Blanket.classify zeta2
+      let (out5, cache5) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i4 4#usize out4 cache4
+      let i5 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta2
+      let (out6, cache6) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i5 5#usize out5 cache5
+      let i6 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
+      let (out7, cache7) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i6 6#usize out6 cache6
+      let i7 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta3
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+        lhs rhs i7 7#usize out7 cache7) = .ok (r7, cache7)
+    rw [h_cnz0]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_p1_eq']
+    simp only [Aeneas.Std.bind_tc_ok]
+    change (do
+      let i2 ← libcrux_secrets.traits.Classify.Blanket.classify zeta1
+      let (out3, cache3) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i2 2#usize r1 cache1
+      let i3 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta1
+      let (out4, cache4) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i3 3#usize out3 cache3
+      let i4 ← libcrux_secrets.traits.Classify.Blanket.classify zeta2
+      let (out5, cache5) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i4 4#usize out4 cache4
+      let i5 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta2
+      let (out6, cache6) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i5 5#usize out5 cache5
+      let i6 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
+      let (out7, cache7) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i6 6#usize out6 cache6
+      let i7 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta3
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+        lhs rhs i7 7#usize out7 cache7) = .ok (r7, cache7)
+    rw [h_cz1]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_p2_eq']
+    simp only [Aeneas.Std.bind_tc_ok]
+    change (do
+      let i3 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta1
+      let (out4, cache4) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i3 3#usize r2 cache2
+      let i4 ← libcrux_secrets.traits.Classify.Blanket.classify zeta2
+      let (out5, cache5) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i4 4#usize out4 cache4
+      let i5 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta2
+      let (out6, cache6) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i5 5#usize out5 cache5
+      let i6 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
+      let (out7, cache7) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i6 6#usize out6 cache6
+      let i7 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta3
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+        lhs rhs i7 7#usize out7 cache7) = .ok (r7, cache7)
+    rw [h_cnz1]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_p3_eq']
+    simp only [Aeneas.Std.bind_tc_ok]
+    change (do
+      let i4 ← libcrux_secrets.traits.Classify.Blanket.classify zeta2
+      let (out5, cache5) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i4 4#usize r3 cache3
+      let i5 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta2
+      let (out6, cache6) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i5 5#usize out5 cache5
+      let i6 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
+      let (out7, cache7) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i6 6#usize out6 cache6
+      let i7 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta3
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+        lhs rhs i7 7#usize out7 cache7) = .ok (r7, cache7)
+    rw [h_cz2]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_p4_eq']
+    simp only [Aeneas.Std.bind_tc_ok]
+    change (do
+      let i5 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta2
+      let (out6, cache6) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i5 5#usize r4 cache4
+      let i6 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
+      let (out7, cache7) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i6 6#usize out6 cache6
+      let i7 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta3
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+        lhs rhs i7 7#usize out7 cache7) = .ok (r7, cache7)
+    rw [h_cnz2]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_p5_eq']
+    simp only [Aeneas.Std.bind_tc_ok]
+    change (do
+      let i6 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
+      let (out7, cache7) ←
+        libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+          lhs rhs i6 6#usize r5 cache5
+      let i7 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta3
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+        lhs rhs i7 7#usize out7 cache7) = .ok (r7, cache7)
+    rw [h_cz3]; simp only [Aeneas.Std.bind_tc_ok]
+    rw [h_p6_eq']
+    simp only [Aeneas.Std.bind_tc_ok]
+    change (do
+      let i7 ← libcrux_secrets.traits.Classify.Blanket.classify nzeta3
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_binomials_fill_cache
+        lhs rhs i7 7#usize r6 cache6) = .ok (r7, cache7)
+    rw [h_cnz3]; simp only [Aeneas.Std.bind_tc_ok]
+    exact h_p7_eq'
+  apply triple_of_ok_fc h_body
+  -- ===== POST: 5-conjunct =====
+  refine ⟨h_r7_len, ?_, ?_, ?_, ?_⟩
+  · -- Relative bound: ∀ k, r7.val[k]!.natAbs ≤ out.val[k]!.natAbs + 2^25.
+    intro k
+    rcases k with ⟨k, hk⟩
+    interval_cases k
+    · have h_r7_at_0 : r7.val[0]! = r0.val[0]! := by
+        rw [h_r7_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 0 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_0]
+      have h_eq : (2 * (0#usize : Std.Usize).val : Nat) = 0 := by decide
+      have h_b := h_r0_bnd_e
+      rw [h_eq] at h_b
+      exact h_b
+    · have h_r7_at_1 : r7.val[1]! = r0.val[1]! := by
+        rw [h_r7_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 1 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_1]
+      have h_eq : (2 * (0#usize : Std.Usize).val + 1 : Nat) = 1 := by decide
+      have h_b := h_r0_bnd_o
+      rw [h_eq] at h_b
+      exact h_b
+    · have h_r7_at_2 : r7.val[2]! = r1.val[2]! := by
+        rw [h_r7_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 2 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_2]
+      have h_eq : (2 * (1#usize : Std.Usize).val : Nat) = 2 := by decide
+      have h_b := h_r1_bnd_e
+      rw [h_eq] at h_b
+      have h_r0_at_2 : r0.val[2]! = out.val[2]! := by
+        rw [h_r0_unc' 2 (by decide) (by decide) (by decide)]
+      rw [h_r0_at_2] at h_b
+      exact h_b
+    · have h_r7_at_3 : r7.val[3]! = r1.val[3]! := by
+        rw [h_r7_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 3 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_3]
+      have h_eq : (2 * (1#usize : Std.Usize).val + 1 : Nat) = 3 := by decide
+      have h_b := h_r1_bnd_o
+      rw [h_eq] at h_b
+      have h_r0_at_3 : r0.val[3]! = out.val[3]! := by
+        rw [h_r0_unc' 3 (by decide) (by decide) (by decide)]
+      rw [h_r0_at_3] at h_b
+      exact h_b
+    · have h_r7_at_4 : r7.val[4]! = r2.val[4]! := by
+        rw [h_r7_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 4 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_4]
+      have h_eq : (2 * (2#usize : Std.Usize).val : Nat) = 4 := by decide
+      have h_b := h_r2_bnd_e
+      rw [h_eq] at h_b
+      have h_r1_at_4 : r1.val[4]! = out.val[4]! := by
+        rw [h_r1_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 4 (by decide) (by decide) (by decide)]
+      rw [h_r1_at_4] at h_b
+      exact h_b
+    · have h_r7_at_5 : r7.val[5]! = r2.val[5]! := by
+        rw [h_r7_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 5 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_5]
+      have h_eq : (2 * (2#usize : Std.Usize).val + 1 : Nat) = 5 := by decide
+      have h_b := h_r2_bnd_o
+      rw [h_eq] at h_b
+      have h_r1_at_5 : r1.val[5]! = out.val[5]! := by
+        rw [h_r1_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 5 (by decide) (by decide) (by decide)]
+      rw [h_r1_at_5] at h_b
+      exact h_b
+    · have h_r7_at_6 : r7.val[6]! = r3.val[6]! := by
+        rw [h_r7_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 6 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_6]
+      have h_eq : (2 * (3#usize : Std.Usize).val : Nat) = 6 := by decide
+      have h_b := h_r3_bnd_e
+      rw [h_eq] at h_b
+      have h_r2_at_6 : r2.val[6]! = out.val[6]! := by
+        rw [h_r2_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 6 (by decide) (by decide) (by decide)]
+      rw [h_r2_at_6] at h_b
+      exact h_b
+    · have h_r7_at_7 : r7.val[7]! = r3.val[7]! := by
+        rw [h_r7_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 7 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_7]
+      have h_eq : (2 * (3#usize : Std.Usize).val + 1 : Nat) = 7 := by decide
+      have h_b := h_r3_bnd_o
+      rw [h_eq] at h_b
+      have h_r2_at_7 : r2.val[7]! = out.val[7]! := by
+        rw [h_r2_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 7 (by decide) (by decide) (by decide)]
+      rw [h_r2_at_7] at h_b
+      exact h_b
+    · have h_r7_at_8 : r7.val[8]! = r4.val[8]! := by
+        rw [h_r7_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_8]
+      have h_eq : (2 * (4#usize : Std.Usize).val : Nat) = 8 := by decide
+      have h_b := h_r4_bnd_e
+      rw [h_eq] at h_b
+      have h_r3_at_8 : r3.val[8]! = out.val[8]! := by
+        rw [h_r3_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r3_at_8] at h_b
+      exact h_b
+    · have h_r7_at_9 : r7.val[9]! = r4.val[9]! := by
+        rw [h_r7_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_9]
+      have h_eq : (2 * (4#usize : Std.Usize).val + 1 : Nat) = 9 := by decide
+      have h_b := h_r4_bnd_o
+      rw [h_eq] at h_b
+      have h_r3_at_9 : r3.val[9]! = out.val[9]! := by
+        rw [h_r3_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r3_at_9] at h_b
+      exact h_b
+    · have h_r7_at_10 : r7.val[10]! = r5.val[10]! := by
+        rw [h_r7_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_10]
+      have h_eq : (2 * (5#usize : Std.Usize).val : Nat) = 10 := by decide
+      have h_b := h_r5_bnd_e
+      rw [h_eq] at h_b
+      have h_r4_at_10 : r4.val[10]! = out.val[10]! := by
+        rw [h_r4_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r4_at_10] at h_b
+      exact h_b
+    · have h_r7_at_11 : r7.val[11]! = r5.val[11]! := by
+        rw [h_r7_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_11]
+      have h_eq : (2 * (5#usize : Std.Usize).val + 1 : Nat) = 11 := by decide
+      have h_b := h_r5_bnd_o
+      rw [h_eq] at h_b
+      have h_r4_at_11 : r4.val[11]! = out.val[11]! := by
+        rw [h_r4_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r4_at_11] at h_b
+      exact h_b
+    · have h_r7_at_12 : r7.val[12]! = r6.val[12]! := by
+        rw [h_r7_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_12]
+      have h_eq : (2 * (6#usize : Std.Usize).val : Nat) = 12 := by decide
+      have h_b := h_r6_bnd_e
+      rw [h_eq] at h_b
+      have h_r5_at_12 : r5.val[12]! = out.val[12]! := by
+        rw [h_r5_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r5_at_12] at h_b
+      exact h_b
+    · have h_r7_at_13 : r7.val[13]! = r6.val[13]! := by
+        rw [h_r7_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_13]
+      have h_eq : (2 * (6#usize : Std.Usize).val + 1 : Nat) = 13 := by decide
+      have h_b := h_r6_bnd_o
+      rw [h_eq] at h_b
+      have h_r5_at_13 : r5.val[13]! = out.val[13]! := by
+        rw [h_r5_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r5_at_13] at h_b
+      exact h_b
+    · have h_eq : (2 * (7#usize : Std.Usize).val : Nat) = 14 := by decide
+      have h_b := h_r7_bnd_e
+      rw [h_eq] at h_b
+      have h_r6_at_14 : r6.val[14]! = out.val[14]! := by
+        rw [h_r6_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r6_at_14] at h_b
+      exact h_b
+    · have h_eq : (2 * (7#usize : Std.Usize).val + 1 : Nat) = 15 := by decide
+      have h_b := h_r7_bnd_o
+      rw [h_eq] at h_b
+      have h_r6_at_15 : r6.val[15]! = out.val[15]! := by
+        rw [h_r6_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r6_at_15] at h_b
+      exact h_b
+  · -- ntt_multiply_base_case_post: per-lane FE equation.
+    unfold ntt_multiply_base_case_post ntt_multiply_base_case_alg
+    apply Subtype.ext
+    have h_lhs_val : (Spec.chunk_reducing_from_i32_array_pure r7).val
+        = (List.range 16).map (fun i => Spec.mont_reduce_pure (lift_fe_int (r7.val[i]!).val)) := by
+      unfold Spec.chunk_reducing_from_i32_array_pure; rfl
+    have h_rhs_val : (Spec.chunk_add_pure
+                        (Spec.chunk_reducing_from_i32_array_pure out)
+                        (Spec.ntt_multiply_pure_no_acc
+                          (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                          (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                          (lift_fe_mont zeta2) (lift_fe_mont zeta3))).val
+        = (List.range 16).map (fun i =>
+            libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              ((Spec.chunk_reducing_from_i32_array_pure out).val[i]!)
+              ((Spec.ntt_multiply_pure_no_acc
+                  (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                  (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                  (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[i]!)) := by
+      unfold Spec.chunk_add_pure; rfl
+    rw [h_lhs_val, h_rhs_val]
+    apply List.ext_getElem
+    · simp
+    · intro k hk1 hk2
+      have hk : k < 16 := by simp at hk1; exact hk1
+      rw [List.getElem_map, List.getElem_map, List.getElem_range]
+      interval_cases k
+      · -- Lane 0: touched by call 0 (zeta0, even).
+        have h_r7_at_lane : r7.val[0]! = r0.val[0]! := by
+          rw [h_r7_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_fe := h_r0_fe_e
+        simp only [show (2 * (0#usize : Std.Usize).val + 1 : Nat) = 1 from by decide,
+                   show (2 * (0#usize : Std.Usize).val : Nat) = 0 from by decide] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[0]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[0]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[0]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[0]!)
+                  ((lift_chunk_mont rhs).val[0]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[1]!)
+                    ((lift_chunk_mont rhs).val[1]!))
+                  (lift_fe_mont zeta0)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_0 : (lift_chunk_mont lhs).val[0]!
+            = lift_fe_mont (lhs.elements.val[0]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[0]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 0 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 0 (by rw [h_l]; decide)]
+        have h_lcm_lhs_1 : (lift_chunk_mont lhs).val[1]!
+            = lift_fe_mont (lhs.elements.val[1]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[1]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 1 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 1 (by rw [h_l]; decide)]
+        have h_lcm_rhs_0 : (lift_chunk_mont rhs).val[0]!
+            = lift_fe_mont (rhs.elements.val[0]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[0]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 0 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 0 (by rw [h_l]; decide)]
+        have h_lcm_rhs_1 : (lift_chunk_mont rhs).val[1]!
+            = lift_fe_mont (rhs.elements.val[1]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[1]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 1 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 1 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_0, h_lcm_lhs_1, h_lcm_rhs_0, h_lcm_rhs_1]
+      · -- Lane 1: touched by call 0 (zeta0, odd).
+        have h_r7_at_lane : r7.val[1]! = r0.val[1]! := by
+          rw [h_r7_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_fe := h_r0_fe_o
+        simp only [show (2 * (0#usize : Std.Usize).val + 1 : Nat) = 1 from by decide,
+                   show (2 * (0#usize : Std.Usize).val : Nat) = 0 from by decide] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[1]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[1]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[1]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[0]!)
+                  ((lift_chunk_mont rhs).val[1]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[1]!)
+                  ((lift_chunk_mont rhs).val[0]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_0 : (lift_chunk_mont lhs).val[0]!
+            = lift_fe_mont (lhs.elements.val[0]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[0]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 0 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 0 (by rw [h_l]; decide)]
+        have h_lcm_lhs_1 : (lift_chunk_mont lhs).val[1]!
+            = lift_fe_mont (lhs.elements.val[1]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[1]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 1 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 1 (by rw [h_l]; decide)]
+        have h_lcm_rhs_0 : (lift_chunk_mont rhs).val[0]!
+            = lift_fe_mont (rhs.elements.val[0]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[0]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 0 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 0 (by rw [h_l]; decide)]
+        have h_lcm_rhs_1 : (lift_chunk_mont rhs).val[1]!
+            = lift_fe_mont (rhs.elements.val[1]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[1]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 1 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 1 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_0, h_lcm_lhs_1, h_lcm_rhs_0, h_lcm_rhs_1]
+      · -- Lane 2: touched by call 1 (nzeta0, even).
+        have h_r7_at_lane : r7.val[2]! = r1.val[2]! := by
+          rw [h_r7_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r0.val[2]! = out.val[2]! := by
+          rw [h_r0_unc' 2 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r0.val[3]! = out.val[3]! := by
+          rw [h_r0_unc' 3 (by decide) (by decide) (by decide)]
+        have h_fe := h_r1_fe_e
+        simp only [show (2 * (1#usize : Std.Usize).val + 1 : Nat) = 3 from by decide,
+                   show (2 * (1#usize : Std.Usize).val : Nat) = 2 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_n0_fe] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[2]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[2]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[2]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[2]!)
+                  ((lift_chunk_mont rhs).val[2]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[3]!)
+                    ((lift_chunk_mont rhs).val[3]!))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0))) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_2 : (lift_chunk_mont lhs).val[2]!
+            = lift_fe_mont (lhs.elements.val[2]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[2]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 2 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 2 (by rw [h_l]; decide)]
+        have h_lcm_lhs_3 : (lift_chunk_mont lhs).val[3]!
+            = lift_fe_mont (lhs.elements.val[3]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[3]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 3 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 3 (by rw [h_l]; decide)]
+        have h_lcm_rhs_2 : (lift_chunk_mont rhs).val[2]!
+            = lift_fe_mont (rhs.elements.val[2]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[2]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 2 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 2 (by rw [h_l]; decide)]
+        have h_lcm_rhs_3 : (lift_chunk_mont rhs).val[3]!
+            = lift_fe_mont (rhs.elements.val[3]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[3]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 3 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 3 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_2, h_lcm_lhs_3, h_lcm_rhs_2, h_lcm_rhs_3]
+      · -- Lane 3: touched by call 1 (nzeta0, odd).
+        have h_r7_at_lane : r7.val[3]! = r1.val[3]! := by
+          rw [h_r7_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r0.val[2]! = out.val[2]! := by
+          rw [h_r0_unc' 2 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r0.val[3]! = out.val[3]! := by
+          rw [h_r0_unc' 3 (by decide) (by decide) (by decide)]
+        have h_fe := h_r1_fe_o
+        simp only [show (2 * (1#usize : Std.Usize).val + 1 : Nat) = 3 from by decide,
+                   show (2 * (1#usize : Std.Usize).val : Nat) = 2 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[3]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[3]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[3]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[2]!)
+                  ((lift_chunk_mont rhs).val[3]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[3]!)
+                  ((lift_chunk_mont rhs).val[2]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_2 : (lift_chunk_mont lhs).val[2]!
+            = lift_fe_mont (lhs.elements.val[2]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[2]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 2 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 2 (by rw [h_l]; decide)]
+        have h_lcm_lhs_3 : (lift_chunk_mont lhs).val[3]!
+            = lift_fe_mont (lhs.elements.val[3]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[3]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 3 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 3 (by rw [h_l]; decide)]
+        have h_lcm_rhs_2 : (lift_chunk_mont rhs).val[2]!
+            = lift_fe_mont (rhs.elements.val[2]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[2]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 2 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 2 (by rw [h_l]; decide)]
+        have h_lcm_rhs_3 : (lift_chunk_mont rhs).val[3]!
+            = lift_fe_mont (rhs.elements.val[3]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[3]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 3 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 3 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_2, h_lcm_lhs_3, h_lcm_rhs_2, h_lcm_rhs_3]
+      · -- Lane 4: touched by call 2 (zeta1, even).
+        have h_r7_at_lane : r7.val[4]! = r2.val[4]! := by
+          rw [h_r7_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r1.val[4]! = out.val[4]! := by
+          rw [h_r1_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 4 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r1.val[5]! = out.val[5]! := by
+          rw [h_r1_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 5 (by decide) (by decide) (by decide)]
+        have h_fe := h_r2_fe_e
+        simp only [show (2 * (2#usize : Std.Usize).val + 1 : Nat) = 5 from by decide,
+                   show (2 * (2#usize : Std.Usize).val : Nat) = 4 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[4]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[4]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[4]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[4]!)
+                  ((lift_chunk_mont rhs).val[4]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[5]!)
+                    ((lift_chunk_mont rhs).val[5]!))
+                  (lift_fe_mont zeta1)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_4 : (lift_chunk_mont lhs).val[4]!
+            = lift_fe_mont (lhs.elements.val[4]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[4]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 4 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 4 (by rw [h_l]; decide)]
+        have h_lcm_lhs_5 : (lift_chunk_mont lhs).val[5]!
+            = lift_fe_mont (lhs.elements.val[5]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[5]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 5 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 5 (by rw [h_l]; decide)]
+        have h_lcm_rhs_4 : (lift_chunk_mont rhs).val[4]!
+            = lift_fe_mont (rhs.elements.val[4]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[4]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 4 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 4 (by rw [h_l]; decide)]
+        have h_lcm_rhs_5 : (lift_chunk_mont rhs).val[5]!
+            = lift_fe_mont (rhs.elements.val[5]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[5]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 5 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 5 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_4, h_lcm_lhs_5, h_lcm_rhs_4, h_lcm_rhs_5]
+      · -- Lane 5: touched by call 2 (zeta1, odd).
+        have h_r7_at_lane : r7.val[5]! = r2.val[5]! := by
+          rw [h_r7_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r1.val[4]! = out.val[4]! := by
+          rw [h_r1_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 4 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r1.val[5]! = out.val[5]! := by
+          rw [h_r1_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 5 (by decide) (by decide) (by decide)]
+        have h_fe := h_r2_fe_o
+        simp only [show (2 * (2#usize : Std.Usize).val + 1 : Nat) = 5 from by decide,
+                   show (2 * (2#usize : Std.Usize).val : Nat) = 4 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[5]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[5]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[5]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[4]!)
+                  ((lift_chunk_mont rhs).val[5]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[5]!)
+                  ((lift_chunk_mont rhs).val[4]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_4 : (lift_chunk_mont lhs).val[4]!
+            = lift_fe_mont (lhs.elements.val[4]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[4]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 4 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 4 (by rw [h_l]; decide)]
+        have h_lcm_lhs_5 : (lift_chunk_mont lhs).val[5]!
+            = lift_fe_mont (lhs.elements.val[5]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[5]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 5 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 5 (by rw [h_l]; decide)]
+        have h_lcm_rhs_4 : (lift_chunk_mont rhs).val[4]!
+            = lift_fe_mont (rhs.elements.val[4]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[4]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 4 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 4 (by rw [h_l]; decide)]
+        have h_lcm_rhs_5 : (lift_chunk_mont rhs).val[5]!
+            = lift_fe_mont (rhs.elements.val[5]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[5]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 5 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 5 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_4, h_lcm_lhs_5, h_lcm_rhs_4, h_lcm_rhs_5]
+      · -- Lane 6: touched by call 3 (nzeta1, even).
+        have h_r7_at_lane : r7.val[6]! = r3.val[6]! := by
+          rw [h_r7_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r2.val[6]! = out.val[6]! := by
+          rw [h_r2_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 6 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r2.val[7]! = out.val[7]! := by
+          rw [h_r2_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 7 (by decide) (by decide) (by decide)]
+        have h_fe := h_r3_fe_e
+        simp only [show (2 * (3#usize : Std.Usize).val + 1 : Nat) = 7 from by decide,
+                   show (2 * (3#usize : Std.Usize).val : Nat) = 6 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_n1_fe] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[6]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[6]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[6]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[6]!)
+                  ((lift_chunk_mont rhs).val[6]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[7]!)
+                    ((lift_chunk_mont rhs).val[7]!))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1))) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_6 : (lift_chunk_mont lhs).val[6]!
+            = lift_fe_mont (lhs.elements.val[6]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[6]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 6 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 6 (by rw [h_l]; decide)]
+        have h_lcm_lhs_7 : (lift_chunk_mont lhs).val[7]!
+            = lift_fe_mont (lhs.elements.val[7]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[7]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 7 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 7 (by rw [h_l]; decide)]
+        have h_lcm_rhs_6 : (lift_chunk_mont rhs).val[6]!
+            = lift_fe_mont (rhs.elements.val[6]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[6]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 6 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 6 (by rw [h_l]; decide)]
+        have h_lcm_rhs_7 : (lift_chunk_mont rhs).val[7]!
+            = lift_fe_mont (rhs.elements.val[7]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[7]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 7 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 7 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_6, h_lcm_lhs_7, h_lcm_rhs_6, h_lcm_rhs_7]
+      · -- Lane 7: touched by call 3 (nzeta1, odd).
+        have h_r7_at_lane : r7.val[7]! = r3.val[7]! := by
+          rw [h_r7_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r2.val[6]! = out.val[6]! := by
+          rw [h_r2_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 6 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r2.val[7]! = out.val[7]! := by
+          rw [h_r2_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 7 (by decide) (by decide) (by decide)]
+        have h_fe := h_r3_fe_o
+        simp only [show (2 * (3#usize : Std.Usize).val + 1 : Nat) = 7 from by decide,
+                   show (2 * (3#usize : Std.Usize).val : Nat) = 6 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[7]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[7]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[7]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[6]!)
+                  ((lift_chunk_mont rhs).val[7]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[7]!)
+                  ((lift_chunk_mont rhs).val[6]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_6 : (lift_chunk_mont lhs).val[6]!
+            = lift_fe_mont (lhs.elements.val[6]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[6]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 6 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 6 (by rw [h_l]; decide)]
+        have h_lcm_lhs_7 : (lift_chunk_mont lhs).val[7]!
+            = lift_fe_mont (lhs.elements.val[7]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[7]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 7 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 7 (by rw [h_l]; decide)]
+        have h_lcm_rhs_6 : (lift_chunk_mont rhs).val[6]!
+            = lift_fe_mont (rhs.elements.val[6]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[6]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 6 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 6 (by rw [h_l]; decide)]
+        have h_lcm_rhs_7 : (lift_chunk_mont rhs).val[7]!
+            = lift_fe_mont (rhs.elements.val[7]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[7]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 7 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 7 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_6, h_lcm_lhs_7, h_lcm_rhs_6, h_lcm_rhs_7]
+      · -- Lane 8: touched by call 4 (zeta2, even).
+        have h_r7_at_lane : r7.val[8]! = r4.val[8]! := by
+          rw [h_r7_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r3.val[8]! = out.val[8]! := by
+          rw [h_r3_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 8 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r3.val[9]! = out.val[9]! := by
+          rw [h_r3_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 9 (by decide) (by decide) (by decide)]
+        have h_fe := h_r4_fe_e
+        simp only [show (2 * (4#usize : Std.Usize).val + 1 : Nat) = 9 from by decide,
+                   show (2 * (4#usize : Std.Usize).val : Nat) = 8 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[8]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[8]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[8]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[8]!)
+                  ((lift_chunk_mont rhs).val[8]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[9]!)
+                    ((lift_chunk_mont rhs).val[9]!))
+                  (lift_fe_mont zeta2)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_8 : (lift_chunk_mont lhs).val[8]!
+            = lift_fe_mont (lhs.elements.val[8]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[8]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 8 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 8 (by rw [h_l]; decide)]
+        have h_lcm_lhs_9 : (lift_chunk_mont lhs).val[9]!
+            = lift_fe_mont (lhs.elements.val[9]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[9]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 9 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 9 (by rw [h_l]; decide)]
+        have h_lcm_rhs_8 : (lift_chunk_mont rhs).val[8]!
+            = lift_fe_mont (rhs.elements.val[8]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[8]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 8 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 8 (by rw [h_l]; decide)]
+        have h_lcm_rhs_9 : (lift_chunk_mont rhs).val[9]!
+            = lift_fe_mont (rhs.elements.val[9]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[9]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 9 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 9 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_8, h_lcm_lhs_9, h_lcm_rhs_8, h_lcm_rhs_9]
+      · -- Lane 9: touched by call 4 (zeta2, odd).
+        have h_r7_at_lane : r7.val[9]! = r4.val[9]! := by
+          rw [h_r7_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r3.val[8]! = out.val[8]! := by
+          rw [h_r3_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 8 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r3.val[9]! = out.val[9]! := by
+          rw [h_r3_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 9 (by decide) (by decide) (by decide)]
+        have h_fe := h_r4_fe_o
+        simp only [show (2 * (4#usize : Std.Usize).val + 1 : Nat) = 9 from by decide,
+                   show (2 * (4#usize : Std.Usize).val : Nat) = 8 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[9]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[9]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[9]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[8]!)
+                  ((lift_chunk_mont rhs).val[9]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[9]!)
+                  ((lift_chunk_mont rhs).val[8]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_8 : (lift_chunk_mont lhs).val[8]!
+            = lift_fe_mont (lhs.elements.val[8]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[8]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 8 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 8 (by rw [h_l]; decide)]
+        have h_lcm_lhs_9 : (lift_chunk_mont lhs).val[9]!
+            = lift_fe_mont (lhs.elements.val[9]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[9]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 9 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 9 (by rw [h_l]; decide)]
+        have h_lcm_rhs_8 : (lift_chunk_mont rhs).val[8]!
+            = lift_fe_mont (rhs.elements.val[8]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[8]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 8 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 8 (by rw [h_l]; decide)]
+        have h_lcm_rhs_9 : (lift_chunk_mont rhs).val[9]!
+            = lift_fe_mont (rhs.elements.val[9]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[9]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 9 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 9 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_8, h_lcm_lhs_9, h_lcm_rhs_8, h_lcm_rhs_9]
+      · -- Lane 10: touched by call 5 (nzeta2, even).
+        have h_r7_at_lane : r7.val[10]! = r5.val[10]! := by
+          rw [h_r7_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r4.val[10]! = out.val[10]! := by
+          rw [h_r4_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 10 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r4.val[11]! = out.val[11]! := by
+          rw [h_r4_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 11 (by decide) (by decide) (by decide)]
+        have h_fe := h_r5_fe_e
+        simp only [show (2 * (5#usize : Std.Usize).val + 1 : Nat) = 11 from by decide,
+                   show (2 * (5#usize : Std.Usize).val : Nat) = 10 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_n2_fe] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[10]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[10]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[10]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[10]!)
+                  ((lift_chunk_mont rhs).val[10]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[11]!)
+                    ((lift_chunk_mont rhs).val[11]!))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2))) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_10 : (lift_chunk_mont lhs).val[10]!
+            = lift_fe_mont (lhs.elements.val[10]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[10]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 10 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 10 (by rw [h_l]; decide)]
+        have h_lcm_lhs_11 : (lift_chunk_mont lhs).val[11]!
+            = lift_fe_mont (lhs.elements.val[11]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[11]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 11 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 11 (by rw [h_l]; decide)]
+        have h_lcm_rhs_10 : (lift_chunk_mont rhs).val[10]!
+            = lift_fe_mont (rhs.elements.val[10]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[10]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 10 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 10 (by rw [h_l]; decide)]
+        have h_lcm_rhs_11 : (lift_chunk_mont rhs).val[11]!
+            = lift_fe_mont (rhs.elements.val[11]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[11]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 11 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 11 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_10, h_lcm_lhs_11, h_lcm_rhs_10, h_lcm_rhs_11]
+      · -- Lane 11: touched by call 5 (nzeta2, odd).
+        have h_r7_at_lane : r7.val[11]! = r5.val[11]! := by
+          rw [h_r7_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r4.val[10]! = out.val[10]! := by
+          rw [h_r4_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 10 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r4.val[11]! = out.val[11]! := by
+          rw [h_r4_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 11 (by decide) (by decide) (by decide)]
+        have h_fe := h_r5_fe_o
+        simp only [show (2 * (5#usize : Std.Usize).val + 1 : Nat) = 11 from by decide,
+                   show (2 * (5#usize : Std.Usize).val : Nat) = 10 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[11]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[11]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[11]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[10]!)
+                  ((lift_chunk_mont rhs).val[11]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[11]!)
+                  ((lift_chunk_mont rhs).val[10]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_10 : (lift_chunk_mont lhs).val[10]!
+            = lift_fe_mont (lhs.elements.val[10]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[10]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 10 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 10 (by rw [h_l]; decide)]
+        have h_lcm_lhs_11 : (lift_chunk_mont lhs).val[11]!
+            = lift_fe_mont (lhs.elements.val[11]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[11]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 11 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 11 (by rw [h_l]; decide)]
+        have h_lcm_rhs_10 : (lift_chunk_mont rhs).val[10]!
+            = lift_fe_mont (rhs.elements.val[10]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[10]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 10 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 10 (by rw [h_l]; decide)]
+        have h_lcm_rhs_11 : (lift_chunk_mont rhs).val[11]!
+            = lift_fe_mont (rhs.elements.val[11]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[11]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 11 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 11 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_10, h_lcm_lhs_11, h_lcm_rhs_10, h_lcm_rhs_11]
+      · -- Lane 12: touched by call 6 (zeta3, even).
+        have h_r7_at_lane : r7.val[12]! = r6.val[12]! := by
+          rw [h_r7_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r5.val[12]! = out.val[12]! := by
+          rw [h_r5_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 12 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r5.val[13]! = out.val[13]! := by
+          rw [h_r5_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 13 (by decide) (by decide) (by decide)]
+        have h_fe := h_r6_fe_e
+        simp only [show (2 * (6#usize : Std.Usize).val + 1 : Nat) = 13 from by decide,
+                   show (2 * (6#usize : Std.Usize).val : Nat) = 12 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[12]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[12]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[12]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[12]!)
+                  ((lift_chunk_mont rhs).val[12]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[13]!)
+                    ((lift_chunk_mont rhs).val[13]!))
+                  (lift_fe_mont zeta3)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_12 : (lift_chunk_mont lhs).val[12]!
+            = lift_fe_mont (lhs.elements.val[12]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[12]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 12 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 12 (by rw [h_l]; decide)]
+        have h_lcm_lhs_13 : (lift_chunk_mont lhs).val[13]!
+            = lift_fe_mont (lhs.elements.val[13]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[13]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 13 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 13 (by rw [h_l]; decide)]
+        have h_lcm_rhs_12 : (lift_chunk_mont rhs).val[12]!
+            = lift_fe_mont (rhs.elements.val[12]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[12]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 12 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 12 (by rw [h_l]; decide)]
+        have h_lcm_rhs_13 : (lift_chunk_mont rhs).val[13]!
+            = lift_fe_mont (rhs.elements.val[13]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[13]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 13 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 13 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_12, h_lcm_lhs_13, h_lcm_rhs_12, h_lcm_rhs_13]
+      · -- Lane 13: touched by call 6 (zeta3, odd).
+        have h_r7_at_lane : r7.val[13]! = r6.val[13]! := by
+          rw [h_r7_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r5.val[12]! = out.val[12]! := by
+          rw [h_r5_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 12 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r5.val[13]! = out.val[13]! := by
+          rw [h_r5_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 13 (by decide) (by decide) (by decide)]
+        have h_fe := h_r6_fe_o
+        simp only [show (2 * (6#usize : Std.Usize).val + 1 : Nat) = 13 from by decide,
+                   show (2 * (6#usize : Std.Usize).val : Nat) = 12 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[13]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[13]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[13]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[12]!)
+                  ((lift_chunk_mont rhs).val[13]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[13]!)
+                  ((lift_chunk_mont rhs).val[12]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_12 : (lift_chunk_mont lhs).val[12]!
+            = lift_fe_mont (lhs.elements.val[12]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[12]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 12 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 12 (by rw [h_l]; decide)]
+        have h_lcm_lhs_13 : (lift_chunk_mont lhs).val[13]!
+            = lift_fe_mont (lhs.elements.val[13]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[13]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 13 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 13 (by rw [h_l]; decide)]
+        have h_lcm_rhs_12 : (lift_chunk_mont rhs).val[12]!
+            = lift_fe_mont (rhs.elements.val[12]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[12]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 12 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 12 (by rw [h_l]; decide)]
+        have h_lcm_rhs_13 : (lift_chunk_mont rhs).val[13]!
+            = lift_fe_mont (rhs.elements.val[13]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[13]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 13 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 13 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_12, h_lcm_lhs_13, h_lcm_rhs_12, h_lcm_rhs_13]
+      · -- Lane 14: touched by call 7 (nzeta3, even).
+        have h_src_at_even : r6.val[14]! = out.val[14]! := by
+          rw [h_r6_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 14 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r6.val[15]! = out.val[15]! := by
+          rw [h_r6_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 15 (by decide) (by decide) (by decide)]
+        have h_fe := h_r7_fe_e
+        simp only [show (2 * (7#usize : Std.Usize).val + 1 : Nat) = 15 from by decide,
+                   show (2 * (7#usize : Std.Usize).val : Nat) = 14 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_n3_fe] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[14]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[14]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[14]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[14]!)
+                  ((lift_chunk_mont rhs).val[14]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[15]!)
+                    ((lift_chunk_mont rhs).val[15]!))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3))) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_14 : (lift_chunk_mont lhs).val[14]!
+            = lift_fe_mont (lhs.elements.val[14]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[14]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 14 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 14 (by rw [h_l]; decide)]
+        have h_lcm_lhs_15 : (lift_chunk_mont lhs).val[15]!
+            = lift_fe_mont (lhs.elements.val[15]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[15]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 15 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 15 (by rw [h_l]; decide)]
+        have h_lcm_rhs_14 : (lift_chunk_mont rhs).val[14]!
+            = lift_fe_mont (rhs.elements.val[14]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[14]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 14 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 14 (by rw [h_l]; decide)]
+        have h_lcm_rhs_15 : (lift_chunk_mont rhs).val[15]!
+            = lift_fe_mont (rhs.elements.val[15]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[15]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 15 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 15 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_14, h_lcm_lhs_15, h_lcm_rhs_14, h_lcm_rhs_15]
+      · -- Lane 15: touched by call 7 (nzeta3, odd).
+        have h_src_at_even : r6.val[14]! = out.val[14]! := by
+          rw [h_r6_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 14 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r6.val[15]! = out.val[15]! := by
+          rw [h_r6_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 15 (by decide) (by decide) (by decide)]
+        have h_fe := h_r7_fe_o
+        simp only [show (2 * (7#usize : Std.Usize).val + 1 : Nat) = 15 from by decide,
+                   show (2 * (7#usize : Std.Usize).val : Nat) = 14 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[15]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[15]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[15]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[14]!)
+                  ((lift_chunk_mont rhs).val[15]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[15]!)
+                  ((lift_chunk_mont rhs).val[14]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_14 : (lift_chunk_mont lhs).val[14]!
+            = lift_fe_mont (lhs.elements.val[14]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[14]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 14 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 14 (by rw [h_l]; decide)]
+        have h_lcm_lhs_15 : (lift_chunk_mont lhs).val[15]!
+            = lift_fe_mont (lhs.elements.val[15]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[15]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 15 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 15 (by rw [h_l]; decide)]
+        have h_lcm_rhs_14 : (lift_chunk_mont rhs).val[14]!
+            = lift_fe_mont (rhs.elements.val[14]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[14]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 14 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 14 (by rw [h_l]; decide)]
+        have h_lcm_rhs_15 : (lift_chunk_mont rhs).val[15]!
+            = lift_fe_mont (rhs.elements.val[15]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[15]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 15 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 15 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_14, h_lcm_lhs_15, h_lcm_rhs_14, h_lcm_rhs_15]
+  · -- Spec.ntt_multiply_cache_post — cache POST: 8 conjuncts (one per pair).
+    intro i
+    -- For each pair index i, the cache7 lane at slot i.val equals cache_i lane at slot i.val
+    -- (since calls i+1..7 write different slots). Conclude via h_c{j}_unc' chain + the
+    -- per-pair canonicity + FE-equation conjuncts h_c{j}_canon, h_c{j}_fe.
+    rcases i with ⟨i, hi⟩
+    -- Normalise (J#usize).val = J in the per-pair canonicity/FE hypotheses.
+    have h_uv0 : (0#usize : Std.Usize).val = 0 := rfl
+    have h_uv1 : (1#usize : Std.Usize).val = 1 := rfl
+    have h_uv2 : (2#usize : Std.Usize).val = 2 := rfl
+    have h_uv3 : (3#usize : Std.Usize).val = 3 := rfl
+    have h_uv4 : (4#usize : Std.Usize).val = 4 := rfl
+    have h_uv5 : (5#usize : Std.Usize).val = 5 := rfl
+    have h_uv6 : (6#usize : Std.Usize).val = 6 := rfl
+    have h_uv7 : (7#usize : Std.Usize).val = 7 := rfl
+    -- Index-arithmetic normalisations on (2 * (J#usize).val + 1).
+    interval_cases i
+    · -- Pair 0: cache7[0] = cache0[0] (calls 1..7 don't touch slot 0).
+      have h_chain : cache7.elements.val[0]! = cache0.elements.val[0]! := by
+        rw [h_c7_unc' 0 (by decide) (by decide)]
+        rw [h_c6_unc' 0 (by decide) (by decide)]
+        rw [h_c5_unc' 0 (by decide) (by decide)]
+        rw [h_c4_unc' 0 (by decide) (by decide)]
+        rw [h_c3_unc' 0 (by decide) (by decide)]
+        rw [h_c2_unc' 0 (by decide) (by decide)]
+        rw [h_c1_unc' 0 (by decide) (by decide)]
+      refine ⟨?_, ?_⟩
+      · -- canonical: cache0[0] ≤ 3328.
+        rw [show ((⟨0, hi⟩ : Fin 8) : Fin 8).val = 0 from rfl, h_chain]
+        rw [h_uv0] at h_c0_canon; exact h_c0_canon
+      · -- FE eq: lift_fe_mont cache7[0] = mul_pure (lift_fe_mont rhs[1]) (zeta0_fe).
+        rw [show ((⟨0, hi⟩ : Fin 8) : Fin 8).val = 0 from rfl, h_chain]
+        rw [h_uv0] at h_c0_fe; rw [h_c0_fe]
+        -- effective_zeta_fe ⟨0, _⟩ ... = zeta0_fe.
+        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (lift_fe_mont (rhs.elements.val[2 * 0 + 1]!))
+                  (Spec.effective_zeta_fe ⟨0, hi⟩
+                    (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                    (lift_fe_mont zeta2) (lift_fe_mont zeta3))
+        unfold Spec.effective_zeta_fe; simp
+    · -- Pair 1: cache7[1] = cache1[1].
+      have h_chain : cache7.elements.val[1]! = cache1.elements.val[1]! := by
+        rw [h_c7_unc' 1 (by decide) (by decide)]
+        rw [h_c6_unc' 1 (by decide) (by decide)]
+        rw [h_c5_unc' 1 (by decide) (by decide)]
+        rw [h_c4_unc' 1 (by decide) (by decide)]
+        rw [h_c3_unc' 1 (by decide) (by decide)]
+        rw [h_c2_unc' 1 (by decide) (by decide)]
+      refine ⟨?_, ?_⟩
+      · rw [show ((⟨1, hi⟩ : Fin 8) : Fin 8).val = 1 from rfl, h_chain]
+        rw [h_uv1] at h_c1_canon; exact h_c1_canon
+      · rw [show ((⟨1, hi⟩ : Fin 8) : Fin 8).val = 1 from rfl, h_chain]
+        rw [h_uv1] at h_c1_fe; rw [h_c1_fe, h_n0_fe]
+        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (lift_fe_mont (rhs.elements.val[2 * 1 + 1]!))
+                  (Spec.effective_zeta_fe ⟨1, hi⟩
+                    (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                    (lift_fe_mont zeta2) (lift_fe_mont zeta3))
+        unfold Spec.effective_zeta_fe; simp
+    · -- Pair 2: cache7[2] = cache2[2].
+      have h_chain : cache7.elements.val[2]! = cache2.elements.val[2]! := by
+        rw [h_c7_unc' 2 (by decide) (by decide)]
+        rw [h_c6_unc' 2 (by decide) (by decide)]
+        rw [h_c5_unc' 2 (by decide) (by decide)]
+        rw [h_c4_unc' 2 (by decide) (by decide)]
+        rw [h_c3_unc' 2 (by decide) (by decide)]
+      refine ⟨?_, ?_⟩
+      · rw [show ((⟨2, hi⟩ : Fin 8) : Fin 8).val = 2 from rfl, h_chain]
+        rw [h_uv2] at h_c2_canon; exact h_c2_canon
+      · rw [show ((⟨2, hi⟩ : Fin 8) : Fin 8).val = 2 from rfl, h_chain]
+        rw [h_uv2] at h_c2_fe; rw [h_c2_fe]
+        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (lift_fe_mont (rhs.elements.val[2 * 2 + 1]!))
+                  (Spec.effective_zeta_fe ⟨2, hi⟩
+                    (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                    (lift_fe_mont zeta2) (lift_fe_mont zeta3))
+        unfold Spec.effective_zeta_fe; simp
+    · -- Pair 3: cache7[3] = cache3[3].
+      have h_chain : cache7.elements.val[3]! = cache3.elements.val[3]! := by
+        rw [h_c7_unc' 3 (by decide) (by decide)]
+        rw [h_c6_unc' 3 (by decide) (by decide)]
+        rw [h_c5_unc' 3 (by decide) (by decide)]
+        rw [h_c4_unc' 3 (by decide) (by decide)]
+      refine ⟨?_, ?_⟩
+      · rw [show ((⟨3, hi⟩ : Fin 8) : Fin 8).val = 3 from rfl, h_chain]
+        rw [h_uv3] at h_c3_canon; exact h_c3_canon
+      · rw [show ((⟨3, hi⟩ : Fin 8) : Fin 8).val = 3 from rfl, h_chain]
+        rw [h_uv3] at h_c3_fe; rw [h_c3_fe, h_n1_fe]
+        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (lift_fe_mont (rhs.elements.val[2 * 3 + 1]!))
+                  (Spec.effective_zeta_fe ⟨3, hi⟩
+                    (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                    (lift_fe_mont zeta2) (lift_fe_mont zeta3))
+        unfold Spec.effective_zeta_fe; simp
+    · -- Pair 4: cache7[4] = cache4[4].
+      have h_chain : cache7.elements.val[4]! = cache4.elements.val[4]! := by
+        rw [h_c7_unc' 4 (by decide) (by decide)]
+        rw [h_c6_unc' 4 (by decide) (by decide)]
+        rw [h_c5_unc' 4 (by decide) (by decide)]
+      refine ⟨?_, ?_⟩
+      · rw [show ((⟨4, hi⟩ : Fin 8) : Fin 8).val = 4 from rfl, h_chain]
+        rw [h_uv4] at h_c4_canon; exact h_c4_canon
+      · rw [show ((⟨4, hi⟩ : Fin 8) : Fin 8).val = 4 from rfl, h_chain]
+        rw [h_uv4] at h_c4_fe; rw [h_c4_fe]
+        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (lift_fe_mont (rhs.elements.val[2 * 4 + 1]!))
+                  (Spec.effective_zeta_fe ⟨4, hi⟩
+                    (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                    (lift_fe_mont zeta2) (lift_fe_mont zeta3))
+        unfold Spec.effective_zeta_fe; simp
+    · -- Pair 5: cache7[5] = cache5[5].
+      have h_chain : cache7.elements.val[5]! = cache5.elements.val[5]! := by
+        rw [h_c7_unc' 5 (by decide) (by decide)]
+        rw [h_c6_unc' 5 (by decide) (by decide)]
+      refine ⟨?_, ?_⟩
+      · rw [show ((⟨5, hi⟩ : Fin 8) : Fin 8).val = 5 from rfl, h_chain]
+        rw [h_uv5] at h_c5_canon; exact h_c5_canon
+      · rw [show ((⟨5, hi⟩ : Fin 8) : Fin 8).val = 5 from rfl, h_chain]
+        rw [h_uv5] at h_c5_fe; rw [h_c5_fe, h_n2_fe]
+        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (lift_fe_mont (rhs.elements.val[2 * 5 + 1]!))
+                  (Spec.effective_zeta_fe ⟨5, hi⟩
+                    (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                    (lift_fe_mont zeta2) (lift_fe_mont zeta3))
+        unfold Spec.effective_zeta_fe; simp
+    · -- Pair 6: cache7[6] = cache6[6].
+      have h_chain : cache7.elements.val[6]! = cache6.elements.val[6]! := by
+        rw [h_c7_unc' 6 (by decide) (by decide)]
+      refine ⟨?_, ?_⟩
+      · rw [show ((⟨6, hi⟩ : Fin 8) : Fin 8).val = 6 from rfl, h_chain]
+        rw [h_uv6] at h_c6_canon; exact h_c6_canon
+      · rw [show ((⟨6, hi⟩ : Fin 8) : Fin 8).val = 6 from rfl, h_chain]
+        rw [h_uv6] at h_c6_fe; rw [h_c6_fe]
+        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (lift_fe_mont (rhs.elements.val[2 * 6 + 1]!))
+                  (Spec.effective_zeta_fe ⟨6, hi⟩
+                    (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                    (lift_fe_mont zeta2) (lift_fe_mont zeta3))
+        unfold Spec.effective_zeta_fe; simp
+    · -- Pair 7: cache7[7] (last call wrote slot 7).
+      refine ⟨?_, ?_⟩
+      · rw [show ((⟨7, hi⟩ : Fin 8) : Fin 8).val = 7 from rfl]
+        rw [h_uv7] at h_c7_canon; exact h_c7_canon
+      · rw [show ((⟨7, hi⟩ : Fin 8) : Fin 8).val = 7 from rfl]
+        rw [h_uv7] at h_c7_fe; rw [h_c7_fe, h_n3_fe]
+        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (lift_fe_mont (rhs.elements.val[2 * 7 + 1]!))
+                  (Spec.effective_zeta_fe ⟨7, hi⟩
+                    (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                    (lift_fe_mont zeta2) (lift_fe_mont zeta3))
+        unfold Spec.effective_zeta_fe; simp
+  · -- Lanes 8..15: untouched.
+    intro k hk h8
+    -- cache7[k] = cache6[k] = cache5[k] = cache4[k] = cache3[k] = cache2[k] = cache1[k] = cache0[k] = cache[k]
+    -- since each cacheJ.unc' k holds whenever k ≠ J.
+    have hk_ne_7 : k ≠ 7 := by omega
+    have hk_ne_6 : k ≠ 6 := by omega
+    have hk_ne_5 : k ≠ 5 := by omega
+    have hk_ne_4 : k ≠ 4 := by omega
+    have hk_ne_3 : k ≠ 3 := by omega
+    have hk_ne_2 : k ≠ 2 := by omega
+    have hk_ne_1 : k ≠ 1 := by omega
+    have hk_ne_0 : k ≠ 0 := by omega
+    rw [h_c7_unc' k hk hk_ne_7]
+    rw [h_c6_unc' k hk hk_ne_6]
+    rw [h_c5_unc' k hk hk_ne_5]
+    rw [h_c4_unc' k hk hk_ne_4]
+    rw [h_c3_unc' k hk hk_ne_3]
+    rw [h_c2_unc' k hk hk_ne_2]
+    rw [h_c1_unc' k hk hk_ne_1]
+    rw [h_c0_unc' k hk hk_ne_0]
+
+set_option maxHeartbeats 16000000 in
 /-- L2.8d — `vector.portable.ntt.accumulating_ntt_multiply_use_cache`:
     cache-using variant. The impl (Funs.lean:3790-3818) chains 8
     `accumulating_ntt_multiply_binomials_use_cache` calls; each reads
@@ -20746,7 +24256,2000 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               ≤ (out.val[k.val]!).val.natAbs + 2^25) ∧
               ntt_multiply_base_case_post lhs rhs
                 zeta0 zeta1 zeta2 zeta3 out r ⌝ ⦄ := by
-  sorry
+  have h_cache_canon : ∀ i : Fin 8,
+      (cache.elements.val[i.val]!).val.natAbs ≤ 3328 := fun i => (h_cache i).1
+  have h_cache_fe : ∀ i : Fin 8,
+      lift_fe_mont (cache.elements.val[i.val]!)
+        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (lift_fe_mont (rhs.elements.val[2 * i.val + 1]!))
+            (Spec.effective_zeta_fe i
+              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+              (lift_fe_mont zeta2) (lift_fe_mont zeta3)) := fun i => (h_cache i).2
+  have h_out_bnd_universal : ∀ k : Fin 16, (out.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
+    intro k; have := h_out_bnd k; omega
+  -- Cache FE-equations specialised at each pair index 0..7 (Spec.effective_zeta_fe
+  -- collapses to the appropriate zeta_j or neg_pure zeta_j).
+  have h_cache0_fe : lift_fe_mont (cache.elements.val[0]!)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont (rhs.elements.val[1]!)) (lift_fe_mont zeta0) := by
+    have h := h_cache_fe ⟨0, by decide⟩
+    rw [show ((⟨0, by decide⟩ : Fin 8) : Fin 8).val = 0 from rfl] at h
+    rw [h]; unfold Spec.effective_zeta_fe; simp
+  have h_cache1_fe : lift_fe_mont (cache.elements.val[1]!)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont (rhs.elements.val[3]!))
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0)) := by
+    have h := h_cache_fe ⟨1, by decide⟩
+    rw [show ((⟨1, by decide⟩ : Fin 8) : Fin 8).val = 1 from rfl] at h
+    rw [h]; unfold Spec.effective_zeta_fe; simp
+  have h_cache2_fe : lift_fe_mont (cache.elements.val[2]!)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont (rhs.elements.val[5]!)) (lift_fe_mont zeta1) := by
+    have h := h_cache_fe ⟨2, by decide⟩
+    rw [show ((⟨2, by decide⟩ : Fin 8) : Fin 8).val = 2 from rfl] at h
+    rw [h]; unfold Spec.effective_zeta_fe; simp
+  have h_cache3_fe : lift_fe_mont (cache.elements.val[3]!)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont (rhs.elements.val[7]!))
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1)) := by
+    have h := h_cache_fe ⟨3, by decide⟩
+    rw [show ((⟨3, by decide⟩ : Fin 8) : Fin 8).val = 3 from rfl] at h
+    rw [h]; unfold Spec.effective_zeta_fe; simp
+  have h_cache4_fe : lift_fe_mont (cache.elements.val[4]!)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont (rhs.elements.val[9]!)) (lift_fe_mont zeta2) := by
+    have h := h_cache_fe ⟨4, by decide⟩
+    rw [show ((⟨4, by decide⟩ : Fin 8) : Fin 8).val = 4 from rfl] at h
+    rw [h]; unfold Spec.effective_zeta_fe; simp
+  have h_cache5_fe : lift_fe_mont (cache.elements.val[5]!)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont (rhs.elements.val[11]!))
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2)) := by
+    have h := h_cache_fe ⟨5, by decide⟩
+    rw [show ((⟨5, by decide⟩ : Fin 8) : Fin 8).val = 5 from rfl] at h
+    rw [h]; unfold Spec.effective_zeta_fe; simp
+  have h_cache6_fe : lift_fe_mont (cache.elements.val[6]!)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont (rhs.elements.val[13]!)) (lift_fe_mont zeta3) := by
+    have h := h_cache_fe ⟨6, by decide⟩
+    rw [show ((⟨6, by decide⟩ : Fin 8) : Fin 8).val = 6 from rfl] at h
+    rw [h]; unfold Spec.effective_zeta_fe; simp
+  have h_cache7_fe : lift_fe_mont (cache.elements.val[7]!)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont (rhs.elements.val[15]!))
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3)) := by
+    have h := h_cache_fe ⟨7, by decide⟩
+    rw [show ((⟨7, by decide⟩ : Fin 8) : Fin 8).val = 7 from rfl] at h
+    rw [h]; unfold Spec.effective_zeta_fe; simp
+  -- ===== 8 chained calls =====
+  -- Call 0:
+  obtain ⟨r0, h_r0_eq, h_r0_len, h_r0_unc, h_r0_bnd_e, h_r0_bnd_o, h_r0_fe_e, h_r0_fe_o⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_use_cache_fc lhs rhs 0#usize out cache
+        (by decide) h_out_len h_lhs h_rhs (h_cache_canon ⟨0, by decide⟩)
+        h_out_bnd_universal)
+  have h_r0_at_even : (r0.val[0]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (0#usize : Std.Usize).val : Nat) = 0 := by decide
+    have h_b := h_r0_bnd_e; rw [h_eq] at h_b
+    have h_out_le := h_out_bnd ⟨0, by decide⟩; simp only at h_out_le; omega
+  have h_r0_at_odd : (r0.val[1]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (0#usize : Std.Usize).val + 1 : Nat) = 1 := by decide
+    have h_b := h_r0_bnd_o; rw [h_eq] at h_b
+    have h_out_le := h_out_bnd ⟨1, by decide⟩; simp only at h_out_le; omega
+  have h_r0_unc' : ∀ k : Nat, k < 16 → k ≠ 0 → k ≠ 1 →
+      r0.val[k]! = out.val[k]! := by
+    intro k hk hke hko
+    apply h_r0_unc k hk
+    · show k ≠ 2 * (0#usize : Std.Usize).val; rw [show (0#usize : Std.Usize).val = 0 from rfl]; omega
+    · show k ≠ 2 * (0#usize : Std.Usize).val + 1; rw [show (0#usize : Std.Usize).val = 0 from rfl]; omega
+  have h_r0_bnd_universal : ∀ k : Fin 16, (r0.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step out r0 0 (by decide) h_out_bnd_universal
+      h_r0_unc' h_r0_at_even h_r0_at_odd
+  -- Call 1:
+  obtain ⟨r1, h_r1_eq, h_r1_len, h_r1_unc, h_r1_bnd_e, h_r1_bnd_o, h_r1_fe_e, h_r1_fe_o⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_use_cache_fc lhs rhs 1#usize r0 cache
+        (by decide) h_r0_len h_lhs h_rhs (h_cache_canon ⟨1, by decide⟩)
+        h_r0_bnd_universal)
+  have h_r1_at_even : (r1.val[2]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (1#usize : Std.Usize).val : Nat) = 2 := by decide
+    have h_b := h_r1_bnd_e; rw [h_eq] at h_b
+    have h_r0_eq2 : r0.val[2]! = out.val[2]! := h_r0_unc' 2 (by decide) (by decide) (by decide)
+    rw [h_r0_eq2] at h_b
+    have h_out_le := h_out_bnd ⟨2, by decide⟩; simp only at h_out_le; omega
+  have h_r1_at_odd : (r1.val[3]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (1#usize : Std.Usize).val + 1 : Nat) = 3 := by decide
+    have h_b := h_r1_bnd_o; rw [h_eq] at h_b
+    have h_r0_eq3 : r0.val[3]! = out.val[3]! := h_r0_unc' 3 (by decide) (by decide) (by decide)
+    rw [h_r0_eq3] at h_b
+    have h_out_le := h_out_bnd ⟨3, by decide⟩; simp only at h_out_le; omega
+  have h_r1_unc' : ∀ k : Nat, k < 16 → k ≠ 2 → k ≠ 3 →
+      r1.val[k]! = r0.val[k]! := by
+    intro k hk hke hko
+    apply h_r1_unc k hk
+    · show k ≠ 2 * (1#usize : Std.Usize).val; rw [show (1#usize : Std.Usize).val = 1 from rfl]; omega
+    · show k ≠ 2 * (1#usize : Std.Usize).val + 1; rw [show (1#usize : Std.Usize).val = 1 from rfl]; omega
+  have h_r1_bnd_universal : ∀ k : Fin 16, (r1.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r0 r1 1 (by decide) h_r0_bnd_universal
+      h_r1_unc' h_r1_at_even h_r1_at_odd
+  -- Call 2:
+  obtain ⟨r2, h_r2_eq, h_r2_len, h_r2_unc, h_r2_bnd_e, h_r2_bnd_o, h_r2_fe_e, h_r2_fe_o⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_use_cache_fc lhs rhs 2#usize r1 cache
+        (by decide) h_r1_len h_lhs h_rhs (h_cache_canon ⟨2, by decide⟩)
+        h_r1_bnd_universal)
+  have h_r2_at_even : (r2.val[4]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (2#usize : Std.Usize).val : Nat) = 4 := by decide
+    have h_b := h_r2_bnd_e; rw [h_eq] at h_b
+    have h_r1_eq4 : r1.val[4]! = out.val[4]! := by
+      rw [h_r1_unc' 4 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 4 (by decide) (by decide) (by decide)]
+    rw [h_r1_eq4] at h_b
+    have h_out_le := h_out_bnd ⟨4, by decide⟩; simp only at h_out_le; omega
+  have h_r2_at_odd : (r2.val[5]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (2#usize : Std.Usize).val + 1 : Nat) = 5 := by decide
+    have h_b := h_r2_bnd_o; rw [h_eq] at h_b
+    have h_r1_eq5 : r1.val[5]! = out.val[5]! := by
+      rw [h_r1_unc' 5 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 5 (by decide) (by decide) (by decide)]
+    rw [h_r1_eq5] at h_b
+    have h_out_le := h_out_bnd ⟨5, by decide⟩; simp only at h_out_le; omega
+  have h_r2_unc' : ∀ k : Nat, k < 16 → k ≠ 4 → k ≠ 5 →
+      r2.val[k]! = r1.val[k]! := by
+    intro k hk hke hko
+    apply h_r2_unc k hk
+    · show k ≠ 2 * (2#usize : Std.Usize).val; rw [show (2#usize : Std.Usize).val = 2 from rfl]; omega
+    · show k ≠ 2 * (2#usize : Std.Usize).val + 1; rw [show (2#usize : Std.Usize).val = 2 from rfl]; omega
+  have h_r2_bnd_universal : ∀ k : Fin 16, (r2.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r1 r2 2 (by decide) h_r1_bnd_universal
+      h_r2_unc' h_r2_at_even h_r2_at_odd
+  -- Call 3:
+  obtain ⟨r3, h_r3_eq, h_r3_len, h_r3_unc, h_r3_bnd_e, h_r3_bnd_o, h_r3_fe_e, h_r3_fe_o⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_use_cache_fc lhs rhs 3#usize r2 cache
+        (by decide) h_r2_len h_lhs h_rhs (h_cache_canon ⟨3, by decide⟩)
+        h_r2_bnd_universal)
+  have h_r3_at_even : (r3.val[6]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (3#usize : Std.Usize).val : Nat) = 6 := by decide
+    have h_b := h_r3_bnd_e; rw [h_eq] at h_b
+    have h_r2_eq6 : r2.val[6]! = out.val[6]! := by
+      rw [h_r2_unc' 6 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 6 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 6 (by decide) (by decide) (by decide)]
+    rw [h_r2_eq6] at h_b
+    have h_out_le := h_out_bnd ⟨6, by decide⟩; simp only at h_out_le; omega
+  have h_r3_at_odd : (r3.val[7]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (3#usize : Std.Usize).val + 1 : Nat) = 7 := by decide
+    have h_b := h_r3_bnd_o; rw [h_eq] at h_b
+    have h_r2_eq7 : r2.val[7]! = out.val[7]! := by
+      rw [h_r2_unc' 7 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 7 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 7 (by decide) (by decide) (by decide)]
+    rw [h_r2_eq7] at h_b
+    have h_out_le := h_out_bnd ⟨7, by decide⟩; simp only at h_out_le; omega
+  have h_r3_unc' : ∀ k : Nat, k < 16 → k ≠ 6 → k ≠ 7 →
+      r3.val[k]! = r2.val[k]! := by
+    intro k hk hke hko
+    apply h_r3_unc k hk
+    · show k ≠ 2 * (3#usize : Std.Usize).val; rw [show (3#usize : Std.Usize).val = 3 from rfl]; omega
+    · show k ≠ 2 * (3#usize : Std.Usize).val + 1; rw [show (3#usize : Std.Usize).val = 3 from rfl]; omega
+  have h_r3_bnd_universal : ∀ k : Fin 16, (r3.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r2 r3 3 (by decide) h_r2_bnd_universal
+      h_r3_unc' h_r3_at_even h_r3_at_odd
+  -- Call 4:
+  obtain ⟨r4, h_r4_eq, h_r4_len, h_r4_unc, h_r4_bnd_e, h_r4_bnd_o, h_r4_fe_e, h_r4_fe_o⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_use_cache_fc lhs rhs 4#usize r3 cache
+        (by decide) h_r3_len h_lhs h_rhs (h_cache_canon ⟨4, by decide⟩)
+        h_r3_bnd_universal)
+  have h_r4_at_even : (r4.val[8]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (4#usize : Std.Usize).val : Nat) = 8 := by decide
+    have h_b := h_r4_bnd_e; rw [h_eq] at h_b
+    have h_r3_eq8 : r3.val[8]! = out.val[8]! := by
+      rw [h_r3_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 8 (by decide) (by decide) (by decide)]
+    rw [h_r3_eq8] at h_b
+    have h_out_le := h_out_bnd ⟨8, by decide⟩; simp only at h_out_le; omega
+  have h_r4_at_odd : (r4.val[9]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (4#usize : Std.Usize).val + 1 : Nat) = 9 := by decide
+    have h_b := h_r4_bnd_o; rw [h_eq] at h_b
+    have h_r3_eq9 : r3.val[9]! = out.val[9]! := by
+      rw [h_r3_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 9 (by decide) (by decide) (by decide)]
+    rw [h_r3_eq9] at h_b
+    have h_out_le := h_out_bnd ⟨9, by decide⟩; simp only at h_out_le; omega
+  have h_r4_unc' : ∀ k : Nat, k < 16 → k ≠ 8 → k ≠ 9 →
+      r4.val[k]! = r3.val[k]! := by
+    intro k hk hke hko
+    apply h_r4_unc k hk
+    · show k ≠ 2 * (4#usize : Std.Usize).val; rw [show (4#usize : Std.Usize).val = 4 from rfl]; omega
+    · show k ≠ 2 * (4#usize : Std.Usize).val + 1; rw [show (4#usize : Std.Usize).val = 4 from rfl]; omega
+  have h_r4_bnd_universal : ∀ k : Fin 16, (r4.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r3 r4 4 (by decide) h_r3_bnd_universal
+      h_r4_unc' h_r4_at_even h_r4_at_odd
+  -- Call 5:
+  obtain ⟨r5, h_r5_eq, h_r5_len, h_r5_unc, h_r5_bnd_e, h_r5_bnd_o, h_r5_fe_e, h_r5_fe_o⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_use_cache_fc lhs rhs 5#usize r4 cache
+        (by decide) h_r4_len h_lhs h_rhs (h_cache_canon ⟨5, by decide⟩)
+        h_r4_bnd_universal)
+  have h_r5_at_even : (r5.val[10]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (5#usize : Std.Usize).val : Nat) = 10 := by decide
+    have h_b := h_r5_bnd_e; rw [h_eq] at h_b
+    have h_r4_eq10 : r4.val[10]! = out.val[10]! := by
+      rw [h_r4_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 10 (by decide) (by decide) (by decide)]
+    rw [h_r4_eq10] at h_b
+    have h_out_le := h_out_bnd ⟨10, by decide⟩; simp only at h_out_le; omega
+  have h_r5_at_odd : (r5.val[11]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (5#usize : Std.Usize).val + 1 : Nat) = 11 := by decide
+    have h_b := h_r5_bnd_o; rw [h_eq] at h_b
+    have h_r4_eq11 : r4.val[11]! = out.val[11]! := by
+      rw [h_r4_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 11 (by decide) (by decide) (by decide)]
+    rw [h_r4_eq11] at h_b
+    have h_out_le := h_out_bnd ⟨11, by decide⟩; simp only at h_out_le; omega
+  have h_r5_unc' : ∀ k : Nat, k < 16 → k ≠ 10 → k ≠ 11 →
+      r5.val[k]! = r4.val[k]! := by
+    intro k hk hke hko
+    apply h_r5_unc k hk
+    · show k ≠ 2 * (5#usize : Std.Usize).val; rw [show (5#usize : Std.Usize).val = 5 from rfl]; omega
+    · show k ≠ 2 * (5#usize : Std.Usize).val + 1; rw [show (5#usize : Std.Usize).val = 5 from rfl]; omega
+  have h_r5_bnd_universal : ∀ k : Fin 16, (r5.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r4 r5 5 (by decide) h_r4_bnd_universal
+      h_r5_unc' h_r5_at_even h_r5_at_odd
+  -- Call 6:
+  obtain ⟨r6, h_r6_eq, h_r6_len, h_r6_unc, h_r6_bnd_e, h_r6_bnd_o, h_r6_fe_e, h_r6_fe_o⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_use_cache_fc lhs rhs 6#usize r5 cache
+        (by decide) h_r5_len h_lhs h_rhs (h_cache_canon ⟨6, by decide⟩)
+        h_r5_bnd_universal)
+  have h_r6_at_even : (r6.val[12]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (6#usize : Std.Usize).val : Nat) = 12 := by decide
+    have h_b := h_r6_bnd_e; rw [h_eq] at h_b
+    have h_r5_eq12 : r5.val[12]! = out.val[12]! := by
+      rw [h_r5_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r4_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 12 (by decide) (by decide) (by decide)]
+    rw [h_r5_eq12] at h_b
+    have h_out_le := h_out_bnd ⟨12, by decide⟩; simp only at h_out_le; omega
+  have h_r6_at_odd : (r6.val[13]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (6#usize : Std.Usize).val + 1 : Nat) = 13 := by decide
+    have h_b := h_r6_bnd_o; rw [h_eq] at h_b
+    have h_r5_eq13 : r5.val[13]! = out.val[13]! := by
+      rw [h_r5_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r4_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 13 (by decide) (by decide) (by decide)]
+    rw [h_r5_eq13] at h_b
+    have h_out_le := h_out_bnd ⟨13, by decide⟩; simp only at h_out_le; omega
+  have h_r6_unc' : ∀ k : Nat, k < 16 → k ≠ 12 → k ≠ 13 →
+      r6.val[k]! = r5.val[k]! := by
+    intro k hk hke hko
+    apply h_r6_unc k hk
+    · show k ≠ 2 * (6#usize : Std.Usize).val; rw [show (6#usize : Std.Usize).val = 6 from rfl]; omega
+    · show k ≠ 2 * (6#usize : Std.Usize).val + 1; rw [show (6#usize : Std.Usize).val = 6 from rfl]; omega
+  have h_r6_bnd_universal : ∀ k : Fin 16, (r6.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 :=
+    L2_8c.bnd_universal_step r5 r6 6 (by decide) h_r5_bnd_universal
+      h_r6_unc' h_r6_at_even h_r6_at_odd
+  -- Call 7:
+  obtain ⟨r7, h_r7_eq, h_r7_len, h_r7_unc, h_r7_bnd_e, h_r7_bnd_o, h_r7_fe_e, h_r7_fe_o⟩ :=
+    triple_exists_ok_fc
+      (accumulating_ntt_multiply_binomials_use_cache_fc lhs rhs 7#usize r6 cache
+        (by decide) h_r6_len h_lhs h_rhs (h_cache_canon ⟨7, by decide⟩)
+        h_r6_bnd_universal)
+  have h_r7_at_even : (r7.val[14]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (7#usize : Std.Usize).val : Nat) = 14 := by decide
+    have h_b := h_r7_bnd_e; rw [h_eq] at h_b
+    have h_r6_eq14 : r6.val[14]! = out.val[14]! := by
+      rw [h_r6_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r5_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r4_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 14 (by decide) (by decide) (by decide)]
+    rw [h_r6_eq14] at h_b
+    have h_out_le := h_out_bnd ⟨14, by decide⟩; simp only at h_out_le; omega
+  have h_r7_at_odd : (r7.val[15]!).val.natAbs ≤ 2^30 + 2^25 := by
+    have h_eq : (2 * (7#usize : Std.Usize).val + 1 : Nat) = 15 := by decide
+    have h_b := h_r7_bnd_o; rw [h_eq] at h_b
+    have h_r6_eq15 : r6.val[15]! = out.val[15]! := by
+      rw [h_r6_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r5_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r4_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r3_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r2_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r1_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r0_unc' 15 (by decide) (by decide) (by decide)]
+    rw [h_r6_eq15] at h_b
+    have h_out_le := h_out_bnd ⟨15, by decide⟩; simp only at h_out_le; omega
+  have h_r7_unc' : ∀ k : Nat, k < 16 → k ≠ 14 → k ≠ 15 →
+      r7.val[k]! = r6.val[k]! := by
+    intro k hk hke hko
+    apply h_r7_unc k hk
+    · show k ≠ 2 * (7#usize : Std.Usize).val; rw [show (7#usize : Std.Usize).val = 7 from rfl]; omega
+    · show k ≠ 2 * (7#usize : Std.Usize).val + 1; rw [show (7#usize : Std.Usize).val = 7 from rfl]; omega
+  -- ===== Pre-rewrite each h_r{i}_fe_e to L2.8c form =====
+  -- h_r{i}_fe_e (even) has the shape:
+  --   mont_reduce_pure (lift_fe_int r{i}[2j].val) = add_pure (mr prev[2j]) (add_pure
+  --     (mul_pure (lift lhs[2j]) (lift rhs[2j])) (mul_pure (lift lhs[2j+1]) c_m))
+  -- where c_m = lift_fe_mont cache[j.val]. Using h_cache{j}_fe + mul_pure_assoc:
+  --   mul_pure (lift lhs[2j+1]) c_m = mul_pure (lift lhs[2j+1]) (mul_pure (lift rhs[2j+1]) zeta_eff)
+  --                                 = mul_pure (mul_pure (lift lhs[2j+1]) (lift rhs[2j+1])) zeta_eff.
+  -- That's the L2.8c shape.
+  have h_uv0 : (0#usize : Std.Usize).val = 0 := rfl
+  have h_uv1 : (1#usize : Std.Usize).val = 1 := rfl
+  have h_uv2 : (2#usize : Std.Usize).val = 2 := rfl
+  have h_uv3 : (3#usize : Std.Usize).val = 3 := rfl
+  have h_uv4 : (4#usize : Std.Usize).val = 4 := rfl
+  have h_uv5 : (5#usize : Std.Usize).val = 5 := rfl
+  have h_uv6 : (6#usize : Std.Usize).val = 6 := rfl
+  have h_uv7 : (7#usize : Std.Usize).val = 7 := rfl
+  rw [h_uv0] at h_r0_fe_e h_r0_fe_o
+  rw [h_uv1] at h_r1_fe_e h_r1_fe_o
+  rw [h_uv2] at h_r2_fe_e h_r2_fe_o
+  rw [h_uv3] at h_r3_fe_e h_r3_fe_o
+  rw [h_uv4] at h_r4_fe_e h_r4_fe_o
+  rw [h_uv5] at h_r5_fe_e h_r5_fe_o
+  rw [h_uv6] at h_r6_fe_e h_r6_fe_o
+  rw [h_uv7] at h_r7_fe_e h_r7_fe_o
+  rw [h_cache0_fe, L2_8d.mul_pure_assoc] at h_r0_fe_e
+  rw [h_cache1_fe, L2_8d.mul_pure_assoc] at h_r1_fe_e
+  rw [h_cache2_fe, L2_8d.mul_pure_assoc] at h_r2_fe_e
+  rw [h_cache3_fe, L2_8d.mul_pure_assoc] at h_r3_fe_e
+  rw [h_cache4_fe, L2_8d.mul_pure_assoc] at h_r4_fe_e
+  rw [h_cache5_fe, L2_8d.mul_pure_assoc] at h_r5_fe_e
+  rw [h_cache6_fe, L2_8d.mul_pure_assoc] at h_r6_fe_e
+  rw [h_cache7_fe, L2_8d.mul_pure_assoc] at h_r7_fe_e
+  -- After rewrite: h_r{i}_fe_e matches L2.8c per-pair FE shape with effective zeta.
+  -- Now h_n0_fe..h_n3_fe are unbound. Set their identity by way of synthesis from
+  -- effective_zeta_fe.
+  have h_n0_fe :
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0))
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0) := rfl
+  have h_n1_fe :
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1))
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1) := rfl
+  have h_n2_fe :
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2))
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2) := rfl
+  have h_n3_fe :
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3))
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3) := rfl
+  -- Compose monadic body.
+  have h_body :
+      libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_use_cache
+        lhs rhs out cache = .ok r7 := by
+    unfold libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_use_cache
+    simp only [h_r0_eq, h_r1_eq, h_r2_eq, h_r3_eq,
+               h_r4_eq, h_r5_eq, h_r6_eq, h_r7_eq,
+               Aeneas.Std.bind_tc_ok]
+  apply triple_of_ok_fc h_body
+  -- POST: 3-conjunct.
+  refine ⟨h_r7_len, ?_, ?_⟩
+  · -- Relative bound (same 16-way enumeration as L2.8c).
+    intro k
+    rcases k with ⟨k, hk⟩
+    interval_cases k
+    · have h_r7_at_0 : r7.val[0]! = r0.val[0]! := by
+        rw [h_r7_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 0 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_0]
+      have h_b := h_r0_bnd_e
+      rw [show (2 * (0#usize : Std.Usize).val : Nat) = 0 from by decide] at h_b
+      exact h_b
+    · have h_r7_at_1 : r7.val[1]! = r0.val[1]! := by
+        rw [h_r7_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 1 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_1]
+      have h_b := h_r0_bnd_o
+      rw [show (2 * (0#usize : Std.Usize).val + 1 : Nat) = 1 from by decide] at h_b
+      exact h_b
+    · have h_r7_at_2 : r7.val[2]! = r1.val[2]! := by
+        rw [h_r7_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 2 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_2]
+      have h_b := h_r1_bnd_e
+      rw [show (2 * (1#usize : Std.Usize).val : Nat) = 2 from by decide] at h_b
+      have h_r0_at_2 : r0.val[2]! = out.val[2]! := h_r0_unc' 2 (by decide) (by decide) (by decide)
+      rw [h_r0_at_2] at h_b
+      exact h_b
+    · have h_r7_at_3 : r7.val[3]! = r1.val[3]! := by
+        rw [h_r7_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 3 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_3]
+      have h_b := h_r1_bnd_o
+      rw [show (2 * (1#usize : Std.Usize).val + 1 : Nat) = 3 from by decide] at h_b
+      have h_r0_at_3 : r0.val[3]! = out.val[3]! := h_r0_unc' 3 (by decide) (by decide) (by decide)
+      rw [h_r0_at_3] at h_b
+      exact h_b
+    · have h_r7_at_4 : r7.val[4]! = r2.val[4]! := by
+        rw [h_r7_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 4 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_4]
+      have h_b := h_r2_bnd_e
+      rw [show (2 * (2#usize : Std.Usize).val : Nat) = 4 from by decide] at h_b
+      have h_r1_at_4 : r1.val[4]! = out.val[4]! := by
+        rw [h_r1_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 4 (by decide) (by decide) (by decide)]
+      rw [h_r1_at_4] at h_b
+      exact h_b
+    · have h_r7_at_5 : r7.val[5]! = r2.val[5]! := by
+        rw [h_r7_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 5 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_5]
+      have h_b := h_r2_bnd_o
+      rw [show (2 * (2#usize : Std.Usize).val + 1 : Nat) = 5 from by decide] at h_b
+      have h_r1_at_5 : r1.val[5]! = out.val[5]! := by
+        rw [h_r1_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 5 (by decide) (by decide) (by decide)]
+      rw [h_r1_at_5] at h_b
+      exact h_b
+    · have h_r7_at_6 : r7.val[6]! = r3.val[6]! := by
+        rw [h_r7_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 6 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_6]
+      have h_b := h_r3_bnd_e
+      rw [show (2 * (3#usize : Std.Usize).val : Nat) = 6 from by decide] at h_b
+      have h_r2_at_6 : r2.val[6]! = out.val[6]! := by
+        rw [h_r2_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 6 (by decide) (by decide) (by decide)]
+      rw [h_r2_at_6] at h_b
+      exact h_b
+    · have h_r7_at_7 : r7.val[7]! = r3.val[7]! := by
+        rw [h_r7_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 7 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_7]
+      have h_b := h_r3_bnd_o
+      rw [show (2 * (3#usize : Std.Usize).val + 1 : Nat) = 7 from by decide] at h_b
+      have h_r2_at_7 : r2.val[7]! = out.val[7]! := by
+        rw [h_r2_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 7 (by decide) (by decide) (by decide)]
+      rw [h_r2_at_7] at h_b
+      exact h_b
+    · have h_r7_at_8 : r7.val[8]! = r4.val[8]! := by
+        rw [h_r7_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_8]
+      have h_b := h_r4_bnd_e
+      rw [show (2 * (4#usize : Std.Usize).val : Nat) = 8 from by decide] at h_b
+      have h_r3_at_8 : r3.val[8]! = out.val[8]! := by
+        rw [h_r3_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 8 (by decide) (by decide) (by decide)]
+      rw [h_r3_at_8] at h_b
+      exact h_b
+    · have h_r7_at_9 : r7.val[9]! = r4.val[9]! := by
+        rw [h_r7_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_9]
+      have h_b := h_r4_bnd_o
+      rw [show (2 * (4#usize : Std.Usize).val + 1 : Nat) = 9 from by decide] at h_b
+      have h_r3_at_9 : r3.val[9]! = out.val[9]! := by
+        rw [h_r3_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 9 (by decide) (by decide) (by decide)]
+      rw [h_r3_at_9] at h_b
+      exact h_b
+    · have h_r7_at_10 : r7.val[10]! = r5.val[10]! := by
+        rw [h_r7_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_10]
+      have h_b := h_r5_bnd_e
+      rw [show (2 * (5#usize : Std.Usize).val : Nat) = 10 from by decide] at h_b
+      have h_r4_at_10 : r4.val[10]! = out.val[10]! := by
+        rw [h_r4_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 10 (by decide) (by decide) (by decide)]
+      rw [h_r4_at_10] at h_b
+      exact h_b
+    · have h_r7_at_11 : r7.val[11]! = r5.val[11]! := by
+        rw [h_r7_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r6_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_11]
+      have h_b := h_r5_bnd_o
+      rw [show (2 * (5#usize : Std.Usize).val + 1 : Nat) = 11 from by decide] at h_b
+      have h_r4_at_11 : r4.val[11]! = out.val[11]! := by
+        rw [h_r4_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 11 (by decide) (by decide) (by decide)]
+      rw [h_r4_at_11] at h_b
+      exact h_b
+    · have h_r7_at_12 : r7.val[12]! = r6.val[12]! := by
+        rw [h_r7_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_12]
+      have h_b := h_r6_bnd_e
+      rw [show (2 * (6#usize : Std.Usize).val : Nat) = 12 from by decide] at h_b
+      have h_r5_at_12 : r5.val[12]! = out.val[12]! := by
+        rw [h_r5_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 12 (by decide) (by decide) (by decide)]
+      rw [h_r5_at_12] at h_b
+      exact h_b
+    · have h_r7_at_13 : r7.val[13]! = r6.val[13]! := by
+        rw [h_r7_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r7_at_13]
+      have h_b := h_r6_bnd_o
+      rw [show (2 * (6#usize : Std.Usize).val + 1 : Nat) = 13 from by decide] at h_b
+      have h_r5_at_13 : r5.val[13]! = out.val[13]! := by
+        rw [h_r5_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 13 (by decide) (by decide) (by decide)]
+      rw [h_r5_at_13] at h_b
+      exact h_b
+    · have h_b := h_r7_bnd_e
+      rw [show (2 * (7#usize : Std.Usize).val : Nat) = 14 from by decide] at h_b
+      have h_r6_at_14 : r6.val[14]! = out.val[14]! := by
+        rw [h_r6_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 14 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 14 (by decide) (by decide) (by decide)]
+      rw [h_r6_at_14] at h_b
+      exact h_b
+    · have h_b := h_r7_bnd_o
+      rw [show (2 * (7#usize : Std.Usize).val + 1 : Nat) = 15 from by decide] at h_b
+      have h_r6_at_15 : r6.val[15]! = out.val[15]! := by
+        rw [h_r6_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r5_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r4_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r3_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r2_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r1_unc' 15 (by decide) (by decide) (by decide)]
+        rw [h_r0_unc' 15 (by decide) (by decide) (by decide)]
+      rw [h_r6_at_15] at h_b
+      exact h_b
+  · -- ntt_multiply_base_case_post: per-lane FE equation.
+    unfold ntt_multiply_base_case_post ntt_multiply_base_case_alg
+    apply Subtype.ext
+    have h_lhs_val : (Spec.chunk_reducing_from_i32_array_pure r7).val
+        = (List.range 16).map (fun i => Spec.mont_reduce_pure (lift_fe_int (r7.val[i]!).val)) := by
+      unfold Spec.chunk_reducing_from_i32_array_pure; rfl
+    have h_rhs_val : (Spec.chunk_add_pure
+                        (Spec.chunk_reducing_from_i32_array_pure out)
+                        (Spec.ntt_multiply_pure_no_acc
+                          (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                          (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                          (lift_fe_mont zeta2) (lift_fe_mont zeta3))).val
+        = (List.range 16).map (fun i =>
+            libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              ((Spec.chunk_reducing_from_i32_array_pure out).val[i]!)
+              ((Spec.ntt_multiply_pure_no_acc
+                  (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                  (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                  (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[i]!)) := by
+      unfold Spec.chunk_add_pure; rfl
+    rw [h_lhs_val, h_rhs_val]
+    apply List.ext_getElem
+    · simp
+    · intro k hk1 hk2
+      have hk : k < 16 := by simp at hk1; exact hk1
+      rw [List.getElem_map, List.getElem_map, List.getElem_range]
+      interval_cases k
+      · -- Lane 0: touched by call 0 (zeta0, even).
+        have h_r7_at_lane : r7.val[0]! = r0.val[0]! := by
+          rw [h_r7_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 0 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 0 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_fe := h_r0_fe_e
+        simp only [show (2 * (0#usize : Std.Usize).val + 1 : Nat) = 1 from by decide,
+                   show (2 * (0#usize : Std.Usize).val : Nat) = 0 from by decide] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[0]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[0]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[0]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[0]!)
+                  ((lift_chunk_mont rhs).val[0]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[1]!)
+                    ((lift_chunk_mont rhs).val[1]!))
+                  (lift_fe_mont zeta0)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_0 : (lift_chunk_mont lhs).val[0]!
+            = lift_fe_mont (lhs.elements.val[0]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[0]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 0 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 0 (by rw [h_l]; decide)]
+        have h_lcm_lhs_1 : (lift_chunk_mont lhs).val[1]!
+            = lift_fe_mont (lhs.elements.val[1]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[1]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 1 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 1 (by rw [h_l]; decide)]
+        have h_lcm_rhs_0 : (lift_chunk_mont rhs).val[0]!
+            = lift_fe_mont (rhs.elements.val[0]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[0]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 0 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 0 (by rw [h_l]; decide)]
+        have h_lcm_rhs_1 : (lift_chunk_mont rhs).val[1]!
+            = lift_fe_mont (rhs.elements.val[1]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[1]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 1 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 1 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_0, h_lcm_lhs_1, h_lcm_rhs_0, h_lcm_rhs_1]
+      · -- Lane 1: touched by call 0 (zeta0, odd).
+        have h_r7_at_lane : r7.val[1]! = r0.val[1]! := by
+          rw [h_r7_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 1 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 1 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_fe := h_r0_fe_o
+        simp only [show (2 * (0#usize : Std.Usize).val + 1 : Nat) = 1 from by decide,
+                   show (2 * (0#usize : Std.Usize).val : Nat) = 0 from by decide] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[1]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[1]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[1]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[0]!)
+                  ((lift_chunk_mont rhs).val[1]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[1]!)
+                  ((lift_chunk_mont rhs).val[0]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_0 : (lift_chunk_mont lhs).val[0]!
+            = lift_fe_mont (lhs.elements.val[0]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[0]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 0 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 0 (by rw [h_l]; decide)]
+        have h_lcm_lhs_1 : (lift_chunk_mont lhs).val[1]!
+            = lift_fe_mont (lhs.elements.val[1]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[1]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 1 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 1 (by rw [h_l]; decide)]
+        have h_lcm_rhs_0 : (lift_chunk_mont rhs).val[0]!
+            = lift_fe_mont (rhs.elements.val[0]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[0]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 0 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 0 (by rw [h_l]; decide)]
+        have h_lcm_rhs_1 : (lift_chunk_mont rhs).val[1]!
+            = lift_fe_mont (rhs.elements.val[1]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[1]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 1 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 1 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_0, h_lcm_lhs_1, h_lcm_rhs_0, h_lcm_rhs_1]
+      · -- Lane 2: touched by call 1 (nzeta0, even).
+        have h_r7_at_lane : r7.val[2]! = r1.val[2]! := by
+          rw [h_r7_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 2 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 2 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r0.val[2]! = out.val[2]! := by
+          rw [h_r0_unc' 2 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r0.val[3]! = out.val[3]! := by
+          rw [h_r0_unc' 3 (by decide) (by decide) (by decide)]
+        have h_fe := h_r1_fe_e
+        simp only [show (2 * (1#usize : Std.Usize).val + 1 : Nat) = 3 from by decide,
+                   show (2 * (1#usize : Std.Usize).val : Nat) = 2 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_n0_fe] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[2]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[2]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[2]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[2]!)
+                  ((lift_chunk_mont rhs).val[2]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[3]!)
+                    ((lift_chunk_mont rhs).val[3]!))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0))) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_2 : (lift_chunk_mont lhs).val[2]!
+            = lift_fe_mont (lhs.elements.val[2]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[2]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 2 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 2 (by rw [h_l]; decide)]
+        have h_lcm_lhs_3 : (lift_chunk_mont lhs).val[3]!
+            = lift_fe_mont (lhs.elements.val[3]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[3]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 3 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 3 (by rw [h_l]; decide)]
+        have h_lcm_rhs_2 : (lift_chunk_mont rhs).val[2]!
+            = lift_fe_mont (rhs.elements.val[2]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[2]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 2 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 2 (by rw [h_l]; decide)]
+        have h_lcm_rhs_3 : (lift_chunk_mont rhs).val[3]!
+            = lift_fe_mont (rhs.elements.val[3]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[3]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 3 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 3 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_2, h_lcm_lhs_3, h_lcm_rhs_2, h_lcm_rhs_3]
+      · -- Lane 3: touched by call 1 (nzeta0, odd).
+        have h_r7_at_lane : r7.val[3]! = r1.val[3]! := by
+          rw [h_r7_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 3 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 3 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r0.val[2]! = out.val[2]! := by
+          rw [h_r0_unc' 2 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r0.val[3]! = out.val[3]! := by
+          rw [h_r0_unc' 3 (by decide) (by decide) (by decide)]
+        have h_fe := h_r1_fe_o
+        simp only [show (2 * (1#usize : Std.Usize).val + 1 : Nat) = 3 from by decide,
+                   show (2 * (1#usize : Std.Usize).val : Nat) = 2 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[3]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[3]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[3]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[2]!)
+                  ((lift_chunk_mont rhs).val[3]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[3]!)
+                  ((lift_chunk_mont rhs).val[2]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_2 : (lift_chunk_mont lhs).val[2]!
+            = lift_fe_mont (lhs.elements.val[2]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[2]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 2 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 2 (by rw [h_l]; decide)]
+        have h_lcm_lhs_3 : (lift_chunk_mont lhs).val[3]!
+            = lift_fe_mont (lhs.elements.val[3]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[3]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 3 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 3 (by rw [h_l]; decide)]
+        have h_lcm_rhs_2 : (lift_chunk_mont rhs).val[2]!
+            = lift_fe_mont (rhs.elements.val[2]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[2]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 2 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 2 (by rw [h_l]; decide)]
+        have h_lcm_rhs_3 : (lift_chunk_mont rhs).val[3]!
+            = lift_fe_mont (rhs.elements.val[3]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[3]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 3 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 3 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_2, h_lcm_lhs_3, h_lcm_rhs_2, h_lcm_rhs_3]
+      · -- Lane 4: touched by call 2 (zeta1, even).
+        have h_r7_at_lane : r7.val[4]! = r2.val[4]! := by
+          rw [h_r7_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 4 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r1.val[4]! = out.val[4]! := by
+          rw [h_r1_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 4 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r1.val[5]! = out.val[5]! := by
+          rw [h_r1_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 5 (by decide) (by decide) (by decide)]
+        have h_fe := h_r2_fe_e
+        simp only [show (2 * (2#usize : Std.Usize).val + 1 : Nat) = 5 from by decide,
+                   show (2 * (2#usize : Std.Usize).val : Nat) = 4 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[4]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[4]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[4]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[4]!)
+                  ((lift_chunk_mont rhs).val[4]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[5]!)
+                    ((lift_chunk_mont rhs).val[5]!))
+                  (lift_fe_mont zeta1)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_4 : (lift_chunk_mont lhs).val[4]!
+            = lift_fe_mont (lhs.elements.val[4]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[4]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 4 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 4 (by rw [h_l]; decide)]
+        have h_lcm_lhs_5 : (lift_chunk_mont lhs).val[5]!
+            = lift_fe_mont (lhs.elements.val[5]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[5]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 5 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 5 (by rw [h_l]; decide)]
+        have h_lcm_rhs_4 : (lift_chunk_mont rhs).val[4]!
+            = lift_fe_mont (rhs.elements.val[4]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[4]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 4 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 4 (by rw [h_l]; decide)]
+        have h_lcm_rhs_5 : (lift_chunk_mont rhs).val[5]!
+            = lift_fe_mont (rhs.elements.val[5]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[5]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 5 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 5 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_4, h_lcm_lhs_5, h_lcm_rhs_4, h_lcm_rhs_5]
+      · -- Lane 5: touched by call 2 (zeta1, odd).
+        have h_r7_at_lane : r7.val[5]! = r2.val[5]! := by
+          rw [h_r7_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 5 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r1.val[4]! = out.val[4]! := by
+          rw [h_r1_unc' 4 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 4 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r1.val[5]! = out.val[5]! := by
+          rw [h_r1_unc' 5 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 5 (by decide) (by decide) (by decide)]
+        have h_fe := h_r2_fe_o
+        simp only [show (2 * (2#usize : Std.Usize).val + 1 : Nat) = 5 from by decide,
+                   show (2 * (2#usize : Std.Usize).val : Nat) = 4 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[5]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[5]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[5]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[4]!)
+                  ((lift_chunk_mont rhs).val[5]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[5]!)
+                  ((lift_chunk_mont rhs).val[4]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_4 : (lift_chunk_mont lhs).val[4]!
+            = lift_fe_mont (lhs.elements.val[4]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[4]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 4 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 4 (by rw [h_l]; decide)]
+        have h_lcm_lhs_5 : (lift_chunk_mont lhs).val[5]!
+            = lift_fe_mont (lhs.elements.val[5]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[5]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 5 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 5 (by rw [h_l]; decide)]
+        have h_lcm_rhs_4 : (lift_chunk_mont rhs).val[4]!
+            = lift_fe_mont (rhs.elements.val[4]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[4]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 4 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 4 (by rw [h_l]; decide)]
+        have h_lcm_rhs_5 : (lift_chunk_mont rhs).val[5]!
+            = lift_fe_mont (rhs.elements.val[5]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[5]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 5 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 5 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_4, h_lcm_lhs_5, h_lcm_rhs_4, h_lcm_rhs_5]
+      · -- Lane 6: touched by call 3 (nzeta1, even).
+        have h_r7_at_lane : r7.val[6]! = r3.val[6]! := by
+          rw [h_r7_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 6 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r2.val[6]! = out.val[6]! := by
+          rw [h_r2_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 6 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r2.val[7]! = out.val[7]! := by
+          rw [h_r2_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 7 (by decide) (by decide) (by decide)]
+        have h_fe := h_r3_fe_e
+        simp only [show (2 * (3#usize : Std.Usize).val + 1 : Nat) = 7 from by decide,
+                   show (2 * (3#usize : Std.Usize).val : Nat) = 6 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_n1_fe] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[6]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[6]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[6]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[6]!)
+                  ((lift_chunk_mont rhs).val[6]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[7]!)
+                    ((lift_chunk_mont rhs).val[7]!))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1))) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_6 : (lift_chunk_mont lhs).val[6]!
+            = lift_fe_mont (lhs.elements.val[6]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[6]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 6 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 6 (by rw [h_l]; decide)]
+        have h_lcm_lhs_7 : (lift_chunk_mont lhs).val[7]!
+            = lift_fe_mont (lhs.elements.val[7]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[7]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 7 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 7 (by rw [h_l]; decide)]
+        have h_lcm_rhs_6 : (lift_chunk_mont rhs).val[6]!
+            = lift_fe_mont (rhs.elements.val[6]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[6]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 6 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 6 (by rw [h_l]; decide)]
+        have h_lcm_rhs_7 : (lift_chunk_mont rhs).val[7]!
+            = lift_fe_mont (rhs.elements.val[7]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[7]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 7 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 7 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_6, h_lcm_lhs_7, h_lcm_rhs_6, h_lcm_rhs_7]
+      · -- Lane 7: touched by call 3 (nzeta1, odd).
+        have h_r7_at_lane : r7.val[7]! = r3.val[7]! := by
+          rw [h_r7_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 7 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r2.val[6]! = out.val[6]! := by
+          rw [h_r2_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 6 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 6 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r2.val[7]! = out.val[7]! := by
+          rw [h_r2_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 7 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 7 (by decide) (by decide) (by decide)]
+        have h_fe := h_r3_fe_o
+        simp only [show (2 * (3#usize : Std.Usize).val + 1 : Nat) = 7 from by decide,
+                   show (2 * (3#usize : Std.Usize).val : Nat) = 6 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[7]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[7]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[7]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[6]!)
+                  ((lift_chunk_mont rhs).val[7]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[7]!)
+                  ((lift_chunk_mont rhs).val[6]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_6 : (lift_chunk_mont lhs).val[6]!
+            = lift_fe_mont (lhs.elements.val[6]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[6]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 6 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 6 (by rw [h_l]; decide)]
+        have h_lcm_lhs_7 : (lift_chunk_mont lhs).val[7]!
+            = lift_fe_mont (lhs.elements.val[7]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[7]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 7 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 7 (by rw [h_l]; decide)]
+        have h_lcm_rhs_6 : (lift_chunk_mont rhs).val[6]!
+            = lift_fe_mont (rhs.elements.val[6]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[6]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 6 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 6 (by rw [h_l]; decide)]
+        have h_lcm_rhs_7 : (lift_chunk_mont rhs).val[7]!
+            = lift_fe_mont (rhs.elements.val[7]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[7]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 7 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 7 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_6, h_lcm_lhs_7, h_lcm_rhs_6, h_lcm_rhs_7]
+      · -- Lane 8: touched by call 4 (zeta2, even).
+        have h_r7_at_lane : r7.val[8]! = r4.val[8]! := by
+          rw [h_r7_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 8 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r3.val[8]! = out.val[8]! := by
+          rw [h_r3_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 8 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r3.val[9]! = out.val[9]! := by
+          rw [h_r3_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 9 (by decide) (by decide) (by decide)]
+        have h_fe := h_r4_fe_e
+        simp only [show (2 * (4#usize : Std.Usize).val + 1 : Nat) = 9 from by decide,
+                   show (2 * (4#usize : Std.Usize).val : Nat) = 8 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[8]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[8]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[8]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[8]!)
+                  ((lift_chunk_mont rhs).val[8]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[9]!)
+                    ((lift_chunk_mont rhs).val[9]!))
+                  (lift_fe_mont zeta2)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_8 : (lift_chunk_mont lhs).val[8]!
+            = lift_fe_mont (lhs.elements.val[8]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[8]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 8 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 8 (by rw [h_l]; decide)]
+        have h_lcm_lhs_9 : (lift_chunk_mont lhs).val[9]!
+            = lift_fe_mont (lhs.elements.val[9]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[9]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 9 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 9 (by rw [h_l]; decide)]
+        have h_lcm_rhs_8 : (lift_chunk_mont rhs).val[8]!
+            = lift_fe_mont (rhs.elements.val[8]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[8]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 8 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 8 (by rw [h_l]; decide)]
+        have h_lcm_rhs_9 : (lift_chunk_mont rhs).val[9]!
+            = lift_fe_mont (rhs.elements.val[9]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[9]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 9 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 9 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_8, h_lcm_lhs_9, h_lcm_rhs_8, h_lcm_rhs_9]
+      · -- Lane 9: touched by call 4 (zeta2, odd).
+        have h_r7_at_lane : r7.val[9]! = r4.val[9]! := by
+          rw [h_r7_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 9 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r3.val[8]! = out.val[8]! := by
+          rw [h_r3_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 8 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 8 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r3.val[9]! = out.val[9]! := by
+          rw [h_r3_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 9 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 9 (by decide) (by decide) (by decide)]
+        have h_fe := h_r4_fe_o
+        simp only [show (2 * (4#usize : Std.Usize).val + 1 : Nat) = 9 from by decide,
+                   show (2 * (4#usize : Std.Usize).val : Nat) = 8 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[9]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[9]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[9]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[8]!)
+                  ((lift_chunk_mont rhs).val[9]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[9]!)
+                  ((lift_chunk_mont rhs).val[8]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_8 : (lift_chunk_mont lhs).val[8]!
+            = lift_fe_mont (lhs.elements.val[8]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[8]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 8 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 8 (by rw [h_l]; decide)]
+        have h_lcm_lhs_9 : (lift_chunk_mont lhs).val[9]!
+            = lift_fe_mont (lhs.elements.val[9]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[9]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 9 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 9 (by rw [h_l]; decide)]
+        have h_lcm_rhs_8 : (lift_chunk_mont rhs).val[8]!
+            = lift_fe_mont (rhs.elements.val[8]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[8]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 8 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 8 (by rw [h_l]; decide)]
+        have h_lcm_rhs_9 : (lift_chunk_mont rhs).val[9]!
+            = lift_fe_mont (rhs.elements.val[9]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[9]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 9 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 9 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_8, h_lcm_lhs_9, h_lcm_rhs_8, h_lcm_rhs_9]
+      · -- Lane 10: touched by call 5 (nzeta2, even).
+        have h_r7_at_lane : r7.val[10]! = r5.val[10]! := by
+          rw [h_r7_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 10 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r4.val[10]! = out.val[10]! := by
+          rw [h_r4_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 10 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r4.val[11]! = out.val[11]! := by
+          rw [h_r4_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 11 (by decide) (by decide) (by decide)]
+        have h_fe := h_r5_fe_e
+        simp only [show (2 * (5#usize : Std.Usize).val + 1 : Nat) = 11 from by decide,
+                   show (2 * (5#usize : Std.Usize).val : Nat) = 10 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_n2_fe] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[10]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[10]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[10]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[10]!)
+                  ((lift_chunk_mont rhs).val[10]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[11]!)
+                    ((lift_chunk_mont rhs).val[11]!))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2))) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_10 : (lift_chunk_mont lhs).val[10]!
+            = lift_fe_mont (lhs.elements.val[10]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[10]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 10 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 10 (by rw [h_l]; decide)]
+        have h_lcm_lhs_11 : (lift_chunk_mont lhs).val[11]!
+            = lift_fe_mont (lhs.elements.val[11]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[11]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 11 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 11 (by rw [h_l]; decide)]
+        have h_lcm_rhs_10 : (lift_chunk_mont rhs).val[10]!
+            = lift_fe_mont (rhs.elements.val[10]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[10]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 10 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 10 (by rw [h_l]; decide)]
+        have h_lcm_rhs_11 : (lift_chunk_mont rhs).val[11]!
+            = lift_fe_mont (rhs.elements.val[11]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[11]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 11 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 11 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_10, h_lcm_lhs_11, h_lcm_rhs_10, h_lcm_rhs_11]
+      · -- Lane 11: touched by call 5 (nzeta2, odd).
+        have h_r7_at_lane : r7.val[11]! = r5.val[11]! := by
+          rw [h_r7_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r6_unc' 11 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r4.val[10]! = out.val[10]! := by
+          rw [h_r4_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 10 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 10 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r4.val[11]! = out.val[11]! := by
+          rw [h_r4_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 11 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 11 (by decide) (by decide) (by decide)]
+        have h_fe := h_r5_fe_o
+        simp only [show (2 * (5#usize : Std.Usize).val + 1 : Nat) = 11 from by decide,
+                   show (2 * (5#usize : Std.Usize).val : Nat) = 10 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[11]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[11]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[11]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[10]!)
+                  ((lift_chunk_mont rhs).val[11]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[11]!)
+                  ((lift_chunk_mont rhs).val[10]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_10 : (lift_chunk_mont lhs).val[10]!
+            = lift_fe_mont (lhs.elements.val[10]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[10]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 10 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 10 (by rw [h_l]; decide)]
+        have h_lcm_lhs_11 : (lift_chunk_mont lhs).val[11]!
+            = lift_fe_mont (lhs.elements.val[11]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[11]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 11 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 11 (by rw [h_l]; decide)]
+        have h_lcm_rhs_10 : (lift_chunk_mont rhs).val[10]!
+            = lift_fe_mont (rhs.elements.val[10]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[10]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 10 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 10 (by rw [h_l]; decide)]
+        have h_lcm_rhs_11 : (lift_chunk_mont rhs).val[11]!
+            = lift_fe_mont (rhs.elements.val[11]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[11]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 11 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 11 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_10, h_lcm_lhs_11, h_lcm_rhs_10, h_lcm_rhs_11]
+      · -- Lane 12: touched by call 6 (zeta3, even).
+        have h_r7_at_lane : r7.val[12]! = r6.val[12]! := by
+          rw [h_r7_unc' 12 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r5.val[12]! = out.val[12]! := by
+          rw [h_r5_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 12 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r5.val[13]! = out.val[13]! := by
+          rw [h_r5_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 13 (by decide) (by decide) (by decide)]
+        have h_fe := h_r6_fe_e
+        simp only [show (2 * (6#usize : Std.Usize).val + 1 : Nat) = 13 from by decide,
+                   show (2 * (6#usize : Std.Usize).val : Nat) = 12 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[12]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[12]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[12]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[12]!)
+                  ((lift_chunk_mont rhs).val[12]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[13]!)
+                    ((lift_chunk_mont rhs).val[13]!))
+                  (lift_fe_mont zeta3)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_12 : (lift_chunk_mont lhs).val[12]!
+            = lift_fe_mont (lhs.elements.val[12]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[12]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 12 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 12 (by rw [h_l]; decide)]
+        have h_lcm_lhs_13 : (lift_chunk_mont lhs).val[13]!
+            = lift_fe_mont (lhs.elements.val[13]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[13]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 13 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 13 (by rw [h_l]; decide)]
+        have h_lcm_rhs_12 : (lift_chunk_mont rhs).val[12]!
+            = lift_fe_mont (rhs.elements.val[12]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[12]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 12 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 12 (by rw [h_l]; decide)]
+        have h_lcm_rhs_13 : (lift_chunk_mont rhs).val[13]!
+            = lift_fe_mont (rhs.elements.val[13]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[13]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 13 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 13 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_12, h_lcm_lhs_13, h_lcm_rhs_12, h_lcm_rhs_13]
+      · -- Lane 13: touched by call 6 (zeta3, odd).
+        have h_r7_at_lane : r7.val[13]! = r6.val[13]! := by
+          rw [h_r7_unc' 13 (by decide) (by decide) (by decide)]
+        rw [h_r7_at_lane]
+        have h_src_at_even : r5.val[12]! = out.val[12]! := by
+          rw [h_r5_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 12 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 12 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r5.val[13]! = out.val[13]! := by
+          rw [h_r5_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 13 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 13 (by decide) (by decide) (by decide)]
+        have h_fe := h_r6_fe_o
+        simp only [show (2 * (6#usize : Std.Usize).val + 1 : Nat) = 13 from by decide,
+                   show (2 * (6#usize : Std.Usize).val : Nat) = 12 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[13]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[13]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[13]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[12]!)
+                  ((lift_chunk_mont rhs).val[13]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[13]!)
+                  ((lift_chunk_mont rhs).val[12]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_12 : (lift_chunk_mont lhs).val[12]!
+            = lift_fe_mont (lhs.elements.val[12]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[12]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 12 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 12 (by rw [h_l]; decide)]
+        have h_lcm_lhs_13 : (lift_chunk_mont lhs).val[13]!
+            = lift_fe_mont (lhs.elements.val[13]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[13]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 13 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 13 (by rw [h_l]; decide)]
+        have h_lcm_rhs_12 : (lift_chunk_mont rhs).val[12]!
+            = lift_fe_mont (rhs.elements.val[12]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[12]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 12 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 12 (by rw [h_l]; decide)]
+        have h_lcm_rhs_13 : (lift_chunk_mont rhs).val[13]!
+            = lift_fe_mont (rhs.elements.val[13]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[13]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 13 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 13 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_12, h_lcm_lhs_13, h_lcm_rhs_12, h_lcm_rhs_13]
+      · -- Lane 14: touched by call 7 (nzeta3, even).
+        have h_src_at_even : r6.val[14]! = out.val[14]! := by
+          rw [h_r6_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 14 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r6.val[15]! = out.val[15]! := by
+          rw [h_r6_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 15 (by decide) (by decide) (by decide)]
+        have h_fe := h_r7_fe_e
+        simp only [show (2 * (7#usize : Std.Usize).val + 1 : Nat) = 15 from by decide,
+                   show (2 * (7#usize : Std.Usize).val : Nat) = 14 from by decide] at h_fe
+        rw [h_src_at_even] at h_fe
+        rw [h_n3_fe] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[14]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[14]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[14]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[14]!)
+                  ((lift_chunk_mont rhs).val[14]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    ((lift_chunk_mont lhs).val[15]!)
+                    ((lift_chunk_mont rhs).val[15]!))
+                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3))) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_14 : (lift_chunk_mont lhs).val[14]!
+            = lift_fe_mont (lhs.elements.val[14]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[14]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 14 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 14 (by rw [h_l]; decide)]
+        have h_lcm_lhs_15 : (lift_chunk_mont lhs).val[15]!
+            = lift_fe_mont (lhs.elements.val[15]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[15]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 15 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 15 (by rw [h_l]; decide)]
+        have h_lcm_rhs_14 : (lift_chunk_mont rhs).val[14]!
+            = lift_fe_mont (rhs.elements.val[14]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[14]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 14 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 14 (by rw [h_l]; decide)]
+        have h_lcm_rhs_15 : (lift_chunk_mont rhs).val[15]!
+            = lift_fe_mont (rhs.elements.val[15]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[15]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 15 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 15 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_14, h_lcm_lhs_15, h_lcm_rhs_14, h_lcm_rhs_15]
+      · -- Lane 15: touched by call 7 (nzeta3, odd).
+        have h_src_at_even : r6.val[14]! = out.val[14]! := by
+          rw [h_r6_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 14 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 14 (by decide) (by decide) (by decide)]
+        have h_src_at_odd : r6.val[15]! = out.val[15]! := by
+          rw [h_r6_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r5_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r4_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r3_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r2_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r1_unc' 15 (by decide) (by decide) (by decide)]
+          rw [h_r0_unc' 15 (by decide) (by decide) (by decide)]
+        have h_fe := h_r7_fe_o
+        simp only [show (2 * (7#usize : Std.Usize).val + 1 : Nat) = 15 from by decide,
+                   show (2 * (7#usize : Std.Usize).val : Nat) = 14 from by decide] at h_fe
+        rw [h_src_at_odd] at h_fe
+        rw [h_fe]
+        have h_red_out : (Spec.chunk_reducing_from_i32_array_pure out).val[15]!
+            = Spec.mont_reduce_pure (lift_fe_int (out.val[15]!).val) := by
+          unfold Spec.chunk_reducing_from_i32_array_pure
+          rfl
+        rw [h_red_out]
+        have h_red_no_acc : (Spec.ntt_multiply_pure_no_acc
+                              (lift_chunk_mont lhs) (lift_chunk_mont rhs)
+                              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+                              (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[15]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[14]!)
+                  ((lift_chunk_mont rhs).val[15]!))
+                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  ((lift_chunk_mont lhs).val[15]!)
+                  ((lift_chunk_mont rhs).val[14]!)) := by
+          unfold Spec.ntt_multiply_pure_no_acc
+          rfl
+        rw [h_red_no_acc]
+        have h_lcm_lhs_14 : (lift_chunk_mont lhs).val[14]!
+            = lift_fe_mont (lhs.elements.val[14]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[14]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 14 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 14 (by rw [h_l]; decide)]
+        have h_lcm_lhs_15 : (lift_chunk_mont lhs).val[15]!
+            = lift_fe_mont (lhs.elements.val[15]!) := by
+          unfold lift_chunk_mont
+          have h_l : lhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+          show (lhs.elements.val.map lift_fe_mont)[15]! = _
+          have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (lhs.elements.val.map lift_fe_mont) 15 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos lhs.elements.val 15 (by rw [h_l]; decide)]
+        have h_lcm_rhs_14 : (lift_chunk_mont rhs).val[14]!
+            = lift_fe_mont (rhs.elements.val[14]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[14]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 14 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 14 (by rw [h_l]; decide)]
+        have h_lcm_rhs_15 : (lift_chunk_mont rhs).val[15]!
+            = lift_fe_mont (rhs.elements.val[15]!) := by
+          unfold lift_chunk_mont
+          have h_l : rhs.elements.val.length = 16 :=
+            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+          show (rhs.elements.val.map lift_fe_mont)[15]! = _
+          have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
+            rw [List.length_map]; exact h_l
+          rw [getElem!_pos (rhs.elements.val.map lift_fe_mont) 15 (by rw [h_ml]; decide)]
+          rw [List.getElem_map]
+          rw [getElem!_pos rhs.elements.val 15 (by rw [h_l]; decide)]
+        rw [h_lcm_lhs_14, h_lcm_lhs_15, h_lcm_rhs_14, h_lcm_rhs_15]
 
 
 /-- Algebraic POST predicate for the L6.3 polynomial-level NTT
@@ -21717,4 +27220,3 @@ theorem compute_message_fc
 -/
 
 end libcrux_iot_ml_kem.BitMlKem.FCTargets
-
