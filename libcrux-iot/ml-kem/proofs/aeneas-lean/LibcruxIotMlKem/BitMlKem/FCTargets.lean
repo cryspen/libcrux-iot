@@ -27243,6 +27243,28 @@ def step_post (myself rhs : Poly) (acc_init : Acc) (cache_init : Poly)
 
 end L6_3c_fill_FC
 
+set_option maxHeartbeats 16000000 in
+/-- Per-iteration FC step lemma for `_fill_cache` polynomial loop. Mirrors
+    `accumulating_ntt_multiply_poly_step_lemma_fc` (L6.3 base, FCTargets:26481)
+    but threads BOTH `acc` and `cache` through the ControlFlow. -/
+private theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
+    (myself rhs : L6_3c_fill_FC.Poly) (acc_init : L6_3c_fill_FC.Acc)
+    (cache_init : L6_3c_fill_FC.Poly)
+    (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
+        ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
+        ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_acc_bnd : ∀ n : Fin 256, (acc_init.val[n.val]!).val.natAbs ≤ 2^30)
+    (acc : L6_3c_fill_FC.Acc) (cache : L6_3c_fill_FC.Poly)
+    (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
+    (h_inv : (L6_3c_fill_FC.inv myself rhs acc_init cache_init k acc cache).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop.body
+      (vectortraitsOperationsInst := portable_ops_inst) myself rhs
+      { start := k, «end» := 16#usize } acc cache
+    ⦃ ⇓ r => ⌜ L6_3c_fill_FC.step_post myself rhs acc_init cache_init k r ⌝ ⦄ := by
+  sorry
+
 /-- L6.3c — `polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache`:
     polynomial wrapper of `accumulating_ntt_multiply_fill_cache_fc`. Loops
     over the 16 chunks; per chunk j it dispatches the L2.8d
