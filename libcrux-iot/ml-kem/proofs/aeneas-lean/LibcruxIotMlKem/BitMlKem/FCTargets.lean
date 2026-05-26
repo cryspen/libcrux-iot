@@ -20614,6 +20614,140 @@ theorem accumulating_ntt_multiply_fc
         rw [h_lcm_lhs_14, h_lcm_lhs_15, h_lcm_rhs_14, h_lcm_rhs_15]
 
 
+/-! ## §L2.8d — Cache-variant Triple statements (fill_cache + use_cache).
+
+    The impl provides two siblings of `accumulating_ntt_multiply` that
+    factor out the per-pair Mont-reduced `b·zeta` products into a
+    16-lane cache vector:
+      • `_fill_cache`: behaves identically to `accumulating_ntt_multiply`
+        on the accumulator slice AND writes `mont_reduce(b[2i+1]·zeta_i)`
+        into `cache[i]` for each pair i ∈ Fin 8 (cache slots 8..15
+        untouched).
+      • `_use_cache`: skips the per-pair Mont reduction by reading the
+        cached I16 directly. Requires a cache pre-condition asserting
+        each cache slot equals the Mont-reduced `b·zeta` product for
+        the corresponding effective zeta.
+
+    Composition pattern (matrix-row reuse): `_fill_cache(A, B, _, _, zetas)`
+    sets the cache, then multiple `_use_cache(A', B, _, cache)` calls reuse
+    it with different first operands and the same `B`/zeta structure. -/
+
+/-- Effective per-pair zeta for the 8 binomial calls in a chunk: pair
+    `2j` uses `zetaJ`, pair `2j+1` uses `neg_pure zetaJ` (the bit-side
+    `wrapping_neg` projected through `lift_fe_mont`). Used to express
+    the cache POST predicate at the FE-projection level. -/
+noncomputable def Spec.effective_zeta_fe
+    (i : Fin 8)
+    (z0 z1 z2 z3 : hacspec_ml_kem.parameters.FieldElement) :
+    hacspec_ml_kem.parameters.FieldElement :=
+  if i.val = 0 then z0
+  else if i.val = 1 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z0
+  else if i.val = 2 then z1
+  else if i.val = 3 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z1
+  else if i.val = 4 then z2
+  else if i.val = 5 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z2
+  else if i.val = 6 then z3
+  else libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z3
+
+/-- Cache POST predicate shared between `_fill_cache` (as output cache
+    POST) and `_use_cache` (as input cache PRE). For each pair `i ∈ Fin 8`:
+      • `cache[i]` is canonical (`natAbs ≤ 3328`) — Mont reduction always
+        produces values in this range; and
+      • `lift_fe_mont cache[i] = mul_pure (lift_fe_mont rhs[2i+1])
+                                          (effective_zeta_fe i z0 z1 z2 z3)`
+        — i.e., the cache slot at pair `i` represents the FE product
+        of `rhs`'s odd-lane operand and the pair's effective zeta. -/
+noncomputable def Spec.ntt_multiply_cache_post
+    (rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 zeta2 zeta3 : Std.I16)
+    (cache : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    Prop :=
+  ∀ i : Fin 8,
+    (cache.elements.val[i.val]!).val.natAbs ≤ 3328
+    ∧ lift_fe_mont (cache.elements.val[i.val]!)
+        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (lift_fe_mont (rhs.elements.val[2 * i.val + 1]!))
+            (Spec.effective_zeta_fe i
+              (lift_fe_mont zeta0) (lift_fe_mont zeta1)
+              (lift_fe_mont zeta2) (lift_fe_mont zeta3))
+
+/-- L2.8d — `vector.portable.ntt.accumulating_ntt_multiply_fill_cache`:
+    cache-filling variant. The impl (Funs.lean:3745-3786) chains 8
+    `accumulating_ntt_multiply_binomials_fill_cache` calls; each
+    behaves like the base `_binomials` (per-pair degree-2 polynomial
+    multiply mod (X²−ζ²)) but additionally writes the Mont-reduced
+    `b[2i+1]·zeta_i` into `cache[i]`.
+
+    POST shape mirrors `accumulating_ntt_multiply_fc` (length + relative
+    bound + `ntt_multiply_base_case_post` on the output slice) AND adds
+    a cache-side POST: each of the 8 cache slots stores the FE-projected
+    `mul_pure rhs[2i+1] zeta_eff_i` and is canonical; lanes 8..15 of
+    the cache are preserved from the input.
+
+    Sibling adaptation of L2.8c reusing `L2_8c.*` infrastructure. -/
+@[spec]
+theorem accumulating_ntt_multiply_fill_cache_fc
+    (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (out : Aeneas.Std.Slice Std.I32)
+    (cache : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 zeta2 zeta3 : Std.I16)
+    (h_out_len : out.length = 16)
+    (h_lhs : ∀ j : Fin 16, (lhs.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_rhs : ∀ j : Fin 16, (rhs.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_zeta0 : zeta0.val.natAbs ≤ 1664)
+    (h_zeta1 : zeta1.val.natAbs ≤ 1664)
+    (h_zeta2 : zeta2.val.natAbs ≤ 1664)
+    (h_zeta3 : zeta3.val.natAbs ≤ 1664)
+    (h_out_bnd : ∀ k : Fin 16, (out.val[k.val]!).val.natAbs ≤ 2^30) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_fill_cache
+      lhs rhs out cache zeta0 zeta1 zeta2 zeta3
+    ⦃ ⇓ p => ⌜ p.1.length = 16 ∧
+              (∀ k : Fin 16, (p.1.val[k.val]!).val.natAbs
+                              ≤ (out.val[k.val]!).val.natAbs + 2^25) ∧
+              ntt_multiply_base_case_post lhs rhs
+                zeta0 zeta1 zeta2 zeta3 out p.1 ∧
+              Spec.ntt_multiply_cache_post rhs
+                zeta0 zeta1 zeta2 zeta3 p.2 ∧
+              (∀ k : Nat, k < 16 → 8 ≤ k →
+                p.2.elements.val[k]! = cache.elements.val[k]!) ⌝ ⦄ := by
+  sorry
+
+/-- L2.8d — `vector.portable.ntt.accumulating_ntt_multiply_use_cache`:
+    cache-using variant. The impl (Funs.lean:3790-3818) chains 8
+    `accumulating_ntt_multiply_binomials_use_cache` calls; each reads
+    `cache[i]` instead of recomputing `mont_reduce(b[2i+1]·zeta_i)`.
+
+    POST identical to `accumulating_ntt_multiply_fc` (the four zetas
+    are ghost arguments — they appear only in the cache PRE-condition
+    and the POST's `ntt_multiply_base_case_post`, NOT in the impl call).
+    Compose with `accumulating_ntt_multiply_fill_cache_fc`: discharge
+    the cache PRE from a prior `_fill_cache` POST's cache conjunct. -/
+@[spec]
+theorem accumulating_ntt_multiply_use_cache_fc
+    (lhs rhs : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (out : Aeneas.Std.Slice Std.I32)
+    (cache : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (zeta0 zeta1 zeta2 zeta3 : Std.I16)
+    (h_out_len : out.length = 16)
+    (h_lhs : ∀ j : Fin 16, (lhs.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_rhs : ∀ j : Fin 16, (rhs.elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_zeta0 : zeta0.val.natAbs ≤ 1664)
+    (h_zeta1 : zeta1.val.natAbs ≤ 1664)
+    (h_zeta2 : zeta2.val.natAbs ≤ 1664)
+    (h_zeta3 : zeta3.val.natAbs ≤ 1664)
+    (h_out_bnd : ∀ k : Fin 16, (out.val[k.val]!).val.natAbs ≤ 2^30)
+    (h_cache : Spec.ntt_multiply_cache_post rhs zeta0 zeta1 zeta2 zeta3 cache) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_use_cache
+      lhs rhs out cache
+    ⦃ ⇓ r => ⌜ r.length = 16 ∧
+              (∀ k : Fin 16, (r.val[k.val]!).val.natAbs
+                              ≤ (out.val[k.val]!).val.natAbs + 2^25) ∧
+              ntt_multiply_base_case_post lhs rhs
+                zeta0 zeta1 zeta2 zeta3 out r ⌝ ⦄ := by
+  sorry
+
 
 /-- Algebraic POST predicate for the L6.3 polynomial-level NTT
     multiply. Relates the resulting I32 accumulator array `r` to the
