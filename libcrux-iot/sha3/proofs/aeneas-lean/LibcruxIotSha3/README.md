@@ -7,9 +7,6 @@ the same function as the FIPS-202 / hacspec specification in
 [hax → aeneas → aeneas-lean](https://github.com/AeneasVerif/aeneas)
 pipeline; this directory then proves their equivalence.
 
-For the extraction pipeline + per-file build commands, see
-[`Equivalence/README.md`](Equivalence/README.md).
-
 ## Main theorems
 
 There are two layers of top theorem:
@@ -82,6 +79,15 @@ pairs `(z0, z1)` (so 64-bit rotations on 32-bit targets reduce to
 32-bit rotations + half-swaps). Additionally, the impl uses storage
 relabeling for π: each round reads from a different physical layout.
 The relabeling permutation `impl_perm : Fin 25 → Fin 25` has order 4.
+
+Each impl round is split into 11 θ sub-functions
+(`theta_c_x{0..4}_z{0,1}` and `theta_d`), a `pi_rho_chi_1` (handles
+rows y=0,1 plus the ι constant XOR), and a `pi_rho_chi_2` (rows
+y=2,3,4). The π step is implemented as a *storage relabeling* — each
+round reads lanes from different physical positions — so after one
+round the canonical `5*x + y` mapping no longer holds. The relabeling
+has order 4 (`impl_perm⁴ = id`), so every 4 rounds the layout
+re-aligns with the spec. The full 24 rounds factor as 6 bundles of 4.
 
 The bridge `lift : KeccakState → Array u64 25` (in
 [`Foundation/Lift.lean`](Foundation/Lift.lean)) interleaves halves
@@ -246,16 +252,58 @@ LibcruxIotSha3/
 | `AlgebraicEquiv.lean`    | `libcrux_iot_sha3.Algebraic`         |
 | `Composition/`           | `libcrux_iot_sha3.Composition`       |
 
+## Extraction pipeline
+
+```
+libcrux-iot/sha3/src/      ──→  hax (cargo hax)
+(Rust + #[hax_lib::*])               │
+                                      ▼
+                            aeneas -core-models-lib
+                                      │
+                                      ▼
+                    LibcruxIotSha3/Extraction/Funs.lean
+                            +
+                    LibcruxIotSha3/Foundation/…  ← proof layer
+
+specs/sha3/src/            ──→  hax → aeneas → HacspecSha3/Extraction/Funs.lean
+                                    (re-extracted at commit 6fff45b
+                                     via SKIP_VERSION_CHECK=1 against
+                                     aeneas b5c45e84 / charon v0.1.184)
+```
+
 ## Verifying
+
+### Prerequisites
+
+- Lean 4 toolchain `leanprover/lean4:v4.28.0-rc1` (pinned in `lean-toolchain`).
+- Aeneas at commit `b5c45e84` if you intend to re-extract; not needed
+  to *check* the existing `.lean` files.
+
+### Building
 
 From `libcrux-iot/sha3/proofs/aeneas-lean/`:
 
 ```bash
-lake exe cache get        # one-time prime
-lake build LibcruxIotSha3.Sponge.Shake               # final SHAKE/SHA3 ema specs
-# or LibcruxIotSha3.Sponge.Sha3 for the generic keccak_keccak_spec
-# or LibcruxIotSha3.Equivalence.HacspecBridge for the Bridge-1 layer only
-# or LibcruxIotSha3.BitKeccak.AlgEquiv for the bit-interleaved post only
+lake exe cache get        # one-time prime (~30 s)
+lake build                # ~2 min from clean
+```
+
+Specific targets:
+
+```bash
+lake build LibcruxIotSha3.Sponge.Shake       # final SHAKE/SHA3-ema specs
+lake build LibcruxIotSha3.Sponge.Sha3        # generic keccak_keccak_spec
+lake build LibcruxIotSha3.Composition.HacspecBridge  # Bridge-1 layer only
+```
+
+Per-file checks (faster feedback during development):
+
+```bash
+lake env lean LibcruxIotSha3/Foundation/Lift.lean
+lake env lean LibcruxIotSha3/Foundation/RcEquiv.lean
+lake env lean LibcruxIotSha3/Foundation/RoundEquiv.lean
+lake env lean LibcruxIotSha3/Composition/HacspecBridge.lean
+lake env lean LibcruxIotSha3/Sponge/Sha3.lean
 ```
 
 Expected: 0 sorries in `LibcruxIotSha3/`, only standard Lean axioms.
@@ -264,14 +312,62 @@ Expected: 0 sorries in `LibcruxIotSha3/`, only standard Lean axioms.
 `sha{224,256,384,512}_ema_spec` all report `propext` + `Classical.choice` +
 `Quot.sound` + `Lean.ofReduceBool` + `Lean.trustCompiler`. The non-standard
 `Lean.ofReduceBool`/`Lean.trustCompiler` come from a single `native_decide` in
-`Equivalence/RcEquiv.lean:29` (24-entry round-constant identity check)
+`Foundation/RcEquiv.lean` (24-entry round-constant identity check)
 needed because the round-constant arrays are `@[irreducible]`.
+
+### Sorry-hygiene check
 
 ```bash
 grep -rn "by sorry\|^  sorry" LibcruxIotSha3/   # must be empty
 ```
 
+### Cross-spec regression (Rust)
+
+Before any Lean iteration that depends on a re-extraction, run from
+`libcrux-iot/sha3/`:
+
+```bash
+cargo test --lib cross_spec --tests
+```
+
+This catches lane-layout / round-constant / endianness mismatches at
+the Rust level, before they propagate into Lean proof failures.
+
+### Re-extraction (only if you edit the Rust source)
+
+```bash
+# Spec side:
+cd specs/sha3/
+SKIP_VERSION_CHECK=1 ./hax_aeneas.py
+
+# Impl side:
+cd libcrux-iot/sha3/
+SKIP_VERSION_CHECK=1 ./hax_aeneas.py
+```
+
+`SKIP_VERSION_CHECK=1` is needed because the installed `cargo-hax` is
+ahead of the `HAX_VERSION` pin in `hax_aeneas.py`; the aeneas binary
+must report `aeneas b5c45e84`.
+
+## Iteration tips
+
+- Use the `lean-lsp-mcp` MCP server for sub-second feedback while
+  editing. `lake env lean <file>` is the right gate for individual file
+  checks; full `lake build` is reserved for end-of-task validation.
+- Mark `spread_to_even` and `lift_lane_bv` `@[local irreducible]` at
+  the top of any file that does post-mvcgen reasoning — every `simp`
+  call otherwise unfolds them into a six-step parallel-bit-deposit
+  cascade × 25 lanes, blowing up term sizes by orders of magnitude.
+- All "lift commutes with op" lemmas (second half of `Foundation/Lift.lean`)
+  close by `unfold lift_lane_bv spread_to_even; bv_decide` — the SAT
+  solver dispatches them in seconds.
+- For U32 equalities arising from post-mvcgen residuals, the standard
+  chain is `apply Std.U32.bv_eq_imp_eq; simp_all [Std.UScalar.bv_xor]`
+  to reduce to a closed BitVec equation, then either `rfl` or `bv_decide`.
+
 ## See also
 
-- [`Foundation/README.md`](Foundation/README.md) — extraction pipeline
-  and per-file iteration tips.
+- `Extraction/Funs.lean` — the impl extraction (generated; do not
+  hand-edit).
+- `../../../specs/sha3/proofs/aeneas-lean/HacspecSha3/Extraction/Funs.lean`
+  — the spec extraction (generated).
