@@ -433,7 +433,7 @@ theorem core_models_try_from_unwrap_spec
   have h_eq : (core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
                   N cpy s)
               = .ok (.Ok (Std.Array.make N s.val (by simp [hlen]))) := by
-    exact libcrux_iot_sha3.Equivalence.result_eq_of_triple h_try
+    exact libcrux_iot_sha3.Foundation.result_eq_of_triple h_try
   rw [h_eq]
   simp [Triple, WP.wp]
 

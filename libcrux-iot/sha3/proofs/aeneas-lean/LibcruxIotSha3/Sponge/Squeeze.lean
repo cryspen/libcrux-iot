@@ -45,7 +45,7 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
-open libcrux_iot_sha3.Equivalence
+open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
 -- of Bridge 1.
@@ -242,7 +242,7 @@ applications, and the offset has advanced by `(blocks - 1) * RATE`. -/
     `iterate_keccak_f_fold (lift s_init) k`. -/
 def squeeze_fold (s_init : state.KeccakState) (k : Nat) :
     Result (Std.Array Std.U64 25#usize) :=
-  iterate_keccak_f_fold (Equivalence.lift s_init) k
+  iterate_keccak_f_fold (Foundation.lift s_init) k
 
 @[spec]
 theorem keccak.keccak_loop1_invariant
@@ -262,7 +262,7 @@ theorem keccak.keccak_loop1_invariant
         out_final.val.length = out.val.length
         ∧ s_final.i.val = 0
         ∧ offset_final.val = offset.val + (blocks.val - 1) * RATE.val
-        ∧ squeeze_fold s (blocks.val - 1) = .ok (Equivalence.lift s_final)
+        ∧ squeeze_fold s (blocks.val - 1) = .ok (Foundation.lift s_final)
         ∧ (∀ j : Nat, j < (blocks.val - 1) * RATE.val →
             ∃ s_bj : Std.Array Std.U64 25#usize,
               squeeze_fold s ((j / RATE.val) + 1) = .ok s_bj
@@ -279,7 +279,7 @@ theorem keccak.keccak_loop1_invariant
           acc.1.val.length = out.val.length
           ∧ acc.2.1.i.val = 0
           ∧ acc.2.2.val = offset.val + (k.val - 1) * RATE.val
-          ∧ squeeze_fold s (k.val - 1) = .ok (Equivalence.lift acc.2.1)
+          ∧ squeeze_fold s (k.val - 1) = .ok (Foundation.lift acc.2.1)
           ∧ (∀ j : Nat, j < (k.val - 1) * RATE.val →
               ∃ s_bj : Std.Array Std.U64 25#usize,
                 squeeze_fold s ((j / RATE.val) + 1) = .ok s_bj
@@ -391,7 +391,7 @@ theorem keccak.keccak_loop1_invariant
       obtain ⟨h_snb_i, h_snb_len, s_spec, h_snb_spec, h_snb_lift, h_snb_bytes⟩ := h_1
       refine ⟨hk_lt, hiter1_end, hiter1_start, ?_⟩
       apply pure_prop_holds
-      have h_new_fold : squeeze_fold s ((k.val + 1) - 1) = .ok (Equivalence.lift r_1.1) := by
+      have h_new_fold : squeeze_fold s ((k.val + 1) - 1) = .ok (Foundation.lift r_1.1) := by
         show squeeze_fold s (k.val + 1 - 1) = _
         have hk_ge_1 : 1 ≤ k.val := h_ge
         have h_idx : k.val + 1 - 1 = (k.val - 1) + 1 := by omega
@@ -399,9 +399,9 @@ theorem keccak.keccak_loop1_invariant
         unfold squeeze_fold iterate_keccak_f_fold
         rw [Nat.fold_succ]
         have h_inner :
-            (Nat.fold (k.val - 1) (init := (.ok (Equivalence.lift s) : Result _))
+            (Nat.fold (k.val - 1) (init := (.ok (Foundation.lift s) : Result _))
               (fun _ _ acc => acc >>= fun st => keccak_f.keccak_f st))
-            = .ok (Equivalence.lift s_acc) := by
+            = .ok (Foundation.lift s_acc) := by
           have := h_fold_acc
           unfold squeeze_fold iterate_keccak_f_fold at this
           exact this
@@ -475,7 +475,7 @@ theorem keccak.keccak_loop1_invariant
               omega
           have h_mod_lt : j % RATE.val < RATE.val := Nat.mod_lt _ (by omega)
           -- The "new" s_b is `lift r_1.1`.
-          refine ⟨Equivalence.lift r_1.1, ?_, ?_⟩
+          refine ⟨Foundation.lift r_1.1, ?_, ?_⟩
           · -- squeeze_fold s ((j / RATE.val) + 1) = .ok (lift r_1.1).
             rw [h_div_RATE]
             have : k.val - 1 + 1 = k.val := by omega
@@ -835,7 +835,7 @@ theorem sponge_squeeze_byte_eq
     rfl
   -- Apply createi_pure_eq.
   have h_createi :=
-    _root_.libcrux_iot_sha3.Equivalence.createi_pure_eq OUTPUT_LEN
+    _root_.libcrux_iot_sha3.Composition.createi_pure_eq OUTPUT_LEN
       (sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8 OUTPUT_LEN)
       (rate, state) f h_call_mut_eq
   refine ⟨_, h_createi, ?_⟩

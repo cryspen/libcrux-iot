@@ -4,7 +4,7 @@
   Sealed `@[spec]` Triple bridging the impl `keccak.keccakf1600` to the
   hacspec `keccak_f.keccak_f` for use throughout Campaign 3.
 
-  The post strengthens Bridge 1 (`Equivalence.keccakf1600_equiv_hacspec`)
+  The post strengthens Bridge 1 (`Composition.keccakf1600_equiv_hacspec`)
   with `r.i.val = 0` — needed because the impl's `keccakf1600` resets
   `s.i := 0#usize` at the end, and every subsequent absorb/squeeze step's
   precondition requires `s.i.val = 0`.
@@ -13,13 +13,13 @@
   marked `attribute [local irreducible]` so downstream files cannot peek
   inside.
 -/
-import LibcruxIotSha3.Equivalence.HacspecBridge
+import LibcruxIotSha3.Composition.HacspecBridge
 
 open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
-open libcrux_iot_sha3.Equivalence
+open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 
 /-! ## Phase 0 — Opaque seal for `keccakf1600`. -/
 
@@ -90,17 +90,17 @@ private theorem keccakf1600_i_zero_of_ok
 theorem keccakf1600_seal_spec (s : state.KeccakState) (h_i : s.i.val = 0) :
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccakf1600 s
-    ⦃ ⇓ r => ⌜ keccak_f.keccak_f (Equivalence.lift s) = .ok (Equivalence.lift r)
+    ⦃ ⇓ r => ⌜ keccak_f.keccak_f (Foundation.lift s) = .ok (Foundation.lift r)
               ∧ r.i.val = 0 ⌝ ⦄ := by
   -- Convert the `.val` form of `h_i` to the bit-vector form Bridge 1 expects.
   have h_i' : s.i = 0#usize := Std.UScalar.eq_of_val_eq (by simpa using h_i)
   -- Bridge 1 gives the spec-equality half of the post.
   have h_bridge :=
-    Equivalence.keccakf1600_equiv_hacspec s h_i'
+    Composition.keccakf1600_equiv_hacspec s h_i'
   -- Extract the underlying Result equation `keccak.keccakf1600 s = .ok r0`.
   obtain ⟨r0, h_ok⟩ := triple_noThrow_exists_ok_local h_bridge
   -- Bridge 1's post evaluated at `r0`: spec-equality half.
-  have h_spec : keccak_f.keccak_f (Equivalence.lift s) = .ok (Equivalence.lift r0) :=
+  have h_spec : keccak_f.keccak_f (Foundation.lift s) = .ok (Foundation.lift r0) :=
     triple_noThrow_elim_local h_bridge h_ok
   -- Body-derived fact: `r0.i = 0#usize` ⇒ `r0.i.val = 0`.
   have h_r0_i : r0.i = 0#usize := keccakf1600_i_zero_of_ok h_ok

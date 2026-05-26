@@ -113,7 +113,7 @@
        ⦃ ⇓ s' => s' = lift r ⦄`
   - `store_block_spec`:
     `∀ k < RATE.val, r.val[k]! =
-       ((Equivalence.lift s).val[5*((k/8)%5) + (k/8)/5]!).bv.toLEBytes[k%8]!`
+       ((Foundation.lift s).val[5*((k/8)%5) + (k/8)/5]!).bv.toLEBytes[k%8]!`
   - `load_block_full_spec`: identical to `load_block_spec` after the
     `Array.to_slice` coercion.
 
@@ -170,7 +170,7 @@ open Aeneas Aeneas.Std Result ControlFlow Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
-open libcrux_iot_sha3.Equivalence
+open libcrux_iot_sha3.Foundation
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
 -- of Bridge 1.
@@ -253,14 +253,14 @@ private theorem rate_div_8_ok (RATE : Std.Usize) :
 
 /-! ### Helpers for textbook-form posts. -/
 
-/-- Indexing `Equivalence.lift s` at a `Fin 25` returns the lifted
+/-- Indexing `Foundation.lift s` at a `Fin 25` returns the lifted
     interleaved halves of `s.st[k]`.  Public companion to the `private`
     `lift_getElem` in `Equivalence/ThetaLiftDefs.lean`. -/
 private theorem lift_getElem_bytes (s : state.KeccakState) (k : Fin 25) :
-    (Equivalence.lift s).val[k.val]! =
+    (Foundation.lift s).val[k.val]! =
       (⟨lift_lane_bv ((s.st.val[k.val]!).val[0]!.bv)
                      ((s.st.val[k.val]!).val[1]!.bv)⟩ : Std.U64) := by
-  unfold Equivalence.lift Equivalence.lift_lane
+  unfold Foundation.lift Foundation.lift_lane
   change (List.ofFn _)[k.val]! = _
   rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
 
@@ -326,12 +326,12 @@ private theorem toLEBytes64_getElem!_eq_ofNat_shift_and
 
 /-- `store_block_byte_at s b` (the value the strong store-loop produces at
     byte position `b`) equals byte `b%8` of the LE-byte split of the spec-side
-    `(Equivalence.lift s).val[5*((b/8)%5) + (b/8)/5]!`. -/
+    `(Foundation.lift s).val[5*((b/8)%5) + (b/8)/5]!`. -/
 private theorem store_block_byte_at_eq_toLEBytes
     (s : state.KeccakState) (b : Nat) (hb : b / 8 < 25) :
     store_block_byte_at s b =
       ⟨(BitVec.toLEBytes
-          ((Equivalence.lift s).val[5 * ((b / 8) % 5) + (b / 8) / 5]!).bv)[b % 8]!⟩ := by
+          ((Foundation.lift s).val[5 * ((b / 8) % 5) + (b / 8) / 5]!).bv)[b % 8]!⟩ := by
   -- Unfold store_block_byte_at; LHS is ⟨BitVec.ofNat 8 ((u64.bv.toNat >>> (8*(b%8))) &&& 0xff)⟩.
   unfold store_block_byte_at
   -- p < 25.
@@ -340,15 +340,15 @@ private theorem store_block_byte_at_eq_toLEBytes
     have h2 : (b / 8) / 5 < 5 :=
       (Nat.div_lt_iff_lt_mul (by decide : 0 < 5)).mpr (by omega)
     omega
-  -- (Equivalence.lift s).val[p]!.bv = lift_lane_bv ...
-  have h_lift : ((Equivalence.lift s).val[5 * ((b / 8) % 5) + (b / 8) / 5]!).bv =
+  -- (Foundation.lift s).val[p]!.bv = lift_lane_bv ...
+  have h_lift : ((Foundation.lift s).val[5 * ((b / 8) % 5) + (b / 8) / 5]!).bv =
       lift_lane_bv
         ((s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!).val[0]!).bv
         ((s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!).val[1]!).bv := by
     rw [lift_getElem_bytes s ⟨_, hp_lt⟩]
   -- `lift_lane (s.st.val[p]!)).bv = lift_lane_bv ...` (by lift_lane def).
   have h_ll_bv :
-      (Equivalence.lift_lane (s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!)).bv =
+      (Foundation.lift_lane (s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!)).bv =
         lift_lane_bv
           ((s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!).val[0]!).bv
           ((s.st.val[5 * ((b / 8) % 5) + (b / 8) / 5]!).val[1]!).bv := rfl
@@ -358,7 +358,7 @@ private theorem store_block_byte_at_eq_toLEBytes
   show (BitVec.ofNat 8 _).toNat = _
   -- Reduce the RHS via the toLEBytes lemma.
   have h_bytes := toLEBytes64_getElem!_eq_ofNat_shift_and
-    ((Equivalence.lift s).val[5 * ((b / 8) % 5) + (b / 8) / 5]!).bv
+    ((Foundation.lift s).val[5 * ((b / 8) % 5) + (b / 8) / 5]!).bv
     (b % 8) hb_mod
   rw [h_bytes, h_lift]
   -- Both sides are now `BitVec.ofNat 8 ((lift_lane_bv _ _).toNat >>> (8*(b%8)) &&& 0xff)`.
@@ -389,16 +389,16 @@ theorem state.KeccakState.load_block_spec
     ⦃ ⇓ r => ⌜
         r.i = s.i
         ∧ ∀ k : Nat, k < 25 →
-            ((Equivalence.lift r).val[k]!).bv =
+            ((Foundation.lift r).val[k]!).bv =
               (if 5 * (k % 5) + k / 5 < RATE.val / 8 then
-                  ((Equivalence.lift s).val[k]!).bv ^^^
+                  ((Foundation.lift s).val[k]!).bv ^^^
                     (BitVec.zeroExtend 64
                         (((Lane2U32_from_4byte_LE_pairs blocks start
                             (5 * (k % 5) + k / 5)).val[1]!).bv) <<< 32
                      ||| BitVec.zeroExtend 64
                         (((Lane2U32_from_4byte_LE_pairs blocks start
                             (5 * (k % 5) + k / 5)).val[0]!).bv))
-               else ((Equivalence.lift s).val[k]!).bv)
+               else ((Foundation.lift s).val[k]!).bv)
     ⌝ ⦄ := by
   have h_blk_len : RATE.val ≤ blocks.val.length := by omega
   have h_RATE_div_le : RATE.val / 8 ≤ 25 := by omega
@@ -436,16 +436,16 @@ theorem state.KeccakState.load_block_spec
   obtain ⟨h_lanes, h_unchanged⟩ := h_post2
   -- Build the per-cell BV post.
   have h_per_cell : ∀ k : Nat, k < 25 →
-      ((Equivalence.lift r_final).val[k]!).bv =
+      ((Foundation.lift r_final).val[k]!).bv =
         (if 5 * (k % 5) + k / 5 < RATE.val / 8 then
-            ((Equivalence.lift s).val[k]!).bv ^^^
+            ((Foundation.lift s).val[k]!).bv ^^^
               (BitVec.zeroExtend 64
                   (((Lane2U32_from_4byte_LE_pairs blocks start
                       (5 * (k % 5) + k / 5)).val[1]!).bv) <<< 32
                ||| BitVec.zeroExtend 64
                   (((Lane2U32_from_4byte_LE_pairs blocks start
                       (5 * (k % 5) + k / 5)).val[0]!).bv))
-         else ((Equivalence.lift s).val[k]!).bv) := by
+         else ((Foundation.lift s).val[k]!).bv) := by
     intro k hk_25
     -- Apply lift_getElem_bytes at k.
     rw [lift_getElem_bytes r_final ⟨k, hk_25⟩,
@@ -555,7 +555,7 @@ theorem state.KeccakState.store_block_spec
         r.val.length = out.val.length
         ∧ ∀ k : Nat, k < RATE.val →
             r.val[k]! = ⟨(BitVec.toLEBytes
-              ((Equivalence.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
+              ((Foundation.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
     ⌝ ⦄ := by
   have h_RATE_div_le : RATE.val / 8 ≤ 25 := by omega
   have h_RATE_div_mul : 8 * (RATE.val / 8) = RATE.val := by
@@ -579,7 +579,7 @@ theorem state.KeccakState.store_block_spec
   -- We rewrite via `store_block_byte_at_eq_toLEBytes`.
   have h_r_textbook : ∀ k : Nat, k < RATE.val →
       r.val[k]! = ⟨(BitVec.toLEBytes
-        ((Equivalence.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩ := by
+        ((Foundation.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩ := by
     intro k hk_RATE
     have hk_8idiv : k < 8 * i_div.val := by rw [h_div_val]; omega
     have hk_200 : k < 8 * 25 := by omega
@@ -612,16 +612,16 @@ theorem state.KeccakState.load_block_full_spec
     ⦃ ⇓ r => ⌜
         r.i = s.i
         ∧ ∀ k : Nat, k < 25 →
-            ((Equivalence.lift r).val[k]!).bv =
+            ((Foundation.lift r).val[k]!).bv =
               (if 5 * (k % 5) + k / 5 < RATE.val / 8 then
-                  ((Equivalence.lift s).val[k]!).bv ^^^
+                  ((Foundation.lift s).val[k]!).bv ^^^
                     (BitVec.zeroExtend 64
                         (((Lane2U32_from_4byte_LE_pairs (Std.Array.to_slice blocks) start
                             (5 * (k % 5) + k / 5)).val[1]!).bv) <<< 32
                      ||| BitVec.zeroExtend 64
                         (((Lane2U32_from_4byte_LE_pairs (Std.Array.to_slice blocks) start
                             (5 * (k % 5) + k / 5)).val[0]!).bv))
-               else ((Equivalence.lift s).val[k]!).bv)
+               else ((Foundation.lift s).val[k]!).bv)
     ⌝ ⦄ := by
   -- `Array.to_slice` preserves `.val`; the array has length 200.
   have h_to_slice_val : (Std.Array.to_slice blocks).val = blocks.val := rfl

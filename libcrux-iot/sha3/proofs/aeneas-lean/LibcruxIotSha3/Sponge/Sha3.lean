@@ -66,7 +66,7 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
-open libcrux_iot_sha3.Equivalence
+open libcrux_iot_sha3.Foundation
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
 -- of Bridge 1.
@@ -104,7 +104,7 @@ theorem state_KeccakState_new_eq :
     ∃ s_new : state.KeccakState,
       state.KeccakState.new = .ok s_new
       ∧ s_new.i.val = 0
-      ∧ Equivalence.lift s_new = Std.Array.repeat 25#usize 0#u64 := by
+      ∧ Foundation.lift s_new = Std.Array.repeat 25#usize 0#u64 := by
   unfold state.KeccakState.new lane.Lane2U32.zero lane.Lane2U32.from_ints
   refine ⟨_, rfl, rfl, ?_⟩
   rfl
@@ -128,7 +128,7 @@ theorem keccak_loop0_zero_terminates
     ∃ r : state.KeccakState,
       keccak.keccak_loop0 RATE { start := 0#usize, «end» := 0#usize } data s = .ok r
       ∧ r.i.val = 0
-      ∧ Equivalence.lift r = Equivalence.lift s := by
+      ∧ Foundation.lift r = Foundation.lift s := by
   have h_n_RATE : (0#usize : Std.Usize).val * RATE.val ≤ data.val.length := by
     show 0 * RATE.val ≤ data.val.length; omega
   have h_off : (0#usize : Std.Usize).val * RATE.val ≤ Std.Usize.max := by
@@ -140,7 +140,7 @@ theorem keccak_loop0_zero_terminates
   -- `absorb_fold s data RATE 0 = .ok (lift s)` then equals `.ok (lift r)`.
   have h_zero_val : ((0#usize : Std.Usize).val : Nat) = 0 := rfl
   rw [h_zero_val] at h_fold
-  have h_fold0 : absorb_fold s data RATE 0 = .ok (Equivalence.lift s) := by
+  have h_fold0 : absorb_fold s data RATE 0 = .ok (Foundation.lift s) := by
     unfold absorb_fold; simp [Nat.fold_zero]
   rw [h_fold0] at h_fold
   -- h_fold : .ok (lift s) = .ok (lift r). Extract.
@@ -314,25 +314,25 @@ theorem keccak.keccak_keccak_spec_blocks_zero
   -- We derive this from h_s1_fold and h_s2_spec.
   -- h_s1_fold : absorb_fold s0 data RATE n_us.val = .ok (lift s1).
   -- We use absorb_fold_eq_spec to translate to absorb_fold_spec (lift s0) data RATE n_us.val.
-  have h_fold_spec : absorb_fold_spec (Equivalence.lift s0) data RATE n_us.val
-                      = .ok (Equivalence.lift s1) := by
+  have h_fold_spec : absorb_fold_spec (Foundation.lift s0) data RATE n_us.val
+                      = .ok (Foundation.lift s1) := by
     rw [← absorb_fold_eq_spec]; exact h_s1_fold
   -- h_s2_spec : sponge.absorb_final (lift s1) data i3_us rem_us RATE DELIM = .ok (lift s2).
   -- Now compose via sponge_absorb_rec_eq_fold + unfold_short.
-  have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Equivalence.lift s2) := by
+  have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) := by
     unfold sponge.absorb
     -- Goal: `let a := Array.repeat 25 0; sponge.absorb_rec a RATE DELIM data = .ok (lift s2)`.
     show sponge.absorb_rec (Std.Array.repeat 25#usize 0#u64) RATE DELIM data
-         = .ok (Equivalence.lift s2)
+         = .ok (Foundation.lift s2)
     rw [← h_s0_lift]
     -- Now: sponge.absorb_rec (lift s0) RATE DELIM data = .ok (lift s2).
-    rw [sponge_absorb_rec_eq_fold (Equivalence.lift s0) RATE DELIM data n_nat (by rw [hn_nat_def]; exact h_n_rate_le)]
+    rw [sponge_absorb_rec_eq_fold (Foundation.lift s0) RATE DELIM data n_nat (by rw [hn_nat_def]; exact h_n_rate_le)]
     -- Now: absorb_fold_spec (lift s0) data RATE n_nat >>= fun s_n =>
     --        absorb_rec s_n RATE DELIM ⟨data.drop (n_nat*RATE), _⟩
     --      = .ok (lift s2).
     -- Step A: absorb_fold_spec (lift s0) data RATE n_nat = .ok (lift s1).
-    have h_fold_spec_n : absorb_fold_spec (Equivalence.lift s0) data RATE n_nat
-                        = .ok (Equivalence.lift s1) := by
+    have h_fold_spec_n : absorb_fold_spec (Foundation.lift s0) data RATE n_nat
+                        = .ok (Foundation.lift s1) := by
       rw [← h_n_us_val]; exact h_fold_spec
     rw [h_fold_spec_n]; simp only [bind_tc_ok]
     -- Step B: absorb_rec (lift s1) RATE DELIM ⟨data.drop (n_nat * RATE), _⟩ = .ok (lift s2).
@@ -345,7 +345,7 @@ theorem keccak.keccak_keccak_spec_blocks_zero
       rw [List.length_drop]; omega
     have h_tail_lt_rate : tail.val.length < RATE.val := by
       rw [h_tail_len]; exact h_rem_lt_RATE
-    rw [sponge_absorb_rec_unfold_short (Equivalence.lift s1) RATE DELIM tail h_tail_lt_rate]
+    rw [sponge_absorb_rec_unfold_short (Foundation.lift s1) RATE DELIM tail h_tail_lt_rate]
     -- Now goal: sponge.absorb_final (lift s1) tail 0#usize (Slice.len tail) RATE DELIM
     --        = .ok (lift s2).
     -- We have h_s2_spec : sponge.absorb_final (lift s1) data i3_us rem_us RATE DELIM = .ok (lift s2).
@@ -362,8 +362,8 @@ theorem keccak.keccak_keccak_spec_blocks_zero
     -- Now LHS: sponge.absorb_final (lift s1) tail 0#usize rem_us RATE DELIM.
     -- RHS: sponge.absorb_final (lift s1) data i3_us rem_us RATE DELIM.
     -- Show these are equal by reducing to the same `pad_last_block`.
-    rw [show sponge.absorb_final (Equivalence.lift s1) tail 0#usize rem_us RATE DELIM
-          = sponge.absorb_final (Equivalence.lift s1) data i3_us rem_us RATE DELIM from ?_]
+    rw [show sponge.absorb_final (Foundation.lift s1) tail 0#usize rem_us RATE DELIM
+          = sponge.absorb_final (Foundation.lift s1) data i3_us rem_us RATE DELIM from ?_]
     · exact h_s2_spec
     · -- pad_last_block tail 0 rem RATE DELIM = pad_last_block data i3_us rem RATE DELIM.
       unfold sponge.absorb_final
@@ -455,10 +455,10 @@ theorem keccak.keccak_keccak_spec_blocks_zero
   -- Use sponge_squeeze_byte_eq with the constant `s_b` function (since outlen < RATE,
   -- every k < outlen has k/RATE = 0, and iterate_keccak_f 0 (lift s2) = .ok (lift s2)).
   have h_RATE_pos : 0 < RATE.val := h_RATE_ge_1
-  set s_b : Nat → Std.Array Std.U64 25#usize := fun _ => Equivalence.lift s2 with hsb_def
+  set s_b : Nat → Std.Array Std.U64 25#usize := fun _ => Foundation.lift s2 with hsb_def
   have h_iter_const : ∀ k : Nat, k < outlen_us.val →
       sponge.iterate_keccak_f
-          ⟨BitVec.ofNat _ (k / RATE.val)⟩ (Equivalence.lift s2) = .ok (s_b k) := by
+          ⟨BitVec.ofNat _ (k / RATE.val)⟩ (Foundation.lift s2) = .ok (s_b k) := by
     intro k hk
     -- k < outlen_us.val = out.length < RATE.val, so k / RATE.val = 0.
     have h_k_div : k / RATE.val = 0 := by
@@ -473,7 +473,7 @@ theorem keccak.keccak_keccak_spec_blocks_zero
     rw [h_zero_usize]
     rw [iterate_keccak_f_zero]
   obtain ⟨spec_out, h_spec_squeeze, h_spec_bytes⟩ :=
-    sponge_squeeze_byte_eq outlen_us (Equivalence.lift s2) RATE h_RATE_pos h_RATE_mod h_RATE_le_200
+    sponge_squeeze_byte_eq outlen_us (Foundation.lift s2) RATE h_RATE_pos h_RATE_mod h_RATE_le_200
       s_b h_iter_const
   -- Step 17: compose: sponge.keccak outlen_us RATE DELIM data = .ok spec_out.
   have h_spec_full_eq :
@@ -496,7 +496,7 @@ theorem keccak.keccak_keccak_spec_blocks_zero
   rw [hsb_def]
   rw [h_k_div]
   show r_out.val[k]! = ⟨(BitVec.toLEBytes
-      ((Equivalence.lift s2).val[5 * (((k - 0 * RATE.val) / 8) % 5)
+      ((Foundation.lift s2).val[5 * (((k - 0 * RATE.val) / 8) % 5)
         + ((k - 0 * RATE.val) / 8) / 5]!).bv)[(k - 0 * RATE.val) % 8]!⟩
   rw [show k - 0 * RATE.val = k from by omega]
   exact h_r_out_bytes k hk
@@ -742,18 +742,18 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       rw [h_idx_eq]; simp only [bind_tc_ok]
       rw [h_s5_eq]; simp only [bind_tc_ok]
     -- Step 20: spec-side absorb (same as blocks_zero case).
-    have h_fold_spec : absorb_fold_spec (Equivalence.lift s0) data RATE n_us.val
-                        = .ok (Equivalence.lift s1) := by
+    have h_fold_spec : absorb_fold_spec (Foundation.lift s0) data RATE n_us.val
+                        = .ok (Foundation.lift s1) := by
       rw [← absorb_fold_eq_spec]; exact h_s1_fold
-    have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Equivalence.lift s2) := by
+    have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) := by
       unfold sponge.absorb
       show sponge.absorb_rec (Std.Array.repeat 25#usize 0#u64) RATE DELIM data
-           = .ok (Equivalence.lift s2)
+           = .ok (Foundation.lift s2)
       rw [← h_s0_lift]
-      rw [sponge_absorb_rec_eq_fold (Equivalence.lift s0) RATE DELIM data n_nat
+      rw [sponge_absorb_rec_eq_fold (Foundation.lift s0) RATE DELIM data n_nat
         (by rw [hn_nat_def]; exact h_n_rate_le)]
-      have h_fold_spec_n : absorb_fold_spec (Equivalence.lift s0) data RATE n_nat
-                          = .ok (Equivalence.lift s1) := by
+      have h_fold_spec_n : absorb_fold_spec (Foundation.lift s0) data RATE n_nat
+                          = .ok (Foundation.lift s1) := by
         rw [← h_n_us_val]; exact h_fold_spec
       rw [h_fold_spec_n]; simp only [bind_tc_ok]
       set tail : Slice Std.U8 :=
@@ -764,13 +764,13 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
         rw [List.length_drop]; omega
       have h_tail_lt_rate : tail.val.length < RATE.val := by
         rw [h_tail_len]; exact h_rem_lt_RATE
-      rw [sponge_absorb_rec_unfold_short (Equivalence.lift s1) RATE DELIM tail h_tail_lt_rate]
+      rw [sponge_absorb_rec_unfold_short (Foundation.lift s1) RATE DELIM tail h_tail_lt_rate]
       have h_slt_eq_rem : Std.Slice.len tail = rem_us := by
         apply Std.UScalar.eq_of_val_eq
         simp [Std.Slice.len, h_tail_len, h_rem_us_val]
       rw [h_slt_eq_rem]
-      rw [show sponge.absorb_final (Equivalence.lift s1) tail 0#usize rem_us RATE DELIM
-            = sponge.absorb_final (Equivalence.lift s1) data i3_us rem_us RATE DELIM from ?_]
+      rw [show sponge.absorb_final (Foundation.lift s1) tail 0#usize rem_us RATE DELIM
+            = sponge.absorb_final (Foundation.lift s1) data i3_us rem_us RATE DELIM from ?_]
       · exact h_s2_spec
       · -- Same pad_last_block equality as in blocks_zero case.
         unfold sponge.absorb_final
@@ -909,11 +909,11 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
         if hk_hi : k < blocks_nat * RATE.val then
           Classical.choose (h_loop_bytes (k - RATE.val) (h_middle_bound k hk_lo hk_hi))
         else s_spec_last
-      else Equivalence.lift s2
+      else Foundation.lift s2
     -- The condition "iterate_keccak_f (k/RATE) (lift s2) = .ok (s_b k)" for each region.
     have h_iter_const : ∀ k : Nat, k < outlen_us.val →
         sponge.iterate_keccak_f
-            ⟨BitVec.ofNat _ (k / RATE.val)⟩ (Equivalence.lift s2) = .ok (s_b k) := by
+            ⟨BitVec.ofNat _ (k / RATE.val)⟩ (Foundation.lift s2) = .ok (s_b k) := by
       intro k hk
       rw [h_outlen_us_val] at hk
       -- k < outlen ≤ Std.Usize.max so k ≤ Std.Usize.max so k/RATE.val ≤ Std.Usize.max.
@@ -924,8 +924,8 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       -- Split on which region k is in.
       by_cases hk_RATE : k < RATE.val
       · -- Region 1: k < RATE. k/RATE = 0, iterate 0 = .ok state.
-        have hsb : s_b k = Equivalence.lift s2 := by
-          show (if hk_lo : RATE.val ≤ k then _ else Equivalence.lift s2) = _
+        have hsb : s_b k = Foundation.lift s2 := by
+          show (if hk_lo : RATE.val ≤ k then _ else Foundation.lift s2) = _
           rw [dif_neg (by omega)]
         rw [hsb]
         have h_div : k / RATE.val = 0 := Nat.div_eq_of_lt hk_RATE
@@ -969,8 +969,8 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
           -- Goal: Nat.fold (k/RATE) ... = .ok (Classical.choose ...).
           -- Use h_div_eq directly.
           have h_eq_arg : (k - RATE.val) / RATE.val + 1 = k / RATE.val := h_div_eq
-          calc iterate_keccak_f_fold (Equivalence.lift s2) (k / RATE.val)
-              = iterate_keccak_f_fold (Equivalence.lift s2) ((k - RATE.val) / RATE.val + 1) := by
+          calc iterate_keccak_f_fold (Foundation.lift s2) (k / RATE.val)
+              = iterate_keccak_f_fold (Foundation.lift s2) ((k - RATE.val) / RATE.val + 1) := by
                 rw [h_eq_arg]
             _ = .ok (Classical.choose (h_loop_bytes (k - RATE.val) h_mb)) := h_fold_eq
         · -- Region 3: k ≥ last = blocks_nat * RATE.val. s_b k = s_spec_last.
@@ -996,9 +996,9 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
           rw [h_blocks_eq, Nat.fold_succ]
           -- Goal: (fold (blocks_nat - 1) ... ) >>= keccak_f.keccak_f = .ok s_spec_last.
           have h_inner : Nat.fold (blocks_nat - 1)
-              (init := (.ok (Equivalence.lift s2) : Result _))
+              (init := (.ok (Foundation.lift s2) : Result _))
               (fun _ _ acc => acc >>= fun st => keccak_f.keccak_f st)
-              = .ok (Equivalence.lift s3) := by
+              = .ok (Foundation.lift s3) := by
             have h_blocks_us_minus : blocks_us.val - 1 = blocks_nat - 1 := by
               rw [h_blocks_us_val]
             unfold squeeze_fold iterate_keccak_f_fold at h_fold_blocks
@@ -1007,7 +1007,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
           rw [h_inner]; simp only [bind_tc_ok]
           exact h_s5_kf
     obtain ⟨spec_out, h_spec_squeeze, h_spec_bytes⟩ :=
-      sponge_squeeze_byte_eq outlen_us (Equivalence.lift s2) RATE h_RATE_pos h_RATE_mod
+      sponge_squeeze_byte_eq outlen_us (Foundation.lift s2) RATE h_RATE_pos h_RATE_mod
         h_RATE_le_200 s_b h_iter_const
     -- Step 22: compose spec-side.
     have h_spec_full_eq :
@@ -1028,8 +1028,8 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
     -- Split into 3 regions for the byte equation.
     by_cases hk_RATE : k < RATE.val
     · -- Region 1: k < RATE ≤ last = offset, so squeeze_last's setSlice at offset preserves k.
-      have hsb : s_b k = Equivalence.lift s2 := by
-        show (if hk_lo : RATE.val ≤ k then _ else Equivalence.lift s2) = _
+      have hsb : s_b k = Foundation.lift s2 := by
+        show (if hk_lo : RATE.val ≤ k then _ else Foundation.lift s2) = _
         rw [dif_neg (by omega)]
       rw [hsb]
       have h_div : k / RATE.val = 0 := Nat.div_eq_of_lt hk_RATE
@@ -1149,18 +1149,18 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       rw [h_massert]; simp only [bind_tc_ok]
       rw [if_neg h_not_partial]
     -- Spec-side absorb (same as partial branch).
-    have h_fold_spec : absorb_fold_spec (Equivalence.lift s0) data RATE n_us.val
-                        = .ok (Equivalence.lift s1) := by
+    have h_fold_spec : absorb_fold_spec (Foundation.lift s0) data RATE n_us.val
+                        = .ok (Foundation.lift s1) := by
       rw [← absorb_fold_eq_spec]; exact h_s1_fold
-    have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Equivalence.lift s2) := by
+    have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) := by
       unfold sponge.absorb
       show sponge.absorb_rec (Std.Array.repeat 25#usize 0#u64) RATE DELIM data
-           = .ok (Equivalence.lift s2)
+           = .ok (Foundation.lift s2)
       rw [← h_s0_lift]
-      rw [sponge_absorb_rec_eq_fold (Equivalence.lift s0) RATE DELIM data n_nat
+      rw [sponge_absorb_rec_eq_fold (Foundation.lift s0) RATE DELIM data n_nat
         (by rw [hn_nat_def]; exact h_n_rate_le)]
-      have h_fold_spec_n : absorb_fold_spec (Equivalence.lift s0) data RATE n_nat
-                          = .ok (Equivalence.lift s1) := by
+      have h_fold_spec_n : absorb_fold_spec (Foundation.lift s0) data RATE n_nat
+                          = .ok (Foundation.lift s1) := by
         rw [← h_n_us_val]; exact h_fold_spec
       rw [h_fold_spec_n]; simp only [bind_tc_ok]
       set tail : Slice Std.U8 :=
@@ -1171,13 +1171,13 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
         rw [List.length_drop]; omega
       have h_tail_lt_rate : tail.val.length < RATE.val := by
         rw [h_tail_len]; exact h_rem_lt_RATE
-      rw [sponge_absorb_rec_unfold_short (Equivalence.lift s1) RATE DELIM tail h_tail_lt_rate]
+      rw [sponge_absorb_rec_unfold_short (Foundation.lift s1) RATE DELIM tail h_tail_lt_rate]
       have h_slt_eq_rem : Std.Slice.len tail = rem_us := by
         apply Std.UScalar.eq_of_val_eq
         simp [Std.Slice.len, h_tail_len, h_rem_us_val]
       rw [h_slt_eq_rem]
-      rw [show sponge.absorb_final (Equivalence.lift s1) tail 0#usize rem_us RATE DELIM
-            = sponge.absorb_final (Equivalence.lift s1) data i3_us rem_us RATE DELIM from ?_]
+      rw [show sponge.absorb_final (Foundation.lift s1) tail 0#usize rem_us RATE DELIM
+            = sponge.absorb_final (Foundation.lift s1) data i3_us rem_us RATE DELIM from ?_]
       · exact h_s2_spec
       · unfold sponge.absorb_final
         have h_pad_eq :
@@ -1276,8 +1276,8 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       if hk_lo : RATE.val ≤ k then
         if hk_hi : k < blocks_nat * RATE.val then
           Classical.choose (h_loop_bytes (k - RATE.val) (h_middle_bound k hk_lo hk_hi))
-        else Equivalence.lift s3
-      else Equivalence.lift s2
+        else Foundation.lift s3
+      else Foundation.lift s2
     have h_iter_eq_fold : ∀ (n : Nat) (st : Std.Array Std.U64 25#usize),
         n ≤ Std.Usize.max →
         sponge.iterate_keccak_f (⟨BitVec.ofNat _ n⟩ : Std.Usize) st
@@ -1298,7 +1298,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       rw [h_val]
     have h_iter_const : ∀ k : Nat, k < outlen_us.val →
         sponge.iterate_keccak_f
-            ⟨BitVec.ofNat _ (k / RATE.val)⟩ (Equivalence.lift s2) = .ok (s_b k) := by
+            ⟨BitVec.ofNat _ (k / RATE.val)⟩ (Foundation.lift s2) = .ok (s_b k) := by
       intro k hk
       rw [h_outlen_us_val] at hk
       have h_k_le : k ≤ Std.Usize.max := by omega
@@ -1306,8 +1306,8 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
         have := Nat.div_le_self k RATE.val; omega
       rw [h_iter_eq_fold _ _ h_kRATE_le]
       by_cases hk_RATE : k < RATE.val
-      · have hsb : s_b k = Equivalence.lift s2 := by
-          show (if hk_lo : RATE.val ≤ k then _ else Equivalence.lift s2) = _
+      · have hsb : s_b k = Foundation.lift s2 := by
+          show (if hk_lo : RATE.val ≤ k then _ else Foundation.lift s2) = _
           rw [dif_neg (by omega)]
         rw [hsb]
         have h_div : k / RATE.val = 0 := Nat.div_eq_of_lt hk_RATE
@@ -1343,12 +1343,12 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
             omega
           omega
         unfold squeeze_fold at h_fold_eq
-        calc iterate_keccak_f_fold (Equivalence.lift s2) (k / RATE.val)
-            = iterate_keccak_f_fold (Equivalence.lift s2) ((k - RATE.val) / RATE.val + 1) := by
+        calc iterate_keccak_f_fold (Foundation.lift s2) (k / RATE.val)
+            = iterate_keccak_f_fold (Foundation.lift s2) ((k - RATE.val) / RATE.val + 1) := by
               rw [h_div_eq]
           _ = .ok (Classical.choose (h_loop_bytes (k - RATE.val) h_mb)) := h_fold_eq
     obtain ⟨spec_out, h_spec_squeeze, h_spec_bytes⟩ :=
-      sponge_squeeze_byte_eq outlen_us (Equivalence.lift s2) RATE h_RATE_pos h_RATE_mod
+      sponge_squeeze_byte_eq outlen_us (Foundation.lift s2) RATE h_RATE_pos h_RATE_mod
         h_RATE_le_200 s_b h_iter_const
     have h_spec_full_eq :
         sponge.keccak outlen_us RATE DELIM data = .ok spec_out := by
@@ -1362,8 +1362,8 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
     rw [h_spec_byte]
     by_cases hk_RATE : k < RATE.val
     · -- Region 1.
-      have hsb : s_b k = Equivalence.lift s2 := by
-        show (if hk_lo : RATE.val ≤ k then _ else Equivalence.lift s2) = _
+      have hsb : s_b k = Foundation.lift s2 := by
+        show (if hk_lo : RATE.val ≤ k then _ else Foundation.lift s2) = _
         rw [dif_neg (by omega)]
       rw [hsb]
       have h_div : k / RATE.val = 0 := Nat.div_eq_of_lt hk_RATE

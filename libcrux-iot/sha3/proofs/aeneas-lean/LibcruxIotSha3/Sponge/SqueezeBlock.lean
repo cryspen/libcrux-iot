@@ -28,7 +28,7 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
-open libcrux_iot_sha3.Equivalence
+open libcrux_iot_sha3.Foundation
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
 -- of Bridge 1.
@@ -76,7 +76,7 @@ theorem keccak.squeeze_first_block_spec
         r.val.length = out.val.length
         ∧ ∀ k : Nat, k < RATE.val →
             r.val[k]! = ⟨(BitVec.toLEBytes
-              ((Equivalence.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
+              ((Foundation.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
     ⌝ ⦄ := by
   -- Delegate to `store_block_spec`.
   obtain ⟨r, h_r_eq, h_r_len, h_r_bytes⟩ :=
@@ -113,8 +113,8 @@ theorem keccak.squeeze_next_block_spec
         r.1.i.val = 0
         ∧ r.2.val.length = out.val.length
         ∧ ∃ s_spec : Std.Array Std.U64 25#usize,
-            keccak_f.keccak_f (Equivalence.lift s) = .ok s_spec
-            ∧ s_spec = Equivalence.lift r.1
+            keccak_f.keccak_f (Foundation.lift s) = .ok s_spec
+            ∧ s_spec = Foundation.lift r.1
             ∧ ∀ k : Nat, k < RATE.val →
                 r.2.val[k]! = ⟨(BitVec.toLEBytes
                   (s_spec.val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
@@ -136,7 +136,7 @@ theorem keccak.squeeze_next_block_spec
     rw [h_out1_eq]; simp only [bind_tc_ok]
   -- Step 4: package the post.
   apply triple_of_ok_sb (v := (s1, out1)) h_impl_eq
-  refine ⟨h_s1_i, h_out1_len, Equivalence.lift s1, h_s1_spec, rfl, ?_⟩
+  refine ⟨h_s1_i, h_out1_len, Foundation.lift s1, h_s1_spec, rfl, ?_⟩
   intro k hk
   exact h_out1_bytes k hk
 
@@ -162,7 +162,7 @@ theorem state.KeccakState.store_block_full_spec
         r.val.length = 200
         ∧ ∀ k : Nat, k < RATE.val →
             r.val[k]! = ⟨(BitVec.toLEBytes
-              ((Equivalence.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
+              ((Foundation.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
     ⌝ ⦄ := by
   -- `Array.to_slice out` has `.val = out.val` (length 200).
   have h_to_slice_val : (Std.Array.to_slice out).val = out.val := rfl
@@ -192,7 +192,7 @@ theorem state.KeccakState.store_block_full_spec
     rw [hr_val_eq]; exact h_s_inner_len_200
   have hr_bytes : ∀ k : Nat, k < RATE.val →
       r_arr.val[k]! = ⟨(BitVec.toLEBytes
-        ((Equivalence.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩ := by
+        ((Foundation.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩ := by
     intro k hk
     rw [hr_val_eq]
     exact h_s_inner_bytes k hk
@@ -297,7 +297,7 @@ theorem keccak.squeeze_last_spec
     ⦃ ⇓ r => ⌜
         r.val.length = out.val.length
         ∧ ∃ s_spec : Std.Array Std.U64 25#usize,
-            keccak_f.keccak_f (Equivalence.lift s) = .ok s_spec
+            keccak_f.keccak_f (Foundation.lift s) = .ok s_spec
             ∧ ∀ k : Nat, k < out.val.length →
                 r.val[k]! = ⟨(BitVec.toLEBytes
                   (s_spec.val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
@@ -380,9 +380,9 @@ theorem keccak.squeeze_last_spec
     exact h_copy
   -- Step 7: build the per-byte post.
   -- For k < out.val.length ≤ RATE.val, s2.val[k]! = b1.val[k]! = the toLEBytes-of-lift formula on s1.
-  -- And `Equivalence.lift s1 = s_spec` where keccak_f (lift s) = .ok s_spec.
+  -- And `Foundation.lift s1 = s_spec` where keccak_f (lift s) = .ok s_spec.
   refine triple_of_ok_sb (v := s2) h_impl_eq ?_
-  refine ⟨h_s2_len', Equivalence.lift s1, h_s1_spec, ?_⟩
+  refine ⟨h_s2_len', Foundation.lift s1, h_s1_spec, ?_⟩
   intro k hk
   rw [h_s2_bytes k hk]
   have hk_RATE : k < RATE.val := lt_of_lt_of_le hk h_out_le_RATE
@@ -407,7 +407,7 @@ theorem keccak.squeeze_first_and_last_spec
         r.val.length = out.val.length
         ∧ ∀ k : Nat, k < out.val.length →
             r.val[k]! = ⟨(BitVec.toLEBytes
-              ((Equivalence.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
+              ((Foundation.lift s).val[5 * ((k / 8) % 5) + (k / 8) / 5]!).bv)[k % 8]!⟩
     ⌝ ⦄ := by
   -- The 200-byte buffer (all zeros).
   set buf : Std.Array Std.U8 200#usize := Std.Array.repeat 200#usize 0#u8 with hbuf

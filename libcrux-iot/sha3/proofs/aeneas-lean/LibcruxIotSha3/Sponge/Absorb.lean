@@ -36,7 +36,7 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
-open libcrux_iot_sha3.Equivalence
+open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
 -- of Bridge 1.
@@ -379,7 +379,7 @@ absorb_blocks have already produced `lift state'`. -/
 def absorb_fold (s : state.KeccakState) (data : Slice Std.U8)
     (RATE : Std.Usize) (k : Nat) :
     Result (Std.Array Std.U64 25#usize) :=
-  Nat.fold k (init := (.ok (Equivalence.lift s) : Result _))
+  Nat.fold k (init := (.ok (Foundation.lift s) : Result _))
     (fun j _hj acc => acc >>= fun st =>
       sponge.absorb_block st
         ⟨data.val.slice (j * RATE.val) ((j + 1) * RATE.val), by
@@ -393,7 +393,7 @@ def absorb_fold (s : state.KeccakState) (data : Slice Std.U8)
 theorem absorb_fold_eq_spec
     (s : state.KeccakState) (data : Slice Std.U8) (RATE : Std.Usize) (k : Nat) :
     absorb_fold s data RATE k
-      = absorb_fold_spec (Equivalence.lift s) data RATE k := by
+      = absorb_fold_spec (Foundation.lift s) data RATE k := by
   unfold absorb_fold absorb_fold_spec
   rfl
 
@@ -409,7 +409,7 @@ theorem keccak.keccak_loop0_spec
     ⦃ ⌜ True ⌝ ⦄
     keccak.keccak_loop0 RATE { start := 0#usize, «end» := n } data s
     ⦃ ⇓ r => ⌜ r.i.val = 0
-              ∧ absorb_fold s data RATE n.val = .ok (Equivalence.lift r) ⌝ ⦄ := by
+              ∧ absorb_fold s data RATE n.val = .ok (Foundation.lift r) ⌝ ⦄ := by
   unfold keccak.keccak_loop0
   apply Std.Do.Triple.of_entails_right _
     (loop_range_spec_usize
@@ -417,7 +417,7 @@ theorem keccak.keccak_loop0_spec
       s 0#usize n
       (fun k s' => pure (
           s'.i.val = 0
-          ∧ absorb_fold s data RATE k.val = .ok (Equivalence.lift s')))
+          ∧ absorb_fold s data RATE k.val = .ok (Foundation.lift s')))
       (Nat.zero_le _)
       (pure_prop_holds ⟨h_i, by
         -- k=0: fold is `pure (lift s) = .ok (lift s)`.
@@ -488,14 +488,14 @@ theorem keccak.keccak_loop0_spec
       unfold absorb_fold
       rw [Nat.fold_succ]
       -- After fold_succ, the inner Nat.fold at k = the existing `h_fold_acc`.
-      have h_inner : (Nat.fold k.val (init := (.ok (Equivalence.lift s) : Result _))
+      have h_inner : (Nat.fold k.val (init := (.ok (Foundation.lift s) : Result _))
           (fun j _hj acc' => acc' >>= fun st =>
             sponge.absorb_block st
               ⟨data.val.slice (j * RATE.val) ((j + 1) * RATE.val), by
                 unfold List.slice
                 rw [List.length_take, List.length_drop]
                 have := data.property; omega⟩ RATE))
-        = .ok (Equivalence.lift acc) := by
+        = .ok (Foundation.lift acc) := by
         have := h_fold_acc; unfold absorb_fold at this; exact this
       rw [h_inner]
       simp only [bind_tc_ok]

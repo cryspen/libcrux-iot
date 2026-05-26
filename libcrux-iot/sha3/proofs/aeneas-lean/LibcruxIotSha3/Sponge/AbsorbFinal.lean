@@ -53,7 +53,7 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
-open libcrux_iot_sha3.Equivalence
+open libcrux_iot_sha3.Foundation
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
 -- of Bridge 1.
@@ -196,8 +196,8 @@ theorem keccak.absorb_final_spec
     ⦃ ⌜ True ⌝ ⦄
     keccak.absorb_final RATE DELIM s last start len
     ⦃ ⇓ r => ⌜ r.i.val = 0
-              ∧ sponge.absorb_final (Equivalence.lift s) last start len RATE DELIM
-                  = .ok (Equivalence.lift r) ⌝ ⦄ := by
+              ∧ sponge.absorb_final (Foundation.lift s) last start len RATE DELIM
+                  = .ok (Foundation.lift r) ⌝ ⦄ := by
   -- Common: RATE.val ≤ Std.Usize.max.
   have h_RATE_max : RATE.val ≤ Std.Usize.max := by
     have h200 : (200 : Nat) ≤ Std.Usize.max := by scalar_tac
@@ -220,8 +220,8 @@ theorem keccak.absorb_final_spec
       ∃ (r : state.KeccakState),
         keccak.absorb_final RATE DELIM s last start len = .ok r ∧
         r.i.val = 0 ∧
-        sponge.absorb_final (Equivalence.lift s) last start len RATE DELIM
-          = .ok (Equivalence.lift r) by
+        sponge.absorb_final (Foundation.lift s) last start len RATE DELIM
+          = .ok (Foundation.lift r) by
     obtain ⟨r, h_r_eq, h_r_i, h_r_spec⟩ := h_exists
     exact triple_of_ok_af (v := r) h_r_eq ⟨h_r_i, h_r_spec⟩
   -- Compute the buffer chain's `.ok` value.
@@ -576,8 +576,8 @@ theorem keccak.absorb_final_spec
     rw [show ((0#usize : Std.Usize).val : Nat) = 0 from rfl, Nat.zero_add]
   -- Compose spec sides.
   have h_spec_eq :
-      sponge.absorb_final (Equivalence.lift s) last start len RATE DELIM
-        = .ok (Equivalence.lift r) := by
+      sponge.absorb_final (Foundation.lift s) last start len RATE DELIM
+        = .ok (Foundation.lift r) := by
     unfold sponge.absorb_final
     rw [h_pad_eq]; simp only [bind_tc_ok]
     rw [h_block_idx_eq]; simp only [bind_tc_ok]

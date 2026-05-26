@@ -48,7 +48,7 @@ open Aeneas Aeneas.Std Result ControlFlow Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
-open libcrux_iot_sha3.Equivalence
+open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
@@ -62,9 +62,8 @@ private theorem triple_of_ok_local {α : Type} {x : Result α} {v : α}
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
   subst hx; simp [Std.Do.Triple, WP.wp, hp]
 
-open libcrux_iot_sha3.Equivalence (triple_imp_intro
-  loop_range_spec_usize IteratorRange_next_spec_usize
-  pure_prop_holds of_pure_prop_holds)
+open libcrux_iot_sha3.Foundation (triple_imp_intro pure_prop_holds of_pure_prop_holds)
+open libcrux_iot_sha3.Composition (loop_range_spec_usize IteratorRange_next_spec_usize)
 
 /-! ## Phase 1a prerequisite — loop Triples for load/store partial_fixpoints.
 

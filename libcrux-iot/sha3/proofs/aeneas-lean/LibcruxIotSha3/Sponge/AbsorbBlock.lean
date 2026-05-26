@@ -80,7 +80,7 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
-open libcrux_iot_sha3.Equivalence
+open libcrux_iot_sha3.Foundation
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
 -- of Bridge 1.
@@ -383,9 +383,9 @@ theorem keccak.absorb_block_spec
     ⦃ ⌜ True ⌝ ⦄
     keccak.absorb_block RATE s blocks start
     ⦃ ⇓ r => ⌜ r.i.val = 0
-              ∧ sponge.absorb_block (Equivalence.lift s)
+              ∧ sponge.absorb_block (Foundation.lift s)
                     (block_of_blocks blocks start RATE h_blk) RATE
-                  = .ok (Equivalence.lift r) ⌝ ⦄ := by
+                  = .ok (Foundation.lift r) ⌝ ⦄ := by
   -- Step 1: discharge `load_block` via its @[spec] in Bytes.lean.
   obtain ⟨s1, h_s1_eq, h_s1_post⟩ :=
     triple_exists_ok_ab
@@ -421,17 +421,17 @@ theorem keccak.absorb_block_spec
   -- Apply `sponge_xor_block_into_state_spec`.
   obtain ⟨s_spec_1, h_xbs_eq, h_xbs_post⟩ :=
     triple_exists_ok_ab
-      (sponge_xor_block_into_state_spec RATE (Equivalence.lift s) block
+      (sponge_xor_block_into_state_spec RATE (Foundation.lift s) block
         h_RATE_bnd h_RATE_mod h_block_len)
-  -- We claim `s_spec_1 = Equivalence.lift s1` by per-cell equality.
-  have h_spec_lift_s1 : s_spec_1 = Equivalence.lift s1 := by
+  -- We claim `s_spec_1 = Foundation.lift s1` by per-cell equality.
+  have h_spec_lift_s1 : s_spec_1 = Foundation.lift s1 := by
     -- Both are `Array U64 25#usize = { val : List U64 // val.length = 25 }`.
     -- Reduce to list equality, then per-cell.
     apply Subtype.ext
     apply List.ext_getElem
     · -- Lengths.
       have h1 : s_spec_1.val.length = 25 := s_spec_1.property
-      have h2 : (Equivalence.lift s1).val.length = 25 := (Equivalence.lift s1).property
+      have h2 : (Foundation.lift s1).val.length = 25 := (Foundation.lift s1).property
       omega
     intro k hk_lhs _
     have hk_25 : k < 25 := by
@@ -439,11 +439,11 @@ theorem keccak.absorb_block_spec
       omega
     -- Replace `[k]` with `[k]!` using `getElem!_pos`.
     have h_len1 : s_spec_1.val.length = 25 := s_spec_1.property
-    have h_len2 : (Equivalence.lift s1).val.length = 25 := (Equivalence.lift s1).property
+    have h_len2 : (Foundation.lift s1).val.length = 25 := (Foundation.lift s1).property
     rw [show s_spec_1.val[k] = s_spec_1.val[k]! from
           (getElem!_pos s_spec_1.val k (by rw [h_len1]; exact hk_25)).symm]
-    rw [show (Equivalence.lift s1).val[k] = (Equivalence.lift s1).val[k]! from
-          (getElem!_pos (Equivalence.lift s1).val k (by rw [h_len2]; exact hk_25)).symm]
+    rw [show (Foundation.lift s1).val[k] = (Foundation.lift s1).val[k]! from
+          (getElem!_pos (Foundation.lift s1).val k (by rw [h_len2]; exact hk_25)).symm]
     -- Use h_xbs_post and h_s1_lanes.
     rw [h_xbs_post k hk_25]
     -- Compare with h_s1_lanes k hk_25.
@@ -452,11 +452,11 @@ theorem keccak.absorb_block_spec
     apply Std.UScalar.eq_of_val_eq
     -- The goal is now on `.bv.toNat`. Apply `BitVec.toNat`-injectivity by
     -- reducing to a `.bv` equality.
-    show (xor_block_value_at (Equivalence.lift s) block RATE k).bv.toNat
-         = ((Equivalence.lift s1).val[k]!).bv.toNat
+    show (xor_block_value_at (Foundation.lift s) block RATE k).bv.toNat
+         = ((Foundation.lift s1).val[k]!).bv.toNat
     -- Show the `.bv`-equality first, then transport via `congrArg`.
-    suffices h_bv : (xor_block_value_at (Equivalence.lift s) block RATE k).bv
-                      = ((Equivalence.lift s1).val[k]!).bv by
+    suffices h_bv : (xor_block_value_at (Foundation.lift s) block RATE k).bv
+                      = ((Foundation.lift s1).val[k]!).bv by
       rw [h_bv]
     -- Now we have a clean BitVec 64 = BitVec UScalarTy.U64.numBits goal —
     -- but `UScalarTy.U64.numBits` reduces to `64` definitionally.
@@ -491,7 +491,7 @@ theorem keccak.absorb_block_spec
   -- Step 5: substitute `s_spec_1 = lift s1` into the do-chain.
   -- Goal: ⦃True⦄ keccak.absorb_block ... ⦃⇓r => r.i.val = 0 ∧ sponge.absorb_block (lift s) block RATE = .ok (lift r)⦄
   have h_spec_compose :
-      sponge.absorb_block (Equivalence.lift s) block RATE = .ok (Equivalence.lift r) := by
+      sponge.absorb_block (Foundation.lift s) block RATE = .ok (Foundation.lift r) := by
     unfold sponge.absorb_block
     rw [h_xbs_eq]; simp only [bind_tc_ok]
     rw [h_spec_lift_s1]
