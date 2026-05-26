@@ -458,6 +458,79 @@ noncomputable def Spec.chunk_reducing_from_i32_array_pure
       Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val)))
     (by simp)
 
+/-! ### §M.1 — Per-lane unfolds for `Spec.chunk_*_pure`.
+
+    Direct lane projections for the chunk-level pointwise operations.
+    Save ~30-50 LOC per proof that needs to extract a specific lane
+    from a chunk-pure result (e.g. L6.3 step lemma, L7 row composition,
+    L6.3c cache-variant wrap). Each lemma collapses the
+    `Std.Array.make 16#usize ((List.range 16).map ...)` + `[k]!` + `List.getElem_map`
+    + `List.getElem_range` cascade into a single rewrite. -/
+
+/-- Lane projection of `Spec.chunk_add_pure`. -/
+theorem Spec.chunk_add_pure_lane_eq
+    (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (k : Nat) (hk : k < 16) :
+    (Spec.chunk_add_pure a b).val[k]!
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (a.val[k]!) (b.val[k]!) := by
+  unfold Spec.chunk_add_pure
+  show ((List.range 16).map (fun i =>
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (a.val[i]!) (b.val[i]!)))[k]! = _
+  have h_l : ((List.range 16).map (fun i =>
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (a.val[i]!) (b.val[i]!))).length = 16 := by simp
+  rw [getElem!_pos _ k (by rw [h_l]; exact hk)]
+  rw [List.getElem_map, List.getElem_range]
+
+/-- Lane projection of `Spec.chunk_sub_pure`. -/
+theorem Spec.chunk_sub_pure_lane_eq
+    (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (k : Nat) (hk : k < 16) :
+    (Spec.chunk_sub_pure a b).val[k]!
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+          (a.val[k]!) (b.val[k]!) := by
+  unfold Spec.chunk_sub_pure
+  show ((List.range 16).map (fun i =>
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+          (a.val[i]!) (b.val[i]!)))[k]! = _
+  have h_l : ((List.range 16).map (fun i =>
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+          (a.val[i]!) (b.val[i]!))).length = 16 := by simp
+  rw [getElem!_pos _ k (by rw [h_l]; exact hk)]
+  rw [List.getElem_map, List.getElem_range]
+
+/-- Lane projection of `Spec.chunk_neg_pure`. -/
+theorem Spec.chunk_neg_pure_lane_eq
+    (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (k : Nat) (hk : k < 16) :
+    (Spec.chunk_neg_pure a).val[k]!
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+          (a.val[k]!) := by
+  unfold Spec.chunk_neg_pure
+  show ((List.range 16).map (fun i =>
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+          (a.val[i]!)))[k]! = _
+  have h_l : ((List.range 16).map (fun i =>
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+          (a.val[i]!))).length = 16 := by simp
+  rw [getElem!_pos _ k (by rw [h_l]; exact hk)]
+  rw [List.getElem_map, List.getElem_range]
+
+/-- Lane projection of `Spec.chunk_reducing_from_i32_array_pure`. -/
+theorem Spec.chunk_reducing_from_i32_array_pure_lane_eq
+    (array : Slice Std.I32) (k : Nat) (hk : k < 16) :
+    (Spec.chunk_reducing_from_i32_array_pure array).val[k]!
+      = Spec.mont_reduce_pure (lift_fe_int (array.val[k]!).val) := by
+  unfold Spec.chunk_reducing_from_i32_array_pure
+  show ((List.range 16).map (fun i =>
+        Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val)))[k]! = _
+  have h_l : ((List.range 16).map (fun i =>
+        Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val))).length = 16 := by simp
+  rw [getElem!_pos _ k (by rw [h_l]; exact hk)]
+  rw [List.getElem_map, List.getElem_range]
+
 /-- Pure NTT butterfly step at the chunk level: applies `ntt.butterfly`
     pointwise to the lane pair `(i, j)` with `zeta`. Mirrors the impl's
     write order (`a[j] := a-t`, then `a[i] := a+t`) so that when `i = j`
