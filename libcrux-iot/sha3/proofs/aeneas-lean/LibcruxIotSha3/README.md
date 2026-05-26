@@ -285,7 +285,7 @@ From `libcrux-iot/sha3/proofs/aeneas-lean/`:
 
 ```bash
 lake exe cache get        # one-time prime (~30 s)
-lake build                # ~2 min from clean
+lake build                # full tree
 ```
 
 Specific targets:
