@@ -1,8 +1,8 @@
 /-
-  # Phase 0 — Opaque seal for `keccakf1600`
+  # Opaque seal for `keccakf1600`
 
   Sealed `@[spec]` Triple bridging the impl `keccak.keccakf1600` to the
-  hacspec `keccak_f.keccak_f` for use throughout Campaign 3.
+  hacspec `keccak_f.keccak_f` for use throughout the sponge proofs.
 
   The post strengthens Bridge 1 (`Composition.keccakf1600_equiv_hacspec`)
   with `r.i.val = 0` — needed because the impl's `keccakf1600` resets
@@ -21,7 +21,7 @@ namespace libcrux_iot_sha3.Sponge
 
 open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 
-/-! ## Phase 0 — Opaque seal for `keccakf1600`. -/
+/-! ## Opaque seal for `keccakf1600`. -/
 
 /-- Local shape: `Triple` postshape for `Result α` (matches the one used
     in `HacspecBridge.lean`). -/
@@ -60,7 +60,7 @@ private theorem triple_of_ok_local {α : Type} {x : Result α} {v : α}
 
     This is the *only* place we ever `unfold keccak.keccakf1600`; the
     attribute at the bottom of this file seals it for the rest of
-    Campaign 3. -/
+    the sponge proofs. -/
 private theorem keccakf1600_i_zero_of_ok
     {s r : state.KeccakState} (h : keccak.keccakf1600 s = .ok r) :
     r.i = 0#usize := by

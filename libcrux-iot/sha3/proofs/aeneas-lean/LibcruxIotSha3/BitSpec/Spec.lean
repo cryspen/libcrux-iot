@@ -10,7 +10,7 @@
   equivalence (`StructuralEquiv.lean`) proves `keccakf1600_round*_*` ≡
   the corresponding `bit_*` definition here via `hax_mvcgen`.
 
-  Phase 1 Step A (rosetta stone): only `bit_pi_rho_chi_y0_zeta0` is
+  Rosetta stone: only `bit_pi_rho_chi_y0_zeta0` is
   defined here. Scaling to the remaining ~29 sub-fns is mechanical
   and happens in subsequent sessions.
 -/

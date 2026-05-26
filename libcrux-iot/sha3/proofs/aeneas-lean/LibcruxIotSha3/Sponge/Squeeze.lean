@@ -1,5 +1,5 @@
 /-
-  # Phase 5 — squeeze loop (`keccak_loop1`) and per-byte spec bridge.
+  # Squeeze loop (`keccak_loop1`) and per-byte spec bridge.
 
   Artifacts delivered in this file:
 
@@ -52,7 +52,7 @@ open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
-/-! ## Phase 5 — squeeze loop. -/
+/-! ## Squeeze loop. -/
 
 /-! ### Local helpers (mirror of `Absorb.lean`). -/
 
@@ -793,8 +793,8 @@ totality is established at use sites via Bridge 1's
 `keccakf1600_equiv_hacspec` (which guarantees `keccak_f.keccak_f`
 succeeds on every lifted impl state).
 
-Used by Phase 7's per-byte equivalence theorem to factor `sponge.squeeze`
-through `iterate_keccak_f`. -/
+Used by the top-level `keccak` per-byte equivalence theorem to factor
+`sponge.squeeze` through `iterate_keccak_f`. -/
 theorem sponge_squeeze_byte_eq
     (OUTPUT_LEN : Std.Usize) (state : Std.Array Std.U64 25#usize)
     (rate : Std.Usize)

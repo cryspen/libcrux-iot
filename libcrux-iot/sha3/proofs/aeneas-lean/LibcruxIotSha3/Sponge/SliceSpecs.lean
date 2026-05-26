@@ -1,5 +1,5 @@
 /-
-  # Phase 1a prerequisite — Aeneas Std byte/slice `@[spec]` Triples
+  # Prerequisite — Aeneas Std byte/slice `@[spec]` Triples
 
   This file installs a set of small `@[spec]` Triples that the byte ↔
   lane bridges in `Sponge/Bytes.lean` will need to discharge. None of
@@ -39,7 +39,7 @@
   ## See also
 
   - `LibcruxIotSha3/Sponge/Plan.lean` § 1 for usage context.
-  - `LibcruxIotSha3/Sponge/Bytes.lean` for the partial Phase-1a delivery
+  - `LibcruxIotSha3/Sponge/Bytes.lean` for the partial delivery
     of `load_block`/`store_block`/`load_block_full` Triples.
 -/
 import LibcruxIotSha3.Sponge.Opaque
@@ -51,7 +51,7 @@ namespace libcrux_iot_sha3.Sponge
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
-/-! ## Phase 1a prerequisite — Aeneas Std byte/slice `@[spec]` lemmas. -/
+/-! ## Prerequisite — Aeneas Std byte/slice `@[spec]` lemmas. -/
 
 /-! ### `core_models.slice.Slice.len` -/
 

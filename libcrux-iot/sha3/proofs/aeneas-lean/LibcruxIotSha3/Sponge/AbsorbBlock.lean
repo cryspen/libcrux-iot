@@ -1,5 +1,5 @@
 /-
-  # Phase 2 — `keccak.absorb_block` ↔ `sponge.absorb_block`
+  # `keccak.absorb_block` ↔ `sponge.absorb_block`
 
   This file hosts the single top-level `@[spec]` Triple bridging the
   impl's `keccak.absorb_block` to the sponge spec's `sponge.absorb_block`.
@@ -20,7 +20,7 @@
     keccak_f.keccak_f state1
   ```
 
-  ## Post strength (Phase 2 — Textbook post landed 2026-05-21)
+  ## Post strength (Textbook post landed 2026-05-21)
 
   The Triple here carries the **full textbook post**: termination,
   `r.i.val = 0`, AND the spec-side equation
@@ -321,7 +321,7 @@ private theorem load_block_to_xor_block_bridge
   rw [h_lo_bv, h_hi_bv, h_u64_bv]
   exact (fromLEBytes_8_split_4_4 _ _ _ _ _ _ _ _).symm
 
-/-! ## Phase 2 — `keccak.absorb_block` ↔ `sponge.absorb_block`. -/
+/-! ## `keccak.absorb_block` ↔ `sponge.absorb_block`. -/
 
 /-- Local triple-of-ok helper. -/
 private theorem triple_of_ok_ab {α : Type} {x : Result α} {v : α}
@@ -362,14 +362,14 @@ def block_of_blocks
     from `blocks` (at offset `start`) into the state, then apply the
     Keccak-f permutation.
 
-    Phase 2 textbook post: termination, `r.i.val = 0`, and the spec-side
+    Textbook post: termination, `r.i.val = 0`, and the spec-side
     equation
 
         sponge.absorb_block (lift s) (block_of_blocks blocks start RATE _) RATE
           = .ok (lift r)
 
     matching the "Real post" target of `Plan.lean` § 2. The `r.i.val = 0`
-    clause is what Phase 3's chain consumes; the spec equation feeds
+    clause is what the downstream loop chain consumes; the spec equation feeds
     `absorb_rec` accumulation. -/
 @[spec]
 theorem keccak.absorb_block_spec

@@ -29,7 +29,7 @@ top-level `keccak_f.keccak_f` (defined in `specs/sha3/src/keccak_f.rs`,
 extracted to `HacspecSha3/Extraction/Funs.lean`) produces when applied
 to the same lifted input.
 
-### Layer 2 — full sponge (SHA-3 / SHAKE) equivalence (Campaign 3)
+### Layer 2 — full sponge (SHA-3 / SHAKE) equivalence
 
 [`Sponge/Sha3.lean`](Sponge/Sha3.lean) — `keccak.keccak_keccak_spec`:
 
@@ -201,7 +201,7 @@ LibcruxIotSha3/
 │                                  iterator/loop specs, keccak_f_loop_eq_*,
 │                                  and the top theorem keccakf1600_equiv_hacspec
 │
-├── Sponge/                          ← Campaign 3: SHA-3 sponge / SHAKE / SHA3-ema
+├── Sponge/                          ← SHA-3 sponge / SHAKE / SHA3-ema
 │   ├── Opaque.lean                  ← § 0: keccakf1600_seal_spec (seals
 │   │                                  keccakf1600 + keccak_f.keccak_f
 │   │                                  [local irreducible] for the rest of Sponge)

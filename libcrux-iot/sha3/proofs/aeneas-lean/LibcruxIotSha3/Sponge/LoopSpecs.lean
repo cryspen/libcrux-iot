@@ -1,5 +1,5 @@
 /-
-  # Phase 1a — Loop Triples for `load_block` / `store_block` outer fixpoints.
+  # Loop Triples for `load_block` / `store_block` outer fixpoints.
 
   Provides three `@[spec]` Triples, one per Aeneas `partial_fixpoint` loop,
   threading a `loop_range_spec_usize`-style forward induction:
@@ -65,7 +65,7 @@ private theorem triple_of_ok_local {α : Type} {x : Result α} {v : α}
 open libcrux_iot_sha3.Foundation (triple_imp_intro pure_prop_holds of_pure_prop_holds)
 open libcrux_iot_sha3.Composition (loop_range_spec_usize IteratorRange_next_spec_usize)
 
-/-! ## Phase 1a prerequisite — loop Triples for load/store partial_fixpoints.
+/-! ## Loop Triples for load/store partial_fixpoints.
 
 The body of each loop performs a `Range.next` step that *forks* on
 whether the iterator is exhausted (`None` -> emit `.done acc`) or has a

@@ -1,11 +1,11 @@
 /-
-  # Phase 1a — Spec-side scaffolding for `sponge.xor_block_into_state`.
+  # Spec-side scaffolding for `sponge.xor_block_into_state`.
 
   This file installs the spec-side scaffolding needed to drive the
   **monadic-in-post** posts of `load_block_spec` (and `load_block_full_spec`)
   in `Sponge/Bytes.lean` via `hax_mvcgen`.
 
-  ## Status (Phase 1a closer, 2026-05-21) — Partial-B (extended 2026-05-21)
+  ## Status (closer, 2026-05-21) — Partial-B (extended 2026-05-21)
 
   **Landed:**
 

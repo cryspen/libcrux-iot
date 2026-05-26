@@ -1,8 +1,8 @@
 /-
-  # Phase 7 — Top-level `keccak.keccak` ↔ `sponge.keccak`.
+  # Top-level `keccak.keccak` ↔ `sponge.keccak`.
 
-  This file delivers the campaign's largest composition: the impl
-  function `keccak.keccak` (full pipeline: absorb-full-loop +
+  This file delivers the largest composition in the sponge proofs:
+  the impl function `keccak.keccak` (full pipeline: absorb-full-loop +
   absorb-final + first-output-block + squeeze-loop + optional
   trailing block) matches the spec `sponge.keccak` byte-by-byte.
 
@@ -23,8 +23,8 @@
   ## Strategy
 
   Compose impl and spec sides as independent `.ok`-equation chains
-  (lesson from Phase 6: parallel `hax_mvcgen` over `do`-blocks induces
-  `__do_jp` friction), then bridge byte-by-byte.
+  (lesson from `absorb_final`: parallel `hax_mvcgen` over `do`-blocks
+  induces `__do_jp` friction), then bridge byte-by-byte.
 
   ### Impl side
   - `keccak.keccak_loop0_spec` ⇒ `absorb_fold s data RATE n.val = .ok (lift s1)`.
@@ -38,15 +38,15 @@
 
   ### Spec side
   - `sponge.absorb` = `absorb_rec a₀ rate delim data` with `a₀ = Array.repeat 25 0`.
-    Via `sponge_absorb_rec_eq_fold` (Phase 3) and `absorb_fold_eq_spec`
-    (Phase 3 bridge), tie to `absorb_fold s_init data RATE n.val` for
-    the new-state `s_init`.
+    Via `sponge_absorb_rec_eq_fold` and `absorb_fold_eq_spec`
+    (from `Sponge/Absorb.lean`), tie to `absorb_fold s_init data RATE n.val`
+    for the new-state `s_init`.
   - `sponge.squeeze` is characterized byte-wise by `sponge_squeeze_byte_eq`
-    (Phase 5).
+    (from `Sponge/Squeeze.lean`).
 
   ## Status
 
-  This file currently lands a **partial** Phase 7: the `blocks = 0`
+  This file currently lands a **partial** result: the `blocks = 0`
   branch is proved end-to-end. The `blocks ≥ 1` branch carries the
   same structural skeleton but is gated by additional bridging work
   between impl per-byte writes and `sponge.squeeze`'s per-byte
@@ -73,7 +73,7 @@ open libcrux_iot_sha3.Foundation
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
-/-! ## Phase 7 — Top-level keccak ↔ sponge.keccak. -/
+/-! ## Top-level keccak ↔ sponge.keccak. -/
 
 /-! ### Local helpers. -/
 
@@ -161,7 +161,7 @@ theorem iterate_keccak_f_zero
   show Nat.fold 0 _ _ = _
   rw [Nat.fold_zero]
 
-/-! ### Phase 7 main theorem: `keccak.keccak_keccak_spec` (blocks = 0 branch).
+/-! ### Main theorem: `keccak.keccak_keccak_spec` (blocks = 0 branch).
 
 We land the `blocks = 0` case end-to-end. The post is the textbook
 equality-form. The `blocks ≥ 1` branch is gated by a non-trivial
@@ -501,7 +501,7 @@ theorem keccak.keccak_keccak_spec_blocks_zero
   rw [show k - 0 * RATE.val = k from by omega]
   exact h_r_out_bytes k hk
 
-/-! ### Phase 7 main theorem: `keccak.keccak_keccak_spec` (blocks ≥ 1 branch).
+/-! ### Main theorem: `keccak.keccak_keccak_spec` (blocks ≥ 1 branch).
 
 The `blocks ≥ 1` case requires walking through the full impl pipeline:
 `KeccakState.new → keccak_loop0 → absorb_final → squeeze_first_block →

@@ -1,5 +1,5 @@
 /-
-  # Phase 8 — SHAKE128/256 + SHA3-{224,256,384,512} ema specs.
+  # SHAKE128/256 + SHA3-{224,256,384,512} ema specs.
 
   Each of these 6 top-level digest functions is a direct instantiation of
   `keccak.keccak_keccak_spec` (landed in `Sponge/Sha3.lean`). The impl side
@@ -46,7 +46,7 @@ open libcrux_iot_sha3.Foundation
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
-/-! ## Phase 8 — SHAKE128/256 + SHA3-{224,256,384,512} ema specs. -/
+/-! ## SHAKE128/256 + SHA3-{224,256,384,512} ema specs. -/
 
 /-! ### Local helpers. -/
 

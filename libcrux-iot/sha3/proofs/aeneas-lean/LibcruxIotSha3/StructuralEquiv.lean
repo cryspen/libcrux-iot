@@ -3106,7 +3106,7 @@ theorem keccakf1600_round3_pi_rho_chi_2_eq (s : state.KeccakState) :
 
 end Round3PrcLiftComp
 
-/-! # Loop bridge — Phase 1 Step B
+/-! # Loop bridge
 
 Closes the structural equivalence by lifting the 12 round-level `_eq` theorems through
 the impl's 4-round bundle, then through the 6-iteration outer loop,

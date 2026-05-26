@@ -14,7 +14,7 @@
   The one Aeneas-side type we keep is `Std.Usize` for the round counter
   `i` — it's a thin `BitVec`-wrapping data type (no `Triple`, `Result`,
   `WP`, or other Aeneas machinery), and matching the impl's `i` type
-  makes the Phase-1 iso `KState ↔ state.KeccakState` trivial on this
+  makes the iso `KState ↔ state.KeccakState` trivial on this
   field.
 -/
 import Init.Data.Vector.Basic

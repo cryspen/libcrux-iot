@@ -1,5 +1,5 @@
 /-
-  # Phase 3 — `keccak.keccak_loop0` ↔ fold of `sponge.absorb_block`
+  # `keccak.keccak_loop0` ↔ fold of `sponge.absorb_block`
                 + sponge.absorb_rec unfold / fold characterization.
 
   This file delivers three artifacts:
@@ -43,7 +43,7 @@ open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
-/-! ## Phase 3 — `keccak.keccak_loop0` ↔ fold of `sponge.absorb_block`. -/
+/-! ## `keccak.keccak_loop0` ↔ fold of `sponge.absorb_block`. -/
 
 /-! ### Helper Triple: `RangeFromUsize` slice index.
 
@@ -225,7 +225,7 @@ A forward fold-form characterization: peeling `k` full blocks via
 `Nat.fold k` of `absorb_block` over those blocks, then `absorb_rec`
 on the suffix `msg.drop (k*rate)`.
 
-Used downstream (Phase 6) to bridge `absorb_rec` with the impl's
+Used downstream by `absorb_final` to bridge `absorb_rec` with the impl's
 forward-iteration loop. -/
 
 /-- Pure `Nat.fold` form analogous to `absorb_fold` but parameterized
@@ -355,7 +355,7 @@ theorem sponge_absorb_rec_eq_fold
 
 /-! ### `keccak.keccak_loop0_spec` — impl loop ↔ Nat.fold of `sponge.absorb_block`.
 
-The post is the canonical Phase 3 textbook target from Plan § 3:
+The post is the canonical textbook target from Plan § 3:
 termination (impl returns `.ok r`), `r.i.val = 0`, and the spec-side
 fold equation
 

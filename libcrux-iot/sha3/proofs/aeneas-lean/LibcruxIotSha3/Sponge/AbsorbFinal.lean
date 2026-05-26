@@ -1,12 +1,12 @@
 /-
-  # Phase 6 — `keccak.absorb_final` ↔ `sponge.absorb_final`
+  # `keccak.absorb_final` ↔ `sponge.absorb_final`
 
-  This file delivers the Phase 6 main Triple `keccak.absorb_final_spec`
+  This file delivers the main Triple `keccak.absorb_final_spec`
   with the **full textbook (equality-form) post**:
 
   * termination of `keccak.absorb_final`;
-  * `r.i.val = 0` on the result (consumed by Phase 7's squeeze-first-block
-    precondition);
+  * `r.i.val = 0` on the result (consumed by the top-level `keccak` proof's
+    squeeze-first-block precondition);
   * the spec equation
     `sponge.absorb_final (lift s) last start len RATE DELIM = .ok (lift r)`.
 
@@ -43,8 +43,8 @@
 
   ## See also
 
-  - `Sponge/AbsorbBlock.lean` — `keccak.absorb_block_spec` (Phase-2
-    composed Triple).
+  - `Sponge/AbsorbBlock.lean` — `keccak.absorb_block_spec` (composed Triple
+    bridging `keccak.absorb_block` to `sponge.absorb_block`).
   - `Sponge/Plan.lean` § 6 — Plan target with full textbook post.
 -/
 import LibcruxIotSha3.Sponge.AbsorbBlock
@@ -60,7 +60,7 @@ open libcrux_iot_sha3.Foundation
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
-/-! ## Phase 6 — `keccak.absorb_final` ↔ `sponge.absorb_final`. -/
+/-! ## `keccak.absorb_final` ↔ `sponge.absorb_final`. -/
 
 /-- Local triple-of-ok helper. -/
 private theorem triple_of_ok_af {α : Type} {x : Result α} {v : α}
@@ -163,7 +163,7 @@ def padded_buf
   let buf2 : Std.Array Std.U8 200#usize := buf1.set len DELIM
   buf2.set i_r1 (buf2.val[i_r1.val]! ||| 128#u8)
 
-/-! ### Phase 6 main Triple. -/
+/-! ### Main Triple. -/
 
 /-- `keccak.absorb_final RATE DELIM s last start len`:
     build a 200-byte padded buffer (zero-init, copy `last[start..start+len]`,

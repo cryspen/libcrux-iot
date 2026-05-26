@@ -5,7 +5,7 @@
   This file provides the conversion FUNCTIONS `KState.toAeneas` and
   `KState.fromAeneas` plus the per-Lane round-trip theorems. The
   KState-level round-trip theorems are *not* proven here — they're only
-  needed if the structural equivalence's per-sub-fn proofs use them (TBD in Phase 2).
+  needed if the structural equivalence's per-sub-fn proofs use them.
   Adding them later is cheap; over-engineering the iso now risks
   fighting Lean's elaborator on irrelevant `Vector`/`Array` plumbing.
 -/
@@ -55,7 +55,7 @@ theorem Lane.toAeneas_fromAeneas (l : lane.Lane2U32) :
 /-! ## Vector Lane n ↔ Aeneas.Std.Array Lane2U32 n#usize
 
     Conversion functions only — KState-level round-trip theorems are
-    deferred until Phase 2 proves whether they're actually needed. -/
+    deferred until they are proven to be needed. -/
 
 private theorem listLenAeneas25 (v : Vector Lane 25) :
     (v.toList.map Lane.toAeneas).length = (25#usize).val := by

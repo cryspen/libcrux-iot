@@ -1,5 +1,5 @@
 /-
-  # Phase 4 — squeeze block-level Triples.
+  # Squeeze block-level Triples.
 
   Bridges the impl-side squeeze block functions to the underlying byte
   projection of the sponge state, optionally preceded by a
@@ -35,7 +35,7 @@ open libcrux_iot_sha3.Foundation
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
-/-! ## Phase 4 — squeeze block-level Triples. -/
+/-! ## Squeeze block-level Triples. -/
 
 /-- Local triple-of-ok helper. -/
 private theorem triple_of_ok_sb {α : Type} {x : Result α} {v : α}

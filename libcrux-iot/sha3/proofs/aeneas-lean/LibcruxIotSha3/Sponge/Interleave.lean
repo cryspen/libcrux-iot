@@ -1,5 +1,5 @@
 /-
-  # Phase 1a prerequisite — Aeneas-Result lifts of `Lane2U32.interleave` /
+  # Prerequisite — Aeneas-Result lifts of `Lane2U32.interleave` /
   # `Lane2U32.deinterleave`.
 
   Bridges the impl's 13-stage bit-deposit code (`Extraction/Funs.lean` lines

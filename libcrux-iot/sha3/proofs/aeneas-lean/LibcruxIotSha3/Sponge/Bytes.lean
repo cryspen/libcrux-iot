@@ -1,5 +1,5 @@
 /-
-  # Phase 1a — Byte ↔ Lane primitives (`load_block`, `store_block`,
+  # Byte ↔ Lane primitives (`load_block`, `store_block`,
   # `load_block_full`).
 
   This file hosts the three top-level `@[spec]` Triples bridging the
@@ -14,10 +14,10 @@
   - `state.KeccakState.load_block_full_spec` — delegates to
     `load_block_spec` after `Array.to_slice` coercion.
 
-  ## Post strength (Phase 1a, after 2026-05-21 strengthening pass — Partial-B)
+  ## Post strength (after 2026-05-21 strengthening pass — Partial-B)
 
   The three Triples here carry the **`i`-preservation** clause needed
-  by Phase 2's absorb/squeeze chaining (`r.i.val = 0` precondition on
+  by the absorb/squeeze chaining (`r.i.val = 0` precondition on
   the next `keccakf1600` call). Specifically:
 
   - `load_block_spec`: `⌜ r.i = s.i ⌝` (loop1 invariant carries it).
@@ -25,7 +25,7 @@
      `Slice U8`, no state component).
   - `load_block_full_spec`: `⌜ r.i = s.i ⌝` (delegates to `load_block`).
 
-  ## Phase 1a closer report (2026-05-21, extended)
+  ## Closer report (2026-05-21, extended)
 
   - **Task 1 (`xor_block_into_state_closure_call_mut_spec`) — LANDED**
     in `Sponge/XorBlockSpec.lean`. The per-cell `@[spec]` for the
@@ -34,7 +34,7 @@
     → lift | index_usize). The `b < rate/8` branch matches the
     constructed 8-byte array's `.val` with `list_8_at block.val (8b)`
     via `list_8_at_val_eq_slice`. Axioms: propext, Classical.choice,
-    Quot.sound. **This unlocks Phase 2's spec-side composition.**
+    Quot.sound. **This unlocks the absorb_block spec-side composition.**
 
   - **`sponge_xor_block_into_state_spec` — LANDED** in
     `Sponge/XorBlockSpec.lean`. The direct per-cell post for
@@ -91,7 +91,7 @@
     `r.st[5*(j%5) + j/5].bv = s.st[...].bv ^^^ lift_lane_bv (u32_le b1)
     (u32_le b2)` (from strong Loop1) with the spec's
     `xor_block_value_at` via `interleave_bv_lift_eq`. The current
-    weak posts are nonetheless sufficient for Phase 2 chaining
+    weak posts are nonetheless sufficient for downstream chaining
     (which only needs termination + `r.i = s.i`).
 
   Inputs to the strengthening pass:
@@ -137,10 +137,10 @@
 
   The current Triples close the *control-flow* gap and pass through
   the `r.i = s.i` invariant needed for the next-`keccakf1600`'s
-  precondition. Phase 2 can now compose against them via `hax_mvcgen`
+  precondition. Downstream proofs can now compose against them via `hax_mvcgen`
   to drive the absorb/squeeze loops at the impl side. The remaining
   spec-equation half is deferred to a follow-up pass once the loop-0
-  /loop-1 strong invariants land. The Phase 1a closer (2026-05-21) landed
+  /loop-1 strong invariants land. The closer (2026-05-21) landed
   `from_fn_pure_spec` as new generic infrastructure (it parallels
   `createi_pure_spec` from `HacspecBridge.lean` but takes a `FnMut`
   instance directly).
@@ -155,8 +155,8 @@
   ## See also
 
   - `LibcruxIotSha3/Sponge/Plan.lean` § 1 — full Plan with textbook
-    posts targeting the strengthened phase.
-  - `LibcruxIotSha3/Sponge/Opaque.lean` — Phase 0 seal of `keccakf1600`.
+    posts targeting the strengthened version.
+  - `LibcruxIotSha3/Sponge/Opaque.lean` — opaque seal of `keccakf1600`.
   - `LibcruxIotSha3/Sponge/LoopSpecs.lean` — outer-loop Triples
     consumed below.
   - `LibcruxIotSha3/Sponge/SliceSpecs.lean` — slice/byte primitives.
