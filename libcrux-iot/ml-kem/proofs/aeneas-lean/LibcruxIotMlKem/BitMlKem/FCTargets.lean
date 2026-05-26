@@ -17647,6 +17647,37 @@ noncomputable def Spec.ntt_multiply_pure_no_acc
       else add (mul a0 b1) (mul a1 b0)))
     (by simp)
 
+/-! ### §L6.3b — `Spec.multiply_ntts_pure` ↔ chunked `Spec.ntt_multiply_pure_no_acc`
+    bridge.
+
+    Required by the L7 matrix-level FC theorems (compute_As_plus_e_fc et al.)
+    to connect the impl-side per-chunk Mont accumulator (which the L6.3
+    family produces in `Spec.ntt_multiply_pure_no_acc` form) to the hacspec
+    `multiply_ntts`-based matrix product spec. The bridge is a SpecPure-side
+    algebraic identity — no impl side, no Triple, no Mont-domain crossing
+    beyond what `Spec.zeta_at` already absorbs. -/
+
+set_option maxRecDepth 4000 in
+set_option maxHeartbeats 16000000 in
+/-- Phase 1: `ntt.ZETAS` reduces to a concrete `.ok` value (since
+    `parameters.FieldElement.new` is unconditional), and for `i ∈ [64, 128)`
+    the `i`-th lookup of that value equals `Spec.zeta_at i`. The numeric
+    fact at each position is the keystone identity
+    `(ZETAS_TIMES_MONTGOMERY_R[i].val * 169) mod 3329 = ntt.ZETAS[i].val`
+    (i.e. impl-side Mont zeta times R⁻¹ = canonical zeta). -/
+private theorem hacspec_ZETAS_ok_and_zeta_at :
+    ∃ zs : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 128#usize,
+      hacspec_ml_kem.ntt.ZETAS = .ok zs
+      ∧ (∀ i : Nat, 64 ≤ i → i < 128 → Spec.zeta_at i = zs.val[i]!) := by
+  unfold hacspec_ml_kem.ntt.ZETAS
+  refine ⟨_, rfl, ?_⟩
+  intro i h_lo h_hi
+  interval_cases i <;>
+  · show lift_fe_mont _ = _
+    unfold lift_fe_mont i16_to_spec_fe_mont feOfZMod
+    simp only [libcrux_iot_ml_kem.polynomial.ZETAS_TIMES_MONTGOMERY_R]
+    rfl
+
 /-- Accumulating base-case NTT multiply: pointwise sum of the initial
     accumulator with the no-acc product. Defined as
     `chunk_add_pure acc (ntt_multiply_pure_no_acc ...)`. The L2.8 POST
