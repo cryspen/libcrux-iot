@@ -20617,22 +20617,43 @@ theorem accumulating_ntt_multiply_fc
 
 /-- Algebraic POST predicate for the L6.3 polynomial-level NTT
     multiply. Relates the resulting I32 accumulator array `r` to the
-    polynomial inputs and the initial accumulator state, anchored
-    against `Spec.multiply_ntts_pure (lift_poly myself) (lift_poly rhs)`.
+    polynomial inputs and the initial accumulator state via a per-chunk
+    × per-lane equation in Mont-domain `FieldElement` space:
 
-    Body deferred to L6.3b dispatch — the M.1 pre-stage defines the
-    bridge between the I32 accumulator and the FE polynomial (via
-    the existing L1.10 `reducing_from_i32_array` chain at FCTargets
-    ~17272), then anchors via `Spec.multiply_ntts_pure`.
+      `mont_reduce_pure (lift_fe_int r[16j+ℓ])`
+        `= mont_reduce_pure (lift_fe_int accumulator[16j+ℓ])`
+          `+ no_acc_product j ℓ`
 
-    Locking as Prop avoids prematurely committing to a specific lift
-    idiom for `Std.Array I32 256` (no such lift function exists yet
-    in the lift tower; design happens during L6.3b). -/
+    where the per-chunk product `no_acc_product j ℓ` is the ℓ-th lane
+    of `Spec.ntt_multiply_pure_no_acc` applied to Mont-domain lifts of
+    the j-th coefficient vectors and the four zetas at
+    `Spec.zeta_at (64 + 4j + {0,1,2,3})`.
+
+    Composes the L2.8 per-chunk POST (`ntt_multiply_base_case_post`)
+    via the chunk_add_pure decomposition baked into
+    `ntt_multiply_base_case_alg`: at each j ∈ 0..15, applying L2.8 to
+    the 16-lane window `[16j..16(j+1)]` gives the per-chunk equation
+    `chunk_reducing_from_i32_array_pure r_chunk =
+      chunk_add_pure (chunk_reducing_from_i32_array_pure acc_chunk)
+                     (ntt_multiply_pure_no_acc ...)`,
+    which extracts per-lane to the equation above (since
+    `chunk_reducing_from_i32_array_pure x .val[ℓ] = mont_reduce_pure
+    (lift_fe_int (x.val[ℓ]!).val)` definitionally). -/
 noncomputable def accumulating_ntt_multiply_poly_post
     (myself rhs : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
                     libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (accumulator r : Std.Array Std.I32 256#usize) : Prop :=
-  sorry
+  ∀ j : Nat, j < 16 → ∀ ℓ : Nat, ℓ < 16 →
+    Spec.mont_reduce_pure (lift_fe_int (r.val[16 * j + ℓ]!).val)
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (Spec.mont_reduce_pure (lift_fe_int (accumulator.val[16 * j + ℓ]!).val))
+          ((Spec.ntt_multiply_pure_no_acc
+              (lift_chunk_mont (myself.coefficients.val[j]!))
+              (lift_chunk_mont (rhs.coefficients.val[j]!))
+              (Spec.zeta_at (64 + 4 * j))
+              (Spec.zeta_at (64 + 4 * j + 1))
+              (Spec.zeta_at (64 + 4 * j + 2))
+              (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!)
 
 /-- L6.3 — `polynomial.PolynomialRingElement.accumulating_ntt_multiply`:
     polynomial-level NTT-domain multiply. Wraps L2.8 across all 16
