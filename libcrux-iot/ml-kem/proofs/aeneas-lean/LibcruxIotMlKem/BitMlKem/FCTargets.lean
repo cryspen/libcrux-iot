@@ -27152,6 +27152,109 @@ theorem accumulating_ntt_multiply_poly_fc
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L6_3_FC.step_post] using hP
 
+/-! ## §L6.3c — Cache-variant polynomial-level Triple statements.
+
+    Polynomial wrappers around L2.8d (`accumulating_ntt_multiply_fill_cache_fc`
+    and `accumulating_ntt_multiply_use_cache_fc`). The impl loops over the
+    16 chunks, dispatching each through the vector-level cache variant.
+
+    Composition pattern (matrix-row reuse): `_fill_cache(A, B, _, _, cache)` sets
+    the polynomial cache (16 chunks × 8 cache slots each), then multiple
+    `_use_cache(A', B, _, _, cache)` calls reuse it with different first
+    operands and the same `B`. This is the matrix `Aᵀ · r` and `A · s`
+    pattern in L7.1 / L7.2 / L7.3.
+
+    Cache POST predicate composes with the vector-level
+    `Spec.ntt_multiply_cache_post` chunk-by-chunk: each of the 16 chunks
+    of `cache.coefficients` stores per-pair `b·zeta` Mont-reduced products
+    for that chunk's effective zetas at table positions
+    `64 + 4j + {0,1,2,3}`. -/
+
+/-- Polynomial-level cache POST predicate. For each chunk `j ∈ Fin 16` and
+    each pair `i ∈ Fin 8`: `cache.coefficients[j].elements[i]` stores the
+    Mont-reduced product `rhs.coefficients[j].elements[2i+1] · zeta_eff_i`
+    where the four base zetas for chunk `j` are
+    `Spec.zeta_at (64 + 4j + {0,1,2,3})`. Composes with the vector-level
+    `Spec.ntt_multiply_cache_post` per chunk. -/
+noncomputable def accumulating_ntt_multiply_poly_cache_post
+    (rhs cache : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                   libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
+    Prop :=
+  ∀ j : Fin 16, ∀ i : Fin 8,
+    ((cache.coefficients.val[j.val]!).elements.val[i.val]!).val.natAbs ≤ 3328
+    ∧ lift_fe_mont ((cache.coefficients.val[j.val]!).elements.val[i.val]!)
+        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (lift_fe_mont ((rhs.coefficients.val[j.val]!).elements.val[2 * i.val + 1]!))
+            (Spec.effective_zeta_fe i
+              (Spec.zeta_at (64 + 4 * j.val))
+              (Spec.zeta_at (64 + 4 * j.val + 1))
+              (Spec.zeta_at (64 + 4 * j.val + 2))
+              (Spec.zeta_at (64 + 4 * j.val + 3)))
+
+/-- L6.3c — `polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache`:
+    polynomial wrapper of `accumulating_ntt_multiply_fill_cache_fc`. Loops
+    over the 16 chunks; per chunk j it dispatches the L2.8d
+    `_fill_cache` variant with chunk `j`'s zetas
+    (`polynomial.zeta (64+4j+{0,1,2,3})`) and the chunk's mutable cache slot
+    (`cache.coefficients[j]`).
+
+    POST shape mirrors L6.3 (length + relative accumulator bound +
+    `accumulating_ntt_multiply_poly_post`) AND adds a polynomial-level
+    cache POST (`accumulating_ntt_multiply_poly_cache_post`) asserting
+    that each cache chunk stores the per-pair Mont-reduced
+    `b·zeta` products for its effective zetas. -/
+@[spec]
+theorem accumulating_ntt_multiply_fill_cache_poly_fc
+    (myself rhs cache : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (accumulator : Std.Array Std.I32 256#usize)
+    (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
+        ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
+        ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_acc_bnd : ∀ n : Fin 256, (accumulator.val[n.val]!).val.natAbs ≤ 2^30) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache
+      (vectortraitsOperationsInst := portable_ops_inst)
+      myself rhs accumulator cache
+    ⦃ ⇓ p => ⌜ (∀ n : Fin 256, (p.1.val[n.val]!).val.natAbs
+                                ≤ (accumulator.val[n.val]!).val.natAbs + 2^25) ∧
+              accumulating_ntt_multiply_poly_post
+                myself rhs accumulator p.1 ∧
+              accumulating_ntt_multiply_poly_cache_post rhs p.2 ⌝ ⦄ := by
+  sorry
+
+/-- L6.3c — `polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache`:
+    polynomial wrapper of `accumulating_ntt_multiply_use_cache_fc`. The cache
+    is read-only here; the PRE asserts the cache satisfies
+    `accumulating_ntt_multiply_poly_cache_post` (so each chunk's vector-level
+    cache PRE is dischargeable from the `Spec.ntt_multiply_cache_post`
+    extraction at that chunk's effective zetas).
+
+    POST identical to L6.3 base (length + relative bound +
+    `accumulating_ntt_multiply_poly_post`); no cache POST conjunct since
+    `_use_cache` does not write to the cache. -/
+@[spec]
+theorem accumulating_ntt_multiply_use_cache_poly_fc
+    (myself rhs cache : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (accumulator : Std.Array Std.I32 256#usize)
+    (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
+        ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
+        ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_acc_bnd : ∀ n : Fin 256, (accumulator.val[n.val]!).val.natAbs ≤ 2^30)
+    (h_cache : accumulating_ntt_multiply_poly_cache_post rhs cache) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache
+      (vectortraitsOperationsInst := portable_ops_inst)
+      myself rhs accumulator cache
+    ⦃ ⇓ r => ⌜ (∀ n : Fin 256, (r.val[n.val]!).val.natAbs
+                                ≤ (accumulator.val[n.val]!).val.natAbs + 2^25) ∧
+              accumulating_ntt_multiply_poly_post
+                myself rhs accumulator r ⌝ ⦄ := by
+  sorry
+
 /-! ## §L7 — matrix-level targets (4 theorems).
 
     These are the ultimate FC obligations: the impl matrix functions
