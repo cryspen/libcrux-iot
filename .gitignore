@@ -21,3 +21,5 @@ kyber-crate/
 *.lock
 /.fstar-cache/
 /c/combined/generated/build/
+
+!flake.lock

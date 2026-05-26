@@ -126,4 +126,10 @@ impl Operations for Coefficients {
     fn invert_ntt_montgomery(simd_units: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
         invntt::invert_ntt_montgomery(simd_units)
     }
+
+    fn reduce(simd_units: &mut [Self; SIMD_UNITS_IN_RING_ELEMENT]) {
+        for i in 0..simd_units.len() {
+            Self::shift_left_then_reduce::<0>(&mut simd_units[i]);
+        }
+    }
 }

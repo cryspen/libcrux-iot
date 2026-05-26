@@ -8,7 +8,7 @@
    "inherited": false,
    "dir": "../../../../specs/sha3/proofs/aeneas-lean",
    "configFile": "lakefile.toml"},
-  {"url": "git@github.com:cryspen/hax-evit.git",
+  {"url": "https://github.com/cryspen/hax-evit",
    "type": "git",
    "subDir": "hax-lib/proof-libs/aeneas-lean",
    "scope": "",

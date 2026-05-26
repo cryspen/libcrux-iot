@@ -2638,6 +2638,33 @@ mod cross_spec {
         }
     }
 
+    /// Broader random + boundary corpus for `keccakf1600` vs the hacspec
+    /// `keccak_f` permutation. Reflects the Lean theorem
+    /// `keccakf1600_equiv_hacspec` (see
+    /// `LibcruxIotSha3/Equivalence/HacspecBridge.lean`).
+    #[test]
+    fn keccakf1600_matches_keccak_f_broad() {
+        let mut rng = StdRng::seed_from_u64(0xCAFE_F1600);
+        let mut cases: alloc::vec::Vec<[u64; 25]> = alloc::vec![
+            [0u64; 25],
+            [u64::MAX; 25],
+            [u64::MAX >> 1; 25],
+            core::array::from_fn(|i| 1u64 << (i % 64)),
+            core::array::from_fn(|i| i as u64),
+            core::array::from_fn(|i| (i as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)),
+        ];
+        for _ in 0..256 {
+            cases.push(random_state(&mut rng));
+        }
+
+        for (idx, case) in cases.into_iter().enumerate() {
+            let spec_out = hacspec_sha3::keccak_f::keccak_f(case);
+            let mut s = state_from_spec(case);
+            keccakf1600(&mut s);
+            assert_eq!(spec_out, state_to_spec(&s), "case #{}", idx);
+        }
+    }
+
     // ---------------------------------------------------------------------
     // Per-round granularity NOTE
     //

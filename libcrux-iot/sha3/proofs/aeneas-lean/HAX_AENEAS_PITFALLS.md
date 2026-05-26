@@ -28,27 +28,11 @@ The pitfalls are organised into two parts:
 
 ## Priority for proof engineers
 
-This is the priority-ordered shortlist of what to look at first.
-
-### 🔴 P0 — Active blocker for `theta_lift_spec` (and by extension Steps 7–9 of the stage)
-
-- **L6  `lift_lane_bv` irreducibility blocks the final `← lift_xor`
-  / `← lift_td` fold.** With every other diagnostic addressed (helpers
-  fire for all 25 reads on both sides, indices are normalised, both
-  sides land in the canonical LL tower form), the very last step —
-  combining adjacent `lift_lane_bv ?a ?b ^^^ lift_lane_bv ?c ?d` pairs
-  via the reverse lifting lemmas — refuses to fire in the actual proof
-  context.  A standalone `lean_run_code` reproducer with the same
-  surface goal closes via `simp only [← lift_xor, ← lift_td]`.  The
-  one surviving `sorry` in `LibcruxIotSha3/Equivalence/ThetaLift.lean`
-  is exactly this step.
-
-  Hypothesis: simp's reducibility-aware matcher treats the irreducible
-  `lift_lane_bv` head differently in the in-context goal vs. the
-  reproducer, even though pp shows identical surface syntax.  Need a
-  proof engineer who knows simp's internals to confirm and propose
-  either (a) a config flag that disables the reducibility check, or
-  (b) a rewriting strategy that doesn't trip it.
+These pitfalls were collected during a development effort that has
+since completed (Bridge 1 + Campaign 3, 0 sorries). The L6 "active
+blocker" that originally motivated this document was resolved — see
+section L6 below for the fix. The remaining items would still
+materially help the next user of this pipeline.
 
 ### 🟠 P1 — High-leverage unblockers (would have prevented ~60% of the diagnostic burn)
 
@@ -104,15 +88,12 @@ users don't re-pay:
 
 ### Suggested action for proof engineers
 
-1.  **Diagnose L6 first** — without this, no progress on the load-bearing
-    sorry.  The single ThetaLift.lean sorry at line 585 + the
-    standalone reproducer below it is enough to confirm/refute the
-    "reducibility-aware matcher" hypothesis.
-2.  **Land L13 (1) and L13 (4) in `Aeneas.Std`** — these are tiny `@[simp]`
-    lemmas that immediately unblock Step 7 (`PrcLift` spec coupling)
-    without re-running the surface-syntax diagnostic gauntlet.
-3.  **L1.2 (proof-irrelevant bounds) is research-y** — defer until
-    after Steps 7–9 land, but be aware it's a latent risk.
+1.  **Land L13 (1) and L13 (4) in `Aeneas.Std`** — these are tiny `@[simp]`
+    lemmas that would immediately remove the surface-syntax diagnostic
+    gauntlet that consumed ~60% of this stage's diagnostic time.
+2.  **L1.2 (proof-irrelevant bounds) is research-y** — a latent risk
+    on any proof that compares two `0#usize` (or any literal UScalar)
+    occurrences originating from different elaboration paths.
 
 ---
 
@@ -512,15 +493,15 @@ can verify the baseline in one command.
 
 ## Closing note
 
-Stage 2 of the SHA-3 equivalence proof landed in 8 sessions × 1.5
-days each; ~60% of that was diagnostic time on the surface-syntax /
-underlying-term mismatches in sections L1–L3 above.  The proof
-**structure** (the 11 sub-function `@[spec]` lemmas, the 12-conjunct
-`theta_comp_spec_local` post, the `lift_theta_applied` definition, the
-25 `lift_getElem_bv_N` helpers, the impl-side preservation specs) was
-straightforward to write once the form-matching issues were
-understood.  The remaining `sorry` (the algebraic fold from LL-tower
-to single LL, see L6) is one missing piece of simp-normalisation lore.
+The SHA-3 equivalence proof — Bridge 1 (Keccak-f[1600] impl ↔ hacspec)
+and Campaign 3 (full sponge / SHAKE / SHA-3 ema) — landed with 0
+sorries. The proof **structure** (the 11 sub-function `@[spec]` lemmas,
+the 12-conjunct `theta_comp_spec_local` post, the `lift_theta_applied`
+definition, the 25 `lift_getElem_bv_N` helpers, the impl-side
+preservation specs, plus all the sponge-level Triples in `Sponge/`)
+was straightforward to write once the form-matching issues were
+understood; ~60% of the total time was diagnostic on the
+surface-syntax / underlying-term mismatches in sections L1–L3 above.
 
 If hax-aeneas-lean is to become accessible to verification engineers
 who aren't already deeply familiar with Lean 4's elaboration
