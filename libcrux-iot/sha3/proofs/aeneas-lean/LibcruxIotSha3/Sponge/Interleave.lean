@@ -1,6 +1,5 @@
 /-
-  # Prerequisite — Aeneas-Result lifts of `Lane2U32.interleave` /
-  # `Lane2U32.deinterleave`.
+  # Aeneas-Result lifts of `Lane2U32.interleave` / `Lane2U32.deinterleave`.
 
   Bridges the impl's 13-stage bit-deposit code (`Extraction/Funs.lean` lines
   116-163 and 3993-4065) to the pure-`BitVec` models `interleave_bv` /
@@ -14,20 +13,16 @@
   in this file) recovers the LE-concatenated `u64` form consumed by the
   byte-bridge layer in `Sponge/Bytes.lean`.
 
-  Technique: the proof is a pure `hax_mvcgen` walk through ~30 `Std.U32`/
-  `Std.U64` ops, finishing with a single `BitVec` equality closed by
-  `bv_decide` (after exposing the underlying `.bv` content through
-  `Std.U32.bv_eq_imp_eq` / `Std.U64.bv_eq_imp_eq` + `UScalar.bv_*`).
-
-  ## Layout note (2026-05-21)
+  Technique: a pure `hax_mvcgen` walk through ~30 `Std.U32`/`Std.U64` ops,
+  finishing with a single `BitVec` equality closed by `bv_decide` (after
+  exposing the underlying `.bv` content through `Std.U32.bv_eq_imp_eq` /
+  `Std.U64.bv_eq_imp_eq` + `UScalar.bv_*`).
 
   The BV-pure identity layer (`interleave_bv`, `deinterleave_bv`,
   `lift_lane_bv_xor`, `interleave_bv_lift_eq`, `deinterleave_bv_lift_eq`)
-  was hoisted from `Sponge/Bytes.lean` into this file so that
-  `Sponge/Bytes.lean` may depend on `Sponge/LoopSpecs.lean` (which itself
-  imports this file) when installing the top-level
-  `load_block_spec` / `store_block_spec` / `load_block_full_spec` Triples,
-  without introducing an import cycle.
+  lives in this file (rather than in `Sponge/Bytes.lean`) so that
+  `Sponge/Bytes.lean` can depend on `Sponge/LoopSpecs.lean` (which itself
+  imports this file) without an import cycle.
 -/
 import LibcruxIotSha3.Sponge.Opaque
 
@@ -54,9 +49,7 @@ Three pure-BitVec identities anchor the byte ↔ interleaved-lane bridge:
 3. **`deinterleave_bv_lift_eq`** — the dual: deinterleave's two output
    halves equal the LE-byte split of `lift_lane_bv even_bits odd_bits`.
 
-All three are discharged purely by `bv_decide` after the relevant unfold.
-These are the load-bearing crux of Plan.lean § 1 lines 222–224 and
-274–279. -/
+All three are discharged purely by `bv_decide` after the relevant unfold. -/
 
 /-- `lift_lane_bv` distributes over per-half XOR.  Pure `bv_decide`. -/
 theorem lift_lane_bv_xor (z0 z1 w0 w1 : BitVec 32) :

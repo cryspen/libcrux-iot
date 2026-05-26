@@ -16,11 +16,6 @@
   - `keccak.squeeze_first_and_last_spec` — no permutation, partial
     output via `store_block_full` + copy.
 
-  ## See also
-
-  - `Sponge/Plan.lean` § 4 for the textbook posts.
-  - `Sponge/Opaque.lean` — `keccakf1600_seal_spec`.
-  - `Sponge/Bytes.lean` — `state.KeccakState.store_block_spec`.
 -/
 import LibcruxIotSha3.Sponge.AbsorbBlock
 

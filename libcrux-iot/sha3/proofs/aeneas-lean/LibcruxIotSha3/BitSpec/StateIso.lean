@@ -2,12 +2,8 @@
   Structural isomorphism between the pure-Lean `BitSpec.KState` and the
   Aeneas-extracted `libcrux_iot_sha3.state.KeccakState`.
 
-  This file provides the conversion FUNCTIONS `KState.toAeneas` and
-  `KState.fromAeneas` plus the per-Lane round-trip theorems. The
-  KState-level round-trip theorems are *not* proven here — they're only
-  needed if the structural equivalence's per-sub-fn proofs use them.
-  Adding them later is cheap; over-engineering the iso now risks
-  fighting Lean's elaborator on irrelevant `Vector`/`Array` plumbing.
+  Provides the conversion functions `KState.toAeneas` and
+  `KState.fromAeneas` plus the per-Lane round-trip theorems.
 -/
 import LibcruxIotSha3.BitSpec.State
 import LibcruxIotSha3.Extraction.Funs
@@ -52,10 +48,7 @@ theorem Lane.toAeneas_fromAeneas (l : lane.Lane2U32) :
   | [a, b], _ =>
     cases a; cases b; rfl
 
-/-! ## Vector Lane n ↔ Aeneas.Std.Array Lane2U32 n#usize
-
-    Conversion functions only — KState-level round-trip theorems are
-    deferred until they are proven to be needed. -/
+/-! ## Vector Lane n ↔ Aeneas.Std.Array Lane2U32 n#usize -/
 
 private theorem listLenAeneas25 (v : Vector Lane 25) :
     (v.toList.map Lane.toAeneas).length = (25#usize).val := by

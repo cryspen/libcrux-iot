@@ -117,7 +117,7 @@ def impl_swap (i : Fin 25) : Bool :=
     `impl_swap_k k L = true`. Cycle of length 4 — `impl_swap_k 4 =
     impl_swap_k 0 = (fun _ => false)`.
 
-    Empirically derived (2026-05-19 session): per-round identities
+    Per-round identities
 
     `spec_round_step (lift_perm s.toAeneas (impl_perm^[k]) (impl_swap_k k)) s.i`
     `  = .ok (lift_perm (bit_round{k} s).toAeneas (impl_perm^[k+1]) (impl_swap_k (k+1)))`

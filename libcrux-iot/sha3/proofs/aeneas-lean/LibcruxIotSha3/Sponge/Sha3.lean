@@ -1,12 +1,12 @@
 /-
   # Top-level `keccak.keccak` ↔ `sponge.keccak`.
 
-  This file delivers the largest composition in the sponge proofs:
-  the impl function `keccak.keccak` (full pipeline: absorb-full-loop +
-  absorb-final + first-output-block + squeeze-loop + optional
-  trailing block) matches the spec `sponge.keccak` byte-by-byte.
+  Largest composition in the sponge proofs: the impl function
+  `keccak.keccak` (full pipeline: absorb-full-loop + absorb-final +
+  first-output-block + squeeze-loop + optional trailing block) matches
+  the spec `sponge.keccak` byte-by-byte.
 
-  ## Post landed (textbook equality-form)
+  ## Post
 
   ```
   @[spec]
@@ -20,11 +20,8 @@
                   ∧ ∀ k < out.val.length, r.val[k]! = spec_out.val[k]! ⌝⦄
   ```
 
-  ## Strategy
-
-  Compose impl and spec sides as independent `.ok`-equation chains
-  (lesson from `absorb_final`: parallel `hax_mvcgen` over `do`-blocks
-  induces `__do_jp` friction), then bridge byte-by-byte.
+  Impl and spec sides are composed as independent `.ok`-equation chains,
+  then bridged byte-by-byte.
 
   ### Impl side
   - `keccak.keccak_loop0_spec` ⇒ `absorb_fold s data RATE n.val = .ok (lift s1)`.
@@ -43,19 +40,6 @@
     for the new-state `s_init`.
   - `sponge.squeeze` is characterized byte-wise by `sponge_squeeze_byte_eq`
     (from `Sponge/Squeeze.lean`).
-
-  ## Status
-
-  This file currently lands a **partial** result: the `blocks = 0`
-  branch is proved end-to-end. The `blocks ≥ 1` branch carries the
-  same structural skeleton but is gated by additional bridging work
-  between impl per-byte writes and `sponge.squeeze`'s per-byte
-  closure. See the `sorry`-free `keccak_keccak_spec_blocks_zero`
-  Triple below, and the full target theorem stub.
-
-  ## See also
-
-  - `Sponge/Plan.lean` § 7 — full Plan post target.
 -/
 import LibcruxIotSha3.Sponge.AbsorbFinal
 import LibcruxIotSha3.Sponge.Squeeze

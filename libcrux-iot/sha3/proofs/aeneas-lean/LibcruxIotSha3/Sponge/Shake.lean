@@ -2,14 +2,14 @@
   # SHAKE128/256 + SHA3-{224,256,384,512} ema specs.
 
   Each of these 6 top-level digest functions is a direct instantiation of
-  `keccak.keccak_keccak_spec` (landed in `Sponge/Sha3.lean`). The impl side
+  `keccak.keccak_keccak_spec` (in `Sponge/Sha3.lean`). The impl side
   goes through `keccakx1 RATE DELIM` which is a one-liner wrapper around
   `keccak.keccak RATE DELIM`; the spec side goes through `sha3.sha3_N` /
   `sha3.shake_N` which is a one-liner wrapper around `sponge.keccak RATE
   DELIM`. The proofs thus reduce to: unfold both wrappers, apply
   `keccak_keccak_spec`, repackage.
 
-  ## Posts landed (textbook equality-form)
+  ## Posts (equality-form)
 
   ```
   -- SHAKE (variable length):

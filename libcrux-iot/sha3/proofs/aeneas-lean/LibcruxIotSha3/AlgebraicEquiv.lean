@@ -17,12 +17,10 @@
   4. Time-varying `impl_swap_k` polarity tracking (see
      `Foundation/Lift.lean`) — a 4-cycle
      `swZero → impl_swap → sw2 → sw3 → swZero` that tracks the actual
-     polarity layout at each round. Replaces the earlier static-`impl_swap`
-     architecture that needed a `BalancedAt k` precondition (pivoted out
-     on 2026-05-19 after empirical evidence that `BalancedAt` is not
-     preserved across rounds 1–3). With `impl_swap_k`, both ends of a
-     4-round chunk use `impl_swap_k 0 = impl_swap_k 4 = (fun _ => false)`,
-     so the canonical lift threads through unconditionally.
+     polarity layout at each round. Both ends of a 4-round chunk use
+     `impl_swap_k 0 = impl_swap_k 4 = (fun _ => false)`, so the canonical
+     lift threads through unconditionally — no `BalancedAt k` precondition
+     required.
   5. Per-round algebraic correspondence theorems
      `bit_round{k}_alg_eq` (k ∈ {0,1,2,3}) — the load-bearing algebra.
      Each says (unconditionally, no state precondition)
@@ -194,18 +192,15 @@ theorem bit_round3_i (s : KState) (hi : s.i.val < 24) :
 
 /-! ## Time-varying polarity tracking (no `BalancedAt` precondition)
 
-    The earlier static-`impl_swap` architecture required a
-    `BalancedAt k` precondition that was *not* preserved across rounds
-    1–3 (empirical counter-example, 2026-05-19). The fix is the
-    time-varying `impl_swap_k` in `Foundation/Lift.lean`: a 4-cycle
-    `swZero → impl_swap → sw2 → sw3 → swZero` that tracks the actual
+    Polarity is tracked by the time-varying `impl_swap_k` in
+    `Foundation/Lift.lean`: a 4-cycle
+    `swZero → impl_swap → sw2 → sw3 → swZero` that records the actual
     polarity layout at each round so the canonical lift recovers the
     spec U64.
 
-    With `impl_swap_k`, the per-round identities hold **unconditionally**
-    (verified empirically on three different unbalanced probes,
-    2026-05-19 session). Both the start and the end of a 4-round chunk
-    use `impl_swap_k 0 = impl_swap_k 4 = (fun _ => false)`, so
+    With `impl_swap_k`, the per-round identities hold **unconditionally**.
+    Both the start and the end of a 4-round chunk use
+    `impl_swap_k 0 = impl_swap_k 4 = (fun _ => false)`, so
     `lift_perm s id (impl_swap_k 0) = lift s` — the canonical lift
     threads cleanly through the 24-round chain with no `BalancedAt`. -/
 

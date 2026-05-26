@@ -10,15 +10,10 @@
     convenience lemmas used by `StructuralEquiv.lean` and the
     loop-invariant unpacking in `AlgebraicEquiv.lean`.
 
-  ## History (2026-05-20 cleanup)
-
-  Extracted from the former `Foundation/Keccakf1600Loop.lean`, whose
-  OLD `keccakf1600_equiv` path (structured around `Balanced` preservation
-  across rounds 1-3) was empirically false and has been superseded by
-  `Composition.keccakf1600_equiv_via_bit` (canonical `lift r_impl`, no
-  `Balanced` precondition, via the time-varying `impl_swap_k`
-  architecture). The I32 iterator + range-loop helpers from the same
-  file now live in `Foundation/I32LoopSpec.lean`.
+  The top-level equivalence is `Composition.keccakf1600_equiv_via_bit`
+  (canonical `lift r_impl`, no `Balanced` precondition, via the
+  time-varying `impl_swap_k` architecture). The I32 iterator +
+  range-loop helpers live in `Foundation/I32LoopSpec.lean`.
 -/
 import LibcruxIotSha3.Foundation.SpecStep
 

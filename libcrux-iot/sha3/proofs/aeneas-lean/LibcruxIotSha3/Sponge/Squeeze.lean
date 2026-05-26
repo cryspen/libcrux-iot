@@ -14,28 +14,18 @@
     `squeeze_fold s (blocks - 1) = .ok (lift r)`.
 
   * `squeeze_byte_at` — the per-byte projection of a spec state used
-    by both `keccak.squeeze_next_block_spec` and the eventual
-    per-byte equivalence theorem.
+    by both `keccak.squeeze_next_block_spec` and the per-byte
+    equivalence theorem.
 
-  ## Deferred (TODO)
-
-  * `sponge_squeeze_byte_eq` — the pure block-wise characterization
-    of `sponge.squeeze`. Equates byte `k` of `sponge.squeeze` (under
+  * `sponge_squeeze_byte_eq` — pure block-wise characterization of
+    `sponge.squeeze`. Equates byte `k` of `sponge.squeeze` (under
     `iterate_keccak_f (k/rate) state = .ok s_b`) with
-    `squeeze_byte_at s_b (k % rate.val)`. Proof path: use
-    `createi_pure_spec` on the squeeze closure, then unfold the
-    closure body's arithmetic (`/`, `*`, `-`, `byte_lane_idx`,
-    `Array.index_usize`, `U64.to_le_bytes`). All steps reduce to
-    closed forms under `rate.val > 0` and `rate.val % 8 = 0`, but
-    the per-step VC bookkeeping is substantial. Establishing
-    `iterate_keccak_f` totality (needed to chain success across
-    all `OUTPUT_LEN` byte indices) requires a `keccak_f.keccak_f`
-    totality lemma, currently available only as a Triple on lifted
-    impl states via Bridge 1's `keccakf1600_equiv_hacspec`.
+    `squeeze_byte_at s_b (k % rate.val)`. The conditional totality
+    of `iterate_keccak_f` is supplied at the use site via Bridge 1's
+    `keccakf1600_equiv_hacspec`.
 
   ## See also
 
-  - `Sponge/Plan.lean` § 5 — full Plan post target.
   - `Sponge/SqueezeBlock.lean:keccak.squeeze_next_block_spec` —
     per-block Triple used in the loop body.
 -/
@@ -148,20 +138,7 @@ position `k % rate`. -/
     serialization of `s`. Matches the per-byte formula used in
     `keccak.squeeze_next_block_spec` and is the form that
     `sponge.squeeze` produces for byte `k = b*rate + j` of the OUTPUT
-    (with `b = k/rate`, `j = k % rate < rate`).
-
-    Used in Theorem 3's loop invariant to bridge impl-side per-byte
-    output to the spec's `iterate_keccak_f`-driven squeeze. The
-    bridge (Theorem 2: `sponge_squeeze_byte_eq`) — the per-byte
-    equality `(sponge.squeeze ...).val[k]! = squeeze_byte_at (iterate
-    state) (k % rate)` — is deferred: it is a pure unfolding of the
-    `createi`-closure (using `createi_pure_spec`), and the per-cell
-    computation involves several `Usize` arithmetic operations that
-    must each be reduced to closed form. The key invariant that
-    iterate_keccak_f always succeeds requires a totality lemma for
-    `keccak_f.keccak_f`, currently established only on lifted impl
-    states via Bridge 1's `keccakf1600_equiv_hacspec`. See Plan §5
-    risks. -/
+    (with `b = k/rate`, `j = k % rate < rate`). -/
 def squeeze_byte_at (s : Std.Array Std.U64 25#usize) (j : Nat) : Std.U8 :=
   ⟨(BitVec.toLEBytes (s.val[5 * ((j / 8) % 5) + (j / 8) / 5]!).bv)[j % 8]!⟩
 

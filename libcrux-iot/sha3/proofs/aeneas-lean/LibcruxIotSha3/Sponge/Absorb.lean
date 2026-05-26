@@ -25,9 +25,8 @@
 
   ## See also
 
-  - `Sponge/Plan.lean` § 3 — full Plan post target.
   - `Sponge/AbsorbBlock.lean:keccak.absorb_block_spec` — per-block
-    textbook Triple used in the loop body.
+    Triple used in the loop body.
   - `Equivalence/HacspecBridge.lean:loop_range_spec_usize`.
 -/
 import LibcruxIotSha3.Sponge.AbsorbBlock
@@ -355,9 +354,8 @@ theorem sponge_absorb_rec_eq_fold
 
 /-! ### `keccak.keccak_loop0_spec` — impl loop ↔ Nat.fold of `sponge.absorb_block`.
 
-The post is the canonical textbook target from Plan § 3:
-termination (impl returns `.ok r`), `r.i.val = 0`, and the spec-side
-fold equation
+The post: termination (impl returns `.ok r`), `r.i.val = 0`, and the
+spec-side fold equation
 
   `Nat.fold n.val (init := .ok (lift s)) (fun j _ acc => acc.bind fun st =>
       sponge.absorb_block st (data.slice (j*RATE) ((j+1)*RATE)) RATE)

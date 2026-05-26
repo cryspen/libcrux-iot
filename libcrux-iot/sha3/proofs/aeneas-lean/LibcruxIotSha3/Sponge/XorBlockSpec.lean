@@ -1,41 +1,24 @@
 /-
   # Spec-side scaffolding for `sponge.xor_block_into_state`.
 
-  This file installs the spec-side scaffolding needed to drive the
-  **monadic-in-post** posts of `load_block_spec` (and `load_block_full_spec`)
-  in `Sponge/Bytes.lean` via `hax_mvcgen`.
-
-  ## Status (closer, 2026-05-21) — Partial-B (extended 2026-05-21)
-
-  **Landed:**
+  Installed:
 
   - `from_fn_pure_spec` — generic `@[spec]` analog of `createi_pure_spec`
     (HacspecBridge.lean:663) but stated over the *direct* `FnMut` instance
     (no `Fn` wrapper required). `sponge.xor_block_into_state` uses
     `core_models.array.from_fn` directly with a `FnMut`, not the `Fn`-wrapped
-    `createi`. This generic Triple is reusable for any pure FnMut closure.
+    `createi`. Reusable for any pure FnMut closure.
   - `list_8_at` / `list_8_at_val_eq_slice` — helpers that extract 8 bytes
     from a list at offset `o`, padded to length 8, with a proof that the
     padded form coincides with the exact slice when `o + 8 ≤ length`.
   - `xor_block_value_at` — the per-cell pure value characterizing the
     closure body (`f`-side for `from_fn_pure_spec`).
-  - **`xor_block_into_state_closure_call_mut_spec`** (NEW, 2026-05-21
-    extended pass): the per-cell `@[spec]` for the 25-cell `from_fn` body.
-    Proof drives the inner do-chain manually:
+  - `xor_block_into_state_closure_call_mut_spec` — the per-cell `@[spec]`
+    for the 25-cell `from_fn` body. Drives the inner do-chain
     `div/rem → mul/add → div → if → (slice-index → try_from → unwrap →
     from_le_bytes → lift) | (Array.index_usize)`. In the `b < rate/8`
     branch, matches the constructed 8-byte array's `.val` with
-    `list_8_at block.val (8b)` via `list_8_at_val_eq_slice`. Closed under
-    only `propext`, `Classical.choice`, `Quot.sound` (no `Lean.ofReduceBool`
-    / `Lean.trustCompiler` since no `bv_decide` / `decide` is used).
-
-  **Future work (deferred — see Bytes.lean `Remaining post strength`):**
-
-  - Strengthening `state.load_block_2u32_loop0_spec` /
-    `state.load_block_2u32_loop1_spec` invariants to characterize
-    `state_flat[j]` / `s'.st[5*(j%5)+j/5]` after iteration.
-  - Driving `state.KeccakState.load_block_spec`'s monadic-in-post post via
-    `from_fn_pure_spec` + the closure spec.
+    `list_8_at block.val (8b)` via `list_8_at_val_eq_slice`.
 
   ## Closure body (Extraction/Funs.lean:1076-1105)
 
@@ -51,10 +34,8 @@
     state[k]
   ```
 
-  Both branches return `(value, c)` — the closure state is preserved.
-  This is **the** key insight that makes `from_fn_pure_spec` applicable:
-  even though the body has an `if`, the closure is pure. The conditional
-  lives inside the per-cell `f`-function (`xor_block_value_at`).
+  Both branches return `(value, c)` — the closure state is preserved, so
+  `from_fn_pure_spec` applies even though the body has an `if`.
 -/
 import LibcruxIotSha3.Sponge.Interleave
 import LibcruxIotSha3.Sponge.SliceSpecs

@@ -1,16 +1,16 @@
 /-
-  Rosetta-stone the structural-equivalence equivalence: one sub-fn at a time.
+  Structural equivalence: each Aeneas-extracted `keccak.keccakf1600_*`
+  sub-function is observationally equal to the corresponding pure-Lean
+  `bit_*` definition under `KState.fromAeneas`.
 
-  Proves `keccak.keccakf1600_round0_pi_rho_chi_y0_zeta0` is observationally
-  equal to the pure-Lean `bit_pi_rho_chi_y0_zeta0` under `KState.fromAeneas`.
-
-  Strategy (per the "minimize unfolding" rule):
-  - Consume the existing `@[spec high]`-tagged FC lemma `pi_rho_chi_y0_zeta0_spec_fc`
-    from `PrcLift.lean` via `mvcgen` — no need to re-do its bv chain locally.
-  - The residual `KState.fromAeneas r = bit_pi_rho_chi_y0_zeta0 ...` splits
-    into 4 field equalities. The `st` field collapses by `simp` once the
-    iso-projection lemmas (`Lane.fromAeneas_*`, `stateArray*FromAeneas_getElem`
-    in `Project.lean`) are in scope; `c`/`d`/`i` are trivial chain rewrites.
+  For each sub-function, the proof:
+  - Consumes the existing `@[spec high]`-tagged FC lemma from
+    `PrcLift.lean` via `mvcgen` (no need to re-do its bv chain locally).
+  - Splits the residual `KState.fromAeneas r = bit_* ...` into four
+    field equalities. The `st` field collapses by `simp` once the
+    iso-projection lemmas (`Lane.fromAeneas_*`,
+    `stateArray*FromAeneas_getElem` in `Project.lean`) are in scope;
+    `c`/`d`/`i` are trivial chain rewrites.
 -/
 import LibcruxIotSha3.BitSpec.Spec
 import LibcruxIotSha3.BitSpec.StateIso
@@ -3595,15 +3595,11 @@ theorem keccakf1600_4rounds_eq (BR : Std.Usize) (s : state.KeccakState)
 
 /-! ## Loop bridge: iterate `bit_keccakf1600_4rounds` 6 times
 
-Uses `loop_range_spec_i32` with an invariant that tracks both the
-iteration index–to–`s.i` correspondence (`s_iter.i.val = 4 * k.val.toNat`)
-and the bit-side equality (`KState.fromAeneas s_iter = f^[k] (...)`).
-
-This is the bit-side analogue of the former `keccakf1600_loop_equiv`
-(removed during the 2026-05-20 cleanup; spec-chain + I32 loop helpers
-extracted into `Foundation/SpecChain.lean` + `Foundation/I32LoopSpec.lean`),
-but without the `Balanced` / `lift_perm` machinery: the bit-side defs
-already chain structurally. -/
+Uses `loop_range_spec_i32` (from `Foundation/I32LoopSpec.lean`) with an
+invariant that tracks both the iteration-index → `s.i` correspondence
+(`s_iter.i.val = 4 * k.val.toNat`) and the bit-side equality
+(`KState.fromAeneas s_iter = f^[k] (...)`). No `Balanced` / `lift_perm`
+machinery is needed: the bit-side defs chain structurally. -/
 
 /-- Per-iteration invariant for the bit-side loop bridge: at iter
     boundary `k ∈ [0, 6]`, the impl state has `i.val = 4k`, and its

@@ -9,9 +9,7 @@
 
   This file establishes the preservation invariants needed to compose
   PRC with the θ step (`d` is read but not written) and to step `s.i`
-  forward by one round constant. Full r.st content characterisation is
-  deferred — it requires 25-cell post-conditions on each sub-function
-  and is gated on the M2 spec re-extraction.
+  forward by one round constant.
 -/
 import LibcruxIotSha3.Foundation.Lift
 import LibcruxIotSha3.Foundation.ThetaLift

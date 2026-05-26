@@ -133,7 +133,7 @@ Three named pieces (one file each at the top of the proof tree):
     its `Usize` loop, then composes with `ViaBit` to yield the top
     theorem `keccakf1600_equiv_hacspec`.
 
-### Time-varying polarity (the load-bearing architectural pivot)
+### Time-varying polarity
 
 `AlgebraicEquiv`'s per-round identities use a time-varying half-swap
 function `impl_swap_k : Nat → Fin 25 → Bool` with a 4-cycle:
@@ -141,9 +141,7 @@ function `impl_swap_k : Nat → Fin 25 → Bool` with a 4-cycle:
 and `impl_swap_k 3` track intermediate polarities, `impl_swap_k 4 =
 impl_swap_k 0`. Both ends of each 4-round chunk land on `swZero`, so
 the canonical `lift` threads through the 24-round chain
-unconditionally. An earlier attempt used a `BalancedAt` precondition;
-it was abandoned after empirical evidence that `Balanced` is not
-preserved across rounds 1–3.
+unconditionally.
 
 ## File map
 

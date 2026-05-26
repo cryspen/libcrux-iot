@@ -6,7 +6,7 @@
   This file composes `theta_lift_spec` and `prc_lift_spec` (round 0)
   into a single Triple establishing the full per-round equivalence.
 
-  ## Status — all four rounds proven
+  ## Proof shape
 
   `round{0,1,2,3}_equiv_spec` each build at 16M heartbeats. The four
   proofs follow the same shape (one `hax_mvcgen`, side-goal `scalar_tac`

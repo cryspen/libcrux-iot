@@ -20,15 +20,15 @@
     keccak_f.keccak_f state1
   ```
 
-  ## Post strength (Textbook post landed 2026-05-21)
+  ## Post
 
-  The Triple here carries the **full textbook post**: termination,
-  `r.i.val = 0`, AND the spec-side equation
+  The Triple carries the full textbook post: termination,
+  `r.i.val = 0`, and the spec-side equation
   `sponge.absorb_block (lift s) <block> RATE = .ok (lift r)`
   where `<block> := block_of_blocks blocks start RATE _` is the
   rate-window slice of `blocks`.
 
-  Bridge infrastructure (landed 2026-05-21):
+  Bridge infrastructure:
 
     - `fromLEBytes_8_split_4_4`         — pure BV identity (bv_decide).
     - `padded4_eq_explicit` /
@@ -40,10 +40,7 @@
                                           ⇒ inner-window readouts match.
     - `UScalar_bv_of_U{32,64}_from_le_bytes_eq`
                                         — `Subtype.ext`-based reduction
-                                          closing the `BitVec.cast` layer
-                                          (the prior `congr`-based
-                                          attempt tripped a 200k delab
-                                          heartbeat cap).
+                                          closing the `BitVec.cast` layer.
     - `load_block_to_xor_block_bridge`  — combines the above into the
                                           per-cell U64-equality
                                           connecting `load_block_spec`'s
@@ -67,12 +64,6 @@
                 = `keccak_f.keccak_f s_spec_1`
                 = `keccak_f.keccak_f (lift s1)`
                 = `.ok (lift r)`.
-
-  ## See also
-
-  - `Sponge/Plan.lean` § 2 — full Plan post target.
-  - `Sponge/Opaque.lean` — `keccakf1600_seal_spec`.
-  - `Sponge/Bytes.lean` — `state.KeccakState.load_block_spec`.
 -/
 import LibcruxIotSha3.Sponge.Bytes
 
@@ -362,15 +353,13 @@ def block_of_blocks
     from `blocks` (at offset `start`) into the state, then apply the
     Keccak-f permutation.
 
-    Textbook post: termination, `r.i.val = 0`, and the spec-side
-    equation
+    Post: termination, `r.i.val = 0`, and the spec-side equation
 
         sponge.absorb_block (lift s) (block_of_blocks blocks start RATE _) RATE
-          = .ok (lift r)
+          = .ok (lift r).
 
-    matching the "Real post" target of `Plan.lean` § 2. The `r.i.val = 0`
-    clause is what the downstream loop chain consumes; the spec equation feeds
-    `absorb_rec` accumulation. -/
+    The `r.i.val = 0` clause is what the downstream loop chain consumes;
+    the spec equation feeds `absorb_rec` accumulation. -/
 @[spec]
 theorem keccak.absorb_block_spec
     (RATE : Std.Usize) (s : state.KeccakState) (blocks : Slice Std.U8)

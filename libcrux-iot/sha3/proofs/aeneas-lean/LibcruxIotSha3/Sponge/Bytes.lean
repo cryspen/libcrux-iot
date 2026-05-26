@@ -2,166 +2,22 @@
   # Byte ↔ Lane primitives (`load_block`, `store_block`,
   # `load_block_full`).
 
-  This file hosts the three top-level `@[spec]` Triples bridging the
-  impl's byte-loop loaders/stores to the sponge spec's byte ↔ lane
-  view:
+  Top-level `@[spec]` Triples bridging the impl's byte-loop
+  loaders/stores to the sponge spec's byte ↔ lane view:
 
   - `state.KeccakState.load_block_spec`      — unwraps `load_block_2u32`,
     composes the two outer-loop Triples from `Sponge/LoopSpecs.lean`.
+    Carries `⌜ r.i = s.i ⌝`.
   - `state.KeccakState.store_block_spec`     — unwraps `store_block_2u32`,
     composes the outer-loop Triple from `Sponge/LoopSpecs.lean` and
     preserves output-slice length.
   - `state.KeccakState.load_block_full_spec` — delegates to
     `load_block_spec` after `Array.to_slice` coercion.
 
-  ## Post strength (after 2026-05-21 strengthening pass — Partial-B)
-
-  The three Triples here carry the **`i`-preservation** clause needed
-  by the absorb/squeeze chaining (`r.i.val = 0` precondition on
-  the next `keccakf1600` call). Specifically:
-
-  - `load_block_spec`: `⌜ r.i = s.i ⌝` (loop1 invariant carries it).
-  - `store_block_spec`: `⌜ r.val.length = out.val.length ⌝` (returns a
-     `Slice U8`, no state component).
-  - `load_block_full_spec`: `⌜ r.i = s.i ⌝` (delegates to `load_block`).
-
-  ## Closer report (2026-05-21, extended)
-
-  - **Task 1 (`xor_block_into_state_closure_call_mut_spec`) — LANDED**
-    in `Sponge/XorBlockSpec.lean`. The per-cell `@[spec]` for the
-    25-cell `from_fn` body drives the inner do-chain (div/rem →
-    mul/add → div → if → slice-index → try_from → unwrap → from_le_bytes
-    → lift | index_usize). The `b < rate/8` branch matches the
-    constructed 8-byte array's `.val` with `list_8_at block.val (8b)`
-    via `list_8_at_val_eq_slice`. Axioms: propext, Classical.choice,
-    Quot.sound. **This unlocks the absorb_block spec-side composition.**
-
-  - **`sponge_xor_block_into_state_spec` — LANDED** in
-    `Sponge/XorBlockSpec.lean`. The direct per-cell post for
-    `sponge.xor_block_into_state`, composing `from_fn_pure_spec` with
-    Task 1. For each `i < 25`, the output cell equals
-    `xor_block_value_at state block rate i`. Axioms: propext,
-    Classical.choice, Quot.sound.
-
-  - **Helper defs for loop invariants — LANDED (2026-05-21)** in
-    `Sponge/LoopSpecs.lean`:
-      * `Lane2U32_from_4byte_LE_pairs blocks start j` — fold-form
-        value of `state_flat[j]` *before* the `interleave` step in
-        Loop0's body. Two 4-byte LE U32 reads paired into a
-        `Lane2U32`.
-      * `loop1_lane_at s state_flat j` — fold-form `BitVec 64` value
-        produced at impl-flat-index `5*(j%5) + j/5` by Loop1's
-        per-iteration XOR (`lift_lane_bv` of the XOR'd halves).
-      * `store_block_byte_at s b` — fold-form `U8` at byte index `b`
-        of the store loop's output (`lift_lane`-derived LE byte
-        split).
-    These are the SKILL §8.2-compliant named values used by the
-    strengthened invariants. The invariants themselves are still
-    deferred (see below).
-
-  - **Tasks 2-4 (loop strong invariants) — DEFERRED.** The current
-    weak invariants (`True` / `r.i = s.i` / length-preservation) are
-    closed by mvcgen + `scalar_tac`/witness-exhibition tactics that
-    do **not** carry through any content-bearing fact about
-    `state_flat[j]` / `s'.st[5*(j%5)+j/5]` / `out'[8j+b]`. Strengthening
-    each invariant requires re-driving the body mvcgen with new VCs
-    that close via `Array.update`/`set_lane`/`setSlice!` characterizations
-    plus the BV bridges (`interleave_bv_lift_eq`, `lift_lane_bv_xor`,
-    `deinterleave_bv_lift_eq`). Estimated 200-400 lines per loop.
-    Helper defs (above) are in place; the remaining work is the
-    body-VC closer for each loop.
-
-    **Precise blocker (2026-05-21):** After strengthening Loop1's `inv`
-    to `inv k acc := acc.i = s.i ∧ (∀ j ≥ k.val, j < 25 →
-    acc.st.val[5*(j%5)+j/5]! = s.st.val[5*(j%5)+j/5]!) ∧ ...`, the body's
-    inv-preservation VC for the *untouched-lane* clause becomes
-    `(Array.update acc.st (5*(k%5)+k/5) lu1).val[5*(j%5)+j/5]! =
-       acc.st.val[5*(j%5)+j/5]!` for `j > k`. This requires
-    `List.getElem!_set!_ne` plus an *involution-injectivity* lemma:
-    `j ↦ 5*(j%5)+j/5` is injective on `{0,...,24}`. The injectivity
-    is closed by `decide` (it's a finite check). The same pattern
-    applies to Loop0 (`Array.update state_flat k lu1`) and to Store
-    (`(out.setSlice! _ _).setSlice! _ _`). Each loop body requires
-    ~200-300 lines of `scalar_tac` + targeted rewriting at each
-    branching VC. **Total remaining effort:** ~900-1200 lines across
-    LoopSpecs.lean and Bytes.lean.
-
-  - **Tasks 5-7 (textbook posts here) — DEFERRED.** Each chains on
-    Tasks 2-4 via a monadic-in-post shape that connects impl-side
-    `r.st[5*(j%5) + j/5].bv = s.st[...].bv ^^^ lift_lane_bv (u32_le b1)
-    (u32_le b2)` (from strong Loop1) with the spec's
-    `xor_block_value_at` via `interleave_bv_lift_eq`. The current
-    weak posts are nonetheless sufficient for downstream chaining
-    (which only needs termination + `r.i = s.i`).
-
-  Inputs to the strengthening pass:
-
-  - **Loop1** (`state.load_block_2u32_loop1_spec`) now uses the
-    invariant `inv k s' := s'.i = s.i`, which is preserved unconditionally
-    by the body (the body's only `state.KeccakState` update is
-    `set_lane`, which is `{ self with st := a }`).
-  - Loop0 (`state.load_block_2u32_loop0_spec`) is unchanged
-    (`inv _ _ := True`): loop0 operates on `state_flat`, never touching
-    `s`, so `r.i = s.i` for the chain only requires Loop1's invariant.
-
-  ## Remaining post strength (deferred — full "textbook" form)
-
-  The full posts targeted by Plan.lean § 1 lines 244–324 also include:
-
-  - `load_block_spec` (monadic-in-post form):
-    `⦃ True ⦄ sponge.xor_block_into_state (lift s) block RATE
-       ⦃ ⇓ s' => s' = lift r ⦄`
-  - `store_block_spec`:
-    `∀ k < RATE.val, r.val[k]! =
-       ((Foundation.lift s).val[5*((k/8)%5) + (k/8)/5]!).bv.toLEBytes[k%8]!`
-  - `load_block_full_spec`: identical to `load_block_spec` after the
-    `Array.to_slice` coercion.
-
-  These require:
-
-  1. Strengthening Loop0's invariant to characterize `state_flat[k]`
-     as `interleave_bv (u32_le b1) (u32_le b2)` for each iterated `k`.
-  2. Strengthening Loop1's invariant to characterize each touched
-     `s'.st[5*(j%5) + j/5]` via `lift_lane_bv_xor`.
-  3. Driving `from_fn_pure_spec` (from `Sponge/XorBlockSpec.lean`, the
-     `FnMut`-direct analog of `createi_pure_spec`) on
-     `sponge.xor_block_into_state`'s closure, which has an `if b < rate/8`
-     branch. The conditional lives inside the per-cell `f`-function
-     `xor_block_value_at` (also in `XorBlockSpec.lean`), so the closure
-     itself is pure (both branches return `(value, c)` with `c`
-     unchanged). The per-cell `@[spec]`
-     (`xor_block_closure_call_mut_spec`) is staged in
-     `XorBlockSpec.lean` — its body needs the inner do-chain
-     `slice-index → try_from → unwrap → from_le_bytes → ok` driven
-     for the `b < rate/8` branch.
-
-  The current Triples close the *control-flow* gap and pass through
-  the `r.i = s.i` invariant needed for the next-`keccakf1600`'s
-  precondition. Downstream proofs can now compose against them via `hax_mvcgen`
-  to drive the absorb/squeeze loops at the impl side. The remaining
-  spec-equation half is deferred to a follow-up pass once the loop-0
-  /loop-1 strong invariants land. The closer (2026-05-21) landed
-  `from_fn_pure_spec` as new generic infrastructure (it parallels
-  `createi_pure_spec` from `HacspecBridge.lean` but takes a `FnMut`
-  instance directly).
-
   The BV-pure identity layer (`interleave_bv`, `deinterleave_bv`,
   `lift_lane_bv_xor`, `interleave_bv_lift_eq`,
-  `deinterleave_bv_lift_eq`) now lives in `Sponge/Interleave.lean`'s
-  header section — moved there in this commit to break the import cycle
-  (`Bytes` would otherwise need `LoopSpecs`, which imports `Interleave`,
-  which used to import `Bytes`).
-
-  ## See also
-
-  - `LibcruxIotSha3/Sponge/Plan.lean` § 1 — full Plan with textbook
-    posts targeting the strengthened version.
-  - `LibcruxIotSha3/Sponge/Opaque.lean` — opaque seal of `keccakf1600`.
-  - `LibcruxIotSha3/Sponge/LoopSpecs.lean` — outer-loop Triples
-    consumed below.
-  - `LibcruxIotSha3/Sponge/SliceSpecs.lean` — slice/byte primitives.
-  - `LibcruxIotSha3/Sponge/Interleave.lean` — interleave/deinterleave
-    Triples and BV-pure identity layer.
+  `deinterleave_bv_lift_eq`) lives in `Sponge/Interleave.lean`'s
+  header section.
 -/
 import LibcruxIotSha3.Sponge.LoopSpecs
 import LibcruxIotSha3.Sponge.XorBlockSpec

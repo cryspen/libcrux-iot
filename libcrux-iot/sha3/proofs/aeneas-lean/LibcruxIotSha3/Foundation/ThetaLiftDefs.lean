@@ -467,7 +467,8 @@ their XOR equals the canonical bit-interleaved column-XOR of the spec view).
 This generalization specialises to the existing `lift_theta_applied` at
 `(id, swZero)` — see `lift_theta_applied_perm_id` below.
 
-  Empirically verified 2026-05-19: for the post-round-1-theta probe state,
+  For example, at the post-round-1-theta state with permutation
+  `impl_perm` and swap `impl_swap_k 1`:
   `theta_unrolled (lift_perm s impl_perm (impl_swap_k 1))
    = .ok (lift_theta_applied_perm r_impl impl_perm (impl_swap_k 1))`. -/
 def lift_theta_applied_perm

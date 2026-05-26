@@ -1,12 +1,10 @@
 /-
-  # Prerequisite — Aeneas Std byte/slice `@[spec]` Triples
+  # Aeneas Std byte/slice `@[spec]` Triples
 
-  This file installs a set of small `@[spec]` Triples that the byte ↔
-  lane bridges in `Sponge/Bytes.lean` will need to discharge. None of
-  these have prior precedent in `LibcruxIotSha3/Equivalence/`; this file
-  establishes the pattern.
+  Small `@[spec]` Triples used by the byte ↔ lane bridges in
+  `Sponge/Bytes.lean`.
 
-  ## Installed (9 Triples)
+  ## Installed
 
   - `core_models_slice_Slice_len_spec` — `core_models.slice.Slice.len`
     returns the underlying list length.
@@ -23,24 +21,14 @@
     `.Ok v` yields `v`.
   - `core_models_slice_Slice_copy_from_slice_spec` — write-into-slice;
     the impl model returns the source slice outright when lengths match.
-
-  ## Installed (10th Triple — added 2026-05-21)
-
   - `core_models_array_try_from_slice_spec`
     (`Slice T → Result (result.Result (Array T N) ...)`).
     The body invokes `rust_primitives.slice.array_from_fn` on the
-    `try_from.closure`, whose Triple required an induction over the
+    `try_from.closure`, whose Triple is established by induction over the
     closure's `call_mut` calls and the `List.range N.val` `foldlM`.
     See the closure-step lemma, the `foldlM` invariant, and the final
-    Triple at the bottom of this file. This Triple is a general Aeneas
-    Std bridge with no SHA-3 specificity and belongs in
-    `rust-core-models` upstream.
-
-  ## See also
-
-  - `LibcruxIotSha3/Sponge/Plan.lean` § 1 for usage context.
-  - `LibcruxIotSha3/Sponge/Bytes.lean` for the partial delivery
-    of `load_block`/`store_block`/`load_block_full` Triples.
+    Triple at the bottom of this file. General Aeneas Std bridge with no
+    SHA-3 specificity (belongs in `rust-core-models` upstream).
 -/
 import LibcruxIotSha3.Sponge.Opaque
 
@@ -156,8 +144,8 @@ The hax `Result.unwrap` on the `core_models` `result.Result` enum panics on
 `Err` and returns the inner `T` on `Ok`. We give a Triple-style spec under
 the precondition `r = .Ok v`.
 
-NB: the `try_from` Triple (for `Slice T → Array T N`) is now proved at the
-bottom of this file (added 2026-05-21). -/
+NB: the `try_from` Triple (for `Slice T → Array T N`) is proved at the
+bottom of this file. -/
 
 /-- `Result.unwrap` of a `.Ok`-valued `r` returns the inner value.
 

@@ -9,12 +9,6 @@
 
   Used by `StructuralEquiv.lean` to verify the 6-iteration
   `keccakf1600` round-bundle loop.
-
-  ## History (2026-05-20 cleanup)
-
-  Extracted from the former `Foundation/Keccakf1600Loop.lean`. The
-  spec-chain + `Result Prop` helpers from the same file now live in
-  `Foundation/SpecChain.lean`.
 -/
 import LibcruxIotSha3.Foundation.SpecStep
 

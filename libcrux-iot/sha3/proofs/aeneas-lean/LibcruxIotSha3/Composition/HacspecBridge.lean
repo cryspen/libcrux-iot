@@ -16,12 +16,9 @@
   small `N`, and the spec-side definitions in terms of the hacspec
   (non-unrolled) variants that mirror `keccak_f.keccak_f`'s body.
 
-  ## History
-
-  Added 2026-05-20 to bridge the iteration-structure gap between our
-  proof infrastructure (using `Nat.fold 24` over `spec_round_step`) and
-  the hacspec function (using a `Usize` range loop over single-round
-  body).
+  These bridge the iteration-structure gap between our proof
+  infrastructure (using `Nat.fold 24` over `spec_round_step`) and the
+  hacspec function (using a `Usize` range loop over a single-round body).
 -/
 import LibcruxIotSha3.Composition.ViaBit
 import LibcruxIotSha3.Foundation.I32LoopSpec
@@ -307,55 +304,30 @@ theorem spec_chain_hacspec_succ (s : Std.Array Std.U64 25#usize) (n : Nat) :
   unfold spec_chain_hacspec
   rw [Nat.fold_succ]
 
-/-! ## Status
+/-! ## Components
 
-This file provides the foundational infrastructure to bridge the
-impl-level `keccak.keccakf1600` to the hacspec-level `keccak_f.keccak_f`:
+This file provides the infrastructure that bridges the impl-level
+`keccak.keccakf1600` to the hacspec-level `keccak_f.keccak_f`:
 
 - `IteratorRange_next_spec_usize` and `loop_range_spec_usize` — the
   `Usize` analogs of `I32LoopSpec`'s `*_i32` lemmas.
-- `array_from_fn_eq_unfold5` — `rust_primitives.slice.array_from_fn 5`
-  unfolds to a chain of 5 sequential `call_mut` calls (handles the
+- `array_from_fn_eq_unfold{5,25}` — `rust_primitives.slice.array_from_fn`
+  unfolds to a chain of sequential `call_mut` calls (handles the
   dependent-typed `match h : foldlM ... with | ok r => ⟨r.1, _proof_1⟩`
   via a `split` + `subst` approach).
 - `spec_round_step_hacspec` / `spec_chain_hacspec` — spec-side
   definitions mirroring the hacspec loop body using the non-`_unrolled`
   variants of θ/ρ/π/χ. Includes `_zero` and `_succ` recurrence lemmas.
-
-### Remaining work for full hacspec coupling
-
-To complete the bridge to `keccak_f.keccak_f`, two more steps are needed:
-
-1. **Function-equality lemmas**: `keccak_f.theta s = keccak_f.theta_unrolled s`
-   (and similarly for ρ/π/χ). These are NOT `rfl` — the non-`_unrolled`
-   versions use `createi` over closures (which expand to
-   `rust_primitives.slice.array_from_fn` over `List.foldlM`), while the
-   `_unrolled` versions are straight-line code. A proof requires:
-   - Extending `array_from_fn_eq_unfold5` to `_unfold25` (analogous
-     pattern, 25 element steps).
-   - Applying the unfolding lemmas to each of θ/ρ/π/χ's `createi` calls
-     with the specific closure semantics.
-
-   The dependent-typed `match h : ... with | ok result => .ok ⟨result.1, _⟩`
-   in `rust_primitives.slice.array_from_fn` (the `_proof_1` length
-   witness reads the match scrutinee) makes naive `rw` fail with
-   "motive is not type correct"; the `array_from_fn_eq_unfold5` proof
-   shows how to work around this via `split` + `subst`.
-
-2. **Loop bridge** `keccak_f_loop_eq_spec_chain_hacspec` (sketched but
-   not yet committed): applies `loop_range_spec_usize` with the
-   invariant "after k iterations, the state equals `spec_chain_hacspec
-   s k`". The body Triple proof uses `IteratorRange_next_spec_usize` to
-   step the iterator, then dispatches the `θ;ρ;π;χ;ι` chain inside the
-   `.cont` branch. The shape of the body post (cont vs done dispatch
-   under `loop_range_spec_usize`'s invariant) is the main technical
-   complexity.
-
-3. **Top-level theorem** `keccakf1600_equiv_hacspec`: composes
-   `keccakf1600_equiv_via_bit` with `spec_chain_hacspec = spec_chain`
-   (which follows from the function-equality lemmas) to get the
-   hacspec-level top theorem coupling `keccak.keccakf1600` to
-   `keccak_f.keccak_f` directly. -/
+- `theta_eq_theta_unrolled` / `rho_eq_rho_unrolled` /
+  `pi_eq_pi_unrolled` / `chi_eq_chi_unrolled` — function-equality
+  bridges from the `createi`-based hacspec forms to their straight-line
+  `_unrolled` variants.
+- `keccak_f_loop_eq_spec_chain_hacspec` — `loop_range_spec_usize` with
+  the invariant "after k iterations, the state equals
+  `spec_chain_hacspec s k`".
+- `keccakf1600_equiv_hacspec` — top-level theorem composing
+  `keccakf1600_equiv_via_bit` with the above bridges to couple
+  `keccak.keccakf1600` to `keccak_f.keccak_f` directly. -/
 
 /-! ## Loop bridge: `keccak_f.keccak_f` equals `spec_chain_hacspec ... 24`
 
