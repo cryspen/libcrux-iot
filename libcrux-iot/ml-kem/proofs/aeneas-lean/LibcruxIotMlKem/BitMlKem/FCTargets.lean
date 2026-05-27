@@ -29204,6 +29204,105 @@ private lemma lift_poly_mont_to_lift_poly
   rw [h_mont, h_plain]
   exact lift_fe_mont_mul_1353_eq_lift_fe x
 
+/-! ## §L7.1-loop0 — row-0 column loop scaffolding.
+
+    Namespace `L7_1a_FC` provides the invariant + step-post predicates
+    used to characterize `matrix.compute_As_plus_e_loop0` (the K-iteration
+    column loop for row 0) via `loop_range_spec_usize`. Each iteration
+    calls `accumulating_ntt_multiply_fill_cache` on column `j ∈ [0, K)`,
+    adding column j's contribution to the I32 accumulator AND populating
+    `s_cache.val[j]!`. The invariant tracks both effects across `k`
+    iterations.
+
+    Mirrors `L6_3c_fill_FC` (FCTargets:27784) but at the row-axis K-scale
+    rather than the chunk-axis 16-scale. -/
+
+namespace L7_1a_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+abbrev Acc := L6_3_FC.Acc
+abbrev Poly := L6_3_FC.Poly
+
+/-- 4-conjunct invariant for the row-0 column loop. Tracks:
+    (1) accumulator characterization: for each chunk j and lane ℓ in
+        `[0, 16)²`, `Spec.mont_reduce_pure (lift_fe_int acc[16j+ℓ].val)`
+        equals init plus the canonical-form sum of column contributions
+        from columns `[0, k)`.
+    (2) accumulator bound: `|acc.val[n]| ≤ |acc_init.val[n]| + k · 2^25`.
+    (3) cache characterization: for each c ∈ `[0, k)`,
+        `cache.val[c]!.coefficients[j]!` (across all chunks j) stores the
+        per-chunk `ntt_multiply_cache_post` for `s_as_ntt.val[c]!.coefficients[j]!`.
+    (4) cache unchanged: for each c ∈ `[k, K)`, `cache.val[c]! = cache_init.val[c]!`. -/
+def row0_inv {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (acc_init : Acc)
+    (cache_init : Std.Array
+                    (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K) :
+    Std.Usize → Acc →
+    Std.Array (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K →
+    Result Prop :=
+  fun k acc cache => pure (
+    -- (1) Per-(chunk j, lane ℓ) accumulator: canonical-form K-column sum.
+    (∀ j : Nat, j < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
+        = (List.range k.val).foldl
+            (fun s c =>
+              libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                ((Spec.ntt_multiply_pure_no_acc
+                    (lift_chunk_mont (matrix_A.val[c]!.coefficients.val[j]!))
+                    (lift_chunk_mont (s_as_ntt.val[c]!.coefficients.val[j]!))
+                    (Spec.zeta_at (64 + 4 * j))
+                    (Spec.zeta_at (64 + 4 * j + 1))
+                    (Spec.zeta_at (64 + 4 * j + 2))
+                    (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!))
+            (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val)))
+    -- (2) Accumulator bound grows by 2^25 per column iteration.
+    ∧ (∀ n : Nat, n < 256 →
+        (acc.val[n]!).val.natAbs ≤ (acc_init.val[n]!).val.natAbs + k.val * 2^25)
+    -- (3) Cache populated for columns [0, k).
+    ∧ (∀ c : Nat, c < k.val →
+        accumulating_ntt_multiply_poly_cache_post
+          (s_as_ntt.val[c]!) (cache.val[c]!))
+    -- (4) Cache unchanged for columns [k, K).
+    ∧ (∀ c : Nat, k.val ≤ c → c < K.val →
+        cache.val[c]! = cache_init.val[c]!))
+
+/-- Step-post for `loop_range_spec_usize` over (acc, cache). -/
+def row0_step_post {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (acc_init : Acc)
+    (cache_init : Std.Array
+                    (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) ×
+        (Std.Array (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K) ×
+        Acc)
+      (Std.Array (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K × Acc)) :
+    Prop :=
+  match r with
+  | .cont (iter', cache', acc') =>
+      k.val < K.val ∧ iter'.«end» = K
+        ∧ iter'.start.val = k.val + 1
+        ∧ (row0_inv matrix_A s_as_ntt acc_init cache_init iter'.start acc' cache').holds
+  | .done y => (row0_inv matrix_A s_as_ntt acc_init cache_init K y.2 y.1).holds
+
+end L7_1a_FC
+
 /-! ## §L7 — matrix-level targets (4 theorems).
 
     These are the ultimate FC obligations: the impl matrix functions
