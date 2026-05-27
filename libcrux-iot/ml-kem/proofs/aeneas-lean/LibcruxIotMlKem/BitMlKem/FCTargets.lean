@@ -17678,6 +17678,280 @@ private theorem hacspec_ZETAS_ok_and_zeta_at :
     simp only [libcrux_iot_ml_kem.polynomial.ZETAS_TIMES_MONTGOMERY_R]
     rfl
 
+/-! ### §L6.3b — Phase 6e.2/3/4: per-lane reduction + `from_fn_pure_eq` lift
+    + chunked assembly.
+
+    The chain below realises `Spec.multiply_ntts_pure_eq_chunked_no_acc` (the
+    canonical bridge between hacspec `ntt.multiply_ntts` and the impl-side
+    chunked `Spec.ntt_multiply_pure_no_acc` form, required by every L7
+    matrix-level FC theorem).
+
+    Architecture mirrors `LibcruxIotSha3/Sponge/Squeeze.lean:798-846` (the
+    `sponge_squeeze_byte_eq` yardstick): a per-call_mut `_eq_pure` Result
+    equation drives `Util.from_fn_pure_eq` to lift the entire 256-lane
+    `multiply_ntts` to a pure-list, then `Subtype.ext` + per-lane reduction
+    closes the chunked-decomposition equality.
+
+    Helpers live inside `L6_3b_FC` namespace for hygiene; only the final
+    theorem is re-exported. -/
+
+namespace L6_3b_FC
+
+/-- `feOfZMod` always produces a canonical FE (since `z.val < 3329`). The
+    `BitVec.ofNat 16` lift is in-range modulo `2^16 = 65536 > 3329`. -/
+private theorem Canonical_feOfZMod (z : ZMod 3329) :
+    SpecPure.Canonical (feOfZMod z) := by
+  unfold SpecPure.Canonical feOfZMod hacspec_ml_kem.parameters.FIELD_MODULUS
+  have h_lt : z.val < 3329 := ZMod.val_lt z
+  show (BitVec.ofNat 16 z.val).toNat < 3329
+  rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt]
+  · exact h_lt
+  · exact Nat.lt_of_lt_of_le h_lt (by decide)
+
+/-- Zeta projections (`Spec.zeta_at i = feOfZMod _`) are always canonical. -/
+private theorem Canonical_zeta_at (i : Nat) :
+    SpecPure.Canonical (Spec.zeta_at i) := by
+  unfold Spec.zeta_at lift_fe_mont
+  exact Canonical_feOfZMod _
+
+/-- `Slice.index_usize` reduces to `.ok (s.val[i.val]!)` for in-bounds index. -/
+private theorem slice_index_usize_eq_ok' {α} [Inhabited α]
+    (s : Aeneas.Std.Slice α) (i : Std.Usize) (h : i.val < s.val.length) :
+    Aeneas.Std.Slice.index_usize s i = .ok (s.val[i.val]!) := by
+  unfold Aeneas.Std.Slice.index_usize
+  have h_eq : s[i]? = s.val[i.val]? := rfl
+  rw [h_eq, List.getElem?_eq_getElem h]
+  show Aeneas.Std.Result.ok _ = Aeneas.Std.Result.ok _
+  congr
+  rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h]; rfl
+
+/-- `Aeneas.Std.Array.index_usize` reduces to `.ok (a.val[i.val]!)`. -/
+private theorem array_index_usize_eq_ok' {α n} [Inhabited α]
+    (a : Aeneas.Std.Array α n) (i : Std.Usize) (h : i.val < a.val.length) :
+    Aeneas.Std.Array.index_usize a i = .ok (a.val[i.val]!) := by
+  unfold Aeneas.Std.Array.index_usize
+  have h_eq : a[i]? = a.val[i.val]? := rfl
+  rw [h_eq, List.getElem?_eq_getElem h]
+  show Aeneas.Std.Result.ok _ = Aeneas.Std.Result.ok _
+  congr
+  rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h]; rfl
+
+/-- `base_case_multiply_even` reduces to `.ok (a0*b0 + (a1*b1)*ζ)` via the
+    three `mul_eq_ok`s and the final `add_eq_ok`. -/
+private theorem base_case_multiply_even_eq
+    (a0 a1 b0 b1 zeta : hacspec_ml_kem.parameters.FieldElement) :
+    hacspec_ml_kem.ntt.base_case_multiply_even a0 a1 b0 b1 zeta = .ok
+      (SpecPure.FieldElement.add_pure (SpecPure.FieldElement.mul_pure a0 b0)
+        (SpecPure.FieldElement.mul_pure
+          (SpecPure.FieldElement.mul_pure a1 b1) zeta)) := by
+  unfold hacspec_ml_kem.ntt.base_case_multiply_even
+  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [SpecPure.FieldElement.add_eq_ok]
+
+/-- `base_case_multiply_odd` reduces to `.ok (a0*b1 + a1*b0)` via two
+    `mul_eq_ok`s and the final `add_eq_ok`. -/
+private theorem base_case_multiply_odd_eq
+    (a0 a1 b0 b1 : hacspec_ml_kem.parameters.FieldElement) :
+    hacspec_ml_kem.ntt.base_case_multiply_odd a0 a1 b0 b1 = .ok
+      (SpecPure.FieldElement.add_pure (SpecPure.FieldElement.mul_pure a0 b1)
+        (SpecPure.FieldElement.mul_pure a1 b0)) := by
+  unfold hacspec_ml_kem.ntt.base_case_multiply_odd
+  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [SpecPure.FieldElement.add_eq_ok]
+
+/-- Pure lane value of `multiply_ntts` at index `i ∈ [0, 256)`.
+
+    Mirrors the impl `ntt_multiply_n_at` body: looks up zeta from the slice at
+    `i/4` (negated when `i % 4 ≥ 2`), then dispatches to
+    `base_case_multiply_{even,odd}` per `i % 2`. The pure form replaces the
+    `Result`-monad ops with their `_pure` projections (`add_pure`, `mul_pure`,
+    `neg_pure`). The zeta is taken from `Spec.zeta_at (64 + i/4)` to match
+    the impl's `zetas[64..128]` slice access. -/
+noncomputable def multiply_ntts_lane_pure
+    (p1 p2 : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (i : Nat) : hacspec_ml_kem.parameters.FieldElement :=
+  let group := i / 4
+  let i1 := i % 4
+  let zeta_base := Spec.zeta_at (64 + group)
+  let zeta := if i1 < 2 then zeta_base
+              else SpecPure.FieldElement.neg_pure zeta_base
+  if i % 2 = 0 then
+    let a0 := p1.val[i]!
+    let a1 := p1.val[i+1]!
+    let b0 := p2.val[i]!
+    let b1 := p2.val[i+1]!
+    SpecPure.FieldElement.add_pure (SpecPure.FieldElement.mul_pure a0 b0)
+      (SpecPure.FieldElement.mul_pure
+        (SpecPure.FieldElement.mul_pure a1 b1) zeta)
+  else
+    let a0 := p1.val[i-1]!
+    let a1 := p1.val[i]!
+    let b0 := p2.val[i-1]!
+    let b1 := p2.val[i]!
+    SpecPure.FieldElement.add_pure (SpecPure.FieldElement.mul_pure a0 b1)
+      (SpecPure.FieldElement.mul_pure a1 b0)
+
+set_option maxHeartbeats 16000000 in
+/-- **Per-lane reduction of `ntt.ntt_multiply_n_at`.**
+
+    For any slice `s` of length 64 satisfying `s.val[k]! = Spec.zeta_at
+    (64 + k)` for `k < 64`, the hacspec body `ntt.ntt_multiply_n_at p1 p2 s
+    i` succeeds with `multiply_ntts_lane_pure p1 p2 i.val`. Drives the
+    `from_fn_pure_eq` lift in Phase 6e.3. -/
+private theorem ntt_multiply_n_at_eq_pure
+    (p1 p2 : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (s : Aeneas.Std.Slice hacspec_ml_kem.parameters.FieldElement)
+    (h_slen : s.val.length = 64)
+    (h_zeta_eq : ∀ k : Nat, k < 64 → s.val[k]! = Spec.zeta_at (64 + k))
+    (i : Std.Usize) (hi : i.val < 256) :
+    hacspec_ml_kem.ntt.ntt_multiply_n_at p1 p2 s i
+      = .ok (multiply_ntts_lane_pure p1 p2 i.val) := by
+  unfold hacspec_ml_kem.ntt.ntt_multiply_n_at
+  -- Step 1: group ← i / 4#usize.
+  obtain ⟨group, h_g_eq, h_g_v, _⟩ :=
+    Std.UScalar.div_bv_spec i (show ((4#usize : Std.Usize)).val ≠ 0 by decide)
+  rw [h_g_eq]; simp only [bind_tc_ok]
+  have h_g_val : group.val = i.val / 4 := by rw [h_g_v]; rfl
+  have h_g_lt : group.val < 64 := by rw [h_g_val]; omega
+  have h_g_lt_slen : group.val < s.val.length := by rw [h_slen]; exact h_g_lt
+  -- Step 2: i1 ← i % 4#usize.
+  obtain ⟨i1, h_i1_eq, h_i1_v, _⟩ :=
+    Std.WP.spec_imp_exists (Std.UScalar.rem_bv_spec i
+      (show ((4#usize : Std.Usize)).val ≠ 0 by decide))
+  rw [h_i1_eq]; simp only [bind_tc_ok]
+  have h_i1_val : i1.val = i.val % 4 := by rw [h_i1_v]; rfl
+  -- Slice index lookup + zeta correspondence + canonicity.
+  have h_slice_idx_ok :
+      Aeneas.Std.Slice.index_usize s group = .ok (s.val[group.val]!) :=
+    slice_index_usize_eq_ok' s group h_g_lt_slen
+  have h_zeta_val : s.val[group.val]! = Spec.zeta_at (64 + group.val) :=
+    h_zeta_eq group.val h_g_lt
+  have h_canon_zeta : SpecPure.Canonical (s.val[group.val]!) := by
+    rw [h_zeta_val]; exact Canonical_zeta_at _
+  -- Step 3: zeta. Collapse the zeta branch into a uniform tail.
+  set zeta_pure : hacspec_ml_kem.parameters.FieldElement :=
+    if i.val % 4 < 2 then Spec.zeta_at (64 + i.val / 4)
+    else SpecPure.FieldElement.neg_pure (Spec.zeta_at (64 + i.val / 4))
+    with h_zeta_pure_def
+  have h_zeta_result :
+      (do let z ← (if i1 < 2#usize then Aeneas.Std.Slice.index_usize s group
+              else do let fe ← Aeneas.Std.Slice.index_usize s group
+                      hacspec_ml_kem.parameters.FieldElement.neg fe);
+          (do let i2 ← i % 2#usize;
+              if i2 = 0#usize
+              then do let fe ← Aeneas.Std.Array.index_usize p1 i;
+                      let i3 ← i + 1#usize;
+                      let fe1 ← Aeneas.Std.Array.index_usize p1 i3;
+                      let fe2 ← Aeneas.Std.Array.index_usize p2 i;
+                      let fe3 ← Aeneas.Std.Array.index_usize p2 i3;
+                      hacspec_ml_kem.ntt.base_case_multiply_even fe fe1 fe2 fe3 z
+              else do let i3 ← i - 1#usize;
+                      let fe ← Aeneas.Std.Array.index_usize p1 i3;
+                      let fe1 ← Aeneas.Std.Array.index_usize p1 i;
+                      let fe2 ← Aeneas.Std.Array.index_usize p2 i3;
+                      let fe3 ← Aeneas.Std.Array.index_usize p2 i;
+                      hacspec_ml_kem.ntt.base_case_multiply_odd fe fe1 fe2 fe3)) =
+      (do let i2 ← i % 2#usize;
+          if i2 = 0#usize
+          then do let fe ← Aeneas.Std.Array.index_usize p1 i;
+                  let i3 ← i + 1#usize;
+                  let fe1 ← Aeneas.Std.Array.index_usize p1 i3;
+                  let fe2 ← Aeneas.Std.Array.index_usize p2 i;
+                  let fe3 ← Aeneas.Std.Array.index_usize p2 i3;
+                  hacspec_ml_kem.ntt.base_case_multiply_even fe fe1 fe2 fe3 zeta_pure
+          else do let i3 ← i - 1#usize;
+                  let fe ← Aeneas.Std.Array.index_usize p1 i3;
+                  let fe1 ← Aeneas.Std.Array.index_usize p1 i;
+                  let fe2 ← Aeneas.Std.Array.index_usize p2 i3;
+                  let fe3 ← Aeneas.Std.Array.index_usize p2 i;
+                  hacspec_ml_kem.ntt.base_case_multiply_odd fe fe1 fe2 fe3) := by
+    rcases (Nat.lt_or_ge i1.val 2) with h_i1_lt | h_i1_ge
+    · rw [if_pos (show i1 < 2#usize from h_i1_lt)]
+      rw [h_slice_idx_ok]; simp only [bind_tc_ok]
+      rw [h_zeta_val]
+      simp only [h_zeta_pure_def,
+                 show i.val % 4 < 2 from h_i1_val ▸ h_i1_lt, if_true]
+      rw [h_g_val]
+    · rw [if_neg (show ¬ i1 < 2#usize from by show ¬ i1.val < 2; omega)]
+      rw [h_slice_idx_ok]; simp only [bind_tc_ok]
+      rw [SpecPure.FieldElement.neg_eq_ok _ h_canon_zeta]
+      simp only [bind_tc_ok]
+      rw [h_zeta_val]
+      simp only [h_zeta_pure_def,
+                 show ¬ i.val % 4 < 2 from by
+                   have : i1.val = i.val % 4 := h_i1_val; omega, if_false]
+      rw [h_g_val]
+  rw [h_zeta_result]
+  -- Step 4: i2 ← i % 2#usize.
+  obtain ⟨i2, h_i2_eq, h_i2_v, _⟩ :=
+    Std.WP.spec_imp_exists (Std.UScalar.rem_bv_spec i
+      (show ((2#usize : Std.Usize)).val ≠ 0 by decide))
+  rw [h_i2_eq]; simp only [bind_tc_ok]
+  have h_i2_val : i2.val = i.val % 2 := by rw [h_i2_v]; rfl
+  -- Array bounds (p1.val.length = p2.val.length = 256).
+  have h_p1_len : p1.val.length = 256 := p1.property
+  have h_p2_len : p2.val.length = 256 := p2.property
+  have h_i_lt_p1 : i.val < p1.val.length := by rw [h_p1_len]; exact hi
+  have h_i_lt_p2 : i.val < p2.val.length := by rw [h_p2_len]; exact hi
+  have h_i2_lt_2 : i2.val < 2 := by
+    rw [h_i2_val]; exact Nat.mod_lt _ (by decide)
+  -- Step 5: branch on i2.val = 0 vs 1.
+  rcases (show i2.val = 0 ∨ i2.val = 1 from by omega) with h_i2_0 | h_i2_1
+  · -- Even branch.
+    have h_i2_eq_0 : i2 = 0#usize :=
+      Std.UScalar.eq_of_val_eq (by rw [h_i2_0]; rfl)
+    rw [if_pos h_i2_eq_0]
+    obtain ⟨i3, h_i3_eq, h_i3_v, _⟩ :=
+      Std.WP.spec_imp_exists
+        (Std.UScalar.add_bv_spec (x := i) (y := 1#usize) (by scalar_tac))
+    have h_i3_val : i3.val = i.val + 1 := by rw [h_i3_v]; rfl
+    have h_i3_lt_p1 : i3.val < p1.val.length := by
+      rw [h_p1_len, h_i3_val]; omega
+    have h_i3_lt_p2 : i3.val < p2.val.length := by
+      rw [h_p2_len, h_i3_val]; omega
+    rw [array_index_usize_eq_ok' p1 i h_i_lt_p1]; simp only [bind_tc_ok]
+    rw [h_i3_eq]; simp only [bind_tc_ok]
+    rw [array_index_usize_eq_ok' p1 i3 h_i3_lt_p1]; simp only [bind_tc_ok]
+    rw [array_index_usize_eq_ok' p2 i h_i_lt_p2]; simp only [bind_tc_ok]
+    rw [array_index_usize_eq_ok' p2 i3 h_i3_lt_p2]; simp only [bind_tc_ok]
+    rw [base_case_multiply_even_eq]
+    congr 1
+    unfold multiply_ntts_lane_pure
+    have h_imod2 : i.val % 2 = 0 := by rw [← h_i2_val]; exact h_i2_0
+    simp only [h_imod2, if_true, h_i3_val, h_zeta_pure_def]
+  · -- Odd branch.
+    have h_i2_ne_0 : ¬ (i2 = 0#usize) := by
+      intro heq
+      have h_zero : i2.val = 0 := by rw [heq]; rfl
+      omega
+    rw [if_neg h_i2_ne_0]
+    have h_i_ge_1 : 1 ≤ i.val := by
+      have h_imod2 : i.val % 2 = 1 := by rw [← h_i2_val]; exact h_i2_1
+      omega
+    obtain ⟨i3, h_i3_eq, h_i3_v, _⟩ :=
+      Std.WP.spec_imp_exists
+        (Std.UScalar.sub_bv_spec (x := i) (y := 1#usize) (by scalar_tac))
+    have h_i3_val : i3.val = i.val - 1 := by rw [h_i3_v]; rfl
+    have h_i3_lt_p1 : i3.val < p1.val.length := by
+      rw [h_p1_len, h_i3_val]; omega
+    have h_i3_lt_p2 : i3.val < p2.val.length := by
+      rw [h_p2_len, h_i3_val]; omega
+    rw [h_i3_eq]; simp only [bind_tc_ok]
+    rw [array_index_usize_eq_ok' p1 i3 h_i3_lt_p1]; simp only [bind_tc_ok]
+    rw [array_index_usize_eq_ok' p1 i h_i_lt_p1]; simp only [bind_tc_ok]
+    rw [array_index_usize_eq_ok' p2 i3 h_i3_lt_p2]; simp only [bind_tc_ok]
+    rw [array_index_usize_eq_ok' p2 i h_i_lt_p2]; simp only [bind_tc_ok]
+    rw [base_case_multiply_odd_eq]
+    congr 1
+    unfold multiply_ntts_lane_pure
+    have h_imod2 : i.val % 2 = 1 := by rw [← h_i2_val]; exact h_i2_1
+    simp only [h_imod2, Nat.one_ne_zero, if_false, h_i3_val]
+
+end L6_3b_FC
+
 /-- Accumulating base-case NTT multiply: pointwise sum of the initial
     accumulator with the no-acc product. Defined as
     `chunk_add_pure acc (ntt_multiply_pure_no_acc ...)`. The L2.8 POST
