@@ -233,12 +233,19 @@ noncomputable def lift_matrix_from_seed
   Spec.sample_matrix_A_pure seed K
 
 /-- Matrix-from-flat-slice lift: the impl `matrix.compute_As_plus_e` takes
-    `matrix_A : Slice (PolynomialRingElement)` as a flat K·K slice (row-major).
-    We reshape it into a 2D K×K matrix of polynomials, lifting each entry via
-    `lift_poly`. Used by L7.1's locked post. Requires the caller's
-    `matrix_A.length = K.val * K.val` precondition for the indexing to be
-    in-range (out-of-range indices default to the unit poly via the
-    `Inhabited` instance). -/
+    `matrix_A : Slice (PolynomialRingElement)` as a flat K·K slice in
+    row-major order (impl convention: `matrix_A[i*K+j]` is the
+    (row `i`, column `j`) entry). We reshape it into a 2D K×K matrix using
+    FIPS 203's column-major convention — "a matrix is a set of column
+    vectors" (`specs/ml-kem/src/matrix.rs:8-9`) — so the outer index is
+    the column and the inner index is the row:
+    `(lift_matrix_from_slice slice K).val[j]!.val[i]!
+        = lift_poly slice.val[i * K.val + j]!`.
+    This matches how hacspec's `multiply_matrix_by_column_at` accesses
+    `m[j][i]` (column-major). Used by L7.1's locked POST. Requires the
+    caller's `matrix_A.length = K.val * K.val` precondition for the
+    indexing to be in-range (out-of-range indices default to the unit poly
+    via the `Inhabited` instance). -/
 noncomputable def lift_matrix_from_slice
     (slice : Slice
               (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -247,9 +254,9 @@ noncomputable def lift_matrix_from_slice
     Std.Array
       (Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K) K :=
   Std.Array.make K
-    ((List.range K.val).map (fun i =>
+    ((List.range K.val).map (fun j =>
       Std.Array.make K
-        ((List.range K.val).map (fun j =>
+        ((List.range K.val).map (fun i =>
           lift_poly slice.val[i * K.val + j]!))
         (by simp)))
     (by simp)
@@ -17437,9 +17444,10 @@ theorem poly_reducing_from_i32_array_fc
 
     `matrix.entry K matrix i j` is a pure indexing op on a flat K·K slice
     of polynomial-ring elements. The FC equation lifts the result via
-    `lift_poly` and matches the (i, j)-th entry of `lift_matrix_from_slice`
-    (defined at FCTargets.lean:229). Uses the file-scoped `Inhabited`
-    instances `instInhabitedFEPoly_fcTargets` and
+    `lift_poly` and matches the (i, j)-th matrix entry, which under
+    `lift_matrix_from_slice`'s column-major convention is accessed as
+    `L.val[j.val]!.val[i.val]!` (outer = column, inner = row). Uses the
+    file-scoped `Inhabited` instances `instInhabitedFEPoly_fcTargets` and
     `instInhabitedFEPolyVec_fcTargets` (declared next to
     `instInhabitedFEChunk_fcTargets`). -/
 
@@ -17516,8 +17524,9 @@ private theorem entry_eq_ok_fc_aux
 
 /-- L6.8 — `matrix.entry`: row-major access of a flat K·K poly slice.
     The FC equation says the impl's returned `PolynomialRingElement`
-    lifts (via `lift_poly`) to the `(i, j)`-th entry of the matrix-shape
-    `lift_matrix_from_slice` of the input slice. -/
+    lifts (via `lift_poly`) to the `(i, j)`-th matrix entry, accessed
+    under `lift_matrix_from_slice`'s column-major convention as
+    `L.val[j.val]!.val[i.val]!` (outer = column, inner = row). -/
 @[spec]
 theorem matrix.entry_fc
     (K : Std.Usize)
@@ -17528,44 +17537,46 @@ theorem matrix.entry_fc
     (h_i : i.val < K.val) (h_j : j.val < K.val) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.matrix.entry K portable_ops_inst matrix i j
-    ⦃ ⇓ r => ⌜ lift_poly r = (lift_matrix_from_slice matrix K).val[i.val]!.val[j.val]! ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ lift_poly r = (lift_matrix_from_slice matrix K).val[j.val]!.val[i.val]! ⌝ ⦄ := by
   apply triple_of_ok_fc (entry_eq_ok_fc_aux K matrix i j h_len h_i h_j)
   -- Goal: lift_poly matrix.val[i.val * K.val + j.val]!
-  --     = (lift_matrix_from_slice matrix K).val[i.val]!.val[j.val]!
+  --     = (lift_matrix_from_slice matrix K).val[j.val]!.val[i.val]!
   -- Reduce the matrix lift's nested `Std.Array.make` constructions explicitly.
   -- `(Std.Array.make n init _).val = init` (definitional), so each outer
   -- `.val[idx]!` collapses to a `List`-indexing on the inner `init` list.
+  -- Under the column-major convention, outer index = j (column),
+  -- inner index = i (row).
   unfold lift_matrix_from_slice
-  -- Outer-list index reduction.
+  -- Outer-list index reduction (outer index = column `j`).
   have h_range_len : (List.range K.val).length = K.val := by simp
-  have h_outer_len : ((List.range K.val).map (fun i' =>
-        Std.Array.make K ((List.range K.val).map (fun j' =>
+  have h_outer_len : ((List.range K.val).map (fun j' =>
+        Std.Array.make K ((List.range K.val).map (fun i' =>
           lift_poly matrix.val[i' * K.val + j']!)) (by simp))).length = K.val := by
     rw [List.length_map, h_range_len]
-  have h_i_lt_outer : i.val < ((List.range K.val).map (fun i' =>
-        Std.Array.make K ((List.range K.val).map (fun j' =>
+  have h_j_lt_outer : j.val < ((List.range K.val).map (fun j' =>
+        Std.Array.make K ((List.range K.val).map (fun i' =>
           lift_poly matrix.val[i' * K.val + j']!)) (by simp))).length := by
-    rw [h_outer_len]; exact h_i
+    rw [h_outer_len]; exact h_j
   -- Use `Std.Array.make`'s definitional `.val = init` to expose the outer list,
   -- then resolve the outer index via `getElem!_pos`.
   show lift_poly matrix.val[i.val * K.val + j.val]!
-       = ((((List.range K.val).map (fun i' =>
-            Std.Array.make K ((List.range K.val).map (fun j' =>
-              lift_poly matrix.val[i' * K.val + j']!)) (by simp)))[i.val]!).val[j.val]!)
-  rw [getElem!_pos _ i.val h_i_lt_outer]
+       = ((((List.range K.val).map (fun j' =>
+            Std.Array.make K ((List.range K.val).map (fun i' =>
+              lift_poly matrix.val[i' * K.val + j']!)) (by simp)))[j.val]!).val[i.val]!)
+  rw [getElem!_pos _ j.val h_j_lt_outer]
   rw [List.getElem_map, List.getElem_range]
-  -- The outer `(fun i' => Std.Array.make K ... _) i.val` β-reduces to
+  -- The outer `(fun j' => Std.Array.make K ... _) j.val` β-reduces to
   -- `Std.Array.make K (...) _`; its `.val` is the inner list.
   show lift_poly matrix.val[i.val * K.val + j.val]!
-       = ((List.range K.val).map (fun j' =>
-            lift_poly matrix.val[i.val * K.val + j']!))[j.val]!
-  have h_inner_len : ((List.range K.val).map (fun j' =>
-        lift_poly matrix.val[i.val * K.val + j']!)).length = K.val := by
+       = ((List.range K.val).map (fun i' =>
+            lift_poly matrix.val[i' * K.val + j.val]!))[i.val]!
+  have h_inner_len : ((List.range K.val).map (fun i' =>
+        lift_poly matrix.val[i' * K.val + j.val]!)).length = K.val := by
     rw [List.length_map, h_range_len]
-  have h_j_lt_inner : j.val < ((List.range K.val).map (fun j' =>
-        lift_poly matrix.val[i.val * K.val + j']!)).length := by
-    rw [h_inner_len]; exact h_j
-  rw [getElem!_pos _ j.val h_j_lt_inner]
+  have h_i_lt_inner : i.val < ((List.range K.val).map (fun i' =>
+        lift_poly matrix.val[i' * K.val + j.val]!)).length := by
+    rw [h_inner_len]; exact h_i
+  rw [getElem!_pos _ i.val h_i_lt_inner]
   rw [List.getElem_map, List.getElem_range]
 
 /-! ## §L2.8 / §L6.3 — Phase 6c NTT-multiply scaffolding.
