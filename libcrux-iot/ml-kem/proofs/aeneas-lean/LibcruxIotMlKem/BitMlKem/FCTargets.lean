@@ -29104,6 +29104,154 @@ theorem accumulating_ntt_multiply_use_cache_poly_fc
 
 end L6_3c_use_irreducible
 
+/-! ## §7.1.A — Matrix-level spec-pure forms (Phase 7.1.A).
+
+    Spec-side pure forms required for the L7.1 close. Five
+    `Spec.*_pure` definitions + five `_eq_pure` evaluation lemmas
+    that pin each hacspec matrix op to a pure FE-arithmetic value.
+    No impl-side work, no Triples.
+
+    Build-up:
+    - `Spec.add_polynomials_pure` / `add_polynomials_eq_pure` —
+      pointwise FE add over 256 lanes. Uses `from_fn_pure_eq` on
+      `parameters.createi` over the `add_polynomials.closure` Fn
+      instance.
+    - `Spec.multiply_matrix_by_column_at_pure` /
+      `multiply_matrix_by_column_at_eq_pure` — per-row accumulator
+      `Σ_j multiply_ntts(m[j][i], v[j])` via `loop_range_spec_usize`
+      over the `multiply_matrix_by_column_at_loop.body`.
+    - `Spec.multiply_matrix_by_column_pure` /
+      `multiply_matrix_by_column_eq_pure` — K-vector of per-row
+      results, via `from_fn_pure_eq` over the per-row closure.
+    - `Spec.add_vectors_pure` / `add_vectors_eq_pure` — pointwise
+      poly-add over K rows.
+    - `Spec.compute_As_plus_e_pure` / `compute_As_plus_e_eq_pure` —
+      composition `add_vectors(multiply_matrix_by_column m v, e)`. -/
+
+/-- Round-trip helper: `(⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k`
+    whenever `k ≤ Std.Usize.max`. Generalizes the file-local
+    `usize_ofNat_val_eq_self_of_lt_256` (§L6.3b) to arbitrary `k`
+    in the `Usize` range — used by the K-vector loops below
+    (K ∈ {2, 3, 4} for ML-KEM-{512,768,1024}). -/
+private lemma usize_ofNat_val_eq_self_of_lt_usize_max (k : Nat)
+    (h : k ≤ Std.Usize.max) :
+    (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k := by
+  show (BitVec.ofNat System.Platform.numBits k).toNat = k
+  rw [BitVec.toNat_ofNat]
+  apply Nat.mod_eq_of_lt
+  have h_max_def : Std.Usize.max + 1 = 2 ^ System.Platform.numBits := by
+    scalar_tac
+  omega
+
+/-! ### §7.1.A.1 — `Spec.add_polynomials_pure` + `_eq_pure`. -/
+
+/-- Pointwise FE add of two 256-lane polynomials, in canonical
+    residue. Mirrors the hacspec `matrix.add_polynomials` body:
+    for each lane `i`, the result is
+    `FieldElement.add_pure (p1[i]) (p2[i])`. -/
+noncomputable def Spec.add_polynomials_pure
+    (p1 p2 : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  Std.Array.make 256#usize
+    ((List.range 256).map (fun i =>
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        (p1.val[i]!) (p2.val[i]!)))
+    (by simp)
+
+set_option maxHeartbeats 4000000 in
+/-- **`hacspec_ml_kem.matrix.add_polynomials p1 p2` reduces to the
+    pure 256-lane array.**
+
+    The hacspec spec is `parameters.createi 256 add_polynomials.closure.Fn
+    (p1, p2)`, whose Fn body is the per-lane
+    `do let fe ← index p1 k; let fe1 ← index p2 k; FieldElement.add fe fe1`.
+    Each call equals `FieldElement.add_pure` via the unconditional
+    `SpecPure.FieldElement.add_eq_ok`; we chain through
+    `Util.from_fn_pure_eq`. -/
+theorem add_polynomials_eq_pure
+    (p1 p2 : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    hacspec_ml_kem.matrix.add_polynomials p1 p2 =
+      .ok (Spec.add_polynomials_pure p1 p2) := by
+  unfold hacspec_ml_kem.matrix.add_polynomials
+         hacspec_ml_kem.parameters.createi
+  -- Build per-call_mut equation: closure body reduces to
+  -- `add_pure p1[k] p2[k]`.
+  set f : Nat → hacspec_ml_kem.parameters.FieldElement :=
+    fun k =>
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        (p1.val[k]!) (p2.val[k]!) with h_f_def
+  have h_call_mut_eq : ∀ k : Nat, k < (256#usize : Std.Usize).val →
+      ((hacspec_ml_kem.matrix.add_polynomials.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement).FnMutInst).call_mut
+        (p1, p2) ⟨BitVec.ofNat _ k⟩ = .ok (f k, (p1, p2)) := by
+    intro k hk
+    have hk' : k < 256 := hk
+    have hk_max : k ≤ Std.Usize.max := by
+      have h_max : (256 : Nat) ≤ Std.Usize.max + 1 := by scalar_tac
+      omega
+    have h_k_val : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k :=
+      usize_ofNat_val_eq_self_of_lt_usize_max k hk_max
+    -- The Fn.FnMutInst.call_mut wraps Fn.call via `do { fe ← call; ok (fe, c) }`.
+    -- Unfold the wrappers and reduce.
+    show (do let fe ←
+              hacspec_ml_kem.matrix.add_polynomials.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement.call
+                (p1, p2) ⟨BitVec.ofNat _ k⟩
+             .ok (fe, (p1, p2))) = _
+    unfold hacspec_ml_kem.matrix.add_polynomials.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement.call
+    -- index_usize p1 k = .ok p1.val[k]!.
+    have h_p1_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < p1.length := by
+      have : p1.length = 256 := p1.property
+      rw [h_k_val, this]; exact hk'
+    have h_p2_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < p2.length := by
+      have : p2.length = 256 := p2.property
+      rw [h_k_val, this]; exact hk'
+    have h_p1_get :
+        Aeneas.Std.Array.index_usize p1 (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (p1.val[k]!) := by
+      rw [libcrux_iot_ml_kem.Util.array_index_usize_ok_eq p1 _ h_p1_len, h_k_val]
+    have h_p2_get :
+        Aeneas.Std.Array.index_usize p2 (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (p2.val[k]!) := by
+      rw [libcrux_iot_ml_kem.Util.array_index_usize_ok_eq p2 _ h_p2_len, h_k_val]
+    -- Reduce the outer `let (a, a1) := (p1, p2)` destructure so the
+    -- inner index_usize calls become syntactically `p1.index_usize ...`.
+    show (do let fe ← (do
+                let fe ← Aeneas.Std.Array.index_usize p1 (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+                let i ← lift (Aeneas.Std.UScalar.cast .U32 fe.val)
+                let fe1 ← Aeneas.Std.Array.index_usize p2 (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+                let i1 ← lift (Aeneas.Std.UScalar.cast .U32 fe1.val)
+                let i2 ← i + i1
+                let i3 ← lift (Aeneas.Std.UScalar.cast .U32
+                                 hacspec_ml_kem.parameters.FIELD_MODULUS)
+                let i4 ← i2 % i3
+                let i5 ← lift (Aeneas.Std.UScalar.cast .U16 i4)
+                hacspec_ml_kem.parameters.FieldElement.new i5)
+             .ok (fe, (p1, p2))) = .ok (f k, (p1, p2))
+    rw [h_p1_get]; simp only [bind_tc_ok]
+    rw [h_p2_get]; simp only [bind_tc_ok]
+    -- Now the body is exactly the body of `parameters.FieldElement.add`
+    -- (after binding `self.val := p1[k].val`, `other.val := p2[k].val`).
+    -- Apply add_eq_ok by showing the do-block is `FieldElement.add p1[k] p2[k]`.
+    have h_add : hacspec_ml_kem.parameters.FieldElement.add (p1.val[k]!) (p2.val[k]!)
+                = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                         (p1.val[k]!) (p2.val[k]!)) :=
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_eq_ok _ _
+    -- The current goal after the two rewrites: the do-block whose body
+    -- is verbatim the unfolded `FieldElement.add (p1[k]!) (p2[k]!)`.
+    -- We fold it back via `show`.
+    show (do let fe ← hacspec_ml_kem.parameters.FieldElement.add
+                        (p1.val[k]!) (p2.val[k]!)
+             .ok (fe, (p1, p2))) = .ok (f k, (p1, p2))
+    rw [h_add]; simp only [bind_tc_ok, h_f_def]
+  -- Apply `from_fn_pure_eq` to collapse `createi`-via-Fn-`call_mut`
+  -- to a `.ok ⟨(List.range 256).map f, _⟩`.
+  have h_from_fn := libcrux_iot_ml_kem.Util.from_fn_pure_eq 256#usize
+    (hacspec_ml_kem.matrix.add_polynomials.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement).FnMutInst
+    (p1, p2) f h_call_mut_eq
+  rw [h_from_fn]
+  -- Pin to `Spec.add_polynomials_pure`.
+  unfold Spec.add_polynomials_pure
+  rfl
+
 /-! ## §L7 — matrix-level targets (4 theorems).
 
     These are the ultimate FC obligations: the impl matrix functions
