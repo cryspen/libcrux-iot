@@ -30350,6 +30350,122 @@ theorem compute_As_plus_e_loop1_loop0_fc
 
 end L7_1b_irreducible
 
+/-! ## §L7.1-loop1 — outer rows loop (rows i ∈ [start, K)) scaffolding.
+
+    Namespace `L7_1c_FC` provides the invariant + step-post predicates
+    for `matrix.compute_As_plus_e_loop1` (the outer rows loop) via
+    `loop_range_spec_usize`. Each iteration covers one full row i:
+    re-zeros accumulator, calls `compute_As_plus_e_loop1_loop0_fc`
+    (Stage 2) for the column sum, converts via `reducing_from_i32_array`
+    to Mont FE form, then applies `add_standard_error_reduce` (×1353 +
+    add error) to produce the canonical FE row.
+
+    Composes Stage 2 + L6.7 (poly_reducing_from_i32_array_fc) + L6.5
+    (add_standard_error_reduce_fc) per row. The per-lane invariant equation
+    has the form `(lift_poly t_as_ntt[r]).val[lane]! =
+    add_pure (mul_pure (canonical_row_sum_lane ...) (lift_fe_mont 1353))
+              ((lift_poly error[r]).val[lane]!)`, where
+    `canonical_row_sum_lane` absorbs ONE Mont→canonical bridge step
+    (mul_pure × lift_fe_mont 1353) over the K-fold sum-in-Mont produced
+    by Stage 2+L6.7; the OUTER × 1353 in the invariant comes from L6.5's
+    own `mul_pure self (lift_fe_mont 1353)` step. -/
+
+namespace L7_1c_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+abbrev TVec (K : Std.Usize) := Std.Array
+  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K
+
+abbrev Acc := Std.Array Std.I32 256#usize
+
+/-- The canonical-form per-(row i, chunk j, lane-within-chunk q) value:
+    the column-K sum of `Spec.ntt_multiply_pure_no_acc` contributions
+    extracted at chunk j, lane q, with the OUTER Mont→canonical bridge
+    (`mul_pure _ (lift_fe_mont 1353)`) folded in. This equals
+    `(lift_poly pre1).val[16*j+q]!` after the Stage 2 + L6.7 + bridge
+    composition, where `pre1` is L6.7's Mont-form polynomial output.
+
+    Per-row composition with L6.5 then gives the canonical FE row:
+    `(lift_poly t_as_ntt[r]!).val[lane]!
+      = add_pure (mul_pure (canonical_row_sum_lane ...) (lift_fe_mont 1353))
+                 ((lift_poly error[r]!).val[lane]!)`
+    where lane = 16*j + q.
+
+    The foldl seed `Spec.mont_reduce_pure (lift_fe_int 0)` matches the
+    zero-init accumulator after Stage 2 — each iteration of the outer
+    loop re-zeros via `Array.repeat 256#usize (classify 0#i32)`, so the
+    `acc_init` slot in Stage 2's invariant collapses to the zero
+    accumulator's `mont_reduce_pure (lift_fe_int 0)` constant. -/
+noncomputable def canonical_row_sum_lane
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : TVec K) (i : Nat) (j q : Nat) :
+    hacspec_ml_kem.parameters.FieldElement :=
+  libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    ((List.range K.val).foldl
+      (fun s c =>
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+          ((Spec.ntt_multiply_pure_no_acc
+              (lift_chunk_mont (matrix_A.val[i * K.val + c]!.coefficients.val[j]!))
+              (lift_chunk_mont (s_as_ntt.val[c]!.coefficients.val[j]!))
+              (Spec.zeta_at (64 + 4 * j))
+              (Spec.zeta_at (64 + 4 * j + 1))
+              (Spec.zeta_at (64 + 4 * j + 2))
+              (Spec.zeta_at (64 + 4 * j + 3))).val[q]!))
+      (Spec.mont_reduce_pure (lift_fe_int 0)))
+    (lift_fe_mont (1353#i16 : Std.I16))
+
+/-- 2-conjunct invariant for the outer rows loop. Tracks:
+    (1) Per-completed-row characterization: for each row `r ∈ [start, k)`,
+        and each lane `ℓ ∈ [0, 256)`,
+        `(lift_poly t_as_ntt.val[r]!).val[ℓ]!`
+          = `add_pure (mul_pure (canonical_row_sum_lane matrix_A s_as_ntt r (ℓ/16) (ℓ%16))
+                                (lift_fe_mont 1353))
+                     ((lift_poly error_as_ntt.val[r]!).val[ℓ]!)`.
+    (2) Unchanged rows: for each row `r ∈ [0, K)` with
+        `r < start.val ∨ k.val ≤ r`,
+        `t_as_ntt.val[r]! = t_as_ntt_init.val[r]!`. -/
+def rows_inv {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt error_as_ntt : TVec K)
+    (t_as_ntt_init : TVec K) (start : Std.Usize) :
+    Std.Usize → TVec K → Acc → Result Prop :=
+  fun k t_as_ntt _acc => pure (
+    (∀ r : Nat, start.val ≤ r → r < k.val → ∀ ℓ : Nat, ℓ < 256 →
+      (lift_poly t_as_ntt.val[r]!).val[ℓ]!
+        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (canonical_row_sum_lane matrix_A s_as_ntt r (ℓ / 16) (ℓ % 16))
+              (lift_fe_mont (1353#i16 : Std.I16)))
+            ((lift_poly error_as_ntt.val[r]!).val[ℓ]!))
+    ∧ (∀ r : Nat, r < K.val → (r < start.val ∨ k.val ≤ r) →
+        t_as_ntt.val[r]! = t_as_ntt_init.val[r]!))
+
+/-- Step-post for `loop_range_spec_usize` over (t_as_ntt, accumulator). -/
+def rows_step_post {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt error_as_ntt : TVec K)
+    (t_as_ntt_init : TVec K) (start : Std.Usize) (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × TVec K × Acc)
+      (TVec K × Acc)) :
+    Prop :=
+  match r with
+  | .cont (iter', t', acc') =>
+      k.val < K.val ∧ iter'.«end» = K
+        ∧ iter'.start.val = k.val + 1
+        ∧ (rows_inv matrix_A s_as_ntt error_as_ntt t_as_ntt_init start
+            iter'.start t' acc').holds
+  | .done y => (rows_inv matrix_A s_as_ntt error_as_ntt t_as_ntt_init start
+                  K y.1 y.2).holds
+
+end L7_1c_FC
+
 /-! ## §L7 — matrix-level targets (4 theorems).
 
     These are the ultimate FC obligations: the impl matrix functions
