@@ -8,7 +8,7 @@
 // them to be properly abstracted in F*. We would like hax to do this automatically.
 // Related Issue: https://github.com/hacspec/hax/issues/616
 
-use libcrux_secrets::U8;
+use libcrux_secrets::{mem_requests::ct_declassify, U8};
 
 /// The SHA3 block size.
 pub(crate) const BLOCK_SIZE: usize = 168;
@@ -176,6 +176,12 @@ pub(crate) mod portable {
                 &mut state.shake128_state[i],
                 &mut output[i],
             );
+            // output is a slice over plain types as it is used for sampling the entries of the public matrix
+            // A. However, the shake128 functions require slices over secret types. This requires the
+            // `classify_ref_mut` above, which also marks the memory as undefined for valgrind. To not
+            // have false positives in the sampling code that uses output, we `ct_declassify` it here
+            // to mark it as defined.
+            ct_declassify(output);
         }
     }
 
@@ -196,6 +202,12 @@ pub(crate) mod portable {
             );
             #[cfg(hax)]
             incremental::shake128_squeeze_next_block(&mut state.shake128_state[i], &mut output[i]);
+            // output is a slice over plain types as it is used for sampling the entries of the public matrix
+            // A. However, the shake128 functions require slices over secret types. This requires the
+            // `classify_ref_mut` above, which also marks the memory as undefined for valgrind. To not
+            // have false positives in the sampling code that uses output, we `ct_declassify` it here
+            // to mark it as defined.
+            ct_declassify(output);
         }
     }
 

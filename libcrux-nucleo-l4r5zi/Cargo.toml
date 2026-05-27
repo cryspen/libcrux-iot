@@ -36,6 +36,10 @@ rand_core = {version = "0.6.4"} # This is the version of rand_core
 [dev-dependencies]
 defmt-test = "0.3"
 
+[patch.crates-io]
+# patch until libcrux-secrets 0.0.6 is released
+libcrux-secrets = { git = "https://github.com/cryspen/libcrux.git", rev = "c4253d211a605f4a284c595fc6ca28ae18dd07ba" }
+
 [features]
 default = ["mldsa87", "mlkem1024"] # We want to benchmark the most expensive variants by default
 mldsa44 = ["libcrux-testbench/mldsa44"]

@@ -26,3 +26,10 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(hax)', 'cfg(eurydice)', 'c
 
 [patch.crates-io]
 hax-lib = { git = "https://github.com/cryspen/hax", branch = "jonas/fstar-wrapping" }
+# patch until libcrux-secrets 0.0.6 is released
+libcrux-secrets = { git = "https://github.com/cryspen/libcrux.git", rev = "c4253d211a605f4a284c595fc6ca28ae18dd07ba" }
+
+[profile.release-debug]
+inherits = "release"
+debug = true
+strip = false

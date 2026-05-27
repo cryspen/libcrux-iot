@@ -1,4 +1,4 @@
-use libcrux_secrets::{ClassifyRef as _, U8};
+use libcrux_secrets::{mem_requests::ct_declassify, ClassifyRef as _, U8};
 
 use crate::{
     constants::{BYTES_PER_RING_ELEMENT, SHARED_SECRET_SIZE},
@@ -103,6 +103,7 @@ pub(super) fn deserialize_ring_elements_reduced<const K: usize, Vector: Operatio
     public_key: &[u8],
     deserialized_pk: &mut [PolynomialRingElement<Vector>],
 ) {
+    let public_key = public_key.classify_ref();
     cloop! {
         for (i, ring_element) in public_key
             .chunks_exact(BYTES_PER_RING_ELEMENT)
@@ -112,9 +113,13 @@ pub(super) fn deserialize_ring_elements_reduced<const K: usize, Vector: Operatio
                 deserialized_pk.len() == K
             });
 
-            deserialize_to_reduced_ring_element(ring_element.classify_ref(), &mut deserialized_pk[i]);
+            deserialize_to_reduced_ring_element(ring_element, &mut deserialized_pk[i]);
         }
     };
+    // Above we needed to classify_ref the public key. This marks
+    // the memory permanently as Undefined for valgrind and can lead to false positives.
+    // Thus we `ct_declassify` the memory here.
+    ct_declassify(public_key);
 }
 
 #[hax_lib::requires(serialized.len() == BLOCK_LEN && BLOCK_LEN >= VECTORS_IN_RING_ELEMENT * 20)]

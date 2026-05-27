@@ -36,6 +36,10 @@ micromath = "2.0.0"
 libcrux-iot-ml-dsa = { path = "../libcrux-iot/ml-dsa" }
 libcrux-iot-ml-kem = { path = "../libcrux-iot/ml-kem" }
 
+[patch.crates-io]
+# patch until libcrux-secrets 0.0.6 is released
+libcrux-secrets = { git = "https://github.com/cryspen/libcrux.git", rev = "c4253d211a605f4a284c595fc6ca28ae18dd07ba" }
+
 [profile.release]
 debug = 2
 

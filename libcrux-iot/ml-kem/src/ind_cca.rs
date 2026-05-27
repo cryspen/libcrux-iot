@@ -1,4 +1,6 @@
-use libcrux_secrets::{Classify as _, ClassifyRef as _, DeclassifyRef, U8};
+use libcrux_secrets::{
+    mem_requests::ct_declassify, Classify as _, ClassifyRef as _, DeclassifyRef, U8,
+};
 
 use crate::{
     constant_time_ops::compare_ciphertexts_select_shared_secret_in_constant_time, constants::*,
@@ -56,6 +58,11 @@ fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize,
         public_key.classify_ref(),
         &mut serialized[pointer..pointer + H_DIGEST_SIZE],
     );
+    // public_key is a slice over plain types as it is public.
+    // However, the `Hasher::H` function require a slice over secret types. This requires the
+    // `classify_ref` above, which also marks the memory as undefined for valgrind. To not
+    // have false positives in code that uses the public_key later, we ct_declassify it.
+    ct_declassify(public_key);
     pointer += H_DIGEST_SIZE;
     serialized[pointer..pointer + implicit_rejection_value.len()]
         .copy_from_slice(implicit_rejection_value);

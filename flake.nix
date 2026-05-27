@@ -60,6 +60,7 @@
             pkgs.valgrind
             pkgs.libclang
             pkgs.python3
+            pkgs.cargo-nextest
             rustToolchain
             fstar.packages.${system}.default
             hax.packages.${system}.default
