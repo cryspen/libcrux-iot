@@ -16,6 +16,50 @@ noncomputable section
 
 namespace libcrux_iot_sha3
 
+/-- [libcrux_iot_sha3::impl_digest_trait::SHA3_224_LEN]
+    Source: 'sha3/src/impl_digest_trait.rs', lines 3:0-3:31 -/
+@[global_simps, irreducible]
+def impl_digest_trait.SHA3_224_LEN : Std.Usize := 28#usize
+
+/-- [libcrux_iot_sha3::impl_digest_trait::SHA3_256_LEN]
+    Source: 'sha3/src/impl_digest_trait.rs', lines 4:0-4:31 -/
+@[global_simps, irreducible]
+def impl_digest_trait.SHA3_256_LEN : Std.Usize := 32#usize
+
+/-- [libcrux_iot_sha3::impl_digest_trait::SHA3_384_LEN]
+    Source: 'sha3/src/impl_digest_trait.rs', lines 5:0-5:31 -/
+@[global_simps, irreducible]
+def impl_digest_trait.SHA3_384_LEN : Std.Usize := 48#usize
+
+/-- [libcrux_iot_sha3::impl_digest_trait::SHA3_512_LEN]
+    Source: 'sha3/src/impl_digest_trait.rs', lines 6:0-6:31 -/
+@[global_simps, irreducible]
+def impl_digest_trait.SHA3_512_LEN : Std.Usize := 64#usize
+
+/-- [libcrux_iot_sha3::impl_digest_trait::Sha3_224]
+    Source: 'sha3/src/impl_digest_trait.rs', lines 13:8-13:25
+    Visibility: public -/
+@[reducible]
+def impl_digest_trait.Sha3_224 := Unit
+
+/-- [libcrux_iot_sha3::impl_digest_trait::Sha3_256]
+    Source: 'sha3/src/impl_digest_trait.rs', lines 13:8-13:25
+    Visibility: public -/
+@[reducible]
+def impl_digest_trait.Sha3_256 := Unit
+
+/-- [libcrux_iot_sha3::impl_digest_trait::Sha3_384]
+    Source: 'sha3/src/impl_digest_trait.rs', lines 13:8-13:25
+    Visibility: public -/
+@[reducible]
+def impl_digest_trait.Sha3_384 := Unit
+
+/-- [libcrux_iot_sha3::impl_digest_trait::Sha3_512]
+    Source: 'sha3/src/impl_digest_trait.rs', lines 13:8-13:25
+    Visibility: public -/
+@[reducible]
+def impl_digest_trait.Sha3_512 := Unit
+
 /-- [libcrux_iot_sha3::lane::Lane2U32]
     Source: 'sha3/src/lane.rs', lines 7:0-7:41
     Visibility: public -/
@@ -4671,7 +4715,7 @@ def lane.Lane2U32.Insts.Core_modelsConvertFromArrayU322 :
 @[global_simps, irreducible] def SHA3_512_DIGEST_SIZE : Std.Usize := 64#usize
 
 /-- [libcrux_iot_sha3::Algorithm]
-    Source: 'sha3/src/lib.rs', lines 73:0-85:1
+    Source: 'sha3/src/lib.rs', lines 78:0-90:1
     Visibility: public -/
 @[discriminant u32 [1,2,3,4]]
 inductive Algorithm where
@@ -4681,14 +4725,14 @@ inductive Algorithm where
 | Sha512 : Algorithm
 
 /-- [libcrux_iot_sha3::{core::clone::Clone for libcrux_iot_sha3::Algorithm}::clone]:
-    Source: 'sha3/src/lib.rs', lines 71:39-71:44
+    Source: 'sha3/src/lib.rs', lines 76:39-76:44
     Visibility: public -/
 def Algorithm.Insts.Core_modelsCloneClone.clone
   (self : Algorithm) : Result Algorithm := do
   ok self
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::clone::Clone for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 71:39-71:44 -/
+    Source: 'sha3/src/lib.rs', lines 76:39-76:44 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsCloneClone : core_models.clone.Clone Algorithm
   := {
@@ -4696,7 +4740,7 @@ def Algorithm.Insts.Core_modelsCloneClone : core_models.clone.Clone Algorithm
 }
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::marker::Copy for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 71:33-71:37 -/
+    Source: 'sha3/src/lib.rs', lines 76:33-76:37 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsMarkerCopy : core_models.marker.Copy Algorithm
   := {
@@ -4704,7 +4748,7 @@ def Algorithm.Insts.Core_modelsMarkerCopy : core_models.marker.Copy Algorithm
 }
 
 /-- [libcrux_iot_sha3::{core::fmt::Debug for libcrux_iot_sha3::Algorithm}::fmt]:
-    Source: 'sha3/src/lib.rs', lines 71:46-71:51
+    Source: 'sha3/src/lib.rs', lines 76:46-76:51
     Visibility: public -/
 def Algorithm.Insts.Core_modelsFmtDebug.fmt
   (self : Algorithm) (f : core_models.fmt.Formatter) :
@@ -4718,21 +4762,21 @@ def Algorithm.Insts.Core_modelsFmtDebug.fmt
   | Algorithm.Sha512 => core_models.fmt.Formatter.write_str f (toStr "Sha512")
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::fmt::Debug for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 71:46-71:51 -/
+    Source: 'sha3/src/lib.rs', lines 76:46-76:51 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsFmtDebug : core_models.fmt.Debug Algorithm := {
   dbg_fmt := Algorithm.Insts.Core_modelsFmtDebug.fmt
 }
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::marker::StructuralPartialEq for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 71:53-71:62 -/
+    Source: 'sha3/src/lib.rs', lines 76:53-76:62 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsMarkerStructuralPartialEq :
   core_models.marker.StructuralPartialEq Algorithm := {
 }
 
 /-- [libcrux_iot_sha3::{core::cmp::PartialEq<libcrux_iot_sha3::Algorithm> for libcrux_iot_sha3::Algorithm}::eq]:
-    Source: 'sha3/src/lib.rs', lines 71:53-71:62
+    Source: 'sha3/src/lib.rs', lines 76:53-76:62
     Visibility: public -/
 def Algorithm.Insts.Core_modelsCmpPartialEqAlgorithm.eq
   (self : Algorithm) (other : Algorithm) : Result Bool := do
@@ -4741,7 +4785,7 @@ def Algorithm.Insts.Core_modelsCmpPartialEqAlgorithm.eq
   ok (self1 = other1)
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::cmp::PartialEq<libcrux_iot_sha3::Algorithm> for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 71:53-71:62 -/
+    Source: 'sha3/src/lib.rs', lines 76:53-76:62 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsCmpPartialEqAlgorithm :
   core_models.cmp.PartialEq Algorithm Algorithm := {
@@ -4749,7 +4793,7 @@ def Algorithm.Insts.Core_modelsCmpPartialEqAlgorithm :
 }
 
 /-- [libcrux_iot_sha3::{core::convert::From<u32> for libcrux_iot_sha3::Algorithm}::from]:
-    Source: 'sha3/src/lib.rs', lines 88:4-96:5
+    Source: 'sha3/src/lib.rs', lines 93:4-101:5
     Visibility: public -/
 def Algorithm.Insts.Core_modelsConvertFromU32.from
   (v : Std.U32) : Result Algorithm := do
@@ -4761,7 +4805,7 @@ def Algorithm.Insts.Core_modelsConvertFromU32.from
   | _ => fail panic
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::convert::From<u32> for libcrux_iot_sha3::Algorithm}]
-    Source: 'sha3/src/lib.rs', lines 87:0-97:1 -/
+    Source: 'sha3/src/lib.rs', lines 92:0-102:1 -/
 @[reducible]
 def Algorithm.Insts.Core_modelsConvertFromU32 : core_models.convert.From
   Algorithm Std.U32 := {
@@ -4769,7 +4813,7 @@ def Algorithm.Insts.Core_modelsConvertFromU32 : core_models.convert.From
 }
 
 /-- [libcrux_iot_sha3::{core::convert::From<libcrux_iot_sha3::Algorithm> for u32}::from]:
-    Source: 'sha3/src/lib.rs', lines 100:4-107:5
+    Source: 'sha3/src/lib.rs', lines 105:4-112:5
     Visibility: public -/
 def U32.Insts.Core_modelsConvertFromAlgorithm.from
   (v : Algorithm) : Result Std.U32 := do
@@ -4780,7 +4824,7 @@ def U32.Insts.Core_modelsConvertFromAlgorithm.from
   | Algorithm.Sha512 => ok 4#u32
 
 /-- Trait implementation: [libcrux_iot_sha3::{core::convert::From<libcrux_iot_sha3::Algorithm> for u32}]
-    Source: 'sha3/src/lib.rs', lines 99:0-108:1 -/
+    Source: 'sha3/src/lib.rs', lines 104:0-113:1 -/
 @[reducible]
 def U32.Insts.Core_modelsConvertFromAlgorithm : core_models.convert.From
   Std.U32 Algorithm := {
@@ -4788,7 +4832,7 @@ def U32.Insts.Core_modelsConvertFromAlgorithm : core_models.convert.From
 }
 
 /-- [libcrux_iot_sha3::digest_size]:
-    Source: 'sha3/src/lib.rs', lines 111:0-118:1
+    Source: 'sha3/src/lib.rs', lines 116:0-123:1
     Visibility: public -/
 def digest_size (mode : Algorithm) : Result Std.Usize := do
   match mode with
@@ -4798,7 +4842,7 @@ def digest_size (mode : Algorithm) : Result Std.Usize := do
   | Algorithm.Sha512 => ok SHA3_512_DIGEST_SIZE
 
 /-- [libcrux_iot_sha3::keccakx1]:
-    Source: 'sha3/src/lib.rs', lines 488:0-490:1 -/
+    Source: 'sha3/src/lib.rs', lines 493:0-495:1 -/
 def keccakx1
   (RATE : Std.Usize) (DELIM : Std.U8) (data : Slice Std.U8)
   (out : Slice Std.U8) :
@@ -4807,7 +4851,7 @@ def keccakx1
   keccak.keccak RATE DELIM data out
 
 /-- [libcrux_iot_sha3::sha512_ema]:
-    Source: 'sha3/src/lib.rs', lines 253:0-260:1
+    Source: 'sha3/src/lib.rs', lines 258:0-265:1
     Visibility: public -/
 def sha512_ema
   (digest : Slice Std.U8) (payload : Slice Std.U8) :
@@ -4821,7 +4865,7 @@ def sha512_ema
   keccakx1 72#usize 6#u8 payload digest
 
 /-- [libcrux_iot_sha3::sha384_ema]:
-    Source: 'sha3/src/lib.rs', lines 226:0-233:1
+    Source: 'sha3/src/lib.rs', lines 231:0-238:1
     Visibility: public -/
 def sha384_ema
   (digest : Slice Std.U8) (payload : Slice Std.U8) :
@@ -4835,7 +4879,7 @@ def sha384_ema
   keccakx1 104#usize 6#u8 payload digest
 
 /-- [libcrux_iot_sha3::sha256_ema]:
-    Source: 'sha3/src/lib.rs', lines 199:0-206:1
+    Source: 'sha3/src/lib.rs', lines 204:0-211:1
     Visibility: public -/
 def sha256_ema
   (digest : Slice Std.U8) (payload : Slice Std.U8) :
@@ -4849,7 +4893,7 @@ def sha256_ema
   keccakx1 136#usize 6#u8 payload digest
 
 /-- [libcrux_iot_sha3::sha224_ema]:
-    Source: 'sha3/src/lib.rs', lines 172:0-179:1
+    Source: 'sha3/src/lib.rs', lines 177:0-184:1
     Visibility: public -/
 def sha224_ema
   (digest : Slice Std.U8) (payload : Slice Std.U8) :
@@ -4863,7 +4907,7 @@ def sha224_ema
   keccakx1 144#usize 6#u8 payload digest
 
 /-- [libcrux_iot_sha3::hash]:
-    Source: 'sha3/src/lib.rs', lines 130:0-150:1
+    Source: 'sha3/src/lib.rs', lines 135:0-155:1
     Visibility: public -/
 def hash
   (LEN : Std.Usize) (algorithm : Algorithm) (payload : Slice Std.U8) :
@@ -4893,7 +4937,7 @@ def hash
     ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::sha224]:
-    Source: 'sha3/src/lib.rs', lines 158:0-165:1
+    Source: 'sha3/src/lib.rs', lines 163:0-170:1
     Visibility: public -/
 def sha224 (payload : Slice Std.U8) : Result (Array Std.U8 28#usize) := do
   let a := Array.repeat 28#usize 0#u8
@@ -4903,7 +4947,7 @@ def sha224 (payload : Slice Std.U8) : Result (Array Std.U8 28#usize) := do
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::sha256]:
-    Source: 'sha3/src/lib.rs', lines 185:0-192:1
+    Source: 'sha3/src/lib.rs', lines 190:0-197:1
     Visibility: public -/
 def sha256 (data : Slice Std.U8) : Result (Array Std.U8 32#usize) := do
   let a := Array.repeat 32#usize 0#u8
@@ -4913,7 +4957,7 @@ def sha256 (data : Slice Std.U8) : Result (Array Std.U8 32#usize) := do
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::sha384]:
-    Source: 'sha3/src/lib.rs', lines 212:0-219:1
+    Source: 'sha3/src/lib.rs', lines 217:0-224:1
     Visibility: public -/
 def sha384 (data : Slice Std.U8) : Result (Array Std.U8 48#usize) := do
   let a := Array.repeat 48#usize 0#u8
@@ -4923,7 +4967,7 @@ def sha384 (data : Slice Std.U8) : Result (Array Std.U8 48#usize) := do
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::sha512]:
-    Source: 'sha3/src/lib.rs', lines 239:0-246:1
+    Source: 'sha3/src/lib.rs', lines 244:0-251:1
     Visibility: public -/
 def sha512 (data : Slice Std.U8) : Result (Array Std.U8 64#usize) := do
   let a := Array.repeat 64#usize 0#u8
@@ -4933,7 +4977,7 @@ def sha512 (data : Slice Std.U8) : Result (Array Std.U8 64#usize) := do
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::shake128]:
-    Source: 'sha3/src/lib.rs', lines 266:0-273:1
+    Source: 'sha3/src/lib.rs', lines 271:0-278:1
     Visibility: public -/
 def shake128
   (BYTES : Std.Usize) (data : Slice Std.U8) : Result (Array Std.U8 BYTES) := do
@@ -4944,14 +4988,14 @@ def shake128
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::shake128_ema]:
-    Source: 'sha3/src/lib.rs', lines 281:0-283:1
+    Source: 'sha3/src/lib.rs', lines 286:0-288:1
     Visibility: public -/
 def shake128_ema
   (out : Slice Std.U8) (data : Slice Std.U8) : Result (Slice Std.U8) := do
   keccakx1 168#usize 31#u8 data out
 
 /-- [libcrux_iot_sha3::shake256]:
-    Source: 'sha3/src/lib.rs', lines 289:0-296:1
+    Source: 'sha3/src/lib.rs', lines 294:0-301:1
     Visibility: public -/
 def shake256
   (BYTES : Std.Usize) (data : Slice Std.U8) : Result (Array Std.U8 BYTES) := do
@@ -4962,45 +5006,45 @@ def shake256
   ok (to_slice_mut_back s1)
 
 /-- [libcrux_iot_sha3::shake256_ema]:
-    Source: 'sha3/src/lib.rs', lines 304:0-306:1
+    Source: 'sha3/src/lib.rs', lines 309:0-311:1
     Visibility: public -/
 def shake256_ema
   (out : Slice Std.U8) (data : Slice Std.U8) : Result (Slice Std.U8) := do
   keccakx1 136#usize 31#u8 data out
 
 /-- Trait declaration: [libcrux_iot_sha3::incremental::private::Sealed]
-    Source: 'sha3/src/lib.rs', lines 327:8-327:27
+    Source: 'sha3/src/lib.rs', lines 332:8-332:27
     Visibility: public -/
 structure incremental.private.Sealed (Self : Type) where
 
 /-- [libcrux_iot_sha3::incremental::Shake128Xof]
-    Source: 'sha3/src/lib.rs', lines 334:4-336:5
+    Source: 'sha3/src/lib.rs', lines 339:4-341:5
     Visibility: public -/
 structure incremental.Shake128Xof where
   state : keccak.KeccakXofState 168#usize
 
 /-- Trait implementation: [libcrux_iot_sha3::incremental::private::{libcrux_iot_sha3::incremental::private::Sealed for libcrux_iot_sha3::incremental::Shake128Xof}]
-    Source: 'sha3/src/lib.rs', lines 329:8-329:45 -/
+    Source: 'sha3/src/lib.rs', lines 334:8-334:45 -/
 @[reducible]
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalPrivateSealed :
   incremental.private.Sealed incremental.Shake128Xof := {
 }
 
 /-- [libcrux_iot_sha3::incremental::Shake256Xof]
-    Source: 'sha3/src/lib.rs', lines 339:4-341:5
+    Source: 'sha3/src/lib.rs', lines 344:4-346:5
     Visibility: public -/
 structure incremental.Shake256Xof where
   state : keccak.KeccakXofState 136#usize
 
 /-- Trait implementation: [libcrux_iot_sha3::incremental::private::{libcrux_iot_sha3::incremental::private::Sealed for libcrux_iot_sha3::incremental::Shake256Xof}]
-    Source: 'sha3/src/lib.rs', lines 330:8-330:45 -/
+    Source: 'sha3/src/lib.rs', lines 335:8-335:45 -/
 @[reducible]
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalPrivateSealed :
   incremental.private.Sealed incremental.Shake256Xof := {
 }
 
 /-- Trait declaration: [libcrux_iot_sha3::incremental::Xof]
-    Source: 'sha3/src/lib.rs', lines 345:4-384:5
+    Source: 'sha3/src/lib.rs', lines 350:4-389:5
     Visibility: public -/
 structure incremental.Xof (Self : Type) (RATE : Std.Usize) where
   privateSealedInst : incremental.private.Sealed Self
@@ -5010,7 +5054,7 @@ structure incremental.Xof (Self : Type) (RATE : Std.Usize) where
   squeeze : Self → Slice Std.U8 → Result (Self × (Slice Std.U8))
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}::squeeze]:
-    Source: 'sha3/src/lib.rs', lines 401:8-403:9
+    Source: 'sha3/src/lib.rs', lines 406:8-408:9
     Visibility: public -/
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.squeeze
   (self : incremental.Shake128Xof) (out : Slice Std.U8) :
@@ -5020,7 +5064,7 @@ def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.squeeze
   ok ({ state := kxs }, out1)
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}::absorb_final]:
-    Source: 'sha3/src/lib.rs', lines 397:8-399:9
+    Source: 'sha3/src/lib.rs', lines 402:8-404:9
     Visibility: public -/
 def
   incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.absorb_final
@@ -5031,7 +5075,7 @@ def
   ok { state := kxs }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}::absorb]:
-    Source: 'sha3/src/lib.rs', lines 393:8-395:9
+    Source: 'sha3/src/lib.rs', lines 398:8-400:9
     Visibility: public -/
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.absorb
   (self : incremental.Shake128Xof) (input : Slice Std.U8) :
@@ -5041,7 +5085,7 @@ def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.absorb
   ok { state := kxs }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}::new]:
-    Source: 'sha3/src/lib.rs', lines 387:8-391:9
+    Source: 'sha3/src/lib.rs', lines 392:8-396:9
     Visibility: public -/
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.new
   : Result incremental.Shake128Xof := do
@@ -5049,7 +5093,7 @@ def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168.new
   ok { state := kxs }
 
 /-- Trait implementation: [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<168usize> for libcrux_iot_sha3::incremental::Shake128Xof}]
-    Source: 'sha3/src/lib.rs', lines 386:4-404:5 -/
+    Source: 'sha3/src/lib.rs', lines 391:4-409:5 -/
 @[reducible]
 def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168 :
   incremental.Xof incremental.Shake128Xof 168#usize := {
@@ -5065,7 +5109,7 @@ def incremental.Shake128Xof.Insts.Libcrux_iot_sha3IncrementalXof168 :
 }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}::squeeze]:
-    Source: 'sha3/src/lib.rs', lines 422:8-424:9
+    Source: 'sha3/src/lib.rs', lines 427:8-429:9
     Visibility: public -/
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.squeeze
   (self : incremental.Shake256Xof) (out : Slice Std.U8) :
@@ -5075,7 +5119,7 @@ def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.squeeze
   ok ({ state := kxs }, out1)
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}::absorb_final]:
-    Source: 'sha3/src/lib.rs', lines 417:8-419:9
+    Source: 'sha3/src/lib.rs', lines 422:8-424:9
     Visibility: public -/
 def
   incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.absorb_final
@@ -5086,7 +5130,7 @@ def
   ok { state := kxs }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}::absorb]:
-    Source: 'sha3/src/lib.rs', lines 413:8-415:9
+    Source: 'sha3/src/lib.rs', lines 418:8-420:9
     Visibility: public -/
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.absorb
   (self : incremental.Shake256Xof) (input : Slice Std.U8) :
@@ -5096,7 +5140,7 @@ def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.absorb
   ok { state := kxs }
 
 /-- [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}::new]:
-    Source: 'sha3/src/lib.rs', lines 407:8-411:9
+    Source: 'sha3/src/lib.rs', lines 412:8-416:9
     Visibility: public -/
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.new
   : Result incremental.Shake256Xof := do
@@ -5104,7 +5148,7 @@ def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136.new
   ok { state := kxs }
 
 /-- Trait implementation: [libcrux_iot_sha3::incremental::{libcrux_iot_sha3::incremental::Xof<136usize> for libcrux_iot_sha3::incremental::Shake256Xof}]
-    Source: 'sha3/src/lib.rs', lines 406:4-425:5 -/
+    Source: 'sha3/src/lib.rs', lines 411:4-430:5 -/
 @[reducible]
 def incremental.Shake256Xof.Insts.Libcrux_iot_sha3IncrementalXof136 :
   incremental.Xof incremental.Shake256Xof 136#usize := {

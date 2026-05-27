@@ -1,0 +1,65 @@
+[[92mInfo[39m ] Imported: /home/alex/Projects/libcrux-iot/review/libcrux-iot/sha3/proofs/aeneas-lean/llbc/libcrux_iot_sha3.llbc
+[[93mWarn[39m ] Found an unknown type declaration with region parameters: as we can not know whether the regions are used in mutable borrows or not the extracted code may be incorrect.
+Type: core::fmt::Formatter
+Compiler source: llbc/TypesAnalysis.ml, line 148
+[[93mWarn[39m ] Found an unknown type declaration with region parameters: as we can not know whether the regions are used in mutable borrows or not the extracted code may be incorrect.
+Type: core::fmt::Arguments
+Compiler source: llbc/TypesAnalysis.ml, line 148
+[[93mWarn[39m ] Found an unknown type declaration with region parameters: as we can not know whether the regions are used in mutable borrows or not the extracted code may be incorrect.
+Type: core::fmt::rt::Argument
+Compiler source: llbc/TypesAnalysis.ml, line 148
+[[91mError[39m] Unimplemented
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[91mError[39m] Unimplemented
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[91mError[39m] Unimplemented
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[91mError[39m] Unimplemented
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[91mError[39m] Missing trait impl, probably because of an error which happened before
+[[91mError[39m] Could not convert the name to a pattern because of missing definition(s)
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[93mWarn[39m ] Could not generate names for the function declaration 'libcrux_iot_sha3::impl_digest_trait::{TraitImpl@17}::hash because of previous error
+Name pattern: '(could not compute the name pattern due to a different error)'
+Definition span: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+Compiler source: Translate.ml, line 1550
+[[91mError[39m] Missing trait impl, probably because of an error which happened before
+[[91mError[39m] Could not convert the name to a pattern because of missing definition(s)
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[93mWarn[39m ] Could not generate names for the function declaration 'libcrux_iot_sha3::impl_digest_trait::{TraitImpl@18}::hash because of previous error
+Name pattern: '(could not compute the name pattern due to a different error)'
+Definition span: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+Compiler source: Translate.ml, line 1550
+[[91mError[39m] Missing trait impl, probably because of an error which happened before
+[[91mError[39m] Could not convert the name to a pattern because of missing definition(s)
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[93mWarn[39m ] Could not generate names for the function declaration 'libcrux_iot_sha3::impl_digest_trait::{TraitImpl@19}::hash because of previous error
+Name pattern: '(could not compute the name pattern due to a different error)'
+Definition span: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+Compiler source: Translate.ml, line 1550
+[[91mError[39m] Missing trait impl, probably because of an error which happened before
+[[91mError[39m] Could not convert the name to a pattern because of missing definition(s)
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[93mWarn[39m ] Could not generate names for the function declaration 'libcrux_iot_sha3::impl_digest_trait::{TraitImpl@20}::hash because of previous error
+Name pattern: '(could not compute the name pattern due to a different error)'
+Definition span: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+Compiler source: Translate.ml, line 1550
+[[91mError[39m] Could not find: libcrux_iot_sha3::impl_digest_trait::{TraitImpl@17}::hash
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[91mError[39m] Could not find: libcrux_iot_sha3::impl_digest_trait::{TraitImpl@18}::hash
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[91mError[39m] Could not find: libcrux_iot_sha3::impl_digest_trait::{TraitImpl@19}::hash
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[91mError[39m] Could not find: libcrux_iot_sha3::impl_digest_trait::{TraitImpl@20}::hash
+Source: 'sha3/src/impl_digest_trait.rs', lines 21:12-37:13
+[[91mError[39m] Could not find: libcrux_iot_sha3::impl_digest_trait::{TraitImpl@17}::hash
+Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libcrux-traits-0.0.6/src/digest/slice.rs', lines 86:12-96:13
+[[91mError[39m] Could not find: libcrux_iot_sha3::impl_digest_trait::{TraitImpl@18}::hash
+Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libcrux-traits-0.0.6/src/digest/slice.rs', lines 86:12-96:13
+[[91mError[39m] Could not find: libcrux_iot_sha3::impl_digest_trait::{TraitImpl@19}::hash
+Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libcrux-traits-0.0.6/src/digest/slice.rs', lines 86:12-96:13
+[[91mError[39m] Could not find: libcrux_iot_sha3::impl_digest_trait::{TraitImpl@20}::hash
+Source: '/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libcrux-traits-0.0.6/src/digest/slice.rs', lines 86:12-96:13
+[[92mInfo[39m ] Generated the partial file (because of 20 errors, including 4 unique errors): /home/alex/Projects/libcrux-iot/review/libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Extraction/LibcruxIotSha3.lean
+[[93mWarn[39m ] The crate contains extracted external, unknown definitions: we advise using the option -split-files to allow manually providing these definitions in separate files.
+[[92mInfo[39m ] Total execution time: 10.433782 seconds

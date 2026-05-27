@@ -2,7 +2,7 @@
   # SHAKE128/256 + SHA3-{224,256,384,512} ema specs.
 
   Each of these 6 top-level digest functions is a direct instantiation of
-  `keccak.keccak_keccak_spec` (in `Sponge/Sha3.lean`). The impl side
+  `keccak.keccak_keccak_spec` (in `Sponge/Keccak.lean`). The impl side
   goes through `keccakx1 RATE DELIM` which is a one-liner wrapper around
   `keccak.keccak RATE DELIM`; the spec side goes through `sha3.sha3_N` /
   `sha3.shake_N` which is a one-liner wrapper around `sponge.keccak RATE
@@ -33,7 +33,7 @@
   - For ema specs: `digest.val.length = <DIGEST_SIZE>` (28/32/48/64) and
     `payload.val.length ≤ U32.MAX` (to discharge the impl's two `massert`s).
 -/
-import LibcruxIotSha3.Sponge.Sha3
+import LibcruxIotSha3.Sponge.Keccak
 
 open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
