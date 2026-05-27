@@ -87,7 +87,11 @@ macro_rules! shake_test {
                     &mut my_digest,
                     test.msg[0..test.msg_length / 8].classify_ref(),
                 );
-                assert_eq!(my_digest.declassify_ref(), &test.digest[..], "test {i}: digest mismatch");
+                assert_eq!(
+                    my_digest.declassify_ref(),
+                    &test.digest[..],
+                    "test {i}: digest mismatch"
+                );
             }
             eprintln!("Ran {test_cnt} tests for {}", stringify!($test_name));
         }
@@ -130,7 +134,11 @@ macro_rules! shake_vo_test {
                     &mut my_digest,
                     test.msg[0..tv.header.input_length / 8].classify_ref(),
                 );
-                assert_eq!(my_digest.declassify_ref(), &test.digest[..], "test {i}: digest mismatch");
+                assert_eq!(
+                    my_digest.declassify_ref(),
+                    &test.digest[..],
+                    "test {i}: digest mismatch"
+                );
             }
             eprintln!("Ran {test_cnt} tests for {}", stringify!($test_name));
         }
@@ -163,7 +171,11 @@ macro_rules! shake_vo_test_incremental {
                 let mut shake = <$shake>::new();
                 shake.absorb_final(test.msg[0..tv.header.input_length / 8].classify_ref());
                 shake.squeeze(&mut my_digest);
-                assert_eq!(my_digest.declassify_ref(), &test.digest[..], "test {i}: digest mismatch");
+                assert_eq!(
+                    my_digest.declassify_ref(),
+                    &test.digest[..],
+                    "test {i}: digest mismatch"
+                );
             }
             eprintln!("Ran {test_cnt} tests for {}", stringify!($name));
         }

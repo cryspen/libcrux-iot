@@ -7,7 +7,7 @@ use crate::lane::Lane2U32;
 use crate::{FromLeBytes, ToLeBytes};
 
 #[derive(Clone, Copy)]
-#[cfg_attr(not(eurydice), derive(Debug))]
+#[cfg_attr(not(any(eurydice, charon)), derive(Debug))]
 pub(crate) struct KeccakState {
     pub(super) st: [Lane2U32; 25],
     pub(super) c: [Lane2U32; 5],
@@ -83,34 +83,33 @@ impl KeccakState {
         let last_block_len = out.len() % 8;
 
         for i in 0..num_full_blocks {
-            let lane = self.get_lane(i / 5, i % 5).deinterleave();
-            out[i * 8..i * 8 + 4].copy_from_slice(&lane[0].to_le_bytes());
-            out[i * 8 + 4..i * 8 + 8].copy_from_slice(&lane[1].to_le_bytes());
+            let l = self.get_lane(i / 5, i % 5).deinterleave();
+            out[i * 8..i * 8 + 4].copy_from_slice(&l[0].to_le_bytes());
+            out[i * 8 + 4..i * 8 + 8].copy_from_slice(&l[1].to_le_bytes());
         }
 
         if last_block_len > 4 {
-            let lane = self
+            let l = self
                 .get_lane(num_full_blocks / 5, num_full_blocks % 5)
                 .deinterleave();
             let last_half_block_len = last_block_len - 4;
 
-            out[num_full_blocks * 8..num_full_blocks * 8 + 4]
-                .copy_from_slice(&lane[0].to_le_bytes());
+            out[num_full_blocks * 8..num_full_blocks * 8 + 4].copy_from_slice(&l[0].to_le_bytes());
             out[num_full_blocks * 8 + 4..num_full_blocks * 8 + last_block_len]
-                .copy_from_slice(&lane[1].to_le_bytes()[0..last_half_block_len]);
+                .copy_from_slice(&l[1].to_le_bytes()[0..last_half_block_len]);
         } else if last_block_len > 0 {
-            let lane = self
+            let l = self
                 .get_lane(num_full_blocks / 5, num_full_blocks % 5)
                 .deinterleave();
 
             out[num_full_blocks * 8..num_full_blocks * 8 + last_block_len]
-                .copy_from_slice(&lane[0].to_le_bytes()[0..last_block_len]);
+                .copy_from_slice(&l[0].to_le_bytes()[0..last_block_len]);
         }
     }
 }
 
 #[inline(always)]
-fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], start: usize) {
+fn load_block_2u32<const RATE: usize>(s: &mut KeccakState, blocks: &[U8], start: usize) {
     #[cfg(not(eurydice))]
     debug_assert!(RATE <= blocks.len() && RATE % 8 == 0);
     let mut state_flat = [Lane2U32::zero(); 25];
@@ -122,8 +121,8 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
         state_flat[i] = Lane2U32::from([a, b]).interleave();
     }
     for i in 0..RATE / 8 {
-        let got = state.get_lane(i / 5, i % 5);
-        state.set_lane(
+        let got = s.get_lane(i / 5, i % 5);
+        s.set_lane(
             i / 5,
             i % 5,
             Lane2U32::from_ints([got[0] ^ state_flat[i][0], got[1] ^ state_flat[i][1]]),
@@ -132,20 +131,16 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
 }
 
 #[inline(always)]
-fn load_block_full_2u32<const RATE: usize>(
-    state: &mut KeccakState,
-    blocks: &[U8; 200],
-    start: usize,
-) {
-    load_block_2u32::<RATE>(state, blocks, start);
+fn load_block_full_2u32<const RATE: usize>(s: &mut KeccakState, blocks: &[U8; 200], start: usize) {
+    load_block_2u32::<RATE>(s, blocks, start);
 }
 
 #[inline(always)]
 fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     for i in 0..RATE / 8 {
-        let lane = s.get_lane(i / 5, i % 5).deinterleave();
-        out[8 * i..8 * i + 4].copy_from_slice(&lane[0].to_le_bytes());
-        out[8 * i + 4..8 * i + 8].copy_from_slice(&lane[1].to_le_bytes());
+        let l = s.get_lane(i / 5, i % 5).deinterleave();
+        out[8 * i..8 * i + 4].copy_from_slice(&l[0].to_le_bytes());
+        out[8 * i + 4..8 * i + 8].copy_from_slice(&l[1].to_le_bytes());
     }
 }
 
@@ -169,5 +164,132 @@ impl ToLeBytes<4> for U32 {
 impl FromLeBytes<4> for U32 {
     fn from_le_bytes(bytes: [U8; 4]) -> Self {
         u32::from_le_bytes(bytes.declassify()).classify()
+    }
+}
+
+/// Helpers used by cross-specification tests against `hacspec_sha3`.
+///
+/// `state_to_spec` is the "deinterleave" function: it converts the
+/// implementation's bit-interleaved `KeccakState` into the spec's flat
+/// `[u64; 25]` Keccak state. `state_from_spec` is its inverse, used to
+/// seed the implementation from a known `[u64; 25]` state for tests.
+///
+/// Both impl and spec now store lane `A[x, y]` at flat index `5*x + y`,
+/// so the index mapping is the identity.
+#[cfg(test)]
+pub(crate) mod cross_spec {
+    use super::KeccakState;
+    use crate::lane::Lane2U32;
+    use libcrux_secrets::{Classify, Declassify};
+
+    /// Deinterleave: read the impl state into the spec's flat `[u64; 25]`.
+    pub(crate) fn state_to_spec(s: &KeccakState) -> [u64; 25] {
+        core::array::from_fn(|idx| {
+            let l = s.st[idx].deinterleave();
+            let arr = l.0.declassify();
+            (arr[0] as u64) | ((arr[1] as u64) << 32)
+        })
+    }
+
+    /// Re-interleave a flat `[u64; 25]` back into the impl's `KeccakState`.
+    pub(crate) fn state_from_spec(flat: [u64; 25]) -> KeccakState {
+        let mut s = KeccakState::new();
+        for idx in 0..25 {
+            let lo = (flat[idx] as u32).classify();
+            let hi = ((flat[idx] >> 32) as u32).classify();
+            s.st[idx] = Lane2U32::from_ints([lo, hi]).interleave();
+        }
+        s
+    }
+}
+
+#[cfg(test)]
+mod cross_spec_tests {
+    use super::cross_spec::{state_from_spec, state_to_spec};
+    use libcrux_secrets::{Classify, Declassify};
+    use rand::rngs::StdRng;
+    use rand::{Rng, SeedableRng};
+
+    fn random_state(rng: &mut StdRng) -> [u64; 25] {
+        core::array::from_fn(|_| rng.gen())
+    }
+
+    #[test]
+    fn state_roundtrip_random() {
+        let mut rng = StdRng::seed_from_u64(0xC0FFEE);
+        for _ in 0..256 {
+            let v = random_state(&mut rng);
+            let back = state_to_spec(&state_from_spec(v));
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn state_roundtrip_edge_cases() {
+        let cases: [[u64; 25]; 5] = [
+            [0u64; 25],
+            [u64::MAX; 25],
+            core::array::from_fn(|i| i as u64),
+            [0x5555_5555_5555_5555u64; 25],
+            [0xAAAA_AAAA_AAAA_AAAAu64; 25],
+        ];
+        for v in cases {
+            assert_eq!(v, state_to_spec(&state_from_spec(v)));
+        }
+    }
+
+    /// `load_block` corresponds to `Spec::xor_block_into_state` followed by no permutation.
+    #[test]
+    fn load_block_matches_xor_block_into_state() {
+        let mut rng = StdRng::seed_from_u64(0xBEEF);
+
+        fn run<const RATE: usize>(rng: &mut StdRng) {
+            let initial: [u64; 25] = core::array::from_fn(|_| rng.gen());
+            // load_block reads RATE bytes starting at offset 0.
+            let block_u8: [u8; 200] = core::array::from_fn(|_| rng.gen());
+            let block_secret: [libcrux_secrets::U8; 200] =
+                core::array::from_fn(|i| block_u8[i].classify());
+
+            let spec_out =
+                hacspec_sha3::sponge::xor_block_into_state(initial, &block_u8[..RATE], RATE);
+
+            let mut s = state_from_spec(initial);
+            s.load_block::<RATE>(&block_secret, 0);
+
+            assert_eq!(spec_out, state_to_spec(&s), "rate={}", RATE);
+        }
+
+        run::<72>(&mut rng);
+        run::<104>(&mut rng);
+        run::<136>(&mut rng);
+        run::<144>(&mut rng);
+        run::<168>(&mut rng);
+    }
+
+    /// `store_block` (used by `squeeze_first_block`) corresponds to extracting the
+    /// first `RATE` bytes via `Spec::squeeze_state`.
+    #[test]
+    fn store_block_matches_squeeze_state() {
+        let mut rng = StdRng::seed_from_u64(0xFACE);
+
+        fn run<const RATE: usize>(rng: &mut StdRng) {
+            let spec_state: [u64; 25] = core::array::from_fn(|_| rng.gen());
+            let impl_state = state_from_spec(spec_state);
+
+            let spec_out: [u8; RATE] =
+                hacspec_sha3::sponge::squeeze_state::<RATE>(&spec_state, [0u8; RATE], 0, RATE);
+
+            let mut out_secret = [0u8.classify(); 200];
+            impl_state.store_block::<RATE>(&mut out_secret[..RATE]);
+            let out_pub: [u8; RATE] = core::array::from_fn(|i| out_secret[i].declassify());
+
+            assert_eq!(spec_out, out_pub, "rate={}", RATE);
+        }
+
+        run::<72>(&mut rng);
+        run::<104>(&mut rng);
+        run::<136>(&mut rng);
+        run::<144>(&mut rng);
+        run::<168>(&mut rng);
     }
 }
