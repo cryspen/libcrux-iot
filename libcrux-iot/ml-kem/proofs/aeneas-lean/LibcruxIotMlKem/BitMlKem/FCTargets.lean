@@ -17950,6 +17950,133 @@ private theorem ntt_multiply_n_at_eq_pure
     have h_imod2 : i.val % 2 = 1 := by rw [← h_i2_val]; exact h_i2_1
     simp only [h_imod2, Nat.one_ne_zero, if_false, h_i3_val]
 
+/-! ### §L6.3b — Phase 6e.3: lift `multiply_ntts` to a pure 256-list. -/
+
+/-- The 64-position slice extracted from a length-128 array has length 64. -/
+private lemma slice_length_64
+    (zs : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 128#usize) :
+    (List.slice 64 128 zs.val).length = 64 := by
+  have h : zs.val.length = 128 := zs.property
+  unfold List.slice
+  simp [List.length_take, h]
+
+/-- The hacspec slice-by-range extraction `zs[64..128]` reduces to the
+    explicit `List.slice 64 128 zs.val` slice. Drives the slice-step in
+    Phase 6e.3's reduction of `ntt.multiply_ntts`. -/
+private lemma slice_zetas_succeeds
+    (zs : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 128#usize) :
+    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+      (core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      hacspec_ml_kem.parameters.FieldElement)) zs
+      { start := 64#usize, «end» := 128#usize }
+    = .ok (⟨List.slice 64 128 zs.val, by
+            rw [slice_length_64]; scalar_tac⟩ :
+           Aeneas.Std.Slice hacspec_ml_kem.parameters.FieldElement) := by
+  unfold core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+         core.slice.index.Slice.index
+         core_models.Slice.Insts.Core_modelsOpsIndexIndex
+         core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+  show core.slice.index.SliceIndexRangeUsizeSlice.index
+      (core_models.cmRangeUsizeToAeneas _) zs.to_slice = _
+  unfold core.slice.index.SliceIndexRangeUsizeSlice.index
+         core_models.cmRangeUsizeToAeneas
+  have h_alen : zs.val.length = 128 := zs.property
+  have h_cond : (64#usize : Std.Usize) ≤ (128#usize : Std.Usize) ∧
+      (128#usize : Std.Usize).val ≤ zs.to_slice.val.length := by
+    refine ⟨by show (64 : Nat) ≤ 128; decide, by
+      show 128 ≤ zs.to_slice.val.length
+      show 128 ≤ zs.val.length; omega⟩
+  rw [if_pos h_cond]
+  rfl
+
+/-- `List.slice a b l [k]! = l[a + k]!` when `a ≤ b`, `b ≤ l.length`,
+    and `k < b - a`. -/
+private lemma slice_getElem_at {α} [Inhabited α]
+    (l : List α) (a b : Nat) (h_le_a : a ≤ b) (h_le_b : b ≤ l.length)
+    (k : Nat) (hk : k < b - a) :
+    (List.slice a b l)[k]! = l[a + k]! := by
+  unfold List.slice
+  have h_ak_lt : a + k < l.length := by omega
+  have h_drop_len : (l.drop a).length = l.length - a := by simp
+  have h_k_lt_drop : k < (l.drop a).length := by rw [h_drop_len]; omega
+  have h_take_idx :
+      ((l.drop a).take (b - a))[k]? = (l.drop a)[k]? := by
+    rw [List.getElem?_take, if_pos hk]
+  have h_drop_idx : (l.drop a)[k]? = l[a + k]? := by
+    rw [List.getElem?_drop]
+  rw [List.getElem!_eq_getElem?_getD, List.getElem!_eq_getElem?_getD,
+      h_take_idx, h_drop_idx]
+
+/-- `BitVec.ofNat _ k` round-trips through `Usize.val` when `k < 256`. -/
+private lemma usize_ofNat_val_eq_self_of_lt_256 (k : Nat) (h : k < 256) :
+    (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k := by
+  show (BitVec.ofNat System.Platform.numBits k).toNat = k
+  rw [BitVec.toNat_ofNat]
+  apply Nat.mod_eq_of_lt
+  have h_max : k ≤ Std.Usize.max := by scalar_tac
+  have h_max_def : Std.Usize.max + 1 = 2 ^ System.Platform.numBits := by scalar_tac
+  omega
+
+set_option maxHeartbeats 4000000 in
+/-- **`hacspec_ml_kem.ntt.multiply_ntts p1 p2` reduces to the pure 256-lane
+    array.**
+
+    Composes Phase 6e.1 (ZETAS = .ok zs + zeta correspondence), the
+    slice-extraction reduction, and Phase 6e.2's per-lane reduction via
+    `Util.from_fn_pure_eq`. The result is the pure FE-arithmetic list
+    `(List.range 256).map (multiply_ntts_lane_pure p1 p2)`. -/
+private theorem multiply_ntts_eq_pure_array
+    (p1 p2 : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    hacspec_ml_kem.ntt.multiply_ntts p1 p2
+    = .ok (⟨(List.range 256).map (multiply_ntts_lane_pure p1 p2),
+            by simp [List.length_map, List.length_range]⟩ :
+           Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) := by
+  unfold hacspec_ml_kem.ntt.multiply_ntts
+  -- Step 1: ntt.ZETAS = .ok zs.
+  obtain ⟨zs, h_zetas_eq, h_zeta_at⟩ := hacspec_ZETAS_ok_and_zeta_at
+  rw [h_zetas_eq]; simp only [bind_tc_ok]
+  -- Step 2: slice extraction.
+  rw [slice_zetas_succeeds]; simp only [bind_tc_ok]
+  -- Step 3: ntt.ntt_multiply_n p1 p2 s ⇒ parameters.createi 256 inst (p1, p2, s)
+  --                                    ⇒ core_models.array.from_fn 256 inst.FnMutInst (p1, p2, s).
+  unfold hacspec_ml_kem.ntt.ntt_multiply_n
+         hacspec_ml_kem.parameters.createi
+  -- Slice / properties.
+  set s : Aeneas.Std.Slice hacspec_ml_kem.parameters.FieldElement :=
+    ⟨List.slice 64 128 zs.val, by rw [slice_length_64]; scalar_tac⟩ with h_s_def
+  have h_slen : s.val.length = 64 := slice_length_64 zs
+  have h_zeta_eq_slice : ∀ k : Nat, k < 64 → s.val[k]! = Spec.zeta_at (64 + k) := by
+    intro k hk
+    show (List.slice 64 128 zs.val)[k]! = _
+    have h_zlen : zs.val.length = 128 := zs.property
+    rw [slice_getElem_at zs.val 64 128 (by omega) (by omega) k (by omega)]
+    exact (h_zeta_at (64 + k) (by omega) (by omega)).symm
+  -- Set f and build the per-call_mut equation.
+  set f : Nat → hacspec_ml_kem.parameters.FieldElement :=
+    multiply_ntts_lane_pure p1 p2 with h_f_def
+  have h_call_mut_eq : ∀ k : Nat, k < (256#usize : Std.Usize).val →
+      ((hacspec_ml_kem.ntt.ntt_multiply_n.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement
+          256#usize).FnMutInst).call_mut (p1, p2, s) ⟨BitVec.ofNat _ k⟩
+      = .ok (f k, (p1, p2, s)) := by
+    intro k hk
+    have hk' : k < 256 := hk
+    have h_k_val : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k :=
+      usize_ofNat_val_eq_self_of_lt_256 k hk'
+    show (do let fe ← hacspec_ml_kem.ntt.ntt_multiply_n_at p1 p2 s
+              (⟨BitVec.ofNat _ k⟩ : Std.Usize);
+             .ok (fe, (p1, p2, s))) = _
+    have h_lane := ntt_multiply_n_at_eq_pure p1 p2 s h_slen h_zeta_eq_slice
+                     (⟨BitVec.ofNat _ k⟩ : Std.Usize) (by rw [h_k_val]; exact hk')
+    rw [h_lane]; simp only [bind_tc_ok]
+    rw [h_k_val]
+  -- Apply from_fn_pure_eq.
+  have h_from_fn := libcrux_iot_ml_kem.Util.from_fn_pure_eq 256#usize
+    (hacspec_ml_kem.ntt.ntt_multiply_n.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement
+        256#usize).FnMutInst
+    (p1, p2, s) f h_call_mut_eq
+  exact h_from_fn
+
 end L6_3b_FC
 
 /-- Accumulating base-case NTT multiply: pointwise sum of the initial
