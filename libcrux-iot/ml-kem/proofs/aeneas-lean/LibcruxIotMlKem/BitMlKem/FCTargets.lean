@@ -18077,7 +18077,154 @@ private theorem multiply_ntts_eq_pure_array
     (p1, p2, s) f h_call_mut_eq
   exact h_from_fn
 
+/-! ### §L6.3b — Phase 6e.4: chunked assembly + final theorem. -/
+
+set_option maxHeartbeats 8000000 in
+/-- **Per-lane equality, `j/ℓ` form.**
+
+    For `j < 16`, `ℓ < 16`, the flat lane value
+    `multiply_ntts_lane_pure p1 p2 (16 * j + ℓ)` equals the `ℓ`-th
+    lane of the per-chunk product
+    `Spec.ntt_multiply_pure_no_acc (chunk_at p1 j) (chunk_at p2 j)
+    ζ_{4j..4j+3}`. Closed via `interval_cases ℓ` (16 cases), each
+    `rfl` after unfolding `multiply_ntts_lane_pure`,
+    `Spec.ntt_multiply_pure_no_acc`, and `Spec.chunk_at`. -/
+private theorem multiply_ntts_lane_pure_eq_chunked_aux
+    (p1 p2 : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (j ℓ : Nat) (hj : j < 16) (hℓ : ℓ < 16) :
+    multiply_ntts_lane_pure p1 p2 (16 * j + ℓ) =
+      (Spec.ntt_multiply_pure_no_acc
+        (Spec.chunk_at p1 j) (Spec.chunk_at p2 j)
+        (Spec.zeta_at (64 + 4 * j))
+        (Spec.zeta_at (64 + 4 * j + 1))
+        (Spec.zeta_at (64 + 4 * j + 2))
+        (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]! := by
+  unfold multiply_ntts_lane_pure
+  have h_div : (16 * j + ℓ) / 4 = 4 * j + ℓ / 4 := by omega
+  have h_mod4 : (16 * j + ℓ) % 4 = ℓ % 4 := by omega
+  have h_mod2 : (16 * j + ℓ) % 2 = ℓ % 2 := by omega
+  rw [h_div, h_mod4, h_mod2]
+  unfold Spec.ntt_multiply_pure_no_acc
+  -- Use `conv_rhs` to scope the index-reduction to the RHS so it doesn't
+  -- accidentally target an LHS `_[m]!` first. After `unfold`, the RHS has
+  -- the (List.range 16)-map structure wrapped in `Std.Array.make`/`↑`;
+  -- the `show` brings the outer projection inline so `rw` can match.
+  conv_rhs =>
+    rw [show ∀ (l : List _) (h : l.length = (16#usize : Std.Usize).val) (k : Nat),
+            (↑(Std.Array.make 16#usize l h) : List _)[k]! = l[k]! from fun _ _ _ => rfl,
+        List.getElem!_eq_getElem?_getD, List.getElem?_map, List.getElem?_range hℓ]
+  unfold Spec.chunk_at
+  interval_cases ℓ <;> rfl
+
+/-- **Per-lane equality, `i` form (wrapper around `_aux`).** -/
+private theorem multiply_ntts_lane_pure_eq_chunked
+    (p1 p2 : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (i : Nat) (hi : i < 256) :
+    multiply_ntts_lane_pure p1 p2 i =
+      (Spec.ntt_multiply_pure_no_acc
+        (Spec.chunk_at p1 (i / 16)) (Spec.chunk_at p2 (i / 16))
+        (Spec.zeta_at (64 + 4 * (i / 16)))
+        (Spec.zeta_at (64 + 4 * (i / 16) + 1))
+        (Spec.zeta_at (64 + 4 * (i / 16) + 2))
+        (Spec.zeta_at (64 + 4 * (i / 16) + 3))).val[i % 16]! := by
+  have h_i : i = 16 * (i / 16) + (i % 16) := by omega
+  conv_lhs => rw [h_i]
+  exact multiply_ntts_lane_pure_eq_chunked_aux p1 p2 (i / 16) (i % 16)
+    (by omega) (Nat.mod_lt _ (by decide))
+
 end L6_3b_FC
+
+set_option maxHeartbeats 4000000 in
+/-- **§L6.3b bridge: hacspec `multiply_ntts` ↔ chunked `ntt_multiply_pure_no_acc`.**
+
+    Connects the spec-side projection of hacspec `ntt.multiply_ntts`
+    (canonical `Spec.multiply_ntts_pure`) to the impl-side per-chunk
+    Mont-domain product form `Spec.ntt_multiply_pure_no_acc` aggregated
+    via `Spec.flatten_chunks` over the 16 chunks.
+
+    This is the bridge required by every L7 matrix-level FC theorem
+    (`compute_As_plus_e_fc`, `compute_vector_u_fc`,
+    `compute_ring_element_v_fc`, `compute_message_fc`): the impl
+    accumulator at row `(i, k)` produces `Spec.ntt_multiply_pure_no_acc
+    (lift_chunk_mont row[k]) (lift_chunk_mont t[k]) Spec.zeta_at(64+4j..)`
+    per chunk `j`, and this theorem allows the matrix Triple to collapse
+    that decomposition into the hacspec `multiply_ntts` form used by
+    `Spec.compute_As_plus_e` and friends.
+
+    Proof composes:
+    - Phase 6e.1 (`hacspec_ZETAS_ok_and_zeta_at`): zetas at [64..128)
+      correspondence.
+    - Phase 6e.3 (`L6_3b_FC.multiply_ntts_eq_pure_array`): lifts
+      `ntt.multiply_ntts p1 p2` to `.ok ⟨pure-list, _⟩`.
+    - Phase 6e.4 (`L6_3b_FC.multiply_ntts_lane_pure_eq_chunked`): per-lane
+      equality.
+    - Array extensionality (`Subtype.ext` + `List.map_congr_left`). -/
+theorem Spec.multiply_ntts_pure_eq_chunked_no_acc
+    (p1 p2 : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    Spec.multiply_ntts_pure p1 p2 =
+      Spec.flatten_chunks
+        ⟨(List.range 16).map (fun j =>
+          Spec.ntt_multiply_pure_no_acc
+            (Spec.chunk_at p1 j) (Spec.chunk_at p2 j)
+            (Spec.zeta_at (64 + 4 * j))
+            (Spec.zeta_at (64 + 4 * j + 1))
+            (Spec.zeta_at (64 + 4 * j + 2))
+            (Spec.zeta_at (64 + 4 * j + 3))),
+         by simp⟩ := by
+  unfold Spec.multiply_ntts_pure
+  rw [L6_3b_FC.multiply_ntts_eq_pure_array]
+  -- Reduce `match .ok r with .ok r => r | _ => default` to `r` so the Array constructor
+  -- on the LHS aligns with the Spec.flatten_chunks Array on the RHS.
+  show (⟨(List.range 256).map (L6_3b_FC.multiply_ntts_lane_pure p1 p2),
+          by simp [List.length_map, List.length_range]⟩ :
+         Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) = _
+  apply Subtype.ext
+  -- Goal: pure_list = (Spec.flatten_chunks ⟨chunks_list, _⟩).val
+  -- Reduce: ↑⟨L, _⟩ = L by `Subtype.coe_mk`-rfl, and `(Spec.flatten_chunks ⟨L, h⟩).val =
+  -- (List.range 256).map (fun j => ⟨L, h⟩.val[j/16]!.val[j%16]!) = (List.range 256).map
+  -- (fun j => L[j/16]!.val[j%16]!)` by unfolding Spec.flatten_chunks and Std.Array.make.
+  show (List.range 256).map (L6_3b_FC.multiply_ntts_lane_pure p1 p2) =
+       (List.range 256).map (fun j =>
+         ((List.range 16).map (fun j' =>
+           Spec.ntt_multiply_pure_no_acc
+             (Spec.chunk_at p1 j') (Spec.chunk_at p2 j')
+             (Spec.zeta_at (64 + 4 * j'))
+             (Spec.zeta_at (64 + 4 * j' + 1))
+             (Spec.zeta_at (64 + 4 * j' + 2))
+             (Spec.zeta_at (64 + 4 * j' + 3))))[j / 16]!.val[j % 16]!)
+  apply List.map_congr_left
+  intro i hi
+  have h_i_lt : i < 256 := List.mem_range.mp hi
+  have hi_div_lt : i / 16 < 16 := by omega
+  -- Reduce the chunks-list lookup at index `i / 16` to the explicit
+  -- `ntt_multiply_pure_no_acc` value, via List.getElem? expansion of the
+  -- inner `[i / 16]!`. We do this via a one-shot `have` lemma to scope the
+  -- rewrites to the inner index only (leaving the outer `[i % 16]!` intact).
+  have h_chunks_at : ((List.range 16).map (fun j' =>
+        Spec.ntt_multiply_pure_no_acc
+          (Spec.chunk_at p1 j') (Spec.chunk_at p2 j')
+          (Spec.zeta_at (64 + 4 * j'))
+          (Spec.zeta_at (64 + 4 * j' + 1))
+          (Spec.zeta_at (64 + 4 * j' + 2))
+          (Spec.zeta_at (64 + 4 * j' + 3))))[i / 16]! =
+      Spec.ntt_multiply_pure_no_acc
+        (Spec.chunk_at p1 (i / 16)) (Spec.chunk_at p2 (i / 16))
+        (Spec.zeta_at (64 + 4 * (i / 16)))
+        (Spec.zeta_at (64 + 4 * (i / 16) + 1))
+        (Spec.zeta_at (64 + 4 * (i / 16) + 2))
+        (Spec.zeta_at (64 + 4 * (i / 16) + 3)) := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_map,
+        List.getElem?_range hi_div_lt]; rfl
+  show L6_3b_FC.multiply_ntts_lane_pure p1 p2 i =
+      ((List.range 16).map (fun j' =>
+        Spec.ntt_multiply_pure_no_acc
+          (Spec.chunk_at p1 j') (Spec.chunk_at p2 j')
+          (Spec.zeta_at (64 + 4 * j'))
+          (Spec.zeta_at (64 + 4 * j' + 1))
+          (Spec.zeta_at (64 + 4 * j' + 2))
+          (Spec.zeta_at (64 + 4 * j' + 3))))[i / 16]!.val[i % 16]!
+  rw [h_chunks_at]
+  exact L6_3b_FC.multiply_ntts_lane_pure_eq_chunked p1 p2 i h_i_lt
 
 /-- Accumulating base-case NTT multiply: pointwise sum of the initial
     accumulator with the no-acc product. Defined as
