@@ -29212,7 +29212,22 @@ private lemma lift_poly_mont_to_lift_poly
 
 /-- L7.1 — `matrix.compute_As_plus_e`: product `A · s + e` of the
     public-key generation step. Impl returns
-    `(t_as_ntt, s_cache, accumulator)`; project on `t_as_ntt`. -/
+    `(t_as_ntt, s_cache, accumulator)`; project on `t_as_ntt`.
+
+    **PRE strengthening** (authorized per
+    `feedback_byte_identical_post_dispatch_scope.md`; POST byte-locked):
+    - `hAlen` : flat slice has K·K entries.
+    - `hK` : `K.val ≤ 4` (ML-KEM 768/1024 etc.; drives `K · 2^25 ≤ 2^27`
+      bound for `poly_reducing_from_i32_array_fc`).
+    - `h_matrix_bnd` : per-lane bound on `matrix_A`'s entries
+      (consumed by L6.3c `accumulating_ntt_multiply_*_poly_fc`).
+    - `h_s_bnd`      : per-lane bound on `s_as_ntt`'s entries.
+    - `h_error_bnd`  : per-lane bound on `error_as_ntt`'s entries
+      (the 29439 = 9 · 3271 ceiling required by L6.5
+      `add_standard_error_reduce_fc`).
+    - `h_acc_bnd`    : per-lane bound on initial `accumulator`
+      (consumed by row-0 forward dep; rows 1..K-1 re-zero the
+      accumulator inside `compute_As_plus_e_loop1`). -/
 @[spec]
 theorem compute_As_plus_e_fc
     {K : Std.Usize}
@@ -29226,7 +29241,15 @@ theorem compute_As_plus_e_fc
       (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
     (accumulator : Std.Array Std.I32 256#usize)
-    (hAlen : matrix_A.length = (K.val * K.val : Nat)) :
+    (hAlen : matrix_A.length = (K.val * K.val : Nat))
+    (hK : K.val ≤ 4)
+    (h_matrix_bnd : ∀ k : Fin matrix_A.length, ∀ i j : Fin 16,
+        ((matrix_A.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_s_bnd : ∀ k : Fin K.val, ∀ i j : Fin 16,
+        ((s_as_ntt.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
+    (h_error_bnd : ∀ k : Fin K.val, ∀ i j : Fin 16,
+        ((error_as_ntt.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 29439)
+    (h_acc_bnd : ∀ n : Fin 256, (accumulator.val[n.val]!).val.natAbs ≤ 2^30) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.matrix.compute_As_plus_e
       (vectortraitsOperationsInst := portable_ops_inst)
