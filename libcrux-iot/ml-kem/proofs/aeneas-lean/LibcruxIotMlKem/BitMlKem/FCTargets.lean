@@ -29104,6 +29104,106 @@ theorem accumulating_ntt_multiply_use_cache_poly_fc
 
 end L6_3c_use_irreducible
 
+/-! ## §L7-prep — Mont→canonical bridge.
+
+    Single lemma `lift_poly_mont_to_lift_poly` used by L7.1's outer-loop
+    composition. The L6 forward-deps for matrix-row accumulation
+    (`accumulating_ntt_multiply_*_poly_fc` + `add_standard_error_reduce_fc`)
+    produce per-lane outputs in Mont form (`lift_poly_mont`), but L7.1's
+    POST consumes them through hacspec's `add_polynomials` after the row
+    finalizer, which expects canonical-domain values. The L6.3a finalizer
+    calls `montgomery_multiply_by_constant 1353` (= `R²` mod q) to strip
+    one R per lane, so the bridge takes the form of a `mul_pure` against
+    `lift_fe_mont 1353` collapsing to `lift_fe`. -/
+
+/-- FE-level Mont→canonical bridge: `mul_pure (lift_fe_mont x) (lift_fe_mont 1353)
+    = lift_fe x`. In `ZMod 3329`, `lift_fe_mont x = x · 169` (where
+    `169 = R⁻¹ mod q`), so the LHS reduces via `zmodOfFE_mul_pure +
+    zmodOfFE_lift_fe_mont` to `(x · 169) · (1353 · 169) = x · (169² · 1353)`.
+    The keystone gives `1353 ≡ R² (mod q)` and `R⁻¹ = 169`, so
+    `169² · 1353 ≡ R⁻² · R² = 1`. Canonical round-trip closes. -/
+private lemma lift_fe_mont_mul_1353_eq_lift_fe (x : Std.I16) :
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (lift_fe_mont x) (lift_fe_mont (1353#i16 : Std.I16))
+      = lift_fe x := by
+  set s : hacspec_ml_kem.parameters.FieldElement :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (lift_fe_mont x) (lift_fe_mont (1353#i16 : Std.I16)) with hs_def
+  -- (1) `s` is canonical (Canonical_mul_pure unconditional).
+  have h_canon : s.val.val < 3329 := by
+    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+      (lift_fe_mont x) (lift_fe_mont (1353#i16 : Std.I16))
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at h_cs
+    exact h_cs
+  -- (2) Canonical round-trip.
+  have h_round_trip : feOfZMod (zmodOfFE s) = s :=
+    feOfZMod_zmodOfFE_of_canonical s h_canon
+  -- (3) `zmodOfFE s = (x.val : ZMod 3329)`.
+  have h_zmod_s : zmodOfFE s = ((x.val : Int) : ZMod 3329) := by
+    rw [hs_def, L2_8c.zmodOfFE_mul_pure,
+        L2_8c.zmodOfFE_lift_fe_mont, L2_8c.zmodOfFE_lift_fe_mont]
+    -- Goal: (x.val : ZMod 3329) * 169 * (((1353#i16).val : ZMod 3329) * 169) = (x.val : ZMod 3329)
+    have h_1353 : (((1353#i16 : Std.I16).val : Int) : ZMod 3329) = 1353 := by
+      decide
+    rw [h_1353]
+    -- Goal: (x.val : ZMod 3329) * 169 * (1353 * 169) = (x.val : ZMod 3329)
+    have h_inv : (169 : ZMod 3329) * (1353 * 169) = 1 := by decide
+    calc ((x.val : Int) : ZMod 3329) * 169 * (1353 * 169)
+        = ((x.val : Int) : ZMod 3329) * (169 * (1353 * 169)) := by ring
+      _ = ((x.val : Int) : ZMod 3329) * 1 := by rw [h_inv]
+      _ = ((x.val : Int) : ZMod 3329) := by ring
+  -- (4) Glue: `s = feOfZMod (zmodOfFE s) = feOfZMod ((x.val : ZMod 3329)) = lift_fe x`.
+  show s = lift_fe x
+  rw [← h_round_trip, h_zmod_s]
+  unfold lift_fe i16_to_spec_fe_plain
+  rfl
+
+/-- Poly-level Mont→canonical bridge: at every lane in [0, 256),
+    `mul_pure (lift_poly_mont re).val[lane]! (lift_fe_mont 1353)
+      = (lift_poly re).val[lane]!`.
+
+    Reduces to the FE-level helper `lift_fe_mont_mul_1353_eq_lift_fe`
+    after unfolding the two `lift_poly*` getters to their underlying
+    `lift_fe_mont`/`lift_fe` of the same I16 lane
+    `(re.coefficients.val[lane/16]!).elements.val[lane%16]!`. -/
+private lemma lift_poly_mont_to_lift_poly
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (lane : Nat) (h_lane : lane < 256) :
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      ((lift_poly_mont re).val[lane]!) (lift_fe_mont (1353#i16 : Std.I16))
+      = (lift_poly re).val[lane]! := by
+  -- Pin the underlying I16 lane.
+  set x : Std.I16 :=
+    (re.coefficients.val[lane / 16]!).elements.val[lane % 16]! with hx_def
+  -- (A) `(lift_poly_mont re).val[lane]! = lift_fe_mont x`.
+  have h_mont : (lift_poly_mont re).val[lane]! = lift_fe_mont x := by
+    unfold lift_poly_mont
+    show ((List.range 256).map (fun j =>
+            lift_fe_mont (re.coefficients.val[j / 16]!).elements.val[j % 16]!))[lane]!
+          = lift_fe_mont x
+    have h_len : ((List.range 256).map (fun j =>
+            lift_fe_mont (re.coefficients.val[j / 16]!).elements.val[j % 16]!)).length = 256 := by
+      simp
+    rw [getElem!_pos _ lane (by rw [h_len]; exact h_lane)]
+    rw [List.getElem_map, List.getElem_range]
+  -- (B) `(lift_poly re).val[lane]! = lift_fe x`.
+  have h_plain : (lift_poly re).val[lane]! = lift_fe x := by
+    unfold lift_poly
+    show ((List.range 256).map (fun j =>
+            lift_fe (re.coefficients.val[j / 16]!).elements.val[j % 16]!))[lane]!
+          = lift_fe x
+    have h_len : ((List.range 256).map (fun j =>
+            lift_fe (re.coefficients.val[j / 16]!).elements.val[j % 16]!)).length = 256 := by
+      simp
+    rw [getElem!_pos _ lane (by rw [h_len]; exact h_lane)]
+    rw [List.getElem_map, List.getElem_range]
+  rw [h_mont, h_plain]
+  exact lift_fe_mont_mul_1353_eq_lift_fe x
+
 /-! ## §L7 — matrix-level targets (4 theorems).
 
     These are the ultimate FC obligations: the impl matrix functions
