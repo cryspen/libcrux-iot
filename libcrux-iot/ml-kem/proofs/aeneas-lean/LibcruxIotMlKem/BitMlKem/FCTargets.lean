@@ -29839,6 +29839,517 @@ theorem compute_As_plus_e_loop0_fc
 
 end L7_1a_irreducible
 
+/-! ## §L7.1-loop1-loop0 — row-i (i ≥ 1) column loop scaffolding.
+
+    Namespace `L7_1b_FC` provides the invariant + step-post predicates
+    used to characterize `matrix.compute_As_plus_e_loop1_loop0` (the
+    K-iteration column loop run once per row i ∈ [1, K)) via
+    `loop_range_spec_usize`. Each iteration calls
+    `accumulating_ntt_multiply_use_cache` on column `j ∈ [0, K)`, adding
+    column j's contribution to the I32 accumulator. Unlike Stage 1
+    (`compute_As_plus_e_loop0`), the cache is INPUT only — it was
+    populated by Stage 1's column loop on row 0, and is consumed
+    read-only here.
+
+    Mirrors `L7_1a_FC` (FCTargets:29220) minus the two cache-state
+    conjuncts (3)/(4), and with the matrix lane index parameterized by
+    the row index `i` (i.e. `i.val * K.val + c` rather than
+    `0 * K.val + c`). The per-column forward dep is
+    `accumulating_ntt_multiply_use_cache_poly_fc` (FCTargets:29031)
+    instead of `_fill_cache_poly_fc`. -/
+
+namespace L7_1b_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+abbrev Acc := L6_3_FC.Acc
+abbrev Poly := L6_3_FC.Poly
+
+/-- 2-conjunct invariant for the row-i (i ≥ 1) column loop. Tracks:
+    (1) accumulator characterization: for each (chunk j, lane ℓ) in
+        `[0, 16)²`, `Spec.mont_reduce_pure (lift_fe_int acc[16j+ℓ].val)`
+        equals init plus the canonical-form sum of column contributions
+        from columns `[0, k)` for the fixed row `i`.
+    (2) accumulator bound: `|acc.val[n]| ≤ |acc_init.val[n]| + k · 2^25`. -/
+def row_i_inv {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (acc_init : Acc) (i : Std.Usize) :
+    Std.Usize → Acc → Result Prop :=
+  fun k acc => pure (
+    -- (1) Per-(chunk j, lane ℓ) accumulator: canonical-form k-column sum.
+    (∀ j : Nat, j < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
+        = (List.range k.val).foldl
+            (fun s c =>
+              libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                ((Spec.ntt_multiply_pure_no_acc
+                    (lift_chunk_mont (matrix_A.val[i.val * K.val + c]!.coefficients.val[j]!))
+                    (lift_chunk_mont (s_as_ntt.val[c]!.coefficients.val[j]!))
+                    (Spec.zeta_at (64 + 4 * j))
+                    (Spec.zeta_at (64 + 4 * j + 1))
+                    (Spec.zeta_at (64 + 4 * j + 2))
+                    (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!))
+            (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val)))
+    -- (2) Accumulator bound grows by 2^25 per column iteration.
+    ∧ (∀ n : Nat, n < 256 →
+        (acc.val[n]!).val.natAbs ≤ (acc_init.val[n]!).val.natAbs + k.val * 2^25))
+
+/-- Step-post for `loop_range_spec_usize` over the accumulator only. -/
+def row_i_step_post {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (acc_init : Acc) (i : Std.Usize) (k : Std.Usize)
+    (r : ControlFlow
+      ((core_models.ops.range.Range Std.Usize) × Acc) Acc) :
+    Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < K.val ∧ iter'.«end» = K
+        ∧ iter'.start.val = k.val + 1
+        ∧ (row_i_inv matrix_A s_as_ntt acc_init i iter'.start acc').holds
+  | .done y => (row_i_inv matrix_A s_as_ntt acc_init i K y).holds
+
+end L7_1b_FC
+
+-- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Mirrors `L7_1a_irreducible`
+-- (FCTargets:29314) — heavy POST predicates and the per-column forward dep
+-- are made locally irreducible across the step lemma + outer Triple so that
+-- elaboration does not whnf-explode through the 2-conjunct `row_i_inv` body or
+-- the nested `∀ j : Fin 16, ∀ ℓ : Fin 16` accumulator characterization.
+-- Per `feedback_minimize_irreducibility_scope.md`, we do NOT mark
+-- `L7_1b_FC.row_i_inv` / `row_i_step_post` irreducible.
+section L7_1b_irreducible
+attribute [local irreducible] accumulating_ntt_multiply_poly_post
+attribute [local irreducible] accumulating_ntt_multiply_poly_cache_post
+attribute [local irreducible] Spec.ntt_multiply_pure_no_acc
+attribute [local irreducible] Spec.mont_reduce_pure
+
+set_option maxHeartbeats 16000000 in
+/-- Per-iteration FC step lemma for the row-i (i ≥ 1) column loop. Given
+    the `row_i_inv` invariant at step k and the strengthened PRE bounds
+    + the cache-post hypothesis, executing one body iteration of
+    `matrix.compute_As_plus_e_loop1_loop0.body` produces the
+    `row_i_step_post` (either `.cont` advancing the invariant to k+1 or
+    `.done` capping at K).
+
+    Mirrors `compute_As_plus_e_loop0_step_lemma_fc` (FCTargets:29344) but
+    with three differences:
+    1. No cache mutation: cache is INPUT only.
+    2. Matrix lane uses `i.val * K.val + k.val` rather than
+       `0 * K.val + k.val = k.val`.
+    3. Per-column forward dep is `accumulating_ntt_multiply_use_cache_poly_fc`
+       (FCTargets:29031) instead of `_fill_cache_poly_fc`. This requires the
+       cache-post hypothesis at column k:
+       `accumulating_ntt_multiply_poly_cache_post (s_as_ntt[k]!) (s_cache[k]!)`.
+       We pass the OUTER ∀-quantified hypothesis through the step lemma so the
+       main theorem can hand it through unchanged. -/
+private theorem compute_As_plus_e_loop1_loop0_step_lemma_fc
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt s_cache : Std.Array
+                          (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (acc_init : L7_1b_FC.Acc)
+    (i : Std.Usize) (hi : i.val < K.val)
+    (hAlen : matrix_A.length = (K.val * K.val : Nat))
+    (h_matrix_bnd : ∀ k : Fin matrix_A.length, ∀ a b : Fin 16,
+        ((matrix_A.val[k.val]!.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs ≤ 3328)
+    (h_s_bnd : ∀ k : Fin K.val, ∀ a b : Fin 16,
+        ((s_as_ntt.val[k.val]!.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs ≤ 3328)
+    (h_acc_bnd : ∀ n : Fin 256,
+        (acc_init.val[n.val]!).val.natAbs + K.val * 2^25 ≤ 2^30)
+    (h_cache : ∀ c : Nat, c < K.val →
+        accumulating_ntt_multiply_poly_cache_post (s_as_ntt.val[c]!) (s_cache.val[c]!))
+    (acc : L7_1b_FC.Acc)
+    (k : Std.Usize) (h_le : k.val ≤ K.val)
+    (h_inv : (L7_1b_FC.row_i_inv matrix_A s_as_ntt acc_init i k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1_loop0.body
+      (vectortraitsOperationsInst := portable_ops_inst) matrix_A s_as_ntt s_cache i
+      { start := k, «end» := K } acc
+    ⦃ ⇓ r => ⌜ L7_1b_FC.row_i_step_post matrix_A s_as_ntt acc_init i k r ⌝ ⦄ := by
+  have h_s_as_ntt_len : s_as_ntt.length = K.val := Std.Array.length_eq s_as_ntt
+  have h_s_cache_len : s_cache.length = K.val := Std.Array.length_eq s_cache
+  have h_acc_len : acc.length = 256 := Std.Array.length_eq acc
+  have h_acc_init_len : acc_init.length = 256 := Std.Array.length_eq acc_init
+  -- Destructure the 2-conjunct invariant.
+  obtain ⟨h_inv_acc, h_inv_acc_bnd⟩ := by
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
+  unfold libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1_loop0.body
+  by_cases h_lt : k.val < K.val
+  · -- `Some k` branch.
+    -- (1) IteratorRange.next reduces to .ok (some k, { start := s_iter, end := K }).
+    have h_iter_step :
+        ⦃ ⌜ True ⌝ ⦄
+        core_models.iter.range.IteratorRange.next
+          core_models.Usize.Insts.Core_modelsIterRangeStep
+          ({ start := k, «end» := K } : core_models.ops.range.Range Std.Usize)
+        ⦃ ⇓ r => ⌜ ∃ s : Std.Usize, s.val = k.val + 1 ∧
+                    r = (some k,
+                        ({ start := s, «end» := K }
+                          : core_models.ops.range.Range Std.Usize)) ⌝ ⦄ :=
+      libcrux_iot_ml_kem.Util.IteratorRange_next_spec_usize k K
+        (fun _ s hs => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨s, hs, rfl⟩)
+        (fun hge => absurd h_lt (Nat.not_lt.mpr hge))
+    obtain ⟨v_iter, hv_iter_eq, hv_iter_post⟩ := triple_exists_ok_fc h_iter_step
+    obtain ⟨s_iter, hs_iter_val, hv_iter_pair⟩ := hv_iter_post
+    -- (2) matrix.entry reduces to .ok matrix_A.val[i.val * K.val + k.val]!.
+    have h_matrix_entry :
+        libcrux_iot_ml_kem.matrix.entry K portable_ops_inst matrix_A i k
+          = .ok (matrix_A.val[i.val * K.val + k.val]!) :=
+      entry_eq_ok_fc_aux K matrix_A i k hAlen hi h_lt
+    set t_matrix : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+      matrix_A.val[i.val * K.val + k.val]! with ht_matrix_def
+    -- (3) Array.index_usize s_as_ntt k reduces to .ok s_as_ntt[k.val]!.
+    set t_s : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                  libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+      s_as_ntt.val[k.val]! with ht_s_def
+    have h_idx_s : Aeneas.Std.Array.index_usize s_as_ntt k = .ok t_s :=
+      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq s_as_ntt k
+        (by rw [h_s_as_ntt_len]; exact h_lt)
+    -- (4) Array.index_usize s_cache k reduces to .ok s_cache[k.val]!. (read-only)
+    set t_cache : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
+      s_cache.val[k.val]! with ht_cache_def
+    have h_idx_cache : Aeneas.Std.Array.index_usize s_cache k = .ok t_cache :=
+      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq s_cache k
+        (by rw [h_s_cache_len]; exact h_lt)
+    -- (5) Apply L6.3c per-column forward dep at column k (use_cache flavor).
+    -- Per-lane bounds on t_matrix and t_s (16×16 lanes).
+    have hK_pos : 0 < K.val := Nat.lt_of_le_of_lt (Nat.zero_le _) h_lt
+    have h_iKk_lt_KK : i.val * K.val + k.val < K.val * K.val := by
+      have h_iK_lt : i.val * K.val + K.val ≤ K.val * K.val := by
+        have hstep : (i.val + 1) * K.val ≤ K.val * K.val :=
+          Nat.mul_le_mul_right _ hi
+        have h_expand : (i.val + 1) * K.val = i.val * K.val + K.val := by ring
+        rw [h_expand] at hstep; exact hstep
+      omega
+    have h_iKk_lt_len : i.val * K.val + k.val < matrix_A.length := by
+      rw [hAlen]; exact h_iKk_lt_KK
+    have h_t_matrix_bnd : ∀ a : Fin 16, ∀ b : Fin 16,
+        ((t_matrix.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs ≤ 3328 :=
+      fun a b => h_matrix_bnd ⟨i.val * K.val + k.val, h_iKk_lt_len⟩ a b
+    have h_t_s_bnd : ∀ a : Fin 16, ∀ b : Fin 16,
+        ((t_s.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs ≤ 3328 :=
+      fun a b => h_s_bnd ⟨k.val, h_lt⟩ a b
+    -- Cache-post hypothesis at column k.
+    have h_cache_at_k : accumulating_ntt_multiply_poly_cache_post t_s t_cache :=
+      h_cache k.val h_lt
+    -- Current acc bound ≤ 2^30: combine inv conjunct (2) with budget PRE.
+    have h_acc_cur_bnd : ∀ n : Fin 256, (acc.val[n.val]!).val.natAbs ≤ 2^30 := by
+      intro n
+      have hb := h_inv_acc_bnd n.val n.isLt
+      have hp := h_acc_bnd n
+      have hk_le : k.val * 2^25 ≤ K.val * 2^25 := Nat.mul_le_mul_right _ h_le
+      omega
+    obtain ⟨acc1, h_acc1_eq, h_acc1_bnd_rel, h_acc1_post⟩ :=
+      triple_exists_ok_fc
+        (accumulating_ntt_multiply_use_cache_poly_fc t_matrix t_s t_cache acc
+          h_t_matrix_bnd h_t_s_bnd h_acc_cur_bnd h_cache_at_k)
+    -- (6) Body equation.
+    have h_body :
+        libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst) matrix_A s_as_ntt s_cache i
+          { start := k, «end» := K } acc
+        = .ok (ControlFlow.cont (({ start := s_iter, «end» := K }
+                        : core_models.ops.range.Range Std.Usize), acc1)) := by
+      unfold libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1_loop0.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := K } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := K }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [hv_iter_pair] at hv_iter_eq
+      rw [hv_iter_eq]
+      simp only [Aeneas.Std.bind_tc_ok]
+      show ((do
+              let pre ← libcrux_iot_ml_kem.matrix.entry K portable_ops_inst
+                          matrix_A i k
+              let pre1 ← Aeneas.Std.Array.index_usize s_as_ntt k
+              let pre2 ← Aeneas.Std.Array.index_usize s_cache k
+              let accumulator1 ←
+                libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache
+                  portable_ops_inst pre pre1 acc pre2
+              .ok (ControlFlow.cont (({ start := s_iter, «end» := K }
+                          : core_models.ops.range.Range Std.Usize), accumulator1)))
+            : Result _) = _
+      rw [h_matrix_entry]
+      simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_idx_s]
+      simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_idx_cache]
+      simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_acc1_eq]
+      rfl
+    apply triple_of_ok_fc h_body
+    -- (7) Discharge the step_post.
+    show L7_1b_FC.row_i_step_post matrix_A s_as_ntt acc_init i k
+      (.cont (({ start := s_iter, «end» := K }
+                : core_models.ops.range.Range Std.Usize), acc1))
+    refine ⟨h_lt, rfl, hs_iter_val, ?_⟩
+    -- (8) Re-establish `row_i_inv` at s_iter (= k+1).
+    show (L7_1b_FC.row_i_inv matrix_A s_as_ntt acc_init i s_iter acc1).holds
+    unfold L7_1b_FC.row_i_inv
+    have h_inv_pure :
+        (∀ j : Nat, j < 16 → ∀ ℓ : Nat, ℓ < 16 →
+          Spec.mont_reduce_pure (lift_fe_int (acc1.val[16 * j + ℓ]!).val)
+            = (List.range s_iter.val).foldl
+                (fun s c =>
+                  libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                    ((Spec.ntt_multiply_pure_no_acc
+                        (lift_chunk_mont (matrix_A.val[i.val * K.val + c]!.coefficients.val[j]!))
+                        (lift_chunk_mont (s_as_ntt.val[c]!.coefficients.val[j]!))
+                        (Spec.zeta_at (64 + 4 * j))
+                        (Spec.zeta_at (64 + 4 * j + 1))
+                        (Spec.zeta_at (64 + 4 * j + 2))
+                        (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!))
+                (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val)))
+        ∧ (∀ n : Nat, n < 256 →
+            (acc1.val[n]!).val.natAbs
+              ≤ (acc_init.val[n]!).val.natAbs + s_iter.val * 2^25) := by
+      refine ⟨?_, ?_⟩
+      · -- (a) Accumulator characterization at s_iter = k+1.
+        intro j hj ℓ hℓ
+        have h_step_acc :
+            Spec.mont_reduce_pure (lift_fe_int (acc1.val[16 * j + ℓ]!).val)
+              = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                  (Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val))
+                  ((Spec.ntt_multiply_pure_no_acc
+                      (lift_chunk_mont (t_matrix.coefficients.val[j]!))
+                      (lift_chunk_mont (t_s.coefficients.val[j]!))
+                      (Spec.zeta_at (64 + 4 * j))
+                      (Spec.zeta_at (64 + 4 * j + 1))
+                      (Spec.zeta_at (64 + 4 * j + 2))
+                      (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!) := by
+          have := h_acc1_post
+          unfold accumulating_ntt_multiply_poly_post at this
+          exact this j hj ℓ hℓ
+        have h_ih := h_inv_acc j hj ℓ hℓ
+        rw [h_step_acc, h_ih]
+        have hs_iter_eq : s_iter.val = k.val + 1 := hs_iter_val
+        rw [hs_iter_eq]
+        rw [List.range_succ, List.foldl_append]
+        show libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              ((List.range k.val).foldl _ _)
+              ((Spec.ntt_multiply_pure_no_acc
+                  (lift_chunk_mont (t_matrix.coefficients.val[j]!))
+                  (lift_chunk_mont (t_s.coefficients.val[j]!))
+                  (Spec.zeta_at (64 + 4 * j))
+                  (Spec.zeta_at (64 + 4 * j + 1))
+                  (Spec.zeta_at (64 + 4 * j + 2))
+                  (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!)
+            = (List.foldl _ ((List.range k.val).foldl _ _) [k.val])
+        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                  ((List.range k.val).foldl _ _)
+                  ((Spec.ntt_multiply_pure_no_acc
+                      (lift_chunk_mont (matrix_A.val[i.val * K.val + k.val]!.coefficients.val[j]!))
+                      (lift_chunk_mont (s_as_ntt.val[k.val]!.coefficients.val[j]!))
+                      (Spec.zeta_at (64 + 4 * j))
+                      (Spec.zeta_at (64 + 4 * j + 1))
+                      (Spec.zeta_at (64 + 4 * j + 2))
+                      (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!)
+        rfl
+      · -- (b) Bound: ≤ acc_init[n] + s_iter.val * 2^25.
+        intro n hn
+        have h_acc1_bnd_n := h_acc1_bnd_rel ⟨n, hn⟩
+        have h_acc1_bnd_n' : (acc1.val[n]!).val.natAbs ≤ (acc.val[n]!).val.natAbs + 2^25 :=
+          h_acc1_bnd_n
+        have h_inv_n := h_inv_acc_bnd n hn
+        have hs_iter_eq : s_iter.val = k.val + 1 := hs_iter_val
+        rw [hs_iter_eq]
+        have h_arith : (k.val + 1) * 2^25 = k.val * 2^25 + 2^25 := by ring
+        rw [h_arith]
+        omega
+    show (pure _ : Result Prop).holds
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+  · -- `None` branch: k ≥ K, done.
+    have hk_ge : k.val ≥ K.val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = K.val := by omega
+    have h_iter_none :
+        ⦃ ⌜ True ⌝ ⦄
+        core_models.iter.range.IteratorRange.next
+          core_models.Usize.Insts.Core_modelsIterRangeStep
+          ({ start := k, «end» := K } : core_models.ops.range.Range Std.Usize)
+        ⦃ ⇓ r => ⌜ r = ((none : Option Std.Usize),
+                          ({ start := k, «end» := K }
+                            : core_models.ops.range.Range Std.Usize)) ⌝ ⦄ :=
+      libcrux_iot_ml_kem.Util.IteratorRange_next_spec_usize k K
+        (fun hlt => absurd hlt (Nat.not_lt.mpr hk_ge))
+        (fun _ => by dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure])
+    obtain ⟨v_iter, hv_iter_eq, hv_iter_post⟩ := triple_exists_ok_fc h_iter_none
+    have h_body :
+        libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst) matrix_A s_as_ntt s_cache i
+          { start := k, «end» := K } acc
+        = .ok (ControlFlow.done acc) := by
+      unfold libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1_loop0.body
+      conv_lhs =>
+        rw [show
+          (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := K } : core_models.ops.range.Range Std.Usize))
+            = (core_models.iter.range.IteratorRange.next
+                core_models.Usize.Insts.Core_modelsIterRangeStep
+                ({ start := k, «end» := K }
+                  : core_models.ops.range.Range Std.Usize))
+          from rfl]
+      rw [hv_iter_post] at hv_iter_eq
+      rw [hv_iter_eq]
+      rfl
+    apply triple_of_ok_fc h_body
+    show L7_1b_FC.row_i_step_post matrix_A s_as_ntt acc_init i k (.done acc)
+    show (L7_1b_FC.row_i_inv matrix_A s_as_ntt acc_init i K acc).holds
+    unfold L7_1b_FC.row_i_inv
+    show (pure _ : Result Prop).holds
+    have h_inv_pure :
+        (∀ j : Nat, j < 16 → ∀ ℓ : Nat, ℓ < 16 →
+          Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
+            = (List.range K.val).foldl
+                (fun s c =>
+                  libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                    ((Spec.ntt_multiply_pure_no_acc
+                        (lift_chunk_mont (matrix_A.val[i.val * K.val + c]!.coefficients.val[j]!))
+                        (lift_chunk_mont (s_as_ntt.val[c]!.coefficients.val[j]!))
+                        (Spec.zeta_at (64 + 4 * j))
+                        (Spec.zeta_at (64 + 4 * j + 1))
+                        (Spec.zeta_at (64 + 4 * j + 2))
+                        (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!))
+                (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val)))
+        ∧ (∀ n : Nat, n < 256 →
+            (acc.val[n]!).val.natAbs
+              ≤ (acc_init.val[n]!).val.natAbs + K.val * 2^25) := by
+      refine ⟨?_, ?_⟩
+      · intro j hj ℓ hℓ
+        have h_eq := h_inv_acc j hj ℓ hℓ
+        have h_rng : (List.range k.val) = (List.range K.val) := by rw [hk_eq]
+        rw [h_rng] at h_eq
+        exact h_eq
+      · intro n hn
+        have h_b := h_inv_acc_bnd n hn
+        have h_arith : k.val * 2^25 = K.val * 2^25 := by rw [hk_eq]
+        rw [h_arith] at h_b
+        exact h_b
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+
+/-- L7.1 Stage 2 — `matrix.compute_As_plus_e_loop1_loop0`: the row-i
+    (i ≥ 1) column loop. Iterates over `j ∈ [0, K)`, accumulating
+    column-j's contribution to the I32 accumulator via
+    `accumulating_ntt_multiply_use_cache`. The cache is INPUT only —
+    populated by Stage 1's row-0 column loop and consumed read-only here.
+
+    POST: `row_i_inv` holds at k = K, i.e. for all (j, ℓ) ∈ [0, 16)²:
+    `mont_reduce_pure (lift_fe_int acc[16j+ℓ].val)` equals the K-column
+    canonical-form sum at row `i` of `ntt_multiply_pure_no_acc` outputs
+    starting from the initial accumulator's `mont_reduce_pure` lift.
+
+    PRE: standard 16×16 bound (3328) on matrix and s_as_ntt entries, the
+    K·K matrix-length axiom, `hK : K.val ≤ 4`, `hi : i.val < K.val`, the
+    additive accumulator BUDGET `(acc_init[n]).val.natAbs + K·2^25 ≤ 2^30`,
+    and the cache-post hypothesis `h_cache` — at every column c < K,
+    `s_cache.val[c]!` satisfies `accumulating_ntt_multiply_poly_cache_post`
+    against `s_as_ntt.val[c]!`. The latter is established by Stage 1's
+    final invariant (row-0 column loop populates the cache).
+
+    Mirrors `compute_As_plus_e_loop0_fc` (FCTargets:29759) minus cache
+    threading; the cache passes through as a read-only parameter. -/
+@[spec]
+theorem compute_As_plus_e_loop1_loop0_fc
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt s_cache : Std.Array
+                          (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (accumulator : Std.Array Std.I32 256#usize)
+    (i : Std.Usize)
+    (hi : i.val < K.val)
+    (hAlen : matrix_A.length = (K.val * K.val : Nat))
+    (h_matrix_bnd : ∀ k : Fin matrix_A.length, ∀ a b : Fin 16,
+        ((matrix_A.val[k.val]!.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs ≤ 3328)
+    (h_s_bnd : ∀ k : Fin K.val, ∀ a b : Fin 16,
+        ((s_as_ntt.val[k.val]!.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs ≤ 3328)
+    (h_acc_bnd : ∀ n : Fin 256,
+        (accumulator.val[n.val]!).val.natAbs + K.val * 2^25 ≤ 2^30)
+    (h_cache : ∀ c : Nat, c < K.val →
+        accumulating_ntt_multiply_poly_cache_post (s_as_ntt.val[c]!) (s_cache.val[c]!)) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1_loop0
+      (vectortraitsOperationsInst := portable_ops_inst)
+      { start := 0#usize, «end» := K } matrix_A s_as_ntt s_cache accumulator i
+    ⦃ ⇓ p => ⌜ (L7_1b_FC.row_i_inv matrix_A s_as_ntt accumulator i K p).holds ⌝ ⦄ := by
+  unfold libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1_loop0
+  apply Std.Do.Triple.of_entails_right _
+    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+      (fun (iter1, acc1) =>
+        libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1_loop0.body
+          (vectortraitsOperationsInst := portable_ops_inst) matrix_A s_as_ntt s_cache i
+          iter1 acc1)
+      (β := L7_1b_FC.Acc)
+      accumulator
+      0#usize K
+      (fun k acc => L7_1b_FC.row_i_inv matrix_A s_as_ntt accumulator i k acc)
+      (by
+        have h0 : (0#usize : Std.Usize).val = 0 := rfl
+        rw [h0]; exact Nat.zero_le _)
+      (by
+        -- Base case at k = 0.
+        show (pure _ : Result Prop).holds
+        simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
+        intro _
+        refine ⟨?_, ?_⟩
+        · intro j hj ℓ hℓ
+          show Spec.mont_reduce_pure _
+            = (List.range (0#usize : Std.Usize).val).foldl _ _
+          have h0' : (0#usize : Std.Usize).val = 0 := rfl
+          rw [h0']
+          show Spec.mont_reduce_pure _ = (List.range 0).foldl _ _
+          simp [List.range_zero, List.foldl_nil]
+        · intro n _; have h0' : (0#usize : Std.Usize).val = 0 := rfl
+          rw [h0']; omega)
+      ?_)
+  · -- Post entailment: the final invariant holds at K.
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    have h_inv_holds : (L7_1b_FC.row_i_inv matrix_A s_as_ntt accumulator i K r).holds := by
+      simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
+    show (L7_1b_FC.row_i_inv matrix_A s_as_ntt accumulator i K r).holds
+    exact h_inv_holds
+  · -- Step entailment.
+    intro acc k _h_ge h_le hinv
+    have h_step := compute_As_plus_e_loop1_loop0_step_lemma_fc
+      matrix_A s_as_ntt s_cache accumulator i hi hAlen h_matrix_bnd h_s_bnd h_acc_bnd
+      h_cache acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : L7_1b_FC.row_i_step_post matrix_A s_as_ntt accumulator i k
+                  (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L7_1b_FC.row_i_step_post] using hP
+    · have hP : L7_1b_FC.row_i_step_post matrix_A s_as_ntt accumulator i k
+                  (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [L7_1b_FC.row_i_step_post] using hP
+
+end L7_1b_irreducible
+
 /-! ## §L7 — matrix-level targets (4 theorems).
 
     These are the ultimate FC obligations: the impl matrix functions
