@@ -32023,6 +32023,946 @@ private theorem matrix_add_polynomials_eq_ok
   show core_models.array.from_fn 256#usize _ (lhs, rhs) = _
   exact h_from_fn
 
+/-- **Helper 1.** Single-product lane-eq characterization: for any two
+    `PolynomialRingElement`s `a, b`, lane `ℓ` of `Spec.multiply_ntts_pure
+    (lift_poly a) (lift_poly b)` equals the corresponding chunk-projected
+    `Spec.ntt_multiply_pure_no_acc` lane on `lift_chunk_mont`-style chunks,
+    scaled by `(lift_fe_mont 1353)²`.
+
+    Composes `Spec.multiply_ntts_pure_eq_chunked_no_acc` (FCTargets:18231)
+    with Helper 2 `L7_1c_FC.ntt_multiply_pure_no_acc_chunk_at_lift_poly_eq`
+    (FCTargets:30728). -/
+private theorem multiply_ntts_lane_eq_canonical_factor
+    (a b : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (ℓ : Nat) (hℓ : ℓ < 256) :
+    (Spec.multiply_ntts_pure (lift_poly a) (lift_poly b)).val[ℓ]!
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          ((Spec.ntt_multiply_pure_no_acc
+              (lift_chunk_mont a.coefficients.val[ℓ / 16]!)
+              (lift_chunk_mont b.coefficients.val[ℓ / 16]!)
+              (Spec.zeta_at (64 + 4 * (ℓ / 16)))
+              (Spec.zeta_at (64 + 4 * (ℓ / 16) + 1))
+              (Spec.zeta_at (64 + 4 * (ℓ / 16) + 2))
+              (Spec.zeta_at (64 + 4 * (ℓ / 16) + 3))).val[ℓ % 16]!)
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (lift_fe_mont (1353#i16 : Std.I16))
+            (lift_fe_mont (1353#i16 : Std.I16))) := by
+  have h_div_lt : ℓ / 16 < 16 := by omega
+  have h_mod_lt : ℓ % 16 < 16 := Nat.mod_lt _ (by decide)
+  -- Step 1: rewrite Spec.multiply_ntts_pure via the chunked form.
+  rw [Spec.multiply_ntts_pure_eq_chunked_no_acc]
+  -- Step 2: project lane ℓ through flatten_chunks via the inner list.
+  unfold Spec.flatten_chunks
+  -- The Std.Array.make's `.val[k]!` lookup is direct list-lookup.
+  show ((List.range 256).map (fun j =>
+          (((List.range 16).map (fun j' =>
+              Spec.ntt_multiply_pure_no_acc
+                (Spec.chunk_at (lift_poly a) j') (Spec.chunk_at (lift_poly b) j')
+                (Spec.zeta_at (64 + 4 * j')) (Spec.zeta_at (64 + 4 * j' + 1))
+                (Spec.zeta_at (64 + 4 * j' + 2)) (Spec.zeta_at (64 + 4 * j' + 3)))
+              )[j / 16]!).val[j % 16]!))[ℓ]! = _
+  rw [getElem!_pos _ ℓ (by simp [List.length_map, List.length_range, hℓ])]
+  rw [List.getElem_map, List.getElem_range]
+  -- Now we have: `(((List.range 16).map f)[ℓ / 16]!).val[ℓ % 16]! = RHS`.
+  -- Reduce the inner getElem!.
+  rw [getElem!_pos _ (ℓ / 16) (by simp [List.length_map, List.length_range, h_div_lt])]
+  rw [List.getElem_map, List.getElem_range]
+  -- Now apply Helper 2.
+  exact L7_1c_FC.ntt_multiply_pure_no_acc_chunk_at_lift_poly_eq
+    a b (ℓ / 16) h_div_lt
+    (Spec.zeta_at (64 + 4 * (ℓ / 16))) (Spec.zeta_at (64 + 4 * (ℓ / 16) + 1))
+    (Spec.zeta_at (64 + 4 * (ℓ / 16) + 2)) (Spec.zeta_at (64 + 4 * (ℓ / 16) + 3))
+    (ℓ % 16) h_mod_lt
+
+set_option maxHeartbeats 1000000 in
+/-- **Helper 2.** Generic foldl/mul distributivity: pulling a uniform
+    right-multiplicand `K` out of every accumulator step.
+
+    `mul_pure (foldl (fun s x => add_pure s (f x)) seed L) K
+       = foldl (fun s x => add_pure s (mul_pure (f x) K)) (mul_pure seed K) L`. -/
+private theorem foldl_add_mul_distrib
+    {α : Type} (L : List α)
+    (f : α → hacspec_ml_kem.parameters.FieldElement)
+    (seed K : hacspec_ml_kem.parameters.FieldElement) :
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (L.foldl (fun s x => libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                            s (f x)) seed) K
+      = L.foldl (fun s x => libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                              s
+                              (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure (f x) K))
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure seed K) := by
+  -- Key fact: `mul_pure (add_pure a b) K = add_pure (mul_pure a K) (mul_pure b K)`.
+  -- We prove this via ZMod 3329 projection + canonical round-trip.
+  have h_distrib :
+      ∀ a b K' : hacspec_ml_kem.parameters.FieldElement,
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b) K'
+          = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a K')
+              (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b K') := by
+    intro a b K'
+    have h_canon_lhs : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b) K') :=
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure _ _
+    have h_canon_rhs : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a K')
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b K')) :=
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure _ _
+    have h_canon_to_lt : ∀ x : hacspec_ml_kem.parameters.FieldElement,
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical x → x.val.val < 3329 := by
+      intro x hx
+      unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at hx
+      have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+        unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+      rw [hq] at hx
+      exact hx
+    have h_lt_lhs := h_canon_to_lt _ h_canon_lhs
+    have h_lt_rhs := h_canon_to_lt _ h_canon_rhs
+    rw [← feOfZMod_zmodOfFE_of_canonical _ h_lt_lhs,
+        ← feOfZMod_zmodOfFE_of_canonical _ h_lt_rhs]
+    congr 1
+    simp only [L2_8c.zmodOfFE_add_pure, L2_8c.zmodOfFE_mul_pure]
+    ring
+  -- Now induction on L. We need an aux that handles the changing seed.
+  induction L generalizing seed with
+  | nil => simp
+  | cons h t ih =>
+    simp only [List.foldl_cons]
+    have h_step := ih
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure seed (f h))
+    rw [h_step]
+    -- Goal: foldl ... (mul_pure (add_pure seed (f h)) K)
+    --     = foldl ... (add_pure (mul_pure seed K) (mul_pure (f h) K))
+    rw [h_distrib seed (f h) K]
+
+/-- Canonical row-sum at column step k (foldl form in `lift_chunk_mont`,
+    canonical post-scale via `mul_pure 1353 1353`). This is the partial-sum
+    value at lane ℓ that the column loop produces at step k. -/
+private noncomputable def col_loop_lane_at_step
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (i : Nat) (k : Nat) (ℓ : Nat) :
+    hacspec_ml_kem.parameters.FieldElement :=
+  libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    ((List.range k).foldl
+      (fun s c =>
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+          ((Spec.ntt_multiply_pure_no_acc
+              (lift_chunk_mont (matrix_A.val[i * K.val + c]!.coefficients.val[ℓ / 16]!))
+              (lift_chunk_mont (s_as_ntt.val[c]!.coefficients.val[ℓ / 16]!))
+              (Spec.zeta_at (64 + 4 * (ℓ / 16)))
+              (Spec.zeta_at (64 + 4 * (ℓ / 16) + 1))
+              (Spec.zeta_at (64 + 4 * (ℓ / 16) + 2))
+              (Spec.zeta_at (64 + 4 * (ℓ / 16) + 3))).val[ℓ % 16]!))
+      (Spec.mont_reduce_pure (lift_fe_int 0)))
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (lift_fe_mont (1353#i16 : Std.I16))
+      (lift_fe_mont (1353#i16 : Std.I16)))
+
+/-- The expected result of `multiply_matrix_by_column_at` at step k:
+    an `Array FE 256` whose lane ℓ equals `col_loop_lane_at_step ... k ℓ`. -/
+private noncomputable def col_loop_result_at_step
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (i : Nat) (k : Nat) :
+    Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+  ⟨(List.range 256).map (fun ℓ => col_loop_lane_at_step matrix_A s_as_ntt i k ℓ),
+   by simp [List.length_map, List.length_range]⟩
+
+/-- The lane-ℓ equation of `col_loop_result_at_step`. -/
+private theorem col_loop_result_at_step_val_lane
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (i : Nat) (k : Nat) (ℓ : Nat) (hℓ : ℓ < 256) :
+    (col_loop_result_at_step matrix_A s_as_ntt i k).val[ℓ]!
+      = col_loop_lane_at_step matrix_A s_as_ntt i k ℓ := by
+  unfold col_loop_result_at_step
+  show ((List.range 256).map (fun ℓ' => col_loop_lane_at_step matrix_A s_as_ntt i k ℓ'))[ℓ]! = _
+  rw [getElem!_pos _ ℓ (by simp [List.length_map, List.length_range, hℓ])]
+  rw [List.getElem_map, List.getElem_range]
+
+/-- **Helper 3a.** Base-case lane equation: at step k=0, every lane of
+    `col_loop_result_at_step` equals `parameters.FieldElement.new 0`. -/
+private theorem col_loop_lane_at_step_zero
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (i : Nat) (ℓ : Nat) :
+    col_loop_lane_at_step matrix_A s_as_ntt i 0 ℓ
+      = ({ val := 0#u16 } : hacspec_ml_kem.parameters.FieldElement) := by
+  unfold col_loop_lane_at_step
+  rw [List.range_zero, List.foldl_nil]
+  -- Now: mul_pure (mont_reduce_pure (lift_fe_int 0)) (mul_pure 1353 1353) = ⟨0#u16⟩.
+  -- Both sides have ZMod 3329 value 0, both are canonical.
+  have h_canon_lhs : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (Spec.mont_reduce_pure (lift_fe_int 0))
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (lift_fe_mont (1353#i16 : Std.I16)) (lift_fe_mont (1353#i16 : Std.I16)))) :=
+    libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure _ _
+  have h_canon_rhs : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+      ({ val := 0#u16 } : hacspec_ml_kem.parameters.FieldElement) := by
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq]
+    decide
+  have h_canon_to_lt : ∀ x : hacspec_ml_kem.parameters.FieldElement,
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical x → x.val.val < 3329 := by
+    intro x hx
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at hx
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at hx; exact hx
+  have h_lt_lhs := h_canon_to_lt _ h_canon_lhs
+  have h_lt_rhs := h_canon_to_lt _ h_canon_rhs
+  rw [← feOfZMod_zmodOfFE_of_canonical _ h_lt_lhs,
+      ← feOfZMod_zmodOfFE_of_canonical _ h_lt_rhs]
+  congr 1
+  rw [L2_8c.zmodOfFE_mul_pure]
+  unfold Spec.mont_reduce_pure
+  rw [zmodOfFE_feOfZMod]
+  unfold lift_fe_int
+  rw [zmodOfFE_feOfZMod]
+  -- LHS: 0 * 169 * 169 * (zmodOfFE ...) = 0; RHS: zmodOfFE ⟨0#u16⟩ = 0.
+  unfold zmodOfFE
+  simp
+
+set_option maxHeartbeats 4000000 in
+/-- **Helper 3b.** Step lemma: at step k < K, taking one column iteration
+    transforms `col_loop_result_at_step ... k` into `col_loop_result_at_step ... (k+1)`. -/
+private theorem col_loop_lane_at_step_succ
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (i : Nat) (k : Nat) (ℓ : Nat) (hℓ : ℓ < 256) :
+    col_loop_lane_at_step matrix_A s_as_ntt i (k + 1) ℓ
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (col_loop_lane_at_step matrix_A s_as_ntt i k ℓ)
+          (Spec.multiply_ntts_pure
+            (lift_poly matrix_A.val[i * K.val + k]!) (lift_poly s_as_ntt.val[k]!)).val[ℓ]! := by
+  unfold col_loop_lane_at_step
+  -- LHS: mul_pure (foldl_{k+1}) (mul_pure 1353 1353).
+  rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil]
+  -- Now LHS = mul_pure (add_pure (foldl_k) (no_acc_lane_at_k)) (mul_pure 1353 1353).
+  -- Distribute via h_distrib (essentially Helper 2's per-pair fact, inlined).
+  -- Specifically: mul_pure (add_pure x y) z = add_pure (mul_pure x z) (mul_pure y z).
+  have h_distrib :
+      ∀ a b c : hacspec_ml_kem.parameters.FieldElement,
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b) c
+          = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a c)
+              (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b c) := by
+    intro a b c
+    have h_canon_lhs : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b) c) :=
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure _ _
+    have h_canon_rhs : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a c)
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b c)) :=
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure _ _
+    have h_canon_to_lt : ∀ x : hacspec_ml_kem.parameters.FieldElement,
+        libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical x → x.val.val < 3329 := by
+      intro x hx
+      unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at hx
+      have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+        unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+      rw [hq] at hx; exact hx
+    rw [← feOfZMod_zmodOfFE_of_canonical _ (h_canon_to_lt _ h_canon_lhs),
+        ← feOfZMod_zmodOfFE_of_canonical _ (h_canon_to_lt _ h_canon_rhs)]
+    congr 1
+    simp only [L2_8c.zmodOfFE_add_pure, L2_8c.zmodOfFE_mul_pure]
+    ring
+  rw [h_distrib]
+  -- Now LHS = add_pure (mul_pure (foldl_k) (mul_pure 1353 1353)) (mul_pure (no_acc_lane_at_k) (mul_pure 1353 1353))
+  -- The first summand is `col_loop_lane_at_step ... k ℓ` (after unfold).
+  -- The second summand should equal `(Spec.multiply_ntts_pure (lift_poly matrix_A.val[i*K+k]!) (lift_poly s_as_ntt.val[k]!)).val[ℓ]!`
+  -- via Helper 1.
+  congr 1
+  -- Apply Helper 1.
+  rw [multiply_ntts_lane_eq_canonical_factor _ _ ℓ hℓ]
+
+/-- **Helper 3c.** Closing equation: `col_loop_lane_at_step ... K.val ℓ = mul_pure (canonical_row_sum_lane ...) (lift_fe_mont 1353)`. -/
+private theorem col_loop_lane_at_step_K_eq_canonical
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (i : Nat) (ℓ : Nat) :
+    col_loop_lane_at_step matrix_A s_as_ntt i K.val ℓ
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt i (ℓ / 16) (ℓ % 16))
+          (lift_fe_mont (1353#i16 : Std.I16)) := by
+  unfold col_loop_lane_at_step L7_1c_FC.canonical_row_sum_lane
+  -- LHS: mul_pure (foldl ...) (mul_pure 1353 1353).
+  -- RHS: mul_pure (mul_pure (foldl ...) 1353) 1353.
+  -- Same foldl on both sides; associativity of mul_pure is the only step.
+  -- Use canonical round-trip + ring.
+  have h_canon_to_lt : ∀ x : hacspec_ml_kem.parameters.FieldElement,
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical x → x.val.val < 3329 := by
+    intro x hx
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at hx
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at hx; exact hx
+  -- Apply the canonical-rewrite via the result of mul_pure being canonical.
+  set foldl_sum := (List.range K.val).foldl
+    (fun s c =>
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+        ((Spec.ntt_multiply_pure_no_acc
+            (lift_chunk_mont (matrix_A.val[i * K.val + c]!.coefficients.val[ℓ / 16]!))
+            (lift_chunk_mont (s_as_ntt.val[c]!.coefficients.val[ℓ / 16]!))
+            (Spec.zeta_at (64 + 4 * (ℓ / 16)))
+            (Spec.zeta_at (64 + 4 * (ℓ / 16) + 1))
+            (Spec.zeta_at (64 + 4 * (ℓ / 16) + 2))
+            (Spec.zeta_at (64 + 4 * (ℓ / 16) + 3))).val[ℓ % 16]!))
+    (Spec.mont_reduce_pure (lift_fe_int 0)) with h_fs_def
+  set mont1353 := lift_fe_mont (1353#i16 : Std.I16)
+  -- Both LHS and RHS are products of `mul_pure`, hence canonical.
+  have h_canon_lhs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+    foldl_sum
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure mont1353 mont1353)
+  have h_canon_rhs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure foldl_sum mont1353)
+    mont1353
+  rw [← feOfZMod_zmodOfFE_of_canonical _ (h_canon_to_lt _ h_canon_lhs),
+      ← feOfZMod_zmodOfFE_of_canonical _ (h_canon_to_lt _ h_canon_rhs)]
+  apply congrArg
+  simp only [L2_8c.zmodOfFE_mul_pure]
+  ring
+
+set_option maxHeartbeats 16000000 in
+set_option maxRecDepth 1000 in
+private theorem multiply_matrix_by_column_at_eq
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (hAlen : matrix_A.length = (K.val * K.val : Nat))
+    (i : Std.Usize) (hi : i.val < K.val) :
+    hacspec_ml_kem.matrix.multiply_matrix_by_column_at
+        (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt) i
+      = .ok ⟨(List.range 256).map (fun ℓ =>
+              libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt i.val
+                  (ℓ / 16) (ℓ % 16))
+                (lift_fe_mont (1353#i16 : Std.I16))),
+             by simp [List.length_map, List.length_range]⟩ := by
+  -- Reduce the target: the .ok's payload coincides with `col_loop_result_at_step ... K.val`
+  -- after applying `col_loop_lane_at_step_K_eq_canonical`.
+  have h_target_eq :
+      (⟨(List.range 256).map (fun ℓ =>
+              libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt i.val
+                  (ℓ / 16) (ℓ % 16))
+                (lift_fe_mont (1353#i16 : Std.I16))),
+             by simp [List.length_map, List.length_range]⟩ :
+       Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) =
+      col_loop_result_at_step matrix_A s_as_ntt i.val K.val := by
+    apply Subtype.ext
+    unfold col_loop_result_at_step
+    show _ = (List.range 256).map _
+    apply List.map_congr_left
+    intro ℓ _
+    rw [col_loop_lane_at_step_K_eq_canonical]
+  rw [h_target_eq]
+  -- Now we need: multiply_matrix_by_column_at lift_M lift_S i = .ok (col_loop_result_at_step ... K.val).
+  -- Use the loop equation directly.
+  unfold hacspec_ml_kem.matrix.multiply_matrix_by_column_at
+  unfold hacspec_ml_kem.parameters.FieldElement.new
+  simp only [bind_tc_ok]
+  -- Now goal: multiply_matrix_by_column_at_loop ⟨0, K⟩ lift_M lift_S i (Array.repeat 256 ⟨0⟩) = .ok ...
+  -- Use loop_range_spec_usize with `inv k r = pure (r = col_loop_result_at_step ... k.val)`.
+  -- Step 1: get the Triple form, then extract the .ok form.
+  have h_triple : ⦃ ⌜ True ⌝ ⦄
+      hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop
+        ({ start := 0#usize, «end» := K }
+          : core_models.ops.range.Range Std.Usize)
+        (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt) i
+        (Std.Array.repeat (256#usize : Std.Usize)
+          ({ val := 0#u16 } : hacspec_ml_kem.parameters.FieldElement))
+      ⦃ ⇓ r => ⌜ r = col_loop_result_at_step matrix_A s_as_ntt i.val K.val ⌝ ⦄ := by
+    unfold hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop
+    apply Std.Do.Triple.of_entails_right _
+      (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+        (fun p : core_models.ops.range.Range Std.Usize ×
+                   Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize =>
+          hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop.body
+            (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt) i p.1 p.2)
+        (β := Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+        (Std.Array.repeat (256#usize : Std.Usize)
+          ({ val := 0#u16 } : hacspec_ml_kem.parameters.FieldElement))
+        0#usize K
+        (fun k result => pure (result = col_loop_result_at_step matrix_A s_as_ntt i.val k.val))
+        (Nat.zero_le _)
+        (by
+          -- Base: init = col_loop_result_at_step ... 0.
+          show (pure _ : Result Prop).holds
+          simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
+          intro _
+          apply Subtype.ext
+          rw [Std.Array.repeat_val]
+          unfold col_loop_result_at_step
+          show List.replicate 256 _ = (List.range 256).map _
+          apply List.ext_getElem
+          · rw [List.length_replicate, List.length_map, List.length_range]
+          intro n h_n_lhs _
+          have h_n_lt : n < 256 := by
+            rw [List.length_replicate] at h_n_lhs; exact h_n_lhs
+          rw [List.getElem_replicate, List.getElem_map, List.getElem_range]
+          show _ = col_loop_lane_at_step matrix_A s_as_ntt i.val 0 n
+          rw [col_loop_lane_at_step_zero])
+        ?_)
+    · -- Post entailment.
+      rw [PostCond.entails_noThrow]
+      intro r hh
+      have h_eq : (pure (r = col_loop_result_at_step matrix_A s_as_ntt i.val K.val)
+                  : Result Prop).holds := by
+        simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
+      simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_eq
+    · -- Step.
+      intro acc k h_ge h_le hinv
+      have h_acc_eq : acc = col_loop_result_at_step matrix_A s_as_ntt i.val k.val := by
+        simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using hinv
+      subst h_acc_eq
+      -- Body: Range.next; if Some j (j < K), then index_usize + multiply_ntts + add_polynomials.
+      unfold hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop.body
+      by_cases h_lt : k.val < K.val
+      · -- `Some k` branch.
+        have h_iter_step :
+            ⦃ ⌜ True ⌝ ⦄
+            core_models.iter.range.IteratorRange.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := K } : core_models.ops.range.Range Std.Usize)
+            ⦃ ⇓ r => ⌜ ∃ s : Std.Usize, s.val = k.val + 1 ∧
+                        r = (some k,
+                            ({ start := s, «end» := K }
+                              : core_models.ops.range.Range Std.Usize)) ⌝ ⦄ :=
+          libcrux_iot_ml_kem.Util.IteratorRange_next_spec_usize k K
+            (fun _ s hs => by
+              dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+              exact ⟨s, hs, rfl⟩)
+            (fun hge => absurd h_lt (Nat.not_lt.mpr hge))
+        obtain ⟨v_iter, hv_iter_eq, hv_iter_post⟩ := triple_exists_ok_fc h_iter_step
+        obtain ⟨s_iter, hs_iter_val, hv_iter_pair⟩ := hv_iter_post
+        -- Compute (lift_matrix_from_slice matrix_A K).val[k.val]! — the k-th column.
+        have h_lift_M_len : (lift_matrix_from_slice matrix_A K).length = K.val :=
+          Std.Array.length_eq _
+        set col_k : Std.Array
+              (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K :=
+          (lift_matrix_from_slice matrix_A K).val[k.val]! with h_col_k_def
+        have h_idx_col : Aeneas.Std.Array.index_usize (lift_matrix_from_slice matrix_A K) k
+            = .ok col_k :=
+          libcrux_iot_ml_kem.Util.array_index_usize_ok_eq _ k
+            (by rw [h_lift_M_len]; exact h_lt)
+        -- The k-th column at row i is lift_poly matrix_A.val[i.val * K.val + k.val]!.
+        have h_col_k_val : col_k.val[i.val]!
+            = lift_poly matrix_A.val[i.val * K.val + k.val]! := by
+          rw [h_col_k_def]
+          unfold lift_matrix_from_slice
+          show ((List.range K.val).map (fun j' =>
+                Std.Array.make K
+                  ((List.range K.val).map (fun i' =>
+                    lift_poly matrix_A.val[i' * K.val + j']!))
+                  (by simp)))[k.val]!.val[i.val]! = _
+          rw [getElem!_pos _ k.val (by simp [List.length_map, List.length_range]; exact h_lt)]
+          rw [List.getElem_map, List.getElem_range]
+          show ((List.range K.val).map (fun i' =>
+                lift_poly matrix_A.val[i' * K.val + k.val]!))[i.val]! = _
+          rw [getElem!_pos _ i.val (by simp [List.length_map, List.length_range]; exact hi)]
+          rw [List.getElem_map, List.getElem_range]
+        have h_col_k_len : col_k.length = K.val := Std.Array.length_eq _
+        set a1 : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+          lift_poly matrix_A.val[i.val * K.val + k.val]! with h_a1_def
+        have h_idx_a1 : Aeneas.Std.Array.index_usize col_k i = .ok a1 := by
+          have := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq col_k i
+            (by rw [h_col_k_len]; exact hi)
+          rw [h_col_k_val] at this; exact this
+        -- Compute (lift_vec s_as_ntt).val[k.val]! = lift_poly s_as_ntt.val[k.val]!.
+        have h_lift_S_len : (lift_vec s_as_ntt).length = K.val := Std.Array.length_eq _
+        set a2 : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+          lift_poly s_as_ntt.val[k.val]! with h_a2_def
+        have h_lift_S_val : (lift_vec s_as_ntt).val[k.val]! = a2 := by
+          rw [h_a2_def]
+          unfold lift_vec
+          show (s_as_ntt.val.map lift_poly)[k.val]! = _
+          have h_len_s : s_as_ntt.val.length = K.val := Std.Array.length_eq _
+          rw [getElem!_pos _ k.val (by rw [List.length_map, h_len_s]; exact h_lt)]
+          rw [List.getElem_map]
+          rw [show s_as_ntt.val[k.val] = s_as_ntt.val[k.val]! from
+                (getElem!_pos _ k.val (by rw [h_len_s]; exact h_lt)).symm]
+        have h_idx_a2 : Aeneas.Std.Array.index_usize (lift_vec s_as_ntt) k = .ok a2 := by
+          have := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq (lift_vec s_as_ntt) k
+            (by rw [h_lift_S_len]; exact h_lt)
+          rw [h_lift_S_val] at this; exact this
+        -- multiply_ntts a1 a2 = .ok (Spec.multiply_ntts_pure a1 a2).
+        have h_mult_eq : hacspec_ml_kem.ntt.multiply_ntts a1 a2
+            = .ok (Spec.multiply_ntts_pure a1 a2) := by
+          unfold Spec.multiply_ntts_pure
+          rw [L6_3b_FC.multiply_ntts_eq_pure_array]
+        -- add_polynomials previous product = .ok new_acc.
+        have h_add_eq := L7_1d_FC.matrix_add_polynomials_eq_ok
+          (col_loop_result_at_step matrix_A s_as_ntt i.val k.val)
+          (Spec.multiply_ntts_pure a1 a2)
+        -- Show the new accumulator equals col_loop_result_at_step ... (k.val + 1).
+        set new_acc : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+          ⟨(List.range 256).map (fun n =>
+              libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (col_loop_result_at_step matrix_A s_as_ntt i.val k.val).val[n]!
+                (Spec.multiply_ntts_pure a1 a2).val[n]!),
+           by simp [List.length_map, List.length_range]⟩ with h_new_acc_def
+        have h_new_acc_eq : new_acc
+            = col_loop_result_at_step matrix_A s_as_ntt i.val (k.val + 1) := by
+          unfold col_loop_result_at_step
+          apply Subtype.ext
+          rw [h_new_acc_def]
+          apply List.map_congr_left
+          intro n hn_mem
+          have hn_lt : n < 256 := List.mem_range.mp hn_mem
+          rw [col_loop_result_at_step_val_lane _ _ _ _ _ hn_lt]
+          rw [col_loop_lane_at_step_succ _ _ _ _ _ hn_lt]
+        -- Body equation: drive the do-block to .ok (cont ...).
+        have h_body :
+            (fun p : core_models.ops.range.Range Std.Usize ×
+                       Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize =>
+              hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop.body
+                (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt) i p.1 p.2)
+              ({ start := k, «end» := K },
+                col_loop_result_at_step matrix_A s_as_ntt i.val k.val)
+            = .ok (ControlFlow.cont (({ start := s_iter, «end» := K }
+                          : core_models.ops.range.Range Std.Usize),
+                  col_loop_result_at_step matrix_A s_as_ntt i.val (k.val + 1))) := by
+          show hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop.body
+                (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt) i
+                { start := k, «end» := K }
+                (col_loop_result_at_step matrix_A s_as_ntt i.val k.val) = _
+          unfold hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop.body
+          conv_lhs =>
+            rw [show
+              (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+                  core_models.Usize.Insts.Core_modelsIterRangeStep
+                  ({ start := k, «end» := K } : core_models.ops.range.Range Std.Usize))
+                = (core_models.iter.range.IteratorRange.next
+                    core_models.Usize.Insts.Core_modelsIterRangeStep
+                    ({ start := k, «end» := K }
+                      : core_models.ops.range.Range Std.Usize))
+              from rfl]
+          rw [hv_iter_pair] at hv_iter_eq
+          rw [hv_iter_eq]
+          simp only [Aeneas.Std.bind_tc_ok]
+          -- Force destructure (some k, iter') into the some j=k branch.
+          show ((do
+                  let a ← Aeneas.Std.Array.index_usize
+                            (lift_matrix_from_slice matrix_A K) k
+                  let a1' ← Aeneas.Std.Array.index_usize a i
+                  let a2' ← Aeneas.Std.Array.index_usize (lift_vec s_as_ntt) k
+                  let product ← hacspec_ml_kem.ntt.multiply_ntts a1' a2'
+                  let result1 ← hacspec_ml_kem.matrix.add_polynomials
+                    (col_loop_result_at_step matrix_A s_as_ntt i.val k.val) product
+                  Aeneas.Std.Result.ok (ControlFlow.cont
+                    (({ start := s_iter, «end» := K }
+                      : core_models.ops.range.Range Std.Usize), result1)))
+                : Result _) = _
+          rw [h_idx_col]
+          simp only [Aeneas.Std.bind_tc_ok]
+          rw [h_idx_a1]
+          simp only [Aeneas.Std.bind_tc_ok]
+          rw [h_idx_a2]
+          simp only [Aeneas.Std.bind_tc_ok]
+          rw [h_mult_eq]
+          simp only [Aeneas.Std.bind_tc_ok]
+          rw [h_add_eq]
+          simp only [Aeneas.Std.bind_tc_ok]
+          rw [← h_new_acc_eq]
+        apply triple_of_ok_fc h_body
+        -- Discharge step_post for .cont branch.
+        refine ⟨h_lt, rfl, hs_iter_val, ?_⟩
+        show (pure (col_loop_result_at_step matrix_A s_as_ntt i.val (k.val + 1)
+                      = col_loop_result_at_step matrix_A s_as_ntt i.val s_iter.val)
+              : Result Prop).holds
+        simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
+        intro _
+        rw [hs_iter_val]
+        rfl
+      · -- `None` branch: k ≥ K, body returns .ok (.done result).
+        have hk_ge : k.val ≥ K.val := Nat.not_lt.mp h_lt
+        have hk_eq : k.val = K.val := by omega
+        have h_iter_none :
+            ⦃ ⌜ True ⌝ ⦄
+            core_models.iter.range.IteratorRange.next
+              core_models.Usize.Insts.Core_modelsIterRangeStep
+              ({ start := k, «end» := K } : core_models.ops.range.Range Std.Usize)
+            ⦃ ⇓ r => ⌜ r = ((none : Option Std.Usize),
+                              ({ start := k, «end» := K }
+                                : core_models.ops.range.Range Std.Usize)) ⌝ ⦄ :=
+          libcrux_iot_ml_kem.Util.IteratorRange_next_spec_usize k K
+            (fun hlt => absurd hlt (Nat.not_lt.mpr hk_ge))
+            (fun _ => by dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure])
+        obtain ⟨v_iter, hv_iter_eq, hv_iter_post⟩ := triple_exists_ok_fc h_iter_none
+        have h_body :
+            (fun p : core_models.ops.range.Range Std.Usize ×
+                       Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize =>
+              hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop.body
+                (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt) i p.1 p.2)
+              ({ start := k, «end» := K },
+                col_loop_result_at_step matrix_A s_as_ntt i.val k.val)
+            = .ok (ControlFlow.done
+                (col_loop_result_at_step matrix_A s_as_ntt i.val k.val)) := by
+          show hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop.body
+                (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt) i
+                { start := k, «end» := K }
+                (col_loop_result_at_step matrix_A s_as_ntt i.val k.val) = _
+          unfold hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop.body
+          conv_lhs =>
+            rw [show
+              (core_models.ops.range.Range.Insts.Core_modelsIterTraitsIteratorIterator.next
+                  core_models.Usize.Insts.Core_modelsIterRangeStep
+                  ({ start := k, «end» := K } : core_models.ops.range.Range Std.Usize))
+                = (core_models.iter.range.IteratorRange.next
+                    core_models.Usize.Insts.Core_modelsIterRangeStep
+                    ({ start := k, «end» := K }
+                      : core_models.ops.range.Range Std.Usize))
+              from rfl]
+          rw [hv_iter_post] at hv_iter_eq
+          rw [hv_iter_eq]
+          rfl
+        apply triple_of_ok_fc h_body
+        show (pure (col_loop_result_at_step matrix_A s_as_ntt i.val k.val
+                      = col_loop_result_at_step matrix_A s_as_ntt i.val K.val)
+              : Result Prop).holds
+        simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
+        intro _
+        rw [hk_eq]
+        rfl
+  -- Now extract the .ok form from h_triple.
+  match h_loop : hacspec_ml_kem.matrix.multiply_matrix_by_column_at_loop
+        ({ start := 0#usize, «end» := K }
+          : core_models.ops.range.Range Std.Usize)
+        (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt) i
+        (Std.Array.repeat (256#usize : Std.Usize)
+          ({ val := 0#u16 } : hacspec_ml_kem.parameters.FieldElement)),
+        h_triple with
+  | .ok r, h =>
+    have hr : r = col_loop_result_at_step matrix_A s_as_ntt i.val K.val := by
+      simpa [Std.Do.Triple, Std.Do.WP.wp] using h
+    rw [hr]
+  | .fail _, h => exact absurd h (by simp [Std.Do.Triple, Std.Do.WP.wp])
+  | .div, h => exact absurd h (by simp [Std.Do.Triple, Std.Do.WP.wp])
+
+set_option maxHeartbeats 4000000 in
+/-- **Helper 4.** Outer `createi K` wrapper around Helper 3 producing the
+    full `multiply_matrix_by_column` result. -/
+private theorem multiply_matrix_by_column_eq
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt : Std.Array
+                  (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                    libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (hAlen : matrix_A.length = (K.val * K.val : Nat)) :
+    hacspec_ml_kem.matrix.multiply_matrix_by_column
+        (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt)
+      = .ok ⟨(List.range K.val).map (fun i =>
+              (⟨(List.range 256).map (fun ℓ =>
+                  libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt i
+                      (ℓ / 16) (ℓ % 16))
+                    (lift_fe_mont (1353#i16 : Std.I16))),
+                by simp [List.length_map, List.length_range]⟩ :
+              Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)),
+             by simp [List.length_map, List.length_range]⟩ := by
+  set f : Nat → Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+    fun i => ⟨(List.range 256).map (fun ℓ =>
+                libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                  (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt i
+                    (ℓ / 16) (ℓ % 16))
+                  (lift_fe_mont (1353#i16 : Std.I16))),
+              by simp [List.length_map, List.length_range]⟩ with hf_def
+  have hpure : ∀ k : Nat, k < K.val →
+      (hacspec_ml_kem.matrix.multiply_matrix_by_column.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeArrayFieldElement256
+        K).FnMutInst.call_mut
+        (lift_matrix_from_slice matrix_A K, lift_vec s_as_ntt) ⟨BitVec.ofNat _ k⟩
+        = .ok (f k, (lift_matrix_from_slice matrix_A K, lift_vec s_as_ntt)) := by
+    intro k hk
+    show hacspec_ml_kem.matrix.multiply_matrix_by_column.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeArrayFieldElement256.call_mut
+        (lift_matrix_from_slice matrix_A K, lift_vec s_as_ntt) ⟨BitVec.ofNat _ k⟩
+        = .ok (f k, (lift_matrix_from_slice matrix_A K, lift_vec s_as_ntt))
+    unfold hacspec_ml_kem.matrix.multiply_matrix_by_column.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeArrayFieldElement256.call_mut
+    unfold hacspec_ml_kem.matrix.multiply_matrix_by_column.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeArrayFieldElement256.call
+    -- Reduce to: multiply_matrix_by_column_at lift_M lift_S ⟨k⟩.
+    have hk_val : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k := by
+      show (BitVec.ofNat _ k).toNat = k
+      apply Nat.mod_eq_of_lt
+      have hK_lt : K.val < 2^System.Platform.numBits := by
+        have h := K.hBounds
+        simp [Std.Usize.max, Std.Usize.numBits] at h
+        omega
+      exact Nat.lt_of_lt_of_le hk (Nat.le_of_lt hK_lt)
+    -- Need: multiply_matrix_by_column_at lift_M lift_S ⟨k⟩ = .ok (f k).
+    have hk_lt : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < K.val := by
+      rw [hk_val]; exact hk
+    have h_mmbc_at := multiply_matrix_by_column_at_eq matrix_A s_as_ntt hAlen
+      (⟨BitVec.ofNat _ k⟩ : Std.Usize) hk_lt
+    show (do let a ← hacspec_ml_kem.matrix.multiply_matrix_by_column_at
+              (lift_matrix_from_slice matrix_A K) (lift_vec s_as_ntt)
+              (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+             .ok (a, (lift_matrix_from_slice matrix_A K, lift_vec s_as_ntt))) =
+         .ok (f k, _)
+    rw [h_mmbc_at]; simp only [bind_tc_ok]
+    rw [hk_val]
+  unfold hacspec_ml_kem.matrix.multiply_matrix_by_column
+  unfold hacspec_ml_kem.parameters.createi
+  have h_from_fn := libcrux_iot_ml_kem.Util.from_fn_pure_eq
+    (T := Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (F := hacspec_ml_kem.matrix.multiply_matrix_by_column.closure K)
+    (N := K)
+    (inst := (hacspec_ml_kem.matrix.multiply_matrix_by_column.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeArrayFieldElement256 K).FnMutInst)
+    (c := (lift_matrix_from_slice matrix_A K, lift_vec s_as_ntt))
+    (f := f)
+    hpure
+  show core_models.array.from_fn K _ _ = _
+  exact h_from_fn
+
+set_option maxHeartbeats 32000000 in
+/-- **Helper 5 (main bridge).** Given the per-row, per-lane characterization
+    of `t_as_ntt_final`, proves the hacspec `compute_As_plus_e` equation that
+    L7.1's POST demands. -/
+private theorem hacspec_compute_As_plus_e_eq_of_lane_eq
+    {K : Std.Usize}
+    (matrix_A : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (s_as_ntt error_as_ntt t_as_ntt_final : Std.Array
+                                              (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                                                libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
+    (hAlen : matrix_A.length = (K.val * K.val : Nat))
+    (h_lane_eq : ∀ r : Nat, r < K.val → ∀ ℓ : Nat, ℓ < 256 →
+      (lift_poly t_as_ntt_final.val[r]!).val[ℓ]!
+        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt r (ℓ / 16) (ℓ % 16))
+              (lift_fe_mont (1353#i16 : Std.I16)))
+            ((lift_poly error_as_ntt.val[r]!).val[ℓ]!)) :
+    hacspec_ml_kem.matrix.compute_As_plus_e
+        (lift_matrix_from_slice matrix_A K)
+        (lift_vec s_as_ntt) (lift_vec error_as_ntt)
+      = .ok (lift_vec t_as_ntt_final) := by
+  unfold hacspec_ml_kem.matrix.compute_As_plus_e
+  -- Step 1: replace `multiply_matrix_by_column ... = .ok (P_arr)` via Helper 4.
+  rw [multiply_matrix_by_column_eq matrix_A s_as_ntt hAlen]
+  simp only [bind_tc_ok]
+  -- Step 2: unfold add_vectors and apply from_fn_pure_eq.
+  set P_arr : Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K :=
+    ⟨(List.range K.val).map (fun i =>
+      (⟨(List.range 256).map (fun ℓ =>
+          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt i
+              (ℓ / 16) (ℓ % 16))
+            (lift_fe_mont (1353#i16 : Std.I16))),
+        by simp [List.length_map, List.length_range]⟩ :
+      Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)),
+     by simp [List.length_map, List.length_range]⟩ with hP_def
+  -- For lookup at row r < K.val.
+  have h_P_at : ∀ r : Nat, r < K.val →
+      P_arr.val[r]! = (⟨(List.range 256).map (fun ℓ =>
+          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt r
+              (ℓ / 16) (ℓ % 16))
+            (lift_fe_mont (1353#i16 : Std.I16))),
+        by simp [List.length_map, List.length_range]⟩ :
+      Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) := by
+    intro r hr
+    rw [hP_def]
+    show ((List.range K.val).map _)[r]! = _
+    rw [getElem!_pos _ r (by simp [List.length_map, List.length_range, hr])]
+    rw [List.getElem_map, List.getElem_range]
+  -- For lane lookup inside P_arr[r].
+  have h_P_at_lane : ∀ r : Nat, r < K.val → ∀ ℓ : Nat, ℓ < 256 →
+      (P_arr.val[r]!).val[ℓ]!
+        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt r
+              (ℓ / 16) (ℓ % 16))
+            (lift_fe_mont (1353#i16 : Std.I16)) := by
+    intro r hr ℓ hℓ
+    rw [h_P_at r hr]
+    show ((List.range 256).map (fun ℓ' =>
+            libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt r
+                (ℓ' / 16) (ℓ' % 16))
+              (lift_fe_mont (1353#i16 : Std.I16))))[ℓ]! = _
+    rw [getElem!_pos _ ℓ (by simp [List.length_map, List.length_range, hℓ])]
+    rw [List.getElem_map, List.getElem_range]
+  -- Now: hacspec_ml_kem.matrix.add_vectors P_arr (lift_vec error_as_ntt) = .ok (lift_vec t_as_ntt_final).
+  unfold hacspec_ml_kem.matrix.add_vectors
+  unfold hacspec_ml_kem.parameters.createi
+  set f_out : Nat → Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
+    fun r => (lift_vec t_as_ntt_final).val[r]! with hf_def
+  -- Per-call_mut equation.
+  have hpure : ∀ r : Nat, r < K.val →
+      (hacspec_ml_kem.matrix.add_vectors.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeArrayFieldElement256 K).FnMutInst.call_mut
+        (P_arr, lift_vec error_as_ntt) ⟨BitVec.ofNat _ r⟩
+        = .ok (f_out r, (P_arr, lift_vec error_as_ntt)) := by
+    intro r hr
+    show hacspec_ml_kem.matrix.add_vectors.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeArrayFieldElement256.call_mut
+            (P_arr, lift_vec error_as_ntt) ⟨BitVec.ofNat _ r⟩
+        = .ok (f_out r, (P_arr, lift_vec error_as_ntt))
+    unfold hacspec_ml_kem.matrix.add_vectors.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeArrayFieldElement256.call_mut
+    unfold hacspec_ml_kem.matrix.add_vectors.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeArrayFieldElement256.call
+    have hr_val : (⟨BitVec.ofNat _ r⟩ : Std.Usize).val = r := by
+      show (BitVec.ofNat _ r).toNat = r
+      apply Nat.mod_eq_of_lt
+      have hK_lt : K.val < 2^System.Platform.numBits := by
+        have h := K.hBounds
+        simp [Std.Usize.max, Std.Usize.numBits] at h
+        omega
+      exact Nat.lt_of_lt_of_le hr (Nat.le_of_lt hK_lt)
+    have hP_len : P_arr.length = K.val := by
+      rw [hP_def]
+      show ((List.range K.val).map _).length = K.val
+      simp [List.length_map, List.length_range]
+    have hE_len : (lift_vec error_as_ntt).length = K.val := by
+      unfold lift_vec
+      show (error_as_ntt.val.map lift_poly).length = K.val
+      rw [List.length_map, error_as_ntt.property]
+    have hr_lt_P : (⟨BitVec.ofNat _ r⟩ : Std.Usize).val < P_arr.length := by
+      rw [hr_val, hP_len]; exact hr
+    have hr_lt_E : (⟨BitVec.ofNat _ r⟩ : Std.Usize).val < (lift_vec error_as_ntt).length := by
+      rw [hr_val, hE_len]; exact hr
+    have h_idx_P : Std.Array.index_usize P_arr (⟨BitVec.ofNat _ r⟩ : Std.Usize)
+                    = .ok (P_arr.val[r]!) := by
+      have := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq P_arr
+                  (⟨BitVec.ofNat _ r⟩ : Std.Usize) hr_lt_P
+      rw [hr_val] at this; exact this
+    have h_idx_E : Std.Array.index_usize (lift_vec error_as_ntt) (⟨BitVec.ofNat _ r⟩ : Std.Usize)
+                    = .ok ((lift_vec error_as_ntt).val[r]!) := by
+      have := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq (lift_vec error_as_ntt)
+                  (⟨BitVec.ofNat _ r⟩ : Std.Usize) hr_lt_E
+      rw [hr_val] at this; exact this
+    -- Apply matrix_add_polynomials_eq_ok.
+    have h_add := matrix_add_polynomials_eq_ok
+      (P_arr.val[r]!) ((lift_vec error_as_ntt).val[r]!)
+    -- Reduce: the closure destructures (a, a1) := (P_arr, lift_vec error_as_ntt).
+    -- Use `show` to expose the destructure outcome (a → P_arr, a1 → lift_vec error_as_ntt).
+    show (do let fe ← (do
+                let a2 ← Std.Array.index_usize P_arr (⟨BitVec.ofNat _ r⟩ : Std.Usize)
+                let a3 ← Std.Array.index_usize (lift_vec error_as_ntt) (⟨BitVec.ofNat _ r⟩ : Std.Usize)
+                hacspec_ml_kem.matrix.add_polynomials a2 a3)
+             .ok (fe, P_arr, lift_vec error_as_ntt)) = _
+    rw [h_idx_P]; simp only [bind_tc_ok]
+    rw [h_idx_E]; simp only [bind_tc_ok]
+    rw [h_add]; simp only [bind_tc_ok]
+    -- Now need: ok (⟨...add_pure ⟩, P, E) = ok (f_out r, P, E).
+    -- Beta-reduce f_out r.
+    show Result.ok (⟨List.map _ (List.range 256), _⟩, P_arr, lift_vec error_as_ntt) =
+         Result.ok ((lift_vec t_as_ntt_final).val[r]!, P_arr, lift_vec error_as_ntt)
+    have h_lift_t_at : (lift_vec t_as_ntt_final).val[r]! = lift_poly t_as_ntt_final.val[r]! := by
+      unfold lift_vec
+      show (t_as_ntt_final.val.map lift_poly)[r]! = _
+      rw [getElem!_pos _ r (by rw [List.length_map, t_as_ntt_final.property]; exact hr)]
+      rw [List.getElem_map]
+      congr 1
+      rw [getElem!_pos _ r (by rw [t_as_ntt_final.property]; exact hr)]
+    rw [h_lift_t_at]
+    congr 1
+    -- Now: (⟨...⟩, P, E) = (lift_poly t.val[r]!, P, E). Reduce the tuple.
+    refine Prod.mk.injEq _ _ _ _ |>.mpr ⟨?_, rfl⟩
+    -- Now we need: ⟨(List.range 256).map _, _⟩ = lift_poly t_as_ntt_final.val[r]!.
+    -- Apply per-lane equality via h_lane_eq.
+    -- Goal: ⟨List.map (fun k => add_pure ...), _⟩ = lift_poly t_as_ntt_final.val[r]!
+    -- Both sides are Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize.
+    -- Use Subtype.ext + manual val-level rewrites via rfl-shape lemmas.
+    have h_coe_mk : ∀ (l : List hacspec_ml_kem.parameters.FieldElement)
+        (h : l.length = (256#usize : Std.Usize).val),
+        ((⟨l, h⟩ : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) : List _) = l :=
+      fun _ _ => rfl
+    have h_make : ∀ (l : List hacspec_ml_kem.parameters.FieldElement)
+        (h : l.length = (256#usize : Std.Usize).val),
+        ((Std.Array.make 256#usize l h : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) : List _) = l :=
+      fun _ _ => rfl
+    apply Subtype.ext
+    unfold lift_poly
+    rw [h_coe_mk, h_make]
+    apply List.map_congr_left
+    intro ℓ hℓ_mem
+    have hℓ : ℓ < 256 := List.mem_range.mp hℓ_mem
+    have h_lane := h_lane_eq r hr ℓ hℓ
+    rw [h_P_at_lane r hr ℓ hℓ]
+    have h_lift_e_at : (lift_vec error_as_ntt).val[r]! = lift_poly error_as_ntt.val[r]! := by
+      unfold lift_vec
+      show (error_as_ntt.val.map lift_poly)[r]! = _
+      rw [getElem!_pos _ r (by rw [List.length_map, error_as_ntt.property]; exact hr)]
+      rw [List.getElem_map]
+      congr 1
+      rw [getElem!_pos _ r (by rw [error_as_ntt.property]; exact hr)]
+    rw [h_lift_e_at]
+    rw [← h_lane]
+    -- Goal: (lift_poly t_as_ntt_final.val[r]!).val[ℓ]! = lift_fe (...).
+    -- After unfolding lift_poly the LHS reduces to ((List.range 256).map ...)[ℓ]!
+    -- which rewrites to lift_fe (...) via getElem!_pos + getElem_map + getElem_range.
+    unfold lift_poly
+    show (((List.range 256).map
+            (fun j => lift_fe
+              ((t_as_ntt_final.val[r]!.coefficients.val[j / 16]!).elements.val[j % 16]!)))[ℓ]!
+            : hacspec_ml_kem.parameters.FieldElement) =
+          lift_fe ((t_as_ntt_final.val[r]!.coefficients.val[ℓ / 16]!).elements.val[ℓ % 16]!)
+    rw [getElem!_pos _ ℓ (by simp [List.length_map, List.length_range, hℓ])]
+    rw [List.getElem_map, List.getElem_range]
+  have h_from_fn := libcrux_iot_ml_kem.Util.from_fn_pure_eq
+    (T := Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
+    (F := hacspec_ml_kem.matrix.add_vectors.closure K)
+    (N := K)
+    (inst := (hacspec_ml_kem.matrix.add_vectors.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeArrayFieldElement256 K).FnMutInst)
+    (c := (P_arr, lift_vec error_as_ntt))
+    (f := f_out)
+    hpure
+  show core_models.array.from_fn K _ _ = _
+  rw [h_from_fn]
+  -- Now need: .ok ⟨(List.range K.val).map f_out, _⟩ = .ok (lift_vec t_as_ntt_final).
+  -- f_out r = (lift_vec t_as_ntt_final).val[r]!. So the LHS is the
+  -- array whose `.val[r] = (lift_vec t_as_ntt_final).val[r]!` for r < K.val.
+  congr 1
+  apply Subtype.ext
+  unfold lift_vec
+  change (List.range K.val).map f_out = t_as_ntt_final.val.map lift_poly
+  apply List.ext_getElem
+  · simp [List.length_map, List.length_range, t_as_ntt_final.property]
+  intro n h_n_lhs _
+  have h_n_lt : n < K.val := by
+    rw [List.length_map, List.length_range] at h_n_lhs; exact h_n_lhs
+  rw [List.getElem_map, List.getElem_range]
+  rw [hf_def]
+  -- f_out n = (lift_vec t_as_ntt_final).val[n]! = lift_poly t_as_ntt_final.val[n]!.
+  unfold lift_vec
+  show (t_as_ntt_final.val.map lift_poly)[n]! = (t_as_ntt_final.val.map lift_poly)[n]
+  rw [getElem!_pos _ n (by rw [List.length_map, t_as_ntt_final.property]; exact h_n_lt)]
+
 end L7_1d_FC
 
 /-! ## §L7 — matrix-level targets (4 theorems).
