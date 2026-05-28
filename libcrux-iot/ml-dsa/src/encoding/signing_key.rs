@@ -1,4 +1,4 @@
-use libcrux_secrets::{Classify as _, ClassifyRef as _, U8};
+use libcrux_secrets::{mem_requests::ct_declassify, Classify as _, ClassifyRef as _, U8};
 
 use crate::{
     constants::{
@@ -36,6 +36,11 @@ pub(crate) fn generate_serialized<SIMDUnit: Operations, Shake256: shake256::DsaX
         verification_key.classify_ref(),
         &mut verification_key_hash,
     );
+    // shake256 requires input to be classified but this marks memory as Undefined longer as intended
+    // leading to false positives when executing under valgrind. Therefore we ct_declassify the memory
+    // to mark it as defined.
+    ct_declassify(&verification_key);
+
     signing_key_serialized[offset..offset + BYTES_FOR_VERIFICATION_KEY_HASH]
         .copy_from_slice(&verification_key_hash);
     offset += BYTES_FOR_VERIFICATION_KEY_HASH;
