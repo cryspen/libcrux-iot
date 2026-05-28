@@ -30524,6 +30524,86 @@ def rows_step_post {K : Std.Usize}
 
 end L7_1c_FC
 
+/-! ## §L7.1 Stage 4 bridge lemmas — `chunk_at (lift_poly _)` ↔ `lift_chunk_mont _`.
+
+    These two helpers connect the `Spec.multiply_ntts_pure_eq_chunked_no_acc`
+    side (which operates on `chunk_at (lift_poly _)` chunks, i.e. canonical
+    `lift_fe` lanes) to the `L7_1c_FC.canonical_row_sum_lane` side (which
+    operates on `lift_chunk_mont _` chunks, i.e. Mont-stripped `lift_fe_mont`
+    lanes). The relationship per lane is exactly the FE-level
+    `lift_fe_mont_mul_1353_eq_lift_fe` identity at FCTargets:29183.
+
+    Both helpers are private to FCTargets and used only by the L7.1 Stage 4
+    closing argument. -/
+
+namespace L7_1c_FC
+
+set_option maxHeartbeats 1000000 in
+/-- Per-lane bridge: `Spec.chunk_at (lift_poly p) j` interprets each I16
+    lane via `lift_fe` (canonical, value = `x.val mod q`), while
+    `lift_chunk_mont p.coefficients.val[j]!` uses `lift_fe_mont` (Mont-
+    stripped, value = `x.val · R⁻¹ mod q`). The conversion factor is
+    `lift_fe_mont 1353 = R` (since `1353 = R² mod q`, so
+    `lift_fe_mont 1353 = 1353 · R⁻¹ = R²·R⁻¹ = R mod q`). Thus
+    `lift_fe x = (lift_fe_mont x) · R = (lift_fe_mont x) · (lift_fe_mont 1353)`,
+    which is exactly `lift_fe_mont_mul_1353_eq_lift_fe`. -/
+private theorem chunk_at_lift_poly_lane
+    (p : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (j : Nat) (h_j : j < 16) (q : Nat) (h_q : q < 16) :
+    (Spec.chunk_at (lift_poly p) j).val[q]!
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          ((lift_chunk_mont p.coefficients.val[j]!).val[q]!)
+          (lift_fe_mont (1353#i16 : Std.I16)) := by
+  -- Pin the underlying I16 lane shared by both sides.
+  set x : Std.I16 :=
+    (p.coefficients.val[j]!).elements.val[q]! with hx_def
+  -- The elements list has length 16 (from PortableVector's invariant).
+  have h_elem_len : ((p.coefficients.val[j]!).elements.val).length = 16 :=
+    libcrux_iot_ml_kem.Util.PortableVector_elements_length _
+  -- (A) RHS factor: `(lift_chunk_mont p.coefficients.val[j]!).val[q]! = lift_fe_mont x`.
+  have h_mont : (lift_chunk_mont p.coefficients.val[j]!).val[q]! = lift_fe_mont x := by
+    unfold lift_chunk_mont
+    show (((p.coefficients.val[j]!).elements.val).map lift_fe_mont)[q]!
+          = lift_fe_mont x
+    have h_len : (((p.coefficients.val[j]!).elements.val).map lift_fe_mont).length = 16 := by
+      rw [List.length_map]; exact h_elem_len
+    rw [getElem!_pos _ q (by rw [h_len]; exact h_q)]
+    rw [List.getElem_map]
+    -- Goal: lift_fe_mont ((p.coefficients.val[j]!).elements.val[q]) = lift_fe_mont x.
+    -- Convert `[q]` (with bounds proof) back to `[q]!` to match `x`'s definition.
+    rw [show ((p.coefficients.val[j]!).elements.val)[q]
+            = ((p.coefficients.val[j]!).elements.val)[q]! from
+          (getElem!_pos _ q (by rw [h_elem_len]; exact h_q)).symm]
+  -- (B) LHS: `(Spec.chunk_at (lift_poly p) j).val[q]! = lift_fe x`.
+  have h_plain : (Spec.chunk_at (lift_poly p) j).val[q]! = lift_fe x := by
+    unfold Spec.chunk_at
+    show ((List.range 16).map (fun j' => (lift_poly p).val[16 * j + j']!))[q]!
+          = lift_fe x
+    have h_len_outer : ((List.range 16).map
+        (fun j' => (lift_poly p).val[16 * j + j']!)).length = 16 := by simp
+    rw [getElem!_pos _ q (by rw [h_len_outer]; exact h_q)]
+    rw [List.getElem_map, List.getElem_range]
+    -- Goal: (lift_poly p).val[16 * j + q]! = lift_fe x.
+    have h_lane : 16 * j + q < 256 := by omega
+    unfold lift_poly
+    show ((List.range 256).map (fun n =>
+            lift_fe (p.coefficients.val[n / 16]!).elements.val[n % 16]!))[16 * j + q]!
+          = lift_fe x
+    have h_len_inner : ((List.range 256).map (fun n =>
+            lift_fe (p.coefficients.val[n / 16]!).elements.val[n % 16]!)).length = 256 := by simp
+    rw [getElem!_pos _ (16 * j + q) (by rw [h_len_inner]; exact h_lane)]
+    rw [List.getElem_map, List.getElem_range]
+    -- Goal: lift_fe (p.coefficients.val[(16*j+q)/16]!).elements.val[(16*j+q)%16]! = lift_fe x.
+    have h_div : (16 * j + q) / 16 = j := by omega
+    have h_mod : (16 * j + q) % 16 = q := by omega
+    rw [h_div, h_mod]
+  rw [h_mont, h_plain]
+  -- Goal: lift_fe x = mul_pure (lift_fe_mont x) (lift_fe_mont 1353).
+  rw [lift_fe_mont_mul_1353_eq_lift_fe]
+
+end L7_1c_FC
+
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Heavy `accumulating_ntt_multiply_*_post`
 -- predicates + the `canonical_row_sum_lane` foldl are made locally irreducible across
 -- the Stage 3 step lemma + main Triple to keep elaboration tractable through the 2-conjunct
