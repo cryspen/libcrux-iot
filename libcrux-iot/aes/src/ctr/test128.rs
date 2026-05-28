@@ -8,25 +8,22 @@ use crate::{
 pub(crate) fn aes128_ctr_xor_block<T: AESState>(
     ctx: &Aes128CtrContext<T>,
     ctr: u32,
-    inp: &[u8],
-    out: &mut [u8],
+    payload: &mut [u8],
 ) {
-    debug_assert!(inp.len() == out.len() && inp.len() <= 16);
-    ctx.aes_ctr_xor_block(ctr, inp, out);
+    debug_assert!(payload.len() <= 16);
+    ctx.aes_ctr_xor_block(ctr, payload);
 }
 
 pub(crate) fn aes128_ctr_encrypt<T: AESState>(
     key: &[u8],
     nonce: &[u8],
     ctr: u32,
-    inp: &[u8],
-    out: &mut [u8],
+    payload: &mut [u8],
 ) {
     debug_assert!(nonce.len() == NONCE_LEN);
     debug_assert!(key.len() == GCM_KEY_LEN);
-    debug_assert!(inp.len() == out.len());
     let ctx = Aes128CtrContext::<T>::init(key, nonce);
-    ctx.update(ctr, inp, out);
+    ctx.update(ctr, payload);
 }
 
 const INPUT: [u8; 32] = [
@@ -46,10 +43,10 @@ const EXPECTED: [u8; 32] = [
 
 #[test]
 fn test_ctr_block() {
-    let mut computed: [u8; 32] = [0u8; 32];
+    let mut computed: [u8; 32] = INPUT;
     let ctx = Aes128CtrContext::<platform::portable::State>::init(&KEY, &NONCE);
-    aes128_ctr_xor_block(&ctx, 1, &INPUT[0..16], &mut computed[0..16]);
-    aes128_ctr_xor_block(&ctx, 2, &INPUT[16..32], &mut computed[16..32]);
+    aes128_ctr_xor_block(&ctx, 1, &mut computed[0..16]);
+    aes128_ctr_xor_block(&ctx, 2, &mut computed[16..32]);
     for i in 0..32 {
         if computed[i] != EXPECTED[i] {
             #[cfg(feature = "std")]
@@ -66,8 +63,8 @@ fn test_ctr_block() {
 
 #[test]
 fn test_ctr_encrypt() {
-    let mut computed: [u8; 32] = [0u8; 32];
-    aes128_ctr_encrypt::<platform::portable::State>(&KEY, &NONCE, 1, &INPUT, &mut computed);
+    let mut computed: [u8; 32] = INPUT;
+    aes128_ctr_encrypt::<platform::portable::State>(&KEY, &NONCE, 1, &mut computed);
     for i in 0..32 {
         if computed[i] != EXPECTED[i] {
             #[cfg(feature = "std")]

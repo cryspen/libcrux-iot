@@ -40,10 +40,8 @@ impl<T: AESState> Aes128CtrContext<T> {
     }
 
     #[inline]
-    pub(crate) fn update(&self, ctr: u32, inp: &[u8], out: &mut [u8]) {
-        debug_assert!(inp.len() == out.len());
-
-        self.aes_ctr_update(ctr, inp, out);
+    pub(crate) fn update(&self, ctr: u32, payload: &mut [u8]) {
+        self.aes_ctr_update(ctr, payload);
     }
 }
 
@@ -56,7 +54,7 @@ fn key_expansion<T: AESState>(key: &[u8]) -> ExtendedKey<T, NUM_KEYS> {
     keyex[0].load_block(key);
 
     macro_rules! expansion_step128 {
-        ($i:expr,$rcon:expr) => {
+        ($i:expr, $rcon:expr) => {
             // For hax need to clone here.
             let prev = keyex[$i - 1].clone();
             // let (prev, current) = keyex.split_at_mut($i);

@@ -31,25 +31,18 @@ macro_rules! aesgcm {
                 self.aes_state.key_block(1, &mut self.tag_mix);
             }
 
-            fn encrypt(
-                &mut self,
-                aad: &[u8],
-                plaintext: &[u8],
-                ciphertext: &mut [u8],
-                tag: &mut [u8],
-            ) {
-                debug_assert!(ciphertext.len() == plaintext.len());
-                debug_assert!(plaintext.len() / AES_BLOCK_LEN <= u32::MAX as usize);
+            fn encrypt(&mut self, aad: &[u8], payload: &mut [u8], tag: &mut [u8]) {
+                debug_assert!(payload.len() / AES_BLOCK_LEN <= u32::MAX as usize);
                 debug_assert!(tag.len() == TAG_LEN);
 
-                self.aes_state.update(2, plaintext, ciphertext);
+                self.aes_state.update(2, payload);
 
                 self.gcm_state.update_padded(aad);
-                self.gcm_state.update_padded(ciphertext);
+                self.gcm_state.update_padded(payload);
 
                 let mut last_block = [0u8; AES_BLOCK_LEN];
                 last_block[0..8].copy_from_slice(&((aad.len() as u64) * 8).to_be_bytes());
-                last_block[8..16].copy_from_slice(&((plaintext.len() as u64) * 8).to_be_bytes());
+                last_block[8..16].copy_from_slice(&((payload.len() as u64) * 8).to_be_bytes());
 
                 self.gcm_state.update(&last_block);
                 self.gcm_state.emit(tag);
@@ -62,20 +55,18 @@ macro_rules! aesgcm {
             fn decrypt(
                 &mut self,
                 aad: &[u8],
-                ciphertext: &[u8],
                 tag: &[u8],
-                plaintext: &mut [u8],
+                payload: &mut [u8],
             ) -> Result<(), DecryptError> {
-                debug_assert!(plaintext.len() == ciphertext.len());
-                debug_assert!(ciphertext.len() / AES_BLOCK_LEN <= u32::MAX as usize);
+                debug_assert!(payload.len() / AES_BLOCK_LEN <= u32::MAX as usize);
                 debug_assert!(tag.len() == TAG_LEN);
 
                 self.gcm_state.update_padded(aad);
-                self.gcm_state.update_padded(ciphertext);
+                self.gcm_state.update_padded(payload);
 
                 let mut last_block = [0u8; AES_BLOCK_LEN];
                 last_block[0..8].copy_from_slice(&((aad.len() as u64) * 8).to_be_bytes());
-                last_block[8..16].copy_from_slice(&((plaintext.len() as u64) * 8).to_be_bytes());
+                last_block[8..16].copy_from_slice(&((payload.len() as u64) * 8).to_be_bytes());
 
                 self.gcm_state.update(&last_block);
 
@@ -92,7 +83,7 @@ macro_rules! aesgcm {
                 }
 
                 if eq_mask == 0 {
-                    self.aes_state.update(2, ciphertext, plaintext);
+                    self.aes_state.update(2, payload);
                     Ok(())
                 } else {
                     Err(DecryptError::InvalidTag)

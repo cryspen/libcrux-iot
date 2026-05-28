@@ -50,8 +50,8 @@ impl<T: AESState, const NUM_KEYS: usize> AesCtrContext<T, NUM_KEYS> {
     }
 
     #[inline]
-    fn aes_ctr_xor_block(&self, ctr: u32, input: &[u8], out: &mut [u8]) {
-        debug_assert!(input.len() == out.len() && input.len() <= AES_BLOCK_LEN);
+    fn aes_ctr_xor_block(&self, ctr: u32, payload: &mut [u8]) {
+        debug_assert!(payload.len() <= AES_BLOCK_LEN);
 
         let mut st_init = self.ctr_nonce;
         st_init[12..16].copy_from_slice(&ctr.to_be_bytes());
@@ -60,47 +60,37 @@ impl<T: AESState, const NUM_KEYS: usize> AesCtrContext<T, NUM_KEYS> {
 
         block_cipher(&mut st, &self.extended_key);
 
-        st.xor_block(input, out);
+        st.xor_block(payload);
     }
 
     #[inline]
-    fn aes_ctr_xor_blocks(&self, ctr: u32, input: &[u8], out: &mut [u8]) {
-        debug_assert!(input.len() == out.len() && input.len().is_multiple_of(AES_BLOCK_LEN));
-        // If input.len() / AES_BLOCK_LEN == u32::MAX - 1 and we start with
+    fn aes_ctr_xor_blocks(&self, ctr: u32, payload: &mut [u8]) {
+        debug_assert!(payload.len().is_multiple_of(AES_BLOCK_LEN));
+        // If payload.len() / AES_BLOCK_LEN == u32::MAX - 1 and we start with
         // ctr == 2 then we'll wrap to 0 below and we'll repeat the initial key
         // block
-        debug_assert!(input.len() / AES_BLOCK_LEN < (u32::MAX - 1) as usize);
+        debug_assert!(payload.len() / AES_BLOCK_LEN < (u32::MAX - 1) as usize);
 
-        let blocks = input.len() / AES_BLOCK_LEN;
+        let blocks = payload.len() / AES_BLOCK_LEN;
         for i in 0..blocks {
             let offset = i * AES_BLOCK_LEN;
             self.aes_ctr_xor_block(
                 ctr.wrapping_add(i as u32),
-                &input[offset..offset + AES_BLOCK_LEN],
-                &mut out[offset..offset + AES_BLOCK_LEN],
+                &mut payload[offset..offset + AES_BLOCK_LEN],
             );
         }
     }
 
     #[inline]
-    fn aes_ctr_update(&self, ctr: u32, input: &[u8], out: &mut [u8]) {
-        debug_assert!(input.len() == out.len());
-        debug_assert!(input.len() / AES_BLOCK_LEN < u32::MAX as usize);
+    fn aes_ctr_update(&self, ctr: u32, payload: &mut [u8]) {
+        debug_assert!(payload.len() / AES_BLOCK_LEN < u32::MAX as usize);
 
-        let blocks = input.len() / AES_BLOCK_LEN;
-        self.aes_ctr_xor_blocks(
-            ctr,
-            &input[0..blocks * AES_BLOCK_LEN],
-            &mut out[0..blocks * AES_BLOCK_LEN],
-        );
+        let blocks = payload.len() / AES_BLOCK_LEN;
+        self.aes_ctr_xor_blocks(ctr, &mut payload[0..blocks * AES_BLOCK_LEN]);
 
-        let last = input.len() - input.len() % AES_BLOCK_LEN;
-        if last < input.len() {
-            self.aes_ctr_xor_block(
-                ctr.wrapping_add(blocks as u32),
-                &input[last..],
-                &mut out[last..],
-            );
+        let last = payload.len() - payload.len() % AES_BLOCK_LEN;
+        if last < payload.len() {
+            self.aes_ctr_xor_block(ctr.wrapping_add(blocks as u32), &mut payload[last..]);
         }
     }
 }

@@ -180,14 +180,8 @@ pub mod aes_gcm_256;
 pub(crate) trait State {
     fn init(key: &[u8]) -> Self;
     fn set_nonce(&mut self, nonce: &[u8]);
-    fn encrypt(&mut self, aad: &[u8], plaintext: &[u8], ciphertext: &mut [u8], tag: &mut [u8]);
-    fn decrypt(
-        &mut self,
-        aad: &[u8],
-        ciphertext: &[u8],
-        tag: &[u8],
-        plaintext: &mut [u8],
-    ) -> Result<(), DecryptError>;
+    fn encrypt(&mut self, aad: &[u8], payload: &mut [u8], tag: &mut [u8]);
+    fn decrypt(&mut self, aad: &[u8], tag: &[u8], payload: &mut [u8]) -> Result<(), DecryptError>;
 }
 
 pub(crate) mod implementations {
@@ -247,26 +241,20 @@ pub(crate) fn encrypt<S: State>(
     key: &[u8],
     nonce: &[u8],
     aad: &[u8],
-    plaintext: &[u8],
-    ciphertext: &mut [u8],
+    payload: &mut [u8],
     tag: &mut [u8],
 ) -> Result<(), EncryptError> {
     debug_assert!(nonce.len() == NONCE_LEN);
     debug_assert!(tag.len() == TAG_LEN);
 
     // plaintext length check
-    if plaintext.len() / crate::aes::AES_BLOCK_LEN >= (u32::MAX - 1) as usize {
+    if payload.len() / crate::aes::AES_BLOCK_LEN >= (u32::MAX - 1) as usize {
         return Err(EncryptError::PlaintextTooLong);
-    }
-
-    // ensure ciphertext and plaintext have same length
-    if ciphertext.len() != plaintext.len() {
-        return Err(EncryptError::WrongCiphertextLength);
     }
 
     let mut st = S::init(key);
     st.set_nonce(nonce);
-    st.encrypt(aad, plaintext, ciphertext, tag);
+    st.encrypt(aad, payload, tag);
 
     Ok(())
 }
@@ -276,26 +264,20 @@ pub(crate) fn decrypt<S: State>(
     key: &[u8],
     nonce: &[u8],
     aad: &[u8],
-    ciphertext: &[u8],
     tag: &[u8],
-    plaintext: &mut [u8],
+    payload: &mut [u8],
 ) -> Result<(), DecryptError> {
     debug_assert!(nonce.len() == NONCE_LEN);
     debug_assert!(tag.len() == TAG_LEN);
 
     // plaintext length check
-    if plaintext.len() / crate::aes::AES_BLOCK_LEN >= (u32::MAX - 1) as usize {
+    if payload.len() / crate::aes::AES_BLOCK_LEN >= (u32::MAX - 1) as usize {
         return Err(DecryptError::PlaintextTooLong);
-    }
-
-    // ensure ciphertext and plaintext have same length
-    if ciphertext.len() != plaintext.len() {
-        return Err(DecryptError::WrongPlaintextLength);
     }
 
     let mut st = S::init(key);
     st.set_nonce(nonce);
-    st.decrypt(aad, ciphertext, tag, plaintext)
+    st.decrypt(aad, tag, payload)
 }
 
 /// Macro to instantiate the different variants, both 128/256 and platforms.
@@ -313,12 +295,11 @@ macro_rules! pub_crate_mod {
                 key: &[u8],
                 nonce: &[u8],
                 aad: &[u8],
-                plaintext: &[u8],
-                ciphertext: &mut [u8],
+                payload: &mut [u8],
                 tag: &mut [u8],
             ) -> Result<(), EncryptError> {
                 debug_assert!(key.len() == KEY_LEN);
-                crate::encrypt::<State>(key, nonce, aad, plaintext, ciphertext, tag)
+                crate::encrypt::<State>(key, nonce, aad, payload, tag)
             }
 
             #[doc = $variant_comment]
@@ -327,12 +308,11 @@ macro_rules! pub_crate_mod {
                 key: &[u8],
                 nonce: &[u8],
                 aad: &[u8],
-                ciphertext: &[u8],
                 tag: &[u8],
-                plaintext: &mut [u8],
+                payload: &mut [u8],
             ) -> Result<(), DecryptError> {
                 debug_assert!(key.len() == KEY_LEN);
-                crate::decrypt::<State>(key, nonce, aad, ciphertext, tag, plaintext)
+                crate::decrypt::<State>(key, nonce, aad, tag, payload)
             }
         }
     };

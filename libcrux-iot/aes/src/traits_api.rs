@@ -61,6 +61,13 @@ macro_rules! api {
                         aad: &[u8],
                         plaintext: &[u8],
                     ) -> Result<(), EncryptError> {
+                        if plaintext.len() / crate::aes::AES_BLOCK_LEN >= (u32::MAX - 1) as usize {
+                            return Err(EncryptError::PlaintextTooLong);
+                        }
+
+                        if plaintext.len() != ciphertext.len() {
+                            return Err(EncryptError::WrongCiphertextLength);
+                        }
                         $portable::encrypt(ciphertext, tag, key, nonce, aad, plaintext)
                     }
 
@@ -72,6 +79,14 @@ macro_rules! api {
                         ciphertext: &[u8],
                         tag: &Tag,
                     ) -> Result<(), DecryptError> {
+                        if plaintext.len() / crate::aes::AES_BLOCK_LEN >= (u32::MAX - 1) as usize {
+                            return Err(DecryptError::PlaintextTooLong);
+                        }
+
+                        if plaintext.len() != ciphertext.len() {
+                            return Err(DecryptError::WrongPlaintextLength);
+                        }
+
                         $portable::decrypt(plaintext, key, nonce, aad, ciphertext, tag)
                     }
                 }
@@ -101,7 +116,9 @@ macro_rules! api {
                         aad: &[u8],
                         plaintext: &[u8],
                     ) -> Result<(), EncryptError> {
-                        crate::portable::$variant::encrypt(key, nonce, aad, plaintext, ciphertext, tag)
+                        assert_eq!(plaintext.len(), ciphertext.len());
+                        ciphertext.copy_from_slice(plaintext);
+                        crate::portable::$variant::encrypt(key, nonce, aad, ciphertext, tag)
                     }
 
                     fn decrypt(
@@ -112,7 +129,9 @@ macro_rules! api {
                         ciphertext: &[u8],
                         tag: &Tag,
                     ) -> Result<(), DecryptError> {
-                        crate::portable::$variant::decrypt(key, nonce, aad, ciphertext, tag, plaintext)
+                        assert_eq!(plaintext.len(), ciphertext.len());
+                        plaintext.copy_from_slice(ciphertext);
+                        crate::portable::$variant::decrypt(key, nonce, aad, tag, plaintext)
                     }
                 }
             }

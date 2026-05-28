@@ -38,9 +38,8 @@ impl<T: AESState> Aes256CtrContext<T> {
     }
 
     #[inline]
-    pub(crate) fn update(&self, ctr: u32, input: &[u8], out: &mut [u8]) {
-        debug_assert!(input.len() == out.len());
-        self.aes_ctr_update(ctr, input, out);
+    pub(crate) fn update(&self, ctr: u32, payload: &mut [u8]) {
+        self.aes_ctr_update(ctr, payload);
     }
 }
 
@@ -54,7 +53,7 @@ fn key_expansion<T: AESState>(key: &[u8]) -> ExtendedKey<T, NUM_KEYS> {
     keyex[1].load_block(&key[16..32]);
 
     macro_rules! expansion_step256 {
-        ($i:expr,$rcon:expr) => {
+        ($i:expr, $rcon:expr) => {
             // // Split at $i to get the one we currently look at and the previous
             // // blocks.
             // let (prev, current) = keyex.split_at_mut($i);
