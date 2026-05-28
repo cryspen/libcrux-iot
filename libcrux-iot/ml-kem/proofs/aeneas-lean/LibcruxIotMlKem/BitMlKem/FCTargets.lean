@@ -13799,7 +13799,9 @@ theorem invert_ntt_montgomery_fc
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_montgomery
       K (vectortraitsOperationsInst := portable_ops_inst) re scratch
-    ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.invert_ntt_montgomery_pure (lift_poly re) ⌝ ⦄ := by
+    ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.invert_ntt_montgomery_pure (lift_poly re)
+              ∧ (∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+                  ((p.1.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
   -- Tighter `h_bnd_loose ≤ 13312` derived from the canonical `h_bnd ≤ 3328`.
   have h_bnd_loose : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
       ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312 := by
@@ -13902,12 +13904,12 @@ theorem invert_ntt_montgomery_fc
   -- Step 7: invert_ntt_at_layer_4_plus (layer = 7). zeta_i = 2 → 1.
   -- 128 >>> 7 = 1.
   -- =============================================================
-  obtain ⟨⟨_zeta_i7, re7, scratch4⟩, h7_eq, _h7_zout, h7_fc, _h7_bnd⟩ :=
+  obtain ⟨⟨_zeta_i7, re7, scratch4⟩, h7_eq, _h7_zout, h7_fc, h7_bnd⟩ :=
     triple_exists_ok_fc
       (invert_ntt_at_layer_4_plus_portable_fc zeta_i6 re6 (7#usize : Std.Usize) scratch3
         (by decide) h6_bnd
         (by refine ⟨?_, ?_⟩ <;> · rw [h_zeta_i6]; decide))
-  dsimp only at h7_fc
+  dsimp only at h7_fc h7_bnd
   -- =============================================================
   -- Compose: derive the full impl `do`-block equation by simp-folding
   -- all step equations into the unfolded body.
@@ -13919,6 +13921,9 @@ theorem invert_ntt_montgomery_fc
     unfold libcrux_iot_ml_kem.invert_ntt.invert_ntt_montgomery
     simp [h_div, h1_eq, h2_eq, h3_eq, h4_eq, h5_eq, h6_eq, h7_eq]
   apply triple_of_ok_fc h_body
+  -- POST is now a conjunction: equality (proved below) ∧ per-lane bound
+  -- (≤ 3328, exactly the layer-7 output bound `h7_bnd`, since `p.1 = re7`).
+  refine ⟨?_, h7_bnd⟩
   -- =============================================================
   -- Prove lift_poly equation by chaining FC equations through
   -- `Spec.invert_ntt_montgomery_pure`.
