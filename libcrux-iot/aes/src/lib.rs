@@ -180,8 +180,18 @@ pub mod aes_gcm_256;
 pub(crate) trait State {
     fn init(key: &[u8]) -> Self;
     fn set_nonce(&mut self, nonce: &[u8]);
-    fn encrypt(&mut self, aad: &[u8], payload: &mut [u8], tag: &mut [u8]);
-    fn decrypt(&mut self, aad: &[u8], tag: &[u8], payload: &mut [u8]) -> Result<(), DecryptError>;
+    fn encrypt<'a>(
+        &mut self,
+        aad: impl core::iter::Iterator<Item = &'a u8>,
+        payload: &mut [u8],
+        tag: &mut [u8],
+    );
+    fn decrypt<'a>(
+        &mut self,
+        aad: impl core::iter::Iterator<Item = &'a u8>,
+        tag: &[u8],
+        payload: &mut [u8],
+    ) -> Result<(), DecryptError>;
 }
 
 pub(crate) mod implementations {
@@ -237,10 +247,10 @@ pub use aes_gcm_256::KEY_LEN as AESGCM256_KEY_LEN;
 pub use libcrux_traits::aead::arrayref::{DecryptError, EncryptError, KeyGenError};
 
 /// Generic AES-GCM encrypt.
-pub(crate) fn encrypt<S: State>(
+pub(crate) fn encrypt<'a, S: State>(
     key: &[u8],
     nonce: &[u8],
-    aad: &[u8],
+    aad: impl core::iter::Iterator<Item = &'a u8>,
     payload: &mut [u8],
     tag: &mut [u8],
 ) -> Result<(), EncryptError> {
@@ -260,10 +270,10 @@ pub(crate) fn encrypt<S: State>(
 }
 
 /// Generic AES-GCM decrypt.
-pub(crate) fn decrypt<S: State>(
+pub(crate) fn decrypt<'a, S: State>(
     key: &[u8],
     nonce: &[u8],
-    aad: &[u8],
+    aad: impl core::iter::Iterator<Item = &'a u8>,
     tag: &[u8],
     payload: &mut [u8],
 ) -> Result<(), DecryptError> {
@@ -291,10 +301,10 @@ macro_rules! pub_crate_mod {
 
             #[doc = $variant_comment]
             /// encrypt.
-            pub fn encrypt(
+            pub fn encrypt<'a>(
                 key: &[u8],
                 nonce: &[u8],
-                aad: &[u8],
+                aad: impl core::iter::Iterator<Item = &'a u8>,
                 payload: &mut [u8],
                 tag: &mut [u8],
             ) -> Result<(), EncryptError> {
@@ -304,10 +314,10 @@ macro_rules! pub_crate_mod {
 
             #[doc = $variant_comment]
             /// decrypt.
-            pub fn decrypt(
+            pub fn decrypt<'a>(
                 key: &[u8],
                 nonce: &[u8],
-                aad: &[u8],
+                aad: impl core::iter::Iterator<Item = &'a u8>,
                 tag: &[u8],
                 payload: &mut [u8],
             ) -> Result<(), DecryptError> {

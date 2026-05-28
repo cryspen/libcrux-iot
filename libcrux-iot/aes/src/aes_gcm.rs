@@ -31,17 +31,22 @@ macro_rules! aesgcm {
                 self.aes_state.key_block(1, &mut self.tag_mix);
             }
 
-            fn encrypt(&mut self, aad: &[u8], payload: &mut [u8], tag: &mut [u8]) {
+            fn encrypt<'a>(
+                &mut self,
+                aad: impl core::iter::Iterator<Item = &'a u8>,
+                payload: &mut [u8],
+                tag: &mut [u8],
+            ) {
                 debug_assert!(payload.len() / AES_BLOCK_LEN <= u32::MAX as usize);
                 debug_assert!(tag.len() == TAG_LEN);
 
                 self.aes_state.update(2, payload);
 
-                self.gcm_state.update_padded(aad);
-                self.gcm_state.update_padded(payload);
+                let aad_len = self.gcm_state.update_padded(aad);
+                self.gcm_state.update_padded(payload.as_ref().into_iter());
 
                 let mut last_block = [0u8; AES_BLOCK_LEN];
-                last_block[0..8].copy_from_slice(&((aad.len() as u64) * 8).to_be_bytes());
+                last_block[0..8].copy_from_slice(&((aad_len as u64) * 8).to_be_bytes());
                 last_block[8..16].copy_from_slice(&((payload.len() as u64) * 8).to_be_bytes());
 
                 self.gcm_state.update(&last_block);
@@ -52,20 +57,20 @@ macro_rules! aesgcm {
                 }
             }
 
-            fn decrypt(
+            fn decrypt<'a>(
                 &mut self,
-                aad: &[u8],
+                aad: impl core::iter::Iterator<Item = &'a u8>,
                 tag: &[u8],
                 payload: &mut [u8],
             ) -> Result<(), DecryptError> {
                 debug_assert!(payload.len() / AES_BLOCK_LEN <= u32::MAX as usize);
                 debug_assert!(tag.len() == TAG_LEN);
 
-                self.gcm_state.update_padded(aad);
-                self.gcm_state.update_padded(payload);
+                let aad_len = self.gcm_state.update_padded(aad.into_iter());
+                self.gcm_state.update_padded(payload.as_ref().into_iter());
 
                 let mut last_block = [0u8; AES_BLOCK_LEN];
-                last_block[0..8].copy_from_slice(&((aad.len() as u64) * 8).to_be_bytes());
+                last_block[0..8].copy_from_slice(&((aad_len as u64) * 8).to_be_bytes());
                 last_block[8..16].copy_from_slice(&((payload.len() as u64) * 8).to_be_bytes());
 
                 self.gcm_state.update(&last_block);

@@ -118,7 +118,7 @@ macro_rules! api {
                     ) -> Result<(), EncryptError> {
                         assert_eq!(plaintext.len(), ciphertext.len());
                         ciphertext.copy_from_slice(plaintext);
-                        crate::portable::$variant::encrypt(key, nonce, aad, ciphertext, tag)
+                        crate::portable::$variant::encrypt(key, nonce, aad.into_iter(), ciphertext, tag)
                     }
 
                     fn decrypt(
@@ -131,7 +131,7 @@ macro_rules! api {
                     ) -> Result<(), DecryptError> {
                         assert_eq!(plaintext.len(), ciphertext.len());
                         plaintext.copy_from_slice(ciphertext);
-                        crate::portable::$variant::decrypt(key, nonce, aad, tag, plaintext)
+                        crate::portable::$variant::decrypt(key, nonce, aad.into_iter(), tag, plaintext)
                     }
                 }
             }
