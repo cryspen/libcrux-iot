@@ -30602,6 +30602,154 @@ private theorem chunk_at_lift_poly_lane
   -- Goal: lift_fe x = mul_pure (lift_fe_mont x) (lift_fe_mont 1353).
   rw [lift_fe_mont_mul_1353_eq_lift_fe]
 
+/-- Per-lane reduction of `Spec.ntt_multiply_pure_no_acc` projection.
+
+    Used by `ntt_multiply_pure_no_acc_lane_scale` to give both sides a
+    uniform `if q%2=0 ...` shape over the four operand projections
+    (`.val[2·(q/2)]!`, `.val[2·(q/2)+1]!`). The reduction is `rfl` after
+    unfolding `Spec.ntt_multiply_pure_no_acc` and projecting through
+    `Std.Array.make` + `(List.range 16).map`.
+
+    The 8-zeta list is materialized inline (no `let`) so downstream
+    `simp`/`rw` substitutions see explicit `FieldElement.{add,mul,neg}_pure`
+    head symbols for `zmodOfFE_{add,mul}_pure` simp-set rewrites. -/
+private theorem ntt_multiply_pure_no_acc_val_q
+    (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (zeta0 zeta1 zeta2 zeta3 : hacspec_ml_kem.parameters.FieldElement)
+    (q : Nat) (h_q : q < 16) :
+    (Spec.ntt_multiply_pure_no_acc a b zeta0 zeta1 zeta2 zeta3).val[q]!
+      = (let neg := libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+         let zeta_q : hacspec_ml_kem.parameters.FieldElement :=
+           [zeta0, neg zeta0, zeta1, neg zeta1,
+            zeta2, neg zeta2, zeta3, neg zeta3][q / 2]!
+         if q % 2 = 0 then
+           libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+             (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+               a.val[2 * (q / 2)]! b.val[2 * (q / 2)]!)
+             (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+               (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                 a.val[2 * (q / 2) + 1]! b.val[2 * (q / 2) + 1]!)
+               zeta_q)
+         else
+           libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+             (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+               a.val[2 * (q / 2)]! b.val[2 * (q / 2) + 1]!)
+             (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+               a.val[2 * (q / 2) + 1]! b.val[2 * (q / 2)]!)) := by
+  unfold Spec.ntt_multiply_pure_no_acc
+  rw [show ∀ (l : List hacspec_ml_kem.parameters.FieldElement)
+          (h : l.length = (16#usize : Std.Usize).val),
+          (Std.Array.make 16#usize l h).val[q]! = l[q]! from fun _ _ => rfl,
+      List.getElem!_eq_getElem?_getD, List.getElem?_map, List.getElem?_range h_q,
+      Option.map_some, Option.getD_some]
+
+set_option maxHeartbeats 8000000 in
+/-- **Bilinearity of `Spec.ntt_multiply_pure_no_acc` over a per-lane scalar.**
+
+    If inputs `a, b` scale `am, bm` lane-wise by a common scalar `c`, then
+    each output lane scales by `c²`. Proof:
+    - Reduce both `.val[q]!` lookups via `ntt_multiply_pure_no_acc_val_q`
+      (uniform `if q%2=0 ...` form over `2·(q/2), 2·(q/2)+1`).
+    - Substitute `h_a, h_b` at those four positions, exposing
+      `mul_pure am_k c` / `mul_pure bm_k c` factors.
+    - Case-split `q % 2 = 0 ∨ q % 2 = 1` and project via `zmodOfFE` to
+      `ZMod 3329`; canonical round-trip + `ring` closes each branch.
+
+    Used by Helper 2 (`ntt_multiply_pure_no_acc_chunk_at_lift_poly_eq`) as
+    a 1-line corollary with `c = lift_fe_mont 1353`. -/
+private theorem ntt_multiply_pure_no_acc_lane_scale
+    (a am b bm : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+    (c : hacspec_ml_kem.parameters.FieldElement)
+    (h_a : ∀ k : Nat, k < 16 → a.val[k]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure am.val[k]! c)
+    (h_b : ∀ k : Nat, k < 16 → b.val[k]!
+            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure bm.val[k]! c)
+    (zeta0 zeta1 zeta2 zeta3 : hacspec_ml_kem.parameters.FieldElement)
+    (q : Nat) (h_q : q < 16) :
+    (Spec.ntt_multiply_pure_no_acc a b zeta0 zeta1 zeta2 zeta3).val[q]!
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          ((Spec.ntt_multiply_pure_no_acc am bm zeta0 zeta1 zeta2 zeta3).val[q]!)
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure c c) := by
+  have h_2pi : 2 * (q / 2) < 16 := by omega
+  have h_2pi1 : 2 * (q / 2) + 1 < 16 := by omega
+  rw [ntt_multiply_pure_no_acc_val_q a b _ _ _ _ q h_q,
+      ntt_multiply_pure_no_acc_val_q am bm _ _ _ _ q h_q]
+  rw [h_a (2 * (q / 2)) h_2pi, h_a (2 * (q / 2) + 1) h_2pi1,
+      h_b (2 * (q / 2)) h_2pi, h_b (2 * (q / 2) + 1) h_2pi1]
+  -- Helper: canonical round-trip closer.
+  have h_close : ∀ s t : hacspec_ml_kem.parameters.FieldElement,
+      s.val.val < 3329 → t.val.val < 3329 →
+      zmodOfFE s = zmodOfFE t → s = t := by
+    intro s t hs ht heq
+    rw [← feOfZMod_zmodOfFE_of_canonical s hs,
+        ← feOfZMod_zmodOfFE_of_canonical t ht, heq]
+  -- Helper: `Canonical x → x.val.val < 3329`.
+  have h_canon_to_lt : ∀ x : hacspec_ml_kem.parameters.FieldElement,
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical x → x.val.val < 3329 := by
+    intro x hx
+    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at hx
+    have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
+      unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
+    rw [hq] at hx
+    exact hx
+  -- Case split on q % 2.
+  rcases (show q % 2 = 0 ∨ q % 2 = 1 from by omega) with h_par | h_par
+  · -- q % 2 = 0 branch.
+    rw [if_pos h_par, if_pos h_par]
+    apply h_close
+    · apply h_canon_to_lt
+      exact libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure _ _
+    · apply h_canon_to_lt
+      exact libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure _ _
+    · simp only [L2_8c.zmodOfFE_add_pure, L2_8c.zmodOfFE_mul_pure]
+      ring
+  · -- q % 2 = 1 branch.
+    have h_par_ne : q % 2 ≠ 0 := by omega
+    rw [if_neg h_par_ne, if_neg h_par_ne]
+    apply h_close
+    · apply h_canon_to_lt
+      exact libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure _ _
+    · apply h_canon_to_lt
+      exact libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure _ _
+    · simp only [L2_8c.zmodOfFE_add_pure, L2_8c.zmodOfFE_mul_pure]
+      ring
+
+/-- **L7.1 Stage 4 chunked bilinearity bridge (Helper 2).**
+
+    Connects per-chunk `Spec.chunk_at (lift_poly _)` (canonical lift, used
+    by Phase 6e.4 `Spec.multiply_ntts_pure_eq_chunked_no_acc`) to
+    `lift_chunk_mont _` (Mont-stripped, used by `canonical_row_sum_lane`)
+    via the bilinearity of `Spec.ntt_multiply_pure_no_acc`. Both inputs
+    differ from the Mont versions by per-lane `× lift_fe_mont 1353` (= R
+    in ZMod 3329), so the per-lane output differs by `(lift_fe_mont 1353)²`.
+
+    1-line composition: `ntt_multiply_pure_no_acc_lane_scale` with
+    `c = lift_fe_mont 1353` and lane hypothesis `chunk_at_lift_poly_lane`. -/
+private theorem ntt_multiply_pure_no_acc_chunk_at_lift_poly_eq
+    (a b : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (j : Nat) (h_j : j < 16)
+    (zeta0 zeta1 zeta2 zeta3 : hacspec_ml_kem.parameters.FieldElement)
+    (q : Nat) (h_q : q < 16) :
+    (Spec.ntt_multiply_pure_no_acc
+        (Spec.chunk_at (lift_poly a) j) (Spec.chunk_at (lift_poly b) j)
+        zeta0 zeta1 zeta2 zeta3).val[q]!
+      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          ((Spec.ntt_multiply_pure_no_acc
+              (lift_chunk_mont a.coefficients.val[j]!)
+              (lift_chunk_mont b.coefficients.val[j]!)
+              zeta0 zeta1 zeta2 zeta3).val[q]!)
+          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (lift_fe_mont (1353#i16 : Std.I16))
+            (lift_fe_mont (1353#i16 : Std.I16))) :=
+  ntt_multiply_pure_no_acc_lane_scale
+    (Spec.chunk_at (lift_poly a) j) (lift_chunk_mont a.coefficients.val[j]!)
+    (Spec.chunk_at (lift_poly b) j) (lift_chunk_mont b.coefficients.val[j]!)
+    (lift_fe_mont (1353#i16 : Std.I16))
+    (fun k h_k => chunk_at_lift_poly_lane a j h_j k h_k)
+    (fun k h_k => chunk_at_lift_poly_lane b j h_j k h_k)
+    zeta0 zeta1 zeta2 zeta3 q h_q
+
 end L7_1c_FC
 
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Heavy `accumulating_ntt_multiply_*_post`
