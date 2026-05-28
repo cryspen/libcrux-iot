@@ -31925,6 +31925,106 @@ private theorem compute_As_plus_e_row0_finalize_fc
 
 end L7_1c_irreducible
 
+/-! ## §L7.1 Stage 4b — hacspec-side bridge lemma.
+
+    Given the per-row, per-lane characterization of `t_as_ntt_final`,
+    proves the hacspec `compute_As_plus_e` equation that L7.1's POST
+    demands. The proof unfolds `compute_As_plus_e` to its do-block
+    `multiply_matrix_by_column ; add_vectors` and uses three layered
+    `from_fn_pure_eq` applications. -/
+
+namespace L7_1d_FC
+
+open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+
+/-- Clone of `polynomial.add_to_ring_element_eq_ok` for the byte-identical
+    `matrix.add_polynomials` closure (both compile from the same Rust
+    source pattern; the closure bodies are identical up to namespace). -/
+private theorem matrix_add_polynomials_eq_ok
+    (lhs rhs : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
+    hacspec_ml_kem.matrix.add_polynomials lhs rhs
+      = .ok ⟨(List.range 256).map (fun k =>
+              libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                (lhs.val[k]!) (rhs.val[k]!)),
+             by simp [List.length_map, List.length_range]⟩ := by
+  set f : Nat → hacspec_ml_kem.parameters.FieldElement :=
+    fun k => libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              (lhs.val[k]!) (rhs.val[k]!) with hf_def
+  have hpure : ∀ k : Nat, k < (256#usize : Std.Usize).val →
+      (hacspec_ml_kem.matrix.add_polynomials.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement
+        : core_models.ops.function.Fn _ _ _).FnMutInst.call_mut
+            (lhs, rhs) ⟨BitVec.ofNat _ k⟩
+        = .ok (f k, (lhs, rhs)) := by
+    intro k hk
+    have hk' : k < 256 := hk
+    show hacspec_ml_kem.matrix.add_polynomials.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+        (lhs, rhs) ⟨BitVec.ofNat _ k⟩ = .ok (f k, (lhs, rhs))
+    unfold hacspec_ml_kem.matrix.add_polynomials.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement.call_mut
+    unfold hacspec_ml_kem.matrix.add_polynomials.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeFieldElement.call
+    have hk_us : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val = k := by
+      show (BitVec.ofNat _ k).toNat = k
+      apply Nat.mod_eq_of_lt
+      have : k < 2^System.Platform.numBits := by
+        have hbits : 2^16 ≤ 2^System.Platform.numBits :=
+          Nat.pow_le_pow_right (by decide) (by
+            cases System.Platform.numBits_eq with
+            | inl h => rw [h]; decide
+            | inr h => rw [h]; decide)
+        omega
+      exact this
+    have hlhs_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < lhs.length := by
+      rw [hk_us]; show k < lhs.val.length
+      rw [lhs.property]; exact hk
+    have hrhs_len : (⟨BitVec.ofNat _ k⟩ : Std.Usize).val < rhs.length := by
+      rw [hk_us]; show k < rhs.val.length
+      rw [rhs.property]; exact hk
+    have h_lhs_idx :
+        Std.Array.index_usize lhs (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (lhs.val[k]!) := by
+      have := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq lhs
+                  (⟨BitVec.ofNat _ k⟩ : Std.Usize) hlhs_len
+      rw [hk_us] at this; exact this
+    have h_rhs_idx :
+        Std.Array.index_usize rhs (⟨BitVec.ofNat _ k⟩ : Std.Usize)
+          = .ok (rhs.val[k]!) := by
+      have := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq rhs
+                  (⟨BitVec.ofNat _ k⟩ : Std.Usize) hrhs_len
+      rw [hk_us] at this; exact this
+    have h_add :=
+      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_eq_ok (lhs.val[k]!) (rhs.val[k]!)
+    change (do
+      let fe ← (do
+        let fe ← Std.Array.index_usize lhs ⟨BitVec.ofNat _ k⟩
+        let i ← lift (Std.UScalar.cast .U32 fe.val)
+        let fe1 ← Std.Array.index_usize rhs ⟨BitVec.ofNat _ k⟩
+        let i1 ← lift (Std.UScalar.cast .U32 fe1.val)
+        let i2 ← i + i1
+        let i3 ← lift (Std.UScalar.cast .U32 hacspec_ml_kem.parameters.FIELD_MODULUS)
+        let i4 ← i2 % i3
+        let i5 ← lift (Std.UScalar.cast .U16 i4)
+        hacspec_ml_kem.parameters.FieldElement.new i5)
+      Result.ok (fe, lhs, rhs)) = Result.ok (f k, lhs, rhs)
+    rw [h_lhs_idx]; simp only [bind_tc_ok]
+    rw [h_rhs_idx]; simp only [bind_tc_ok]
+    unfold hacspec_ml_kem.parameters.FieldElement.add at h_add
+    rw [h_add]
+    simp only [bind_tc_ok, hf_def]
+  have h_from_fn :=
+    libcrux_iot_ml_kem.Util.from_fn_pure_eq
+      (T := hacspec_ml_kem.parameters.FieldElement)
+      (F := hacspec_ml_kem.matrix.add_polynomials.closure)
+      (N := 256#usize)
+      (inst := hacspec_ml_kem.matrix.add_polynomials.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeFieldElement)
+      (c := (lhs, rhs))
+      (f := f)
+      hpure
+  unfold hacspec_ml_kem.matrix.add_polynomials
+  unfold hacspec_ml_kem.parameters.createi
+  show core_models.array.from_fn 256#usize _ (lhs, rhs) = _
+  exact h_from_fn
+
+end L7_1d_FC
+
 /-! ## §L7 — matrix-level targets (4 theorems).
 
     These are the ultimate FC obligations: the impl matrix functions
