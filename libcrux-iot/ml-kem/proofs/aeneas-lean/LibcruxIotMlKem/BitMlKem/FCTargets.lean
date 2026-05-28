@@ -31295,9 +31295,16 @@ end L7_1c_irreducible
     - `h_error_bnd`  : per-lane bound on `error_as_ntt`'s entries
       (the 29439 = 9 · 3271 ceiling required by L6.5
       `add_standard_error_reduce_fc`).
-    - `h_acc_bnd`    : per-lane bound on initial `accumulator`
-      (consumed by row-0 forward dep; rows 1..K-1 re-zero the
-      accumulator inside `compute_As_plus_e_loop1`). -/
+    - `h_acc_bnd`    : per-lane ADDITIVE-BUDGET bound on initial
+      `accumulator` (consumed by row-0 forward dep `Stage 1`, whose PRE
+      requires `acc[n] + K · 2^25 ≤ 2^30`; rows 1..K-1 re-zero the
+      accumulator inside `compute_As_plus_e_loop1`).
+
+    **Additional PRE strengthening (2026-05-28)**: `h_acc_bnd` shape
+    changed from `≤ 2^30` to additive form `+ K · 2^25 ≤ 2^30` to match
+    Stage 1's PRE. Authorized per
+    `feedback_byte_identical_post_dispatch_scope.md` (in-dispatch PRE
+    strengthening allowed; POST byte-locked). -/
 @[spec]
 theorem compute_As_plus_e_fc
     {K : Std.Usize}
@@ -31319,7 +31326,8 @@ theorem compute_As_plus_e_fc
         ((s_as_ntt.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_error_bnd : ∀ k : Fin K.val, ∀ i j : Fin 16,
         ((error_as_ntt.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 29439)
-    (h_acc_bnd : ∀ n : Fin 256, (accumulator.val[n.val]!).val.natAbs ≤ 2^30) :
+    (h_acc_bnd : ∀ n : Fin 256,
+        (accumulator.val[n.val]!).val.natAbs + K.val * 2^25 ≤ 2^30) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.matrix.compute_As_plus_e
       (vectortraitsOperationsInst := portable_ops_inst)
