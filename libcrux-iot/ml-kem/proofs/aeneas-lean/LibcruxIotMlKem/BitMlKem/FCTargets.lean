@@ -3307,7 +3307,13 @@ private theorem lift_fe_mont_mont_reduce_pure_eq
     _ = (x.val : ZMod 3329) * 169 * 169 := by rw [h_zmod]
 
 /-- L1.10 — `reducing_from_i32_array` on a chunk.
-    Composes `montgomery_reduce_element` across 16 lanes. -/
+    Composes `montgomery_reduce_element` across 16 lanes.
+
+    POST additionally exposes the per-lane I16 bound `|r[i]| ≤ 4993`
+    (= 3328 + 1665) coming from `Equivalence.reducing_from_i32_array_spec`.
+    Used by L6.7 to thread a bound through to L7.1 Stage 3, where
+    `add_standard_error_reduce_fc` consumes `|self[k][ℓ]| ≤ 32767`
+    via `4993 ≤ 32767`. -/
 @[spec high]
 theorem reducing_from_i32_array_fc
     (array : Slice Std.I32)
@@ -3317,7 +3323,8 @@ theorem reducing_from_i32_array_fc
       (array.val[i]!).val.natAbs ≤ 2^16 * 3328) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array array out
-    ⦃ ⇓ r => ⌜ lift_chunk_mont r = Spec.chunk_reducing_from_i32_array_pure array ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ lift_chunk_mont r = Spec.chunk_reducing_from_i32_array_pure array
+                ∧ (∀ i : Nat, i < 16 → (r.elements.val[i]!).val.natAbs ≤ 4993) ⌝ ⦄ := by
   -- 1. Extract per-element legacy fact:
   --    |r[i]| ≤ 3328+1665 ∧ (r[i]*2^16) ≡ array[i] (mod 3329).
   have hpre' : ∀ i : Nat, i < 16 → (array.val[i]!).val.natAbs ≤ 3328 * 2 ^ 16 := by
@@ -3329,32 +3336,37 @@ theorem reducing_from_i32_array_fc
     libcrux_iot_ml_kem.Equivalence.reducing_from_i32_array_spec array out hlen' hpre'
   obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
-  -- 2. Reduce array equality to list equality, then to per-index lift_fe_mont equality.
-  unfold lift_chunk_mont Spec.chunk_reducing_from_i32_array_pure
-  apply Subtype.ext
-  show r0.elements.val.map lift_fe_mont
-      = (List.range 16).map (fun i =>
-          Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val))
-  have h_r0_len : r0.elements.val.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
-  apply List.ext_getElem
-  · simp [List.length_map, List.length_range, h_r0_len]
-  · intro i hi1 hi2
-    have hi : i < 16 := by
-      have : i < (r0.elements.val.map lift_fe_mont).length := hi1
-      simp [List.length_map, h_r0_len] at this; exact this
-    rw [List.getElem_map]
-    rw [List.getElem_map, List.getElem_range]
-    show lift_fe_mont r0.elements.val[i]
-      = Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val)
-    have h_r0_get_eq : r0.elements.val[i]
-        = r0.elements.val[i]! := by
-      have hi_r0 : i < r0.elements.val.length := by rw [h_r0_len]; exact hi
-      rw [getElem!_pos r0.elements.val i hi_r0]
-    rw [h_r0_get_eq]
-    obtain ⟨_h_bnd, h_modq⟩ := h_per i hi
-    exact lift_fe_mont_mont_reduce_pure_eq
-      (array.val[i]!) (r0.elements.val[i]!) h_modq
+  refine ⟨?_, ?_⟩
+  · -- (a) Existing FC equation: lift_chunk_mont r = Spec.chunk_reducing_from_i32_array_pure array.
+    -- Reduce array equality to list equality, then to per-index lift_fe_mont equality.
+    unfold lift_chunk_mont Spec.chunk_reducing_from_i32_array_pure
+    apply Subtype.ext
+    show r0.elements.val.map lift_fe_mont
+        = (List.range 16).map (fun i =>
+            Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val))
+    have h_r0_len : r0.elements.val.length = 16 :=
+      libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+    apply List.ext_getElem
+    · simp [List.length_map, List.length_range, h_r0_len]
+    · intro i hi1 hi2
+      have hi : i < 16 := by
+        have : i < (r0.elements.val.map lift_fe_mont).length := hi1
+        simp [List.length_map, h_r0_len] at this; exact this
+      rw [List.getElem_map]
+      rw [List.getElem_map, List.getElem_range]
+      show lift_fe_mont r0.elements.val[i]
+        = Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val)
+      have h_r0_get_eq : r0.elements.val[i]
+          = r0.elements.val[i]! := by
+        have hi_r0 : i < r0.elements.val.length := by rw [h_r0_len]; exact hi
+        rw [getElem!_pos r0.elements.val i hi_r0]
+      rw [h_r0_get_eq]
+      obtain ⟨_h_bnd, h_modq⟩ := h_per i hi
+      exact lift_fe_mont_mont_reduce_pure_eq
+        (array.val[i]!) (r0.elements.val[i]!) h_modq
+  · -- (b) Per-lane I16 bound `|r[i]| ≤ 4993` from the legacy spec's first conjunct.
+    intro i hi
+    exact (h_per i hi).1
 
 /-! ## §L2 — NTT step ops (5 theorems). -/
 
@@ -17140,8 +17152,10 @@ private theorem poly_reducing_from_i32_array_step_lemma_fc
         = .ok (t, acc.coefficients.set k) := by
       unfold Aeneas.Std.Array.index_mut_usize
       rw [h_idx_t]; rfl
-    -- (6) Apply `reducing_from_i32_array_fc` to get `t1` with the chunk FC equation.
-    obtain ⟨t1, h_t1_eq, h_t1_lift⟩ :=
+    -- (6) Apply `reducing_from_i32_array_fc` to get `t1` with the chunk FC equation
+    -- AND the per-lane I16 bound `|t1.elements[ℓ]| ≤ 4993` (used by L6.7's
+    -- strengthened POST conjunct (c) at chunk k).
+    obtain ⟨t1, h_t1_eq, h_t1_lift, h_t1_bnd⟩ :=
       triple_exists_ok_fc (reducing_from_i32_array_fc s t h_s_len16 h_s_bnd)
     -- (7) Compose `a1 := acc.coefficients.set k t1`.
     set a1 : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
