@@ -39,7 +39,7 @@ pub(crate) fn generate_serialized<SIMDUnit: Operations, Shake256: shake256::DsaX
     // shake256 requires input to be classified but this marks memory as Undefined longer as intended
     // leading to false positives when executing under valgrind. Therefore we ct_declassify the memory
     // to mark it as defined.
-    ct_declassify(&verification_key);
+    ct_declassify(verification_key);
 
     signing_key_serialized[offset..offset + BYTES_FOR_VERIFICATION_KEY_HASH]
         .copy_from_slice(&verification_key_hash);
