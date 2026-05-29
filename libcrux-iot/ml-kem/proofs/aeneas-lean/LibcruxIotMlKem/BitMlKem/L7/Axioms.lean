@@ -106,11 +106,22 @@ open libcrux_iot_ml_kem.BitMlKem
     own sampling logic, plus a per-coefficient projection lemma — all of
     which is XOF semantics, not L7.2 matrix arithmetic.
 
-    ### Statement (column-major access via `lift_matrix_from_seed`)
+    ### Statement (ROW-major access via `lift_matrix_from_seed`)
 
-    Matches the FIPS 203 column-major convention also used by
-    `matrix.entry_fc` (FCTargets.lean:17589): the (i-th row, j-th column)
-    entry is `(lift_matrix_from_seed seed K).val[j.val]!.val[i.val]!`. -/
+    **NB — differs from L7.1's `matrix.entry_fc` convention.** L7.1
+    `compute_As_plus_e` calls `multiply_matrix_by_column a_as_ntt s`
+    *without* transposing, so its column-major lift accesses
+    `.val[j]!.val[i]!`. L7.2 `compute_vector_u`, by contrast, computes
+    `multiply_matrix_by_column (transpose a_as_ntt) r` — the extra
+    `transpose` flips the effective convention, so the (i-th row,
+    j-th column) entry the impl samples via `sample_matrix_entry seed i j`
+    must land at `(lift_matrix_from_seed seed K).val[i.val]!.val[j.val]!`
+    (ROW-major). Verified by computable check (2026-05-29): hacspec
+    `multiply_matrix_by_column_at (transpose A) r i = multiply_vectors
+    A.val[i] r` (row-major), so FC requires `lift(sample i j) =
+    LM.val[i]!.val[j]!`. The earlier column-major statement (copied from
+    `matrix.entry_fc`) was transposed-wrong for L7.2 and would have made
+    `compute_vector_u_fc` false for asymmetric matrices. -/
 @[spec]
 axiom sample_matrix_entry_fc
     {Hasher : Type}
@@ -124,7 +135,7 @@ axiom sample_matrix_entry_fc
     libcrux_iot_ml_kem.matrix.sample_matrix_entry
       (vectortraitsOperationsInst := portable_ops_inst)
       hash_functionsHashInst out seed i j
-    ⦃ ⇓ p => ⌜ lift_poly p = (lift_matrix_from_seed seed K).val[j.val]!.val[i.val]!
+    ⦃ ⇓ p => ⌜ lift_poly p = (lift_matrix_from_seed seed K).val[i.val]!.val[j.val]!
                 ∧ (∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
                     ((p.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 3328) ⌝ ⦄
 
