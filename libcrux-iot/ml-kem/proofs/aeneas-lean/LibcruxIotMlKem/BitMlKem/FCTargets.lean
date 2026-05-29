@@ -33033,38 +33033,17 @@ theorem compute_As_plus_e_fc
                 = .ok (lift_vec p.1) ⌝ ⦄ := by
   sorry
 
-/-- L7.2 — `matrix.compute_vector_u`: product `Aᵀ · r + e₁` of the
-    encryption step. Impl takes `seed : Slice U8` and reconstructs
-    the matrix via `sample_matrix_A_loop`; the FC equation references
-    the deterministic `Spec.sample_matrix_A_pure seed K` projection.
-    Impl returns
-    `(matrix_entry, result, scratch, cache, accumulator)`; project on
-    `result`. -/
-@[spec]
-theorem compute_vector_u_fc
-    {Hasher : Type} (K : Std.Usize)
-    (hash_functionsHashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher)
-    (matrix_entry : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (seed : Slice Std.U8)
-    (r_as_ntt error_1 result : Slice
-      (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
-    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (cache : Slice
-      (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
-    (accumulator : Std.Array Std.I32 256#usize) :
-    ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_ml_kem.matrix.compute_vector_u
-      K (vectortraitsOperationsInst := portable_ops_inst) hash_functionsHashInst
-      matrix_entry seed r_as_ntt error_1 result scratch cache accumulator
-    ⦃ ⇓ p => ⌜ hacspec_ml_kem.matrix.compute_vector_u
-                  (lift_matrix_from_seed seed K)
-                  (lift_vec_slice r_as_ntt K)
-                  (lift_vec_slice error_1 K)
-                = .ok (lift_vec_slice p.2.1 K) ⌝ ⦄ := by
-  sorry
+/- L7.2 — `matrix.compute_vector_u`: product `Aᵀ · r + e₁` of the encryption
+   step. The FC theorem is PROVEN as `libcrux_iot_ml_kem.BitMlKem.L7.compute_vector_u_fc`
+   in `BitMlKem/L7/FC/ComputeVectorU.lean` (byte-locked POST:
+   `hacspec_ml_kem.matrix.compute_vector_u (lift_matrix_from_seed seed K)
+      (lift_vec_slice r_as_ntt K) (lift_vec_slice error_1 K) = .ok (lift_vec_slice p.2.1 K)`,
+   axiom-clean modulo the sanctioned `sample_matrix_entry_fc` / `Spec.sample_matrix_A_pure` boundary).
+   The stub `@[spec] theorem compute_vector_u_fc := by sorry` was REMOVED here: the
+   `L7/` bridge tree imports `FCTargets`, so this file cannot `:=`-reference the proven
+   `L7.compute_vector_u_fc` (import cycle), and a `sorry`-backed `@[spec]` is a
+   downstream-`hax_mvcgen` footgun. The canonical proven `@[spec]` lives in `L7/FC/`.
+   (Mirrors the L7.4 `compute_message_fc` wiring, commit 806de7d.) -/
 
 /-- L7.3 — `matrix.compute_ring_element_v`: `t · r + e₂ + message`.
     Impl returns `(t_as_ntt_entry, result, scratch, accumulator)`;

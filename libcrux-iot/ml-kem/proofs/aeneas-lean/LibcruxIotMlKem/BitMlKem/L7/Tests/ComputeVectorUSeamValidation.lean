@@ -134,6 +134,27 @@ def mFE := Std.Array.make 2#usize [mkFEArr m0, mkFEArr m1] (by simp)
 def rFE := Std.Array.make 2#usize [mkFEArr r0, mkFEArr r1] (by simp)
 def innerR := hacspec_ml_kem.matrix.multiply_vectors (RANK:=2#usize) mFE rFE
 
+/-! ## SEAM 1b — fill-cache acc ≡ plain acc (loop0 specificity).
+
+  `compute_vector_u_loop0` accumulates via `accumulating_ntt_multiply_fill_cache`
+  (it ALSO populates the cache), whereas SEAM 1's proxy `compute_message_loop`
+  uses the plain `accumulating_ntt_multiply`. Both carry the SAME
+  `accumulating_ntt_multiply_poly_post` for the accumulator (FCTargets:27728 vs
+  28537 — fill-cache merely ADDS a cache POST). This guard confirms numerically
+  that, on identical (matrix-poly, r-poly) inputs, the fill-cache accumulator is
+  byte-identical to the plain accumulator — so SEAM 1's factor-2285 pin transfers
+  verbatim to the loop0 acc-bridge. The cache half is irrelevant to the acc seam. -/
+def accFill : Std.Array Std.I32 256#usize :=
+  match polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache
+    (vectortraitsOperationsInst:=portable_ops_inst) (mkPoly m0) (mkPoly r0) accArr (mkPoly (fun _=>0)) with
+  | .ok (a, _) => a | _ => accArr
+def accPlain : Std.Array Std.I32 256#usize :=
+  match polynomial.PolynomialRingElement.accumulating_ntt_multiply
+    (vectortraitsOperationsInst:=portable_ops_inst) (mkPoly m0) (mkPoly r0) accArr with
+  | .ok a => a | _ => accArr
+
+#guard (List.range 256).all (fun j => decide (((accFill.val[j]!).val) = ((accPlain.val[j]!).val)))
+
 /-! ## SEAM 2 — ntt_inverse, factor 512 (from L7.4/L7.3). -/
 
 def result2R : Result (polynomial.PolynomialRingElement vector.portable.vector_type.PortableVector) :=

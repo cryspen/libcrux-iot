@@ -25,4 +25,5 @@ import LibcruxIotMlKem.BitMlKem.L7.Common
 import LibcruxIotMlKem.BitMlKem.L7.Impl.ComputeMessage
 import LibcruxIotMlKem.BitMlKem.L7.Correctness.ComputeMessage
 import LibcruxIotMlKem.BitMlKem.L7.FC.ComputeMessage
+import LibcruxIotMlKem.BitMlKem.L7.FC.ComputeVectorU
 import LibcruxIotMlKem.Util.AutomationSandbox
