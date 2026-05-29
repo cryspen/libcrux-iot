@@ -100,6 +100,7 @@ impl From<[U32; 2]> for Lane2U32 {
 //      `Debug` which build on it have to be switched off for Eurydice.
 #[cfg(not(eurydice))]
 #[cfg_attr(hax, hax_lib::opaque)]
+#[cfg_attr(hax_backend_lean, charon::exclude)]
 impl core::fmt::Debug for Lane2U32 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use libcrux_secrets::Declassify;

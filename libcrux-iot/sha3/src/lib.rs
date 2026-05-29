@@ -49,6 +49,8 @@
 #![no_std]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+#![cfg_attr(hax_backend_lean, feature(register_tool))]
+#![cfg_attr(hax_backend_lean, register_tool(charon))]
 
 use libcrux_secrets::{Classify, U8};
 

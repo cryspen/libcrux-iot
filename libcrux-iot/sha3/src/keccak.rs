@@ -206,12 +206,12 @@ impl<const RATE: usize> KeccakXofState<RATE> {
 #[inline(always)]
 #[hax_lib::requires(RATE == 168 || RATE == 144 || RATE == 136 || RATE == 104 || RATE == 72)]
 #[hax_lib::fstar::options("--z3rlimit 60")]
-fn _squeeze<const RATE: usize>(state: &mut KeccakXofState<RATE>, out: &mut [U8]) {
-    if state.sponge {
+fn _squeeze<const RATE: usize>(keccak_state: &mut KeccakXofState<RATE>, out: &mut [U8]) {
+    if keccak_state.sponge {
         // If we called `squeeze` before, call f1600 first.
         // We do it this way around so that we don't call f1600 at the end
         // when we don't need it.
-        keccakf1600(&mut state.inner);
+        keccakf1600(&mut keccak_state.inner);
     }
 
     // How many blocks do we need to squeeze out?
@@ -223,7 +223,7 @@ fn _squeeze<const RATE: usize>(state: &mut KeccakXofState<RATE>, out: &mut [U8])
     // XXX: Eurydice does not extract `core::cmp::min`, so we do
     // this instead. (cf. https://github.com/AeneasVerif/eurydice/issues/49)
     let mid = if RATE >= out_len { out_len } else { RATE };
-    state.inner.store::<RATE>(&mut out[..mid]);
+    keccak_state.inner.store::<RATE>(&mut out[..mid]);
 
     // If we got asked for more than one block, squeeze out more.
     let mut offset = mid;
@@ -232,19 +232,21 @@ fn _squeeze<const RATE: usize>(state: &mut KeccakXofState<RATE>, out: &mut [U8])
             out.len() == out_len && offset.to_int() == _k.to_int() * RATE.to_int()
         });
         // Here we know that we always have full blocks to write out.
-        keccakf1600(&mut state.inner);
-        state.inner.store::<RATE>(&mut out[offset..offset + RATE]);
+        keccakf1600(&mut keccak_state.inner);
+        keccak_state
+            .inner
+            .store::<RATE>(&mut out[offset..offset + RATE]);
         offset += RATE;
     }
 
     if last > 0 && last < out_len {
         debug_assert_eq!(last, offset);
         // Squeeze out the last partial block
-        keccakf1600(&mut state.inner);
-        state.inner.store::<RATE>(&mut out[offset..]);
+        keccakf1600(&mut keccak_state.inner);
+        keccak_state.inner.store::<RATE>(&mut out[offset..]);
     }
 
-    state.sponge = true;
+    keccak_state.sponge = true;
 }
 //// From here, everything is generic
 

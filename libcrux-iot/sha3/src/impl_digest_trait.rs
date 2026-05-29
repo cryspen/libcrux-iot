@@ -15,6 +15,7 @@ macro_rules! impl_hash_traits {
         #[doc = concat!("A hasher for [`",stringify!($type), "`].")]
         pub type $hasher = libcrux_traits::digest::Hasher<$len, $type>;
 
+        #[cfg_attr(hax_backend_lean, charon::exclude)]
         impl libcrux_traits::digest::arrayref::Hash<$len> for $type {
             #[inline(always)]
             fn hash(
@@ -46,6 +47,7 @@ impl_hash_traits!(Sha3_512, Sha3_512Hasher, SHA3_512_LEN, sha512_ema);
 // Implement the slice hash trait
 // This is excluded for the hax extraction
 #[cfg_attr(hax, hax_lib::exclude)]
+#[cfg_attr(hax_backend_lean, charon::exclude)]
 mod slice {
     use super::*;
 
