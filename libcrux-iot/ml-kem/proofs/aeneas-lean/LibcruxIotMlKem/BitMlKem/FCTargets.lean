@@ -18093,7 +18093,10 @@ set_option maxHeartbeats 4000000 in
     slice-extraction reduction, and Phase 6e.2's per-lane reduction via
     `Util.from_fn_pure_eq`. The result is the pure FE-arithmetic list
     `(List.range 256).map (multiply_ntts_lane_pure p1 p2)`. -/
-private theorem multiply_ntts_eq_pure_array
+-- Public (exported for L7.4 `compute_message_acc_bridge`): per-multiply reduction
+-- of the hacspec `ntt.multiply_ntts` to its pure-lane array form. Visibility-only
+-- change (proof/statement unchanged).
+theorem multiply_ntts_eq_pure_array
     (p1 p2 : Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
     hacspec_ml_kem.ntt.multiply_ntts p1 p2
     = .ok (⟨(List.range 256).map (multiply_ntts_lane_pure p1 p2),
@@ -31938,7 +31941,10 @@ open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
 /-- Clone of `polynomial.add_to_ring_element_eq_ok` for the byte-identical
     `matrix.add_polynomials` closure (both compile from the same Rust
     source pattern; the closure bodies are identical up to namespace). -/
-private theorem matrix_add_polynomials_eq_ok
+-- Public (exported for L7.4 `compute_message_acc_bridge`): per-step reduction of
+-- the hacspec `matrix.add_polynomials` to its pure-lane `add_pure` array form.
+-- Visibility-only change (proof/statement unchanged).
+theorem matrix_add_polynomials_eq_ok
     (lhs rhs : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
     hacspec_ml_kem.matrix.add_polynomials lhs rhs
       = .ok ⟨(List.range 256).map (fun k =>
@@ -33092,29 +33098,20 @@ theorem compute_ring_element_v_fc
                 = .ok (lift_poly p.2.1) ⌝ ⦄ := by
   sorry
 
-/-- L7.4 — `matrix.compute_message`: `v - secret · u` then NTT-inverse.
-    Impl returns `(result, scratch, accumulator)`; project on `result`. -/
-@[spec]
-theorem compute_message_fc
-    {K : Std.Usize}
-    (v : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (secret_as_ntt u_as_ntt : Std.Array
-      (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
-    (result : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (accumulator : Std.Array Std.I32 256#usize) :
-    ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_ml_kem.matrix.compute_message
-      (vectortraitsOperationsInst := portable_ops_inst)
-      v secret_as_ntt u_as_ntt result scratch accumulator
-    ⦃ ⇓ p => ⌜ hacspec_ml_kem.matrix.compute_message
-                  (lift_poly v)
-                  (lift_vec secret_as_ntt) (lift_vec u_as_ntt)
-                = .ok (lift_poly p.1) ⌝ ⦄ := by
-  sorry
+/- L7.4 — `matrix.compute_message`: `v - secret · u` then NTT-inverse.
+    **PROVEN** (with explicit PRE bounds `hK ≤ 4` + per-lane `≤ 3328`, and the
+    byte-identical equality POST below) as
+    `libcrux_iot_ml_kem.BitMlKem.L7.compute_message_fc` in
+    `BitMlKem/L7/FC/ComputeMessage.lean`. It depends on the L7 bridge tree
+    (S1 loop FC + acc-bridge A + invert-linearity B + ntt_inverse C +
+    subtract D), all of which import THIS file — so the theorem cannot live
+    here (import cycle). The earlier `sorry` stub at this location is removed:
+    it was an unreferenced, sorry-backed `@[spec]` placeholder (a footgun for
+    downstream `hax_mvcgen`). Downstream callers should import the L7 file.
+
+    POST (for reference):
+    `hacspec_ml_kem.matrix.compute_message (lift_poly v) (lift_vec secret_as_ntt)
+       (lift_vec u_as_ntt) = .ok (lift_poly p.1)`. -/
 
 /-! ## Roll-up
 
