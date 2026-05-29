@@ -10468,7 +10468,7 @@ def inv
               (Spec.zeta_at (zeta_i_0.val - 4 * j - 4)))
     ∧ (∀ j : Nat, k.val ≤ j → j < 16 →
         acc.2.coefficients.val[j]! = re.coefficients.val[j]!)
-    ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+    ∧ (∀ c : Nat, c < k.val → ∀ ℓ : Nat, ℓ < 16 →
         ((acc.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328))
 
 /-- Step-post for `loop_range_spec_usize`. -/
@@ -10651,7 +10651,7 @@ private theorem invert_ntt_at_layer_1_step_lemma_fc
                   (Spec.zeta_at (zeta_i_0.val - 4 * j - 4)))
         ∧ (∀ j : Nat, s.val ≤ j → j < 16 →
             acc'.2.coefficients.val[j]! = re.coefficients.val[j]!)
-        ∧ (∀ c : Nat, c < 16 → ∀ ℓ : Nat, ℓ < 16 →
+        ∧ (∀ c : Nat, c < s.val → ∀ ℓ : Nat, ℓ < 16 →
             ((acc'.2.coefficients.val[c]!).elements.val[ℓ]!).val.natAbs ≤ 3328) := by
       refine ⟨?_, ?_, ?_, ?_⟩
       · -- acc'.1 = zi7, zi7.val = acc.1.val - 4 = zeta_i_0.val - 4 * (k.val + 1).
@@ -10731,7 +10731,7 @@ private theorem invert_ntt_at_layer_1_step_lemma_fc
               (acc.2.coefficients.set k t1).val[c]! = acc.2.coefficients.val[c]! := by
             simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
               Aeneas.Std.Array.getElem!_Nat_set_ne acc.2.coefficients k c t1 h_ne
-          rw [h_set_ne_val]; exact h_acc_bnd c hc ℓ hℓ
+          rw [h_set_ne_val]; exact h_acc_bnd c (by omega) ℓ hℓ
     show (pure _ : Result Prop).holds
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
   · -- `None` branch: k ≥ 16, done.
@@ -10783,7 +10783,7 @@ private theorem invert_ntt_at_layer_1_step_lemma_fc
       · intro j hj_ge hj_lt
         rw [h16] at hj_ge
         apply h_acc_undone j _ hj_lt; rw [hk_eq]; exact hj_ge
-      · exact h_acc_bnd
+      · intro c hc ℓ hℓ; exact h_acc_bnd c (by omega) ℓ hℓ
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
 
 set_option maxHeartbeats 16000000 in
@@ -10799,13 +10799,11 @@ set_option maxHeartbeats 16000000 in
     - `h_zeta_hi : zeta_i.val ≤ 128` — so `polynomial.zeta` index (worst case
       `zeta_i - 1` at iter k=0) is `< 128`.
     - `h_bnd` per-lane bound `≤ 13312` on `re`'s chunks — matches
-      `inv_ntt_layer_1_step_fc`'s precondition, preserved across iterations
-      (per-step output ≤ 4993 ≤ 13312, unchanged chunks ≤ 13312).
-    - `h_bnd_strict` per-lane bound `≤ 3328` on `re`'s chunks — needed for
-      the strengthened POST's output-bound conjunct: the initial state at
-      `k = 0` has `acc.2 = re`, so we need the tight bound up front. Each
-      iteration's `inv_ntt_layer_1_step_fc` re-establishes the bound at the
-      touched chunk; untouched chunks retain the input's bound. -/
+      `inv_ntt_layer_1_step_fc`'s precondition. The loop invariant tracks
+      only PROCESSED chunks as ≤ 3328; the initial state at `k = 0` is
+      vacuously satisfied (no processed chunks yet). Each iteration's
+      `inv_ntt_layer_1_step_fc` establishes the bound at the touched chunk;
+      at k=16 all chunks are covered, giving the output bound ≤ 3328. -/
 @[spec high]
 theorem invert_ntt_at_layer_1_portable_fc
     (zeta_i : Std.Usize)
@@ -10813,8 +10811,6 @@ theorem invert_ntt_at_layer_1_portable_fc
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
       ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312)
-    (h_bnd_strict : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
-      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3328)
     (h_zeta_lo : 64 ≤ zeta_i.val)
     (h_zeta_hi : zeta_i.val ≤ 128) :
     ⦃ ⌜ True ⌝ ⦄
@@ -10850,9 +10846,9 @@ theorem invert_ntt_at_layer_1_portable_fc
           exact absurd hj (Nat.not_lt_zero j)
         · intro _ _ _
           trivial
-        · -- Initial bound: acc.2 = re at k=0, so bound from h_bnd_strict.
-          intro c hc ℓ hℓ
-          exact h_bnd_strict c hc ℓ hℓ)
+        · -- Initial bound: vacuous at k=0 (no processed chunks yet).
+          intro c hc
+          exact absurd hc (Nat.not_lt_zero c))
       ?_)
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations + zeta_i = zeta_i_0 - 64.
     rw [PostCond.entails_noThrow]
@@ -13795,19 +13791,16 @@ theorem invert_ntt_montgomery_fc
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
-      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3328) :
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.invert_ntt.invert_ntt_montgomery
       K (vectortraitsOperationsInst := portable_ops_inst) re scratch
     ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.invert_ntt_montgomery_pure (lift_poly re)
               ∧ (∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
                   ((p.1.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3328) ⌝ ⦄ := by
-  -- Tighter `h_bnd_loose ≤ 13312` derived from the canonical `h_bnd ≤ 3328`.
+  -- `h_bnd` is already ≤ 13312; keep alias for readability at layer-1 call site.
   have h_bnd_loose : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
-      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312 := by
-    intro chunk hc k hk
-    have := h_bnd chunk hc k hk
-    omega
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 13312 := h_bnd
   -- =============================================================
   -- Step 0: resolve `let zeta_i ← constants.COEFFICIENTS_IN_RING_ELEMENT / 2`
   --         = `256#usize / 2#usize = .ok 128#usize`.
@@ -13831,7 +13824,7 @@ theorem invert_ntt_montgomery_fc
   obtain ⟨⟨zeta_i1, re1⟩, h1_eq, h1_zout, h1_fc, h1_bnd⟩ :=
     triple_exists_ok_fc
       (invert_ntt_at_layer_1_portable_fc (128#usize : Std.Usize) re
-        h_bnd_loose h_bnd (by decide) (by decide))
+        h_bnd_loose (by decide) (by decide))
   dsimp only at h1_zout h1_fc h1_bnd
   have h_zeta_i1 : zeta_i1.val = 64 := by rw [h1_zout]; decide
   -- =============================================================
