@@ -33198,37 +33198,25 @@ theorem compute_As_plus_e_fc
    downstream-`hax_mvcgen` footgun. The canonical proven `@[spec]` lives in `L7/FC/`.
    (Mirrors the L7.4 `compute_message_fc` wiring, commit 806de7d.) -/
 
-/-- L7.3 — `matrix.compute_ring_element_v`: `t · r + e₂ + message`.
-    Impl returns `(t_as_ntt_entry, result, scratch, accumulator)`;
-    project on `result`. -/
-@[spec]
-theorem compute_ring_element_v_fc
-    (K : Std.Usize)
-    (public_key : Slice Std.U8)
-    (t_as_ntt_entry : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (r_as_ntt : Slice
-      (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
-    (error_2 message result :
-      libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (cache : Slice
-      (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-        libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
-    (accumulator : Std.Array Std.I32 256#usize) :
-    ⦃ ⌜ True ⌝ ⦄
-    libcrux_iot_ml_kem.matrix.compute_ring_element_v
-      K (vectortraitsOperationsInst := portable_ops_inst)
-      public_key t_as_ntt_entry r_as_ntt error_2 message result scratch
-      cache accumulator
-    ⦃ ⇓ p => ⌜ hacspec_ml_kem.matrix.compute_ring_element_v
-                  (lift_t_as_ntt_from_public_key public_key K)
-                  (lift_vec_slice r_as_ntt K)
-                  (lift_poly error_2) (lift_poly message)
-                = .ok (lift_poly p.2.1) ⌝ ⦄ := by
-  sorry
+/- L7.3 — `matrix.compute_ring_element_v`: `t · r + e₂ + message` (the
+   decryption-side ring element `v`). The FC theorem is PROVEN as
+   `libcrux_iot_ml_kem.BitMlKem.L7.compute_ring_element_v_fc` in
+   `BitMlKem/L7/FC/ComputeRingElementV.lean` (byte-locked POST:
+   `hacspec_ml_kem.matrix.compute_ring_element_v
+      (lift_t_as_ntt_from_public_key public_key K) (lift_vec_slice r_as_ntt K)
+      (lift_poly error_2) (lift_poly message) = .ok (lift_poly p.2.1)`,
+   with PRE bounds `hK ≤ 4` / per-lane `≤ 3328` on `r_as_ntt`/`error_2`/`message`
+   + the `accumulating_ntt_multiply_poly_cache_post` cache precondition + zero
+   accumulator). It depends on the L7.3 bridge tree (the novel chunks-exact
+   enumerate loop keystone `loop_chunks_exact_pk_spec`, the deserialize/accumulate
+   loop FC + `scaleZ 2285` acc-bridge in `L7/Impl/ComputeRingElementV.lean`, the
+   D′ two-add tail bridge `add_message_error_scaleZ_eq` in
+   `L7/Correctness/ComputeRingElementV.lean`, reusing L7.4 B/C/glue), all of which
+   import THIS file — so the theorem cannot `:=`-reference it here (import cycle),
+   and a `sorry`-backed `@[spec]` is a downstream-`hax_mvcgen` footgun. The
+   canonical proven `@[spec]` lives in `L7/FC/`. Axiom-clean modulo the sanctioned
+   `deserialize_to_reduced_ring_element_fc` (A2) / `Spec.t_as_ntt_from_public_key_pure`
+   spec-stub boundary. (Mirrors the L7.2 / L7.4 wiring, commits 8c314ef / 806de7d.) -/
 
 /- L7.4 — `matrix.compute_message`: `v - secret · u` then NTT-inverse.
     **PROVEN** (with explicit PRE bounds `hK ≤ 4` + per-lane `≤ 3328`, and the
