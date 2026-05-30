@@ -98,20 +98,14 @@ def slice.Slice.split_at {T : Type} (s : Aeneas.Std.Slice T) (mid : Aeneas.Std.U
     Aeneas.Std.Result (Aeneas.Std.Slice T × Aeneas.Std.Slice T) :=
   Aeneas.Std.core.slice.Slice.split_at s mid
 
-/-- `Slice::chunks_exact` — bundles the chunk size + slice into a
-    `ChunksExact` iterator state. Stub returning `panic` since the
-    iterator implementation is opaque to current callers. -/
-def slice.Slice.chunks_exact {T : Type}
-    (_s : Aeneas.Std.Slice T) (_cs : Aeneas.Std.Usize) :
-    Aeneas.Std.Result (slice.iter.ChunksExact T) :=
-  Aeneas.Std.Result.fail Aeneas.Std.Error.panic
-
-/-- `Iterator::next` for `ChunksExact<T>` (shared-slice item type).
-    Stub returning `(None, iter)` — terminates iteration immediately. -/
-def slice.iter.ChunksExact.Insts.Core_modelsIterTraitsIteratorIteratorSharedASlice.next
-    {T : Type} (iter : slice.iter.ChunksExact T) :
-    Aeneas.Std.Result ((option.Option (Aeneas.Std.Slice T)) × slice.iter.ChunksExact T) :=
-  Aeneas.Std.Result.ok (option.Option.None, iter)
+-- `slice.Slice.chunks_exact` and `slice.iter.ChunksExact.…SharedASlice.next`
+-- were previously hand-stubbed here (panic / immediate-None) because the
+-- core-models `ChunksExact` iterator impls are `aeneas::exclude`d and the
+-- generated struct field `elements : Slice T` had degenerated to the dummy
+-- `slice.Slice (:= T)`. Both are now provided FAITHFULLY in
+-- `CoreModels.FunsExternal` (with `slice.Slice := Aeneas.Std.Slice T`),
+-- rust-core-models @ chunks-exact-iter-model (dbb7c4e). Defining them here
+-- too would be a duplicate declaration, so the stubs are removed.
 
 /-- `RangeTo Usize → RangeTo Usize` identity bridge (preserves the
     Rust type-level distinction between `RangeTo` and `Range`). -/
