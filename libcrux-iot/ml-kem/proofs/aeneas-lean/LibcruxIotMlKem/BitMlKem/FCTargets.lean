@@ -31539,15 +31539,18 @@ private theorem compute_As_plus_e_row0_finalize_fc
     (s_as_ntt error_as_ntt s_cache : Std.Array
                                        (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
                                          libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
-    (accumulator : L7_1c_FC.Acc)
+    (acc_init accumulator : L7_1c_FC.Acc)
+    (s_cache_fin : Std.Array
+                     (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
     (hK_pos : 0 < K.val)
     (h_error_bnd : ∀ k : Fin K.val, ∀ a b : Fin 16,
         ((error_as_ntt.val[k.val]!.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs ≤ 29439)
-    (h_acc_zero : ∀ n : Nat, n < 256 → accumulator.val[n]! = (0#i32 : Std.I32))
+    (h_acc_zero : ∀ n : Nat, n < 256 → acc_init.val[n]! = (0#i32 : Std.I32))
     (h_acc_lane_bnd : ∀ n : Nat, n < 256 →
         (accumulator.val[n]!).val.natAbs ≤ 2^16 * 3328)
-    (h_row0_inv : (L7_1a_FC.row0_inv matrix_A s_as_ntt accumulator s_cache K accumulator
-                    s_cache).holds) :
+    (h_row0_inv : (L7_1a_FC.row0_inv matrix_A s_as_ntt acc_init s_cache K accumulator
+                    s_cache_fin).holds) :
     ⦃ ⌜ True ⌝ ⦄
     (do
       let s ← Aeneas.Std.lift (Aeneas.Std.Array.to_slice accumulator)
@@ -31864,17 +31867,14 @@ private theorem compute_As_plus_e_row0_finalize_fc
               (Spec.mont_reduce_pure (lift_fe_int 0)) := by
       have h_at := h_row0_lane (ℓ / 16) hℓ_div_lt (ℓ % 16) hℓ_mod_lt
       rw [hℓ_decomp] at h_at
-      -- h_at: mont_reduce_pure (lift_fe_int (accumulator[ℓ]).val) = foldl ... (mont_reduce_pure (lift_fe_int (accumulator[ℓ]).val))
-      -- Goal: mont_reduce_pure (lift_fe_int (accumulator[ℓ]).val) = foldl ... (mont_reduce_pure (lift_fe_int 0))
-      -- The seed `(accumulator[ℓ]).val` collapses to 0 via h_acc_zero.
+      -- h_at: mont_reduce_pure (lift_fe_int (acc_final[ℓ]).val)
+      --         = foldl ... (mont_reduce_pure (lift_fe_int (acc_init[ℓ]).val))
+      -- Goal seed: mont_reduce_pure (lift_fe_int 0). The acc_init seed collapses to 0
+      -- via h_acc_zero (acc_init is the loop0 INPUT accumulator, which is zero).
       have h_z := h_acc_zero ℓ hℓ
       have h_zero_i32_val : ((0#i32 : Std.I32).val) = 0 := rfl
-      have h_collapse : (accumulator.val[ℓ]!).val = 0 := by rw [h_z]; exact h_zero_i32_val
-      -- Rewrite ONLY the RHS seed (under foldl): use rw with location filter via conv.
-      conv_rhs => rw [show (Spec.mont_reduce_pure (lift_fe_int 0)
-                              : hacspec_ml_kem.parameters.FieldElement)
-                          = Spec.mont_reduce_pure (lift_fe_int (accumulator.val[ℓ]!).val)
-                        from by rw [h_collapse]]
+      have h_collapse : (acc_init.val[ℓ]!).val = 0 := by rw [h_z]; exact h_zero_i32_val
+      rw [h_collapse] at h_at
       exact h_at
     -- Step B.3: combine via canonical_row_sum_lane.
     -- For row i = 0, canonical_row_sum_lane's internal index 0*K.val + c = c.
@@ -33022,7 +33022,9 @@ theorem compute_As_plus_e_fc
     (h_error_bnd : ∀ k : Fin K.val, ∀ i j : Fin 16,
         ((error_as_ntt.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 29439)
     (h_acc_bnd : ∀ n : Fin 256,
-        (accumulator.val[n.val]!).val.natAbs + K.val * 2^25 ≤ 2^30) :
+        (accumulator.val[n.val]!).val.natAbs + K.val * 2^25 ≤ 2^30)
+    (h_acc_zero : ∀ n : Nat, n < 256 → accumulator.val[n]! = (0#i32 : Std.I32))
+    (hK_pos : 0 < K.val) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.matrix.compute_As_plus_e
       (vectortraitsOperationsInst := portable_ops_inst)
@@ -33031,7 +33033,158 @@ theorem compute_As_plus_e_fc
                   (lift_matrix_from_slice matrix_A K)
                   (lift_vec s_as_ntt) (lift_vec error_as_ntt)
                 = .ok (lift_vec p.1) ⌝ ⦄ := by
-  sorry
+  -- Length facts.
+  have h_t_len : t_as_ntt.length = K.val := Std.Array.length_eq t_as_ntt
+  have h_err_len : error_as_ntt.length = K.val := Std.Array.length_eq error_as_ntt
+  -- Re-shape PRE bounds for sub-lemmas (Fin 16 ↔ Nat).
+  have h_s_bnd' : ∀ k : Fin K.val, ∀ a b : Fin 16,
+      ((s_as_ntt.val[k.val]!.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs ≤ 3328 :=
+    h_s_bnd
+  have h_error_bnd' : ∀ k : Fin K.val, ∀ a b : Fin 16,
+      ((error_as_ntt.val[k.val]!.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs
+        ≤ 29439 := h_error_bnd
+  -- ── S1: row-0 column loop (loop0). acc_init = input `accumulator` (zero). ──
+  obtain ⟨⟨cache1, acc2⟩, h_loop0_eq, h_row0⟩ := triple_exists_ok_fc
+    (compute_As_plus_e_loop0_fc matrix_A s_as_ntt s_cache accumulator hAlen
+      h_matrix_bnd h_s_bnd h_acc_bnd)
+  dsimp only at h_loop0_eq h_row0
+  -- Destructure row0_inv: (1) lane, (2) acc bound, (3) cache populated, (4) cache unchanged.
+  obtain ⟨_h_row0_lane, h_acc2_bnd_raw, h_cache_done, _h_cache_undone⟩ := by
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
+      L7_1a_FC.row0_inv, ← List.getElem!_eq_getElem?_getD] using h_row0
+  -- Cache-post bridge for loop1: row0_inv conjunct (3) at k = K.
+  have h_cache_post : ∀ c : Nat, c < K.val →
+      accumulating_ntt_multiply_poly_cache_post (s_as_ntt.val[c]!) (cache1.val[c]!) := by
+    intro c hc; exact h_cache_done c hc
+  -- acc2 lane bound: ≤ 2^16·3328 (from acc2[n] ≤ acc_init[n] + K·2^25, acc_init = 0).
+  have h_acc2_lane_bnd : ∀ n : Nat, n < 256 →
+      (acc2.val[n]!).val.natAbs ≤ 2^16 * 3328 := by
+    intro n hn
+    have hb := h_acc2_bnd_raw n hn
+    have hz : (accumulator.val[n]!).val.natAbs = 0 := by
+      rw [h_acc_zero n hn]; rfl
+    rw [hz] at hb
+    have hK4 : K.val * 2^25 ≤ 4 * 2^25 := Nat.mul_le_mul_right _ hK
+    have h2 : (4 : Nat) * 2^25 ≤ 2^16 * 3328 := by decide
+    omega
+  -- ── Row-0 finalize: produces `a` with row-0 lane eq + rows>0 unchanged. ──
+  obtain ⟨a, h_fin_eq, h_a0_lane, h_a_unch⟩ := triple_exists_ok_fc
+    (compute_As_plus_e_row0_finalize_fc t_as_ntt matrix_A s_as_ntt error_as_ntt s_cache
+      accumulator acc2 cache1 hK_pos h_error_bnd h_acc_zero h_acc2_lane_bnd h_row0)
+  dsimp only at h_fin_eq h_a0_lane h_a_unch
+  -- ── S2: outer rows loop [1, K). t_as_ntt_init = a. acc seed = acc2 (loop1 re-zeros). ──
+  obtain ⟨⟨t_as_ntt2, accumulator2⟩, h_loop1_eq, h_rows⟩ := triple_exists_ok_fc
+    (compute_As_plus_e_loop1_fc a matrix_A s_as_ntt error_as_ntt cache1 acc2 1#usize hK
+      (by show (1#usize : Std.Usize).val ≤ K.val; exact hK_pos) hAlen
+      h_matrix_bnd h_s_bnd h_error_bnd h_cache_post)
+  dsimp only at h_loop1_eq h_rows
+  -- Destructure rows_inv: (1) done rows [1,K), (2) unchanged rows.
+  obtain ⟨h_rows_done, h_rows_undone⟩ := by
+    simpa [L7_1c_FC.rows_inv, Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
+      ← List.getElem!_eq_getElem?_getD] using h_rows
+  -- t_as_ntt2[0] = a[0] (loop1 starts at 1, leaves row 0 unchanged).
+  have h_t2_at0 : t_as_ntt2.val[0]! = a.val[0]! := by
+    exact h_rows_undone 0 (by omega) (Or.inl (by decide))
+  -- ── Per-row, per-lane characterization of t_as_ntt2. ──
+  have h_lane_eq : ∀ r : Nat, r < K.val → ∀ ℓ : Nat, ℓ < 256 →
+      (lift_poly t_as_ntt2.val[r]!).val[ℓ]!
+        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (L7_1c_FC.canonical_row_sum_lane matrix_A s_as_ntt r (ℓ / 16) (ℓ % 16))
+              (lift_fe_mont (1353#i16 : Std.I16)))
+            ((lift_poly error_as_ntt.val[r]!).val[ℓ]!) := by
+    intro r hr ℓ hℓ
+    by_cases h0 : r = 0
+    · subst h0
+      rw [h_t2_at0]
+      exact h_a0_lane ℓ hℓ
+    · have hr1 : (1#usize : Std.Usize).val ≤ r := by
+        have : (1#usize : Std.Usize).val = 1 := rfl
+        rw [this]; omega
+      exact h_rows_done r hr1 hr ℓ hℓ
+  -- ── PART A: the hacspec equation. ──
+  have h_hacspec := L7_1d_FC.hacspec_compute_As_plus_e_eq_of_lane_eq
+    matrix_A s_as_ntt error_as_ntt t_as_ntt2 hAlen h_lane_eq
+  -- ── Package: reduce the impl do-block to .ok (t_as_ntt2, cache1, accumulator2). ──
+  apply triple_of_ok_fc (v := (t_as_ntt2, cache1, accumulator2))
+  · unfold libcrux_iot_ml_kem.matrix.compute_As_plus_e
+    rw [h_loop0_eq]; simp only [Aeneas.Std.bind_tc_ok]
+    show (do
+        let s ← Aeneas.Std.lift (Aeneas.Std.Array.to_slice acc2)
+        let (pre, index_mut_back) ← Aeneas.Std.Array.index_mut_usize t_as_ntt 0#usize
+        let pre1 ← libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array
+                     portable_ops_inst s pre
+        let (pre2, index_mut_back1) ← Aeneas.Std.Array.index_mut_usize (index_mut_back pre1) 0#usize
+        let pre3 ← Aeneas.Std.Array.index_usize error_as_ntt 0#usize
+        let pre4 ← libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_standard_error_reduce
+                     portable_ops_inst pre2 pre3
+        let (t2', accumulator2') ← libcrux_iot_ml_kem.matrix.compute_As_plus_e_loop1
+          portable_ops_inst { start := 1#usize, «end» := K } (index_mut_back1 pre4) matrix_A
+          s_as_ntt error_as_ntt cache1 acc2
+        Aeneas.Std.Result.ok (t2', cache1, accumulator2'))
+      = Aeneas.Std.Result.ok (t_as_ntt2, cache1, accumulator2)
+    -- Step through binds: invert h_fin_eq step by step to extract per-step equations.
+    simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at h_fin_eq
+    -- Step 0: index_mut_usize t_as_ntt 0
+    cases h0 : Aeneas.Std.Array.index_mut_usize t_as_ntt (0#usize : Std.Usize) with
+    | fail e => rw [h0] at h_fin_eq; simp at h_fin_eq
+    | div => rw [h0] at h_fin_eq; simp at h_fin_eq
+    | ok v0 =>
+      obtain ⟨pre0, imb0⟩ := v0
+      simp only [h0, Aeneas.Std.bind_tc_ok] at h_fin_eq
+      -- Reduce the let-pair destructure (let (a, b) := (x, y)) to concrete form:
+      change (do
+          let pre1 ← libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array
+              portable_ops_inst (Aeneas.Std.Array.to_slice acc2) pre0
+          let (pre2', index_mut_back1) ← (imb0 pre1).index_mut_usize 0#usize
+          let pre3' ← Aeneas.Std.Array.index_usize error_as_ntt 0#usize
+          let pre4' ← libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_standard_error_reduce
+              portable_ops_inst pre2' pre3'
+          Aeneas.Std.Result.ok (index_mut_back1 pre4')) = Aeneas.Std.Result.ok a at h_fin_eq
+      -- Step 1: reducing_from_i32_array
+      cases h1 : libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array
+          portable_ops_inst (Aeneas.Std.Array.to_slice acc2) pre0 with
+      | fail e => rw [h1] at h_fin_eq; simp at h_fin_eq
+      | div => rw [h1] at h_fin_eq; simp at h_fin_eq
+      | ok t1 =>
+        simp only [h1, Aeneas.Std.bind_tc_ok] at h_fin_eq
+        -- Step 2: index_mut_usize (imb0 t1) 0
+        cases h2 : Aeneas.Std.Array.index_mut_usize (imb0 t1) (0#usize : Std.Usize) with
+        | fail e => rw [h2] at h_fin_eq; simp at h_fin_eq
+        | div => rw [h2] at h_fin_eq; simp at h_fin_eq
+        | ok v2 =>
+          obtain ⟨pre2, imb1⟩ := v2
+          simp only [h2, Aeneas.Std.bind_tc_ok] at h_fin_eq
+          -- Reduce the let-pair destructure for step 2:
+          change (do
+              let pre3' ← Aeneas.Std.Array.index_usize error_as_ntt 0#usize
+              let pre4' ← libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_standard_error_reduce
+                  portable_ops_inst pre2 pre3'
+              Aeneas.Std.Result.ok (imb1 pre4')) = Aeneas.Std.Result.ok a at h_fin_eq
+          -- Step 3: index_usize error_as_ntt 0
+          cases h3 : Aeneas.Std.Array.index_usize error_as_ntt (0#usize : Std.Usize) with
+          | fail e => rw [h3] at h_fin_eq; simp at h_fin_eq
+          | div => rw [h3] at h_fin_eq; simp at h_fin_eq
+          | ok pre3 =>
+            simp only [h3, Aeneas.Std.bind_tc_ok] at h_fin_eq
+            -- Step 4: add_standard_error_reduce
+            cases h4 : libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_standard_error_reduce
+                portable_ops_inst pre2 pre3 with
+            | fail e => rw [h4] at h_fin_eq; simp at h_fin_eq
+            | div => rw [h4] at h_fin_eq; simp at h_fin_eq
+            | ok pre4 =>
+              simp only [h4, Aeneas.Std.bind_tc_ok] at h_fin_eq
+              -- h_fin_eq : .ok (imb1 pre4) = .ok a  →  imb1 pre4 = a
+              have h_a_eq : imb1 pre4 = a := Aeneas.Std.Result.ok.inj h_fin_eq
+              -- Step through the goal using the same step equations:
+              simp [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok, h0, h1, h2, h3, h4, h_a_eq,
+                h_loop1_eq]
+  · -- POST = the hacspec equation. p.1 = t_as_ntt2.
+    show hacspec_ml_kem.matrix.compute_As_plus_e
+            (lift_matrix_from_slice matrix_A K)
+            (lift_vec s_as_ntt) (lift_vec error_as_ntt)
+          = .ok (lift_vec t_as_ntt2)
+    exact h_hacspec
 
 /- L7.2 — `matrix.compute_vector_u`: product `Aᵀ · r + e₁` of the encryption
    step. The FC theorem is PROVEN as `libcrux_iot_ml_kem.BitMlKem.L7.compute_vector_u_fc`
