@@ -22,7 +22,7 @@ To run ML-KEM measurements:
 ```
 cd libcrux-nucleo-l4r5zi
 # $variant in {mlkem512, mlkem768, mlkem1024}
-DEFMT_LOG=info cargo rrb mlkem -F $variant
+DEFMT_LOG=info cargo rrb mlkem --no-default-features -F $variant,mldsa44
 ```
 
 To run ML-DSA measurements:
@@ -30,7 +30,7 @@ To run ML-DSA measurements:
 ```
 cd libcrux-nucleo-l4r5zi
 # $variant in {mldsa44, mldsa65, mldsa87}
-DEFMT_LOG=info cargo rrb mldsa --no-default-features -F $variant
+DEFMT_LOG=info cargo rrb mldsa --no-default-features -F $variant,mlkem512
 ```
 
 ### ML-KEM 512
