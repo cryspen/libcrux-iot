@@ -101,35 +101,35 @@ impl KeccakState {
 
         for i in 0..num_full_blocks {
             hax_lib::loop_invariant!(|i: usize| out.len() == _out_len);
-            let lane = self.get_lane(i / 5, i % 5).deinterleave();
-            out[i * 8..i * 8 + 4].copy_from_slice(&lane[0].to_le_bytes());
-            out[i * 8 + 4..i * 8 + 8].copy_from_slice(&lane[1].to_le_bytes());
+            let keccak_lane = self.get_lane(i / 5, i % 5).deinterleave();
+            out[i * 8..i * 8 + 4].copy_from_slice(&keccak_lane[0].to_le_bytes());
+            out[i * 8 + 4..i * 8 + 8].copy_from_slice(&keccak_lane[1].to_le_bytes());
         }
 
         if last_block_len > 4 {
-            let lane = self
+            let keccak_lane = self
                 .get_lane(num_full_blocks / 5, num_full_blocks % 5)
                 .deinterleave();
             let last_half_block_len = last_block_len - 4;
 
             out[num_full_blocks * 8..num_full_blocks * 8 + 4]
-                .copy_from_slice(&lane[0].to_le_bytes());
+                .copy_from_slice(&keccak_lane[0].to_le_bytes());
             out[num_full_blocks * 8 + 4..num_full_blocks * 8 + last_block_len]
-                .copy_from_slice(&lane[1].to_le_bytes()[0..last_half_block_len]);
+                .copy_from_slice(&keccak_lane[1].to_le_bytes()[0..last_half_block_len]);
         } else if last_block_len > 0 {
-            let lane = self
+            let keccak_lane = self
                 .get_lane(num_full_blocks / 5, num_full_blocks % 5)
                 .deinterleave();
 
             out[num_full_blocks * 8..num_full_blocks * 8 + last_block_len]
-                .copy_from_slice(&lane[0].to_le_bytes()[0..last_block_len]);
+                .copy_from_slice(&keccak_lane[0].to_le_bytes()[0..last_block_len]);
         }
     }
 }
 
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && start.to_int() + RATE.to_int() <= blocks.len().to_int())]
 #[inline(always)]
-fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], start: usize) {
+fn load_block_2u32<const RATE: usize>(keccak_state: &mut KeccakState, blocks: &[U8], start: usize) {
     #[cfg(not(eurydice))]
     debug_assert!(RATE <= blocks.len() && RATE % 8 == 0);
     let mut state_flat = [Lane2U32::zero(); 25];
@@ -141,8 +141,8 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
         state_flat[i] = Lane2U32::from([a, b]).interleave();
     }
     for i in 0..RATE / 8 {
-        let got = state.get_lane(i / 5, i % 5);
-        state.set_lane(
+        let got = keccak_state.get_lane(i / 5, i % 5);
+        keccak_state.set_lane(
             i / 5,
             i % 5,
             Lane2U32::from_ints([got[0] ^ state_flat[i][0], got[1] ^ state_flat[i][1]]),
@@ -153,11 +153,11 @@ fn load_block_2u32<const RATE: usize>(state: &mut KeccakState, blocks: &[U8], st
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && start.to_int() + RATE.to_int() <= 200.to_int())]
 #[inline(always)]
 fn load_block_full_2u32<const RATE: usize>(
-    state: &mut KeccakState,
+    keccak_state: &mut KeccakState,
     blocks: &[U8; 200],
     start: usize,
 ) {
-    load_block_2u32::<RATE>(state, blocks, start);
+    load_block_2u32::<RATE>(keccak_state, blocks, start);
 }
 
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && RATE <= out.len())]
@@ -167,9 +167,9 @@ fn store_block_2u32<const RATE: usize>(s: &KeccakState, out: &mut [U8]) {
     let _out_len = out.len();
     for i in 0..RATE / 8 {
         hax_lib::loop_invariant!(|i: usize| out.len() == _out_len);
-        let lane = s.get_lane(i / 5, i % 5).deinterleave();
-        out[8 * i..8 * i + 4].copy_from_slice(&lane[0].to_le_bytes());
-        out[8 * i + 4..8 * i + 8].copy_from_slice(&lane[1].to_le_bytes());
+        let keccak_lane = s.get_lane(i / 5, i % 5).deinterleave();
+        out[8 * i..8 * i + 4].copy_from_slice(&keccak_lane[0].to_le_bytes());
+        out[8 * i + 4..8 * i + 8].copy_from_slice(&keccak_lane[1].to_le_bytes());
     }
 }
 
