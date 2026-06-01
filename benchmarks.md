@@ -215,6 +215,3 @@ Firmware exited successfully
 [^1]: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1.html
 [^2]: https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf
 [^3]: https://www.espressif.com/sites/default/files/documentation/esp32-c6-wroom-1_wroom-1u_datasheet_en.pdf
-[^4]: The benchmark crashses due to insufficient stack space.
-[^5]: Core locks up.
-[^6]: Benchmark binary does not fit available flash space.
