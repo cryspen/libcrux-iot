@@ -10,6 +10,7 @@ files:
 
   # Portable SHA3
   - name: libcrux_iot_sha3
+    include_in_h: ['"eurydice_glue_additions.h"']  
     api:
       exact:
         - [libcrux_iot_sha3, sha224]

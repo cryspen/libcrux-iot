@@ -1,5 +1,5 @@
-#ifndef __KRMLLIB_H
-#define __KRMLLIB_H
+#ifndef KRML_HEADER_KRMLLIB_H
+#define KRML_HEADER_KRMLLIB_H
 
 /******************************************************************************/
 /* The all-in-one krmllib.h header                                            */
@@ -16,12 +16,13 @@
  * argument "-bundle FStar.*"). You can then include the headers of your choice
  * one by one, using -add-early-include. */
 
-#include "krml/fstar_int.h"
-#include "krml/internal/builtin.h"
-#include "krml/internal/callconv.h"
-#include "krml/internal/debug.h"
 #include "krml/internal/target.h"
+#include "krml/internal/callconv.h"
+#include "krml/internal/builtin.h"
+#include "krml/internal/debug.h"
 #include "krml/internal/types.h"
-#include "krml/lowstar_endianness.h"
 
-#endif /* __KRMLLIB_H */
+#include "krml/lowstar_endianness.h"
+#include "krml/fstar_int.h"
+
+#endif     /* KRML_HEADER_KRMLLIB_H */

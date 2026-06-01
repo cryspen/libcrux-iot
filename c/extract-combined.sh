@@ -31,8 +31,8 @@ clean=0
 config=$extract_root/combined.yaml
 out=combined/generated
 glue=$EURYDICE_HOME/include/eurydice_glue.h
-features_mlkem="${features} --cargo-arg=--no-default-features --cargo-arg=--features=mlkem768"
-features_mldsa="${features} --cargo-arg=--no-default-features --cargo-arg=--features=mldsa65"
+features_mlkem="${features} --no-default-features --features=mlkem768"
+features_mldsa="${features} --no-default-features --features=mldsa65,mldsa44,mldsa87"
 eurydice_glue=1
 karamel_include=1
 unrolling=16
@@ -85,9 +85,9 @@ if [[ "$no_charon" = 0 ]]; then
     popd
     rm -rf $workspace_root/libcrux_iot_ml_kem.llbc $workspace_root/libcrux_iot_sha3.llbc $workspace_root/libcrux_iot_ml_dsa.llbc $secrets_root/libcrux_secrets.llbc
 
-    flags=
+    flags="-- "
     if [[ $(uname -m) == "arm64" ]]; then
-       flags+="-- --target=x86_64-apple-darwin"
+       flags+="--target=x86_64-apple-darwin "
     fi
 
     cd $secrets_root
@@ -104,25 +104,23 @@ if [[ "$no_charon" = 0 ]]; then
              --preset eurydice \
              --start-from libcrux_iot_sha3 \
              --remove-associated-types '*' \
-             --include 'core::num::*::BITS' --include 'core::num::*::MAX' $flags
+             --include 'core::num::*::BITS' --include 'core::num::*::MAX' $flags --features=unbuffered-xof
     
     cd $workspace_root/ml-kem
     echo "Running charon (ML-KEM) ..."
     RUSTFLAGS="-Cdebug-assertions=no --cfg eurydice" $CHARON_HOME/bin/charon cargo \
-             $features_mlkem \
              --preset eurydice \
              --start-from libcrux_iot_ml_kem \
-             --include 'core::num::*::BITS' --include 'core::num::*::MAX' $flags
+             --include 'core::num::*::BITS' --include 'core::num::*::MAX' $flags $features_mlkem
     
     cd $workspace_root/ml-dsa
     echo "Running charon (ML-DSA) ..."
     RUSTFLAGS="--cfg eurydice" $CHARON_HOME/bin/charon cargo \
-             $features_mldsa \
              --preset eurydice \
              --start-from libcrux_iot_ml_dsa \
              --remove-associated-types '*' \
              --include 'core::num::*::BITS' --include 'core::num::*::MAX' \
-             --rustc-arg=-Cdebug-assertions=no $flags
+             --rustc-arg=-Cdebug-assertions=no $flags $features_mldsa
 
     
     # rm -rf $repo_root/libcrux_ml_kem.llbc $repo_root/libcrux_sha3.llbc $repo_root/libcrux_secrets.llbc

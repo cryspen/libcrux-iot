@@ -3,7 +3,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include "libcrux_iot_sha3_portable.h"
+#include "libcrux_iot_sha3.h"
 
 using namespace std;
 

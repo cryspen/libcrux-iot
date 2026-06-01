@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * Charon: e656e17bff6ca5efac8ab6919b9b74cb9a8dd8ad
+ * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
+ * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
  * F*: unset
- * Libcrux: 1ad7c25705450131b575043e252c944035898962
+ * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
  */
 
 #ifndef libcrux_iot_core_H
@@ -26,9 +26,9 @@ with types uint8_t
 with const generics
 - $64size_t
 */
-typedef struct Eurydice_arr_06_s {
+typedef struct Eurydice_arr_c7_s {
   uint8_t data[64U];
-} Eurydice_arr_06;
+} Eurydice_arr_c7;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -36,9 +36,9 @@ with types uint8_t
 with const generics
 - $48size_t
 */
-typedef struct Eurydice_arr_5f_s {
+typedef struct Eurydice_arr_65_s {
   uint8_t data[48U];
-} Eurydice_arr_5f;
+} Eurydice_arr_65;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -46,9 +46,9 @@ with types uint8_t
 with const generics
 - $32size_t
 */
-typedef struct Eurydice_arr_60_s {
+typedef struct Eurydice_arr_ec_s {
   uint8_t data[32U];
-} Eurydice_arr_60;
+} Eurydice_arr_ec;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -56,9 +56,9 @@ with types uint8_t
 with const generics
 - $28size_t
 */
-typedef struct Eurydice_arr_f1_s {
+typedef struct Eurydice_arr_a2_s {
   uint8_t data[28U];
-} Eurydice_arr_f1;
+} Eurydice_arr_a2;
 
 #if defined(__cplusplus)
 }
