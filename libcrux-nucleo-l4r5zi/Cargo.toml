@@ -20,7 +20,7 @@ defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
-libcrux-testbench = { path = "../libcrux-testbench" }
+libcrux-testbench = { path = "../libcrux-testbench" , default-features = false}
 embassy-stm32 = { version = "0.2.0", features = ["stm32l4r5zi", "defmt"] }
 embassy-time = { version = "0.4", features = ["tick-hz-80_000_000", "generic-queue-8"], optional = true }
 libcrux-iot-ml-kem = { path = "../libcrux-iot/ml-kem" }
