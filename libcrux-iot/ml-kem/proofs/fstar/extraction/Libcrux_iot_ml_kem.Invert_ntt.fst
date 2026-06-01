@@ -374,7 +374,4 @@ let invert_ntt_montgomery
   let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector = tmp1 in
   let scratch:v_Vector = tmp2 in
   let _:Prims.unit = () in
-  let re:Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector =
-    Libcrux_iot_ml_kem.Polynomial.impl_2__poly_barrett_reduce #v_Vector re
-  in
   re, scratch <: (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector & v_Vector)

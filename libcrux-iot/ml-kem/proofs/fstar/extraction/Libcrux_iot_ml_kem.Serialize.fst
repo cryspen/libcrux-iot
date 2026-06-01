@@ -364,6 +364,7 @@ let deserialize_ring_elements_reduced
           in
           deserialized_pk)
   in
+  let _:Prims.unit = Libcrux_secrets.Mem_requests.ct_declassify #(t_Slice u8) public_key in
   deserialized_pk
 
 let compress_then_serialize_10_

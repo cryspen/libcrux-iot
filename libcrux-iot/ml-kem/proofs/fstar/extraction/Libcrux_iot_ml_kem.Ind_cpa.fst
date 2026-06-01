@@ -123,6 +123,7 @@ let serialize_public_key_mut
   in
   let scratch:v_Vector = tmp1 in
   let _:Prims.unit = () in
+  let _:Prims.unit = Libcrux_secrets.Mem_requests.ct_declassify #(t_Slice u8) serialized in
   let serialized:t_Slice u8 =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_range_from serialized
       ({
