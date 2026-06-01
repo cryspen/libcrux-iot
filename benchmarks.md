@@ -18,7 +18,20 @@ Results captured on the reference board.
 
 ## Cycle Measurements
 
-Run `DEFMT_LOG=infor cargo rrb mlkem --no-default-features -F $variant` (`$variant` in {`mlkem512`, `mlkem768`, `mlkem1024`}) in `libcrux-nucleo-l4r5zi` to reproduce:
+To run ML-KEM measurements:
+```
+cd libcrux-nucleo-l4r5zi
+# $variant in {mlkem512, mlkem768, mlkem1024}
+DEFMT_LOG=info cargo rrb mlkem --no-default-features -F $variant
+```
+
+To run ML-DSA measurements:
+
+```
+cd libcrux-nucleo-l4r5zi
+# $variant in {mldsa44, mldsa65, mldsa87}
+DEFMT_LOG=info cargo rrb mldsa --no-default-features -F $variant
+```
 
 ### ML-KEM 512
 ```
@@ -130,42 +143,114 @@ b,d,bench_decaps,4,2028194
 Firmware exited successfully
 ```
 
-### ML-DSA 87
-
-Run `DEFMT_LOG=infor cargo rrb mldsa` in `libcrux-nucleo-l4r5zi` to reproduce:
+### ML-DSA 44
 
 ```
 l,0,16000000,ML-DSA Benchmark
 b,r,bench_keygen,0
-b,d,bench_keygen,0,7786306
+b,d,bench_keygen,0,2907973
 b,r,bench_keygen,1
-b,d,bench_keygen,1,7786306
+b,d,bench_keygen,1,2907975
 b,r,bench_keygen,2
-b,d,bench_keygen,2,7786307
+b,d,bench_keygen,2,2907974
 b,r,bench_keygen,3
-b,d,bench_keygen,3,7786307
+b,d,bench_keygen,3,2907972
 b,r,bench_keygen,4
-b,d,bench_keygen,4,7786305
+b,d,bench_keygen,4,2907975
 b,r,bench_sign,0
-b,d,bench_sign,0,13558239
+b,d,bench_sign,0,3834740
 b,r,bench_sign,1
-b,d,bench_sign,1,13558234
+b,d,bench_sign,1,3834744
 b,r,bench_sign,2
-b,d,bench_sign,2,13558236
+b,d,bench_sign,2,3834741
 b,r,bench_sign,3
-b,d,bench_sign,3,13558238
+b,d,bench_sign,3,3834744
 b,r,bench_sign,4
-b,d,bench_sign,4,13558244
+b,d,bench_sign,4,3834746
+b,r,bench_verify,0
+b,d,bench_verify,0,2560836
+b,r,bench_verify,1
+b,d,bench_verify,1,2560838
+b,r,bench_verify,2
+b,d,bench_verify,2,2560837
+b,r,bench_verify,3
+b,d,bench_verify,3,2560836
+b,r,bench_verify,4
+b,d,bench_verify,4,2560839
+Firmware exited successfully
+```
+
+### ML-DSA 65
+
+```
+l,0,16000000,ML-DSA Benchmark
+b,r,bench_keygen,0
+b,d,bench_keygen,0,4548147
+b,r,bench_keygen,1
+b,d,bench_keygen,1,4548143
+b,r,bench_keygen,2
+b,d,bench_keygen,2,4548147
+b,r,bench_keygen,3
+b,d,bench_keygen,3,4548146
+b,r,bench_keygen,4
+b,d,bench_keygen,4,4548144
+b,r,bench_sign,0
+b,d,bench_sign,0,5609316
+b,r,bench_sign,1
+b,d,bench_sign,1,5609313
+b,r,bench_sign,2
+b,d,bench_sign,2,5609311
+b,r,bench_sign,3
+b,d,bench_sign,3,5609316
+b,r,bench_sign,4
+b,d,bench_sign,4,5609313
+b,r,bench_verify,0
+b,d,bench_verify,0,4240913
+b,r,bench_verify,1
+b,d,bench_verify,1,4240920
+b,r,bench_verify,2
+b,d,bench_verify,2,4240919
+b,r,bench_verify,3
+b,d,bench_verify,3,4240916
+b,r,bench_verify,4
+b,d,bench_verify,4,4240921
+Firmware exited successfully
+```
+
+### ML-DSA 87
+
+```
+l,0,16000000,ML-DSA Benchmark
+b,r,bench_keygen,0
+b,d,bench_keygen,0,7786305
+b,r,bench_keygen,1
+b,d,bench_keygen,1,7786304
+b,r,bench_keygen,2
+b,d,bench_keygen,2,7786303
+b,r,bench_keygen,3
+b,d,bench_keygen,3,7786306
+b,r,bench_keygen,4
+b,d,bench_keygen,4,7786306
+b,r,bench_sign,0
+b,d,bench_sign,0,13558244
+b,r,bench_sign,1
+b,d,bench_sign,1,13558242
+b,r,bench_sign,2
+b,d,bench_sign,2,13558238
+b,r,bench_sign,3
+b,d,bench_sign,3,13558242
+b,r,bench_sign,4
+b,d,bench_sign,4,13558240
 b,r,bench_verify,0
 b,d,bench_verify,0,7210660
 b,r,bench_verify,1
-b,d,bench_verify,1,7210654
+b,d,bench_verify,1,7210655
 b,r,bench_verify,2
-b,d,bench_verify,2,7210654
+b,d,bench_verify,2,7210655
 b,r,bench_verify,3
-b,d,bench_verify,3,7210659
+b,d,bench_verify,3,7210657
 b,r,bench_verify,4
-b,d,bench_verify,4,7210655
+b,d,bench_verify,4,7210654
 Firmware exited successfully
 ```
 
