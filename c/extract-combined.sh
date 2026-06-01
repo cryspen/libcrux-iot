@@ -96,7 +96,8 @@ if [[ "$no_charon" = 0 ]]; then
              --preset eurydice \
              --start-from libcrux_secrets \
              --remove-associated-types '*' \
-             --include 'core::num::*::BITS' --include 'core::num::*::MAX' $flags
+             --include 'core::num::*::BITS' --include 'core::num::*::MAX' \
+             --dest $secrets_root $flags
 
     cd $workspace_root/sha3
     echo "Running charon (SHA3) ..."
