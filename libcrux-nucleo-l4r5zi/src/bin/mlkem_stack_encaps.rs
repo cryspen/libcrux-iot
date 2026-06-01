@@ -30,8 +30,8 @@ fn main() -> ! {
         assets::ENCAPS_SEED,
     ));
 
-    let stack_start = core::hint::black_box(unsafe { &_stack_start as *const u32 });
-    let stack_end = core::hint::black_box(unsafe { &_stack_end as *const u32 });
+    let stack_start = core::hint::black_box(&raw const _stack_start);
+    let stack_end = core::hint::black_box(&raw const _stack_end);
 
     board::stack::measure(
         assets::STR_ENCAPS,
