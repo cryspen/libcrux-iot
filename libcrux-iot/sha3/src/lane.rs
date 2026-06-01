@@ -113,6 +113,8 @@ impl core::fmt::Debug for Lane2U32 {
 mod interleave_tests {
     use super::*;
     use libcrux_secrets::Declassify;
+    use rand::rngs::StdRng;
+    use rand::{Rng, SeedableRng};
 
     #[test]
     fn identity() {
@@ -125,6 +127,62 @@ mod interleave_tests {
                 lane_.0.declassify(),
                 "lane_: {lane_:x?}, lane: {lane:x?}",
             )
+        }
+    }
+
+    #[test]
+    fn interleave_deinterleave_edge_cases() {
+        let cases: [[u32; 2]; 8] = [
+            [0, 0],
+            [u32::MAX, u32::MAX],
+            [u32::MAX, 0],
+            [0, u32::MAX],
+            [0x5555_5555, 0x5555_5555],
+            [0xAAAA_AAAA, 0xAAAA_AAAA],
+            [0x5555_5555, 0xAAAA_AAAA],
+            [0xDEAD_BEEF, 0x1234_5678],
+        ];
+        for v in cases {
+            let l: Lane2U32 = v.classify().into();
+            let back = l.interleave().deinterleave();
+            assert_eq!(l.0.declassify(), back.0.declassify(), "{:x?}", v);
+        }
+    }
+
+    #[test]
+    fn interleave_deinterleave_random() {
+        let mut rng = StdRng::seed_from_u64(0x1234_5678);
+        for _ in 0..1000 {
+            let v: [u32; 2] = [rng.gen(), rng.gen()];
+            let l: Lane2U32 = v.classify().into();
+            let back = l.interleave().deinterleave();
+            assert_eq!(l.0.declassify(), back.0.declassify(), "{:x?}", v);
+        }
+    }
+
+    /// Interleave a 64-bit value bit-by-bit (reference implementation): even
+    /// bits to the low 32-bit half, odd bits to the high 32-bit half. Used as
+    /// a check that the impl's `interleave` is not just self-inverse but also
+    /// implements the right bit-shuffle.
+    fn reference_interleave(v: u64) -> [u32; 2] {
+        let mut even = 0u32;
+        let mut odd = 0u32;
+        for k in 0..32 {
+            even |= (((v >> (2 * k)) & 1) as u32) << k;
+            odd |= (((v >> (2 * k + 1)) & 1) as u32) << k;
+        }
+        [even, odd]
+    }
+
+    #[test]
+    fn interleave_matches_reference() {
+        let mut rng = StdRng::seed_from_u64(0xABCD_EF01);
+        for _ in 0..500 {
+            let v: u64 = rng.gen();
+            let l: Lane2U32 = [v as u32, (v >> 32) as u32].classify().into();
+            let got = l.interleave().0.declassify();
+            let want = reference_interleave(v);
+            assert_eq!(got, want, "v={:x}", v);
         }
     }
 }
