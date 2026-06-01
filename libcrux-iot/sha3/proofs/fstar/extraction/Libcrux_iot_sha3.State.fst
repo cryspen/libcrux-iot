@@ -185,7 +185,7 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
       (fun out i ->
           let out:t_Slice u8 = out in
           let i:usize = i in
-          let lane:Libcrux_iot_sha3.Lane.t_Lane2U32 =
+          let keccak_lane:Libcrux_iot_sha3.Lane.t_Lane2U32 =
             Libcrux_iot_sha3.Lane.impl_Lane2U32__deinterleave (impl_KeccakState__get_lane self
                   (i /! mk_usize 5 <: usize)
                   (i %! mk_usize 5 <: usize)
@@ -211,7 +211,9 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
                       Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
-                  (Core_models.Num.impl_u32__to_le_bytes (lane.[ mk_usize 0 ] <: u32) <: t_Slice u8)
+                  (Core_models.Num.impl_u32__to_le_bytes (keccak_lane.[ mk_usize 0 ] <: u32)
+                    <:
+                    t_Slice u8)
                 <:
                 t_Slice u8)
           in
@@ -236,7 +238,9 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
                       Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
-                  (Core_models.Num.impl_u32__to_le_bytes (lane.[ mk_usize 1 ] <: u32) <: t_Slice u8)
+                  (Core_models.Num.impl_u32__to_le_bytes (keccak_lane.[ mk_usize 1 ] <: u32)
+                    <:
+                    t_Slice u8)
                 <:
                 t_Slice u8)
           in
@@ -245,7 +249,7 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
   let out:t_Slice u8 =
     if last_block_len >. mk_usize 4
     then
-      let lane:Libcrux_iot_sha3.Lane.t_Lane2U32 =
+      let keccak_lane:Libcrux_iot_sha3.Lane.t_Lane2U32 =
         Libcrux_iot_sha3.Lane.impl_Lane2U32__deinterleave (impl_KeccakState__get_lane self
               (num_full_blocks /! mk_usize 5 <: usize)
               (num_full_blocks %! mk_usize 5 <: usize)
@@ -274,7 +278,9 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
                   Core_models.Ops.Range.t_Range usize ]
                 <:
                 t_Slice u8)
-              (Core_models.Num.impl_u32__to_le_bytes (lane.[ mk_usize 0 ] <: u32) <: t_Slice u8)
+              (Core_models.Num.impl_u32__to_le_bytes (keccak_lane.[ mk_usize 0 ] <: u32)
+                <:
+                t_Slice u8)
             <:
             t_Slice u8)
       in
@@ -303,7 +309,7 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
                   Core_models.Ops.Range.t_Range usize ]
                 <:
                 t_Slice u8)
-              ((Core_models.Num.impl_u32__to_le_bytes (lane.[ mk_usize 1 ] <: u32)
+              ((Core_models.Num.impl_u32__to_le_bytes (keccak_lane.[ mk_usize 1 ] <: u32)
                   <:
                   t_Array u8 (mk_usize 4)).[ {
                     Core_models.Ops.Range.f_start = mk_usize 0;
@@ -320,7 +326,7 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
     else
       if last_block_len >. mk_usize 0
       then
-        let lane:Libcrux_iot_sha3.Lane.t_Lane2U32 =
+        let keccak_lane:Libcrux_iot_sha3.Lane.t_Lane2U32 =
           Libcrux_iot_sha3.Lane.impl_Lane2U32__deinterleave (impl_KeccakState__get_lane self
                 (num_full_blocks /! mk_usize 5 <: usize)
                 (num_full_blocks %! mk_usize 5 <: usize)
@@ -348,7 +354,7 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
                     Core_models.Ops.Range.t_Range usize ]
                   <:
                   t_Slice u8)
-                ((Core_models.Num.impl_u32__to_le_bytes (lane.[ mk_usize 0 ] <: u32)
+                ((Core_models.Num.impl_u32__to_le_bytes (keccak_lane.[ mk_usize 0 ] <: u32)
                     <:
                     t_Array u8 (mk_usize 4)).[ {
                       Core_models.Ops.Range.f_start = mk_usize 0;
@@ -366,7 +372,11 @@ let impl_KeccakState__store (v_RATE: usize) (self: t_KeccakState) (out: t_Slice 
   in
   out
 
-let load_block_2u32 (v_RATE: usize) (state: t_KeccakState) (blocks: t_Slice u8) (start: usize)
+let load_block_2u32
+      (v_RATE: usize)
+      (keccak_state: t_KeccakState)
+      (blocks: t_Slice u8)
+      (start: usize)
     : Prims.Pure t_KeccakState
       (requires
         (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
@@ -463,22 +473,24 @@ let load_block_2u32 (v_RATE: usize) (state: t_KeccakState) (blocks: t_Slice u8) 
           in
           state_flat)
   in
-  let state:t_KeccakState =
+  let keccak_state:t_KeccakState =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
       (v_RATE /! mk_usize 8 <: usize)
-      (fun state temp_1_ ->
-          let state:t_KeccakState = state in
+      (fun keccak_state temp_1_ ->
+          let keccak_state:t_KeccakState = keccak_state in
           let _:usize = temp_1_ in
           true)
-      state
-      (fun state i ->
-          let state:t_KeccakState = state in
+      keccak_state
+      (fun keccak_state i ->
+          let keccak_state:t_KeccakState = keccak_state in
           let i:usize = i in
           let got:Libcrux_iot_sha3.Lane.t_Lane2U32 =
-            impl_KeccakState__get_lane state (i /! mk_usize 5 <: usize) (i %! mk_usize 5 <: usize)
+            impl_KeccakState__get_lane keccak_state
+              (i /! mk_usize 5 <: usize)
+              (i %! mk_usize 5 <: usize)
           in
-          let state:t_KeccakState =
-            impl_KeccakState__set_lane state
+          let keccak_state:t_KeccakState =
+            impl_KeccakState__set_lane keccak_state
               (i /! mk_usize 5 <: usize)
               (i %! mk_usize 5 <: usize)
               (Libcrux_iot_sha3.Lane.impl_Lane2U32__from_ints (let list =
@@ -502,9 +514,9 @@ let load_block_2u32 (v_RATE: usize) (state: t_KeccakState) (blocks: t_Slice u8) 
                 <:
                 Libcrux_iot_sha3.Lane.t_Lane2U32)
           in
-          state)
+          keccak_state)
   in
-  state
+  keccak_state
 
 let impl_KeccakState__load_block
       (v_RATE: usize)
@@ -527,7 +539,7 @@ let impl_KeccakState__load_block
 
 let load_block_full_2u32
       (v_RATE: usize)
-      (state: t_KeccakState)
+      (keccak_state: t_KeccakState)
       (blocks: t_Array u8 (mk_usize 200))
       (start: usize)
     : Prims.Pure t_KeccakState
@@ -539,8 +551,10 @@ let load_block_full_2u32
           Hax_lib.Int.t_Int) <=
         (Rust_primitives.Hax.Int.from_machine (mk_i32 200) <: Hax_lib.Int.t_Int))
       (fun _ -> Prims.l_True) =
-  let state:t_KeccakState = load_block_2u32 v_RATE state (blocks <: t_Slice u8) start in
-  state
+  let keccak_state:t_KeccakState =
+    load_block_2u32 v_RATE keccak_state (blocks <: t_Slice u8) start
+  in
+  keccak_state
 
 let impl_KeccakState__load_block_full
       (v_RATE: usize)
@@ -574,7 +588,7 @@ let store_block_2u32 (v_RATE: usize) (s: t_KeccakState) (out: t_Slice u8)
       (fun out i ->
           let out:t_Slice u8 = out in
           let i:usize = i in
-          let lane:Libcrux_iot_sha3.Lane.t_Lane2U32 =
+          let keccak_lane:Libcrux_iot_sha3.Lane.t_Lane2U32 =
             Libcrux_iot_sha3.Lane.impl_Lane2U32__deinterleave (impl_KeccakState__get_lane s
                   (i /! mk_usize 5 <: usize)
                   (i %! mk_usize 5 <: usize)
@@ -600,7 +614,9 @@ let store_block_2u32 (v_RATE: usize) (s: t_KeccakState) (out: t_Slice u8)
                       Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
-                  (Core_models.Num.impl_u32__to_le_bytes (lane.[ mk_usize 0 ] <: u32) <: t_Slice u8)
+                  (Core_models.Num.impl_u32__to_le_bytes (keccak_lane.[ mk_usize 0 ] <: u32)
+                    <:
+                    t_Slice u8)
                 <:
                 t_Slice u8)
           in
@@ -625,7 +641,9 @@ let store_block_2u32 (v_RATE: usize) (s: t_KeccakState) (out: t_Slice u8)
                       Core_models.Ops.Range.t_Range usize ]
                     <:
                     t_Slice u8)
-                  (Core_models.Num.impl_u32__to_le_bytes (lane.[ mk_usize 1 ] <: u32) <: t_Slice u8)
+                  (Core_models.Num.impl_u32__to_le_bytes (keccak_lane.[ mk_usize 1 ] <: u32)
+                    <:
+                    t_Slice u8)
                 <:
                 t_Slice u8)
           in

@@ -199,6 +199,40 @@ unfold
 let keccakf1600_round0_theta = keccakf1600_round0_theta'
 
 assume
+val keccakf1600_round0_pi_rho_chi_y0_zeta0':
+    v_BASE_ROUND: usize ->
+    s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y0_zeta0 (v_BASE_ROUND: usize) =
+  keccakf1600_round0_pi_rho_chi_y0_zeta0' v_BASE_ROUND
+
+assume
+val keccakf1600_round0_pi_rho_chi_y0_zeta1':
+    v_BASE_ROUND: usize ->
+    s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y0_zeta1 (v_BASE_ROUND: usize) =
+  keccakf1600_round0_pi_rho_chi_y0_zeta1' v_BASE_ROUND
+
+assume
+val keccakf1600_round0_pi_rho_chi_y1_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y1_zeta0 = keccakf1600_round0_pi_rho_chi_y1_zeta0'
+
+assume
+val keccakf1600_round0_pi_rho_chi_y1_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y1_zeta1 = keccakf1600_round0_pi_rho_chi_y1_zeta1'
+
+assume
 val keccakf1600_round0_pi_rho_chi_1_':
     v_BASE_ROUND: usize ->
     s: Libcrux_iot_sha3.State.t_KeccakState
@@ -207,6 +241,48 @@ val keccakf1600_round0_pi_rho_chi_1_':
 unfold
 let keccakf1600_round0_pi_rho_chi_1_ (v_BASE_ROUND: usize) =
   keccakf1600_round0_pi_rho_chi_1_' v_BASE_ROUND
+
+assume
+val keccakf1600_round0_pi_rho_chi_y2_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y2_zeta0 = keccakf1600_round0_pi_rho_chi_y2_zeta0'
+
+assume
+val keccakf1600_round0_pi_rho_chi_y2_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y2_zeta1 = keccakf1600_round0_pi_rho_chi_y2_zeta1'
+
+assume
+val keccakf1600_round0_pi_rho_chi_y3_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y3_zeta0 = keccakf1600_round0_pi_rho_chi_y3_zeta0'
+
+assume
+val keccakf1600_round0_pi_rho_chi_y3_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y3_zeta1 = keccakf1600_round0_pi_rho_chi_y3_zeta1'
+
+assume
+val keccakf1600_round0_pi_rho_chi_y4_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y4_zeta0 = keccakf1600_round0_pi_rho_chi_y4_zeta0'
+
+assume
+val keccakf1600_round0_pi_rho_chi_y4_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round0_pi_rho_chi_y4_zeta1 = keccakf1600_round0_pi_rho_chi_y4_zeta1'
 
 assume
 val keccakf1600_round0_pi_rho_chi_2_': s: Libcrux_iot_sha3.State.t_KeccakState
@@ -300,6 +376,40 @@ unfold
 let keccakf1600_round1_theta = keccakf1600_round1_theta'
 
 assume
+val keccakf1600_round1_pi_rho_chi_y0_zeta0':
+    v_BASE_ROUND: usize ->
+    s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y0_zeta0 (v_BASE_ROUND: usize) =
+  keccakf1600_round1_pi_rho_chi_y0_zeta0' v_BASE_ROUND
+
+assume
+val keccakf1600_round1_pi_rho_chi_y0_zeta1':
+    v_BASE_ROUND: usize ->
+    s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y0_zeta1 (v_BASE_ROUND: usize) =
+  keccakf1600_round1_pi_rho_chi_y0_zeta1' v_BASE_ROUND
+
+assume
+val keccakf1600_round1_pi_rho_chi_y1_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y1_zeta0 = keccakf1600_round1_pi_rho_chi_y1_zeta0'
+
+assume
+val keccakf1600_round1_pi_rho_chi_y1_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y1_zeta1 = keccakf1600_round1_pi_rho_chi_y1_zeta1'
+
+assume
 val keccakf1600_round1_pi_rho_chi_1_':
     v_BASE_ROUND: usize ->
     s: Libcrux_iot_sha3.State.t_KeccakState
@@ -308,6 +418,48 @@ val keccakf1600_round1_pi_rho_chi_1_':
 unfold
 let keccakf1600_round1_pi_rho_chi_1_ (v_BASE_ROUND: usize) =
   keccakf1600_round1_pi_rho_chi_1_' v_BASE_ROUND
+
+assume
+val keccakf1600_round1_pi_rho_chi_y2_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y2_zeta0 = keccakf1600_round1_pi_rho_chi_y2_zeta0'
+
+assume
+val keccakf1600_round1_pi_rho_chi_y2_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y2_zeta1 = keccakf1600_round1_pi_rho_chi_y2_zeta1'
+
+assume
+val keccakf1600_round1_pi_rho_chi_y3_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y3_zeta0 = keccakf1600_round1_pi_rho_chi_y3_zeta0'
+
+assume
+val keccakf1600_round1_pi_rho_chi_y3_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y3_zeta1 = keccakf1600_round1_pi_rho_chi_y3_zeta1'
+
+assume
+val keccakf1600_round1_pi_rho_chi_y4_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y4_zeta0 = keccakf1600_round1_pi_rho_chi_y4_zeta0'
+
+assume
+val keccakf1600_round1_pi_rho_chi_y4_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round1_pi_rho_chi_y4_zeta1 = keccakf1600_round1_pi_rho_chi_y4_zeta1'
 
 assume
 val keccakf1600_round1_pi_rho_chi_2_': s: Libcrux_iot_sha3.State.t_KeccakState
@@ -401,6 +553,40 @@ unfold
 let keccakf1600_round2_theta = keccakf1600_round2_theta'
 
 assume
+val keccakf1600_round2_pi_rho_chi_y0_zeta0':
+    v_BASE_ROUND: usize ->
+    s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y0_zeta0 (v_BASE_ROUND: usize) =
+  keccakf1600_round2_pi_rho_chi_y0_zeta0' v_BASE_ROUND
+
+assume
+val keccakf1600_round2_pi_rho_chi_y0_zeta1':
+    v_BASE_ROUND: usize ->
+    s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y0_zeta1 (v_BASE_ROUND: usize) =
+  keccakf1600_round2_pi_rho_chi_y0_zeta1' v_BASE_ROUND
+
+assume
+val keccakf1600_round2_pi_rho_chi_y1_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y1_zeta0 = keccakf1600_round2_pi_rho_chi_y1_zeta0'
+
+assume
+val keccakf1600_round2_pi_rho_chi_y1_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y1_zeta1 = keccakf1600_round2_pi_rho_chi_y1_zeta1'
+
+assume
 val keccakf1600_round2_pi_rho_chi_1_':
     v_BASE_ROUND: usize ->
     s: Libcrux_iot_sha3.State.t_KeccakState
@@ -409,6 +595,48 @@ val keccakf1600_round2_pi_rho_chi_1_':
 unfold
 let keccakf1600_round2_pi_rho_chi_1_ (v_BASE_ROUND: usize) =
   keccakf1600_round2_pi_rho_chi_1_' v_BASE_ROUND
+
+assume
+val keccakf1600_round2_pi_rho_chi_y2_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y2_zeta0 = keccakf1600_round2_pi_rho_chi_y2_zeta0'
+
+assume
+val keccakf1600_round2_pi_rho_chi_y2_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y2_zeta1 = keccakf1600_round2_pi_rho_chi_y2_zeta1'
+
+assume
+val keccakf1600_round2_pi_rho_chi_y3_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y3_zeta0 = keccakf1600_round2_pi_rho_chi_y3_zeta0'
+
+assume
+val keccakf1600_round2_pi_rho_chi_y3_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y3_zeta1 = keccakf1600_round2_pi_rho_chi_y3_zeta1'
+
+assume
+val keccakf1600_round2_pi_rho_chi_y4_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y4_zeta0 = keccakf1600_round2_pi_rho_chi_y4_zeta0'
+
+assume
+val keccakf1600_round2_pi_rho_chi_y4_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round2_pi_rho_chi_y4_zeta1 = keccakf1600_round2_pi_rho_chi_y4_zeta1'
 
 assume
 val keccakf1600_round2_pi_rho_chi_2_': s: Libcrux_iot_sha3.State.t_KeccakState
@@ -502,6 +730,40 @@ unfold
 let keccakf1600_round3_theta = keccakf1600_round3_theta'
 
 assume
+val keccakf1600_round3_pi_rho_chi_y0_zeta0':
+    v_BASE_ROUND: usize ->
+    s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y0_zeta0 (v_BASE_ROUND: usize) =
+  keccakf1600_round3_pi_rho_chi_y0_zeta0' v_BASE_ROUND
+
+assume
+val keccakf1600_round3_pi_rho_chi_y0_zeta1':
+    v_BASE_ROUND: usize ->
+    s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y0_zeta1 (v_BASE_ROUND: usize) =
+  keccakf1600_round3_pi_rho_chi_y0_zeta1' v_BASE_ROUND
+
+assume
+val keccakf1600_round3_pi_rho_chi_y1_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y1_zeta0 = keccakf1600_round3_pi_rho_chi_y1_zeta0'
+
+assume
+val keccakf1600_round3_pi_rho_chi_y1_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y1_zeta1 = keccakf1600_round3_pi_rho_chi_y1_zeta1'
+
+assume
 val keccakf1600_round3_pi_rho_chi_1_':
     v_BASE_ROUND: usize ->
     s: Libcrux_iot_sha3.State.t_KeccakState
@@ -510,6 +772,48 @@ val keccakf1600_round3_pi_rho_chi_1_':
 unfold
 let keccakf1600_round3_pi_rho_chi_1_ (v_BASE_ROUND: usize) =
   keccakf1600_round3_pi_rho_chi_1_' v_BASE_ROUND
+
+assume
+val keccakf1600_round3_pi_rho_chi_y2_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y2_zeta0 = keccakf1600_round3_pi_rho_chi_y2_zeta0'
+
+assume
+val keccakf1600_round3_pi_rho_chi_y2_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y2_zeta1 = keccakf1600_round3_pi_rho_chi_y2_zeta1'
+
+assume
+val keccakf1600_round3_pi_rho_chi_y3_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y3_zeta0 = keccakf1600_round3_pi_rho_chi_y3_zeta0'
+
+assume
+val keccakf1600_round3_pi_rho_chi_y3_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y3_zeta1 = keccakf1600_round3_pi_rho_chi_y3_zeta1'
+
+assume
+val keccakf1600_round3_pi_rho_chi_y4_zeta0': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y4_zeta0 = keccakf1600_round3_pi_rho_chi_y4_zeta0'
+
+assume
+val keccakf1600_round3_pi_rho_chi_y4_zeta1': s: Libcrux_iot_sha3.State.t_KeccakState
+  -> Libcrux_iot_sha3.State.t_KeccakState
+
+unfold
+let keccakf1600_round3_pi_rho_chi_y4_zeta1 = keccakf1600_round3_pi_rho_chi_y4_zeta1'
 
 assume
 val keccakf1600_round3_pi_rho_chi_2_': s: Libcrux_iot_sha3.State.t_KeccakState
