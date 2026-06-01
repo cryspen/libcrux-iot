@@ -3,7 +3,15 @@
 
 use cortex_m_semihosting::debug;
 
-use defmt_rtt as _; // global logger
+#[cfg(all(feature = "board", feature = "qemu"))]
+compile_error!("features `board` and `qemu` are mutually exclusive");
+#[cfg(not(any(feature = "board", feature = "qemu")))]
+compile_error!("enable exactly one feature of `board` (default) or `qemu`");
+
+#[cfg(feature = "board")]
+use defmt_rtt as _;
+#[cfg(feature = "qemu")]
+use defmt_semihosting as _;
 
 use embassy_stm32 as _; // memory layout
 
