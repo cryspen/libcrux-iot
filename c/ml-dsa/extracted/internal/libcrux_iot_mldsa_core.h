@@ -8,7 +8,7 @@
  * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
  * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
  * F*: unset
- * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
+ * Libcrux: 5db7272c7ac7c1933d461a7c12ea5d00fdf450d2
  */
 
 #ifndef internal_libcrux_iot_mldsa_core_H
@@ -185,6 +185,18 @@ with const generics
 */
 const Eurydice_arr_43 *libcrux_iot_ml_dsa_types_as_ref_e9_c6(
     const Eurydice_arr_43 *self);
+
+/**
+ Declassify secret memory.
+
+ No-op if `valgrind_ct_test` cfg is not enabled.
+*/
+/**
+A monomorphic instance of libcrux_secrets.mem_requests.ct_declassify
+with types Eurydice_arr uint8_t[[$64size_t]]
+
+*/
+void libcrux_secrets_mem_requests_ct_declassify_56(const Eurydice_arr_c7 *val);
 
 /**
 This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
@@ -405,6 +417,18 @@ with const generics
 */
 const Eurydice_arr_29 *libcrux_iot_ml_dsa_types_as_ref_e9_a2(
     const Eurydice_arr_29 *self);
+
+/**
+ Declassify secret memory.
+
+ No-op if `valgrind_ct_test` cfg is not enabled.
+*/
+/**
+A monomorphic instance of libcrux_secrets.mem_requests.ct_declassify
+with types Eurydice_arr uint8_t[[$48size_t]]
+
+*/
+void libcrux_secrets_mem_requests_ct_declassify_69(const Eurydice_arr_65 *val);
 
 /**
 This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
@@ -662,6 +686,18 @@ with types Eurydice_arr uint8_t[[$34size_t]]
 */
 Eurydice_arr_31 libcrux_secrets_int_public_integers_classify_27_78(
     Eurydice_arr_31 self);
+
+/**
+ Declassify secret memory.
+
+ No-op if `valgrind_ct_test` cfg is not enabled.
+*/
+/**
+A monomorphic instance of libcrux_secrets.mem_requests.ct_declassify
+with types Eurydice_arr uint8_t[[$32size_t]]
+
+*/
+void libcrux_secrets_mem_requests_ct_declassify_4b(const Eurydice_arr_ec *val);
 
 /**
 This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a (T)> for
@@ -993,6 +1029,18 @@ with const generics
 */
 Eurydice_borrow_slice_u8 Eurydice_array_to_slice_shared_17(
     const Eurydice_arr_c7 *a);
+
+/**
+ Declassify secret memory.
+
+ No-op if `valgrind_ct_test` cfg is not enabled.
+*/
+/**
+A monomorphic instance of libcrux_secrets.mem_requests.ct_declassify
+with types Eurydice_derefed_slice uint8_t
+
+*/
+void libcrux_secrets_mem_requests_ct_declassify_45(const uint8_t (*val)[]);
 
 /**
 This function found in impl {libcrux_secrets::traits::ClassifyRef<&'a ([T])> for
