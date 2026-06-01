@@ -6,7 +6,7 @@ use rand_core::RngCore;
 
 extern crate alloc;
 
-/// Macro to simplify `eurydice` cfg gating
+/// Macro to simplify cfg gating
 #[allow(unused_macros)]
 macro_rules! cfg {
     ($feature:literal, $($item:item)*) => {
