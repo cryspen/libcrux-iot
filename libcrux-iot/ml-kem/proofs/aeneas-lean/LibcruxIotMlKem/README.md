@@ -16,7 +16,7 @@ rejection sampling, (de)serialization, compression) is **not** proven
 here — see [Assumptions](#assumptions-trust-boundary) for the precise
 trust boundary.
 
-## Main theorems
+## Matrix-level theorems
 
 All four are `@[spec]` Triples of the form
 `⦃ True ⦄ <impl> ⦃ ⇓ p => ⌜ <hacspec> (lift args…) = .ok (lift p…) ⌝ ⦄`
@@ -95,6 +95,107 @@ matrix.compute_message K portable_ops_inst v secret_as_ntt u_as_ntt …
 
 `v − secret · u`, then inverse-NTT. All inputs are passed-in polynomials
 (`lift_poly` / `lift_vec`), so this theorem is fully axiom-clean.
+
+## Polynomial-level theorems
+
+The four matrix-level theorems above are assembled from a stack of
+**polynomial-level** FC theorems — each over a single ring element
+(`PolynomialRingElement` = 256 coefficients) — stated and proven in
+[`BitMlKem/FCTargets.lean`](BitMlKem/FCTargets.lean). Unlike L7.2/L7.3,
+**none** of these depend on the sampling / deserialization leaf axioms or
+the spec stubs: every one reports only `{propext, Classical.choice,
+Quot.sound}` (verified). They are the unconditionally-proven core of the
+development.
+
+Each has the same equality shape as the matrix theorems —
+`lift_poly p = Spec.<op>_pure (lift_poly …)` (or the hacspec-`Result`
+form `… = .ok (lift_poly p)`).
+
+### Number-theoretic transform — forward (`ntt_pure`)
+
+```lean
+-- ntt_binomially_sampled_ring_element_fc
+⦃ ⌜ True ⌝ ⦄ polynomial.…ntt_binomially_sampled_ring_element … re
+⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.ntt_pure (lift_poly re) ⌝ ⦄
+```
+
+The impl's in-place 7-layer forward NTT equals the spec's `Spec.ntt_pure`.
+The ciphertext-`u` variant `ntt_vector_u_fc` (`= Spec.ntt_pure_vec_u`)
+covers the encryption path. Both are composed from the per-layer butterfly
+drivers `ntt_at_layer_{1,2,3,7}_portable_fc` and
+`ntt_at_layer_4_plus_portable_fc` — each with a bound-carrying `_strong`
+variant that threads the per-lane `|coeff|` growth across layers.
+
+### Number-theoretic transform — inverse (`invert_ntt_montgomery_pure`)
+
+```lean
+-- invert_ntt_montgomery_fc
+⦃ ⌜ True ⌝ ⦄ … invert_ntt_montgomery K … re scratch
+⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.invert_ntt_montgomery_pure (lift_poly re)
+            ∧ (∀ i j < 16, per-lane |coeff| bound) ⌝ ⦄
+```
+
+The inverse NTT (with the trailing `1/128` Montgomery scaling), built from
+`invert_ntt_at_layer_{1,2,3}_portable_fc`,
+`invert_ntt_at_layer_4_plus_portable_fc`, and the per-vector reduce step
+`inv_ntt_layer_int_vec_step_reduce_fc`. The cross-domain `R`-factor of the
+inverse is carried by the `scaleZ`-bridges (`invert_ntt_montgomery_pure_scaleZ`,
+`ntt_inverse_eq_scaleZ_invert_pure`) used in the L7 chains.
+
+### Pointwise NTT multiplication
+
+```lean
+-- multiply_ntts_eq_pure_array
+ntt.multiply_ntts p1 p2
+  = .ok ⟨(List.range 256).map (multiply_ntts_lane_pure p1 p2), …⟩
+```
+
+The base-case pointwise product of two NTT-domain ring elements, lane by
+lane. The accumulating form `accumulating_ntt_multiply_poly_fc` adds the
+product `self · rhs` into an `i32[256]` accumulator in the Montgomery
+domain (characterized by `accumulating_ntt_multiply_poly_post` plus a
+`≤ 2³⁰` growth bound); the cache variants
+`accumulating_ntt_multiply_{fill,use}_cache_poly_fc` precompute / reuse the
+per-lane twiddle cache. This kernel is the inner loop of all four
+matrix-level products (the `scaleZ 2285` acc-bridges in
+[`L7/Impl/`](BitMlKem/L7/Impl/) sit directly on top of it).
+
+### Reduction, error, and message combination (L6)
+
+The poly-level arithmetic that finishes each ML-KEM step. Every one couples
+the impl op to its pure spec mirror `Spec.<op>_pure`:
+
+| Theorem | hacspec op | what it does |
+|---------|-----------|--------------|
+| `poly_barrett_reduce_fc`          | `poly_barrett_reduce`               | Barrett-reduce all 256 lanes to canonical residues |
+| `poly_reducing_from_i32_array_fc` | `poly_reducing_from_i32_array_pure` | Montgomery-reduce an `i32[256]` accumulator into a ring element |
+| `subtract_reduce_fc`              | `subtract_reduce_pure`              | subtract two ring elements, then Barrett-reduce (decryption tail, L7.4) |
+| `add_error_reduce_fc`             | `add_error_reduce_pure`             | add an error polynomial (impl's `1441`-Montgomery multiply), Barrett-reduce |
+| `add_standard_error_reduce_fc`    | `add_standard_error_reduce_pure`    | add a standard error polynomial (`R`-Montgomery multiply), Barrett-reduce (keygen tail) |
+| `add_message_error_reduce_fc`     | `add_message_error_reduce_pure`     | add error + message to the (`1441`-multiplied) result, Barrett-reduce (L7.3 tail) |
+
+`poly_reducing_from_i32_array_fc` lands in the Montgomery domain
+(`lift_poly_mont`); a `mont_strip` bridge in
+[`L7/Common.lean`](BitMlKem/L7/Common.lean) converts it to the canonical
+`lift_poly` the matrix-level chains consume.
+
+### Field- and vector-element primitives (L0–L2)
+
+Beneath the polynomial layer, each leaf is proven against its `ZMod 3329`
+spec and chained upward:
+
+- **L0** — per-coefficient field arithmetic: `add_fc`, `sub_fc`,
+  `barrett_reduce_fc`, `montgomery_reduce_element_fc`,
+  `montgomery_multiply_fe_by_fer_fc`, `montgomery_multiply_by_constant_fc`,
+  `cond_subtract_3329_fc`, `get_n_least_significant_bits_fc`, …
+- **L1** — the `PortableVector` 16-lane SIMD-shaped ops (`negate_fc`,
+  `multiply_by_constant_fc`, `bitwise_and_with_constant_fc`,
+  `shift_right_fc`, `reducing_from_i32_array_fc`, …).
+- **L2** — single NTT butterfly steps within one layer: `ntt_step_fc`,
+  `ntt_layer_{1,2,3}_step_fc`, `inv_ntt_step_fc`,
+  `inv_ntt_layer_{1,2,3}_step_fc`.
+
+These are the leaves the polynomial-level theorems compose.
 
 ## Assumptions (trust boundary)
 
