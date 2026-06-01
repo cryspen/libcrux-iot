@@ -27,8 +27,8 @@ extern "C" {
 fn main() -> ! {
     let _pair = core::hint::black_box(mlkem::generate_key_pair(assets::KEYGEN_SEED));
 
-    let stack_start = core::hint::black_box(unsafe { &_stack_start as *const u32 });
-    let stack_end = core::hint::black_box(unsafe { &_stack_end as *const u32 });
+    let stack_start = core::hint::black_box(&raw const _stack_start);
+    let stack_end = core::hint::black_box(&raw const _stack_end);
 
     board::stack::measure(
         assets::STR_KEYGEN,
