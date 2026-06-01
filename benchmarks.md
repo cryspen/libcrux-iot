@@ -22,7 +22,7 @@ To run ML-KEM measurements:
 ```
 cd libcrux-nucleo-l4r5zi
 # $variant in {mlkem512, mlkem768, mlkem1024}
-DEFMT_LOG=info cargo rrb mlkem --no-default-features -F $variant
+DEFMT_LOG=info cargo rrb mlkem -F $variant
 ```
 
 To run ML-DSA measurements:
@@ -37,35 +37,35 @@ DEFMT_LOG=info cargo rrb mldsa --no-default-features -F $variant
 ```
 l,0,16000000,ML-KEM Benchmark
 b,r,bench_keygen,0
-b,d,bench_keygen,0,690288
+b,d,bench_keygen,0,690156
 b,r,bench_keygen,1
-b,d,bench_keygen,1,690283
+b,d,bench_keygen,1,690150
 b,r,bench_keygen,2
-b,d,bench_keygen,2,690291
+b,d,bench_keygen,2,690157
 b,r,bench_keygen,3
-b,d,bench_keygen,3,690283
+b,d,bench_keygen,3,690150
 b,r,bench_keygen,4
-b,d,bench_keygen,4,690283
+b,d,bench_keygen,4,690150
 b,r,bench_encaps,0
-b,d,bench_encaps,0,736271
+b,d,bench_encaps,0,736112
 b,r,bench_encaps,1
-b,d,bench_encaps,1,736265
+b,d,bench_encaps,1,736103
 b,r,bench_encaps,2
-b,d,bench_encaps,2,736279
+b,d,bench_encaps,2,736115
 b,r,bench_encaps,3
-b,d,bench_encaps,3,736265
+b,d,bench_encaps,3,736103
 b,r,bench_encaps,4
-b,d,bench_encaps,4,736272
+b,d,bench_encaps,4,736117
 b,r,bench_decaps,0
-b,d,bench_decaps,0,852875
+b,d,bench_decaps,0,852716
 b,r,bench_decaps,1
-b,d,bench_decaps,1,852884
+b,d,bench_decaps,1,852730
 b,r,bench_decaps,2
-b,d,bench_decaps,2,852875
+b,d,bench_decaps,2,852716
 b,r,bench_decaps,3
-b,d,bench_decaps,3,852886
+b,d,bench_decaps,3,852725
 b,r,bench_decaps,4
-b,d,bench_decaps,4,852875
+b,d,bench_decaps,4,852716
 Firmware exited successfully
 ```
 
@@ -74,35 +74,35 @@ Firmware exited successfully
 ```
 l,0,16000000,ML-KEM Benchmark
 b,r,bench_keygen,0
-b,d,bench_keygen,0,1103357
+b,d,bench_keygen,0,1103324
 b,r,bench_keygen,1
-b,d,bench_keygen,1,1103352
+b,d,bench_keygen,1,1103324
 b,r,bench_keygen,2
-b,d,bench_keygen,2,1103351
+b,d,bench_keygen,2,1103328
 b,r,bench_keygen,3
-b,d,bench_keygen,3,1103349
+b,d,bench_keygen,3,1103320
 b,r,bench_keygen,4
-b,d,bench_keygen,4,1103360
+b,d,bench_keygen,4,1103326
 b,r,bench_encaps,0
-b,d,bench_encaps,0,1196721
+b,d,bench_encaps,0,1196687
 b,r,bench_encaps,1
-b,d,bench_encaps,1,1196718
+b,d,bench_encaps,1,1196684
 b,r,bench_encaps,2
-b,d,bench_encaps,2,1196727
+b,d,bench_encaps,2,1196692
 b,r,bench_encaps,3
-b,d,bench_encaps,3,1196724
+b,d,bench_encaps,3,1196688
 b,r,bench_encaps,4
-b,d,bench_encaps,4,1196721
+b,d,bench_encaps,4,1196687
 b,r,bench_decaps,0
-b,d,bench_decaps,0,1353702
+b,d,bench_decaps,0,1353693
 b,r,bench_decaps,1
-b,d,bench_decaps,1,1353708
+b,d,bench_decaps,1,1353704
 b,r,bench_decaps,2
-b,d,bench_decaps,2,1353705
+b,d,bench_decaps,2,1353700
 b,r,bench_decaps,3
-b,d,bench_decaps,3,1353709
+b,d,bench_decaps,3,1353695
 b,r,bench_decaps,4
-b,d,bench_decaps,4,1353709
+b,d,bench_decaps,4,1353693
 Firmware exited successfully
 ```
 
@@ -111,35 +111,35 @@ Firmware exited successfully
 ```
 l,0,16000000,ML-KEM Benchmark
 b,r,bench_keygen,0
-b,d,bench_keygen,0,1716921
+b,d,bench_keygen,0,1716659
 b,r,bench_keygen,1
-b,d,bench_keygen,1,1716923
+b,d,bench_keygen,1,1716659
 b,r,bench_keygen,2
-b,d,bench_keygen,2,1716920
+b,d,bench_keygen,2,1716659
 b,r,bench_keygen,3
-b,d,bench_keygen,3,1716922
+b,d,bench_keygen,3,1716662
 b,r,bench_keygen,4
-b,d,bench_keygen,4,1716919
+b,d,bench_keygen,4,1716659
 b,r,bench_encaps,0
-b,d,bench_encaps,0,1833626
+b,d,bench_encaps,0,1833362
 b,r,bench_encaps,1
-b,d,bench_encaps,1,1833627
+b,d,bench_encaps,1,1833364
 b,r,bench_encaps,2
-b,d,bench_encaps,2,1833630
+b,d,bench_encaps,2,1833365
 b,r,bench_encaps,3
-b,d,bench_encaps,3,1833631
+b,d,bench_encaps,3,1833363
 b,r,bench_encaps,4
-b,d,bench_encaps,4,1833629
+b,d,bench_encaps,4,1833359
 b,r,bench_decaps,0
-b,d,bench_decaps,0,2028191
+b,d,bench_decaps,0,2027928
 b,r,bench_decaps,1
-b,d,bench_decaps,1,2028196
+b,d,bench_decaps,1,2027933
 b,r,bench_decaps,2
-b,d,bench_decaps,2,2028193
+b,d,bench_decaps,2,2027933
 b,r,bench_decaps,3
-b,d,bench_decaps,3,2028196
+b,d,bench_decaps,3,2027933
 b,r,bench_decaps,4
-b,d,bench_decaps,4,2028194
+b,d,bench_decaps,4,2027932
 Firmware exited successfully
 ```
 

@@ -39,11 +39,11 @@ fn bench_keygen<
 ) -> Result<(), String> {
     let mut dk = [0u8; DK_LEN];
     let mut ek = [0u8; EK_LEN];
-    let _pair = K::keygen(
+    let _pair = core::hint::black_box(K::keygen(
         core::hint::black_box(&mut ek),
         core::hint::black_box(&mut dk),
         core::hint::black_box(&state.randomness_gen),
-    );
+    ));
     Ok(())
 }
 
@@ -69,12 +69,12 @@ fn bench_encaps<
 ) -> Result<(), String> {
     let mut ct = [0u8; CT_LEN];
     let mut ss = [0u8; SS_LEN];
-    let _ = K::encaps(
+    let _ = core::hint::black_box(K::encaps(
         core::hint::black_box(&mut ct),
         core::hint::black_box(&mut ss),
         core::hint::black_box(&state.public_key),
         core::hint::black_box(&state.randomness_encaps),
-    );
+    ));
     Ok(())
 }
 
@@ -99,11 +99,11 @@ fn bench_decaps<
     state: &MlKemBenchState<EK_LEN, DK_LEN, CT_LEN, RAND_KEYGEN_LEN, RAND_ENCAPS_LEN>,
 ) -> Result<(), String> {
     let mut ss = [0u8; SS_LEN];
-    let _ = K::decaps(
+    let _ = core::hint::black_box(K::decaps(
         core::hint::black_box(&mut ss),
         core::hint::black_box(&state.ciphertext),
         core::hint::black_box(&state.private_key),
-    );
+    ));
 
     Ok(())
 }
