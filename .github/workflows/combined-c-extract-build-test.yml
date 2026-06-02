@@ -31,7 +31,7 @@ jobs:
             persist-credentials: false
 
       - name: Extract C
-        run: ../c/extract-combined.sh
+        run: ./c/extract-combined.sh
 
       - name: Upload C extraction
         uses: actions/upload-artifact@v7
