@@ -1,7 +1,7 @@
 # libcrux-iot
 An IoT friendly, formally verified, crypto library based on libcrux.
 
-The `libcrux-nrf*/nucleo-l4r5zi` crates are based on the app template found at [https://github.com/knurling-rs/app-template].
+The `nucleo-l4r5zi` crate is based on the app template found at [https://github.com/knurling-rs/app-template].
 
 ## Dependencies
 
@@ -17,10 +17,6 @@ You need the following target toolchains installed, by board:
 
 | Board         | Target toolchain            |
 |---------------|-----------------------------|
-| nRF52810      | `thumbv7em-none-eabi`       |
-| nRF52832      | `thumbv7em-none-eabihf`     |
-| nRF52840      | `thumbv7em-none-eabihf`     |
-| nRF52340      | `thumbv8m.main-none-eabihf` |
 | nucleo-L4R5ZI | `thumbv7em-none-eabihf`     |
 
 #### 3. `probe-rs`:

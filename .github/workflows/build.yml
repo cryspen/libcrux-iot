@@ -17,10 +17,6 @@ jobs:
       matrix:
         board_directory: [
                           libcrux-nucleo-l4r5zi,
-                          libcrux-nrf52840,
-                          libcrux-nrf52810,
-                          libcrux-nrf52832,
-                          libcrux-nrf5340,
                          ]
 
     steps:
@@ -35,7 +31,7 @@ jobs:
              
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: thumbv7em-none-eabihf,thumbv7em-none-eabi,thumbv8m.main-none-eabihf
+          targets: thumbv7em-none-eabihf
 
       - name: Install flip-link
         run: cargo install flip-link
