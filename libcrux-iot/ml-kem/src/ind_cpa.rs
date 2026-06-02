@@ -108,7 +108,7 @@ pub(crate) fn serialize_public_key_mut<
     // Above we needed to partially classify_ref the public serialized slice. This marks
     // the memory permanently as Undefined for valgrind and can lead to false positives.
     // Thus we `ct_declassify` the memory here.
-    ct_declassify(&mut serialized[0..ranked_bytes_per_ring_element(K)]);
+    ct_declassify(&serialized[0..ranked_bytes_per_ring_element(K)]);
 
     serialized[ranked_bytes_per_ring_element(K)..].copy_from_slice(seed_for_a);
 }
