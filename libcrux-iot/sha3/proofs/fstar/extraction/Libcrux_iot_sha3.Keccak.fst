@@ -45,14 +45,14 @@ let impl__new (v_RATE: usize) (_: Prims.unit) : t_KeccakXofState v_RATE =
 let impl__fill_buffer (v_RATE: usize) (self: t_KeccakXofState v_RATE) (inputs: t_Slice u8)
     : Prims.Pure (t_KeccakXofState v_RATE & usize)
       (requires
-        self.f_buf_len <=. v_RATE &&
         ((Rust_primitives.Hax.Int.from_machine (Core_models.Slice.impl__len #u8 inputs <: usize)
             <:
             Hax_lib.Int.t_Int) +
           (Rust_primitives.Hax.Int.from_machine self.f_buf_len <: Hax_lib.Int.t_Int)
           <:
           Hax_lib.Int.t_Int) <=
-        (Rust_primitives.Hax.Int.from_machine Core_models.Num.impl_usize__MAX <: Hax_lib.Int.t_Int))
+        (Rust_primitives.Hax.Int.from_machine Core_models.Num.impl_usize__MAX <: Hax_lib.Int.t_Int) &&
+        self.f_buf_len <. v_RATE)
       (ensures
         fun temp_0_ ->
           let (self_e_future: t_KeccakXofState v_RATE), (res: usize) = temp_0_ in
@@ -852,13 +852,13 @@ let impl__absorb_full (v_RATE: usize) (self: t_KeccakXofState v_RATE) (inputs: t
         fun temp_0_ ->
           let (self_e_future: t_KeccakXofState v_RATE), (remainder: usize) = temp_0_ in
           remainder <. v_RATE && remainder <=. (Core_models.Slice.impl__len #u8 inputs <: usize) &&
-          self_e_future.f_buf_len <=. v_RATE &&
           ((Rust_primitives.Hax.Int.from_machine self_e_future.f_buf_len <: Hax_lib.Int.t_Int) +
             (Rust_primitives.Hax.Int.from_machine remainder <: Hax_lib.Int.t_Int)
             <:
             Hax_lib.Int.t_Int) <
           (Rust_primitives.Hax.Int.from_machine Core_models.Num.impl_usize__MAX <: Hax_lib.Int.t_Int
-          )) =
+          ) &&
+          self_e_future.f_buf_len <. v_RATE) =
   let _:Prims.unit =
     if true
     then

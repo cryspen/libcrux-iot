@@ -86,8 +86,8 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     #[hax_lib::ensures(|remainder|
         remainder < RATE
         && remainder <= inputs.len()
-        && future(self).buf_len <= RATE
         && future(self).buf_len.to_int() + remainder.to_int() < usize::MAX.to_int()
+        && future(self).buf_len < RATE
     )]
     fn absorb_full(&mut self, inputs: &[U8]) -> usize {
         #[cfg(not(eurydice))]
@@ -133,8 +133,8 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     /// If `consumed > 0` is returned, `self.buf` contains a full block to be
     /// loaded.
     #[hax_lib::requires(
-        self.buf_len <= RATE &&
         inputs.len().to_int() + self.buf_len.to_int() <= usize::MAX.to_int()
+        && self.buf_len < RATE 
     )]
     #[hax_lib::ensures(|res|
         (res <= RATE).to_prop()

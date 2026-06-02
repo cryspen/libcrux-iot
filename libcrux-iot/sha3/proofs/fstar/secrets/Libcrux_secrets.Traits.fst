@@ -43,57 +43,57 @@ let impl_Scalar_for_i128: t_Scalar i128 = { _super_i0 = FStar.Tactics.Typeclasse
 
 /// A trait for integer operations provided by Rust for machine integers
 class t_IntOps (v_Self: Type0) = {
-  f_wrapping_add_pre:#v_T: Type0 -> {| i1: Core_models.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
+  f_wrapping_add_pre:#v_T: Type0 -> {| i0: Core_models.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
     -> Type0;
   f_wrapping_add_post:
       #v_T: Type0 ->
-      {| i1: Core_models.Convert.t_Into v_T v_Self |} ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
       v_Self ->
       v_T ->
       v_Self
     -> Type0;
   f_wrapping_add:
       #v_T: Type0 ->
-      {| i1: Core_models.Convert.t_Into v_T v_Self |} ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
       x0: v_Self ->
       x1: v_T
     -> Prims.Pure v_Self
-        (f_wrapping_add_pre #v_T #i1 x0 x1)
-        (fun result -> f_wrapping_add_post #v_T #i1 x0 x1 result);
-  f_wrapping_sub_pre:#v_T: Type0 -> {| i1: Core_models.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
+        (f_wrapping_add_pre #v_T #i0 x0 x1)
+        (fun result -> f_wrapping_add_post #v_T #i0 x0 x1 result);
+  f_wrapping_sub_pre:#v_T: Type0 -> {| i0: Core_models.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
     -> Type0;
   f_wrapping_sub_post:
       #v_T: Type0 ->
-      {| i1: Core_models.Convert.t_Into v_T v_Self |} ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
       v_Self ->
       v_T ->
       v_Self
     -> Type0;
   f_wrapping_sub:
       #v_T: Type0 ->
-      {| i1: Core_models.Convert.t_Into v_T v_Self |} ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
       x0: v_Self ->
       x1: v_T
     -> Prims.Pure v_Self
-        (f_wrapping_sub_pre #v_T #i1 x0 x1)
-        (fun result -> f_wrapping_sub_post #v_T #i1 x0 x1 result);
-  f_wrapping_mul_pre:#v_T: Type0 -> {| i1: Core_models.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
+        (f_wrapping_sub_pre #v_T #i0 x0 x1)
+        (fun result -> f_wrapping_sub_post #v_T #i0 x0 x1 result);
+  f_wrapping_mul_pre:#v_T: Type0 -> {| i0: Core_models.Convert.t_Into v_T v_Self |} -> v_Self -> v_T
     -> Type0;
   f_wrapping_mul_post:
       #v_T: Type0 ->
-      {| i1: Core_models.Convert.t_Into v_T v_Self |} ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
       v_Self ->
       v_T ->
       v_Self
     -> Type0;
   f_wrapping_mul:
       #v_T: Type0 ->
-      {| i1: Core_models.Convert.t_Into v_T v_Self |} ->
+      {| i0: Core_models.Convert.t_Into v_T v_Self |} ->
       x0: v_Self ->
       x1: v_T
     -> Prims.Pure v_Self
-        (f_wrapping_mul_pre #v_T #i1 x0 x1)
-        (fun result -> f_wrapping_mul_post #v_T #i1 x0 x1 result);
+        (f_wrapping_mul_pre #v_T #i0 x0 x1)
+        (fun result -> f_wrapping_mul_post #v_T #i0 x0 x1 result);
   f_wrapping_neg_pre:v_Self -> Type0;
   f_wrapping_neg_post:v_Self -> v_Self -> Type0;
   f_wrapping_neg:x0: v_Self
@@ -146,7 +146,7 @@ let impl_12: t_Scalar Core_models.Core_arch.X86.t_e_ee_m256 =
 
 /// A trait for public types that can be classified into secret types
 class t_Classify (v_Self: Type0) = {
-  [@@@ FStar.Tactics.Typeclasses.no_method]f_Classified:Type0;
+  f_Classified:Type0;
   f_classify_pre:v_Self -> Type0;
   f_classify_post:v_Self -> f_Classified -> Type0;
   f_classify:x0: v_Self
@@ -155,7 +155,7 @@ class t_Classify (v_Self: Type0) = {
 
 /// A trait for classifying immutable references to public types
 class t_ClassifyRef (v_Self: Type0) = {
-  [@@@ FStar.Tactics.Typeclasses.no_method]f_ClassifiedRef:Type0;
+  f_ClassifiedRef:Type0;
   f_classify_ref_pre:v_Self -> Type0;
   f_classify_ref_post:v_Self -> f_ClassifiedRef -> Type0;
   f_classify_ref:x0: v_Self
@@ -166,7 +166,7 @@ class t_ClassifyRef (v_Self: Type0) = {
 
 /// A trait for declassifying secret types into public types
 class t_Declassify (v_Self: Type0) = {
-  [@@@ FStar.Tactics.Typeclasses.no_method]f_Declassified:Type0;
+  f_Declassified:Type0;
   f_declassify_pre:v_Self -> Type0;
   f_declassify_post:v_Self -> f_Declassified -> Type0;
   f_declassify:x0: v_Self
@@ -175,7 +175,7 @@ class t_Declassify (v_Self: Type0) = {
 
 /// A trait for declassifying references to secret types
 class t_DeclassifyRef (v_Self: Type0) = {
-  [@@@ FStar.Tactics.Typeclasses.no_method]f_DeclassifiedRef:Type0;
+  f_DeclassifiedRef:Type0;
   f_declassify_ref_pre:v_Self -> Type0;
   f_declassify_ref_post:v_Self -> f_DeclassifiedRef -> Type0;
   f_declassify_ref:x0: v_Self
@@ -186,7 +186,7 @@ class t_DeclassifyRef (v_Self: Type0) = {
 
 /// A trait for classifying mutable references to public types
 class t_ClassifyRefMut (v_Self: Type0) = {
-  [@@@ FStar.Tactics.Typeclasses.no_method]f_ClassifiedRefMut:Type0;
+  f_ClassifiedRefMut:Type0;
   f_classify_ref_mut_pre:v_Self -> Type0;
   f_classify_ref_mut_post:v_Self -> f_ClassifiedRefMut -> Type0;
   f_classify_ref_mut:x0: v_Self
@@ -197,7 +197,7 @@ class t_ClassifyRefMut (v_Self: Type0) = {
 
 /// A trait for declassifying mutable references to secret types
 class t_DeclassifyRefMut (v_Self: Type0) = {
-  [@@@ FStar.Tactics.Typeclasses.no_method]f_DeclassifiedRefMut:Type0;
+  f_DeclassifiedRefMut:Type0;
   f_declassify_ref_mut_pre:v_Self -> Type0;
   f_declassify_ref_mut_post:v_Self -> f_DeclassifiedRefMut -> Type0;
   f_declassify_ref_mut:x0: v_Self
