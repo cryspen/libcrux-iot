@@ -33,8 +33,8 @@ out=combined/generated
 glue=$EURYDICE_HOME/include/eurydice_glue.h
 features_mlkem="${features} --no-default-features --features=mlkem768"
 features_mldsa="${features} --no-default-features --features=mldsa65,mldsa44,mldsa87"
-eurydice_glue=1
-karamel_include=1
+eurydice_glue=0
+karamel_include=0
 unrolling=16
 format=1
 cpp17=

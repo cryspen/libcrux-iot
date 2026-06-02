@@ -33,8 +33,8 @@ clean_cfiles=0
 extract=""
 glue=$EURYDICE_HOME/include/eurydice_glue.h
 features=""
-eurydice_glue=1
-karamel_include=1
+eurydice_glue=0
+karamel_include=0
 # We want to avoid the `KRML_MAYBE_FOR*` unrolling macros, for now
 unrolling=0
 format=1
