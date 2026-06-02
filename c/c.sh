@@ -60,7 +60,7 @@ while [ $# -gt 0 ]; do
         --libcrux-dep) libcrux_deps+=("libcrux_$2") ; shift ;;
         --extract) extract="$2" ; shift ;;
         --config) config="$2"; shift ;;
-        --out) out="$2"; shift ;;
+        --out) out_dir="$2"; shift ;;
         --glue) glue="$2"; shift ;;
         --no-glue) eurydice_glue=0 ;;
         --no-karamel_include) karamel_include=0 ;;
@@ -93,8 +93,8 @@ config=$(realpath "$config")
 if [[ -z $config ]]; then
   config=$extract_root/extract.yaml
 fi
-if [[ -z $out ]]; then
-  out=$extract_root/extracted
+if [[ -z $out_dir ]]; then
+  out_dir=$extract_root/extracted
 fi
 
 if [[ "$clean_cargo" = 1 ]]; then
@@ -127,8 +127,8 @@ else
     echo "Skipping charon"
 fi
 
-mkdir -p $out
-cd $out
+mkdir -p $out_dir
+cd $out_dir
 
 # Clean only when requesting it.
 # Note that we can not extract for all platforms on any platform right now.

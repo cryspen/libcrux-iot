@@ -24,7 +24,9 @@ pub(crate) mod multiplexing;
 
 #[libcrux_macros::ml_dsa_parameter_sets(44, 65, 87)]
 pub(crate) mod generic {
-    use libcrux_secrets::{Classify as _, ClassifyRef as _, DeclassifyRef as _};
+    use libcrux_secrets::{
+        mem_requests::ct_declassify, Classify as _, ClassifyRef as _, DeclassifyRef as _,
+    };
 
     use super::*;
 
@@ -451,11 +453,16 @@ pub(crate) mod generic {
 
         let mut verifier_challenge = PolynomialRingElement::zero();
         sample_challenge_ring_element::<SIMDUnit, Shake256>(
-            // Declassification: This value is deserialized from the signature itself.
             deserialized_commitment_hash.classify_ref(),
             ONES_IN_VERIFIER_CHALLENGE,
             &mut verifier_challenge,
         );
+        // deserialized_commitment_hash is a slice over plain types. However, the sample_challenge_ring_element function
+        // requires a slice over secret types. This requires the
+        // `classify_ref` above, which also marks the memory as undefined for valgrind. To not
+        // have false positives in later uses of deserialized_commitment_hash we ct_declassify it and mark the
+        // memory as defined.
+        ct_declassify(&deserialized_commitment_hash);
         ntt(&mut verifier_challenge);
 
         // Move signer response into ntt
@@ -562,6 +569,12 @@ pub(crate) mod generic {
             ONES_IN_VERIFIER_CHALLENGE,
             &mut verifier_challenge,
         );
+        // commitment_hash is a slice over plain types. However, the sample_challenge_ring_element function
+        // requires a slice over secret types. This requires the
+        // `classify_ref` above, which also marks the memory as undefined for valgrind. To not
+        // have false positives in later uses of commitment_hash we ct_declassify it and mark the
+        // memory as defined.
+        ct_declassify(commitment_hash);
         ntt(&mut verifier_challenge);
 
         // Compute the commitment hash again to validate the signature.

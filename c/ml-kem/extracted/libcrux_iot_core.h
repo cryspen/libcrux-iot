@@ -8,7 +8,7 @@
  * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
  * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
  * F*: unset
- * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
+ * Libcrux: 5db7272c7ac7c1933d461a7c12ea5d00fdf450d2
  */
 
 #ifndef libcrux_iot_core_H
@@ -101,8 +101,6 @@ typedef struct Eurydice_dst_ref_mut_c3_s {
   Eurydice_arr_c5 *ptr;
   size_t meta;
 } Eurydice_dst_ref_mut_c3;
-
-typedef struct Eurydice_arr_79_s Eurydice_arr_79;
 
 /**
 A monomorphic instance of Eurydice.arr

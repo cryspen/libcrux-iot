@@ -8,7 +8,7 @@
  * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
  * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
  * F*: unset
- * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
+ * Libcrux: 5db7272c7ac7c1933d461a7c12ea5d00fdf450d2
  */
 
 #include "internal/libcrux_iot_mlkem_portable.h"
@@ -2109,20 +2109,21 @@ generics
 */
 static KRML_MUSTINLINE void deserialize_ring_elements_reduced_3d(
     Eurydice_borrow_slice_u8 public_key, dst_ref_mut_2f deserialized_pk) {
+  Eurydice_borrow_slice_u8 public_key0 =
+      libcrux_secrets_int_classify_public_classify_ref_6d_90(public_key);
   for (size_t i = (size_t)0U;
        i <
-       public_key.meta / LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT;
+       public_key0.meta / LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT;
        i++) {
     size_t i0 = i;
     Eurydice_borrow_slice_u8 ring_element = Eurydice_slice_subslice_shared_c8(
-        public_key,
+        public_key0,
         (KRML_CLITERAL(core_ops_range_Range_87){
             .start = i0 * LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT,
             .end = i0 * LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT +
                    LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT}));
-    deserialize_to_reduced_ring_element_a7(
-        libcrux_secrets_int_classify_public_classify_ref_6d_90(ring_element),
-        &deserialized_pk.ptr[i0]);
+    deserialize_to_reduced_ring_element_a7(ring_element,
+                                           &deserialized_pk.ptr[i0]);
   }
 }
 
@@ -2266,6 +2267,12 @@ static KRML_MUSTINLINE void serialize_public_key_mut_df(
       t_as_ntt,
       libcrux_secrets_int_classify_public_classify_ref_mut_a1_75(&lvalue)[0U],
       scratch);
+  Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_c8(
+      serialized,
+      (KRML_CLITERAL(core_ops_range_Range_87){
+          .start = (size_t)0U,
+          .end = libcrux_iot_ml_kem_constants_ranked_bytes_per_ring_element(
+              (size_t)4U)}));
   Eurydice_slice_copy(
       Eurydice_slice_subslice_from_mut_6d(
           serialized,
@@ -5736,20 +5743,21 @@ generics
 */
 static KRML_MUSTINLINE void deserialize_ring_elements_reduced_51(
     Eurydice_borrow_slice_u8 public_key, dst_ref_mut_2f deserialized_pk) {
+  Eurydice_borrow_slice_u8 public_key0 =
+      libcrux_secrets_int_classify_public_classify_ref_6d_90(public_key);
   for (size_t i = (size_t)0U;
        i <
-       public_key.meta / LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT;
+       public_key0.meta / LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT;
        i++) {
     size_t i0 = i;
     Eurydice_borrow_slice_u8 ring_element = Eurydice_slice_subslice_shared_c8(
-        public_key,
+        public_key0,
         (KRML_CLITERAL(core_ops_range_Range_87){
             .start = i0 * LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT,
             .end = i0 * LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT +
                    LIBCRUX_IOT_ML_KEM_CONSTANTS_BYTES_PER_RING_ELEMENT}));
-    deserialize_to_reduced_ring_element_a7(
-        libcrux_secrets_int_classify_public_classify_ref_6d_90(ring_element),
-        &deserialized_pk.ptr[i0]);
+    deserialize_to_reduced_ring_element_a7(ring_element,
+                                           &deserialized_pk.ptr[i0]);
   }
 }
 
@@ -5818,6 +5826,12 @@ static KRML_MUSTINLINE void serialize_public_key_mut_21(
       t_as_ntt,
       libcrux_secrets_int_classify_public_classify_ref_mut_a1_75(&lvalue)[0U],
       scratch);
+  Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_c8(
+      serialized,
+      (KRML_CLITERAL(core_ops_range_Range_87){
+          .start = (size_t)0U,
+          .end = libcrux_iot_ml_kem_constants_ranked_bytes_per_ring_element(
+              (size_t)3U)}));
   Eurydice_slice_copy(
       Eurydice_slice_subslice_from_mut_6d(
           serialized,

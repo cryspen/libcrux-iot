@@ -75,9 +75,36 @@ jobs:
           cargo clean
           cargo check -F kyber,check-secret-independence --verbose
 
+  valgrind-ct-test:
+    if: ${{ github.event_name != 'merge_group' }}
+    runs-on: ubuntu-24.04-arm
+    defaults:
+      run:
+        shell: bash
+        working-directory: libcrux-iot/ml-kem
+    env:
+      RUSTFLAGS: '--cfg valgrind_ct_test'
+      # don't use --track-origins here, as that makes the tests even slower
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER: 'valgrind --tool=memcheck --error-exitcode=1'
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
+      # Using nextest significantly speeds up the tests under valgrind
+      - name: Install cargo nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: 🏃🏻‍♀️ Test under valgrind
+        run: cargo nextest run --verbose --cargo-profile release-debug --features check-secret-independence
+
   mlkem-build-test-status:
     if: ${{ always() }}
-    needs: [build]
+    needs: [build, valgrind-ct-test]
     runs-on: ubuntu-latest
     steps:
       - name: Successful

@@ -322,6 +322,9 @@ let deserialize_ring_elements_reduced
       (public_key: t_Slice u8)
       (deserialized_pk: t_Slice (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector))
      =
+  let public_key:t_Slice u8 =
+    Libcrux_secrets.Traits.f_classify_ref #(t_Slice u8) #FStar.Tactics.Typeclasses.solve public_key
+  in
   let deserialized_pk:t_Slice (Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector) =
     Rust_primitives.Hax.Folds.fold_enumerated_chunked_slice Libcrux_iot_ml_kem.Constants.v_BYTES_PER_RING_ELEMENT
       public_key
@@ -351,11 +354,7 @@ let deserialize_ring_elements_reduced
             Rust_primitives.Hax.Monomorphized_update_at.update_at_usize deserialized_pk
               i
               (deserialize_to_reduced_ring_element #v_Vector
-                  (Libcrux_secrets.Traits.f_classify_ref #(t_Slice u8)
-                      #FStar.Tactics.Typeclasses.solve
-                      ring_element
-                    <:
-                    t_Slice u8)
+                  ring_element
                   (deserialized_pk.[ i ]
                     <:
                     Libcrux_iot_ml_kem.Polynomial.t_PolynomialRingElement v_Vector)
@@ -364,6 +363,7 @@ let deserialize_ring_elements_reduced
           in
           deserialized_pk)
   in
+  let _:Prims.unit = Libcrux_secrets.Mem_requests.ct_declassify #(t_Slice u8) public_key in
   deserialized_pk
 
 let compress_then_serialize_10_

@@ -89,9 +89,43 @@ jobs:
           cargo clean
           cargo bench --no-run
 
+  valgrind-ct-test:
+    if: ${{ github.event_name != 'merge_group' }}
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        features:
+          - "--features check-secret-independence,acvp"
+          - "--features check-secret-independence,acvp,stack"
+    defaults:
+      run:
+        shell: bash
+        working-directory: libcrux-iot/ml-dsa
+    env:
+      RUSTFLAGS: '--cfg valgrind_ct_test'
+      # don't use --track-origins here, as that makes the tests even slower
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER: 'valgrind --tool=memcheck --error-exitcode=1'
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
+      # Using nextest significantly speeds up the tests under valgrind
+      - name: Install cargo nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: 🏃🏻‍♀️ Test under valgrind
+        # only run the acvp tests, as the full test suite would take too long under valgrind
+        run: cargo nextest run --verbose --cargo-profile release-debug ${{ matrix.features }} --test acvp
+
   mldsa-build-test-status:
     if: ${{ always() }}
-    needs: [build]
+    needs: [build, valgrind-ct-test]
     runs-on: ubuntu-latest
     steps:
       - name: Successful

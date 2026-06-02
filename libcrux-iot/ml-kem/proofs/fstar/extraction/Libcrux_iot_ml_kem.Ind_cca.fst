@@ -111,6 +111,7 @@ let serialize_kem_secret_key_mut
         <:
         t_Slice u8)
   in
+  let _:Prims.unit = Libcrux_secrets.Mem_requests.ct_declassify #(t_Slice u8) public_key in
   let pointer:usize = pointer +! Libcrux_iot_ml_kem.Constants.v_H_DIGEST_SIZE in
   let serialized:t_Array u8 v_SERIALIZED_KEY_LEN =
     Rust_primitives.Hax.Monomorphized_update_at.update_at_range serialized

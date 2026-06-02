@@ -10,19 +10,33 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     # Keep this revision in sync with EURYDICE_REV in [libcrux/.docker/c/Dockerfile](https://github.com/cryspen/libcrux/blob/main/.docker/c/Dockerfile),
     # which is what CI uses for the extraction.
-    eurydice.url = "github:aeneasverif/eurydice/b227478b67c6a6e2ff611f978f10d6b7f26472ac";
-    hax.url = "github:hacspec/hax";
+    eurydice.url = "github:aeneasverif/eurydice/aaa9fa657fb6f09802edb890252040d94cd93982";
+    eurydice.inputs.karamel.inputs.fstar.follows = "fstar-pinned";
+    hax.url = "github:hacspec/hax/87ba96831ecfeb7dbb54efcf97036fbc5f25bc71";
+    fstar-pinned.url = "github:FStarLang/FStar/v2025.10.06";
   };
 
   outputs =
-    { self, nixpkgs, flake-utils, rust-overlay, eurydice, hax, ... } @ inputs:
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      rust-overlay,
+      eurydice,
+      hax,
+      fstar-pinned,
+      ...
+    }@inputs:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import nixpkgs { inherit system; overlays = [ rust-overlay.overlays.default ]; };
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ rust-overlay.overlays.default ];
+        };
         charon = eurydice.inputs.charon;
+        fstar = fstar-pinned;
         karamel = eurydice.packages.${system}.karamel;
-        fstar = eurydice.inputs.karamel.inputs.fstar;
 
         tools-environment = {
           CHARON_HOME = charon.packages.${system}.charon;
@@ -43,30 +57,37 @@
         };
 
         rustToolchain = pkgs.rust-bin.stable.latest.default.override {
-          extensions = [ "rust-src" "rust-analyzer" ];
+          extensions = [
+            "rust-src"
+            "rust-analyzer"
+          ];
         };
       in
       {
-        devShells.default = pkgs.mkShell (tools-environment // {
-          packages = [
-            pkgs.clang_18
-            pkgs.llvmPackages_18.clang-tools
-            (pkgs.writeShellScriptBin "clang-format-18" ''exec ${pkgs.llvmPackages_18.clang-tools}/bin/clang-format "$@"'')
-            pkgs.cmake
-            pkgs.ninja
-            pkgs.openssl
-            pkgs.pkg-config
-            pkgs.jq
-            pkgs.valgrind
-            pkgs.libclang
-            pkgs.python3
-            rustToolchain
-            fstar.packages.${system}.default
-            hax.packages.${system}.default
-          ];
-          RUST_SRC_PATH = "${rustToolchain.outPath}/lib/rustlib/src/rust/library";
-          LIBCLANG_PATH = "${pkgs.llvmPackages_18.libclang.lib}/lib";
-        });
+        devShells.default = pkgs.mkShell (
+          tools-environment
+          // {
+            packages = [
+              pkgs.clang_18
+              pkgs.llvmPackages_18.clang-tools
+              (pkgs.writeShellScriptBin "clang-format-18" ''exec ${pkgs.llvmPackages_18.clang-tools}/bin/clang-format "$@"'')
+              pkgs.cmake
+              pkgs.ninja
+              pkgs.openssl
+              pkgs.pkg-config
+              pkgs.jq
+              pkgs.valgrind
+              pkgs.libclang
+              pkgs.python3
+              pkgs.cargo-nextest
+              rustToolchain
+              fstar.packages.${system}.default
+              hax.packages.${system}.default
+            ];
+            RUST_SRC_PATH = "${rustToolchain.outPath}/lib/rustlib/src/rust/library";
+            LIBCLANG_PATH = "${pkgs.llvmPackages_18.libclang.lib}/lib";
+          }
+        );
       }
     );
 }
