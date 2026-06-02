@@ -1,5 +1,7 @@
 name: SHA3 C - Extract, Build & Test
 
+permissions: {}
+
 on:
   merge_group:
   push:

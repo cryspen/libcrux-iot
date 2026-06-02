@@ -1,5 +1,7 @@
 name: ML-KEM C - Extract, Build & Test
 
+permissions: {}
+
 on:
   merge_group:
   push:

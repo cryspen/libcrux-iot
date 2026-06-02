@@ -1,5 +1,7 @@
 name: Build for all boards
 
+permissions: {}
+
 on:
   push:
     branches: ["main"]

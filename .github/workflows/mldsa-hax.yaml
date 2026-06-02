@@ -1,5 +1,7 @@
 name: ML-DSA - hax
 
+permissions: {}
+
 on:
   merge_group:
   push:

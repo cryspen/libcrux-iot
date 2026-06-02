@@ -1,5 +1,7 @@
 name: ML-KEM - hax
 
+permissions: {}
+
 on:
   merge_group:
   push:

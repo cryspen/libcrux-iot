@@ -1,5 +1,7 @@
 name: ML-DSA - Build & Test
 
+permissions: {}
+
 on:
   merge_group:
   push:

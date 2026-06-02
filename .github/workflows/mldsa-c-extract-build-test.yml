@@ -1,5 +1,7 @@
 name: ML-DSA C - Extract, Build & Test
 
+permissions: {}
+
 on:
   merge_group:
   push:
