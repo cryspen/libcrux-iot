@@ -103,6 +103,9 @@ pub(super) fn deserialize_ring_elements_reduced<const K: usize, Vector: Operatio
     public_key: &[u8],
     deserialized_pk: &mut [PolynomialRingElement<Vector>],
 ) {
+    // We need to classify the public key bytes, since the serialization code is the same for
+    // secret and non-secret ring elements and will only write to classified output references.
+    // We undo this overclassification below.
     let public_key = public_key.classify_ref();
     cloop! {
         for (i, ring_element) in public_key
