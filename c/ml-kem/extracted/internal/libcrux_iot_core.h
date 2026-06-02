@@ -8,7 +8,7 @@
  * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
  * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
  * F*: unset
- * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
+ * Libcrux: 5db7272c7ac7c1933d461a7c12ea5d00fdf450d2
  */
 
 #ifndef internal_libcrux_iot_core_H
@@ -1063,6 +1063,18 @@ Eurydice_borrow_slice_u8_x4 libcrux_iot_ml_kem_types_unpack_private_key_64(
     Eurydice_borrow_slice_u8 private_key);
 
 /**
+ Declassify secret memory.
+
+ No-op if `valgrind_ct_test` cfg is not enabled.
+*/
+/**
+A monomorphic instance of libcrux_secrets.mem_requests.ct_declassify
+with types Eurydice_derefed_slice uint8_t
+
+*/
+void libcrux_secrets_mem_requests_ct_declassify_45(const uint8_t (*val)[]);
+
+/**
 A monomorphic instance of Eurydice.array_to_subslice_mut
 with types uint8_t, core_ops_range_Range size_t, Eurydice_derefed_slice uint8_t
 with const generics
@@ -1551,6 +1563,32 @@ with const generics
 typedef struct Eurydice_arr_34_s {
   int16_t data[128U];
 } Eurydice_arr_34;
+
+/**
+ Declassify secret memory.
+
+ No-op if `valgrind_ct_test` cfg is not enabled.
+*/
+/**
+A monomorphic instance of libcrux_secrets.mem_requests.ct_declassify
+with types Eurydice_derefed_slice Eurydice_arr uint8_t[[$168size_t]]
+
+*/
+void libcrux_secrets_mem_requests_ct_declassify_e40(
+    const Eurydice_arr_c5 (*val)[]);
+
+/**
+ Declassify secret memory.
+
+ No-op if `valgrind_ct_test` cfg is not enabled.
+*/
+/**
+A monomorphic instance of libcrux_secrets.mem_requests.ct_declassify
+with types Eurydice_derefed_slice Eurydice_arr uint8_t[[$504size_t]]
+
+*/
+void libcrux_secrets_mem_requests_ct_declassify_e4(
+    const Eurydice_arr_79 (*val)[]);
 
 /**
 This function found in impl {libcrux_secrets::traits::ClassifyRefMut<&'a mut
