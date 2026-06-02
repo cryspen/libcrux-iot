@@ -19,7 +19,7 @@ jobs:
   extract-c:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/cryspen/libcrux-c:latest
+      image: ghcr.io/cryspen/libcrux-c@sha256:08087ee55fdb908a84ce4d579366e16132bf41717484c46a83326a9da73c07a2
     defaults:
       run:
         shell: bash
