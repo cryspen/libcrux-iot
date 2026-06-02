@@ -35,7 +35,7 @@ jobs:
           ../c/extract-combined.sh
 
       - name: Upload C extraction
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: c-extraction-combined-iot
           path: c/combined/generated
