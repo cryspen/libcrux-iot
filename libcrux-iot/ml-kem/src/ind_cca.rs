@@ -59,7 +59,7 @@ fn serialize_kem_secret_key_mut<const K: usize, const SERIALIZED_KEY_LEN: usize,
         &mut serialized[pointer..pointer + H_DIGEST_SIZE],
     );
     // public_key is a slice over plain types as it is public.
-    // However, the `Hasher::H` function require a slice over secret types. This requires the
+    // However, the `Hasher::H` function requires a slice over secret types. This requires the
     // `classify_ref` above, which also marks the memory as undefined for valgrind. To not
     // have false positives in code that uses the public_key later, we ct_declassify it.
     ct_declassify(public_key);

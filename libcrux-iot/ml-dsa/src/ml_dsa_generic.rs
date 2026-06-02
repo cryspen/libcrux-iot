@@ -458,7 +458,7 @@ pub(crate) mod generic {
             &mut verifier_challenge,
         );
         // deserialized_commitment_hash is a slice over plain types. However, the sample_challenge_ring_element function
-        // require a slice over secret types. This requires the
+        // requires a slice over secret types. This requires the
         // `classify_ref` above, which also marks the memory as undefined for valgrind. To not
         // have false positives in later uses of deserialized_commitment_hash we ct_declassify it and mark the
         // memory as defined.
@@ -570,7 +570,7 @@ pub(crate) mod generic {
             &mut verifier_challenge,
         );
         // commitment_hash is a slice over plain types. However, the sample_challenge_ring_element function
-        // require a slice over secret types. This requires the
+        // requires a slice over secret types. This requires the
         // `classify_ref` above, which also marks the memory as undefined for valgrind. To not
         // have false positives in later uses of commitment_hash we ct_declassify it and mark the
         // memory as defined.
