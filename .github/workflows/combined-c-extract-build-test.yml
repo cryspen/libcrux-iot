@@ -29,10 +29,7 @@ jobs:
             persist-credentials: false
 
       - name: Extract C
-        run: |
-          export HOME=/home/user
-          cd libcrux-iot
-          ../c/extract-combined.sh
+        run: ../c/extract-combined.sh
 
       - name: Upload C extraction
         uses: actions/upload-artifact@v7
