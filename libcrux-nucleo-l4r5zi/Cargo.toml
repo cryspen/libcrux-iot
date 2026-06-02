@@ -20,7 +20,7 @@ defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 libcrux-iot-testutil = { path = "../libcrux-iot-testutil" }
-libcrux-testbench = { path = "../libcrux-testbench" }
+libcrux-testbench = { path = "../libcrux-testbench" , default-features = false}
 embassy-stm32 = { version = "0.2.0", features = ["stm32l4r5zi", "defmt"] }
 embassy-time = { version = "0.4", features = ["tick-hz-80_000_000", "generic-queue-8"], optional = true }
 libcrux-iot-ml-kem = { path = "../libcrux-iot/ml-kem" }
@@ -32,6 +32,7 @@ rand_core = {version = "0.6.4"} # This is the version of rand_core
                                 # that embassy_stm32.0.2.0 depends
                                 # on. We need it to get the right
                                 # RngCore trait for the on-device RNG.
+libcrux-traits = "0.0.5"
 
 [dev-dependencies]
 defmt-test = "0.3"
@@ -45,9 +46,9 @@ default = ["mldsa87", "mlkem1024"] # We want to benchmark the most expensive var
 mldsa44 = ["libcrux-testbench/mldsa44"]
 mldsa65 = ["libcrux-testbench/mldsa65"]
 mldsa87 = ["libcrux-testbench/mldsa87"]
-mlkem512 = ["libcrux-testbench/mlkem512"]
-mlkem768 = ["libcrux-testbench/mlkem768"]
-mlkem1024 = ["libcrux-testbench/mlkem1024"]
+mlkem512 = []
+mlkem768 = []
+mlkem1024 = []
 realtime = ["dep:embassy-time", "embassy-stm32/time", "embassy-stm32/time-driver-any"] # This allows real time measurements. The clock MUST be run with the `ClockConfig::Fast` configuration, otherwise the device will panic.
 stack = ["cortex-m-rt/paint-stack", "libcrux-iot-ml-dsa/stack"]
 pqm4 = ["dep:libcrux-pqm4"]
