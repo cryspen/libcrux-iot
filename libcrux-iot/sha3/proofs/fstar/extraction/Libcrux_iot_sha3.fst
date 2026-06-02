@@ -22,7 +22,7 @@ let v_SHA3_384_DIGEST_SIZE: usize = mk_usize 48
 /// Size in bytes of a SHA3 512 digest
 let v_SHA3_512_DIGEST_SIZE: usize = mk_usize 64
 
-/// The Digest Algorithm
+/// The Digest Algorithm.
 type t_Algorithm =
   | Algorithm_Sha224 : t_Algorithm
   | Algorithm_Sha256 : t_Algorithm

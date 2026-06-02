@@ -26,10 +26,48 @@ def shell(command, expect=0, cwd=None, env={}):
     if ret.returncode != expect:
         raise Exception("Error {}. Expected {}.".format(ret, expect))
 
+def dependency_path(dep):
+    """Attempt to retrieve the crate root path (as a UTF-8 string) of a dependency `dep`, identified by its crate name."""
+    cargo_command = ["cargo",
+               "metadata",
+               "--format-version",
+               "1"]
+    jq_command = ["jq",
+                  "-r",
+                  f".packages | .[] | select(.name==\"{dep}\") | .manifest_path | split(\"/\") | .[:-1] | join(\"/\")"]
+    cargo_res = subprocess.Popen(cargo_command, stdout=subprocess.PIPE)
+    jq_output = subprocess.run(jq_command, stdin=cargo_res.stdout, capture_output=True, encoding="utf-8")
+    if jq_output.returncode != 0:
+        raise Exception("Error {}. Expected {}.".format(jq_output, 0))
+    return jq_output.stdout.strip()
 
 class extractAction(argparse.Action):
 
     def __call__(self, parser, args, values, option_string=None) -> None:
+        # Extract libcrux-secrets
+        secrets_output_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "proofs/fstar/secrets")
+        )
+        include_str = "+**"
+        cargo_hax_into = [
+            "cargo",
+            "hax",
+            "into",
+            "-i",
+            include_str,
+            "--output-dir",
+            secrets_output_dir,
+            "fstar",
+        ]
+        hax_env = {}
+        secrets_dir = dependency_path("libcrux-secrets")
+        print("Secrets at : {}".format(secrets_dir))
+        shell(
+            cargo_hax_into,
+            cwd=secrets_dir,
+            env=hax_env,
+        )
+        
         includes = [
             "+**",
         ]
