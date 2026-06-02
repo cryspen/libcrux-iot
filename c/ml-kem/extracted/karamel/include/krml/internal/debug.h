@@ -1,8 +1,8 @@
 /* Copyright (c) INRIA and Microsoft Corporation. All rights reserved.
    Licensed under the Apache 2.0 and MIT Licenses. */
 
-#ifndef __KRML_DEBUG_H
-#define __KRML_DEBUG_H
+#ifndef KRML_HEADER_DEBUG_H
+#define KRML_HEADER_DEBUG_H
 
 #include <inttypes.h>
 
@@ -44,14 +44,14 @@ void WasmSupport_check_buffer_size(uint32_t s);
   default : "unknown")
 /* clang-format on */
 
-#define KRML_DEBUG_RETURN(X)                                    \
-  ({                                                            \
-    __auto_type _ret = (X);                                     \
-    KRML_HOST_PRINTF("returning: ");                            \
-    KRML_HOST_PRINTF(KRML_FORMAT(_ret), KRML_FORMAT_ARG(_ret)); \
-    KRML_HOST_PRINTF(" \n");                                    \
-    _ret;                                                       \
-  })
+#  define KRML_DEBUG_RETURN(X)                                                 \
+    ({                                                                         \
+      __auto_type _ret = (X);                                                  \
+      KRML_HOST_PRINTF("returning: ");                                         \
+      KRML_HOST_PRINTF(KRML_FORMAT(_ret), KRML_FORMAT_ARG(_ret));              \
+      KRML_HOST_PRINTF(" \n");                                                 \
+      _ret;                                                                    \
+    })
 #endif
 
-#endif
+#endif /* KRML_HEADER_DEBUG_H */

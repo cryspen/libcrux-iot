@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 377317d6b25702c46ffff072fa00a3e32095e46f
- * Eurydice: b227478b67c6a6e2ff611f978f10d6b7f26472ac
- * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
- * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
- * Libcrux: 0ab0448a17b81dc787e95a2c646c27ae75247f7b
+ * Charon: e656e17bff6ca5efac8ab6919b9b74cb9a8dd8ad
+ * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
+ * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
+ * F*: unset
+ * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
  */
 
 #ifndef libcrux_iot_mlkem768_H
@@ -69,14 +69,14 @@ extern "C" {
   (LIBCRUX_IOT_ML_KEM_CONSTANTS_SHARED_SECRET_SIZE +                   \
    LIBCRUX_IOT_ML_KEM_MLKEM768_CPA_PKE_CIPHERTEXT_SIZE)
 
-typedef Eurydice_arr_2c libcrux_iot_ml_kem_mlkem768_MlKem768Ciphertext;
+typedef Eurydice_arr_2b libcrux_iot_ml_kem_mlkem768_MlKem768Ciphertext;
 
-typedef libcrux_iot_ml_kem_types_MlKemKeyPair_5f
+typedef libcrux_iot_ml_kem_types_MlKemKeyPair_e2
     libcrux_iot_ml_kem_mlkem768_MlKem768KeyPair;
 
-typedef Eurydice_arr_ea libcrux_iot_ml_kem_mlkem768_MlKem768PrivateKey;
+typedef Eurydice_arr_7d libcrux_iot_ml_kem_mlkem768_MlKem768PrivateKey;
 
-typedef Eurydice_arr_74 libcrux_iot_ml_kem_mlkem768_MlKem768PublicKey;
+typedef Eurydice_arr_5f libcrux_iot_ml_kem_mlkem768_MlKem768PublicKey;
 
 #define LIBCRUX_IOT_ML_KEM_MLKEM768_PRF_OUTPUT_SIZE1  \
   (LIBCRUX_IOT_ML_KEM_MLKEM768_ETA1_RANDOMNESS_SIZE * \

@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 377317d6b25702c46ffff072fa00a3e32095e46f
- * Eurydice: b227478b67c6a6e2ff611f978f10d6b7f26472ac
- * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
- * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
- * Libcrux: 0ab0448a17b81dc787e95a2c646c27ae75247f7b
+ * Charon: e656e17bff6ca5efac8ab6919b9b74cb9a8dd8ad
+ * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
+ * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
+ * F*: unset
+ * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
  */
 
 #ifndef libcrux_iot_mldsa_core_H
@@ -19,6 +19,11 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
+
+#define None 0
+#define Some 1
+
+typedef uint8_t Option_87_tags;
 
 #define libcrux_iot_ml_dsa_types_VerificationError_MalformedHintError 0
 #define libcrux_iot_ml_dsa_types_VerificationError_SignerResponseExceedsBoundError \
@@ -41,9 +46,9 @@ with types uint8_t
 with const generics
 - $4627size_t
 */
-typedef struct Eurydice_arr_380_s {
+typedef struct Eurydice_arr_930_s {
   uint8_t data[4627U];
-} Eurydice_arr_380;
+} Eurydice_arr_930;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -51,9 +56,9 @@ with types uint8_t
 with const generics
 - $2592size_t
 */
-typedef struct Eurydice_arr_51_s {
+typedef struct Eurydice_arr_43_s {
   uint8_t data[2592U];
-} Eurydice_arr_51;
+} Eurydice_arr_43;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -61,9 +66,9 @@ with types uint8_t
 with const generics
 - $64size_t
 */
-typedef struct Eurydice_arr_06_s {
+typedef struct Eurydice_arr_c7_s {
   uint8_t data[64U];
-} Eurydice_arr_06;
+} Eurydice_arr_c7;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -71,9 +76,21 @@ with types uint8_t
 with const generics
 - $4896size_t
 */
-typedef struct Eurydice_arr_180_s {
+typedef struct Eurydice_arr_e2_s {
   uint8_t data[4896U];
-} Eurydice_arr_180;
+} Eurydice_arr_e2;
+
+typedef struct Eurydice_arr_6c_s Eurydice_arr_6c;
+
+/**
+A monomorphic instance of Eurydice.dst_ref_shared
+with types Eurydice_arr_6c, size_t
+
+*/
+typedef struct Eurydice_dst_ref_shared_20_s {
+  const Eurydice_arr_6c *ptr;
+  size_t meta;
+} Eurydice_dst_ref_shared_20;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -81,29 +98,19 @@ with types int32_t
 with const generics
 - $256size_t
 */
-typedef struct Eurydice_arr_c3_s {
+typedef struct Eurydice_arr_6c_s {
   int32_t data[256U];
-} Eurydice_arr_c3;
-
-/**
-A monomorphic instance of Eurydice.dst_ref_shared
-with types Eurydice_arr_c3, size_t
-
-*/
-typedef struct Eurydice_dst_ref_shared_22_s {
-  const Eurydice_arr_c3 *ptr;
-  size_t meta;
-} Eurydice_dst_ref_shared_22;
+} Eurydice_arr_6c;
 
 /**
 A monomorphic instance of Eurydice.dst_ref_mut
-with types Eurydice_arr_c3, size_t
+with types Eurydice_arr_6c, size_t
 
 */
-typedef struct Eurydice_dst_ref_mut_22_s {
-  Eurydice_arr_c3 *ptr;
+typedef struct Eurydice_dst_ref_mut_20_s {
+  Eurydice_arr_6c *ptr;
   size_t meta;
-} Eurydice_dst_ref_mut_22;
+} Eurydice_dst_ref_mut_20;
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.types.MLDSAKeyPair
@@ -111,10 +118,10 @@ with const generics
 - $2592size_t
 - $4896size_t
 */
-typedef struct libcrux_iot_ml_dsa_types_MLDSAKeyPair_2d_s {
-  Eurydice_arr_180 signing_key;
-  Eurydice_arr_51 verification_key;
-} libcrux_iot_ml_dsa_types_MLDSAKeyPair_2d;
+typedef struct libcrux_iot_ml_dsa_types_MLDSAKeyPair_850_s {
+  Eurydice_arr_e2 signing_key;
+  Eurydice_arr_43 verification_key;
+} libcrux_iot_ml_dsa_types_MLDSAKeyPair_850;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -122,9 +129,9 @@ with types uint8_t
 with const generics
 - $3309size_t
 */
-typedef struct Eurydice_arr_96_s {
+typedef struct Eurydice_arr_0c_s {
   uint8_t data[3309U];
-} Eurydice_arr_96;
+} Eurydice_arr_0c;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -132,9 +139,9 @@ with types uint8_t
 with const generics
 - $1952size_t
 */
-typedef struct Eurydice_arr_4a_s {
+typedef struct Eurydice_arr_29_s {
   uint8_t data[1952U];
-} Eurydice_arr_4a;
+} Eurydice_arr_29;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -142,9 +149,9 @@ with types uint8_t
 with const generics
 - $48size_t
 */
-typedef struct Eurydice_arr_5f_s {
+typedef struct Eurydice_arr_65_s {
   uint8_t data[48U];
-} Eurydice_arr_5f;
+} Eurydice_arr_65;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -152,9 +159,9 @@ with types uint8_t
 with const generics
 - $4032size_t
 */
-typedef struct Eurydice_arr_d10_s {
+typedef struct Eurydice_arr_24_s {
   uint8_t data[4032U];
-} Eurydice_arr_d10;
+} Eurydice_arr_24;
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.types.MLDSAKeyPair
@@ -162,10 +169,10 @@ with const generics
 - $1952size_t
 - $4032size_t
 */
-typedef struct libcrux_iot_ml_dsa_types_MLDSAKeyPair_06_s {
-  Eurydice_arr_d10 signing_key;
-  Eurydice_arr_4a verification_key;
-} libcrux_iot_ml_dsa_types_MLDSAKeyPair_06;
+typedef struct libcrux_iot_ml_dsa_types_MLDSAKeyPair_d5_s {
+  Eurydice_arr_24 signing_key;
+  Eurydice_arr_29 verification_key;
+} libcrux_iot_ml_dsa_types_MLDSAKeyPair_d5;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -173,9 +180,9 @@ with types uint8_t
 with const generics
 - $2420size_t
 */
-typedef struct Eurydice_arr_400_s {
+typedef struct Eurydice_arr_85_s {
   uint8_t data[2420U];
-} Eurydice_arr_400;
+} Eurydice_arr_85;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -183,19 +190,19 @@ with types uint8_t
 with const generics
 - $1312size_t
 */
-typedef struct Eurydice_arr_40_s {
+typedef struct Eurydice_arr_02_s {
   uint8_t data[1312U];
-} Eurydice_arr_40;
+} Eurydice_arr_02;
 
 /**
 A monomorphic instance of Eurydice.dst_ref_shared
 with types int32_t, size_t
 
 */
-typedef struct Eurydice_dst_ref_shared_fc_s {
+typedef struct Eurydice_dst_ref_shared_83_s {
   const int32_t *ptr;
   size_t meta;
-} Eurydice_dst_ref_shared_fc;
+} Eurydice_dst_ref_shared_83;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -203,9 +210,9 @@ with types int32_t
 with const generics
 - $263size_t
 */
-typedef struct Eurydice_arr_13_s {
+typedef struct Eurydice_arr_d0_s {
   int32_t data[263U];
-} Eurydice_arr_13;
+} Eurydice_arr_d0;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -213,9 +220,9 @@ with types uint8_t
 with const generics
 - $34size_t
 */
-typedef struct Eurydice_arr_48_s {
+typedef struct Eurydice_arr_31_s {
   uint8_t data[34U];
-} Eurydice_arr_48;
+} Eurydice_arr_31;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -223,9 +230,9 @@ with types uint8_t
 with const generics
 - $32size_t
 */
-typedef struct Eurydice_arr_60_s {
+typedef struct Eurydice_arr_ec_s {
   uint8_t data[32U];
-} Eurydice_arr_60;
+} Eurydice_arr_ec;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -233,19 +240,19 @@ with types uint8_t
 with const generics
 - $2560size_t
 */
-typedef struct Eurydice_arr_18_s {
+typedef struct Eurydice_arr_10_s {
   uint8_t data[2560U];
-} Eurydice_arr_18;
+} Eurydice_arr_10;
 
 /**
 A monomorphic instance of Eurydice.dst_ref_mut
 with types int32_t, size_t
 
 */
-typedef struct Eurydice_dst_ref_mut_fc_s {
+typedef struct Eurydice_dst_ref_mut_83_s {
   int32_t *ptr;
   size_t meta;
-} Eurydice_dst_ref_mut_fc;
+} Eurydice_dst_ref_mut_83;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -253,9 +260,9 @@ with types uint8_t
 with const generics
 - $136size_t
 */
-typedef struct Eurydice_arr_3d_s {
+typedef struct Eurydice_arr_ff_s {
   uint8_t data[136U];
-} Eurydice_arr_3d;
+} Eurydice_arr_ff;
 
 #define Ok 0
 #define Err 1
@@ -268,9 +275,9 @@ with types uint8_t
 with const generics
 - $640size_t
 */
-typedef struct Eurydice_arr_c30_s {
+typedef struct Eurydice_arr_20_s {
   uint8_t data[640U];
-} Eurydice_arr_c30;
+} Eurydice_arr_20;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -278,9 +285,9 @@ with types uint8_t
 with const generics
 - $576size_t
 */
-typedef struct Eurydice_arr_5f0_s {
+typedef struct Eurydice_arr_22_s {
   uint8_t data[576U];
-} Eurydice_arr_5f0;
+} Eurydice_arr_22;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -288,9 +295,9 @@ with types uint8_t
 with const generics
 - $11size_t
 */
-typedef struct Eurydice_arr_cb_s {
+typedef struct Eurydice_arr_c9_s {
   uint8_t data[11U];
-} Eurydice_arr_cb;
+} Eurydice_arr_c9;
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.types.MLDSAKeyPair
@@ -298,10 +305,10 @@ with const generics
 - $1312size_t
 - $2560size_t
 */
-typedef struct libcrux_iot_ml_dsa_types_MLDSAKeyPair_c2_s {
-  Eurydice_arr_18 signing_key;
-  Eurydice_arr_40 verification_key;
-} libcrux_iot_ml_dsa_types_MLDSAKeyPair_c2;
+typedef struct libcrux_iot_ml_dsa_types_MLDSAKeyPair_85_s {
+  Eurydice_arr_10 signing_key;
+  Eurydice_arr_02 verification_key;
+} libcrux_iot_ml_dsa_types_MLDSAKeyPair_85;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -309,19 +316,19 @@ with types uint8_t
 with const generics
 - $66size_t
 */
-typedef struct Eurydice_arr_a2_s {
+typedef struct Eurydice_arr_91_s {
   uint8_t data[66U];
-} Eurydice_arr_a2;
+} Eurydice_arr_91;
 
 /**
 A monomorphic instance of Eurydice.dst_ref_mut
-with types Eurydice_arr_13, size_t
+with types Eurydice_arr_d0, size_t
 
 */
-typedef struct Eurydice_dst_ref_mut_4c_s {
-  Eurydice_arr_13 *ptr;
+typedef struct Eurydice_dst_ref_mut_33_s {
+  Eurydice_arr_d0 *ptr;
   size_t meta;
-} Eurydice_dst_ref_mut_4c;
+} Eurydice_dst_ref_mut_33;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -329,9 +336,9 @@ with types uint8_t
 with const generics
 - $168size_t
 */
-typedef struct Eurydice_arr_27_s {
+typedef struct Eurydice_arr_c5_s {
   uint8_t data[168U];
-} Eurydice_arr_27;
+} Eurydice_arr_c5;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -339,9 +346,9 @@ with types int32_t
 with const generics
 - $8size_t
 */
-typedef struct Eurydice_arr_d4_s {
+typedef struct Eurydice_arr_4d_s {
   int32_t data[8U];
-} Eurydice_arr_d4;
+} Eurydice_arr_4d;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -349,9 +356,9 @@ with types uint8_t
 with const generics
 - $840size_t
 */
-typedef struct Eurydice_arr_12_s {
+typedef struct Eurydice_arr_d1_s {
   uint8_t data[840U];
-} Eurydice_arr_12;
+} Eurydice_arr_d1;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -359,9 +366,9 @@ with types uint8_t
 with const generics
 - $28size_t
 */
-typedef struct Eurydice_arr_f1_s {
+typedef struct Eurydice_arr_a2_s {
   uint8_t data[28U];
-} Eurydice_arr_f1;
+} Eurydice_arr_a2;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -369,9 +376,9 @@ with types uint32_t
 with const generics
 - $2size_t
 */
-typedef struct Eurydice_arr_b2_s {
+typedef struct Eurydice_arr_a0_s {
   uint32_t data[2U];
-} Eurydice_arr_b2;
+} Eurydice_arr_a0;
 
 #if defined(__cplusplus)
 }

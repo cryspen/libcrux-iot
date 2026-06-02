@@ -1,6 +1,7 @@
 files:
   # Portable SHA3
   - name: libcrux_iot_sha3
+    include_in_h: ['"eurydice_glue_additions.h"']
     api:
       exact:
         - [libcrux_iot_sha3, sha224]
@@ -51,6 +52,7 @@ files:
   # This covers slightly more than the two bundles above, but this greatly
   # simplifies our lives.
   - name: libcrux_iot_mlkem_portable
+    include_in_h: ['"eurydice_glue_additions.h"']
     api:
       - [libcrux_iot_ml_kem, vector, "*"]
       - [libcrux_iot_ml_kem, hash_functions, portable, "*"]

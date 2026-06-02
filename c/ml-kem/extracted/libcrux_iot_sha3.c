@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 377317d6b25702c46ffff072fa00a3e32095e46f
- * Eurydice: b227478b67c6a6e2ff611f978f10d6b7f26472ac
- * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
- * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
- * Libcrux: 0ab0448a17b81dc787e95a2c646c27ae75247f7b
+ * Charon: e656e17bff6ca5efac8ab6919b9b74cb9a8dd8ad
+ * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
+ * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
+ * F*: unset
+ * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
  */
 
 #include "internal/libcrux_iot_sha3.h"
@@ -19,18 +19,18 @@
 /**
 This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
 */
-KRML_MUSTINLINE Eurydice_arr_b2
-libcrux_iot_sha3_lane_from_ints_8d(Eurydice_arr_b2 value) {
+KRML_MUSTINLINE Eurydice_arr_a0
+libcrux_iot_sha3_lane_from_ints_8d(Eurydice_arr_a0 value) {
   return value;
 }
 
 /**
 This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
 */
-KRML_MUSTINLINE Eurydice_arr_b2 libcrux_iot_sha3_lane_zero_8d(void) {
+KRML_MUSTINLINE Eurydice_arr_a0 libcrux_iot_sha3_lane_zero_8d(void) {
   return libcrux_iot_sha3_lane_from_ints_8d(
-      libcrux_secrets_int_public_integers_classify_27_54(
-          (KRML_CLITERAL(Eurydice_arr_b2){.data = {0U}})));
+      libcrux_secrets_int_public_integers_classify_27_aa(
+          (KRML_CLITERAL(Eurydice_arr_a0){.data = {0U}})));
 }
 
 /**
@@ -38,28 +38,28 @@ This function found in impl {libcrux_iot_sha3::state::KeccakState}
 */
 KRML_MUSTINLINE libcrux_iot_sha3_state_KeccakState
 libcrux_iot_sha3_state_new_18(void) {
-  Eurydice_arr_f8 uu____0;
-  Eurydice_arr_b2 repeat_expression0[25U];
+  Eurydice_arr_c0 uu____0;
+  Eurydice_arr_a0 repeat_expression0[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
     repeat_expression0[i] = libcrux_iot_sha3_lane_zero_8d();
   }
   memcpy(uu____0.data, repeat_expression0,
-         (size_t)25U * sizeof(Eurydice_arr_b2));
-  Eurydice_arr_6c uu____1;
-  Eurydice_arr_b2 repeat_expression1[5U];
+         (size_t)25U * sizeof(Eurydice_arr_a0));
+  Eurydice_arr_44 uu____1;
+  Eurydice_arr_a0 repeat_expression1[5U];
   for (size_t i = (size_t)0U; i < (size_t)5U; i++) {
     repeat_expression1[i] = libcrux_iot_sha3_lane_zero_8d();
   }
   memcpy(uu____1.data, repeat_expression1,
-         (size_t)5U * sizeof(Eurydice_arr_b2));
+         (size_t)5U * sizeof(Eurydice_arr_a0));
   libcrux_iot_sha3_state_KeccakState lit;
   lit.st = uu____0;
   lit.c = uu____1;
-  Eurydice_arr_b2 repeat_expression[5U];
+  Eurydice_arr_a0 repeat_expression[5U];
   for (size_t i = (size_t)0U; i < (size_t)5U; i++) {
     repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
   }
-  memcpy(lit.d.data, repeat_expression, (size_t)5U * sizeof(Eurydice_arr_b2));
+  memcpy(lit.d.data, repeat_expression, (size_t)5U * sizeof(Eurydice_arr_a0));
   lit.i = (size_t)0U;
   return lit;
 }
@@ -67,7 +67,7 @@ libcrux_iot_sha3_state_new_18(void) {
 /**
 This function found in impl {libcrux_iot_sha3::state::KeccakState}
 */
-KRML_MUSTINLINE Eurydice_arr_b2 libcrux_iot_sha3_state_get_lane_18(
+KRML_MUSTINLINE Eurydice_arr_a0 libcrux_iot_sha3_state_get_lane_18(
     const libcrux_iot_sha3_state_KeccakState *self, size_t i, size_t j) {
   return self->st.data[(size_t)5U * j + i];
 }
@@ -77,7 +77,7 @@ This function found in impl {core::ops::index::Index<usize, u32> for
 libcrux_iot_sha3::lane::Lane2U32}
 */
 KRML_MUSTINLINE const uint32_t *libcrux_iot_sha3_lane_index_cc(
-    const Eurydice_arr_b2 *self, size_t index) {
+    const Eurydice_arr_a0 *self, size_t index) {
   return &self->data[index];
 }
 
@@ -86,24 +86,24 @@ This function found in impl {libcrux_iot_sha3::state::KeccakState}
 */
 KRML_MUSTINLINE void libcrux_iot_sha3_state_set_lane_18(
     libcrux_iot_sha3_state_KeccakState *self, size_t i, size_t j,
-    Eurydice_arr_b2 lane) {
+    Eurydice_arr_a0 lane) {
   self->st.data[(size_t)5U * j + i] = lane;
 }
 
 /**
-This function found in impl {core::convert::From<@Array<u32, 2usize>> for
+This function found in impl {core::convert::From<[u32; 2usize]> for
 libcrux_iot_sha3::lane::Lane2U32}
 */
-KRML_MUSTINLINE Eurydice_arr_b2
-libcrux_iot_sha3_lane_from_47(Eurydice_arr_b2 value) {
+KRML_MUSTINLINE Eurydice_arr_a0
+libcrux_iot_sha3_lane_from_29(Eurydice_arr_a0 value) {
   return value;
 }
 
 /**
 This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
 */
-KRML_MUSTINLINE Eurydice_arr_b2
-libcrux_iot_sha3_lane_interleave_8d(Eurydice_arr_b2 self) {
+KRML_MUSTINLINE Eurydice_arr_a0
+libcrux_iot_sha3_lane_interleave_8d(Eurydice_arr_a0 self) {
   uint64_t lane_u64 =
       libcrux_secrets_int_as_u64_b8(
           libcrux_iot_sha3_lane_index_cc(&self, (size_t)0U)[0U]) |
@@ -122,7 +122,7 @@ libcrux_iot_sha3_lane_interleave_8d(Eurydice_arr_b2 self) {
   odd_bits = (odd_bits ^ odd_bits >> 4U) & 71777214294589695ULL;
   odd_bits = (odd_bits ^ odd_bits >> 8U) & 281470681808895ULL;
   odd_bits = (odd_bits ^ odd_bits >> 16U) & 4294967295ULL;
-  return libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_b2){
+  return libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_a0){
       .data = {libcrux_secrets_int_as_u32_a3(even_bits),
                libcrux_secrets_int_as_u32_a3(odd_bits)}}));
 }
@@ -2023,7 +2023,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 0
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_bc(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_56(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -2196,7 +2196,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
 - BASE_ROUND= 0
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_bc(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_56(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -2369,7 +2369,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
 - BASE_ROUND= 0
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_bc(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_56(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -2542,7 +2542,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
 - BASE_ROUND= 0
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_bc(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_56(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -2715,19 +2715,19 @@ A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_4rounds
 with const generics
 - BASE_ROUND= 0
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_bc(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_56(
     libcrux_iot_sha3_state_KeccakState *s) {
   libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_bc(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_56(s);
   libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_bc(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_56(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_bc(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_56(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_bc(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_56(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
@@ -2736,7 +2736,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 4
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_ac(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_23(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -2909,7 +2909,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
 - BASE_ROUND= 4
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_ac(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_23(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -3082,7 +3082,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
 - BASE_ROUND= 4
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_ac(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_23(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -3255,7 +3255,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
 - BASE_ROUND= 4
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_ac(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_23(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -3428,19 +3428,19 @@ A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_4rounds
 with const generics
 - BASE_ROUND= 4
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_ac(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_23(
     libcrux_iot_sha3_state_KeccakState *s) {
   libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_ac(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_23(s);
   libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_ac(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_23(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_ac(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_23(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_ac(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_23(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
@@ -3449,7 +3449,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 8
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_3b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_70(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -3622,7 +3622,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
 - BASE_ROUND= 8
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_3b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_70(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -3795,7 +3795,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
 - BASE_ROUND= 8
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_3b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_70(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -3968,7 +3968,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
 - BASE_ROUND= 8
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_3b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_70(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -4141,19 +4141,19 @@ A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_4rounds
 with const generics
 - BASE_ROUND= 8
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_3b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_70(
     libcrux_iot_sha3_state_KeccakState *s) {
   libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_3b(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_70(s);
   libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_3b(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_70(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_3b(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_70(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_3b(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_70(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
@@ -4162,7 +4162,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 12
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_78(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_60(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -4337,7 +4337,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
 - BASE_ROUND= 12
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_78(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_60(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -4512,7 +4512,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
 - BASE_ROUND= 12
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_78(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_60(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -4687,7 +4687,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
 - BASE_ROUND= 12
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_78(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_60(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -4862,19 +4862,19 @@ A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_4rounds
 with const generics
 - BASE_ROUND= 12
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_78(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_60(
     libcrux_iot_sha3_state_KeccakState *s) {
   libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_78(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_60(s);
   libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_78(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_60(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_78(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_60(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_78(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_60(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
@@ -4883,7 +4883,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 16
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_f1(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_18(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -5058,7 +5058,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
 - BASE_ROUND= 16
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_f1(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_18(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -5233,7 +5233,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
 - BASE_ROUND= 16
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_f1(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_18(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -5408,7 +5408,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
 - BASE_ROUND= 16
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_f1(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_18(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -5583,19 +5583,19 @@ A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_4rounds
 with const generics
 - BASE_ROUND= 16
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_f1(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_18(
     libcrux_iot_sha3_state_KeccakState *s) {
   libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_18(s);
   libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_18(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_18(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_18(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
@@ -5604,7 +5604,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round0_pi_rho_chi_1 with const generics
 - BASE_ROUND= 20
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_70(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_fc(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -5779,7 +5779,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round1_pi_rho_chi_1 with const generics
 - BASE_ROUND= 20
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_70(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_fc(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -5954,7 +5954,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round2_pi_rho_chi_1 with const generics
 - BASE_ROUND= 20
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_70(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_fc(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -6129,7 +6129,7 @@ A monomorphic instance of
 libcrux_iot_sha3.keccak.keccakf1600_round3_pi_rho_chi_1 with const generics
 - BASE_ROUND= 20
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_70(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_fc(
     libcrux_iot_sha3_state_KeccakState *s) {
   uint32_t a0 = libcrux_iot_sha3_state_get_with_zeta_18(s, (size_t)0U,
                                                         (size_t)0U, (size_t)0U);
@@ -6304,38 +6304,38 @@ A monomorphic instance of libcrux_iot_sha3.keccak.keccakf1600_4rounds
 with const generics
 - BASE_ROUND= 20
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_70(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccakf1600_4rounds_fc(
     libcrux_iot_sha3_state_KeccakState *s) {
   libcrux_iot_sha3_keccak_keccakf1600_round0_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_1_fc(s);
   libcrux_iot_sha3_keccak_keccakf1600_round0_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_1_fc(s);
   libcrux_iot_sha3_keccak_keccakf1600_round1_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_1_fc(s);
   libcrux_iot_sha3_keccak_keccakf1600_round2_pi_rho_chi_2(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_theta(s);
-  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_1_fc(s);
   libcrux_iot_sha3_keccak_keccakf1600_round3_pi_rho_chi_2(s);
 }
 
 KRML_NOINLINE void libcrux_iot_sha3_keccak_keccakf1600(
     libcrux_iot_sha3_state_KeccakState *s) {
-  libcrux_iot_sha3_keccak_keccakf1600_4rounds_bc(s);
-  libcrux_iot_sha3_keccak_keccakf1600_4rounds_ac(s);
-  libcrux_iot_sha3_keccak_keccakf1600_4rounds_3b(s);
-  libcrux_iot_sha3_keccak_keccakf1600_4rounds_78(s);
-  libcrux_iot_sha3_keccak_keccakf1600_4rounds_f1(s);
+  libcrux_iot_sha3_keccak_keccakf1600_4rounds_56(s);
+  libcrux_iot_sha3_keccak_keccakf1600_4rounds_23(s);
   libcrux_iot_sha3_keccak_keccakf1600_4rounds_70(s);
+  libcrux_iot_sha3_keccak_keccakf1600_4rounds_60(s);
+  libcrux_iot_sha3_keccak_keccakf1600_4rounds_18(s);
+  libcrux_iot_sha3_keccak_keccakf1600_4rounds_fc(s);
   s->i = (size_t)0U;
 }
 
 /**
 This function found in impl {libcrux_iot_sha3::lane::Lane2U32}
 */
-KRML_MUSTINLINE Eurydice_arr_b2
-libcrux_iot_sha3_lane_deinterleave_8d(Eurydice_arr_b2 self) {
+KRML_MUSTINLINE Eurydice_arr_a0
+libcrux_iot_sha3_lane_deinterleave_8d(Eurydice_arr_a0 self) {
   uint32_t even_bits = self.data[0U];
   uint32_t odd_bits = self.data[1U];
   uint32_t even_spaced_lo = even_bits & 65535U;
@@ -6362,7 +6362,7 @@ libcrux_iot_sha3_lane_deinterleave_8d(Eurydice_arr_b2 self) {
   odd_spaced_hi = (odd_spaced_hi ^ odd_spaced_hi << 4U) & 252645135U;
   odd_spaced_hi = (odd_spaced_hi ^ odd_spaced_hi << 2U) & 858993459U;
   odd_spaced_hi = (odd_spaced_hi ^ odd_spaced_hi << 1U) & 1431655765U;
-  return (KRML_CLITERAL(Eurydice_arr_b2){
+  return (KRML_CLITERAL(Eurydice_arr_a0){
       .data = {even_spaced_lo | odd_spaced_lo << 1U,
                even_spaced_hi | odd_spaced_hi << 1U}});
 }
@@ -6377,85 +6377,73 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_2u32
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_f8(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_c6(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_arr_f8 state_flat;
-  Eurydice_arr_b2 repeat_expression[25U];
+  Eurydice_arr_c0 state_flat;
+  Eurydice_arr_a0 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
     repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
   }
   memcpy(state_flat.data, repeat_expression,
-         (size_t)25U * sizeof(Eurydice_arr_b2));
-  for (size_t i = (size_t)0U; i < (size_t)72U / (size_t)8U; i++) {
-    size_t i0 = i;
-    size_t offset = start + (size_t)8U * i0;
+         (size_t)25U * sizeof(Eurydice_arr_a0));
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){
+              .start = (size_t)0U, .end = (size_t)72U / (size_t)8U}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      for (size_t i = (size_t)0U; i < (size_t)72U / (size_t)8U; i++) {
+        size_t i0 = i;
+        Eurydice_arr_a0 got = libcrux_iot_sha3_state_get_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U);
+        libcrux_iot_sha3_state_set_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U,
+            libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_a0){
+                .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)0U)[0U],
+                         libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)1U)[0U]}})));
+      }
+      return;
+    }
+    size_t i = uu____0.f0;
+    size_t offset = start + (size_t)8U * i;
     Eurydice_array_u8x4 arr0;
     memcpy(arr0.data,
-           Eurydice_slice_subslice_shared_7e(
-               blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+           Eurydice_slice_subslice_shared_c8(
+               blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                            .start = offset, .end = offset + (size_t)4U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
-           Eurydice_slice_subslice_shared_7e(
+           Eurydice_slice_subslice_shared_c8(
                blocks,
-               (KRML_CLITERAL(core_ops_range_Range_08){
+               (KRML_CLITERAL(core_ops_range_Range_87){
                    .start = offset + (size_t)4U, .end = offset + (size_t)8U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
-    Eurydice_arr_b2 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
-            (KRML_CLITERAL(Eurydice_arr_b2){.data = {a, b}})));
-    state_flat.data[i0] = uu____0;
+    Eurydice_arr_a0 uu____1 =
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29(
+            (KRML_CLITERAL(Eurydice_arr_a0){.data = {a, b}})));
+    state_flat.data[i] = uu____1;
   }
-  for (size_t i = (size_t)0U; i < (size_t)72U / (size_t)8U; i++) {
-    size_t i0 = i;
-    Eurydice_arr_b2 got = libcrux_iot_sha3_state_get_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U);
-    libcrux_iot_sha3_state_set_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U,
-        libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_b2){
-            .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)0U)[0U],
-                     libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)1U)[0U]}})));
-  }
-}
-
-/**
-This function found in impl {libcrux_iot_sha3::state::KeccakState}
-*/
-/**
-A monomorphic instance of libcrux_iot_sha3.state.load_block_18
-with const generics
-- RATE= 72
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_f8(
-    libcrux_iot_sha3_state_KeccakState *self, Eurydice_borrow_slice_u8 blocks,
-    size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_f8(self, blocks, start);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.absorb_block
-with const generics
-- RATE= 72
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_f8(
-    libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 blocks,
-    size_t start) {
-  libcrux_iot_sha3_state_load_block_18_f8(s, blocks, start);
-  libcrux_iot_sha3_keccak_keccakf1600(s);
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
@@ -6463,11 +6451,11 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_2u32
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_f8(
-    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_c6(
+    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_f8(
-      state, Eurydice_array_to_slice_shared_f7(blocks), start);
+  libcrux_iot_sha3_state_load_block_2u32_c6(
+      state, Eurydice_array_to_slice_shared_15(blocks), start);
 }
 
 /**
@@ -6478,10 +6466,10 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_18
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_f8(
-    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_c6(
+    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_full_2u32_f8(self, blocks, start);
+  libcrux_iot_sha3_state_load_block_full_2u32_c6(self, blocks, start);
 }
 
 /**
@@ -6490,24 +6478,24 @@ with const generics
 - RATE= 72
 - DELIM= 6
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_96(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_dc(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
+  Eurydice_arr_5c blocks = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
   if (len > (size_t)0U) {
-    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_36(
-                            &blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_d4(
+                            &blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                                          .start = (size_t)0U, .end = len})),
-                        Eurydice_slice_subslice_shared_7e(
-                            last, (KRML_CLITERAL(core_ops_range_Range_08){
+                        Eurydice_slice_subslice_shared_c8(
+                            last, (KRML_CLITERAL(core_ops_range_Range_87){
                                       .start = start, .end = start + len})),
                         uint8_t);
   }
   blocks.data[len] = libcrux_secrets_int_public_integers_classify_27_90(6U);
   size_t uu____0 = (size_t)72U - (size_t)1U;
   blocks.data[uu____0] = (uint32_t)blocks.data[uu____0] | 128U;
-  libcrux_iot_sha3_state_load_block_full_18_f8(s, &blocks, (size_t)0U);
+  libcrux_iot_sha3_state_load_block_full_18_c6(s, &blocks, (size_t)0U);
   libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
@@ -6516,31 +6504,31 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_2u32
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_f8(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_c6(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
   for (size_t i = (size_t)0U; i < (size_t)72U / (size_t)8U; i++) {
     size_t i0 = i;
-    Eurydice_arr_b2 lane = libcrux_iot_sha3_lane_deinterleave_8d(
+    Eurydice_arr_a0 lane = libcrux_iot_sha3_lane_deinterleave_8d(
         libcrux_iot_sha3_state_get_lane_18(s, i0 / (size_t)5U,
                                            i0 % (size_t)5U));
-    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_7e(
+    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_c8(
         out,
-        (KRML_CLITERAL(core_ops_range_Range_08){
+        (KRML_CLITERAL(core_ops_range_Range_87){
             .start = (size_t)8U * i0, .end = (size_t)8U * i0 + (size_t)4U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue0 = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)0U)[0U]);
-    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_60(&lvalue0),
+    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_98(&lvalue0),
                         uint8_t);
-    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_7e(
-        out, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_c8(
+        out, (KRML_CLITERAL(core_ops_range_Range_87){
                  .start = (size_t)8U * i0 + (size_t)4U,
                  .end = (size_t)8U * i0 + (size_t)8U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)1U)[0U]);
-    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_60(&lvalue),
+    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_98(&lvalue),
                         uint8_t);
   }
 }
@@ -6550,10 +6538,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_2u32
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_f8(
-    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_2u32_f8(
-      s, Eurydice_array_to_slice_mut_f7(out));
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_c6(
+    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_2u32_c6(
+      s, Eurydice_array_to_slice_mut_15(out));
 }
 
 /**
@@ -6564,9 +6552,9 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_18
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_f8(
-    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_full_2u32_f8(self, out);
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_c6(
+    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_full_2u32_c6(self, out);
 }
 
 /**
@@ -6574,15 +6562,15 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_and_last
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_f8(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_c6(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_f8(s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_c6(s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
 }
@@ -6595,10 +6583,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_18
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_f8(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_c6(
     const libcrux_iot_sha3_state_KeccakState *self,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_2u32_f8(self, out);
+  libcrux_iot_sha3_state_store_block_2u32_c6(self, out);
 }
 
 /**
@@ -6606,10 +6594,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_block
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_f8(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_c6(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_18_f8(s, out);
+  libcrux_iot_sha3_state_store_block_18_c6(s, out);
 }
 
 /**
@@ -6617,10 +6605,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_next_block
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_f8(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_c6(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(s);
-  libcrux_iot_sha3_state_store_block_18_f8(s, out);
+  libcrux_iot_sha3_state_store_block_18_c6(s, out);
 }
 
 /**
@@ -6628,17 +6616,43 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_last
 with const generics
 - RATE= 72
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_f8(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_c6(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_f8(&s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_c6(&s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
+}
+
+/**
+This function found in impl {libcrux_iot_sha3::state::KeccakState}
+*/
+/**
+A monomorphic instance of libcrux_iot_sha3.state.load_block_18
+with const generics
+- RATE= 72
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_c6(
+    libcrux_iot_sha3_state_KeccakState *self, Eurydice_borrow_slice_u8 blocks,
+    size_t start) {
+  libcrux_iot_sha3_state_load_block_2u32_c6(self, blocks, start);
+}
+
+/**
+A monomorphic instance of libcrux_iot_sha3.keccak.absorb_block
+with const generics
+- RATE= 72
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_c6(
+    libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 blocks,
+    size_t start) {
+  libcrux_iot_sha3_state_load_block_18_c6(s, blocks, start);
+  libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
 /**
@@ -6647,7 +6661,7 @@ with const generics
 - RATE= 72
 - DELIM= 6
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_96(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_dc(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
   size_t n = data.meta / (size_t)72U;
   size_t rem = data.meta % (size_t)72U;
@@ -6655,47 +6669,65 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_96(
   size_t blocks = outlen / (size_t)72U;
   size_t last = outlen - outlen % (size_t)72U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
-  for (size_t i = (size_t)0U; i < n; i++) {
-    size_t i0 = i;
-    libcrux_iot_sha3_keccak_absorb_block_f8(&s, data, i0 * (size_t)72U);
-  }
-  libcrux_iot_sha3_keccak_absorb_final_96(&s, data, data.meta - rem, rem);
-  if (blocks == (size_t)0U) {
-    libcrux_iot_sha3_keccak_squeeze_first_and_last_f8(&s, out);
-  } else {
-    libcrux_iot_sha3_keccak_squeeze_first_block_f8(&s, out);
-    size_t offset = (size_t)72U;
-    for (size_t i = (size_t)1U; i < blocks; i++) {
-      libcrux_iot_sha3_keccak_squeeze_next_block_f8(
-          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-      offset = offset + (size_t)72U;
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){.start = (size_t)0U,
+                                                  .end = n}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      libcrux_iot_sha3_keccak_absorb_final_dc(&s, data, data.meta - rem, rem);
+      if (blocks == (size_t)0U) {
+        libcrux_iot_sha3_keccak_squeeze_first_and_last_c6(&s, out);
+      } else {
+        libcrux_iot_sha3_keccak_squeeze_first_block_c6(&s, out);
+        size_t offset = (size_t)72U;
+        for (size_t i = (size_t)1U; i < blocks; i++) {
+          libcrux_iot_sha3_keccak_squeeze_next_block_c6(
+              &s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+          offset += (size_t)72U;
+        }
+        if (last < outlen) {
+          const_size_t__x2 uu____1 = {.fst = &last, .snd = &offset};
+          EURYDICE_ASSERT(uu____1.fst[0U] == uu____1.snd[0U], "panic!");
+          libcrux_iot_sha3_keccak_squeeze_last_c6(
+              s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+        }
+      }
+      return;
     }
-    if (last < outlen) {
-      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
-      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
-      libcrux_iot_sha3_keccak_squeeze_last_f8(
-          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-    }
+    size_t i = uu____0.f0;
+    libcrux_iot_sha3_keccak_absorb_block_c6(&s, data, i * (size_t)72U);
   }
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.portable.keccakx1
+A monomorphic instance of libcrux_iot_sha3.keccakx1
 with const generics
 - RATE= 72
 - DELIM= 6
 */
-void libcrux_iot_sha3_portable_keccakx1_96(Eurydice_borrow_slice_u8 data,
-                                           Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_96(data, out);
+void keccakx1_dc(Eurydice_borrow_slice_u8 data,
+                 Eurydice_mut_borrow_slice_u8 out) {
+  libcrux_iot_sha3_keccak_keccak_dc(data, out);
 }
 
 /**
- A portable SHA3 512 implementation.
+ Writes SHA3-512 digest of input payload to externally allocated buffer.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+ - `digest` is exactly [`SHA3_512_DIGEST_SIZE`] bytes long
 */
-void libcrux_iot_sha3_portable_sha512(Eurydice_mut_borrow_slice_u8 digest,
-                                      Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_portable_keccakx1_96(data, digest);
+void sha512_ema(Eurydice_mut_borrow_slice_u8 digest,
+                Eurydice_borrow_slice_u8 payload) {
+  keccakx1_dc(payload, digest);
 }
 
 /**
@@ -6703,85 +6735,73 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_2u32
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_5b(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_b2(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_arr_f8 state_flat;
-  Eurydice_arr_b2 repeat_expression[25U];
+  Eurydice_arr_c0 state_flat;
+  Eurydice_arr_a0 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
     repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
   }
   memcpy(state_flat.data, repeat_expression,
-         (size_t)25U * sizeof(Eurydice_arr_b2));
-  for (size_t i = (size_t)0U; i < (size_t)136U / (size_t)8U; i++) {
-    size_t i0 = i;
-    size_t offset = start + (size_t)8U * i0;
+         (size_t)25U * sizeof(Eurydice_arr_a0));
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){
+              .start = (size_t)0U, .end = (size_t)136U / (size_t)8U}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      for (size_t i = (size_t)0U; i < (size_t)136U / (size_t)8U; i++) {
+        size_t i0 = i;
+        Eurydice_arr_a0 got = libcrux_iot_sha3_state_get_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U);
+        libcrux_iot_sha3_state_set_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U,
+            libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_a0){
+                .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)0U)[0U],
+                         libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)1U)[0U]}})));
+      }
+      return;
+    }
+    size_t i = uu____0.f0;
+    size_t offset = start + (size_t)8U * i;
     Eurydice_array_u8x4 arr0;
     memcpy(arr0.data,
-           Eurydice_slice_subslice_shared_7e(
-               blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+           Eurydice_slice_subslice_shared_c8(
+               blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                            .start = offset, .end = offset + (size_t)4U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
-           Eurydice_slice_subslice_shared_7e(
+           Eurydice_slice_subslice_shared_c8(
                blocks,
-               (KRML_CLITERAL(core_ops_range_Range_08){
+               (KRML_CLITERAL(core_ops_range_Range_87){
                    .start = offset + (size_t)4U, .end = offset + (size_t)8U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
-    Eurydice_arr_b2 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
-            (KRML_CLITERAL(Eurydice_arr_b2){.data = {a, b}})));
-    state_flat.data[i0] = uu____0;
+    Eurydice_arr_a0 uu____1 =
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29(
+            (KRML_CLITERAL(Eurydice_arr_a0){.data = {a, b}})));
+    state_flat.data[i] = uu____1;
   }
-  for (size_t i = (size_t)0U; i < (size_t)136U / (size_t)8U; i++) {
-    size_t i0 = i;
-    Eurydice_arr_b2 got = libcrux_iot_sha3_state_get_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U);
-    libcrux_iot_sha3_state_set_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U,
-        libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_b2){
-            .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)0U)[0U],
-                     libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)1U)[0U]}})));
-  }
-}
-
-/**
-This function found in impl {libcrux_iot_sha3::state::KeccakState}
-*/
-/**
-A monomorphic instance of libcrux_iot_sha3.state.load_block_18
-with const generics
-- RATE= 136
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_5b(
-    libcrux_iot_sha3_state_KeccakState *self, Eurydice_borrow_slice_u8 blocks,
-    size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_5b(self, blocks, start);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.absorb_block
-with const generics
-- RATE= 136
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_5b(
-    libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 blocks,
-    size_t start) {
-  libcrux_iot_sha3_state_load_block_18_5b(s, blocks, start);
-  libcrux_iot_sha3_keccak_keccakf1600(s);
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
@@ -6789,11 +6809,11 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_2u32
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_5b(
-    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_b2(
+    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_5b(
-      state, Eurydice_array_to_slice_shared_f7(blocks), start);
+  libcrux_iot_sha3_state_load_block_2u32_b2(
+      state, Eurydice_array_to_slice_shared_15(blocks), start);
 }
 
 /**
@@ -6804,10 +6824,10 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_18
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_5b(
-    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_b2(
+    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_full_2u32_5b(self, blocks, start);
+  libcrux_iot_sha3_state_load_block_full_2u32_b2(self, blocks, start);
 }
 
 /**
@@ -6816,24 +6836,24 @@ with const generics
 - RATE= 136
 - DELIM= 6
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_ad(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_22(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
+  Eurydice_arr_5c blocks = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
   if (len > (size_t)0U) {
-    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_36(
-                            &blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_d4(
+                            &blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                                          .start = (size_t)0U, .end = len})),
-                        Eurydice_slice_subslice_shared_7e(
-                            last, (KRML_CLITERAL(core_ops_range_Range_08){
+                        Eurydice_slice_subslice_shared_c8(
+                            last, (KRML_CLITERAL(core_ops_range_Range_87){
                                       .start = start, .end = start + len})),
                         uint8_t);
   }
   blocks.data[len] = libcrux_secrets_int_public_integers_classify_27_90(6U);
   size_t uu____0 = (size_t)136U - (size_t)1U;
   blocks.data[uu____0] = (uint32_t)blocks.data[uu____0] | 128U;
-  libcrux_iot_sha3_state_load_block_full_18_5b(s, &blocks, (size_t)0U);
+  libcrux_iot_sha3_state_load_block_full_18_b2(s, &blocks, (size_t)0U);
   libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
@@ -6842,31 +6862,31 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_2u32
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_5b(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_b2(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
   for (size_t i = (size_t)0U; i < (size_t)136U / (size_t)8U; i++) {
     size_t i0 = i;
-    Eurydice_arr_b2 lane = libcrux_iot_sha3_lane_deinterleave_8d(
+    Eurydice_arr_a0 lane = libcrux_iot_sha3_lane_deinterleave_8d(
         libcrux_iot_sha3_state_get_lane_18(s, i0 / (size_t)5U,
                                            i0 % (size_t)5U));
-    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_7e(
+    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_c8(
         out,
-        (KRML_CLITERAL(core_ops_range_Range_08){
+        (KRML_CLITERAL(core_ops_range_Range_87){
             .start = (size_t)8U * i0, .end = (size_t)8U * i0 + (size_t)4U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue0 = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)0U)[0U]);
-    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_60(&lvalue0),
+    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_98(&lvalue0),
                         uint8_t);
-    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_7e(
-        out, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_c8(
+        out, (KRML_CLITERAL(core_ops_range_Range_87){
                  .start = (size_t)8U * i0 + (size_t)4U,
                  .end = (size_t)8U * i0 + (size_t)8U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)1U)[0U]);
-    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_60(&lvalue),
+    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_98(&lvalue),
                         uint8_t);
   }
 }
@@ -6876,10 +6896,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_2u32
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_5b(
-    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_2u32_5b(
-      s, Eurydice_array_to_slice_mut_f7(out));
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_b2(
+    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_2u32_b2(
+      s, Eurydice_array_to_slice_mut_15(out));
 }
 
 /**
@@ -6890,9 +6910,9 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_18
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_5b(
-    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_full_2u32_5b(self, out);
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_b2(
+    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_full_2u32_b2(self, out);
 }
 
 /**
@@ -6900,15 +6920,15 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_and_last
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_b2(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_5b(s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_b2(s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
 }
@@ -6921,10 +6941,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_18
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_5b(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_b2(
     const libcrux_iot_sha3_state_KeccakState *self,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_2u32_5b(self, out);
+  libcrux_iot_sha3_state_store_block_2u32_b2(self, out);
 }
 
 /**
@@ -6932,10 +6952,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_block
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_5b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_b2(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_18_5b(s, out);
+  libcrux_iot_sha3_state_store_block_18_b2(s, out);
 }
 
 /**
@@ -6943,10 +6963,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_next_block
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_5b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_b2(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(s);
-  libcrux_iot_sha3_state_store_block_18_5b(s, out);
+  libcrux_iot_sha3_state_store_block_18_b2(s, out);
 }
 
 /**
@@ -6954,17 +6974,43 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_last
 with const generics
 - RATE= 136
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_5b(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_b2(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_5b(&s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_b2(&s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
+}
+
+/**
+This function found in impl {libcrux_iot_sha3::state::KeccakState}
+*/
+/**
+A monomorphic instance of libcrux_iot_sha3.state.load_block_18
+with const generics
+- RATE= 136
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_b2(
+    libcrux_iot_sha3_state_KeccakState *self, Eurydice_borrow_slice_u8 blocks,
+    size_t start) {
+  libcrux_iot_sha3_state_load_block_2u32_b2(self, blocks, start);
+}
+
+/**
+A monomorphic instance of libcrux_iot_sha3.keccak.absorb_block
+with const generics
+- RATE= 136
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_b2(
+    libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 blocks,
+    size_t start) {
+  libcrux_iot_sha3_state_load_block_18_b2(s, blocks, start);
+  libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
 /**
@@ -6973,7 +7019,7 @@ with const generics
 - RATE= 136
 - DELIM= 6
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_22(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
   size_t n = data.meta / (size_t)136U;
   size_t rem = data.meta % (size_t)136U;
@@ -6981,47 +7027,65 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad(
   size_t blocks = outlen / (size_t)136U;
   size_t last = outlen - outlen % (size_t)136U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
-  for (size_t i = (size_t)0U; i < n; i++) {
-    size_t i0 = i;
-    libcrux_iot_sha3_keccak_absorb_block_5b(&s, data, i0 * (size_t)136U);
-  }
-  libcrux_iot_sha3_keccak_absorb_final_ad(&s, data, data.meta - rem, rem);
-  if (blocks == (size_t)0U) {
-    libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(&s, out);
-  } else {
-    libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s, out);
-    size_t offset = (size_t)136U;
-    for (size_t i = (size_t)1U; i < blocks; i++) {
-      libcrux_iot_sha3_keccak_squeeze_next_block_5b(
-          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-      offset = offset + (size_t)136U;
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){.start = (size_t)0U,
+                                                  .end = n}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      libcrux_iot_sha3_keccak_absorb_final_22(&s, data, data.meta - rem, rem);
+      if (blocks == (size_t)0U) {
+        libcrux_iot_sha3_keccak_squeeze_first_and_last_b2(&s, out);
+      } else {
+        libcrux_iot_sha3_keccak_squeeze_first_block_b2(&s, out);
+        size_t offset = (size_t)136U;
+        for (size_t i = (size_t)1U; i < blocks; i++) {
+          libcrux_iot_sha3_keccak_squeeze_next_block_b2(
+              &s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+          offset += (size_t)136U;
+        }
+        if (last < outlen) {
+          const_size_t__x2 uu____1 = {.fst = &last, .snd = &offset};
+          EURYDICE_ASSERT(uu____1.fst[0U] == uu____1.snd[0U], "panic!");
+          libcrux_iot_sha3_keccak_squeeze_last_b2(
+              s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+        }
+      }
+      return;
     }
-    if (last < outlen) {
-      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
-      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
-      libcrux_iot_sha3_keccak_squeeze_last_5b(
-          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-    }
+    size_t i = uu____0.f0;
+    libcrux_iot_sha3_keccak_absorb_block_b2(&s, data, i * (size_t)136U);
   }
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.portable.keccakx1
+A monomorphic instance of libcrux_iot_sha3.keccakx1
 with const generics
 - RATE= 136
 - DELIM= 6
 */
-void libcrux_iot_sha3_portable_keccakx1_ad(Eurydice_borrow_slice_u8 data,
-                                           Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_ad(data, out);
+void keccakx1_22(Eurydice_borrow_slice_u8 data,
+                 Eurydice_mut_borrow_slice_u8 out) {
+  libcrux_iot_sha3_keccak_keccak_22(data, out);
 }
 
 /**
- A portable SHA3 256 implementation.
+ Writes SHA3-256 digest of input payload to externally allocated buffer.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+ - `digest` is exactly [`SHA3_256_DIGEST_SIZE`] bytes long
 */
-void libcrux_iot_sha3_portable_sha256(Eurydice_mut_borrow_slice_u8 digest,
-                                      Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_portable_keccakx1_ad(data, digest);
+void sha256_ema(Eurydice_mut_borrow_slice_u8 digest,
+                Eurydice_borrow_slice_u8 payload) {
+  keccakx1_22(payload, digest);
 }
 
 /**
@@ -7030,24 +7094,24 @@ with const generics
 - RATE= 136
 - DELIM= 31
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_ad0(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_220(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
+  Eurydice_arr_5c blocks = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
   if (len > (size_t)0U) {
-    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_36(
-                            &blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_d4(
+                            &blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                                          .start = (size_t)0U, .end = len})),
-                        Eurydice_slice_subslice_shared_7e(
-                            last, (KRML_CLITERAL(core_ops_range_Range_08){
+                        Eurydice_slice_subslice_shared_c8(
+                            last, (KRML_CLITERAL(core_ops_range_Range_87){
                                       .start = start, .end = start + len})),
                         uint8_t);
   }
   blocks.data[len] = libcrux_secrets_int_public_integers_classify_27_90(31U);
   size_t uu____0 = (size_t)136U - (size_t)1U;
   blocks.data[uu____0] = (uint32_t)blocks.data[uu____0] | 128U;
-  libcrux_iot_sha3_state_load_block_full_18_5b(s, &blocks, (size_t)0U);
+  libcrux_iot_sha3_state_load_block_full_18_b2(s, &blocks, (size_t)0U);
   libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
@@ -7057,7 +7121,7 @@ with const generics
 - RATE= 136
 - DELIM= 31
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad0(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_220(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
   size_t n = data.meta / (size_t)136U;
   size_t rem = data.meta % (size_t)136U;
@@ -7065,54 +7129,73 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_ad0(
   size_t blocks = outlen / (size_t)136U;
   size_t last = outlen - outlen % (size_t)136U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
-  for (size_t i = (size_t)0U; i < n; i++) {
-    size_t i0 = i;
-    libcrux_iot_sha3_keccak_absorb_block_5b(&s, data, i0 * (size_t)136U);
-  }
-  libcrux_iot_sha3_keccak_absorb_final_ad0(&s, data, data.meta - rem, rem);
-  if (blocks == (size_t)0U) {
-    libcrux_iot_sha3_keccak_squeeze_first_and_last_5b(&s, out);
-  } else {
-    libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s, out);
-    size_t offset = (size_t)136U;
-    for (size_t i = (size_t)1U; i < blocks; i++) {
-      libcrux_iot_sha3_keccak_squeeze_next_block_5b(
-          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-      offset = offset + (size_t)136U;
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){.start = (size_t)0U,
+                                                  .end = n}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      libcrux_iot_sha3_keccak_absorb_final_220(&s, data, data.meta - rem, rem);
+      if (blocks == (size_t)0U) {
+        libcrux_iot_sha3_keccak_squeeze_first_and_last_b2(&s, out);
+      } else {
+        libcrux_iot_sha3_keccak_squeeze_first_block_b2(&s, out);
+        size_t offset = (size_t)136U;
+        for (size_t i = (size_t)1U; i < blocks; i++) {
+          libcrux_iot_sha3_keccak_squeeze_next_block_b2(
+              &s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+          offset += (size_t)136U;
+        }
+        if (last < outlen) {
+          const_size_t__x2 uu____1 = {.fst = &last, .snd = &offset};
+          EURYDICE_ASSERT(uu____1.fst[0U] == uu____1.snd[0U], "panic!");
+          libcrux_iot_sha3_keccak_squeeze_last_b2(
+              s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+        }
+      }
+      return;
     }
-    if (last < outlen) {
-      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
-      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
-      libcrux_iot_sha3_keccak_squeeze_last_5b(
-          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-    }
+    size_t i = uu____0.f0;
+    libcrux_iot_sha3_keccak_absorb_block_b2(&s, data, i * (size_t)136U);
   }
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.portable.keccakx1
+A monomorphic instance of libcrux_iot_sha3.keccakx1
 with const generics
 - RATE= 136
 - DELIM= 31
 */
-void libcrux_iot_sha3_portable_keccakx1_ad0(Eurydice_borrow_slice_u8 data,
-                                            Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_ad0(data, out);
+void keccakx1_220(Eurydice_borrow_slice_u8 data,
+                  Eurydice_mut_borrow_slice_u8 out) {
+  libcrux_iot_sha3_keccak_keccak_220(data, out);
 }
 
 /**
- A portable SHAKE256 implementation.
+ Writes SHAKE256 digest of input payload to externally allocated buffer.
+
+ Writes `out.len()` bytes.
+
+ Preconditions:
+ - `out` is at most `u32::MAX` bytes long
 */
-void libcrux_iot_sha3_portable_shake256(Eurydice_mut_borrow_slice_u8 digest,
-                                        Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_portable_keccakx1_ad0(data, digest);
+void shake256_ema(Eurydice_mut_borrow_slice_u8 out,
+                  Eurydice_borrow_slice_u8 data) {
+  keccakx1_220(data, out);
 }
 
 /**
  Create a new SHAKE-128 state object.
 */
-libcrux_iot_sha3_state_KeccakState
-libcrux_iot_sha3_portable_incremental_shake128_init(void) {
+libcrux_iot_sha3_state_KeccakState libcrux_iot_sha3_incremental_shake128_init(
+    void) {
   return libcrux_iot_sha3_state_new_18();
 }
 
@@ -7121,59 +7204,73 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_2u32
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_60(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_arr_f8 state_flat;
-  Eurydice_arr_b2 repeat_expression[25U];
+  Eurydice_arr_c0 state_flat;
+  Eurydice_arr_a0 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
     repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
   }
   memcpy(state_flat.data, repeat_expression,
-         (size_t)25U * sizeof(Eurydice_arr_b2));
-  for (size_t i = (size_t)0U; i < (size_t)168U / (size_t)8U; i++) {
-    size_t i0 = i;
-    size_t offset = start + (size_t)8U * i0;
+         (size_t)25U * sizeof(Eurydice_arr_a0));
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){
+              .start = (size_t)0U, .end = (size_t)168U / (size_t)8U}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      for (size_t i = (size_t)0U; i < (size_t)168U / (size_t)8U; i++) {
+        size_t i0 = i;
+        Eurydice_arr_a0 got = libcrux_iot_sha3_state_get_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U);
+        libcrux_iot_sha3_state_set_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U,
+            libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_a0){
+                .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)0U)[0U],
+                         libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)1U)[0U]}})));
+      }
+      return;
+    }
+    size_t i = uu____0.f0;
+    size_t offset = start + (size_t)8U * i;
     Eurydice_array_u8x4 arr0;
     memcpy(arr0.data,
-           Eurydice_slice_subslice_shared_7e(
-               blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+           Eurydice_slice_subslice_shared_c8(
+               blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                            .start = offset, .end = offset + (size_t)4U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
-           Eurydice_slice_subslice_shared_7e(
+           Eurydice_slice_subslice_shared_c8(
                blocks,
-               (KRML_CLITERAL(core_ops_range_Range_08){
+               (KRML_CLITERAL(core_ops_range_Range_87){
                    .start = offset + (size_t)4U, .end = offset + (size_t)8U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
-    Eurydice_arr_b2 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
-            (KRML_CLITERAL(Eurydice_arr_b2){.data = {a, b}})));
-    state_flat.data[i0] = uu____0;
+    Eurydice_arr_a0 uu____1 =
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29(
+            (KRML_CLITERAL(Eurydice_arr_a0){.data = {a, b}})));
+    state_flat.data[i] = uu____1;
   }
-  for (size_t i = (size_t)0U; i < (size_t)168U / (size_t)8U; i++) {
-    size_t i0 = i;
-    Eurydice_arr_b2 got = libcrux_iot_sha3_state_get_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U);
-    libcrux_iot_sha3_state_set_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U,
-        libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_b2){
-            .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)0U)[0U],
-                     libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)1U)[0U]}})));
-  }
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
@@ -7181,11 +7278,11 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_2u32
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_3a(
-    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_60(
+    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_3a(
-      state, Eurydice_array_to_slice_shared_f7(blocks), start);
+  libcrux_iot_sha3_state_load_block_2u32_60(
+      state, Eurydice_array_to_slice_shared_15(blocks), start);
 }
 
 /**
@@ -7196,10 +7293,10 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_18
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_3a(
-    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_60(
+    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_full_2u32_3a(self, blocks, start);
+  libcrux_iot_sha3_state_load_block_full_2u32_60(self, blocks, start);
 }
 
 /**
@@ -7208,33 +7305,33 @@ with const generics
 - RATE= 168
 - DELIM= 31
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_c6(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_37(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
+  Eurydice_arr_5c blocks = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
   if (len > (size_t)0U) {
-    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_36(
-                            &blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_d4(
+                            &blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                                          .start = (size_t)0U, .end = len})),
-                        Eurydice_slice_subslice_shared_7e(
-                            last, (KRML_CLITERAL(core_ops_range_Range_08){
+                        Eurydice_slice_subslice_shared_c8(
+                            last, (KRML_CLITERAL(core_ops_range_Range_87){
                                       .start = start, .end = start + len})),
                         uint8_t);
   }
   blocks.data[len] = libcrux_secrets_int_public_integers_classify_27_90(31U);
   size_t uu____0 = (size_t)168U - (size_t)1U;
   blocks.data[uu____0] = (uint32_t)blocks.data[uu____0] | 128U;
-  libcrux_iot_sha3_state_load_block_full_18_3a(s, &blocks, (size_t)0U);
+  libcrux_iot_sha3_state_load_block_full_18_60(s, &blocks, (size_t)0U);
   libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
 /**
  Absorb
 */
-void libcrux_iot_sha3_portable_incremental_shake128_absorb_final(
+void libcrux_iot_sha3_incremental_shake128_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 data0) {
-  libcrux_iot_sha3_keccak_absorb_final_c6(s, data0, (size_t)0U, data0.meta);
+  libcrux_iot_sha3_keccak_absorb_final_37(s, data0, (size_t)0U, data0.meta);
 }
 
 /**
@@ -7242,31 +7339,31 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_2u32
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_60(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
   for (size_t i = (size_t)0U; i < (size_t)168U / (size_t)8U; i++) {
     size_t i0 = i;
-    Eurydice_arr_b2 lane = libcrux_iot_sha3_lane_deinterleave_8d(
+    Eurydice_arr_a0 lane = libcrux_iot_sha3_lane_deinterleave_8d(
         libcrux_iot_sha3_state_get_lane_18(s, i0 / (size_t)5U,
                                            i0 % (size_t)5U));
-    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_7e(
+    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_c8(
         out,
-        (KRML_CLITERAL(core_ops_range_Range_08){
+        (KRML_CLITERAL(core_ops_range_Range_87){
             .start = (size_t)8U * i0, .end = (size_t)8U * i0 + (size_t)4U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue0 = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)0U)[0U]);
-    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_60(&lvalue0),
+    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_98(&lvalue0),
                         uint8_t);
-    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_7e(
-        out, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_c8(
+        out, (KRML_CLITERAL(core_ops_range_Range_87){
                  .start = (size_t)8U * i0 + (size_t)4U,
                  .end = (size_t)8U * i0 + (size_t)8U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)1U)[0U]);
-    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_60(&lvalue),
+    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_98(&lvalue),
                         uint8_t);
   }
 }
@@ -7279,10 +7376,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_18
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_60(
     const libcrux_iot_sha3_state_KeccakState *self,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_2u32_3a(self, out);
+  libcrux_iot_sha3_state_store_block_2u32_60(self, out);
 }
 
 /**
@@ -7290,10 +7387,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_block
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_60(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_18_3a(s, out);
+  libcrux_iot_sha3_state_store_block_18_60(s, out);
 }
 
 /**
@@ -7301,10 +7398,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_next_block
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_60(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(s);
-  libcrux_iot_sha3_state_store_block_18_3a(s, out);
+  libcrux_iot_sha3_state_store_block_18_60(s, out);
 }
 
 /**
@@ -7312,33 +7409,33 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_three_blocks
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_three_blocks_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_three_blocks_60(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_squeeze_first_block_3a(s, out);
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
-      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)168U));
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
-      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)2U * (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_first_block_60(s, out);
+  libcrux_iot_sha3_keccak_squeeze_next_block_60(
+      s, Eurydice_slice_subslice_from_mut_6d(out, (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_next_block_60(
+      s, Eurydice_slice_subslice_from_mut_6d(out, (size_t)2U * (size_t)168U));
 }
 
 /**
  Squeeze three blocks
 */
-void libcrux_iot_sha3_portable_incremental_shake128_squeeze_first_three_blocks(
+void libcrux_iot_sha3_incremental_shake128_squeeze_first_three_blocks(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out0) {
-  libcrux_iot_sha3_keccak_squeeze_first_three_blocks_3a(s, out0);
+  libcrux_iot_sha3_keccak_squeeze_first_three_blocks_60(s, out0);
 }
 
 /**
  Squeeze another block
 */
-void libcrux_iot_sha3_portable_incremental_shake128_squeeze_next_block(
+void libcrux_iot_sha3_incremental_shake128_squeeze_next_block(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out0) {
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(s, out0);
+  libcrux_iot_sha3_keccak_squeeze_next_block_60(s, out0);
 }
 
 /**
- Returns the output size of a digest.
+ Returns the size of a digest in bytes for a given [`Algorithm`].
 */
 size_t digest_size(Algorithm mode) {
   switch (mode) {
@@ -7368,85 +7465,73 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_2u32
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_2c(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_9e(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_arr_f8 state_flat;
-  Eurydice_arr_b2 repeat_expression[25U];
+  Eurydice_arr_c0 state_flat;
+  Eurydice_arr_a0 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
     repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
   }
   memcpy(state_flat.data, repeat_expression,
-         (size_t)25U * sizeof(Eurydice_arr_b2));
-  for (size_t i = (size_t)0U; i < (size_t)144U / (size_t)8U; i++) {
-    size_t i0 = i;
-    size_t offset = start + (size_t)8U * i0;
+         (size_t)25U * sizeof(Eurydice_arr_a0));
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){
+              .start = (size_t)0U, .end = (size_t)144U / (size_t)8U}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      for (size_t i = (size_t)0U; i < (size_t)144U / (size_t)8U; i++) {
+        size_t i0 = i;
+        Eurydice_arr_a0 got = libcrux_iot_sha3_state_get_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U);
+        libcrux_iot_sha3_state_set_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U,
+            libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_a0){
+                .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)0U)[0U],
+                         libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)1U)[0U]}})));
+      }
+      return;
+    }
+    size_t i = uu____0.f0;
+    size_t offset = start + (size_t)8U * i;
     Eurydice_array_u8x4 arr0;
     memcpy(arr0.data,
-           Eurydice_slice_subslice_shared_7e(
-               blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+           Eurydice_slice_subslice_shared_c8(
+               blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                            .start = offset, .end = offset + (size_t)4U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
-           Eurydice_slice_subslice_shared_7e(
+           Eurydice_slice_subslice_shared_c8(
                blocks,
-               (KRML_CLITERAL(core_ops_range_Range_08){
+               (KRML_CLITERAL(core_ops_range_Range_87){
                    .start = offset + (size_t)4U, .end = offset + (size_t)8U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
-    Eurydice_arr_b2 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
-            (KRML_CLITERAL(Eurydice_arr_b2){.data = {a, b}})));
-    state_flat.data[i0] = uu____0;
+    Eurydice_arr_a0 uu____1 =
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29(
+            (KRML_CLITERAL(Eurydice_arr_a0){.data = {a, b}})));
+    state_flat.data[i] = uu____1;
   }
-  for (size_t i = (size_t)0U; i < (size_t)144U / (size_t)8U; i++) {
-    size_t i0 = i;
-    Eurydice_arr_b2 got = libcrux_iot_sha3_state_get_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U);
-    libcrux_iot_sha3_state_set_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U,
-        libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_b2){
-            .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)0U)[0U],
-                     libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)1U)[0U]}})));
-  }
-}
-
-/**
-This function found in impl {libcrux_iot_sha3::state::KeccakState}
-*/
-/**
-A monomorphic instance of libcrux_iot_sha3.state.load_block_18
-with const generics
-- RATE= 144
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_2c(
-    libcrux_iot_sha3_state_KeccakState *self, Eurydice_borrow_slice_u8 blocks,
-    size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_2c(self, blocks, start);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.absorb_block
-with const generics
-- RATE= 144
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_2c(
-    libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 blocks,
-    size_t start) {
-  libcrux_iot_sha3_state_load_block_18_2c(s, blocks, start);
-  libcrux_iot_sha3_keccak_keccakf1600(s);
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
@@ -7454,11 +7539,11 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_2u32
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_2c(
-    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_9e(
+    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_2c(
-      state, Eurydice_array_to_slice_shared_f7(blocks), start);
+  libcrux_iot_sha3_state_load_block_2u32_9e(
+      state, Eurydice_array_to_slice_shared_15(blocks), start);
 }
 
 /**
@@ -7469,10 +7554,10 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_18
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_2c(
-    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_9e(
+    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_full_2u32_2c(self, blocks, start);
+  libcrux_iot_sha3_state_load_block_full_2u32_9e(self, blocks, start);
 }
 
 /**
@@ -7481,24 +7566,24 @@ with const generics
 - RATE= 144
 - DELIM= 6
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_1e(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_3a(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
+  Eurydice_arr_5c blocks = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
   if (len > (size_t)0U) {
-    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_36(
-                            &blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_d4(
+                            &blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                                          .start = (size_t)0U, .end = len})),
-                        Eurydice_slice_subslice_shared_7e(
-                            last, (KRML_CLITERAL(core_ops_range_Range_08){
+                        Eurydice_slice_subslice_shared_c8(
+                            last, (KRML_CLITERAL(core_ops_range_Range_87){
                                       .start = start, .end = start + len})),
                         uint8_t);
   }
   blocks.data[len] = libcrux_secrets_int_public_integers_classify_27_90(6U);
   size_t uu____0 = (size_t)144U - (size_t)1U;
   blocks.data[uu____0] = (uint32_t)blocks.data[uu____0] | 128U;
-  libcrux_iot_sha3_state_load_block_full_18_2c(s, &blocks, (size_t)0U);
+  libcrux_iot_sha3_state_load_block_full_18_9e(s, &blocks, (size_t)0U);
   libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
@@ -7507,31 +7592,31 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_2u32
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_2c(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_9e(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
   for (size_t i = (size_t)0U; i < (size_t)144U / (size_t)8U; i++) {
     size_t i0 = i;
-    Eurydice_arr_b2 lane = libcrux_iot_sha3_lane_deinterleave_8d(
+    Eurydice_arr_a0 lane = libcrux_iot_sha3_lane_deinterleave_8d(
         libcrux_iot_sha3_state_get_lane_18(s, i0 / (size_t)5U,
                                            i0 % (size_t)5U));
-    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_7e(
+    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_c8(
         out,
-        (KRML_CLITERAL(core_ops_range_Range_08){
+        (KRML_CLITERAL(core_ops_range_Range_87){
             .start = (size_t)8U * i0, .end = (size_t)8U * i0 + (size_t)4U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue0 = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)0U)[0U]);
-    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_60(&lvalue0),
+    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_98(&lvalue0),
                         uint8_t);
-    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_7e(
-        out, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_c8(
+        out, (KRML_CLITERAL(core_ops_range_Range_87){
                  .start = (size_t)8U * i0 + (size_t)4U,
                  .end = (size_t)8U * i0 + (size_t)8U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)1U)[0U]);
-    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_60(&lvalue),
+    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_98(&lvalue),
                         uint8_t);
   }
 }
@@ -7541,10 +7626,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_2u32
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_2c(
-    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_2u32_2c(
-      s, Eurydice_array_to_slice_mut_f7(out));
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_9e(
+    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_2u32_9e(
+      s, Eurydice_array_to_slice_mut_15(out));
 }
 
 /**
@@ -7555,9 +7640,9 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_18
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_2c(
-    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_full_2u32_2c(self, out);
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_9e(
+    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_full_2u32_9e(self, out);
 }
 
 /**
@@ -7565,15 +7650,15 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_and_last
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_2c(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_9e(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_2c(s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_9e(s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
 }
@@ -7586,10 +7671,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_18
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_2c(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_9e(
     const libcrux_iot_sha3_state_KeccakState *self,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_2u32_2c(self, out);
+  libcrux_iot_sha3_state_store_block_2u32_9e(self, out);
 }
 
 /**
@@ -7597,10 +7682,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_block
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_2c(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_9e(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_18_2c(s, out);
+  libcrux_iot_sha3_state_store_block_18_9e(s, out);
 }
 
 /**
@@ -7608,10 +7693,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_next_block
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_2c(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_9e(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(s);
-  libcrux_iot_sha3_state_store_block_18_2c(s, out);
+  libcrux_iot_sha3_state_store_block_18_9e(s, out);
 }
 
 /**
@@ -7619,17 +7704,43 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_last
 with const generics
 - RATE= 144
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_2c(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_9e(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_2c(&s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_9e(&s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
+}
+
+/**
+This function found in impl {libcrux_iot_sha3::state::KeccakState}
+*/
+/**
+A monomorphic instance of libcrux_iot_sha3.state.load_block_18
+with const generics
+- RATE= 144
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_9e(
+    libcrux_iot_sha3_state_KeccakState *self, Eurydice_borrow_slice_u8 blocks,
+    size_t start) {
+  libcrux_iot_sha3_state_load_block_2u32_9e(self, blocks, start);
+}
+
+/**
+A monomorphic instance of libcrux_iot_sha3.keccak.absorb_block
+with const generics
+- RATE= 144
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_9e(
+    libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 blocks,
+    size_t start) {
+  libcrux_iot_sha3_state_load_block_18_9e(s, blocks, start);
+  libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
 /**
@@ -7638,7 +7749,7 @@ with const generics
 - RATE= 144
 - DELIM= 6
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_1e(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_3a(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
   size_t n = data.meta / (size_t)144U;
   size_t rem = data.meta % (size_t)144U;
@@ -7646,47 +7757,65 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_1e(
   size_t blocks = outlen / (size_t)144U;
   size_t last = outlen - outlen % (size_t)144U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
-  for (size_t i = (size_t)0U; i < n; i++) {
-    size_t i0 = i;
-    libcrux_iot_sha3_keccak_absorb_block_2c(&s, data, i0 * (size_t)144U);
-  }
-  libcrux_iot_sha3_keccak_absorb_final_1e(&s, data, data.meta - rem, rem);
-  if (blocks == (size_t)0U) {
-    libcrux_iot_sha3_keccak_squeeze_first_and_last_2c(&s, out);
-  } else {
-    libcrux_iot_sha3_keccak_squeeze_first_block_2c(&s, out);
-    size_t offset = (size_t)144U;
-    for (size_t i = (size_t)1U; i < blocks; i++) {
-      libcrux_iot_sha3_keccak_squeeze_next_block_2c(
-          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-      offset = offset + (size_t)144U;
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){.start = (size_t)0U,
+                                                  .end = n}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      libcrux_iot_sha3_keccak_absorb_final_3a(&s, data, data.meta - rem, rem);
+      if (blocks == (size_t)0U) {
+        libcrux_iot_sha3_keccak_squeeze_first_and_last_9e(&s, out);
+      } else {
+        libcrux_iot_sha3_keccak_squeeze_first_block_9e(&s, out);
+        size_t offset = (size_t)144U;
+        for (size_t i = (size_t)1U; i < blocks; i++) {
+          libcrux_iot_sha3_keccak_squeeze_next_block_9e(
+              &s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+          offset += (size_t)144U;
+        }
+        if (last < outlen) {
+          const_size_t__x2 uu____1 = {.fst = &last, .snd = &offset};
+          EURYDICE_ASSERT(uu____1.fst[0U] == uu____1.snd[0U], "panic!");
+          libcrux_iot_sha3_keccak_squeeze_last_9e(
+              s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+        }
+      }
+      return;
     }
-    if (last < outlen) {
-      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
-      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
-      libcrux_iot_sha3_keccak_squeeze_last_2c(
-          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-    }
+    size_t i = uu____0.f0;
+    libcrux_iot_sha3_keccak_absorb_block_9e(&s, data, i * (size_t)144U);
   }
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.portable.keccakx1
+A monomorphic instance of libcrux_iot_sha3.keccakx1
 with const generics
 - RATE= 144
 - DELIM= 6
 */
-void libcrux_iot_sha3_portable_keccakx1_1e(Eurydice_borrow_slice_u8 data,
-                                           Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_1e(data, out);
+void keccakx1_3a(Eurydice_borrow_slice_u8 data,
+                 Eurydice_mut_borrow_slice_u8 out) {
+  libcrux_iot_sha3_keccak_keccak_3a(data, out);
 }
 
 /**
- A portable SHA3 224 implementation.
+ Writes SHA3-224 digest of input payload to externally allocated buffer.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+ - `digest` is exactly [`SHA3_224_DIGEST_SIZE`] bytes long
 */
-void libcrux_iot_sha3_portable_sha224(Eurydice_mut_borrow_slice_u8 digest,
-                                      Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_portable_keccakx1_1e(data, digest);
+void sha224_ema(Eurydice_mut_borrow_slice_u8 digest,
+                Eurydice_borrow_slice_u8 payload) {
+  keccakx1_3a(payload, digest);
 }
 
 /**
@@ -7694,85 +7823,73 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_2u32
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_7a(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_2u32_53(
     libcrux_iot_sha3_state_KeccakState *state, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  Eurydice_arr_f8 state_flat;
-  Eurydice_arr_b2 repeat_expression[25U];
+  Eurydice_arr_c0 state_flat;
+  Eurydice_arr_a0 repeat_expression[25U];
   for (size_t i = (size_t)0U; i < (size_t)25U; i++) {
     repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
   }
   memcpy(state_flat.data, repeat_expression,
-         (size_t)25U * sizeof(Eurydice_arr_b2));
-  for (size_t i = (size_t)0U; i < (size_t)104U / (size_t)8U; i++) {
-    size_t i0 = i;
-    size_t offset = start + (size_t)8U * i0;
+         (size_t)25U * sizeof(Eurydice_arr_a0));
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){
+              .start = (size_t)0U, .end = (size_t)104U / (size_t)8U}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      for (size_t i = (size_t)0U; i < (size_t)104U / (size_t)8U; i++) {
+        size_t i0 = i;
+        Eurydice_arr_a0 got = libcrux_iot_sha3_state_get_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U);
+        libcrux_iot_sha3_state_set_lane_18(
+            state, i0 / (size_t)5U, i0 % (size_t)5U,
+            libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_a0){
+                .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)0U)[0U],
+                         libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
+                             libcrux_iot_sha3_lane_index_cc(
+                                 &state_flat.data[i0], (size_t)1U)[0U]}})));
+      }
+      return;
+    }
+    size_t i = uu____0.f0;
+    size_t offset = start + (size_t)8U * i;
     Eurydice_array_u8x4 arr0;
     memcpy(arr0.data,
-           Eurydice_slice_subslice_shared_7e(
-               blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+           Eurydice_slice_subslice_shared_c8(
+               blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                            .start = offset, .end = offset + (size_t)4U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t a = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr0}})));
     Eurydice_array_u8x4 arr;
     memcpy(arr.data,
-           Eurydice_slice_subslice_shared_7e(
+           Eurydice_slice_subslice_shared_c8(
                blocks,
-               (KRML_CLITERAL(core_ops_range_Range_08){
+               (KRML_CLITERAL(core_ops_range_Range_87){
                    .start = offset + (size_t)4U, .end = offset + (size_t)8U}))
                .ptr,
            (size_t)4U * sizeof(uint8_t));
     uint32_t b = core_num__u32__from_le_bytes(
-        core_result_unwrap_26_84((KRML_CLITERAL(core_result_Result_c7){
+        core_result_unwrap_26_cc((KRML_CLITERAL(core_result_Result_c7){
             .tag = core_result_Ok, .val = {.case_Ok = arr}})));
-    Eurydice_arr_b2 uu____0 =
-        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_47(
-            (KRML_CLITERAL(Eurydice_arr_b2){.data = {a, b}})));
-    state_flat.data[i0] = uu____0;
+    Eurydice_arr_a0 uu____1 =
+        libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29(
+            (KRML_CLITERAL(Eurydice_arr_a0){.data = {a, b}})));
+    state_flat.data[i] = uu____1;
   }
-  for (size_t i = (size_t)0U; i < (size_t)104U / (size_t)8U; i++) {
-    size_t i0 = i;
-    Eurydice_arr_b2 got = libcrux_iot_sha3_state_get_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U);
-    libcrux_iot_sha3_state_set_lane_18(
-        state, i0 / (size_t)5U, i0 % (size_t)5U,
-        libcrux_iot_sha3_lane_from_ints_8d((KRML_CLITERAL(Eurydice_arr_b2){
-            .data = {libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)0U)[0U],
-                     libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                         libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
-                                                        (size_t)1U)[0U]}})));
-  }
-}
-
-/**
-This function found in impl {libcrux_iot_sha3::state::KeccakState}
-*/
-/**
-A monomorphic instance of libcrux_iot_sha3.state.load_block_18
-with const generics
-- RATE= 104
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_7a(
-    libcrux_iot_sha3_state_KeccakState *self, Eurydice_borrow_slice_u8 blocks,
-    size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_7a(self, blocks, start);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.absorb_block
-with const generics
-- RATE= 104
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_7a(
-    libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 blocks,
-    size_t start) {
-  libcrux_iot_sha3_state_load_block_18_7a(s, blocks, start);
-  libcrux_iot_sha3_keccak_keccakf1600(s);
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
@@ -7780,11 +7897,11 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_2u32
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_7a(
-    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_2u32_53(
+    libcrux_iot_sha3_state_KeccakState *state, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_7a(
-      state, Eurydice_array_to_slice_shared_f7(blocks), start);
+  libcrux_iot_sha3_state_load_block_2u32_53(
+      state, Eurydice_array_to_slice_shared_15(blocks), start);
 }
 
 /**
@@ -7795,10 +7912,10 @@ A monomorphic instance of libcrux_iot_sha3.state.load_block_full_18
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_7a(
-    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_88 *blocks,
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_full_18_53(
+    libcrux_iot_sha3_state_KeccakState *self, const Eurydice_arr_5c *blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_full_2u32_7a(self, blocks, start);
+  libcrux_iot_sha3_state_load_block_full_2u32_53(self, blocks, start);
 }
 
 /**
@@ -7807,24 +7924,24 @@ with const generics
 - RATE= 104
 - DELIM= 6
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_7c(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_final_dc0(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 last,
     size_t start, size_t len) {
-  Eurydice_arr_88 blocks = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
+  Eurydice_arr_5c blocks = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
   if (len > (size_t)0U) {
-    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_36(
-                            &blocks, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_slice_copy(Eurydice_array_to_subslice_mut_d4(
+                            &blocks, (KRML_CLITERAL(core_ops_range_Range_87){
                                          .start = (size_t)0U, .end = len})),
-                        Eurydice_slice_subslice_shared_7e(
-                            last, (KRML_CLITERAL(core_ops_range_Range_08){
+                        Eurydice_slice_subslice_shared_c8(
+                            last, (KRML_CLITERAL(core_ops_range_Range_87){
                                       .start = start, .end = start + len})),
                         uint8_t);
   }
   blocks.data[len] = libcrux_secrets_int_public_integers_classify_27_90(6U);
   size_t uu____0 = (size_t)104U - (size_t)1U;
   blocks.data[uu____0] = (uint32_t)blocks.data[uu____0] | 128U;
-  libcrux_iot_sha3_state_load_block_full_18_7a(s, &blocks, (size_t)0U);
+  libcrux_iot_sha3_state_load_block_full_18_53(s, &blocks, (size_t)0U);
   libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
@@ -7833,31 +7950,31 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_2u32
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_7a(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_2u32_53(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
   for (size_t i = (size_t)0U; i < (size_t)104U / (size_t)8U; i++) {
     size_t i0 = i;
-    Eurydice_arr_b2 lane = libcrux_iot_sha3_lane_deinterleave_8d(
+    Eurydice_arr_a0 lane = libcrux_iot_sha3_lane_deinterleave_8d(
         libcrux_iot_sha3_state_get_lane_18(s, i0 / (size_t)5U,
                                            i0 % (size_t)5U));
-    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_7e(
+    Eurydice_mut_borrow_slice_u8 uu____0 = Eurydice_slice_subslice_mut_c8(
         out,
-        (KRML_CLITERAL(core_ops_range_Range_08){
+        (KRML_CLITERAL(core_ops_range_Range_87){
             .start = (size_t)8U * i0, .end = (size_t)8U * i0 + (size_t)4U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue0 = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)0U)[0U]);
-    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_60(&lvalue0),
+    Eurydice_slice_copy(uu____0, Eurydice_array_to_slice_shared_98(&lvalue0),
                         uint8_t);
-    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_7e(
-        out, (KRML_CLITERAL(core_ops_range_Range_08){
+    Eurydice_mut_borrow_slice_u8 uu____1 = Eurydice_slice_subslice_mut_c8(
+        out, (KRML_CLITERAL(core_ops_range_Range_87){
                  .start = (size_t)8U * i0 + (size_t)4U,
                  .end = (size_t)8U * i0 + (size_t)8U}));
     /* original Rust expression is not an lvalue in C */
     Eurydice_array_u8x4 lvalue = core_num__u32__to_le_bytes(
         libcrux_iot_sha3_lane_index_cc(&lane, (size_t)1U)[0U]);
-    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_60(&lvalue),
+    Eurydice_slice_copy(uu____1, Eurydice_array_to_slice_shared_98(&lvalue),
                         uint8_t);
   }
 }
@@ -7867,10 +7984,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_2u32
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_7a(
-    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_2u32_7a(
-      s, Eurydice_array_to_slice_mut_f7(out));
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_53(
+    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_2u32_53(
+      s, Eurydice_array_to_slice_mut_15(out));
 }
 
 /**
@@ -7881,9 +7998,9 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_18
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_7a(
-    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_full_2u32_7a(self, out);
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_53(
+    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_full_2u32_53(self, out);
 }
 
 /**
@@ -7891,15 +8008,15 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_and_last
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_7a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_53(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_7a(s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_53(s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
 }
@@ -7912,10 +8029,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_18
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_7a(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_18_53(
     const libcrux_iot_sha3_state_KeccakState *self,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_2u32_7a(self, out);
+  libcrux_iot_sha3_state_store_block_2u32_53(self, out);
 }
 
 /**
@@ -7923,10 +8040,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_block
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_7a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_block_53(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_state_store_block_18_7a(s, out);
+  libcrux_iot_sha3_state_store_block_18_53(s, out);
 }
 
 /**
@@ -7934,10 +8051,10 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_next_block
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_7a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_next_block_53(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(s);
-  libcrux_iot_sha3_state_store_block_18_7a(s, out);
+  libcrux_iot_sha3_state_store_block_18_53(s, out);
 }
 
 /**
@@ -7945,149 +8062,17 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_last
 with const generics
 - RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_7a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_53(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_7a(&s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_53(&s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.keccak.keccak
-with const generics
-- RATE= 104
-- DELIM= 6
-*/
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_7c(
-    Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
-  size_t n = data.meta / (size_t)104U;
-  size_t rem = data.meta % (size_t)104U;
-  size_t outlen = out.meta;
-  size_t blocks = outlen / (size_t)104U;
-  size_t last = outlen - outlen % (size_t)104U;
-  libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
-  for (size_t i = (size_t)0U; i < n; i++) {
-    size_t i0 = i;
-    libcrux_iot_sha3_keccak_absorb_block_7a(&s, data, i0 * (size_t)104U);
-  }
-  libcrux_iot_sha3_keccak_absorb_final_7c(&s, data, data.meta - rem, rem);
-  if (blocks == (size_t)0U) {
-    libcrux_iot_sha3_keccak_squeeze_first_and_last_7a(&s, out);
-  } else {
-    libcrux_iot_sha3_keccak_squeeze_first_block_7a(&s, out);
-    size_t offset = (size_t)104U;
-    for (size_t i = (size_t)1U; i < blocks; i++) {
-      libcrux_iot_sha3_keccak_squeeze_next_block_7a(
-          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-      offset = offset + (size_t)104U;
-    }
-    if (last < outlen) {
-      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
-      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
-      libcrux_iot_sha3_keccak_squeeze_last_7a(
-          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-    }
-  }
-}
-
-/**
-A monomorphic instance of libcrux_iot_sha3.portable.keccakx1
-with const generics
-- RATE= 104
-- DELIM= 6
-*/
-void libcrux_iot_sha3_portable_keccakx1_7c(Eurydice_borrow_slice_u8 data,
-                                           Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_7c(data, out);
-}
-
-/**
- A portable SHA3 384 implementation.
-*/
-void libcrux_iot_sha3_portable_sha384(Eurydice_mut_borrow_slice_u8 digest,
-                                      Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_portable_keccakx1_7c(data, digest);
-}
-
-/**
- SHA3 224
-
- Preconditions:
- - `digest.len() == 28`
-*/
-void sha224_ema(Eurydice_mut_borrow_slice_u8 digest,
-                Eurydice_borrow_slice_u8 payload) {
-  libcrux_iot_sha3_portable_keccakx1_1e(payload, digest);
-}
-
-/**
- SHA3 224
-*/
-Eurydice_arr_f1 sha224(Eurydice_borrow_slice_u8 data) {
-  Eurydice_arr_f1 out = libcrux_secrets_int_public_integers_classify_27_4b(
-      (KRML_CLITERAL(Eurydice_arr_f1){.data = {0U}}));
-  sha224_ema(Eurydice_array_to_slice_mut_c0(&out), data);
-  return out;
-}
-
-/**
- SHA3 256
-*/
-void sha256_ema(Eurydice_mut_borrow_slice_u8 digest,
-                Eurydice_borrow_slice_u8 payload) {
-  libcrux_iot_sha3_portable_keccakx1_ad(payload, digest);
-}
-
-/**
- SHA3 256
-*/
-Eurydice_arr_600 sha256(Eurydice_borrow_slice_u8 data) {
-  Eurydice_arr_600 out = libcrux_secrets_int_public_integers_classify_27_62(
-      (KRML_CLITERAL(Eurydice_arr_600){.data = {0U}}));
-  sha256_ema(Eurydice_array_to_slice_mut_6e(&out), data);
-  return out;
-}
-
-/**
- SHA3 384
-*/
-void sha384_ema(Eurydice_mut_borrow_slice_u8 digest,
-                Eurydice_borrow_slice_u8 payload) {
-  libcrux_iot_sha3_portable_keccakx1_7c(payload, digest);
-}
-
-/**
- SHA3 384
-*/
-Eurydice_arr_5f sha384(Eurydice_borrow_slice_u8 data) {
-  Eurydice_arr_5f out = libcrux_secrets_int_public_integers_classify_27_7d(
-      (KRML_CLITERAL(Eurydice_arr_5f){.data = {0U}}));
-  sha384_ema(Eurydice_array_to_slice_mut_95(&out), data);
-  return out;
-}
-
-/**
- SHA3 512
-*/
-void sha512_ema(Eurydice_mut_borrow_slice_u8 digest,
-                Eurydice_borrow_slice_u8 payload) {
-  libcrux_iot_sha3_portable_keccakx1_96(payload, digest);
-}
-
-/**
- SHA3 512
-*/
-Eurydice_arr_06 sha512(Eurydice_borrow_slice_u8 data) {
-  Eurydice_arr_06 out = libcrux_secrets_int_public_integers_classify_27_490(
-      (KRML_CLITERAL(Eurydice_arr_06){.data = {0U}}));
-  sha512_ema(Eurydice_array_to_slice_mut_d8(&out), data);
-  return out;
 }
 
 /**
@@ -8096,24 +8081,151 @@ This function found in impl {libcrux_iot_sha3::state::KeccakState}
 /**
 A monomorphic instance of libcrux_iot_sha3.state.load_block_18
 with const generics
-- RATE= 168
+- RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_53(
     libcrux_iot_sha3_state_KeccakState *self, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_2u32_3a(self, blocks, start);
+  libcrux_iot_sha3_state_load_block_2u32_53(self, blocks, start);
 }
 
 /**
 A monomorphic instance of libcrux_iot_sha3.keccak.absorb_block
 with const generics
-- RATE= 168
+- RATE= 104
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_53(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 blocks,
     size_t start) {
-  libcrux_iot_sha3_state_load_block_18_3a(s, blocks, start);
+  libcrux_iot_sha3_state_load_block_18_53(s, blocks, start);
   libcrux_iot_sha3_keccak_keccakf1600(s);
+}
+
+/**
+A monomorphic instance of libcrux_iot_sha3.keccak.keccak
+with const generics
+- RATE= 104
+- DELIM= 6
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_dc0(
+    Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
+  size_t n = data.meta / (size_t)104U;
+  size_t rem = data.meta % (size_t)104U;
+  size_t outlen = out.meta;
+  size_t blocks = outlen / (size_t)104U;
+  size_t last = outlen - outlen % (size_t)104U;
+  libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){.start = (size_t)0U,
+                                                  .end = n}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      libcrux_iot_sha3_keccak_absorb_final_dc0(&s, data, data.meta - rem, rem);
+      if (blocks == (size_t)0U) {
+        libcrux_iot_sha3_keccak_squeeze_first_and_last_53(&s, out);
+      } else {
+        libcrux_iot_sha3_keccak_squeeze_first_block_53(&s, out);
+        size_t offset = (size_t)104U;
+        for (size_t i = (size_t)1U; i < blocks; i++) {
+          libcrux_iot_sha3_keccak_squeeze_next_block_53(
+              &s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+          offset += (size_t)104U;
+        }
+        if (last < outlen) {
+          const_size_t__x2 uu____1 = {.fst = &last, .snd = &offset};
+          EURYDICE_ASSERT(uu____1.fst[0U] == uu____1.snd[0U], "panic!");
+          libcrux_iot_sha3_keccak_squeeze_last_53(
+              s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+        }
+      }
+      return;
+    }
+    size_t i = uu____0.f0;
+    libcrux_iot_sha3_keccak_absorb_block_53(&s, data, i * (size_t)104U);
+  }
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
+}
+
+/**
+A monomorphic instance of libcrux_iot_sha3.keccakx1
+with const generics
+- RATE= 104
+- DELIM= 6
+*/
+void keccakx1_dc0(Eurydice_borrow_slice_u8 data,
+                  Eurydice_mut_borrow_slice_u8 out) {
+  libcrux_iot_sha3_keccak_keccak_dc0(data, out);
+}
+
+/**
+ Writes SHA3-384 digest of input payload to externally allocated buffer.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+ - `digest` is exactly [`SHA3_384_DIGEST_SIZE`] bytes long
+*/
+void sha384_ema(Eurydice_mut_borrow_slice_u8 digest,
+                Eurydice_borrow_slice_u8 payload) {
+  keccakx1_dc0(payload, digest);
+}
+
+/**
+ Returns SHA3-224 digest of input payload.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+*/
+Eurydice_arr_a2 sha224(Eurydice_borrow_slice_u8 payload) {
+  Eurydice_arr_a2 out = libcrux_secrets_int_public_integers_classify_27_96(
+      (KRML_CLITERAL(Eurydice_arr_a2){.data = {0U}}));
+  sha224_ema(Eurydice_array_to_slice_mut_5e(&out), payload);
+  return out;
+}
+
+/**
+ Returns SHA3-256 digest of input payload.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+*/
+Eurydice_arr_ec sha256(Eurydice_borrow_slice_u8 data) {
+  Eurydice_arr_ec out = libcrux_secrets_int_public_integers_classify_27_4b(
+      (KRML_CLITERAL(Eurydice_arr_ec){.data = {0U}}));
+  sha256_ema(Eurydice_array_to_slice_mut_01(&out), data);
+  return out;
+}
+
+/**
+ Returns SHA3-384 digest of input payload.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+*/
+Eurydice_arr_65 sha384(Eurydice_borrow_slice_u8 data) {
+  Eurydice_arr_65 out = libcrux_secrets_int_public_integers_classify_27_69(
+      (KRML_CLITERAL(Eurydice_arr_65){.data = {0U}}));
+  sha384_ema(Eurydice_array_to_slice_mut_9f(&out), data);
+  return out;
+}
+
+/**
+ Returns SHA3-512 digest of input payload.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+*/
+Eurydice_arr_c7 sha512(Eurydice_borrow_slice_u8 data) {
+  Eurydice_arr_c7 out = libcrux_secrets_int_public_integers_classify_27_56(
+      (KRML_CLITERAL(Eurydice_arr_c7){.data = {0U}}));
+  sha512_ema(Eurydice_array_to_slice_mut_17(&out), data);
+  return out;
 }
 
 /**
@@ -8121,10 +8233,10 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_2u32
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_3a(
-    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_2u32_3a(
-      s, Eurydice_array_to_slice_mut_f7(out));
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_2u32_60(
+    const libcrux_iot_sha3_state_KeccakState *s, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_2u32_60(
+      s, Eurydice_array_to_slice_mut_15(out));
 }
 
 /**
@@ -8135,9 +8247,9 @@ A monomorphic instance of libcrux_iot_sha3.state.store_block_full_18
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_3a(
-    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_88 *out) {
-  libcrux_iot_sha3_state_store_block_full_2u32_3a(self, out);
+KRML_MUSTINLINE void libcrux_iot_sha3_state_store_block_full_18_60(
+    const libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_5c *out) {
+  libcrux_iot_sha3_state_store_block_full_2u32_60(self, out);
 }
 
 /**
@@ -8145,15 +8257,15 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_and_last
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_and_last_60(
     const libcrux_iot_sha3_state_KeccakState *s,
     Eurydice_mut_borrow_slice_u8 out) {
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_3a(s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_60(s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
 }
@@ -8163,17 +8275,43 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_last
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_last_60(
     libcrux_iot_sha3_state_KeccakState s, Eurydice_mut_borrow_slice_u8 out) {
   libcrux_iot_sha3_keccak_keccakf1600(&s);
-  Eurydice_arr_88 b = libcrux_secrets_int_public_integers_classify_27_c1(
-      (KRML_CLITERAL(Eurydice_arr_88){.data = {0U}}));
-  libcrux_iot_sha3_state_store_block_full_18_3a(&s, &b);
+  Eurydice_arr_5c b = libcrux_secrets_int_public_integers_classify_27_df0(
+      (KRML_CLITERAL(Eurydice_arr_5c){.data = {0U}}));
+  libcrux_iot_sha3_state_store_block_full_18_60(&s, &b);
   Eurydice_slice_copy(out,
-                      Eurydice_array_to_subslice_shared_36(
-                          &b, (KRML_CLITERAL(core_ops_range_Range_08){
+                      Eurydice_array_to_subslice_shared_d4(
+                          &b, (KRML_CLITERAL(core_ops_range_Range_87){
                                   .start = (size_t)0U, .end = out.meta})),
                       uint8_t);
+}
+
+/**
+This function found in impl {libcrux_iot_sha3::state::KeccakState}
+*/
+/**
+A monomorphic instance of libcrux_iot_sha3.state.load_block_18
+with const generics
+- RATE= 168
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_state_load_block_18_60(
+    libcrux_iot_sha3_state_KeccakState *self, Eurydice_borrow_slice_u8 blocks,
+    size_t start) {
+  libcrux_iot_sha3_state_load_block_2u32_60(self, blocks, start);
+}
+
+/**
+A monomorphic instance of libcrux_iot_sha3.keccak.absorb_block
+with const generics
+- RATE= 168
+*/
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_absorb_block_60(
+    libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 blocks,
+    size_t start) {
+  libcrux_iot_sha3_state_load_block_18_60(s, blocks, start);
+  libcrux_iot_sha3_keccak_keccakf1600(s);
 }
 
 /**
@@ -8182,7 +8320,7 @@ with const generics
 - RATE= 168
 - DELIM= 31
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_c6(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_37(
     Eurydice_borrow_slice_u8 data, Eurydice_mut_borrow_slice_u8 out) {
   size_t n = data.meta / (size_t)168U;
   size_t rem = data.meta % (size_t)168U;
@@ -8190,75 +8328,66 @@ KRML_MUSTINLINE void libcrux_iot_sha3_keccak_keccak_c6(
   size_t blocks = outlen / (size_t)168U;
   size_t last = outlen - outlen % (size_t)168U;
   libcrux_iot_sha3_state_KeccakState s = libcrux_iot_sha3_state_new_18();
-  for (size_t i = (size_t)0U; i < n; i++) {
-    size_t i0 = i;
-    libcrux_iot_sha3_keccak_absorb_block_3a(&s, data, i0 * (size_t)168U);
-  }
-  libcrux_iot_sha3_keccak_absorb_final_c6(&s, data, data.meta - rem, rem);
-  if (blocks == (size_t)0U) {
-    libcrux_iot_sha3_keccak_squeeze_first_and_last_3a(&s, out);
-  } else {
-    libcrux_iot_sha3_keccak_squeeze_first_block_3a(&s, out);
-    size_t offset = (size_t)168U;
-    for (size_t i = (size_t)1U; i < blocks; i++) {
-      libcrux_iot_sha3_keccak_squeeze_next_block_3a(
-          &s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-      offset = offset + (size_t)168U;
+  core_ops_range_Range_87 iter =
+      core_iter_traits_collect__core__iter__traits__collect__IntoIterator_Clause1_Item__I__for_I__into_iter(
+          (KRML_CLITERAL(core_ops_range_Range_87){.start = (size_t)0U,
+                                                  .end = n}),
+          core_ops_range_Range_87, size_t, core_ops_range_Range_87);
+  while (true) {
+    core_option_Option_87 uu____0 =
+        core_iter_range__core__iter__traits__iterator__Iterator_A__for_core__ops__range__Range_A__TraitClause_0___next(
+            &iter, size_t, core_option_Option_87);
+    if (uu____0.tag == core_option_None) {
+      libcrux_iot_sha3_keccak_absorb_final_37(&s, data, data.meta - rem, rem);
+      if (blocks == (size_t)0U) {
+        libcrux_iot_sha3_keccak_squeeze_first_and_last_60(&s, out);
+      } else {
+        libcrux_iot_sha3_keccak_squeeze_first_block_60(&s, out);
+        size_t offset = (size_t)168U;
+        for (size_t i = (size_t)1U; i < blocks; i++) {
+          libcrux_iot_sha3_keccak_squeeze_next_block_60(
+              &s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+          offset += (size_t)168U;
+        }
+        if (last < outlen) {
+          const_size_t__x2 uu____1 = {.fst = &last, .snd = &offset};
+          EURYDICE_ASSERT(uu____1.fst[0U] == uu____1.snd[0U], "panic!");
+          libcrux_iot_sha3_keccak_squeeze_last_60(
+              s, Eurydice_slice_subslice_from_mut_6d(out, offset));
+        }
+      }
+      return;
     }
-    if (last < outlen) {
-      const_size_t__x2 uu____0 = {.fst = &last, .snd = &offset};
-      EURYDICE_ASSERT(uu____0.fst[0U] == uu____0.snd[0U], "panic!");
-      libcrux_iot_sha3_keccak_squeeze_last_3a(
-          s, Eurydice_slice_subslice_from_mut_6b(out, offset));
-    }
+    size_t i = uu____0.f0;
+    libcrux_iot_sha3_keccak_absorb_block_60(&s, data, i * (size_t)168U);
   }
+  KRML_HOST_EPRINTF("KaRaMeL abort at %s:%d\n%s\n", __FILE__, __LINE__,
+                    "panic!");
+  KRML_HOST_EXIT(255U);
 }
 
 /**
-A monomorphic instance of libcrux_iot_sha3.portable.keccakx1
+A monomorphic instance of libcrux_iot_sha3.keccakx1
 with const generics
 - RATE= 168
 - DELIM= 31
 */
-void libcrux_iot_sha3_portable_keccakx1_c6(Eurydice_borrow_slice_u8 data,
-                                           Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_keccak_c6(data, out);
+void keccakx1_37(Eurydice_borrow_slice_u8 data,
+                 Eurydice_mut_borrow_slice_u8 out) {
+  libcrux_iot_sha3_keccak_keccak_37(data, out);
 }
 
 /**
- SHAKE 128
+ Writes SHAKE-128 digest of input payload to externally allocated buffer.
 
- Writes `out.len()` bytes.
+ Writes `out.len()` bytes
+
+ Preconditions:
+ - `out` is at most `u32::MAX` bytes long
 */
 void shake128_ema(Eurydice_mut_borrow_slice_u8 out,
                   Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_portable_keccakx1_c6(data, out);
-}
-
-/**
- SHAKE 256
-
- Writes `out.len()` bytes.
-*/
-void shake256_ema(Eurydice_mut_borrow_slice_u8 out,
-                  Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_portable_keccakx1_ad0(data, out);
-}
-
-/**
- A portable SHAKE128 implementation.
-*/
-void libcrux_iot_sha3_portable_shake128(Eurydice_mut_borrow_slice_u8 digest,
-                                        Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_portable_keccakx1_c6(data, digest);
-}
-
-/**
- Perform four rounds of the keccak permutation functions
-*/
-void libcrux_iot_sha3_portable_incremental_keccakf1660_4rounds(
-    libcrux_iot_sha3_state_KeccakState *s) {
-  libcrux_iot_sha3_keccak_keccakf1600_4rounds_bc(s);
+  keccakx1_37(data, out);
 }
 
 /**
@@ -8266,55 +8395,55 @@ A monomorphic instance of libcrux_iot_sha3.keccak.squeeze_first_five_blocks
 with const generics
 - RATE= 168
 */
-KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_five_blocks_3a(
+KRML_MUSTINLINE void libcrux_iot_sha3_keccak_squeeze_first_five_blocks_60(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_squeeze_first_block_3a(s, out);
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
-      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)168U));
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
-      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)2U * (size_t)168U));
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
-      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)3U * (size_t)168U));
-  libcrux_iot_sha3_keccak_squeeze_next_block_3a(
-      s, Eurydice_slice_subslice_from_mut_6b(out, (size_t)4U * (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_first_block_60(s, out);
+  libcrux_iot_sha3_keccak_squeeze_next_block_60(
+      s, Eurydice_slice_subslice_from_mut_6d(out, (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_next_block_60(
+      s, Eurydice_slice_subslice_from_mut_6d(out, (size_t)2U * (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_next_block_60(
+      s, Eurydice_slice_subslice_from_mut_6d(out, (size_t)3U * (size_t)168U));
+  libcrux_iot_sha3_keccak_squeeze_next_block_60(
+      s, Eurydice_slice_subslice_from_mut_6d(out, (size_t)4U * (size_t)168U));
 }
 
 /**
  Squeeze five blocks
 */
-void libcrux_iot_sha3_portable_incremental_shake128_squeeze_first_five_blocks(
+void libcrux_iot_sha3_incremental_shake128_squeeze_first_five_blocks(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out0) {
-  libcrux_iot_sha3_keccak_squeeze_first_five_blocks_3a(s, out0);
+  libcrux_iot_sha3_keccak_squeeze_first_five_blocks_60(s, out0);
 }
 
 /**
  Absorb some data for SHAKE-256 for the last time
 */
-void libcrux_iot_sha3_portable_incremental_shake256_absorb_final(
+void libcrux_iot_sha3_incremental_shake256_absorb_final(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_borrow_slice_u8 data) {
-  libcrux_iot_sha3_keccak_absorb_final_ad0(s, data, (size_t)0U, data.meta);
+  libcrux_iot_sha3_keccak_absorb_final_220(s, data, (size_t)0U, data.meta);
 }
 
 /**
  Create a new SHAKE-256 state object.
 */
 KRML_MUSTINLINE libcrux_iot_sha3_state_KeccakState
-libcrux_iot_sha3_portable_incremental_shake256_init(void) {
+libcrux_iot_sha3_incremental_shake256_init(void) {
   return libcrux_iot_sha3_state_new_18();
 }
 
 /**
  Squeeze the first SHAKE-256 block
 */
-void libcrux_iot_sha3_portable_incremental_shake256_squeeze_first_block(
+void libcrux_iot_sha3_incremental_shake256_squeeze_first_block(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_squeeze_first_block_5b(&s[0U], out);
+  libcrux_iot_sha3_keccak_squeeze_first_block_b2(&s[0U], out);
 }
 
 /**
  Squeeze the next SHAKE-256 block
 */
-void libcrux_iot_sha3_portable_incremental_shake256_squeeze_next_block(
+void libcrux_iot_sha3_incremental_shake256_squeeze_next_block(
     libcrux_iot_sha3_state_KeccakState *s, Eurydice_mut_borrow_slice_u8 out) {
-  libcrux_iot_sha3_keccak_squeeze_next_block_5b(s, out);
+  libcrux_iot_sha3_keccak_squeeze_next_block_b2(s, out);
 }

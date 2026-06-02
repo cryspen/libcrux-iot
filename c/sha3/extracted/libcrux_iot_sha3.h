@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 146b7dce58cb11ca8010b1c947c3437a959dcd88
- * Eurydice: cdf02f9d8ed0d73f88c0a495c5b79359a51398fc
- * Karamel: 8e7262955105599e91f3a99c9ab3d3387f7046f2
+ * Charon: e656e17bff6ca5efac8ab6919b9b74cb9a8dd8ad
+ * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
+ * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
  * F*: unset
- * Libcrux: 1ad7c25705450131b575043e252c944035898962
+ * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
  */
 
 #ifndef libcrux_iot_sha3_H
@@ -20,67 +20,99 @@
 extern "C" {
 #endif
 
+#include "eurydice_glue_additions.h"
 #include "libcrux_iot_core.h"
 
 /**
- SHA3 224
+ Writes SHA3-224 digest of input payload to externally allocated buffer.
 
  Preconditions:
- - `digest.len() == 28`
+ - `payload` is at most `u32::MAX` bytes long
+ - `digest` is exactly [`SHA3_224_DIGEST_SIZE`] bytes long
 */
 void sha224_ema(Eurydice_mut_borrow_slice_u8 digest,
                 Eurydice_borrow_slice_u8 payload);
 
 /**
- SHA3 224
-*/
-Eurydice_arr_f1 sha224(Eurydice_borrow_slice_u8 data);
+ Writes SHA3-256 digest of input payload to externally allocated buffer.
 
-/**
- SHA3 256
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+ - `digest` is exactly [`SHA3_256_DIGEST_SIZE`] bytes long
 */
 void sha256_ema(Eurydice_mut_borrow_slice_u8 digest,
                 Eurydice_borrow_slice_u8 payload);
 
 /**
- SHA3 256
-*/
-Eurydice_arr_60 sha256(Eurydice_borrow_slice_u8 data);
+ Writes SHA3-384 digest of input payload to externally allocated buffer.
 
-/**
- SHA3 384
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+ - `digest` is exactly [`SHA3_384_DIGEST_SIZE`] bytes long
 */
 void sha384_ema(Eurydice_mut_borrow_slice_u8 digest,
                 Eurydice_borrow_slice_u8 payload);
 
 /**
- SHA3 384
-*/
-Eurydice_arr_5f sha384(Eurydice_borrow_slice_u8 data);
+ Writes SHA3-512 digest of input payload to externally allocated buffer.
 
-/**
- SHA3 512
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+ - `digest` is exactly [`SHA3_512_DIGEST_SIZE`] bytes long
 */
 void sha512_ema(Eurydice_mut_borrow_slice_u8 digest,
                 Eurydice_borrow_slice_u8 payload);
 
 /**
- SHA3 512
+ Returns SHA3-224 digest of input payload.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
 */
-Eurydice_arr_06 sha512(Eurydice_borrow_slice_u8 data);
+Eurydice_arr_a2 sha224(Eurydice_borrow_slice_u8 payload);
 
 /**
- SHAKE 128
+ Returns SHA3-256 digest of input payload.
 
- Writes `out.len()` bytes.
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+*/
+Eurydice_arr_ec sha256(Eurydice_borrow_slice_u8 data);
+
+/**
+ Returns SHA3-384 digest of input payload.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+*/
+Eurydice_arr_65 sha384(Eurydice_borrow_slice_u8 data);
+
+/**
+ Returns SHA3-512 digest of input payload.
+
+ Preconditions:
+ - `payload` is at most `u32::MAX` bytes long
+*/
+Eurydice_arr_c7 sha512(Eurydice_borrow_slice_u8 data);
+
+/**
+ Writes SHAKE-128 digest of input payload to externally allocated buffer.
+
+ Writes `out.len()` bytes
+
+ Preconditions:
+ - `out` is at most `u32::MAX` bytes long
 */
 void shake128_ema(Eurydice_mut_borrow_slice_u8 out,
                   Eurydice_borrow_slice_u8 data);
 
 /**
- SHAKE 256
+ Writes SHAKE256 digest of input payload to externally allocated buffer.
 
  Writes `out.len()` bytes.
+
+ Preconditions:
+ - `out` is at most `u32::MAX` bytes long
 */
 void shake256_ema(Eurydice_mut_borrow_slice_u8 out,
                   Eurydice_borrow_slice_u8 data);

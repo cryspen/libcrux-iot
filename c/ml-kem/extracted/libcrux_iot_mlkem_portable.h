@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 377317d6b25702c46ffff072fa00a3e32095e46f
- * Eurydice: b227478b67c6a6e2ff611f978f10d6b7f26472ac
- * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
- * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
- * Libcrux: 0ab0448a17b81dc787e95a2c646c27ae75247f7b
+ * Charon: e656e17bff6ca5efac8ab6919b9b74cb9a8dd8ad
+ * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
+ * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
+ * F*: unset
+ * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
  */
 
 #ifndef libcrux_iot_mlkem_portable_H
@@ -20,6 +20,7 @@
 extern "C" {
 #endif
 
+#include "eurydice_glue_additions.h"
 #include "libcrux_iot_core.h"
 #include "libcrux_iot_sha3.h"
 
@@ -30,20 +31,20 @@ void libcrux_iot_ml_kem_hash_functions_portable_H(
     Eurydice_borrow_slice_u8 input, Eurydice_mut_borrow_slice_u8 output);
 
 void libcrux_iot_ml_kem_hash_functions_portable_PRFxN(
-    Eurydice_dst_ref_shared_de input, Eurydice_mut_borrow_slice_u8 outputs,
+    Eurydice_dst_ref_shared_b4 input, Eurydice_mut_borrow_slice_u8 outputs,
     size_t out_len);
 
-typedef Eurydice_arr_5e libcrux_iot_ml_kem_hash_functions_portable_PortableHash;
+typedef Eurydice_arr_7b libcrux_iot_ml_kem_hash_functions_portable_PortableHash;
 
-Eurydice_arr_5e
+Eurydice_arr_7b
 libcrux_iot_ml_kem_hash_functions_portable_shake128_init_absorb_final(
-    Eurydice_dst_ref_shared_cc input);
+    Eurydice_dst_ref_shared_cf input);
 
 void libcrux_iot_ml_kem_hash_functions_portable_shake128_squeeze_first_three_blocks(
-    Eurydice_arr_5e *state, Eurydice_dst_ref_mut_1a output);
+    Eurydice_arr_7b *state, Eurydice_dst_ref_mut_8c output);
 
 void libcrux_iot_ml_kem_hash_functions_portable_shake128_squeeze_next_block(
-    Eurydice_arr_5e *state, Eurydice_dst_ref_mut_a1 output);
+    Eurydice_arr_7b *state, Eurydice_dst_ref_mut_c3 output);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::hash_functions::Hash for
@@ -64,58 +65,58 @@ This function found in impl {libcrux_iot_ml_kem::hash_functions::Hash for
 libcrux_iot_ml_kem::hash_functions::portable::PortableHash}
 */
 void libcrux_iot_ml_kem_hash_functions_portable_PRFxN_07(
-    Eurydice_dst_ref_shared_de input, Eurydice_mut_borrow_slice_u8 outputs,
+    Eurydice_dst_ref_shared_b4 input, Eurydice_mut_borrow_slice_u8 outputs,
     size_t out_len);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::hash_functions::Hash for
 libcrux_iot_ml_kem::hash_functions::portable::PortableHash}
 */
-Eurydice_arr_5e
+Eurydice_arr_7b
 libcrux_iot_ml_kem_hash_functions_portable_shake128_init_absorb_final_07(
-    Eurydice_dst_ref_shared_cc input);
+    Eurydice_dst_ref_shared_cf input);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::hash_functions::Hash for
 libcrux_iot_ml_kem::hash_functions::portable::PortableHash}
 */
 void libcrux_iot_ml_kem_hash_functions_portable_shake128_squeeze_first_three_blocks_07(
-    Eurydice_arr_5e *self, Eurydice_dst_ref_mut_1a output);
+    Eurydice_arr_7b *self, Eurydice_dst_ref_mut_8c output);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::hash_functions::Hash for
 libcrux_iot_ml_kem::hash_functions::portable::PortableHash}
 */
 void libcrux_iot_ml_kem_hash_functions_portable_shake128_squeeze_next_block_07(
-    Eurydice_arr_5e *self, Eurydice_dst_ref_mut_a1 output);
+    Eurydice_arr_7b *self, Eurydice_dst_ref_mut_c3 output);
 
 #define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_FIELD_ELEMENTS_IN_VECTOR ((size_t)16U)
 
-#define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_FIELD_MODULUS ((int16_t)3329)
+#define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_FIELD_MODULUS (3329)
 
 #define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_MONTGOMERY_R_SQUARED_MOD_FIELD_MODULUS \
-  ((int16_t)1353)
+  (1353)
 
-typedef Eurydice_arr_e2
+typedef Eurydice_arr_d6
     libcrux_iot_ml_kem_vector_portable_vector_type_PortableVector;
 
-Eurydice_arr_e2 libcrux_iot_ml_kem_vector_portable_vector_type_zero(void);
+Eurydice_arr_d6 libcrux_iot_ml_kem_vector_portable_vector_type_zero(void);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-Eurydice_arr_e2 libcrux_iot_ml_kem_vector_portable_ZERO_4e(void);
+Eurydice_arr_d6 libcrux_iot_ml_kem_vector_portable_ZERO_4e(void);
 
 void libcrux_iot_ml_kem_vector_portable_vector_type_from_i16_array(
-    Eurydice_borrow_slice_i16 array, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_i16 array, Eurydice_arr_d6 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_from_i16_array_4e(
-    Eurydice_borrow_slice_i16 array, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_i16 array, Eurydice_arr_d6 *out);
 
 #define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_INVERSE_OF_MODULUS_MOD_MONTGOMERY_R \
   (62209U)
@@ -142,84 +143,85 @@ int16_t libcrux_iot_ml_kem_vector_portable_arithmetic_montgomery_reduce_element(
     int32_t value);
 
 void libcrux_iot_ml_kem_vector_portable_arithmetic_reducing_from_i32_array(
-    Eurydice_dst_ref_shared_fc array, Eurydice_arr_e2 *out);
+    Eurydice_dst_ref_shared_83 array, Eurydice_arr_d6 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_reducing_from_i32_array_4e(
-    Eurydice_dst_ref_shared_fc array, Eurydice_arr_e2 *out);
+    Eurydice_dst_ref_shared_83 array, Eurydice_arr_d6 *out);
 
 void libcrux_iot_ml_kem_vector_portable_arithmetic_add(
-    Eurydice_arr_e2 *lhs, const Eurydice_arr_e2 *rhs);
+    Eurydice_arr_d6 *lhs, const Eurydice_arr_d6 *rhs);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-void libcrux_iot_ml_kem_vector_portable_add_4e(Eurydice_arr_e2 *lhs,
-                                               const Eurydice_arr_e2 *rhs);
+void libcrux_iot_ml_kem_vector_portable_add_4e(Eurydice_arr_d6 *lhs,
+                                               const Eurydice_arr_d6 *rhs);
 
 void libcrux_iot_ml_kem_vector_portable_arithmetic_sub(
-    Eurydice_arr_e2 *lhs, const Eurydice_arr_e2 *rhs);
+    Eurydice_arr_d6 *lhs, const Eurydice_arr_d6 *rhs);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-void libcrux_iot_ml_kem_vector_portable_sub_4e(Eurydice_arr_e2 *lhs,
-                                               const Eurydice_arr_e2 *rhs);
+void libcrux_iot_ml_kem_vector_portable_sub_4e(Eurydice_arr_d6 *lhs,
+                                               const Eurydice_arr_d6 *rhs);
 
-void libcrux_iot_ml_kem_vector_portable_arithmetic_negate(Eurydice_arr_e2 *vec);
+void libcrux_iot_ml_kem_vector_portable_arithmetic_negate(Eurydice_arr_d6 *vec);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-void libcrux_iot_ml_kem_vector_portable_negate_4e(Eurydice_arr_e2 *vec);
+void libcrux_iot_ml_kem_vector_portable_negate_4e(Eurydice_arr_d6 *vec);
 
 void libcrux_iot_ml_kem_vector_portable_arithmetic_multiply_by_constant(
-    Eurydice_arr_e2 *vec, int16_t c);
+    Eurydice_arr_d6 *vec, int16_t c);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_multiply_by_constant_4e(
-    Eurydice_arr_e2 *vec, int16_t c);
+    Eurydice_arr_d6 *vec, int16_t c);
 
 void libcrux_iot_ml_kem_vector_portable_arithmetic_bitwise_and_with_constant(
-    Eurydice_arr_e2 *vec, int16_t c);
+    Eurydice_arr_d6 *vec, int16_t c);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_bitwise_and_with_constant_4e(
-    Eurydice_arr_e2 *vec, int16_t c);
+    Eurydice_arr_d6 *vec, int16_t c);
 
 /**
  Note: This function is not secret independent
  Only use with public values.
 */
 void libcrux_iot_ml_kem_vector_portable_arithmetic_cond_subtract_3329(
-    Eurydice_arr_e2 *vec);
+    Eurydice_arr_d6 *vec);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_cond_subtract_3329_4e(
-    Eurydice_arr_e2 *vec);
+    Eurydice_arr_d6 *vec);
 
-#define LIBCRUX_IOT_ML_KEM_VECTOR_PORTABLE_ARITHMETIC_BARRETT_MULTIPLIER \
-  ((int32_t)20159)
+#define LIBCRUX_IOT_ML_KEM_VECTOR_PORTABLE_ARITHMETIC_BARRETT_MULTIPLIER (20159)
 
-#define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_BARRETT_SHIFT ((int32_t)26)
+#define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_BARRETT_SHIFT (26)
 
 #define LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_BARRETT_R \
-  ((int32_t)1 << (uint32_t)LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_BARRETT_SHIFT)
+  (                                                \
+      (int32_t)((uint32_t)1                        \
+                << (uint32_t)LIBCRUX_IOT_ML_KEM_VECTOR_TRAITS_BARRETT_SHIFT))
 
 /**
  Signed Barrett Reduction
@@ -240,13 +242,13 @@ int16_t libcrux_iot_ml_kem_vector_portable_arithmetic_barrett_reduce_element(
     int16_t value);
 
 void libcrux_iot_ml_kem_vector_portable_arithmetic_barrett_reduce(
-    Eurydice_arr_e2 *vec);
+    Eurydice_arr_d6 *vec);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-void libcrux_iot_ml_kem_vector_portable_barrett_reduce_4e(Eurydice_arr_e2 *vec);
+void libcrux_iot_ml_kem_vector_portable_barrett_reduce_4e(Eurydice_arr_d6 *vec);
 
 /**
  If `fe` is some field element 'x' of the Kyber field and `fer` is congruent to
@@ -264,14 +266,14 @@ libcrux_iot_ml_kem_vector_portable_arithmetic_montgomery_multiply_fe_by_fer(
     int16_t fe, int16_t fer);
 
 void libcrux_iot_ml_kem_vector_portable_arithmetic_montgomery_multiply_by_constant(
-    Eurydice_arr_e2 *vec, int16_t c);
+    Eurydice_arr_d6 *vec, int16_t c);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_montgomery_multiply_by_constant_4e(
-    Eurydice_arr_e2 *vec, int16_t r);
+    Eurydice_arr_d6 *vec, int16_t r);
 
 /**
  The `compress_*` functions implement the `Compress` function specified in the
@@ -299,13 +301,13 @@ uint8_t
 libcrux_iot_ml_kem_vector_portable_compress_compress_message_coefficient(
     uint16_t fe);
 
-void libcrux_iot_ml_kem_vector_portable_compress_compress_1(Eurydice_arr_e2 *a);
+void libcrux_iot_ml_kem_vector_portable_compress_compress_1(Eurydice_arr_d6 *a);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-void libcrux_iot_ml_kem_vector_portable_compress_1_4e(Eurydice_arr_e2 *a);
+void libcrux_iot_ml_kem_vector_portable_compress_1_4e(Eurydice_arr_d6 *a);
 
 uint32_t
 libcrux_iot_ml_kem_vector_portable_arithmetic_get_n_least_significant_bits(
@@ -315,51 +317,51 @@ int16_t
 libcrux_iot_ml_kem_vector_portable_compress_compress_ciphertext_coefficient(
     uint8_t coefficient_bits, uint16_t fe);
 
-void libcrux_iot_ml_kem_vector_portable_ntt_ntt_step(Eurydice_arr_e2 *vec,
+void libcrux_iot_ml_kem_vector_portable_ntt_ntt_step(Eurydice_arr_d6 *vec,
                                                      int16_t zeta, size_t i,
                                                      size_t j);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_ntt_layer_1_step(
-    Eurydice_arr_e2 *vec, int16_t zeta0, int16_t zeta1, int16_t zeta2,
+    Eurydice_arr_d6 *vec, int16_t zeta0, int16_t zeta1, int16_t zeta2,
     int16_t zeta3);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-void libcrux_iot_ml_kem_vector_portable_ntt_layer_1_step_4e(Eurydice_arr_e2 *a,
+void libcrux_iot_ml_kem_vector_portable_ntt_layer_1_step_4e(Eurydice_arr_d6 *a,
                                                             int16_t zeta0,
                                                             int16_t zeta1,
                                                             int16_t zeta2,
                                                             int16_t zeta3);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_ntt_layer_2_step(
-    Eurydice_arr_e2 *vec, int16_t zeta0, int16_t zeta1);
+    Eurydice_arr_d6 *vec, int16_t zeta0, int16_t zeta1);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-void libcrux_iot_ml_kem_vector_portable_ntt_layer_2_step_4e(Eurydice_arr_e2 *a,
+void libcrux_iot_ml_kem_vector_portable_ntt_layer_2_step_4e(Eurydice_arr_d6 *a,
                                                             int16_t zeta0,
                                                             int16_t zeta1);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_ntt_layer_3_step(
-    Eurydice_arr_e2 *vec, int16_t zeta);
+    Eurydice_arr_d6 *vec, int16_t zeta);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-void libcrux_iot_ml_kem_vector_portable_ntt_layer_3_step_4e(Eurydice_arr_e2 *a,
+void libcrux_iot_ml_kem_vector_portable_ntt_layer_3_step_4e(Eurydice_arr_d6 *a,
                                                             int16_t zeta);
 
-void libcrux_iot_ml_kem_vector_portable_ntt_inv_ntt_step(Eurydice_arr_e2 *vec,
+void libcrux_iot_ml_kem_vector_portable_ntt_inv_ntt_step(Eurydice_arr_d6 *vec,
                                                          int16_t zeta, size_t i,
                                                          size_t j);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_inv_ntt_layer_1_step(
-    Eurydice_arr_e2 *vec, int16_t zeta0, int16_t zeta1, int16_t zeta2,
+    Eurydice_arr_d6 *vec, int16_t zeta0, int16_t zeta1, int16_t zeta2,
     int16_t zeta3);
 
 /**
@@ -367,36 +369,36 @@ This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_inv_ntt_layer_1_step_4e(
-    Eurydice_arr_e2 *a, int16_t zeta0, int16_t zeta1, int16_t zeta2,
+    Eurydice_arr_d6 *a, int16_t zeta0, int16_t zeta1, int16_t zeta2,
     int16_t zeta3);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_inv_ntt_layer_2_step(
-    Eurydice_arr_e2 *vec, int16_t zeta0, int16_t zeta1);
+    Eurydice_arr_d6 *vec, int16_t zeta0, int16_t zeta1);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_inv_ntt_layer_2_step_4e(
-    Eurydice_arr_e2 *a, int16_t zeta0, int16_t zeta1);
+    Eurydice_arr_d6 *a, int16_t zeta0, int16_t zeta1);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_inv_ntt_layer_3_step(
-    Eurydice_arr_e2 *vec, int16_t zeta);
+    Eurydice_arr_d6 *vec, int16_t zeta);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_inv_ntt_layer_3_step_4e(
-    Eurydice_arr_e2 *a, int16_t zeta);
+    Eurydice_arr_d6 *a, int16_t zeta);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_accumulating_ntt_multiply_binomials(
-    const Eurydice_arr_e2 *a, const Eurydice_arr_e2 *b, int16_t zeta, size_t i,
-    Eurydice_dst_ref_mut_fc out);
+    const Eurydice_arr_d6 *a, const Eurydice_arr_d6 *b, int16_t zeta, size_t i,
+    Eurydice_dst_ref_mut_83 out);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_accumulating_ntt_multiply(
-    const Eurydice_arr_e2 *lhs, const Eurydice_arr_e2 *rhs,
-    Eurydice_dst_ref_mut_fc out, int16_t zeta0, int16_t zeta1, int16_t zeta2,
+    const Eurydice_arr_d6 *lhs, const Eurydice_arr_d6 *rhs,
+    Eurydice_dst_ref_mut_83 out, int16_t zeta0, int16_t zeta1, int16_t zeta2,
     int16_t zeta3);
 
 /**
@@ -404,8 +406,8 @@ This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_accumulating_ntt_multiply_4e(
-    const Eurydice_arr_e2 *lhs, const Eurydice_arr_e2 *rhs,
-    Eurydice_dst_ref_mut_fc out, int16_t zeta0, int16_t zeta1, int16_t zeta2,
+    const Eurydice_arr_d6 *lhs, const Eurydice_arr_d6 *rhs,
+    Eurydice_dst_ref_mut_83 out, int16_t zeta0, int16_t zeta1, int16_t zeta2,
     int16_t zeta3);
 
 /**
@@ -431,12 +433,12 @@ void libcrux_iot_ml_kem_vector_portable_accumulating_ntt_multiply_4e(
  <https://csrc.nist.gov/pubs/fips/203/ipd>.
 */
 void libcrux_iot_ml_kem_vector_portable_ntt_accumulating_ntt_multiply_binomials_fill_cache(
-    const Eurydice_arr_e2 *a, const Eurydice_arr_e2 *b, int16_t zeta, size_t i,
-    Eurydice_dst_ref_mut_fc out, Eurydice_arr_e2 *cache);
+    const Eurydice_arr_d6 *a, const Eurydice_arr_d6 *b, int16_t zeta, size_t i,
+    Eurydice_dst_ref_mut_83 out, Eurydice_arr_d6 *cache);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_accumulating_ntt_multiply_fill_cache(
-    const Eurydice_arr_e2 *lhs, const Eurydice_arr_e2 *rhs,
-    Eurydice_dst_ref_mut_fc out, Eurydice_arr_e2 *cache, int16_t zeta0,
+    const Eurydice_arr_d6 *lhs, const Eurydice_arr_d6 *rhs,
+    Eurydice_dst_ref_mut_83 out, Eurydice_arr_d6 *cache, int16_t zeta0,
     int16_t zeta1, int16_t zeta2, int16_t zeta3);
 
 /**
@@ -444,45 +446,45 @@ This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_accumulating_ntt_multiply_fill_cache_4e(
-    const Eurydice_arr_e2 *lhs, const Eurydice_arr_e2 *rhs,
-    Eurydice_dst_ref_mut_fc out, Eurydice_arr_e2 *cache, int16_t zeta0,
+    const Eurydice_arr_d6 *lhs, const Eurydice_arr_d6 *rhs,
+    Eurydice_dst_ref_mut_83 out, Eurydice_arr_d6 *cache, int16_t zeta0,
     int16_t zeta1, int16_t zeta2, int16_t zeta3);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_accumulating_ntt_multiply_binomials_use_cache(
-    const Eurydice_arr_e2 *a, const Eurydice_arr_e2 *b, size_t i,
-    Eurydice_dst_ref_mut_fc out, const Eurydice_arr_e2 *cache);
+    const Eurydice_arr_d6 *a, const Eurydice_arr_d6 *b, size_t i,
+    Eurydice_dst_ref_mut_83 out, const Eurydice_arr_d6 *cache);
 
 void libcrux_iot_ml_kem_vector_portable_ntt_accumulating_ntt_multiply_use_cache(
-    const Eurydice_arr_e2 *lhs, const Eurydice_arr_e2 *rhs,
-    Eurydice_dst_ref_mut_fc out, const Eurydice_arr_e2 *cache);
+    const Eurydice_arr_d6 *lhs, const Eurydice_arr_d6 *rhs,
+    Eurydice_dst_ref_mut_83 out, const Eurydice_arr_d6 *cache);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_accumulating_ntt_multiply_use_cache_4e(
-    const Eurydice_arr_e2 *lhs, const Eurydice_arr_e2 *rhs,
-    Eurydice_dst_ref_mut_fc out, const Eurydice_arr_e2 *cache);
+    const Eurydice_arr_d6 *lhs, const Eurydice_arr_d6 *rhs,
+    Eurydice_dst_ref_mut_83 out, const Eurydice_arr_d6 *cache);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_serialize_1(
-    const Eurydice_arr_e2 *v, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *v, Eurydice_mut_borrow_slice_u8 out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_serialize_1_4e(
-    const Eurydice_arr_e2 *a, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *a, Eurydice_mut_borrow_slice_u8 out);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_deserialize_1(
-    Eurydice_borrow_slice_u8 v, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 v, Eurydice_arr_d6 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_deserialize_1_4e(
-    Eurydice_borrow_slice_u8 a, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 a, Eurydice_arr_d6 *out);
 
 typedef struct uint8_t_x4_s {
   uint8_t fst;
@@ -495,14 +497,14 @@ uint8_t_x4 libcrux_iot_ml_kem_vector_portable_serialize_serialize_4_int(
     Eurydice_borrow_slice_i16 v);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_serialize_4(
-    const Eurydice_arr_e2 *v, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *v, Eurydice_mut_borrow_slice_u8 out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_serialize_4_4e(
-    const Eurydice_arr_e2 *a, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *a, Eurydice_mut_borrow_slice_u8 out);
 
 typedef struct int16_t_x8_s {
   int16_t fst;
@@ -519,14 +521,14 @@ int16_t_x8 libcrux_iot_ml_kem_vector_portable_serialize_deserialize_4_int(
     Eurydice_borrow_slice_u8 bytes);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_deserialize_4(
-    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_d6 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_deserialize_4_4e(
-    Eurydice_borrow_slice_u8 a, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 a, Eurydice_arr_d6 *out);
 
 typedef struct uint8_t_x5_s {
   uint8_t fst;
@@ -540,53 +542,53 @@ uint8_t_x5 libcrux_iot_ml_kem_vector_portable_serialize_serialize_5_int(
     Eurydice_borrow_slice_i16 v);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_serialize_5(
-    const Eurydice_arr_e2 *v, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *v, Eurydice_mut_borrow_slice_u8 out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_serialize_5_4e(
-    const Eurydice_arr_e2 *a, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *a, Eurydice_mut_borrow_slice_u8 out);
 
 int16_t_x8 libcrux_iot_ml_kem_vector_portable_serialize_deserialize_5_int(
     Eurydice_borrow_slice_u8 bytes);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_deserialize_5(
-    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_d6 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_deserialize_5_4e(
-    Eurydice_borrow_slice_u8 a, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 a, Eurydice_arr_d6 *out);
 
 uint8_t_x5 libcrux_iot_ml_kem_vector_portable_serialize_serialize_10_int(
     Eurydice_borrow_slice_i16 v);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_serialize_10(
-    const Eurydice_arr_e2 *v, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *v, Eurydice_mut_borrow_slice_u8 out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_serialize_10_4e(
-    const Eurydice_arr_e2 *a, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *a, Eurydice_mut_borrow_slice_u8 out);
 
 int16_t_x8 libcrux_iot_ml_kem_vector_portable_serialize_deserialize_10_int(
     Eurydice_borrow_slice_u8 bytes);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_deserialize_10(
-    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_d6 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_deserialize_10_4e(
-    Eurydice_borrow_slice_u8 a, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 a, Eurydice_arr_d6 *out);
 
 typedef struct uint8_t_x11_s {
   uint8_t fst;
@@ -606,27 +608,27 @@ uint8_t_x11 libcrux_iot_ml_kem_vector_portable_serialize_serialize_11_int(
     Eurydice_borrow_slice_i16 v);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_serialize_11(
-    const Eurydice_arr_e2 *v, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *v, Eurydice_mut_borrow_slice_u8 out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_serialize_11_4e(
-    const Eurydice_arr_e2 *a, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *a, Eurydice_mut_borrow_slice_u8 out);
 
 int16_t_x8 libcrux_iot_ml_kem_vector_portable_serialize_deserialize_11_int(
     Eurydice_borrow_slice_u8 bytes);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_deserialize_11(
-    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_d6 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_deserialize_11_4e(
-    Eurydice_borrow_slice_u8 a, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 a, Eurydice_arr_d6 *out);
 
 typedef struct uint8_t_x3_s {
   uint8_t fst;
@@ -638,14 +640,14 @@ uint8_t_x3 libcrux_iot_ml_kem_vector_portable_serialize_serialize_12_int(
     Eurydice_borrow_slice_i16 v);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_serialize_12(
-    const Eurydice_arr_e2 *v, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *v, Eurydice_mut_borrow_slice_u8 out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_serialize_12_4e(
-    const Eurydice_arr_e2 *a, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_d6 *a, Eurydice_mut_borrow_slice_u8 out);
 
 typedef struct int16_t_x2_s {
   int16_t fst;
@@ -656,14 +658,14 @@ int16_t_x2 libcrux_iot_ml_kem_vector_portable_serialize_deserialize_12_int(
     Eurydice_borrow_slice_u8 bytes);
 
 void libcrux_iot_ml_kem_vector_portable_serialize_deserialize_12(
-    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 bytes, Eurydice_arr_d6 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_kem::vector::traits::Operations for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
 void libcrux_iot_ml_kem_vector_portable_deserialize_12_4e(
-    Eurydice_borrow_slice_u8 a, Eurydice_arr_e2 *out);
+    Eurydice_borrow_slice_u8 a, Eurydice_arr_d6 *out);
 
 size_t libcrux_iot_ml_kem_vector_portable_sampling_rej_sample(
     Eurydice_borrow_slice_u8 a, Eurydice_mut_borrow_slice_i16 out);
@@ -687,8 +689,8 @@ typedef int16_t libcrux_iot_ml_kem_vector_portable_vector_type_FieldElement;
 This function found in impl {core::clone::Clone for
 libcrux_iot_ml_kem::vector::portable::vector_type::PortableVector}
 */
-Eurydice_arr_e2 libcrux_iot_ml_kem_vector_portable_vector_type_clone_9c(
-    const Eurydice_arr_e2 *self);
+Eurydice_arr_d6 libcrux_iot_ml_kem_vector_portable_vector_type_clone_9c(
+    const Eurydice_arr_d6 *self);
 
 #if defined(__cplusplus)
 }

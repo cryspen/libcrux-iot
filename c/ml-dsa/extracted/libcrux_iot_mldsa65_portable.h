@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT or Apache-2.0
  *
  * This code was generated with the following revisions:
- * Charon: 377317d6b25702c46ffff072fa00a3e32095e46f
- * Eurydice: b227478b67c6a6e2ff611f978f10d6b7f26472ac
- * Karamel: 4e64d915da3c172d1dfad805b8e1a46beff938bc
- * F*: 89901492c020c74b82d811d27f3149c222d9b8b5
- * Libcrux: 0ab0448a17b81dc787e95a2c646c27ae75247f7b
+ * Charon: e656e17bff6ca5efac8ab6919b9b74cb9a8dd8ad
+ * Eurydice: aaa9fa657fb6f09802edb890252040d94cd93982
+ * Karamel: 8c19d41458ce5cbfea029ebc03334ba96d149039
+ * F*: unset
+ * Libcrux: 0b1da9aa241abc8ae799a477417da10614fe9c53
  */
 
 #ifndef libcrux_iot_mldsa65_portable_H
@@ -50,11 +50,11 @@ typedef uint8_t libcrux_iot_ml_dsa_constants_Eta;
 
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_CONTEXT_MAX_LEN ((size_t)255U)
 
-#define LIBCRUX_IOT_ML_DSA_CONSTANTS_FIELD_MODULUS ((int32_t)8380417)
+#define LIBCRUX_IOT_ML_DSA_CONSTANTS_FIELD_MODULUS (8380417)
 
-#define LIBCRUX_IOT_ML_DSA_CONSTANTS_GAMMA2_V261_888 ((int32_t)261888)
+#define LIBCRUX_IOT_ML_DSA_CONSTANTS_GAMMA2_V261_888 (261888)
 
-#define LIBCRUX_IOT_ML_DSA_CONSTANTS_GAMMA2_V95_232 ((int32_t)95232)
+#define LIBCRUX_IOT_ML_DSA_CONSTANTS_GAMMA2_V95_232 (95232)
 
 typedef int32_t libcrux_iot_ml_dsa_constants_Gamma2;
 
@@ -127,7 +127,7 @@ size_t libcrux_iot_ml_dsa_constants_verification_key_size(size_t rows_in_a);
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_44_GAMMA1_EXPONENT ((size_t)17U)
 
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_44_GAMMA2 \
-  ((LIBCRUX_IOT_ML_DSA_CONSTANTS_FIELD_MODULUS - (int32_t)1) / (int32_t)88)
+  ((LIBCRUX_IOT_ML_DSA_CONSTANTS_FIELD_MODULUS - 1) / 88)
 
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_44_MAX_ONES_IN_HINT ((size_t)80U)
 
@@ -156,7 +156,7 @@ size_t libcrux_iot_ml_dsa_constants_verification_key_size(size_t rows_in_a);
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_65_GAMMA1_EXPONENT ((size_t)19U)
 
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_65_GAMMA2 \
-  ((LIBCRUX_IOT_ML_DSA_CONSTANTS_FIELD_MODULUS - (int32_t)1) / (int32_t)32)
+  ((LIBCRUX_IOT_ML_DSA_CONSTANTS_FIELD_MODULUS - 1) / 32)
 
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_65_MAX_ONES_IN_HINT ((size_t)55U)
 
@@ -185,7 +185,7 @@ size_t libcrux_iot_ml_dsa_constants_verification_key_size(size_t rows_in_a);
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_87_GAMMA1_EXPONENT ((size_t)19U)
 
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_87_GAMMA2 \
-  ((LIBCRUX_IOT_ML_DSA_CONSTANTS_FIELD_MODULUS - (int32_t)1) / (int32_t)32)
+  ((LIBCRUX_IOT_ML_DSA_CONSTANTS_FIELD_MODULUS - 1) / 32)
 
 #define LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_87_MAX_ONES_IN_HINT ((size_t)75U)
 
@@ -205,7 +205,7 @@ size_t libcrux_iot_ml_dsa_encoding_error_chunk_size(
     libcrux_iot_ml_dsa_constants_Eta eta);
 
 void libcrux_iot_ml_dsa_encoding_signature_set_hint(
-    Eurydice_dst_ref_mut_22 out_hint, size_t i, size_t j);
+    Eurydice_dst_ref_mut_20 out_hint, size_t i, size_t j);
 
 #define LIBCRUX_IOT_ML_DSA_ENCODING_T0_OUTPUT_BYTES_PER_SIMD_UNIT ((size_t)13U)
 
@@ -214,7 +214,7 @@ void libcrux_iot_ml_dsa_encoding_signature_set_hint(
 #define LIBCRUX_IOT_ML_DSA_ENCODING_T1_SERIALIZE_OUTPUT_BYTES_PER_SIMD_UNIT \
   ((size_t)10U)
 
-typedef libcrux_iot_sha3_portable_KeccakState
+typedef libcrux_iot_sha3_incremental_UnbufferedXofState
     libcrux_iot_ml_dsa_hash_functions_portable_Shake128;
 
 typedef struct libcrux_iot_ml_dsa_hash_functions_portable_Shake128X4_s {
@@ -224,7 +224,7 @@ typedef struct libcrux_iot_ml_dsa_hash_functions_portable_Shake128X4_s {
   libcrux_iot_sha3_state_KeccakState state3;
 } libcrux_iot_ml_dsa_hash_functions_portable_Shake128X4;
 
-typedef libcrux_iot_sha3_portable_KeccakState
+typedef libcrux_iot_sha3_incremental_UnbufferedXofState
     libcrux_iot_ml_dsa_hash_functions_portable_Shake256;
 
 typedef struct libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4_s {
@@ -234,7 +234,7 @@ typedef struct libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4_s {
   libcrux_iot_sha3_state_KeccakState state3;
 } libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4;
 
-typedef libcrux_iot_sha3_portable_incremental_Shake256Xof
+typedef libcrux_iot_sha3_incremental_Shake256Xof
     libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof;
 
 libcrux_iot_sha3_state_KeccakState
@@ -251,17 +251,17 @@ libcrux_iot_ml_dsa_hash_functions_portable_shake128_init_absorb_x4(
 
 void libcrux_iot_ml_dsa_hash_functions_portable_shake128_squeeze_first_five_blocks_x4(
     libcrux_iot_ml_dsa_hash_functions_portable_Shake128X4 *state,
-    Eurydice_arr_12 *out0, Eurydice_arr_12 *out1, Eurydice_arr_12 *out2,
-    Eurydice_arr_12 *out3);
+    Eurydice_arr_d1 *out0, Eurydice_arr_d1 *out1, Eurydice_arr_d1 *out2,
+    Eurydice_arr_d1 *out3);
 
-typedef struct Eurydice_arr_27_x4_s {
-  Eurydice_arr_27 fst;
-  Eurydice_arr_27 snd;
-  Eurydice_arr_27 thd;
-  Eurydice_arr_27 f3;
-} Eurydice_arr_27_x4;
+typedef struct Eurydice_arr_c5_x4_s {
+  Eurydice_arr_c5 fst;
+  Eurydice_arr_c5 snd;
+  Eurydice_arr_c5 thd;
+  Eurydice_arr_c5 f3;
+} Eurydice_arr_c5_x4;
 
-Eurydice_arr_27_x4
+Eurydice_arr_c5_x4
 libcrux_iot_ml_dsa_hash_functions_portable_shake128_squeeze_next_block_x4(
     libcrux_iot_ml_dsa_hash_functions_portable_Shake128X4 *state);
 
@@ -270,26 +270,26 @@ libcrux_iot_ml_dsa_hash_functions_portable_shake256_init_absorb_x4(
     Eurydice_borrow_slice_u8 input0, Eurydice_borrow_slice_u8 input1,
     Eurydice_borrow_slice_u8 input2, Eurydice_borrow_slice_u8 input3);
 
-typedef struct Eurydice_arr_3d_x4_s {
-  Eurydice_arr_3d fst;
-  Eurydice_arr_3d snd;
-  Eurydice_arr_3d thd;
-  Eurydice_arr_3d f3;
-} Eurydice_arr_3d_x4;
+typedef struct Eurydice_arr_ff_x4_s {
+  Eurydice_arr_ff fst;
+  Eurydice_arr_ff snd;
+  Eurydice_arr_ff thd;
+  Eurydice_arr_ff f3;
+} Eurydice_arr_ff_x4;
 
-Eurydice_arr_3d_x4
+Eurydice_arr_ff_x4
 libcrux_iot_ml_dsa_hash_functions_portable_shake256_squeeze_first_block_x4(
     libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 *state);
 
-Eurydice_arr_3d_x4
+Eurydice_arr_ff_x4
 libcrux_iot_ml_dsa_hash_functions_portable_shake256_squeeze_next_block_x4(
     libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 *state);
 
-Eurydice_arr_3d
+Eurydice_arr_ff
 libcrux_iot_ml_dsa_hash_functions_portable_squeeze_first_block_shake256(
     libcrux_iot_sha3_state_KeccakState *state);
 
-Eurydice_arr_3d
+Eurydice_arr_ff
 libcrux_iot_ml_dsa_hash_functions_portable_squeeze_next_block_shake256(
     libcrux_iot_sha3_state_KeccakState *state);
 
@@ -306,14 +306,14 @@ This function found in impl
 {libcrux_iot_ml_dsa::hash_functions::portable::Shake128}
 */
 void libcrux_iot_ml_dsa_hash_functions_portable_shake128_squeeze_first_five_blocks_b5(
-    libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_12 *out);
+    libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_d1 *out);
 
 /**
 This function found in impl
 {libcrux_iot_ml_dsa::hash_functions::portable::Shake128}
 */
 void libcrux_iot_ml_dsa_hash_functions_portable_shake128_squeeze_next_block_b5(
-    libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_27 *out);
+    libcrux_iot_sha3_state_KeccakState *self, Eurydice_arr_c5 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake128::Xof
@@ -337,14 +337,14 @@ for libcrux_iot_ml_dsa::hash_functions::portable::Shake128X4}
 */
 void libcrux_iot_ml_dsa_hash_functions_portable_squeeze_first_five_blocks_33(
     libcrux_iot_ml_dsa_hash_functions_portable_Shake128X4 *self,
-    Eurydice_arr_12 *out0, Eurydice_arr_12 *out1, Eurydice_arr_12 *out2,
-    Eurydice_arr_12 *out3);
+    Eurydice_arr_d1 *out0, Eurydice_arr_d1 *out1, Eurydice_arr_d1 *out2,
+    Eurydice_arr_d1 *out3);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake128::XofX4
 for libcrux_iot_ml_dsa::hash_functions::portable::Shake128X4}
 */
-Eurydice_arr_27_x4
+Eurydice_arr_c5_x4
 libcrux_iot_ml_dsa_hash_functions_portable_squeeze_next_block_33(
     libcrux_iot_ml_dsa_hash_functions_portable_Shake128X4 *self);
 
@@ -362,7 +362,7 @@ This function found in impl
 {libcrux_iot_ml_dsa::hash_functions::shake256::DsaXof for
 libcrux_iot_ml_dsa::hash_functions::portable::Shake256}
 */
-Eurydice_arr_3d
+Eurydice_arr_ff
 libcrux_iot_ml_dsa_hash_functions_portable_squeeze_first_block_a1(
     libcrux_iot_sha3_state_KeccakState *self);
 
@@ -371,7 +371,7 @@ This function found in impl
 {libcrux_iot_ml_dsa::hash_functions::shake256::DsaXof for
 libcrux_iot_ml_dsa::hash_functions::portable::Shake256}
 */
-Eurydice_arr_3d
+Eurydice_arr_ff
 libcrux_iot_ml_dsa_hash_functions_portable_squeeze_next_block_a1(
     libcrux_iot_sha3_state_KeccakState *self);
 
@@ -380,7 +380,7 @@ This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake256::Xof
 for libcrux_iot_ml_dsa::hash_functions::portable::Shake256Xof}
 */
 void libcrux_iot_ml_dsa_hash_functions_portable_absorb_88(
-    libcrux_iot_sha3_keccak_KeccakXofState_c7 *self,
+    libcrux_iot_sha3_keccak_KeccakXofState_bd *self,
     Eurydice_borrow_slice_u8 input);
 
 /**
@@ -388,14 +388,14 @@ This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake256::Xof
 for libcrux_iot_ml_dsa::hash_functions::portable::Shake256Xof}
 */
 void libcrux_iot_ml_dsa_hash_functions_portable_absorb_final_88(
-    libcrux_iot_sha3_keccak_KeccakXofState_c7 *self,
+    libcrux_iot_sha3_keccak_KeccakXofState_bd *self,
     Eurydice_borrow_slice_u8 input);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake256::Xof
 for libcrux_iot_ml_dsa::hash_functions::portable::Shake256Xof}
 */
-libcrux_iot_sha3_keccak_KeccakXofState_c7
+libcrux_iot_sha3_keccak_KeccakXofState_bd
 libcrux_iot_ml_dsa_hash_functions_portable_init_88(void);
 
 /**
@@ -403,7 +403,7 @@ This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake256::Xof
 for libcrux_iot_ml_dsa::hash_functions::portable::Shake256Xof}
 */
 void libcrux_iot_ml_dsa_hash_functions_portable_squeeze_88(
-    libcrux_iot_sha3_keccak_KeccakXofState_c7 *self,
+    libcrux_iot_sha3_keccak_KeccakXofState_bd *self,
     Eurydice_mut_borrow_slice_u8 out);
 
 /**
@@ -419,7 +419,7 @@ libcrux_iot_ml_dsa_hash_functions_portable_init_absorb_x4_29(
 This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake256::XofX4
 for libcrux_iot_ml_dsa::hash_functions::portable::Shake256X4}
 */
-Eurydice_arr_3d_x4
+Eurydice_arr_ff_x4
 libcrux_iot_ml_dsa_hash_functions_portable_squeeze_first_block_x4_29(
     libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 *self);
 
@@ -427,7 +427,7 @@ libcrux_iot_ml_dsa_hash_functions_portable_squeeze_first_block_x4_29(
 This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake256::XofX4
 for libcrux_iot_ml_dsa::hash_functions::portable::Shake256X4}
 */
-Eurydice_arr_3d_x4
+Eurydice_arr_ff_x4
 libcrux_iot_ml_dsa_hash_functions_portable_squeeze_next_block_x4_29(
     libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 *self);
 
@@ -445,78 +445,78 @@ typedef struct uint8_t_x2_s {
 
 uint16_t libcrux_iot_ml_dsa_sample_generate_domain_separator(uint8_t_x2 _);
 
-Eurydice_arr_48 libcrux_iot_ml_dsa_sample_add_domain_separator(
+Eurydice_arr_31 libcrux_iot_ml_dsa_sample_add_domain_separator(
     Eurydice_borrow_slice_u8 slice, uint8_t_x2 indices);
 
-Eurydice_arr_a2 libcrux_iot_ml_dsa_sample_add_error_domain_separator(
+Eurydice_arr_91 libcrux_iot_ml_dsa_sample_add_error_domain_separator(
     Eurydice_borrow_slice_u8 slice, uint16_t domain_separator);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_44_ERROR_RING_ELEMENT_SIZE \
   (libcrux_iot_ml_dsa_constants_error_ring_element_size(                    \
       LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_44_BITS_PER_ERROR_COEFFICIENT))
 
-typedef Eurydice_arr_d4
+typedef Eurydice_arr_4d
     libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients;
 
-Eurydice_arr_d4 libcrux_iot_ml_dsa_simd_portable_vector_type_zero(void);
+Eurydice_arr_4d libcrux_iot_ml_dsa_simd_portable_vector_type_zero(void);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
-Eurydice_arr_d4 libcrux_iot_ml_dsa_simd_portable_zero_c5(void);
+Eurydice_arr_4d libcrux_iot_ml_dsa_simd_portable_zero_c5(void);
 
 void libcrux_iot_ml_dsa_simd_portable_vector_type_from_coefficient_array(
-    Eurydice_dst_ref_shared_fc array, Eurydice_arr_d4 *out);
+    Eurydice_dst_ref_shared_83 array, Eurydice_arr_4d *out);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_from_coefficient_array_c5(
-    Eurydice_dst_ref_shared_fc array, Eurydice_arr_d4 *out);
+    Eurydice_dst_ref_shared_83 array, Eurydice_arr_4d *out);
 
 void libcrux_iot_ml_dsa_simd_portable_vector_type_to_coefficient_array(
-    const Eurydice_arr_d4 *value, Eurydice_dst_ref_mut_fc out);
+    const Eurydice_arr_4d *value, Eurydice_dst_ref_mut_83 out);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_to_coefficient_array_c5(
-    const Eurydice_arr_d4 *value, Eurydice_dst_ref_mut_fc out);
+    const Eurydice_arr_4d *value, Eurydice_dst_ref_mut_83 out);
 
 void libcrux_iot_ml_dsa_simd_portable_arithmetic_add(
-    Eurydice_arr_d4 *lhs, const Eurydice_arr_d4 *rhs);
+    Eurydice_arr_4d *lhs, const Eurydice_arr_4d *rhs);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
-void libcrux_iot_ml_dsa_simd_portable_add_c5(Eurydice_arr_d4 *lhs,
-                                             const Eurydice_arr_d4 *rhs);
+void libcrux_iot_ml_dsa_simd_portable_add_c5(Eurydice_arr_4d *lhs,
+                                             const Eurydice_arr_4d *rhs);
 
 void libcrux_iot_ml_dsa_simd_portable_arithmetic_subtract(
-    Eurydice_arr_d4 *lhs, const Eurydice_arr_d4 *rhs);
+    Eurydice_arr_4d *lhs, const Eurydice_arr_4d *rhs);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
-void libcrux_iot_ml_dsa_simd_portable_subtract_c5(Eurydice_arr_d4 *lhs,
-                                                  const Eurydice_arr_d4 *rhs);
+void libcrux_iot_ml_dsa_simd_portable_subtract_c5(Eurydice_arr_4d *lhs,
+                                                  const Eurydice_arr_4d *rhs);
 
 bool libcrux_iot_ml_dsa_simd_portable_arithmetic_infinity_norm_exceeds(
-    const Eurydice_arr_d4 *simd_unit, int32_t bound);
+    const Eurydice_arr_4d *simd_unit, int32_t bound);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 bool libcrux_iot_ml_dsa_simd_portable_infinity_norm_exceeds_c5(
-    const Eurydice_arr_d4 *simd_unit, int32_t bound);
+    const Eurydice_arr_4d *simd_unit, int32_t bound);
 
-#define LIBCRUX_IOT_ML_DSA_SIMD_TRAITS_FIELD_MODULUS ((int32_t)8380417)
+#define LIBCRUX_IOT_ML_DSA_SIMD_TRAITS_FIELD_MODULUS (8380417)
 
 typedef struct int32_t_x2_s {
   int32_t fst;
@@ -527,45 +527,45 @@ int32_t_x2 libcrux_iot_ml_dsa_simd_portable_arithmetic_decompose_element(
     int32_t gamma2, int32_t r);
 
 void libcrux_iot_ml_dsa_simd_portable_arithmetic_decompose(
-    int32_t gamma2, const Eurydice_arr_d4 *simd_unit, Eurydice_arr_d4 *low,
-    Eurydice_arr_d4 *high);
+    int32_t gamma2, const Eurydice_arr_4d *simd_unit, Eurydice_arr_4d *low,
+    Eurydice_arr_4d *high);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_decompose_c5(
-    int32_t gamma2, const Eurydice_arr_d4 *simd_unit, Eurydice_arr_d4 *low,
-    Eurydice_arr_d4 *high);
+    int32_t gamma2, const Eurydice_arr_4d *simd_unit, Eurydice_arr_4d *low,
+    Eurydice_arr_4d *high);
 
 int32_t libcrux_iot_ml_dsa_simd_portable_arithmetic_compute_one_hint(
     int32_t low, int32_t high, int32_t gamma2);
 
 size_t libcrux_iot_ml_dsa_simd_portable_arithmetic_compute_hint(
-    const Eurydice_arr_d4 *low, const Eurydice_arr_d4 *high, int32_t gamma2,
-    Eurydice_arr_d4 *hint);
+    const Eurydice_arr_4d *low, const Eurydice_arr_4d *high, int32_t gamma2,
+    Eurydice_arr_4d *hint);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 size_t libcrux_iot_ml_dsa_simd_portable_compute_hint_c5(
-    const Eurydice_arr_d4 *low, const Eurydice_arr_d4 *high, int32_t gamma2,
-    Eurydice_arr_d4 *hint);
+    const Eurydice_arr_4d *low, const Eurydice_arr_4d *high, int32_t gamma2,
+    Eurydice_arr_4d *hint);
 
 int32_t libcrux_iot_ml_dsa_simd_portable_arithmetic_use_one_hint(int32_t gamma2,
                                                                  int32_t r,
                                                                  int32_t hint);
 
 void libcrux_iot_ml_dsa_simd_portable_arithmetic_use_hint(
-    int32_t gamma2, const Eurydice_arr_d4 *simd_unit, Eurydice_arr_d4 *hint);
+    int32_t gamma2, const Eurydice_arr_4d *simd_unit, Eurydice_arr_4d *hint);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_use_hint_c5(
-    int32_t gamma2, const Eurydice_arr_d4 *simd_unit, Eurydice_arr_d4 *hint);
+    int32_t gamma2, const Eurydice_arr_4d *simd_unit, Eurydice_arr_4d *hint);
 
 uint64_t
 libcrux_iot_ml_dsa_simd_portable_arithmetic_get_n_least_significant_bits(
@@ -580,14 +580,14 @@ int32_t libcrux_iot_ml_dsa_simd_portable_arithmetic_montgomery_reduce_element(
     int64_t value);
 
 void libcrux_iot_ml_dsa_simd_portable_arithmetic_montgomery_multiply(
-    Eurydice_arr_d4 *lhs, const Eurydice_arr_d4 *rhs);
+    Eurydice_arr_4d *lhs, const Eurydice_arr_4d *rhs);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_montgomery_multiply_c5(
-    Eurydice_arr_d4 *lhs, const Eurydice_arr_d4 *rhs);
+    Eurydice_arr_4d *lhs, const Eurydice_arr_4d *rhs);
 
 int32_t libcrux_iot_ml_dsa_simd_portable_arithmetic_reduce_element(int32_t fe);
 
@@ -595,18 +595,18 @@ int32_t_x2 libcrux_iot_ml_dsa_simd_portable_arithmetic_power2round_element(
     int32_t t);
 
 void libcrux_iot_ml_dsa_simd_portable_arithmetic_power2round(
-    Eurydice_arr_d4 *t0, Eurydice_arr_d4 *t1);
+    Eurydice_arr_4d *t0, Eurydice_arr_4d *t1);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
-void libcrux_iot_ml_dsa_simd_portable_power2round_c5(Eurydice_arr_d4 *t0,
-                                                     Eurydice_arr_d4 *t1);
+void libcrux_iot_ml_dsa_simd_portable_power2round_c5(Eurydice_arr_4d *t0,
+                                                     Eurydice_arr_4d *t1);
 
 size_t
 libcrux_iot_ml_dsa_simd_portable_sample_rejection_sample_less_than_field_modulus(
-    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_fc out);
+    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_83 out);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
@@ -614,11 +614,11 @@ libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 size_t
 libcrux_iot_ml_dsa_simd_portable_rejection_sample_less_than_field_modulus_c5(
-    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_fc out);
+    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_83 out);
 
 size_t
 libcrux_iot_ml_dsa_simd_portable_sample_rejection_sample_less_than_eta_equals_2(
-    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_fc out);
+    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_83 out);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
@@ -626,11 +626,11 @@ libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 size_t
 libcrux_iot_ml_dsa_simd_portable_rejection_sample_less_than_eta_equals_2_c5(
-    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_fc out);
+    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_83 out);
 
 size_t
 libcrux_iot_ml_dsa_simd_portable_sample_rejection_sample_less_than_eta_equals_4(
-    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_fc out);
+    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_83 out);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
@@ -638,22 +638,22 @@ libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 size_t
 libcrux_iot_ml_dsa_simd_portable_rejection_sample_less_than_eta_equals_4_c5(
-    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_fc out);
+    Eurydice_borrow_slice_u8 randomness, Eurydice_dst_ref_mut_83 out);
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_SERIALIZE_WHEN_GAMMA1_IS_2_POW_17_GAMMA1 \
-  ((int32_t)1 << 17U)
+  ((int32_t)((uint32_t)1 << 17U))
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_gamma1_serialize_when_gamma1_is_2_pow_17(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_SERIALIZE_WHEN_GAMMA1_IS_2_POW_19_GAMMA1 \
-  ((int32_t)1 << 19U)
+  ((int32_t)((uint32_t)1 << 19U))
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_gamma1_serialize_when_gamma1_is_2_pow_19(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_gamma1_serialize(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized,
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized,
     size_t gamma1_exponent);
 
 /**
@@ -661,33 +661,35 @@ This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_gamma1_serialize_c5(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized,
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized,
     size_t gamma1_exponent);
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_DESERIALIZE_WHEN_GAMMA1_IS_2_POW_17_GAMMA1 \
-  ((int32_t)1 << 17U)
+  ((int32_t)((uint32_t)1 << 17U))
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_DESERIALIZE_WHEN_GAMMA1_IS_2_POW_17_GAMMA1_TIMES_2_BITMASK \
-  ((LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_DESERIALIZE_WHEN_GAMMA1_IS_2_POW_17_GAMMA1                     \
-    << 1U) -                                                                                                        \
-   (int32_t)1)
+  ((int32_t)((uint32_t)                                                                                             \
+                 LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_DESERIALIZE_WHEN_GAMMA1_IS_2_POW_17_GAMMA1        \
+             << 1U) -                                                                                               \
+   1)
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_gamma1_deserialize_when_gamma1_is_2_pow_17(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *simd_unit);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *simd_unit);
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_DESERIALIZE_WHEN_GAMMA1_IS_2_POW_19_GAMMA1 \
-  ((int32_t)1 << 19U)
+  ((int32_t)((uint32_t)1 << 19U))
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_DESERIALIZE_WHEN_GAMMA1_IS_2_POW_19_GAMMA1_TIMES_2_BITMASK \
-  ((LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_DESERIALIZE_WHEN_GAMMA1_IS_2_POW_19_GAMMA1                     \
-    << 1U) -                                                                                                        \
-   (int32_t)1)
+  ((int32_t)((uint32_t)                                                                                             \
+                 LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_GAMMA1_DESERIALIZE_WHEN_GAMMA1_IS_2_POW_19_GAMMA1        \
+             << 1U) -                                                                                               \
+   1)
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_gamma1_deserialize_when_gamma1_is_2_pow_19(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *simd_unit);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *simd_unit);
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_gamma1_deserialize(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *out,
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *out,
     size_t gamma1_exponent);
 
 /**
@@ -695,33 +697,33 @@ This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_gamma1_deserialize_c5(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *out,
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *out,
     size_t gamma1_exponent);
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_commitment_serialize(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_commitment_serialize_c5(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_ERROR_SERIALIZE_WHEN_ETA_IS_4_ETA \
-  ((int32_t)4)
+  (4)
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_error_serialize_when_eta_is_4(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_ERROR_SERIALIZE_WHEN_ETA_IS_2_ETA \
-  ((int32_t)2)
+  (2)
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_error_serialize_when_eta_is_2(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_error_serialize(
-    libcrux_iot_ml_dsa_constants_Eta eta, const Eurydice_arr_d4 *simd_unit,
+    libcrux_iot_ml_dsa_constants_Eta eta, const Eurydice_arr_4d *simd_unit,
     Eurydice_mut_borrow_slice_u8 serialized);
 
 /**
@@ -729,24 +731,24 @@ This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_error_serialize_c5(
-    libcrux_iot_ml_dsa_constants_Eta eta, const Eurydice_arr_d4 *simd_unit,
+    libcrux_iot_ml_dsa_constants_Eta eta, const Eurydice_arr_4d *simd_unit,
     Eurydice_mut_borrow_slice_u8 serialized);
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_ERROR_DESERIALIZE_WHEN_ETA_IS_4_ETA \
-  ((int32_t)4)
+  (4)
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_error_deserialize_when_eta_is_4(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *simd_units);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *simd_units);
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_ERROR_DESERIALIZE_WHEN_ETA_IS_2_ETA \
-  ((int32_t)2)
+  (2)
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_error_deserialize_when_eta_is_2(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *simd_unit);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *simd_unit);
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_error_deserialize(
     libcrux_iot_ml_dsa_constants_Eta eta, Eurydice_borrow_slice_u8 serialized,
-    Eurydice_arr_d4 *out);
+    Eurydice_arr_4d *out);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
@@ -754,58 +756,58 @@ libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_error_deserialize_c5(
     libcrux_iot_ml_dsa_constants_Eta eta, Eurydice_borrow_slice_u8 serialized,
-    Eurydice_arr_d4 *out);
+    Eurydice_arr_4d *out);
 
 int32_t libcrux_iot_ml_dsa_simd_portable_encoding_t0_change_t0_interval(
     int32_t t0);
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_t0_serialize(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_t0_serialize_c5(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 out);
 
 #define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_ENCODING_T0_DESERIALIZE_BITS_IN_LOWER_PART_OF_T_MASK \
-  (((int32_t)1 << (uint32_t)(int32_t)                                                         \
-        LIBCRUX_IOT_ML_DSA_CONSTANTS_BITS_IN_LOWER_PART_OF_T) -                               \
-   (int32_t)1)
+  ((int32_t)((uint32_t)1 << (uint32_t)(int32_t)                                               \
+                 LIBCRUX_IOT_ML_DSA_CONSTANTS_BITS_IN_LOWER_PART_OF_T) -                      \
+   1)
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_t0_deserialize(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *simd_unit);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *simd_unit);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_t0_deserialize_c5(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *out);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *out);
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_t1_serialize(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 serialized);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_t1_serialize_c5(
-    const Eurydice_arr_d4 *simd_unit, Eurydice_mut_borrow_slice_u8 out);
+    const Eurydice_arr_4d *simd_unit, Eurydice_mut_borrow_slice_u8 out);
 
 void libcrux_iot_ml_dsa_simd_portable_encoding_t1_deserialize(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *simd_unit);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *simd_unit);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_t1_deserialize_c5(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_d4 *out);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_4d *out);
 
 void libcrux_iot_ml_dsa_simd_portable_arithmetic_montgomery_multiply_by_constant(
-    Eurydice_arr_d4 *simd_unit, int32_t c);
+    Eurydice_arr_4d *simd_unit, int32_t c);
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -813,9 +815,9 @@ with types libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients
 with const generics
 - $32size_t
 */
-typedef struct Eurydice_arr_79_s {
-  Eurydice_arr_d4 data[32U];
-} Eurydice_arr_79;
+typedef struct Eurydice_arr_ef_s {
+  Eurydice_arr_4d data[32U];
+} Eurydice_arr_ef;
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -824,9 +826,9 @@ with const generics
 - STEP_BY= 16
 - ZETA= 25847
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_99(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_30(Eurydice_arr_ef *re);
 
-void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_7(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_7(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -835,7 +837,7 @@ with const generics
 - STEP_BY= 8
 - ZETA= -2608894
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_990(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_300(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -844,9 +846,9 @@ with const generics
 - STEP_BY= 8
 - ZETA= -518909
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_7a(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_42(Eurydice_arr_ef *re);
 
-void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_6(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_6(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -855,7 +857,7 @@ with const generics
 - STEP_BY= 4
 - ZETA= 237124
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_991(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_301(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -864,7 +866,7 @@ with const generics
 - STEP_BY= 4
 - ZETA= -777960
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_a8(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_82(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -873,7 +875,7 @@ with const generics
 - STEP_BY= 4
 - ZETA= -876248
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_7a0(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_420(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -882,9 +884,9 @@ with const generics
 - STEP_BY= 4
 - ZETA= 466468
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_d9(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_fe(Eurydice_arr_ef *re);
 
-void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_5(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_5(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -893,7 +895,7 @@ with const generics
 - STEP_BY= 2
 - ZETA= 1826347
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_992(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_302(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -902,7 +904,7 @@ with const generics
 - STEP_BY= 2
 - ZETA= 2353451
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_6b(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_43(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -911,7 +913,7 @@ with const generics
 - STEP_BY= 2
 - ZETA= -359251
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_a80(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_820(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -920,7 +922,7 @@ with const generics
 - STEP_BY= 2
 - ZETA= -2091905
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_95(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_ea(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -929,7 +931,7 @@ with const generics
 - STEP_BY= 2
 - ZETA= 3119733
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_7a1(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_421(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -938,7 +940,7 @@ with const generics
 - STEP_BY= 2
 - ZETA= -2884855
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_de(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_61(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -947,7 +949,7 @@ with const generics
 - STEP_BY= 2
 - ZETA= 3111497
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_d90(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_fe0(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -956,9 +958,9 @@ with const generics
 - STEP_BY= 2
 - ZETA= 2680103
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_3b(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_38(Eurydice_arr_ef *re);
 
-void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_4(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_4(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -967,7 +969,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= 2725464
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_993(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_303(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -976,7 +978,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= 1024112
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_1c(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_25(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -985,7 +987,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= -1079900
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_6b0(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_430(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -994,7 +996,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= 3585928
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_44(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_f4(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1003,7 +1005,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= -549488
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_a81(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_821(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1012,7 +1014,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= -1119584
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_1f(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_1d(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1021,7 +1023,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= 2619752
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_950(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_ea0(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1030,7 +1032,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= -2108549
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_3b0(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_d8(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1039,7 +1041,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= -2118186
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_7a2(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_422(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1048,7 +1050,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= -3859737
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_e4(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_60(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1057,7 +1059,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= -1399561
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_de0(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_610(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1066,7 +1068,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= -3277672
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_05(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_29(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1075,7 +1077,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= 1757237
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_d91(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_fe1(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1084,7 +1086,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= -19422
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_3a(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_9d(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1093,7 +1095,7 @@ with const generics
 - STEP_BY= 1
 - ZETA= 4010497
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_3b1(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_380(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.ntt.outer_3_plus
@@ -1102,83 +1104,83 @@ with const generics
 - STEP_BY= 1
 - ZETA= 280005
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_a0(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_outer_3_plus_5f(Eurydice_arr_ef *re);
 
-void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_3(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_3(Eurydice_arr_ef *re);
 
 int32_t
 libcrux_iot_ml_dsa_simd_portable_arithmetic_montgomery_multiply_fe_by_fer(
     int32_t fe, int32_t fer);
 
 void libcrux_iot_ml_dsa_simd_portable_ntt_simd_unit_ntt_at_layer_2(
-    Eurydice_arr_d4 *simd_unit, int32_t zeta);
+    Eurydice_arr_4d *simd_unit, int32_t zeta);
 
 void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_2_round(
-    Eurydice_arr_79 *re, size_t index, int32_t zeta);
+    Eurydice_arr_ef *re, size_t index, int32_t zeta);
 
-void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_2(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_2(Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_ntt_simd_unit_ntt_at_layer_1(
-    Eurydice_arr_d4 *simd_unit, int32_t zeta1, int32_t zeta2);
+    Eurydice_arr_4d *simd_unit, int32_t zeta1, int32_t zeta2);
 
 void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_1_round(
-    Eurydice_arr_79 *re, size_t index, int32_t zeta_0, int32_t zeta_1);
+    Eurydice_arr_ef *re, size_t index, int32_t zeta_0, int32_t zeta_1);
 
-void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_1(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_1(Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_ntt_simd_unit_ntt_at_layer_0(
-    Eurydice_arr_d4 *simd_unit, int32_t zeta0, int32_t zeta1, int32_t zeta2,
+    Eurydice_arr_4d *simd_unit, int32_t zeta0, int32_t zeta1, int32_t zeta2,
     int32_t zeta3);
 
 void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_0_round(
-    Eurydice_arr_79 *re, size_t index, int32_t zeta_0, int32_t zeta_1,
+    Eurydice_arr_ef *re, size_t index, int32_t zeta_0, int32_t zeta_1,
     int32_t zeta_2, int32_t zeta_3);
 
-void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_0(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_ntt_at_layer_0(Eurydice_arr_ef *re);
 
-void libcrux_iot_ml_dsa_simd_portable_ntt_ntt(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_ntt_ntt(Eurydice_arr_ef *re);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
-void libcrux_iot_ml_dsa_simd_portable_ntt_c5(Eurydice_arr_79 *simd_units);
+void libcrux_iot_ml_dsa_simd_portable_ntt_c5(Eurydice_arr_ef *simd_units);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_simd_unit_invert_ntt_at_layer_0(
-    Eurydice_arr_d4 *simd_unit, int32_t zeta0, int32_t zeta1, int32_t zeta2,
+    Eurydice_arr_4d *simd_unit, int32_t zeta0, int32_t zeta1, int32_t zeta2,
     int32_t zeta3);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_0_round(
-    Eurydice_arr_79 *re, size_t index, int32_t zeta0, int32_t zeta1,
+    Eurydice_arr_ef *re, size_t index, int32_t zeta0, int32_t zeta1,
     int32_t zeta2, int32_t zeta3);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_0(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_simd_unit_invert_ntt_at_layer_1(
-    Eurydice_arr_d4 *simd_unit, int32_t zeta0, int32_t zeta1);
+    Eurydice_arr_4d *simd_unit, int32_t zeta0, int32_t zeta1);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_1_round(
-    Eurydice_arr_79 *re, size_t index, int32_t zeta_00, int32_t zeta_01);
+    Eurydice_arr_ef *re, size_t index, int32_t zeta_00, int32_t zeta_01);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_1(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_simd_unit_invert_ntt_at_layer_2(
-    Eurydice_arr_d4 *simd_unit, int32_t zeta);
+    Eurydice_arr_4d *simd_unit, int32_t zeta);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_2_round(
-    Eurydice_arr_79 *re, size_t index, int32_t zeta1);
+    Eurydice_arr_ef *re, size_t index, int32_t zeta1);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_2(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 /**
 This function found in impl {core::clone::Clone for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
-Eurydice_arr_d4 libcrux_iot_ml_dsa_simd_portable_vector_type_clone_c2(
-    const Eurydice_arr_d4 *self);
+Eurydice_arr_4d libcrux_iot_ml_dsa_simd_portable_vector_type_clone_c2(
+    const Eurydice_arr_4d *self);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1187,8 +1189,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= 280005
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_99(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_30(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1197,8 +1199,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= 4010497
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_1c(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_25(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1207,8 +1209,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= -19422
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_6b(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_43(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1217,8 +1219,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= 1757237
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_44(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_f4(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1227,8 +1229,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= -3277672
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_a8(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_82(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1237,8 +1239,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= -1399561
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_1f(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_1d(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1247,8 +1249,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= -3859737
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_95(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_ea(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1257,8 +1259,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= -2118186
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_3b(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_d8(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1267,8 +1269,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= -2108549
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_7a(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_42(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1277,8 +1279,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= 2619752
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_e4(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_60(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1287,8 +1289,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= -1119584
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_de(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_61(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1297,8 +1299,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= -549488
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_05(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_29(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1307,8 +1309,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= 3585928
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_d9(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_fe(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1317,8 +1319,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= -1079900
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_3a(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_9d(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1327,8 +1329,8 @@ with const generics
 - STEP_BY= 1
 - ZETA= 1024112
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_3b0(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_38(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1337,11 +1339,11 @@ with const generics
 - STEP_BY= 1
 - ZETA= 2725464
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_a0(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_5f(
+    Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_3(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1350,8 +1352,8 @@ with const generics
 - STEP_BY= 2
 - ZETA= 2680103
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_990(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_300(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1360,8 +1362,8 @@ with const generics
 - STEP_BY= 2
 - ZETA= 3111497
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_6b0(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_430(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1370,8 +1372,8 @@ with const generics
 - STEP_BY= 2
 - ZETA= -2884855
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_a80(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_820(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1380,8 +1382,8 @@ with const generics
 - STEP_BY= 2
 - ZETA= 3119733
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_950(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_ea0(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1390,8 +1392,8 @@ with const generics
 - STEP_BY= 2
 - ZETA= -2091905
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_7a0(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_420(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1400,8 +1402,8 @@ with const generics
 - STEP_BY= 2
 - ZETA= -359251
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_de0(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_610(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1410,8 +1412,8 @@ with const generics
 - STEP_BY= 2
 - ZETA= 2353451
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_d90(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_fe0(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1420,11 +1422,11 @@ with const generics
 - STEP_BY= 2
 - ZETA= 1826347
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_3b1(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_380(
+    Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_4(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1433,8 +1435,8 @@ with const generics
 - STEP_BY= 4
 - ZETA= 466468
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_991(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_301(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1443,8 +1445,8 @@ with const generics
 - STEP_BY= 4
 - ZETA= -876248
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_a81(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_821(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1453,8 +1455,8 @@ with const generics
 - STEP_BY= 4
 - ZETA= -777960
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_7a1(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_421(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1463,11 +1465,11 @@ with const generics
 - STEP_BY= 4
 - ZETA= 237124
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_d91(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_fe1(
+    Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_5(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1476,8 +1478,8 @@ with const generics
 - STEP_BY= 8
 - ZETA= -518909
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_992(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_302(
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1486,11 +1488,11 @@ with const generics
 - STEP_BY= 8
 - ZETA= -2608894
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_7a2(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_422(
+    Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_6(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
@@ -1499,21 +1501,48 @@ with const generics
 - STEP_BY= 16
 - ZETA= 25847
 */
-void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_993(
-    Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_simd_portable_invntt_outer_3_plus_303(
+    Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_at_layer_7(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 void libcrux_iot_ml_dsa_simd_portable_invntt_invert_ntt_montgomery(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
 libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
 */
 void libcrux_iot_ml_dsa_simd_portable_invert_ntt_montgomery_c5(
-    Eurydice_arr_79 *simd_units);
+    Eurydice_arr_ef *simd_units);
+
+/**
+A monomorphic instance of
+libcrux_iot_ml_dsa.simd.portable.arithmetic.shift_left_then_reduce with const
+generics
+- SHIFT_BY= 0
+*/
+void libcrux_iot_ml_dsa_simd_portable_arithmetic_shift_left_then_reduce_c3(
+    Eurydice_arr_4d *simd_unit);
+
+/**
+This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
+libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
+*/
+/**
+A monomorphic instance of
+libcrux_iot_ml_dsa.simd.portable.shift_left_then_reduce_c5 with const generics
+- SHIFT_BY= 0
+*/
+void libcrux_iot_ml_dsa_simd_portable_shift_left_then_reduce_c5_c3(
+    Eurydice_arr_4d *simd_unit);
+
+/**
+This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
+libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}
+*/
+void libcrux_iot_ml_dsa_simd_portable_reduce_c5(Eurydice_arr_ef *simd_units);
 
 uint8_t_x2 libcrux_iot_ml_dsa_sample_sample_up_to_four_ring_elements_flat_xy(
     size_t index, size_t width);
@@ -1523,7 +1552,7 @@ A monomorphic instance of libcrux_iot_ml_dsa.polynomial.PolynomialRingElement
 with types libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients
 
 */
-typedef Eurydice_arr_79 libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d;
+typedef Eurydice_arr_ef libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -1531,9 +1560,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $16size_t
 */
-typedef struct Eurydice_arr_5c_s {
-  Eurydice_arr_79 data[16U];
-} Eurydice_arr_5c;
+typedef struct Eurydice_arr_f8_s {
+  Eurydice_arr_ef data[16U];
+} Eurydice_arr_f8;
 
 /**
 This function found in impl
@@ -1546,27 +1575,27 @@ with types libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients
 with const generics
 
 */
-Eurydice_arr_79 libcrux_iot_ml_dsa_polynomial_zero_c2_08(void);
+Eurydice_arr_ef libcrux_iot_ml_dsa_polynomial_zero_c2_08(void);
 
 /**
 A monomorphic instance of Eurydice.dst_ref_mut
 with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d, size_t
 
 */
-typedef struct Eurydice_dst_ref_mut_32_s {
-  Eurydice_arr_79 *ptr;
+typedef struct Eurydice_dst_ref_mut_90_s {
+  Eurydice_arr_ef *ptr;
   size_t meta;
-} Eurydice_dst_ref_mut_32;
+} Eurydice_dst_ref_mut_90;
 
 /**
 A monomorphic instance of Eurydice.dst_ref_shared
 with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d, size_t
 
 */
-typedef struct Eurydice_dst_ref_shared_32_s {
-  const Eurydice_arr_79 *ptr;
+typedef struct Eurydice_dst_ref_shared_90_s {
+  const Eurydice_arr_ef *ptr;
   size_t meta;
-} Eurydice_dst_ref_shared_32;
+} Eurydice_dst_ref_shared_90;
 
 /**
 A monomorphic instance of
@@ -1576,7 +1605,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 */
 bool libcrux_iot_ml_dsa_sample_rejection_sample_less_than_field_modulus_08(
     Eurydice_borrow_slice_u8 randomness, size_t *sampled_coefficients,
-    Eurydice_arr_13 *out);
+    Eurydice_arr_d0 *out);
 
 /**
 This function found in impl
@@ -1590,7 +1619,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_polynomial_from_i32_array_c2_08(
-    Eurydice_dst_ref_shared_fc array, Eurydice_arr_79 *result);
+    Eurydice_dst_ref_shared_83 array, Eurydice_arr_ef *result);
 
 /**
  Sample and write out up to four ring elements.
@@ -1611,9 +1640,9 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake128X4 with const generics
 */
 void libcrux_iot_ml_dsa_sample_sample_up_to_four_ring_elements_flat_15(
     size_t columns, Eurydice_borrow_slice_u8 seed,
-    Eurydice_dst_ref_mut_32 matrix, Eurydice_arr_12 *rand_stack0,
-    Eurydice_arr_12 *rand_stack1, Eurydice_arr_12 *rand_stack2,
-    Eurydice_arr_12 *rand_stack3, Eurydice_dst_ref_mut_4c tmp_stack,
+    Eurydice_dst_ref_mut_90 matrix, Eurydice_arr_d1 *rand_stack0,
+    Eurydice_arr_d1 *rand_stack1, Eurydice_arr_d1 *rand_stack2,
+    Eurydice_arr_d1 *rand_stack3, Eurydice_dst_ref_mut_33 tmp_stack,
     size_t start_index, size_t elements_requested);
 
 /**
@@ -1624,7 +1653,7 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake128X4 with const generics
 */
 void libcrux_iot_ml_dsa_samplex4_matrix_flat_15(size_t columns,
                                                 Eurydice_borrow_slice_u8 seed,
-                                                Eurydice_dst_ref_mut_32 matrix);
+                                                Eurydice_dst_ref_mut_90 matrix);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::samplex4::X4Sampler for
@@ -1638,7 +1667,7 @@ with const generics
 */
 void libcrux_iot_ml_dsa_samplex4_portable_matrix_flat_ad_08(
     size_t columns, Eurydice_borrow_slice_u8 seed,
-    Eurydice_dst_ref_mut_32 matrix);
+    Eurydice_dst_ref_mut_90 matrix);
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -1646,9 +1675,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $8size_t
 */
-typedef struct Eurydice_arr_a5_s {
-  Eurydice_arr_79 data[8U];
-} Eurydice_arr_a5;
+typedef struct Eurydice_arr_62_s {
+  Eurydice_arr_ef data[8U];
+} Eurydice_arr_62;
 
 /**
 A monomorphic instance of
@@ -1658,7 +1687,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 */
 bool libcrux_iot_ml_dsa_sample_rejection_sample_less_than_eta_equals_4_08(
     Eurydice_borrow_slice_u8 randomness, size_t *sampled_coefficients,
-    Eurydice_arr_13 *out);
+    Eurydice_arr_d0 *out);
 
 /**
 A monomorphic instance of
@@ -1668,7 +1697,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 */
 bool libcrux_iot_ml_dsa_sample_rejection_sample_less_than_eta_equals_2_08(
     Eurydice_borrow_slice_u8 randomness, size_t *sampled_coefficients,
-    Eurydice_arr_13 *out);
+    Eurydice_arr_d0 *out);
 
 /**
 A monomorphic instance of
@@ -1678,7 +1707,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 */
 bool libcrux_iot_ml_dsa_sample_rejection_sample_less_than_eta_08(
     libcrux_iot_ml_dsa_constants_Eta eta, Eurydice_borrow_slice_u8 randomness,
-    size_t *sampled, Eurydice_arr_13 *out);
+    size_t *sampled, Eurydice_arr_d0 *out);
 
 /**
 A monomorphic instance of
@@ -1689,7 +1718,7 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 */
 void libcrux_iot_ml_dsa_sample_sample_four_error_ring_elements_e7(
     libcrux_iot_ml_dsa_constants_Eta eta, Eurydice_borrow_slice_u8 seed,
-    uint16_t start_index, Eurydice_dst_ref_mut_32 re);
+    uint16_t start_index, Eurydice_dst_ref_mut_90 re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.samplex4.sample_s1_and_s2
@@ -1699,7 +1728,7 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 */
 void libcrux_iot_ml_dsa_samplex4_sample_s1_and_s2_e7(
     libcrux_iot_ml_dsa_constants_Eta eta, Eurydice_borrow_slice_u8 seed,
-    Eurydice_dst_ref_mut_32 s1_s2);
+    Eurydice_dst_ref_mut_90 s1_s2);
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -1707,9 +1736,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $4size_t
 */
-typedef struct Eurydice_arr_270_s {
-  Eurydice_arr_79 data[4U];
-} Eurydice_arr_270;
+typedef struct Eurydice_arr_f5_s {
+  Eurydice_arr_ef data[4U];
+} Eurydice_arr_f5;
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ntt.ntt
@@ -1717,7 +1746,7 @@ with types libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients
 with const generics
 
 */
-void libcrux_iot_ml_dsa_ntt_ntt_08(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_ntt_ntt_08(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ntt.ntt_multiply_montgomery
@@ -1726,7 +1755,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_ntt_ntt_multiply_montgomery_08(
-    Eurydice_arr_79 *lhs, const Eurydice_arr_79 *rhs);
+    Eurydice_arr_ef *lhs, const Eurydice_arr_ef *rhs);
 
 /**
 This function found in impl
@@ -1739,8 +1768,16 @@ with types libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients
 with const generics
 
 */
-void libcrux_iot_ml_dsa_polynomial_add_c2_08(Eurydice_arr_79 *self,
-                                             const Eurydice_arr_79 *rhs);
+void libcrux_iot_ml_dsa_polynomial_add_c2_08(Eurydice_arr_ef *self,
+                                             const Eurydice_arr_ef *rhs);
+
+/**
+A monomorphic instance of libcrux_iot_ml_dsa.ntt.reduce
+with types libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients
+with const generics
+
+*/
+void libcrux_iot_ml_dsa_ntt_reduce_08(Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ntt.invert_ntt_montgomery
@@ -1748,7 +1785,7 @@ with types libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients
 with const generics
 
 */
-void libcrux_iot_ml_dsa_ntt_invert_ntt_montgomery_08(Eurydice_arr_79 *re);
+void libcrux_iot_ml_dsa_ntt_invert_ntt_montgomery_08(Eurydice_arr_ef *re);
 
 /**
  Compute InvertNTT(Â ◦ ŝ₁) + s₂
@@ -1760,9 +1797,9 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_matrix_compute_as1_plus_s2_08(
-    size_t rows_in_a, size_t columns_in_a, Eurydice_dst_ref_shared_32 a_as_ntt,
-    Eurydice_dst_ref_shared_32 s1_ntt, Eurydice_dst_ref_shared_32 s1_s2,
-    Eurydice_dst_ref_mut_32 result);
+    size_t rows_in_a, size_t columns_in_a, Eurydice_dst_ref_shared_90 a_as_ntt,
+    Eurydice_dst_ref_shared_90 s1_ntt, Eurydice_dst_ref_shared_90 s1_s2,
+    Eurydice_dst_ref_mut_90 result);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.arithmetic.power2round_vector
@@ -1771,7 +1808,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_arithmetic_power2round_vector_08(
-    Eurydice_dst_ref_mut_32 t0, Eurydice_dst_ref_mut_32 t1);
+    Eurydice_dst_ref_mut_90 t0, Eurydice_dst_ref_mut_90 t1);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.encoding.t1.serialize
@@ -1780,7 +1817,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_t1_serialize_08(
-    const Eurydice_arr_79 *re, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_ef *re, Eurydice_mut_borrow_slice_u8 serialized);
 
 /**
 A monomorphic instance of
@@ -1789,7 +1826,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_verification_key_generate_serialized_08(
-    Eurydice_borrow_slice_u8 seed, Eurydice_dst_ref_shared_32 t1,
+    Eurydice_borrow_slice_u8 seed, Eurydice_dst_ref_shared_90 t1,
     Eurydice_mut_borrow_slice_u8 verification_key_serialized);
 
 /**
@@ -1797,8 +1834,8 @@ A monomorphic instance of libcrux_iot_ml_dsa.hash_functions.portable.shake256
 with const generics
 - OUTPUT_LENGTH= 64
 */
-void libcrux_iot_ml_dsa_hash_functions_portable_shake256_24(
-    Eurydice_borrow_slice_u8 input, Eurydice_arr_06 *out);
+void libcrux_iot_ml_dsa_hash_functions_portable_shake256_c9(
+    Eurydice_borrow_slice_u8 input, Eurydice_arr_c7 *out);
 
 /**
 This function found in impl
@@ -1810,8 +1847,8 @@ A monomorphic instance of libcrux_iot_ml_dsa.hash_functions.portable.shake256_a1
 with const generics
 - OUTPUT_LENGTH= 64
 */
-void libcrux_iot_ml_dsa_hash_functions_portable_shake256_a1_24(
-    Eurydice_borrow_slice_u8 input, Eurydice_arr_06 *out);
+void libcrux_iot_ml_dsa_hash_functions_portable_shake256_a1_c9(
+    Eurydice_borrow_slice_u8 input, Eurydice_arr_c7 *out);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.encoding.error.serialize
@@ -1820,7 +1857,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_error_serialize_08(
-    libcrux_iot_ml_dsa_constants_Eta eta, const Eurydice_arr_79 *re,
+    libcrux_iot_ml_dsa_constants_Eta eta, const Eurydice_arr_ef *re,
     Eurydice_mut_borrow_slice_u8 serialized);
 
 /**
@@ -1830,7 +1867,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_t0_serialize_08(
-    const Eurydice_arr_79 *re, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_ef *re, Eurydice_mut_borrow_slice_u8 serialized);
 
 /**
 A monomorphic instance of
@@ -1842,8 +1879,8 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256 with const generics
 void libcrux_iot_ml_dsa_encoding_signing_key_generate_serialized_1b(
     libcrux_iot_ml_dsa_constants_Eta eta, size_t error_ring_element_size,
     Eurydice_borrow_slice_u8 seed_matrix, Eurydice_borrow_slice_u8 seed_signing,
-    Eurydice_borrow_slice_u8 verification_key, Eurydice_dst_ref_shared_32 s1_2,
-    Eurydice_dst_ref_shared_32 t0,
+    Eurydice_borrow_slice_u8 verification_key, Eurydice_dst_ref_shared_90 s1_2,
+    Eurydice_dst_ref_shared_90 t0,
     Eurydice_mut_borrow_slice_u8 signing_key_serialized);
 
 /**
@@ -1858,41 +1895,36 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 
 */
 void libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_generate_key_pair_c4(
-    Eurydice_arr_60 randomness, Eurydice_mut_borrow_slice_u8 signing_key,
+    Eurydice_arr_ec randomness, Eurydice_mut_borrow_slice_u8 signing_key,
     Eurydice_mut_borrow_slice_u8 verification_key);
 
 /**
  Generate key pair.
 */
 void libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_generate_key_pair(
-    Eurydice_arr_60 randomness, Eurydice_arr_18 *signing_key,
-    Eurydice_arr_40 *verification_key);
+    Eurydice_arr_ec randomness, Eurydice_arr_10 *signing_key,
+    Eurydice_arr_02 *verification_key);
 
 /**
  Generate an ML-DSA-44 Key Pair
 */
-libcrux_iot_ml_dsa_types_MLDSAKeyPair_c2
+libcrux_iot_ml_dsa_types_MLDSAKeyPair_85
 libcrux_iot_ml_dsa_ml_dsa_44_portable_generate_key_pair(
-    Eurydice_arr_60 randomness);
-
-#define None 0
-#define Some 1
-
-typedef uint8_t Option_b5_tags;
+    Eurydice_arr_ec randomness);
 
 /**
 A monomorphic instance of core.option.Option
-with types Eurydice_arr_cb
+with types Eurydice_arr_c9
 
 */
-typedef struct Option_b5_s {
-  Option_b5_tags tag;
-  Eurydice_arr_cb f0;
-} Option_b5;
+typedef struct Option_57_s {
+  Option_87_tags tag;
+  Eurydice_arr_c9 f0;
+} Option_57;
 
 typedef struct libcrux_iot_ml_dsa_pre_hash_DomainSeparationContext_s {
   Eurydice_borrow_slice_u8 context;
-  Option_b5 pre_hash_oid;
+  Option_57 pre_hash_oid;
 } libcrux_iot_ml_dsa_pre_hash_DomainSeparationContext;
 
 #define libcrux_iot_ml_dsa_pre_hash_DomainSeparationError_ContextTooLongError 0
@@ -1921,7 +1953,7 @@ This function found in impl
 {libcrux_iot_ml_dsa::pre_hash::DomainSeparationContext<'a>}
 */
 Result_80 libcrux_iot_ml_dsa_pre_hash_new_c9(Eurydice_borrow_slice_u8 context,
-                                             Option_b5 pre_hash_oid);
+                                             Option_57 pre_hash_oid);
 
 /**
  Returns the pre-hash OID, if any.
@@ -1930,7 +1962,7 @@ Result_80 libcrux_iot_ml_dsa_pre_hash_new_c9(Eurydice_borrow_slice_u8 context,
 This function found in impl
 {libcrux_iot_ml_dsa::pre_hash::DomainSeparationContext<'a>}
 */
-const Option_b5 *libcrux_iot_ml_dsa_pre_hash_pre_hash_oid_c9(
+const Option_57 *libcrux_iot_ml_dsa_pre_hash_pre_hash_oid_c9(
     const libcrux_iot_ml_dsa_pre_hash_DomainSeparationContext *self);
 
 /**
@@ -1949,7 +1981,7 @@ Eurydice_borrow_slice_u8 libcrux_iot_ml_dsa_pre_hash_context_c9(
 
 bool libcrux_iot_ml_dsa_sample_inside_out_shuffle(
     Eurydice_borrow_slice_u8 randomness, size_t *out_index, uint64_t *signs,
-    Eurydice_arr_c3 *result);
+    Eurydice_arr_6c *result);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_44_BETA                 \
   (libcrux_iot_ml_dsa_constants_beta(                                    \
@@ -1966,7 +1998,7 @@ with types libcrux_iot_ml_dsa_pre_hash_DomainSeparationContext
 
 */
 typedef struct Option_e3_s {
-  Option_b5_tags tag;
+  Option_87_tags tag;
   libcrux_iot_ml_dsa_pre_hash_DomainSeparationContext f0;
 } Option_e3;
 
@@ -1982,17 +2014,17 @@ typedef struct Result_87_s {
 
 /**
 A monomorphic instance of core.result.Result
-with types libcrux_iot_ml_dsa_types_MLDSASignature_64,
+with types libcrux_iot_ml_dsa_types_MLDSASignature_28,
 libcrux_iot_ml_dsa_types_SigningError
 
 */
-typedef struct Result_d6_s {
+typedef struct Result_b2_s {
   Result_8e_tags tag;
   union {
-    Eurydice_arr_400 case_Ok;
+    Eurydice_arr_85 case_Ok;
     libcrux_iot_ml_dsa_types_SigningError case_Err;
   } val;
-} Result_d6;
+} Result_b2;
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.encoding.error.deserialize
@@ -2002,7 +2034,7 @@ with const generics
 */
 void libcrux_iot_ml_dsa_encoding_error_deserialize_08(
     libcrux_iot_ml_dsa_constants_Eta eta, Eurydice_borrow_slice_u8 serialized,
-    Eurydice_arr_79 *result);
+    Eurydice_arr_ef *result);
 
 /**
 A monomorphic instance of
@@ -2012,7 +2044,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 */
 void libcrux_iot_ml_dsa_encoding_error_deserialize_to_vector_then_ntt_08(
     libcrux_iot_ml_dsa_constants_Eta eta, size_t ring_element_size,
-    Eurydice_borrow_slice_u8 serialized, Eurydice_dst_ref_mut_32 ring_elements);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_dst_ref_mut_90 ring_elements);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.encoding.t0.deserialize
@@ -2021,7 +2053,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_t0_deserialize_08(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_79 *result);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_ef *result);
 
 /**
 A monomorphic instance of
@@ -2030,7 +2062,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_t0_deserialize_to_vector_then_ntt_08(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_dst_ref_mut_32 ring_elements);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_dst_ref_mut_90 ring_elements);
 
 /**
  This corresponds to line 6 in algorithm 7 in FIPS 204 (line 7 in algorithm
@@ -2063,15 +2095,15 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof with const generics
 void libcrux_iot_ml_dsa_ml_dsa_generic_derive_message_representative_fd(
     Eurydice_borrow_slice_u8 verification_key_hash,
     const Option_e3 *domain_separation_context,
-    Eurydice_borrow_slice_u8 message, Eurydice_arr_06 *message_representative);
+    Eurydice_borrow_slice_u8 message, Eurydice_arr_c7 *message_representative);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.hash_functions.portable.shake256
 with const generics
 - OUTPUT_LENGTH= 576
 */
-void libcrux_iot_ml_dsa_hash_functions_portable_shake256_1b(
-    Eurydice_borrow_slice_u8 input, Eurydice_arr_5f0 *out);
+void libcrux_iot_ml_dsa_hash_functions_portable_shake256_5a(
+    Eurydice_borrow_slice_u8 input, Eurydice_arr_22 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake256::XofX4
@@ -2082,11 +2114,11 @@ A monomorphic instance of
 libcrux_iot_ml_dsa.hash_functions.portable.shake256_x4_29 with const generics
 - OUT_LEN= 576
 */
-void libcrux_iot_ml_dsa_hash_functions_portable_shake256_x4_29_1b(
+void libcrux_iot_ml_dsa_hash_functions_portable_shake256_x4_29_5a(
     Eurydice_borrow_slice_u8 input0, Eurydice_borrow_slice_u8 input1,
     Eurydice_borrow_slice_u8 input2, Eurydice_borrow_slice_u8 input3,
-    Eurydice_arr_5f0 *out0, Eurydice_arr_5f0 *out1, Eurydice_arr_5f0 *out2,
-    Eurydice_arr_5f0 *out3);
+    Eurydice_arr_22 *out0, Eurydice_arr_22 *out1, Eurydice_arr_22 *out2,
+    Eurydice_arr_22 *out3);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.encoding.gamma1.deserialize
@@ -2096,15 +2128,15 @@ with const generics
 */
 void libcrux_iot_ml_dsa_encoding_gamma1_deserialize_08(
     size_t gamma1_exponent, Eurydice_borrow_slice_u8 serialized,
-    Eurydice_arr_79 *result);
+    Eurydice_arr_ef *result);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.hash_functions.portable.shake256
 with const generics
 - OUTPUT_LENGTH= 640
 */
-void libcrux_iot_ml_dsa_hash_functions_portable_shake256_c8(
-    Eurydice_borrow_slice_u8 input, Eurydice_arr_c30 *out);
+void libcrux_iot_ml_dsa_hash_functions_portable_shake256_0e(
+    Eurydice_borrow_slice_u8 input, Eurydice_arr_20 *out);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::hash_functions::shake256::XofX4
@@ -2115,11 +2147,11 @@ A monomorphic instance of
 libcrux_iot_ml_dsa.hash_functions.portable.shake256_x4_29 with const generics
 - OUT_LEN= 640
 */
-void libcrux_iot_ml_dsa_hash_functions_portable_shake256_x4_29_c8(
+void libcrux_iot_ml_dsa_hash_functions_portable_shake256_x4_29_0e(
     Eurydice_borrow_slice_u8 input0, Eurydice_borrow_slice_u8 input1,
     Eurydice_borrow_slice_u8 input2, Eurydice_borrow_slice_u8 input3,
-    Eurydice_arr_c30 *out0, Eurydice_arr_c30 *out1, Eurydice_arr_c30 *out2,
-    Eurydice_arr_c30 *out3);
+    Eurydice_arr_20 *out0, Eurydice_arr_20 *out1, Eurydice_arr_20 *out2,
+    Eurydice_arr_20 *out3);
 
 /**
 This function found in impl
@@ -2131,8 +2163,8 @@ A monomorphic instance of libcrux_iot_ml_dsa.hash_functions.portable.shake256_a1
 with const generics
 - OUTPUT_LENGTH= 576
 */
-void libcrux_iot_ml_dsa_hash_functions_portable_shake256_a1_1b(
-    Eurydice_borrow_slice_u8 input, Eurydice_arr_5f0 *out);
+void libcrux_iot_ml_dsa_hash_functions_portable_shake256_a1_5a(
+    Eurydice_borrow_slice_u8 input, Eurydice_arr_22 *out);
 
 /**
 This function found in impl
@@ -2144,8 +2176,8 @@ A monomorphic instance of libcrux_iot_ml_dsa.hash_functions.portable.shake256_a1
 with const generics
 - OUTPUT_LENGTH= 640
 */
-void libcrux_iot_ml_dsa_hash_functions_portable_shake256_a1_c8(
-    Eurydice_borrow_slice_u8 input, Eurydice_arr_c30 *out);
+void libcrux_iot_ml_dsa_hash_functions_portable_shake256_a1_0e(
+    Eurydice_borrow_slice_u8 input, Eurydice_arr_20 *out);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.sample.sample_mask_ring_element
@@ -2154,7 +2186,7 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256 with const generics
 
 */
 void libcrux_iot_ml_dsa_sample_sample_mask_ring_element_1b(
-    const Eurydice_arr_a2 *seed, Eurydice_arr_79 *result,
+    const Eurydice_arr_91 *seed, Eurydice_arr_ef *result,
     size_t gamma1_exponent);
 
 /**
@@ -2165,8 +2197,8 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 
 */
 void libcrux_iot_ml_dsa_sample_sample_mask_vector_1a(
-    size_t dimension, size_t gamma1_exponent, const Eurydice_arr_06 *seed,
-    uint16_t *domain_separator, Eurydice_dst_ref_mut_32 mask);
+    size_t dimension, size_t gamma1_exponent, const Eurydice_arr_c7 *seed,
+    uint16_t *domain_separator, Eurydice_dst_ref_mut_90 mask);
 
 /**
  Compute InvertNTT(Â ◦ ŷ)
@@ -2178,8 +2210,8 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_matrix_compute_matrix_x_mask_08(
-    size_t rows_in_a, size_t columns_in_a, Eurydice_dst_ref_shared_32 matrix,
-    Eurydice_dst_ref_shared_32 mask, Eurydice_dst_ref_mut_32 result);
+    size_t rows_in_a, size_t columns_in_a, Eurydice_dst_ref_shared_90 matrix,
+    Eurydice_dst_ref_shared_90 mask, Eurydice_dst_ref_mut_90 result);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.arithmetic.decompose_vector
@@ -2188,8 +2220,8 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_arithmetic_decompose_vector_08(
-    size_t dimension, int32_t gamma2, Eurydice_dst_ref_shared_32 t,
-    Eurydice_dst_ref_mut_32 low, Eurydice_dst_ref_mut_32 high);
+    size_t dimension, int32_t gamma2, Eurydice_dst_ref_shared_90 t,
+    Eurydice_dst_ref_mut_90 low, Eurydice_dst_ref_mut_90 high);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.encoding.commitment.serialize
@@ -2198,7 +2230,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_commitment_serialize_08(
-    const Eurydice_arr_79 *re, Eurydice_mut_borrow_slice_u8 serialized);
+    const Eurydice_arr_ef *re, Eurydice_mut_borrow_slice_u8 serialized);
 
 /**
 A monomorphic instance of
@@ -2207,7 +2239,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_commitment_serialize_vector_08(
-    size_t ring_element_size, Eurydice_dst_ref_shared_32 vector,
+    size_t ring_element_size, Eurydice_dst_ref_shared_90 vector,
     Eurydice_mut_borrow_slice_u8 serialized);
 
 /**
@@ -2218,7 +2250,7 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256 with const generics
 
 */
 void libcrux_iot_ml_dsa_sample_sample_challenge_ring_element_1b(
-    Eurydice_borrow_slice_u8 seed, size_t number_of_ones, Eurydice_arr_79 *re);
+    Eurydice_borrow_slice_u8 seed, size_t number_of_ones, Eurydice_arr_ef *re);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.matrix.vector_times_ring_element
@@ -2227,7 +2259,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_matrix_vector_times_ring_element_08(
-    Eurydice_dst_ref_mut_32 vector, const Eurydice_arr_79 *ring_element);
+    Eurydice_dst_ref_mut_90 vector, const Eurydice_arr_ef *ring_element);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.matrix.add_vectors
@@ -2236,8 +2268,8 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_matrix_add_vectors_08(size_t dimension,
-                                              Eurydice_dst_ref_mut_32 lhs,
-                                              Eurydice_dst_ref_shared_32 rhs);
+                                              Eurydice_dst_ref_mut_90 lhs,
+                                              Eurydice_dst_ref_shared_90 rhs);
 
 /**
 This function found in impl
@@ -2250,8 +2282,8 @@ with types libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients
 with const generics
 
 */
-void libcrux_iot_ml_dsa_polynomial_subtract_c2_08(Eurydice_arr_79 *self,
-                                                  const Eurydice_arr_79 *rhs);
+void libcrux_iot_ml_dsa_polynomial_subtract_c2_08(Eurydice_arr_ef *self,
+                                                  const Eurydice_arr_ef *rhs);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.matrix.subtract_vectors
@@ -2260,8 +2292,8 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_matrix_subtract_vectors_08(
-    size_t dimension, Eurydice_dst_ref_mut_32 lhs,
-    Eurydice_dst_ref_shared_32 rhs);
+    size_t dimension, Eurydice_dst_ref_mut_90 lhs,
+    Eurydice_dst_ref_shared_90 rhs);
 
 /**
 This function found in impl
@@ -2275,7 +2307,7 @@ with const generics
 
 */
 bool libcrux_iot_ml_dsa_polynomial_infinity_norm_exceeds_c2_08(
-    const Eurydice_arr_79 *self, int32_t bound);
+    const Eurydice_arr_ef *self, int32_t bound);
 
 /**
 A monomorphic instance of
@@ -2284,7 +2316,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 
 */
 bool libcrux_iot_ml_dsa_arithmetic_vector_infinity_norm_exceeds_08(
-    Eurydice_dst_ref_shared_32 vector, int32_t bound);
+    Eurydice_dst_ref_shared_90 vector, int32_t bound);
 
 /**
 This function found in impl
@@ -2297,8 +2329,8 @@ with types libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients
 with const generics
 
 */
-Eurydice_arr_c3 libcrux_iot_ml_dsa_polynomial_to_i32_array_c2_08(
-    const Eurydice_arr_79 *self);
+Eurydice_arr_6c libcrux_iot_ml_dsa_polynomial_to_i32_array_c2_08(
+    const Eurydice_arr_ef *self);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.arithmetic.make_hint
@@ -2307,8 +2339,8 @@ with const generics
 
 */
 size_t libcrux_iot_ml_dsa_arithmetic_make_hint_08(
-    Eurydice_dst_ref_shared_32 low, Eurydice_dst_ref_shared_32 high,
-    int32_t gamma2, Eurydice_dst_ref_mut_22 hint);
+    Eurydice_dst_ref_shared_90 low, Eurydice_dst_ref_shared_90 high,
+    int32_t gamma2, Eurydice_dst_ref_mut_20 hint);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.encoding.gamma1.serialize
@@ -2317,7 +2349,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_gamma1_serialize_08(
-    const Eurydice_arr_79 *re, Eurydice_mut_borrow_slice_u8 serialized,
+    const Eurydice_arr_ef *re, Eurydice_mut_borrow_slice_u8 serialized,
     size_t gamma1_exponent);
 
 /**
@@ -2328,7 +2360,7 @@ with const generics
 */
 void libcrux_iot_ml_dsa_encoding_signature_serialize_08(
     Eurydice_borrow_slice_u8 commitment_hash,
-    Eurydice_dst_ref_shared_32 signer_response, Eurydice_dst_ref_shared_22 hint,
+    Eurydice_dst_ref_shared_90 signer_response, Eurydice_dst_ref_shared_20 hint,
     size_t commitment_hash_size, size_t columns_in_a, size_t rows_in_a,
     size_t gamma1_exponent, size_t gamma1_ring_element_size,
     size_t max_ones_in_hint, Eurydice_mut_borrow_slice_u8 signature);
@@ -2346,8 +2378,8 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 */
 Result_87 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_sign_internal_c4(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
-    Option_e3 domain_separation_context, Eurydice_arr_60 randomness,
-    Eurydice_arr_400 *signature);
+    Option_e3 domain_separation_context, Eurydice_arr_ec randomness,
+    Eurydice_arr_85 *signature);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_44.sign_mut
@@ -2361,8 +2393,8 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 */
 Result_87 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_sign_mut_c4(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness,
-    Eurydice_arr_400 *signature);
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness,
+    Eurydice_arr_85 *signature);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_44.sign
@@ -2374,17 +2406,17 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof,
 libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 
 */
-Result_d6 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_sign_c4(
+Result_b2 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_sign_c4(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 /**
  Sign.
 */
-Result_d6
+Result_b2
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_sign(
-    const Eurydice_arr_18 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+    const Eurydice_arr_10 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 /**
  Generate an ML-DSA-44 Signature
@@ -2393,18 +2425,18 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_sign(
  and is a byte string of length at most 255 bytes. It
  may also be empty.
 */
-Result_d6 libcrux_iot_ml_dsa_ml_dsa_44_portable_sign(
-    const Eurydice_arr_18 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+Result_b2 libcrux_iot_ml_dsa_ml_dsa_44_portable_sign(
+    const Eurydice_arr_10 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 /**
  Sign.
 */
 Result_87
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_sign_mut(
-    const Eurydice_arr_18 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness,
-    Eurydice_arr_400 *signature);
+    const Eurydice_arr_10 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness,
+    Eurydice_arr_85 *signature);
 
 /**
  Generate an ML-DSA-44 Signature
@@ -2414,19 +2446,19 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_sign_mut(
  may also be empty.
 */
 Result_87 libcrux_iot_ml_dsa_ml_dsa_44_portable_sign_mut(
-    const Eurydice_arr_18 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness,
-    Eurydice_arr_400 *signature);
+    const Eurydice_arr_10 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness,
+    Eurydice_arr_85 *signature);
 
 #define LIBCRUX_IOT_ML_DSA_PRE_HASH_SHAKE128_OID \
-  ((KRML_CLITERAL(Eurydice_arr_cb){              \
+  ((KRML_CLITERAL(Eurydice_arr_c9){              \
       .data = {6U, 9U, 96U, 134U, 72U, 1U, 101U, 3U, 4U, 2U, 11U}}))
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::pre_hash::PreHash for
 libcrux_iot_ml_dsa::pre_hash::SHAKE128_PH}
 */
-Eurydice_arr_cb libcrux_iot_ml_dsa_pre_hash_oid_0b(void);
+Eurydice_arr_c9 libcrux_iot_ml_dsa_pre_hash_oid_0b(void);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::pre_hash::PreHash for
@@ -2457,8 +2489,8 @@ libcrux_iot_ml_dsa_pre_hash_SHAKE128_PH with const generics
 Result_87 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_sign_pre_hashed_mut_36(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
-    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_60 randomness,
-    Eurydice_arr_400 *signature);
+    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_ec randomness,
+    Eurydice_arr_85 *signature);
 
 /**
 A monomorphic instance of
@@ -2473,19 +2505,19 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4,
 libcrux_iot_ml_dsa_pre_hash_SHAKE128_PH with const generics
 
 */
-Result_d6 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_sign_pre_hashed_36(
+Result_b2 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_sign_pre_hashed_36(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
-    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_60 randomness);
+    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_ec randomness);
 
 /**
  Sign (pre-hashed).
 */
-Result_d6
+Result_b2
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_sign_pre_hashed_shake128(
-    const Eurydice_arr_18 *signing_key, Eurydice_borrow_slice_u8 message,
+    const Eurydice_arr_10 *signing_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
-    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_60 randomness);
+    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_ec randomness);
 
 /**
  Generate a HashML-DSA-44 Signature, with a SHAKE128 pre-hashing
@@ -2494,9 +2526,9 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_sign_pre_has
  and is a byte string of length at most 255 bytes. It
  may also be empty.
 */
-Result_d6 libcrux_iot_ml_dsa_ml_dsa_44_portable_sign_pre_hashed_shake128(
-    const Eurydice_arr_18 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+Result_b2 libcrux_iot_ml_dsa_ml_dsa_44_portable_sign_pre_hashed_shake128(
+    const Eurydice_arr_10 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_44_VERIFICATION_KEY_SIZE \
   (libcrux_iot_ml_dsa_constants_verification_key_size(                    \
@@ -2527,7 +2559,7 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_encoding_t1_deserialize_08(
-    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_79 *result);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_arr_ef *result);
 
 /**
 A monomorphic instance of
@@ -2537,7 +2569,7 @@ libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients with const generics
 */
 void libcrux_iot_ml_dsa_encoding_verification_key_deserialize_08(
     size_t rows_in_a, size_t verification_key_size,
-    Eurydice_borrow_slice_u8 serialized, Eurydice_dst_ref_mut_32 t1);
+    Eurydice_borrow_slice_u8 serialized, Eurydice_dst_ref_mut_90 t1);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.encoding.signature.deserialize
@@ -2551,8 +2583,8 @@ Result_5c libcrux_iot_ml_dsa_encoding_signature_deserialize_08(
     size_t max_ones_in_hint, size_t signature_size,
     Eurydice_borrow_slice_u8 serialized,
     Eurydice_mut_borrow_slice_u8 out_commitment_hash,
-    Eurydice_dst_ref_mut_32 out_signer_response,
-    Eurydice_dst_ref_mut_22 out_hint);
+    Eurydice_dst_ref_mut_90 out_signer_response,
+    Eurydice_dst_ref_mut_20 out_hint);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.sample.sample_ring_element
@@ -2561,9 +2593,9 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_sample_sample_ring_element_08(
-    Eurydice_borrow_slice_u8 seed, uint8_t_x2 indices, Eurydice_arr_79 *out,
-    Eurydice_arr_12 *rand_stack, Eurydice_arr_27 *rand_block,
-    Eurydice_arr_13 *tmp_stack);
+    Eurydice_borrow_slice_u8 seed, uint8_t_x2 indices, Eurydice_arr_ef *out,
+    Eurydice_arr_d1 *rand_stack, Eurydice_arr_c5 *rand_block,
+    Eurydice_arr_d0 *tmp_stack);
 
 /**
 A monomorphic instance of
@@ -2572,7 +2604,7 @@ generics
 - SHIFT_BY= 13
 */
 void libcrux_iot_ml_dsa_simd_portable_arithmetic_shift_left_then_reduce_84(
-    Eurydice_arr_d4 *simd_unit);
+    Eurydice_arr_4d *simd_unit);
 
 /**
 This function found in impl {libcrux_iot_ml_dsa::simd::traits::Operations for
@@ -2584,7 +2616,7 @@ libcrux_iot_ml_dsa.simd.portable.shift_left_then_reduce_c5 with const generics
 - SHIFT_BY= 13
 */
 void libcrux_iot_ml_dsa_simd_portable_shift_left_then_reduce_c5_84(
-    Eurydice_arr_d4 *simd_unit);
+    Eurydice_arr_4d *simd_unit);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.arithmetic.shift_left_then_reduce
@@ -2593,7 +2625,7 @@ with const generics
 - SHIFT_BY= 13
 */
 void libcrux_iot_ml_dsa_arithmetic_shift_left_then_reduce_41(
-    Eurydice_arr_79 *re);
+    Eurydice_arr_ef *re);
 
 /**
  Compute InvertNTT(Â ◦ ẑ - ĉ ◦ NTT(t₁2ᵈ))
@@ -2606,11 +2638,11 @@ with const generics
 */
 void libcrux_iot_ml_dsa_matrix_compute_w_approx_08(
     size_t rows_in_a, size_t columns_in_a, Eurydice_borrow_slice_u8 seed,
-    Eurydice_arr_12 *rand_stack, Eurydice_arr_27 *rand_block,
-    Eurydice_arr_13 *tmp_stack, Eurydice_arr_79 *poly_slot,
-    Eurydice_dst_ref_shared_32 signer_response,
-    const Eurydice_arr_79 *verifier_challenge_as_ntt,
-    Eurydice_dst_ref_mut_32 t1);
+    Eurydice_arr_d1 *rand_stack, Eurydice_arr_c5 *rand_block,
+    Eurydice_arr_d0 *tmp_stack, Eurydice_arr_ef *poly_slot,
+    Eurydice_dst_ref_shared_90 signer_response,
+    const Eurydice_arr_ef *verifier_challenge_as_ntt,
+    Eurydice_dst_ref_mut_90 t1);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.arithmetic.use_hint
@@ -2619,9 +2651,15 @@ with const generics
 
 */
 void libcrux_iot_ml_dsa_arithmetic_use_hint_08(
-    int32_t gamma2, Eurydice_dst_ref_shared_22 hint,
-    Eurydice_dst_ref_mut_32 re_vector);
+    int32_t gamma2, Eurydice_dst_ref_shared_20 hint,
+    Eurydice_dst_ref_mut_90 re_vector);
 
+/**
+ The internal verification API.
+
+ If no `domain_separation_context` is supplied, it is assumed that
+ `message` already contains the domain separation.
+*/
 /**
 A monomorphic instance of
 libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_44.verify_internal with types
@@ -2633,9 +2671,9 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof with const generics
 
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_verify_internal_c4(
-    const Eurydice_arr_40 *verification_key, Eurydice_borrow_slice_u8 message,
+    const Eurydice_arr_02 *verification_key, Eurydice_borrow_slice_u8 message,
     Option_e3 domain_separation_context,
-    const Eurydice_arr_400 *signature_serialized);
+    const Eurydice_arr_85 *signature_serialized);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_44.verify
@@ -2647,17 +2685,17 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof with const generics
 
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_verify_c4(
-    const Eurydice_arr_40 *verification_key_serialized,
+    const Eurydice_arr_02 *verification_key_serialized,
     Eurydice_borrow_slice_u8 message, Eurydice_borrow_slice_u8 context,
-    const Eurydice_arr_400 *signature_serialized);
+    const Eurydice_arr_85 *signature_serialized);
 
 /**
  Verify.
 */
 Result_5c
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_verify(
-    const Eurydice_arr_40 *verification_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, const Eurydice_arr_400 *signature);
+    const Eurydice_arr_02 *verification_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, const Eurydice_arr_85 *signature);
 
 /**
  Verify an ML-DSA-44 Signature
@@ -2667,8 +2705,8 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_verify(
  may also be empty.
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_44_portable_verify(
-    const Eurydice_arr_40 *verification_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, const Eurydice_arr_400 *signature);
+    const Eurydice_arr_02 *verification_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, const Eurydice_arr_85 *signature);
 
 /**
 A monomorphic instance of
@@ -2683,20 +2721,20 @@ libcrux_iot_ml_dsa_pre_hash_SHAKE128_PH with const generics
 
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_verify_pre_hashed_36(
-    const Eurydice_arr_40 *verification_key_serialized,
+    const Eurydice_arr_02 *verification_key_serialized,
     Eurydice_borrow_slice_u8 message, Eurydice_borrow_slice_u8 context,
     Eurydice_mut_borrow_slice_u8 pre_hash_buffer,
-    const Eurydice_arr_400 *signature_serialized);
+    const Eurydice_arr_85 *signature_serialized);
 
 /**
  Verify (pre-hashed with SHAKE-128).
 */
 Result_5c
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_verify_pre_hashed_shake128(
-    const Eurydice_arr_40 *verification_key, Eurydice_borrow_slice_u8 message,
+    const Eurydice_arr_02 *verification_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
     Eurydice_mut_borrow_slice_u8 pre_hash_buffer,
-    const Eurydice_arr_400 *signature);
+    const Eurydice_arr_85 *signature);
 
 /**
  Verify a HashML-DSA-44 Signature, with a SHAKE128 pre-hashing
@@ -2706,8 +2744,8 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_44_verify_pre_h
  may also be empty.
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_44_portable_verify_pre_hashed_shake128(
-    const Eurydice_arr_40 *verification_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, const Eurydice_arr_400 *signature);
+    const Eurydice_arr_02 *verification_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, const Eurydice_arr_85 *signature);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_65_ERROR_RING_ELEMENT_SIZE \
   (libcrux_iot_ml_dsa_constants_error_ring_element_size(                    \
@@ -2719,9 +2757,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $30size_t
 */
-typedef struct Eurydice_arr_d2_s {
-  Eurydice_arr_79 data[30U];
-} Eurydice_arr_d2;
+typedef struct Eurydice_arr_51_s {
+  Eurydice_arr_ef data[30U];
+} Eurydice_arr_51;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -2729,9 +2767,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $11size_t
 */
-typedef struct Eurydice_arr_74_s {
-  Eurydice_arr_79 data[11U];
-} Eurydice_arr_74;
+typedef struct Eurydice_arr_3d_s {
+  Eurydice_arr_ef data[11U];
+} Eurydice_arr_3d;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -2739,9 +2777,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $6size_t
 */
-typedef struct Eurydice_arr_10_s {
-  Eurydice_arr_79 data[6U];
-} Eurydice_arr_10;
+typedef struct Eurydice_arr_05_s {
+  Eurydice_arr_ef data[6U];
+} Eurydice_arr_05;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -2749,9 +2787,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $5size_t
 */
-typedef struct Eurydice_arr_1d_s {
-  Eurydice_arr_79 data[5U];
-} Eurydice_arr_1d;
+typedef struct Eurydice_arr_15_s {
+  Eurydice_arr_ef data[5U];
+} Eurydice_arr_15;
 
 /**
 A monomorphic instance of
@@ -2765,29 +2803,29 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 
 */
 void libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_generate_key_pair_c4(
-    Eurydice_arr_60 randomness, Eurydice_mut_borrow_slice_u8 signing_key,
+    Eurydice_arr_ec randomness, Eurydice_mut_borrow_slice_u8 signing_key,
     Eurydice_mut_borrow_slice_u8 verification_key);
 
 /**
  Generate key pair.
 */
 void libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_generate_key_pair(
-    Eurydice_arr_60 randomness, Eurydice_arr_d10 *signing_key,
-    Eurydice_arr_4a *verification_key);
+    Eurydice_arr_ec randomness, Eurydice_arr_24 *signing_key,
+    Eurydice_arr_29 *verification_key);
 
 /**
  Generate an ML-DSA-65 Key Pair
 */
-libcrux_iot_ml_dsa_types_MLDSAKeyPair_06
+libcrux_iot_ml_dsa_types_MLDSAKeyPair_d5
 libcrux_iot_ml_dsa_ml_dsa_65_portable_generate_key_pair(
-    Eurydice_arr_60 randomness);
+    Eurydice_arr_ec randomness);
 
 /**
  Generate an ML-DSA-65 Key Pair
 */
 void libcrux_iot_ml_dsa_ml_dsa_65_portable_generate_key_pair_mut(
-    Eurydice_arr_60 randomness, Eurydice_arr_d10 *signing_key,
-    Eurydice_arr_4a *verification_key);
+    Eurydice_arr_ec randomness, Eurydice_arr_24 *signing_key,
+    Eurydice_arr_29 *verification_key);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_65_COMMITMENT_RING_ELEMENT_SIZE \
   (libcrux_iot_ml_dsa_constants_commitment_ring_element_size(                    \
@@ -2804,17 +2842,17 @@ void libcrux_iot_ml_dsa_ml_dsa_65_portable_generate_key_pair_mut(
 
 /**
 A monomorphic instance of core.result.Result
-with types libcrux_iot_ml_dsa_types_MLDSASignature_8f,
+with types libcrux_iot_ml_dsa_types_MLDSASignature_aa,
 libcrux_iot_ml_dsa_types_SigningError
 
 */
-typedef struct Result_74_s {
+typedef struct Result_0f_s {
   Result_8e_tags tag;
   union {
-    Eurydice_arr_96 case_Ok;
+    Eurydice_arr_0c case_Ok;
     libcrux_iot_ml_dsa_types_SigningError case_Err;
   } val;
-} Result_74;
+} Result_0f;
 
 /**
 A monomorphic instance of
@@ -2829,8 +2867,8 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 */
 Result_87 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_sign_internal_c4(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
-    Option_e3 domain_separation_context, Eurydice_arr_60 randomness,
-    Eurydice_arr_96 *signature);
+    Option_e3 domain_separation_context, Eurydice_arr_ec randomness,
+    Eurydice_arr_0c *signature);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_65.sign_mut
@@ -2844,8 +2882,8 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 */
 Result_87 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_sign_mut_c4(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness,
-    Eurydice_arr_96 *signature);
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness,
+    Eurydice_arr_0c *signature);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_65.sign
@@ -2857,17 +2895,17 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof,
 libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 
 */
-Result_74 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_sign_c4(
+Result_0f libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_sign_c4(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 /**
  Sign.
 */
-Result_74
+Result_0f
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_sign(
-    const Eurydice_arr_d10 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+    const Eurydice_arr_24 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 /**
  Generate an ML-DSA-65 Signature
@@ -2876,18 +2914,18 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_sign(
  and is a byte string of length at most 255 bytes. It
  may also be empty.
 */
-Result_74 libcrux_iot_ml_dsa_ml_dsa_65_portable_sign(
-    const Eurydice_arr_d10 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+Result_0f libcrux_iot_ml_dsa_ml_dsa_65_portable_sign(
+    const Eurydice_arr_24 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 /**
  Sign.
 */
 Result_87
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_sign_mut(
-    const Eurydice_arr_d10 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness,
-    Eurydice_arr_96 *signature);
+    const Eurydice_arr_24 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness,
+    Eurydice_arr_0c *signature);
 
 /**
  Generate an ML-DSA-65 Signature
@@ -2897,9 +2935,9 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_sign_mut(
  may also be empty.
 */
 Result_87 libcrux_iot_ml_dsa_ml_dsa_65_portable_sign_mut(
-    const Eurydice_arr_d10 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness,
-    Eurydice_arr_96 *signature);
+    const Eurydice_arr_24 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness,
+    Eurydice_arr_0c *signature);
 
 /**
 A monomorphic instance of
@@ -2917,8 +2955,8 @@ libcrux_iot_ml_dsa_pre_hash_SHAKE128_PH with const generics
 Result_87 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_sign_pre_hashed_mut_36(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
-    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_60 randomness,
-    Eurydice_arr_96 *signature);
+    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_ec randomness,
+    Eurydice_arr_0c *signature);
 
 /**
 A monomorphic instance of
@@ -2933,19 +2971,19 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4,
 libcrux_iot_ml_dsa_pre_hash_SHAKE128_PH with const generics
 
 */
-Result_74 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_sign_pre_hashed_36(
+Result_0f libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_sign_pre_hashed_36(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
-    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_60 randomness);
+    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_ec randomness);
 
 /**
  Sign (pre-hashed).
 */
-Result_74
+Result_0f
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_sign_pre_hashed_shake128(
-    const Eurydice_arr_d10 *signing_key, Eurydice_borrow_slice_u8 message,
+    const Eurydice_arr_24 *signing_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
-    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_60 randomness);
+    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_ec randomness);
 
 /**
  Generate a HashML-DSA-65 Signature, with a SHAKE128 pre-hashing
@@ -2954,9 +2992,9 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_sign_pre_has
  and is a byte string of length at most 255 bytes. It
  may also be empty.
 */
-Result_74 libcrux_iot_ml_dsa_ml_dsa_65_portable_sign_pre_hashed_shake128(
-    const Eurydice_arr_d10 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+Result_0f libcrux_iot_ml_dsa_ml_dsa_65_portable_sign_pre_hashed_shake128(
+    const Eurydice_arr_24 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_65_VERIFICATION_KEY_SIZE \
   (libcrux_iot_ml_dsa_constants_verification_key_size(                    \
@@ -2971,6 +3009,12 @@ Result_74 libcrux_iot_ml_dsa_ml_dsa_65_portable_sign_pre_hashed_shake128(
       LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_65_BITS_PER_GAMMA1_COEFFICIENT))
 
 /**
+ The internal verification API.
+
+ If no `domain_separation_context` is supplied, it is assumed that
+ `message` already contains the domain separation.
+*/
+/**
 A monomorphic instance of
 libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_65.verify_internal with types
 libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients,
@@ -2981,9 +3025,9 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof with const generics
 
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_verify_internal_c4(
-    const Eurydice_arr_4a *verification_key, Eurydice_borrow_slice_u8 message,
+    const Eurydice_arr_29 *verification_key, Eurydice_borrow_slice_u8 message,
     Option_e3 domain_separation_context,
-    const Eurydice_arr_96 *signature_serialized);
+    const Eurydice_arr_0c *signature_serialized);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_65.verify
@@ -2995,17 +3039,17 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof with const generics
 
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_verify_c4(
-    const Eurydice_arr_4a *verification_key_serialized,
+    const Eurydice_arr_29 *verification_key_serialized,
     Eurydice_borrow_slice_u8 message, Eurydice_borrow_slice_u8 context,
-    const Eurydice_arr_96 *signature_serialized);
+    const Eurydice_arr_0c *signature_serialized);
 
 /**
  Verify.
 */
 Result_5c
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_verify(
-    const Eurydice_arr_4a *verification_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, const Eurydice_arr_96 *signature);
+    const Eurydice_arr_29 *verification_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, const Eurydice_arr_0c *signature);
 
 /**
  Verify an ML-DSA-65 Signature
@@ -3015,8 +3059,8 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_verify(
  may also be empty.
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_65_portable_verify(
-    const Eurydice_arr_4a *verification_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, const Eurydice_arr_96 *signature);
+    const Eurydice_arr_29 *verification_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, const Eurydice_arr_0c *signature);
 
 /**
 A monomorphic instance of
@@ -3031,20 +3075,20 @@ libcrux_iot_ml_dsa_pre_hash_SHAKE128_PH with const generics
 
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_verify_pre_hashed_36(
-    const Eurydice_arr_4a *verification_key_serialized,
+    const Eurydice_arr_29 *verification_key_serialized,
     Eurydice_borrow_slice_u8 message, Eurydice_borrow_slice_u8 context,
     Eurydice_mut_borrow_slice_u8 pre_hash_buffer,
-    const Eurydice_arr_96 *signature_serialized);
+    const Eurydice_arr_0c *signature_serialized);
 
 /**
  Verify (pre-hashed with SHAKE-128).
 */
 Result_5c
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_verify_pre_hashed_shake128(
-    const Eurydice_arr_4a *verification_key, Eurydice_borrow_slice_u8 message,
+    const Eurydice_arr_29 *verification_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
     Eurydice_mut_borrow_slice_u8 pre_hash_buffer,
-    const Eurydice_arr_96 *signature);
+    const Eurydice_arr_0c *signature);
 
 /**
  Verify a HashML-DSA-65 Signature, with a SHAKE128 pre-hashing
@@ -3054,8 +3098,8 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_65_verify_pre_h
  may also be empty.
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_65_portable_verify_pre_hashed_shake128(
-    const Eurydice_arr_4a *verification_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, const Eurydice_arr_96 *signature);
+    const Eurydice_arr_29 *verification_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, const Eurydice_arr_0c *signature);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_87_ERROR_RING_ELEMENT_SIZE \
   (libcrux_iot_ml_dsa_constants_error_ring_element_size(                    \
@@ -3067,9 +3111,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $56size_t
 */
-typedef struct Eurydice_arr_1c_s {
-  Eurydice_arr_79 data[56U];
-} Eurydice_arr_1c;
+typedef struct Eurydice_arr_b4_s {
+  Eurydice_arr_ef data[56U];
+} Eurydice_arr_b4;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -3077,9 +3121,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $15size_t
 */
-typedef struct Eurydice_arr_28_s {
-  Eurydice_arr_79 data[15U];
-} Eurydice_arr_28;
+typedef struct Eurydice_arr_48_s {
+  Eurydice_arr_ef data[15U];
+} Eurydice_arr_48;
 
 /**
 A monomorphic instance of Eurydice.arr
@@ -3087,9 +3131,9 @@ with types libcrux_iot_ml_dsa_polynomial_PolynomialRingElement_8d
 with const generics
 - $7size_t
 */
-typedef struct Eurydice_arr_09_s {
-  Eurydice_arr_79 data[7U];
-} Eurydice_arr_09;
+typedef struct Eurydice_arr_33_s {
+  Eurydice_arr_ef data[7U];
+} Eurydice_arr_33;
 
 /**
 A monomorphic instance of
@@ -3103,22 +3147,22 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 
 */
 void libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_generate_key_pair_c4(
-    Eurydice_arr_60 randomness, Eurydice_mut_borrow_slice_u8 signing_key,
+    Eurydice_arr_ec randomness, Eurydice_mut_borrow_slice_u8 signing_key,
     Eurydice_mut_borrow_slice_u8 verification_key);
 
 /**
  Generate key pair.
 */
 void libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_generate_key_pair(
-    Eurydice_arr_60 randomness, Eurydice_arr_180 *signing_key,
-    Eurydice_arr_51 *verification_key);
+    Eurydice_arr_ec randomness, Eurydice_arr_e2 *signing_key,
+    Eurydice_arr_43 *verification_key);
 
 /**
  Generate an ML-DSA-87 Key Pair
 */
-libcrux_iot_ml_dsa_types_MLDSAKeyPair_2d
+libcrux_iot_ml_dsa_types_MLDSAKeyPair_850
 libcrux_iot_ml_dsa_ml_dsa_87_portable_generate_key_pair(
-    Eurydice_arr_60 randomness);
+    Eurydice_arr_ec randomness);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_87_COMMITMENT_RING_ELEMENT_SIZE \
   (libcrux_iot_ml_dsa_constants_commitment_ring_element_size(                    \
@@ -3135,17 +3179,17 @@ libcrux_iot_ml_dsa_ml_dsa_87_portable_generate_key_pair(
 
 /**
 A monomorphic instance of core.result.Result
-with types libcrux_iot_ml_dsa_types_MLDSASignature_9b,
+with types libcrux_iot_ml_dsa_types_MLDSASignature_06,
 libcrux_iot_ml_dsa_types_SigningError
 
 */
-typedef struct Result_79_s {
+typedef struct Result_20_s {
   Result_8e_tags tag;
   union {
-    Eurydice_arr_380 case_Ok;
+    Eurydice_arr_930 case_Ok;
     libcrux_iot_ml_dsa_types_SigningError case_Err;
   } val;
-} Result_79;
+} Result_20;
 
 /**
 A monomorphic instance of
@@ -3160,8 +3204,8 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 */
 Result_87 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_sign_internal_c4(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
-    Option_e3 domain_separation_context, Eurydice_arr_60 randomness,
-    Eurydice_arr_380 *signature);
+    Option_e3 domain_separation_context, Eurydice_arr_ec randomness,
+    Eurydice_arr_930 *signature);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_87.sign_mut
@@ -3175,8 +3219,8 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 */
 Result_87 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_sign_mut_c4(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness,
-    Eurydice_arr_380 *signature);
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness,
+    Eurydice_arr_930 *signature);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_87.sign
@@ -3188,17 +3232,17 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof,
 libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4 with const generics
 
 */
-Result_79 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_sign_c4(
+Result_20 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_sign_c4(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 /**
  Sign.
 */
-Result_79
+Result_20
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_sign(
-    const Eurydice_arr_180 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+    const Eurydice_arr_e2 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 /**
  Generate an ML-DSA-87 Signature
@@ -3207,18 +3251,18 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_sign(
  and is a byte string of length at most 255 bytes. It
  may also be empty.
 */
-Result_79 libcrux_iot_ml_dsa_ml_dsa_87_portable_sign(
-    const Eurydice_arr_180 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+Result_20 libcrux_iot_ml_dsa_ml_dsa_87_portable_sign(
+    const Eurydice_arr_e2 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 /**
  Sign.
 */
 Result_87
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_sign_mut(
-    const Eurydice_arr_180 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness,
-    Eurydice_arr_380 *signature);
+    const Eurydice_arr_e2 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness,
+    Eurydice_arr_930 *signature);
 
 /**
  Generate an ML-DSA-87 Signature
@@ -3228,9 +3272,9 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_sign_mut(
  may also be empty.
 */
 Result_87 libcrux_iot_ml_dsa_ml_dsa_87_portable_sign_mut(
-    const Eurydice_arr_180 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness,
-    Eurydice_arr_380 *signature);
+    const Eurydice_arr_e2 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness,
+    Eurydice_arr_930 *signature);
 
 /**
 A monomorphic instance of
@@ -3248,8 +3292,8 @@ libcrux_iot_ml_dsa_pre_hash_SHAKE128_PH with const generics
 Result_87 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_sign_pre_hashed_mut_36(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
-    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_60 randomness,
-    Eurydice_arr_380 *signature);
+    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_ec randomness,
+    Eurydice_arr_930 *signature);
 
 /**
 A monomorphic instance of
@@ -3264,19 +3308,19 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256X4,
 libcrux_iot_ml_dsa_pre_hash_SHAKE128_PH with const generics
 
 */
-Result_79 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_sign_pre_hashed_36(
+Result_20 libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_sign_pre_hashed_36(
     Eurydice_borrow_slice_u8 signing_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
-    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_60 randomness);
+    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_ec randomness);
 
 /**
  Sign (pre-hashed).
 */
-Result_79
+Result_20
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_sign_pre_hashed_shake128(
-    const Eurydice_arr_180 *signing_key, Eurydice_borrow_slice_u8 message,
+    const Eurydice_arr_e2 *signing_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
-    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_60 randomness);
+    Eurydice_mut_borrow_slice_u8 pre_hash_buffer, Eurydice_arr_ec randomness);
 
 /**
  Generate a HashML-DSA-87 Signature, with a SHAKE128 pre-hashing
@@ -3285,9 +3329,9 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_sign_pre_has
  and is a byte string of length at most 255 bytes. It
  may also be empty.
 */
-Result_79 libcrux_iot_ml_dsa_ml_dsa_87_portable_sign_pre_hashed_shake128(
-    const Eurydice_arr_180 *signing_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, Eurydice_arr_60 randomness);
+Result_20 libcrux_iot_ml_dsa_ml_dsa_87_portable_sign_pre_hashed_shake128(
+    const Eurydice_arr_e2 *signing_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, Eurydice_arr_ec randomness);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_87_VERIFICATION_KEY_SIZE \
   (libcrux_iot_ml_dsa_constants_verification_key_size(                    \
@@ -3302,6 +3346,12 @@ Result_79 libcrux_iot_ml_dsa_ml_dsa_87_portable_sign_pre_hashed_shake128(
       LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_87_BITS_PER_GAMMA1_COEFFICIENT))
 
 /**
+ The internal verification API.
+
+ If no `domain_separation_context` is supplied, it is assumed that
+ `message` already contains the domain separation.
+*/
+/**
 A monomorphic instance of
 libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_87.verify_internal with types
 libcrux_iot_ml_dsa_simd_portable_vector_type_Coefficients,
@@ -3312,9 +3362,9 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof with const generics
 
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_verify_internal_c4(
-    const Eurydice_arr_51 *verification_key, Eurydice_borrow_slice_u8 message,
+    const Eurydice_arr_43 *verification_key, Eurydice_borrow_slice_u8 message,
     Option_e3 domain_separation_context,
-    const Eurydice_arr_380 *signature_serialized);
+    const Eurydice_arr_930 *signature_serialized);
 
 /**
 A monomorphic instance of libcrux_iot_ml_dsa.ml_dsa_generic.ml_dsa_87.verify
@@ -3326,17 +3376,17 @@ libcrux_iot_ml_dsa_hash_functions_portable_Shake256Xof with const generics
 
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_verify_c4(
-    const Eurydice_arr_51 *verification_key_serialized,
+    const Eurydice_arr_43 *verification_key_serialized,
     Eurydice_borrow_slice_u8 message, Eurydice_borrow_slice_u8 context,
-    const Eurydice_arr_380 *signature_serialized);
+    const Eurydice_arr_930 *signature_serialized);
 
 /**
  Verify.
 */
 Result_5c
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_verify(
-    const Eurydice_arr_51 *verification_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, const Eurydice_arr_380 *signature);
+    const Eurydice_arr_43 *verification_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, const Eurydice_arr_930 *signature);
 
 /**
  Verify an ML-DSA-87 Signature
@@ -3346,8 +3396,8 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_verify(
  may also be empty.
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_87_portable_verify(
-    const Eurydice_arr_51 *verification_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, const Eurydice_arr_380 *signature);
+    const Eurydice_arr_43 *verification_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, const Eurydice_arr_930 *signature);
 
 /**
 A monomorphic instance of
@@ -3362,20 +3412,20 @@ libcrux_iot_ml_dsa_pre_hash_SHAKE128_PH with const generics
 
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_verify_pre_hashed_36(
-    const Eurydice_arr_51 *verification_key_serialized,
+    const Eurydice_arr_43 *verification_key_serialized,
     Eurydice_borrow_slice_u8 message, Eurydice_borrow_slice_u8 context,
     Eurydice_mut_borrow_slice_u8 pre_hash_buffer,
-    const Eurydice_arr_380 *signature_serialized);
+    const Eurydice_arr_930 *signature_serialized);
 
 /**
  Verify (pre-hashed with SHAKE-128).
 */
 Result_5c
 libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_verify_pre_hashed_shake128(
-    const Eurydice_arr_51 *verification_key, Eurydice_borrow_slice_u8 message,
+    const Eurydice_arr_43 *verification_key, Eurydice_borrow_slice_u8 message,
     Eurydice_borrow_slice_u8 context,
     Eurydice_mut_borrow_slice_u8 pre_hash_buffer,
-    const Eurydice_arr_380 *signature);
+    const Eurydice_arr_930 *signature);
 
 /**
  Verify a HashML-DSA-87 Signature, with a SHAKE128 pre-hashing
@@ -3385,24 +3435,24 @@ libcrux_iot_ml_dsa_ml_dsa_generic_instantiations_portable_ml_dsa_87_verify_pre_h
  may also be empty.
 */
 Result_5c libcrux_iot_ml_dsa_ml_dsa_87_portable_verify_pre_hashed_shake128(
-    const Eurydice_arr_51 *verification_key, Eurydice_borrow_slice_u8 message,
-    Eurydice_borrow_slice_u8 context, const Eurydice_arr_380 *signature);
+    const Eurydice_arr_43 *verification_key, Eurydice_borrow_slice_u8 message,
+    Eurydice_borrow_slice_u8 context, const Eurydice_arr_930 *signature);
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_44_COMMITMENT_VECTOR_SIZE    \
   (libcrux_iot_ml_dsa_constants_commitment_vector_size(                       \
       LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_44_BITS_PER_COMMITMENT_COEFFICIENT, \
       LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_44_ROWS_IN_A))
 
-typedef libcrux_iot_ml_dsa_types_MLDSAKeyPair_c2
+typedef libcrux_iot_ml_dsa_types_MLDSAKeyPair_85
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_MLDSA44KeyPair;
 
-typedef Eurydice_arr_400
+typedef Eurydice_arr_85
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_MLDSA44Signature;
 
-typedef Eurydice_arr_18
+typedef Eurydice_arr_10
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_MLDSA44SigningKey;
 
-typedef Eurydice_arr_40
+typedef Eurydice_arr_02
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_44_MLDSA44VerificationKey;
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_44_ROWS_PLUS_COLUMNS \
@@ -3424,16 +3474,16 @@ typedef Eurydice_arr_40
       LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_65_BITS_PER_COMMITMENT_COEFFICIENT, \
       LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_65_ROWS_IN_A))
 
-typedef libcrux_iot_ml_dsa_types_MLDSAKeyPair_06
+typedef libcrux_iot_ml_dsa_types_MLDSAKeyPair_d5
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_MLDSA65KeyPair;
 
-typedef Eurydice_arr_96
+typedef Eurydice_arr_0c
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_MLDSA65Signature;
 
-typedef Eurydice_arr_d10
+typedef Eurydice_arr_24
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_MLDSA65SigningKey;
 
-typedef Eurydice_arr_4a
+typedef Eurydice_arr_29
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_65_MLDSA65VerificationKey;
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_65_ROWS_PLUS_COLUMNS \
@@ -3455,16 +3505,16 @@ typedef Eurydice_arr_4a
       LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_87_BITS_PER_COMMITMENT_COEFFICIENT, \
       LIBCRUX_IOT_ML_DSA_CONSTANTS_ML_DSA_87_ROWS_IN_A))
 
-typedef libcrux_iot_ml_dsa_types_MLDSAKeyPair_2d
+typedef libcrux_iot_ml_dsa_types_MLDSAKeyPair_850
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_MLDSA87KeyPair;
 
-typedef Eurydice_arr_380
+typedef Eurydice_arr_930
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_MLDSA87Signature;
 
-typedef Eurydice_arr_180
+typedef Eurydice_arr_e2
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_MLDSA87SigningKey;
 
-typedef Eurydice_arr_51
+typedef Eurydice_arr_43
     libcrux_iot_ml_dsa_ml_dsa_generic_ml_dsa_87_MLDSA87VerificationKey;
 
 #define LIBCRUX_IOT_ML_DSA_ML_DSA_GENERIC_ML_DSA_87_ROWS_PLUS_COLUMNS \
@@ -3483,7 +3533,7 @@ typedef Eurydice_arr_51
 
 #define LIBCRUX_IOT_ML_DSA_PRE_HASH_PRE_HASH_OID_LEN ((size_t)11U)
 
-typedef Eurydice_arr_cb libcrux_iot_ml_dsa_pre_hash_PreHashOID;
+typedef Eurydice_arr_c9 libcrux_iot_ml_dsa_pre_hash_PreHashOID;
 
 typedef Result_80 libcrux_iot_ml_dsa_pre_hash_PreHashResult;
 
@@ -3502,6 +3552,57 @@ libcrux_iot_ml_dsa::types::VerificationError}
 */
 libcrux_iot_ml_dsa_types_VerificationError libcrux_iot_ml_dsa_pre_hash_from_97(
     libcrux_iot_ml_dsa_pre_hash_DomainSeparationError e);
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_3_STEP \
+  ((size_t)8U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_3_STEP_BY \
+  ((size_t)1U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_4_STEP \
+  ((size_t)16U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_4_STEP_BY \
+  ((size_t)2U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_5_STEP \
+  ((size_t)32U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_5_STEP_BY \
+  ((size_t)4U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_6_STEP \
+  ((size_t)64U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_6_STEP_BY \
+  ((size_t)8U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_7_STEP \
+  ((size_t)128U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_INVNTT_INVERT_NTT_AT_LAYER_7_STEP_BY \
+  ((size_t)16U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_3_STEP ((size_t)8U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_3_STEP_BY ((size_t)1U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_4_STEP ((size_t)16U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_4_STEP_BY ((size_t)2U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_5_STEP ((size_t)32U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_5_STEP_BY ((size_t)4U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_6_STEP ((size_t)64U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_6_STEP_BY ((size_t)8U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_7_STEP ((size_t)128U)
+
+#define LIBCRUX_IOT_ML_DSA_SIMD_PORTABLE_NTT_NTT_AT_LAYER_7_STEP_BY \
+  ((size_t)16U)
 
 typedef int32_t libcrux_iot_ml_dsa_simd_portable_vector_type_FieldElement;
 
