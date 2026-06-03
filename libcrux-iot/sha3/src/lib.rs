@@ -87,15 +87,20 @@ pub enum Algorithm {
     Sha512 = 4,
 }
 
-#[hax_lib::opaque]
-impl From<u32> for Algorithm {
-    fn from(v: u32) -> Algorithm {
+/// Error returned when a `u32` does not correspond to an [`Algorithm`].
+#[cfg_attr(not(eurydice), derive(Copy, Clone, Debug, PartialEq))]
+pub struct UnknownAlgorithm;
+
+impl TryFrom<u32> for Algorithm {
+    type Error = UnknownAlgorithm;
+
+    fn try_from(v: u32) -> Result<Algorithm, Self::Error> {
         match v {
-            1 => Algorithm::Sha224,
-            2 => Algorithm::Sha256,
-            3 => Algorithm::Sha384,
-            4 => Algorithm::Sha512,
-            _ => panic!(),
+            1 => Ok(Algorithm::Sha224),
+            2 => Ok(Algorithm::Sha256),
+            3 => Ok(Algorithm::Sha384),
+            4 => Ok(Algorithm::Sha512),
+            _ => Err(UnknownAlgorithm),
         }
     }
 }
