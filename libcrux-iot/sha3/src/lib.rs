@@ -140,6 +140,8 @@ pub const fn digest_size(mode: Algorithm) -> usize {
 pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[U8]) -> [U8; LEN] {
     #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
+    #[cfg(not(eurydice))]
+    debug_assert_eq!(LEN, digest_size(algorithm));
 
     let mut out = [0u8; LEN].classify();
 

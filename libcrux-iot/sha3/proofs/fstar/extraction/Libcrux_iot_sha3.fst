@@ -422,6 +422,15 @@ let hash (v_LEN: usize) (algorithm: t_Algorithm) (payload: t_Slice u8)
       in
       ()
   in
+  let _:Prims.unit =
+    if true
+    then
+      let _:Prims.unit =
+        match v_LEN, digest_size algorithm <: (usize & usize) with
+        | left_val, right_val -> Hax_lib.v_assert (left_val =. right_val <: bool)
+      in
+      ()
+  in
   let out:t_Array u8 v_LEN =
     Libcrux_secrets.Traits.f_classify #(t_Array u8 v_LEN)
       #FStar.Tactics.Typeclasses.solve
