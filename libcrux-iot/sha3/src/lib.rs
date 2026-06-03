@@ -352,8 +352,6 @@ pub fn shake256_ema(out: &mut [U8], data: &[U8]) {
 
 /// Incremental API for SHAKE XOFs
 pub mod incremental {
-    #[cfg(hax)]
-    use hax_lib::ToInt;
     use libcrux_secrets::U8;
 
     /// An unbuffered XOF state.

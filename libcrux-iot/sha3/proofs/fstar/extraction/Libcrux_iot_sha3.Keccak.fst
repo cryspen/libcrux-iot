@@ -1564,13 +1564,7 @@ let keccak (v_RATE: usize) (v_DELIM: u8) (data out: t_Slice u8)
       (fun temp_0_ e_i ->
           let (s: Libcrux_iot_sha3.State.t_KeccakState), (start: usize) = temp_0_ in
           let e_i:usize = e_i in
-          (Rust_primitives.Hax.Int.from_machine start <: Hax_lib.Int.t_Int) =
-          ((Rust_primitives.Hax.Int.from_machine e_i <: Hax_lib.Int.t_Int) *
-            (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
-            <:
-            Hax_lib.Int.t_Int)
-          <:
-          bool)
+          start =. (e_i *! v_RATE <: usize) <: bool)
       (s, start <: (Libcrux_iot_sha3.State.t_KeccakState & usize))
       (fun temp_0_ e_i ->
           let (s: Libcrux_iot_sha3.State.t_KeccakState), (start: usize) = temp_0_ in
@@ -1603,13 +1597,7 @@ let keccak (v_RATE: usize) (v_DELIM: u8) (data out: t_Slice u8)
               in
               let e_i:usize = e_i in
               ((Core_models.Slice.impl__len #u8 out <: usize) =. outlen <: bool) &&
-              ((Rust_primitives.Hax.Int.from_machine offset <: Hax_lib.Int.t_Int) =
-                ((Rust_primitives.Hax.Int.from_machine e_i <: Hax_lib.Int.t_Int) *
-                  (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
-                  <:
-                  Hax_lib.Int.t_Int)
-                <:
-                bool))
+              (offset =. (e_i *! v_RATE <: usize) <: bool))
           (offset, out, s <: (usize & t_Slice u8 & Libcrux_iot_sha3.State.t_KeccakState))
           (fun temp_0_ e_i ->
               let (offset: usize), (out: t_Slice u8), (s: Libcrux_iot_sha3.State.t_KeccakState) =
