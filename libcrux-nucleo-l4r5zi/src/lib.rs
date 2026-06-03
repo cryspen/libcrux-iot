@@ -26,6 +26,27 @@ pub mod real_time;
 #[cfg(feature = "stack")]
 pub mod stack;
 
+#[cfg(feature = "mldsa44")]
+pub use libcrux_iot_ml_dsa::ml_dsa_44 as mldsa;
+#[cfg(feature = "mldsa65")]
+pub use libcrux_iot_ml_dsa::ml_dsa_65 as mldsa;
+#[cfg(feature = "mldsa87")]
+pub use libcrux_iot_ml_dsa::ml_dsa_87 as mldsa;
+
+#[cfg(feature = "mlkem1024")]
+pub use libcrux_iot_ml_kem::mlkem1024 as mlkem;
+#[cfg(feature = "mlkem512")]
+pub use libcrux_iot_ml_kem::mlkem512 as mlkem;
+#[cfg(feature = "mlkem768")]
+pub use libcrux_iot_ml_kem::mlkem768 as mlkem;
+
+#[cfg(not(any(feature = "mldsa44", feature = "mldsa65", feature = "mldsa87")))]
+compile_error!("Must select any feature of mldsa44, mldsa65, mldsa87");
+
+#[cfg(not(any(feature = "mlkem512", feature = "mlkem768", feature = "mlkem1024")))]
+compile_error!("Must select any feature of mlkem512, mlkem768, mlkem1024");
+
+
 // same panicking *behavior* as `panic-probe` but doesn't print a panic message
 // this prevents the panic message being printed *twice* when `defmt::panic` is invoked
 #[defmt::panic_handler]
