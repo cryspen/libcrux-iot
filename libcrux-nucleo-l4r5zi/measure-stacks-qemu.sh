@@ -8,7 +8,7 @@
 # measure other variants, pass the cargo features for the variant(s) you want;
 # they replace the defaults and are forwarded to argo. The
 # variants are mutually exclusive within each family (mldsa*/mlkem*), so supply
-# at most one of each plus `stack`, e.g.:
+# exactly one of each plus `stack`, e.g.:
 #   ./measure-stacks-qemu.sh --features stack,mldsa44,mlkem512
 
 set -euo pipefail
