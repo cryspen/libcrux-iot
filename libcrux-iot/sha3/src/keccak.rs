@@ -2756,14 +2756,14 @@ mod cross_spec {
 
     /// Compute the spec's column-parity array `C` from a flat `[u64; 25]` state.
     ///
-    /// Under the layout `state[5*x + y] = A[x, y]`, `C[x] = ⊕_{y=0..4} state[5*x + y]`.
+    /// Under the layout `state[5*y + x] = A[x, y]`, `C[x] = ⊕_{y=0..4} state[5*y + x]`.
     fn spec_c(state: &[u64; 25]) -> [u64; 5] {
         core::array::from_fn(|x| {
-            state[5 * x + 0]
-                ^ state[5 * x + 1]
-                ^ state[5 * x + 2]
-                ^ state[5 * x + 3]
-                ^ state[5 * x + 4]
+            state[x]
+                ^ state[5 + x]
+                ^ state[10 + x]
+                ^ state[15 + x]
+                ^ state[20 + x]
         })
     }
 
@@ -2877,9 +2877,9 @@ mod cross_spec {
     // reads from different physical positions (compare the addressing in
     // `keccakf1600_round0_pi_rho_chi_y0_zeta0` at line 420 with the
     // `round1`/`round2`/`round3` analogues). After one round the canonical
-    // mapping `st[5*x + y] ↔ A[x, y]` no longer holds; instead the physical
-    // layout is a non-trivial permutation of the logical layout. The
-    // permutation has order 4, so the layout *only* re-aligns with the
+    // impl mapping `st[5*x + y] ↔ A[x, y]` no longer holds; instead the
+    // physical layout is a non-trivial permutation of the logical layout.
+    // The permutation has order 4, so the layout *only* re-aligns with the
     // spec every 4 rounds. A per-round cross-spec comparison would require
     // deriving that permutation by hand; the `four_rounds_*` tests below
     // cover the smallest impl-aligned granularity where a direct comparison

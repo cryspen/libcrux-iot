@@ -204,8 +204,10 @@ impl FromLeBytes<4> for U32 {
 /// `[u64; 25]` Keccak state. `state_from_spec` is its inverse, used to
 /// seed the implementation from a known `[u64; 25]` state for tests.
 ///
-/// Both impl and spec now store lane `A[x, y]` at flat index `5*x + y`,
-/// so the index mapping is the identity.
+/// The impl stores lane `A[x, y]` at `st[5*x + y]` (see `get_with_zeta`),
+/// while the spec stores it at `state[5*y + x]` (FIPS 202 §3.1.2). The
+/// bridge therefore transposes the flat index: spec slot `idx = 5*y + x`
+/// maps to impl slot `5*x + y = 5*(idx % 5) + idx / 5`.
 #[cfg(test)]
 pub(crate) mod cross_spec {
     use super::KeccakState;
@@ -215,7 +217,9 @@ pub(crate) mod cross_spec {
     /// Deinterleave: read the impl state into the spec's flat `[u64; 25]`.
     pub(crate) fn state_to_spec(s: &KeccakState) -> [u64; 25] {
         core::array::from_fn(|idx| {
-            let l = s.st[idx].deinterleave();
+            // spec_idx = 5*y + x  →  impl_idx = 5*x + y = 5*(idx % 5) + idx / 5
+            let impl_idx = 5 * (idx % 5) + idx / 5;
+            let l = s.st[impl_idx].deinterleave();
             let arr = l.0.declassify();
             (arr[0] as u64) | ((arr[1] as u64) << 32)
         })
@@ -224,10 +228,12 @@ pub(crate) mod cross_spec {
     /// Re-interleave a flat `[u64; 25]` back into the impl's `KeccakState`.
     pub(crate) fn state_from_spec(flat: [u64; 25]) -> KeccakState {
         let mut s = KeccakState::new();
-        for idx in 0..25 {
-            let lo = (flat[idx] as u32).classify();
-            let hi = ((flat[idx] >> 32) as u32).classify();
-            s.st[idx] = Lane2U32::from_ints([lo, hi]).interleave();
+        for impl_idx in 0..25 {
+            // impl_idx = 5*x + y  →  spec_idx = 5*y + x = 5*(impl_idx % 5) + impl_idx / 5
+            let spec_idx = 5 * (impl_idx % 5) + impl_idx / 5;
+            let lo = (flat[spec_idx] as u32).classify();
+            let hi = ((flat[spec_idx] >> 32) as u32).classify();
+            s.st[impl_idx] = Lane2U32::from_ints([lo, hi]).interleave();
         }
         s
     }
