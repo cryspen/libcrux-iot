@@ -2874,9 +2874,9 @@ mod cross_spec {
     // reads from different physical positions (compare the addressing in
     // `keccakf1600_round0_pi_rho_chi_y0_zeta0` at line 420 with the
     // `round1`/`round2`/`round3` analogues). After one round the canonical
-    // mapping `st[5*x + y] ↔ A[x, y]` no longer holds; instead the physical
-    // layout is a non-trivial permutation of the logical layout. The
-    // permutation has order 4, so the layout *only* re-aligns with the
+    // impl mapping `st[5*x + y] ↔ A[x, y]` no longer holds; instead the
+    // physical layout is a non-trivial permutation of the logical layout.
+    // The permutation has order 4, so the layout *only* re-aligns with the
     // spec every 4 rounds. A per-round cross-spec comparison would require
     // deriving that permutation by hand; the `four_rounds_*` tests below
     // cover the smallest impl-aligned granularity where a direct comparison
