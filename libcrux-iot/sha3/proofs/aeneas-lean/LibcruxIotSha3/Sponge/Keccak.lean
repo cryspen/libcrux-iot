@@ -64,7 +64,7 @@ attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 private theorem triple_of_ok_kk {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 private theorem triple_exists_ok_kk {α : Type} {x : Result α}
     {P : α → Prop}
@@ -73,11 +73,11 @@ private theorem triple_exists_ok_kk {α : Type} {x : Result α}
   match hx : x with
   | .ok v =>
       refine ⟨v, rfl, ?_⟩
-      have := h; simp [Std.Do.Triple, WP.wp] at this; exact this
+      have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
   | .fail _ =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
   | .div =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
 
 /-! ### Lemma: `KeccakState.new` returns a fresh zero-initialised state. -/
 
@@ -93,11 +93,11 @@ theorem state_KeccakState_new_eq :
   refine ⟨_, rfl, rfl, ?_⟩
   rfl
 
-/-! ### Helper: `core_models.slice.Slice.len` Result-level equation. -/
+/-! ### Helper: `CoreModels.core.slice.Slice.len` Result-level equation. -/
 
 private theorem slice_len_eq (s : Slice Std.U8) :
-    core_models.slice.Slice.len s = .ok (Std.Slice.len s) := by
-  unfold core_models.slice.Slice.len; rfl
+    CoreModels.core.slice.Slice.len s = .ok (Std.Slice.len s) := by
+  unfold CoreModels.core.slice.Slice.len; rfl
 
 /-! ### Helper: bridge `keccak_loop0` for the trivial n = 0 case.
 
@@ -196,7 +196,7 @@ theorem keccak.keccak_keccak_spec_blocks_zero
   -- Step 4: i (= data length).
   set i_us : Std.Usize := Std.Slice.len data with hi_us_def
   have h_i_us_val : i_us.val = data.val.length := Std.Slice.len_val data
-  have h_i_us_eq : core_models.slice.Slice.len data = .ok i_us := slice_len_eq data
+  have h_i_us_eq : CoreModels.core.slice.Slice.len data = .ok i_us := slice_len_eq data
   -- Step 5: n (= i_us / RATE) = ⟨BitVec n_nat⟩.
   have h_RATE_nz : RATE.val ≠ 0 := by omega
   obtain ⟨n_us, h_n_us_eq, h_n_us_val_eq, _⟩ :=
@@ -212,7 +212,7 @@ theorem keccak.keccak_keccak_spec_blocks_zero
   -- Step 7: outlen (= Slice.len out).
   set outlen_us : Std.Usize := Std.Slice.len out with houtlen_us_def
   have h_outlen_us_val : outlen_us.val = out.val.length := Std.Slice.len_val out
-  have h_outlen_us_eq : core_models.slice.Slice.len out = .ok outlen_us := slice_len_eq out
+  have h_outlen_us_eq : CoreModels.core.slice.Slice.len out = .ok outlen_us := slice_len_eq out
   -- Step 8: blocks (= outlen / RATE) = 0 (since outlen < RATE).
   obtain ⟨blocks_us, h_blocks_us_eq, h_blocks_us_val_eq, _⟩ :=
     Std.UScalar.div_bv_spec outlen_us (y := RATE) h_RATE_nz
@@ -389,13 +389,12 @@ theorem keccak.keccak_keccak_spec_blocks_zero
         -- = data.val.drop (n*rate) since (data.length - n*rate) covers the whole drop.
         -- Show both indices yield the same `Slice`.
         have h_lhs_idx :
-            core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-              (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
+            CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+              (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
               tail { start := 0#usize, «end» := rem_us }
             = .ok tail := by
-          unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                 core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-                 core_models.cmRangeUsizeToAeneas
+          unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                 CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                  core.slice.index.Slice.index
                  core.slice.index.SliceIndexRangeUsizeSlice.index
           have h0 : (0#usize : Std.Usize) ≤ rem_us := by
@@ -411,13 +410,12 @@ theorem keccak.keccak_keccak_spec_blocks_zero
           rw [List.drop_zero]
           rw [List.take_of_length_le (by rw [h_tail_len]; omega)]
         have h_rhs_idx :
-            core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-              (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
+            CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+              (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
               data { start := i3_us, «end» := i_us }
             = .ok tail := by
-          unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                 core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-                 core_models.cmRangeUsizeToAeneas
+          unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                 CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                  core.slice.index.Slice.index
                  core.slice.index.SliceIndexRangeUsizeSlice.index
           have h0 : i3_us ≤ i_us := by
@@ -536,7 +534,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
   -- Step 4: i_us = Slice.len data.
   set i_us : Std.Usize := Std.Slice.len data with hi_us_def
   have h_i_us_val : i_us.val = data.val.length := Std.Slice.len_val data
-  have h_i_us_eq : core_models.slice.Slice.len data = .ok i_us := slice_len_eq data
+  have h_i_us_eq : CoreModels.core.slice.Slice.len data = .ok i_us := slice_len_eq data
   -- Step 5: n_us = i_us / RATE.
   have h_RATE_nz : RATE.val ≠ 0 := by omega
   obtain ⟨n_us, h_n_us_eq, h_n_us_val_eq, _⟩ :=
@@ -552,7 +550,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
   -- Step 7: outlen_us = Slice.len out.
   set outlen_us : Std.Usize := Std.Slice.len out with houtlen_us_def
   have h_outlen_us_val : outlen_us.val = out.val.length := Std.Slice.len_val out
-  have h_outlen_us_eq : core_models.slice.Slice.len out = .ok outlen_us := slice_len_eq out
+  have h_outlen_us_eq : CoreModels.core.slice.Slice.len out = .ok outlen_us := slice_len_eq out
   -- Step 8: blocks_us = outlen / RATE.
   set blocks_nat : Nat := out.val.length / RATE.val with hblocks_nat_def
   set i1_nat : Nat := out.val.length % RATE.val with hi1_nat_def
@@ -714,8 +712,8 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
               if last_us < outlen_us
               then do
                 let (s4, index_mut_back) ←
-                  core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
-                    (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+                  CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut.index_mut
+                    (CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                       Std.U8) out2 { start := offset }
                 let s5 ← keccak.squeeze_last RATE s3 s4
                 ok (index_mut_back s5)
@@ -785,14 +783,13 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
             rw [h_eq_v, h_v_eq]
           rw [h_rhs_add]; simp only [bind_tc_ok]
           have h_lhs_idx :
-              core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+              CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                   Std.U8)
                 tail { start := 0#usize, «end» := rem_us }
               = .ok tail := by
-            unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                   core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-                   core_models.cmRangeUsizeToAeneas
+            unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                   CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                    core.slice.index.Slice.index
                    core.slice.index.SliceIndexRangeUsizeSlice.index
             have h0 : (0#usize : Std.Usize) ≤ rem_us := by
@@ -809,14 +806,13 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
             rw [List.drop_zero]
             rw [List.take_of_length_le (by rw [h_tail_len]; omega)]
           have h_rhs_idx :
-              core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+              CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                   Std.U8)
                 data { start := i3_us, «end» := i_us }
               = .ok tail := by
-            unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                   core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-                   core_models.cmRangeUsizeToAeneas
+            unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                   CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                    core.slice.index.Slice.index
                    core.slice.index.SliceIndexRangeUsizeSlice.index
             have h0 : i3_us ≤ i_us := by
@@ -1123,8 +1119,8 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
               if last_us < outlen_us
               then do
                 let (s4, index_mut_back) ←
-                  core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
-                    (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+                  CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut.index_mut
+                    (CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                       Std.U8) out2 { start := offset }
                 let s5 ← keccak.squeeze_last RATE s3 s4
                 ok (index_mut_back s5)
@@ -1191,14 +1187,13 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
             rw [h_eq_v, h_v_eq]
           rw [h_rhs_add]; simp only [bind_tc_ok]
           have h_lhs_idx :
-              core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+              CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                   Std.U8)
                 tail { start := 0#usize, «end» := rem_us }
               = .ok tail := by
-            unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                   core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-                   core_models.cmRangeUsizeToAeneas
+            unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                   CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                    core.slice.index.Slice.index
                    core.slice.index.SliceIndexRangeUsizeSlice.index
             have h0 : (0#usize : Std.Usize) ≤ rem_us := by
@@ -1215,14 +1210,13 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
             rw [List.drop_zero]
             rw [List.take_of_length_le (by rw [h_tail_len]; omega)]
           have h_rhs_idx :
-              core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+              CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                   Std.U8)
                 data { start := i3_us, «end» := i_us }
               = .ok tail := by
-            unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                   core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-                   core_models.cmRangeUsizeToAeneas
+            unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                   CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                    core.slice.index.Slice.index
                    core.slice.index.SliceIndexRangeUsizeSlice.index
             have h0 : i3_us ≤ i_us := by

@@ -15,18 +15,16 @@ open Aeneas Aeneas.Std libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Foundation
 
-/-- Auxiliary `Fin 24` form. Closed by `native_decide` after a `revert` —
-    every concrete index reduces both sides to a closed `BitVec 64`
-    literal which the kernel compares. The interleaved-RC and
-    `ROUND_CONSTANTS` arrays are `@[irreducible]`, so the kernel
-    `decide` reducer stalls; `native_decide` works through them via
-    the compiled equational lemmas. -/
+/-- Auxiliary `Fin 24` form. The interleaved-RC and `ROUND_CONSTANTS` arrays
+  are `@[irreducible]`, so we need to unfold them explicitly. -/
 private theorem rc_equiv_aux (i : Fin 24) :
     lift_lane_bv
       (keccak.RC_INTERLEAVED_0.val[i.val]!).bv
       (keccak.RC_INTERLEAVED_1.val[i.val]!).bv =
     (keccak_f.ROUND_CONSTANTS.val[i.val]!).bv := by
-  revert i; native_decide
+  revert i
+  unfold keccak.RC_INTERLEAVED_0 keccak.RC_INTERLEAVED_1 keccak_f.ROUND_CONSTANTS
+  decide
 
 /-- Round constant equivalence for `i : Nat` with `i < 24`. -/
 theorem rc_equiv (i : Nat) (hi : i < 24) :

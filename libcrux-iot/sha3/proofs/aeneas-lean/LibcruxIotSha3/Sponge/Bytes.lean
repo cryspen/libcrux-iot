@@ -41,7 +41,7 @@ attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 private theorem triple_of_ok_bytes {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 /-- Local existence extractor: a Triple yields `∃ v, x = .ok v ∧ P v`. -/
 private theorem triple_exists_ok_bytes {α : Type} {x : Result α}
@@ -51,21 +51,21 @@ private theorem triple_exists_ok_bytes {α : Type} {x : Result α}
   match hx : x with
   | .ok v =>
       refine ⟨v, rfl, ?_⟩
-      have := h; simp [Std.Do.Triple, WP.wp] at this; exact this
+      have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
   | .fail _ =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
   | .div =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
 
 /-! ### Pure-side reductions for the body of `state.load_block_2u32`.
 
 We capture each step's `.ok`-equation as a small local lemma so the
 final assembly is a straight `rw` chain. -/
 
-/-- `core_models.slice.Slice.len v = .ok (Std.Slice.len v)`. -/
+/-- `CoreModels.core.slice.Slice.len v = .ok (Std.Slice.len v)`. -/
 private theorem core_slice_len_eq_ok {T : Type} (v : Slice T) :
-    core_models.slice.Slice.len v = .ok (Std.Slice.len v) := by
-  unfold core_models.slice.Slice.len; rfl
+    CoreModels.core.slice.Slice.len v = .ok (Std.Slice.len v) := by
+  unfold CoreModels.core.slice.Slice.len; rfl
 
 /-- `RATE % 8#usize = .ok 0#usize` whenever `RATE.val % 8 = 0`. -/
 private theorem rate_mod_8_eq_ok (RATE : Std.Usize) (h : RATE.val % 8 = 0) :
@@ -327,7 +327,7 @@ theorem state.KeccakState.load_block_spec
       rw [Nat.add_comm, Nat.add_mul_div_left _ _ (by decide : 0 < 5)]
       have : k / 5 / 5 = 0 := Nat.div_eq_of_lt hk_div_5
       omega
-    -- Under the new layout, byte block index = spec index k. The impl's
+    -- The byte block index equals the spec index k. The impl's
     -- loop ranges over j ∈ [0, RATE/8), so we want `k < RATE/8` to mean
     -- the lane was touched. But the impl stored byte block j at impl idx
     -- transpose(j); we read it back at impl idx b = transpose(k). So the

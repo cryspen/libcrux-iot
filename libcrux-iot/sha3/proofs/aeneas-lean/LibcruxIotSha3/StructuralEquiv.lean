@@ -29,6 +29,8 @@ open libcrux_iot_sha3.BitSpec
 
 set_option mvcgen.warning false
 
+attribute [local spec] Aeneas.Std.uncurry
+
 /-- Bridge: when `r.i.val = s.i.val + 1` and `s.i.val < 24`, recover the
     UScalar-level equality `r.i = ⟨s.i.bv + 1⟩`. Used in every PrcLift FC
     sub-fn that increments `s.i` (the `_zeta1` family with RC). -/
@@ -860,15 +862,14 @@ private theorem round1_theta_d_spec_fc (s : state.KeccakState) :
         r.d.val[4]!.val[1]! =
           s.c.val[3]!.val[1]! ^^^ s.c.val[0]!.val[0]! ⌝ ⦄ := by
   unfold keccak.keccakf1600_round1_theta_d
-  hax_mvcgen
+  mvcgen
   all_goals first
     | scalar_tac
-    | trivial
-    | (refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-       all_goals first | trivial | assumption | (
-         simp only [Std.WP.predn] at *
-         try apply Std.U32.bv_eq_imp_eq
-         simp_all [Std.UScalar.bv_xor, Foundation.rot32]))
+    | (refine ⟨trivial, trivial, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+       (apply Std.U32.bv_eq_imp_eq
+        simp_all [WP.uncurry', Std.Array.set_val_eq,
+                  Std.UScalar.bv_xor, Foundation.rot32, Std.UScalar.rotate_left]) <;>
+       scalar_tac)
 
 set_option maxHeartbeats 8000000 in
 @[spec high]
@@ -1034,12 +1035,19 @@ private theorem round1_pi_rho_chi_y0_zeta0_spec_fc
   · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
   · exact h_59.trans (h_52.trans (h_45.trans (h_38.trans h_31)))
   · exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
-  · rw [h_61, h_54, h_47, h_40, h_33]
+  · have hb : s.i.val < keccak.RC_INTERLEAVED_0.val.length := by
+      have hl : keccak.RC_INTERLEAVED_0.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_0.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_0.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
+    rw [h_61, h_54, h_47, h_40, h_33]
     norm_num [apply_5_writes]
     congr 6
-    all_goals try apply Std.U32.bv_eq_imp_eq
+    all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
         h_36.2, h_35.2, h_34,
         h_43.2, h_42.2, h_41,
@@ -1083,12 +1091,19 @@ private theorem round1_pi_rho_chi_y0_zeta1_spec_fc
   · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
   · rw [h_59, h_52, h_45, h_38, h_31, h_30]
     rfl
-  · rw [h_62, h_55, h_48, h_41, h_34]
+  · have hb : s.i.val < keccak.RC_INTERLEAVED_1.val.length := by
+      have hl : keccak.RC_INTERLEAVED_1.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_1.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_1.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
+    rw [h_62, h_55, h_48, h_41, h_34]
     norm_num [apply_5_writes]
     congr 6
-    all_goals try apply Std.U32.bv_eq_imp_eq
+    all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
         h_37.2, h_36.2, h_35,
         h_44.2, h_43.2, h_42,
@@ -1699,15 +1714,14 @@ private theorem round2_theta_d_spec_fc (s : state.KeccakState) :
         r.d.val[4]!.val[1]! =
           s.c.val[3]!.val[1]! ^^^ s.c.val[0]!.val[0]! ⌝ ⦄ := by
   unfold keccak.keccakf1600_round2_theta_d
-  hax_mvcgen
+  mvcgen
   all_goals first
     | scalar_tac
-    | trivial
-    | (refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-       all_goals first | trivial | assumption | (
-         simp only [Std.WP.predn] at *
-         try apply Std.U32.bv_eq_imp_eq
-         simp_all [Std.UScalar.bv_xor, Foundation.rot32]))
+    | (refine ⟨trivial, trivial, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+       (apply Std.U32.bv_eq_imp_eq
+        simp_all [WP.uncurry', Std.Array.set_val_eq,
+                  Std.UScalar.bv_xor, Foundation.rot32, Std.UScalar.rotate_left]) <;>
+       scalar_tac)
 
 set_option maxHeartbeats 8000000 in
 @[spec high]
@@ -1815,12 +1829,19 @@ private theorem round2_pi_rho_chi_y0_zeta0_spec_fc
   · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
   · exact h_59.trans (h_52.trans (h_45.trans (h_38.trans h_31)))
   · exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
-  · rw [h_61, h_54, h_47, h_40, h_33]
+  · have hb : s.i.val < keccak.RC_INTERLEAVED_0.val.length := by
+      have hl : keccak.RC_INTERLEAVED_0.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_0.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_0.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
+    rw [h_61, h_54, h_47, h_40, h_33]
     norm_num [apply_5_writes]
     congr 6
-    all_goals try apply Std.U32.bv_eq_imp_eq
+    all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
         h_36.2, h_35.2, h_34,
         h_43.2, h_42.2, h_41,
@@ -1862,12 +1883,19 @@ private theorem round2_pi_rho_chi_y0_zeta1_spec_fc
   · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
   · rw [h_59, h_52, h_45, h_38, h_31, h_30]
     rfl
-  · rw [h_62, h_55, h_48, h_41, h_34]
+  · have hb : s.i.val < keccak.RC_INTERLEAVED_1.val.length := by
+      have hl : keccak.RC_INTERLEAVED_1.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_1.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_1.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
+    rw [h_62, h_55, h_48, h_41, h_34]
     norm_num [apply_5_writes]
     congr 6
-    all_goals try apply Std.U32.bv_eq_imp_eq
+    all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
         h_37.2, h_36.2, h_35,
         h_44.2, h_43.2, h_42,
@@ -2466,15 +2494,14 @@ private theorem round3_theta_d_spec_fc (s : state.KeccakState) :
         r.d.val[4]!.val[1]! =
           s.c.val[3]!.val[1]! ^^^ s.c.val[0]!.val[0]! ⌝ ⦄ := by
   unfold keccak.keccakf1600_round3_theta_d
-  hax_mvcgen
+  mvcgen
   all_goals first
     | scalar_tac
-    | trivial
-    | (refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-       all_goals first | trivial | assumption | (
-         simp only [Std.WP.predn] at *
-         try apply Std.U32.bv_eq_imp_eq
-         simp_all [Std.UScalar.bv_xor, Foundation.rot32]))
+    | (refine ⟨trivial, trivial, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+       (apply Std.U32.bv_eq_imp_eq
+        simp_all [WP.uncurry', Std.Array.set_val_eq,
+                  Std.UScalar.bv_xor, Foundation.rot32, Std.UScalar.rotate_left]) <;>
+       scalar_tac)
 
 set_option maxHeartbeats 8000000 in
 @[spec high]
@@ -2582,12 +2609,19 @@ private theorem round3_pi_rho_chi_y0_zeta0_spec_fc
   · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
   · exact h_59.trans (h_52.trans (h_45.trans (h_38.trans h_31)))
   · exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
-  · rw [h_61, h_54, h_47, h_40, h_33]
+  · have hb : s.i.val < keccak.RC_INTERLEAVED_0.val.length := by
+      have hl : keccak.RC_INTERLEAVED_0.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_0.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_0.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
+    rw [h_61, h_54, h_47, h_40, h_33]
     norm_num [apply_5_writes]
     congr 6
-    all_goals try apply Std.U32.bv_eq_imp_eq
+    all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
         h_36.2, h_35.2, h_34,
         h_43.2, h_42.2, h_41,
@@ -2629,12 +2663,19 @@ private theorem round3_pi_rho_chi_y0_zeta1_spec_fc
   · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
   · rw [h_59, h_52, h_45, h_38, h_31, h_30]
     rfl
-  · rw [h_62, h_55, h_48, h_41, h_34]
+  · have hb : s.i.val < keccak.RC_INTERLEAVED_1.val.length := by
+      have hl : keccak.RC_INTERLEAVED_1.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_1.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_1.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
+    rw [h_62, h_55, h_48, h_41, h_34]
     norm_num [apply_5_writes]
     congr 6
-    all_goals try apply Std.U32.bv_eq_imp_eq
+    all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
         h_37.2, h_36.2, h_35,
         h_44.2, h_43.2, h_42,
@@ -3497,7 +3538,7 @@ open Result ControlFlow
 private theorem triple_of_ok_local {α : Type} {x : Result α} {v : α} {P : α → Prop}
     (hx : x = Aeneas.Std.Result.ok v) (hp : P v) :
     (⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄) := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 set_option maxHeartbeats 4000000 in
 theorem keccakf1600_4rounds_eq (BR : Std.Usize) (s : state.KeccakState)

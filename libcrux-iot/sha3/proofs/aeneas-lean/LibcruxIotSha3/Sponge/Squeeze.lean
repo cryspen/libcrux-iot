@@ -35,6 +35,8 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
+attribute [local spec] Aeneas.Std.uncurry
+
 open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
@@ -49,7 +51,7 @@ attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 private theorem triple_of_ok_sq {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 private theorem triple_exists_ok_sq {α : Type} {x : Result α}
     {P : α → Prop}
@@ -58,11 +60,11 @@ private theorem triple_exists_ok_sq {α : Type} {x : Result α}
   match hx : x with
   | .ok v =>
       refine ⟨v, rfl, ?_⟩
-      have := h; simp [Std.Do.Triple, WP.wp] at this; exact this
+      have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
   | .fail _ =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
   | .div =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
 
 /-! ### Theorem 1: `iterate_keccak_f_eq_fold`.
 
@@ -179,17 +181,16 @@ Companion to `Absorb.lean:core_models_Slice_Insts_index_RangeFromUsize_spec`
 uses to obtain the tail sub-slice. -/
 @[spec]
 theorem core_models_Slice_Insts_index_mut_RangeFromUsize_spec
-    {T : Type} (s : Slice T) (r : core_models.ops.range.RangeFrom Std.Usize)
+    {T : Type} (s : Slice T) (r : CoreModels.core.ops.range.RangeFrom Std.Usize)
     (h : r.start.val ≤ s.val.length) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
-      (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice T) s r
+    CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut.index_mut
+      (CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T) s r
     ⦃ ⇓ p => ⌜ p.1.val = s.val.drop r.start.val ∧
                 p.1.val.length = s.val.length - r.start.val ∧
                 ∀ s', (p.2 s').val = s.val.setSlice! r.start.val s'.val ⌝ ⦄ := by
-  unfold core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
-         core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-         core_models.cmRangeFromUsizeToAeneas
+  unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut.index_mut
+         CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
          core.slice.index.Slice.index_mut
          core.slice.index.SliceIndexRangeUsizeSlice.index_mut
   have h0' : (⟨r.start, s.len⟩ : core.ops.range.Range Std.Usize).start
@@ -199,11 +200,10 @@ theorem core_models_Slice_Insts_index_mut_RangeFromUsize_spec
   simp [h0', Std.Slice.length, Std.Slice.len]
   refine ⟨?_, ?_⟩
   · unfold List.slice
-    rw [List.take_of_length_le]
-    rw [List.length_drop]
+    exact List.take_of_length_le (by simp)
   · unfold List.slice
     rw [List.length_take, List.length_drop]
-    omega
+    exact ⟨by omega, fun s' => rfl⟩
 
 /-! ### Theorem 3: `keccak.keccak_loop1_invariant`.
 
@@ -550,9 +550,10 @@ private theorem squeeze_closure_call_eq
     (s_b : Std.Array Std.U64 25#usize)
     (h_iter :
       sponge.iterate_keccak_f ⟨BitVec.ofNat _ (k / rate.val)⟩ state = .ok s_b) :
-    (sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8.call
+    (sponge.squeeze.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU8.call_mut
         (OUTPUT_LEN := OUTPUT_LEN) (rate, state) ⟨BitVec.ofNat _ k⟩)
-      = .ok (squeeze_byte_at s_b (k - (k / rate.val) * rate.val)) := by
+      = .ok (squeeze_byte_at s_b (k - (k / rate.val) * rate.val),
+             ((rate, state) : sponge.squeeze.closure OUTPUT_LEN)) := by
   -- args.val = k (since k ≤ Usize.max).
   set args : Std.Usize := ⟨BitVec.ofNat _ k⟩ with hargs_def
   have h_args_val : args.val = k := usize_ofNat_toNat k h_k_le
@@ -620,10 +621,10 @@ private theorem squeeze_closure_call_eq
     Std.WP.spec_imp_exists (Std.Array.index_usize_spec s_b i2 h_i2_lt_sb')
   -- Step 8: a1 = U64.to_le_bytes i4
   have h_a1_eq :
-      core_models.num.U64.to_le_bytes i4
+      CoreModels.core.num.U64.to_le_bytes i4
         = .ok (Std.core.num.U64.to_le_bytes i4) := by
-    unfold core_models.num.U64.to_le_bytes
-           rust_primitives.arithmetic.to_le_bytes_u64
+    unfold CoreModels.core.num.U64.to_le_bytes
+           CoreModels.rust_primitives.arithmetic.to_le_bytes_u64
     rfl
   set a1 : Std.Array Std.U8 8#usize := Std.core.num.U64.to_le_bytes i4 with ha1_def
   -- Step 9: i5 = j % 8.
@@ -640,7 +641,9 @@ private theorem squeeze_closure_call_eq
     Std.WP.spec_imp_exists (Std.Array.index_usize_spec a1 i5 h_i5_lt_a1)
   -- Compute v_final's actual byte value.
   set u : Std.U64 := s_b.val[i2.val]! with hu_def
-  have h_i4_eq_u : i4 = u := h_i4_val_eq
+  have h_i4_eq_u : i4 = u := by
+    rw [hu_def, h_i4_val_eq]
+    simp [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h_i2_lt_sb]
   have h_a1_unfold : a1.val
       = (BitVec.toLEBytes u.bv).map (@Std.UScalar.mk .U8) := by
     show (Std.core.num.U64.to_le_bytes i4).val = _
@@ -648,13 +651,18 @@ private theorem squeeze_closure_call_eq
     unfold Std.core.num.U64.to_le_bytes
     rfl
   have h_len_bytes : (BitVec.toLEBytes u.bv).length = 8 := by
-    have h := @BitVec.toLEBytes_length 64 u.bv (by decide)
+    have h := @BitVec.toLEBytes_length 64 u.bv
     -- h : toLEBytes.length = 64 / 8
     exact h
   have h_jmod_lt : j.val % 8 < 8 := Nat.mod_lt _ (by decide)
   have h_v_final_byte :
       v_final = ⟨(BitVec.toLEBytes u.bv)[j.val % 8]!⟩ := by
-    rw [h_v_final_val, h_a1_unfold, h_i5_val]
+    have h_i5_lt_a1' : i5.val < a1.val.length := by
+      have : a1.val.length = 8 := a1.property
+      rw [this]; exact h_i5_lt
+    rw [show v_final = a1.val[i5.val]! from by
+          rw [h_v_final_val]; exact (getElem!_pos a1.val i5.val h_i5_lt_a1').symm]
+    rw [h_a1_unfold, h_i5_val]
     -- (xs.map UScalar.mk)[j.val % 8]! = ⟨xs[j.val % 8]!⟩
     rw [List.getElem!_eq_getElem?_getD, List.getElem?_map]
     rw [List.getElem?_eq_getElem (h := by rw [h_len_bytes]; exact h_jmod_lt)]
@@ -662,9 +670,8 @@ private theorem squeeze_closure_call_eq
     rw [List.getElem!_eq_getElem?_getD]
     rw [List.getElem?_eq_getElem (h := by rw [h_len_bytes]; exact h_jmod_lt)]
     rw [Option.getD_some]
-    rfl
   -- Assemble: walk the closure body. New closure body (no byte_lane_idx).
-  unfold sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8.call
+  unfold sponge.squeeze.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU8.call_mut
   show (do
     let b' ← args / rate
     let i1' ← b' * rate
@@ -672,9 +679,10 @@ private theorem squeeze_closure_call_eq
     let state_b' ← sponge.iterate_keccak_f b' state
     let i2' ← j' / 8#usize
     let i3' ← Std.Array.index_usize state_b' i2'
-    let a1' ← core_models.num.U64.to_le_bytes i3'
+    let a1' ← CoreModels.core.num.U64.to_le_bytes i3'
     let i4' ← j' % 8#usize
-    Std.Array.index_usize a1' i4') = _
+    let i5' ← Std.Array.index_usize a1' i4'
+    Result.ok (i5', ((rate, state) : sponge.squeeze.closure OUTPUT_LEN))) = _
   rw [show args / rate = (.ok b : Result Std.Usize) from h_b_eq]; simp only [bind_tc_ok]
   rw [show b * rate = (.ok i1 : Result Std.Usize) from h_i1_eq]; simp only [bind_tc_ok]
   rw [show args - i1 = (.ok j : Result Std.Usize) from h_j_eq]; simp only [bind_tc_ok]
@@ -683,8 +691,8 @@ private theorem squeeze_closure_call_eq
   rw [h_i4_eq]; simp only [bind_tc_ok]
   rw [h_a1_eq]; simp only [bind_tc_ok]
   rw [show j % 8#usize = (.ok i5 : Result Std.Usize) from h_i5_eq]; simp only [bind_tc_ok]
-  rw [h_v_final_eq]
-  -- Now goal: .ok v_final = .ok (squeeze_byte_at s_b (k - (k/rate.val)*rate.val))
+  rw [h_v_final_eq]; simp only [bind_tc_ok]
+  -- Now goal: .ok (v_final, c) = .ok (squeeze_byte_at s_b (k - (k/rate.val)*rate.val), c)
   -- Under new layout, squeeze_byte_at indexes s_b at (j/8) directly.
   have h_u_eq :
       u = s_b.val[(k - k / rate.val * rate.val) / 8]! := by
@@ -696,6 +704,7 @@ private theorem squeeze_closure_call_eq
     unfold squeeze_byte_at
     rw [h_u_eq, h_j_eq_residue]
   rw [h_v_final_byte, h_byte_eq]
+  rfl
 
 /-- **Pure block-wise characterization of `sponge.squeeze`.**
 
@@ -736,24 +745,19 @@ theorem sponge_squeeze_byte_eq
     omega
   -- Build the per-k call_mut equation.
   have h_call_mut_eq : ∀ k : Nat, k < OUTPUT_LEN.val →
-      (sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8
-          OUTPUT_LEN).FnMutInst.call_mut (rate, state) ⟨BitVec.ofNat _ k⟩
+      (sponge.squeeze.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU8
+          OUTPUT_LEN).call_mut (rate, state) ⟨BitVec.ofNat _ k⟩
         = .ok (f k, (rate, state)) := by
     intro k hk
-    -- Unfold call_mut to call ; ok (·, state).
-    show sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU8.call_mut
+    show sponge.squeeze.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU8.call_mut
             (rate, state) ⟨BitVec.ofNat _ k⟩
           = .ok (f k, (rate, state))
-    unfold sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU8.call_mut
-    have h_call_eq :=
-      squeeze_closure_call_eq (OUTPUT_LEN := OUTPUT_LEN) rate state k
-        (h_k_le_max k hk) h_rate_pos h_rate_bnd (s_b k) (h_iter k hk)
-    rw [h_call_eq]
-    rfl
+    rw [squeeze_closure_call_eq (OUTPUT_LEN := OUTPUT_LEN) rate state k
+          (h_k_le_max k hk) h_rate_pos h_rate_bnd (s_b k) (h_iter k hk)]
   -- Apply createi_pure_eq.
   have h_createi :=
     _root_.libcrux_iot_sha3.Foundation.createi_pure_eq OUTPUT_LEN
-      (sponge.squeeze.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU8 OUTPUT_LEN)
+      (sponge.squeeze.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU8 OUTPUT_LEN)
       (rate, state) f h_call_mut_eq
   refine ⟨_, h_createi, ?_⟩
   intro k hk

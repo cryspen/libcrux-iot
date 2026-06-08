@@ -164,29 +164,55 @@ theorem deinterleave_bv_lift_eq (even_bits odd_bits : BitVec 32) :
   simp only [deinterleave_bv, lift_lane_bv, spread_to_even]
   bv_decide
 
-/-! ## Aeneas-`Result` lift of `Lane2U32.interleave`.
+/-- Bridge: `0#32 ++ x` (BV64) equals `x.setWidth 64`. Used to feed
+    the impl's `as_u64` cast (which Lean computes as `0#32 ++ x`) into
+    `bv_decide` (which doesn't natively destructure `BitVec.append`). -/
+private theorem zero_append_eq_setWidth_32 (x : BitVec 32) :
+    (0#32 ++ x : BitVec 64) = x.setWidth 64 := by
+  apply BitVec.eq_of_toNat_eq
+  rw [BitVec.toNat_append, BitVec.toNat_setWidth]
+  have hbnd : x.toNat < 2 ^ 64 := by
+    have := x.isLt; omega
+  simp
+  omega
 
-The impl (Extraction/Funs.lean:116-163) reads `self.val[0]!`/`self.val[1]!`
-as the input halves `(lo, hi)`, casts to `u64`, ORs `(hi << 32) ||| lo`
-into a 64-bit word, runs 11 sequential masking/shift/XOR stages on each of
-the two parity tracks, and finally projects the low 32 bits of each track.
-The pure model `interleave_bv` mirrors this exactly. -/
+/-- Bridge: `x ++ 0#32` (BV64) equals `(x.setWidth 64) <<< 32`. -/
+private theorem append_zero_32_eq_shiftLeft_setWidth (x : BitVec 32) :
+    (x ++ 0#32 : BitVec 64) = (x.setWidth 64) <<< 32 := by
+  apply BitVec.eq_of_toNat_eq
+  rw [BitVec.toNat_append, BitVec.toNat_shiftLeft, BitVec.toNat_setWidth]
+  simp [Nat.shiftLeft_eq]
+  have hbnd : x.toNat < 2 ^ 32 := x.isLt
+  have h64 : x.toNat * 2 ^ 32 < 2 ^ 64 := by
+    have : x.toNat * 2^32 < 2^32 * 2^32 :=
+      Nat.mul_lt_mul_of_lt_of_le hbnd (le_refl _) (by decide)
+    omega
+  omega
+
+
+/-! ## Aeneas-`Result` lift of `Lane2U32.interleave`. -/
 @[spec]
 theorem lane.Lane2U32.interleave_spec (self : lane.Lane2U32) :
     ⦃ ⌜ True ⌝ ⦄
     lane.Lane2U32.interleave self
     ⦃ ⇓ r => ⌜ ((r.val[0]!).bv, (r.val[1]!).bv) =
                 interleave_bv (self.val[0]!).bv (self.val[1]!).bv ⌝ ⦄ := by
+  have h0 : (0 : Nat) < self.val.length := by simp
+  have h1 : (1 : Nat) < self.val.length := by simp
+  have h0_eq : self.val[0]! = self.val[0]'h0 := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h0]; rfl
+  have h1_eq : self.val[1]! = self.val[1]'h1 := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h1]; rfl
   unfold lane.Lane2U32.interleave
   unfold libcrux_secrets.U32.Insts.Libcrux_secretsIntCastOps.as_u64
   unfold libcrux_secrets.U64.Insts.Libcrux_secretsIntCastOps.as_u32
-  unfold lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index
+  unfold lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index
   unfold lane.Lane2U32.from_ints
   hax_mvcgen
   all_goals
     first
     | scalar_tac
-    | (simp only [interleave_bv, Std.UScalar.cast, BitVec.truncate_eq_setWidth,
+    | (simp only [interleave_bv, Std.UScalar.cast,
                   Std.Array.make,
                   List.getElem!_cons_zero, List.getElem!_cons_succ,
                   Std.U32.bv, Std.U64.bv,
@@ -199,22 +225,23 @@ theorem lane.Lane2U32.interleave_spec (self : lane.Lane2U32) :
                   show (4#i32).toNat  = 4 from rfl,
                   show (8#i32).toNat  = 8 from rfl,
                   show (16#i32).toNat = 16 from rfl,
-                  show (32#i32).toNat = 32 from rfl, *]
-       try (refine Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩ <;> bv_decide))
+                  show (32#i32).toNat = 32 from rfl,
+                  h0_eq, h1_eq, *]
+       refine Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩ <;> rw [BitVec.or_comm])
 
-/-! ## Aeneas-`Result` lift of `Lane2U32.deinterleave`.
-
-The impl (Extraction/Funs.lean:3993-4065) reads `self.val[0]!` (even bits)
-and `self.val[1]!` (odd bits), runs four parallel 11-stage deposit chains
-(evlo, evhi, odlo, odhi), and assembles the two output halves as
-`evlo5 ||| (odlo5 <<< 1)` and `evhi5 ||| (odhi5 <<< 1)`. The pure model
-`deinterleave_bv` mirrors this exactly. -/
+/-! ## Aeneas-`Result` lift of `Lane2U32.deinterleave`. -/
 @[spec]
 theorem lane.Lane2U32.deinterleave_spec (self : lane.Lane2U32) :
     ⦃ ⌜ True ⌝ ⦄
     lane.Lane2U32.deinterleave self
     ⦃ ⇓ r => ⌜ ((r.val[0]!).bv, (r.val[1]!).bv) =
                 deinterleave_bv (self.val[0]!).bv (self.val[1]!).bv ⌝ ⦄ := by
+  have h0 : (0 : Nat) < self.val.length := by simp
+  have h1 : (1 : Nat) < self.val.length := by simp
+  have h0_eq : self.val[0]! = self.val[0]'h0 := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h0]; rfl
+  have h1_eq : self.val[1]! = self.val[1]'h1 := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h1]; rfl
   unfold lane.Lane2U32.deinterleave
   hax_mvcgen
   all_goals
@@ -231,7 +258,8 @@ theorem lane.Lane2U32.deinterleave_spec (self : lane.Lane2U32) :
                   show (2#i32).toNat  = 2 from rfl,
                   show (4#i32).toNat  = 4 from rfl,
                   show (8#i32).toNat  = 8 from rfl,
-                  show (16#i32).toNat = 16 from rfl, *]
+                  show (16#i32).toNat = 16 from rfl,
+                  h0_eq, h1_eq, *]
        try (refine Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩ <;> bv_decide))
 
 end libcrux_iot_sha3.Sponge

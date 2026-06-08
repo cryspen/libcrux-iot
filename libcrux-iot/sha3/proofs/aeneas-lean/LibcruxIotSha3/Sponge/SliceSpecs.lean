@@ -6,7 +6,7 @@
 
   ## Installed
 
-  - `core_models_slice_Slice_len_spec` — `core_models.slice.Slice.len`
+  - `core_models_slice_Slice_len_spec` — `CoreModels.core.slice.Slice.len`
     returns the underlying list length.
   - `massert_spec` — `Aeneas.Std.massert b` succeeds (with `()`) when `b`.
   - `core_models_num_U32_from_le_bytes_spec`,
@@ -23,7 +23,7 @@
     the impl model returns the source slice outright when lengths match.
   - `core_models_array_try_from_slice_spec`
     (`Slice T → Result (result.Result (Array T N) ...)`).
-    The body invokes `rust_primitives.slice.array_from_fn` on the
+    The body invokes `CoreModels.rust_primitives.slice.array_from_fn` on the
     `try_from.closure`, whose Triple is established by induction over the
     closure's `call_mut` calls and the `List.range N.val` `foldlM`.
     See the closure-step lemma, the `foldlM` invariant, and the final
@@ -41,18 +41,18 @@ attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
 /-! ## Prerequisite — Aeneas Std byte/slice `@[spec]` lemmas. -/
 
-/-! ### `core_models.slice.Slice.len` -/
+/-! ### `CoreModels.core.slice.Slice.len` -/
 
-/-- The hax `core_models.slice.Slice.len` is a thin `pure`-wrapper around
+/-- The hax `CoreModels.core.slice.Slice.len` is a thin `pure`-wrapper around
     `Aeneas.Std.Slice.len`. Always succeeds with the underlying list length
     (as a `Usize`). -/
 @[spec]
 theorem core_models_slice_Slice_len_spec {T : Type} (s : Slice T) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.slice.Slice.len s
+    CoreModels.core.slice.Slice.len s
     ⦃ ⇓ r => ⌜ r.val = s.val.length ⌝ ⦄ := by
-  unfold core_models.slice.Slice.len
-  simp [Triple, WP.wp]
+  unfold CoreModels.core.slice.Slice.len
+  simp [Triple, WP.wp, PredTrans.apply]
 
 /-! ### `Aeneas.Std.massert` -/
 
@@ -63,82 +63,82 @@ theorem massert_spec (b : Prop) [Decidable b] (h : b) :
     massert b
     ⦃ ⇓ r => ⌜ r = () ⌝ ⦄ := by
   unfold massert
-  simp [Triple, WP.wp, h]
+  simp [Triple, WP.wp, PredTrans.apply, h]
 
-/-! ### `core_models.num.U32.from_le_bytes` / `U32.to_le_bytes` -/
+/-! ### `CoreModels.core.num.U32.from_le_bytes` / `U32.to_le_bytes` -/
 
 /-- The four-byte LE-load `U32.from_le_bytes` always succeeds with
     `core.num.U32.from_le_bytes` applied to the input array. -/
 @[spec]
 theorem core_models_num_U32_from_le_bytes_spec (bytes : Std.Array Std.U8 4#usize) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.num.U32.from_le_bytes bytes
+    CoreModels.core.num.U32.from_le_bytes bytes
     ⦃ ⇓ r => ⌜ r = Std.core.num.U32.from_le_bytes bytes ⌝ ⦄ := by
-  unfold core_models.num.U32.from_le_bytes rust_primitives.arithmetic.from_le_bytes_u32
-  simp [Triple, WP.wp]
+  unfold CoreModels.core.num.U32.from_le_bytes CoreModels.rust_primitives.arithmetic.from_le_bytes_u32
+  simp [Triple, WP.wp, PredTrans.apply]
 
 /-- The four-byte LE-store `U32.to_le_bytes` always succeeds with
     `core.num.U32.to_le_bytes` applied to the input integer. -/
 @[spec]
 theorem core_models_num_U32_to_le_bytes_spec (x : Std.U32) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.num.U32.to_le_bytes x
+    CoreModels.core.num.U32.to_le_bytes x
     ⦃ ⇓ r => ⌜ r = Std.core.num.U32.to_le_bytes x ⌝ ⦄ := by
-  unfold core_models.num.U32.to_le_bytes rust_primitives.arithmetic.to_le_bytes_u32
-  simp [Triple, WP.wp]
+  unfold CoreModels.core.num.U32.to_le_bytes CoreModels.rust_primitives.arithmetic.to_le_bytes_u32
+  simp [Triple, WP.wp, PredTrans.apply]
 
-/-! ### `core_models.num.U64.from_le_bytes` / `U64.to_le_bytes` -/
+/-! ### `CoreModels.core.num.U64.from_le_bytes` / `U64.to_le_bytes` -/
 
 /-- The eight-byte LE-load `U64.from_le_bytes` always succeeds with
     `core.num.U64.from_le_bytes` applied to the input array. -/
 @[spec]
 theorem core_models_num_U64_from_le_bytes_spec (bytes : Std.Array Std.U8 8#usize) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.num.U64.from_le_bytes bytes
+    CoreModels.core.num.U64.from_le_bytes bytes
     ⦃ ⇓ r => ⌜ r = Std.core.num.U64.from_le_bytes bytes ⌝ ⦄ := by
-  unfold core_models.num.U64.from_le_bytes rust_primitives.arithmetic.from_le_bytes_u64
-  simp [Triple, WP.wp]
+  unfold CoreModels.core.num.U64.from_le_bytes CoreModels.rust_primitives.arithmetic.from_le_bytes_u64
+  simp [Triple, WP.wp, PredTrans.apply]
 
 /-- The eight-byte LE-store `U64.to_le_bytes` always succeeds with
     `core.num.U64.to_le_bytes` applied to the input integer. -/
 @[spec]
 theorem core_models_num_U64_to_le_bytes_spec (x : Std.U64) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.num.U64.to_le_bytes x
+    CoreModels.core.num.U64.to_le_bytes x
     ⦃ ⇓ r => ⌜ r = Std.core.num.U64.to_le_bytes x ⌝ ⦄ := by
-  unfold core_models.num.U64.to_le_bytes rust_primitives.arithmetic.to_le_bytes_u64
-  simp [Triple, WP.wp]
+  unfold CoreModels.core.num.U64.to_le_bytes CoreModels.rust_primitives.arithmetic.to_le_bytes_u64
+  simp [Triple, WP.wp, PredTrans.apply]
 
-/-! ### `core_models.Slice.Insts.Core_modelsOpsIndexIndex.index` over `Range Usize` -/
+/-! ### `CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index` over `Range Usize` -/
 
 /-- Slice subindexing over a `Range<usize>` succeeds whenever the range is
     in bounds, returning the sub-`Slice` whose `val` is the contiguous
     slice `s.val[start..end]`. -/
 @[spec]
 theorem core_models_Slice_Insts_index_RangeUsize_spec
-    {T : Type} (s : Slice T) (r : core_models.ops.range.Range Std.Usize)
+    {T : Type} (s : Slice T) (r : CoreModels.core.ops.range.Range Std.Usize)
     (h0 : r.start.val ≤ r.end.val) (h1 : r.end.val ≤ s.val.length) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice T) s r
+    CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+      (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T) s r
     ⦃ ⇓ r' => ⌜ r'.val = s.val.slice r.start.val r.end.val ∧
                 r'.val.length = r.end.val - r.start.val ⌝ ⦄ := by
-  unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-         core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-         core_models.cmRangeUsizeToAeneas
+  unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+         CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
          core.slice.index.Slice.index
          core.slice.index.SliceIndexRangeUsizeSlice.index
+  simp only [id]
   have h0' : (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).start
               ≤ (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).end := by
     simpa [UScalar.le_equiv] using h0
   have h1' : (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).end.val ≤ (Slice.length s) := by
     simpa [Slice.length] using h1
-  simp only [Triple, WP.wp]
+  simp only [Triple, WP.wp, PredTrans.apply]
   simp [h0', h1', Slice.length]
   simp [List.slice, List.length_drop, List.length_take]
   omega
 
-/-! ### `core_models.result.Result.unwrap`
+/-! ### `CoreModels.core.result.Result.unwrap`
 
 The hax `Result.unwrap` on the `core_models` `result.Result` enum panics on
 `Err` and returns the inner `T` on `Ok`. We give a Triple-style spec under
@@ -156,20 +156,20 @@ bottom of this file. -/
     right type. -/
 @[spec]
 theorem core_models_result_Result_unwrap_spec
-    {T E : Type} (dbg : core_models.fmt.Debug E)
-    (r : core_models.result.Result T E)
+    {T E : Type} (dbg : CoreModels.core.fmt.Debug E)
+    (r : CoreModels.core.result.Result T E)
     (h : ∃ v, r = .Ok v) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.result.Result.unwrap dbg r
+    CoreModels.core.result.Result.unwrap dbg r
     ⦃ ⇓ r' => ⌜ r = .Ok r' ⌝ ⦄ := by
   obtain ⟨v, hv⟩ := h
-  unfold core_models.result.Result.unwrap
+  unfold CoreModels.core.result.Result.unwrap
   subst hv
-  simp [Triple, WP.wp]
+  simp [Triple, WP.wp, PredTrans.apply]
 
 
 
-/-! ### `core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut` over `Range Usize`
+/-! ### `CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut.index_mut` over `Range Usize`
 
 Used by `state.store_block_2u32_loop.body` (Funs.lean:4373) to obtain a
 mutable sub-slice and a write-back closure. -/
@@ -180,50 +180,50 @@ mutable sub-slice and a write-back closure. -/
     `val`. -/
 @[spec]
 theorem core_models_Slice_Insts_index_mut_RangeUsize_spec
-    {T : Type} (s : Slice T) (r : core_models.ops.range.Range Std.Usize)
+    {T : Type} (s : Slice T) (r : CoreModels.core.ops.range.Range Std.Usize)
     (h0 : r.start.val ≤ r.end.val) (h1 : r.end.val ≤ s.val.length) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
-      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice T) s r
+    CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut.index_mut
+      (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T) s r
     ⦃ ⇓ p => ⌜ p.1.val = s.val.slice r.start.val r.end.val ∧
                 p.1.val.length = r.end.val - r.start.val ∧
                 ∀ s', (p.2 s').val = s.val.setSlice! r.start.val s'.val ⌝ ⦄ := by
-  unfold core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut
-         core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-         core_models.cmRangeUsizeToAeneas
+  unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut.index_mut
+         CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
          core.slice.index.Slice.index_mut
          core.slice.index.SliceIndexRangeUsizeSlice.index_mut
+  simp only [id]
   have h0' : (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).start
               ≤ (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).end := by
     simpa [UScalar.le_equiv] using h0
   have h1' : (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).end.val ≤ (Slice.length s) := by
     simpa [Slice.length] using h1
-  simp only [Triple, WP.wp]
+  simp only [Triple, WP.wp, PredTrans.apply]
   simp [h0', h1', Slice.length]
   simp [List.slice, List.length_drop, List.length_take]
   omega
 
-/-! ### `core_models.slice.Slice.copy_from_slice` -/
+/-! ### `CoreModels.core.slice.Slice.copy_from_slice` -/
 
 /-- `copy_from_slice dst src` succeeds with the source slice `src`
     whenever both slices have the same length (the impl model returns
     `src` outright when lengths match). -/
 @[spec]
 theorem core_models_slice_Slice_copy_from_slice_spec
-    {T : Type} (cpy : core_models.marker.Copy T) (dst src : Slice T)
+    {T : Type} (cpy : CoreModels.core.marker.Copy T) (dst src : Slice T)
     (h : dst.val.length = src.val.length) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.slice.Slice.copy_from_slice cpy dst src
+    CoreModels.core.slice.Slice.copy_from_slice cpy dst src
     ⦃ ⇓ r => ⌜ r = src ⌝ ⦄ := by
-  unfold core_models.slice.Slice.copy_from_slice
+  unfold CoreModels.core.slice.Slice.copy_from_slice
   have h' : dst.len = src.len := by
     apply Std.UScalar.eq_of_val_eq
     simp [h]
-  simp [Triple, WP.wp, h']
+  simp [Triple, WP.wp, PredTrans.apply, h']
 
-/-! ### `core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from`
+/-! ### `CoreModels.core.Array.Insts.CoreConvertTryFromShared0SliceTryFromSliceError.try_from`
 
-The body invokes `rust_primitives.slice.array_from_fn` on the `try_from`
+The body invokes `CoreModels.rust_primitives.slice.array_from_fn` on the `try_from`
 closure (whose state is just the source `Slice T`). The proof has three
 parts:
 
@@ -257,14 +257,14 @@ private theorem bv_ofNat_usize_val_eq (n : Nat) (hn : n ≤ Std.Usize.max) :
     because that's what the FnMut instance's `call_mut` field reduces to
     after Lean unfolds the structure projection. -/
 private theorem try_from_closure_call_mut_eq
-    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : core_models.marker.Copy T)
+    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : CoreModels.core.marker.Copy T)
     (s : Slice T) (i : Std.Usize) (h : i.val < s.val.length) :
-    core_models.convert.TryFromArrayShared0SliceTryFromSliceError.try_from.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeT.call_mut
+    CoreModels.core.convert.TryFromArrayShared0SliceTryFromSliceError.try_from.closure.Insts.CoreOpsFunctionFnMutTupleUsizeT.call_mut
       (T := T) (N := N) cpy s i =
       .ok (s.val[i.val]!, s) := by
   -- Reduces to `do let t ← slice_index s i; ok (t, s)`.
-  unfold core_models.convert.TryFromArrayShared0SliceTryFromSliceError.try_from.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeT.call_mut
-  unfold rust_primitives.slice.slice_index Std.Slice.index_usize
+  unfold CoreModels.core.convert.TryFromArrayShared0SliceTryFromSliceError.try_from.closure.Insts.CoreOpsFunctionFnMutTupleUsizeT.call_mut
+  unfold CoreModels.rust_primitives.slice.slice_index Std.Slice.index_usize
   -- Now `s[i]?` matches; for `i.val < s.length`, `s[i]? = some s.val[i.val]!`.
   have hsome : s[i]? = some s.val[i.val]! := by
     simp only [Std.Slice.getElem?_Usize_eq]
@@ -280,7 +280,7 @@ private theorem try_from_closure_call_mut_eq
     yields `(acc ++ s.val.slice acc.length (acc.length + k), s)` when
     `acc.length + k ≤ s.length` and acc lines up with the slice prefix. -/
 private theorem foldlM_try_from_closure_invariant
-    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : core_models.marker.Copy T)
+    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : CoreModels.core.marker.Copy T)
     (s : Slice T)
     (_hN : s.val.length ≤ Std.Usize.max) :
     ∀ (k start : Nat) (acc : List T),
@@ -290,7 +290,7 @@ private theorem foldlM_try_from_closure_invariant
       (List.range' start k).foldlM
         (fun (p : List T × Slice T) (i : Nat) => do
           let (v, f') ←
-            core_models.convert.TryFromArrayShared0SliceTryFromSliceError.try_from.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeT.call_mut
+            CoreModels.core.convert.TryFromArrayShared0SliceTryFromSliceError.try_from.closure.Insts.CoreOpsFunctionFnMutTupleUsizeT.call_mut
               (T := T) (N := N) cpy p.2 ⟨BitVec.ofNat _ i⟩
           ok (p.1 ++ [v], f'))
         (acc, s)
@@ -335,10 +335,10 @@ private theorem foldlM_try_from_closure_invariant
 /-- `array_from_fn N (try_from closure) s = .ok (Array.make N s.val)`
     when `s.length = N.val`. -/
 private theorem array_from_fn_try_from_eq_ok
-    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : core_models.marker.Copy T)
+    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : CoreModels.core.marker.Copy T)
     (s : Slice T) (hlen : s.val.length = N.val) :
-    rust_primitives.slice.array_from_fn N
-      (core_models.convert.TryFromArrayShared0SliceTryFromSliceError.try_from.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeT
+    CoreModels.rust_primitives.slice.array_from_fn N
+      (CoreModels.core.convert.TryFromArrayShared0SliceTryFromSliceError.try_from.closure.Insts.CoreOpsFunctionFnMutTupleUsizeT
         (T := T) (N := N) cpy) s
     = .ok (Std.Array.make N s.val (by simp [hlen])) := by
   -- Foldl invariant at start=0, k=N.val, acc=[].
@@ -360,7 +360,7 @@ private theorem array_from_fn_try_from_eq_ok
   -- We can't `rw [hrange]` (dependent motive); instead transfer h_fold to the
   -- `List.range` form first, then unfold and split.
   rw [← hrange] at h_fold
-  unfold rust_primitives.slice.array_from_fn
+  unfold CoreModels.rust_primitives.slice.array_from_fn
   -- Now transport the foldlM equation through the `split`.
   split
   · rename_i e heq
@@ -377,17 +377,17 @@ private theorem array_from_fn_try_from_eq_ok
     whenever `s.val.length = N.val`. -/
 @[spec]
 theorem core_models_array_try_from_slice_spec
-    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : core_models.marker.Copy T)
+    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : CoreModels.core.marker.Copy T)
     (s : Slice T) (hlen : s.val.length = N.val) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
+    CoreModels.core.Array.Insts.CoreConvertTryFromShared0SliceTryFromSliceError.try_from
       N cpy s
-    ⦃ ⇓ r => ⌜ r = core_models.result.Result.Ok
+    ⦃ ⇓ r => ⌜ r = CoreModels.core.result.Result.Ok
                     (Std.Array.make N s.val (by simp [hlen])) ⌝ ⦄ := by
   -- Unfold try_from and reduce the `do` chain step-by-step.
-  unfold core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
-  -- `core_models.slice.Slice.len x` is `pure (Slice.len x)`, returns `.ok (Slice.len s)`.
-  unfold core_models.slice.Slice.len
+  unfold CoreModels.core.Array.Insts.CoreConvertTryFromShared0SliceTryFromSliceError.try_from
+  -- `CoreModels.core.slice.Slice.len x` is `pure (Slice.len x)`, returns `.ok (Slice.len s)`.
+  unfold CoreModels.core.slice.Slice.len
   -- The if-decision: `Slice.len s = N` reduces to `s.val.length = N.val`.
   have hi_eq : (Std.Slice.len s) = N := by
     apply Std.UScalar.eq_of_val_eq
@@ -403,26 +403,49 @@ theorem core_models_array_try_from_slice_spec
     canonical Aeneas idiom for slice → array coercion; we provide a
     direct equation that mvcgen can chain without intermediate metavars. -/
 theorem core_models_try_from_unwrap_spec
-    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : core_models.marker.Copy T)
-    (dbg : core_models.fmt.Debug core_models.array.TryFromSliceError)
+    {T : Type} [Inhabited T] {N : Std.Usize} (cpy : CoreModels.core.marker.Copy T)
+    (dbg : CoreModels.core.fmt.Debug CoreModels.core.array.TryFromSliceError)
     (s : Slice T) (hlen : s.val.length = N.val) :
     ⦃ ⌜ True ⌝ ⦄
     (do
-      let r ← core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
+      let r ← CoreModels.core.Array.Insts.CoreConvertTryFromShared0SliceTryFromSliceError.try_from
                 N cpy s
-      core_models.result.Result.unwrap dbg r)
+      CoreModels.core.result.Result.unwrap dbg r)
     ⦃ ⇓ a => ⌜ a = Std.Array.make N s.val (by simp [hlen]) ⌝ ⦄ := by
   -- Establish `try_from ... = .ok (.Ok (Array.make N s.val _))` outright.
   have h_try := core_models_array_try_from_slice_spec (T := T) (N := N) cpy s hlen
   -- Then unfold Result.unwrap and reduce.
-  unfold core_models.result.Result.unwrap
+  unfold CoreModels.core.result.Result.unwrap
   -- Reduce `try_from` to its known .ok form. The Triple post `h_try` already
   -- encodes this.
-  have h_eq : (core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
+  have h_eq : (CoreModels.core.Array.Insts.CoreConvertTryFromShared0SliceTryFromSliceError.try_from
                   N cpy s)
               = .ok (.Ok (Std.Array.make N s.val (by simp [hlen]))) := by
     exact libcrux_iot_sha3.Foundation.result_eq_of_triple h_try
   rw [h_eq]
-  simp [Triple, WP.wp]
+  simp [Triple, WP.wp, PredTrans.apply]
+
+/-! ## `!`-valued index override for the sponge layer.
+
+The current Aeneas `Array.index_usize_spec` post is the total `getElem`
+`v.val[i]`, whereas the sponge proofs are written with `getElem!`. The
+sponge accessors (`get_lane`/`set_lane`/the `Lane2U32` `Index` instance) all
+unfold to `Array.index_usize`, so a single high-priority `@[spec]` override
+of the index post (which `mvcgen` prefers over the auto-generated default)
+makes every unfolded read come out as `!` — the `getElem!` form the sponge
+proofs use, with no per-site bridging. `@[spec high]`
+ensures it wins over the Aeneas default without disabling it (disabling
+would just make `mvcgen` unfold `index_usize` to the total form instead). -/
+@[spec high]
+theorem index_usize_bang_spec {α : Type _} [Inhabited α] {n : Std.Usize}
+    (v : Std.Array α n) (i : Std.Usize) (hbound : i.val < v.length) :
+    ⦃ ⌜ True ⌝ ⦄ v.index_usize i ⦃ ⇓ x => ⌜ x = v.val[i.val]! ⌝ ⦄ := by
+  have h_idx : i.val < v.val.length := hbound
+  have hbang : v.val[i.val]! = v.val[i.val]'h_idx := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h_idx]; rfl
+  obtain ⟨x, hxok, hxval⟩ :=
+    Aeneas.Std.WP.spec_imp_exists (Std.Array.index_usize_spec v i hbound)
+  have hpost : x = v.val[i.val]! := by rw [hxval, hbang]
+  simp [Triple, WP.wp, PredTrans.apply, hxok, hpost]
 
 end libcrux_iot_sha3.Sponge

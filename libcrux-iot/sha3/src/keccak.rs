@@ -2735,7 +2735,7 @@ impl RotateLeft for U32 {
 #[cfg(test)]
 mod cross_spec {
     //! Cross-specification tests: compare every observable stage of the impl
-    //! against the spec at `/Users/karthik/libcrux-iot/specs/sha3`. The state
+    //! against the `hacspec_sha3` spec crate. The state
     //! conversion helpers live in `crate::state::cross_spec`.
     //!
     //! Properties have the form `Spec::f(to_spec(input)) == to_spec(Impl::f(input))`.

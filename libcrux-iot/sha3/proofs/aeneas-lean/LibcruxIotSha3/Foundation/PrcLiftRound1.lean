@@ -62,12 +62,19 @@ private theorem pi_rho_chi_y0_zeta0_spec_fc_1
   · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
   · exact h_59.trans (h_52.trans (h_45.trans (h_38.trans h_31)))
   · exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
-  · rw [h_61, h_54, h_47, h_40, h_33]
+  · have hb : s.i.val < keccak.RC_INTERLEAVED_0.val.length := by
+      have hl : keccak.RC_INTERLEAVED_0.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_0.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_0.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
+    rw [h_61, h_54, h_47, h_40, h_33]
     norm_num [apply_5_writes]
     congr 6
     all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
         h_36.2, h_35.2, h_34,
         h_43.2, h_42.2, h_41,
@@ -107,20 +114,23 @@ private theorem pi_rho_chi_y0_zeta1_spec_fc_1
   all_goals try scalar_tac
   expose_names
   refine ⟨?_, ?_, ?_, ?_⟩
-  · -- r.d = s.d
-    exact h_61.trans (h_54.trans (h_47.trans (h_40.trans h_33)))
-  · -- r.c = s.c
-    exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
-  · -- ↑r.i = ↑s.i + 1
-    rw [h_59, h_52, h_45, h_38, h_31, h_30]
+  · exact h_61.trans (h_54.trans (h_47.trans (h_40.trans h_33)))
+  · exact h_60.trans (h_53.trans (h_46.trans (h_39.trans h_32)))
+  · rw [h_59, h_52, h_45, h_38, h_31, h_30]
     rfl
-  · -- val-eq
+  · have hb : s.i.val < keccak.RC_INTERLEAVED_1.val.length := by
+      have hl : keccak.RC_INTERLEAVED_1.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_1.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_1.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
     rw [h_62, h_55, h_48, h_41, h_34]
     norm_num [apply_5_writes]
     congr 6
     all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
         h_37.2, h_36.2, h_35,
         h_44.2, h_43.2, h_42,
@@ -616,6 +626,16 @@ theorem lift_theta_applied_perm_bv_24_1 (s : state.KeccakState) :
   simp only [hp, hsw, lift_lane_maybe_swap, lift_lane, Std.UScalar.bv_xor]
   rw [lift_xor]; rfl
 
+/-! ### Set-peeling lemmas (`getElem!` over `List.set`), local copies. -/
+private theorem list_getElem!_set_ne {α} [Inhabited α] {l : List α} {i j : Nat}
+    {a : α} (h : i ≠ j) : (l.set i a)[j]! = l[j]! := by
+  simp only [List.getElem!_eq_getElem?_getD, List.getElem?_set, if_neg h]
+
+private theorem list_getElem!_set_eq {α} [Inhabited α] {l : List α} {i : Nat}
+    {a : α} (h : i < l.length) : (l.set i a)[i]! = a := by
+  simp only [List.getElem!_eq_getElem?_getD, List.getElem?_set, if_pos rfl, h,
+    if_true, Option.getD_some]
+
 /-! ## Main composition: `prc_lift_spec_1`
 
    Infrastructure: 10 per-FC specs + 25 input cell access lemmas. The proof
@@ -627,7 +647,7 @@ theorem lift_theta_applied_perm_bv_24_1 (s : state.KeccakState) :
    RHS — this avoids accidentally normalising the LHS, which would defeat the
    per-cell `simp` cascade. Runs at 256M heartbeats. -/
 
-set_option maxHeartbeats 1000000 in
+set_option maxHeartbeats 32000000 in
 theorem prc_lift_spec_1 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
     ⦃ ⌜ True ⌝ ⦄
     (do let r1 ← keccak.keccakf1600_round1_pi_rho_chi_1 0#usize s
@@ -646,24 +666,8 @@ theorem prc_lift_spec_1 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
   subst_vars
   rw [prc_spec_eq_composed]
   casesm* _ ∧ _
-  rename_i r9 r8 r7 r6 r5 r4 r3 r2 r1 r' hd hc hi h_chain
-    l26 l25 l24 l23 l22 l21 l20 l19 l18 l17 l16 l15 l14 l13 l12 l11 l10 l9 l8
-    h_FC9 l7 h_FC8 l6 h_FC7 l5 h_FC6 l4 h_FC5 l3 h_FC4 l2 h_FC3 l1 h_FC2 l_last h_FC1
-  simp only [l_last, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17,
-    l18, l19, l20, l21, l22, l23, l24, l25, l26]
-    at h_chain h_FC1 h_FC2 h_FC3 h_FC4 h_FC5 h_FC6 h_FC7 h_FC8 h_FC9
-  have hr'  : (↑r'.st : List lane.Lane2U32).length = 25  := by exact r'.st.2
-  have hr1  : (↑r1.st : List lane.Lane2U32).length = 25  := by exact r1.st.2
-  have hr2  : (↑r2.st : List lane.Lane2U32).length = 25  := by exact r2.st.2
-  have hr3  : (↑r3.st : List lane.Lane2U32).length = 25  := by exact r3.st.2
-  have hr4  : (↑r4.st : List lane.Lane2U32).length = 25  := by exact r4.st.2
-  have hr5  : (↑r5.st : List lane.Lane2U32).length = 25  := by exact r5.st.2
-  have hr6  : (↑r6.st : List lane.Lane2U32).length = 25  := by exact r6.st.2
-  have hr7  : (↑r7.st : List lane.Lane2U32).length = 25  := by exact r7.st.2
-  have hr8  : (↑r8.st : List lane.Lane2U32).length = 25  := by exact r8.st.2
-  have hr9  : (↑r9.st : List lane.Lane2U32).length = 25  := by exact r9.st.2
-  have hss  : (↑s.st  : List lane.Lane2U32).length = 25  := by exact s.st.2
   have hlane : ∀ (L : lane.Lane2U32), L.val.length = 2 := fun L => L.2
+  have hss : (↑s.st : List lane.Lane2U32).length = 25 := s.st.2
   apply Subtype.ext
   unfold prc_spec lift_perm transpose_perm
   conv_rhs =>
@@ -672,18 +676,15 @@ theorem prc_lift_spec_1 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
       funext L; rw [impl_swap_k]]
     unfold impl_perm lift_lane_maybe_swap
   simp (config := { decide := true }) only [Std.Array.make, List.ofFn_succ, List.ofFn_zero,
-    Function.comp_apply,
-    Fin.val_succ, Fin.val_zero, Nat.succ_eq_add_one, Nat.zero_add, Nat.reduceAdd, Nat.reduceMul,
-    Nat.reduceDiv, Nat.reduceMod, reduceIte]
+    Function.comp_apply, Fin.val_succ, Fin.val_zero, Nat.succ_eq_add_one, Nat.zero_add,
+    Nat.reduceAdd, Nat.reduceMul, Nat.reduceDiv, Nat.reduceMod, reduceIte]
   repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
   all_goals (
     apply Std.U64.bv_eq_imp_eq
     simp (config := { decide := true }) only
-      [h_chain, h_FC1, h_FC2, h_FC3, h_FC4, h_FC5, h_FC6, h_FC7, h_FC8, h_FC9, apply_5_writes,
-       lift_lane,
-       List.getElem!_set_ne, List.getElem!_set, List.length_set,
-       Std.Array.set_val_eq, hlane,
-       hr', hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hss,
+      [*, apply_5_writes, lift_lane,
+       list_getElem!_set_ne, list_getElem!_set_eq, List.length_set,
+       Std.Array.set_val_eq, hlane, hss,
        show ((0#usize : Std.Usize) : Nat) = 0 from rfl,
        show ((1#usize : Std.Usize) : Nat) = 1 from rfl]
     simp only [lift_theta_applied_perm_bv_0_1, lift_theta_applied_perm_bv_1_1,

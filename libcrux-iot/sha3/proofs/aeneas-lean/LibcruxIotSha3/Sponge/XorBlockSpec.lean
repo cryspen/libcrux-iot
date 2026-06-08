@@ -6,7 +6,7 @@
   - `from_fn_pure_spec` — generic `@[spec]` analog of `createi_pure_spec`
     (HacspecBridge.lean:663) but stated over the *direct* `FnMut` instance
     (no `Fn` wrapper required). `sponge.xor_block_into_state` uses
-    `core_models.array.from_fn` directly with a `FnMut`, not the `Fn`-wrapped
+    `CoreModels.core.array.from_fn` directly with a `FnMut`, not the `Fn`-wrapped
     `createi`. Reusable for any pure FnMut closure.
   - `list_8_at` / `list_8_at_val_eq_slice` — helpers that extract 8 bytes
     from a list at offset `o`, padded to length 8, with a proof that the
@@ -53,12 +53,12 @@ attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
 Analogous to `createi_pure_spec` (HacspecBridge.lean:663) but takes
 a `FnMut` instance directly (no `Fn` wrapper). Required because
-`sponge.xor_block_into_state` calls `core_models.array.from_fn` directly
+`sponge.xor_block_into_state` calls `CoreModels.core.array.from_fn` directly
 with the `FnMut` instance of its closure. -/
 
 private theorem from_fn_foldlM_pure_aux
     {T F : Type}
-    (inst : core_models.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
+    (inst : CoreModels.core.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
     (l : List Nat) (acc : List T)
     (hpure : ∀ k ∈ l,
       inst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c)) :
@@ -83,10 +83,10 @@ private theorem from_fn_foldlM_pure_aux
 /-- Lean-level equation for `from_fn` over pure closures. -/
 private theorem from_fn_pure_eq
     {T F : Type} (N : Std.Usize)
-    (inst : core_models.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
+    (inst : CoreModels.core.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
     (hpure : ∀ k : Nat, k < N.val →
       inst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c)) :
-    core_models.array.from_fn N inst c =
+    CoreModels.core.array.from_fn N inst c =
       .ok ⟨(List.range N.val).map f,
            by simp [List.length_map, List.length_range]⟩ := by
   have hf : ∀ k ∈ List.range N.val,
@@ -95,7 +95,7 @@ private theorem from_fn_pure_eq
   have h_fold :=
     from_fn_foldlM_pure_aux inst c f (List.range N.val) [] hf
   simp only [List.nil_append] at h_fold
-  unfold core_models.array.from_fn rust_primitives.slice.array_from_fn
+  unfold CoreModels.core.array.from_fn CoreModels.rust_primitives.slice.array_from_fn
   split
   · rename_i e heq
     rw [h_fold] at heq; exact absurd heq (by simp)
@@ -108,7 +108,7 @@ private theorem from_fn_pure_eq
     subst hres
     rfl
 
-/-- **Generic pure-closure `[spec]` for `core_models.array.from_fn`.**
+/-- **Generic pure-closure `[spec]` for `CoreModels.core.array.from_fn`.**
 
 For any closure whose `call_mut` is pure (doesn't mutate state),
 `from_fn N inst c` succeeds and its `i`-th cell is `f i`. `hpure` is a
@@ -117,13 +117,13 @@ per-closure `@[spec]` lemmas. -/
 @[spec]
 theorem from_fn_pure_spec
     {T F : Type} [Inhabited T] (N : Std.Usize)
-    (inst : core_models.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
+    (inst : CoreModels.core.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
     (hpure : ∀ k : Nat, k < N.val →
       ⦃ ⌜ True ⌝ ⦄
       inst.call_mut c ⟨BitVec.ofNat _ k⟩
       ⦃ ⇓ r => ⌜ r = (f k, c) ⌝ ⦄) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.array.from_fn N inst c
+    CoreModels.core.array.from_fn N inst c
     ⦃ ⇓ a => ⌜ ∀ i : Nat, i < N.val → a.val[i]! = f i ⌝ ⦄ := by
   have hpure_eq : ∀ k : Nat, k < N.val →
       inst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c) :=
@@ -206,7 +206,7 @@ def xor_block_value_at
 private theorem triple_of_ok_xbs {α : Type} {x : Result α} {v : α}
     (hx : x = .ok v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ r = v ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply]
 
 /-- Local exist-extractor for Std.Do.Triple-based posts: a Triple
     `⦃True⦄ x ⦃⇓ r => P r⦄` yields `∃ v, x = .ok v ∧ P v`. -/
@@ -216,11 +216,11 @@ private theorem triple_exists_ok_xbs {α : Type} {x : Result α}
   match hx : x with
   | .ok v =>
       refine ⟨v, rfl, ?_⟩
-      have := h; simp [Std.Do.Triple, WP.wp] at this; exact this
+      have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
   | .fail _ =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
   | .div =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
 
 /-- Two `Array U8 8` values with equal `.val` produce equal
     `Std.core.num.U64.from_le_bytes` outputs (it factors through `.val`). -/
@@ -243,7 +243,7 @@ theorem xor_block_into_state_closure_call_mut_spec
     (h_rate_mod : rate.val % 8 = 0)
     (h_blk_len : block.val.length = rate.val) :
     ⦃ ⌜ True ⌝ ⦄
-    sponge.xor_block_into_state.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+    sponge.xor_block_into_state.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
       (rate, state, block) k
     ⦃ ⇓ r => ⌜ r = (xor_block_value_at state block rate k.val,
                      (rate, state, block)) ⌝ ⦄ := by
@@ -255,7 +255,7 @@ theorem xor_block_into_state_closure_call_mut_spec
     Std.UScalar.div_bv_spec rate (y := (8#usize : Std.Usize)) (by decide)
   have h_i1_val : i1.val = rate.val / 8 := by rw [h_i1_val_raw]; rfl
   -- Unfold the closure body.
-  unfold sponge.xor_block_into_state.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+  unfold sponge.xor_block_into_state.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
   -- Bound for `index_usize state k`: succeeds since `k.val < 25`.
   have h_state_idx : (Array.index_usize state k : Result Std.U64) = .ok state.val[k.val]! := by
     have hkl : k.val < state.val.length := by
@@ -265,7 +265,9 @@ theorem xor_block_into_state_closure_call_mut_spec
       show k.val < state.val.length; exact hkl
     have h_state_spec := Std.Array.index_usize_spec state k hkl'
     obtain ⟨v, hv_eq, hv_val⟩ := Std.WP.spec_imp_exists h_state_spec
-    rw [hv_eq, hv_val]
+    have hbridge : (↑state : List Std.U64)[k.val]! = (↑state : List Std.U64)[k.val] := by
+      rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem hkl]; rfl
+    rw [hv_eq, hv_val, hbridge]
   -- Now distinguish on the branch.
   by_cases h_branch : k < i1
   · -- True branch: k < rate/8.
@@ -306,17 +308,17 @@ theorem xor_block_into_state_closure_call_mut_spec
     -- try_from + unwrap fused.
     have h_try_triple := core_models_array_try_from_slice_spec
       (T := Std.U8) (N := (8#usize : Std.Usize))
-      core_models.U8.Insts.Core_modelsMarkerCopy s1 h_s1_val_len
+      CoreModels.core.U8.Insts.CoreMarkerCopy s1 h_s1_val_len
     have h_try_eq :
-        core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
-          (8#usize : Std.Usize) core_models.U8.Insts.Core_modelsMarkerCopy s1
+        CoreModels.core.Array.Insts.CoreConvertTryFromShared0SliceTryFromSliceError.try_from
+          (8#usize : Std.Usize) CoreModels.core.U8.Insts.CoreMarkerCopy s1
         = .ok (.Ok (Std.Array.make 8#usize s1.val (by simp [h_s1_val_len]))) := by
       have h := triple_exists_ok_xbs h_try_triple
       obtain ⟨r, hr_eq, hr_val⟩ := h
       rw [hr_eq, hr_val]
     -- Assemble the body's .ok-equation.
     have h_body_eq :
-        sponge.xor_block_into_state.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+        sponge.xor_block_into_state.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
           (rate, state, block) k =
         .ok (xor_block_value_at state block rate k.val, (rate, state, block)) := by
       show (do
@@ -326,14 +328,14 @@ theorem xor_block_into_state_closure_call_mut_spec
           let i2 ← Array.index_usize a k
           let i3 ← 8#usize * k
           let i4 ← i3 + 8#usize
-          let s1 ← core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-            (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+          let s1 ← CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+            (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
               Std.U8) s { start := i3, «end» := i4 }
-          let r ← core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
-            8#usize core_models.U8.Insts.Core_modelsMarkerCopy s1
-          let a1 ← core_models.result.Result.unwrap
-            core_models.array.TryFromSliceError.Insts.Core_modelsFmtDebug r
-          let i5 ← core_models.num.U64.from_le_bytes a1
+          let r ← CoreModels.core.Array.Insts.CoreConvertTryFromShared0SliceTryFromSliceError.try_from
+            8#usize CoreModels.core.U8.Insts.CoreMarkerCopy s1
+          let a1 ← CoreModels.core.result.Result.unwrap
+            CoreModels.core.array.TryFromSliceError.Insts.CoreFmtDebug r
+          let i5 ← CoreModels.core.num.U64.from_le_bytes a1
           let i6 ← Std.lift (i2 ^^^ i5)
           ok (i6, (i, a, s))
         else
@@ -349,19 +351,19 @@ theorem xor_block_into_state_closure_call_mut_spec
       rw [h_try_eq]; simp only [bind_tc_ok]
       -- unwrap of .Ok a = .ok a.
       show (do
-          let a1 ← core_models.result.Result.unwrap
-            core_models.array.TryFromSliceError.Insts.Core_modelsFmtDebug
+          let a1 ← CoreModels.core.result.Result.unwrap
+            CoreModels.core.array.TryFromSliceError.Insts.CoreFmtDebug
             (.Ok (Std.Array.make 8#usize s1.val (by simp [h_s1_val_len])))
-          let i5 ← core_models.num.U64.from_le_bytes a1
+          let i5 ← CoreModels.core.num.U64.from_le_bytes a1
           let i6 ← Std.lift (state.val[k.val]! ^^^ i5)
           ok (i6, (rate, state, block))) = _
-      unfold core_models.result.Result.unwrap; simp only [bind_tc_ok]
+      unfold CoreModels.core.result.Result.unwrap; simp only [bind_tc_ok]
       -- from_le_bytes is `pure (Std.core.num.U64.from_le_bytes a)`.
-      have h_fle : (core_models.num.U64.from_le_bytes
+      have h_fle : (CoreModels.core.num.U64.from_le_bytes
                       (Std.Array.make 8#usize s1.val (by simp [h_s1_val_len])) : Result Std.U64)
                 = .ok (Std.core.num.U64.from_le_bytes
                          (Std.Array.make 8#usize s1.val (by simp [h_s1_val_len]))) := by
-        unfold core_models.num.U64.from_le_bytes rust_primitives.arithmetic.from_le_bytes_u64
+        unfold CoreModels.core.num.U64.from_le_bytes CoreModels.rust_primitives.arithmetic.from_le_bytes_u64
         rfl
       rw [h_fle]; simp only [bind_tc_ok]
       -- Std.lift x = .ok x.
@@ -388,7 +390,7 @@ theorem xor_block_into_state_closure_call_mut_spec
       h_branch ((Std.UScalar.lt_equiv k i1).mp h_lt)
     have h_k_ge_rate8 : ¬ k.val < rate.val / 8 := by rw [← h_i1_val]; exact h_k_ge
     have h_body_eq :
-        sponge.xor_block_into_state.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+        sponge.xor_block_into_state.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
           (rate, state, block) k =
         .ok (xor_block_value_at state block rate k.val, (rate, state, block)) := by
       show (do
@@ -398,14 +400,14 @@ theorem xor_block_into_state_closure_call_mut_spec
           let i2 ← Array.index_usize a k
           let i3 ← 8#usize * k
           let i4 ← i3 + 8#usize
-          let s1 ← core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-            (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+          let s1 ← CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+            (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
               Std.U8) s { start := i3, «end» := i4 }
-          let r ← core_models.Array.Insts.Core_modelsConvertTryFromShared0SliceTryFromSliceError.try_from
-            8#usize core_models.U8.Insts.Core_modelsMarkerCopy s1
-          let a1 ← core_models.result.Result.unwrap
-            core_models.array.TryFromSliceError.Insts.Core_modelsFmtDebug r
-          let i5 ← core_models.num.U64.from_le_bytes a1
+          let r ← CoreModels.core.Array.Insts.CoreConvertTryFromShared0SliceTryFromSliceError.try_from
+            8#usize CoreModels.core.U8.Insts.CoreMarkerCopy s1
+          let a1 ← CoreModels.core.result.Result.unwrap
+            CoreModels.core.array.TryFromSliceError.Insts.CoreFmtDebug r
+          let i5 ← CoreModels.core.num.U64.from_le_bytes a1
           let i6 ← Std.lift (i2 ^^^ i5)
           ok (i6, (i, a, s))
         else

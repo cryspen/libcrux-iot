@@ -36,8 +36,8 @@ private theorem triple_noThrow_exists_ok_local {α : Type} {x : Result α}
     (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ PostCond.noThrow Q ⦄) : ∃ v, x = .ok v := by
   match x, h with
   | .ok v, _ => exact ⟨v, rfl⟩
-  | .fail _, h => exact absurd h (by simp [Triple, WP.wp])
-  | .div, h => exact absurd h (by simp [Triple, WP.wp])
+  | .fail _, h => exact absurd h (by simp [Triple, WP.wp, PredTrans.apply])
+  | .div, h => exact absurd h (by simp [Triple, WP.wp, PredTrans.apply])
 
 /-- If `x = .ok v` and `Triple ⦃ True ⦄ x ⦃ noThrow Q ⦄`, then `Q v`
     holds. -/
@@ -45,14 +45,14 @@ private theorem triple_noThrow_elim_local {α : Type} {x : Result α}
     {Q : α → Assertion ResultPSU}
     (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ PostCond.noThrow Q ⦄) {v : α} (hv : x = .ok v) :
     (Q v).down := by
-  subst hv; simpa [Triple, WP.wp] using h
+  subst hv; simpa [Triple, WP.wp, PredTrans.apply] using h
 
 /-- If `x = .ok v` and we have `P v`, repackage as a Triple with a
     `pure-prop` post. -/
 private theorem triple_of_ok_local {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Triple, WP.wp, hp]
+  subst hx; simp [Triple, WP.wp, PredTrans.apply, hp]
 
 /-- Any successful `keccak.keccakf1600` execution sets `i := 0#usize` in
     its output state. This is by construction: the impl body ends with

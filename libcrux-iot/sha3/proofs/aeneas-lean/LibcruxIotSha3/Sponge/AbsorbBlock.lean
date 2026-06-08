@@ -318,7 +318,7 @@ private theorem load_block_to_xor_block_bridge
 private theorem triple_of_ok_ab {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 /-- Local existence extractor: a Triple yields `∃ v, x = .ok v ∧ P v`. -/
 private theorem triple_exists_ok_ab {α : Type} {x : Result α}
@@ -328,11 +328,11 @@ private theorem triple_exists_ok_ab {α : Type} {x : Result α}
   match hx : x with
   | .ok v =>
       refine ⟨v, rfl, ?_⟩
-      have := h; simp [Std.Do.Triple, WP.wp] at this; exact this
+      have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
   | .fail _ =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
   | .div =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
 
 /-- The spec-side block window: a `Slice U8` whose `.val` is
     `blocks.val.slice start (start+RATE)`. This is the `<block>` argument

@@ -31,6 +31,8 @@ open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 set_option allowUnsafeReducibility true in
 attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 
+attribute [local spec] Aeneas.Std.uncurry
+
 /-! ### Local helpers -/
 
 /-- Local copy of the private `triple_of_ok_local` pattern: an `.ok v`
@@ -38,7 +40,7 @@ attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 private theorem triple_of_ok_local {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 open libcrux_iot_sha3.Foundation (triple_imp_intro pure_prop_holds of_pure_prop_holds)
 open libcrux_iot_sha3.Composition (loop_range_spec_usize IteratorRange_next_spec_usize)
@@ -131,7 +133,7 @@ def Lane2U32_from_4byte_LE_pairs
     output (a pair-equality on `.bv`s) plugs in directly. -/
 @[spec]
 theorem state.load_block_2u32_loop0_spec
-    (iter : core_models.ops.range.Range Std.Usize)
+    (iter : CoreModels.core.ops.range.Range Std.Usize)
     (blocks : Slice Std.U8) (start : Std.Usize)
     (state_flat : Std.Array lane.Lane2U32 25#usize)
     (h_le : iter.start.val ≤ iter.end.val)
@@ -235,7 +237,7 @@ theorem state.load_block_2u32_loop0_spec
         omega
       -- Unfold the trivial `from`-converter (it's `do ok value`); mvcgen
       -- needs it inlined to step into `Lane2U32.interleave`.
-      unfold lane.Lane2U32.Insts.Core_modelsConvertFromArrayU322.from
+      unfold lane.Lane2U32.Insts.CoreConvertFromArrayU322.from
       -- The body's two `try_from + Result.unwrap` chains are tricky for
       -- mvcgen (it picks the wrong unification witness for `Result.unwrap`'s
       -- `v` argument). We pre-reduce both pairs to plain `Array.make`'s
@@ -358,7 +360,7 @@ theorem state.load_block_2u32_loop0_spec
                   (4 - ((blocks.val.drop (start.val + 8 * k.val)).take 4).length) (0#u8) := by
             have h_45 := h_5.symm.trans h_4
             have h_r5_eq : r_5 = Std.Array.make 4#usize r_3.val (by rw [h_3.2]; scalar_tac) :=
-              core_models.result.Result.Ok.inj h_45
+              CoreModels.core.result.Result.Ok.inj h_45
             rw [h_r5_eq]
             -- (Array.make 4 r_3.val _).val = r_3.val by defn
             show r_3.val = _
@@ -370,7 +372,7 @@ theorem state.load_block_2u32_loop0_spec
                   (4 - ((blocks.val.drop (start.val + 8 * k.val + 4)).take 4).length) (0#u8) := by
             have h_910 := h_10.symm.trans h_9
             have h_r10_eq : r_10 = Std.Array.make 4#usize r_8.val (by rw [h_8.2]; scalar_tac) :=
-              core_models.result.Result.Ok.inj h_910
+              CoreModels.core.result.Result.Ok.inj h_910
             rw [h_r10_eq]
             show r_8.val = _
             rw [h_r8_val, h_len_hi]
@@ -449,7 +451,7 @@ def loop1_lane_at
     the `i` field. -/
 @[spec]
 theorem state.load_block_2u32_loop1_spec
-    (iter : core_models.ops.range.Range Std.Usize)
+    (iter : CoreModels.core.ops.range.Range Std.Usize)
     (state_flat : Std.Array lane.Lane2U32 25#usize)
     (s : state.KeccakState)
     (h_le : iter.start.val ≤ iter.end.val)
@@ -545,7 +547,7 @@ theorem state.load_block_2u32_loop1_spec
       have hk_div : k.val / 5 < 5 := by omega
       have hk_mod : k.val % 5 < 5 := Nat.mod_lt _ (by decide)
       unfold state.KeccakState.get_lane state.KeccakState.set_lane
-             lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index
+             lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index
              lane.Lane2U32.from_ints
       mvcgen
       -- All scalar-bound VCs close via `scalar_tac`. The remaining VC
@@ -948,7 +950,7 @@ private theorem deinterleave_bv_hi_toLEBytes_byte_3 (e o : BitVec 32) :
     threads `iter.start.val = 0` (`h_zero`) so the entire range is touched. -/
 @[spec]
 theorem state.store_block_2u32_loop_spec
-    (iter : core_models.ops.range.Range Std.Usize)
+    (iter : CoreModels.core.ops.range.Range Std.Usize)
     (s : state.KeccakState) (out : Slice Std.U8)
     (h_le : iter.start.val ≤ iter.end.val)
     (h_bnd : iter.end.val ≤ 25)
@@ -1042,7 +1044,7 @@ theorem state.store_block_2u32_loop_spec
         have h2 : 8 * iter_end.val ≤ Std.Usize.max := h_off
         omega
       unfold state.KeccakState.get_lane
-             lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index
+             lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index
       mvcgen
       -- Remaining VCs after `mvcgen`:
       --   `vc14.h1`: `↑r_13 ≤ ((r_8.2 r_11).val).length` — rewrite via
@@ -1137,7 +1139,7 @@ theorem state.store_block_2u32_loop_spec
               rw [h_le_val]
               -- `(map UScalar.mk lst)[i]! = UScalar.mk lst[i]!` for `i < length`.
               have h_toLE_len : r_9.bv.toLEBytes.length = 4 := by
-                rw [BitVec.toLEBytes_length _ (by decide)]
+                simp [BitVec.toLEBytes_length]
               have h_b_lt_len : b - r_6.val < r_9.bv.toLEBytes.length := by
                 rw [h_toLE_len, h_r6]; omega
               have h_map_get :
@@ -1200,7 +1202,7 @@ theorem state.store_block_2u32_loop_spec
                                 = r_15.bv.toLEBytes.map (@Std.UScalar.mk Std.UScalarTy.U8) := rfl
               rw [h_le_val]
               have h_toLE_len : r_15.bv.toLEBytes.length = 4 := by
-                rw [BitVec.toLEBytes_length _ (by decide)]
+                simp [BitVec.toLEBytes_length]
               have h_b_lt_len : b - r_12.val < r_15.bv.toLEBytes.length := by
                 rw [h_toLE_len, h_r12]; omega
               have h_map_get :

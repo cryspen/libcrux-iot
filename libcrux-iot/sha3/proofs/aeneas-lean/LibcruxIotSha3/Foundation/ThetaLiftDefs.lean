@@ -24,23 +24,25 @@ namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
-/-! ## Bridge 1: `keccak_f.{theta, rho, pi, chi}` equal their `_unrolled` variants
+attribute [local spec] Aeneas.Std.uncurry
+
+/-! ## Bridge 1: characterizing `keccak_f.{theta, rho, pi, chi}`
 
 The hacspec definitions of `theta`/`rho`/`pi`/`chi` call `createi N inst c` —
-which expands to `rust_primitives.slice.array_from_fn N inst.FnMutInst c` —
+which expands to `CoreModels.rust_primitives.slice.array_from_fn N inst.FnMutInst c` —
 with closures whose `call_mut` returns `.ok (call state args, state)` (pure
-closures). The `_unrolled` variants are straight-line do-chains terminating
-in `ok (Std.Array.make N [v₀, …, v_{N-1}])`.
+closures).
 
-We prove the function equality through a generic `@[spec]` lemma
-`createi_pure_spec` characterizing `createi` for pure closures, plus six
-per-closure purity lemmas (one for each of θ's 3, ρ/π/χ's 1 closures). -/
+We characterize each function by a pure `_applied` form through a generic
+`@[spec]` lemma `createi_pure_spec` (handling `createi` for pure closures),
+plus six per-closure purity lemmas (one for each of θ's 3, ρ/π/χ's 1
+closures). -/
 
 /-- Per-element foldlM evaluation for pure closures. The closure state `c`
     is invariant; the result list is `acc ++ l.map f`. -/
 private theorem createi_foldlM_pure_aux
     {T F : Type}
-    (inst : core_models.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
+    (inst : CoreModels.core.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
     (l : List Nat) (acc : List T)
     (hpure : ∀ k ∈ l,
       inst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c)) :
@@ -67,19 +69,19 @@ private theorem createi_foldlM_pure_aux
     `createi_pure_spec` (Triple form). -/
 theorem createi_pure_eq
     {T F : Type} (N : Std.Usize)
-    (inst : core_models.ops.function.Fn F Std.Usize T) (c : F) (f : Nat → T)
+    (inst : CoreModels.core.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
     (hpure : ∀ k : Nat, k < N.val →
-      inst.FnMutInst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c)) :
+      inst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c)) :
     createi N inst c =
       .ok ⟨(List.range N.val).map f,
            by simp [List.length_map, List.length_range]⟩ := by
   have hf : ∀ k ∈ List.range N.val,
-      inst.FnMutInst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c) := by
+      inst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c) := by
     intro k hk; exact hpure k (List.mem_range.mp hk)
   have h_fold :=
-    createi_foldlM_pure_aux inst.FnMutInst c f (List.range N.val) [] hf
+    createi_foldlM_pure_aux inst c f (List.range N.val) [] hf
   simp only [List.nil_append] at h_fold
-  unfold createi core_models.array.from_fn rust_primitives.slice.array_from_fn
+  unfold createi CoreModels.core.array.from_fn CoreModels.rust_primitives.slice.array_from_fn
   split
   · rename_i e heq
     rw [h_fold] at heq; exact absurd heq (by simp)
@@ -104,20 +106,20 @@ in `keccak_f.theta` (3 calls) and `keccak_f.{rho,pi,chi}` (1 call each). -/
 @[spec]
 theorem createi_pure_spec
     {T F : Type} [Inhabited T] (N : Std.Usize)
-    (inst : core_models.ops.function.Fn F Std.Usize T) (c : F) (f : Nat → T)
+    (inst : CoreModels.core.ops.function.FnMut F Std.Usize T) (c : F) (f : Nat → T)
     (hpure : ∀ k : Nat, k < N.val →
       ⦃ ⌜ True ⌝ ⦄
-      inst.FnMutInst.call_mut c ⟨BitVec.ofNat _ k⟩
+      inst.call_mut c ⟨BitVec.ofNat _ k⟩
       ⦃ ⇓ r => ⌜ r = (f k, c) ⌝ ⦄) :
     ⦃ ⌜ True ⌝ ⦄
     createi N inst c
     ⦃ ⇓ a => ⌜ ∀ i : Nat, i < N.val → a.val[i]! = f i ⌝ ⦄ := by
   have hpure_eq : ∀ k : Nat, k < N.val →
-      inst.FnMutInst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c) :=
+      inst.call_mut c ⟨BitVec.ofNat _ k⟩ = .ok (f k, c) :=
     fun k hk => result_eq_of_triple (hpure k hk)
   have heq := createi_pure_eq N inst c f hpure_eq
   rw [heq]
-  simp only [Triple, WP.wp]
+  simp only [Triple, WP.wp, PredTrans.apply]
   apply SPred.pure_intro
   intro i hi
   show ((List.range N.val).map f)[i]! = f i
@@ -148,18 +150,17 @@ private theorem keccak_f_get_spec
     ⦃ ⇓ r => ⌜ r = state.val[5*y.val + x.val]! ⌝ ⦄ := by
   unfold keccak_f.get
   hax_mvcgen
-  all_goals scalar_tac
+  all_goals first | scalar_tac | simp_all
 
 /-- Purity of theta's first closure (5 column-XORs). -/
 @[spec]
 theorem theta_closure_call_mut_spec
     (state : Std.Array Std.U64 25#usize) (k : Std.Usize) (hk : k.val < 5) :
     ⦃ ⌜ True ⌝ ⦄
-    keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+    keccak_f.theta.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
       state k
     ⦃ ⇓ r => ⌜ r = (theta_closure_c_at state k.val, state) ⌝ ⦄ := by
-  unfold keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
-        keccak_f.theta.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
+  unfold keccak_f.theta.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
         theta_closure_c_at
   hax_mvcgen
   all_goals (first | scalar_tac | (simp; scalar_tac)
@@ -177,23 +178,25 @@ def theta_closure_1_d_at (c : Std.Array Std.U64 5#usize) (k : Nat) :
 theorem theta_closure_1_call_mut_spec
     (c : Std.Array Std.U64 5#usize) (k : Std.Usize) (hk : k.val < 5) :
     ⦃ ⌜ True ⌝ ⦄
-    keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+    keccak_f.theta.closure_1.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
       c k
     ⦃ ⇓ r => ⌜ r = (theta_closure_1_d_at c k.val, c) ⌝ ⦄ := by
-  unfold keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
-        keccak_f.theta.closure_1.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
+  have h4 : (k.val + 4) % 5 < c.val.length := by simp; omega
+  have h1 : (k.val + 1) % 5 < c.val.length := by simp; omega
+  have h4_eq : c.val[(k.val + 4) % 5]! = c.val[(k.val + 4) % 5]'h4 := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h4]; rfl
+  have h1_eq : c.val[(k.val + 1) % 5]! = c.val[(k.val + 1) % 5]'h1 := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h1]; rfl
+  unfold keccak_f.theta.closure_1.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
         theta_closure_1_d_at
   hax_mvcgen
-  all_goals (first | scalar_tac
-                   | (congr 1
-                      apply Std.U64.bv_eq_imp_eq
-                      simp_all [Std.UScalar.bv_xor]
-                      try (subst_vars
-                           unfold Std.UScalar.rotate_left
-                           rfl)))
+  all_goals (first | scalar_tac | (simp; scalar_tac)
+                   | (congr 1; rw [h4_eq, h1_eq];
+                      apply Std.U64.bv_eq_imp_eq;
+                      simp_all [Std.UScalar.bv_xor, Std.UScalar.rotate_left]))
 
 /-- `f`-side of theta's third closure (25 final state values).
-    Under the new layout `k = 5*y + x`, so `x = k % 5` and `D[x] = d[k%5]`. -/
+    With the `k = 5*y + x` layout, `x = k % 5` and `D[x] = d[k%5]`. -/
 def theta_closure_2_at
     (sd : Std.Array Std.U64 25#usize × Std.Array Std.U64 5#usize) (k : Nat) :
     Std.U64 :=
@@ -205,15 +208,21 @@ theorem theta_closure_2_call_mut_spec
     (sd : Std.Array Std.U64 25#usize × Std.Array Std.U64 5#usize)
     (k : Std.Usize) (hk : k.val < 25) :
     ⦃ ⌜ True ⌝ ⦄
-    keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+    keccak_f.theta.closure_2.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
       sd k
     ⦃ ⇓ r => ⌜ r = (theta_closure_2_at sd k.val, sd) ⌝ ⦄ := by
-  unfold keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
-        keccak_f.theta.closure_2.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
+  have h25 : k.val < sd.1.val.length := by simp; omega
+  have h5 : k.val % 5 < sd.2.val.length := by simp; omega
+  have h25_eq : sd.1.val[k.val]! = sd.1.val[k.val]'h25 := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h25]; rfl
+  have h5_eq : sd.2.val[k.val % 5]! = sd.2.val[k.val % 5]'h5 := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h5]; rfl
+  unfold keccak_f.theta.closure_2.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
         theta_closure_2_at
   hax_mvcgen
   all_goals (first | scalar_tac | (simp; scalar_tac)
-                   | (congr 1; apply Std.U64.bv_eq_imp_eq;
+                   | (congr 1; rw [h25_eq, h5_eq];
+                      apply Std.U64.bv_eq_imp_eq;
                       simp_all [Std.UScalar.bv_xor]))
 
 /-- `f`-side of `rho`'s closure (25 lane-rotations). -/
@@ -226,21 +235,25 @@ def rho_closure_at (state : Std.Array Std.U64 25#usize) (k : Nat) :
 theorem rho_closure_call_mut_spec
     (state : Std.Array Std.U64 25#usize) (k : Std.Usize) (hk : k.val < 25) :
     ⦃ ⌜ True ⌝ ⦄
-    keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+    keccak_f.rho.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
       state k
     ⦃ ⇓ r => ⌜ r = (rho_closure_at state k.val, state) ⌝ ⦄ := by
-  unfold keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
-        keccak_f.rho.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
+  have hs : k.val < state.val.length := by simp; omega
+  have hr : k.val < keccak_f.RHO_OFFSETS.val.length := by simp; omega
+  have hs_eq : state.val[k.val]! = state.val[k.val]'hs := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem hs]; rfl
+  have hr_eq : keccak_f.RHO_OFFSETS.val[k.val]!
+             = keccak_f.RHO_OFFSETS.val[k.val]'hr := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem hr]; rfl
+  unfold keccak_f.rho.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
         rho_closure_at
   hax_mvcgen
-  all_goals (first | scalar_tac
-                   | (congr 1; apply Std.U64.bv_eq_imp_eq
-                      subst_vars
-                      unfold Std.UScalar.rotate_left
-                      rfl))
+  all_goals (first | scalar_tac | (simp; scalar_tac)
+                   | (congr 1; rw [hs_eq, hr_eq];
+                      simp_all [Std.UScalar.rotate_left]))
 
-/-- `f`-side of `pi`'s closure (lane permutation). Under the new layout
-    `A[x,y]` is at position `5*y + x`, so π's output at `k = 5*y + x`
+/-- `f`-side of `pi`'s closure (lane permutation). With the `5*y + x`
+    layout, `A[x,y]` is at position `5*y + x`, so π's output at `k = 5*y + x`
     reads `state[5*x + (x+3y)%5]`. -/
 def pi_closure_at (state : Std.Array Std.U64 25#usize) (k : Nat) :
     Std.U64 :=
@@ -251,11 +264,10 @@ def pi_closure_at (state : Std.Array Std.U64 25#usize) (k : Nat) :
 theorem pi_closure_call_mut_spec
     (state : Std.Array Std.U64 25#usize) (k : Std.Usize) (hk : k.val < 25) :
     ⦃ ⌜ True ⌝ ⦄
-    keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+    keccak_f.pi.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
       state k
     ⦃ ⇓ r => ⌜ r = (pi_closure_at state k.val, state) ⌝ ⦄ := by
-  unfold keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
-        keccak_f.pi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
+  unfold keccak_f.pi.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
         pi_closure_at
   hax_mvcgen
   all_goals (first | scalar_tac | (simp; scalar_tac)
@@ -278,11 +290,10 @@ def chi_closure_at (state : Std.Array Std.U64 25#usize) (k : Nat) :
 theorem chi_closure_call_mut_spec
     (state : Std.Array Std.U64 25#usize) (k : Std.Usize) (hk : k.val < 25) :
     ⦃ ⌜ True ⌝ ⦄
-    keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
+    keccak_f.chi.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
       state k
     ⦃ ⇓ r => ⌜ r = (chi_closure_at state k.val, state) ⌝ ⦄ := by
-  unfold keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnMutTupleUsizeU64.call_mut
-        keccak_f.chi.closure.Insts.Core_modelsOpsFunctionFnTupleUsizeU64.call
+  unfold keccak_f.chi.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
         chi_closure_at
   hax_mvcgen
   all_goals (first
@@ -294,14 +305,12 @@ theorem chi_closure_call_mut_spec
          show ((2#usize : Std.Usize).val) = 2 from rfl,
          show ((5#usize : Std.Usize).val) = 5 from rfl]))
 
-/-! ### Function-equality theorems: `keccak_f.X = keccak_f.X_unrolled`
+/-! ### Function-value theorems: `keccak_f.X = X_applied`
 
-Each non-`_unrolled` hacspec function and its `_unrolled` counterpart are
-shown to produce the same `Result` value by routing both through their
-shared `_applied` form. `keccak_f.X` is proven via `createi_pure_spec` (a
-single `hax_mvcgen` chains through createi → per-closure `[spec]`).
-`keccak_f.X_unrolled` is proven by the existing `*_unrolled_spec` Triples
-in `RoundEquiv.lean` / `PrcLift.lean`.
+Each hacspec function `keccak_f.X` is shown to produce its pure `_applied`
+form. `createi_pure_spec` lets a single `hax_mvcgen` chain through createi →
+per-closure `[spec]`, reaching a 25-cell array equality that the
+`close_array25` macro below collapses.
 
 ### Shared closer for the 25-cell array equality
 
@@ -417,28 +426,16 @@ private theorem set_lane_value_spec
     ⦃ ⌜ True ⌝ ⦄
     state.KeccakState.set_lane_value s i j v
     ⦃ Q ⦄ := by
+  have h_idx : i.val < s.c.val.length := by simp; scalar_tac
+  have h_eq : s.c.val[i.val]! = s.c.val[i.val]'h_idx := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h_idx]; rfl
   unfold state.KeccakState.set_lane_value
   mvcgen
   all_goals first | simpa | scalar_tac | (
-    simp only [Std.WP.predn] at *
-    obtain ⟨_, _⟩ := ‹_ ∧ _›
-    apply hpost <;> simp [*])
-
-@[spec]
-private theorem get_with_zeta_spec
-    (s : state.KeccakState) (i j zeta : Std.Usize) {Q}
-    (hi : i.val < 5) (hj : j.val < 5) (hzeta : zeta.val < 2)
-    (hpost : ∀ v : Std.U32, v = (s.st.val[5 * j.val + i.val]!).val[zeta.val]! →
-        (Q.1 v).down) :
-    ⦃ ⌜ True ⌝ ⦄ state.KeccakState.get_with_zeta s i j zeta ⦃ Q ⦄ := by
-  unfold state.KeccakState.get_with_zeta
-    lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index
-  mvcgen
-  all_goals first | scalar_tac | (
-    intros
-    apply hpost
-    subst_vars
-    congr 2 <;> scalar_tac)
+    apply hpost <;> first
+      | rfl
+      | scalar_tac
+      | (rw [h_eq]; simp_all [WP.uncurry', Std.Array.set_val_eq]))
 
 /-- `Lane2U32` array-index returns the indexed element when in bounds. Used by
     `theta_d` to read `s.c`. -/
@@ -448,13 +445,31 @@ private theorem lane_index_spec
     (hi : i.val < 2)
     (hpost : ∀ v : Std.U32, v = l.val[i.val]! → (Q.1 v).down) :
     ⦃ ⌜ True ⌝ ⦄
-    lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index l i
+    lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index l i
     ⦃ Q ⦄ := by
-  unfold lane.Lane2U32.Insts.Core_modelsOpsIndexIndexUsizeU32.index
+  unfold lane.Lane2U32.Insts.CoreOpsIndexIndexUsizeU32.index
   mvcgen
-  all_goals first | scalar_tac | (intros; apply hpost _ ‹_›)
+  all_goals first | scalar_tac | (try intros; apply hpost; simp_all)
 
-/-- `core_models.num.U32.rotate_left` returns the bit-rotated value. (Local
+@[spec]
+private theorem get_with_zeta_spec
+    (s : state.KeccakState) (i j zeta : Std.Usize) {Q}
+    (hi : i.val < 5) (hj : j.val < 5) (hzeta : zeta.val < 2)
+    (hpost : ∀ v : Std.U32, v = (s.st.val[5 * j.val + i.val]!).val[zeta.val]! →
+        (Q.1 v).down) :
+    ⦃ ⌜ True ⌝ ⦄ state.KeccakState.get_with_zeta s i j zeta ⦃ Q ⦄ := by
+  have h_idx : 5 * j.val + i.val < s.st.val.length := by simp; scalar_tac
+  have h_eq : s.st.val[5 * j.val + i.val]! = s.st.val[5 * j.val + i.val]'h_idx := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h_idx]; rfl
+  unfold state.KeccakState.get_with_zeta
+  mvcgen
+  all_goals first | scalar_tac | (
+    try intros
+    apply hpost
+    rw [h_eq]
+    simp_all)
+
+/-- `CoreModels.core.num.U32.rotate_left` returns the bit-rotated value. (Local
     re-statement of the spec in `CoreModels/Specs.lean` for downstream
     consumers that haven't yet picked up the updated rust-core-models pin.) -/
 @[spec]
@@ -462,25 +477,25 @@ private theorem rotate_left_u32_spec
     (x : Std.U32) (n : Std.U32) {Q}
     (hpost : ∀ v : Std.U32, v.bv = x.bv.rotateLeft n.val → (Q.1 v).down) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.num.U32.rotate_left x n
+    CoreModels.core.num.U32.rotate_left x n
     ⦃ Q ⦄ := by
-  unfold core_models.num.U32.rotate_left
-    rust_primitives.arithmetic.rotate_left_u32
+  unfold CoreModels.core.num.U32.rotate_left
+    CoreModels.rust_primitives.arithmetic.rotate_left_u32
   mvcgen [Std.UScalar.rotate_left]
   apply hpost _ rfl
 
-/-- `core_models.num.U64.rotate_left` returns the bit-rotated value. Same
+/-- `CoreModels.core.num.U64.rotate_left` returns the bit-rotated value. Same
     shape as `rotate_left_u32_spec`; used on the spec side of
-    `theta_lift_spec` for the 5 ρ-style rotations in `theta_unrolled`. -/
+    `theta_lift_spec` for the 5 ρ-style rotations in `keccak_f.theta`. -/
 @[spec]
 private theorem rotate_left_u64_spec
     (x : Std.U64) (n : Std.U32) {Q}
     (hpost : ∀ v : Std.U64, v.bv = x.bv.rotateLeft n.val → (Q.1 v).down) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.num.U64.rotate_left x n
+    CoreModels.core.num.U64.rotate_left x n
     ⦃ Q ⦄ := by
-  unfold core_models.num.U64.rotate_left
-    rust_primitives.arithmetic.rotate_left_u64
+  unfold CoreModels.core.num.U64.rotate_left
+    CoreModels.rust_primitives.arithmetic.rotate_left_u64
   mvcgen [Std.UScalar.rotate_left]
   apply hpost _ rfl
 
@@ -643,15 +658,14 @@ private theorem theta_d_spec (s : state.KeccakState) :
         r.d.val[4]!.val[1]! =
           s.c.val[3]!.val[1]! ^^^ s.c.val[0]!.val[0]! ⌝ ⦄ := by
   unfold keccak.keccakf1600_round0_theta_d
-  hax_mvcgen
+  mvcgen
   all_goals first
     | scalar_tac
-    | trivial
-    | (refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-       all_goals first | trivial | assumption | (
-         simp only [Std.WP.predn] at *
-         try apply Std.U32.bv_eq_imp_eq
-         simp_all [Std.UScalar.bv_xor, rot32]))
+    | (refine ⟨trivial, trivial, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+       (apply Std.U32.bv_eq_imp_eq
+        simp_all [WP.uncurry', Std.Array.set_val_eq,
+                  Std.UScalar.bv_xor, rot32, Std.UScalar.rotate_left]) <;>
+       scalar_tac)
 
 /-! ### Composed θ-round spec
 
@@ -759,11 +773,11 @@ theorem theta_comp_spec_local (s : state.KeccakState) :
 /-! ## θ-applied lifted state (spec-coupling side)
 
 After impl θ, the impl's `r.st` is *unchanged* — the actual XOR-into-`st`
-is deferred to π·ρ·χ. But the spec's `theta_unrolled` *does* apply the
+is deferred to π·ρ·χ. But the spec's `keccak_f.theta` *does* apply the
 d-values to the state in one go. To bridge this asymmetry we define
 `lift_theta_applied r_impl`, the lifted 25-lane state that the spec
 would produce given the impl's post-θ d-cells. The spec-coupling
-theorem then proves `theta_unrolled (lift s) = ok (lift_theta_applied r_impl)`.
+theorem then proves `keccak_f.theta (lift s) = ok (lift_theta_applied r_impl)`.
 -/
 
 /-- Helper for `lift_theta_applied`: lift a single lane given the four
@@ -773,7 +787,7 @@ theorem then proves `theta_unrolled (lift s) = ok (lift_theta_applied r_impl)`.
 private abbrev lta (st_z0 st_z1 d_z0 d_z1 : Std.U32) : Std.U64 :=
   ⟨lift_lane_bv ((st_z0 ^^^ d_z0).bv) ((st_z1 ^^^ d_z1).bv)⟩
 
-/-- The 25-lane `u64` state that the spec's `theta_unrolled` produces
+/-- The 25-lane `u64` state that the spec's `keccak_f.theta` produces
     given the impl's post-θ scratch cells. Each spec lane `i = 5*y + x` is
     `lift_lane_bv (s.st[transpose_perm i].z0 ⊕ s.d[i%5].z0)
                   (s.st[transpose_perm i].z1 ⊕ s.d[i%5].z1)`,
@@ -783,7 +797,7 @@ private abbrev lta (st_z0 st_z1 d_z0 d_z1 : Std.U32) : Std.U64 :=
     Written as a literal 25-element list (rather than `List.ofFn`) so
     that `unfold lift_theta_applied` exposes a concrete cons list — this
     aligns the RHS structurally with the LHS literal list produced by
-    `hax_mvcgen` on `theta_unrolled` and lets a 25-way `congr` peel the
+    `hax_mvcgen` on `keccak_f.theta` and lets a 25-way `congr` peel the
     lanes pointwise. -/
 def lift_theta_applied (s : state.KeccakState) : Std.Array Std.U64 25#usize :=
   let d := s.d; let st := s.st
@@ -859,7 +873,7 @@ This generalization specialises to the existing `lift_theta_applied` at
 
   For example, at the post-round-1-theta state with permutation
   `impl_perm` and swap `impl_swap_k 1`:
-  `theta_unrolled (lift_perm s impl_perm (impl_swap_k 1))
+  `keccak_f.theta (lift_perm s impl_perm (impl_swap_k 1))
    = .ok (lift_theta_applied_perm r_impl impl_perm (impl_swap_k 1))`. -/
 def lift_theta_applied_perm
     (s : state.KeccakState) (p : Fin 25 → Fin 25) (sw : Fin 25 → Bool) :
@@ -1035,7 +1049,7 @@ theorem lift_getElem_bv_24 (s : state.KeccakState) :
 
 /-! ## Spec-coupling theorem
 
-After running the impl θ on `s`, the spec's `theta_unrolled (lift s)`
+After running the impl θ on `s`, the spec's `keccak_f.theta (lift s)`
 produces exactly `lift_theta_applied r_impl`. The chain of equalities:
 
   spec lane i  = (lift s)[i] ⊕ spec_d[i/5]

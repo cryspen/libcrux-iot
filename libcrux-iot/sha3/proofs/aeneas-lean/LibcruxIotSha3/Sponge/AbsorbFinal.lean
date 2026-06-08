@@ -44,7 +44,7 @@ attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 private theorem triple_of_ok_af {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 /-- Local existence extractor. -/
 private theorem triple_exists_ok_af {α : Type} {x : Result α}
@@ -54,11 +54,11 @@ private theorem triple_exists_ok_af {α : Type} {x : Result α}
   match hx : x with
   | .ok v =>
       refine ⟨v, rfl, ?_⟩
-      have := h; simp [Std.Do.Triple, WP.wp] at this; exact this
+      have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
   | .fail _ =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
   | .div =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
 
 /-! ### Array index_mut Triple over `Range Usize`.
 
@@ -67,16 +67,16 @@ The Array variant of `core_models_Slice_Insts_index_mut_RangeUsize_spec`
 @[spec]
 theorem core_models_Array_Insts_index_mut_RangeUsize_spec
     {T : Type} {N : Std.Usize} (arr : Std.Array T N)
-    (r : core_models.ops.range.Range Std.Usize)
+    (r : CoreModels.core.ops.range.Range Std.Usize)
     (h0 : r.start.val ≤ r.end.val) (h1 : r.end.val ≤ N.val) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
-      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice T) arr r
+    CoreModels.core.Array.Insts.CoreOpsIndexIndexMut.index_mut
+      (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T) arr r
     ⦃ ⇓ p => ⌜ p.1.val = arr.val.slice r.start.val r.end.val ∧
                 p.1.val.length = r.end.val - r.start.val ∧
                 ∀ s' : Slice T, s'.val.length = r.end.val - r.start.val →
                   (p.2 s').val = arr.val.setSlice! r.start.val s'.val ⌝ ⦄ := by
-  unfold core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
+  unfold CoreModels.core.Array.Insts.CoreOpsIndexIndexMut.index_mut
   have h_to_slice_mut : Std.Array.to_slice_mut arr
       = (Std.Array.to_slice arr, Std.Array.from_slice arr) := rfl
   have h_val_to_slice : (Std.Array.to_slice arr).val = arr.val := Std.Array.val_to_slice arr
@@ -88,10 +88,10 @@ theorem core_models_Array_Insts_index_mut_RangeUsize_spec
   obtain ⟨p_slice, hp_eq, hp_val, hp_len, hp_back⟩ := triple_exists_ok_af h_slice
   have h_slice_eq_core :
       (core.slice.index.Slice.index_mut
-        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice T)
+        (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T)
         (Std.Array.to_slice arr) r) = .ok p_slice := by
     have := hp_eq
-    unfold core_models.Slice.Insts.Core_modelsOpsIndexIndexMut.index_mut at this
+    unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut.index_mut at this
     exact this
   set out_val := p_slice.1
   set to_slice_back := p_slice.2
@@ -99,7 +99,7 @@ theorem core_models_Array_Insts_index_mut_RangeUsize_spec
   · show (do
       let (s, to_arr) := Std.Array.to_slice_mut arr
       let (out, ts) ← core.slice.index.Slice.index_mut
-        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice T)
+        (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T)
         s r
       ok (out, fun o => to_arr (ts o))) = .ok _
     rw [h_to_slice_mut]
@@ -286,18 +286,18 @@ theorem keccak.absorb_final_spec
         then
           (do
             let (s, index_mut_back) ←
-              core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
-                (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
-                  (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+              CoreModels.core.Array.Insts.CoreOpsIndexIndexMut.index_mut
+                (CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut
+                  (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                     Std.U8)) buf0 { start := 0#usize, «end» := len }
             let i ← start + len
             let s2 ←
-              core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+              CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                   Std.U8) last { start, «end» := i }
             let s3 ←
-              core_models.slice.Slice.copy_from_slice
-                core_models.U8.Insts.Core_modelsMarkerCopy s s2
+              CoreModels.core.slice.Slice.copy_from_slice
+                CoreModels.core.U8.Insts.CoreMarkerCopy s s2
             ok (index_mut_back s3))
         else (ok buf0 : Result (Std.Array Std.U8 200#usize)))
         = .ok buf1 := by
@@ -309,9 +309,9 @@ theorem keccak.absorb_final_spec
       have h_im_le : ((0#usize : Std.Usize).val) ≤ len.val := by show 0 ≤ len.val; omega
       have h_im_bnd : len.val ≤ (200#usize : Std.Usize).val := by show len.val ≤ 200; omega
       have h_wrap_eq_im :
-          core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
-            (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
-          = core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8 := rfl
+          CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut
+            (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
+          = CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8 := rfl
       rw [h_wrap_eq_im]
       obtain ⟨p_im, h_pim_eq, h_pim_val, h_pim_len, h_pim_back⟩ :=
         triple_exists_ok_af
@@ -324,11 +324,11 @@ theorem keccak.absorb_final_spec
       -- Use `show` to manually beta-reduce.
       show (do
               let i ← start + len
-              let s2 ← core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-                (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+              let s2 ← CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                   Std.U8) last { start, «end» := i }
-              let s3 ← core_models.slice.Slice.copy_from_slice
-                core_models.U8.Insts.Core_modelsMarkerCopy s_im s2
+              let s3 ← CoreModels.core.slice.Slice.copy_from_slice
+                CoreModels.core.U8.Insts.CoreMarkerCopy s_im s2
               ok (write_back s3)) = _
       obtain ⟨i_sl, h_i_sl_eq, h_i_sl_val_eq, _⟩ :=
         Std.WP.spec_imp_exists
@@ -350,7 +350,7 @@ theorem keccak.absorb_final_spec
       obtain ⟨w, hw_eq, hw_val⟩ :=
         triple_exists_ok_af
           (core_models_slice_Slice_copy_from_slice_spec
-            core_models.U8.Insts.Core_modelsMarkerCopy s_im q h_p_q_len)
+            CoreModels.core.U8.Insts.CoreMarkerCopy s_im q h_p_q_len)
       rw [hw_eq]; simp only [bind_tc_ok]
       -- Conclude write_back w = buf1.
       have h_w_val_len : w.val.length = len.val - (0#usize : Std.Usize).val := by
@@ -402,16 +402,16 @@ theorem keccak.absorb_final_spec
     -- `let buffer1 ← ok (...)` so it joins the monadic chain, then split.
     show (do
             let (s, index_mut_back) ←
-              core_models.Array.Insts.Core_modelsOpsIndexIndexMut.index_mut
-                (core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
-                  (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+              CoreModels.core.Array.Insts.CoreOpsIndexIndexMut.index_mut
+                (CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut
+                  (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                     Std.U8)) buf0 { start := 0#usize, «end» := len }
             let i ← start + len
-            let s1 ← core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-              (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+            let s1 ← CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+              (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                 Std.U8) last { start := start, «end» := i }
-            let s2 ← core_models.slice.Slice.copy_from_slice
-              core_models.U8.Insts.Core_modelsMarkerCopy s s1
+            let s2 ← CoreModels.core.slice.Slice.copy_from_slice
+              CoreModels.core.U8.Insts.CoreMarkerCopy s s1
             let buffer1 := index_mut_back s2
             let buffer2 ← Std.Array.update buffer1 len DELIM
             let i1 ← RATE - 1#usize
@@ -420,9 +420,9 @@ theorem keccak.absorb_final_spec
             Std.Array.update buffer2 i1 i3) = .ok buf3
     -- Use the unwrapped form of the IndexMut instance.
     have h_wrap_eq_im :
-        core_models.Slice.Insts.Core_modelsOpsIndexIndexMut
-          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
-        = core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8 := rfl
+        CoreModels.core.Slice.Insts.CoreOpsIndexIndexMut
+          (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
+        = CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8 := rfl
     rw [h_wrap_eq_im]
     -- Build the unfolded prefix result.
     have h_im_le : ((0#usize : Std.Usize).val) ≤ len.val := by show 0 ≤ len.val; omega
@@ -436,11 +436,11 @@ theorem keccak.absorb_final_spec
     simp only at h_pim_val h_pim_len h_pim_back ⊢
     show (do
             let i ← start + len
-            let s1 ← core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-              (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+            let s1 ← CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+              (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                 Std.U8) last { start := start, «end» := i }
-            let s2 ← core_models.slice.Slice.copy_from_slice
-              core_models.U8.Insts.Core_modelsMarkerCopy s_im s1
+            let s2 ← CoreModels.core.slice.Slice.copy_from_slice
+              CoreModels.core.U8.Insts.CoreMarkerCopy s_im s1
             let buffer1 := write_back s2
             let buffer2 ← Std.Array.update buffer1 len DELIM
             let i1 ← RATE - 1#usize
@@ -467,7 +467,7 @@ theorem keccak.absorb_final_spec
     obtain ⟨w, hw_eq, hw_val⟩ :=
       triple_exists_ok_af
         (core_models_slice_Slice_copy_from_slice_spec
-          core_models.U8.Insts.Core_modelsMarkerCopy s_im q h_p_q_len)
+          CoreModels.core.U8.Insts.CoreMarkerCopy s_im q h_p_q_len)
     rw [hw_eq]; simp only [bind_tc_ok]
     have h_w_val_len : w.val.length = len.val - (0#usize : Std.Usize).val := by
       rw [hw_val, hq_len]
@@ -513,20 +513,20 @@ theorem keccak.absorb_final_spec
     exact h_buf3_eq
   -- Spec-side: `block[0..rate]` (Array index on buf3) = .ok (block_of_blocks (to_slice buf3) 0 RATE _).
   have h_block_idx_eq :
-      core_models.Array.Insts.Core_modelsOpsIndexIndex.index
-        (core_models.Slice.Insts.Core_modelsOpsIndexIndex
-          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+      CoreModels.core.Array.Insts.CoreOpsIndexIndex.index
+        (CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+          (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
             Std.U8)) buf3 { start := 0#usize, «end» := RATE }
         = .ok (block_of_blocks (Std.Array.to_slice buf3) 0#usize RATE h_blk) := by
     -- Unfold Array index → slice index over to_slice.
-    unfold core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+    unfold CoreModels.core.Array.Insts.CoreOpsIndexIndex.index
     -- The body is `core.slice.index.Slice.index inst (to_slice buf3) r`.
-    -- This is the same as `core_models.Slice.Insts.Core_modelsOpsIndexIndex.index`
+    -- This is the same as `CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index`
     -- after the wrapper is collapsed.
     have h_wrap_eq :
-        core_models.Slice.Insts.Core_modelsOpsIndexIndex
-          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
-        = core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8 := rfl
+        CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+          (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
+        = CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8 := rfl
     rw [h_wrap_eq]
     have h0' : ((0#usize : Std.Usize).val) ≤ RATE.val := by show 0 ≤ RATE.val; omega
     have h1' : RATE.val ≤ (Std.Array.to_slice buf3).val.length := by
@@ -539,10 +539,10 @@ theorem keccak.absorb_final_spec
           (Std.Array.to_slice buf3) { start := 0#usize, «end» := RATE } h0' h1')
     have h_slice_eq :
         core.slice.index.Slice.index
-          (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
+          (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
           (Std.Array.to_slice buf3) { start := 0#usize, «end» := RATE } = .ok q := by
       have := hq_eq
-      unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index at this
+      unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index at this
       exact this
     rw [h_slice_eq]
     apply congrArg

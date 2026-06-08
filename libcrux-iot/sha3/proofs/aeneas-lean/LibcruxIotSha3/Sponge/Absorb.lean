@@ -35,6 +35,8 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
+attribute [local spec] Aeneas.Std.uncurry
+
 open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
@@ -51,16 +53,15 @@ This complements `core_models_Slice_Insts_index_RangeUsize_spec` in
 `message[rate..]` produces. -/
 @[spec]
 theorem core_models_Slice_Insts_index_RangeFromUsize_spec
-    {T : Type} (s : Slice T) (r : core_models.ops.range.RangeFrom Std.Usize)
+    {T : Type} (s : Slice T) (r : CoreModels.core.ops.range.RangeFrom Std.Usize)
     (h : r.start.val ≤ s.val.length) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-      (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice T) s r
+    CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+      (CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T) s r
     ⦃ ⇓ r' => ⌜ r'.val = s.val.drop r.start.val
                 ∧ r'.val.length = s.val.length - r.start.val ⌝ ⦄ := by
-  unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-         core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-         core_models.cmRangeFromUsizeToAeneas
+  unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+         CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
          core.slice.index.Slice.index
          core.slice.index.SliceIndexRangeUsizeSlice.index
   have h0' : (⟨r.start, s.len⟩ : core.ops.range.Range Std.Usize).start
@@ -73,8 +74,7 @@ theorem core_models_Slice_Insts_index_RangeFromUsize_spec
   simp [h0', Std.Slice.length, Std.Slice.len]
   refine ⟨?_, ?_⟩
   · unfold List.slice
-    rw [List.take_of_length_le]
-    rw [List.length_drop]
+    exact List.take_of_length_le (by simp)
   · unfold List.slice
     rw [List.length_take, List.length_drop]
     omega
@@ -84,7 +84,7 @@ theorem core_models_Slice_Insts_index_RangeFromUsize_spec
 private theorem triple_of_ok_abs {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 private theorem triple_exists_ok_abs {α : Type} {x : Result α}
     {P : α → Prop}
@@ -93,17 +93,17 @@ private theorem triple_exists_ok_abs {α : Type} {x : Result α}
   match hx : x with
   | .ok v =>
       refine ⟨v, rfl, ?_⟩
-      have := h; simp [Std.Do.Triple, WP.wp] at this; exact this
+      have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
   | .fail _ =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
   | .div =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
 
 /-- Generalizes `loop_range_spec_usize` to asymmetric `cont`/`done` types.
     The `cont` branch carries `Range × β`; the `done` branch carries `γ`. -/
 private theorem loop_range_spec_gen {β γ : Type}
-    (body : (core_models.ops.range.Range Std.Usize × β) →
-      Result (ControlFlow (core_models.ops.range.Range Std.Usize × β) γ))
+    (body : (CoreModels.core.ops.range.Range Std.Usize × β) →
+      Result (ControlFlow (CoreModels.core.ops.range.Range Std.Usize × β) γ))
     (init : β) (s e : Std.Usize)
     (inv : Std.Usize → β → Prop) (post : γ → Prop)
     (h_le : s.val ≤ e.val)
@@ -141,16 +141,16 @@ private theorem loop_range_spec_gen {β γ : Type}
       match hx : body ({ start := k, «end» := e }, acc) with
       | .ok v =>
           refine ⟨v, rfl, ?_⟩
-          have hhs := by rw [hx] at hs; simpa [Std.Do.Triple, WP.wp] using hs
+          have hhs := by rw [hx] at hs; simpa [Std.Do.Triple, WP.wp, PredTrans.apply] using hs
           match v with
           | .cont (iter', acc') => simpa using hhs
           | .done y => simpa using hhs
       | .fail _ =>
           exfalso; have := h_step acc k hs_le hke hinv
-          simp [Std.Do.Triple, WP.wp, hx] at this
+          simp [Std.Do.Triple, WP.wp, PredTrans.apply, hx] at this
       | .div =>
           exfalso; have := h_step acc k hs_le hke hinv
-          simp [Std.Do.Triple, WP.wp, hx] at this
+          simp [Std.Do.Triple, WP.wp, PredTrans.apply, hx] at this
     obtain ⟨r, hbody, hpost⟩ := hb
     rw [loop.eq_def, hbody]
     match r with
@@ -170,16 +170,16 @@ private theorem loop_range_spec_gen {β γ : Type}
       match hx : body ({ start := k, «end» := e }, acc) with
       | .ok v =>
           refine ⟨v, rfl, ?_⟩
-          have hhs := by rw [hx] at hs; simpa [Std.Do.Triple, WP.wp] using hs
+          have hhs := by rw [hx] at hs; simpa [Std.Do.Triple, WP.wp, PredTrans.apply] using hs
           match v with
           | .cont (iter', acc') => simpa using hhs
           | .done y => simpa using hhs
       | .fail _ =>
           exfalso; have := h_step acc k hs_le hke hinv
-          simp [Std.Do.Triple, WP.wp, hx] at this
+          simp [Std.Do.Triple, WP.wp, PredTrans.apply, hx] at this
       | .div =>
           exfalso; have := h_step acc k hs_le hke hinv
-          simp [Std.Do.Triple, WP.wp, hx] at this
+          simp [Std.Do.Triple, WP.wp, PredTrans.apply, hx] at this
     obtain ⟨r, hbody, hpost⟩ := hb
     rw [loop.eq_def, hbody]
     match r with
@@ -227,7 +227,7 @@ theorem sponge_absorb_rec_unfold_short
     sponge.absorb_rec state rate delim message =
       sponge.absorb_final state message 0#usize (Std.Slice.len message) rate delim := by
   rw [sponge.absorb_rec.eq_def]
-  unfold core_models.slice.Slice.len
+  unfold CoreModels.core.slice.Slice.len
   have h_i_val : (Std.Slice.len message).val = message.val.length := by
     simp [Std.Slice.len]
   have h_lt' : Std.Slice.len message < rate := by
@@ -250,7 +250,7 @@ theorem sponge_absorb_rec_unfold_long
       (sponge.absorb_block state (head_block message rate h_ge) rate >>=
         fun s' => sponge.absorb_rec s' rate delim (tail_after message rate h_ge)) := by
   rw [sponge.absorb_rec.eq_def]
-  unfold core_models.slice.Slice.len
+  unfold CoreModels.core.slice.Slice.len
   have h_i_val : (Std.Slice.len message).val = message.val.length := by
     simp [Std.Slice.len]
   have h_not_lt : ¬ (Std.Slice.len message < rate) := by
@@ -262,13 +262,12 @@ theorem sponge_absorb_rec_unfold_long
   simp only [pure_bind]
   rw [if_neg h_not_lt]
   -- Reduce both slice index calls to concrete .ok values.
-  have h_idx_range : core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
+  have h_idx_range : CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+      (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
       message { start := 0#usize, «end» := rate }
     = .ok (head_block message rate h_ge) := by
-    unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-           core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-           core_models.cmRangeUsizeToAeneas
+    unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+           CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
            core.slice.index.Slice.index
            core.slice.index.SliceIndexRangeUsizeSlice.index
     have h_le_v : (0#usize : Std.Usize) ≤ rate := by
@@ -279,13 +278,12 @@ theorem sponge_absorb_rec_unfold_long
     rfl
   rw [h_idx_range]; simp only [bind_tc_ok]
   -- Now the tail slice index.
-  have h_idx_from : core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-      (core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
+  have h_idx_from : CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+      (CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
       message { start := rate }
     = .ok (tail_after message rate h_ge) := by
-    unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index
-           core_models.ops.range.RangeFromUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
-           core_models.cmRangeFromUsizeToAeneas
+    unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+           CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
            core.slice.index.Slice.index
            core.slice.index.SliceIndexRangeUsizeSlice.index
     have h_le_v : ({ start := rate, «end» := message.len } : core.ops.range.Range Std.Usize).start
