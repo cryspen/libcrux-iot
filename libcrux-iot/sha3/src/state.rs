@@ -9,7 +9,7 @@ use crate::lane::Lane2U32;
 use crate::{FromLeBytes, ToLeBytes};
 
 #[derive(Clone, Copy)]
-#[cfg_attr(not(eurydice), derive(Debug))]
+#[cfg_attr(not(any(eurydice, hax_backend_lean)), derive(Debug))]
 pub(crate) struct KeccakState {
     pub(super) st: [Lane2U32; 25],
     pub(super) c: [Lane2U32; 5],
