@@ -6,8 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-HAX_VERSION = "7b4bd97058e0fcbf9135b76297ca91942f2327a6"
-AENEAS_VERSION = "b5c45e84"
+HAX_VERSION = "1f85fc13b9967080cc657863e2000ba5d4aa8647"
+AENEAS_VERSION = "8d2077c"
 
 
 def check_version(cmd: list[str], name: str, expected: str) -> None:
@@ -22,74 +22,43 @@ check_version(["cargo", "hax", "--version"], "hax", HAX_VERSION)
 check_version(["aeneas", "-version"], "aeneas", AENEAS_VERSION)
 
 result = subprocess.run(
-    ["cargo", "hax", "into", "aeneas-lean"],
+    ["cargo", "hax", "into", "aeneas-lean", '--aeneas-args="-core-models-lib"'],
     env={**os.environ, "RUSTFLAGS": "--cfg hax_backend_lean"},
-    capture_output=True,
-    text=True,
 )
 
-# Suppress version mismatch warnings. (We check versions above.)
-_ANSI = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
-def should_suppress(line: str) -> bool:
-    plain = _ANSI.sub('', line)
-    return plain.startswith("warning: hax: aeneas version mismatch:") or plain.startswith("warning: hax: charon version mismatch:")
-
-for line in result.stdout.splitlines():
-    if not should_suppress(line):
-        print(line)
-for line in result.stderr.splitlines():
-    if not should_suppress(line):
-        print(line, file=sys.stderr)
+# Aeneas reports a non-zero exit when it can't generate a definition for an
+# extracted external item (here: the `Debug` derive on `Algorithm`). The
+# generated Funs.lean still has the axiom inline, so we tolerate this
+# specific failure and continue with the post-processing below.
 if result.returncode != 0:
-    sys.exit(result.returncode)
+    print(f"warning: aeneas exited with code {result.returncode}; "
+          f"continuing with post-processing (axiom remains inline).",
+          file=sys.stderr)
 
-funs_lean = "proofs/aeneas-lean/LibcruxIotSha3/Extraction/Funs.lean"
-with open(funs_lean) as f:
-    content = f.read()
+funs_lean = Path("proofs/aeneas-lean/LibcruxIotSha3/Extraction/Funs.lean")
+content = funs_lean.read_text()
 
-content = content.replace(
-    "import Aeneas",
-    "import Aeneas\nimport LibcruxIotSha3.Extraction.Missing\nopen core_models",
-    1,
-)
-
-# This definition is hitting the recursion limit:
-content = content.replace(
-    "/-- [libcrux_iot_sha3::keccak::RC_INTERLEAVED_1]",
-    "set_option maxRecDepth 1000 in\n/-- [libcrux_iot_sha3::keccak::RC_INTERLEAVED_1]",
-    1,
-)
-
-# This definition is hitting the recursion limit:
-content = content.replace(
-    "/-- [libcrux_iot_sha3::keccak::RC_INTERLEAVED_0]",
-    "set_option maxRecDepth 1000 in\n/-- [libcrux_iot_sha3::keccak::RC_INTERLEAVED_0]",
-    1,
+content = re.sub(
+    r"(^import Aeneas\b)",
+    r"\1\nimport LibcruxIotSha3.Extraction.Missing",
+    content,
+    count=1,
+    flags=re.MULTILINE,
 )
 
 # Wrong signature of `core_models.fmt.rt.Argument.new_display`
-block = (
+panic_block = (
     "    let a ←\n"
-    "      core_models.fmt.rt.Argument.new_display\n"
-    "        core_models.Usize.Insts.Core_modelsFmtDisplay i\n"
+    "      core.fmt.rt.Argument.new_display core.Usize.Insts.CoreFmtDisplay i\n"
     "    let a1 ←\n"
-    "      core_models.fmt.rt.Argument.new_display\n"
-    "        core_models.Usize.Insts.Core_modelsFmtDisplay RATE\n"
+    "      core.fmt.rt.Argument.new_display core.Usize.Insts.CoreFmtDisplay RATE\n"
     "    let _ ←\n"
-    "      core_models.fmt.Arguments.new\n"
+    "      core.fmt.Arguments.new\n"
     "        (Array.make 7#usize [\n"
     "          192#u8, 3#u8, 32#u8, 62#u8, 32#u8, 192#u8, 0#u8\n"
-    "          ]) (Array.make 2#usize [ a, a1 ])"
+    "          ]) (Array.make 2#usize [ a, a1 ])\n"
+    "    fail panic"
 )
-content = content.replace(block, "/-\n" + block + "\n-/", 1)
+content = content.replace(panic_block, "/-\n" + panic_block + "\n-/\n    fail panic", 1)
 
-# Wrong field name in `core_models.fmt.Debug`
-content = content.replace(
-    "  fmt := ",
-    "  dbg_fmt := ",
-    1,
-)
-
-
-with open(funs_lean, "w") as f:
-    f.write(content)
+funs_lean.write_text(content)

@@ -36,7 +36,7 @@ attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 private theorem triple_of_ok_sb {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 /-- Local existence extractor: a Triple yields `∃ v, x = .ok v ∧ P v`. -/
 private theorem triple_exists_ok_sb {α : Type} {x : Result α}
@@ -46,11 +46,11 @@ private theorem triple_exists_ok_sb {α : Type} {x : Result α}
   match hx : x with
   | .ok v =>
       refine ⟨v, rfl, ?_⟩
-      have := h; simp [Std.Do.Triple, WP.wp] at this; exact this
+      have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
   | .fail _ =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
   | .div =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
 
 /-! ### Triple 1: `keccak.squeeze_first_block`. -/
 
@@ -235,15 +235,15 @@ Array variant of `core_models_Slice_Insts_index_RangeUsize_spec`
 @[spec]
 theorem core_models_Array_Insts_index_RangeUsize_spec
     {T : Type} {N : Std.Usize} (arr : Std.Array T N)
-    (r : core_models.ops.range.Range Std.Usize)
+    (r : CoreModels.core.ops.range.Range Std.Usize)
     (h0 : r.start.val ≤ r.end.val) (h1 : r.end.val ≤ N.val) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.Array.Insts.Core_modelsOpsIndexIndex.index
-      (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice T) arr r
+    CoreModels.core.Array.Insts.CoreOpsIndexIndex.index
+      (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T) arr r
     ⦃ ⇓ r' => ⌜ r'.val = arr.val.slice r.start.val r.end.val ∧
                 r'.val.length = r.end.val - r.start.val ⌝ ⦄ := by
   -- Reduce to the slice version via `Array.to_slice`.
-  unfold core_models.Array.Insts.Core_modelsOpsIndexIndex.index
+  unfold CoreModels.core.Array.Insts.CoreOpsIndexIndex.index
   -- Body: `core.slice.index.Slice.index inst (Array.to_slice arr) i`.
   have h1' : r.end.val ≤ (Std.Array.to_slice arr).val.length := by
     rw [Std.Array.val_to_slice]
@@ -254,7 +254,7 @@ theorem core_models_Array_Insts_index_RangeUsize_spec
   -- Use the existing slice spec.
   have h_slice :=
     core_models_Slice_Insts_index_RangeUsize_spec (Std.Array.to_slice arr) r h0 h1'
-  -- The slice version uses `core_models.Slice.Insts.Core_modelsOpsIndexIndex.index`,
+  -- The slice version uses `CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index`,
   -- which unfolds to the same `core.slice.index.Slice.index` we need here.
   -- Convert the slice spec's post (in terms of `arr.to_slice.val`) into one
   -- in terms of `arr.val`.
@@ -262,7 +262,7 @@ theorem core_models_Array_Insts_index_RangeUsize_spec
   refine triple_of_ok_sb (v := v) ?_ ?_
   · -- Equality: `core.slice.index.Slice.index inst (Array.to_slice arr) r = .ok v`.
     have := hv_eq
-    unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex.index at this
+    unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index at this
     exact this
   · refine ⟨?_, ?_⟩
     · rw [hv_val, h_slice_val]
@@ -309,8 +309,8 @@ theorem keccak.squeeze_last_spec
       (state.KeccakState.store_block_full_spec RATE s1 buf
         h_RATE_mod h_RATE_bnd)
   -- Step 3: discharge `Slice.len out`.
-  have h_len : core_models.slice.Slice.len out = .ok (Std.Slice.len out) := by
-    unfold core_models.slice.Slice.len; rfl
+  have h_len : CoreModels.core.slice.Slice.len out = .ok (Std.Slice.len out) := by
+    unfold CoreModels.core.slice.Slice.len; rfl
   set i := Std.Slice.len out
   have h_i_val : i.val = out.val.length := by
     simp [i, Std.Slice.len]
@@ -348,19 +348,19 @@ theorem keccak.squeeze_last_spec
     have hk_i : k < i.val := by rw [h_i_val]; exact hk
     exact List.getElem!_take_of_lt _ k _ hk_i
   -- Step 5: discharge `copy_from_slice out s2`. Length check: out.val.length = s2.val.length.
-  have h_copy : core_models.slice.Slice.copy_from_slice
-        core_models.U8.Insts.Core_modelsMarkerCopy out s2 = .ok s2 := by
-    unfold core_models.slice.Slice.copy_from_slice
+  have h_copy : CoreModels.core.slice.Slice.copy_from_slice
+        CoreModels.core.U8.Insts.CoreMarkerCopy out s2 = .ok s2 := by
+    unfold CoreModels.core.slice.Slice.copy_from_slice
     have h_len_eq : Std.Slice.len out = Std.Slice.len s2 := by
       apply Std.UScalar.eq_of_val_eq
       simp [Std.Slice.len, h_s2_len']
     simp [h_len_eq]
-  -- Wrapper-identity: `Slice.Insts.Core_modelsOpsIndexIndex inst = inst`.
+  -- Wrapper-identity: `Slice.Insts.CoreOpsIndexIndex inst = inst`.
   have h_wrap_eq :
-      core_models.Slice.Insts.Core_modelsOpsIndexIndex
-        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
-      = core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8 := by
-    unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+        (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
+      = CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8 := by
+    unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex
     rfl
   -- Step 6: assemble impl-side equality.
   have h_impl_eq :
@@ -413,8 +413,8 @@ theorem keccak.squeeze_first_and_last_spec
       (state.KeccakState.store_block_full_spec RATE s buf
         h_RATE_mod h_RATE_bnd)
   -- Step 2: discharge `Slice.len out`.
-  have h_len : core_models.slice.Slice.len out = .ok (Std.Slice.len out) := by
-    unfold core_models.slice.Slice.len; rfl
+  have h_len : CoreModels.core.slice.Slice.len out = .ok (Std.Slice.len out) := by
+    unfold CoreModels.core.slice.Slice.len; rfl
   set i := Std.Slice.len out
   have h_i_val : i.val = out.val.length := by
     simp [i, Std.Slice.len]
@@ -444,19 +444,19 @@ theorem keccak.squeeze_first_and_last_spec
     have hk_i : k < i.val := by rw [h_i_val]; exact hk
     exact List.getElem!_take_of_lt _ k _ hk_i
   -- Step 4: discharge `copy_from_slice out s2`.
-  have h_copy : core_models.slice.Slice.copy_from_slice
-        core_models.U8.Insts.Core_modelsMarkerCopy out s2 = .ok s2 := by
-    unfold core_models.slice.Slice.copy_from_slice
+  have h_copy : CoreModels.core.slice.Slice.copy_from_slice
+        CoreModels.core.U8.Insts.CoreMarkerCopy out s2 = .ok s2 := by
+    unfold CoreModels.core.slice.Slice.copy_from_slice
     have h_len_eq : Std.Slice.len out = Std.Slice.len s2 := by
       apply Std.UScalar.eq_of_val_eq
       simp [Std.Slice.len, h_s2_len']
     simp [h_len_eq]
-  -- Wrapper-identity: `Slice.Insts.Core_modelsOpsIndexIndex inst = inst`.
+  -- Wrapper-identity: `Slice.Insts.CoreOpsIndexIndex inst = inst`.
   have h_wrap_eq :
-      core_models.Slice.Insts.Core_modelsOpsIndexIndex
-        (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8)
-      = core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice Std.U8 := by
-    unfold core_models.Slice.Insts.Core_modelsOpsIndexIndex
+      CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+        (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
+      = CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8 := by
+    unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex
     rfl
   -- Step 5: assemble impl-side equality.
   have h_impl_eq :
@@ -466,13 +466,13 @@ theorem keccak.squeeze_first_and_last_spec
     show (do
         let b ← libcrux_secrets.traits.Classify.Blanket.classify buf
         let b1 ← state.KeccakState.store_block_full RATE s b
-        let i ← core_models.slice.Slice.len out
-        let s1 ← core_models.Array.Insts.Core_modelsOpsIndexIndex.index
-                  (core_models.Slice.Insts.Core_modelsOpsIndexIndex
-                    (core_models.ops.range.RangeUsize.Insts.Core_modelsSliceIndexSliceIndexSliceSlice
+        let i ← CoreModels.core.slice.Slice.len out
+        let s1 ← CoreModels.core.Array.Insts.CoreOpsIndexIndex.index
+                  (CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+                    (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
                       Std.U8)) b1 { start := 0#usize, «end» := i }
-        core_models.slice.Slice.copy_from_slice
-          core_models.U8.Insts.Core_modelsMarkerCopy out s1) = .ok s2
+        CoreModels.core.slice.Slice.copy_from_slice
+          CoreModels.core.U8.Insts.CoreMarkerCopy out s1) = .ok s2
     rw [h_classify]; simp only [bind_tc_ok]
     rw [h_b1_eq]; simp only [bind_tc_ok]
     rw [h_len]; simp only [bind_tc_ok]

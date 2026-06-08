@@ -22,7 +22,7 @@ attribute [local irreducible] spread_to_even lift_lane_bv
     be tagged `@[spec]` and used by `hax_mvcgen` whenever a downstream
     function calls `keccakf1600_round0_theta`. The post says: for the
     `r_impl` produced by impl-θ, the spec computation
-    `theta_unrolled (lift s)` succeeds with result equal to
+    `keccak_f.theta (lift s)` succeeds with result equal to
     `lift_theta_applied r_impl`. The `r_impl.i = s.i` conjunct lets
     downstream consumers (`prc_lift_spec`, `round0_equiv_spec`) discharge
     their `s.i.val < 24` preconditions on the θ output. -/
@@ -42,8 +42,7 @@ theorem theta_lift_spec (s : state.KeccakState) :
   dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
   refine ⟨hpost.2.1, ?_⟩
   -- Reduce `keccak_f.theta (lift s)` to `.ok (theta_applied (lift s))` via
-  -- the @[spec] proven in `ThetaLiftDefs`. With the unrolled variant gone,
-  -- this replaces the previous `unfold keccak_f.theta; hax_mvcgen` chain.
+  -- the @[spec] proven in `ThetaLiftDefs`.
   show (do let r_spec ← keccak_f.theta (lift s)
            pure (r_spec = lift_theta_applied r_impl)).holds
   rw [show keccak_f.theta (lift s) = .ok (theta_applied (lift s)) from

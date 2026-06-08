@@ -3,7 +3,9 @@
 This directory contains the Lean 4 proof that the IOT-friendly
 implementation of SHA-3 in `libcrux-iot/sha3/src/` computes
 the same function as the hacspec-style FIPS-202 specification in
-`specs/sha3/src/`. Both sides are extracted from Rust into Lean
+the `hacspec_sha3` crate (from
+[`cryspen/libcrux`](https://github.com/cryspen/libcrux)). Both sides are
+extracted from Rust into Lean
 via the `cargo hax into aeneas-lean` pipeline. Most of the verification
 code is AI-generated.
 
@@ -51,10 +53,7 @@ The incremental API is not part of this verification.
 ### Axiom hygiene
 
 All of the top-level theorems report only standard Lean axioms (`propext`,
-`Classical.choice`, `Quot.sound`) plus `Lean.ofReduceBool` /
-`Lean.trustCompiler`  from bv_decide (used for bitvector rotation/XOR identities
-in [Foundation/Lift.lean](Foundation/Lift.lean) and related files), and from a
-single native_decide in [Foundation/RcEquiv.lean](Foundation/RcEquiv.lean).
+`Classical.choice`, `Quot.sound`) plus `bv_decide`.
 
 
 ## Proof architecture
@@ -109,15 +108,15 @@ Three named pieces (one file each at the top of the proof tree):
   Rust extraction equals the pure-Lean bit spec under
   `KState.fromAeneas`.
 
-- **`AlgebraicEquiv.lean`** (`bit_keccak_spec` lifted ≡ unrolled version
-  of spec). Proves the pure-Lean bit spec, lifted to `u64`, equals the
-  unrolled version of the spec.
+- **`AlgebraicEquiv.lean`** (`bit_keccak_spec` lifted ≡ spec). Proves the
+  pure-Lean bit spec, lifted to `u64`, equals the hacspec 24-round
+  application of the round body (θ; ρ; π; χ; ι).
 
 - **`Composition/`**:
-  - **`ViaBit.lean`** — composes the two equivalences above to
-    show that the impl is equivalent to the unrolled version of the spec.
-  - **`HacspecBridge.lean`** — couples the `_unrolled` spec functions
-    to the non-`_unrolled` spec functions to yield `keccakf1600_equiv_hacspec`
+  - **`ViaBit.lean`** — composes the two equivalences above to show that
+    the impl, lifted to `u64`, equals the 24-round spec chain.
+  - **`HacspecBridge.lean`** — bridges the 24-round spec chain to the
+    hacspec `keccak_f.keccak_f` loop to yield `keccakf1600_equiv_hacspec`
     as stated above.
 
 ### Sponge construction proof
@@ -165,12 +164,13 @@ and proceeds as follows:
 
 ## Extraction pipeline
 
-The specification and the implementation are extracted separately, 
+The specification and the implementation are extracted separately,
 using the python scripts [`libcrux-iot/sha3/hax_aeneas.py`](../../../../sha3/hax_aeneas.py) and
-[`specs/sha3/hax_aeneas.py`](../../../../../specs/sha3/hax_aeneas.py). Internally, these scripts
+the corresponding `specs/sha3/hax_aeneas.py` in the
+[`cryspen/libcrux`](https://github.com/cryspen/libcrux) repo. Internally, these scripts
 call `cargo hax into aeneas-lean` and apply small fixes to the output.
 The resulting Lean files are:
-* [`specs/sha3/proofs/aeneas-lean/HacspecSha3/Extraction/Funs.lean`](../../../../../specs/sha3/proofs/aeneas-lean/HacspecSha3/Extraction/Funs.lean)
+* `specs/sha3/proofs/aeneas-lean/HacspecSha3/Extraction/Funs.lean` (in `cryspen/libcrux`)
 * [`libcrux-iot/sha3/proofs/aeneas-lean/LibcruxIotSha3/Extraction/Funs.lean`](Extraction/Funs.lean)
 
 ## Reproduction
@@ -178,12 +178,14 @@ The resulting Lean files are:
 ### Prerequisites
 
 - For running the proofs:
-  - Lean 4 toolchain `leanprover/lean4:v4.28.0-rc1` (pinned in `lean-toolchain`).
+  - Lean 4 toolchain `leanprover/lean4:v4.30.0-rc2` (pinned in `lean-toolchain`).
+  - Hacspec-style implementation from https://github.com/cryspen/libcrux at commit `b313344`
 - For extraction:
-  - Hax at commit `7b4bd97058e0fcbf9135b76297ca91942f2327a6`
+  - Hax at commit `1f85fc13b9967080cc657863e2000ba5d4aa8647`
     (not publicly available yet, https://github.com/cryspen/hax-evit)
-  - Charon at commit `ed22146b1cd4d0b578006a58b3299d41ecbe0fd4`
-  - Aeneas at commit `b5c45e84` (from https://github.com/cryspen/aeneas)
+    with the corresponding charon/aeneas versions:
+    - Charon at https://github.com/AeneasVerif/charon/releases/tag/nightly-2026.06.02
+    - Aeneas at https://github.com/cryspen/aeneas/releases/tag/nightly-2026.06.04
 
 ### Building
 
@@ -209,9 +211,9 @@ the Rust level, before they propagate into Lean proof failures.
 ### Extraction from Rust into Lean
 
 ```bash
-# Spec side:
+# Spec side (from a checkout of cryspen/libcrux):
 cd specs/sha3/
-/hax_aeneas.py
+./hax_aeneas.py
 
 # Impl side:
 cd libcrux-iot/sha3/

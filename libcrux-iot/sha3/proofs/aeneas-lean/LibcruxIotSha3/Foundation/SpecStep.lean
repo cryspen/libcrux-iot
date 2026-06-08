@@ -20,7 +20,7 @@ namespace libcrux_iot_sha3.Foundation
 theorem holds_chain_eq_ok {α : Type} {C : Aeneas.Std.Result α} {X : α}
     (h : (do let r ← C; pure (r = X)).holds) : C = .ok X := by
   cases C
-  all_goals simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, Functor.map,
+  all_goals simp_all [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp, PredTrans.apply, Functor.map,
                       Std.Do.SPred.down_pure]
 
 /-! ## Spec-side one-round step (theta + rho + pi + chi + iota)

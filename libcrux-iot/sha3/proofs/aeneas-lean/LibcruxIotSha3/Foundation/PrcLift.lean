@@ -23,6 +23,8 @@ namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
 
+attribute [local spec] Aeneas.Std.uncurry
+
 /-! ### Macro: `preserves_complement`
 
 Given a list of 5 written lane indices, expand to the 40-conjunct
@@ -77,14 +79,18 @@ private theorem set_with_zeta_spec
     ⦃ ⌜ True ⌝ ⦄
     state.KeccakState.set_with_zeta s i j zeta v
     ⦃ Q ⦄ := by
+  have h_idx : 5 * j.val + i.val < s.st.val.length := by simp; scalar_tac
+  have h_eq : s.st.val[5 * j.val + i.val]! = s.st.val[5 * j.val + i.val]'h_idx := by
+    rw [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem h_idx]; rfl
   unfold state.KeccakState.set_with_zeta
   mvcgen
   all_goals first | simpa | scalar_tac | (
-    simp only [Std.WP.predn] at *
-    obtain ⟨_, _⟩ := ‹_ ∧ _›
-    apply hpost <;> scalar_tac)
+    apply hpost <;> first
+      | rfl
+      | scalar_tac
+      | (rw [h_eq]; simp_all [WP.uncurry', Std.Array.set_val_eq]))
 
-/-! ## Full-FC sub-function specs (Step 7)
+/-! ## Full-FC sub-function specs
 
 Each of the 10 `pi_rho_chi_y{0..4}_zeta{0,1}` sub-functions writes 5
 cells of `st`; we capture them in **50-cell FC form**: 5 written cells
@@ -95,24 +101,7 @@ The FC posts are `@[spec]`-tagged so `hax_mvcgen` threads the cell
 content automatically when composing `pi_rho_chi_{1,2}` (via the
 `prc_chain_FC` spec) and downstream into `prc_lift_spec`. -/
 
-/-- Legacy macro for the original 50-cell FC posts (kept while migrating
-    the remaining FCs to the R1 chained-set form). -/
-local macro "prc_y_zeta_fc_proof" subfun:ident : tactic => `(tactic|
-  (unfold $subfun
-   hax_mvcgen
-   all_goals first
-     | scalar_tac
-     | (refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-        all_goals first
-          | (apply Eq.trans ‹_›; assumption)
-          | assumption
-          | scalar_tac
-          | simp_all [Std.Array.set_val_eq, rot32,
-                      Std.UScalar.eq_equiv_bv_eq,
-                      Std.UScalar.bv_xor, Std.UScalar.bv_and,
-                      Std.UScalar.bv_not])))
-
-/- Proof body for the R1 chained-set FC posts in the y1-y4 family
+/- Proof body for the chained-set FC posts in the y1-y4 family
    (no RC step, preserves `s.i`). Uses `expose_names` to grab the stable
    hyp names produced by `hax_mvcgen` (which assigns h_25..h_55 to the
    chi value chains and h_28..h_59 to the state chain).
@@ -166,7 +155,7 @@ def apply_5_writes
   let l := l.set lane3 ((l[lane3]!).set half3 v3)
   l.set lane4 ((l[lane4]!).set half4 v4)
 
-/-! y0_zeta0 FC (R1 chained-set form).
+/-! y0_zeta0 FC (chained-set form).
 
     Captures the 5 writes as a single chained `apply_5_writes` equation
     on `r.st.val`. Downstream `simp` with aeneas's List.set/getElem!
@@ -203,29 +192,29 @@ private theorem pi_rho_chi_y0_zeta0_spec_fc
   · -- r.i = s.i
     exact h_58.trans (h_51.trans (h_44.trans (h_37.trans h_30)))
   · -- val-eq: ↑r.st = apply_5_writes ...
+    -- Bridge the spec-side RC read (`getElem!`, i.e. `?.getD default`) to the
+    -- impl-side total `getElem` (h_28). The bound `s.i < 255` follows from `hi`.
+    have hb : s.i.val < keccak.RC_INTERLEAVED_0.val.length := by
+      have hl : keccak.RC_INTERLEAVED_0.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_0.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_0.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
     rw [h_61, h_54, h_47, h_40, h_33]
     norm_num [apply_5_writes]
     congr 6
     all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
-        -- chi 0 chain (r_14)
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
-        -- chi 1 chain (r_18)
         h_36.2, h_35.2, h_34,
-        -- chi 2 chain (r_22)
         h_43.2, h_42.2, h_41,
-        -- chi 3 chain (r_26)
         h_50.2, h_49.2, h_48,
-        -- chi 4 chain (r_30)
         h_57.2, h_56.2, h_55,
-        -- rotateLeft hyps (v_4, v_5, v_12, v_13, v_14)
         h_7, h_9, h_20, h_22, h_24,
-        -- xor hyps (r_2, r_3, r_7, r_8, r_9)
         h_6.2, h_8.2, h_19.2, h_21.2, h_23.2,
-        -- RC_INTERLEAVED hyp (r_13)
         h_28,
-        -- substitute v_i and r_i to s.st/s.d reads
         h, h_1, h_2, h_3, h_4, h_5, h_10, h_11, h_12, h_13, h_14, h_15, h_16, h_17, h_18,
         Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
       norm_num)
@@ -265,12 +254,21 @@ private theorem pi_rho_chi_y0_zeta1_spec_fc
     rw [h_59, h_52, h_45, h_38, h_31, h_30]
     rfl
   · -- val-eq
+    -- Bridge the spec-side RC read (`getElem!`) to the impl-side total
+    -- `getElem` (h_28); the bound `s.i < 255` follows from `hi`.
+    have hb : s.i.val < keccak.RC_INTERLEAVED_1.val.length := by
+      have hl : keccak.RC_INTERLEAVED_1.val.length = 255 := Array.length_eq _
+      omega
+    have hRC : keccak.RC_INTERLEAVED_1.val[s.i.val]?.getD default
+             = keccak.RC_INTERLEAVED_1.val[s.i.val]'hb := by
+      rw [List.getElem?_eq_getElem hb]; rfl
     rw [h_62, h_55, h_48, h_41, h_34]
     norm_num [apply_5_writes]
     congr 6
     all_goals apply Std.U32.bv_eq_imp_eq
     all_goals (
       simp only [
+        hRC,
         h_29.2, h_27.2, h_26.2, h_25,
         h_37.2, h_36.2, h_35,
         h_44.2, h_43.2, h_42,
@@ -283,7 +281,7 @@ private theorem pi_rho_chi_y0_zeta1_spec_fc
         Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not, rot32]
       norm_num)
 
-/-! y1_zeta0 FC (R1 chained-set form): writes lanes 2/8/14/15/21 at halves 1/1/1/0/0;
+/-! y1_zeta0 FC (chained-set form): writes lanes 2/8/14/15/21 at halves 1/1/1/0/0;
     preserves `s.i`. Shift=2: bx_i reads from write_pos[(i-2) mod 5]. -/
 set_option maxHeartbeats 16000000 in
 @[spec]
@@ -468,7 +466,7 @@ private theorem pi_rho_chi_y4_zeta1_spec_fc
         (bx4 ^^^ ((~~~bx0) &&& bx1)) ⌝ ⦄ := by
   prc_y_zeta_no_rc_proof keccak.keccakf1600_round0_pi_rho_chi_y4_zeta1
 
-/-! ## Spec-side `@[spec]` lemmas for `keccak_f.{iota,rho_unrolled,pi_unrolled,chi_unrolled}`
+/-! ## Spec-side `@[spec]` lemmas for `keccak_f.{iota,rho,pi,chi}`
 
 These pure-semantics descriptions let `hax_mvcgen` thread the spec
 computation as a black-box step rather than drilling into each
@@ -920,10 +918,22 @@ theorem lift_theta_applied_bv_24 (s : state.KeccakState) :
                    ((s.st.val[24]!).val[1]! ^^^ (s.d.val[4]!).val[1]!).bv := by
   unfold lift_theta_applied; rfl
 
+/-! ### Set-peeling lemmas for `List` (`getElem!` over `set`)
+
+List-level `getElem!`-over-`set` lemmas, derived from `List.getElem?_set`. -/
+private theorem list_getElem!_set_ne {α} [Inhabited α] {l : List α} {i j : Nat}
+    {a : α} (h : i ≠ j) : (l.set i a)[j]! = l[j]! := by
+  simp only [List.getElem!_eq_getElem?_getD, List.getElem?_set, if_neg h]
+
+private theorem list_getElem!_set_eq {α} [Inhabited α] {l : List α} {i : Nat}
+    {a : α} (h : i < l.length) : (l.set i a)[i]! = a := by
+  simp only [List.getElem!_eq_getElem?_getD, List.getElem?_set, if_pos rfl, h,
+    if_true, Option.getD_some]
+
 /-! ## Bridge 1: `prc_lift_spec`
 
 Couples the impl `keccakf1600_round0_pi_rho_chi_{1,2}` chain to the spec
-`iota ∘ chi_unrolled ∘ pi_unrolled ∘ rho_unrolled`. After the recursive
+`iota ∘ chi ∘ pi ∘ rho`. After the recursive
 `hax_mvcgen` produces 50 impl cell equations plus 4 spec substitutions,
 we rewrite the spec side via Bridge 2 to use `prc_spec`, then close the
 25-lane equality via the standard lift cascade (lift_getElem_bv + lift
@@ -947,41 +957,20 @@ theorem prc_lift_spec (s : state.KeccakState) (hi_lt : s.i.val < 24) :
   subst_vars
   rw [prc_spec_eq_composed]
   casesm* _ ∧ _
-  rename_i r9 r8 r7 r6 r5 r4 r3 r2 r1 r' hd hc hi h_chain
-    l26 l25 l24 l23 l22 l21 l20 l19 l18 l17 l16 l15 l14 l13 l12 l11 l10 l9 l8
-    h_FC9 l7 h_FC8 l6 h_FC7 l5 h_FC6 l4 h_FC5 l3 h_FC4 l2 h_FC3 l1 h_FC2 l_last h_FC1
-  -- Substitute d/c/i preservation chains BEFORE the cell split (avoids per-cell duplication).
-  simp only [l_last, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17,
-    l18, l19, l20, l21, l22, l23, l24, l25, l26]
-    at h_chain h_FC1 h_FC2 h_FC3 h_FC4 h_FC5 h_FC6 h_FC7 h_FC8 h_FC9
-  have hr'  : (↑r'.st : List lane.Lane2U32).length = 25  := by exact r'.st.2
-  have hr1  : (↑r1.st : List lane.Lane2U32).length = 25  := by exact r1.st.2
-  have hr2  : (↑r2.st : List lane.Lane2U32).length = 25  := by exact r2.st.2
-  have hr3  : (↑r3.st : List lane.Lane2U32).length = 25  := by exact r3.st.2
-  have hr4  : (↑r4.st : List lane.Lane2U32).length = 25  := by exact r4.st.2
-  have hr5  : (↑r5.st : List lane.Lane2U32).length = 25  := by exact r5.st.2
-  have hr6  : (↑r6.st : List lane.Lane2U32).length = 25  := by exact r6.st.2
-  have hr7  : (↑r7.st : List lane.Lane2U32).length = 25  := by exact r7.st.2
-  have hr8  : (↑r8.st : List lane.Lane2U32).length = 25  := by exact r8.st.2
-  have hr9  : (↑r9.st : List lane.Lane2U32).length = 25  := by exact r9.st.2
-  have hss  : (↑s.st  : List lane.Lane2U32).length = 25  := by exact s.st.2
   have hlane : ∀ (L : lane.Lane2U32), L.val.length = 2 := fun L => L.2
+  have hss : (↑s.st : List lane.Lane2U32).length = 25 := s.st.2
   apply Subtype.ext
   unfold prc_spec lift_perm impl_perm impl_swap lift_lane_maybe_swap transpose_perm
   simp (config := { decide := true }) only [Std.Array.make, List.ofFn_succ, List.ofFn_zero,
     Fin.val_succ, Fin.val_zero, Nat.succ_eq_add_one, Nat.zero_add, Nat.reduceAdd, Nat.reduceMul,
     Nat.reduceDiv, Nat.reduceMod, reduceIte]
   repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
-  -- Per-cell: cascade chain through apply_5_writes + Std.Array.set, then lift_theta_applied_bv_K,
-  -- then ← lift_* / ← rot_* / rc_equiv to equate spec and impl side.
   all_goals (
     apply Std.U64.bv_eq_imp_eq
     simp (config := { decide := true }) only
-      [h_chain, h_FC1, h_FC2, h_FC3, h_FC4, h_FC5, h_FC6, h_FC7, h_FC8, h_FC9, apply_5_writes,
-       lift_lane,
-       List.getElem!_set_ne, List.getElem!_set, List.length_set,
-       Std.Array.set_val_eq, hlane,
-       hr', hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hss,
+      [*, apply_5_writes, lift_lane,
+       list_getElem!_set_ne, list_getElem!_set_eq, List.length_set,
+       Std.Array.set_val_eq, hlane, hss,
        show ((0#usize : Std.Usize) : Nat) = 0 from rfl,
        show ((1#usize : Std.Usize) : Nat) = 1 from rfl]
     simp only [lift_theta_applied_bv_0, lift_theta_applied_bv_1, lift_theta_applied_bv_2,

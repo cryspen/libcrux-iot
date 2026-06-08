@@ -53,7 +53,7 @@ attribute [local irreducible] keccak.keccakf1600 keccak_f.keccak_f
 private theorem triple_of_ok_sh {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
-  subst hx; simp [Std.Do.Triple, WP.wp, hp]
+  subst hx; simp [Std.Do.Triple, WP.wp, PredTrans.apply, hp]
 
 /-! ### `keccakx1` is a one-liner wrapper around `keccak.keccak`. -/
 
@@ -63,25 +63,25 @@ private theorem keccakx1_eq_keccak
     keccakx1 RATE DELIM data out = keccak.keccak RATE DELIM data out := by
   unfold keccakx1; rfl
 
-/-! ### Helper: `core_models.slice.Slice.len` Result-level equation. -/
+/-! ### Helper: `CoreModels.core.slice.Slice.len` Result-level equation. -/
 
 private theorem slice_len_eq_sh (s : Slice Std.U8) :
-    core_models.slice.Slice.len s = .ok (Std.Slice.len s) := by
-  unfold core_models.slice.Slice.len; rfl
+    CoreModels.core.slice.Slice.len s = .ok (Std.Slice.len s) := by
+  unfold CoreModels.core.slice.Slice.len; rfl
 
 /-! ### Helper: `lift (UScalar.cast .Usize U32.MAX) = .ok 4294967295#usize`. -/
 
 private theorem lift_cast_U32_MAX :
-    (Std.lift (Std.UScalar.cast .Usize core_models.num.U32.MAX)
+    (Std.lift (Std.UScalar.cast .Usize CoreModels.core.num.U32.MAX)
       : Result Std.Usize)
       = .ok 4294967295#usize := by
   unfold Std.lift
   congr 1
   apply Std.UScalar.eq_of_val_eq
   rw [Std.U32.cast_Usize_val_eq]
-  -- Goal: core_models.num.U32.MAX.val = 4294967295#usize.val.
-  show core_models.num.U32.MAX.val = (4294967295#usize : Std.Usize).val
-  simp only [core_models.num.U32.MAX]
+  -- Goal: CoreModels.core.num.U32.MAX.val = 4294967295#usize.val.
+  show CoreModels.core.num.U32.MAX.val = (4294967295#usize : Std.Usize).val
+  simp only [CoreModels.core.num.U32.MAX]
   rfl
 
 /-! ### Helper: extract Triple post into existential form. -/
@@ -93,11 +93,11 @@ private theorem triple_exists_ok_sh {α : Type} {x : Result α}
   match hx : x with
   | .ok v =>
       refine ⟨v, rfl, ?_⟩
-      have := h; simp [Std.Do.Triple, WP.wp] at this; exact this
+      have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
   | .fail _ =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
   | .div =>
-      exfalso; have := h; simp [Std.Do.Triple, WP.wp] at this
+      exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
 
 /-! ## SHAKE128 spec. -/
 
@@ -295,10 +295,10 @@ theorem sha224_ema_spec
                     r.val[k]! = spec_out.val[k]! ⌝ ⦄ := by
   -- Side facts.
   have h_slice_len_payload :
-      core_models.slice.Slice.len payload = .ok (Std.Slice.len payload) :=
+      CoreModels.core.slice.Slice.len payload = .ok (Std.Slice.len payload) :=
     slice_len_eq_sh payload
   have h_slice_len_digest :
-      core_models.slice.Slice.len digest = .ok (Std.Slice.len digest) :=
+      CoreModels.core.slice.Slice.len digest = .ok (Std.Slice.len digest) :=
     slice_len_eq_sh digest
   have h_payload_len_val : (Std.Slice.len payload).val = payload.val.length :=
     Std.Slice.len_val payload
@@ -391,10 +391,10 @@ theorem sha256_ema_spec
                 ∧ ∀ k : Nat, k < 32 →
                     r.val[k]! = spec_out.val[k]! ⌝ ⦄ := by
   have h_slice_len_payload :
-      core_models.slice.Slice.len payload = .ok (Std.Slice.len payload) :=
+      CoreModels.core.slice.Slice.len payload = .ok (Std.Slice.len payload) :=
     slice_len_eq_sh payload
   have h_slice_len_digest :
-      core_models.slice.Slice.len digest = .ok (Std.Slice.len digest) :=
+      CoreModels.core.slice.Slice.len digest = .ok (Std.Slice.len digest) :=
     slice_len_eq_sh digest
   have h_payload_len_val : (Std.Slice.len payload).val = payload.val.length :=
     Std.Slice.len_val payload
@@ -480,10 +480,10 @@ theorem sha384_ema_spec
                 ∧ ∀ k : Nat, k < 48 →
                     r.val[k]! = spec_out.val[k]! ⌝ ⦄ := by
   have h_slice_len_payload :
-      core_models.slice.Slice.len payload = .ok (Std.Slice.len payload) :=
+      CoreModels.core.slice.Slice.len payload = .ok (Std.Slice.len payload) :=
     slice_len_eq_sh payload
   have h_slice_len_digest :
-      core_models.slice.Slice.len digest = .ok (Std.Slice.len digest) :=
+      CoreModels.core.slice.Slice.len digest = .ok (Std.Slice.len digest) :=
     slice_len_eq_sh digest
   have h_payload_len_val : (Std.Slice.len payload).val = payload.val.length :=
     Std.Slice.len_val payload
@@ -569,10 +569,10 @@ theorem sha512_ema_spec
                 ∧ ∀ k : Nat, k < 64 →
                     r.val[k]! = spec_out.val[k]! ⌝ ⦄ := by
   have h_slice_len_payload :
-      core_models.slice.Slice.len payload = .ok (Std.Slice.len payload) :=
+      CoreModels.core.slice.Slice.len payload = .ok (Std.Slice.len payload) :=
     slice_len_eq_sh payload
   have h_slice_len_digest :
-      core_models.slice.Slice.len digest = .ok (Std.Slice.len digest) :=
+      CoreModels.core.slice.Slice.len digest = .ok (Std.Slice.len digest) :=
     slice_len_eq_sh digest
   have h_payload_len_val : (Std.Slice.len payload).val = payload.val.length :=
     Std.Slice.len_val payload

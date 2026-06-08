@@ -31,7 +31,7 @@ loop-spec helpers) and externally (in `HacspecBridge.lean`). -/
 
 /-! ## I32 iterator-next spec
 
-The `core_models.I32.Insts.Core_modelsIterRangeStep` instance (defined
+The `CoreModels.core.I32.Insts.CoreIterRangeStep` instance (defined
 in `Extraction/Missing.lean:25`) uses `IScalar.tryMk .I32 (start.val +
 1)` for `forward_checked`. For our use case (range `[0, 6)`), the
 bounds are well within I32 and `tryMk` succeeds. -/
@@ -44,63 +44,60 @@ theorem IteratorRange_next_spec_i32 (i e : Std.I32)
     (h_ge : i.val ≥ e.val →
       (Q.1 (none, { start := i, «end» := e })).down) :
     ⦃ ⌜ True ⌝ ⦄
-    core_models.iter.range.IteratorRange.next core_models.I32.Insts.Core_modelsIterRangeStep
+    CoreModels.core.iter.range.IteratorRange.next CoreModels.core.I32.Insts.CoreIterRangeStep
       { start := i, «end» := e }
     ⦃ Q ⦄ := by
-  unfold core_models.iter.range.IteratorRange.next
-  unfold core_models.I32.Insts.Core_modelsIterRangeStep
-  by_cases h : i.val < e.val
-  · -- i < e: partial_cmp returns Less, forward_checked succeeds (i+1 ≤ e < 2^31).
-    have hbnd : i.val + 1 < 2^31 := by omega
-    have hi_min := i.hBounds.1
-    have hbnd_lo : -(2^31 : Int) ≤ i.val + 1 := by
-      simp only [Std.IScalar.min, Std.IScalarTy.numBits] at hi_min
-      omega
-    have h_lt' := h_lt h
-    simp_all [compare, compareOfLessAndEq]
-    have hck := Std.IScalar.tryMk_eq Std.IScalarTy.I32 (i.val + 1)
-    cases hres : Std.IScalar.tryMk Std.IScalarTy.I32 (i.val + 1) with
-    | ok s =>
-        rw [hres] at hck
-        obtain ⟨hsv, _⟩ := hck
-        simp only [Option.ofResult]
-        mvcgen
-        exact h_lt' s hsv
-    | fail _ =>
-        rw [hres] at hck
-        simp at hck
-        omega
-    | div =>
-        rw [hres] at hck
-        exact absurd hck (by exact False.elim)
-  · -- i ≥ e: partial_cmp returns Equal or Greater (not Less); branch returns
-    -- `.ok (none, range)` directly without invoking forward_checked.
-    have hle : e.val ≤ i.val := Int.not_lt.mp h
-    have h_ge' := h_ge hle
-    -- The boolean condition `isLess` evaluates to `false` under `¬ (i < e)`.
-    have hisLess_false :
-        (match
-          (match if i.val < e.val then Ordering.lt
-                  else if i.val = e.val then Ordering.eq else Ordering.gt with
-           | Ordering.lt => core_models.cmp.Ordering.Less
-           | Ordering.eq => core_models.cmp.Ordering.Equal
-           | Ordering.gt => core_models.cmp.Ordering.Greater) with
-          | core_models.cmp.Ordering.Less => true
-          | _ => false) = false := by
-      simp only [if_neg h]
-      by_cases hieq : i.val = e.val <;> simp [hieq]
-    simp_all [compare, compareOfLessAndEq]
-    mvcgen
-    all_goals first
-      | exact h_ge'
-      | (exfalso
-         rename_i hLess _ _
-         have : false = true := hisLess_false.symm.trans hLess
-         exact absurd this (by decide))
-      | (exfalso
-         rename_i hLess _
-         have : false = true := hisLess_false.symm.trans hLess
-         exact absurd this (by decide))
+  rcases lt_or_ge i.val e.val with hlt | hge
+  · -- i < e: `forward_checked` succeeds with no overflow, start advances by 1.
+    have hcmp : compare i.val e.val = Ordering.lt := Int.compare_eq_lt.mpr hlt
+    have hmin : (-2147483648 : Int) ≤ i.val := by scalar_tac
+    -- the `1#usize`, cast through u32 then hcast to i32, has value 1
+    have h1val : (UScalar.hcast IScalarTy.I32 (UScalar.cast UScalarTy.U32 1#usize)).val = 1 := by
+      simp only [UScalar.hcast, UScalar.cast, IScalarTy.I32_numBits_eq, UScalarTy.U32_numBits_eq]
+      simp; decide
+    -- the wrapping_add does not overflow: i.val + 1 ∈ [-2^31, 2^31)
+    have hwval : (Std.I32.wrapping_add i
+        (UScalar.hcast IScalarTy.I32 (UScalar.cast UScalarTy.U32 1#usize))).val = i.val + 1 := by
+      rw [Std.I32.wrapping_add_val_eq, h1val, Int.bmod_eq_emod]
+      simp only [Nat.reducePow]
+      split <;> omega
+    -- the same no-overflow fact, in the `bmod` form `simp` exposes
+    have hbmod : ((i.val : Int) + 1).bmod 4294967296 = i.val + 1 := by
+      rw [Int.bmod_eq_emod]; split <;> omega
+    -- `try_from 1#usize` succeeds (1 is in range for u32).
+    have htry : CoreModels.core.U32.Insts.CoreConvertTryFromUsizeTryFromIntError.try_from 1#usize
+        = .ok (CoreModels.core.result.Result.Ok (UScalar.cast UScalarTy.U32 1#usize)) := by
+      unfold CoreModels.core.U32.Insts.CoreConvertTryFromUsizeTryFromIntError.try_from
+      simp [Aeneas.Std.lift, U32.rMax]
+    have h_eq : CoreModels.core.iter.range.IteratorRange.next
+        CoreModels.core.I32.Insts.CoreIterRangeStep { start := i, «end» := e }
+      = .ok (CoreModels.core.option.Option.Some i,
+             { start := Std.I32.wrapping_add i
+                 (UScalar.hcast IScalarTy.I32 (UScalar.cast UScalarTy.U32 1#usize)),
+               «end» := e }) := by
+      unfold CoreModels.core.iter.range.IteratorRange.next
+      simp [CoreModels.core.I32.Insts.CoreCmpPartialOrdI32,
+            CoreModels.core.mkIPartialOrd,
+            CoreModels.core.I32.Insts.CoreCloneClone.clone,
+            CoreModels.core.I32.Insts.CoreIterRangeStep.forward_checked,
+            CoreModels.core.num.I32.wrapping_add,
+            CoreModels.rust_primitives.arithmetic.wrapping_add_i32,
+            Aeneas.Std.lift, hcmp, htry, h1val, hbmod]
+    rw [h_eq]
+    simp [Triple, WP.wp, PredTrans.apply]
+    exact h_lt hlt _ hwval
+  · -- i ≥ e: `next` returns `none`.
+    have h_eq : CoreModels.core.iter.range.IteratorRange.next
+        CoreModels.core.I32.Insts.CoreIterRangeStep { start := i, «end» := e }
+      = .ok (CoreModels.core.option.Option.None, { start := i, «end» := e }) := by
+      unfold CoreModels.core.iter.range.IteratorRange.next
+      simp only [CoreModels.core.I32.Insts.CoreCmpPartialOrdI32,
+                 CoreModels.core.mkIPartialOrd]
+      have hcmp : compare i.val e.val ≠ Ordering.lt := Int.compare_ne_lt.mpr hge
+      cases h : compare i.val e.val <;> simp_all
+    rw [h_eq]
+    simp [Triple, WP.wp, PredTrans.apply]
+    exact h_ge hge
 
 /-! ## I32 loop-over-range spec
 
@@ -113,27 +110,27 @@ private abbrev ResultPS := PostShape.except Error (PostShape.except PUnit PostSh
 private theorem triple_noThrow_elim_i32 {α : Type} {x : Result α} {Q : α → Assertion ResultPS}
     (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ PostCond.noThrow Q ⦄) {v : α} (hv : x = ok v) :
     (Q v).down := by
-  subst hv; simpa [Triple, WP.wp] using h
+  subst hv; simpa [Triple, WP.wp, PredTrans.apply] using h
 
 private theorem triple_noThrow_exists_ok_i32 {α : Type} {x : Result α}
     {Q : α → Assertion ResultPS}
     (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ PostCond.noThrow Q ⦄) : ∃ v, x = ok v := by
   match x, h with
   | .ok v, _ => exact ⟨v, rfl⟩
-  | .fail _, h => exact absurd h (by simp [Triple, WP.wp])
-  | .div, h => exact absurd h (by simp [Triple, WP.wp])
+  | .fail _, h => exact absurd h (by simp [Triple, WP.wp, PredTrans.apply])
+  | .div, h => exact absurd h (by simp [Triple, WP.wp, PredTrans.apply])
 
 private theorem triple_of_ok_i32 {α : Type} {x : Result α} {v : α} {P : α → Prop}
     (hx : x = ok v) (hp : P v) :
     (⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄) := by
-  subst hx; simp [Triple, WP.wp, hp]
+  subst hx; simp [Triple, WP.wp, PredTrans.apply, hp]
 
 end loop_range_i32_helpers
 
 set_option maxHeartbeats 2000000 in
 theorem loop_range_spec_i32 {β : Type}
-    (body : (core_models.ops.range.Range Std.I32 × β) →
-      Result (ControlFlow (core_models.ops.range.Range Std.I32 × β) β))
+    (body : (CoreModels.core.ops.range.Range Std.I32 × β) →
+      Result (ControlFlow (CoreModels.core.ops.range.Range Std.I32 × β) β))
     (init : β) (s e : Std.I32) (inv : Std.I32 → β → Result Prop)
     (h_le : s.val ≤ e.val)
     (h_init : (inv s init).holds)
