@@ -2756,14 +2756,11 @@ mod cross_spec {
 
     /// Compute the spec's column-parity array `C` from a flat `[u64; 25]` state.
     ///
-    /// Under the layout `state[5*x + y] = A[x, y]`, `C[x] = ⊕_{y=0..4} state[5*x + y]`.
+    /// Under the spec layout `state[5*y + x] = A[x, y]`,
+    /// `C[x] = ⊕_{y=0..4} state[5*y + x]`.
     fn spec_c(state: &[u64; 25]) -> [u64; 5] {
         core::array::from_fn(|x| {
-            state[5 * x + 0]
-                ^ state[5 * x + 1]
-                ^ state[5 * x + 2]
-                ^ state[5 * x + 3]
-                ^ state[5 * x + 4]
+            state[x] ^ state[5 + x] ^ state[5 * 2 + x] ^ state[5 * 3 + x] ^ state[5 * 4 + x]
         })
     }
 

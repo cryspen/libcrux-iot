@@ -204,18 +204,32 @@ impl FromLeBytes<4> for U32 {
 /// `[u64; 25]` Keccak state. `state_from_spec` is its inverse, used to
 /// seed the implementation from a known `[u64; 25]` state for tests.
 ///
-/// Both impl and spec now store lane `A[x, y]` at flat index `5*x + y`,
-/// so the index mapping is the identity.
+/// The two crates use *transposed* lane layouts:
+///
+/// * The spec stores lane `A[x, y]` at flat index `5*y + x` (as  described in
+///   FIPS 202 §3.1.2), so byte-lane `l` lives directly at `state[l]`.
+/// * The impl stores lane `A[x, y]` at flat index `5*x + y` — its byte I/O
+///   (`store` / `load_block`) reaches rate-lane `l` via
+///   `get_lane(l / 5, l % 5)`, i.e. `st[5 * (l % 5) + (l / 5)]`.
+///
+/// The two layouts are therefore related by the 5×5 transpose
+/// `T(l) = 5 * (l % 5) + (l / 5)`. Spec index `l` corresponds to impl
+/// index `T(l)`, so both helpers map through `T`.
 #[cfg(test)]
 pub(crate) mod cross_spec {
     use super::KeccakState;
     use crate::lane::Lane2U32;
     use libcrux_secrets::{Classify, Declassify};
 
+    /// Transpose between spec and impl flat lane indices.
+    fn transpose(idx: usize) -> usize {
+        5 * (idx % 5) + (idx / 5)
+    }
+
     /// Deinterleave: read the impl state into the spec's flat `[u64; 25]`.
     pub(crate) fn state_to_spec(s: &KeccakState) -> [u64; 25] {
         core::array::from_fn(|idx| {
-            let l = s.st[idx].deinterleave();
+            let l = s.st[transpose(idx)].deinterleave();
             let arr = l.0.declassify();
             (arr[0] as u64) | ((arr[1] as u64) << 32)
         })
@@ -227,7 +241,7 @@ pub(crate) mod cross_spec {
         for idx in 0..25 {
             let lo = (flat[idx] as u32).classify();
             let hi = ((flat[idx] >> 32) as u32).classify();
-            s.st[idx] = Lane2U32::from_ints([lo, hi]).interleave();
+            s.st[transpose(idx)] = Lane2U32::from_ints([lo, hi]).interleave();
         }
         s
     }
