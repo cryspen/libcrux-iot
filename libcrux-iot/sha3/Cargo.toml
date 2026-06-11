@@ -1,7 +1,7 @@
 [package]
 name = "libcrux-iot-sha3"
 description = "Libcrux-IoT SHA-3 implementation"
-exclude = ["/c.sh", "/c.yaml", "/tests/tv", "tests/cavp.rs"]
+exclude = ["/c.sh", "/c.yaml"]
 publish = false
 
 readme.workspace = true
