@@ -3009,13 +3009,6 @@ libcrux_iot_sha3_state_load_block_2u32_b2(
   size_t start
 )
 {
-  Eurydice_arr_c0 state_flat;
-  Eurydice_arr_a0 repeat_expression[25U];
-  for (size_t i = (size_t)0U; i < (size_t)25U; i++)
-  {
-    repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
-  }
-  memcpy(state_flat.data, repeat_expression, (size_t)25U * sizeof (Eurydice_arr_a0));
   for (size_t i = (size_t)0U; i < (size_t)136U / (size_t)8U; i++)
   {
     size_t i0 = i;
@@ -3049,15 +3042,10 @@ libcrux_iot_sha3_state_load_block_2u32_b2(
             KRML_CLITERAL(core_result_Result_c7){ .tag = core_result_Ok, .val = { .case_Ok = arr } }
           )));
     Eurydice_arr_a0
-    uu____0 =
+    lane =
       libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29((
             KRML_CLITERAL(Eurydice_arr_a0){ .data = { a, b } }
           )));
-    state_flat.data[i0] = uu____0;
-  }
-  for (size_t i = (size_t)0U; i < (size_t)136U / (size_t)8U; i++)
-  {
-    size_t i0 = i;
     Eurydice_arr_a0
     got = libcrux_iot_sha3_state_get_lane_18(keccak_state, i0 / (size_t)5U, i0 % (size_t)5U);
     libcrux_iot_sha3_state_set_lane_18(keccak_state,
@@ -3067,10 +3055,10 @@ libcrux_iot_sha3_state_load_block_2u32_b2(
           KRML_CLITERAL(Eurydice_arr_a0){
             .data = {
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)0U)[0U],
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)1U)[0U]
             }
           }
@@ -3211,13 +3199,6 @@ libcrux_iot_sha3_state_load_block_2u32_60(
   size_t start
 )
 {
-  Eurydice_arr_c0 state_flat;
-  Eurydice_arr_a0 repeat_expression[25U];
-  for (size_t i = (size_t)0U; i < (size_t)25U; i++)
-  {
-    repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
-  }
-  memcpy(state_flat.data, repeat_expression, (size_t)25U * sizeof (Eurydice_arr_a0));
   for (size_t i = (size_t)0U; i < (size_t)168U / (size_t)8U; i++)
   {
     size_t i0 = i;
@@ -3251,15 +3232,10 @@ libcrux_iot_sha3_state_load_block_2u32_60(
             KRML_CLITERAL(core_result_Result_c7){ .tag = core_result_Ok, .val = { .case_Ok = arr } }
           )));
     Eurydice_arr_a0
-    uu____0 =
+    lane =
       libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29((
             KRML_CLITERAL(Eurydice_arr_a0){ .data = { a, b } }
           )));
-    state_flat.data[i0] = uu____0;
-  }
-  for (size_t i = (size_t)0U; i < (size_t)168U / (size_t)8U; i++)
-  {
-    size_t i0 = i;
     Eurydice_arr_a0
     got = libcrux_iot_sha3_state_get_lane_18(keccak_state, i0 / (size_t)5U, i0 % (size_t)5U);
     libcrux_iot_sha3_state_set_lane_18(keccak_state,
@@ -3269,10 +3245,10 @@ libcrux_iot_sha3_state_load_block_2u32_60(
           KRML_CLITERAL(Eurydice_arr_a0){
             .data = {
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)0U)[0U],
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)1U)[0U]
             }
           }
@@ -4471,13 +4447,6 @@ libcrux_iot_sha3_state_load_block_2u32_c6(
   size_t start
 )
 {
-  Eurydice_arr_c0 state_flat;
-  Eurydice_arr_a0 repeat_expression[25U];
-  for (size_t i = (size_t)0U; i < (size_t)25U; i++)
-  {
-    repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
-  }
-  memcpy(state_flat.data, repeat_expression, (size_t)25U * sizeof (Eurydice_arr_a0));
   for (size_t i = (size_t)0U; i < (size_t)72U / (size_t)8U; i++)
   {
     size_t i0 = i;
@@ -4511,15 +4480,10 @@ libcrux_iot_sha3_state_load_block_2u32_c6(
             KRML_CLITERAL(core_result_Result_c7){ .tag = core_result_Ok, .val = { .case_Ok = arr } }
           )));
     Eurydice_arr_a0
-    uu____0 =
+    lane =
       libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29((
             KRML_CLITERAL(Eurydice_arr_a0){ .data = { a, b } }
           )));
-    state_flat.data[i0] = uu____0;
-  }
-  for (size_t i = (size_t)0U; i < (size_t)72U / (size_t)8U; i++)
-  {
-    size_t i0 = i;
     Eurydice_arr_a0
     got = libcrux_iot_sha3_state_get_lane_18(keccak_state, i0 / (size_t)5U, i0 % (size_t)5U);
     libcrux_iot_sha3_state_set_lane_18(keccak_state,
@@ -4529,10 +4493,10 @@ libcrux_iot_sha3_state_load_block_2u32_c6(
           KRML_CLITERAL(Eurydice_arr_a0){
             .data = {
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)0U)[0U],
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)1U)[0U]
             }
           }
@@ -5041,13 +5005,6 @@ libcrux_iot_sha3_state_load_block_2u32_9e(
   size_t start
 )
 {
-  Eurydice_arr_c0 state_flat;
-  Eurydice_arr_a0 repeat_expression[25U];
-  for (size_t i = (size_t)0U; i < (size_t)25U; i++)
-  {
-    repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
-  }
-  memcpy(state_flat.data, repeat_expression, (size_t)25U * sizeof (Eurydice_arr_a0));
   for (size_t i = (size_t)0U; i < (size_t)144U / (size_t)8U; i++)
   {
     size_t i0 = i;
@@ -5081,15 +5038,10 @@ libcrux_iot_sha3_state_load_block_2u32_9e(
             KRML_CLITERAL(core_result_Result_c7){ .tag = core_result_Ok, .val = { .case_Ok = arr } }
           )));
     Eurydice_arr_a0
-    uu____0 =
+    lane =
       libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29((
             KRML_CLITERAL(Eurydice_arr_a0){ .data = { a, b } }
           )));
-    state_flat.data[i0] = uu____0;
-  }
-  for (size_t i = (size_t)0U; i < (size_t)144U / (size_t)8U; i++)
-  {
-    size_t i0 = i;
     Eurydice_arr_a0
     got = libcrux_iot_sha3_state_get_lane_18(keccak_state, i0 / (size_t)5U, i0 % (size_t)5U);
     libcrux_iot_sha3_state_set_lane_18(keccak_state,
@@ -5099,10 +5051,10 @@ libcrux_iot_sha3_state_load_block_2u32_9e(
           KRML_CLITERAL(Eurydice_arr_a0){
             .data = {
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)0U)[0U],
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)1U)[0U]
             }
           }
@@ -5473,13 +5425,6 @@ libcrux_iot_sha3_state_load_block_2u32_53(
   size_t start
 )
 {
-  Eurydice_arr_c0 state_flat;
-  Eurydice_arr_a0 repeat_expression[25U];
-  for (size_t i = (size_t)0U; i < (size_t)25U; i++)
-  {
-    repeat_expression[i] = libcrux_iot_sha3_lane_zero_8d();
-  }
-  memcpy(state_flat.data, repeat_expression, (size_t)25U * sizeof (Eurydice_arr_a0));
   for (size_t i = (size_t)0U; i < (size_t)104U / (size_t)8U; i++)
   {
     size_t i0 = i;
@@ -5513,15 +5458,10 @@ libcrux_iot_sha3_state_load_block_2u32_53(
             KRML_CLITERAL(core_result_Result_c7){ .tag = core_result_Ok, .val = { .case_Ok = arr } }
           )));
     Eurydice_arr_a0
-    uu____0 =
+    lane =
       libcrux_iot_sha3_lane_interleave_8d(libcrux_iot_sha3_lane_from_29((
             KRML_CLITERAL(Eurydice_arr_a0){ .data = { a, b } }
           )));
-    state_flat.data[i0] = uu____0;
-  }
-  for (size_t i = (size_t)0U; i < (size_t)104U / (size_t)8U; i++)
-  {
-    size_t i0 = i;
     Eurydice_arr_a0
     got = libcrux_iot_sha3_state_get_lane_18(keccak_state, i0 / (size_t)5U, i0 % (size_t)5U);
     libcrux_iot_sha3_state_set_lane_18(keccak_state,
@@ -5531,10 +5471,10 @@ libcrux_iot_sha3_state_load_block_2u32_53(
           KRML_CLITERAL(Eurydice_arr_a0){
             .data = {
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)0U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)0U)[0U],
               libcrux_iot_sha3_lane_index_cc(&got, (size_t)1U)[0U] ^
-                libcrux_iot_sha3_lane_index_cc(&state_flat.data[i0],
+                libcrux_iot_sha3_lane_index_cc(&lane,
                   (size_t)1U)[0U]
             }
           }

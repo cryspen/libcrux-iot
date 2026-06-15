@@ -132,20 +132,17 @@ impl KeccakState {
 fn load_block_2u32<const RATE: usize>(keccak_state: &mut KeccakState, blocks: &[U8], start: usize) {
     #[cfg(not(eurydice))]
     debug_assert!(RATE <= blocks.len() && RATE % 8 == 0);
-    let mut state_flat = [Lane2U32::zero(); 25];
     for i in 0..RATE / 8 {
         let offset = start + 8 * i;
         // Perform `u64::from_le_bytes` on our 32-bit representation:
         let a = U32::from_le_bytes(blocks[offset..offset + 4].try_into().unwrap());
         let b = U32::from_le_bytes(blocks[offset + 4..offset + 8].try_into().unwrap());
-        state_flat[i] = Lane2U32::from([a, b]).interleave();
-    }
-    for i in 0..RATE / 8 {
+        let lane = Lane2U32::from([a, b]).interleave();
         let got = keccak_state.get_lane(i / 5, i % 5);
         keccak_state.set_lane(
             i / 5,
             i % 5,
-            Lane2U32::from_ints([got[0] ^ state_flat[i][0], got[1] ^ state_flat[i][1]]),
+            Lane2U32::from_ints([got[0] ^ lane[0], got[1] ^ lane[1]]),
         );
     }
 }
