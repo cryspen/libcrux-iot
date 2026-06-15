@@ -89,15 +89,20 @@ pub enum Algorithm {
     Sha512 = 4,
 }
 
-#[hax_lib::opaque]
-impl From<u32> for Algorithm {
-    fn from(v: u32) -> Algorithm {
+/// Error returned when a `u32` does not correspond to an [`Algorithm`].
+#[cfg_attr(not(eurydice), derive(Copy, Clone, Debug, PartialEq))]
+pub struct UnknownAlgorithm;
+
+impl TryFrom<u32> for Algorithm {
+    type Error = UnknownAlgorithm;
+
+    fn try_from(v: u32) -> Result<Algorithm, Self::Error> {
         match v {
-            1 => Algorithm::Sha224,
-            2 => Algorithm::Sha256,
-            3 => Algorithm::Sha384,
-            4 => Algorithm::Sha512,
-            _ => panic!(),
+            1 => Ok(Algorithm::Sha224),
+            2 => Ok(Algorithm::Sha256),
+            3 => Ok(Algorithm::Sha384),
+            4 => Ok(Algorithm::Sha512),
+            _ => Err(UnknownAlgorithm),
         }
     }
 }
@@ -137,6 +142,8 @@ pub const fn digest_size(mode: Algorithm) -> usize {
 pub fn hash<const LEN: usize>(algorithm: Algorithm, payload: &[U8]) -> [U8; LEN] {
     #[cfg(not(eurydice))]
     debug_assert!(payload.len() <= u32::MAX as usize);
+    #[cfg(not(eurydice))]
+    debug_assert_eq!(LEN, digest_size(algorithm));
 
     let mut out = [0u8; LEN].classify();
 
@@ -354,8 +361,6 @@ pub fn shake256_ema(out: &mut [U8], data: &[U8]) {
 
 /// Incremental API for SHAKE XOFs
 pub mod incremental {
-    #[cfg(hax)]
-    use hax_lib::ToInt;
     use libcrux_secrets::U8;
 
     /// An unbuffered XOF state.
@@ -440,18 +445,12 @@ pub mod incremental {
                 state: KeccakXofState::<168>::new(),
             }
         }
-        #[hax_lib::requires(
-            self.state.buf_len < 168
-            && input.len().to_int() + self.state.buf_len.to_int() <= usize::MAX.to_int()
-        )]
+        #[hax_lib::requires(self.state.buf_len < 168)]
         fn absorb(&mut self, input: &[U8]) {
             self.state.absorb(input);
         }
 
-        #[hax_lib::requires(
-            self.state.buf_len < 168
-            && input.len().to_int() + self.state.buf_len.to_int() <= usize::MAX.to_int()
-        )]
+        #[hax_lib::requires(self.state.buf_len < 168)]
         fn absorb_final(&mut self, input: &[U8]) {
             self.state.absorb_final::<0x1fu8>(input);
         }
@@ -471,16 +470,12 @@ pub mod incremental {
 
         #[hax_lib::requires(
             self.state.buf_len < 136
-            && input.len().to_int() + self.state.buf_len.to_int() <= usize::MAX.to_int()
         )]
         fn absorb(&mut self, input: &[U8]) {
             self.state.absorb(input);
         }
 
-        #[hax_lib::requires(
-            self.state.buf_len < 136
-            && input.len().to_int() + self.state.buf_len.to_int() <= usize::MAX.to_int()
-        )]
+        #[hax_lib::requires(self.state.buf_len < 136)]
         fn absorb_final(&mut self, input: &[U8]) {
             self.state.absorb_final::<0x1fu8>(input);
         }

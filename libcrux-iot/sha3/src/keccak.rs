@@ -2,7 +2,7 @@
 //! sub-routines.
 
 #[cfg(hax)]
-use hax_lib::{ToInt, ToProp};
+use hax_lib::ToInt;
 use libcrux_secrets::{Classify, U8};
 #[cfg(feature = "check-secret-independence")]
 use libcrux_secrets::{Declassify, U32};
@@ -55,8 +55,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
         RATE > 0 &&
         RATE % 8 == 0 &&
         RATE <= 168 &&
-        self.buf_len < RATE &&
-        inputs.len().to_int() + self.buf_len.to_int() <= usize::MAX.to_int()
+        self.buf_len < RATE 
     )]
     pub(crate) fn absorb(&mut self, inputs: &[U8]) {
         let input_remainder_len = self.absorb_full(inputs);
@@ -80,14 +79,12 @@ impl<const RATE: usize> KeccakXofState<RATE> {
         RATE > 0 &&
         RATE % 8 == 0 &&
         RATE <= 168 &&
-        self.buf_len < RATE &&
-        inputs.len().to_int() + self.buf_len.to_int() <= usize::MAX.to_int()
+        self.buf_len < RATE
     )]
     #[hax_lib::ensures(|remainder|
         remainder < RATE
         && remainder <= inputs.len()
-        && future(self).buf_len <= RATE
-        && future(self).buf_len.to_int() + remainder.to_int() < usize::MAX.to_int()
+        && future(self).buf_len < RATE
     )]
     fn absorb_full(&mut self, inputs: &[U8]) -> usize {
         #[cfg(not(eurydice))]
@@ -133,20 +130,18 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     /// If `consumed > 0` is returned, `self.buf` contains a full block to be
     /// loaded.
     #[hax_lib::requires(
-        self.buf_len <= RATE &&
-        inputs.len().to_int() + self.buf_len.to_int() <= usize::MAX.to_int()
+        self.buf_len < RATE 
     )]
     #[hax_lib::ensures(|res|
-        (res <= RATE).to_prop()
-        & (future(self).buf_len <= RATE).to_prop()
-        & hax_lib::implies(res > 0, future(self).buf_len == RATE)
+        res <= RATE
+        && future(self).buf_len <= RATE
     )]
     fn fill_buffer(&mut self, inputs: &[U8]) -> usize {
         let input_len = inputs.len();
         let mut consumed = 0;
         if self.buf_len > 0 {
             // There's something buffered internally to consume.
-            if self.buf_len + input_len >= RATE {
+            if input_len >= RATE - self.buf_len {
                 // We have enough data when combining the internal buffer and
                 // the input.
                 consumed = RATE - self.buf_len;
@@ -166,8 +161,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
         RATE > 0 &&
         RATE % 8 == 0 &&
         RATE <= 168 &&
-        self.buf_len < RATE &&
-        inputs.len().to_int() + self.buf_len.to_int() <= usize::MAX.to_int()
+        self.buf_len < RATE 
     )]
     pub(crate) fn absorb_final<const DELIMITER: u8>(&mut self, inputs: &[U8]) {
         let input_remainder_len = self.absorb_full(inputs);
@@ -2693,7 +2687,7 @@ pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut 
 
     let mut start = 0;
     for _i in 0..n {
-        hax_lib::loop_invariant!(|_i: usize| { start.to_int() == _i.to_int() * RATE.to_int() });
+        hax_lib::loop_invariant!(|_i: usize| { start == _i * RATE });
 
         absorb_block::<RATE>(&mut s, &data, start);
         start += RATE;
@@ -2708,7 +2702,7 @@ pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut 
         let mut offset = RATE;
         for _i in 1..blocks {
             hax_lib::loop_invariant!(|_i: usize| {
-                out.len() == outlen && offset.to_int() == _i.to_int() * RATE.to_int()
+                out.len() == outlen && offset == _i * RATE
             });
             squeeze_next_block::<RATE>(&mut s, &mut out[offset..]);
             offset += RATE;
