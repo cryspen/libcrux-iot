@@ -911,7 +911,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
         rw [h_div]
         unfold iterate_keccak_f_fold
         rw [Nat.fold_zero]
-      · push_neg at hk_RATE
+      · push Not at hk_RATE
         by_cases hk_last : k < blocks_nat * RATE.val
         · -- Region 2: RATE ≤ k < last. k/RATE ∈ [1, blocks).
           have h_mb := h_middle_bound k hk_RATE hk_last
@@ -953,7 +953,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
                 rw [h_eq_arg]
             _ = .ok (Classical.choose (h_loop_bytes (k - RATE.val) h_mb)) := h_fold_eq
         · -- Region 3: k ≥ last = blocks_nat * RATE.val. s_b k = s_spec_last.
-          push_neg at hk_last
+          push Not at hk_last
           have hsb : s_b k = s_spec_last := by
             show (if hk_lo : RATE.val ≤ k then
                     if hk_hi : k < blocks_nat * RATE.val then _
@@ -1018,7 +1018,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       rw [h_out1_bytes k hk_RATE]
       unfold squeeze_byte_at
       rw [h_div, Nat.zero_mul, Nat.sub_zero]
-    · push_neg at hk_RATE
+    · push Not at hk_RATE
       by_cases hk_last : k < blocks_nat * RATE.val
       · -- Region 2: RATE ≤ k < last.
         rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inl (by rw [h_offset_eq_last]; omega))]
@@ -1060,7 +1060,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
         have h_sub_mod : k - k / RATE.val * RATE.val = k % RATE.val := by
           have hd := Nat.div_add_mod' k RATE.val; omega
         rw [h_kmRATE_mod, h_sub_mod]
-      · push_neg at hk_last
+      · push Not at hk_last
         -- Region 3: last ≤ k < outlen.
         have h_off_le_k : offset.val ≤ k := by rw [h_offset_eq_last]; exact hk_last
         have h_k_lt_outlen : k < out.val.length := hk
@@ -1089,7 +1089,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
         unfold squeeze_byte_at
         rw [h_k_off_eq]
   · -- Else-branch: ¬(last < outlen) ⇒ i1 = 0, no partial trailing block.
-    push_neg at h_partial
+    push Not at h_partial
     have h_last_eq_outlen : last_us.val = outlen_us.val := by
       rw [h_last_us_val, h_outlen_us_val]; omega
     have h_i1_zero : i1_nat = 0 := by
@@ -1289,7 +1289,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
         rw [hsb]
         have h_div : k / RATE.val = 0 := Nat.div_eq_of_lt hk_RATE
         rw [h_div]; unfold iterate_keccak_f_fold; rw [Nat.fold_zero]
-      · push_neg at hk_RATE
+      · push Not at hk_RATE
         have hk_last : k < blocks_nat * RATE.val := by rw [h_outlen_eq_last] at hk; exact hk
         have h_mb := h_middle_bound k hk_RATE hk_last
         have hsb : s_b k = Classical.choose (h_loop_bytes (k - RATE.val) h_mb) := by
@@ -1349,7 +1349,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       rw [h_out1_bytes k hk_RATE]
       unfold squeeze_byte_at
       rw [h_div, Nat.zero_mul, Nat.sub_zero]
-    · push_neg at hk_RATE
+    · push Not at hk_RATE
       have hk_last : k < blocks_nat * RATE.val := by rw [h_outlen_eq_last] at hk; exact hk
       have h_j_lt := h_middle_bound k hk_RATE hk_last
       obtain ⟨s_bj_loop, h_fold_loop, h_byte_loop⟩ := h_loop_bytes (k - RATE.val) h_j_lt
@@ -1411,7 +1411,7 @@ theorem keccak.keccak_keccak_spec
   by_cases h : out.val.length < RATE.val
   · exact keccak.keccak_keccak_spec_blocks_zero RATE DELIM data out
       h_RATE_mod h_RATE_ge_1 h_RATE_le_200 h
-  · push_neg at h
+  · push Not at h
     exact keccak.keccak_keccak_spec_blocks_nonzero RATE DELIM data out
       h_RATE_mod h_RATE_ge_1 h_RATE_le_200 h
 

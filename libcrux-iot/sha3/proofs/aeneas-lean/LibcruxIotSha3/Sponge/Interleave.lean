@@ -30,6 +30,8 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
+set_option mvcgen.warning false
+
 open libcrux_iot_sha3.Foundation
 
 -- Defensive seal re-issue: no proof in this file may unfold either side
@@ -226,7 +228,7 @@ theorem lane.Lane2U32.interleave_spec (self : lane.Lane2U32) :
                   show (8#i32).toNat  = 8 from rfl,
                   show (16#i32).toNat = 16 from rfl,
                   show (32#i32).toNat = 32 from rfl,
-                  h0_eq, h1_eq, *]
+                  *]
        refine Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩ <;> rw [BitVec.or_comm])
 
 /-! ## Aeneas-`Result` lift of `Lane2U32.deinterleave`. -/
@@ -259,7 +261,6 @@ theorem lane.Lane2U32.deinterleave_spec (self : lane.Lane2U32) :
                   show (4#i32).toNat  = 4 from rfl,
                   show (8#i32).toNat  = 8 from rfl,
                   show (16#i32).toNat = 16 from rfl,
-                  h0_eq, h1_eq, *]
-       try (refine Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩ <;> bv_decide))
+                  *])
 
 end libcrux_iot_sha3.Sponge

@@ -152,14 +152,11 @@ theorem IteratorRange_next_spec_usize (i e : Std.Usize) {Q}
         = .ok (CoreModels.core.option.Option.Some i,
                { start := ⟨i.bv + 1#System.Platform.numBits⟩, «end» := e }) := by
       unfold CoreModels.core.iter.range.IteratorRange.next
-      simp only [CoreModels.core.Usize.Insts.CoreIterRangeStep,
-                 CoreModels.core.Usize.Insts.CoreCmpPartialOrdUsize,
+      simp only [CoreModels.core.Usize.Insts.CoreCmpPartialOrdUsize,
                  CoreModels.core.mkUPartialOrd,
-                 CoreModels.core.Usize.Insts.CoreCloneClone,
                  CoreModels.core.Usize.Insts.CoreCloneClone.clone,
                  CoreModels.core.Usize.Insts.CoreIterRangeStep.forward_checked,
                  CoreModels.core.convert.TryFromUTInfallible.Blanket.try_from,
-                 CoreModels.core.convert.From.Blanket,
                  CoreModels.core.convert.From.Blanket.from,
                  CoreModels.core.num.Usize.checked_add,
                  CoreModels.core.num.Usize.overflowing_add,
@@ -185,8 +182,7 @@ theorem IteratorRange_next_spec_usize (i e : Std.Usize) {Q}
           CoreModels.core.Usize.Insts.CoreIterRangeStep { start := i, «end» := e }
         = .ok (CoreModels.core.option.Option.None, { start := i, «end» := e }) := by
       unfold CoreModels.core.iter.range.IteratorRange.next
-      simp only [CoreModels.core.Usize.Insts.CoreIterRangeStep,
-                 CoreModels.core.Usize.Insts.CoreCmpPartialOrdUsize,
+      simp only [CoreModels.core.Usize.Insts.CoreCmpPartialOrdUsize,
                  CoreModels.core.mkUPartialOrd]
       have hcmp : compare i.val e.val ≠ Ordering.lt := by
         intro h; rw [Nat.compare_eq_lt] at h; omega
@@ -368,14 +364,11 @@ private theorem IteratorRange_next_eq_some_usize
     apply Nat.mod_eq_of_lt
     exact hUB
   unfold CoreModels.core.iter.range.IteratorRange.next
-  simp only [CoreModels.core.Usize.Insts.CoreIterRangeStep,
-             CoreModels.core.Usize.Insts.CoreCmpPartialOrdUsize,
+  simp only [CoreModels.core.Usize.Insts.CoreCmpPartialOrdUsize,
              CoreModels.core.mkUPartialOrd,
-             CoreModels.core.Usize.Insts.CoreCloneClone,
              CoreModels.core.Usize.Insts.CoreCloneClone.clone,
              CoreModels.core.Usize.Insts.CoreIterRangeStep.forward_checked,
              CoreModels.core.convert.TryFromUTInfallible.Blanket.try_from,
-             CoreModels.core.convert.From.Blanket,
              CoreModels.core.convert.From.Blanket.from,
              CoreModels.core.num.Usize.checked_add,
              CoreModels.core.num.Usize.overflowing_add,
@@ -402,8 +395,7 @@ private theorem IteratorRange_next_eq_none_usize
       .ok (CoreModels.core.option.Option.None,
            { start := kU, «end» := 24#usize }) := by
   unfold CoreModels.core.iter.range.IteratorRange.next
-  simp only [CoreModels.core.Usize.Insts.CoreIterRangeStep,
-             CoreModels.core.Usize.Insts.CoreCmpPartialOrdUsize,
+  simp only [CoreModels.core.Usize.Insts.CoreCmpPartialOrdUsize,
              CoreModels.core.mkUPartialOrd]
   have hkU' : (24#usize : Std.Usize).val = 24 := rfl
   have hcmp : compare kU.val 24 ≠ Ordering.lt := by

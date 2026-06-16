@@ -304,9 +304,7 @@ theorem bit_theta_c_x0_z0_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -327,9 +325,8 @@ theorem bit_theta_c_x0_z1_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -350,9 +347,7 @@ theorem bit_theta_c_x1_z0_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -373,9 +368,8 @@ theorem bit_theta_c_x1_z1_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -396,9 +390,7 @@ theorem bit_theta_c_x2_z0_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -419,9 +411,8 @@ theorem bit_theta_c_x2_z1_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -442,9 +433,7 @@ theorem bit_theta_c_x3_z0_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -465,9 +454,8 @@ theorem bit_theta_c_x3_z1_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -488,9 +476,7 @@ theorem bit_theta_c_x4_z0_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -511,9 +497,8 @@ theorem bit_theta_c_x4_z1_eq (s : state.KeccakState) :
     rw [hst]
   · apply Vector.toArray_inj.mp
     simp [stateArray5FromAeneas, hc, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem,
-      stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
+      Lane.fromAeneas_set_zeta1,
+      KState.fromAeneas, stateArray25FromAeneas_getElem, Std.UScalar.bv_xor]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
     rw [hd]
   · show r.i = s.i
@@ -555,50 +540,45 @@ theorem bit_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd00]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd01]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 1, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd10]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd11]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 2, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd20]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd21]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 3, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd30]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd31]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 4, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd40]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd41]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
   · show r.i = s.i
     exact hi_eq
 
@@ -868,8 +848,7 @@ private theorem round1_theta_d_spec_fc (s : state.KeccakState) :
     | (refine ⟨trivial, trivial, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
        (apply Std.U32.bv_eq_imp_eq
         simp_all [WP.uncurry', Std.Array.set_val_eq,
-                  Std.UScalar.bv_xor, Foundation.rot32, Std.UScalar.rotate_left]) <;>
-       scalar_tac)
+                  Std.UScalar.bv_xor, Foundation.rot32]))
 
 set_option maxHeartbeats 8000000 in
 @[spec high]
@@ -897,50 +876,45 @@ theorem bit_round1_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd00]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd01]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 1, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd10]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd11]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 2, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd20]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd21]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 3, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd30]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd31]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 4, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd40]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd41]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
   · show r.i = s.i
     exact hi_eq
 
@@ -1720,8 +1694,7 @@ private theorem round2_theta_d_spec_fc (s : state.KeccakState) :
     | (refine ⟨trivial, trivial, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
        (apply Std.U32.bv_eq_imp_eq
         simp_all [WP.uncurry', Std.Array.set_val_eq,
-                  Std.UScalar.bv_xor, Foundation.rot32, Std.UScalar.rotate_left]) <;>
-       scalar_tac)
+                  Std.UScalar.bv_xor, Foundation.rot32]))
 
 set_option maxHeartbeats 8000000 in
 @[spec high]
@@ -1749,50 +1722,45 @@ theorem bit_round2_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd00]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd01]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 1, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd10]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd11]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 2, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd20]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd21]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 3, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd30]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd31]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 4, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd40]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd41]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
   · show r.i = s.i
     exact hi_eq
 
@@ -2500,8 +2468,7 @@ private theorem round3_theta_d_spec_fc (s : state.KeccakState) :
     | (refine ⟨trivial, trivial, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
        (apply Std.U32.bv_eq_imp_eq
         simp_all [WP.uncurry', Std.Array.set_val_eq,
-                  Std.UScalar.bv_xor, Foundation.rot32, Std.UScalar.rotate_left]) <;>
-       scalar_tac)
+                  Std.UScalar.bv_xor, Foundation.rot32]))
 
 set_option maxHeartbeats 8000000 in
 @[spec high]
@@ -2529,50 +2496,45 @@ theorem bit_round3_theta_d_eq (s : state.KeccakState) :
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd00]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd01]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 1, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd10]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd11]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 2, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd20]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd21]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 3, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd30]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd31]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
     | 4, _ =>
       simp only [Vector.getElem_set]
       rw [Lane.fromAeneas_mk]
       refine Lane.mk.injEq .. |>.mpr ⟨?_, ?_⟩
       · rw [hd40]
         simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!, Foundation.rot32]
+          Foundation.rot32]
       · rw [hd41]
-        simp [Std.UScalar.bv_xor, KState.fromAeneas,
-          stateArray5FromAeneas_getElem!]
+        simp [Std.UScalar.bv_xor, KState.fromAeneas]
   · show r.i = s.i
     exact hi_eq
 
@@ -2874,8 +2836,7 @@ theorem bit_round3_pi_rho_chi_y0_zeta0_eq
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
@@ -2899,7 +2860,7 @@ theorem bit_round3_pi_rho_chi_y0_zeta1_eq
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      Lane.fromAeneas_set_zeta1,
       KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
@@ -2920,8 +2881,7 @@ theorem bit_round3_pi_rho_chi_y1_zeta0_eq (s : state.KeccakState) :
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
@@ -2942,7 +2902,7 @@ theorem bit_round3_pi_rho_chi_y1_zeta1_eq (s : state.KeccakState) :
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      Lane.fromAeneas_set_zeta1,
       KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
@@ -2964,8 +2924,7 @@ theorem bit_round3_pi_rho_chi_y2_zeta0_eq (s : state.KeccakState) :
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
@@ -2986,7 +2945,7 @@ theorem bit_round3_pi_rho_chi_y2_zeta1_eq (s : state.KeccakState) :
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      Lane.fromAeneas_set_zeta1,
       KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
@@ -3008,8 +2967,7 @@ theorem bit_round3_pi_rho_chi_y3_zeta0_eq (s : state.KeccakState) :
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
@@ -3030,7 +2988,7 @@ theorem bit_round3_pi_rho_chi_y3_zeta1_eq (s : state.KeccakState) :
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      Lane.fromAeneas_set_zeta1,
       KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
@@ -3052,8 +3010,7 @@ theorem bit_round3_pi_rho_chi_y4_zeta0_eq (s : state.KeccakState) :
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
-      KState.fromAeneas, stateArray5FromAeneas_getElem]
+      Lane.fromAeneas_set_zeta0, KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]
   · show stateArray5FromAeneas r.d = stateArray5FromAeneas s.d
@@ -3074,7 +3031,7 @@ theorem bit_round3_pi_rho_chi_y4_zeta1_eq (s : state.KeccakState) :
   refine KState.mk.injEq .. |>.mpr ⟨?_, ?_, ?_, ?_⟩
   · apply Vector.toArray_inj.mp
     simp [stateArray25FromAeneas, hst, List.map_set,
-      Lane.fromAeneas_set_zeta0, Lane.fromAeneas_set_zeta1,
+      Lane.fromAeneas_set_zeta1,
       KState.fromAeneas, stateArray5FromAeneas_getElem]
   · show stateArray5FromAeneas r.c = stateArray5FromAeneas s.c
     rw [hc]

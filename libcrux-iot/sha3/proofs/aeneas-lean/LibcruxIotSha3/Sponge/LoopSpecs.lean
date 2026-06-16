@@ -26,6 +26,8 @@ open Aeneas Aeneas.Std Result ControlFlow Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
+set_option mvcgen.warning false
+
 open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
 
 set_option allowUnsafeReducibility true in
@@ -107,7 +109,7 @@ def Lane2U32_from_4byte_LE_pairs
              List.replicate (4 - ((blocks.val.drop (start.val + 8 * j)).take 4).length) (0#u8)).length
            = 4 := by
          rw [List.length_append, List.length_replicate]; omega
-       simp [hlen]⟩
+       simp []⟩
   let hi_bytes : Std.Array Std.U8 4#usize :=
     ⟨((blocks.val.drop (start.val + 8 * j + 4)).take 4) ++
        List.replicate (4 - ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length) (0#u8),
@@ -119,7 +121,7 @@ def Lane2U32_from_4byte_LE_pairs
              List.replicate (4 - ((blocks.val.drop (start.val + 8 * j + 4)).take 4).length) (0#u8)).length
            = 4 := by
          rw [List.length_append, List.length_replicate]; omega
-       simp [hlen]⟩
+       simp []⟩
   Std.Array.make 2#usize
     [Std.core.num.U32.from_le_bytes lo_bytes,
      Std.core.num.U32.from_le_bytes hi_bytes]
@@ -255,10 +257,6 @@ theorem state.load_block_2u32_loop0_spec
       --     after `try`-closing the structural VCs.
       all_goals (try (first
         | scalar_tac
-        | -- The `Inhabited (Std.Array U8 4#usize)` instance comes from
-          -- `core_models_array_try_from_slice_spec`'s param chain; we
-          -- pick a canonical witness explicitly.
-          exact ⟨Std.Array.make 4#usize (List.replicate 4 0#u8) (by simp)⟩
         | (-- For each `Result.unwrap` VC: provide `∃ v, r = .Ok v` —
            -- the witness comes from the matching `try_from` hypothesis
            -- (`r = .Ok (Array.make ...)`), available as `h_4` / `h_9` etc.
@@ -1112,7 +1110,7 @@ theorem state.store_block_2u32_loop_spec
             rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inl (by rw [h_r12]; omega))]
             rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inl (by rw [h_r6]; exact hb_lt_8k))]
             exact h_acc_done b hb_lt_8k hb_25
-          · push_neg at hb_lt_8k
+          · push Not at hb_lt_8k
             by_cases hb_lt_p1 : b < 8 * k.val + 4
             · -- Middle of FIRST setSlice (offset 8k, length 4), prefix of SECOND.
               rw [List.getElem!_setSlice!_same _ _ _ _ (Or.inl (by rw [h_r12]; omega))]
@@ -1186,7 +1184,7 @@ theorem state.store_block_2u32_loop_spec
                   | exact deinterleave_bv_lo_toLEBytes_byte_2 _ _
                   | exact deinterleave_bv_lo_toLEBytes_byte_3 _ _)
             · -- Middle of SECOND setSlice (offset 8k+4, length 4).
-              push_neg at hb_lt_p1
+              push Not at hb_lt_p1
               have hb_lt_p2 : b < 8 * k.val + 8 := by omega
               rw [List.getElem!_setSlice!_middle _ _ _ _
                   (by rw [h_r12, h_r17_len]; refine ⟨hb_lt_p1, ?_, ?_⟩ <;>

@@ -211,7 +211,7 @@ theorem lift_perm_getElem (s : libcrux_iot_sha3.state.KeccakState)
                            (sw (p (transpose_perm k))) := by
   unfold lift_perm
   change (List.ofFn _)[k.val]! = _
-  rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
+  rw [getElem!_pos _ k.val (by simp), List.getElem_ofFn]
 
 /-- BV variant of `lift_perm_getElem`. -/
 theorem lift_perm_getElem_bv_aux (s : libcrux_iot_sha3.state.KeccakState)

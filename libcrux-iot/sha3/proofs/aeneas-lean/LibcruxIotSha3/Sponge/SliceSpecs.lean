@@ -127,7 +127,7 @@ theorem core_models_Slice_Insts_index_RangeUsize_spec
          CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
          core.slice.index.Slice.index
          core.slice.index.SliceIndexRangeUsizeSlice.index
-  simp only [id]
+  simp only []
   have h0' : (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).start
               ≤ (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).end := by
     simpa [UScalar.le_equiv] using h0
@@ -192,7 +192,7 @@ theorem core_models_Slice_Insts_index_mut_RangeUsize_spec
          CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
          core.slice.index.Slice.index_mut
          core.slice.index.SliceIndexRangeUsizeSlice.index_mut
-  simp only [id]
+  simp only []
   have h0' : (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).start
               ≤ (⟨r.start, r.end⟩ : core.ops.range.Range Std.Usize).end := by
     simpa [UScalar.le_equiv] using h0

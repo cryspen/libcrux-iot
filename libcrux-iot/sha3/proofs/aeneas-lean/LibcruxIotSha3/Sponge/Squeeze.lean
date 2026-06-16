@@ -35,6 +35,8 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
+set_option mvcgen.warning false
+
 attribute [local spec] Aeneas.Std.uncurry
 
 open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition
@@ -422,7 +424,7 @@ theorem keccak.keccak_loop1_invariant
           · -- offset.val + j < offset_acc.val = offset.val + (k.val - 1) * RATE.val.
             rw [h_acc_offset]; omega
         · -- New write region: j in [(k.val - 1)*RATE.val, k.val*RATE.val).
-          push_neg at h_j_old
+          push Not at h_j_old
           -- Set j' := j - (k.val - 1) * RATE.val. Then 0 ≤ j' < RATE.val.
           have h_jrate_split : j = (k.val - 1) * RATE.val + (j % RATE.val) := by
             -- Since (k-1)*RATE ≤ j < k*RATE and j = (k-1)*RATE + (j - (k-1)*RATE),
@@ -725,7 +727,7 @@ theorem sponge_squeeze_byte_eq
     (OUTPUT_LEN : Std.Usize) (state : Std.Array Std.U64 25#usize)
     (rate : Std.Usize)
     (h_rate_pos : 0 < rate.val)
-    (h_rate_mod : rate.val % 8 = 0)
+    (_h_rate_mod : rate.val % 8 = 0)
     (h_rate_bnd : rate.val ≤ 200)
     (s_b : Nat → Std.Array Std.U64 25#usize)
     (h_iter : ∀ k : Nat, k < OUTPUT_LEN.val →

@@ -62,33 +62,7 @@ theorem theta_lift_spec (s : state.KeccakState) :
   repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
   all_goals (apply Std.U64.bv_eq_imp_eq)
   all_goals
-    simp_all only [Std.UScalar.bv_xor, rot32,
-      show ((0#usize : Std.Usize).val) = 0 from rfl,
-      show ((1#usize : Std.Usize).val) = 1 from rfl,
-      show ((2#usize : Std.Usize).val) = 2 from rfl,
-      show ((3#usize : Std.Usize).val) = 3 from rfl,
-      show ((4#usize : Std.Usize).val) = 4 from rfl,
-      show ((5#usize : Std.Usize).val) = 5 from rfl,
-      show ((6#usize : Std.Usize).val) = 6 from rfl,
-      show ((7#usize : Std.Usize).val) = 7 from rfl,
-      show ((8#usize : Std.Usize).val) = 8 from rfl,
-      show ((9#usize : Std.Usize).val) = 9 from rfl,
-      show ((10#usize : Std.Usize).val) = 10 from rfl,
-      show ((11#usize : Std.Usize).val) = 11 from rfl,
-      show ((12#usize : Std.Usize).val) = 12 from rfl,
-      show ((13#usize : Std.Usize).val) = 13 from rfl,
-      show ((14#usize : Std.Usize).val) = 14 from rfl,
-      show ((15#usize : Std.Usize).val) = 15 from rfl,
-      show ((16#usize : Std.Usize).val) = 16 from rfl,
-      show ((17#usize : Std.Usize).val) = 17 from rfl,
-      show ((18#usize : Std.Usize).val) = 18 from rfl,
-      show ((19#usize : Std.Usize).val) = 19 from rfl,
-      show ((20#usize : Std.Usize).val) = 20 from rfl,
-      show ((21#usize : Std.Usize).val) = 21 from rfl,
-      show ((22#usize : Std.Usize).val) = 22 from rfl,
-      show ((23#usize : Std.Usize).val) = 23 from rfl,
-      show ((24#usize : Std.Usize).val) = 24 from rfl,
-      show ((1#u32 : Std.U32).val) = 1 from rfl]
+    simp_all only [Std.UScalar.bv_xor, rot32]
   all_goals
     simp only [lift_getElem_bv_0, lift_getElem_bv_1, lift_getElem_bv_2,
       lift_getElem_bv_3, lift_getElem_bv_4, lift_getElem_bv_5,

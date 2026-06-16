@@ -119,13 +119,13 @@ private theorem lift_getElem_bytes (s : state.KeccakState) (k : Fin 25) :
         : Std.U64) := by
   unfold Foundation.lift Foundation.lift_lane
   change (List.ofFn _)[k.val]! = _
-  rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
+  rw [getElem!_pos _ k.val (by simp), List.getElem_ofFn]
 
 /-- Bytewise readout for `BitVec.toLEBytes` over 64-bit values: byte `i` is
     `BitVec.ofNat 8 ((bv.toNat >>> (8*i)) &&& 0xff)`. Stated at the
     BitVec level. -/
 private theorem toLEBytes64_getElem!_eq_ofNat_shift_and
-    (bv : BitVec 64) (i : Nat) (hi : i < 8) :
+    (bv : BitVec 64) (i : Nat) (_hi : i < 8) :
     bv.toLEBytes[i]! = BitVec.ofNat 8 ((bv.toNat >>> (8 * i)) &&& 0xff) := by
   -- Each side is determined by its 8 bits (as Nats).
   apply BitVec.eq_of_toNat_eq

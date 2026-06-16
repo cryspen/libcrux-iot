@@ -163,9 +163,7 @@ theorem theta_closure_call_mut_spec
   unfold keccak_f.theta.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
         theta_closure_c_at
   hax_mvcgen
-  all_goals (first | scalar_tac | (simp; scalar_tac)
-                   | (congr 1; apply Std.U64.bv_eq_imp_eq;
-                      simp_all [Std.UScalar.bv_xor]))
+  all_goals scalar_tac
 
 /-- `f`-side of theta's second closure (5 d-values: `c[(k+4)%5] ^^^
     rotateLeft64(c[(k+1)%5], 1)`). -/
@@ -262,7 +260,7 @@ def pi_closure_at (state : Std.Array Std.U64 25#usize) (k : Nat) :
 /-- Purity of `pi`'s closure. -/
 @[spec]
 theorem pi_closure_call_mut_spec
-    (state : Std.Array Std.U64 25#usize) (k : Std.Usize) (hk : k.val < 25) :
+    (state : Std.Array Std.U64 25#usize) (k : Std.Usize) (_hk : k.val < 25) :
     ⦃ ⌜ True ⌝ ⦄
     keccak_f.pi.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
       state k
@@ -270,9 +268,7 @@ theorem pi_closure_call_mut_spec
   unfold keccak_f.pi.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
         pi_closure_at
   hax_mvcgen
-  all_goals (first | scalar_tac | (simp; scalar_tac)
-                   | (congr 1; apply Std.U64.bv_eq_imp_eq;
-                      simp_all [Std.UScalar.bv_xor]))
+  all_goals scalar_tac
 
 /-- `f`-side of `chi`'s closure (new layout `A[x,y]` at `5*y + x`):
     `state[5y+x] ^^^ ((¬state[5y+(x+1)%5]) &&& state[5y+(x+2)%5])`,
@@ -300,7 +296,7 @@ theorem chi_closure_call_mut_spec
     | scalar_tac
     | (simp; scalar_tac)
     | (congr 1; apply Std.U64.bv_eq_imp_eq
-       simp_all only [Std.UScalar.bv_xor, Std.UScalar.bv_and, Std.UScalar.bv_not,
+       simp_all only [Std.UScalar.bv_xor, Std.UScalar.bv_not,
          show ((1#usize : Std.Usize).val) = 1 from rfl,
          show ((2#usize : Std.Usize).val) = 2 from rfl,
          show ((5#usize : Std.Usize).val) = 5 from rfl]))
@@ -435,7 +431,7 @@ private theorem set_lane_value_spec
     apply hpost <;> first
       | rfl
       | scalar_tac
-      | (rw [h_eq]; simp_all [WP.uncurry', Std.Array.set_val_eq]))
+      | (rw [h_eq]; simp_all [WP.uncurry']))
 
 /-- `Lane2U32` array-index returns the indexed element when in bounds. Used by
     `theta_d` to read `s.c`. -/
@@ -664,8 +660,7 @@ private theorem theta_d_spec (s : state.KeccakState) :
     | (refine ⟨trivial, trivial, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
        (apply Std.U32.bv_eq_imp_eq
         simp_all [WP.uncurry', Std.Array.set_val_eq,
-                  Std.UScalar.bv_xor, rot32, Std.UScalar.rotate_left]) <;>
-       scalar_tac)
+                  Std.UScalar.bv_xor, rot32]))
 
 /-! ### Composed θ-round spec
 
@@ -909,7 +904,7 @@ private theorem lift_getElem (s : state.KeccakState) (k : Fin 25) :
                      ((s.st.val[(transpose_perm k).val]!).val[1]!.bv)⟩ : Std.U64) := by
   unfold lift lift_lane
   change (List.ofFn _)[k.val]! = _
-  rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
+  rw [getElem!_pos _ k.val (by simp), List.getElem_ofFn]
 
 private theorem lift_getElem_bv (s : state.KeccakState) (k : Fin 25) :
     ((↑(lift s) : List Std.U64)[(k.val : Nat)]!).bv =
@@ -1122,19 +1117,16 @@ theorem theta_spec (state : Std.Array Std.U64 25#usize) :
        have hc2 := hc 2 (by decide); have hc3 := hc 3 (by decide)
        have hc4 := hc 4 (by decide)
        simp only [theta_closure_c_at,
-         show (5 * 0 : Nat) = 0 from rfl, show (5 * 0 + 1 : Nat) = 1 from rfl,
-         show (5 * 0 + 2 : Nat) = 2 from rfl, show (5 * 0 + 3 : Nat) = 3 from rfl,
-         show (5 * 0 + 4 : Nat) = 4 from rfl,
-         show (5 * 1 : Nat) = 5 from rfl, show (5 * 1 + 1 : Nat) = 6 from rfl,
+         show (5 * 1 + 1 : Nat) = 6 from rfl,
          show (5 * 1 + 2 : Nat) = 7 from rfl, show (5 * 1 + 3 : Nat) = 8 from rfl,
          show (5 * 1 + 4 : Nat) = 9 from rfl,
-         show (5 * 2 : Nat) = 10 from rfl, show (5 * 2 + 1 : Nat) = 11 from rfl,
+         show (5 * 2 + 1 : Nat) = 11 from rfl,
          show (5 * 2 + 2 : Nat) = 12 from rfl, show (5 * 2 + 3 : Nat) = 13 from rfl,
          show (5 * 2 + 4 : Nat) = 14 from rfl,
-         show (5 * 3 : Nat) = 15 from rfl, show (5 * 3 + 1 : Nat) = 16 from rfl,
+         show (5 * 3 + 1 : Nat) = 16 from rfl,
          show (5 * 3 + 2 : Nat) = 17 from rfl, show (5 * 3 + 3 : Nat) = 18 from rfl,
          show (5 * 3 + 4 : Nat) = 19 from rfl,
-         show (5 * 4 : Nat) = 20 from rfl, show (5 * 4 + 1 : Nat) = 21 from rfl,
+         show (5 * 4 + 1 : Nat) = 21 from rfl,
          show (5 * 4 + 2 : Nat) = 22 from rfl, show (5 * 4 + 3 : Nat) = 23 from rfl,
          show (5 * 4 + 4 : Nat) = 24 from rfl] at hc0 hc1 hc2 hc3 hc4
        have hd0 := hd 0 (by decide); have hd1 := hd 1 (by decide)
@@ -1143,9 +1135,7 @@ theorem theta_spec (state : Std.Array Std.U64 25#usize) :
        simp only [theta_closure_1_d_at, hc0, hc1, hc2, hc3, hc4,
          show (0 + 4) % 5 = 4 from rfl, show (0 + 1) % 5 = 1 from rfl,
          show (1 + 4) % 5 = 0 from rfl, show (1 + 1) % 5 = 2 from rfl,
-         show (2 + 4) % 5 = 1 from rfl, show (2 + 1) % 5 = 3 from rfl,
-         show (3 + 4) % 5 = 2 from rfl, show (3 + 1) % 5 = 4 from rfl,
-         show (4 + 4) % 5 = 3 from rfl, show (4 + 1) % 5 = 0 from rfl] at hd0 hd1 hd2 hd3 hd4
+         show (2 + 1) % 5 = 3 from rfl] at hd0 hd1 hd2 hd3 hd4
        close_array25_inner theta_closure_2_at with [
          show (0:Nat) % 5 = 0 from rfl,
          show (1:Nat) % 5 = 1 from rfl,

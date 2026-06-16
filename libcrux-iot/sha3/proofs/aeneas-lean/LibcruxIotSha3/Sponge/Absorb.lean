@@ -35,6 +35,8 @@ open Aeneas Aeneas.Std Result Std.Do libcrux_iot_sha3 hacspec_sha3
 
 namespace libcrux_iot_sha3.Sponge
 
+set_option mvcgen.warning false
+
 attribute [local spec] Aeneas.Std.uncurry
 
 open libcrux_iot_sha3.Foundation libcrux_iot_sha3.Composition

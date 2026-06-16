@@ -339,7 +339,7 @@ private theorem lta_perm_getElem_2 (s : state.KeccakState)
         lift_lane (s.d.val[k.val % 5]!) := by
   unfold lift_theta_applied_perm
   change (List.ofFn _)[k.val]! = _
-  rw [getElem!_pos _ k.val (by simpa using k.isLt), List.getElem_ofFn]
+  rw [getElem!_pos _ k.val (by simp), List.getElem_ofFn]
 
 theorem lift_theta_applied_perm_bv_0_2 (s : state.KeccakState) :
     ((lift_theta_applied_perm s (impl_perm ∘ impl_perm) (impl_swap_k 2)).val[0]!).bv =
@@ -623,7 +623,7 @@ private theorem list_getElem!_set_ne {α} [Inhabited α] {l : List α} {i j : Na
 
 private theorem list_getElem!_set_eq {α} [Inhabited α] {l : List α} {i : Nat}
     {a : α} (h : i < l.length) : (l.set i a)[i]! = a := by
-  simp only [List.getElem!_eq_getElem?_getD, List.getElem?_set, if_pos rfl, h,
+  simp only [List.getElem!_eq_getElem?_getD, List.getElem?_set, h,
     if_true, Option.getD_some]
 
 /-! ## Main composition: `prc_lift_spec_2`
@@ -664,7 +664,7 @@ theorem prc_lift_spec_2 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
       funext L; rw [impl_swap_k]]
     unfold impl_perm lift_lane_maybe_swap
   simp (config := { decide := true }) only [Std.Array.make, List.ofFn_succ, List.ofFn_zero,
-    Function.comp_apply, Fin.val_succ, Fin.val_zero, Nat.succ_eq_add_one, Nat.zero_add,
+    Function.comp_apply, Fin.val_succ, Fin.val_zero, Nat.zero_add,
     Nat.reduceAdd, Nat.reduceMul, Nat.reduceDiv, Nat.reduceMod, reduceIte]
   repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
   all_goals (
@@ -672,8 +672,7 @@ theorem prc_lift_spec_2 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
     simp (config := { decide := true }) only
       [*, apply_5_writes, lift_lane,
        list_getElem!_set_ne, list_getElem!_set_eq, List.length_set,
-       Std.Array.set_val_eq, hlane, hss,
-       show ((0#usize : Std.Usize) : Nat) = 0 from rfl,
+       Std.Array.set_val_eq, show ((0#usize : Std.Usize) : Nat) = 0 from rfl,
        show ((1#usize : Std.Usize) : Nat) = 1 from rfl]
     simp only [lift_theta_applied_perm_bv_0_2, lift_theta_applied_perm_bv_1_2,
       lift_theta_applied_perm_bv_2_2, lift_theta_applied_perm_bv_3_2,
@@ -694,7 +693,6 @@ theorem prc_lift_spec_2 (s : state.KeccakState) (hi_lt : s.i.val < 24) :
       rot_14, rot_15, rot_18, rot_20, rot_21, rot_25, rot_27,
       rot_28, rot_36, rot_39, rot_41, rot_43, rot_44, rot_45,
       rot_55, rot_56, rot_61, rot_62,
-      ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
-      ← rc_equiv _ hi_lt])
+      ← lift_xor, ← lift_and, ← lift_not, ← rc_equiv _ hi_lt])
 
 end libcrux_iot_sha3.Foundation

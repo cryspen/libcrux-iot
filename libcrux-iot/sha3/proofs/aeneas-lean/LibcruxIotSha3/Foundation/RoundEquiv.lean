@@ -64,6 +64,7 @@ open Aeneas Aeneas.Std Std.Do libcrux_iot_sha3 hacspec_sha3
 namespace libcrux_iot_sha3.Foundation
 
 set_option mvcgen.warning false
+set_option hax_mvcgen.warnings false
 
 /-! ## Chain wrapper for round-0 πρχι
 

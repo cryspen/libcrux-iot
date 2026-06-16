@@ -521,7 +521,7 @@ theorem rho_spec (state : Std.Array Std.U64 25#usize) :
   case vc1.f => exact rho_closure_at state ‹ℕ›
   all_goals first
     | (rw [usize_bv_ofNat_val _ (by scalar_tac)] at *
-       first | scalar_tac | assumption)
+       scalar_tac)
     | scalar_tac
     | close_array25 rho_applied, rho_closure_at with [rot64,
         show (keccak_f.RHO_OFFSETS.val[0]!).val = 0 from by simp [keccak_f.RHO_OFFSETS, Std.Array.make],
@@ -571,7 +571,7 @@ theorem pi_spec (state : Std.Array Std.U64 25#usize) :
   case vc1.f => exact pi_closure_at state ‹ℕ›
   all_goals first
     | (rw [usize_bv_ofNat_val _ (by scalar_tac)] at *
-       first | scalar_tac | assumption)
+       scalar_tac)
     | scalar_tac
     | close_array25 pi_applied, pi_closure_at with [
         show 5 * ((0:Nat) % 5) + ((0 % 5) + 3 * (0 / 5)) % 5 = 0 from rfl,
@@ -643,7 +643,7 @@ theorem chi_spec (state : Std.Array Std.U64 25#usize) :
   case vc1.f => exact chi_closure_at state ‹ℕ›
   all_goals first
     | (rw [usize_bv_ofNat_val _ (by scalar_tac)] at *
-       first | scalar_tac | assumption)
+       scalar_tac)
     | scalar_tac
     | close_array25 chi_applied, chi_closure_at with [
         show (0:Nat)/5 = 0 from rfl, show (0:Nat)%5 = 0 from rfl,
@@ -927,7 +927,7 @@ private theorem list_getElem!_set_ne {α} [Inhabited α] {l : List α} {i j : Na
 
 private theorem list_getElem!_set_eq {α} [Inhabited α] {l : List α} {i : Nat}
     {a : α} (h : i < l.length) : (l.set i a)[i]! = a := by
-  simp only [List.getElem!_eq_getElem?_getD, List.getElem?_set, if_pos rfl, h,
+  simp only [List.getElem!_eq_getElem?_getD, List.getElem?_set, h,
     if_true, Option.getD_some]
 
 /-! ## Bridge 1: `prc_lift_spec`
@@ -962,7 +962,7 @@ theorem prc_lift_spec (s : state.KeccakState) (hi_lt : s.i.val < 24) :
   apply Subtype.ext
   unfold prc_spec lift_perm impl_perm impl_swap lift_lane_maybe_swap transpose_perm
   simp (config := { decide := true }) only [Std.Array.make, List.ofFn_succ, List.ofFn_zero,
-    Fin.val_succ, Fin.val_zero, Nat.succ_eq_add_one, Nat.zero_add, Nat.reduceAdd, Nat.reduceMul,
+    Fin.val_succ, Fin.val_zero, Nat.zero_add, Nat.reduceAdd, Nat.reduceMul,
     Nat.reduceDiv, Nat.reduceMod, reduceIte]
   repeat' (first | rfl | (apply List.cons_eq_cons.mpr; refine ⟨?_, ?_⟩))
   all_goals (
@@ -970,8 +970,7 @@ theorem prc_lift_spec (s : state.KeccakState) (hi_lt : s.i.val < 24) :
     simp (config := { decide := true }) only
       [*, apply_5_writes, lift_lane,
        list_getElem!_set_ne, list_getElem!_set_eq, List.length_set,
-       Std.Array.set_val_eq, hlane, hss,
-       show ((0#usize : Std.Usize) : Nat) = 0 from rfl,
+       Std.Array.set_val_eq, show ((0#usize : Std.Usize) : Nat) = 0 from rfl,
        show ((1#usize : Std.Usize) : Nat) = 1 from rfl]
     simp only [lift_theta_applied_bv_0, lift_theta_applied_bv_1, lift_theta_applied_bv_2,
       lift_theta_applied_bv_3, lift_theta_applied_bv_4, lift_theta_applied_bv_5,
@@ -988,7 +987,6 @@ theorem prc_lift_spec (s : state.KeccakState) (hi_lt : s.i.val < 24) :
       rot_14, rot_15, rot_18, rot_20, rot_21, rot_25, rot_27,
       rot_28, rot_36, rot_39, rot_41, rot_43, rot_44, rot_45,
       rot_55, rot_56, rot_61, rot_62,
-      ← lift_xor, ← lift_and, ← lift_not, ← lift_chi,
-      ← rc_equiv _ hi_lt])
+      ← lift_xor, ← lift_and, ← lift_not, ← rc_equiv _ hi_lt])
 
 end libcrux_iot_sha3.Foundation

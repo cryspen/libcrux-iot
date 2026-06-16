@@ -155,8 +155,7 @@ private theorem theta_d_spec_2 (s : state.KeccakState) :
     | (refine ⟨trivial, trivial, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
        (apply Std.U32.bv_eq_imp_eq
         simp_all [WP.uncurry', Std.Array.set_val_eq,
-                  Std.UScalar.bv_xor, rot32, Std.UScalar.rotate_left]) <;>
-       scalar_tac)
+                  Std.UScalar.bv_xor, rot32]))
 
 set_option maxHeartbeats 4000000 in
 theorem theta_comp_spec_local_2 (s : state.KeccakState) :
@@ -718,36 +717,9 @@ theorem theta_lift_spec_2 (s : state.KeccakState) :
       lift_lane_maybe_swap, lift_lane,
       Std.UScalar.bv_xor,
       reduceIte,
-      Function.comp_apply,
-      show (↑(impl_perm (impl_perm 0)) : Nat) = 0 from rfl]
+      Function.comp_apply]
   all_goals
-    simp_all only [Std.UScalar.bv_xor, rot32,
-      show ((0#usize : Std.Usize).val) = 0 from rfl,
-      show ((1#usize : Std.Usize).val) = 1 from rfl,
-      show ((2#usize : Std.Usize).val) = 2 from rfl,
-      show ((3#usize : Std.Usize).val) = 3 from rfl,
-      show ((4#usize : Std.Usize).val) = 4 from rfl,
-      show ((5#usize : Std.Usize).val) = 5 from rfl,
-      show ((6#usize : Std.Usize).val) = 6 from rfl,
-      show ((7#usize : Std.Usize).val) = 7 from rfl,
-      show ((8#usize : Std.Usize).val) = 8 from rfl,
-      show ((9#usize : Std.Usize).val) = 9 from rfl,
-      show ((10#usize : Std.Usize).val) = 10 from rfl,
-      show ((11#usize : Std.Usize).val) = 11 from rfl,
-      show ((12#usize : Std.Usize).val) = 12 from rfl,
-      show ((13#usize : Std.Usize).val) = 13 from rfl,
-      show ((14#usize : Std.Usize).val) = 14 from rfl,
-      show ((15#usize : Std.Usize).val) = 15 from rfl,
-      show ((16#usize : Std.Usize).val) = 16 from rfl,
-      show ((17#usize : Std.Usize).val) = 17 from rfl,
-      show ((18#usize : Std.Usize).val) = 18 from rfl,
-      show ((19#usize : Std.Usize).val) = 19 from rfl,
-      show ((20#usize : Std.Usize).val) = 20 from rfl,
-      show ((21#usize : Std.Usize).val) = 21 from rfl,
-      show ((22#usize : Std.Usize).val) = 22 from rfl,
-      show ((23#usize : Std.Usize).val) = 23 from rfl,
-      show ((24#usize : Std.Usize).val) = 24 from rfl,
-      show ((1#u32 : Std.U32).val) = 1 from rfl]
+    simp_all only [Std.UScalar.bv_xor, rot32]
   all_goals
     simp only [lift_perm_getElem_bv_0_2, lift_perm_getElem_bv_1_2, lift_perm_getElem_bv_2_2,
       lift_perm_getElem_bv_3_2, lift_perm_getElem_bv_4_2, lift_perm_getElem_bv_5_2,
@@ -759,32 +731,6 @@ theorem theta_lift_spec_2 (s : state.KeccakState) :
       lift_perm_getElem_bv_21_2, lift_perm_getElem_bv_22_2, lift_perm_getElem_bv_23_2,
       lift_perm_getElem_bv_24_2]
   all_goals simp only [Std.UScalarTy.U64_numBits_eq, ← lift_xor, ← lift_td]
-  all_goals try
-    simp only [
-      show (↑(impl_perm (impl_perm (Fin.succ 0))) : Nat) = 4 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ)) : Nat) = 3 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ)) : Nat) = 2 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ)) : Nat) = 1 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ)) : Nat) = 8 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ)) : Nat) = 7 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ)) : Nat) = 6 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ)) : Nat) = 5 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 9 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 11 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 10 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 14 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 13 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 12 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 19 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 18 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 17 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 16 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 15 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 22 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 21 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 20 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 24 from rfl,
-      show (↑(impl_perm (impl_perm (Fin.succ 0).succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ.succ)) : Nat) = 23 from rfl]
   all_goals first
     | rfl
     | apply congrArg₂ lift_lane_bv
