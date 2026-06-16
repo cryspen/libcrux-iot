@@ -73,7 +73,8 @@ class extractAction(argparse.Action):
             "-**",
             "+libcrux_iot_ml_dsa::simd::portable::arithmetic::*",
             "+libcrux_iot_ml_dsa::simd::portable::ntt::*",
-            "+libcrux_iot_ml_dsa::simd::portable::invntt::*"
+            "+libcrux_iot_ml_dsa::simd::portable::invntt::*",
+            "+libcrux_iot_ml_dsa::simd::portable::sample::*"
         ]
         include_str = " ".join(includes)
         cargo_hax_into = [
