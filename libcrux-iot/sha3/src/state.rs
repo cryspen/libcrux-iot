@@ -226,13 +226,16 @@ pub(crate) mod cross_spec {
         5 * (idx % 5) + (idx / 5)
     }
 
+    /// Deinterleave a single bit-interleaved lane and recombine its two
+    /// 32-bit halves into the spec's `u64` lane value.
+    pub(crate) fn lane_to_u64(l: &Lane2U32) -> u64 {
+        let arr = l.deinterleave().0.declassify();
+        (arr[0] as u64) | ((arr[1] as u64) << 32)
+    }
+
     /// Deinterleave: read the impl state into the spec's flat `[u64; 25]`.
     pub(crate) fn state_to_spec(s: &KeccakState) -> [u64; 25] {
-        core::array::from_fn(|idx| {
-            let l = s.st[transpose(idx)].deinterleave();
-            let arr = l.0.declassify();
-            (arr[0] as u64) | ((arr[1] as u64) << 32)
-        })
+        core::array::from_fn(|idx| lane_to_u64(&s.st[transpose(idx)]))
     }
 
     /// Re-interleave a flat `[u64; 25]` back into the impl's `KeccakState`.
@@ -290,12 +293,11 @@ mod cross_spec_tests {
         fn run<const RATE: usize>(rng: &mut StdRng) {
             let initial: [u64; 25] = core::array::from_fn(|_| rng.gen());
             // load_block reads RATE bytes starting at offset 0.
-            let block_u8: [u8; 200] = core::array::from_fn(|_| rng.gen());
-            let block_secret: [libcrux_secrets::U8; 200] =
+            let block_u8: [u8; RATE] = core::array::from_fn(|_| rng.gen());
+            let block_secret: [libcrux_secrets::U8; RATE] =
                 core::array::from_fn(|i| block_u8[i].classify());
 
-            let spec_out =
-                hacspec_sha3::sponge::xor_block_into_state(initial, &block_u8[..RATE], RATE);
+            let spec_out = hacspec_sha3::sponge::xor_block_into_state(initial, &block_u8, RATE);
 
             let mut s = state_from_spec(initial);
             s.load_block::<RATE>(&block_secret, 0);
@@ -323,8 +325,8 @@ mod cross_spec_tests {
             let spec_out: [u8; RATE] =
                 hacspec_sha3::sponge::squeeze_state::<RATE>(&spec_state, [0u8; RATE], 0, RATE);
 
-            let mut out_secret = [0u8.classify(); 200];
-            impl_state.store_block::<RATE>(&mut out_secret[..RATE]);
+            let mut out_secret = [0u8.classify(); RATE];
+            impl_state.store_block::<RATE>(&mut out_secret);
             let out_pub: [u8; RATE] = core::array::from_fn(|i| out_secret[i].declassify());
 
             assert_eq!(spec_out, out_pub, "rate={}", RATE);

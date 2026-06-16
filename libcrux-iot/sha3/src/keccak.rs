@@ -2740,19 +2740,13 @@ mod cross_spec {
     //!
     //! Properties have the form `Spec::f(to_spec(input)) == to_spec(Impl::f(input))`.
 
+    extern crate alloc;
+
     use super::*;
-    use crate::state::cross_spec::{state_from_spec, state_to_spec};
-    use libcrux_secrets::{Classify, Declassify};
+    use crate::state::cross_spec::{lane_to_u64, state_from_spec, state_to_spec};
+    use libcrux_secrets::{Classify, ClassifyRef, Declassify};
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
-
-    /// Recover the underlying u64 from a `Lane2U32` stored in bit-interleaved
-    /// form: deinterleave, then combine the two 32-bit halves.
-    fn lane_interleaved_to_u64(l: &crate::lane::Lane2U32) -> u64 {
-        let d = l.deinterleave();
-        let arr = d.0.declassify();
-        (arr[0] as u64) | ((arr[1] as u64) << 32)
-    }
 
     /// Compute the spec's column-parity array `C` from a flat `[u64; 25]` state.
     ///
@@ -2802,8 +2796,8 @@ mod cross_spec {
 
             let c_spec = spec_c(&spec_state);
             let d_spec = spec_d(&c_spec);
-            let c_impl: [u64; 5] = core::array::from_fn(|x| lane_interleaved_to_u64(&s.c[x]));
-            let d_impl: [u64; 5] = core::array::from_fn(|x| lane_interleaved_to_u64(&s.d[x]));
+            let c_impl: [u64; 5] = core::array::from_fn(|x| lane_to_u64(&s.c[x]));
+            let d_impl: [u64; 5] = core::array::from_fn(|x| lane_to_u64(&s.d[x]));
 
             assert_eq!(c_spec, c_impl, "C mismatch");
             assert_eq!(d_spec, d_impl, "D mismatch");
@@ -2933,19 +2927,24 @@ mod cross_spec {
     fn absorb_block_matches() {
         let mut rng = StdRng::seed_from_u64(0xABBA);
         fn run<const RATE: usize>(rng: &mut StdRng) {
-            for _ in 0..4 {
-                let spec_state = core::array::from_fn(|_| rng.gen::<u64>());
-                let block_u8: [u8; 200] = core::array::from_fn(|_| rng.gen());
-                let block_secret: [libcrux_secrets::U8; 200] =
-                    core::array::from_fn(|i| block_u8[i].classify());
+            for &start in &[0usize, RATE] {
+                for _ in 0..4 {
+                    let spec_state = core::array::from_fn(|_| rng.gen::<u64>());
+                    let block_u8: alloc::vec::Vec<u8> =
+                        (0..start + RATE).map(|_| rng.gen()).collect();
+                    let block_secret = block_u8[..].classify_ref();
 
-                let spec_out =
-                    hacspec_sha3::sponge::absorb_block(spec_state, &block_u8[..RATE], RATE);
+                    let spec_out = hacspec_sha3::sponge::absorb_block(
+                        spec_state,
+                        &block_u8[start..start + RATE],
+                        RATE,
+                    );
 
-                let mut s = state_from_spec(spec_state);
-                absorb_block::<RATE>(&mut s, &block_secret, 0);
+                    let mut s = state_from_spec(spec_state);
+                    absorb_block::<RATE>(&mut s, block_secret, start);
 
-                assert_eq!(spec_out, state_to_spec(&s), "rate={}", RATE);
+                    assert_eq!(spec_out, state_to_spec(&s), "rate={} start={}", RATE, start);
+                }
             }
         }
         run::<72>(&mut rng);
@@ -2960,28 +2959,31 @@ mod cross_spec {
     fn absorb_final_matches() {
         let mut rng = StdRng::seed_from_u64(0xF1AA);
         fn run<const RATE: usize, const DELIM: u8>(rng: &mut StdRng) {
-            for &len in &[0usize, 1, RATE / 2, RATE - 1] {
-                for _ in 0..2 {
-                    let spec_state = core::array::from_fn(|_| rng.gen::<u64>());
-                    let msg_u8: [u8; 200] = core::array::from_fn(|_| rng.gen());
-                    let msg_secret: [libcrux_secrets::U8; 200] =
-                        core::array::from_fn(|i| msg_u8[i].classify());
+            for &start in &[0usize, RATE] {
+                for &len in &[0usize, 1, RATE / 2, RATE - 1] {
+                    for _ in 0..4 {
+                        let spec_state = core::array::from_fn(|_| rng.gen::<u64>());
+                        let msg_u8: alloc::vec::Vec<u8> =
+                            (0..start + len).map(|_| rng.gen()).collect();
+                        let msg_secret = msg_u8[..].classify_ref();
 
-                    let spec_out = hacspec_sha3::sponge::absorb_final(
-                        spec_state, &msg_u8, 0, len, RATE, DELIM,
-                    );
+                        let spec_out = hacspec_sha3::sponge::absorb_final(
+                            spec_state, &msg_u8, start, len, RATE, DELIM,
+                        );
 
-                    let mut s = state_from_spec(spec_state);
-                    absorb_final::<RATE, DELIM>(&mut s, &msg_secret, 0, len);
+                        let mut s = state_from_spec(spec_state);
+                        absorb_final::<RATE, DELIM>(&mut s, msg_secret, start, len);
 
-                    assert_eq!(
-                        spec_out,
-                        state_to_spec(&s),
-                        "rate={} delim={:#x} len={}",
-                        RATE,
-                        DELIM,
-                        len
-                    );
+                        assert_eq!(
+                            spec_out,
+                            state_to_spec(&s),
+                            "rate={} delim={:#x} start={} len={}",
+                            RATE,
+                            DELIM,
+                            start,
+                            len
+                        );
+                    }
                 }
             }
         }
@@ -3007,9 +3009,9 @@ mod cross_spec {
                 let spec_out: [u8; RATE] =
                     hacspec_sha3::sponge::squeeze_state::<RATE>(&spec_state, [0u8; RATE], 0, RATE);
 
-                let mut out_secret = [0u8.classify(); 200];
-                squeeze_first_block::<RATE>(&impl_state, &mut out_secret[..RATE]);
-                let out_pub: [u8; RATE] = core::array::from_fn(|i| out_secret[i].declassify());
+                let mut out_secret = [0u8; RATE].classify();
+                squeeze_first_block::<RATE>(&impl_state, &mut out_secret);
+                let out_pub: [u8; RATE] = out_secret.declassify();
 
                 assert_eq!(spec_out, out_pub, "rate={}", RATE);
             }
@@ -3034,9 +3036,9 @@ mod cross_spec {
                     hacspec_sha3::sponge::squeeze_state::<RATE>(&permuted, [0u8; RATE], 0, RATE);
 
                 let mut s = state_from_spec(spec_state);
-                let mut out_secret = [0u8.classify(); 200];
-                squeeze_next_block::<RATE>(&mut s, &mut out_secret[..RATE]);
-                let out_pub: [u8; RATE] = core::array::from_fn(|i| out_secret[i].declassify());
+                let mut out_secret = [0u8; RATE].classify();
+                squeeze_next_block::<RATE>(&mut s, &mut out_secret);
+                let out_pub: [u8; RATE] = out_secret.declassify();
 
                 assert_eq!(spec_out, out_pub, "rate={}", RATE);
             }
@@ -3055,11 +3057,10 @@ mod cross_spec {
     fn run_impl_keccak<const RATE: usize, const DELIM: u8, const OUT_LEN: usize>(
         msg: &[u8],
     ) -> [u8; OUT_LEN] {
-        let msg_secret: alloc::vec::Vec<libcrux_secrets::U8> =
-            msg.iter().copied().map(|b| b.classify()).collect();
-        let mut out_secret = [0u8.classify(); OUT_LEN];
-        keccak::<RATE, DELIM>(&msg_secret, &mut out_secret);
-        core::array::from_fn(|i| out_secret[i].declassify())
+        let msg_secret = msg[..].classify_ref();
+        let mut out_secret = [0u8; OUT_LEN].classify();
+        keccak::<RATE, DELIM>(msg_secret, &mut out_secret);
+        out_secret.declassify()
     }
 
     /// Sample input messages: edges + a few randoms across a range of sizes.
@@ -3163,6 +3164,4 @@ mod cross_spec {
     fn shake256_matches_spec_512() {
         shake_check::<136, 512>(hacspec_sha3::shake256::<512>);
     }
-
-    extern crate alloc;
 }
