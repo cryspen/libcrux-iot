@@ -71,7 +71,8 @@ class extractAction(argparse.Action):
         # Extract ml-dsa
         includes = [
             "-**",
-            "+libcrux_iot_ml_dsa::simd::portable::arithmetic::*"
+            "+libcrux_iot_ml_dsa::simd::portable::arithmetic::*",
+            "+libcrux_iot_ml_dsa::simd::portable::ntt::*"
         ]
         include_str = " ".join(includes)
         cargo_hax_into = [
