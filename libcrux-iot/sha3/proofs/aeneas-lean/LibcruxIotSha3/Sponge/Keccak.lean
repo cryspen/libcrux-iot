@@ -145,6 +145,139 @@ theorem iterate_keccak_f_zero
   show Nat.fold 0 _ _ = _
   rw [Nat.fold_zero]
 
+
+/-! ### Helper: spec-side `sponge.absorb` equals the impl absorb pipeline.
+
+Common to all three top-level dispatch branches. Given the impl-side
+absorb chain — `keccak_loop0` producing `s1` (as `absorb_fold`) and
+`absorb_final` producing `s2` — the spec `sponge.absorb` evaluates to
+`.ok (lift s2)`. The bulk is a `pad_last_block` slice equality showing
+that the impl's `data[i3..i]` tail and the spec's `data.drop (n*RATE)`
+tail extract the same bytes. -/
+theorem sponge_absorb_eq_of_impl
+    (RATE : Std.Usize) (DELIM : Std.U8) (data : Slice Std.U8)
+    (s0 s1 s2 : state.KeccakState)
+    (i_us n_us rem_us i3_us : Std.Usize)
+    (h_RATE_ge_1 : 1 ≤ RATE.val)
+    (h_s0_lift : Foundation.lift s0 = Std.Array.repeat 25#usize 0#u64)
+    (h_i_us_val : i_us.val = data.val.length)
+    (h_n_us_val : n_us.val = data.val.length / RATE.val)
+    (h_rem_us_val : rem_us.val = data.val.length % RATE.val)
+    (h_i3_us_val : i3_us.val = data.val.length / RATE.val * RATE.val)
+    (h_s1_fold : absorb_fold s0 data RATE n_us.val = .ok (Foundation.lift s1))
+    (h_s2_spec : sponge.absorb_final (Foundation.lift s1) data i3_us rem_us RATE DELIM
+                  = .ok (Foundation.lift s2)) :
+    sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) := by
+  have h_data_len_max : data.val.length ≤ Std.Usize.max := by
+    have := data.property; omega
+  set n_nat : Nat := data.val.length / RATE.val with hn_nat_def
+  set rem_nat : Nat := data.val.length % RATE.val with hrem_nat_def
+  have h_n_rem : n_nat * RATE.val + rem_nat = data.val.length := by
+    rw [hn_nat_def, hrem_nat_def]
+    exact Nat.div_add_mod' data.val.length RATE.val
+  have h_n_rate_le : n_nat * RATE.val ≤ data.val.length := by omega
+  have h_rem_lt_RATE : rem_nat < RATE.val := Nat.mod_lt _ (by omega)
+  have h_fold_spec : absorb_fold_spec (Foundation.lift s0) data RATE n_us.val
+                      = .ok (Foundation.lift s1) := by
+    rw [← absorb_fold_eq_spec]; exact h_s1_fold
+  unfold sponge.absorb
+  show sponge.absorb_rec (Std.Array.repeat 25#usize 0#u64) RATE DELIM data
+       = .ok (Foundation.lift s2)
+  rw [← h_s0_lift]
+  rw [sponge_absorb_rec_eq_fold (Foundation.lift s0) RATE DELIM data n_nat
+    (by rw [hn_nat_def]; exact h_n_rate_le)]
+  have h_fold_spec_n : absorb_fold_spec (Foundation.lift s0) data RATE n_nat
+                      = .ok (Foundation.lift s1) := by
+    rw [← h_n_us_val]; exact h_fold_spec
+  rw [h_fold_spec_n]; simp only [bind_tc_ok]
+  set tail : Slice Std.U8 :=
+    ⟨data.val.drop (n_nat * RATE.val), by
+      rw [List.length_drop]; have := data.property; omega⟩ with htail_def
+  have h_tail_len : tail.val.length = rem_nat := by
+    show (data.val.drop (n_nat * RATE.val)).length = _
+    rw [List.length_drop]; omega
+  have h_tail_lt_rate : tail.val.length < RATE.val := by
+    rw [h_tail_len]; exact h_rem_lt_RATE
+  rw [sponge_absorb_rec_unfold_short (Foundation.lift s1) RATE DELIM tail h_tail_lt_rate]
+  have h_slt_eq_rem : Std.Slice.len tail = rem_us := by
+    apply Std.UScalar.eq_of_val_eq
+    simp [Std.Slice.len, h_tail_len, h_rem_us_val]
+  rw [h_slt_eq_rem]
+  rw [show sponge.absorb_final (Foundation.lift s1) tail 0#usize rem_us RATE DELIM
+        = sponge.absorb_final (Foundation.lift s1) data i3_us rem_us RATE DELIM from ?_]
+  · exact h_s2_spec
+  · unfold sponge.absorb_final
+    have h_pad_eq :
+        sponge.pad_last_block tail 0#usize rem_us RATE DELIM
+          = sponge.pad_last_block data i3_us rem_us RATE DELIM := by
+      unfold sponge.pad_last_block
+      have h_lhs_add : (0#usize : Std.Usize) + rem_us = (.ok rem_us : Result Std.Usize) := by
+        have h_bnd : (0#usize : Std.Usize).val + rem_us.val ≤ Std.UScalar.max .Usize := by
+          rw [Std.UScalar.max_USize_eq]; show 0 + rem_us.val ≤ Std.Usize.max
+          rw [h_rem_us_val]; omega
+        obtain ⟨v, h_eq_v, h_v_val_eq, _⟩ :=
+          Std.WP.spec_imp_exists
+            (Std.UScalar.add_bv_spec (x := (0#usize : Std.Usize)) (y := rem_us) h_bnd)
+        have h_v_val : v.val = rem_us.val := by
+          rw [h_v_val_eq]; show 0 + rem_us.val = rem_us.val; omega
+        have h_v_eq : v = rem_us := Std.UScalar.eq_of_val_eq h_v_val
+        rw [h_eq_v, h_v_eq]
+      rw [h_lhs_add]; simp only [bind_tc_ok]
+      have h_rhs_add : i3_us + rem_us = (.ok i_us : Result Std.Usize) := by
+        have h_bnd : i3_us.val + rem_us.val ≤ Std.UScalar.max .Usize := by
+          rw [Std.UScalar.max_USize_eq, h_i3_us_val, h_rem_us_val]; omega
+        obtain ⟨v, h_eq_v, h_v_val_eq, _⟩ :=
+          Std.WP.spec_imp_exists
+            (Std.UScalar.add_bv_spec (x := i3_us) (y := rem_us) h_bnd)
+        have h_v_val : v.val = i_us.val := by
+          rw [h_v_val_eq, h_i3_us_val, h_rem_us_val, h_i_us_val]; omega
+        have h_v_eq : v = i_us := Std.UScalar.eq_of_val_eq h_v_val
+        rw [h_eq_v, h_v_eq]
+      rw [h_rhs_add]; simp only [bind_tc_ok]
+      have h_lhs_idx :
+          CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+            (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
+            tail { start := 0#usize, «end» := rem_us }
+          = .ok tail := by
+        unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+               CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
+               core.slice.index.Slice.index
+               core.slice.index.SliceIndexRangeUsizeSlice.index
+        have h0 : (0#usize : Std.Usize) ≤ rem_us := by
+          show (0 : Nat) ≤ rem_us.val; omega
+        have h1' : (⟨0#usize, rem_us⟩ : core.ops.range.Range Std.Usize).end.val ≤ tail.length := by
+          show rem_us.val ≤ tail.val.length
+          rw [h_tail_len, h_rem_us_val]
+        simp [h0, h1']
+        apply Subtype.ext
+        show tail.val.slice ((0#usize : Std.Usize).val) rem_us.val = tail.val
+        rw [show ((0#usize : Std.Usize).val : Nat) = 0 from rfl, h_rem_us_val]
+        unfold List.slice
+        rw [List.drop_zero]
+        rw [List.take_of_length_le (by rw [h_tail_len]; omega)]
+      have h_rhs_idx :
+          CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+            (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
+            data { start := i3_us, «end» := i_us }
+          = .ok tail := by
+        unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+               CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
+               core.slice.index.Slice.index
+               core.slice.index.SliceIndexRangeUsizeSlice.index
+        have h0 : i3_us ≤ i_us := by
+          show i3_us.val ≤ i_us.val; rw [h_i3_us_val, h_i_us_val]; omega
+        have h1' : (⟨i3_us, i_us⟩ : core.ops.range.Range Std.Usize).end.val ≤ data.length := by
+          show i_us.val ≤ data.length
+          rw [h_i_us_val]
+        simp [h0, h1']
+        apply Subtype.ext
+        show data.val.slice i3_us.val i_us.val = tail.val
+        rw [h_i3_us_val, h_i_us_val]
+        show data.val.slice (n_nat * RATE.val) data.val.length = data.val.drop (n_nat * RATE.val)
+        unfold List.slice
+        rw [List.take_of_length_le (by rw [List.length_drop])]
+      rw [h_lhs_idx, h_rhs_idx]
+    rw [h_pad_eq]
 /-! ### Main theorem: `keccak.keccak_keccak_spec` (blocks = 0 branch).
 
 We land the `blocks = 0` case end-to-end. The post is the textbook
@@ -298,140 +431,11 @@ theorem keccak.keccak_keccak_spec_blocks_zero
   -- We derive this from h_s1_fold and h_s2_spec.
   -- h_s1_fold : absorb_fold s0 data RATE n_us.val = .ok (lift s1).
   -- We use absorb_fold_eq_spec to translate to absorb_fold_spec (lift s0) data RATE n_us.val.
-  have h_fold_spec : absorb_fold_spec (Foundation.lift s0) data RATE n_us.val
-                      = .ok (Foundation.lift s1) := by
-    rw [← absorb_fold_eq_spec]; exact h_s1_fold
-  -- h_s2_spec : sponge.absorb_final (lift s1) data i3_us rem_us RATE DELIM = .ok (lift s2).
-  -- Now compose via sponge_absorb_rec_eq_fold + unfold_short.
-  have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) := by
-    unfold sponge.absorb
-    -- Goal: `let a := Array.repeat 25 0; sponge.absorb_rec a RATE DELIM data = .ok (lift s2)`.
-    show sponge.absorb_rec (Std.Array.repeat 25#usize 0#u64) RATE DELIM data
-         = .ok (Foundation.lift s2)
-    rw [← h_s0_lift]
-    -- Now: sponge.absorb_rec (lift s0) RATE DELIM data = .ok (lift s2).
-    rw [sponge_absorb_rec_eq_fold (Foundation.lift s0) RATE DELIM data n_nat (by rw [hn_nat_def]; exact h_n_rate_le)]
-    -- Now: absorb_fold_spec (lift s0) data RATE n_nat >>= fun s_n =>
-    --        absorb_rec s_n RATE DELIM ⟨data.drop (n_nat*RATE), _⟩
-    --      = .ok (lift s2).
-    -- Step A: absorb_fold_spec (lift s0) data RATE n_nat = .ok (lift s1).
-    have h_fold_spec_n : absorb_fold_spec (Foundation.lift s0) data RATE n_nat
-                        = .ok (Foundation.lift s1) := by
-      rw [← h_n_us_val]; exact h_fold_spec
-    rw [h_fold_spec_n]; simp only [bind_tc_ok]
-    -- Step B: absorb_rec (lift s1) RATE DELIM ⟨data.drop (n_nat * RATE), _⟩ = .ok (lift s2).
-    -- We apply `sponge_absorb_rec_unfold_short` since the tail length is rem_nat < RATE.
-    set tail : Slice Std.U8 :=
-      ⟨data.val.drop (n_nat * RATE.val), by
-        rw [List.length_drop]; have := data.property; omega⟩ with htail_def
-    have h_tail_len : tail.val.length = rem_nat := by
-      show (data.val.drop (n_nat * RATE.val)).length = _
-      rw [List.length_drop]; omega
-    have h_tail_lt_rate : tail.val.length < RATE.val := by
-      rw [h_tail_len]; exact h_rem_lt_RATE
-    rw [sponge_absorb_rec_unfold_short (Foundation.lift s1) RATE DELIM tail h_tail_lt_rate]
-    -- Now goal: sponge.absorb_final (lift s1) tail 0#usize (Slice.len tail) RATE DELIM
-    --        = .ok (lift s2).
-    -- We have h_s2_spec : sponge.absorb_final (lift s1) data i3_us rem_us RATE DELIM = .ok (lift s2).
-    -- The two absorb_final calls have:
-    --   LHS: message = tail (msg.drop (n*rate)), msg_offset = 0, remaining = Slice.len tail (= rem_nat).
-    --   RHS: message = data, msg_offset = i3_us (= n*rate), remaining = rem_us (= rem_nat).
-    -- Both extract the same bytes (data[n*rate..data.length]) via `pad_last_block`.
-    -- Show LHS = RHS by `pad_last_block_eq`.
-    -- We compute (Slice.len tail).val = tail.length = rem_nat = rem_us.val.
-    have h_slt_eq_rem : Std.Slice.len tail = rem_us := by
-      apply Std.UScalar.eq_of_val_eq
-      simp [Std.Slice.len, h_tail_len, h_rem_us_val]
-    rw [h_slt_eq_rem]
-    -- Now LHS: sponge.absorb_final (lift s1) tail 0#usize rem_us RATE DELIM.
-    -- RHS: sponge.absorb_final (lift s1) data i3_us rem_us RATE DELIM.
-    -- Show these are equal by reducing to the same `pad_last_block`.
-    rw [show sponge.absorb_final (Foundation.lift s1) tail 0#usize rem_us RATE DELIM
-          = sponge.absorb_final (Foundation.lift s1) data i3_us rem_us RATE DELIM from ?_]
-    · exact h_s2_spec
-    · -- pad_last_block tail 0 rem RATE DELIM = pad_last_block data i3_us rem RATE DELIM.
-      unfold sponge.absorb_final
-      -- Both have form: do let block ← pad_last_block ...; ...
-      have h_pad_eq :
-          sponge.pad_last_block tail 0#usize rem_us RATE DELIM
-            = sponge.pad_last_block data i3_us rem_us RATE DELIM := by
-        unfold sponge.pad_last_block
-        -- Both produce a buffer; they differ only in the `s1` slice extracted.
-        -- Reduce both `let i ← off + remaining`.
-        -- LHS: 0#usize + rem_us = .ok rem_us.
-        have h_lhs_add : (0#usize : Std.Usize) + rem_us = (.ok rem_us : Result Std.Usize) := by
-          have h_bnd : (0#usize : Std.Usize).val + rem_us.val ≤ Std.UScalar.max .Usize := by
-            rw [Std.UScalar.max_USize_eq]; show 0 + rem_us.val ≤ Std.Usize.max
-            rw [h_rem_us_val]; omega
-          obtain ⟨v, h_eq_v, h_v_val_eq, _⟩ :=
-            Std.WP.spec_imp_exists
-              (Std.UScalar.add_bv_spec (x := (0#usize : Std.Usize)) (y := rem_us) h_bnd)
-          have h_v_val : v.val = rem_us.val := by
-            rw [h_v_val_eq]; show 0 + rem_us.val = rem_us.val; omega
-          have h_v_eq : v = rem_us := Std.UScalar.eq_of_val_eq h_v_val
-          rw [h_eq_v, h_v_eq]
-        rw [h_lhs_add]; simp only [bind_tc_ok]
-        -- RHS: i3_us + rem_us = .ok i_us (since i3_us.val + rem_us.val = n*RATE + rem = data.length = i_us.val).
-        have h_rhs_add : i3_us + rem_us = (.ok i_us : Result Std.Usize) := by
-          have h_bnd : i3_us.val + rem_us.val ≤ Std.UScalar.max .Usize := by
-            rw [Std.UScalar.max_USize_eq, h_i3_us_val, h_rem_us_val]; omega
-          obtain ⟨v, h_eq_v, h_v_val_eq, _⟩ :=
-            Std.WP.spec_imp_exists
-              (Std.UScalar.add_bv_spec (x := i3_us) (y := rem_us) h_bnd)
-          have h_v_val : v.val = i_us.val := by
-            rw [h_v_val_eq, h_i3_us_val, h_rem_us_val, h_i_us_val]; omega
-          have h_v_eq : v = i_us := Std.UScalar.eq_of_val_eq h_v_val
-          rw [h_eq_v, h_v_eq]
-        rw [h_rhs_add]; simp only [bind_tc_ok]
-        -- Now both sides have slice indices that produce the same byte sequence.
-        -- LHS: index tail [0, rem_us]. Bytes = tail.val.slice 0 rem.val = tail.val (= data.drop n*rate, length rem).
-        -- RHS: index data [i3_us, i_us]. Bytes = data.val.slice (n*rate) (data.length).
-        -- = data.val.drop (n*rate) since (data.length - n*rate) covers the whole drop.
-        -- Show both indices yield the same `Slice`.
-        have h_lhs_idx :
-            CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-              (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
-              tail { start := 0#usize, «end» := rem_us }
-            = .ok tail := by
-          unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                 CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                 core.slice.index.Slice.index
-                 core.slice.index.SliceIndexRangeUsizeSlice.index
-          have h0 : (0#usize : Std.Usize) ≤ rem_us := by
-            show (0 : Nat) ≤ rem_us.val; omega
-          have h1' : (⟨0#usize, rem_us⟩ : core.ops.range.Range Std.Usize).end.val ≤ tail.length := by
-            show rem_us.val ≤ tail.val.length
-            rw [h_tail_len, h_rem_us_val]
-          simp [h0, h1']
-          apply Subtype.ext
-          show tail.val.slice ((0#usize : Std.Usize).val) rem_us.val = tail.val
-          rw [show ((0#usize : Std.Usize).val : Nat) = 0 from rfl, h_rem_us_val]
-          unfold List.slice
-          rw [List.drop_zero]
-          rw [List.take_of_length_le (by rw [h_tail_len]; omega)]
-        have h_rhs_idx :
-            CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-              (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
-              data { start := i3_us, «end» := i_us }
-            = .ok tail := by
-          unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                 CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                 core.slice.index.Slice.index
-                 core.slice.index.SliceIndexRangeUsizeSlice.index
-          have h0 : i3_us ≤ i_us := by
-            show i3_us.val ≤ i_us.val; rw [h_i3_us_val, h_i_us_val]; omega
-          have h1' : (⟨i3_us, i_us⟩ : core.ops.range.Range Std.Usize).end.val ≤ data.length := by
-            show i_us.val ≤ data.length
-            rw [h_i_us_val]
-          simp [h0, h1']
-          apply Subtype.ext
-          show data.val.slice i3_us.val i_us.val = tail.val
-          rw [h_i3_us_val, h_i_us_val]
-          show data.val.slice (n_nat * RATE.val) data.val.length = data.val.drop (n_nat * RATE.val)
-          unfold List.slice
-          rw [List.take_of_length_le (by rw [List.length_drop])]
-        rw [h_lhs_idx, h_rhs_idx]
-      rw [h_pad_eq]
+  have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) :=
+    sponge_absorb_eq_of_impl RATE DELIM data s0 s1 s2 i_us n_us rem_us i3_us
+      h_RATE_ge_1 h_s0_lift h_i_us_val
+      (h_n_us_val.trans hn_nat_def) (h_rem_us_val.trans hrem_nat_def)
+      (h_i3_us_val.trans (by rw [hn_nat_def])) h_s1_fold h_s2_spec
   -- Step 16: spec-side squeeze. Need:
   --   sponge.squeeze outlen_us (lift s2) RATE = .ok spec_out.
   -- Use sponge_squeeze_byte_eq with the constant `s_b` function (since outlen < RATE,
@@ -723,112 +727,11 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       rw [h_idx_eq]; simp only [bind_tc_ok]
       rw [h_s5_eq]; simp only [bind_tc_ok]
     -- Step 20: spec-side absorb (same as blocks_zero case).
-    have h_fold_spec : absorb_fold_spec (Foundation.lift s0) data RATE n_us.val
-                        = .ok (Foundation.lift s1) := by
-      rw [← absorb_fold_eq_spec]; exact h_s1_fold
-    have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) := by
-      unfold sponge.absorb
-      show sponge.absorb_rec (Std.Array.repeat 25#usize 0#u64) RATE DELIM data
-           = .ok (Foundation.lift s2)
-      rw [← h_s0_lift]
-      rw [sponge_absorb_rec_eq_fold (Foundation.lift s0) RATE DELIM data n_nat
-        (by rw [hn_nat_def]; exact h_n_rate_le)]
-      have h_fold_spec_n : absorb_fold_spec (Foundation.lift s0) data RATE n_nat
-                          = .ok (Foundation.lift s1) := by
-        rw [← h_n_us_val]; exact h_fold_spec
-      rw [h_fold_spec_n]; simp only [bind_tc_ok]
-      set tail : Slice Std.U8 :=
-        ⟨data.val.drop (n_nat * RATE.val), by
-          rw [List.length_drop]; have := data.property; omega⟩ with htail_def
-      have h_tail_len : tail.val.length = rem_nat := by
-        show (data.val.drop (n_nat * RATE.val)).length = _
-        rw [List.length_drop]; omega
-      have h_tail_lt_rate : tail.val.length < RATE.val := by
-        rw [h_tail_len]; exact h_rem_lt_RATE
-      rw [sponge_absorb_rec_unfold_short (Foundation.lift s1) RATE DELIM tail h_tail_lt_rate]
-      have h_slt_eq_rem : Std.Slice.len tail = rem_us := by
-        apply Std.UScalar.eq_of_val_eq
-        simp [Std.Slice.len, h_tail_len, h_rem_us_val]
-      rw [h_slt_eq_rem]
-      rw [show sponge.absorb_final (Foundation.lift s1) tail 0#usize rem_us RATE DELIM
-            = sponge.absorb_final (Foundation.lift s1) data i3_us rem_us RATE DELIM from ?_]
-      · exact h_s2_spec
-      · -- Same pad_last_block equality as in blocks_zero case.
-        unfold sponge.absorb_final
-        have h_pad_eq :
-            sponge.pad_last_block tail 0#usize rem_us RATE DELIM
-              = sponge.pad_last_block data i3_us rem_us RATE DELIM := by
-          unfold sponge.pad_last_block
-          have h_lhs_add : (0#usize : Std.Usize) + rem_us = (.ok rem_us : Result Std.Usize) := by
-            have h_bnd : (0#usize : Std.Usize).val + rem_us.val ≤ Std.UScalar.max .Usize := by
-              rw [Std.UScalar.max_USize_eq]; show 0 + rem_us.val ≤ Std.Usize.max
-              rw [h_rem_us_val]; omega
-            obtain ⟨v, h_eq_v, h_v_val_eq, _⟩ :=
-              Std.WP.spec_imp_exists
-                (Std.UScalar.add_bv_spec (x := (0#usize : Std.Usize)) (y := rem_us) h_bnd)
-            have h_v_val : v.val = rem_us.val := by
-              rw [h_v_val_eq]; show 0 + rem_us.val = rem_us.val; omega
-            have h_v_eq : v = rem_us := Std.UScalar.eq_of_val_eq h_v_val
-            rw [h_eq_v, h_v_eq]
-          rw [h_lhs_add]; simp only [bind_tc_ok]
-          have h_rhs_add : i3_us + rem_us = (.ok i_us : Result Std.Usize) := by
-            have h_bnd : i3_us.val + rem_us.val ≤ Std.UScalar.max .Usize := by
-              rw [Std.UScalar.max_USize_eq, h_i3_us_val, h_rem_us_val]; omega
-            obtain ⟨v, h_eq_v, h_v_val_eq, _⟩ :=
-              Std.WP.spec_imp_exists
-                (Std.UScalar.add_bv_spec (x := i3_us) (y := rem_us) h_bnd)
-            have h_v_val : v.val = i_us.val := by
-              rw [h_v_val_eq, h_i3_us_val, h_rem_us_val, h_i_us_val]; omega
-            have h_v_eq : v = i_us := Std.UScalar.eq_of_val_eq h_v_val
-            rw [h_eq_v, h_v_eq]
-          rw [h_rhs_add]; simp only [bind_tc_ok]
-          have h_lhs_idx :
-              CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                  Std.U8)
-                tail { start := 0#usize, «end» := rem_us }
-              = .ok tail := by
-            unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                   CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                   core.slice.index.Slice.index
-                   core.slice.index.SliceIndexRangeUsizeSlice.index
-            have h0 : (0#usize : Std.Usize) ≤ rem_us := by
-              show (0 : Nat) ≤ rem_us.val; omega
-            have h1' : (⟨0#usize, rem_us⟩ : core.ops.range.Range Std.Usize).end.val
-                        ≤ tail.length := by
-              show rem_us.val ≤ tail.val.length
-              rw [h_tail_len, h_rem_us_val]
-            simp [h0, h1']
-            apply Subtype.ext
-            show tail.val.slice ((0#usize : Std.Usize).val) rem_us.val = tail.val
-            rw [show ((0#usize : Std.Usize).val : Nat) = 0 from rfl, h_rem_us_val]
-            unfold List.slice
-            rw [List.drop_zero]
-            rw [List.take_of_length_le (by rw [h_tail_len]; omega)]
-          have h_rhs_idx :
-              CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                  Std.U8)
-                data { start := i3_us, «end» := i_us }
-              = .ok tail := by
-            unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                   CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                   core.slice.index.Slice.index
-                   core.slice.index.SliceIndexRangeUsizeSlice.index
-            have h0 : i3_us ≤ i_us := by
-              show i3_us.val ≤ i_us.val; rw [h_i3_us_val, h_i_us_val]; omega
-            have h1' : (⟨i3_us, i_us⟩ : core.ops.range.Range Std.Usize).end.val ≤ data.length := by
-              show i_us.val ≤ data.length
-              rw [h_i_us_val]
-            simp [h0, h1']
-            apply Subtype.ext
-            show data.val.slice i3_us.val i_us.val = tail.val
-            rw [h_i3_us_val, h_i_us_val]
-            show data.val.slice (n_nat * RATE.val) data.val.length = data.val.drop (n_nat * RATE.val)
-            unfold List.slice
-            rw [List.take_of_length_le (by rw [List.length_drop])]
-          rw [h_lhs_idx, h_rhs_idx]
-        rw [h_pad_eq]
+    have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) :=
+      sponge_absorb_eq_of_impl RATE DELIM data s0 s1 s2 i_us n_us rem_us i3_us
+        h_RATE_ge_1 h_s0_lift h_i_us_val
+        (h_n_us_val.trans hn_nat_def) (h_rem_us_val.trans hrem_nat_def)
+        (h_i3_us_val.trans (by rw [hn_nat_def])) h_s1_fold h_s2_spec
     -- Step 21: spec-side squeeze using sponge_squeeze_byte_eq.
     have h_RATE_pos : 0 < RATE.val := h_RATE_ge_1
     -- The s_b function: for each k < outlen, return state of iterate (k/RATE) (lift s2).
@@ -1128,112 +1031,11 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       rw [h_massert]; simp only [bind_tc_ok]
       rw [if_neg h_not_partial]
     -- Spec-side absorb (same as partial branch).
-    have h_fold_spec : absorb_fold_spec (Foundation.lift s0) data RATE n_us.val
-                        = .ok (Foundation.lift s1) := by
-      rw [← absorb_fold_eq_spec]; exact h_s1_fold
-    have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) := by
-      unfold sponge.absorb
-      show sponge.absorb_rec (Std.Array.repeat 25#usize 0#u64) RATE DELIM data
-           = .ok (Foundation.lift s2)
-      rw [← h_s0_lift]
-      rw [sponge_absorb_rec_eq_fold (Foundation.lift s0) RATE DELIM data n_nat
-        (by rw [hn_nat_def]; exact h_n_rate_le)]
-      have h_fold_spec_n : absorb_fold_spec (Foundation.lift s0) data RATE n_nat
-                          = .ok (Foundation.lift s1) := by
-        rw [← h_n_us_val]; exact h_fold_spec
-      rw [h_fold_spec_n]; simp only [bind_tc_ok]
-      set tail : Slice Std.U8 :=
-        ⟨data.val.drop (n_nat * RATE.val), by
-          rw [List.length_drop]; have := data.property; omega⟩ with htail_def
-      have h_tail_len : tail.val.length = rem_nat := by
-        show (data.val.drop (n_nat * RATE.val)).length = _
-        rw [List.length_drop]; omega
-      have h_tail_lt_rate : tail.val.length < RATE.val := by
-        rw [h_tail_len]; exact h_rem_lt_RATE
-      rw [sponge_absorb_rec_unfold_short (Foundation.lift s1) RATE DELIM tail h_tail_lt_rate]
-      have h_slt_eq_rem : Std.Slice.len tail = rem_us := by
-        apply Std.UScalar.eq_of_val_eq
-        simp [Std.Slice.len, h_tail_len, h_rem_us_val]
-      rw [h_slt_eq_rem]
-      rw [show sponge.absorb_final (Foundation.lift s1) tail 0#usize rem_us RATE DELIM
-            = sponge.absorb_final (Foundation.lift s1) data i3_us rem_us RATE DELIM from ?_]
-      · exact h_s2_spec
-      · unfold sponge.absorb_final
-        have h_pad_eq :
-            sponge.pad_last_block tail 0#usize rem_us RATE DELIM
-              = sponge.pad_last_block data i3_us rem_us RATE DELIM := by
-          unfold sponge.pad_last_block
-          have h_lhs_add : (0#usize : Std.Usize) + rem_us = (.ok rem_us : Result Std.Usize) := by
-            have h_bnd : (0#usize : Std.Usize).val + rem_us.val ≤ Std.UScalar.max .Usize := by
-              rw [Std.UScalar.max_USize_eq]; show 0 + rem_us.val ≤ Std.Usize.max
-              rw [h_rem_us_val]; omega
-            obtain ⟨v, h_eq_v, h_v_val_eq, _⟩ :=
-              Std.WP.spec_imp_exists
-                (Std.UScalar.add_bv_spec (x := (0#usize : Std.Usize)) (y := rem_us) h_bnd)
-            have h_v_val : v.val = rem_us.val := by
-              rw [h_v_val_eq]; show 0 + rem_us.val = rem_us.val; omega
-            have h_v_eq : v = rem_us := Std.UScalar.eq_of_val_eq h_v_val
-            rw [h_eq_v, h_v_eq]
-          rw [h_lhs_add]; simp only [bind_tc_ok]
-          have h_rhs_add : i3_us + rem_us = (.ok i_us : Result Std.Usize) := by
-            have h_bnd : i3_us.val + rem_us.val ≤ Std.UScalar.max .Usize := by
-              rw [Std.UScalar.max_USize_eq, h_i3_us_val, h_rem_us_val]; omega
-            obtain ⟨v, h_eq_v, h_v_val_eq, _⟩ :=
-              Std.WP.spec_imp_exists
-                (Std.UScalar.add_bv_spec (x := i3_us) (y := rem_us) h_bnd)
-            have h_v_val : v.val = i_us.val := by
-              rw [h_v_val_eq, h_i3_us_val, h_rem_us_val, h_i_us_val]; omega
-            have h_v_eq : v = i_us := Std.UScalar.eq_of_val_eq h_v_val
-            rw [h_eq_v, h_v_eq]
-          rw [h_rhs_add]; simp only [bind_tc_ok]
-          have h_lhs_idx :
-              CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                  Std.U8)
-                tail { start := 0#usize, «end» := rem_us }
-              = .ok tail := by
-            unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                   CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                   core.slice.index.Slice.index
-                   core.slice.index.SliceIndexRangeUsizeSlice.index
-            have h0 : (0#usize : Std.Usize) ≤ rem_us := by
-              show (0 : Nat) ≤ rem_us.val; omega
-            have h1' : (⟨0#usize, rem_us⟩ : core.ops.range.Range Std.Usize).end.val
-                        ≤ tail.length := by
-              show rem_us.val ≤ tail.val.length
-              rw [h_tail_len, h_rem_us_val]
-            simp [h0, h1']
-            apply Subtype.ext
-            show tail.val.slice ((0#usize : Std.Usize).val) rem_us.val = tail.val
-            rw [show ((0#usize : Std.Usize).val : Nat) = 0 from rfl, h_rem_us_val]
-            unfold List.slice
-            rw [List.drop_zero]
-            rw [List.take_of_length_le (by rw [h_tail_len]; omega)]
-          have h_rhs_idx :
-              CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                  Std.U8)
-                data { start := i3_us, «end» := i_us }
-              = .ok tail := by
-            unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
-                   CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
-                   core.slice.index.Slice.index
-                   core.slice.index.SliceIndexRangeUsizeSlice.index
-            have h0 : i3_us ≤ i_us := by
-              show i3_us.val ≤ i_us.val; rw [h_i3_us_val, h_i_us_val]; omega
-            have h1' : (⟨i3_us, i_us⟩ : core.ops.range.Range Std.Usize).end.val ≤ data.length := by
-              show i_us.val ≤ data.length
-              rw [h_i_us_val]
-            simp [h0, h1']
-            apply Subtype.ext
-            show data.val.slice i3_us.val i_us.val = tail.val
-            rw [h_i3_us_val, h_i_us_val]
-            show data.val.slice (n_nat * RATE.val) data.val.length
-                = data.val.drop (n_nat * RATE.val)
-            unfold List.slice
-            rw [List.take_of_length_le (by rw [List.length_drop])]
-          rw [h_lhs_idx, h_rhs_idx]
-        rw [h_pad_eq]
+    have h_absorb_eq : sponge.absorb RATE DELIM data = .ok (Foundation.lift s2) :=
+      sponge_absorb_eq_of_impl RATE DELIM data s0 s1 s2 i_us n_us rem_us i3_us
+        h_RATE_ge_1 h_s0_lift h_i_us_val
+        (h_n_us_val.trans hn_nat_def) (h_rem_us_val.trans hrem_nat_def)
+        (h_i3_us_val.trans (by rw [hn_nat_def])) h_s1_fold h_s2_spec
     -- Spec-side squeeze (no region 3; outlen = blocks * RATE).
     have h_RATE_pos : 0 < RATE.val := h_RATE_ge_1
     have h_blocks_le_max : blocks_nat ≤ Std.Usize.max := by
