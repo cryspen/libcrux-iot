@@ -1,5 +1,5 @@
 /-
-  # `BitMlKem/L7/Correctness/Bridges.lean` — L7.4 bridge foundation.
+  # `Matrix/ComputeMessage/Bridges.lean` — L7.4 bridge foundation.
 
   ZMod-domain bridge lemmas for the L7.4 `compute_message` decomposition.
 -/
@@ -18,11 +18,11 @@ import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Matrix.ComputeAsPlusE
 import LibcruxIotMlKem.Matrix.Common
 
-namespace libcrux_iot_ml_kem.BitMlKem.L7
-
+namespace libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges
+open libcrux_iot_ml_kem.Matrix.Common
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
-open libcrux_iot_ml_kem.BitMlKem.FCTargets
+open libcrux_iot_ml_kem.Spec
+open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 
 /-! ## `zmodOfFE` distribution helpers (public re-derivations).
 
@@ -31,7 +31,7 @@ open libcrux_iot_ml_kem.BitMlKem.FCTargets
     `*_val_eq` lemmas re-derive the impl's `% 3329` value equation; `mul`/`add`
     are unconditional, `sub` requires canonical inputs. -/
 
-/-- Local copy of `SpecPure.uscalar_rem_ok_U32` (private there). -/
+/-- Local copy of `Spec.Pure.uscalar_rem_ok_U32` (private there). -/
 private theorem uscalar_rem_ok_U32 (z m : Std.U32) (hm : m.val ≠ 0) :
     ∃ w : Std.U32, (z % m : Result Std.U32) = .ok w ∧ w.val = z.val % m.val := by
   have heq : (z % m : Result Std.U32) = Std.UScalar.rem z m := rfl
@@ -45,12 +45,12 @@ private theorem uscalar_rem_ok_U32 (z m : Std.U32) (hm : m.val ≠ 0) :
 
 private theorem mul_pure_val_eq
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b).val.val
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b).val.val
       = (a.val.val * b.val.val) % 3329 := by
   have hmul :
       hacspec_ml_kem.parameters.FieldElement.mul a b
-        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_eq_ok a b
+        = .ok (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b) :=
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_eq_ok a b
   unfold hacspec_ml_kem.parameters.FieldElement.mul at hmul
   simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at hmul
   have hA := a.val.hBounds; have hB := b.val.hBounds
@@ -101,19 +101,19 @@ private theorem mul_pure_val_eq
 /-- `zmodOfFE` distributes over `mul_pure` (public). -/
 theorem zmodOfFE_mul_pure
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b)
+    zmodOfFE (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b)
       = zmodOfFE a * zmodOfFE b := by
   unfold zmodOfFE
   rw [mul_pure_val_eq, ZMod.natCast_mod]; push_cast; rfl
 
 private theorem add_pure_val_eq
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b).val.val
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure a b).val.val
       = (a.val.val + b.val.val) % 3329 := by
   have hadd :
       hacspec_ml_kem.parameters.FieldElement.add a b
-        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b) :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_eq_ok a b
+        = .ok (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure a b) :=
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_eq_ok a b
   unfold hacspec_ml_kem.parameters.FieldElement.add at hadd
   simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at hadd
   have hA := a.val.hBounds; have hB := b.val.hBounds
@@ -155,26 +155,26 @@ private theorem add_pure_val_eq
 /-- `zmodOfFE` distributes over `add_pure` (public). -/
 theorem zmodOfFE_add_pure
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b)
+    zmodOfFE (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure a b)
       = zmodOfFE a + zmodOfFE b := by
   unfold zmodOfFE
   rw [add_pure_val_eq, ZMod.natCast_mod]; push_cast; rfl
 
 private theorem sub_pure_val_eq
     (a b : hacspec_ml_kem.parameters.FieldElement)
-    (ha : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical a)
-    (hb : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical b) :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure a b).val.val
+    (ha : libcrux_iot_ml_kem.Spec.Pure.Canonical a)
+    (hb : libcrux_iot_ml_kem.Spec.Pure.Canonical b) :
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure a b).val.val
       = (a.val.val + 3329 - b.val.val) % 3329 := by
   have hsub :
       hacspec_ml_kem.parameters.FieldElement.sub a b
-        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure a b) :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_eq_ok a b ha hb
+        = .ok (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure a b) :=
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_eq_ok a b ha hb
   have ha' : a.val.val < 3329 := by
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at ha
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at ha
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS at ha; simpa using ha
   have hb' : b.val.val < 3329 := by
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at hb
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at hb
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS at hb; simpa using hb
   unfold hacspec_ml_kem.parameters.FieldElement.sub at hsub
   simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at hsub
@@ -234,12 +234,12 @@ private theorem sub_pure_val_eq
     lanes satisfy). -/
 theorem zmodOfFE_sub_pure
     (a b : hacspec_ml_kem.parameters.FieldElement)
-    (ha : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical a)
-    (hb : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical b) :
-    zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure a b)
+    (ha : libcrux_iot_ml_kem.Spec.Pure.Canonical a)
+    (hb : libcrux_iot_ml_kem.Spec.Pure.Canonical b) :
+    zmodOfFE (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure a b)
       = zmodOfFE a - zmodOfFE b := by
   have hb' : b.val.val < 3329 := by
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at hb
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at hb
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS at hb; simpa using hb
   unfold zmodOfFE
   rw [sub_pure_val_eq a b ha hb, ZMod.natCast_mod]
@@ -371,7 +371,7 @@ theorem zmodOfFE_lift_fe_mont (x : Std.I16) :
 theorem zmodOfFE_subtract_reduce_pure_lane
     (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
     (j : Nat) (hj : j < 256)
-    (ha : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical (a.val[j]!)) :
+    (ha : libcrux_iot_ml_kem.Spec.Pure.Canonical (a.val[j]!)) :
     zmodOfFE ((Spec.subtract_reduce_pure a b).val[j]!)
       = zmodOfFE (a.val[j]!) - 512 * zmodOfFE (b.val[j]!) := by
   have hk : j / 16 < 16 := by omega
@@ -392,10 +392,10 @@ theorem zmodOfFE_subtract_reduce_pure_lane
   rw [chunk_at_lane a (j / 16) (j % 16) hℓ, chunk_at_lane b (j / 16) (j % 16) hℓ]
   rw [hjeq]
   -- Need canonicity of the two sub_pure args.
-  have hcb : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+  have hcb : libcrux_iot_ml_kem.Spec.Pure.Canonical
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (b.val[j]!) (lift_fe_mont (1441#i16))) :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure _ _
+    libcrux_iot_ml_kem.Spec.Pure.Canonical_mul_pure _ _
   rw [zmodOfFE_sub_pure _ _ ha hcb]
   rw [zmodOfFE_mul_pure]
   -- zmodOfFE (lift_fe_mont 1441) = 1441 * 169 = 512
@@ -406,4 +406,4 @@ theorem zmodOfFE_subtract_reduce_pure_lane
   rw [show (zmodOfFE (b.val[j]!) * (1441 * 169) : ZMod 3329)
         = 512 * zmodOfFE (b.val[j]!) by rw [h512]; ring]
 
-end libcrux_iot_ml_kem.BitMlKem.L7
+end libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges

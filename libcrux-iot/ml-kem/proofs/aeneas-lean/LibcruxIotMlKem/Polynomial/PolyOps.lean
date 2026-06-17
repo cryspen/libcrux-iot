@@ -21,10 +21,10 @@ set_option mvcgen.warning false
 set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
 
-namespace libcrux_iot_ml_kem.Equivalence
-
+namespace libcrux_iot_ml_kem.Polynomial.PolyOps
+open libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement
 open CoreModels Aeneas Aeneas.Std Result ControlFlow Std.Do
-open libcrux_iot_ml_kem.Util
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper
 
 /-! ## Inhabited instances — needed for `.val[j]!` projections on
     `Array PortableVector 16`. Mirror the locally-registered instances
@@ -85,7 +85,7 @@ Loop invariant after `k` iterations (`k.val ∈ [0, 16]`), state `acc`:
 
 namespace L6_1
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 /-- Step-local accumulator type. -/
 abbrev Acc :=
@@ -364,4 +364,4 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [L6_1.step_post] using hP
 
-end libcrux_iot_ml_kem.Equivalence
+end libcrux_iot_ml_kem.Polynomial.PolyOps

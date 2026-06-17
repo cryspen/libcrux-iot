@@ -30,10 +30,10 @@ set_option mvcgen.warning false
 set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
 
-namespace libcrux_iot_ml_kem.Equivalence
-
+namespace libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element
+open libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.Util
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper
 
 /-! ## L1.1 — `add_spec`
 
@@ -237,7 +237,7 @@ theorem sub_spec
     an implication. -/
 private def barrett_per_elem_P (x y : Std.I16) : Prop :=
   x.val.natAbs ≤ 32767 →
-    libcrux_iot_ml_kem.Util.modq_eq y.val x.val 3329
+    libcrux_iot_ml_kem.Spec.ModularArith.modq_eq y.val x.val 3329
       ∧ y.val.natAbs ≤ 3328
 
 /-- Per-element Triple: an unconditional Triple over
@@ -278,7 +278,7 @@ theorem barrett_reduce_spec
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce vec
     ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
-              libcrux_iot_ml_kem.Util.modq_eq
+              libcrux_iot_ml_kem.Spec.ModularArith.modq_eq
                 (r.elements.val[i]!).val (vec.elements.val[i]!).val 3329
               ∧ (r.elements.val[i]!).val.natAbs ≤ 3328 ⌝ ⦄ := by
   unfold libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce
@@ -349,14 +349,14 @@ private theorem montgomery_per_elem_spec
   rw [PostCond.entails_noThrow]
   intro r hh
   have h_inner : r.val.natAbs ≤ 3328
-                  ∧ libcrux_iot_ml_kem.Util.modq_eq r.val (x.val * c.val * 169) 3329 := by
+                  ∧ libcrux_iot_ml_kem.Spec.ModularArith.modq_eq r.val (x.val * c.val * 169) 3329 := by
     simpa [Std.Do.SPred.down_pure] using hh
   obtain ⟨h_bd, h_mod⟩ := h_inner
   show montgomery_per_elem_P c x r
   unfold montgomery_per_elem_P
   refine ⟨h_bd, ?_⟩
   -- From `modq_eq r (x * c * 169) 3329`, derive `(r * 2^16) % 3329 = (x * c) % 3329`.
-  unfold libcrux_iot_ml_kem.Util.modq_eq at h_mod
+  unfold libcrux_iot_ml_kem.Spec.ModularArith.modq_eq at h_mod
   -- h_mod : (r.val - x.val * c.val * 169) % 3329 = 0
   -- Goal:   (r.val * 2^16) % 3329 = (x.val * c.val) % 3329
   have h_dvd : (3329 : Int) ∣ (r.val - x.val * c.val * 169) :=
@@ -519,7 +519,7 @@ theorem negate_spec
 
 namespace L1_5
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 private theorem triple_of_ok_l1
     {α : Type} {x : Result α} {v : α} {P : α → Prop}
@@ -1259,7 +1259,7 @@ theorem shift_right_spec
 private def reducing_per_elem_P (x : Std.I32) (y : Std.I16) : Prop :=
   x.val.natAbs ≤ 3328 * 2 ^ 16 →
     y.val.natAbs ≤ 3328 + 1665
-    ∧ libcrux_iot_ml_kem.Util.modq_eq
+    ∧ libcrux_iot_ml_kem.Spec.ModularArith.modq_eq
         (y.val * (2 ^ 16 : Int)) x.val 3329
 
 /-- Per-element Triple: `montgomery_reduce_element` is total (returns
@@ -1289,7 +1289,7 @@ private theorem reducing_per_elem_spec (x : Std.I32) :
   refine ⟨h_weak, ?_⟩
   -- Convert L0.3's `modq_eq r.val (x.val * 169) 3329` to
   -- `modq_eq (r.val * 2^16) x.val 3329` (same algebra as L1.4).
-  unfold libcrux_iot_ml_kem.Util.modq_eq at h_modq ⊢
+  unfold libcrux_iot_ml_kem.Spec.ModularArith.modq_eq at h_modq ⊢
   have h_dvd : (3329 : Int) ∣ ((mont_reduce_impl_value x).val - x.val * 169) :=
     Int.dvd_of_emod_eq_zero h_modq
   have h_dvd2 : (3329 : Int)
@@ -1325,7 +1325,7 @@ theorem reducing_from_i32_array_spec
     libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array array out
     ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
                 (r.elements.val[i]!).val.natAbs ≤ 3328 + 1665
-              ∧ libcrux_iot_ml_kem.Util.modq_eq
+              ∧ libcrux_iot_ml_kem.Spec.ModularArith.modq_eq
                   ((r.elements.val[i]!).val * (2 ^ 16 : Int))
                   (array.val[i]!).val 3329 ⌝ ⦄ := by
   unfold libcrux_iot_ml_kem.vector.portable.arithmetic.reducing_from_i32_array
@@ -1360,13 +1360,13 @@ theorem reducing_from_i32_array_spec
   rw [h_acc]
   exact h_P (hpre j hj)
 
-end libcrux_iot_ml_kem.Equivalence
-
+end libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element
 /-! ### Extracted from FCTargets.lean (§vector_arith_hi). -/
 
-namespace libcrux_iot_ml_kem.BitMlKem.FCTargets
+namespace libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element
+open libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
 /-! ## §L1 — chunk-level vector ops (10 theorems). -/
 
@@ -1386,7 +1386,7 @@ open libcrux_iot_ml_kem.BitMlKem
        Apply `triple_of_ok_fc` to close monadic shell. Reduce array
        equality to `List.ext_get!` + per-index, then apply Bridge 2. -/
 
-/-- Local helper (mirrors `SpecPure.uscalar_rem_ok_U32` which is
+/-- Local helper (mirrors `Spec.Pure.uscalar_rem_ok_U32` which is
     file-private). Establishes that U32 modular remainder by a non-zero
     divisor is always `.ok`, and exposes the underlying value. -/
 theorem uscalar_rem_ok_U32_local (z m : Std.U32) (hm : m.val ≠ 0) :
@@ -1402,17 +1402,17 @@ theorem uscalar_rem_ok_U32_local (z m : Std.U32) (hm : m.val ≠ 0) :
 
 /-- Bridge lemma: the `.val.val` of `FieldElement.add_pure` is the
     impl's U16 modular-reduced sum. Proof structure mirrors
-    `Canonical_add_pure` in `SpecPure.lean` — chain through the U32
+    `Canonical_add_pure` in `Spec.Pure.lean` — chain through the U32
     do-block via `add_equiv` + `uscalar_rem_ok_U32_local` + the U16
     narrowing cast. Pure-projection side lemma, NOT panic-freedom. -/
 theorem add_pure_val_eq
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b).val.val
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure a b).val.val
       = (a.val.val + b.val.val) % 3329 := by
   have hadd :
       hacspec_ml_kem.parameters.FieldElement.add a b
-        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b) :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_eq_ok a b
+        = .ok (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure a b) :=
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_eq_ok a b
   unfold hacspec_ml_kem.parameters.FieldElement.add at hadd
   simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at hadd
   have hA := a.val.hBounds; have hB := b.val.hBounds
@@ -1508,7 +1508,7 @@ theorem lift_fe_val_val (x : Std.I16) :
 theorem lift_fe_add_pure_eq
     (a b r : Std.I16) (hrv : r.val = a.val + b.val) :
     lift_fe r
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           (lift_fe a) (lift_fe b) := by
   -- LHS reduction: lift_fe r = feOfZMod ((r.val : Int) : ZMod 3329)
   --                           = feOfZMod ((a.val + b.val : Int) : ZMod 3329).
@@ -1520,13 +1520,13 @@ theorem lift_fe_add_pure_eq
   --                  = feOfZMod (zmodOfFE …) (canonical round-trip)
   --                  = feOfZMod ((a.val + b.val : Int) : ZMod 3329).
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
       (lift_fe a) (lift_fe b) with hs_def
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_add_pure
       (lift_fe a) (lift_fe b)
     show s.val.val < 3329
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -1559,7 +1559,7 @@ theorem add_fc
     libcrux_iot_ml_kem.vector.portable.arithmetic.add lhs rhs
     ⦃ ⇓ r => ⌜ lift_chunk r = Spec.chunk_add_pure (lift_chunk lhs) (lift_chunk rhs) ⌝ ⦄ := by
   -- 1. Extract per-element value-equation from legacy bounds Triple.
-  have h_legacy := libcrux_iot_ml_kem.Equivalence.add_spec lhs rhs hpre
+  have h_legacy := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.add_spec lhs rhs hpre
   obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   -- 2. Reduce array equality to list equality, then to per-index lift_fe equality.
@@ -1567,14 +1567,14 @@ theorem add_fc
   apply Subtype.ext
   show r0.elements.val.map lift_fe
       = (List.range 16).map (fun i =>
-          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
             ((Std.Array.make 16#usize (lhs.elements.val.map lift_fe)
               (by simp)).val[i]!)
             ((Std.Array.make 16#usize (rhs.elements.val.map lift_fe)
               (by simp)).val[i]!))
   -- 3. Show both lists have length 16 and per-index entries match.
   have h_r0_len : r0.elements.val.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length r0
   apply List.ext_getElem
   · simp [List.length_map, List.length_range, h_r0_len]
   · intro i hi1 hi2
@@ -1589,7 +1589,7 @@ theorem add_fc
     rw [List.getElem_map, List.getElem_range]
     -- Indexing into Std.Array.make.
     show lift_fe r0.elements.val[i]
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           ((lhs.elements.val.map lift_fe)[i]!)
           ((rhs.elements.val.map lift_fe)[i]!)
     -- Express `r0.elements.val[i]` as `r0.elements.val[i]!`
@@ -1601,9 +1601,9 @@ theorem add_fc
     rw [h_r0_get_eq]
     -- Express `(lhs.elements.val.map lift_fe)[i]!` as `lift_fe (lhs.val[i]!)`.
     have h_lhs_len : lhs.elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
     have h_rhs_len : rhs.elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
     have h_map_lhs :
         (lhs.elements.val.map lift_fe)[i]! = lift_fe (lhs.elements.val[i]!) := by
       have hi_lhs : i < lhs.elements.val.length := by rw [h_lhs_len]; exact hi
@@ -1629,8 +1629,8 @@ theorem add_fc
     (its `.val.val < 3329`). Used by `lift_fe_sub_pure_eq` to discharge
     `sub_eq_ok`'s canonicity preconditions. Pure-projection side lemma. -/
 theorem Canonical_lift_fe (x : Std.I16) :
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical (lift_fe x) := by
-  unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+    libcrux_iot_ml_kem.Spec.Pure.Canonical (lift_fe x) := by
+  unfold libcrux_iot_ml_kem.Spec.Pure.Canonical
   unfold lift_fe i16_to_spec_fe_plain feOfZMod
   -- Goal: (BitVec.ofNat 16 ((x.val : Int) : ZMod 3329).val).toNat
   --         < parameters.FIELD_MODULUS.val
@@ -1652,11 +1652,11 @@ theorem lift_poly_lanes_canonical
     (self : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
     ∀ k : Nat, k < 256 →
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical ((lift_poly self).val[k]!) := by
+      libcrux_iot_ml_kem.Spec.Pure.Canonical ((lift_poly self).val[k]!) := by
   intro k hk
   -- (lift_poly self).val = (List.range 256).map (fun j => lift_fe …).
   unfold lift_poly
-  show libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+  show libcrux_iot_ml_kem.Spec.Pure.Canonical
         (((List.range 256).map (fun j =>
             lift_fe (self.coefficients.val[j / 16]!).elements.val[j % 16]!))[k]!)
   have h_len : ((List.range 256).map (fun j =>
@@ -1675,19 +1675,19 @@ theorem lift_poly_lanes_canonical
     `s = x + q ≥ q > y`, then `% q`, then narrow U16). -/
 theorem sub_pure_val_eq
     (a b : hacspec_ml_kem.parameters.FieldElement)
-    (ha : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical a)
-    (hb : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical b) :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure a b).val.val
+    (ha : libcrux_iot_ml_kem.Spec.Pure.Canonical a)
+    (hb : libcrux_iot_ml_kem.Spec.Pure.Canonical b) :
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure a b).val.val
       = (a.val.val + 3329 - b.val.val) % 3329 := by
   have hsub :
       hacspec_ml_kem.parameters.FieldElement.sub a b
-        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure a b) :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_eq_ok a b ha hb
+        = .ok (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure a b) :=
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_eq_ok a b ha hb
   have ha' : a.val.val < 3329 := by
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at ha
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at ha
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS at ha; simpa using ha
   have hb' : b.val.val < 3329 := by
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at hb
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at hb
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS at hb; simpa using hb
   unfold hacspec_ml_kem.parameters.FieldElement.sub at hsub
   simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at hsub
@@ -1754,12 +1754,12 @@ theorem sub_pure_val_eq
     then narrow U16). Unconditional (no canonicity needed). -/
 theorem mul_pure_val_eq
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b).val.val
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b).val.val
       = (a.val.val * b.val.val) % 3329 := by
   have hmul :
       hacspec_ml_kem.parameters.FieldElement.mul a b
-        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_eq_ok a b
+        = .ok (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b) :=
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_eq_ok a b
   unfold hacspec_ml_kem.parameters.FieldElement.mul at hmul
   simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at hmul
   have hA := a.val.hBounds; have hB := b.val.hBounds
@@ -1821,20 +1821,20 @@ theorem mul_pure_val_eq
 theorem lift_fe_sub_pure_eq
     (a b r : Std.I16) (hrv : r.val = a.val - b.val) :
     lift_fe r
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
           (lift_fe a) (lift_fe b) := by
   have h_lhs : lift_fe r
       = feOfZMod (((a.val - b.val : Int)) : ZMod 3329) := by
     unfold lift_fe i16_to_spec_fe_plain
     rw [hrv]
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
       (lift_fe a) (lift_fe b) with hs_def
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_sub_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_sub_pure
       (lift_fe a) (lift_fe b) (Canonical_lift_fe a) (Canonical_lift_fe b)
     show s.val.val < 3329
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -1852,7 +1852,7 @@ theorem lift_fe_sub_pure_eq
     -- (b canonical), Nat subtraction agrees with Int subtraction.
     have hb_lt : (lift_fe b).val.val < 3329 := by
       have h_cb := Canonical_lift_fe b
-      unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cb
+      unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cb
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS at h_cb; simpa using h_cb
     have h_le : (lift_fe b).val.val ≤ (lift_fe a).val.val + 3329 := by omega
     -- (Nat-cast into ZMod) of the Nat sub equals (Int-cast into ZMod) of the Int sub.
@@ -1891,20 +1891,20 @@ theorem lift_fe_sub_pure_eq
 theorem lift_fe_mul_pure_eq
     (a b r : Std.I16) (hrv : r.val = a.val * b.val) :
     lift_fe r
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe a) (lift_fe b) := by
   have h_lhs : lift_fe r
       = feOfZMod (((a.val * b.val : Int)) : ZMod 3329) := by
     unfold lift_fe i16_to_spec_fe_plain
     rw [hrv]
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
       (lift_fe a) (lift_fe b) with hs_def
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_mul_pure
       (lift_fe a) (lift_fe b)
     show s.val.val < 3329
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -1930,7 +1930,7 @@ theorem sub_fc
     libcrux_iot_ml_kem.vector.portable.arithmetic.sub lhs rhs
     ⦃ ⇓ r => ⌜ lift_chunk r = Spec.chunk_sub_pure (lift_chunk lhs) (lift_chunk rhs) ⌝ ⦄ := by
   -- 1. Extract per-element value-equation from legacy bounds Triple.
-  have h_legacy := libcrux_iot_ml_kem.Equivalence.sub_spec lhs rhs hpre
+  have h_legacy := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.sub_spec lhs rhs hpre
   obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   -- 2. Reduce array equality to list equality, then to per-index lift_fe equality.
@@ -1938,13 +1938,13 @@ theorem sub_fc
   apply Subtype.ext
   show r0.elements.val.map lift_fe
       = (List.range 16).map (fun i =>
-          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+          libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
             ((Std.Array.make 16#usize (lhs.elements.val.map lift_fe)
               (by simp)).val[i]!)
             ((Std.Array.make 16#usize (rhs.elements.val.map lift_fe)
               (by simp)).val[i]!))
   have h_r0_len : r0.elements.val.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length r0
   apply List.ext_getElem
   · simp [List.length_map, List.length_range, h_r0_len]
   · intro i hi1 hi2
@@ -1954,7 +1954,7 @@ theorem sub_fc
     rw [List.getElem_map]
     rw [List.getElem_map, List.getElem_range]
     show lift_fe r0.elements.val[i]
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
           ((lhs.elements.val.map lift_fe)[i]!)
           ((rhs.elements.val.map lift_fe)[i]!)
     have h_r0_get_eq : r0.elements.val[i]
@@ -1963,9 +1963,9 @@ theorem sub_fc
       rw [getElem!_pos r0.elements.val i hi_r0]
     rw [h_r0_get_eq]
     have h_lhs_len : lhs.elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
     have h_rhs_len : rhs.elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
     have h_map_lhs :
         (lhs.elements.val.map lift_fe)[i]! = lift_fe (lhs.elements.val[i]!) := by
       have hi_lhs : i < lhs.elements.val.length := by rw [h_lhs_len]; exact hi
@@ -1993,7 +1993,7 @@ theorem sub_fc
     `lift_fe` images to identity). -/
 theorem lift_fe_barrett_pure_eq
     (a r : Std.I16)
-    (h : libcrux_iot_ml_kem.Util.modq_eq r.val a.val 3329) :
+    (h : libcrux_iot_ml_kem.Spec.ModularArith.modq_eq r.val a.val 3329) :
     lift_fe r = Spec.barrett_pure (lift_fe a) := by
   rw [barrett_pure_lift_fe]
   exact lift_fe_eq_of_modq r a h
@@ -2009,7 +2009,7 @@ theorem barrett_reduce_fc
     ⦃ ⇓ r => ⌜ (∀ i : Nat, i < 16 → (r.elements.val[i]!).val.natAbs ≤ 3328)
                 ∧ lift_chunk r = Spec.chunk_barrett_reduce_pure (lift_chunk vec) ⌝ ⦄ := by
   -- 1. Extract per-element legacy fact: modq_eq r[i] vec[i] 3329 ∧ |r[i]| ≤ 3328.
-  have h_legacy := libcrux_iot_ml_kem.Equivalence.barrett_reduce_spec vec hpre
+  have h_legacy := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.barrett_reduce_spec vec hpre
   obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   refine ⟨?_, ?_⟩
@@ -2025,7 +2025,7 @@ theorem barrett_reduce_fc
               ((Std.Array.make 16#usize (vec.elements.val.map lift_fe)
                 (by simp)).val[i]!))
     have h_r0_len : r0.elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length r0
     apply List.ext_getElem
     · simp [List.length_map, List.length_range, h_r0_len]
     · intro i hi1 hi2
@@ -2042,7 +2042,7 @@ theorem barrett_reduce_fc
         rw [getElem!_pos r0.elements.val i hi_r0]
       rw [h_r0_get_eq]
       have h_vec_len : vec.elements.val.length = 16 :=
-        libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+        libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length vec
       have h_map_vec :
           (vec.elements.val.map lift_fe)[i]! = lift_fe (vec.elements.val[i]!) := by
         have hi_vec : i < vec.elements.val.length := by rw [h_vec_len]; exact hi
@@ -2075,9 +2075,9 @@ theorem lift_fe_mont_mmfbf_pure_eq
   unfold lift_fe_mont i16_to_spec_fe_mont
   congr 1
   -- Goal: (r.val : ZMod 3329) * 169 = (a.val : ZMod 3329) * ((c.val : ZMod 3329) * 169) * 169
-  have h_modq : libcrux_iot_ml_kem.Util.modq_eq
+  have h_modq : libcrux_iot_ml_kem.Spec.ModularArith.modq_eq
                   (r.val * (2 ^ 16 : Int)) (a.val * c.val) 3329 := by
-    unfold libcrux_iot_ml_kem.Util.modq_eq
+    unfold libcrux_iot_ml_kem.Spec.ModularArith.modq_eq
     rw [Int.sub_emod, h]; simp
   have h_zmod : ((r.val * (2 ^ 16 : Int) : Int) : ZMod 3329)
               = ((a.val * c.val : Int) : ZMod 3329) :=
@@ -2108,15 +2108,15 @@ theorem lift_fe_mont_mul_pure_eq
     (a c r : Std.I16)
     (h : (r.val * (2 ^ 16 : Int)) % 3329 = (a.val * c.val) % 3329) :
     lift_fe r
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe a) (lift_fe_mont c) := by
   -- Both sides equal `feOfZMod ((a.val : ZMod q) * ((c.val : ZMod q) * 169))`.
   -- LHS: `lift_fe r = feOfZMod ((r.val : ZMod q))`.
   -- RHS: round-trip via Canonical_mul_pure + mul_pure_val_eq.
   have h_lhs_zmod : (r.val : ZMod 3329) = (a.val : ZMod 3329) * ((c.val : ZMod 3329) * 169) := by
-    have h_modq : libcrux_iot_ml_kem.Util.modq_eq
+    have h_modq : libcrux_iot_ml_kem.Spec.ModularArith.modq_eq
                     (r.val * (2 ^ 16 : Int)) (a.val * c.val) 3329 := by
-      unfold libcrux_iot_ml_kem.Util.modq_eq
+      unfold libcrux_iot_ml_kem.Spec.ModularArith.modq_eq
       rw [Int.sub_emod, h]; simp
     have h_zmod : ((r.val * (2 ^ 16 : Int) : Int) : ZMod 3329)
                 = ((a.val * c.val : Int) : ZMod 3329) :=
@@ -2134,12 +2134,12 @@ theorem lift_fe_mont_mul_pure_eq
     unfold lift_fe i16_to_spec_fe_plain
     rw [h_lhs_zmod]
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
       (lift_fe a) (lift_fe_mont c) with hs_def
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_mul_pure
       (lift_fe a) (lift_fe_mont c)
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -2190,7 +2190,7 @@ theorem montgomery_multiply_by_constant_fc
                     (lift_chunk vec) (lift_fe_mont c) ⌝ ⦄ := by
   -- 1. Extract per-element legacy fact: |r[i]| ≤ 3328 ∧ (r[i]*2^16) ≡ vec[i]*c (mod 3329).
   have h_legacy :=
-    libcrux_iot_ml_kem.Equivalence.montgomery_multiply_by_constant_spec vec c hc
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.montgomery_multiply_by_constant_spec vec c hc
   obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   -- 2. Reduce array equality to list equality, then to per-index lift_fe_mont equality.
@@ -2203,7 +2203,7 @@ theorem montgomery_multiply_by_constant_fc
               (by simp)).val[i]!)
             (lift_fe_mont c))
   have h_r0_len : r0.elements.val.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length r0
   apply List.ext_getElem
   · simp [List.length_map, List.length_range, h_r0_len]
   · intro i hi1 hi2
@@ -2221,7 +2221,7 @@ theorem montgomery_multiply_by_constant_fc
       rw [getElem!_pos r0.elements.val i hi_r0]
     rw [h_r0_get_eq]
     have h_vec_len : vec.elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length vec
     have h_map_vec :
         (vec.elements.val.map lift_fe)[i]! = lift_fe (vec.elements.val[i]!) := by
       have hi_vec : i < vec.elements.val.length := by rw [h_vec_len]; exact hi
@@ -2237,7 +2237,7 @@ theorem montgomery_multiply_by_constant_fc
 
 /-! ### L1.5 — `cond_subtract_3329` private loop machinery.
 
-    The legacy `Equivalence.cond_subtract_3329_spec` requires
+    The legacy `libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.cond_subtract_3329_spec` requires
     `0 ≤ vec[i] < 2*3329` as a precondition (it's load-bearing for the
     OUTER bound `r[i] < 3329`). The FC statement here uses NO
     precondition — we only need `lift_chunk r = lift_chunk vec`, i.e.
@@ -2257,7 +2257,7 @@ theorem montgomery_multiply_by_constant_fc
 
 namespace L1_5_FC
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
 theorem triple_of_ok_l1
     {α : Type} {x : Result α} {v : α} {P : α → Prop}
@@ -2323,10 +2323,10 @@ theorem cond_step
   unfold libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329_loop.body
   by_cases h_lt : k.val < (16#usize : Std.Usize).val
   · have hk_16 : k.val < 16 := by rw [h_16] at h_lt; exact h_lt
-    obtain ⟨s, hs_val, h_iter_some⟩ := libcrux_iot_ml_kem.Util.iter_next_some_eq k h_lt
+    obtain ⟨s, hs_val, h_iter_some⟩ := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_some_eq k h_lt
     have h_idx :
         Aeneas.Std.Array.index_usize acc.elements k = .ok (acc.elements.val[k.val]!) :=
-      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq acc.elements k (by rw [h_acc_len]; exact hk_16)
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq acc.elements k (by rw [h_acc_len]; exact hk_16)
     set xk : Std.I16 := acc.elements.val[k.val]! with hxk_def
     have h_acc_xk : acc.elements.val[k.val]! = input.elements.val[k.val]! :=
       h_acc_undone k.val (Nat.le_refl _) hk_16
@@ -2517,7 +2517,7 @@ theorem cond_step
         exact h_acc_undone j h_ge' hj_lt
   · have hk_ge : k.val ≥ (16#usize : Std.Usize).val := Nat.not_lt.mp h_lt
     have hk_eq : k.val = 16 := by rw [h_16] at hk_ge; omega
-    have h_iter_none := libcrux_iot_ml_kem.Util.iter_next_none_eq k hk_ge
+    have h_iter_none := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_none_eq k hk_ge
     have h_body :
         (do
           let (o, iter1) ←
@@ -2597,7 +2597,7 @@ theorem cond_subtract_3329_fc
       unfold libcrux_iot_ml_kem.vector.traits.FIELD_ELEMENTS_IN_VECTOR; rfl
     rw [h_field]
     apply Std.Do.Triple.of_entails_right _
-      (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+      (libcrux_iot_ml_kem.Util.LoopSpecs.loop_range_spec_usize
         (fun (iter1, vec1) =>
           libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329_loop.body
             iter1 vec1)
@@ -2636,9 +2636,9 @@ theorem cond_subtract_3329_fc
   apply Subtype.ext
   show r0.elements.val.map lift_fe = vec.elements.val.map lift_fe
   have h_r0_len : r0.elements.val.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length r0
   have h_vec_len : vec.elements.val.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length vec
   apply List.ext_getElem
   · simp [List.length_map, h_r0_len, h_vec_len]
   · intro i hi1 hi2
@@ -2666,7 +2666,7 @@ theorem cond_subtract_3329_fc
       -- (wrapping_sub xi 3329).val = bmod (xi.val - 3329) (2^16). Since
       -- xi.val ≥ 3329 and xi.val < 2^15, we have xi.val - 3329 ∈ [0, 2^15 - 3329],
       -- which is in I16 range, so bmod = xi.val - 3329.
-      unfold libcrux_iot_ml_kem.Util.modq_eq
+      unfold libcrux_iot_ml_kem.Spec.ModularArith.modq_eq
       rw [Std.I16.wrapping_sub_val_eq]
       have hxi_ub : xi.val < 2^15 := by
         have h := xi.hBounds
@@ -2692,7 +2692,7 @@ theorem cond_subtract_3329_fc
     · -- < 3329 branch: r0[i] = vec[i], trivially mod-3329 equivalent.
       rw [h_eq_lane]
 
-/-- Local helper (mirrors `SpecPure.uscalar_rem_ok_U16` which is
+/-- Local helper (mirrors `Spec.Pure.uscalar_rem_ok_U16` which is
     file-private). Establishes that U16 modular remainder by a non-zero
     divisor is always `.ok`, and exposes the underlying value. Needed
     by `neg_pure_val_eq`, whose `% q` step is at U16 width (no widening). -/
@@ -2715,15 +2715,15 @@ theorem uscalar_rem_ok_U16_local (z m : Std.U16) (hm : m.val ≠ 0) :
     is precisely `Canonical a` (i.e. `a.val.val < q`). -/
 theorem neg_pure_val_eq
     (a : hacspec_ml_kem.parameters.FieldElement)
-    (ha : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical a) :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure a).val.val
+    (ha : libcrux_iot_ml_kem.Spec.Pure.Canonical a) :
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure a).val.val
       = (3329 - a.val.val) % 3329 := by
   have hneg :
       hacspec_ml_kem.parameters.FieldElement.neg a
-        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure a) :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_eq_ok a ha
+        = .ok (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure a) :=
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_eq_ok a ha
   have ha' : a.val.val < 3329 := by
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at ha
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at ha
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS at ha; simpa using ha
   unfold hacspec_ml_kem.parameters.FieldElement.neg at hneg
   have hA := a.val.hBounds
@@ -2780,19 +2780,19 @@ theorem lift_fe_neg_pure_eq
     (hbnd : a.val.natAbs ≤ 2^15 - 1)
     (hrv : r.val = -a.val) :
     lift_fe r
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe a) := by
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe a) := by
   -- LHS reduction.
   have h_lhs : lift_fe r = feOfZMod (((-a.val : Int)) : ZMod 3329) := by
     unfold lift_fe i16_to_spec_fe_plain
     rw [hrv]
   -- RHS reduction.
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe a) with hs_def
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe a) with hs_def
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_neg_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_neg_pure
       (lift_fe a) (Canonical_lift_fe a)
     show s.val.val < 3329
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -2808,7 +2808,7 @@ theorem lift_fe_neg_pure_eq
     -- (lift_fe a).val.val < 3329, so 3329 - (lift_fe a).val.val ≤ 3329.
     have ha_lt : (lift_fe a).val.val < 3329 := by
       have h_ca := Canonical_lift_fe a
-      unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_ca
+      unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_ca
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS at h_ca; simpa using h_ca
     -- Cast the Nat-sub through Int-sub: 3329 - (lift_fe a).val.val (Nat) =
     -- 3329 - (lift_fe a).val.val (Int) since the former is ≥ 0.
@@ -2869,7 +2869,7 @@ theorem negate_fc
     libcrux_iot_ml_kem.vector.portable.arithmetic.negate vec
     ⦃ ⇓ r => ⌜ lift_chunk r = Spec.chunk_neg_pure (lift_chunk vec) ⌝ ⦄ := by
   -- 1. Extract per-element BV-equation from legacy `negate_spec`.
-  have h_legacy := libcrux_iot_ml_kem.Equivalence.negate_spec vec
+  have h_legacy := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.negate_spec vec
   obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   -- 2. Reduce array equality to list equality, then to per-index lift_fe equality.
@@ -2877,11 +2877,11 @@ theorem negate_fc
   apply Subtype.ext
   show r0.elements.val.map lift_fe
       = (List.range 16).map (fun i =>
-          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+          libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure
             ((Std.Array.make 16#usize (vec.elements.val.map lift_fe)
               (by simp)).val[i]!))
   have h_r0_len : r0.elements.val.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length r0
   apply List.ext_getElem
   · simp [List.length_map, List.length_range, h_r0_len]
   · intro i hi1 hi2
@@ -2891,7 +2891,7 @@ theorem negate_fc
     rw [List.getElem_map]
     rw [List.getElem_map, List.getElem_range]
     show lift_fe r0.elements.val[i]
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure
           ((vec.elements.val.map lift_fe)[i]!)
     have h_r0_get_eq : r0.elements.val[i]
         = r0.elements.val[i]! := by
@@ -2899,7 +2899,7 @@ theorem negate_fc
       rw [getElem!_pos r0.elements.val i hi_r0]
     rw [h_r0_get_eq]
     have h_vec_len : vec.elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length vec
     have h_map_vec :
         (vec.elements.val.map lift_fe)[i]! = lift_fe (vec.elements.val[i]!) := by
       have hi_vec : i < vec.elements.val.length := by rw [h_vec_len]; exact hi
@@ -2957,7 +2957,7 @@ theorem negate_fc
 
 /-- L1.7 — `multiply_by_constant` (plain) on a chunk.
 
-    **Precondition note**: the legacy `Equivalence.multiply_by_constant_spec`
+    **Precondition note**: the legacy `libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.multiply_by_constant_spec`
     requires the per-element product bound `|vec[i] * c| ≤ 2^15 - 1`.
     The aggregate `|vec[i]| ≤ 32767 ∧ |c| ≤ 1664` does NOT imply that
     product bound (it allows `32767 * 1664 ≫ 32767`), so we carry
@@ -2982,7 +2982,7 @@ theorem multiply_by_constant_fc
                     (lift_chunk vec) (lift_fe c) ⌝ ⦄ := by
   -- 1. Extract per-element value-equation from legacy bounds Triple.
   have h_legacy :=
-    libcrux_iot_ml_kem.Equivalence.multiply_by_constant_spec vec c hpre_prod
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.multiply_by_constant_spec vec c hpre_prod
   obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   -- 2. Reduce array equality to list equality, then to per-index lift_fe equality.
@@ -2990,12 +2990,12 @@ theorem multiply_by_constant_fc
   apply Subtype.ext
   show r0.elements.val.map lift_fe
       = (List.range 16).map (fun i =>
-          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
             ((Std.Array.make 16#usize (vec.elements.val.map lift_fe)
               (by simp)).val[i]!)
             (lift_fe c))
   have h_r0_len : r0.elements.val.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length r0
   apply List.ext_getElem
   · simp [List.length_map, List.length_range, h_r0_len]
   · intro i hi1 hi2
@@ -3005,7 +3005,7 @@ theorem multiply_by_constant_fc
     rw [List.getElem_map]
     rw [List.getElem_map, List.getElem_range]
     show lift_fe r0.elements.val[i]
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           ((vec.elements.val.map lift_fe)[i]!) (lift_fe c)
     have h_r0_get_eq : r0.elements.val[i]
         = r0.elements.val[i]! := by
@@ -3013,7 +3013,7 @@ theorem multiply_by_constant_fc
       rw [getElem!_pos r0.elements.val i hi_r0]
     rw [h_r0_get_eq]
     have h_vec_len : vec.elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length vec
     have h_map_vec :
         (vec.elements.val.map lift_fe)[i]! = lift_fe (vec.elements.val[i]!) := by
       have hi_vec : i < vec.elements.val.length := by rw [h_vec_len]; exact hi
@@ -3053,7 +3053,7 @@ theorem bitwise_and_with_constant_fc
     libcrux_iot_ml_kem.vector.portable.arithmetic.bitwise_and_with_constant vec c
     ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
                 (r.elements.val[i]!).bv = (vec.elements.val[i]!).bv &&& c.bv ⌝ ⦄ :=
-  libcrux_iot_ml_kem.Equivalence.bitwise_and_with_constant_spec vec c
+  libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.bitwise_and_with_constant_spec vec c
 
 /-- L1.9 — `shift_right` on a chunk.
 
@@ -3066,7 +3066,7 @@ theorem bitwise_and_with_constant_fc
     the I16-BV level is the correct abstraction; lift_fe would discard
     the bit pattern that `>>!` depends on.
 
-    The legacy `Equivalence.shift_right_spec` uses `0 ≤ SHIFT_BY.val ∧
+    The legacy `libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.shift_right_spec` uses `0 ≤ SHIFT_BY.val ∧
     SHIFT_BY.val < 16` (the same range as the upstream F* `requires
     SHIFT_BY >= 0 && SHIFT_BY < 16` on the trait). We adopt the same
     precondition shape. -/
@@ -3080,7 +3080,7 @@ theorem shift_right_fc
     ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 16 →
                 (r.elements.val[i]!).bv =
                   (vec.elements.val[i]!).bv.sshiftRight SHIFT_BY.val.toNat ⌝ ⦄ :=
-  libcrux_iot_ml_kem.Equivalence.shift_right_spec SHIFT_BY hs vec
+  libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.shift_right_spec SHIFT_BY hs vec
 
 /-- Per-element bridge for `reducing_from_i32_array_fc`: from the legacy
     L1.10 congruence `(r * 2^16) ≡ x (mod 3329)`, derive the FC equation
@@ -3095,7 +3095,7 @@ theorem shift_right_fc
     on the LHS. -/
 theorem lift_fe_mont_mont_reduce_pure_eq
     (x : Std.I32) (r : Std.I16)
-    (h : libcrux_iot_ml_kem.Util.modq_eq
+    (h : libcrux_iot_ml_kem.Spec.ModularArith.modq_eq
             (r.val * (2 ^ 16 : Int)) x.val 3329) :
     lift_fe_mont r = Spec.mont_reduce_pure (lift_fe_int x.val) := by
   rw [mont_reduce_pure_lift_fe_int]
@@ -3118,7 +3118,7 @@ theorem lift_fe_mont_mont_reduce_pure_eq
     Composes `montgomery_reduce_element` across 16 lanes.
 
     POST additionally exposes the per-lane I16 bound `|r[i]| ≤ 4993`
-    (= 3328 + 1665) coming from `Equivalence.reducing_from_i32_array_spec`.
+    (= 3328 + 1665) coming from `libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.reducing_from_i32_array_spec`.
     Used by L6.7 to thread a bound through to L7.1 Stage 3, where
     `add_standard_error_reduce_fc` consumes `|self[k][ℓ]| ≤ 32767`
     via `4993 ≤ 32767`. -/
@@ -3141,7 +3141,7 @@ theorem reducing_from_i32_array_fc
     rwa [show (3328 * 2 ^ 16 : Nat) = 2 ^ 16 * 3328 from by decide]
   have hlen' : array.val.length = 16 := hlen
   have h_legacy :=
-    libcrux_iot_ml_kem.Equivalence.reducing_from_i32_array_spec array out hlen' hpre'
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element.reducing_from_i32_array_spec array out hlen' hpre'
   obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   refine ⟨?_, ?_⟩
@@ -3153,7 +3153,7 @@ theorem reducing_from_i32_array_fc
         = (List.range 16).map (fun i =>
             Spec.mont_reduce_pure (lift_fe_int (array.val[i]!).val))
     have h_r0_len : r0.elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Util.PortableVector_elements_length r0
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length r0
     apply List.ext_getElem
     · simp [List.length_map, List.length_range, h_r0_len]
     · intro i hi1 hi2
@@ -3177,4 +3177,4 @@ theorem reducing_from_i32_array_fc
     exact (h_per i hi).1
 
 
-end libcrux_iot_ml_kem.BitMlKem.FCTargets
+end libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element

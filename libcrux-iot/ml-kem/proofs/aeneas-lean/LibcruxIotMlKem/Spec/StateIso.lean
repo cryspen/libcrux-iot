@@ -1,7 +1,7 @@
 /-
-  # `BitMlKem/StateIso.lean` — M.3 impl ↔ MontPoly round-trip lemmas.
+  # `Spec/StateIso.lean` — M.3 impl ↔ MontPoly round-trip lemmas.
 
-  Companion to `BitMlKem/Spec.lean` (M.1) and `BitMlKem/Commute.lean` (M.2).
+  Companion to `Spec.lean` (M.1) and `Spec/Commute.lean` (M.2).
   This file ships the **Decision Point I.6** injectivity pair plus an
   `lift_id` round-trip showing `to_spec_poly_plain (canonicalUnlift m) = m`
   for any `m : MontPoly`.
@@ -46,12 +46,11 @@ import Mathlib.Data.ZMod.Basic
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.FieldSimp
 
-namespace libcrux_iot_ml_kem.BitMlKem.StateIso
-
+namespace libcrux_iot_ml_kem.Spec.StateIso
 open CoreModels Aeneas Aeneas.Std
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
-/-! ### Local `Inhabited` instances (mirror of `BitMlKem/Spec.lean`). -/
+/-! ### Local `Inhabited` instances (mirror of `Spec.lean`). -/
 
 local instance instInhabitedPortableVector_stateIso :
     Inhabited libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
@@ -303,4 +302,4 @@ theorem to_spec_poly_mont_of_zero
   show ((0#i16).val : ZMod 3329) * 169 = 0
   simp
 
-end libcrux_iot_ml_kem.BitMlKem.StateIso
+end libcrux_iot_ml_kem.Spec.StateIso

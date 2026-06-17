@@ -13,8 +13,8 @@ import Hax
 
 open CoreModels Aeneas Aeneas.Std Result ControlFlow Std.Do
 
-namespace libcrux_iot_ml_kem.Util
-
+namespace libcrux_iot_ml_kem.Util.LoopSpecs
+open libcrux_iot_ml_kem.Util.SliceSpecs
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
 
@@ -24,7 +24,7 @@ set_option linter.unusedVariables false
 module's namespace so downstream `import Util.LoopSpecs` callers
 automatically see it. -/
 
--- (`Util.result_eq_of_triple` is in scope via `Util.SliceSpecs`.)
+-- (`libcrux_iot_ml_kem.Util.SliceSpecs.result_eq_of_triple` is in scope via `Util.SliceSpecs`.)
 
 /-! ## `Usize.val` conversion for small-Nat constants
 
@@ -422,4 +422,4 @@ theorem loop_range_spec_i32 {β : Type}
       exact ih acc' iter'.start
         (by rw [hstart]; omega) (by rw [hstart]; omega) (by rw [hstart]; omega) hinv'
 
-end libcrux_iot_ml_kem.Util
+end libcrux_iot_ml_kem.Util.LoopSpecs

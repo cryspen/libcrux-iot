@@ -12,9 +12,9 @@ set_option mvcgen.warning false
 set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
 
-namespace libcrux_iot_ml_kem.BitMlKem.FCTargets
+namespace libcrux_iot_ml_kem.Spec.Lift
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
 /-! ## §0 Lift tower
 
@@ -35,7 +35,7 @@ private noncomputable instance : Inhabited hacspec_ml_kem.parameters.FieldElemen
 
 /-- Local `Inhabited` instance for `PortableVector` used by `[i]!`
     indexing in `lift_chunk` / `lift_poly`. Mirrors the `local instance`
-    in `BitMlKem/Spec.lean` (which is file-scoped). -/
+    in `Spec.lean` (which is file-scoped). -/
 private instance instInhabitedPortableVector_fcTargets :
     Inhabited libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
   ⟨{ elements := Std.Array.make 16#usize (List.replicate 16 (0#i16 : Std.I16))
@@ -223,9 +223,9 @@ noncomputable def lift_t_as_ntt_from_public_key
     Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K :=
   Spec.t_as_ntt_from_public_key_pure public_key K
 
-/-! ## §0.5 Spec `_pure` aliases needed beyond `SpecPure.lean`.
+/-! ## §0.5 Spec `_pure` aliases needed beyond `Spec.Pure.lean`.
 
-    `SpecPure.lean` already provides:
+    `Spec.Pure.lean` already provides:
       - `FieldElement.{add,sub,mul,neg}_pure`
       - `polynomial.{add_to_ring_element,poly_barrett_reduce,subtract_reduce}_pure`
 
@@ -233,7 +233,7 @@ noncomputable def lift_t_as_ntt_from_public_key
     below. Each is the `Result`-stripped pure projection of a
     `Result`-monadic hacspec op; bodies use the standard
     `match | .ok r => r | _ => default`
-    pattern (see `SpecPure.lean`). Bodies left `sorry` here for brevity
+    pattern (see `Spec.Pure.lean`). Bodies left `sorry` here for brevity
     — types are load-bearing. -/
 
 /-- Pure projection of `parameters.FieldElement.new (x.val % q)` —
@@ -292,7 +292,7 @@ noncomputable def Spec.chunk_add_pure
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize
     ((List.range 16).map (fun i =>
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
         (a.val[i]!) (b.val[i]!)))
     (by simp)
 
@@ -303,7 +303,7 @@ noncomputable def Spec.chunk_sub_pure
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize
     ((List.range 16).map (fun i =>
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
         (a.val[i]!) (b.val[i]!)))
     (by simp)
 
@@ -314,7 +314,7 @@ noncomputable def Spec.chunk_neg_pure
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize
     ((List.range 16).map (fun i =>
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure
         (a.val[i]!)))
     (by simp)
 
@@ -348,7 +348,7 @@ noncomputable def Spec.chunk_multiply_by_constant_pure
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize
     ((List.range 16).map (fun i =>
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (a.val[i]!) c))
     (by simp)
 
@@ -420,14 +420,14 @@ theorem Spec.chunk_add_pure_lane_eq
     (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
     (k : Nat) (hk : k < 16) :
     (Spec.chunk_add_pure a b).val[k]!
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           (a.val[k]!) (b.val[k]!) := by
   unfold Spec.chunk_add_pure
   show ((List.range 16).map (fun i =>
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           (a.val[i]!) (b.val[i]!)))[k]! = _
   have h_l : ((List.range 16).map (fun i =>
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           (a.val[i]!) (b.val[i]!))).length = 16 := by simp
   rw [getElem!_pos _ k (by rw [h_l]; exact hk)]
   rw [List.getElem_map, List.getElem_range]
@@ -437,14 +437,14 @@ theorem Spec.chunk_sub_pure_lane_eq
     (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
     (k : Nat) (hk : k < 16) :
     (Spec.chunk_sub_pure a b).val[k]!
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
           (a.val[k]!) (b.val[k]!) := by
   unfold Spec.chunk_sub_pure
   show ((List.range 16).map (fun i =>
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+        libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
           (a.val[i]!) (b.val[i]!)))[k]! = _
   have h_l : ((List.range 16).map (fun i =>
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+        libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
           (a.val[i]!) (b.val[i]!))).length = 16 := by simp
   rw [getElem!_pos _ k (by rw [h_l]; exact hk)]
   rw [List.getElem_map, List.getElem_range]
@@ -454,14 +454,14 @@ theorem Spec.chunk_neg_pure_lane_eq
     (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
     (k : Nat) (hk : k < 16) :
     (Spec.chunk_neg_pure a).val[k]!
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure
           (a.val[k]!) := by
   unfold Spec.chunk_neg_pure
   show ((List.range 16).map (fun i =>
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+        libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure
           (a.val[i]!)))[k]! = _
   have h_l : ((List.range 16).map (fun i =>
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
+        libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure
           (a.val[i]!))).length = 16 := by simp
   rw [getElem!_pos _ k (by rw [h_l]; exact hk)]
   rw [List.getElem_map, List.getElem_range]
@@ -490,11 +490,11 @@ noncomputable def Spec.chunk_ntt_step_pure
     (zeta : hacspec_ml_kem.parameters.FieldElement) (i j : Std.Usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   let t_fe :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure (a.val[j.val]!) zeta
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure (a.val[j.val]!) zeta
   let a_minus_t :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure (a.val[i.val]!) t_fe
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure (a.val[i.val]!) t_fe
   let a_plus_t :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure (a.val[i.val]!) t_fe
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure (a.val[i.val]!) t_fe
   (a.set j a_minus_t).set i a_plus_t
 
 /-- Pure NTT-layer-1 step at the chunk level. Mirrors the impl's
@@ -561,11 +561,11 @@ noncomputable def Spec.chunk_inv_ntt_step_pure
   let a_i := a.val[i.val]!
   let a_j := a.val[j.val]!
   let new_i :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a_j a_i
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure a_j a_i
   let diff :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure a_j a_i
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure a_j a_i
   let new_j :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure diff zeta
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure diff zeta
   (a.set i new_i).set j new_j
 
 /-- Pure projection of `vector.portable.ntt.inv_ntt_layer_1_step`:
@@ -637,33 +637,33 @@ noncomputable def Spec.chunk_accumulating_ntt_multiply_pure
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   let zeta_for_pair (i : Nat) : hacspec_ml_kem.parameters.FieldElement :=
     if i = 0 then z0
-    else if i = 1 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z0
+    else if i = 1 then libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure z0
     else if i = 2 then z1
-    else if i = 3 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z1
+    else if i = 3 then libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure z1
     else if i = 4 then z2
-    else if i = 5 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z2
+    else if i = 5 then libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure z2
     else if i = 6 then z3
-    else if i = 7 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z3
+    else if i = 7 then libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure z3
     else defaultFE
   Std.Array.make 16#usize
     ((List.range 16).map (fun ℓ =>
       let i := ℓ / 2
       let ζ := zeta_for_pair i
       if ℓ % 2 = 0 then
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure (acc.val[ℓ]!)
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure (acc.val[ℓ]!)
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (a.val[ℓ]!) (b.val[ℓ]!))
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-              (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+              (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                 (a.val[ℓ + 1]!) (b.val[ℓ + 1]!))
               ζ))
       else
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure (acc.val[ℓ]!)
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure (acc.val[ℓ]!)
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (a.val[ℓ - 1]!) (b.val[ℓ]!))
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (a.val[ℓ]!) (b.val[ℓ - 1]!)))))
     (by simp)
 
@@ -828,7 +828,7 @@ noncomputable def Spec.chunk_inv_pair_butterfly_a_pure
     (chunk_a chunk_b : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
       (chunk_a.val[ℓ]!) (chunk_b.val[ℓ]!)))
     (by simp)
 
@@ -842,8 +842,8 @@ noncomputable def Spec.chunk_inv_pair_butterfly_b_pure
     (z : hacspec_ml_kem.parameters.FieldElement) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
         (chunk_b.val[ℓ]!) (chunk_a.val[ℓ]!))
       z))
     (by simp)
@@ -938,8 +938,8 @@ noncomputable def Spec.chunk_pair_butterfly_a_pure
     (z : hacspec_ml_kem.parameters.FieldElement) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure (chunk_a.val[ℓ]!)
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure (chunk_a.val[ℓ]!)
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (chunk_b.val[ℓ]!) z)))
     (by simp)
 
@@ -948,8 +948,8 @@ noncomputable def Spec.chunk_pair_butterfly_b_pure
     (z : hacspec_ml_kem.parameters.FieldElement) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure (chunk_a.val[ℓ]!)
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure (chunk_a.val[ℓ]!)
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (chunk_b.val[ℓ]!) z)))
     (by simp)
 
@@ -1045,7 +1045,7 @@ noncomputable def Spec.ntt_pure
   let p3 := Spec.ntt_layer_3_pure p4 15#usize
   let p2 := Spec.ntt_layer_2_pure p3 31#usize
   let p1 := Spec.ntt_layer_1_pure p2 63#usize
-  SpecPure.polynomial.poly_barrett_reduce_pure p1
+  Spec.Pure.polynomial.poly_barrett_reduce_pure p1
 
 /-- Pure projection of `ntt_vector_u`'s full NTT chain. Mirrors `Spec.ntt_pure`
     but uses `Spec.ntt_at_layer_4_plus_pure p 0 7` for the first step instead
@@ -1066,7 +1066,7 @@ noncomputable def Spec.ntt_pure_vec_u
   let p3 := Spec.ntt_layer_3_pure p4 15#usize
   let p2 := Spec.ntt_layer_2_pure p3 31#usize
   let p1 := Spec.ntt_layer_1_pure p2 63#usize
-  SpecPure.polynomial.poly_barrett_reduce_pure p1
+  Spec.Pure.polynomial.poly_barrett_reduce_pure p1
 
 /-- `ZETAS_TIMES_MONTGOMERY_R[1]! = -758#i16`. -/
 theorem Spec.ZETAS_TIMES_MONTGOMERY_R_get_one :
@@ -1086,8 +1086,8 @@ theorem Spec.zeta_at_one_eq_layer_7 :
   unfold Spec.zeta_at Spec.zeta_layer_7
   rw [Spec.ZETAS_TIMES_MONTGOMERY_R_get_one]
   unfold lift_fe_mont lift_fe
-    libcrux_iot_ml_kem.BitMlKem.i16_to_spec_fe_mont
-    libcrux_iot_ml_kem.BitMlKem.i16_to_spec_fe_plain
+    libcrux_iot_ml_kem.Spec.i16_to_spec_fe_mont
+    libcrux_iot_ml_kem.Spec.i16_to_spec_fe_plain
   congr 1
 
 /-- Per-chunk pure projection of `polynomial.add_error_reduce`: for the
@@ -1098,8 +1098,8 @@ noncomputable def Spec.chunk_add_error_reduce_pure
         Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (self_chunk.val[ℓ]!) (lift_fe_mont (1441#i16)))
       (error_chunk.val[ℓ]!)))
     (by simp)
@@ -1107,14 +1107,14 @@ noncomputable def Spec.chunk_add_error_reduce_pure
 /-- Per-chunk pure projection of `polynomial.add_standard_error_reduce`:
     for the `ℓ`-th lane,
     `out[ℓ] := self_chunk[ℓ] · lift_fe_mont(1353#i16) + error_chunk[ℓ]`,
-    where `1353 ≡ R² (mod q)` (cf. `Util.mont_1353_eq_RR_mod_q`). -/
+    where `1353 ≡ R² (mod q)` (cf. `libcrux_iot_ml_kem.Spec.NumericKeystones.mont_1353_eq_RR_mod_q`). -/
 noncomputable def Spec.chunk_add_standard_error_reduce_pure
     (self_chunk error_chunk :
         Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (self_chunk.val[ℓ]!) (lift_fe_mont (1353#i16)))
       (error_chunk.val[ℓ]!)))
     (by simp)
@@ -1130,10 +1130,10 @@ noncomputable def Spec.chunk_add_message_error_reduce_pure
         Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (result_chunk.val[ℓ]!) (lift_fe_mont (1441#i16)))
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
         (self_chunk.val[ℓ]!) (message_chunk.val[ℓ]!))))
     (by simp)
 
@@ -1201,8 +1201,8 @@ noncomputable def Spec.chunk_subtract_reduce_pure
     (self_chunk b_chunk : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
   Std.Array.make 16#usize ((List.range 16).map (fun ℓ =>
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure (self_chunk.val[ℓ]!)
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure (self_chunk.val[ℓ]!)
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (b_chunk.val[ℓ]!) (lift_fe_mont (1441#i16)))))
     (by simp)
 
@@ -1230,4 +1230,4 @@ noncomputable def Spec.subtract_reduce_pure
 -- `Spec.sample_matrix_A_pure` is declared above (with `lift_matrix_from_seed`).
 
 
-end libcrux_iot_ml_kem.BitMlKem.FCTargets
+end libcrux_iot_ml_kem.Spec.Lift

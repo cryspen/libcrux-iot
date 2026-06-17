@@ -42,8 +42,7 @@ open CoreModels Aeneas
 open Aeneas.Std hiding namespace core alloc
 open Result Std.Do
 
-namespace libcrux_iot_ml_kem.Util
-
+namespace libcrux_iot_ml_kem.Util.SliceSpecs
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
 
@@ -440,4 +439,4 @@ theorem core_models_try_from_unwrap_spec
   rw [h_eq]
   simp [Triple, WP.wp, PostCond.noThrow, PredTrans.apply]
 
-end libcrux_iot_ml_kem.Util
+end libcrux_iot_ml_kem.Util.SliceSpecs

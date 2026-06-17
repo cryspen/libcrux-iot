@@ -27,9 +27,10 @@ set_option linter.unusedSectionVars false
 
 /-! ### Extracted from FCTargets.lean (§poly_l6_1). -/
 
-namespace libcrux_iot_ml_kem.BitMlKem.FCTargets
+namespace libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett
+open libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
 /-! ## §L6 — poly-level ops (6 theorems). -/
 
@@ -45,7 +46,7 @@ open libcrux_iot_ml_kem.BitMlKem
 
 namespace L6_1_FC
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
 /-- Step-local accumulator (the mutable poly being barrett-reduced). -/
 abbrev Acc :=
@@ -114,12 +115,12 @@ theorem poly_barrett_reduce_step_lemma_fc
   · -- `Some i = k` branch.
     have hk_16 : k.val < 16 := by rw [h16] at h_lt; exact h_lt
     obtain ⟨s, hs_val, h_iter_some⟩ :=
-      libcrux_iot_ml_kem.Util.iter_next_some_eq k h_lt
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_some_eq k h_lt
     -- (1) `index_mut_usize acc.coefficients k` → `(t, set_back) = (acc.coefs[k], acc.coefs.set k)`.
     set t : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
       acc.coefficients.val[k.val]! with ht_def
     have h_idx_t : Aeneas.Std.Array.index_usize acc.coefficients k = .ok t :=
-      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq acc.coefficients k
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq acc.coefficients k
         (by rw [h_coef_len]; exact hk_16)
     have h_imt_t : Aeneas.Std.Array.index_mut_usize acc.coefficients k
         = .ok (t, acc.coefficients.set k) := by
@@ -231,7 +232,7 @@ theorem poly_barrett_reduce_step_lemma_fc
   · -- `None` branch: k ≥ 16, done.
     have hk_ge : k.val ≥ (16#usize : Std.Usize).val := Nat.not_lt.mp h_lt
     have hk_eq : k.val = 16 := by rw [h16] at hk_ge; omega
-    have h_iter_none := libcrux_iot_ml_kem.Util.iter_next_none_eq k hk_ge
+    have h_iter_none := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_none_eq k hk_ge
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst)
@@ -310,7 +311,7 @@ theorem poly_barrett_reduce_fc
   rw [h_vre]; simp only [Aeneas.Std.bind_tc_ok]
   unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce_loop
   apply Std.Do.Triple.of_entails_right _
-    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+    (libcrux_iot_ml_kem.Util.LoopSpecs.loop_range_spec_usize
       (fun (iter1, acc1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) iter1 acc1)
@@ -368,8 +369,8 @@ theorem poly_barrett_reduce_fc
       exact (h_done k hk).symm
     have h_flat := flatten_chunks_eq_lift_poly_fc r chunks_arr h_chunks_len h_chunks_get
     -- Bridge to hacspec via `poly_barrett_reduce_eq_ok` + canonical-identity.
-    rw [libcrux_iot_ml_kem.BitMlKem.SpecPure.polynomial.poly_barrett_reduce_eq_ok]
-    rw [libcrux_iot_ml_kem.BitMlKem.SpecPure.polynomial.poly_barrett_reduce_pure_id_of_canonical
+    rw [libcrux_iot_ml_kem.Spec.Pure.polynomial.poly_barrett_reduce_eq_ok]
+    rw [libcrux_iot_ml_kem.Spec.Pure.polynomial.poly_barrett_reduce_pure_id_of_canonical
           (lift_poly self) (lift_poly_lanes_canonical self)]
     -- Goal: .ok (lift_poly self) = .ok (lift_poly r). Reduce via congrArg.
     congr 1
@@ -415,7 +416,7 @@ theorem poly_barrett_reduce_fc
       rw [chunk_at_lift_poly_fc self (j / 16) h_div_lt]
       -- (lift_chunk x).val[j%16]! = lift_fe (x.elements.val[j%16]!).
       have h_self_elems_len : (self.coefficients.val[j / 16]!).elements.val.length = 16 :=
-        libcrux_iot_ml_kem.Util.PortableVector_elements_length _
+        libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length _
       have h_lc_self : ((lift_chunk (self.coefficients.val[j / 16]!)).val[j % 16]!)
           = lift_fe ((self.coefficients.val[j / 16]!).elements.val[j % 16]!) := by
         unfold lift_chunk
@@ -445,4 +446,4 @@ theorem poly_barrett_reduce_fc
       simpa [L6_1_FC.step_post] using hP
 
 
-end libcrux_iot_ml_kem.BitMlKem.FCTargets
+end libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett

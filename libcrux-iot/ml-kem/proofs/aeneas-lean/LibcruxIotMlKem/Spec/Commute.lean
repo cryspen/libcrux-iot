@@ -1,5 +1,5 @@
 /-
-  # `BitMlKem/Commute.lean` — M.2 commute lemmas (Block A).
+  # `Spec/Commute.lean` — M.2 commute lemmas (Block A).
 
   Layer-0 scalar `Std.I16 → ZMod 3329` field-element commute lemmas.
   Each lemma consumes an impl-level "value-equation" precondition
@@ -14,9 +14,9 @@
   ## Discipline
 
   Each lemma carries `@[scoped grind]` and lives inside the
-  `libcrux_iot_ml_kem.BitMlKem.Commute` namespace, so consumers
+  `libcrux_iot_ml_kem.Spec.Commute` namespace, so consumers
   enable `grind` over the commute set with
-  `open libcrux_iot_ml_kem.BitMlKem.Commute` (no global pollution).
+  `open libcrux_iot_ml_kem.Spec.Commute` (no global pollution).
 
   ## File-shape notes
 
@@ -34,12 +34,11 @@ import LibcruxIotMlKem.Spec
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Tactic.Ring
 
-namespace libcrux_iot_ml_kem.BitMlKem.Commute
-
+namespace libcrux_iot_ml_kem.Spec.Commute
 open CoreModels Aeneas Aeneas.Std
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
-/-! ### Local `Inhabited` instances (mirror of `BitMlKem/Spec.lean`).
+/-! ### Local `Inhabited` instances (mirror of `Spec.lean`).
 
     The `PolynomialRingElement V`-and-`PortableVector` chunk types
     need an `Inhabited` instance for the `coefficients.val[i]!` /
@@ -974,4 +973,4 @@ theorem lemma_subtract_reduce_scaled_eq
     lemma_to_spec_poly_mont_eq_of_coeffs p q h
   rw [hpq]
 
-end libcrux_iot_ml_kem.BitMlKem.Commute
+end libcrux_iot_ml_kem.Spec.Commute

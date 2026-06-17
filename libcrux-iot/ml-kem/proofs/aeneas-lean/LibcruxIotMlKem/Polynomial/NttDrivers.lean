@@ -29,10 +29,10 @@ set_option mvcgen.warning false
 set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
 
-namespace libcrux_iot_ml_kem.Equivalence
-
+namespace libcrux_iot_ml_kem.Polynomial.NttDrivers
+open libcrux_iot_ml_kem.Polynomial.PolyOps libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 open CoreModels Aeneas Aeneas.Std Result ControlFlow Std.Do
-open libcrux_iot_ml_kem.Util
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper
 
 /-! ## Inhabited instances — needed for `.val[j]!` projections.
 
@@ -149,7 +149,7 @@ Loop invariant after `k` iterations (`k.val ∈ [0, 16]`), state
 
 namespace L3_1
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 /-- Step-local accumulator type — explicitly named to keep `loop_range_spec_usize`'s
     `β` parameter mounted to a concrete type for inference. -/
@@ -506,7 +506,7 @@ instantiation and is left untouched. -/
 
 namespace L3_1_B
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 abbrev Acc := Std.Usize ×
   libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -837,7 +837,7 @@ bound per coefficient goes `6·3328 → 7·3328`. -/
 
 namespace L3_2
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 abbrev Acc := Std.Usize ×
   libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -1135,7 +1135,7 @@ two ζ lookups, dispatches `ntt_layer_2_step_spec_bnd`. Input bound
 
 namespace L3_2_B
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 abbrev Acc := Std.Usize ×
   libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -1429,7 +1429,7 @@ coefficient goes `5·3328 → 6·3328`. -/
 
 namespace L3_3
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 abbrev Acc := Std.Usize ×
   libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -1714,7 +1714,7 @@ single ζ lookup, dispatches `ntt_layer_3_step_spec_bnd`. Input bound
 
 namespace L3_3_B
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 abbrev Acc := Std.Usize ×
   libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -2062,7 +2062,7 @@ private theorem iter_next_none_eq_gen
 
 namespace L3_5
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 /-- Step-local accumulator: a `PolynomialRingElement × scratch`. -/
 abbrev Acc :=
@@ -2942,7 +2942,7 @@ and `b_offset + step_vec ≤ 16` (with `a_offset ≤ b_offset` from L3.4's calle
 
 namespace L3_4_Inner
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 /-- Inner-loop accumulator: a `(PolynomialRingElement × scratch)`. -/
 abbrev Acc :=
@@ -3326,7 +3326,7 @@ private theorem usize_mul_ok_eq (x y : Std.Usize)
 
 namespace L3_4_Outer
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
 /-- Outer-loop accumulator: `(zeta_i, PolynomialRingElement, scratch)`. -/
 abbrev Acc := Std.Usize ×
@@ -4380,4 +4380,4 @@ theorem ntt_vector_u_spec
   intro i hi j hj
   exact h_re8_bd i hi j hj
 
-end libcrux_iot_ml_kem.Equivalence
+end libcrux_iot_ml_kem.Polynomial.NttDrivers

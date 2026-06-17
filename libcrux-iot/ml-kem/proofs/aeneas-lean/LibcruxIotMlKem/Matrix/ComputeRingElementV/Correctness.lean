@@ -1,5 +1,5 @@
 /-
-  # `BitMlKem/L7/Correctness/ComputeRingElementV.lean` — L7.3 `D′` tail bridge.
+  # `Matrix/ComputeRingElementV/Correctness.lean` — L7.3 `D′` tail bridge.
 
   The hacspec↔pure equational bridge for the *add-message-error* tail of the
   `compute_ring_element_v` decomposition. The hacspec `compute_ring_element_v`
@@ -43,13 +43,12 @@ import LibcruxIotMlKem.Matrix.ComputeVectorU.Correctness
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
 
-namespace libcrux_iot_ml_kem.BitMlKem.L7
-
+namespace libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Correctness
+open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness libcrux_iot_ml_kem.Matrix.ComputeVectorU.Correctness
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
-open libcrux_iot_ml_kem.BitMlKem.FCTargets
-open libcrux_iot_ml_kem.BitMlKem.SpecPure (Canonical)
-
+open libcrux_iot_ml_kem.Spec
+open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
+open libcrux_iot_ml_kem.Spec.Pure (Canonical)
 section AddMessageErrorScaleZ
 
 /-! ### Local lane-access / canonicity helpers (copies of the `private`
@@ -146,7 +145,7 @@ private theorem eq_of_zmod_lane_canon''
 private theorem zmodOfFE_add_error_reduce_pure_lane''
     (b e : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
     (j : Nat) (hj : j < 256)
-    (hb : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical (b.val[j]!)) :
+    (hb : libcrux_iot_ml_kem.Spec.Pure.Canonical (b.val[j]!)) :
     zmodOfFE ((Spec.add_error_reduce_pure b e).val[j]!)
       = 512 * zmodOfFE (b.val[j]!) + zmodOfFE (e.val[j]!) := by
   have hℓ : j % 16 < 16 := Nat.mod_lt _ (by decide)
@@ -178,7 +177,7 @@ set_option maxHeartbeats 1000000 in
 theorem add_message_error_scaleZ_eq
     (result2 e2 msg : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
     (h_r2_canon : ∀ j : Nat, j < 256 →
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical (result2.val[j]!)) :
+      libcrux_iot_ml_kem.Spec.Pure.Canonical (result2.val[j]!)) :
     (do let a ← hacspec_ml_kem.matrix.add_polynomials (scaleZ 512 result2) e2
         hacspec_ml_kem.matrix.add_polynomials a msg)
       = .ok (Spec.add_message_error_reduce_pure e2 msg result2) := by
@@ -189,15 +188,15 @@ theorem add_message_error_scaleZ_eq
   rw [L7_1d_FC.matrix_add_polynomials_eq_ok (Spec.add_error_reduce_pure result2 e2) msg]
   set L : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
     ⟨(List.range 256).map (fun k =>
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           ((Spec.add_error_reduce_pure result2 e2).val[k]!) (msg.val[k]!)),
      by simp [List.length_map, List.length_range]⟩ with hL_def
   have hL_lane : ∀ j : Nat, j < 256 →
-      L.val[j]! = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      L.val[j]! = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                     ((Spec.add_error_reduce_pure result2 e2).val[j]!) (msg.val[j]!) := by
     intro j hj
     show ((List.range 256).map (fun k =>
-            libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
               ((Spec.add_error_reduce_pure result2 e2).val[k]!) (msg.val[k]!)))[j]! = _
     rw [getElem!_pos _ j (by simp [List.length_map, List.length_range, hj])]
     rw [List.getElem_map, List.getElem_range]
@@ -206,7 +205,7 @@ theorem add_message_error_scaleZ_eq
   · -- L lanes canonical
     intro j hj
     rw [hL_lane j hj]
-    exact libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure _ _
+    exact libcrux_iot_ml_kem.Spec.Pure.Canonical_add_pure _ _
   · -- add_message_error_reduce_pure lanes canonical
     intro j hj
     have hℓ : j % 16 < 16 := Nat.mod_lt _ (by decide)
@@ -215,7 +214,7 @@ theorem add_message_error_scaleZ_eq
           (Spec.chunk_at e2 k) (Spec.chunk_at msg k) (Spec.chunk_at result2 k)) j hj (by simp)]
     unfold Spec.chunk_add_message_error_reduce_pure
     rw [mkN_map_lane'' _ (j % 16) hℓ]
-    exact libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure _ _
+    exact libcrux_iot_ml_kem.Spec.Pure.Canonical_add_pure _ _
   · -- per-lane zmodOfFE equality
     intro j hj
     have hℓ : j % 16 < 16 := Nat.mod_lt _ (by decide)
@@ -242,4 +241,4 @@ theorem add_message_error_scaleZ_eq
 
 end AddMessageErrorScaleZ
 
-end libcrux_iot_ml_kem.BitMlKem.L7
+end libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Correctness

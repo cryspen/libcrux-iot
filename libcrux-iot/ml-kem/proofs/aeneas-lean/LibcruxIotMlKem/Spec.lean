@@ -35,8 +35,7 @@ import HacspecMlKem.Extraction.Funs
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Tactic.Ring
 
-namespace libcrux_iot_ml_kem.BitMlKem
-
+namespace libcrux_iot_ml_kem.Spec
 open CoreModels Aeneas Aeneas.Std
 
 /-! ### `Inhabited` instances for `.val[j]!` projections.
@@ -159,10 +158,6 @@ def to_spec_poly_mont
     let chunk := re.coefficients.val[i]!
     let lane := chunk.elements.val[k]!
     i16_to_spec_fe_mont lane
-
-/-- Aliases used by downstream Triples and the F* port. -/
-abbrev lift_poly_plain := @to_spec_poly_plain
-abbrev lift_poly_mont  := @to_spec_poly_mont
 
 /-! ## §B.3 — the 34 `bit_<op>` defs.
 
@@ -602,4 +597,4 @@ theorem lemma_to_spec_poly_mont_eq_of_coeffs
   have hmod_lt : k % 16 < 16 := Nat.mod_lt k (by decide)
   exact h ⟨k / 16, hdiv_lt⟩ ⟨k % 16, hmod_lt⟩
 
-end libcrux_iot_ml_kem.BitMlKem
+end libcrux_iot_ml_kem.Spec

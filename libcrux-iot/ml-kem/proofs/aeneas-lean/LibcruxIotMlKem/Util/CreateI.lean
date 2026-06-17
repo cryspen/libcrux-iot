@@ -51,8 +51,8 @@ import HacspecMlKem.Extraction.Funs
 open CoreModels Aeneas Aeneas.Std Result Std.Do
 open hacspec_ml_kem.parameters (createi)
 
-namespace libcrux_iot_ml_kem.Util
-
+namespace libcrux_iot_ml_kem.Util.CreateI
+open libcrux_iot_ml_kem.Util.SliceSpecs
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
 
@@ -236,4 +236,4 @@ theorem from_fn_pure_spec
       List.getElem?_range hi]
   rfl
 
-end libcrux_iot_ml_kem.Util
+end libcrux_iot_ml_kem.Util.CreateI

@@ -1,5 +1,5 @@
 /-
-  # `BitMlKem/L7/Common.lean` — shared L7.4 scaffolding.
+  # `Matrix/Common.lean` — shared L7.4 scaffolding.
 
   Holds the small shared definitions used by the L7.4 `compute_message`
   proof and (prospectively) reused by L7.2/L7.3:
@@ -30,11 +30,10 @@ import LibcruxIotMlKem.Polynomial.PolyOps
 import LibcruxIotMlKem.Polynomial.PolyOpsFcBarrett
 import LibcruxIotMlKem.Polynomial.PolyOpsFc
 
-namespace libcrux_iot_ml_kem.BitMlKem.L7
-
+namespace libcrux_iot_ml_kem.Matrix.Common
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
-open libcrux_iot_ml_kem.BitMlKem.FCTargets
+open libcrux_iot_ml_kem.Spec
+open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 
 /-- The all-zero canonical-domain ring element (256 lanes, each
     `FieldElement.val = 0`). This is the fold seed for
@@ -64,7 +63,7 @@ noncomputable def Impl.compute_message_zero :
     `private lift_poly_mont_to_lift_poly` from public primitives so the L7
     files (which cannot see the private original) can apply it. -/
 
-/-- Local copy of `SpecPure.uscalar_rem_ok_U32` (private there); the L7
+/-- Local copy of `Spec.Pure.uscalar_rem_ok_U32` (private there); the L7
     files re-derive it from `BitVec.umod` to reprove `mul_pure_val_eq`. -/
 private theorem Impl.uscalar_rem_ok_U32 (z m : Std.U32) (hm : m.val ≠ 0) :
     ∃ w : Std.U32, (z % m : Result Std.U32) = .ok w ∧ w.val = z.val % m.val := by
@@ -82,12 +81,12 @@ private theorem Impl.uscalar_rem_ok_U32 (z m : Std.U32) (hm : m.val ≠ 0) :
     unconditional (the U32 widening keeps the product `< 2^32`). -/
 private theorem Impl.mul_pure_val_eq
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b).val.val
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b).val.val
       = (a.val.val * b.val.val) % 3329 := by
   have hmul :
       hacspec_ml_kem.parameters.FieldElement.mul a b
-        = .ok (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_eq_ok a b
+        = .ok (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b) :=
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_eq_ok a b
   unfold hacspec_ml_kem.parameters.FieldElement.mul at hmul
   simp only [Aeneas.Std.lift, Aeneas.Std.bind_tc_ok] at hmul
   have hA := a.val.hBounds; have hB := b.val.hBounds
@@ -139,7 +138,7 @@ private theorem Impl.mul_pure_val_eq
     FCTargets' `private L2_8c.zmodOfFE_mul_pure`). -/
 private theorem Impl.zmodOfFE_mul_pure
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b)
+    zmodOfFE (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b)
       = zmodOfFE a * zmodOfFE b := by
   unfold zmodOfFE
   rw [Impl.mul_pure_val_eq]
@@ -161,17 +160,17 @@ private theorem Impl.zmodOfFE_lift_fe_mont (x : Std.I16) :
     product canonically round-trips to `x`. Reproves the `private`
     `lift_fe_mont_mul_1353_eq_lift_fe` from public lemmas. -/
 theorem Impl.lift_fe_mont_mul_1353_eq_lift_fe (x : Std.I16) :
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
       (lift_fe_mont x) (lift_fe_mont (1353#i16 : Std.I16))
       = lift_fe x := by
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
       (lift_fe_mont x) (lift_fe_mont (1353#i16 : Std.I16)) with hs_def
   -- (1) `s` is canonical (`Canonical_mul_pure` is unconditional).
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_mul_pure
       (lift_fe_mont x) (lift_fe_mont (1353#i16 : Std.I16))
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -218,7 +217,7 @@ noncomputable def Impl.mont_strip_pure
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
   Std.Array.make 256#usize
     ((List.range 256).map (fun i =>
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (p.val[i]!) (lift_fe_mont (1353#i16 : Std.I16))))
     (by simp)
 
@@ -231,17 +230,17 @@ noncomputable def Impl.mont_strip_pure
 theorem Impl.mont_strip_lift_poly_mont_eq_lift_poly
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
-    Impl.mont_strip_pure (FCTargets.lift_poly_mont re) = lift_poly re := by
+    Impl.mont_strip_pure (libcrux_iot_ml_kem.Spec.Lift.lift_poly_mont re) = lift_poly re := by
   unfold Impl.mont_strip_pure
   apply Subtype.ext
   show (List.range 256).map (fun i =>
-          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-            ((FCTargets.lift_poly_mont re).val[i]!) (lift_fe_mont (1353#i16 : Std.I16)))
+          libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+            ((libcrux_iot_ml_kem.Spec.Lift.lift_poly_mont re).val[i]!) (lift_fe_mont (1353#i16 : Std.I16)))
       = (lift_poly re).val
   unfold lift_poly
   show (List.range 256).map (fun i =>
-          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-            ((FCTargets.lift_poly_mont re).val[i]!) (lift_fe_mont (1353#i16 : Std.I16)))
+          libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+            ((libcrux_iot_ml_kem.Spec.Lift.lift_poly_mont re).val[i]!) (lift_fe_mont (1353#i16 : Std.I16)))
       = (List.range 256).map (fun j =>
           lift_fe (re.coefficients.val[j / 16]!).elements.val[j % 16]!)
   apply List.ext_getElem
@@ -249,15 +248,15 @@ theorem Impl.mont_strip_lift_poly_mont_eq_lift_poly
   · intro j hj1 _hj2
     have hj : j < 256 := by
       have : j < ((List.range 256).map (fun i =>
-          libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-            ((FCTargets.lift_poly_mont re).val[i]!) (lift_fe_mont (1353#i16 : Std.I16)))).length := hj1
+          libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+            ((libcrux_iot_ml_kem.Spec.Lift.lift_poly_mont re).val[i]!) (lift_fe_mont (1353#i16 : Std.I16)))).length := hj1
       simpa using this
     simp only [List.getElem_map, List.getElem_range]
     -- LHS lane = mul_pure (lift_fe_mont x) (lift_fe_mont 1353); RHS = lift_fe x.
     set x : Std.I16 :=
       (re.coefficients.val[j / 16]!).elements.val[j % 16]! with hx_def
-    have h_mont : (FCTargets.lift_poly_mont re).val[j]! = lift_fe_mont x := by
-      unfold FCTargets.lift_poly_mont
+    have h_mont : (libcrux_iot_ml_kem.Spec.Lift.lift_poly_mont re).val[j]! = lift_fe_mont x := by
+      unfold libcrux_iot_ml_kem.Spec.Lift.lift_poly_mont
       show ((List.range 256).map (fun k =>
               lift_fe_mont (re.coefficients.val[k / 16]!).elements.val[k % 16]!))[j]!
             = lift_fe_mont x
@@ -269,13 +268,13 @@ theorem Impl.mont_strip_lift_poly_mont_eq_lift_poly
     rw [h_mont]
     exact Impl.lift_fe_mont_mul_1353_eq_lift_fe x
 
-end libcrux_iot_ml_kem.BitMlKem.L7
-
+end libcrux_iot_ml_kem.Matrix.Common
 /-! ### Extracted from FCTargets.lean (§matrix_entry). -/
 
-namespace libcrux_iot_ml_kem.BitMlKem.FCTargets
+namespace libcrux_iot_ml_kem.Matrix.Common
+open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
 /-! ## §L6.8 — matrix per-cell accessor.
 
@@ -347,7 +346,7 @@ theorem entry_eq_ok_fc_aux
     rw [h_idx_val, h_ik_val]; exact h_idx_lt_len
   have h_slice_idx :
       Aeneas.Std.Slice.index_usize matrix idx = .ok (matrix.val[idx.val]!) :=
-    libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq matrix idx h_idx_lt_matrix
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.slice_index_usize_ok_eq matrix idx h_idx_lt_matrix
   -- Rewrite the do-block.
   simp only [pure, Pure.pure, Aeneas.Std.bind_tc_ok, h_kk_eq, h_ik_eq, h_idx_eq,
              h_slice_idx, h_massert_len]
@@ -417,4 +416,4 @@ theorem matrix.entry_fc
   rw [List.getElem_map, List.getElem_range]
 
 
-end libcrux_iot_ml_kem.BitMlKem.FCTargets
+end libcrux_iot_ml_kem.Matrix.Common

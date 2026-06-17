@@ -33,8 +33,8 @@ import LibcruxIotMlKem.Extraction.Funs
 
 open CoreModels Aeneas Aeneas.Std Result ControlFlow Std.Do
 
-namespace libcrux_iot_ml_kem.Util
-
+namespace libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper
+open libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
@@ -1046,4 +1046,4 @@ theorem elementwise_io_spec
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [io_step_post] using hP
 
-end libcrux_iot_ml_kem.Util
+end libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper

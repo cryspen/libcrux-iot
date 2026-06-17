@@ -1,5 +1,5 @@
 /-
-  # `BitMlKem/L7/FC/ComputeMessage.lean` — L7.4 FC theorem glue.
+  # `Matrix/ComputeMessage/FC.lean` — L7.4 FC theorem glue.
 
   Houses the L7.4 FC theorem `compute_message_fc`, gluing the direct
   decomposition (impl walk via `triple_*_ok_fc` + the A/B/C/D chain).
@@ -25,11 +25,11 @@ import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Matrix.ComputeMessage.Impl
 import LibcruxIotMlKem.Matrix.ComputeMessage.Correctness
 
-namespace libcrux_iot_ml_kem.BitMlKem.L7
-
+namespace libcrux_iot_ml_kem.Matrix.ComputeMessage.FC
+open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
-open libcrux_iot_ml_kem.BitMlKem.FCTargets
+open libcrux_iot_ml_kem.Spec
+open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 
 /-- Local copy of the `private triple_exists_ok_fc` helper (Impl/ComputeMessage):
     a `True`-pre Triple yielding `.ok` with the post is an existential witness. -/
@@ -52,13 +52,13 @@ private theorem triple_of_ok_fc {α : Type} {x : Result α} {v : α}
 private theorem scaleZ_canon (c : ZMod 3329)
     (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
     (j : Nat) (hj : j < 256) :
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical ((scaleZ c p).val[j]!) := by
+    libcrux_iot_ml_kem.Spec.Pure.Canonical ((scaleZ c p).val[j]!) := by
   unfold scaleZ
-  show libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+  show libcrux_iot_ml_kem.Spec.Pure.Canonical
     (((List.range 256).map (fun k => feOfZMod (c * zmodOfFE (p.val[k]!))))[j]!)
   rw [getElem!_pos _ j (by simp [List.length_map, List.length_range, hj])]
   rw [List.getElem_map, List.getElem_range]
-  unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical feOfZMod
+  unfold libcrux_iot_ml_kem.Spec.Pure.Canonical feOfZMod
   have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
   rw [hq]
@@ -73,14 +73,14 @@ private theorem lift_poly_canon
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (j : Nat) (hj : j < 256) :
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical ((lift_poly re).val[j]!) := by
+    libcrux_iot_ml_kem.Spec.Pure.Canonical ((lift_poly re).val[j]!) := by
   unfold lift_poly
-  show libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+  show libcrux_iot_ml_kem.Spec.Pure.Canonical
     (((List.range 256).map (fun i =>
         lift_fe (re.coefficients.val[i / 16]!).elements.val[i % 16]!))[j]!)
   rw [getElem!_pos _ j (by simp [List.length_map, List.length_range, hj])]
   rw [List.getElem_map, List.getElem_range]
-  unfold lift_fe libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical feOfZMod
+  unfold lift_fe libcrux_iot_ml_kem.Spec.Pure.Canonical feOfZMod
   have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
   rw [hq]
@@ -228,7 +228,7 @@ theorem compute_message_fc
     -- C: ntt_inverse (scaleZ 2285 (lift_poly result1))
     --      = .ok (scaleZ 3303 (invert_pure (scaleZ 2285 (lift_poly result1)))).
     have hCanon_s : ∀ j : Nat, j < 256 →
-        libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+        libcrux_iot_ml_kem.Spec.Pure.Canonical
           ((scaleZ 2285 (lift_poly result1)).val[j]!) :=
       fun j hj => scaleZ_canon 2285 (lift_poly result1) j hj
     rw [ntt_inverse_eq_scaleZ_invert_pure (scaleZ 2285 (lift_poly result1)) hCanon_s]
@@ -249,9 +249,11 @@ theorem compute_message_fc
     rw [← h_result3_lift]
 
 /--
-info: 'libcrux_iot_ml_kem.BitMlKem.L7.compute_message_fc' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'libcrux_iot_ml_kem.Matrix.ComputeMessage.FC.compute_message_fc' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
 -/
 #guard_msgs in
 #print axioms compute_message_fc
 
-end libcrux_iot_ml_kem.BitMlKem.L7
+end libcrux_iot_ml_kem.Matrix.ComputeMessage.FC

@@ -1,5 +1,5 @@
 /-
-  # `BitMlKem/AlgEquiv.lean` — algebraic-equivalence lemmas for the
+  # `Spec/AlgEquiv.lean` — algebraic-equivalence lemmas for the
   easy `bit_<op>` cluster.
 
   Each lemma characterises `bit_<op>` pointwise on
@@ -34,10 +34,9 @@ import LibcruxIotMlKem.Spec
 import LibcruxIotMlKem.Spec.Pure
 import Mathlib.Tactic.Ring
 
-namespace libcrux_iot_ml_kem.BitMlKem.AlgEquiv
-
+namespace libcrux_iot_ml_kem.Spec.AlgEquiv
 open CoreModels Aeneas Aeneas.Std
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
 /-! ## §M.4 Easy #1 — `bit_add` pointwise. -/
 
@@ -163,7 +162,7 @@ theorem bit_subtract_reduce_getElem (p q : MontPoly) (i : Nat) (h : i < 256) :
     theorem bit_add_specpoly_alg_eq (p q : SpecPoly) :
         bit_add (SpecPoly.toMontPoly p) (SpecPoly.toMontPoly q) =
         SpecPoly.toMontPoly
-          (Vector.ofFn fun i => SpecPure.FieldElement.add_pure (p[i]) (q[i])) := by
+          (Vector.ofFn fun i => Spec.Pure.FieldElement.add_pure (p[i]) (q[i])) := by
       apply Vector.ext; intro k hk
       rw [bit_add_getElem]
       unfold SpecPoly.toMontPoly
@@ -175,4 +174,4 @@ theorem bit_subtract_reduce_getElem (p q : MontPoly) (i : Nat) (h : i < 256) :
     -- lands (depends on `FieldElement.add_eq_ok` pure-projection).
 -/
 
-end libcrux_iot_ml_kem.BitMlKem.AlgEquiv
+end libcrux_iot_ml_kem.Spec.AlgEquiv

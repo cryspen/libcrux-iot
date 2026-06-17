@@ -18,10 +18,10 @@ set_option mvcgen.warning false
 set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
 
-namespace libcrux_iot_ml_kem.Equivalence
-
+namespace libcrux_iot_ml_kem.Vector.Portable.Ntt
+open libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.Util
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper
 
 /-! ## Local helpers — Triple ↔ Result.ok bridges. -/
 
@@ -3264,13 +3264,13 @@ theorem inv_ntt_layer_3_step_spec
   -- Lane 15: step 8 j-lane.
   · exact le_trans h_v8_j h_3328
 
-end libcrux_iot_ml_kem.Equivalence
-
+end libcrux_iot_ml_kem.Vector.Portable.Ntt
 /-! ### Extracted from FCTargets.lean (§vector_ntt). -/
 
-namespace libcrux_iot_ml_kem.BitMlKem.FCTargets
+namespace libcrux_iot_ml_kem.Vector.Portable.Ntt
+open libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
 /-! ## §L2 — NTT step ops (5 theorems). -/
 
@@ -3369,9 +3369,9 @@ theorem lift_fe_mont_val_val (x : Std.I16) :
     `modq_eq_cast_zmod` plus `ring`. -/
 theorem lift_fe_mul_pure_mont_eq
     (b zeta r : Std.I16)
-    (h : libcrux_iot_ml_kem.Util.modq_eq r.val (b.val * zeta.val * 169) 3329) :
+    (h : libcrux_iot_ml_kem.Spec.ModularArith.modq_eq r.val (b.val * zeta.val * 169) 3329) :
     lift_fe r
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe b) (lift_fe_mont zeta) := by
   -- LHS: lift_fe r = feOfZMod ((r.val : Int) : ZMod 3329).
   have h_lhs : lift_fe r = feOfZMod (((r.val : Int)) : ZMod 3329) := by
@@ -3379,12 +3379,12 @@ theorem lift_fe_mul_pure_mont_eq
     rfl
   -- RHS: mul_pure is canonical; reduce via round-trip.
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
       (lift_fe b) (lift_fe_mont zeta) with hs_def
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_mul_pure
       (lift_fe b) (lift_fe_mont zeta)
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -3441,12 +3441,12 @@ theorem ntt_step_fc
                 = Spec.chunk_ntt_step_pure (lift_chunk vec) (lift_fe_mont zeta) i j ⌝ ⦄ := by
   -- Step 0: vector length facts.
   have h_vec_len : vec.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length vec
   have h_vec_val_len : vec.elements.val.length = 16 := h_vec_len
   -- Step 1: read vec[j].
   have h_idx_j :
       Aeneas.Std.Array.index_usize vec.elements j = .ok (vec.elements.val[j.val]!) :=
-    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements j
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq vec.elements j
       (by rw [h_vec_len]; exact hj)
   -- Step 2: classify ζ.
   have h_classify : libcrux_secrets.traits.Classify.Blanket.classify zeta = .ok zeta :=
@@ -3462,7 +3462,7 @@ theorem ntt_step_fc
   -- Recover the modq form via the legacy spec (needed for `lift_fe_mul_pure_mont_eq`).
   obtain ⟨t', h_t'_eq, h_t'_bnd_tight, h_t_modq⟩ :=
     triple_exists_ok_fc
-      (libcrux_iot_ml_kem.Equivalence.montgomery_multiply_fe_by_fer_spec b zeta hzeta)
+      (libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_multiply_fe_by_fer_spec b zeta hzeta)
   -- t' = t (same impl call, both `.ok`).
   have h_tt' : t = t' := by
     have : (Result.ok t : Result _) = Result.ok t' := by rw [← h_t_eq_ok, h_t'_eq]
@@ -3470,7 +3470,7 @@ theorem ntt_step_fc
   -- Step 4: read vec[i].
   have h_idx_i :
       Aeneas.Std.Array.index_usize vec.elements i = .ok (vec.elements.val[i.val]!) :=
-    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements i
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq vec.elements i
       (by rw [h_vec_len]; exact hi)
   set a : Std.I16 := vec.elements.val[i.val]! with ha_def
   have h_a_bnd : a.val.natAbs ≤ 29439 := hvec i.val hi
@@ -3495,14 +3495,14 @@ theorem ntt_step_fc
   have h_upd_j :
       Aeneas.Std.Array.update vec.elements j a_minus_t
         = .ok (vec.elements.set j a_minus_t) :=
-    libcrux_iot_ml_kem.Util.array_update_ok_eq vec.elements j a_minus_t
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_update_ok_eq vec.elements j a_minus_t
       (by rw [h_vec_len]; exact hj)
   have h_upd_i :
       Aeneas.Std.Array.update (vec.elements.set j a_minus_t) i a_plus_t
         = .ok ((vec.elements.set j a_minus_t).set i a_plus_t) := by
     have h_len : (vec.elements.set j a_minus_t).length = 16 := by
       rw [Std.Array.set_length]; exact h_vec_len
-    exact libcrux_iot_ml_kem.Util.array_update_ok_eq _ i a_plus_t
+    exact libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_update_ok_eq _ i a_plus_t
       (by rw [h_len]; exact hi)
   -- Compose: derive `.ok final_vec` form.
   set final_elements : Std.Array Std.I16 16#usize :=
@@ -3525,13 +3525,13 @@ theorem ntt_step_fc
   -- Now: prove the FC chunk equation.
   -- Set up the abbreviations.
   set s_t_fe : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
       (lift_fe b) (lift_fe_mont zeta) with hs_t_fe_def
   set s_minus : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
       (lift_fe a) s_t_fe with hs_minus_def
   set s_plus : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
       (lift_fe a) s_t_fe with hs_plus_def
   -- Reduce both sides to underlying lists via Subtype.ext.
   unfold lift_chunk Spec.chunk_ntt_step_pure
@@ -3545,13 +3545,13 @@ theorem ntt_step_fc
   -- LHS: final_vec.elements.val.map lift_fe (final_vec.elements is set-set).
   show ((vec.elements.val.set j.val a_minus_t).set i.val a_plus_t).map lift_fe
       = ((vec.elements.val.map lift_fe).set j.val
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
             ((vec.elements.val.map lift_fe)[i.val]!)
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               ((vec.elements.val.map lift_fe)[j.val]!) (lift_fe_mont zeta)))).set i.val
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           ((vec.elements.val.map lift_fe)[i.val]!)
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
             ((vec.elements.val.map lift_fe)[j.val]!) (lift_fe_mont zeta)))
   -- Bridge: `(vec.elements.val.map lift_fe)[k]! = lift_fe (vec.elements.val[k]!)` when k < 16.
   have h_map_lift_at (k : Nat) (hk : k < 16) :
@@ -3586,11 +3586,11 @@ theorem ntt_step_fc
       show lift_fe a_plus_t = s_plus
       have h_step1 :
           lift_fe a_plus_t
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 (lift_fe a) (lift_fe t) :=
         lift_fe_add_pure_eq a t a_plus_t h_apt_val
       rw [h_step1]
-      show libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      show libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
               (lift_fe a) (lift_fe t) = s_plus
       simp only [hs_plus_def, hs_t_fe_def]
       congr 1
@@ -3607,11 +3607,11 @@ theorem ntt_step_fc
         show lift_fe a_minus_t = s_minus
         have h_step1 :
             lift_fe a_minus_t
-              = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+              = libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
                   (lift_fe a) (lift_fe t) :=
           lift_fe_sub_pure_eq a t a_minus_t h_amt_val
         rw [h_step1]
-        show libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+        show libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
                 (lift_fe a) (lift_fe t) = s_minus
         simp only [hs_minus_def, hs_t_fe_def]
         congr 1
@@ -3649,12 +3649,12 @@ theorem ntt_step_pair_fc
               ∧ (r.elements.val[j.val]!).val.natAbs ≤ 32767 ⌝ ⦄ := by
   -- Step 0: vector length facts.
   have h_vec_len : vec.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length vec
   have h_vec_val_len : vec.elements.val.length = 16 := h_vec_len
   -- Step 1: read vec[j].
   have h_idx_j :
       Aeneas.Std.Array.index_usize vec.elements j = .ok (vec.elements.val[j.val]!) :=
-    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements j
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq vec.elements j
       (by rw [h_vec_len]; exact hj)
   -- Step 2: classify ζ.
   have h_classify : libcrux_secrets.traits.Classify.Blanket.classify zeta = .ok zeta :=
@@ -3668,14 +3668,14 @@ theorem ntt_step_pair_fc
     triple_exists_ok_fc (montgomery_multiply_fe_by_fer_fc b zeta h_b_bnd_max hzeta)
   obtain ⟨t', h_t'_eq, h_t'_bnd_tight, h_t_modq⟩ :=
     triple_exists_ok_fc
-      (libcrux_iot_ml_kem.Equivalence.montgomery_multiply_fe_by_fer_spec b zeta hzeta)
+      (libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_multiply_fe_by_fer_spec b zeta hzeta)
   have h_tt' : t = t' := by
     have : (Result.ok t : Result _) = Result.ok t' := by rw [← h_t_eq_ok, h_t'_eq]
     cases this; rfl
   -- Step 4: read vec[i].
   have h_idx_i :
       Aeneas.Std.Array.index_usize vec.elements i = .ok (vec.elements.val[i.val]!) :=
-    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements i
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq vec.elements i
       (by rw [h_vec_len]; exact hi)
   set a : Std.I16 := vec.elements.val[i.val]! with ha_def
   have h_a_bnd_29439 : a.val.natAbs ≤ 29439 := h_a_bnd
@@ -3698,14 +3698,14 @@ theorem ntt_step_pair_fc
   have h_upd_j :
       Aeneas.Std.Array.update vec.elements j a_minus_t
         = .ok (vec.elements.set j a_minus_t) :=
-    libcrux_iot_ml_kem.Util.array_update_ok_eq vec.elements j a_minus_t
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_update_ok_eq vec.elements j a_minus_t
       (by rw [h_vec_len]; exact hj)
   have h_upd_i :
       Aeneas.Std.Array.update (vec.elements.set j a_minus_t) i a_plus_t
         = .ok ((vec.elements.set j a_minus_t).set i a_plus_t) := by
     have h_len : (vec.elements.set j a_minus_t).length = 16 := by
       rw [Std.Array.set_length]; exact h_vec_len
-    exact libcrux_iot_ml_kem.Util.array_update_ok_eq _ i a_plus_t
+    exact libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_update_ok_eq _ i a_plus_t
       (by rw [h_len]; exact hi)
   -- Compose.
   set final_elements : Std.Array Std.I16 16#usize :=
@@ -3729,26 +3729,26 @@ theorem ntt_step_pair_fc
   refine ⟨?_, ?_, ?_, ?_⟩
   · -- lift_chunk equation: identical to keystone proof.
     set s_t_fe : hacspec_ml_kem.parameters.FieldElement :=
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         (lift_fe b) (lift_fe_mont zeta) with hs_t_fe_def
     set s_minus : hacspec_ml_kem.parameters.FieldElement :=
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
         (lift_fe a) s_t_fe with hs_minus_def
     set s_plus : hacspec_ml_kem.parameters.FieldElement :=
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
         (lift_fe a) s_t_fe with hs_plus_def
     unfold lift_chunk Spec.chunk_ntt_step_pure
     apply Subtype.ext
     simp only [Std.Array.set_val_eq]
     show ((vec.elements.val.set j.val a_minus_t).set i.val a_plus_t).map lift_fe
         = ((vec.elements.val.map lift_fe).set j.val
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
               ((vec.elements.val.map lift_fe)[i.val]!)
-              (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+              (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                 ((vec.elements.val.map lift_fe)[j.val]!) (lift_fe_mont zeta)))).set i.val
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
             ((vec.elements.val.map lift_fe)[i.val]!)
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               ((vec.elements.val.map lift_fe)[j.val]!) (lift_fe_mont zeta)))
     have h_map_lift_at (k : Nat) (hk : k < 16) :
         (vec.elements.val.map lift_fe)[k]! = lift_fe (vec.elements.val[k]!) := by
@@ -3776,11 +3776,11 @@ theorem ntt_step_pair_fc
         show lift_fe a_plus_t = s_plus
         have h_step1 :
             lift_fe a_plus_t
-              = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                   (lift_fe a) (lift_fe t) :=
           lift_fe_add_pure_eq a t a_plus_t h_apt_val
         rw [h_step1]
-        show libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        show libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 (lift_fe a) (lift_fe t) = s_plus
         simp only [hs_plus_def, hs_t_fe_def]
         congr 1
@@ -3795,11 +3795,11 @@ theorem ntt_step_pair_fc
           show lift_fe a_minus_t = s_minus
           have h_step1 :
               lift_fe a_minus_t
-                = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+                = libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
                     (lift_fe a) (lift_fe t) :=
             lift_fe_sub_pure_eq a t a_minus_t h_amt_val
           rw [h_step1]
-          show libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+          show libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
                   (lift_fe a) (lift_fe t) = s_minus
           simp only [hs_minus_def, hs_t_fe_def]
           congr 1
@@ -4341,17 +4341,17 @@ theorem inv_ntt_step_fc
                 = Spec.chunk_inv_ntt_step_pure (lift_chunk vec) (lift_fe_mont zeta) i j ⌝ ⦄ := by
   -- Step 0: vector length facts.
   have h_vec_len : vec.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length vec
   have h_vec_val_len : vec.elements.val.length = 16 := h_vec_len
   -- Step 1: read vec[j] (= i1 in impl, called "b").
   have h_idx_j :
       Aeneas.Std.Array.index_usize vec.elements j = .ok (vec.elements.val[j.val]!) :=
-    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements j
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq vec.elements j
       (by rw [h_vec_len]; exact hj)
   -- Step 2: read vec[i] (= i2 in impl, called "a").
   have h_idx_i :
       Aeneas.Std.Array.index_usize vec.elements i = .ok (vec.elements.val[i.val]!) :=
-    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements i
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq vec.elements i
       (by rw [h_vec_len]; exact hi)
   set a : Std.I16 := vec.elements.val[i.val]! with ha_def
   set b : Std.I16 := vec.elements.val[j.val]! with hb_def
@@ -4415,7 +4415,7 @@ theorem inv_ntt_step_fc
   -- (lift_fe a)`; the bridge needs the modq equation on `.val`s).
   obtain ⟨o0', h_o0'_eq, h_o0'_modq, _h_o0'_bd⟩ :=
     triple_exists_ok_fc
-      (libcrux_iot_ml_kem.Equivalence.barrett_reduce_element_spec a_plus_b h_apb_bd)
+      (libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.barrett_reduce_element_spec a_plus_b h_apb_bd)
   have h_oo' : o0 = o0' := by
     have : (Result.ok o0 : Result _) = Result.ok o0' := by
       rw [← h_o0_eq_ok, h_o0'_eq]
@@ -4429,7 +4429,7 @@ theorem inv_ntt_step_fc
       (by have := a_minus_b.hBounds; omega) hzeta)
   obtain ⟨o1', h_o1'_eq, h_o1'_bd_tight, h_o1'_modq⟩ :=
     triple_exists_ok_fc
-      (libcrux_iot_ml_kem.Equivalence.montgomery_multiply_fe_by_fer_spec a_minus_b zeta hzeta)
+      (libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_multiply_fe_by_fer_spec a_minus_b zeta hzeta)
   have h_oo1' : o1 = o1' := by
     have : (Result.ok o1 : Result _) = Result.ok o1' := by
       rw [← h_o1_eq_ok, h_o1'_eq]
@@ -4438,7 +4438,7 @@ theorem inv_ntt_step_fc
   have h_upd_i :
       Aeneas.Std.Array.update vec.elements i o0
         = .ok (vec.elements.set i o0) :=
-    libcrux_iot_ml_kem.Util.array_update_ok_eq vec.elements i o0
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_update_ok_eq vec.elements i o0
       (by rw [h_vec_len]; exact hi)
   -- Step 9: write vec[j] := o1.
   have h_upd_j :
@@ -4446,7 +4446,7 @@ theorem inv_ntt_step_fc
         = .ok ((vec.elements.set i o0).set j o1) := by
     have h_len : (vec.elements.set i o0).length = 16 := by
       rw [Std.Array.set_length]; exact h_vec_len
-    exact libcrux_iot_ml_kem.Util.array_update_ok_eq _ j o1
+    exact libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_update_ok_eq _ j o1
       (by rw [h_len]; exact hj)
   -- Compose into `.ok final_vec`.
   set final_elements : Std.Array Std.I16 16#usize :=
@@ -4473,13 +4473,13 @@ theorem inv_ntt_step_fc
   -- spec new_i := add_pure (lift_fe b) (lift_fe a)
   -- spec new_j := mul_pure (sub_pure (lift_fe b) (lift_fe a)) (lift_fe_mont zeta)
   set s_new_i : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
       (lift_fe b) (lift_fe a) with hs_new_i_def
   set s_diff : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
       (lift_fe b) (lift_fe a) with hs_diff_def
   set s_new_j : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
       s_diff (lift_fe_mont zeta) with hs_new_j_def
   unfold lift_chunk Spec.chunk_inv_ntt_step_pure
   apply Subtype.ext
@@ -4495,11 +4495,11 @@ theorem inv_ntt_step_fc
     rw [getElem!_pos vec.elements.val k hk_vec]
   show ((vec.elements.val.set i.val o0).set j.val o1).map lift_fe
       = ((vec.elements.val.map lift_fe).set i.val
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
             ((vec.elements.val.map lift_fe)[j.val]!)
             ((vec.elements.val.map lift_fe)[i.val]!))).set j.val
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
             ((vec.elements.val.map lift_fe)[j.val]!)
             ((vec.elements.val.map lift_fe)[i.val]!))
           (lift_fe_mont zeta))
@@ -4524,7 +4524,7 @@ theorem inv_ntt_step_fc
       -- modq_eq o1'.val (a_minus_b.val * zeta.val * 169) 3329.
       -- lift_fe o1 = lift_fe o1' (h_oo1') = mul_pure (lift_fe a_minus_b) (lift_fe_mont zeta).
       have h_step1 :
-          lift_fe o1 = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          lift_fe o1 = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
             (lift_fe a_minus_b) (lift_fe_mont zeta) := by
         rw [h_oo1']
         exact lift_fe_mul_pure_mont_eq a_minus_b zeta o1' h_o1'_modq
@@ -4597,17 +4597,17 @@ theorem inv_ntt_step_pair_fc
               ∧ (r.elements.val[j.val]!).val.natAbs ≤ 3328 ⌝ ⦄ := by
   -- Step 0: vector length facts.
   have h_vec_len : vec.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length vec
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length vec
   have h_vec_val_len : vec.elements.val.length = 16 := h_vec_len
   -- Step 1: read vec[j] (= i1 in impl, called "b").
   have h_idx_j :
       Aeneas.Std.Array.index_usize vec.elements j = .ok (vec.elements.val[j.val]!) :=
-    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements j
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq vec.elements j
       (by rw [h_vec_len]; exact hj)
   -- Step 2: read vec[i] (= i2 in impl, called "a").
   have h_idx_i :
       Aeneas.Std.Array.index_usize vec.elements i = .ok (vec.elements.val[i.val]!) :=
-    libcrux_iot_ml_kem.Util.array_index_usize_ok_eq vec.elements i
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq vec.elements i
       (by rw [h_vec_len]; exact hi)
   set a : Std.I16 := vec.elements.val[i.val]! with ha_def
   set b : Std.I16 := vec.elements.val[j.val]! with hb_def
@@ -4666,7 +4666,7 @@ theorem inv_ntt_step_pair_fc
     triple_exists_ok_fc (barrett_reduce_element_fc a_plus_b h_apb_bd)
   obtain ⟨o0', h_o0'_eq, h_o0'_modq, _h_o0'_bd⟩ :=
     triple_exists_ok_fc
-      (libcrux_iot_ml_kem.Equivalence.barrett_reduce_element_spec a_plus_b h_apb_bd)
+      (libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.barrett_reduce_element_spec a_plus_b h_apb_bd)
   have h_oo' : o0 = o0' := by
     have : (Result.ok o0 : Result _) = Result.ok o0' := by
       rw [← h_o0_eq_ok, h_o0'_eq]
@@ -4680,7 +4680,7 @@ theorem inv_ntt_step_pair_fc
       (by have := a_minus_b.hBounds; omega) hzeta)
   obtain ⟨o1', h_o1'_eq, h_o1'_bd_tight, h_o1'_modq⟩ :=
     triple_exists_ok_fc
-      (libcrux_iot_ml_kem.Equivalence.montgomery_multiply_fe_by_fer_spec a_minus_b zeta hzeta)
+      (libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_multiply_fe_by_fer_spec a_minus_b zeta hzeta)
   have h_oo1' : o1 = o1' := by
     have : (Result.ok o1 : Result _) = Result.ok o1' := by
       rw [← h_o1_eq_ok, h_o1'_eq]
@@ -4689,7 +4689,7 @@ theorem inv_ntt_step_pair_fc
   have h_upd_i :
       Aeneas.Std.Array.update vec.elements i o0
         = .ok (vec.elements.set i o0) :=
-    libcrux_iot_ml_kem.Util.array_update_ok_eq vec.elements i o0
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_update_ok_eq vec.elements i o0
       (by rw [h_vec_len]; exact hi)
   -- Step 9: write vec[j] := o1.
   have h_upd_j :
@@ -4697,7 +4697,7 @@ theorem inv_ntt_step_pair_fc
         = .ok ((vec.elements.set i o0).set j o1) := by
     have h_len : (vec.elements.set i o0).length = 16 := by
       rw [Std.Array.set_length]; exact h_vec_len
-    exact libcrux_iot_ml_kem.Util.array_update_ok_eq _ j o1
+    exact libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_update_ok_eq _ j o1
       (by rw [h_len]; exact hj)
   -- Compose into `.ok final_vec`.
   set final_elements : Std.Array Std.I16 16#usize :=
@@ -4733,24 +4733,24 @@ theorem inv_ntt_step_pair_fc
   refine ⟨?_, ?_, ?_, ?_⟩
   · -- lift_chunk equation: same as keystone proof.
     set s_new_i : hacspec_ml_kem.parameters.FieldElement :=
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
         (lift_fe b) (lift_fe a) with hs_new_i_def
     set s_diff : hacspec_ml_kem.parameters.FieldElement :=
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
         (lift_fe b) (lift_fe a) with hs_diff_def
     set s_new_j : hacspec_ml_kem.parameters.FieldElement :=
-      libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
         s_diff (lift_fe_mont zeta) with hs_new_j_def
     unfold lift_chunk Spec.chunk_inv_ntt_step_pure
     apply Subtype.ext
     simp only [Std.Array.set_val_eq]
     show ((vec.elements.val.set i.val o0).set j.val o1).map lift_fe
         = ((vec.elements.val.map lift_fe).set i.val
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
               ((vec.elements.val.map lift_fe)[j.val]!)
               ((vec.elements.val.map lift_fe)[i.val]!))).set j.val
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.sub_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.sub_pure
               ((vec.elements.val.map lift_fe)[j.val]!)
               ((vec.elements.val.map lift_fe)[i.val]!))
             (lift_fe_mont zeta))
@@ -4771,7 +4771,7 @@ theorem inv_ntt_step_pair_fc
         rw [List.getElem_set_self]
         show lift_fe o1 = s_new_j
         have h_step1 :
-            lift_fe o1 = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            lift_fe o1 = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (lift_fe a_minus_b) (lift_fe_mont zeta) := by
           rw [h_oo1']
           exact lift_fe_mul_pure_mont_eq a_minus_b zeta o1' h_o1'_modq
@@ -5592,4 +5592,4 @@ theorem inv_ntt_layer_3_step_fc
       exact h_v8_bnd_15
 
 
-end libcrux_iot_ml_kem.BitMlKem.FCTargets
+end libcrux_iot_ml_kem.Vector.Portable.Ntt

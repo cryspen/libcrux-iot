@@ -1,5 +1,5 @@
 /-
-  # `BitMlKem/SpecPure.lean` — Open Question I.7 resolution.
+  # `Spec/Pure.lean` — Open Question I.7 resolution.
 
   The hacspec ML-KEM extraction (`HacspecMlKem.Extraction.Funs`) wraps
   every spec function in the Aeneas `Result` monad, even when the
@@ -16,7 +16,7 @@
   match on the `Result`. The companion **pure-projection side lemmas**
   of the form `Spec.<op> args = .ok (Spec.<op>_pure args)` pin the
   impl's `.ok` value to the projected `_pure` value. They are the
-  equational input to `Util.from_fn_pure_eq` (the index-wise spec
+  equational input to `libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq` (the index-wise spec
   lifting `from_fn`) and to downstream M.2 commute lemmas — NOT
   standalone "panic-freedom" facts.
 
@@ -41,8 +41,7 @@
 import LibcruxIotMlKem.Spec
 import LibcruxIotMlKem.Util.CreateI
 
-namespace libcrux_iot_ml_kem.BitMlKem.SpecPure
-
+namespace libcrux_iot_ml_kem.Spec.Pure
 open CoreModels Aeneas Aeneas.Std
 open hacspec_ml_kem
 
@@ -94,7 +93,7 @@ noncomputable def FieldElement.neg_pure
 
     These wrap the 256-coefficient Aeneas-`Array` results into a pure
     `SpecPoly = Vector parameters.FieldElement 256` via per-lane
-    extraction. Downstream lifting through `Util.from_fn_pure_eq`
+    extraction. Downstream lifting through `libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq`
     pins each lane to its per-element `_pure` value; see the
     `polynomial.<op>_eq_ok` pure-projection side lemmas at the end of
     this file. -/
@@ -610,12 +609,12 @@ theorem Canonical_neg_pure (a : parameters.FieldElement)
     the projected `polynomial.<op>_pure` value, on the corresponding
     canonicity precondition (none for `add`, none for `poly_barrett_reduce`,
     per-element canonicity for both inputs to `subtract_reduce`). These
-    are the input lemmas to `Util.from_fn_pure_eq` and to downstream M.2
+    are the input lemmas to `libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq` and to downstream M.2
     commute lemmas; 
     for why "panic-freedom" is the wrong framing. Proof shape:
     * Unfold the wrapper through `parameters.createi` to
       `core.array.from_fn`.
-    * Apply `libcrux_iot_ml_kem.Util.from_fn_pure_eq` with `f` the
+    * Apply `libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq` with `f` the
       pointwise pure projection.
     * Discharge the per-element closure obligation by unfolding
       `call_mut`/`call`, rewriting the leading `Array.index_usize` via
@@ -715,7 +714,7 @@ theorem polynomial.add_to_ring_element_eq_ok
     simp only [bind_tc_ok, hf_def]
   -- Step 3: chain through `from_fn_pure_eq` to get the wrapper equation.
   have h_from_fn :=
-    libcrux_iot_ml_kem.Util.from_fn_pure_eq
+    libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq
       (T := parameters.FieldElement)
       (F := polynomial.add_to_ring_element.closure)
       (N := 256#usize)
@@ -811,7 +810,7 @@ theorem polynomial.poly_barrett_reduce_eq_ok
     simp only [bind_tc_ok, hf_def]
   -- Step 3: apply from_fn_pure_eq.
   have h_from_fn :=
-    libcrux_iot_ml_kem.Util.from_fn_pure_eq
+    libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq
       (T := parameters.FieldElement)
       (F := polynomial.poly_barrett_reduce.closure)
       (N := 256#usize)
@@ -917,7 +916,7 @@ theorem polynomial.poly_barrett_reduce_pure_id_of_canonical
     rw [h_fe_eq]
   -- Apply from_fn_pure_eq with this f.
   have h_from_fn :=
-    libcrux_iot_ml_kem.Util.from_fn_pure_eq
+    libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq
       (T := parameters.FieldElement)
       (F := polynomial.poly_barrett_reduce.closure)
       (N := 256#usize)
@@ -1035,7 +1034,7 @@ theorem polynomial.subtract_reduce_eq_ok
     simp only [bind_tc_ok, hf_def]
   -- Step 3: apply from_fn_pure_eq.
   have h_from_fn :=
-    libcrux_iot_ml_kem.Util.from_fn_pure_eq
+    libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq
       (T := parameters.FieldElement)
       (F := polynomial.subtract_reduce.closure)
       (N := 256#usize)
@@ -1054,4 +1053,4 @@ theorem polynomial.subtract_reduce_eq_ok
   unfold polynomial.subtract_reduce_pure
   rw [h_wrap]
 
-end libcrux_iot_ml_kem.BitMlKem.SpecPure
+end libcrux_iot_ml_kem.Spec.Pure

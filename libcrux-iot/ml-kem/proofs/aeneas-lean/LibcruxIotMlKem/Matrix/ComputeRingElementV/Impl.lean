@@ -1,5 +1,5 @@
 /-
-  # `BitMlKem/L7/Impl/ComputeRingElementV.lean` — L7.3 chunks-exact loop keystone.
+  # `Matrix/ComputeRingElementV/Impl.lean` — L7.3 chunks-exact loop keystone.
 
   Domain-free iterator infrastructure for the `loop` in
   `matrix.compute_ring_element_v_loop`, which iterates over a
@@ -32,10 +32,10 @@ import LibcruxIotMlKem.Serialize
 import LibcruxIotMlKem.Matrix.ComputeMessage.Impl
 import LibcruxIotMlKem.Matrix.ComputeMessage.Correctness
 
-namespace libcrux_iot_ml_kem.BitMlKem.L7
-
+namespace libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Impl
+open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 open Result ControlFlow
 
 set_option mvcgen.warning false
@@ -390,8 +390,8 @@ theorem loop_chunks_exact_pk_spec {β : Type}
 
 namespace L7_3_FC
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
-open libcrux_iot_ml_kem.BitMlKem.FCTargets
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
+open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Sampling libcrux_iot_ml_kem.Serialize libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 
 abbrev Acc := L6_3_FC.Acc
 abbrev Poly := L6_3_FC.Poly
@@ -423,7 +423,7 @@ def loop_inv {K : Std.Usize}
            Spec.mont_reduce_pure (lift_fe_int (p.2.val[16 * j + ℓ]!).val)
              = (List.range k).foldl
                  (fun s c =>
-                   libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                   libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure s
                      ((Spec.ntt_multiply_pure_no_acc
                          (lift_chunk_mont (mp.val[c]!.coefficients.val[j]!))
                          (lift_chunk_mont (r_arr.val[c]!.coefficients.val[j]!))
@@ -440,8 +440,8 @@ end L7_3_FC
 -- Memory hygiene (rule 1). Mirrors `L7_2b_irreducible`. We do NOT mark
 -- `L7_3_FC.loop_inv` irreducible (preserve `simpa`-based destructure).
 section L7_3_irreducible
-open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
-open libcrux_iot_ml_kem.BitMlKem.FCTargets
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
+open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Sampling libcrux_iot_ml_kem.Serialize libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 
 attribute [local irreducible] accumulating_ntt_multiply_poly_post
 attribute [local irreducible] accumulating_ntt_multiply_poly_cache_post
@@ -552,7 +552,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
       r_as_ntt.val[k]! with ht_r_def
     have h_idx_r : Aeneas.Std.Slice.index_usize r_as_ntt cnt = .ok t_r := by
       rw [ht_r_def, ← h_cnt]
-      exact libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq r_as_ntt cnt
+      exact libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.slice_index_usize_ok_eq r_as_ntt cnt
         (by show cnt.val < r_as_ntt.length; rw [h_r_len, h_cnt]; exact h_lt)
     -- (5) Slice.index_usize cache cnt → cache[k]!.
     set t_cache : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -560,7 +560,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
       cache.val[k]! with ht_cache_def
     have h_idx_cache : Aeneas.Std.Slice.index_usize cache cnt = .ok t_cache := by
       rw [ht_cache_def, ← h_cnt]
-      exact libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq cache cnt
+      exact libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.slice_index_usize_ok_eq cache cnt
         (by show cnt.val < cache.length; rw [h_cache_len, h_cnt]; exact h_lt)
     -- (6) per-column use-cache forward dep at column k.
     have h_t_r_bnd : ∀ a : Fin 16, ∀ b : Fin 16,
@@ -665,7 +665,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
                  Spec.mont_reduce_pure (lift_fe_int (acc1.val[16 * j + ℓ]!).val)
                    = (List.range (k + 1)).foldl
                        (fun s c =>
-                         libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                         libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure s
                            ((Spec.ntt_multiply_pure_no_acc
                                (lift_chunk_mont (mp'.val[c]!.coefficients.val[j]!))
                                (lift_chunk_mont (r_arr.val[c]!.coefficients.val[j]!))
@@ -687,7 +687,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
         · intro j hj ℓ hℓ
           have h_step_acc :
               Spec.mont_reduce_pure (lift_fe_int (acc1.val[16 * j + ℓ]!).val)
-                = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                     (Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val))
                     ((Spec.ntt_multiply_pure_no_acc
                         (lift_chunk_mont (te1.coefficients.val[j]!))
@@ -706,7 +706,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
               (∀ c ∈ L, c < k) →
               L.foldl
                   (fun s c =>
-                    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure s
                       ((Spec.ntt_multiply_pure_no_acc
                           (lift_chunk_mont (mp1.val[c]!.coefficients.val[j]!))
                           (lift_chunk_mont (r_arr.val[c]!.coefficients.val[j]!))
@@ -717,7 +717,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
                   init
                 = L.foldl
                   (fun s c =>
-                    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure s
                       ((Spec.ntt_multiply_pure_no_acc
                           (lift_chunk_mont (mp.val[c]!.coefficients.val[j]!))
                           (lift_chunk_mont (r_arr.val[c]!.coefficients.val[j]!))
@@ -740,7 +740,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
           rw [h_foldl_congr (List.range k)
                 (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
                 (fun c hc => by simpa using hc)]
-          show libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+          show libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 ((List.range k).foldl _ _) _
               = (List.foldl _ ((List.range k).foldl _ _) [k])
           rw [List.foldl_cons, List.foldl_nil]
@@ -791,7 +791,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
                Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
                  = (List.range K.val).foldl
                      (fun s c =>
-                       libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                       libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure s
                          ((Spec.ntt_multiply_pure_no_acc
                              (lift_chunk_mont (mp'.val[c]!.coefficients.val[j]!))
                              (lift_chunk_mont (r_arr.val[c]!.coefficients.val[j]!))
@@ -933,8 +933,8 @@ end L7_3_irreducible
 
 /-! ## §L7.3 — acc-bridge (REUSES L7.4 `compute_message_acc_bridge`). -/
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem.FCTargets
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do
+open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Sampling libcrux_iot_ml_kem.Serialize libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 
 /-- Local single-256-lane field-element poly abbrev (keeps `256#usize` out of
     statement signatures — SKILL §7.7). -/
@@ -1031,7 +1031,7 @@ theorem compute_ring_element_v_acc_bridge {K : Std.Usize} (hK : K.val ≤ 4)
             Spec.mont_reduce_pure (lift_fe_int (acc2.val[16 * j + ℓ]!).val)
               = (List.range K.val).foldl
                   (fun s c =>
-                    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure s
+                    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure s
                       ((Spec.ntt_multiply_pure_no_acc
                           (lift_chunk_mont (mp.val[c]!.coefficients.val[j]!))
                           (lift_chunk_mont (r_arr.val[c]!.coefficients.val[j]!))
@@ -1064,4 +1064,4 @@ theorem compute_ring_element_v_acc_bridge {K : Std.Usize} (hK : K.val ≤ 4)
   rw [htrows_def]
   exact h_bridge
 
-end libcrux_iot_ml_kem.BitMlKem.L7
+end libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Impl

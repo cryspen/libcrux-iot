@@ -14,8 +14,7 @@
   `Lean.ofReduceBool` / `Lean.trustCompiler`).
 -/
 
-namespace libcrux_iot_ml_kem.Util
-
+namespace libcrux_iot_ml_kem.Spec.NumericKeystones
 /-! ## Numeric keystones -/
 
 /-- **B.1 `mont_R_inv_q`** — `R · 169 ≡ 1 (mod q)`. Used by every
@@ -74,4 +73,4 @@ theorem mont_qinv_R : (62209 * 3329) % (2^16 : Nat) = 1 := by decide
     representatives. -/
 theorem mont_128_169_512 : (1441 * 169) % 3329 = 512 := by decide
 
-end libcrux_iot_ml_kem.Util
+end libcrux_iot_ml_kem.Spec.NumericKeystones

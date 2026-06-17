@@ -7,8 +7,7 @@
 -/
 import Mathlib.Tactic.IntervalCases
 
-namespace libcrux_iot_ml_kem.Util
-
+namespace libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks
 /-- The 32-bit BV mask `(1 <<< n) - 1` has `.toNat = 2^n - 1` for any
     `n ≤ 16` (and in fact for `n < 32`, but 16 is what L0.1 needs).
 
@@ -20,4 +19,4 @@ theorem mask_pow2_minus_one_toNat (n : Nat) (h : n ≤ 16) :
     ((1#32 <<< n) - 1#32).toNat = 2 ^ n - 1 := by
   interval_cases n <;> decide
 
-end libcrux_iot_ml_kem.Util
+end libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks

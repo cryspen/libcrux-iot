@@ -17,8 +17,7 @@
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Tactic.Ring
 
-namespace libcrux_iot_ml_kem.Util
-
+namespace libcrux_iot_ml_kem.Spec.ModularArith
 /-- Canonical modular-equality predicate: `a ≡ b (mod q)` in the
     subtraction-mod spelling.
 
@@ -100,4 +99,4 @@ theorem modq_eq_iff_zmod {q : ℕ} [NeZero q] (a b : Int) :
       rw [this]; exact dvd_neg.mpr h
     exact Int.emod_eq_zero_of_dvd hdvd
 
-end libcrux_iot_ml_kem.Util
+end libcrux_iot_ml_kem.Spec.ModularArith

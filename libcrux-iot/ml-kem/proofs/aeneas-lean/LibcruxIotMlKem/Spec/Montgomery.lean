@@ -31,8 +31,8 @@ import LibcruxIotMlKem.Spec.ModularArith
 import LibcruxIotMlKem.Spec.NumericKeystones
 import Mathlib.Tactic.Ring
 
-namespace libcrux_iot_ml_kem.Util
-
+namespace libcrux_iot_ml_kem.Spec.Montgomery
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.NumericKeystones
 /-- **`mont_reduce_int_form`** — the L0.3 algebraic keystone.
 
     Given that `value + k · q` is divisible by `R = 2^16` (as an
@@ -128,4 +128,4 @@ theorem modq_R_to_169
     exact dvd_sub h_dvd_169 h_dvd_r
   exact Int.emod_eq_zero_of_dvd h_dvd_final
 
-end libcrux_iot_ml_kem.Util
+end libcrux_iot_ml_kem.Spec.Montgomery

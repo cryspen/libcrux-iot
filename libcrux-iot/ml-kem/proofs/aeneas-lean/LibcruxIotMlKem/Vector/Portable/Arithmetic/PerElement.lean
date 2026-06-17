@@ -18,10 +18,9 @@ set_option mvcgen.warning false
 set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
 
-namespace libcrux_iot_ml_kem.Equivalence
-
+namespace libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.Util
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks
 
 /-! ## Local primitive helpers
 
@@ -108,7 +107,7 @@ theorem get_n_least_significant_bits_spec
   -- The mask `(1#32 <<< n.val) - 1#32 : BitVec 32` has `.toNat = 2^n.val - 1`.
   -- Discharge by case analysis on n.val ∈ {0, …, 16} — each case is a concrete BV decide.
   have h_mask_toNat : ((1#32 <<< n.val) - 1#32).toNat = 2 ^ n.val - 1 :=
-    libcrux_iot_ml_kem.Util.mask_pow2_minus_one_toNat n.val hn
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks.mask_pow2_minus_one_toNat n.val hn
   -- r.val = (value.bv &&& mask_bv).toNat = value.val &&& (2^n.val - 1)
   have h_r_val : (⟨value.bv &&& (1#32 <<< n.val - 1#32)⟩ : Std.U32).val
                   = value.val &&& (2 ^ n.val - 1) := by
@@ -614,9 +613,9 @@ private theorem mont_reduce_core
       change v % (2^16 : Int) = (Int.bmod v (2^16)) % (2^16 : Int)
       exact_mod_cast Int.bmod_emod.symm
     rw [Int.sub_emod, h_v_emod, ← h_step2]; simp
-  -- Apply Util.sub_div_of_emod_eq_zero
+  -- Apply libcrux_iot_ml_kem.Spec.Montgomery.sub_div_of_emod_eq_zero
   have h_div_split : v / (2^16 : Int) - km / (2^16 : Int) = (v - km) / (2^16 : Int) := by
-    exact libcrux_iot_ml_kem.Util.sub_div_of_emod_eq_zero v km (2^16) (by decide) h_km_mod
+    exact libcrux_iot_ml_kem.Spec.Montgomery.sub_div_of_emod_eq_zero v km (2^16) (by decide) h_km_mod
   refine ⟨?_, ?_⟩
   · -- modq_eq ((v/R - km/R) * R) v 3329, i.e. ((v/R - km/R) * R - v) % 3329 = 0.
     show ((v / (2^16 : Int) - km / (2^16 : Int)) * (2^16 : Int) - v) % 3329 = 0
@@ -1180,7 +1179,7 @@ private theorem mont_reduce_tight_3328
     have h_vm_div : (vi - km) / (2^16 : Int) = q := by
       rw [hq]; exact Int.mul_ediv_cancel_left q (by decide)
     have h_div_split : vi / (2^16 : Int) - km / (2^16 : Int) = (vi - km) / (2^16 : Int) :=
-      libcrux_iot_ml_kem.Util.sub_div_of_emod_eq_zero vi km (2^16) (by decide) h_km_mod
+      libcrux_iot_ml_kem.Spec.Montgomery.sub_div_of_emod_eq_zero vi km (2^16) (by decide) h_km_mod
     show (vi / (2^16 : Int) - km / (2^16 : Int)) * (2^16 : Int) = vi - km
     rw [h_div_split, h_vm_div, hq]; ring
   -- Triangle inequality + bounds: |vi - km| ≤ 2^15 * 6657.
@@ -1381,13 +1380,13 @@ theorem montgomery_multiply_fe_by_fer_spec
   · -- modq_new: rewrite product.val to fe.val * fer.val.
     rw [← h_product_val]; exact h_modq_new
 
-end libcrux_iot_ml_kem.Equivalence
-
+end libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement
 /-! ### Extracted from FCTargets.lean (§vector_arith_lo). -/
 
-namespace libcrux_iot_ml_kem.BitMlKem.FCTargets
+namespace libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement
+open libcrux_iot_ml_kem.Spec.Lift
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
 /-! ## §L0 — FE scalar primitives (4 theorems).
 
@@ -1413,7 +1412,7 @@ theorem triple_exists_ok_fc {α : Type} {x : Result α} {P : α → Prop}
   | .div => exact absurd h (by simp [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply])
 
 /-- `.val`-preserving `Std.Usize` add helper, scoped to this file.
-    Mirrors `libcrux_iot_ml_kem.Equivalence.usize_add_ok_eq`
+    Mirrors `libcrux_iot_ml_kem.Polynomial.NttDrivers.usize_add_ok_eq`
     (private to L3_NTTDrivers). -/
 theorem usize_add_ok_eq_fc (x y : Std.Usize)
     (h_max : x.val + y.val ≤ Std.Usize.max) :
@@ -1445,7 +1444,7 @@ theorem usize_mul_ok_eq_fc (x y : Std.Usize)
     3. The FC equality is `rfl` (the spec body IS the mask expression).
     4. The bound `r.val < 2^n.val` reduces to
        `(value.bv &&& mask).toNat < 2^n.val` via `BitVec.toNat_and` +
-       `Util.mask_pow2_minus_one_toNat` + `Nat.and_le_right` + `omega`. -/
+       `libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks.mask_pow2_minus_one_toNat` + `Nat.and_le_right` + `omega`. -/
 
 /-- Pure-projection side lemma for `get_n_least_significant_bits`.
     Pins the impl's `.ok` value to `Spec.get_n_least_significant_bits_pure`. -/
@@ -1481,7 +1480,7 @@ theorem get_n_least_significant_bits_fc
   show (value.bv &&& ((1#32 <<< n.val) - 1#32)).toNat < 2 ^ n.val
   rw [BitVec.toNat_and]
   have h_mask_toNat : ((1#32 <<< n.val) - 1#32).toNat = 2 ^ n.val - 1 :=
-    libcrux_iot_ml_kem.Util.mask_pow2_minus_one_toNat n.val hn
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks.mask_pow2_minus_one_toNat n.val hn
   rw [h_mask_toNat]
   have h_and_le : value.bv.toNat &&& (2 ^ n.val - 1) ≤ 2 ^ n.val - 1 := Nat.and_le_right
   have h_pos : 0 < (2 : Nat) ^ n.val := Nat.two_pow_pos _
@@ -1494,7 +1493,7 @@ theorem get_n_least_significant_bits_fc
        `feOfZMod ∘ zmodOfFE`. Helper `barrett_pure_lift_fe` shows that on
        `lift_fe`-image FEs (which are canonical by construction) this is
        the identity, so `Spec.barrett_pure (lift_fe value) = lift_fe value`.
-    2. The legacy `Equivalence.barrett_reduce_element_spec` (bounds-only)
+    2. The legacy `libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.barrett_reduce_element_spec` (bounds-only)
        gives `modq_eq r.val value.val 3329 ∧ r.val.natAbs ≤ 3328`. We
        consume it via `triple_exists_ok_fc`; we only need its content,
        not its `@[spec]` registration.
@@ -1511,13 +1510,13 @@ theorem barrett_pure_lift_fe (x : Std.I16) :
   exact zmodOfFE_feOfZMod _
 
 /-- Cast `modq_eq` into a `ZMod 3329` equality. The barrier-side
-    `Util.modq_eq` unfolds to `(a - b) % 3329 = 0`; via
+    `libcrux_iot_ml_kem.Spec.ModularArith.modq_eq` unfolds to `(a - b) % 3329 = 0`; via
     `ZMod.intCast_zmod_eq_zero_iff_dvd` and `push_cast` this becomes
     `(a : ZMod 3329) - (b : ZMod 3329) = 0`. -/
 theorem modq_eq_cast_zmod (a b : Int)
-    (h : libcrux_iot_ml_kem.Util.modq_eq a b 3329) :
+    (h : libcrux_iot_ml_kem.Spec.ModularArith.modq_eq a b 3329) :
     (a : ZMod 3329) = (b : ZMod 3329) := by
-  unfold libcrux_iot_ml_kem.Util.modq_eq at h
+  unfold libcrux_iot_ml_kem.Spec.ModularArith.modq_eq at h
   have hdvd : (3329 : Int) ∣ (a - b) := Int.dvd_of_emod_eq_zero h
   have hzero : ((a - b : Int) : ZMod 3329) = 0 :=
     (ZMod.intCast_zmod_eq_zero_iff_dvd (a - b) 3329).mpr (by exact_mod_cast hdvd)
@@ -1529,7 +1528,7 @@ theorem modq_eq_cast_zmod (a b : Int)
     reduces (via `congr 1`) to the `ZMod 3329` cast equality delivered by
     `modq_eq_cast_zmod`. Pure-projection side lemma. -/
 theorem lift_fe_eq_of_modq (a b : Std.I16)
-    (h : libcrux_iot_ml_kem.Util.modq_eq a.val b.val 3329) :
+    (h : libcrux_iot_ml_kem.Spec.ModularArith.modq_eq a.val b.val 3329) :
     lift_fe a = lift_fe b := by
   unfold lift_fe i16_to_spec_fe_plain
   congr 1
@@ -1544,7 +1543,7 @@ theorem barrett_reduce_element_fc
     libcrux_iot_ml_kem.vector.portable.arithmetic.barrett_reduce_element value
     ⦃ ⇓ r => ⌜ r.val.natAbs ≤ 3328
                 ∧ lift_fe r = Spec.barrett_pure (lift_fe value) ⌝ ⦄ := by
-  have h_legacy := libcrux_iot_ml_kem.Equivalence.barrett_reduce_element_spec value hb
+  have h_legacy := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.barrett_reduce_element_spec value hb
   obtain ⟨r0, h_eq, h_modq, h_bnd⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   refine ⟨h_bnd, ?_⟩
@@ -1560,7 +1559,7 @@ theorem barrett_reduce_element_fc
     1. `Spec.mont_reduce_pure x := feOfZMod (zmodOfFE x · 169 · 169)`.
        Helper `mont_reduce_pure_lift_fe_int` unfolds this composed with
        `lift_fe_int v` to `feOfZMod ((v : ZMod 3329) · 169 · 169)`.
-    2. Legacy `Equivalence.montgomery_reduce_element_spec` gives
+    2. Legacy `libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_reduce_element_spec` gives
        `r.val.natAbs ≤ 3328 + 1665 ∧ (tight-bound conditional)
        ∧ modq_eq r.val (value.val * 169) 3329`. We extract via
        `triple_exists_ok_fc` and drop the tight-bound conditional clause.
@@ -1592,7 +1591,7 @@ theorem montgomery_reduce_element_fc
     have h_eq : (3328 * 2^16 : Nat) = 2^16 * 3328 := by decide
     rw [h_eq]; exact hv
   have h_legacy :=
-    libcrux_iot_ml_kem.Equivalence.montgomery_reduce_element_spec value hv'
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_reduce_element_spec value hv'
   obtain ⟨r0, h_eq, h_bnd, _h_tight, h_modq⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   refine ⟨h_bnd, ?_⟩
@@ -1611,7 +1610,7 @@ theorem montgomery_reduce_element_fc
        `Spec.montgomery_multiply_fe_by_fer_pure (lift_fe fe) (lift_fe_mont fer)`
        to `feOfZMod ((fe.val : ZMod 3329) * ((fer.val : ZMod 3329) * 169) * 169)`
        via `zmodOfFE_feOfZMod` (applied twice).
-    2. Legacy `Equivalence.montgomery_multiply_fe_by_fer_spec` gives
+    2. Legacy `libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_multiply_fe_by_fer_spec` gives
        `r.val.natAbs ≤ 3328 ∧ modq_eq r.val (fe.val * fer.val * 169) 3329`.
        Note the legacy bound is TIGHTER than our locked post (3328 vs
        3328 + 1665), so the bound conjunct closes by transitivity:
@@ -1642,7 +1641,7 @@ theorem montgomery_multiply_fe_by_fer_fc
                     = Spec.montgomery_multiply_fe_by_fer_pure
                         (lift_fe fe) (lift_fe_mont fer) ⌝ ⦄ := by
   have h_legacy :=
-    libcrux_iot_ml_kem.Equivalence.montgomery_multiply_fe_by_fer_spec fe fer hfer
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_multiply_fe_by_fer_spec fe fer hfer
   obtain ⟨r0, h_eq, h_bnd_tight, h_modq⟩ := triple_exists_ok_fc h_legacy
   apply triple_of_ok_fc (v := r0) h_eq
   refine ⟨?_, ?_⟩
@@ -1659,4 +1658,4 @@ theorem montgomery_multiply_fe_by_fer_fc
     ring
 
 
-end libcrux_iot_ml_kem.BitMlKem.FCTargets
+end libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement

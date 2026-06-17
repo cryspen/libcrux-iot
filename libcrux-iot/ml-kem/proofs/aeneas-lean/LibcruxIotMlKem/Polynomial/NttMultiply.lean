@@ -16,9 +16,10 @@ set_option mvcgen.warning false
 set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
 
-namespace libcrux_iot_ml_kem.BitMlKem.FCTargets
+namespace libcrux_iot_ml_kem.Polynomial.NttMultiply
+open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 open CoreModels Aeneas Aeneas.Std Std.Do
-open libcrux_iot_ml_kem.BitMlKem
+open libcrux_iot_ml_kem.Spec
 
 /-! ## §L2.8 / §L6.3 — NTT-multiply scaffolding.
 
@@ -79,9 +80,9 @@ noncomputable def Spec.ntt_multiply_pure_no_acc
     (lhs_m rhs_m : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
     (zeta0_m zeta1_m zeta2_m zeta3_m : hacspec_ml_kem.parameters.FieldElement) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize :=
-  let neg := libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure
-  let add := libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-  let mul := libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+  let neg := libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure
+  let add := libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+  let mul := libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
   let zetas : List hacspec_ml_kem.parameters.FieldElement :=
     [zeta0_m, neg zeta0_m, zeta1_m, neg zeta1_m,
      zeta2_m, neg zeta2_m, zeta3_m, neg zeta3_m]
@@ -138,7 +139,7 @@ theorem hacspec_ZETAS_ok_and_zeta_at :
 
     Architecture mirrors `LibcruxIotSha3/Sponge/` (the
     `sponge_squeeze_byte_eq` yardstick): a per-call_mut `_eq_pure` Result
-    equation drives `Util.from_fn_pure_eq` to lift the entire 256-lane
+    equation drives `libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq` to lift the entire 256-lane
     `multiply_ntts` to a pure-list, then `Subtype.ext` + per-lane reduction
     closes the chunked-decomposition equality.
 
@@ -150,8 +151,8 @@ namespace L6_3b_FC
 /-- `feOfZMod` always produces a canonical FE (since `z.val < 3329`). The
     `BitVec.ofNat 16` lift is in-range modulo `2^16 = 65536 > 3329`. -/
 theorem Canonical_feOfZMod (z : ZMod 3329) :
-    SpecPure.Canonical (feOfZMod z) := by
-  unfold SpecPure.Canonical feOfZMod hacspec_ml_kem.parameters.FIELD_MODULUS
+    Spec.Pure.Canonical (feOfZMod z) := by
+  unfold Spec.Pure.Canonical feOfZMod hacspec_ml_kem.parameters.FIELD_MODULUS
   have h_lt : z.val < 3329 := ZMod.val_lt z
   show (BitVec.ofNat 16 z.val).toNat < 3329
   rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt]
@@ -160,7 +161,7 @@ theorem Canonical_feOfZMod (z : ZMod 3329) :
 
 /-- Zeta projections (`Spec.zeta_at i = feOfZMod _`) are always canonical. -/
 theorem Canonical_zeta_at (i : Nat) :
-    SpecPure.Canonical (Spec.zeta_at i) := by
+    Spec.Pure.Canonical (Spec.zeta_at i) := by
   unfold Spec.zeta_at lift_fe_mont
   exact Canonical_feOfZMod _
 
@@ -191,26 +192,26 @@ theorem array_index_usize_eq_ok' {α n} [Inhabited α]
 theorem base_case_multiply_even_eq
     (a0 a1 b0 b1 zeta : hacspec_ml_kem.parameters.FieldElement) :
     hacspec_ml_kem.ntt.base_case_multiply_even a0 a1 b0 b1 zeta = .ok
-      (SpecPure.FieldElement.add_pure (SpecPure.FieldElement.mul_pure a0 b0)
-        (SpecPure.FieldElement.mul_pure
-          (SpecPure.FieldElement.mul_pure a1 b1) zeta)) := by
+      (Spec.Pure.FieldElement.add_pure (Spec.Pure.FieldElement.mul_pure a0 b0)
+        (Spec.Pure.FieldElement.mul_pure
+          (Spec.Pure.FieldElement.mul_pure a1 b1) zeta)) := by
   unfold hacspec_ml_kem.ntt.base_case_multiply_even
-  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
-  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
-  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
-  rw [SpecPure.FieldElement.add_eq_ok]
+  rw [Spec.Pure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [Spec.Pure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [Spec.Pure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [Spec.Pure.FieldElement.add_eq_ok]
 
 /-- `base_case_multiply_odd` reduces to `.ok (a0*b1 + a1*b0)` via two
     `mul_eq_ok`s and the final `add_eq_ok`. -/
 theorem base_case_multiply_odd_eq
     (a0 a1 b0 b1 : hacspec_ml_kem.parameters.FieldElement) :
     hacspec_ml_kem.ntt.base_case_multiply_odd a0 a1 b0 b1 = .ok
-      (SpecPure.FieldElement.add_pure (SpecPure.FieldElement.mul_pure a0 b1)
-        (SpecPure.FieldElement.mul_pure a1 b0)) := by
+      (Spec.Pure.FieldElement.add_pure (Spec.Pure.FieldElement.mul_pure a0 b1)
+        (Spec.Pure.FieldElement.mul_pure a1 b0)) := by
   unfold hacspec_ml_kem.ntt.base_case_multiply_odd
-  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
-  rw [SpecPure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
-  rw [SpecPure.FieldElement.add_eq_ok]
+  rw [Spec.Pure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [Spec.Pure.FieldElement.mul_eq_ok]; simp only [bind_tc_ok]
+  rw [Spec.Pure.FieldElement.add_eq_ok]
 
 /-- Pure lane value of `multiply_ntts` at index `i ∈ [0, 256)`.
 
@@ -227,22 +228,22 @@ noncomputable def multiply_ntts_lane_pure
   let i1 := i % 4
   let zeta_base := Spec.zeta_at (64 + group)
   let zeta := if i1 < 2 then zeta_base
-              else SpecPure.FieldElement.neg_pure zeta_base
+              else Spec.Pure.FieldElement.neg_pure zeta_base
   if i % 2 = 0 then
     let a0 := p1.val[i]!
     let a1 := p1.val[i+1]!
     let b0 := p2.val[i]!
     let b1 := p2.val[i+1]!
-    SpecPure.FieldElement.add_pure (SpecPure.FieldElement.mul_pure a0 b0)
-      (SpecPure.FieldElement.mul_pure
-        (SpecPure.FieldElement.mul_pure a1 b1) zeta)
+    Spec.Pure.FieldElement.add_pure (Spec.Pure.FieldElement.mul_pure a0 b0)
+      (Spec.Pure.FieldElement.mul_pure
+        (Spec.Pure.FieldElement.mul_pure a1 b1) zeta)
   else
     let a0 := p1.val[i-1]!
     let a1 := p1.val[i]!
     let b0 := p2.val[i-1]!
     let b1 := p2.val[i]!
-    SpecPure.FieldElement.add_pure (SpecPure.FieldElement.mul_pure a0 b1)
-      (SpecPure.FieldElement.mul_pure a1 b0)
+    Spec.Pure.FieldElement.add_pure (Spec.Pure.FieldElement.mul_pure a0 b1)
+      (Spec.Pure.FieldElement.mul_pure a1 b0)
 
 set_option maxHeartbeats 16000000 in
 /-- **Per-lane reduction of `ntt.ntt_multiply_n_at`.**
@@ -279,12 +280,12 @@ theorem ntt_multiply_n_at_eq_pure
     slice_index_usize_eq_ok' s group h_g_lt_slen
   have h_zeta_val : s.val[group.val]! = Spec.zeta_at (64 + group.val) :=
     h_zeta_eq group.val h_g_lt
-  have h_canon_zeta : SpecPure.Canonical (s.val[group.val]!) := by
+  have h_canon_zeta : Spec.Pure.Canonical (s.val[group.val]!) := by
     rw [h_zeta_val]; exact Canonical_zeta_at _
   -- Step 3: zeta. Collapse the zeta branch into a uniform tail.
   set zeta_pure : hacspec_ml_kem.parameters.FieldElement :=
     if i.val % 4 < 2 then Spec.zeta_at (64 + i.val / 4)
-    else SpecPure.FieldElement.neg_pure (Spec.zeta_at (64 + i.val / 4))
+    else Spec.Pure.FieldElement.neg_pure (Spec.zeta_at (64 + i.val / 4))
     with h_zeta_pure_def
   have h_zeta_result :
       (do let z ← (if i1 < 2#usize then Aeneas.Std.Slice.index_usize s group
@@ -327,7 +328,7 @@ theorem ntt_multiply_n_at_eq_pure
       rw [h_g_val]
     · rw [if_neg (show ¬ i1 < 2#usize from by show ¬ i1.val < 2; omega)]
       rw [h_slice_idx_ok]; simp only [bind_tc_ok]
-      rw [SpecPure.FieldElement.neg_eq_ok _ h_canon_zeta]
+      rw [Spec.Pure.FieldElement.neg_eq_ok _ h_canon_zeta]
       simp only [bind_tc_ok]
       rw [h_zeta_val]
       simp only [h_zeta_pure_def,
@@ -474,7 +475,7 @@ set_option maxHeartbeats 4000000 in
 
     Composes .1 (ZETAS = .ok zs + zeta correspondence), the
     slice-extraction reduction, and .2's per-lane reduction via
-    `Util.from_fn_pure_eq`. The result is the pure FE-arithmetic list
+    `libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq`. The result is the pure FE-arithmetic list
     `(List.range 256).map (multiply_ntts_lane_pure p1 p2)`. -/
 -- Public (exported for L7.4 `compute_message_acc_bridge`): per-multiply reduction
 -- of the hacspec `ntt.multiply_ntts` to its pure-lane array form. Visibility-only
@@ -525,7 +526,7 @@ theorem multiply_ntts_eq_pure_array
     rw [h_k_val]
     rfl
   -- Apply from_fn_pure_eq.
-  have h_from_fn := libcrux_iot_ml_kem.Util.from_fn_pure_eq 256#usize
+  have h_from_fn := libcrux_iot_ml_kem.Util.CreateI.from_fn_pure_eq 256#usize
     (hacspec_ml_kem.ntt.ntt_multiply_n.closure.Insts.CoreOpsFunctionFnTupleUsizeFieldElement
         256#usize).FnMutInst
     (p1, p2, s) f h_call_mut_eq
@@ -849,19 +850,19 @@ theorem L2_8c.lift_fe_mont_neg_pure_eq
     (hbnd : a.val.natAbs ≤ 2^15 - 1)
     (hrv : r.val = -a.val) :
     lift_fe_mont r
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont a) := by
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont a) := by
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont a) with hs_def
-  have h_lm_canon : libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical (lift_fe_mont a) := by
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont a) with hs_def
+  have h_lm_canon : libcrux_iot_ml_kem.Spec.Pure.Canonical (lift_fe_mont a) := by
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS
     show (lift_fe_mont a).val.val < 3329
     rw [lift_fe_mont_val_val]
     exact ZMod.val_lt _
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_neg_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_neg_pure
       (lift_fe_mont a) h_lm_canon
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     unfold hacspec_ml_kem.parameters.FIELD_MODULUS at h_cs; simpa using h_cs
   have h_round_trip : feOfZMod (zmodOfFE s) = s :=
     feOfZMod_zmodOfFE_of_canonical s h_canon
@@ -923,7 +924,7 @@ theorem L2_8c.zmodOfFE_lift_fe_mont (x : Std.I16) :
 /-- `zmodOfFE` distributes over `FieldElement.mul_pure` in ZMod 3329. -/
 theorem L2_8c.zmodOfFE_mul_pure
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b)
+    zmodOfFE (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b)
       = zmodOfFE a * zmodOfFE b := by
   unfold zmodOfFE
   rw [mul_pure_val_eq]
@@ -934,7 +935,7 @@ theorem L2_8c.zmodOfFE_mul_pure
 /-- `zmodOfFE` distributes over `FieldElement.add_pure` in ZMod 3329. -/
 theorem L2_8c.zmodOfFE_add_pure
     (a b : hacspec_ml_kem.parameters.FieldElement) :
-    zmodOfFE (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure a b)
+    zmodOfFE (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure a b)
       = zmodOfFE a + zmodOfFE b := by
   unfold zmodOfFE
   rw [add_pure_val_eq]
@@ -966,39 +967,39 @@ theorem L2_8c.mont_reduce_even_fe_eq
       = ((out.val * (2 ^ 16 : Int) + ai.val * bi.val * (2 ^ 16 : Int)
             + aj.val * bj.val * zeta.val) : ZMod 3329)) :
     Spec.mont_reduce_pure (lift_fe_int r.val)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           (Spec.mont_reduce_pure (lift_fe_int out.val))
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (lift_fe_mont ai) (lift_fe_mont bi))
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-              (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+              (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                 (lift_fe_mont aj) (lift_fe_mont bj))
               (lift_fe_mont zeta))) := by
   -- LHS: feOfZMod ((r.val : ZMod q) * 169 * 169).
   rw [mont_reduce_pure_lift_fe_int]
   -- RHS: round-trip via canonicity.
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
       (Spec.mont_reduce_pure (lift_fe_int out.val))
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont ai) (lift_fe_mont bi))
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
             (lift_fe_mont aj) (lift_fe_mont bj))
           (lift_fe_mont zeta))) with hs_def
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_add_pure
       (Spec.mont_reduce_pure (lift_fe_int out.val))
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont ai) (lift_fe_mont bi))
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
             (lift_fe_mont aj) (lift_fe_mont bj))
           (lift_fe_mont zeta)))
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -1074,31 +1075,31 @@ theorem L2_8c.mont_reduce_odd_fe_eq
             + ai.val * bj.val * (2 ^ 16 : Int)
             + aj.val * bi.val * (2 ^ 16 : Int)) : ZMod 3329)) :
     Spec.mont_reduce_pure (lift_fe_int r.val)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           (Spec.mont_reduce_pure (lift_fe_int out.val))
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (lift_fe_mont ai) (lift_fe_mont bj))
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (lift_fe_mont aj) (lift_fe_mont bi))) := by
   rw [mont_reduce_pure_lift_fe_int]
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
       (Spec.mont_reduce_pure (lift_fe_int out.val))
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont ai) (lift_fe_mont bj))
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont aj) (lift_fe_mont bi))) with hs_def
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_add_pure
       (Spec.mont_reduce_pure (lift_fe_int out.val))
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont ai) (lift_fe_mont bj))
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont aj) (lift_fe_mont bi)))
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -1210,34 +1211,34 @@ theorem accumulating_ntt_multiply_binomials_fc
                 ∧ (r.val[2 * i.val + 1]!).val.natAbs
                     ≤ (out.val[2 * i.val + 1]!).val.natAbs + 2^25
                 ∧ Spec.mont_reduce_pure (lift_fe_int (r.val[2 * i.val]!).val)
-                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                    = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                         (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val]!).val))
-                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val]!))
                             (lift_fe_mont (b.elements.val[2 * i.val]!)))
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                               (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
                               (lift_fe_mont (b.elements.val[2 * i.val + 1]!)))
                             (lift_fe_mont zeta)))
                 ∧ Spec.mont_reduce_pure (lift_fe_int (r.val[2 * i.val + 1]!).val)
-                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                    = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                         (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val + 1]!).val))
-                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val]!))
                             (lift_fe_mont (b.elements.val[2 * i.val + 1]!)))
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
                             (lift_fe_mont (b.elements.val[2 * i.val]!)))) ⌝ ⦄ := by
   -- ===== Setup =====
   have h_2i_lt : 2 * i.val < 16 := by omega
   have h_2i1_lt : 2 * i.val + 1 < 16 := by omega
   have h_a_len : a.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length a
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length a
   have h_b_len : b.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length b
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length b
   have h_out_val_len : out.val.length = 16 := h_out_len
   -- Set up bound abbreviations.
   set ai_v : Std.I16 := a.elements.val[2 * i.val]! with hai_def
@@ -1264,22 +1265,22 @@ theorem accumulating_ntt_multiply_binomials_fc
   -- ===== Reads (with index_usize_ok_eq) =====
   have h_read_ai :
       Aeneas.Std.Array.index_usize a.elements i1 = .ok ai_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i1
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq a.elements i1
       (by rw [h_a_len, h_i1_val']; exact h_2i_lt)
     rw [h, h_i1_val']
   have h_read_bi :
       Aeneas.Std.Array.index_usize b.elements i1 = .ok bi_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i1
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq b.elements i1
       (by rw [h_b_len, h_i1_val']; exact h_2i_lt)
     rw [h, h_i1_val']
   have h_read_aj :
       Aeneas.Std.Array.index_usize a.elements i2 = .ok aj_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i2
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq a.elements i2
       (by rw [h_a_len, h_i2_val']; exact h_2i1_lt)
     rw [h, h_i2_val']
   have h_read_bj :
       Aeneas.Std.Array.index_usize b.elements i2 = .ok bj_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i2
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq b.elements i2
       (by rw [h_b_len, h_i2_val']; exact h_2i1_lt)
     rw [h, h_i2_val']
   -- ===== as_i32 casts =====
@@ -1349,7 +1350,7 @@ theorem accumulating_ntt_multiply_binomials_fc
     rw [show (3328 * 2^16 : Nat) = 2^16 * 3328 from by decide]; exact h_bj_zeta_pre
   obtain ⟨bj_zeta', h_bj_zeta_ok', _h_bnd', _h_tight, h_bj_zeta_modq⟩ :=
     triple_exists_ok_fc
-      (libcrux_iot_ml_kem.Equivalence.montgomery_reduce_element_spec bj_zeta_ h_bj_zeta_pre')
+      (libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_reduce_element_spec bj_zeta_ h_bj_zeta_pre')
   have h_bj_zeta_eq2 : bj_zeta = bj_zeta' := by
     have h_both : (Result.ok bj_zeta : Result _) = Result.ok bj_zeta' := by
       rw [← h_bj_zeta_ok, h_bj_zeta_ok']
@@ -1447,7 +1448,7 @@ theorem accumulating_ntt_multiply_binomials_fc
   -- ===== Slice reads + writes for `out` =====
   -- Step: i10 = out[i1] (= old_e at i1.val = 2*i.val).
   have h_read_old_e : Aeneas.Std.Slice.index_usize out i1 = .ok old_e := by
-    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out i1
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.slice_index_usize_ok_eq out i1
       (by rw [h_out_val_len, h_i1_val']; exact h_2i_lt)
     rw [h, h_i1_val']
   -- Step: i11 = wrapping_add old_e ai_bi_aj_bj (the new lane 2i value).
@@ -1489,7 +1490,7 @@ theorem accumulating_ntt_multiply_binomials_fc
     rw [getElem!_pos out.val (2 * i.val + 1) h_lt]
     rw [List.getElem_set_ne (Ne.symm h_ne)]
   have h_read_old_o : Aeneas.Std.Slice.index_usize out1 i2 = .ok old_o := by
-    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out1 i2
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.slice_index_usize_ok_eq out1 i2
       (by rw [h_out1_val_len, h_i2_val']; exact h_2i1_lt)
     rw [h, h_old_o_in_out1]
   -- Step: i14 = wrapping_add old_o ai_bj_aj_bi (new lane 2i+1 value).
@@ -1690,16 +1691,16 @@ theorem accumulating_ntt_multiply_fc
   have h_nz2_bnd : nzeta2.val.natAbs ≤ 1664 := by rw [h_n2_val]; omega
   have h_nz3_bnd : nzeta3.val.natAbs ≤ 1664 := by rw [h_n3_val]; omega
   have h_n0_fe : lift_fe_mont nzeta0
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0) :=
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta0) :=
     L2_8c.lift_fe_mont_neg_pure_eq zeta0 nzeta0 (h_zeta_within _ h_zeta0) h_n0_val
   have h_n1_fe : lift_fe_mont nzeta1
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1) :=
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta1) :=
     L2_8c.lift_fe_mont_neg_pure_eq zeta1 nzeta1 (h_zeta_within _ h_zeta1) h_n1_val
   have h_n2_fe : lift_fe_mont nzeta2
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2) :=
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta2) :=
     L2_8c.lift_fe_mont_neg_pure_eq zeta2 nzeta2 (h_zeta_within _ h_zeta2) h_n2_val
   have h_n3_fe : lift_fe_mont nzeta3
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3) :=
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta3) :=
     L2_8c.lift_fe_mont_neg_pure_eq zeta3 nzeta3 (h_zeta_within _ h_zeta3) h_n3_val
   have h_wn0 : core.num.I16.wrapping_neg zeta0 = .ok nzeta0 :=
     L2_8c.cm_wrapping_neg_i16_ok_eq zeta0
@@ -2341,7 +2342,7 @@ theorem accumulating_ntt_multiply_fc
                           (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                           (lift_fe_mont zeta2) (lift_fe_mont zeta3))).val
         = (List.range 16).map (fun i =>
-            libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
               ((Spec.chunk_reducing_from_i32_array_pure out).val[i]!)
               ((Spec.ntt_multiply_pure_no_acc
                   (lift_chunk_mont lhs) (lift_chunk_mont rhs)
@@ -2378,12 +2379,12 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[0]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[0]!)
                   ((lift_chunk_mont rhs).val[0]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[1]!)
                     ((lift_chunk_mont rhs).val[1]!))
                   (lift_fe_mont zeta0)) := by
@@ -2394,7 +2395,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2405,7 +2406,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2416,7 +2417,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2427,7 +2428,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2458,11 +2459,11 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[1]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[0]!)
                   ((lift_chunk_mont rhs).val[1]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[1]!)
                   ((lift_chunk_mont rhs).val[0]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -2472,7 +2473,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2483,7 +2484,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2494,7 +2495,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2505,7 +2506,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2541,15 +2542,15 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[2]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[2]!)
                   ((lift_chunk_mont rhs).val[2]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[3]!)
                     ((lift_chunk_mont rhs).val[3]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta0))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -2557,7 +2558,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2568,7 +2569,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2579,7 +2580,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2590,7 +2591,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2625,11 +2626,11 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[3]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[2]!)
                   ((lift_chunk_mont rhs).val[3]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[3]!)
                   ((lift_chunk_mont rhs).val[2]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -2639,7 +2640,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2650,7 +2651,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2661,7 +2662,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2672,7 +2673,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2708,12 +2709,12 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[4]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[4]!)
                   ((lift_chunk_mont rhs).val[4]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[5]!)
                     ((lift_chunk_mont rhs).val[5]!))
                   (lift_fe_mont zeta1)) := by
@@ -2724,7 +2725,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2735,7 +2736,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2746,7 +2747,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2757,7 +2758,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2793,11 +2794,11 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[5]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[4]!)
                   ((lift_chunk_mont rhs).val[5]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[5]!)
                   ((lift_chunk_mont rhs).val[4]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -2807,7 +2808,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2818,7 +2819,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2829,7 +2830,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2840,7 +2841,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2878,15 +2879,15 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[6]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[6]!)
                   ((lift_chunk_mont rhs).val[6]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[7]!)
                     ((lift_chunk_mont rhs).val[7]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta1))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -2894,7 +2895,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2905,7 +2906,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2916,7 +2917,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2927,7 +2928,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2964,11 +2965,11 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[7]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[6]!)
                   ((lift_chunk_mont rhs).val[7]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[7]!)
                   ((lift_chunk_mont rhs).val[6]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -2978,7 +2979,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -2989,7 +2990,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3000,7 +3001,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3011,7 +3012,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3049,12 +3050,12 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[8]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[8]!)
                   ((lift_chunk_mont rhs).val[8]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[9]!)
                     ((lift_chunk_mont rhs).val[9]!))
                   (lift_fe_mont zeta2)) := by
@@ -3065,7 +3066,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3076,7 +3077,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3087,7 +3088,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3098,7 +3099,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3136,11 +3137,11 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[9]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[8]!)
                   ((lift_chunk_mont rhs).val[9]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[9]!)
                   ((lift_chunk_mont rhs).val[8]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -3150,7 +3151,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3161,7 +3162,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3172,7 +3173,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3183,7 +3184,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3223,15 +3224,15 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[10]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[10]!)
                   ((lift_chunk_mont rhs).val[10]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[11]!)
                     ((lift_chunk_mont rhs).val[11]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta2))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -3239,7 +3240,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3250,7 +3251,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3261,7 +3262,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3272,7 +3273,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3311,11 +3312,11 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[11]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[10]!)
                   ((lift_chunk_mont rhs).val[11]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[11]!)
                   ((lift_chunk_mont rhs).val[10]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -3325,7 +3326,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3336,7 +3337,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3347,7 +3348,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3358,7 +3359,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3398,12 +3399,12 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[12]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[12]!)
                   ((lift_chunk_mont rhs).val[12]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[13]!)
                     ((lift_chunk_mont rhs).val[13]!))
                   (lift_fe_mont zeta3)) := by
@@ -3414,7 +3415,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3425,7 +3426,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3436,7 +3437,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3447,7 +3448,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3487,11 +3488,11 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[13]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[12]!)
                   ((lift_chunk_mont rhs).val[13]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[13]!)
                   ((lift_chunk_mont rhs).val[12]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -3501,7 +3502,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3512,7 +3513,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3523,7 +3524,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3534,7 +3535,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3574,15 +3575,15 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[14]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[14]!)
                   ((lift_chunk_mont rhs).val[14]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[15]!)
                     ((lift_chunk_mont rhs).val[15]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta3))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -3590,7 +3591,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3601,7 +3602,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3612,7 +3613,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3623,7 +3624,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3662,11 +3663,11 @@ theorem accumulating_ntt_multiply_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[15]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[14]!)
                   ((lift_chunk_mont rhs).val[15]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[15]!)
                   ((lift_chunk_mont rhs).val[14]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -3676,7 +3677,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3687,7 +3688,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (lhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3698,7 +3699,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3709,7 +3710,7 @@ theorem accumulating_ntt_multiply_fc
             = lift_fe_mont (rhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -3746,13 +3747,13 @@ noncomputable def Spec.effective_zeta_fe
     (z0 z1 z2 z3 : hacspec_ml_kem.parameters.FieldElement) :
     hacspec_ml_kem.parameters.FieldElement :=
   if i.val = 0 then z0
-  else if i.val = 1 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z0
+  else if i.val = 1 then libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure z0
   else if i.val = 2 then z1
-  else if i.val = 3 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z1
+  else if i.val = 3 then libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure z1
   else if i.val = 4 then z2
-  else if i.val = 5 then libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z2
+  else if i.val = 5 then libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure z2
   else if i.val = 6 then z3
-  else libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure z3
+  else libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure z3
 
 /-- Cache POST predicate shared between `_fill_cache` (as output cache
     POST) and `_use_cache` (as input cache PRE). For each pair `i ∈ Fin 8`:
@@ -3770,7 +3771,7 @@ noncomputable def Spec.ntt_multiply_cache_post
   ∀ i : Fin 8,
     (cache.elements.val[i.val]!).val.natAbs ≤ 3328
     ∧ lift_fe_mont (cache.elements.val[i.val]!)
-        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
             (lift_fe_mont (rhs.elements.val[2 * i.val + 1]!))
             (Spec.effective_zeta_fe i
               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -3802,19 +3803,19 @@ theorem L2_8d.lift_fe_mont_of_mont_reduce_modq
     (h_zmod : ((r.val : Int) : ZMod 3329) * (2^16 : Int)
                 = ((x.val : Int) : ZMod 3329) * ((y.val : Int) : ZMod 3329)) :
     lift_fe_mont r
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont x) (lift_fe_mont y) := by
   -- LHS: feOfZMod ((r.val : ZMod q) * 169).
   -- Set up s := mul_pure (lift_fe_mont x) (lift_fe_mont y); s is canonical, so
   -- the goal collapses (after round-trip) to a ZMod q equation.
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
       (lift_fe_mont x) (lift_fe_mont y) with hs_def
   -- Express s.val.val < 3329 via Canonical_mul_pure.
   have h_canon_s : s.val.val < 3329 := by
-    have h_cm := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
+    have h_cm := libcrux_iot_ml_kem.Spec.Pure.Canonical_mul_pure
       (lift_fe_mont x) (lift_fe_mont y)
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cm
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cm
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cm
@@ -3861,34 +3862,34 @@ theorem L2_8d.lift_fe_mont_of_mont_reduce_modq
   rw [h_mul_169_squared]
   ring
 
-/-- Associativity of `SpecPure.FieldElement.mul_pure` (Mont-domain product
+/-- Associativity of `Spec.Pure.FieldElement.mul_pure` (Mont-domain product
     in ZMod q). Used to reshape use_cache per-pair FE equations from
     `mul a (mul b c)` form (cache lane = mul rhs zeta) to `mul (mul a b) c`
     form to match the L2.8c per-pair FE shape. -/
 theorem L2_8d.mul_pure_assoc
     (a b c : hacspec_ml_kem.parameters.FieldElement) :
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b c)
-    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) c := by
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure b c)
+    = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b) c := by
   -- Both sides are canonical; use round-trip + ZMod commutativity.
   set lhs : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b c) with hlhs
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure b c) with hlhs
   set rhs : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) c with hrhs
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b) c with hrhs
   have h_canon_lhs : lhs.val.val < 3329 := by
-    have h_cm := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure a
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure b c)
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cm
+    have h_cm := libcrux_iot_ml_kem.Spec.Pure.Canonical_mul_pure a
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure b c)
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cm
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cm; exact h_cm
   have h_canon_rhs : rhs.val.val < 3329 := by
-    have h_cm := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_mul_pure
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure a b) c
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cm
+    have h_cm := libcrux_iot_ml_kem.Spec.Pure.Canonical_mul_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure a b) c
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cm
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cm; exact h_cm
@@ -3914,31 +3915,31 @@ theorem L2_8d.mont_reduce_even_fe_eq_cache
       = ((out.val * (2 ^ 16 : Int) + ai.val * bi.val * (2 ^ 16 : Int)
             + aj.val * c.val * (2 ^ 16 : Int)) : ZMod 3329)) :
     Spec.mont_reduce_pure (lift_fe_int r.val)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           (Spec.mont_reduce_pure (lift_fe_int out.val))
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (lift_fe_mont ai) (lift_fe_mont bi))
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (lift_fe_mont aj) (lift_fe_mont c))) := by
   rw [mont_reduce_pure_lift_fe_int]
   set s : hacspec_ml_kem.parameters.FieldElement :=
-    libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+    libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
       (Spec.mont_reduce_pure (lift_fe_int out.val))
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont ai) (lift_fe_mont bi))
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont aj) (lift_fe_mont c))) with hs_def
   have h_canon : s.val.val < 3329 := by
-    have h_cs := libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical_add_pure
+    have h_cs := libcrux_iot_ml_kem.Spec.Pure.Canonical_add_pure
       (Spec.mont_reduce_pure (lift_fe_int out.val))
-      (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont ai) (lift_fe_mont bi))
-        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont aj) (lift_fe_mont c)))
-    unfold libcrux_iot_ml_kem.BitMlKem.SpecPure.Canonical at h_cs
+    unfold libcrux_iot_ml_kem.Spec.Pure.Canonical at h_cs
     have hq : hacspec_ml_kem.parameters.FIELD_MODULUS.val = 3329 := by
       unfold hacspec_ml_kem.parameters.FIELD_MODULUS; rfl
     rw [hq] at h_cs
@@ -3995,12 +3996,12 @@ theorem L2_8d.mont_reduce_odd_fe_eq_cache
             + ai.val * bj.val * (2 ^ 16 : Int)
             + aj.val * bi.val * (2 ^ 16 : Int)) : ZMod 3329)) :
     Spec.mont_reduce_pure (lift_fe_int r.val)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           (Spec.mont_reduce_pure (lift_fe_int out.val))
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (lift_fe_mont ai) (lift_fe_mont bj))
-            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
               (lift_fe_mont aj) (lift_fe_mont bi))) :=
   -- The odd-half equation has no cache lane (the cached
   -- `mont_reduce(b·zeta)` only enters the even-half product); it is
@@ -4035,30 +4036,30 @@ theorem accumulating_ntt_multiply_binomials_fill_cache_fc
                 ∧ (p.1.val[2 * i.val + 1]!).val.natAbs
                     ≤ (out.val[2 * i.val + 1]!).val.natAbs + 2^25
                 ∧ Spec.mont_reduce_pure (lift_fe_int (p.1.val[2 * i.val]!).val)
-                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                    = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                         (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val]!).val))
-                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val]!))
                             (lift_fe_mont (b.elements.val[2 * i.val]!)))
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                            (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                            (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                               (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
                               (lift_fe_mont (b.elements.val[2 * i.val + 1]!)))
                             (lift_fe_mont zeta)))
                 ∧ Spec.mont_reduce_pure (lift_fe_int (p.1.val[2 * i.val + 1]!).val)
-                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                    = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                         (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val + 1]!).val))
-                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val]!))
                             (lift_fe_mont (b.elements.val[2 * i.val + 1]!)))
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
                             (lift_fe_mont (b.elements.val[2 * i.val]!))))
                 ∧ (p.2.elements.val[i.val]!).val.natAbs ≤ 3328
                 ∧ lift_fe_mont (p.2.elements.val[i.val]!)
-                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                    = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                         (lift_fe_mont (b.elements.val[2 * i.val + 1]!))
                         (lift_fe_mont zeta)
                 ∧ (∀ k : Nat, k < 16 → k ≠ i.val →
@@ -4067,11 +4068,11 @@ theorem accumulating_ntt_multiply_binomials_fill_cache_fc
   have h_2i_lt : 2 * i.val < 16 := by omega
   have h_2i1_lt : 2 * i.val + 1 < 16 := by omega
   have h_a_len : a.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length a
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length a
   have h_b_len : b.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length b
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length b
   have h_cache_len : cache.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length cache
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length cache
   have h_out_val_len : out.val.length = 16 := h_out_len
   set ai_v : Std.I16 := a.elements.val[2 * i.val]! with hai_def
   set bi_v : Std.I16 := b.elements.val[2 * i.val]! with hbi_def
@@ -4097,22 +4098,22 @@ theorem accumulating_ntt_multiply_binomials_fill_cache_fc
   -- ===== Reads (with index_usize_ok_eq) =====
   have h_read_ai :
       Aeneas.Std.Array.index_usize a.elements i1 = .ok ai_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i1
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq a.elements i1
       (by rw [h_a_len, h_i1_val']; exact h_2i_lt)
     rw [h, h_i1_val']
   have h_read_bi :
       Aeneas.Std.Array.index_usize b.elements i1 = .ok bi_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i1
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq b.elements i1
       (by rw [h_b_len, h_i1_val']; exact h_2i_lt)
     rw [h, h_i1_val']
   have h_read_aj :
       Aeneas.Std.Array.index_usize a.elements i2 = .ok aj_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i2
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq a.elements i2
       (by rw [h_a_len, h_i2_val']; exact h_2i1_lt)
     rw [h, h_i2_val']
   have h_read_bj :
       Aeneas.Std.Array.index_usize b.elements i2 = .ok bj_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i2
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq b.elements i2
       (by rw [h_b_len, h_i2_val']; exact h_2i1_lt)
     rw [h, h_i2_val']
   -- ===== as_i32 casts =====
@@ -4179,7 +4180,7 @@ theorem accumulating_ntt_multiply_binomials_fill_cache_fc
     rw [show (3328 * 2^16 : Nat) = 2^16 * 3328 from by decide]; exact h_bj_zeta_pre
   obtain ⟨bj_zeta', h_bj_zeta_ok', _h_bnd', h_tight_imp, h_bj_zeta_modq⟩ :=
     triple_exists_ok_fc
-      (libcrux_iot_ml_kem.Equivalence.montgomery_reduce_element_spec bj_zeta_ h_bj_zeta_pre')
+      (libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement.montgomery_reduce_element_spec bj_zeta_ h_bj_zeta_pre')
   have h_bj_zeta_eq2 : bj_zeta = bj_zeta' := by
     have h_both : (Result.ok bj_zeta : Result _) = Result.ok bj_zeta' := by
       rw [← h_bj_zeta_ok, h_bj_zeta_ok']
@@ -4198,7 +4199,7 @@ theorem accumulating_ntt_multiply_binomials_fill_cache_fc
   have h_upd_cache :
       Aeneas.Std.Array.update cache.elements i bj_zeta
         = .ok (cache.elements.set i bj_zeta) :=
-    libcrux_iot_ml_kem.Util.array_update_ok_eq cache.elements i bj_zeta
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_update_ok_eq cache.elements i bj_zeta
       (by rw [h_cache_len]; exact (by omega : i.val < 16))
   set cache_new : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
     { elements := cache.elements.set i bj_zeta } with hcn_def
@@ -4292,7 +4293,7 @@ theorem accumulating_ntt_multiply_binomials_fill_cache_fc
     omega
   -- ===== Slice reads + writes for `out` =====
   have h_read_old_e : Aeneas.Std.Slice.index_usize out i1 = .ok old_e := by
-    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out i1
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.slice_index_usize_ok_eq out i1
       (by rw [h_out_val_len, h_i1_val']; exact h_2i_lt)
     rw [h, h_i1_val']
   set new_e : Std.I32 := Aeneas.Std.I32.wrapping_add old_e ai_bi_aj_bj with hne_def
@@ -4327,7 +4328,7 @@ theorem accumulating_ntt_multiply_binomials_fill_cache_fc
     rw [getElem!_pos out.val (2 * i.val + 1) h_lt]
     rw [List.getElem_set_ne (Ne.symm h_ne)]
   have h_read_old_o : Aeneas.Std.Slice.index_usize out1 i2 = .ok old_o := by
-    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out1 i2
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.slice_index_usize_ok_eq out1 i2
       (by rw [h_out1_val_len, h_i2_val']; exact h_2i1_lt)
     rw [h, h_old_o_in_out1]
   set new_o : Std.I32 := Aeneas.Std.I32.wrapping_add old_o ai_bj_aj_bi with hno_def
@@ -4429,7 +4430,7 @@ theorem accumulating_ntt_multiply_binomials_fill_cache_fc
   -- The cache POST FE-equation conjunct: lift_fe_mont bj_zeta = mul (lift bj) (lift zeta).
   have h_cache_fe :
       lift_fe_mont bj_zeta
-        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
             (lift_fe_mont bj_v) (lift_fe_mont zeta) := by
     -- Convert h_bj_zeta_modq to ZMod equation and invoke the helper.
     have h_modq_cast : ((bj_zeta'.val : Int) : ZMod 3329)
@@ -4535,34 +4536,34 @@ theorem accumulating_ntt_multiply_binomials_use_cache_fc
                 ∧ (r.val[2 * i.val + 1]!).val.natAbs
                     ≤ (out.val[2 * i.val + 1]!).val.natAbs + 2^25
                 ∧ Spec.mont_reduce_pure (lift_fe_int (r.val[2 * i.val]!).val)
-                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                    = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                         (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val]!).val))
-                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val]!))
                             (lift_fe_mont (b.elements.val[2 * i.val]!)))
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
                             (lift_fe_mont (cache.elements.val[i.val]!))))
                 ∧ Spec.mont_reduce_pure (lift_fe_int (r.val[2 * i.val + 1]!).val)
-                    = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                    = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                         (Spec.mont_reduce_pure (lift_fe_int (out.val[2 * i.val + 1]!).val))
-                        (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                        (libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val]!))
                             (lift_fe_mont (b.elements.val[2 * i.val + 1]!)))
-                          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                             (lift_fe_mont (a.elements.val[2 * i.val + 1]!))
                             (lift_fe_mont (b.elements.val[2 * i.val]!)))) ⌝ ⦄ := by
   -- ===== Setup =====
   have h_2i_lt : 2 * i.val < 16 := by omega
   have h_2i1_lt : 2 * i.val + 1 < 16 := by omega
   have h_a_len : a.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length a
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length a
   have h_b_len : b.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length b
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length b
   have h_cache_len : cache.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length cache
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length cache
   have h_out_val_len : out.val.length = 16 := h_out_len
   set ai_v : Std.I16 := a.elements.val[2 * i.val]! with hai_def
   set bi_v : Std.I16 := b.elements.val[2 * i.val]! with hbi_def
@@ -4590,27 +4591,27 @@ theorem accumulating_ntt_multiply_binomials_use_cache_fc
   -- ===== Reads (with index_usize_ok_eq) =====
   have h_read_ai :
       Aeneas.Std.Array.index_usize a.elements i1 = .ok ai_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i1
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq a.elements i1
       (by rw [h_a_len, h_i1_val']; exact h_2i_lt)
     rw [h, h_i1_val']
   have h_read_bi :
       Aeneas.Std.Array.index_usize b.elements i1 = .ok bi_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i1
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq b.elements i1
       (by rw [h_b_len, h_i1_val']; exact h_2i_lt)
     rw [h, h_i1_val']
   have h_read_aj :
       Aeneas.Std.Array.index_usize a.elements i2 = .ok aj_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq a.elements i2
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq a.elements i2
       (by rw [h_a_len, h_i2_val']; exact h_2i1_lt)
     rw [h, h_i2_val']
   have h_read_bj :
       Aeneas.Std.Array.index_usize b.elements i2 = .ok bj_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq b.elements i2
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq b.elements i2
       (by rw [h_b_len, h_i2_val']; exact h_2i1_lt)
     rw [h, h_i2_val']
   have h_read_cv :
       Aeneas.Std.Array.index_usize cache.elements i = .ok c_v := by
-    have h := libcrux_iot_ml_kem.Util.array_index_usize_ok_eq cache.elements i
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq cache.elements i
       (by rw [h_cache_len]; exact (by omega : i.val < 16))
     rw [h]
   -- ===== as_i32 casts =====
@@ -4734,7 +4735,7 @@ theorem accumulating_ntt_multiply_binomials_use_cache_fc
     omega
   -- ===== Slice reads + writes for `out` =====
   have h_read_old_e : Aeneas.Std.Slice.index_usize out i1 = .ok old_e := by
-    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out i1
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.slice_index_usize_ok_eq out i1
       (by rw [h_out_val_len, h_i1_val']; exact h_2i_lt)
     rw [h, h_i1_val']
   set new_e : Std.I32 := Aeneas.Std.I32.wrapping_add old_e ai_bi_aj_bj with hne_def
@@ -4769,7 +4770,7 @@ theorem accumulating_ntt_multiply_binomials_use_cache_fc
     rw [getElem!_pos out.val (2 * i.val + 1) h_lt]
     rw [List.getElem_set_ne (Ne.symm h_ne)]
   have h_read_old_o : Aeneas.Std.Slice.index_usize out1 i2 = .ok old_o := by
-    have h := libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq out1 i2
+    have h := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.slice_index_usize_ok_eq out1 i2
       (by rw [h_out1_val_len, h_i2_val']; exact h_2i1_lt)
     rw [h, h_old_o_in_out1]
   set new_o : Std.I32 := Aeneas.Std.I32.wrapping_add old_o ai_bj_aj_bi with hno_def
@@ -4923,16 +4924,16 @@ theorem accumulating_ntt_multiply_fill_cache_fc
   have h_nz2_bnd : nzeta2.val.natAbs ≤ 1664 := by rw [h_n2_val]; omega
   have h_nz3_bnd : nzeta3.val.natAbs ≤ 1664 := by rw [h_n3_val]; omega
   have h_n0_fe : lift_fe_mont nzeta0
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0) :=
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta0) :=
     L2_8c.lift_fe_mont_neg_pure_eq zeta0 nzeta0 (h_zeta_within _ h_zeta0) h_n0_val
   have h_n1_fe : lift_fe_mont nzeta1
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1) :=
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta1) :=
     L2_8c.lift_fe_mont_neg_pure_eq zeta1 nzeta1 (h_zeta_within _ h_zeta1) h_n1_val
   have h_n2_fe : lift_fe_mont nzeta2
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2) :=
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta2) :=
     L2_8c.lift_fe_mont_neg_pure_eq zeta2 nzeta2 (h_zeta_within _ h_zeta2) h_n2_val
   have h_n3_fe : lift_fe_mont nzeta3
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3) :=
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta3) :=
     L2_8c.lift_fe_mont_neg_pure_eq zeta3 nzeta3 (h_zeta_within _ h_zeta3) h_n3_val
   have h_wn0 : core.num.I16.wrapping_neg zeta0 = .ok nzeta0 :=
     L2_8c.cm_wrapping_neg_i16_ok_eq zeta0
@@ -4961,7 +4962,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
   have h_out_bnd_universal : ∀ k : Fin 16, (out.val[k.val]!).val.natAbs ≤ 2^30 + 2^25 := by
     intro k; have := h_out_bnd k; omega
   have h_cache_len : cache.elements.length = 16 :=
-    libcrux_iot_ml_kem.Util.PortableVector_elements_length cache
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length cache
   -- ===== 8 chained calls — each returns (r{i}, cache_out{i}) =====
   -- Call 0: pair 0 with zeta0 (touches lanes 0, 1; writes cache[0]).
   obtain ⟨p0, h_p0_eq, h_r0_len, h_r0_unc, h_r0_bnd_e, h_r0_bnd_o,
@@ -5773,7 +5774,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                           (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                           (lift_fe_mont zeta2) (lift_fe_mont zeta3))).val
         = (List.range 16).map (fun i =>
-            libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
               ((Spec.chunk_reducing_from_i32_array_pure out).val[i]!)
               ((Spec.ntt_multiply_pure_no_acc
                   (lift_chunk_mont lhs) (lift_chunk_mont rhs)
@@ -5810,12 +5811,12 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[0]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[0]!)
                   ((lift_chunk_mont rhs).val[0]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[1]!)
                     ((lift_chunk_mont rhs).val[1]!))
                   (lift_fe_mont zeta0)) := by
@@ -5826,7 +5827,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -5837,7 +5838,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -5848,7 +5849,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -5859,7 +5860,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -5890,11 +5891,11 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[1]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[0]!)
                   ((lift_chunk_mont rhs).val[1]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[1]!)
                   ((lift_chunk_mont rhs).val[0]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -5904,7 +5905,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -5915,7 +5916,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -5926,7 +5927,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -5937,7 +5938,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -5973,15 +5974,15 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[2]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[2]!)
                   ((lift_chunk_mont rhs).val[2]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[3]!)
                     ((lift_chunk_mont rhs).val[3]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta0))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -5989,7 +5990,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6000,7 +6001,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6011,7 +6012,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6022,7 +6023,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6057,11 +6058,11 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[3]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[2]!)
                   ((lift_chunk_mont rhs).val[3]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[3]!)
                   ((lift_chunk_mont rhs).val[2]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -6071,7 +6072,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6082,7 +6083,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6093,7 +6094,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6104,7 +6105,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6140,12 +6141,12 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[4]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[4]!)
                   ((lift_chunk_mont rhs).val[4]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[5]!)
                     ((lift_chunk_mont rhs).val[5]!))
                   (lift_fe_mont zeta1)) := by
@@ -6156,7 +6157,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6167,7 +6168,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6178,7 +6179,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6189,7 +6190,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6225,11 +6226,11 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[5]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[4]!)
                   ((lift_chunk_mont rhs).val[5]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[5]!)
                   ((lift_chunk_mont rhs).val[4]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -6239,7 +6240,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6250,7 +6251,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6261,7 +6262,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6272,7 +6273,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6310,15 +6311,15 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[6]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[6]!)
                   ((lift_chunk_mont rhs).val[6]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[7]!)
                     ((lift_chunk_mont rhs).val[7]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta1))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -6326,7 +6327,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6337,7 +6338,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6348,7 +6349,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6359,7 +6360,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6396,11 +6397,11 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[7]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[6]!)
                   ((lift_chunk_mont rhs).val[7]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[7]!)
                   ((lift_chunk_mont rhs).val[6]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -6410,7 +6411,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6421,7 +6422,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6432,7 +6433,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6443,7 +6444,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6481,12 +6482,12 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[8]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[8]!)
                   ((lift_chunk_mont rhs).val[8]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[9]!)
                     ((lift_chunk_mont rhs).val[9]!))
                   (lift_fe_mont zeta2)) := by
@@ -6497,7 +6498,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6508,7 +6509,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6519,7 +6520,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6530,7 +6531,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6568,11 +6569,11 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[9]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[8]!)
                   ((lift_chunk_mont rhs).val[9]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[9]!)
                   ((lift_chunk_mont rhs).val[8]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -6582,7 +6583,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6593,7 +6594,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6604,7 +6605,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6615,7 +6616,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6655,15 +6656,15 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[10]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[10]!)
                   ((lift_chunk_mont rhs).val[10]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[11]!)
                     ((lift_chunk_mont rhs).val[11]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta2))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -6671,7 +6672,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6682,7 +6683,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6693,7 +6694,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6704,7 +6705,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6743,11 +6744,11 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[11]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[10]!)
                   ((lift_chunk_mont rhs).val[11]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[11]!)
                   ((lift_chunk_mont rhs).val[10]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -6757,7 +6758,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6768,7 +6769,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6779,7 +6780,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6790,7 +6791,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6830,12 +6831,12 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[12]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[12]!)
                   ((lift_chunk_mont rhs).val[12]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[13]!)
                     ((lift_chunk_mont rhs).val[13]!))
                   (lift_fe_mont zeta3)) := by
@@ -6846,7 +6847,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6857,7 +6858,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6868,7 +6869,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6879,7 +6880,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6919,11 +6920,11 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[13]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[12]!)
                   ((lift_chunk_mont rhs).val[13]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[13]!)
                   ((lift_chunk_mont rhs).val[12]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -6933,7 +6934,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6944,7 +6945,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6955,7 +6956,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -6966,7 +6967,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -7006,15 +7007,15 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[14]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[14]!)
                   ((lift_chunk_mont rhs).val[14]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[15]!)
                     ((lift_chunk_mont rhs).val[15]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta3))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -7022,7 +7023,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -7033,7 +7034,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -7044,7 +7045,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -7055,7 +7056,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -7094,11 +7095,11 @@ theorem accumulating_ntt_multiply_fill_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[15]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[14]!)
                   ((lift_chunk_mont rhs).val[15]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[15]!)
                   ((lift_chunk_mont rhs).val[14]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -7108,7 +7109,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -7119,7 +7120,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (lhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -7130,7 +7131,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -7141,7 +7142,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
             = lift_fe_mont (rhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -7183,7 +7184,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
         rw [show ((⟨0, hi⟩ : Fin 8) : Fin 8).val = 0 from rfl, h_chain]
         rw [h_uv0] at h_c0_fe; rw [h_c0_fe]
         -- effective_zeta_fe ⟨0, _⟩ ... = zeta0_fe.
-        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        show _ = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   (lift_fe_mont (rhs.elements.val[2 * 0 + 1]!))
                   (Spec.effective_zeta_fe ⟨0, hi⟩
                     (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -7202,7 +7203,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
         rw [h_uv1] at h_c1_canon; exact h_c1_canon
       · rw [show ((⟨1, hi⟩ : Fin 8) : Fin 8).val = 1 from rfl, h_chain]
         rw [h_uv1] at h_c1_fe; rw [h_c1_fe, h_n0_fe]
-        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        show _ = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   (lift_fe_mont (rhs.elements.val[2 * 1 + 1]!))
                   (Spec.effective_zeta_fe ⟨1, hi⟩
                     (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -7220,7 +7221,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
         rw [h_uv2] at h_c2_canon; exact h_c2_canon
       · rw [show ((⟨2, hi⟩ : Fin 8) : Fin 8).val = 2 from rfl, h_chain]
         rw [h_uv2] at h_c2_fe; rw [h_c2_fe]
-        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        show _ = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   (lift_fe_mont (rhs.elements.val[2 * 2 + 1]!))
                   (Spec.effective_zeta_fe ⟨2, hi⟩
                     (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -7237,7 +7238,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
         rw [h_uv3] at h_c3_canon; exact h_c3_canon
       · rw [show ((⟨3, hi⟩ : Fin 8) : Fin 8).val = 3 from rfl, h_chain]
         rw [h_uv3] at h_c3_fe; rw [h_c3_fe, h_n1_fe]
-        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        show _ = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   (lift_fe_mont (rhs.elements.val[2 * 3 + 1]!))
                   (Spec.effective_zeta_fe ⟨3, hi⟩
                     (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -7253,7 +7254,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
         rw [h_uv4] at h_c4_canon; exact h_c4_canon
       · rw [show ((⟨4, hi⟩ : Fin 8) : Fin 8).val = 4 from rfl, h_chain]
         rw [h_uv4] at h_c4_fe; rw [h_c4_fe]
-        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        show _ = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   (lift_fe_mont (rhs.elements.val[2 * 4 + 1]!))
                   (Spec.effective_zeta_fe ⟨4, hi⟩
                     (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -7268,7 +7269,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
         rw [h_uv5] at h_c5_canon; exact h_c5_canon
       · rw [show ((⟨5, hi⟩ : Fin 8) : Fin 8).val = 5 from rfl, h_chain]
         rw [h_uv5] at h_c5_fe; rw [h_c5_fe, h_n2_fe]
-        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        show _ = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   (lift_fe_mont (rhs.elements.val[2 * 5 + 1]!))
                   (Spec.effective_zeta_fe ⟨5, hi⟩
                     (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -7282,7 +7283,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
         rw [h_uv6] at h_c6_canon; exact h_c6_canon
       · rw [show ((⟨6, hi⟩ : Fin 8) : Fin 8).val = 6 from rfl, h_chain]
         rw [h_uv6] at h_c6_fe; rw [h_c6_fe]
-        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        show _ = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   (lift_fe_mont (rhs.elements.val[2 * 6 + 1]!))
                   (Spec.effective_zeta_fe ⟨6, hi⟩
                     (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -7294,7 +7295,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
         rw [h_uv7] at h_c7_canon; exact h_c7_canon
       · rw [show ((⟨7, hi⟩ : Fin 8) : Fin 8).val = 7 from rfl]
         rw [h_uv7] at h_c7_fe; rw [h_c7_fe, h_n3_fe]
-        show _ = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        show _ = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   (lift_fe_mont (rhs.elements.val[2 * 7 + 1]!))
                   (Spec.effective_zeta_fe ⟨7, hi⟩
                     (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -7359,7 +7360,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
       (cache.elements.val[i.val]!).val.natAbs ≤ 3328 := fun i => (h_cache i).1
   have h_cache_fe : ∀ i : Fin 8,
       lift_fe_mont (cache.elements.val[i.val]!)
-        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
             (lift_fe_mont (rhs.elements.val[2 * i.val + 1]!))
             (Spec.effective_zeta_fe i
               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
@@ -7369,54 +7370,54 @@ theorem accumulating_ntt_multiply_use_cache_fc
   -- Cache FE-equations specialised at each pair index 0..7 (Spec.effective_zeta_fe
   -- collapses to the appropriate zeta_j or neg_pure zeta_j).
   have h_cache0_fe : lift_fe_mont (cache.elements.val[0]!)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont (rhs.elements.val[1]!)) (lift_fe_mont zeta0) := by
     have h := h_cache_fe ⟨0, by decide⟩
     rw [show ((⟨0, by decide⟩ : Fin 8) : Fin 8).val = 0 from rfl] at h
     rw [h]; unfold Spec.effective_zeta_fe; simp
   have h_cache1_fe : lift_fe_mont (cache.elements.val[1]!)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont (rhs.elements.val[3]!))
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0)) := by
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta0)) := by
     have h := h_cache_fe ⟨1, by decide⟩
     rw [show ((⟨1, by decide⟩ : Fin 8) : Fin 8).val = 1 from rfl] at h
     rw [h]; unfold Spec.effective_zeta_fe; simp
   have h_cache2_fe : lift_fe_mont (cache.elements.val[2]!)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont (rhs.elements.val[5]!)) (lift_fe_mont zeta1) := by
     have h := h_cache_fe ⟨2, by decide⟩
     rw [show ((⟨2, by decide⟩ : Fin 8) : Fin 8).val = 2 from rfl] at h
     rw [h]; unfold Spec.effective_zeta_fe; simp
   have h_cache3_fe : lift_fe_mont (cache.elements.val[3]!)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont (rhs.elements.val[7]!))
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1)) := by
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta1)) := by
     have h := h_cache_fe ⟨3, by decide⟩
     rw [show ((⟨3, by decide⟩ : Fin 8) : Fin 8).val = 3 from rfl] at h
     rw [h]; unfold Spec.effective_zeta_fe; simp
   have h_cache4_fe : lift_fe_mont (cache.elements.val[4]!)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont (rhs.elements.val[9]!)) (lift_fe_mont zeta2) := by
     have h := h_cache_fe ⟨4, by decide⟩
     rw [show ((⟨4, by decide⟩ : Fin 8) : Fin 8).val = 4 from rfl] at h
     rw [h]; unfold Spec.effective_zeta_fe; simp
   have h_cache5_fe : lift_fe_mont (cache.elements.val[5]!)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont (rhs.elements.val[11]!))
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2)) := by
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta2)) := by
     have h := h_cache_fe ⟨5, by decide⟩
     rw [show ((⟨5, by decide⟩ : Fin 8) : Fin 8).val = 5 from rfl] at h
     rw [h]; unfold Spec.effective_zeta_fe; simp
   have h_cache6_fe : lift_fe_mont (cache.elements.val[6]!)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont (rhs.elements.val[13]!)) (lift_fe_mont zeta3) := by
     have h := h_cache_fe ⟨6, by decide⟩
     rw [show ((⟨6, by decide⟩ : Fin 8) : Fin 8).val = 6 from rfl] at h
     rw [h]; unfold Spec.effective_zeta_fe; simp
   have h_cache7_fe : lift_fe_mont (cache.elements.val[7]!)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
           (lift_fe_mont (rhs.elements.val[15]!))
-          (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3)) := by
+          (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta3)) := by
     have h := h_cache_fe ⟨7, by decide⟩
     rw [show ((⟨7, by decide⟩ : Fin 8) : Fin 8).val = 7 from rfl] at h
     rw [h]; unfold Spec.effective_zeta_fe; simp
@@ -7720,17 +7721,17 @@ theorem accumulating_ntt_multiply_use_cache_fc
   -- Now h_n0_fe..h_n3_fe are unbound. Set their identity by way of synthesis from
   -- effective_zeta_fe.
   have h_n0_fe :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0))
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0) := rfl
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta0))
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta0) := rfl
   have h_n1_fe :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1))
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1) := rfl
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta1))
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta1) := rfl
   have h_n2_fe :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2))
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2) := rfl
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta2))
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta2) := rfl
   have h_n3_fe :
-    (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3))
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3) := rfl
+    (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta3))
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta3) := rfl
   -- Compose monadic body.
   have h_body :
       libcrux_iot_ml_kem.vector.portable.ntt.accumulating_ntt_multiply_use_cache
@@ -7973,7 +7974,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
                           (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                           (lift_fe_mont zeta2) (lift_fe_mont zeta3))).val
         = (List.range 16).map (fun i =>
-            libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
               ((Spec.chunk_reducing_from_i32_array_pure out).val[i]!)
               ((Spec.ntt_multiply_pure_no_acc
                   (lift_chunk_mont lhs) (lift_chunk_mont rhs)
@@ -8009,12 +8010,12 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[0]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[0]!)
                   ((lift_chunk_mont rhs).val[0]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[1]!)
                     ((lift_chunk_mont rhs).val[1]!))
                   (lift_fe_mont zeta0)) := by
@@ -8025,7 +8026,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8036,7 +8037,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8047,7 +8048,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8058,7 +8059,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8088,11 +8089,11 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[1]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[0]!)
                   ((lift_chunk_mont rhs).val[1]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[1]!)
                   ((lift_chunk_mont rhs).val[0]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -8102,7 +8103,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8113,7 +8114,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8124,7 +8125,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[0]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[0]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8135,7 +8136,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[1]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[1]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8170,15 +8171,15 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[2]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[2]!)
                   ((lift_chunk_mont rhs).val[2]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[3]!)
                     ((lift_chunk_mont rhs).val[3]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta0))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta0))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -8186,7 +8187,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8197,7 +8198,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8208,7 +8209,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8219,7 +8220,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8253,11 +8254,11 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[3]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[2]!)
                   ((lift_chunk_mont rhs).val[3]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[3]!)
                   ((lift_chunk_mont rhs).val[2]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -8267,7 +8268,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8278,7 +8279,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8289,7 +8290,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[2]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[2]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8300,7 +8301,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[3]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[3]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8335,12 +8336,12 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[4]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[4]!)
                   ((lift_chunk_mont rhs).val[4]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[5]!)
                     ((lift_chunk_mont rhs).val[5]!))
                   (lift_fe_mont zeta1)) := by
@@ -8351,7 +8352,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8362,7 +8363,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8373,7 +8374,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8384,7 +8385,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8419,11 +8420,11 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[5]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[4]!)
                   ((lift_chunk_mont rhs).val[5]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[5]!)
                   ((lift_chunk_mont rhs).val[4]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -8433,7 +8434,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8444,7 +8445,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8455,7 +8456,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[4]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[4]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8466,7 +8467,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[5]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[5]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8503,15 +8504,15 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[6]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[6]!)
                   ((lift_chunk_mont rhs).val[6]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[7]!)
                     ((lift_chunk_mont rhs).val[7]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta1))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta1))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -8519,7 +8520,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8530,7 +8531,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8541,7 +8542,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8552,7 +8553,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8588,11 +8589,11 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[7]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[6]!)
                   ((lift_chunk_mont rhs).val[7]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[7]!)
                   ((lift_chunk_mont rhs).val[6]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -8602,7 +8603,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8613,7 +8614,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8624,7 +8625,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[6]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[6]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8635,7 +8636,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[7]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[7]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8672,12 +8673,12 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[8]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[8]!)
                   ((lift_chunk_mont rhs).val[8]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[9]!)
                     ((lift_chunk_mont rhs).val[9]!))
                   (lift_fe_mont zeta2)) := by
@@ -8688,7 +8689,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8699,7 +8700,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8710,7 +8711,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8721,7 +8722,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8758,11 +8759,11 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[9]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[8]!)
                   ((lift_chunk_mont rhs).val[9]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[9]!)
                   ((lift_chunk_mont rhs).val[8]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -8772,7 +8773,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8783,7 +8784,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8794,7 +8795,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[8]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[8]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8805,7 +8806,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[9]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[9]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8844,15 +8845,15 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[10]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[10]!)
                   ((lift_chunk_mont rhs).val[10]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[11]!)
                     ((lift_chunk_mont rhs).val[11]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta2))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta2))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -8860,7 +8861,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8871,7 +8872,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8882,7 +8883,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8893,7 +8894,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8931,11 +8932,11 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[11]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[10]!)
                   ((lift_chunk_mont rhs).val[11]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[11]!)
                   ((lift_chunk_mont rhs).val[10]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -8945,7 +8946,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8956,7 +8957,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8967,7 +8968,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[10]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[10]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -8978,7 +8979,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[11]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[11]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9017,12 +9018,12 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[12]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[12]!)
                   ((lift_chunk_mont rhs).val[12]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[13]!)
                     ((lift_chunk_mont rhs).val[13]!))
                   (lift_fe_mont zeta3)) := by
@@ -9033,7 +9034,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9044,7 +9045,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9055,7 +9056,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9066,7 +9067,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9105,11 +9106,11 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[13]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[12]!)
                   ((lift_chunk_mont rhs).val[13]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[13]!)
                   ((lift_chunk_mont rhs).val[12]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -9119,7 +9120,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9130,7 +9131,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9141,7 +9142,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[12]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[12]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9152,7 +9153,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[13]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[13]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9191,15 +9192,15 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[14]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[14]!)
                   ((lift_chunk_mont rhs).val[14]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                     ((lift_chunk_mont lhs).val[15]!)
                     ((lift_chunk_mont rhs).val[15]!))
-                  (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.neg_pure (lift_fe_mont zeta3))) := by
+                  (libcrux_iot_ml_kem.Spec.Pure.FieldElement.neg_pure (lift_fe_mont zeta3))) := by
           unfold Spec.ntt_multiply_pure_no_acc
           rfl
         rw [h_red_no_acc]
@@ -9207,7 +9208,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9218,7 +9219,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9229,7 +9230,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9240,7 +9241,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9278,11 +9279,11 @@ theorem accumulating_ntt_multiply_use_cache_fc
                               (lift_chunk_mont lhs) (lift_chunk_mont rhs)
                               (lift_fe_mont zeta0) (lift_fe_mont zeta1)
                               (lift_fe_mont zeta2) (lift_fe_mont zeta3)).val[15]!
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[14]!)
                   ((lift_chunk_mont rhs).val[15]!))
-                (libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+                (libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
                   ((lift_chunk_mont lhs).val[15]!)
                   ((lift_chunk_mont rhs).val[14]!)) := by
           unfold Spec.ntt_multiply_pure_no_acc
@@ -9292,7 +9293,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9303,7 +9304,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (lhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : lhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length lhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length lhs
           show (lhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (lhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9314,7 +9315,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[14]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[14]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9325,7 +9326,7 @@ theorem accumulating_ntt_multiply_use_cache_fc
             = lift_fe_mont (rhs.elements.val[15]!) := by
           unfold lift_chunk_mont
           have h_l : rhs.elements.val.length = 16 :=
-            libcrux_iot_ml_kem.Util.PortableVector_elements_length rhs
+            libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length rhs
           show (rhs.elements.val.map lift_fe_mont)[15]! = _
           have h_ml : (rhs.elements.val.map lift_fe_mont).length = 16 := by
             rw [List.length_map]; exact h_l
@@ -9365,7 +9366,7 @@ noncomputable def accumulating_ntt_multiply_poly_post
     (accumulator r : Std.Array Std.I32 256#usize) : Prop :=
   ∀ j : Nat, j < 16 → ∀ ℓ : Nat, ℓ < 16 →
     Spec.mont_reduce_pure (lift_fe_int (r.val[16 * j + ℓ]!).val)
-      = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+      = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
           (Spec.mont_reduce_pure (lift_fe_int (accumulator.val[16 * j + ℓ]!).val))
           ((Spec.ntt_multiply_pure_no_acc
               (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -9377,7 +9378,7 @@ noncomputable def accumulating_ntt_multiply_poly_post
 
 namespace L6_3_FC
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
 /-- Step-local accumulator: 256-lane `I32` array. -/
 abbrev Acc := Std.Array Std.I32 256#usize
@@ -9399,7 +9400,7 @@ def inv (myself rhs : Poly) (acc_init : Acc) :
   fun k acc => pure (
     (∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
       Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
-        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
             (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
             ((Spec.ntt_multiply_pure_no_acc
                 (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -9452,7 +9453,7 @@ theorem array_index_mut_range_ok_eq_fc
   have h_a_slice_len : a_slice.val.length = a.val.length := by rw [h_a_slice_val]
   have h1' : r.end.val ≤ a_slice.val.length := by rw [h_a_slice_len]; exact h1
   -- Slice-level index_mut over the same range.
-  have hT := libcrux_iot_ml_kem.Util.core_models_Slice_Insts_index_mut_RangeUsize_spec
+  have hT := libcrux_iot_ml_kem.Util.SliceSpecs.core_models_Slice_Insts_index_mut_RangeUsize_spec
               (T := T) a_slice
               ({ start := r.start, «end» := r.end } : CoreModels.core.ops.range.Range Std.Usize)
               h0 h1'
@@ -9519,17 +9520,17 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
   · -- `Some i = k` branch.
     have hk_16 : k.val < 16 := by rw [h16] at h_lt; exact h_lt
     obtain ⟨s_iter, hs_val_eq, h_iter_some⟩ :=
-      libcrux_iot_ml_kem.Util.iter_next_some_eq k h_lt
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_some_eq k h_lt
     -- (1) t := self.coefficients[k] and t1 := rhs.coefficients[k].
     set t : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
       myself.coefficients.val[k.val]! with ht_def
     set t1 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
       rhs.coefficients.val[k.val]! with ht1_def
     have h_idx_t : Aeneas.Std.Array.index_usize myself.coefficients k = .ok t :=
-      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq myself.coefficients k
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq myself.coefficients k
         (by rw [h_self_coef_len]; exact hk_16)
     have h_idx_t1 : Aeneas.Std.Array.index_usize rhs.coefficients k = .ok t1 :=
-      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq rhs.coefficients k
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq rhs.coefficients k
         (by rw [h_rhs_coef_len]; exact hk_16)
     -- (2) i1 := k * 16, i2 := k + 1, i3 := i2 * 16.
     have hi1_max : k.val * (16#usize : Std.Usize).val ≤ Std.Usize.max := by
@@ -9831,7 +9832,7 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
     have h_inv_pure :
         (∀ j : Nat, j < s_iter.val → ∀ ℓ : Nat, ℓ < 16 →
           Spec.mont_reduce_pure (lift_fe_int (acc1.val[16 * j + ℓ]!).val)
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
                 ((Spec.ntt_multiply_pure_no_acc
                     (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -9890,7 +9891,7 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
                 (lift_fe_mont z0) (lift_fe_mont z1)
                 (lift_fe_mont z2) (lift_fe_mont z3)
                 (Spec.chunk_reducing_from_i32_array_pure s)).val[ℓ]!
-                = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                     ((Spec.chunk_reducing_from_i32_array_pure s).val[ℓ]!)
                     ((Spec.ntt_multiply_pure_no_acc
                         (lift_chunk_mont t) (lift_chunk_mont t1)
@@ -9898,14 +9899,14 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
                         (lift_fe_mont z2) (lift_fe_mont z3)).val[ℓ]!) := by
             unfold ntt_multiply_base_case_alg Spec.chunk_add_pure
             show ((List.range 16).map (fun i =>
-              libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 ((Spec.chunk_reducing_from_i32_array_pure s).val[i]!)
                 ((Spec.ntt_multiply_pure_no_acc
                   (lift_chunk_mont t) (lift_chunk_mont t1)
                   (lift_fe_mont z0) (lift_fe_mont z1)
                   (lift_fe_mont z2) (lift_fe_mont z3)).val[i]!)))[ℓ]! = _
             have h_len : ((List.range 16).map (fun i =>
-              libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+              libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 ((Spec.chunk_reducing_from_i32_array_pure s).val[i]!)
                 ((Spec.ntt_multiply_pure_no_acc
                   (lift_chunk_mont t) (lift_chunk_mont t1)
@@ -9925,7 +9926,7 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
             rw [List.getElem_map, List.getElem_range]
           have h_chunk_eq :
               Spec.mont_reduce_pure (lift_fe_int (s1.val[ℓ]!).val)
-                = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                     (Spec.mont_reduce_pure (lift_fe_int (s.val[ℓ]!).val))
                     ((Spec.ntt_multiply_pure_no_acc
                         (lift_chunk_mont t) (lift_chunk_mont t1)
@@ -9994,7 +9995,7 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
   · -- `None` branch: k ≥ 16, done.
     have hk_ge : k.val ≥ (16#usize : Std.Usize).val := Nat.not_lt.mp h_lt
     have hk_eq : k.val = 16 := by rw [h16] at hk_ge; omega
-    have h_iter_none := libcrux_iot_ml_kem.Util.iter_next_none_eq k hk_ge
+    have h_iter_none := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_none_eq k hk_ge
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) myself rhs
@@ -10020,7 +10021,7 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
           Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
                 ((Spec.ntt_multiply_pure_no_acc
                     (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -10098,7 +10099,7 @@ theorem accumulating_ntt_multiply_poly_fc
   rw [h_vre]; simp only [Aeneas.Std.bind_tc_ok]
   unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_loop
   apply Std.Do.Triple.of_entails_right _
-    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+    (libcrux_iot_ml_kem.Util.LoopSpecs.loop_range_spec_usize
       (fun (iter1, acc1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) myself rhs iter1 acc1)
@@ -10124,7 +10125,7 @@ theorem accumulating_ntt_multiply_poly_fc
     have h_inv :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
           Spec.mont_reduce_pure (lift_fe_int (r.val[16 * j + ℓ]!).val)
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 (Spec.mont_reduce_pure (lift_fe_int (accumulator.val[16 * j + ℓ]!).val))
                 ((Spec.ntt_multiply_pure_no_acc
                     (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -10193,7 +10194,7 @@ noncomputable def accumulating_ntt_multiply_poly_cache_post
   ∀ j : Fin 16, ∀ i : Fin 8,
     ((cache.coefficients.val[j.val]!).elements.val[i.val]!).val.natAbs ≤ 3328
     ∧ lift_fe_mont ((cache.coefficients.val[j.val]!).elements.val[i.val]!)
-        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure
+        = libcrux_iot_ml_kem.Spec.Pure.FieldElement.mul_pure
             (lift_fe_mont ((rhs.coefficients.val[j.val]!).elements.val[2 * i.val + 1]!))
             (Spec.effective_zeta_fe i
               (Spec.zeta_at (64 + 4 * j.val))
@@ -10203,7 +10204,7 @@ noncomputable def accumulating_ntt_multiply_poly_cache_post
 
 namespace L6_3c_fill_FC
 
-open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
+open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
 abbrev Acc := L6_3_FC.Acc
 abbrev Poly := L6_3_FC.Poly
@@ -10214,7 +10215,7 @@ def inv (myself rhs : Poly) (acc_init : Acc) (cache_init : Poly) :
   fun k acc cache => pure (
     (∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
       Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
-        = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+        = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
             (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
             ((Spec.ntt_multiply_pure_no_acc
                 (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -10303,17 +10304,17 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
   · -- `Some i = k` branch.
     have hk_16 : k.val < 16 := by rw [h16] at h_lt; exact h_lt
     obtain ⟨s_iter, hs_val_eq, h_iter_some⟩ :=
-      libcrux_iot_ml_kem.Util.iter_next_some_eq k h_lt
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_some_eq k h_lt
     -- (1) t := self.coefficients[k] and t1 := rhs.coefficients[k].
     set t : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
       myself.coefficients.val[k.val]! with ht_def
     set t1 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
       rhs.coefficients.val[k.val]! with ht1_def
     have h_idx_t : Aeneas.Std.Array.index_usize myself.coefficients k = .ok t :=
-      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq myself.coefficients k
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq myself.coefficients k
         (by rw [h_self_coef_len]; exact hk_16)
     have h_idx_t1 : Aeneas.Std.Array.index_usize rhs.coefficients k = .ok t1 :=
-      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq rhs.coefficients k
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq rhs.coefficients k
         (by rw [h_rhs_coef_len]; exact hk_16)
     -- (2) i1 := k * 16, i2 := k + 1, i3 := i2 * 16.
     have hi1_max : k.val * (16#usize : Std.Usize).val ≤ Std.Usize.max := by
@@ -10396,7 +10397,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
       unfold Aeneas.Std.Array.index_mut_usize
       have h_idx : Aeneas.Std.Array.index_usize cache.coefficients k
           = .ok (cache.coefficients.val[k.val]!) :=
-        libcrux_iot_ml_kem.Util.array_index_usize_ok_eq cache.coefficients k
+        libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq cache.coefficients k
           (by rw [h_cache_coef_len]; exact hk_16)
       rw [h_idx]; rfl
     -- (5) Read 4 zetas via polynomial.zeta_fc.
@@ -10640,7 +10641,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
     have h_inv_pure :
         (∀ j : Nat, j < s_iter.val → ∀ ℓ : Nat, ℓ < 16 →
           Spec.mont_reduce_pure (lift_fe_int (acc1.val[16 * j + ℓ]!).val)
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
                 ((Spec.ntt_multiply_pure_no_acc
                     (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -10699,7 +10700,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
                 (lift_fe_mont z0) (lift_fe_mont z1)
                 (lift_fe_mont z2) (lift_fe_mont z3)
                 (Spec.chunk_reducing_from_i32_array_pure s)).val[ℓ]!
-                = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                     ((Spec.chunk_reducing_from_i32_array_pure s).val[ℓ]!)
                     ((Spec.ntt_multiply_pure_no_acc
                         (lift_chunk_mont t) (lift_chunk_mont t1)
@@ -10709,7 +10710,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
             exact Spec.chunk_add_pure_lane_eq _ _ ℓ hℓ
           have h_chunk_eq :
               Spec.mont_reduce_pure (lift_fe_int (s1.val[ℓ]!).val)
-                = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                     (Spec.mont_reduce_pure (lift_fe_int (s.val[ℓ]!).val))
                     ((Spec.ntt_multiply_pure_no_acc
                         (lift_chunk_mont t) (lift_chunk_mont t1)
@@ -10803,7 +10804,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
   · -- `None` branch: k ≥ 16, done.
     have hk_ge : k.val ≥ (16#usize : Std.Usize).val := Nat.not_lt.mp h_lt
     have hk_eq : k.val = 16 := by rw [h16] at hk_ge; omega
-    have h_iter_none := libcrux_iot_ml_kem.Util.iter_next_none_eq k hk_ge
+    have h_iter_none := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_none_eq k hk_ge
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) myself rhs
@@ -10830,7 +10831,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
           Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
                 ((Spec.ntt_multiply_pure_no_acc
                     (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -10908,7 +10909,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_fc
   rw [h_vre]; simp only [Aeneas.Std.bind_tc_ok]
   unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop
   apply Std.Do.Triple.of_entails_right _
-    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+    (libcrux_iot_ml_kem.Util.LoopSpecs.loop_range_spec_usize
       (fun (iter1, p) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) myself rhs iter1 p.1 p.2)
@@ -11019,17 +11020,17 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
   · -- `Some i = k` branch.
     have hk_16 : k.val < 16 := by rw [h16] at h_lt; exact h_lt
     obtain ⟨s_iter, hs_val_eq, h_iter_some⟩ :=
-      libcrux_iot_ml_kem.Util.iter_next_some_eq k h_lt
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_some_eq k h_lt
     -- (1) t := self.coefficients[k] and t1 := rhs.coefficients[k].
     set t : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
       myself.coefficients.val[k.val]! with ht_def
     set t1 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
       rhs.coefficients.val[k.val]! with ht1_def
     have h_idx_t : Aeneas.Std.Array.index_usize myself.coefficients k = .ok t :=
-      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq myself.coefficients k
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq myself.coefficients k
         (by rw [h_self_coef_len]; exact hk_16)
     have h_idx_t1 : Aeneas.Std.Array.index_usize rhs.coefficients k = .ok t1 :=
-      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq rhs.coefficients k
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq rhs.coefficients k
         (by rw [h_rhs_coef_len]; exact hk_16)
     -- (2) i1 := k * 16, i2 := k + 1, i3 := i2 * 16.
     have hi1_max : k.val * (16#usize : Std.Usize).val ≤ Std.Usize.max := by
@@ -11109,7 +11110,7 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
     set t2 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
       cache.coefficients.val[k.val]! with ht2_def
     have h_idx_t2 : Aeneas.Std.Array.index_usize cache.coefficients k = .ok t2 :=
-      libcrux_iot_ml_kem.Util.array_index_usize_ok_eq cache.coefficients k
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.array_index_usize_ok_eq cache.coefficients k
         (by rw [h_cache_coef_len]; exact hk_16)
     -- (5) The four zetas: derived from the cache PRE at chunk k, without
     -- calling `polynomial.zeta_fc` (the impl does NOT read zetas here).
@@ -11266,7 +11267,7 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
     have h_inv_pure :
         (∀ j : Nat, j < s_iter.val → ∀ ℓ : Nat, ℓ < 16 →
           Spec.mont_reduce_pure (lift_fe_int (acc1.val[16 * j + ℓ]!).val)
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
                 ((Spec.ntt_multiply_pure_no_acc
                     (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -11315,7 +11316,7 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
                 (lift_fe_mont z0) (lift_fe_mont z1)
                 (lift_fe_mont z2) (lift_fe_mont z3)
                 (Spec.chunk_reducing_from_i32_array_pure s)).val[ℓ]!
-                = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                     ((Spec.chunk_reducing_from_i32_array_pure s).val[ℓ]!)
                     ((Spec.ntt_multiply_pure_no_acc
                         (lift_chunk_mont t) (lift_chunk_mont t1)
@@ -11325,7 +11326,7 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
             exact Spec.chunk_add_pure_lane_eq _ _ ℓ hℓ
           have h_chunk_eq :
               Spec.mont_reduce_pure (lift_fe_int (s1.val[ℓ]!).val)
-                = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+                = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                     (Spec.mont_reduce_pure (lift_fe_int (s.val[ℓ]!).val))
                     ((Spec.ntt_multiply_pure_no_acc
                         (lift_chunk_mont t) (lift_chunk_mont t1)
@@ -11389,7 +11390,7 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
   · -- `None` branch: k ≥ 16, done.
     have hk_ge : k.val ≥ (16#usize : Std.Usize).val := Nat.not_lt.mp h_lt
     have hk_eq : k.val = 16 := by rw [h16] at hk_ge; omega
-    have h_iter_none := libcrux_iot_ml_kem.Util.iter_next_none_eq k hk_ge
+    have h_iter_none := libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.iter_next_none_eq k hk_ge
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) myself rhs cache
@@ -11415,7 +11416,7 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
           Spec.mont_reduce_pure (lift_fe_int (acc.val[16 * j + ℓ]!).val)
-            = libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.add_pure
+            = libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure
                 (Spec.mont_reduce_pure (lift_fe_int (acc_init.val[16 * j + ℓ]!).val))
                 ((Spec.ntt_multiply_pure_no_acc
                     (lift_chunk_mont (myself.coefficients.val[j]!))
@@ -11476,7 +11477,7 @@ theorem accumulating_ntt_multiply_use_cache_poly_fc
   rw [h_vre]; simp only [Aeneas.Std.bind_tc_ok]
   unfold libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache_loop
   apply Std.Do.Triple.of_entails_right _
-    (libcrux_iot_ml_kem.Util.loop_range_spec_usize
+    (libcrux_iot_ml_kem.Util.LoopSpecs.loop_range_spec_usize
       (fun (iter1, acc1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) myself rhs cache iter1 acc1)
@@ -11525,4 +11526,4 @@ theorem accumulating_ntt_multiply_use_cache_poly_fc
 end L6_3c_use_irreducible
 
 
-end libcrux_iot_ml_kem.BitMlKem.FCTargets
+end libcrux_iot_ml_kem.Polynomial.NttMultiply
