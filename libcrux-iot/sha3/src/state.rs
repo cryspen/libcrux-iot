@@ -1,8 +1,8 @@
 #[cfg(hax)]
 use hax_lib::ToInt;
 #[cfg(feature = "check-secret-independence")]
-use libcrux_secrets::{Classify, Declassify};
-use libcrux_secrets::{U32, U8};
+use libcrux_secrets::Declassify;
+use libcrux_secrets::{Classify, U32, U8};
 
 use crate::lane::Lane2U32;
 #[cfg(feature = "check-secret-independence")]
@@ -72,10 +72,23 @@ impl KeccakState {
         store_block_2u32::<RATE>(self, out)
     }
 
+    /// Load the final, partial block into the state.
+    ///
+    /// The `len` data bytes `last[0..len]` are absorbed, followed by the
+    /// `delimiter` byte and the `0x80` padding bit (in the most significant
+    /// byte of the rate). This is the padded last block of the sponge; it is
+    /// XORed into the state directly, without first materializing a full
+    /// `RATE`-byte (or `200`-byte) buffer. `delimiter` and `0x80` coincide in
+    /// the same byte when `len == RATE - 1`.
     #[inline(always)]
-    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && start <= 200 && start + RATE <= 168)]
-    pub(crate) fn load_block_full<const RATE: usize>(&mut self, blocks: &[U8; 200], start: usize) {
-        load_block_full_2u32::<RATE>(self, blocks, start)
+    #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && len < RATE && len <= last.len())]
+    pub(crate) fn load_last_block<const RATE: usize>(
+        &mut self,
+        last: &[U8],
+        len: usize,
+        delimiter: U8,
+    ) {
+        load_last_block_2u32::<RATE>(self, last, len, delimiter)
     }
 
     #[inline(always)]
@@ -150,14 +163,50 @@ fn load_block_2u32<const RATE: usize>(keccak_state: &mut KeccakState, blocks: &[
     }
 }
 
-#[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && start.to_int() + RATE.to_int() <= 200.to_int())]
+#[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && len < RATE && len <= last.len())]
 #[inline(always)]
-fn load_block_full_2u32<const RATE: usize>(
+fn load_last_block_2u32<const RATE: usize>(
     keccak_state: &mut KeccakState,
-    blocks: &[U8; 200],
-    start: usize,
+    last: &[U8],
+    len: usize,
+    delimiter: U8,
 ) {
-    load_block_2u32::<RATE>(keccak_state, blocks, start);
+    #[cfg(not(eurydice))]
+    debug_assert!(RATE % 8 == 0 && len < RATE && len <= last.len());
+
+    // Assemble the padded last block lane by lane and XOR it into the state.
+    // For rate-lane `i`, byte `8 * i + k` is a data byte when its position is
+    // `< len`, the `delimiter` when its position equals `len`, and zero
+    // otherwise. The `0x80` padding bit is OR-ed into the most significant byte
+    // of the last rate-lane (so it combines with the delimiter when
+    // `len == RATE - 1`). XORing in the zero bytes leaves the state unchanged,
+    // matching a load of the fully materialized block.
+    let mut state_flat = [Lane2U32::zero(); 25];
+    for i in 0..RATE / 8 {
+        let mut bytes = [0u8; 8].classify();
+        for k in 0..8 {
+            let pos = 8 * i + k;
+            if pos < len {
+                bytes[k] = last[pos];
+            } else if pos == len {
+                bytes[k] = delimiter;
+            }
+        }
+        if i == RATE / 8 - 1 {
+            bytes[7] |= 0x80;
+        }
+        let a = U32::from_le_bytes(bytes[0..4].try_into().unwrap());
+        let b = U32::from_le_bytes(bytes[4..8].try_into().unwrap());
+        state_flat[i] = Lane2U32::from([a, b]).interleave();
+    }
+    for i in 0..RATE / 8 {
+        let got = keccak_state.get_lane(i / 5, i % 5);
+        keccak_state.set_lane(
+            i / 5,
+            i % 5,
+            Lane2U32::from_ints([got[0] ^ state_flat[i][0], got[1] ^ state_flat[i][1]]),
+        );
+    }
 }
 
 #[hax_lib::requires(RATE % 8 == 0 && RATE <= 168 && RATE <= out.len())]

@@ -172,21 +172,20 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     pub(crate) fn absorb_final<const DELIMITER: u8>(&mut self, inputs: &[U8]) {
         let input_remainder_len = self.absorb_full(inputs);
 
-        // Consume the remaining bytes.
-        // This may be in the local buffer or in the input.
+        // Gather the remaining bytes contiguously in the local buffer. After
+        // `absorb_full` the leftover input either follows what is already
+        // buffered, or the buffer has been emptied (`buf_len == 0`).
         let input_len = inputs.len();
-        let mut blocks = [0u8; 200].classify();
-        if self.buf_len > 0 {
-            blocks[0..self.buf_len].copy_from_slice(&self.buf[0..self.buf_len]);
-        }
         if input_remainder_len > 0 {
-            blocks[self.buf_len..self.buf_len + input_remainder_len]
+            self.buf[self.buf_len..self.buf_len + input_remainder_len]
                 .copy_from_slice(&inputs[input_len - input_remainder_len..]);
         }
-        blocks[self.buf_len + input_remainder_len] = DELIMITER.classify();
-        blocks[RATE - 1] |= 0x80;
+        let last_len = self.buf_len + input_remainder_len;
 
-        self.inner.load_block_full::<RATE>(&blocks, 0);
+        // Load the partial block directly into the state, appending the domain
+        // separator and the `0x80` padding bit there, then run the permutation.
+        self.inner
+            .load_last_block::<RATE>(&self.buf, last_len, DELIMITER.classify());
         keccakf1600(&mut self.inner);
     }
 
@@ -2611,13 +2610,7 @@ pub(crate) fn absorb_final<const RATE: usize, const DELIM: u8>(
     #[cfg(not(eurydice))]
     debug_assert!(len < RATE); // && last[0].len() < RATE
 
-    let mut blocks = [0u8; WIDTH].classify();
-    if len > 0 {
-        blocks[0..len].copy_from_slice(&last[start..start + len]);
-    }
-    blocks[len] = DELIM.classify();
-    blocks[RATE - 1] |= 0x80;
-    s.load_block_full::<RATE>(&blocks, 0);
+    s.load_last_block::<RATE>(&last[start..], len, DELIM.classify());
     keccakf1600(s)
 }
 
@@ -2672,9 +2665,6 @@ pub(crate) fn squeeze_first_and_last<const RATE: usize>(s: &KeccakState, out: &m
     s.store_block_full::<RATE>(&mut b);
     out.copy_from_slice(&b[0..out.len()]);
 }
-
-// in bytes; this is the 1600 (in bits) in keccak-f[1600]
-const WIDTH: usize = 200;
 
 #[inline(always)]
 #[hax_lib::requires(
