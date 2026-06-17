@@ -188,13 +188,17 @@ The resulting Lean files are:
 
 - For running the proofs:
   - Lean 4 toolchain `leanprover/lean4:v4.30.0-rc2` (pinned in `lean-toolchain`).
-  - Hacspec-style implementation from https://github.com/cryspen/libcrux at commit `b313344`
+  - Hacspec-style implementation from https://github.com/cryspen/libcrux at commit `a4cfb1ebf26431b2ee81f0dc19383158aaf397b7`
 - For extraction:
-  - Hax at commit `1f85fc13b9967080cc657863e2000ba5d4aa8647`
+  - Hax at commit `ffdf432705d409b62ec025d253a340234b59766f`
     (not publicly available yet, https://github.com/cryspen/hax-evit)
     with the corresponding charon/aeneas versions:
     - Charon at https://github.com/AeneasVerif/charon/releases/tag/nightly-2026.06.02
     - Aeneas at https://github.com/cryspen/aeneas/releases/tag/nightly-2026.06.04
+      — note: the `aeneas-pin` file in hax-evit at this commit names tag
+      `nightly-2026.06.03`, but commit `8d2077c` (the SHA the binary
+      must report) actually ships in `nightly-2026.06.04`. Use the
+      `06.04` release.
 
 ### Building
 
