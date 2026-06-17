@@ -11,7 +11,7 @@
    "inputRev": "b313344",
    "inherited": false,
    "configFile": "lakefile.toml"},
-  {"url": "https://github.com/cryspen/hax-evit",
+  {"url": "ssh://git@github.com/cryspen/hax-evit",
    "type": "git",
    "subDir": "hax-lib/proof-libs/aeneas-lean",
    "scope": "",

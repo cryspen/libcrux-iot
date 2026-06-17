@@ -55,6 +55,15 @@ The incremental API is not part of this verification.
 All of the top-level theorems report only standard Lean axioms (`propext`,
 `Classical.choice`, `Quot.sound`) plus `bv_decide`.
 
+This is enforced on every build by [`AxiomCheck.lean`](AxiomCheck.lean): it
+runs an `#assert_no_sorry` command on each of the six digest specs that fails
+the build if any of them comes to depend on `sorryAx` (an admitted `sorry`
+anywhere in the proof tree, including the hand-written Aeneas stdlib models).
+It checks only the soundness-critical `sorry` property, not the full axiom set
+(which contains hygienically-named `bv_decide` axioms that are not stable
+enough to pin exactly). To inspect the axioms of any declaration manually, use
+`#print axioms <name>`.
+
 
 ## Proof architecture
 
