@@ -182,6 +182,51 @@ theorem squeeze_middle_bound {RATE blocks_us_val blocks_nat k : Nat}
     rw [Nat.add_mul, Nat.one_mul]
   omega
 
+/-! ### Helpers: per-byte div/mod identities for the squeeze regions.
+
+These pure-`Nat` facts and the `iterate_keccak_f_fold` shift below are shared
+between the two `blocks ≥ 1` sub-branches (partial / full trailing block) in
+both the `iterate`-witness construction and the per-byte equality. -/
+
+theorem sub_rate_div_succ {RATE k : Nat} (h_RATE_pos : 0 < RATE) (hk_RATE : RATE ≤ k) :
+    (k - RATE) / RATE + 1 = k / RATE := by
+  have hd_ge_1 : 1 ≤ k / RATE := (Nat.one_le_div_iff h_RATE_pos).mpr hk_RATE
+  have h_mod_lt : k % RATE < RATE := Nat.mod_lt _ h_RATE_pos
+  have h_kdivmod : k = k / RATE * RATE + k % RATE := (Nat.div_add_mod' k RATE).symm
+  have h_split : k / RATE * RATE = (k / RATE - 1) * RATE + RATE := by
+    conv_lhs => rw [show k / RATE = (k / RATE - 1) + 1 from by omega]
+    rw [Nat.add_mul, Nat.one_mul]
+  have h_eq : k - RATE = k % RATE + (k / RATE - 1) * RATE := by omega
+  have h_div_compute : (k - RATE) / RATE = k / RATE - 1 := by
+    rw [h_eq]
+    rw [Nat.add_mul_div_right _ _ h_RATE_pos]
+    rw [Nat.div_eq_of_lt h_mod_lt]
+    omega
+  omega
+
+theorem sub_rate_mod_eq {RATE k : Nat} (h_RATE_pos : 0 < RATE) (hk_RATE : RATE ≤ k) :
+    (k - RATE) % RATE = k % RATE := by
+  have h_rewrite : k - RATE = k % RATE + (k / RATE - 1) * RATE := by
+    have hd := Nat.div_add_mod' k RATE
+    have hd_ge_1 : 1 ≤ k / RATE := (Nat.one_le_div_iff h_RATE_pos).mpr hk_RATE
+    have h_split : k / RATE * RATE = (k / RATE - 1) * RATE + RATE := by
+      conv_lhs => rw [show k / RATE = (k / RATE - 1) + 1 from by omega]
+      rw [Nat.add_mul, Nat.one_mul]
+    omega
+  rw [h_rewrite, Nat.add_mul_mod_self_right]
+  exact Nat.mod_eq_of_lt (Nat.mod_lt _ h_RATE_pos)
+
+theorem sub_div_mul_eq (k RATE : Nat) : k - k / RATE * RATE = k % RATE := by
+  have hd := Nat.div_add_mod' k RATE; omega
+
+/-- Shift the iterate count by one block: in the middle region `k / RATE`
+applications agree with `(k - RATE) / RATE + 1` applications. -/
+theorem iter_fold_shift {RATE k : Nat} {st target : Std.Array Std.U64 25#usize}
+    (h_RATE_pos : 0 < RATE) (hk_RATE : RATE ≤ k)
+    (h : iterate_keccak_f_fold st ((k - RATE) / RATE + 1) = .ok target) :
+    iterate_keccak_f_fold st (k / RATE) = .ok target := by
+  rwa [sub_rate_div_succ h_RATE_pos hk_RATE] at h
+
 /-! ### Helper: spec-side `sponge.absorb` equals the impl absorb pipeline.
 
 Common to all three top-level dispatch branches. Given the impl-side
@@ -837,34 +882,9 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
                   else _) = _
             rw [dif_pos hk_RATE, dif_pos hk_last]
           rw [hsb]
-          have h_choose_spec := Classical.choose_spec (h_loop_bytes (k - RATE.val) h_mb)
-          have h_fold_eq := h_choose_spec.1
-          have hd_ge_1 : 1 ≤ k / RATE.val :=
-            (Nat.one_le_div_iff (by omega)).mpr hk_RATE
-          have h_mod_lt : k % RATE.val < RATE.val := Nat.mod_lt _ (by omega)
-          have h_kdivmod : k = k / RATE.val * RATE.val + k % RATE.val :=
-            (Nat.div_add_mod' k RATE.val).symm
-          have h_split : k / RATE.val * RATE.val
-                        = (k / RATE.val - 1) * RATE.val + RATE.val := by
-            conv_lhs => rw [show k / RATE.val = (k / RATE.val - 1) + 1 from by omega]
-            rw [Nat.add_mul, Nat.one_mul]
-          have h_eq : k - RATE.val = k % RATE.val + (k / RATE.val - 1) * RATE.val := by omega
-          have h_div_eq : (k - RATE.val) / RATE.val + 1 = k / RATE.val := by
-            have h_div_compute : (k - RATE.val) / RATE.val = k / RATE.val - 1 := by
-              rw [h_eq]
-              rw [Nat.add_mul_div_right _ _ (by omega : 0 < RATE.val)]
-              rw [Nat.div_eq_of_lt h_mod_lt]
-              omega
-            omega
+          have h_fold_eq := (Classical.choose_spec (h_loop_bytes (k - RATE.val) h_mb)).1
           unfold squeeze_fold at h_fold_eq
-          -- h_fold_eq : Nat.fold ((k-RATE)/RATE + 1) ... = .ok (Classical.choose ...).
-          -- Goal: Nat.fold (k/RATE) ... = .ok (Classical.choose ...).
-          -- Use h_div_eq directly.
-          have h_eq_arg : (k - RATE.val) / RATE.val + 1 = k / RATE.val := h_div_eq
-          calc iterate_keccak_f_fold (Foundation.lift s2) (k / RATE.val)
-              = iterate_keccak_f_fold (Foundation.lift s2) ((k - RATE.val) / RATE.val + 1) := by
-                rw [h_eq_arg]
-            _ = .ok (Classical.choose (h_loop_bytes (k - RATE.val) h_mb)) := h_fold_eq
+          exact iter_fold_shift h_RATE_pos hk_RATE h_fold_eq
         · -- Region 3: k ≥ last = blocks_nat * RATE.val. s_b k = s_spec_last.
           push Not at hk_last
           have hsb : s_b k = s_spec_last := by
@@ -959,20 +979,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
                   = .ok s_bj_loop := by rw [← h1, h2]
           exact (Result.ok.injEq _ _).mp this
         rw [h_s_b_eq]
-        have h_div_ge_1 : 1 ≤ k / RATE.val := (Nat.one_le_div_iff (by omega)).mpr hk_RATE
-        have h_kmRATE_mod : (k - RATE.val) % RATE.val = k % RATE.val := by
-          have h_rewrite : k - RATE.val = k % RATE.val + (k / RATE.val - 1) * RATE.val := by
-            have hd := Nat.div_add_mod' k RATE.val
-            have h_split : k / RATE.val * RATE.val = (k / RATE.val - 1) * RATE.val + RATE.val := by
-              conv_lhs => rw [show k / RATE.val = (k / RATE.val - 1) + 1 from by omega]
-              rw [Nat.add_mul, Nat.one_mul]
-            omega
-          rw [h_rewrite]
-          rw [Nat.add_mul_mod_self_right]
-          exact Nat.mod_eq_of_lt (Nat.mod_lt _ (by omega))
-        have h_sub_mod : k - k / RATE.val * RATE.val = k % RATE.val := by
-          have hd := Nat.div_add_mod' k RATE.val; omega
-        rw [h_kmRATE_mod, h_sub_mod]
+        rw [sub_rate_mod_eq h_RATE_pos hk_RATE, sub_div_mul_eq k RATE.val]
       · push Not at hk_last
         -- Region 3: last ≤ k < outlen.
         have h_off_le_k : offset.val ≤ k := by rw [h_offset_eq_last]; exact hk_last
@@ -1089,29 +1096,9 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
                 else _) = _
           rw [dif_pos hk_RATE, dif_pos hk_last]
         rw [hsb]
-        have h_choose_spec := Classical.choose_spec (h_loop_bytes (k - RATE.val) h_mb)
-        have h_fold_eq := h_choose_spec.1
-        have hd_ge_1 : 1 ≤ k / RATE.val := (Nat.one_le_div_iff (by omega)).mpr hk_RATE
-        have h_mod_lt : k % RATE.val < RATE.val := Nat.mod_lt _ (by omega)
-        have h_kdivmod : k = k / RATE.val * RATE.val + k % RATE.val :=
-          (Nat.div_add_mod' k RATE.val).symm
-        have h_split : k / RATE.val * RATE.val
-                      = (k / RATE.val - 1) * RATE.val + RATE.val := by
-          conv_lhs => rw [show k / RATE.val = (k / RATE.val - 1) + 1 from by omega]
-          rw [Nat.add_mul, Nat.one_mul]
-        have h_eq : k - RATE.val = k % RATE.val + (k / RATE.val - 1) * RATE.val := by omega
-        have h_div_eq : (k - RATE.val) / RATE.val + 1 = k / RATE.val := by
-          have h_div_compute : (k - RATE.val) / RATE.val = k / RATE.val - 1 := by
-            rw [h_eq]
-            rw [Nat.add_mul_div_right _ _ (by omega : 0 < RATE.val)]
-            rw [Nat.div_eq_of_lt h_mod_lt]
-            omega
-          omega
+        have h_fold_eq := (Classical.choose_spec (h_loop_bytes (k - RATE.val) h_mb)).1
         unfold squeeze_fold at h_fold_eq
-        calc iterate_keccak_f_fold (Foundation.lift s2) (k / RATE.val)
-            = iterate_keccak_f_fold (Foundation.lift s2) ((k - RATE.val) / RATE.val + 1) := by
-              rw [h_div_eq]
-          _ = .ok (Classical.choose (h_loop_bytes (k - RATE.val) h_mb)) := h_fold_eq
+        exact iter_fold_shift h_RATE_pos hk_RATE h_fold_eq
     obtain ⟨spec_out, h_spec_squeeze, h_spec_bytes⟩ :=
       sponge_squeeze_byte_eq outlen_us (Foundation.lift s2) RATE h_RATE_pos h_RATE_mod
         h_RATE_le_200 s_b h_iter_const
@@ -1161,20 +1148,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
                 = .ok s_bj_loop := by rw [← h1, h2]
         exact (Result.ok.injEq _ _).mp this
       rw [h_s_b_eq]
-      have h_div_ge_1 : 1 ≤ k / RATE.val := (Nat.one_le_div_iff (by omega)).mpr hk_RATE
-      have h_kmRATE_mod : (k - RATE.val) % RATE.val = k % RATE.val := by
-        have h_rewrite : k - RATE.val = k % RATE.val + (k / RATE.val - 1) * RATE.val := by
-          have hd := Nat.div_add_mod' k RATE.val
-          have h_split : k / RATE.val * RATE.val = (k / RATE.val - 1) * RATE.val + RATE.val := by
-            conv_lhs => rw [show k / RATE.val = (k / RATE.val - 1) + 1 from by omega]
-            rw [Nat.add_mul, Nat.one_mul]
-          omega
-        rw [h_rewrite]
-        rw [Nat.add_mul_mod_self_right]
-        exact Nat.mod_eq_of_lt (Nat.mod_lt _ (by omega))
-      have h_sub_mod : k - k / RATE.val * RATE.val = k % RATE.val := by
-        have hd := Nat.div_add_mod' k RATE.val; omega
-      rw [h_kmRATE_mod, h_sub_mod]
+      rw [sub_rate_mod_eq h_RATE_pos hk_RATE, sub_div_mul_eq k RATE.val]
 
 /-! ### Combined dispatcher: `keccak.keccak_keccak_spec`.
 
