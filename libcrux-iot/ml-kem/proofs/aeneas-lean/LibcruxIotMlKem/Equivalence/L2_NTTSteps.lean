@@ -483,9 +483,9 @@ theorem ntt_step_spec_B
 /-! ## Truly bnd-parameterised L2.1 — `ntt_step_spec_bnd`
 
     Same shape as `ntt_step_spec_B` but with the lane bound stated as a raw
-    `Nat` `bnd` (instead of `B * 3328`). Used by the Phase-1.2
-    `L3.{1,2,3}_B` parameterisations which carry an `bnd : Nat` invariant
-    rather than a multiplicative `B * 3328` shape.
+    `Nat` `bnd` (instead of `B * 3328`). Used by the `L3.{1,2,3}_B`
+    parameterisations which carry an `bnd : Nat` invariant rather than a
+    multiplicative `B * 3328` shape.
 
     The proof body mirrors `ntt_step_spec_B` exactly, swapping the calls to
     `add_no_overflow_value_B` / `sub_no_overflow_value_B` for their `_bnd`

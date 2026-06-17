@@ -1,30 +1,21 @@
 /-
-  # `BitMlKem/L7/Impl/ComputeMessage.lean` — L7.4 corrected S1 loop FC.
+  # `BitMlKem/L7/Impl/ComputeMessage.lean` — L7.4 S1 loop FC.
 
-  The poisoned "pure mirror" (`Impl.compute_message_acc_pure`,
-  `Impl.compute_message_pure`, `compute_message_eq_ok`) — built on the
-  numerically-REFUTED S1 conjunct
-  `Spec.poly_reducing_from_i32_array_pure (to_slice acc2)
-     = compute_message_acc_pure …` (off by R² = 1353; see
-  `L7/Tests/ComputeMessageSeamValidation.lean:24`) — has been removed.
-  The downstream FC now uses the DIRECT decomposition (lemmas B/C/D in
-  `Correctness/ComputeMessage.lean`).
+  Houses the S1 loop FC for `matrix.compute_message_loop`: the cache-free
+  analog of `compute_As_plus_e_loop0_fc`. The loop folds over
+  `i ∈ [0, K)`, each iteration applying
+  `accumulating_ntt_multiply secret_as_ntt[i] u_as_ntt[i] acc` into a
+  single I32[256] accumulator (no cache, no matrix). The POST is the
+  K-fold of the per-step POST of `accumulating_ntt_multiply_poly_fc`: a
+  `mont_reduce_pure`-per-lane `List.range`-foldl characterization plus
+  the running bound `≤ accumulator[n] + k·2^25`.
 
-  This file houses the CORRECTED S1 loop FC for `matrix.compute_message_loop`
-  (Funs.lean:1252): the cache-free analog of `compute_As_plus_e_loop0_fc`.
-  The loop folds over `i ∈ [0, K)`, each iteration applying
-  `accumulating_ntt_multiply secret_as_ntt[i] u_as_ntt[i] acc` into a single
-  I32[256] accumulator (no cache, no matrix). The POST is the K-fold of the
-  per-step POST of `accumulating_ntt_multiply_poly_fc` (FCTargets:27710):
-  a `mont_reduce_pure`-per-lane `List.range`-foldl characterization plus the
-  running bound `≤ accumulator[n] + k·2^25`.
-
-  Mirrors `L7_1b_FC.row_i_inv` / `compute_As_plus_e_loop1_loop0_fc`
-  (FCTargets:29930/30328) — the 2-conjunct, accumulator-only (no cache)
-  precedent — but DROPS the matrix-row index (two source arrays
-  `secret_as_ntt[c]`, `u_as_ntt[c]` indexed directly by `c`), and uses
-  the plain `accumulating_ntt_multiply_poly_fc` per-step lemma instead of
-  the `_use_cache_poly_fc` variant.
+  Mirrors `L7_1b_FC.row_i_inv` / `compute_As_plus_e_loop1_loop0_fc` — the
+  2-conjunct, accumulator-only (no cache) precedent — but drops the
+  matrix-row index (two source arrays `secret_as_ntt[c]`, `u_as_ntt[c]`
+  indexed directly by `c`), and uses the plain
+  `accumulating_ntt_multiply_poly_fc` per-step lemma instead of the
+  `_use_cache_poly_fc` variant.
 -/
 import LibcruxIotMlKem.BitMlKem.FCTargets
 import LibcruxIotMlKem.BitMlKem.L7.Common
@@ -75,7 +66,7 @@ abbrev Acc := L6_3_FC.Acc
         `secret_as_ntt[c] ⊛ u_as_ntt[c]` from columns `[0, k)`.
     (2) accumulator bound: `|acc.val[n]| ≤ |acc_init.val[n]| + k · 2^25`.
 
-    Cache-free analog of `L7_1b_FC.row_i_inv` (FCTargets:29930) with the
+    Cache-free analog of `L7_1b_FC.row_i_inv` with the
     matrix-row index dropped: both source arrays are indexed directly by
     the column `c`. -/
 def loop_inv {K : Std.Usize}
@@ -122,11 +113,10 @@ def step_post {K : Std.Usize}
 end L7_4_FC
 
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Mirrors `L7_1b_irreducible`
--- (FCTargets:29984) — heavy POST predicates are made locally irreducible
+-- — heavy POST predicates are made locally irreducible
 -- across the step lemma + outer Triple so that elaboration does not
 -- whnf-explode through the 2-conjunct `loop_inv` body or the nested
--- `∀ j, ∀ ℓ` accumulator characterization. Per
--- `feedback_minimize_irreducibility_scope.md`, we do NOT mark
+-- `∀ j, ∀ ℓ` accumulator characterization. -- we do NOT mark
 -- `L7_4_FC.loop_inv` / `step_post` irreducible.
 section L7_4_irreducible
 attribute [local irreducible] accumulating_ntt_multiply_poly_post
@@ -140,10 +130,10 @@ set_option maxHeartbeats 16000000 in
     `step_post` (either `.cont` advancing the invariant to k+1 or `.done`
     capping at K).
 
-    Mirrors `compute_As_plus_e_loop1_loop0_step_lemma_fc` (FCTargets:30009)
+    Mirrors `compute_As_plus_e_loop1_loop0_step_lemma_fc`
     but cache-free: no `matrix.entry` (read `secret_as_ntt[k]`, `u_as_ntt[k]`
     directly), no cache read, and the per-column forward dep is
-    `accumulating_ntt_multiply_poly_fc` (FCTargets:27710) which returns a
+    `accumulating_ntt_multiply_poly_fc` which returns a
     single accumulator (no pair). -/
 private theorem compute_message_loop_step_lemma_fc
     {K : Std.Usize}
@@ -430,7 +420,7 @@ private theorem compute_message_loop_step_lemma_fc
     `≤ 2^30`) at every iteration: the running accumulator satisfies
     `acc[n] ≤ accumulator[n] + k·2^25 ≤ accumulator[n] + K·2^25 ≤ 2^30`.
 
-    Mirrors `compute_As_plus_e_loop1_loop0_fc` (FCTargets:30328) cache-free,
+    Mirrors `compute_As_plus_e_loop1_loop0_fc` cache-free,
     with two source arrays indexed directly by the column. -/
 @[spec]
 theorem compute_message_loop_fc
@@ -509,20 +499,19 @@ end L7_4_irreducible
 /-! ## A — the acc-bridge ("crux"): R-factor reconciliation.
 
     Relates the hacspec `multiply_vectors` (on `lift_vec`-lifted inputs) to
-    the loop accumulator's reduced value, scaled by `R = 2285`. This IS the
-    committed seam `L7/Tests/ComputeMessageSeamValidation.lean` SEAM1
-    (`multiply_vectors = 2285 · result1`, where `result1 = reducing(acc2)`),
-    recast purely. The RHS `mont_strip_pure (poly_reducing(to_slice acc2))`
-    equals `lift_poly result1` via the proven `reducing_from_i32_array_fc`
-    POST (in the `lift_poly_mont` domain) composed with
-    `Impl.mont_strip_lift_poly_mont_eq_lift_poly` (Common.lean:218). -/
+    the loop accumulator's reduced value, scaled by `R = 2285`
+    (`multiply_vectors = 2285 · result1`, where `result1 = reducing(acc2)`).
+    The RHS `mont_strip_pure (poly_reducing(to_slice acc2))` equals
+    `lift_poly result1` via the proven `reducing_from_i32_array_fc` POST
+    (in the `lift_poly_mont` domain) composed with
+    `Impl.mont_strip_lift_poly_mont_eq_lift_poly`. -/
 
-/-- **Banked crux helper (PROVEN).** Per-lane R-factor reconciliation.
+/-- Per-lane R-factor reconciliation.
 
     For any 256-FE array `p` and lane `j < 256`,
     `scaleZ 2285 (mont_strip_pure p)` and
-    `mul_pure (p[j]) (mul_pure 1353 1353)` agree in `ZMod 3329`. This is the
-    numerically-validated factor identity (`#eval`-pinned: the `mont_strip`
+    `mul_pure (p[j]) (mul_pure 1353 1353)` agree in `ZMod 3329`. The
+    factor identity unpacks as: the `mont_strip`
     factor `zmodOfFE (lift_fe_mont 1353) = 1353·169 = 2285 = R`, the
     `multiply_ntts`-canonical factor `mul_pure 1353 1353 = 2285² = 1353`,
     and `2285 · 2285 = 1353` in `ZMod 3329`).
@@ -565,12 +554,12 @@ theorem compute_message_recon_lane
   rw [hc]
 
 /-! ### `multiply_vectors` loop reduction (mirror of
-    `multiply_matrix_by_column_at_eq`, FCTargets:32366, but cache/matrix-free:
+    `multiply_matrix_by_column_at_eq`,, but cache/matrix-free:
     the two source vectors are indexed directly by the column `j`). -/
 
 /-- Per-lane partial sum produced by the `multiply_vectors` loop at step `k`:
     the `add_pure` foldl of the per-column `multiply_ntts_pure` lane values,
-    seeded at the zero FE. Mirrors `col_loop_lane_at_step` (FCTargets:32148)
+    seeded at the zero FE. Mirrors `col_loop_lane_at_step`
     but folds the raw `multiply_ntts_pure` lane (the loop body adds the
     `multiply_ntts` product directly — no pre-applied canonical factor). -/
 private noncomputable def vec_loop_lane_at_step {K : Std.Usize}
@@ -886,8 +875,7 @@ private theorem multiply_vectors_eq {K : Std.Usize}
 
 /-! ### re-derived Helper 1 (`multiply_ntts_lane_eq_canonical_factor`).
 
-    The chunk-lift bilinearity bridge `multiply_ntts_lane_eq_canonical_factor`
-    (FCTargets:32039) and its two dependencies (`chunk_at_lift_poly_lane`,
+    The chunk-lift bilinearity bridge `multiply_ntts_lane_eq_canonical_factor` and its two dependencies (`chunk_at_lift_poly_lane`,
     `ntt_multiply_pure_no_acc_lane_scale`) are `private` to FCTargets. We
     re-derive a public-callable copy here from public primitives
     (`Spec.multiply_ntts_pure_eq_chunked_no_acc`, `zmodOfFE_{add,mul}_pure`,
@@ -1155,7 +1143,7 @@ set_option maxHeartbeats 1000000 in
 
     Relates the hacspec `multiply_vectors` (on `lift_vec`-lifts) to the loop
     accumulator's reduced value, scaled by `R = 2285`. Statement numerically
-    VALIDATED (SEAM1, factor 2285 = R). RHS kept in the
+    Factor 2285 = R. RHS kept in the
     `scaleZ 2285 (mont_strip ∘ poly_reducing ∘ to_slice acc2)` form per the
     FC-glue requirement.
 

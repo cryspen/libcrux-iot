@@ -2,12 +2,11 @@
   # `BitMlKem/L7/Impl/ComputeRingElementV.lean` — L7.3 chunks-exact loop keystone.
 
   Domain-free iterator infrastructure for the `loop` in
-  `matrix.compute_ring_element_v_loop` (Funs.lean:1532), which iterates over a
+  `matrix.compute_ring_element_v_loop`, which iterates over a
   `Enumerate (ChunksExact U8)` via the `loop` combinator. There is no Mathlib,
   no ZMod, no mont reasoning here — purely Slice / Usize / iterator facts.
 
-  Mirrors the EXISTING range-loop keystone `loop_range_spec_usize`
-  (Util/LoopSpecs.lean:234): same induction skeleton, with `e.val - start.val`
+  Mirrors the EXISTING range-loop keystone `loop_range_spec_usize`: same induction skeleton, with `e.val - start.val`
   replaced by `numChunks - k` (k = enumerate count).
 
   Deliverables:
@@ -106,7 +105,7 @@ theorem enumerate_chunks_next_done
 
 /-! ## Deliverable 2 — the loop Hoare spec keystone
 
-Mirrors `loop_range_spec_usize` (Util/LoopSpecs.lean:234): same induction
+Mirrors `loop_range_spec_usize`: same induction
 skeleton with `e.val - start.val` replaced by `numChunks - k`. The three
 `triple_noThrow_*_chunks` helpers below are verbatim copies of the
 `triple_noThrow_*_usize` machinery, renamed to avoid clashes. -/

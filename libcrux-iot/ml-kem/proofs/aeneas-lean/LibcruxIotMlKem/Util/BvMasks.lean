@@ -1,7 +1,7 @@
 /-
   # `Util.BvMasks` — bitvector-mask identities used by L0.x Triples.
 
-  Barrier-layer module (per the campaign's Mathlib-isolation discipline).
+  Barrier-layer module (Mathlib-isolation discipline).
   Above-barrier callers (e.g. `Equivalence/L0_FieldArith.lean`) import
   this file and use the exported lemmas; they MUST NOT import Mathlib
   themselves. The proof bodies here are free to use `interval_cases`,

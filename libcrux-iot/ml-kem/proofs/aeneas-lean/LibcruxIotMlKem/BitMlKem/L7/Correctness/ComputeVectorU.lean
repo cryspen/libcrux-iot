@@ -240,13 +240,13 @@ open hacspec_ml_kem.parameters (FieldElement)
     `n#usize` macro tactic — SKILL §9.13 / nested-index trap). -/
 private abbrev Poly256 := Std.Array FieldElement 256#usize
 
-/-- Local copy of the `private triple_of_ok_fc` (FCTargets:1305). -/
+/-- Local copy of the `private triple_of_ok_fc`. -/
 private theorem triple_of_ok_fc' {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
   subst hx; simp [Std.Do.Triple, Std.Do.WP.wp, PostCond.noThrow, PredTrans.apply, hp]
 
-/-- Local copy of the `private triple_exists_ok_fc` (FCTargets:1312). -/
+/-- Local copy of the `private triple_exists_ok_fc`. -/
 private theorem triple_exists_ok_fc' {α : Type} {x : Result α} {P : α → Prop}
     (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄) :
     ∃ v, x = .ok v ∧ P v := by

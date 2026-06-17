@@ -6,7 +6,7 @@
   tail unfolds to
     `let a ← add_polynomials inner_product_inv error_2;
      add_polynomials a message`,
-  where the L7.3 SEAM-2 bridge supplies `inner_product_inv = scaleZ 512 result2`.
+  where the L7.3 bridge supplies `inner_product_inv = scaleZ 512 result2`.
 
   This file proves the *outer* `add_polynomials … message` step on top of the
   already-proven *inner* bridge `ComputeVectorU.add_polynomials_scaleZ_eq`
@@ -15,11 +15,11 @@
     add_polynomials (add_error_reduce_pure result2 e2) msg
       = add_message_error_reduce_pure e2 msg result2.
 
-  Per-lane both sides reduce, in `ZMod 3329`, to `512·result2 + e2 + msg`
-  (factor 1 — `L7/Tests/ComputeRingElementVSeamValidation.lean`, #guard-locked).
-  The proof mirrors `add_polynomials_scaleZ_eq` exactly: `matrix_add_polynomials_eq_ok`
-  reduction, `eq_of_zmod_lane_canon''` 3-part split, per-lane `add_pure`
-  associativity/commutativity closed by `ring`.
+  Per-lane both sides reduce, in `ZMod 3329`, to `512·result2 + e2 + msg`.
+  The proof mirrors `add_polynomials_scaleZ_eq` exactly:
+  `matrix_add_polynomials_eq_ok` reduction, `eq_of_zmod_lane_canon''`
+  3-part split, per-lane `add_pure` associativity/commutativity closed by
+  `ring`.
 
   Local copies of the `private` lane-access / canonicity helpers from
   `ComputeVectorU` are re-derived here (the originals are `private`).

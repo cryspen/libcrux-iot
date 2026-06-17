@@ -1,7 +1,7 @@
 /-
   # `BitMlKem/L7/Impl/ComputeVectorU.lean` — L7.2 row-0 fill-loop FC.
 
-  Loop FC for `matrix.compute_vector_u_loop0` (Funs.lean:1772): the row-0
+  Loop FC for `matrix.compute_vector_u_loop0`: the row-0
   column loop of `matrix.compute_vector_u`. Iterates over `j ∈ [0, K)`; each
   step SAMPLES the matrix entry `matrix_entry1 = sample_matrix_entry seed 0 j`
   (rather than reading a stored slice, as L7.1 does), reads `r_as_ntt[j]`,
@@ -9,15 +9,14 @@
   column j's contribution to the I32[256] accumulator AND populate
   `cache[j]`, then stores the new cache chunk.
 
-  Mirrors the PROVEN L7.1 sibling `compute_As_plus_e_loop0_fc`
-  (FCTargets:29818) + `compute_As_plus_e_loop0_step_lemma_fc` (29403) +
-  `L7_1a_FC.row0_inv` (29296). Structural deltas vs L7.1:
+  Mirrors the L7.1 sibling `compute_As_plus_e_loop0_fc` +
+  `compute_As_plus_e_loop0_step_lemma_fc` + `L7_1a_FC.row0_inv`.
+  Structural deltas vs L7.1:
 
   * `r_as_ntt`, `cache` are `Slice` (not `Array K`); we use
     `Slice.index_usize` / `Slice.index_mut_usize` / `Slice.set`.
   * the matrix entry per column `c` comes from `sample_matrix_entry`, whose
-    only stable characterization is the AXIOM `sample_matrix_entry_fc`
-    (Axioms.lean:126): `lift_poly (sample seed 0 c) =
+    only stable characterization is the AXIOM `sample_matrix_entry_fc`: `lift_poly (sample seed 0 c) =
     (lift_matrix_from_seed seed K).val[0]!.val[c]!` (ROW-major). Since the
     sampled polys are NOT retained by the impl, the acc invariant cannot use
     `lift_chunk_mont (matrix_entry.coefs[j])` of a stored poly (as L7.1 does
@@ -62,8 +61,7 @@ private theorem triple_of_ok_fc {α : Type} {x : Result α} {v : α}
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
   subst hx; simp [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply, hp]
 
-/-- Local re-derivation of FCTargets' `private chunk_at_lift_poly_fc`
-    (FCTargets:5740): `Spec.chunk_at (lift_poly re) k = lift_chunk re.coefs[k]`. -/
+/-- Local re-derivation of FCTargets' `private chunk_at_lift_poly_fc`: `Spec.chunk_at (lift_poly re) k = lift_chunk re.coefs[k]`. -/
 private theorem chunk_at_lift_poly_local
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
@@ -101,7 +99,7 @@ private theorem chunk_at_lift_poly_local
 
 /-! ## §L7.2-loop0 — row-0 column-loop scaffolding (namespace `L7_2a_FC`).
 
-    Mirrors `L7_1a_FC` (FCTargets:29279). The matrix factor in conjunct (1)
+    Mirrors `L7_1a_FC`. The matrix factor in conjunct (1)
     is the canonical `Spec.chunk_at (lm.val[c]!) j` of the axiom-pinned
     row-0 matrix row `lm = (lift_matrix_from_seed seed K).val[0]!`, NOT a
     `lift_chunk_mont` of a stored poly. -/
@@ -214,11 +212,10 @@ def row0_step_post {K : Std.Usize}
 end L7_2a_FC
 
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Mirrors `L7_1a_irreducible`
--- (FCTargets:29373) — heavy POST predicates and the per-column forward dep are
+-- — heavy POST predicates and the per-column forward dep are
 -- made locally irreducible across the step lemma + outer Triple so that
 -- elaboration does not whnf-explode through the 4-conjunct `row0_inv` body or
--- the nested accumulator characterization. Per
--- `feedback_minimize_irreducibility_scope.md`, we do NOT mark
+-- the nested accumulator characterization. -- we do NOT mark
 -- `L7_2a_FC.row0_inv` / `row0_step_post` irreducible — keeping them reducible
 -- preserves the `simpa`-based destructure of `h_inv`.
 section L7_2a_irreducible
@@ -236,7 +233,7 @@ set_option maxHeartbeats 16000000 in
     `matrix.compute_vector_u_loop0.body` produces the `row0_step_post`
     (either `.cont` advancing the invariant to k+1 or `.done` capping at K).
 
-    Mirrors `compute_As_plus_e_loop0_step_lemma_fc` (FCTargets:29403) with two
+    Mirrors `compute_As_plus_e_loop0_step_lemma_fc` with two
     structural deltas:
     1. The matrix entry is SAMPLED via `sample_matrix_entry` (whose only stable
        characterization is the axiom `sample_matrix_entry_fc`), not read from a
@@ -691,7 +688,7 @@ private theorem compute_vector_u_loop0_step_lemma_fc
     that for all (j, ℓ) ∈ [0, 16)², `mont_reduce_pure (lift_fe_int acc[16j+ℓ])`
     equals the K-column all-mont sum of `ntt_multiply_pure_no_acc` outputs over
     `lift_chunk_mont mp[c].coefs[j]` × `lift_chunk_mont r_arr[c].coefs[j]`,
-    plus the per-column cache population. This is the byte-locked form consumed
+    plus the per-column cache population. This is the form consumed
     by the downstream `compute_vector_u` acc-bridge.
 
     PRE: `seed.length = 32` (axiom requirement), `r_as_ntt.length = K`, the
@@ -699,7 +696,7 @@ private theorem compute_vector_u_loop0_step_lemma_fc
     and the accumulator BUDGET `(acc[n]).val.natAbs + K·2^25 ≤ 2^30`. The matrix
     bound is supplied internally by the sample axiom's POST.
 
-    Mirrors `compute_As_plus_e_loop0_fc` (FCTargets:29818). -/
+    Mirrors `compute_As_plus_e_loop0_fc`. -/
 theorem compute_vector_u_loop0_fc {K : Std.Usize} {Hasher : Type}
     (hash_functionsHashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher)
     (matrix_entry : L7_2a_FC.Poly) (seed : Slice Std.U8)
@@ -725,7 +722,7 @@ theorem compute_vector_u_loop0_fc {K : Std.Usize} {Hasher : Type}
     (lift_matrix_from_seed seed K).val[0]! with hlm0_def
   -- Combined invariant: `row0_inv` ∧ cache-length-preservation (the latter is
   -- needed to discharge the per-iteration `Slice.index_mut_usize` bound, which
-  -- the byte-locked `row0_inv` does not carry; `Slice.set` preserves length).
+  -- the `row0_inv` does not carry; `Slice.set` preserves length).
   set inv2 : Std.Usize →
       ((libcrux_iot_ml_kem.polynomial.PolynomialRingElement
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) ×
@@ -1195,7 +1192,7 @@ def row_i_step_post {K : Std.Usize}
 end L7_2b_FC
 
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Mirrors `L7_2a_irreducible`
--- and `L7_1b_irreducible`. Per `feedback_minimize_irreducibility_scope.md`, we
+-- and `L7_1b_irreducible`. we
 -- do NOT mark `L7_2b_FC.row_i_inv` / `row_i_step_post` irreducible.
 section L7_2b_irreducible
 attribute [local irreducible] accumulating_ntt_multiply_poly_post
@@ -1601,7 +1598,7 @@ private theorem compute_vector_u_loop1_loop0_step_lemma_fc
     accumulator BUDGET, and the cache-post hypothesis `h_cache` (the cache was
     populated by Stage 1's row-0 column loop and is consumed read-only).
 
-    Mirrors `compute_As_plus_e_loop1_loop0_fc` (FCTargets:30331) + the local
+    Mirrors `compute_As_plus_e_loop1_loop0_fc` + the local
     `compute_vector_u_loop0_fc`. -/
 theorem compute_vector_u_loop1_loop0_fc {K : Std.Usize} {Hasher : Type}
     (hash_functionsHashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher)
@@ -1631,7 +1628,7 @@ theorem compute_vector_u_loop1_loop0_fc {K : Std.Usize} {Hasher : Type}
     (lift_matrix_from_seed seed K).val[i.val]! with hlm_i_def
   -- Combined invariant: `row_i_inv` ∧ cache-length-preservation (needed to
   -- discharge the per-iteration `Slice.index_usize cache` bound; the cache is
-  -- never mutated so its length is constant, but the byte-locked `row_i_inv`
+  -- never mutated so its length is constant, but the `row_i_inv`
   -- does not carry it).
   set inv2 : Std.Usize →
       ((libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -1898,7 +1895,7 @@ theorem compute_vector_u_rowi_acc_bridge {K : Std.Usize}
     the per-row finalize `reducing_from_i32_array → invert_ntt_montgomery →
     add_error_reduce`, storing `result[i1] := result_poly`.
 
-    Mirrors `compute_As_plus_e_loop1_fc` (FCTargets:31428) structurally — the
+    Mirrors `compute_As_plus_e_loop1_fc` structurally — the
     rows loop `loop_range_spec_usize` wrapper + the re-zero-per-row pattern +
     the (done-rows ∧ unchanged-rows) `rows_inv`. L7.1's per-row finalize is
     reducing→add (no invert); ours is reducing→INVERT→add (the L7.4 glue WALK,
@@ -1943,8 +1940,7 @@ noncomputable def row_spec {K : Std.Usize}
     (2) Unchanged rows: for each `r ∈ [0, K)` with `r < start ∨ k ≤ r`,
         `result[r]! = result_init[r]!`.
     (3) Length preservation: `result.length = K.val` (needed to discharge the
-        per-iteration `Slice.index_mut result k` bound; the byte-locked
-        conjuncts (1)/(2) do not carry it). -/
+        per-iteration `Slice.index_mut result k` bound; the conjuncts (1)/(2) do not carry it). -/
 def rows_inv {K : Std.Usize}
     (lm : Std.Array (Std.Array FEPoly K) K)
     (r_as_ntt error_1 : Slice Poly)
@@ -1986,8 +1982,7 @@ set_option maxHeartbeats 16000000 in
     inner column loop (`compute_vector_u_loop1_loop0_fc`), then the per-row
     finalize WALK (`reducing_from_i32_array` → `invert_ntt_montgomery` →
     `add_error_reduce`), and store `result[i1] := result_poly`. Re-establishes
-    `rows_inv` at `k+1`. Mirrors `compute_As_plus_e_loop1_step_lemma_fc`
-    (FCTargets:30792) + the L7.4 glue finalize (`FC/ComputeMessage.lean` 168-251,
+    `rows_inv` at `k+1`. Mirrors `compute_As_plus_e_loop1_step_lemma_fc` + the L7.4 glue finalize (`FC/ComputeMessage.lean` 168-251,
     add-error instead of subtract). -/
 private theorem compute_vector_u_loop1_step_lemma_fc {K : Std.Usize} {Hasher : Type}
     (hash_functionsHashInst : libcrux_iot_ml_kem.hash_functions.Hash Hasher)
@@ -2486,7 +2481,7 @@ private theorem compute_vector_u_loop1_step_lemma_fc {K : Std.Usize} {Hasher : T
 
 set_option maxHeartbeats 1600000 in
 /-- **L7.2 Stage 3 — outer rows loop FC** (`compute_vector_u_loop1`). Mirrors
-    `compute_As_plus_e_loop1_fc` (FCTargets:31428): the rows loop `[start, K)`,
+    `compute_As_plus_e_loop1_fc`: the rows loop `[start, K)`,
     each row re-zeroing the accumulator, running the use-cache inner column loop,
     and finalizing (reducing → invert → add_error). POST is the resolved
     `L7_2c_FC.rows_inv` at `k = K`: every row `r ∈ [start, K)` matches

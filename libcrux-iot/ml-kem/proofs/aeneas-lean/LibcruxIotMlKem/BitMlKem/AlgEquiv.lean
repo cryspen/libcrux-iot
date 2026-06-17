@@ -1,13 +1,11 @@
 /-
-  # `BitMlKem/AlgEquiv.lean` — M.4 easy cluster.
+  # `BitMlKem/AlgEquiv.lean` — algebraic-equivalence lemmas for the
+  easy `bit_<op>` cluster.
 
-  Algebraic-equivalence lemmas for the 10 `bit_<op>`s in
-  `BitMlKem.Spec` that ship with REAL bodies (not stubs). Each lemma
-  characterises `bit_<op>` pointwise on `MontPoly = Vector (ZMod 3329) 256`
-  in closed form, so downstream Phase-4 callers can unfold a single
-  named theorem instead of inlining `Vector.getElem_ofFn` chains.
-
-  ## Per arch plan §E.2 — "easy cluster" coverage
+  Each lemma characterises `bit_<op>` pointwise on
+  `MontPoly = Vector (ZMod 3329) 256` in closed form, so callers can
+  unfold a single named theorem instead of inlining `Vector.getElem_ofFn`
+  chains.
 
   | `bit_<op>`                              | Characterisation         | Shape  |
   | --------------------------------------- | ------------------------ | ------ |
@@ -22,22 +20,15 @@
   | `bit_add_to_ring_element`               | `bit_add`                | rfl    |
   | `bit_subtract_reduce`                   | pointwise `(q-p) · 512`  | rfl    |
 
-  ## Discipline
-
   - The pointwise lemmas are `@[simp]`-eligible: each rewrites
     `(bit_<op> ...)[i]'h` to a closed form on the operand lanes.
-    Downstream Phase-4 callers `rw [bit_<op>_getElem]` to push the
-    lift inside.
   - The SpecPoly-bridge variants of the form
     `bit_<op> (SpecPoly.toMontPoly p) = SpecPoly.toMontPoly (Spec.<op>_pure p)`
-    are DEFERRED to M.4 NTT-cluster, because they require the
-    pure-projection side lemmas of `parameters.FieldElement.{add,sub,mul}`
-    (Open Question I.8 in `iot-mlkem-layer-M-architecture.md` §F.2).
-    A locked target shape for the follow-up dispatch is captured
-    inline at the end of this file.
-
+    are deferred to the NTT-cluster pass because they require the
+    pure-projection side lemmas of `parameters.FieldElement.{add,sub,mul}`.
+    A locked target shape for the follow-up is captured inline at the end
+    of this file.
   - Mathlib is imported for `ring`/`field_simp` on `ZMod 3329`.
-
   - Layer-M barrier: this file is above the barrier; it uses
     `MontPoly`/`ZMod 3329` from `BitMlKem.Spec` and the lift helpers
     in `BitMlKem.SpecPure`. No direct `Mathlib` use outside what

@@ -12,7 +12,7 @@
   where `Spec.<op>_pure` is the `Result`-stripped pure projection of
   the hacspec spec. This file defines those `_pure` aliases.
 
-  Per arch plan §F.2 option (b): each alias is defined by pattern
+  arch plan §F.2 option (b): each alias is defined by pattern
   match on the `Result`. The companion **pure-projection side lemmas**
   of the form `Spec.<op> args = .ok (Spec.<op>_pure args)` pin the
   impl's `.ok` value to the projected `_pure` value. They are the
@@ -611,7 +611,7 @@ theorem Canonical_neg_pure (a : parameters.FieldElement)
     canonicity precondition (none for `add`, none for `poly_barrett_reduce`,
     per-element canonicity for both inputs to `subtract_reduce`). These
     are the input lemmas to `Util.from_fn_pure_eq` and to downstream M.2
-    commute lemmas; see `feedback_pure_projection_not_panic_freedom.md`
+    commute lemmas; 
     for why "panic-freedom" is the wrong framing. Proof shape:
     * Unfold the wrapper through `parameters.createi` to
       `core.array.from_fn`.

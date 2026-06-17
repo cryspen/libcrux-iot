@@ -1,22 +1,22 @@
 /-
-  # `BitMlKem/L7/FC/ComputeVectorU.lean` — L7.2 MAIN theorem (glue).
+  # `BitMlKem/L7/FC/ComputeVectorU.lean` — L7.2 FC theorem glue.
 
-  Houses the L7.2 FC theorem `compute_vector_u_fc` — the top-level assembly
-  gluing the impl walk (`compute_vector_u_loop0` row-0 column loop +
-  `compute_vector_u_loop1` outer rows loop, both proven in
+  Houses the L7.2 FC theorem `compute_vector_u_fc` — the top-level
+  assembly gluing the impl walk (`compute_vector_u_loop0` row-0 column
+  loop + `compute_vector_u_loop1` outer rows loop, both proven in
   `Impl/ComputeVectorU.lean`) to the hacspec `matrix.compute_vector_u`
-  (transpose → multiply_matrix_by_column → createi(ntt_inverse) → add_vectors).
+  (transpose → multiply_matrix_by_column → createi(ntt_inverse) →
+  add_vectors).
 
-  Mirrors L7.4's `FC/ComputeMessage.lean`. Two added subtleties vs L7.4:
-  * a VECTOR output (K rows, two accumulation loops: row 0 fills the cache;
+  Two added subtleties vs L7.4:
+  * a vector output (K rows, two accumulation loops: row 0 fills the cache;
     rows 1..K consume it);
-  * a hacspec PART A reduction `compute_vector_u_hacspec_eq` relating the
+  * a hacspec part-A reduction `compute_vector_u_hacspec_eq` relating the
     hacspec do-block to the per-row `L7_2c_FC.row_spec`. Because the
-    Correctness `extractCol`/`mcol_*` helpers are `private`, the matrix-column
-    reduction is re-derived locally here.
+    Correctness `extractCol`/`mcol_*` helpers are `private`, the
+    matrix-column reduction is re-derived locally here.
 
-  POST is byte-locked to the FCTargets stub (FCTargets.lean:33044-33067).
-  PRE strengthening (`hK ≤ 4`, lengths, per-lane bounds) is allowed & documented.
+  PRE strengthening: `hK ≤ 4`, lengths, per-lane bounds.
 -/
 import LibcruxIotMlKem.BitMlKem.FCTargets
 import LibcruxIotMlKem.BitMlKem.L7.Common
@@ -932,9 +932,8 @@ open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do
 
 set_option maxHeartbeats 3200000 in
 /-- **L7.2 MAIN theorem.** The top-level `matrix.compute_vector_u` glue.
-    Byte-locked POST (FCTargets.lean:33044-33067). PRE strengthened with
-    `hK : K.val ≤ 4`, `h_K_pos : 1 ≤ K.val`, slice lengths, and per-lane bounds
-    on `r_as_ntt` (≤ 3328) / `error_1` (≤ 29439). Mirrors L7.4's
+    PRE: `hK : K.val ≤ 4`, `h_K_pos : 1 ≤ K.val`, slice lengths, and per-lane
+    bounds on `r_as_ntt` (≤ 3328) / `error_1` (≤ 29439). Mirrors L7.4's
     `compute_message_fc` glue + the impl `matrix.compute_vector_u` body. -/
 @[spec]
 theorem compute_vector_u_fc

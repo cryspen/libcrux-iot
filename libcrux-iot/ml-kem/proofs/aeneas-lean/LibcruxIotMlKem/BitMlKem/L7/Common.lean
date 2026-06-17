@@ -26,7 +26,7 @@ open libcrux_iot_ml_kem.BitMlKem.FCTargets
 /-- The all-zero canonical-domain ring element (256 lanes, each
     `FieldElement.val = 0`). This is the fold seed for
     `Impl.compute_message_acc_pure`, mirroring the impl's explicit
-    accumulator re-zero (`matrix.rs:96`, modeled in `Funs.lean:1280` as
+    accumulator re-zero (`matrix.rs:96`, modeled in `` as
     `Array.repeat 256#usize (classify 0#i32)`). -/
 noncomputable def Impl.compute_message_zero :
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=

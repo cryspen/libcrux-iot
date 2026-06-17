@@ -1,13 +1,8 @@
 /-
-  # `BitMlKem/L7/Correctness/ComputeMessage.lean` — L7.4 CORRECTED pure/spec bridges.
+  # `BitMlKem/L7/Correctness/ComputeMessage.lean` — L7.4 pure/spec bridges.
 
-  The CORRECTED (post per-contract numerical validation, 2026-05-29) pure-side
-  and pure↔hacspec equational bridges for the *direct* `compute_message`
-  decomposition. See `~/.claude/plans/iot-mlkem-l74-proof-sketch.md` →
-  "CORRECTED CONTRACT DESIGN (2026-05-29, post per-contract validation)".
-
-  All factors `#eval`-confirmed in `ZMod 3329`, regression-guarded in
-  `L7/Tests/ComputeMessageSeamValidation.lean` (SEAM 1/2/3):
+  Pure-side and pure↔hacspec equational bridges for the direct
+  `compute_message` decomposition:
 
   * **B** — `invert_ntt_montgomery_pure` is `scaleZ`-equivariant (pure
     scalar-linearity; the constant passes through all 7 inverse layers).
@@ -18,13 +13,6 @@
     = subtract_reduce_pure a b` for canonical `a` (the `·512` cancels the
     surplus `R` the invert path carries; `Bridges.zmodOfFE_subtract_reduce_pure_lane`
     supplies the per-lane characterization, `1441·169 ≡ 512`).
-
-  NB: the Phase-1 `compute_message_pure` mirror + `compute_message_eq_ok` +
-  the old S3/S4/S5 stubs were built on the (numerically refuted, off by R²)
-  S1 conjunct-2 and are SUPERSEDED by this direct decomposition.
-
-  Ledger: `~/.claude/plans/iot-mlkem-campaign-ledger.md` (discipline:
-  `feedback_per_contract_pbt`, `feedback_strong_postconditions`).
 -/
 import LibcruxIotMlKem.BitMlKem.FCTargets
 import LibcruxIotMlKem.BitMlKem.L7.Common
@@ -792,23 +780,16 @@ end InvertScaleZ
 
 /-! ## C — hacspec `ntt_inverse` ≡ `scaleZ 3303 ∘ invert_ntt_montgomery_pure`.
 
-    Numerically pinned (factor scan at `p = lift_poly result1`, all 256 lanes):
-    `zmodOfFE (ntt_inverse p)[j] = 3303 * zmodOfFE (invert_ntt_montgomery_pure p)[j]`.
-    `3303 = INVERSE_OF_128` (`invert_ntt.INVERSE_OF_128 = FieldElement.new 3303`,
-    spec Funs.lean:3464) `= 512·169`. Consistent with SEAM 2 (`ntt_inverse(mv)
-    = 512·result2`) under SEAM 1 (`mv = 2285·result1`) + B + `3303·2285 ≡ 512`.
+    `3303 = INVERSE_OF_128 = 512·169`. Decomposed into:
 
-    **Decomposition (both halves numerically confirmed):**
     * **C1** — `ntt_inverse p = scaleZ 3303 (ntt_inverse_butterflies p)`: the
       `reduce_polynomial` createi wrapper multiplying every lane by
-      `INVERSE_OF_128 = 3303`. Mechanical (createi; mirror `sub_polynomials_eq_ok`).
-    * **C2** — `ntt_inverse_butterflies p = .ok (invert_ntt_montgomery_pure p)`
-      (factor **1**, validated vs `result2 = invert_pure (lift result1)`): the
-      hacspec 7-layer plain-field Gentleman–Sande inverse equals the Mont-domain
-      pure 7-layer inverse (the Montgomery `R`-factors net to 1). The hard half
-      (per-layer hacspec↔Spec-pure match).
+      `INVERSE_OF_128 = 3303`.
+    * **C2** — `ntt_inverse_butterflies p = .ok (invert_ntt_montgomery_pure p)`:
+      the hacspec 7-layer plain-field Gentleman–Sande inverse equals the
+      Mont-domain pure 7-layer inverse (the Montgomery `R`-factors net to 1).
 
-    **Canonical precondition** (same mechanism as `invert_ntt_montgomery_pure_scaleZ`:
+    Canonical precondition (same mechanism as `invert_ntt_montgomery_pure_scaleZ`:
     `sub_pure` saturates on non-canonical lanes). Discharged at the L7.4 call
     site: C is applied at `p = multiply_vectors …`, whose lanes are
     `add_pure`/`mul_pure` results (canonical). -/
@@ -933,16 +914,16 @@ end InvertReduceC1
 /-! ## C2 — hacspec `ntt_inverse_butterflies` ≡ `Spec.invert_ntt_montgomery_pure`
     (factor 1).
 
-    **Status: closed** (`ntt_inverse_butterflies_eq_invert_pure`). Per-layer
-    flat↔chunk match (`ntt_inverse_layer` createi reduction + flat-lane
+    Closed by `ntt_inverse_butterflies_eq_invert_pure`: per-layer flat↔chunk
+    match (`ntt_inverse_layer` createi reduction + flat-lane
     `i ↔ chunk (i/16, i%16)` correspondence + the cross-chunk layers 4-7), then
     composing 7 layers; lemma C (`ntt_inverse_eq_scaleZ_invert_pure`) is C1 ∘ C2.
 
-    `zetas_bridge_zmod` below is the *gating* arithmetic shared by every layer:
+    `zetas_bridge_zmod` below is the gating arithmetic shared by every layer:
     the hacspec plain-domain zeta table `ntt.ZETAS[i]` matches the Mont-domain
     `Spec.zeta_at i` in `ZMod 3329` (`ZETAS[i] ≡ ZETAS_TIMES_MONTGOMERY_R[i]·R⁻¹`,
-    `R⁻¹ = 169`). Verified numerically over all 128 entries (`#eval`, true), and
-    proven here by `interval_cases … <;> rfl` after unfolding both tables. -/
+    `R⁻¹ = 169`); proven by `interval_cases … <;> rfl` after unfolding both
+    tables. -/
 section InvertButterfliesC2
 
 open libcrux_iot_ml_kem.BitMlKem.SpecPure (Canonical)
@@ -1012,8 +993,8 @@ private theorem umod_ok' (a b : Std.Usize) (h : b.val ≠ 0) :
   obtain ⟨v, hv, hpv⟩ := Aeneas.Std.WP.spec_imp_exists (Std.Usize.rem_spec a h)
   exact ⟨v, hv, by simpa using hpv⟩
 
-/-- `inv_butterfly z a b` (Funs.lean:3294) pure projection: `(add a b,
-    mul z (sub b a))` (requires `a`, `b` canonical for the `sub`). -/
+/-- `inv_butterfly z a b` pure projection: `(add a b, mul z (sub b a))`
+    (requires `a`, `b` canonical for the `sub`). -/
 private theorem inv_butterfly_eq (z a b : hacspec_ml_kem.parameters.FieldElement)
     (ha : Canonical a) (hb : Canonical b) :
     hacspec_ml_kem.invert_ntt.inv_butterfly z a b
@@ -1403,7 +1384,7 @@ private theorem ntt_inverse_layer_eq_ok
     (`ntt_inverse_layer_eq_ok`) and the RHS lane to the same flat butterfly (in
     `ZMod 3329`), then concluding via canonical determination (`eq_of_zmod_lane_canon'`).
     The per-lane match uses commutativity of `add`/`mul` in `ZMod` and
-    `zetas_bridge_zmod` (numerically validated zeta-index correspondence). -/
+    `zetas_bridge_zmod` (zeta-index correspondence). -/
 
 /-- Local copy of `eq_of_zmod_lane_canon` (the SubPolyScaleZ one is defined later). -/
 private theorem eq_of_zmod_lane_canon'

@@ -1,21 +1,12 @@
 /-
-  # `BitMlKem/L7/FC/ComputeMessage.lean` — L7.4 FC theorem (glue).
+  # `BitMlKem/L7/FC/ComputeMessage.lean` — L7.4 FC theorem glue.
 
-  Houses the L7.4 FC theorem (iii) `compute_message_fc`, the direct
-  decomposition glue (impl walk via `triple_*_ok_fc` + the validated
-  A/B/C/D chain). The earlier `compute_message_pure_correct` mirror
-  (which named the now-deleted `Impl.compute_message_pure`) is superseded
-  by this direct decomposition and is not present.
+  Houses the L7.4 FC theorem `compute_message_fc`, gluing the direct
+  decomposition (impl walk via `triple_*_ok_fc` + the A/B/C/D chain).
 
-  This FC theorem is stated in the new `L7` namespace to avoid clashing
-  with the still-`sorry` stub `compute_message_fc` in FCTargets.lean
-  (which is wired to re-export this in S6 — NOT touched here).
-
-  POST is byte-locked to the FCTargets stub (FCTargets.lean:33113-33116):
+  POST:
     `hacspec_ml_kem.matrix.compute_message (lift_poly v)
        (lift_vec secret_as_ntt) (lift_vec u_as_ntt) = .ok (lift_poly p.1)`.
-
-  Complete — `compute_message_fc` proven; file has 0 `sorry`.
 -/
 import LibcruxIotMlKem.BitMlKem.FCTargets
 import LibcruxIotMlKem.BitMlKem.L7.Common
@@ -93,13 +84,8 @@ private theorem lift_poly_canon
 
 /-! ## (iii) — L7.4 FC theorem (glue of (i) + (ii)).
 
-    Byte-locked POST (FCTargets.lean:33113-33116). PRE strengthened per the
-    sketch §a (corrected): `hK : K.val ≤ 4` plus per-lane `≤ 3328` bounds on
-    `secret_as_ntt`, `u_as_ntt`, `v`. No `h_acc_bnd` (the impl re-zeros the
-    accumulator — see sketch "Critical finding").
-
-    Stated in the `L7` namespace; the FCTargets stub is wired to this in S6
-    (NOT yet — FCTargets unchanged this phase). -/
+    PRE: `hK : K.val ≤ 4` plus per-lane `≤ 3328` bounds on `secret_as_ntt`,
+    `u_as_ntt`, `v`. No `h_acc_bnd` (the impl re-zeros the accumulator). -/
 @[spec]
 theorem compute_message_fc
     {K : Std.Usize}

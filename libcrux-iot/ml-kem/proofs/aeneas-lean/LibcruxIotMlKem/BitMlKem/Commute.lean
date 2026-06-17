@@ -355,7 +355,7 @@ theorem lemma_inv_butterfly_pair_commute
         Vector.ofFn (lift ∘ getLane r) = Vector.ofFn (combine ∘ lift ∘ getLane lhs ∘ …)
     closed by `Vector.ext` + `Vector.getElem_ofFn` + one Block-A apply.
 
-    ### Deviation from dispatch brief — `@[scoped grind]` omitted.
+    ### Why no `@[scoped grind]` on Block B
 
     The Block-A scalar lemmas accept `@[scoped grind]` because
     `grind` can pattern on `i16_to_spec_fe_X _` directly in the
@@ -364,15 +364,12 @@ theorem lemma_inv_butterfly_pair_commute
     the only candidate pattern under a binder; `grind` rejects this
     with "failed to find an usable pattern using different modifiers"
     regardless of `=`/`←`/`→` modifier or `grind_pattern` (the binders
-    leave `lhs`/`rhs`/`r` un-instantiable). Block-B lemmas are
-    therefore consumed explicitly by Block-C / M.4 poly aggregation
-    via `exact`/`apply` rather than via `grind`, which matches their
-    actual call pattern (one-shot aggregation per op, not a recurring
-    `grind`-set obligation). The Block-A K.1 discipline is preserved
-    for the scalar lemmas that drive Triple-body proofs.
+    leave `lhs`/`rhs`/`r` un-instantiable). Block-B lemmas are therefore
+    consumed explicitly by Block-C / M.4 poly aggregation via
+    `exact`/`apply` rather than via `grind`.
 
-    B.11–B.14 (compress/decompress chunks) deferred per arch plan §C.2
-    / Open Question I.4: see comment block at end of file.
+    B.11–B.14 (compress/decompress chunks) deferred; see comment block
+    at end of file.
 -/
 
 /-! ### B.1 / B.2 — pointwise addition (plain and Mont). -/

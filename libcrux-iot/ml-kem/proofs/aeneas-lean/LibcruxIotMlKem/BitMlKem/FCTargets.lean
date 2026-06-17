@@ -1,27 +1,12 @@
 /-
-  # `BitMlKem/FCTargets.lean` — STATEMENTS-ONLY FC obligation hierarchy.
+  # `BitMlKem/FCTargets.lean` — FC obligation hierarchy + proofs.
 
-  Per `~/.claude/skills/lean-for-libcrux/SKILL.md` §8.1 and the
-  `feedback_strong_postconditions.md` memory:
+  Locked statement (and proof) of the full functional-correctness
+  obligation hierarchy for the ML-KEM impl-vs-hacspec equivalence,
+  from the leaf field primitives (L0) up through the four matrix-level
+  targets (L7).
 
-  > Strong post-conditions, no bounds fallback. New + upgrade-pass
-  > Triples must use equality-form posts; never weaken to bounds
-  > because they're easier.
-
-  > §8.1 — Write the final FC form (with the spec-level equality) from
-  > day one, leaving the proof `sorry` if needed. Upgrading after the
-  > fact cascades.
-
-  This file is the single locked statement of the full functional-
-  correctness obligation hierarchy for the ML-KEM impl-vs-hacspec
-  equivalence: from the leaf field primitives (L0) up through the
-  four matrix-level targets (L7). Every proof body is `by sorry`,
-  every helper `def` body is `sorry` where the spec wiring is not
-  yet computable. **No proofs.** The file's job is to lock the
-  type-correct statement of every FC Triple so subsequent dispatches
-  fill in proofs without retroactively widening the postconditions.
-
-  ## Hard rules followed (per dispatch brief)
+  ## Rules
 
   1. Every Triple post is equality-form:
         `Spec.<op> (lift args) = .ok (lift p)`
@@ -31,26 +16,16 @@
   3. `⇓ p => …` is total correctness; the `.ok` on the RHS of each
      FC equation is the `_eq_ok` pure-projection content (impl's
      `.ok` value = projected `_pure` value).
-  4. The lift tower is defined below. All `_pure` Spec aliases needed
-     beyond `SpecPure.lean` (which has only the four FE scalars plus
-     three poly wrappers) are introduced here with bodies = `sorry`.
-  5. `@[spec]` attribute on every Triple; bare `by sorry` proof.
+  4. The lift tower is defined below. `_pure` Spec aliases needed
+     beyond `SpecPure.lean` are introduced here.
+  5. `@[spec]` attribute on every Triple.
   6. Bottom-up ordering L0 → L1 → L2 → L3 → L6 → L7.
 
-  ## Discipline notes (from the dispatch brief)
-
-  - We do NOT modify the existing `Equivalence/L*.lean` files; their
-    bounds-only Triples remain and will be retired separately. This
-    file is the FC-compliant replacement set.
-  - Each `_pure` alias defined here is intended to be the `Result`-stripped
-    pure projection of a hacspec `Result`-monadic op. Bodies are `sorry`
-    when the matching hacspec call chain is intricate (compress,
-    decompress, ntt full driver); types are correct.
-  - Where the impl op has no direct hacspec counterpart at the same
-    abstraction layer (e.g. the impl's `cond_subtract_3329` is a
-    pure-Mont-form rebalance with no FE-level hacspec mirror), we mark
-    `// NO HACSPEC EQUIVALENT — treat as identity in ZMod 3329` and
-    state the FC equation against the identity-`Spec.<closest>`.
+  Where the impl op has no direct hacspec counterpart at the same
+  abstraction layer (e.g. the impl's `cond_subtract_3329` is a
+  pure-Mont-form rebalance with no FE-level hacspec mirror), we mark
+  `// NO HACSPEC EQUIVALENT — treat as identity in ZMod 3329` and
+  state the FC equation against the identity-`Spec.<closest>`.
 -/
 import LibcruxIotMlKem.BitMlKem.Spec
 import LibcruxIotMlKem.BitMlKem.SpecPure
@@ -189,8 +164,7 @@ noncomputable def lift_vec_slice
     `FieldElement` poly. Each lane goes through `lift_fe_int` on its
     `.val` (Int). Used by the L6c NTT-multiply family FC equations to
     relate the impl-side I32 accumulator to a `FieldElement 256`-array.
-    Matches the `Spec.poly_reducing_from_i32_array_pure` lane shape
-    (FCTargets:880) — composes cleanly with L6.7. -/
+    Matches the `Spec.poly_reducing_from_i32_array_pure` lane shape — composes cleanly with L6.7. -/
 noncomputable def lift_accumulator_i32
     (acc : Std.Array Std.I32 256#usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
@@ -213,7 +187,7 @@ noncomputable def lift_matrix {K : Std.Usize}
     Forward-declared here (rather than in §0.5 below) so
     `lift_matrix_from_seed` can reference it.
 
-    **Phase-1 obligation**: pure-projection side lemma
+    Pending pure-projection side lemma:
     `hacspec_ml_kem.matrix.sample_matrix_A seed K
     = .ok (Spec.sample_matrix_A_pure seed K)`. -/
 noncomputable opaque Spec.sample_matrix_A_pure
@@ -264,8 +238,8 @@ noncomputable def lift_matrix_from_slice
     `t_as_ntt : Array (Array FE 256) K`. The impl `matrix.compute_ring_element_v`
     consumes `public_key : Slice U8` via `chunks_exact public_key
     BYTES_PER_RING_ELEMENT`, deserializing each chunk into a ring element.
-    Used by L7.3's locked post. Body left `sorry` here — the explicit
-    deserialization spec is a Phase-1 obligation paralleling
+    Used by L7.3's locked post. Declared `opaque` here; the explicit
+    deserialization spec is a pending obligation paralleling
     `Spec.sample_matrix_A_pure`. -/
 noncomputable opaque Spec.t_as_ntt_from_public_key_pure
     (public_key : Slice Std.U8) (K : Std.Usize) :
@@ -625,11 +599,10 @@ noncomputable def Spec.chunk_inv_ntt_step_pure
     libcrux_iot_ml_kem.BitMlKem.SpecPure.FieldElement.mul_pure diff zeta
   (a.set i new_i).set j new_j
 
-/-- Pure projection of `vector.portable.ntt.inv_ntt_layer_1_step` (Funs.lean:3539):
+/-- Pure projection of `vector.portable.ntt.inv_ntt_layer_1_step`:
     8 sequential `Spec.chunk_inv_ntt_step_pure` calls at disjoint lane pairs
     `(0,2)(1,3)(4,6)(5,7)(8,10)(9,11)(12,14)(13,15)` with zetas
-    `z0,z0,z1,z1,z2,z2,z3,z3`. Mirrors `Spec.chunk_ntt_layer_1_step_pure`
-    (FCTargets:482) on the same lane-pair sequence but with the inverse
+    `z0,z0,z1,z1,z2,z2,z3,z3`. Mirrors `Spec.chunk_ntt_layer_1_step_pure` on the same lane-pair sequence but with the inverse
     butterfly direction (`chunk_inv_ntt_step_pure` vs `chunk_ntt_step_pure`). -/
 noncomputable def Spec.chunk_inv_ntt_layer_1_step_pure
     (a : Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
@@ -644,7 +617,7 @@ noncomputable def Spec.chunk_inv_ntt_layer_1_step_pure
   let a7 := Spec.chunk_inv_ntt_step_pure a6 z3 12#usize 14#usize
   Spec.chunk_inv_ntt_step_pure a7 z3 13#usize 15#usize
 
-/-- Pure projection of `vector.portable.ntt.inv_ntt_layer_2_step` (Funs.lean:3555):
+/-- Pure projection of `vector.portable.ntt.inv_ntt_layer_2_step`:
     8 sequential `Spec.chunk_inv_ntt_step_pure` calls at disjoint lane pairs
     `(0,4)(1,5)(2,6)(3,7)(8,12)(9,13)(10,14)(11,15)` with zetas
     `z0,z0,z0,z0,z1,z1,z1,z1`. Mirror of `Spec.chunk_ntt_layer_2_step_pure`. -/
@@ -661,7 +634,7 @@ noncomputable def Spec.chunk_inv_ntt_layer_2_step_pure
   let a7 := Spec.chunk_inv_ntt_step_pure a6 z1 10#usize 14#usize
   Spec.chunk_inv_ntt_step_pure a7 z1 11#usize 15#usize
 
-/-- Pure projection of `vector.portable.ntt.inv_ntt_layer_3_step` (Funs.lean:3571):
+/-- Pure projection of `vector.portable.ntt.inv_ntt_layer_3_step`:
     8 sequential `Spec.chunk_inv_ntt_step_pure` calls at disjoint lane pairs
     `(0,8)(1,9)(2,10)(3,11)(4,12)(5,13)(6,14)(7,15)` with a single zeta `z`.
     Mirror of `Spec.chunk_ntt_layer_3_step_pure`. -/
@@ -679,7 +652,7 @@ noncomputable def Spec.chunk_inv_ntt_layer_3_step_pure
   Spec.chunk_inv_ntt_step_pure a7 z 7#usize 15#usize
 
 /-- Pure accumulating NTT-multiply at the chunk level. Mirrors the impl
-    `vector.portable.ntt.accumulating_ntt_multiply` (Funs.lean:3701),
+    `vector.portable.ntt.accumulating_ntt_multiply`,
     which fans out 8 calls of `accumulating_ntt_multiply_binomials` with
     alternating ±zeta:
       pair i ∈ {0..7}, zeta_i = [z0, -z0, z1, -z1, z2, -z2, z3, -z3][i]
@@ -825,8 +798,7 @@ noncomputable def Spec.ntt_layer_3_pure
         (Spec.zeta_at (zeta_i.val + k + 1))))
       (by simp))
 
-/-- Pure projection of `invert_ntt.invert_ntt_at_layer_1` driver loop
-    (Funs.lean:202). 16 chunks; for chunk `k ∈ {0..15}` reads 4 zetas at
+/-- Pure projection of `invert_ntt.invert_ntt_at_layer_1` driver loop. 16 chunks; for chunk `k ∈ {0..15}` reads 4 zetas at
     Mont-table indices `[zeta_i - 4k - 1, zeta_i - 4k - 2, zeta_i - 4k - 3,
     zeta_i - 4k - 4]` (decreasing — opposite direction from the forward
     layer-1 driver) and applies `chunk_inv_ntt_layer_1_step_pure`. The
@@ -847,8 +819,7 @@ noncomputable def Spec.invert_ntt_layer_1_pure
         (Spec.zeta_at (zeta_i.val - 4 * k - 4))))
       (by simp))
 
-/-- Pure projection of `invert_ntt.invert_ntt_at_layer_2` driver loop
-    (Funs.lean:253). 16 chunks; for chunk `k ∈ {0..15}` reads 2 zetas at
+/-- Pure projection of `invert_ntt.invert_ntt_at_layer_2` driver loop. 16 chunks; for chunk `k ∈ {0..15}` reads 2 zetas at
     Mont-table indices `[zeta_i - 2k - 1, zeta_i - 2k - 2]` (decreasing)
     and applies `chunk_inv_ntt_layer_2_step_pure`. The impl decrements
     `zeta_i` by 2 per chunk, so indices span `[zeta_i - 32 .. zeta_i - 1]`.
@@ -864,8 +835,7 @@ noncomputable def Spec.invert_ntt_layer_2_pure
         (Spec.zeta_at (zeta_i.val - 2 * k - 2))))
       (by simp))
 
-/-- Pure projection of `invert_ntt.invert_ntt_at_layer_3` driver loop
-    (Funs.lean:302). 16 chunks; for chunk `k ∈ {0..15}` reads 1 zeta at
+/-- Pure projection of `invert_ntt.invert_ntt_at_layer_3` driver loop. 16 chunks; for chunk `k ∈ {0..15}` reads 1 zeta at
     Mont-table index `zeta_i - k - 1` (decreasing) and applies
     `chunk_inv_ntt_layer_3_step_pure`. The impl decrements `zeta_i` by 1
     per chunk, so indices span `[zeta_i - 16 .. zeta_i - 1]`. Natural
@@ -881,7 +851,7 @@ noncomputable def Spec.invert_ntt_layer_3_pure
       (by simp))
 
 /-- Pure INVERSE NTT (Gentleman-Sande) butterfly between TWO chunks, a-side.
-    Mirrors the impl `invert_ntt.inv_ntt_layer_int_vec_step_reduce` (Funs.lean:322)
+    Mirrors the impl `invert_ntt.inv_ntt_layer_int_vec_step_reduce`
     on the a-side write: `new_a[ℓ] := barrett_reduce(a[ℓ] + b[ℓ])`, which under
     `lift_fe_mont`'s canonical lift is simply `a[ℓ] + b[ℓ]` (no zeta on a-side
     for the inverse direction). -/
@@ -910,7 +880,7 @@ noncomputable def Spec.chunk_inv_pair_butterfly_b_pure
     (by simp)
 
 /-- Per-chunk output for the INVERSE layer-4+ driver, parameterized by zeta
-    source. Mirror of `Spec.chunk_at_layer_4_plus_pure` (FCTargets:861) but
+    source. Mirror of `Spec.chunk_at_layer_4_plus_pure` but
     using the inverse butterflies (`chunk_inv_pair_butterfly_{a,b}_pure`).
     Chunk position `c ∈ 0..16`; step_vec/group/offset/partner relations same
     as forward. -/
@@ -954,8 +924,7 @@ noncomputable def Spec.invert_ntt_layer_4_plus_pure
       Spec.chunk_inv_at_layer_4_plus_pure chunks0 layer zeta_fn c))
       (by simp))
 
-/-- Pure projection of `invert_ntt.invert_ntt_montgomery` top-level composer
-    (Funs.lean:451). Initial `zeta_i = 128` (= `COEFFICIENTS_IN_RING_ELEMENT / 2`).
+/-- Pure projection of `invert_ntt.invert_ntt_montgomery` top-level composer. Initial `zeta_i = 128` (= `COEFFICIENTS_IN_RING_ELEMENT / 2`).
     Composes seven layers in inverse order: layer 1, 2, 3, 4_plus(4),
     4_plus(5), 4_plus(6), 4_plus(7). zeta_i thread:
     `128 → 64 → 32 → 16 → 8 → 4 → 2 → 1` (final, discarded). -/
@@ -974,8 +943,7 @@ noncomputable def Spec.invert_ntt_montgomery_pure
     16 chunks of accumulating NTT-multiplication. For chunk k ∈ {0..15},
     applies `chunk_accumulating_ntt_multiply_pure` with the 4 canonical-domain
     zetas at `Spec.zeta_at (64 + 4*k + m)` for `m ∈ {0..3}` (matching the
-    impl's `polynomial.zeta` lookups at `64 + 4*k + m` per chunk —
-    Funs.lean:1058-1069). -/
+    impl's `polynomial.zeta` lookups at `64 + 4*k + m` per chunk —). -/
 noncomputable def Spec.accumulating_ntt_multiply_pure
     (a b acc : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) :
     Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
@@ -1203,7 +1171,7 @@ noncomputable def Spec.chunk_add_message_error_reduce_pure
 /-- Pure projection of `polynomial.add_error_reduce`. The hacspec spec
     does not expose a dedicated `add_error_reduce` at the poly level —
     the impl's behaviour is "multiply by R/128 then add error then
-    barrett". Per chunk `k ∈ 0..16` and lane `ℓ`:
+    barrett". chunk `k ∈ 0..16` and lane `ℓ`:
     `out_chunk[k][ℓ] := self[k][ℓ] · lift_fe_mont(1441#i16) + error[k][ℓ]`,
     flattened to a 256-array via `Spec.flatten_chunks`. -/
 noncomputable def Spec.add_error_reduce_pure
@@ -1215,7 +1183,7 @@ noncomputable def Spec.add_error_reduce_pure
         (Spec.chunk_at self k) (Spec.chunk_at error k)))
       (by simp))
 
-/-- Pure projection of `polynomial.add_standard_error_reduce`. Per chunk
+/-- Pure projection of `polynomial.add_standard_error_reduce`. chunk
     `k` and lane `ℓ`:
     `out[k][ℓ] := self[k][ℓ] · lift_fe_mont(1353#i16) + error[k][ℓ]`
     (1353 ≡ R² mod q lifts to `× R` in canonical domain). -/
@@ -1228,7 +1196,7 @@ noncomputable def Spec.add_standard_error_reduce_pure
         (Spec.chunk_at self k) (Spec.chunk_at error k)))
       (by simp))
 
-/-- Pure projection of `polynomial.add_message_error_reduce`. Per chunk
+/-- Pure projection of `polynomial.add_message_error_reduce`. chunk
     `k` and lane `ℓ`:
     `out[k][ℓ] := result[k][ℓ] · lift_fe_mont(1441#i16) +
                   (self[k][ℓ] + message[k][ℓ])`. -/
@@ -1271,7 +1239,7 @@ noncomputable def Spec.chunk_subtract_reduce_pure
 
 /-- Pure projection of `polynomial.subtract_reduce`. The hacspec spec
     computes `self - b`, but the impl fuses a Mont-multiply on b by the
-    constant `1441#i16` BEFORE the subtract. Per the C.4 commute
+    constant `1441#i16` BEFORE the subtract. the C.4 commute
     `1441 · R⁻¹ ≡ 1441 · 169 ≡ 512 (mod q)`, this is equivalent in
     ZMod q to computing `self - 512 · b` pointwise, NOT `self - b`.
 
@@ -3222,7 +3190,7 @@ theorem multiply_by_constant_fc
 
 /-- L1.8 — `bitwise_and_with_constant` on a chunk.
 
-    Per the upstream F* spec
+    the upstream F* spec
     `libcrux-ml-kem-proofs/libcrux-ml-kem/src/vector/traits.rs:720`
     (`bitwise_and_with_constant_constant_post`), the canonical FC
     statement for this bit-level op is the per-lane BV-equality
@@ -3250,7 +3218,7 @@ theorem bitwise_and_with_constant_fc
 
 /-- L1.9 — `shift_right` on a chunk.
 
-    Per the upstream F* spec
+    the upstream F* spec
     `libcrux-ml-kem-proofs/libcrux-ml-kem/src/vector/traits.rs:731`
     (`shift_right_post`), the canonical FC statement for this bit-level
     op is the per-lane BV-equality
@@ -4658,12 +4626,11 @@ theorem inv_ntt_step_fc
 
 /-! ### L2.9 — `inv_ntt_layer_1_step` (FC).
 
-    layer-1 vector-level step. Mirrors `ntt_layer_1_step_fc`
-    (FCTargets:3670) on the same lane-pair sequence
+    layer-1 vector-level step. Mirrors `ntt_layer_1_step_fc` on the same lane-pair sequence
     `(0,2)(1,3)(4,6)(5,7)(8,10)(9,11)(12,14)(13,15)` with zetas
     `z0,z0,z1,z1,z2,z2,z3,z3` — only the butterfly direction differs.
     Chains 8 `inv_ntt_step` calls via the private `inv_ntt_step_pair_fc`
-    helper (mirror of `ntt_step_pair_fc` @ FCTargets:3440) which exposes
+    helper (mirror of `ntt_step_pair_fc`) which exposes
     both the `lift_chunk` equation AND the unchanged-lane preservation,
     plus the tight per-output bound `≤ 3328` so the bound is preserved
     across the 8-step chain on disjoint lane pairs. -/
@@ -5190,8 +5157,7 @@ theorem inv_ntt_layer_1_step_fc
       exact h_v8_bnd_15
 
 /-- L2.10 — `inv_ntt_layer_2_step`: 8 inverse butterfly pairs (0,4)…(3,7)
-    with z0 then (8,12)…(11,15) with z1. Mirror of `ntt_layer_2_step_fc`
-    (FCTargets:3842) on the same lane-pair sequence.
+    with z0 then (8,12)…(11,15) with z1. Mirror of `ntt_layer_2_step_fc` on the same lane-pair sequence.
 
     **Precondition adjustment** (beyond locked statement):
     - `hvec : ∀ k < 16, |vec[k]| ≤ 13312` — preserved across 8 sequential
@@ -5442,8 +5408,7 @@ theorem inv_ntt_layer_2_step_fc
       exact h_v8_bnd_15
 
 /-- L2.11 — `inv_ntt_layer_3_step`: 8 inverse butterfly pairs
-    (0,8)…(7,15) with one zeta. Mirror of `ntt_layer_3_step_fc`
-    (FCTargets:3995) on the same lane-pair sequence.
+    (0,8)…(7,15) with one zeta. Mirror of `ntt_layer_3_step_fc` on the same lane-pair sequence.
 
     **Precondition adjustment** (beyond locked statement):
     - `hvec : ∀ k < 16, |vec[k]| ≤ 13312` — chained through the 8
@@ -5859,7 +5824,7 @@ namespace L3_1_FC
 
 open libcrux_iot_ml_kem.Util Aeneas.Std Std.Do Result ControlFlow
 
-/-- Local `usize_add_ok_eq` helper (mirrors `Equivalence/L3_NTTDrivers.lean:76`). -/
+/-- Local `usize_add_ok_eq` helper (mirrors `Equivalence/`). -/
 private theorem usize_add_ok_eq (x y : Std.Usize)
     (h_max : x.val + y.val ≤ Std.Usize.max) :
     ∃ z : Std.Usize, (x + y : Result Std.Usize) = .ok z ∧ z.val = x.val + y.val := by
@@ -11241,7 +11206,7 @@ private theorem invert_ntt_at_layer_2_step_lemma_fc
 set_option maxHeartbeats 16000000 in
 /-- L3i.2 — `invert_ntt_at_layer_2` driver: 16-chunk loop, per-chunk
     2-zeta-lookup decreasing `zeta_i` by 2. Mirror of `L3i.1` and forward
-    `ntt_at_layer_2_portable_fc` (FCTargets:6119). Locked POST exposes
+    `ntt_at_layer_2_portable_fc`. Locked POST exposes
     `p.1.val = zeta_i.val - 32` (output zeta_i for composer chaining) +
     `lift_poly p.2 = Spec.invert_ntt_layer_2_pure (lift_poly re) zeta_i`.
 
@@ -11667,7 +11632,7 @@ private theorem invert_ntt_at_layer_3_step_lemma_fc
 set_option maxHeartbeats 16000000 in
 /-- L3i.3 — `invert_ntt_at_layer_3` driver: 16-chunk loop, per-chunk
     1-zeta-lookup decreasing `zeta_i` by 1. Mirror of `L3i.2` and forward
-    `ntt_at_layer_3_portable_fc` (FCTargets:6500). Locked POST exposes
+    `ntt_at_layer_3_portable_fc`. Locked POST exposes
     `p.1.val = zeta_i.val - 16` (output zeta_i for composer chaining) +
     `lift_poly p.2 = Spec.invert_ntt_layer_3_pure (lift_poly re) zeta_i`.
 
@@ -11796,7 +11761,7 @@ theorem invert_ntt_at_layer_3_portable_fc
 
     Cross-chunk INVERSE NTT (Gentleman-Sande) butterfly between coefficient
     chunks at positions `a` and `b` (where `b = a + step_vec`). Mirrors the
-    impl `invert_ntt.inv_ntt_layer_int_vec_step_reduce` (Funs.lean:322):
+    impl `invert_ntt.inv_ntt_layer_int_vec_step_reduce`:
 
     ```
     scratch1 := coefs[a]; t := coefs[b]
@@ -12504,13 +12469,12 @@ theorem inv_ntt_layer_int_vec_step_reduce_fc
 /-! ### L3i.5 — `invert_ntt_at_layer_4_plus` driver (Task H.1).
 
     Nested-loop driver for the inverse-NTT cross-chunk butterflies at
-    layers 4-7. Mirror of forward `ntt_at_layer_4_plus_portable_fc`
-    (FCTargets:9138) with:
+    layers 4-7. Mirror of forward `ntt_at_layer_4_plus_portable_fc` with:
     - INVERSE butterfly direction (uses `chunk_inv_pair_butterfly_{a,b}_pure`
       instead of forward's `chunk_pair_butterfly_{a,b}_pure`).
     - zeta_i DECREMENTS (zeta_fn group := `Spec.zeta_at (zeta_i - 1 - group)`).
     - Dispatches to closed `inv_ntt_layer_int_vec_step_reduce_fc`
-      (Task H.0 @ FCTargets:11318) for each inner butterfly. -/
+      (Task H.0) for each inner butterfly. -/
 
 namespace L3i_4_plus_inner_FC
 
@@ -13767,10 +13731,9 @@ theorem invert_ntt_at_layer_4_plus_portable_fc
 
     Top-level inverse-NTT composer. 7-step bind chain through the closed
     layer FC equations (F + G.2 + G.3 + H.1 instantiated at 4 different
-    layer values). Closest yardstick: forward `ntt_binomially_sampled_ring_element_fc`
-    @ FCTargets:9935 (~247 LOC).
+    layer values). Closest yardstick: forward `ntt_binomially_sampled_ring_element_fc` (~247 LOC).
 
-    Impl (Funs.lean:451):
+    Impl:
     ```
     let zeta_i := 256 / 2 = 128
     let (zeta_i1, re1)         := invert_ntt_at_layer_1 portable zeta_i re
@@ -17638,10 +17601,8 @@ theorem matrix.entry_fc
 
 /-! ## §L2.8 / §L6.3 — NTT-multiply scaffolding.
 
-    Locked-statement skeletons for the NTT-domain multiplication chain
-    that the L7 matrix-level targets depend on. Bodies are `sorry`;
-    PROVER dispatches per the campaign plan in
-    `~/.claude/plans/iot-mlkem-fc-phase6c-decomposition.md` fill them.
+    Statement skeletons for the NTT-domain multiplication chain that
+    the L7 matrix-level targets depend on.
 
     Naming convention (distinguishes vector-level from polynomial-level
     since both impl namespaces define `accumulating_ntt_multiply`):
@@ -17754,7 +17715,7 @@ private theorem hacspec_ZETAS_ok_and_zeta_at :
     chunked `Spec.ntt_multiply_pure_no_acc` form, required by every L7
     matrix-level FC theorem).
 
-    Architecture mirrors `LibcruxIotSha3/Sponge/Squeeze.lean:798-846` (the
+    Architecture mirrors `LibcruxIotSha3/Sponge/` (the
     `sponge_squeeze_byte_eq` yardstick): a per-call_mut `_eq_pure` Result
     equation drives `Util.from_fn_pure_eq` to lift the entire 256-lane
     `multiply_ntts` to a pure-list, then `Subtype.ext` + per-lane reduction
@@ -19249,7 +19210,7 @@ set_option maxHeartbeats 4000000 in
 /-- L2.8 — `vector.portable.ntt.accumulating_ntt_multiply`: base-case
     NTT-domain multiply on a 16-lane vector chunk.
 
-    The impl (Funs.lean:3701-3741) chains 8
+    The impl chains 8
     `accumulating_ntt_multiply_binomials` calls, each accumulating one
     coefficient pair via the degree-2 polynomial multiply mod (X²−ζ²).
     The 4 input zetas yield 8 effective zetas with alternating
@@ -22487,7 +22448,7 @@ private theorem accumulating_ntt_multiply_binomials_use_cache_fc
 
 set_option maxHeartbeats 16000000 in
 /-- L2.8d — `vector.portable.ntt.accumulating_ntt_multiply_fill_cache`:
-    cache-filling variant. The impl (Funs.lean:3745-3786) chains 8
+    cache-filling variant. The impl chains 8
     `accumulating_ntt_multiply_binomials_fill_cache` calls; each
     behaves like the base `_binomials` (per-pair degree-2 polynomial
     multiply mod (X²−ζ²)) but additionally writes the Mont-reduced
@@ -24941,7 +24902,7 @@ theorem accumulating_ntt_multiply_fill_cache_fc
 
 set_option maxHeartbeats 16000000 in
 /-- L2.8d — `vector.portable.ntt.accumulating_ntt_multiply_use_cache`:
-    cache-using variant. The impl (Funs.lean:3790-3818) chains 8
+    cache-using variant. The impl chains 8
     `accumulating_ntt_multiply_binomials_use_cache` calls; each reads
     `cache[i]` instead of recomputing `mont_reduce(b[2i+1]·zeta_i)`.
 
@@ -27666,7 +27627,7 @@ set_option maxHeartbeats 4000000 in
     vector chunks, computing the running sum into a 256-element I32
     accumulator (one degree-2 polynomial multiply per chunk).
 
-    The impl (Funs.lean:1094-1104) iterates 16 times over
+    The impl iterates 16 times over
     `vectortraitsOperationsInst.accumulating_ntt_multiply`, slicing
     the accumulator as `[i*16 .. (i+1)*16]` per iteration and reading
     zetas from `polynomial.zeta(64 + 4i + {0,1,2,3})`.
@@ -27889,7 +27850,7 @@ attribute [local irreducible] Spec.effective_zeta_fe
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for `_fill_cache` polynomial loop. Mirrors
-    `accumulating_ntt_multiply_poly_step_lemma_fc` (L6.3 base, FCTargets:26481)
+    `accumulating_ntt_multiply_poly_step_lemma_fc` (L6.3 base,)
     but threads BOTH `acc` and `cache` through the ControlFlow. -/
 private theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
     (myself rhs : L6_3c_fill_FC.Poly) (acc_init : L6_3c_fill_FC.Acc)
@@ -29252,7 +29213,7 @@ private lemma lift_poly_mont_to_lift_poly
     `s_cache.val[j]!`. The invariant tracks both effects across `k`
     iterations.
 
-    Mirrors `L6_3c_fill_FC` (FCTargets:27784) but at the row-axis K-scale
+    Mirrors `L6_3c_fill_FC` but at the row-axis K-scale
     rather than the chunk-axis 16-scale. -/
 
 namespace L7_1a_FC
@@ -29342,11 +29303,11 @@ def row0_step_post {K : Std.Usize}
 end L7_1a_FC
 
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Mirrors `L6_3c_fill_irreducible`
--- (FCTargets:27842) — heavy POST predicates and the per-column forward dep are
+-- — heavy POST predicates and the per-column forward dep are
 -- made locally irreducible across the step lemma + outer Triple so that
 -- elaboration does not whnf-explode through the 4-conjunct `row0_inv` body or
 -- the nested `∀ j : Fin 16, ∀ ℓ : Fin 16` accumulator characterization.
--- Per `feedback_minimize_irreducibility_scope.md`, we do NOT mark
+-- we do NOT mark
 -- `L7_1a_FC.row0_inv` / `row0_step_post` irreducible — keeping them reducible
 -- preserves the `simpa`-based destructure of `h_inv`.
 section L7_1a_irreducible
@@ -29364,15 +29325,14 @@ set_option maxRecDepth 1000 in
     `row0_step_post` (either `.cont` advancing the invariant to k+1 or
     `.done` capping at K).
 
-    Mirrors `accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc`
-    (FCTargets:27856) but at the row-axis K-scale rather than the chunk-axis
+    Mirrors `accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc` but at the row-axis K-scale rather than the chunk-axis
     16-scale. Per-iteration step composes:
     1. `matrix.entry` reduction (via `entry_eq_ok_fc_aux`) at `(i, j) = (0, k)`
        gives `matrix_A.val[0*K+k]! = matrix_A.val[k]!`.
     2. `array_index_usize_ok_eq` for `s_as_ntt[k]`.
     3. `Array.index_mut_usize` reduction for `s_cache[k]` (extract pre +
        `cache.set k` setter).
-    4. `accumulating_ntt_multiply_fill_cache_poly_fc` (FCTargets:28463) on
+    4. `accumulating_ntt_multiply_fill_cache_poly_fc` on
        column k. The current accumulator's bound `≤ 2^30` follows from the
        PRE budget `(acc_init[n]).val.natAbs + K·2^25 ≤ 2^30` combined with
        invariant conjunct (2) `acc[n] ≤ acc_init[n] + k·2^25`.
@@ -29792,7 +29752,7 @@ private theorem compute_As_plus_e_loop0_step_lemma_fc
     PRE `≤ 2^30`) at every iteration: the running accumulator satisfies
     `acc[n] ≤ acc_init[n] + k·2^25 ≤ acc_init[n] + K·2^25 ≤ 2^30` for k ≤ K.
 
-    Mirrors `accumulating_ntt_multiply_fill_cache_poly_fc` (FCTargets:28463)
+    Mirrors `accumulating_ntt_multiply_fill_cache_poly_fc`
     but at the row-axis K-scale rather than the chunk-axis 16-scale. -/
 @[spec]
 theorem compute_As_plus_e_loop0_fc
@@ -29890,11 +29850,11 @@ end L7_1a_irreducible
     populated by Stage 1's column loop on row 0, and is consumed
     read-only here.
 
-    Mirrors `L7_1a_FC` (FCTargets:29220) minus the two cache-state
+    Mirrors `L7_1a_FC` minus the two cache-state
     conjuncts (3)/(4), and with the matrix lane index parameterized by
     the row index `i` (i.e. `i.val * K.val + c` rather than
     `0 * K.val + c`). The per-column forward dep is
-    `accumulating_ntt_multiply_use_cache_poly_fc` (FCTargets:29031)
+    `accumulating_ntt_multiply_use_cache_poly_fc`
     instead of `_fill_cache_poly_fc`. -/
 
 namespace L7_1b_FC
@@ -29958,11 +29918,11 @@ def row_i_step_post {K : Std.Usize}
 end L7_1b_FC
 
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Mirrors `L7_1a_irreducible`
--- (FCTargets:29314) — heavy POST predicates and the per-column forward dep
+-- — heavy POST predicates and the per-column forward dep
 -- are made locally irreducible across the step lemma + outer Triple so that
 -- elaboration does not whnf-explode through the 2-conjunct `row_i_inv` body or
 -- the nested `∀ j : Fin 16, ∀ ℓ : Fin 16` accumulator characterization.
--- Per `feedback_minimize_irreducibility_scope.md`, we do NOT mark
+-- we do NOT mark
 -- `L7_1b_FC.row_i_inv` / `row_i_step_post` irreducible.
 section L7_1b_irreducible
 attribute [local irreducible] accumulating_ntt_multiply_poly_post
@@ -29979,13 +29939,12 @@ set_option maxRecDepth 1000 in
     `row_i_step_post` (either `.cont` advancing the invariant to k+1 or
     `.done` capping at K).
 
-    Mirrors `compute_As_plus_e_loop0_step_lemma_fc` (FCTargets:29344) but
+    Mirrors `compute_As_plus_e_loop0_step_lemma_fc` but
     with three differences:
     1. No cache mutation: cache is INPUT only.
     2. Matrix lane uses `i.val * K.val + k.val` rather than
        `0 * K.val + k.val = k.val`.
-    3. Per-column forward dep is `accumulating_ntt_multiply_use_cache_poly_fc`
-       (FCTargets:29031) instead of `_fill_cache_poly_fc`. This requires the
+    3. Per-column forward dep is `accumulating_ntt_multiply_use_cache_poly_fc` instead of `_fill_cache_poly_fc`. This requires the
        cache-post hypothesis at column k:
        `accumulating_ntt_multiply_poly_cache_post (s_as_ntt[k]!) (s_cache[k]!)`.
        We pass the OUTER ∀-quantified hypothesis through the step lemma so the
@@ -30306,7 +30265,7 @@ private theorem compute_As_plus_e_loop1_loop0_step_lemma_fc
     against `s_as_ntt.val[c]!`. The latter is established by Stage 1's
     final invariant (row-0 column loop populates the cache).
 
-    Mirrors `compute_As_plus_e_loop0_fc` (FCTargets:29759) minus cache
+    Mirrors `compute_As_plus_e_loop0_fc` minus cache
     threading; the cache passes through as a read-only parameter. -/
 @[spec]
 theorem compute_As_plus_e_loop1_loop0_fc
@@ -30513,7 +30472,7 @@ end L7_1c_FC
     `lift_fe` lanes) to the `L7_1c_FC.canonical_row_sum_lane` side (which
     operates on `lift_chunk_mont _` chunks, i.e. Mont-stripped `lift_fe_mont`
     lanes). The relationship per lane is exactly the FE-level
-    `lift_fe_mont_mul_1353_eq_lift_fe` identity at FCTargets:29183.
+    `lift_fe_mont_mul_1353_eq_lift_fe` identity at.
 
     Both helpers are private to FCTargets and used only by the L7.1 Stage 4
     closing argument. -/
@@ -30737,9 +30696,9 @@ end L7_1c_FC
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Heavy `accumulating_ntt_multiply_*_post`
 -- predicates + the `canonical_row_sum_lane` foldl are made locally irreducible across
 -- the Stage 3 step lemma + main Triple to keep elaboration tractable through the 2-conjunct
--- `rows_inv` body. Per `feedback_minimize_irreducibility_scope.md` we do NOT mark
--- `L7_1c_FC.rows_inv` / `rows_step_post` irreducible — keeping them reducible preserves
--- the `simpa`-based destructure of `h_inv`.
+-- `rows_inv` body. We do NOT mark `L7_1c_FC.rows_inv` / `rows_step_post`
+-- irreducible — keeping them reducible preserves the `simpa`-based
+-- destructure of `h_inv`.
 section L7_1c_irreducible
 attribute [local irreducible] accumulating_ntt_multiply_poly_post
 attribute [local irreducible] accumulating_ntt_multiply_poly_cache_post
@@ -31488,8 +31447,7 @@ set_option maxHeartbeats 16000000 in
     Given a row-0 column-loop output `accumulator` satisfying `L7_1a_FC.row0_inv`
     at k=K (with `acc_init = accumulator` itself — i.e. the lemma's caller passes
     the original L7.1 accumulator and the Stage 1 output coincides at this slot,
-    consistent with the calling pattern at `compute_As_plus_e_loop0_fc`
-    FCTargets:29836), executes the bind chain
+    consistent with the calling pattern at `compute_As_plus_e_loop0_fc`), executes the bind chain
     `Array.to_slice + index_mut_usize t_as_ntt 0 + L6.7 + index_mut t_as_ntt1 0
      + index_usize error_as_ntt 0 + L6.5` and produces `a` such that:
 
@@ -31501,7 +31459,7 @@ set_option maxHeartbeats 16000000 in
               ((lift_poly error_as_ntt.val[0]!).val[ℓ]!)`.
     (2) For rows r > 0: `a.val[r]! = t_as_ntt.val[r]!`.
 
-    Mirrors `compute_As_plus_e_loop1_step_lemma_fc` (FCTargets:30792) structurally
+    Mirrors `compute_As_plus_e_loop1_step_lemma_fc` structurally
     — the `.cont` branch's bind chain at lines 30880-31320, with row index `k`
     replaced by `0#usize` and matrix lane index `k.val * K.val + c` replaced by
     just `c` (since `0 * K + c = c`).
@@ -32014,9 +31972,8 @@ theorem matrix_add_polynomials_eq_ok
     `Spec.ntt_multiply_pure_no_acc` lane on `lift_chunk_mont`-style chunks,
     scaled by `(lift_fe_mont 1353)²`.
 
-    Composes `Spec.multiply_ntts_pure_eq_chunked_no_acc` (FCTargets:18231)
-    with Helper 2 `L7_1c_FC.ntt_multiply_pure_no_acc_chunk_at_lift_poly_eq`
-    (FCTargets:30728). -/
+    Composes `Spec.multiply_ntts_pure_eq_chunked_no_acc`
+    with Helper 2 `L7_1c_FC.ntt_multiply_pure_no_acc_chunk_at_lift_poly_eq`. -/
 private theorem multiply_ntts_lane_eq_canonical_factor
     (a b : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
@@ -32960,8 +32917,7 @@ end L7_1d_FC
     public-key generation step. Impl returns
     `(t_as_ntt, s_cache, accumulator)`; project on `t_as_ntt`.
 
-    **PRE strengthening** (authorized per
-    `feedback_byte_identical_post_dispatch_scope.md`; POST byte-locked):
+    PRE:
     - `hAlen` : flat slice has K·K entries.
     - `hK` : `K.val ≤ 4` (ML-KEM 768/1024 etc.; drives `K · 2^25 ≤ 2^27`
       bound for `poly_reducing_from_i32_array_fc`).
@@ -32971,16 +32927,10 @@ end L7_1d_FC
     - `h_error_bnd`  : per-lane bound on `error_as_ntt`'s entries
       (the 29439 = 9 · 3271 ceiling required by L6.5
       `add_standard_error_reduce_fc`).
-    - `h_acc_bnd`    : per-lane ADDITIVE-BUDGET bound on initial
+    - `h_acc_bnd`    : per-lane additive-budget bound on initial
       `accumulator` (consumed by row-0 forward dep `Stage 1`, whose PRE
       requires `acc[n] + K · 2^25 ≤ 2^30`; rows 1..K-1 re-zero the
-      accumulator inside `compute_As_plus_e_loop1`).
-
-    **Additional PRE strengthening**: `h_acc_bnd` shape
-    changed from `≤ 2^30` to additive form `+ K · 2^25 ≤ 2^30` to match
-    Stage 1's PRE. Authorized per
-    `feedback_byte_identical_post_dispatch_scope.md` (in-dispatch PRE
-    strengthening allowed; POST byte-locked). -/
+      accumulator inside `compute_As_plus_e_loop1`). -/
 @[spec]
 theorem compute_As_plus_e_fc
     {K : Std.Usize}
@@ -33173,52 +33123,41 @@ info: 'libcrux_iot_ml_kem.BitMlKem.FCTargets.compute_As_plus_e_fc' depends on ax
 #guard_msgs in
 #print axioms compute_As_plus_e_fc
 
-/- L7.2 — `matrix.compute_vector_u`: product `Aᵀ · r + e₁` of the encryption
-   step. The FC theorem is PROVEN as `libcrux_iot_ml_kem.BitMlKem.L7.compute_vector_u_fc`
-   in `BitMlKem/L7/FC/ComputeVectorU.lean` (byte-locked POST:
-   `hacspec_ml_kem.matrix.compute_vector_u (lift_matrix_from_seed seed K)
-      (lift_vec_slice r_as_ntt K) (lift_vec_slice error_1 K) = .ok (lift_vec_slice p.2.1 K)`,
-   axiom-clean modulo the sanctioned `sample_matrix_entry_fc` / `Spec.sample_matrix_A_pure` boundary).
-   The stub `@[spec] theorem compute_vector_u_fc := by sorry` was REMOVED here: the
-   `L7/` bridge tree imports `FCTargets`, so this file cannot `:=`-reference the proven
-   `L7.compute_vector_u_fc` (import cycle), and a `sorry`-backed `@[spec]` is a
-   downstream-`hax_mvcgen` footgun. The canonical proven `@[spec]` lives in `L7/FC/`.
-   (Mirrors the L7.4 `compute_message_fc` wiring, commit 806de7d.) -/
+/- L7.2 — `matrix.compute_vector_u`: product `Aᵀ · r + e₁` of the
+   encryption step. Proven as
+   `libcrux_iot_ml_kem.BitMlKem.L7.compute_vector_u_fc` in
+   `BitMlKem/L7/FC/ComputeVectorU.lean`, axiom-clean modulo the
+   sanctioned `sample_matrix_entry_fc` / `Spec.sample_matrix_A_pure`
+   boundary. The proof lives downstream because the `L7/` bridge tree
+   imports `FCTargets`.
+
+   POST: `hacspec_ml_kem.matrix.compute_vector_u (lift_matrix_from_seed seed K)
+   (lift_vec_slice r_as_ntt K) (lift_vec_slice error_1 K)
+   = .ok (lift_vec_slice p.2.1 K)`. -/
 
 /- L7.3 — `matrix.compute_ring_element_v`: `t · r + e₂ + message` (the
-   decryption-side ring element `v`). The FC theorem is PROVEN as
+   decryption-side ring element `v`). Proven as
    `libcrux_iot_ml_kem.BitMlKem.L7.compute_ring_element_v_fc` in
-   `BitMlKem/L7/FC/ComputeRingElementV.lean` (byte-locked POST:
-   `hacspec_ml_kem.matrix.compute_ring_element_v
-      (lift_t_as_ntt_from_public_key public_key K) (lift_vec_slice r_as_ntt K)
-      (lift_poly error_2) (lift_poly message) = .ok (lift_poly p.2.1)`,
-   with PRE bounds `hK ≤ 4` / per-lane `≤ 3328` on `r_as_ntt`/`error_2`/`message`
-   + the `accumulating_ntt_multiply_poly_cache_post` cache precondition + zero
-   accumulator). It depends on the L7.3 bridge tree (the novel chunks-exact
-   enumerate loop keystone `loop_chunks_exact_pk_spec`, the deserialize/accumulate
-   loop FC + `scaleZ 2285` acc-bridge in `L7/Impl/ComputeRingElementV.lean`, the
-   D′ two-add tail bridge `add_message_error_scaleZ_eq` in
-   `L7/Correctness/ComputeRingElementV.lean`, reusing L7.4 B/C/glue), all of which
-   import THIS file — so the theorem cannot `:=`-reference it here (import cycle),
-   and a `sorry`-backed `@[spec]` is a downstream-`hax_mvcgen` footgun. The
-   canonical proven `@[spec]` lives in `L7/FC/`. Axiom-clean modulo the sanctioned
-   `deserialize_to_reduced_ring_element_fc` (A2) / `Spec.t_as_ntt_from_public_key_pure`
-   spec-stub boundary. (Mirrors the L7.2 / L7.4 wiring, commits 8c314ef / 806de7d.) -/
+   `BitMlKem/L7/FC/ComputeRingElementV.lean` (PRE bounds `hK ≤ 4` /
+   per-lane `≤ 3328` on `r_as_ntt`/`error_2`/`message` + the
+   `accumulating_ntt_multiply_poly_cache_post` cache precondition +
+   zero accumulator). The proof lives downstream because the L7.3
+   bridge tree imports `FCTargets`. Axiom-clean modulo the sanctioned
+   `deserialize_to_reduced_ring_element_fc` (A2) /
+   `Spec.t_as_ntt_from_public_key_pure` spec-stub boundary.
+
+   POST: `hacspec_ml_kem.matrix.compute_ring_element_v
+   (lift_t_as_ntt_from_public_key public_key K) (lift_vec_slice r_as_ntt K)
+   (lift_poly error_2) (lift_poly message) = .ok (lift_poly p.2.1)`. -/
 
 /- L7.4 — `matrix.compute_message`: `v - secret · u` then NTT-inverse.
-    **PROVEN** (with explicit PRE bounds `hK ≤ 4` + per-lane `≤ 3328`, and the
-    byte-identical equality POST below) as
-    `libcrux_iot_ml_kem.BitMlKem.L7.compute_message_fc` in
-    `BitMlKem/L7/FC/ComputeMessage.lean`. It depends on the L7 bridge tree
-    (S1 loop FC + acc-bridge A + invert-linearity B + ntt_inverse C +
-    subtract D), all of which import THIS file — so the theorem cannot live
-    here (import cycle). The earlier `sorry` stub at this location is removed:
-    it was an unreferenced, sorry-backed `@[spec]` placeholder (a footgun for
-    downstream `hax_mvcgen`). Downstream callers should import the L7 file.
+   Proven (with explicit PRE bounds `hK ≤ 4` + per-lane `≤ 3328`) as
+   `libcrux_iot_ml_kem.BitMlKem.L7.compute_message_fc` in
+   `BitMlKem/L7/FC/ComputeMessage.lean`. The proof lives downstream
+   because the L7 bridge tree imports `FCTargets`.
 
-    POST (for reference):
-    `hacspec_ml_kem.matrix.compute_message (lift_poly v) (lift_vec secret_as_ntt)
-       (lift_vec u_as_ntt) = .ok (lift_poly p.1)`. -/
+   POST: `hacspec_ml_kem.matrix.compute_message (lift_poly v) (lift_vec secret_as_ntt)
+   (lift_vec u_as_ntt) = .ok (lift_poly p.1)`. -/
 
 /-! ## Roll-up
 

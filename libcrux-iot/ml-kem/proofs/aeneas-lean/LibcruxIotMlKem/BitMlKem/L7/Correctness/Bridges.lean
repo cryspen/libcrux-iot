@@ -1,13 +1,7 @@
 /-
-  # `BitMlKem/L7/Correctness/Bridges.lean` — L7.4 validated bridge foundation.
+  # `BitMlKem/L7/Correctness/Bridges.lean` — L7.4 bridge foundation.
 
-  The numerically-validated (per-lane `#eval`-confirmed, regression-guarded in
-  `L7/Tests/ComputeMessageSeamValidation.lean`) ZMod-domain bridge lemmas for the
-  CORRECTED L7.4 `compute_message` decomposition. See
-  `~/.claude/plans/iot-mlkem-l74-proof-sketch.md` →
-  "CORRECTED CONTRACT DESIGN".
-
-  Imports only FCTargets + Common (stays inside the L7 barrier).
+  ZMod-domain bridge lemmas for the L7.4 `compute_message` decomposition.
 -/
 import LibcruxIotMlKem.BitMlKem.FCTargets
 import LibcruxIotMlKem.BitMlKem.L7.Common
@@ -355,13 +349,13 @@ theorem zmodOfFE_lift_fe_mont (x : Std.I16) :
   unfold lift_fe_mont
   rw [zmodOfFE_feOfZMod]; rfl
 
-/-! ## D / subtract bridge (validated SEAM 3, factor 512 = 1441·169). -/
+/-! ## D / subtract bridge (factor 512 = 1441·169). -/
 
 /-- Per-lane characterization of `Spec.subtract_reduce_pure`: for `j < 256`
     and canonical `a[j]` (the actual `self`-poly lanes are always canonical),
     `zmodOfFE ((subtract_reduce_pure a b)[j]) = zmodOfFE (a[j]) - 512 * zmodOfFE (b[j])`.
-    Validated SEAM 3; the impl's fused Montgomery `·1441` correction equals
-    `·512` in `ZMod 3329` since `1441 · 169 ≡ 512` (`glue_1441_169`). -/
+    The impl's fused Montgomery `·1441` correction equals `·512` in `ZMod 3329`
+    since `1441 · 169 ≡ 512` (`glue_1441_169`). -/
 theorem zmodOfFE_subtract_reduce_pure_lane
     (a b : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
     (j : Nat) (hj : j < 256)

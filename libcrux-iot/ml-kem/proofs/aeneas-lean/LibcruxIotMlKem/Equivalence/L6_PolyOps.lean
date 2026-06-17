@@ -44,9 +44,8 @@ local instance instInhabitedPolynomialRingElement_l6 {Vector : Type} [Inhabited 
 /-! ## Local helpers — Triple ↔ Result.ok bridges, pure-prop holds.
 
 Mirror the `triple_of_ok_l3` / `triple_exists_ok_l3` / `pure_prop_holds_l3`
-family used by `L3_NTTDrivers.lean`. Per the campaign methodology
-(§13.5), each phase file carries its own copy with a phase-local suffix
-to avoid cross-file shadowing. -/
+family used by `L3_NTTDrivers.lean`. Each phase file carries its own copy
+with a phase-local suffix to avoid cross-file shadowing. -/
 
 private theorem triple_of_ok_l6 {α : Type} {x : Result α} {v : α}
     {P : α → Prop} (hx : x = .ok v) (hp : P v) :

@@ -11,35 +11,27 @@
   function signatures whose algebraic equivalence to the hacspec
   spec lives.
 
-  Open-question decisions baked into this file
-  (see plan §Section I in `~/.claude/plans/iot-mlkem-layer-M-architecture.md`):
-  - **I.1**: `MontPoly := Vector (ZMod 3329) 256` is the algebraic
-    working type. The parallel `SpecPoly := Vector
-    parameters.FieldElement 256` lives below, after the Phase-0
-    `HacspecSha3.Common` factor resolved the FmtDisplay collision.
-  - **I.2**: `vector.traits.Operations` has no `repr` field; concrete
-    impls (e.g. `vector.portable.vector_type.PortableVector`) carry an
+  Design notes:
+  - `MontPoly := Vector (ZMod 3329) 256` is the algebraic working type.
+    The parallel `SpecPoly := Vector parameters.FieldElement 256` lives
+    below.
+  - `vector.traits.Operations` has no `repr` field; concrete impls
+    (e.g. `vector.portable.vector_type.PortableVector`) carry an
     `elements : Array Std.I16 16` field accessed directly via
-    `re.coefficients.val[i]!.elements.val[j]!` — matches the pattern in
-    `Equivalence/L6_PolyOps.lean:135` etc. The lift functions below
+    `re.coefficients.val[i]!.elements.val[j]!`. The lift functions
     therefore specialize to `PortableVector`.
-  - **I.7**: hacspec spec functions return `Result`; bit-side `bit_<op>`
-    are pure. M.4 AlgEquiv will bridge via `Spec.<op>_pure` aliases.
-  - **NTT family**: per the dispatch brief, `bit_ntt`, `bit_ntt_layer_*`,
-    `bit_invert_ntt_*`, `bit_butterfly`, etc. ship as STUBBED identity
-    placeholders so downstream code can reference them by NAME. a later pass will
-    replace these stubs with real bodies and prove the algebraic
-    equivalence.
+  - hacspec spec functions return `Result`; bit-side `bit_<op>` are
+    pure; `AlgEquiv` bridges via `Spec.<op>_pure` aliases.
+  - The NTT family (`bit_ntt`, `bit_ntt_layer_*`, `bit_invert_ntt_*`,
+    `bit_butterfly`, …) ships as identity placeholders so downstream
+    code can reference them by name; a later pass replaces these stubs
+    with real bodies and proves the algebraic equivalence.
 
   This file is the BARRIER FOR LAYER M (Mathlib-isolation discipline).
   Mathlib is imported here for `ZMod 3329` ring instances and the
   `ring` tactic; downstream `Commute.lean` / `StateIso.lean` /
   `AlgEquiv.lean` use the symbols defined here without further Mathlib
-  imports (except where M.4 itself adds the AlgEquiv lemma surface).
-
-  No `@[scoped grind]` annotations live here (those land in M.2 / M.4
-  per.2 / K.1). No Triples here (those land +
-  L0+ upgrades per §X.3).
+  imports.
 -/
 import LibcruxIotMlKem.Util.NumericKeystones
 import LibcruxIotMlKem.Util.ModularArith
@@ -84,8 +76,7 @@ local instance instInhabitedPolynomialRingElement_bitMlKem
     project each lane via `i16_to_spec_fe_{plain,mont}` below. -/
 abbrev MontPoly : Type := Vector (ZMod 3329) 256
 
-/-! ## §B.5 — `SpecPoly` + lane coercions (landed after Phase-0
-    `HacspecSha3.Common` factor; arch doc §A.2 design). -/
+/-! ## §B.5 — `SpecPoly` + lane coercions. -/
 
 /-- The hacspec interface type: a 256-coefficient vector of
     `parameters.FieldElement` (which wraps a `Std.U16` carrying a

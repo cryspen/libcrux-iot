@@ -1,17 +1,14 @@
 /-
-  # `BitMlKem/L7/FC/ComputeRingElementV.lean` — L7.3 FC theorem (capstone glue).
+  # `BitMlKem/L7/FC/ComputeRingElementV.lean` — L7.3 FC theorem glue.
 
-  Houses the L7.3 FC theorem `compute_ring_element_v_fc`, the direct
-  decomposition glue (impl walk via `triple_*_ok_fc` + the validated
-  A/C/B/compose/glue/D′ chain). Mirrors L7.4 `compute_message_fc`
-  near-verbatim, swapping the loop (chunks-exact deserialize loop instead of
-  the SAMPLED USE-CACHE loop) and the tail (two `add_polynomials` instead of a
-  single `subtract`).
+  Houses the L7.3 FC theorem `compute_ring_element_v_fc`, gluing the
+  direct decomposition (impl walk via `triple_*_ok_fc` + the A/C/B/
+  compose/glue/D′ chain). Mirrors L7.4 `compute_message_fc`
+  near-verbatim, swapping the loop (chunks-exact deserialize loop
+  instead of the sampled use-cache loop) and the tail (two
+  `add_polynomials` instead of a single `subtract`).
 
-  Stated in the `L7` namespace; the FCTargets stub `compute_ring_element_v_fc`
-  is wired to this in S6 (NOT touched here).
-
-  POST is byte-locked to the FCTargets stub (FCTargets.lean:33226-33230):
+  POST:
     `hacspec_ml_kem.matrix.compute_ring_element_v
        (lift_t_as_ntt_from_public_key public_key K) (lift_vec_slice r_as_ntt K)
        (lift_poly error_2) (lift_poly message) = .ok (lift_poly p.2.1)`.

@@ -36,8 +36,7 @@
 
   - No `@[scoped grind]` — these are one-shot lemmas for downstream
     explicit use, not a grind set.
-  - No `sorry`, no `admit`. The `lift_id` goes option (a) per the
-    dispatch brief.
+  - No `sorry`, no `admit`.
   - Mathlib is imported here for `ZMod 3329` injectivity arguments
     (cancel `169` via the explicit inverse).
 
