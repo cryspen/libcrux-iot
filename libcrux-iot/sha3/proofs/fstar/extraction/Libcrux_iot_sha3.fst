@@ -44,6 +44,13 @@ let t_Algorithm_cast_to_repr (x: t_Algorithm) : u32 =
   | Algorithm_Sha384  -> anon_const_Algorithm_Sha384__anon_const_0
   | Algorithm_Sha512  -> anon_const_Algorithm_Sha512__anon_const_0
 
+[@@ FStar.Tactics.Typeclasses.tcinstance]
+assume
+val impl_5': Core_models.Fmt.t_Debug t_Algorithm
+
+unfold
+let impl_5 = impl_5'
+
 let impl_2: Core_models.Clone.t_Clone t_Algorithm =
   { f_clone = (fun x -> x); f_clone_pre = (fun _ -> True); f_clone_post = (fun _ _ -> True) }
 
@@ -56,24 +63,17 @@ let impl_1 = impl_1'
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
 assume
-val impl_3': Core_models.Fmt.t_Debug t_Algorithm
+val impl_3': Core_models.Marker.t_StructuralPartialEq t_Algorithm
 
 unfold
 let impl_3 = impl_3'
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
 assume
-val impl_4': Core_models.Marker.t_StructuralPartialEq t_Algorithm
+val impl_4': Core_models.Cmp.t_PartialEq t_Algorithm t_Algorithm
 
 unfold
 let impl_4 = impl_4'
-
-[@@ FStar.Tactics.Typeclasses.tcinstance]
-assume
-val impl_5': Core_models.Cmp.t_PartialEq t_Algorithm t_Algorithm
-
-unfold
-let impl_5 = impl_5'
 
 [@@ FStar.Tactics.Typeclasses.tcinstance]
 assume

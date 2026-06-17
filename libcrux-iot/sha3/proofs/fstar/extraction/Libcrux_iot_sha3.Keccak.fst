@@ -1034,97 +1034,57 @@ let impl__absorb_final
   let self:t_KeccakXofState v_RATE = tmp0 in
   let input_remainder_len:usize = out in
   let input_len:usize = Core_models.Slice.impl__len #u8 inputs in
-  let blocks:t_Array u8 (mk_usize 200) =
-    Libcrux_secrets.Traits.f_classify #(t_Array u8 (mk_usize 200))
-      #FStar.Tactics.Typeclasses.solve
-      (Rust_primitives.Hax.repeat (mk_u8 0) (mk_usize 200) <: t_Array u8 (mk_usize 200))
-  in
-  let blocks:t_Array u8 (mk_usize 200) =
-    if self.f_buf_len >. mk_usize 0
-    then
-      let blocks:t_Array u8 (mk_usize 200) =
-        Rust_primitives.Hax.Monomorphized_update_at.update_at_range blocks
-          ({
-              Core_models.Ops.Range.f_start = mk_usize 0;
-              Core_models.Ops.Range.f_end = self.f_buf_len
-            }
-            <:
-            Core_models.Ops.Range.t_Range usize)
-          (Core_models.Slice.impl__copy_from_slice #u8
-              (blocks.[ {
-                    Core_models.Ops.Range.f_start = mk_usize 0;
-                    Core_models.Ops.Range.f_end = self.f_buf_len
-                  }
-                  <:
-                  Core_models.Ops.Range.t_Range usize ]
-                <:
-                t_Slice u8)
-              (self.f_buf.[ {
-                    Core_models.Ops.Range.f_start = mk_usize 0;
-                    Core_models.Ops.Range.f_end = self.f_buf_len
-                  }
-                  <:
-                  Core_models.Ops.Range.t_Range usize ]
-                <:
-                t_Slice u8)
-            <:
-            t_Slice u8)
-      in
-      blocks
-    else blocks
-  in
-  let blocks:t_Array u8 (mk_usize 200) =
+  let self:t_KeccakXofState v_RATE =
     if input_remainder_len >. mk_usize 0
     then
-      let blocks:t_Array u8 (mk_usize 200) =
-        Rust_primitives.Hax.Monomorphized_update_at.update_at_range blocks
-          ({
-              Core_models.Ops.Range.f_start = self.f_buf_len;
-              Core_models.Ops.Range.f_end = self.f_buf_len +! input_remainder_len <: usize
-            }
-            <:
-            Core_models.Ops.Range.t_Range usize)
-          (Core_models.Slice.impl__copy_from_slice #u8
-              (blocks.[ {
-                    Core_models.Ops.Range.f_start = self.f_buf_len;
-                    Core_models.Ops.Range.f_end = self.f_buf_len +! input_remainder_len <: usize
-                  }
+      let self:t_KeccakXofState v_RATE =
+        {
+          self with
+          f_buf
+          =
+          Rust_primitives.Hax.Monomorphized_update_at.update_at_range self.f_buf
+            ({
+                Core_models.Ops.Range.f_start = self.f_buf_len;
+                Core_models.Ops.Range.f_end = self.f_buf_len +! input_remainder_len <: usize
+              }
+              <:
+              Core_models.Ops.Range.t_Range usize)
+            (Core_models.Slice.impl__copy_from_slice #u8
+                (self.f_buf.[ {
+                      Core_models.Ops.Range.f_start = self.f_buf_len;
+                      Core_models.Ops.Range.f_end = self.f_buf_len +! input_remainder_len <: usize
+                    }
+                    <:
+                    Core_models.Ops.Range.t_Range usize ]
                   <:
-                  Core_models.Ops.Range.t_Range usize ]
-                <:
-                t_Slice u8)
-              (inputs.[ {
-                    Core_models.Ops.Range.f_start = input_len -! input_remainder_len <: usize
-                  }
+                  t_Slice u8)
+                (inputs.[ {
+                      Core_models.Ops.Range.f_start = input_len -! input_remainder_len <: usize
+                    }
+                    <:
+                    Core_models.Ops.Range.t_RangeFrom usize ]
                   <:
-                  Core_models.Ops.Range.t_RangeFrom usize ]
-                <:
-                t_Slice u8)
-            <:
-            t_Slice u8)
+                  t_Slice u8)
+              <:
+              t_Slice u8)
+        }
+        <:
+        t_KeccakXofState v_RATE
       in
-      blocks
-    else blocks
+      self
+    else self
   in
-  let blocks:t_Array u8 (mk_usize 200) =
-    Rust_primitives.Hax.Monomorphized_update_at.update_at_usize blocks
-      (self.f_buf_len +! input_remainder_len <: usize)
-      (Libcrux_secrets.Traits.f_classify #u8 #FStar.Tactics.Typeclasses.solve v_DELIMITER <: u8)
-  in
-  let blocks:t_Array u8 (mk_usize 200) =
-    Rust_primitives.Hax.Monomorphized_update_at.update_at_usize blocks
-      (v_RATE -! mk_usize 1 <: usize)
-      ((blocks.[ v_RATE -! mk_usize 1 <: usize ] <: u8) |. mk_u8 128 <: u8)
-  in
+  let last_len:usize = self.f_buf_len +! input_remainder_len in
   let self:t_KeccakXofState v_RATE =
     {
       self with
       f_inner
       =
-      Libcrux_iot_sha3.State.impl_KeccakState__load_block_full v_RATE
+      Libcrux_iot_sha3.State.impl_KeccakState__load_last_block v_RATE
         self.f_inner
-        blocks
-        (mk_usize 0)
+        (self.f_buf <: t_Slice u8)
+        last_len
+        (Libcrux_secrets.Traits.f_classify #u8 #FStar.Tactics.Typeclasses.solve v_DELIMITER <: u8)
     }
     <:
     t_KeccakXofState v_RATE
@@ -1134,23 +1094,23 @@ let impl__absorb_final
   in
   self
 
-#push-options "--z3rlimit 60"
+#push-options "--z3rlimit 150"
 
-let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
+let e_squeeze (v_RATE: usize) (keccak_state: t_KeccakXofState v_RATE) (out: t_Slice u8)
     : Prims.Pure (t_KeccakXofState v_RATE & t_Slice u8)
       (requires
         v_RATE =. mk_usize 168 || v_RATE =. mk_usize 144 || v_RATE =. mk_usize 136 ||
         v_RATE =. mk_usize 104 ||
         v_RATE =. mk_usize 72)
       (fun _ -> Prims.l_True) =
-  let state:t_KeccakXofState v_RATE =
-    if state.f_sponge
+  let keccak_state:t_KeccakXofState v_RATE =
+    if keccak_state.f_sponge
     then
-      let state:t_KeccakXofState v_RATE =
-        { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
+      let keccak_state:t_KeccakXofState v_RATE =
+        { keccak_state with f_inner = keccakf1600 keccak_state.f_inner } <: t_KeccakXofState v_RATE
       in
-      state
-    else state
+      keccak_state
+    else keccak_state
   in
   let out_len:usize = Core_models.Slice.impl__len #u8 out in
   let blocks:usize = out_len /! v_RATE in
@@ -1160,7 +1120,7 @@ let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
     Rust_primitives.Hax.Monomorphized_update_at.update_at_range_to out
       ({ Core_models.Ops.Range.f_end = mid } <: Core_models.Ops.Range.t_RangeTo usize)
       (Libcrux_iot_sha3.State.impl_KeccakState__store v_RATE
-          state.f_inner
+          keccak_state.f_inner
           (out.[ { Core_models.Ops.Range.f_end = mid } <: Core_models.Ops.Range.t_RangeTo usize ]
             <:
             t_Slice u8)
@@ -1168,11 +1128,13 @@ let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
         t_Slice u8)
   in
   let offset:usize = mid in
-  let (offset: usize), (out: t_Slice u8), (state: t_KeccakXofState v_RATE) =
+  let (keccak_state: t_KeccakXofState v_RATE), (offset: usize), (out: t_Slice u8) =
     Rust_primitives.Hax.Folds.fold_range (mk_usize 1)
       blocks
       (fun temp_0_ e_k ->
-          let (offset: usize), (out: t_Slice u8), (state: t_KeccakXofState v_RATE) = temp_0_ in
+          let (keccak_state: t_KeccakXofState v_RATE), (offset: usize), (out: t_Slice u8) =
+            temp_0_
+          in
           let e_k:usize = e_k in
           ((Core_models.Slice.impl__len #u8 out <: usize) =. out_len <: bool) &&
           ((Rust_primitives.Hax.Int.from_machine offset <: Hax_lib.Int.t_Int) =
@@ -1182,12 +1144,16 @@ let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
               Hax_lib.Int.t_Int)
             <:
             bool))
-      (offset, out, state <: (usize & t_Slice u8 & t_KeccakXofState v_RATE))
+      (keccak_state, offset, out <: (t_KeccakXofState v_RATE & usize & t_Slice u8))
       (fun temp_0_ e_k ->
-          let (offset: usize), (out: t_Slice u8), (state: t_KeccakXofState v_RATE) = temp_0_ in
+          let (keccak_state: t_KeccakXofState v_RATE), (offset: usize), (out: t_Slice u8) =
+            temp_0_
+          in
           let e_k:usize = e_k in
-          let state:t_KeccakXofState v_RATE =
-            { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
+          let keccak_state:t_KeccakXofState v_RATE =
+            { keccak_state with f_inner = keccakf1600 keccak_state.f_inner }
+            <:
+            t_KeccakXofState v_RATE
           in
           let out:t_Slice u8 =
             Rust_primitives.Hax.Monomorphized_update_at.update_at_range out
@@ -1198,7 +1164,7 @@ let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
                 <:
                 Core_models.Ops.Range.t_Range usize)
               (Libcrux_iot_sha3.State.impl_KeccakState__store v_RATE
-                  state.f_inner
+                  keccak_state.f_inner
                   (out.[ {
                         Core_models.Ops.Range.f_start = offset;
                         Core_models.Ops.Range.f_end = offset +! v_RATE <: usize
@@ -1211,9 +1177,9 @@ let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
                 t_Slice u8)
           in
           let offset:usize = offset +! v_RATE in
-          offset, out, state <: (usize & t_Slice u8 & t_KeccakXofState v_RATE))
+          keccak_state, offset, out <: (t_KeccakXofState v_RATE & usize & t_Slice u8))
   in
-  let (out: t_Slice u8), (state: t_KeccakXofState v_RATE) =
+  let (keccak_state: t_KeccakXofState v_RATE), (out: t_Slice u8) =
     if last >. mk_usize 0 && last <. out_len
     then
       let _:Prims.unit =
@@ -1225,14 +1191,14 @@ let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
           in
           ()
       in
-      let state:t_KeccakXofState v_RATE =
-        { state with f_inner = keccakf1600 state.f_inner } <: t_KeccakXofState v_RATE
+      let keccak_state:t_KeccakXofState v_RATE =
+        { keccak_state with f_inner = keccakf1600 keccak_state.f_inner } <: t_KeccakXofState v_RATE
       in
       let out:t_Slice u8 =
         Rust_primitives.Hax.Monomorphized_update_at.update_at_range_from out
           ({ Core_models.Ops.Range.f_start = offset } <: Core_models.Ops.Range.t_RangeFrom usize)
           (Libcrux_iot_sha3.State.impl_KeccakState__store v_RATE
-              state.f_inner
+              keccak_state.f_inner
               (out.[ { Core_models.Ops.Range.f_start = offset }
                   <:
                   Core_models.Ops.Range.t_RangeFrom usize ]
@@ -1241,11 +1207,13 @@ let e_squeeze (v_RATE: usize) (state: t_KeccakXofState v_RATE) (out: t_Slice u8)
             <:
             t_Slice u8)
       in
-      out, state <: (t_Slice u8 & t_KeccakXofState v_RATE)
-    else out, state <: (t_Slice u8 & t_KeccakXofState v_RATE)
+      keccak_state, out <: (t_KeccakXofState v_RATE & t_Slice u8)
+    else keccak_state, out <: (t_KeccakXofState v_RATE & t_Slice u8)
   in
-  let state:t_KeccakXofState v_RATE = { state with f_sponge = true } <: t_KeccakXofState v_RATE in
-  state, out <: (t_KeccakXofState v_RATE & t_Slice u8)
+  let keccak_state:t_KeccakXofState v_RATE =
+    { keccak_state with f_sponge = true } <: t_KeccakXofState v_RATE
+  in
+  keccak_state, out <: (t_KeccakXofState v_RATE & t_Slice u8)
 
 #pop-options
 
@@ -1310,54 +1278,14 @@ let absorb_final
       let _:Prims.unit = Hax_lib.v_assert (len <. v_RATE <: bool) in
       ()
   in
-  let blocks:t_Array u8 (mk_usize 200) =
-    Libcrux_secrets.Traits.f_classify #(t_Array u8 (mk_usize 200))
-      #FStar.Tactics.Typeclasses.solve
-      (Rust_primitives.Hax.repeat (mk_u8 0) (mk_usize 200) <: t_Array u8 (mk_usize 200))
-  in
-  let blocks:t_Array u8 (mk_usize 200) =
-    if len >. mk_usize 0
-    then
-      let blocks:t_Array u8 (mk_usize 200) =
-        Rust_primitives.Hax.Monomorphized_update_at.update_at_range blocks
-          ({ Core_models.Ops.Range.f_start = mk_usize 0; Core_models.Ops.Range.f_end = len }
-            <:
-            Core_models.Ops.Range.t_Range usize)
-          (Core_models.Slice.impl__copy_from_slice #u8
-              (blocks.[ {
-                    Core_models.Ops.Range.f_start = mk_usize 0;
-                    Core_models.Ops.Range.f_end = len
-                  }
-                  <:
-                  Core_models.Ops.Range.t_Range usize ]
-                <:
-                t_Slice u8)
-              (last.[ {
-                    Core_models.Ops.Range.f_start = start;
-                    Core_models.Ops.Range.f_end = start +! len <: usize
-                  }
-                  <:
-                  Core_models.Ops.Range.t_Range usize ]
-                <:
-                t_Slice u8)
-            <:
-            t_Slice u8)
-      in
-      blocks
-    else blocks
-  in
-  let blocks:t_Array u8 (mk_usize 200) =
-    Rust_primitives.Hax.Monomorphized_update_at.update_at_usize blocks
+  let s:Libcrux_iot_sha3.State.t_KeccakState =
+    Libcrux_iot_sha3.State.impl_KeccakState__load_last_block v_RATE
+      s
+      (last.[ { Core_models.Ops.Range.f_start = start } <: Core_models.Ops.Range.t_RangeFrom usize ]
+        <:
+        t_Slice u8)
       len
       (Libcrux_secrets.Traits.f_classify #u8 #FStar.Tactics.Typeclasses.solve v_DELIM <: u8)
-  in
-  let blocks:t_Array u8 (mk_usize 200) =
-    Rust_primitives.Hax.Monomorphized_update_at.update_at_usize blocks
-      (v_RATE -! mk_usize 1 <: usize)
-      ((blocks.[ v_RATE -! mk_usize 1 <: usize ] <: u8) |. mk_u8 128 <: u8)
-  in
-  let s:Libcrux_iot_sha3.State.t_KeccakState =
-    Libcrux_iot_sha3.State.impl_KeccakState__load_block_full v_RATE s blocks (mk_usize 0)
   in
   let s:Libcrux_iot_sha3.State.t_KeccakState = keccakf1600 s in
   s
@@ -1574,8 +1502,6 @@ let squeeze_first_and_last
         t_Slice u8)
   in
   out
-
-let v_WIDTH: usize = mk_usize 200
 
 let keccak (v_RATE: usize) (v_DELIM: u8) (data out: t_Slice u8)
     : Prims.Pure (t_Slice u8)

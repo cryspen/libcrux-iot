@@ -196,7 +196,6 @@ impl<const RATE: usize> KeccakXofState<RATE> {
     // can't use the `options` attribute in the impl block because of
     // a hax issue. Therefore we pull out the function and put it
     // there instead.  cf. https://github.com/cryspen/hax/issues/1698
-    // #[hax_lib::fstar::options("--z3rlimit 60")]
     pub(crate) fn squeeze(&mut self, out: &mut [U8]) {
         _squeeze(self, out);
     }
@@ -204,7 +203,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
 
 #[inline(always)]
 #[hax_lib::requires(RATE == 168 || RATE == 144 || RATE == 136 || RATE == 104 || RATE == 72)]
-#[hax_lib::fstar::options("--z3rlimit 60")]
+#[hax_lib::fstar::options("--z3rlimit 150")]
 fn _squeeze<const RATE: usize>(keccak_state: &mut KeccakXofState<RATE>, out: &mut [U8]) {
     if keccak_state.sponge {
         // If we called `squeeze` before, call f1600 first.

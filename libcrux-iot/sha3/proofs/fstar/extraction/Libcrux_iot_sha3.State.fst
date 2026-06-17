@@ -7,6 +7,8 @@ let _ =
   (* This module has implicit dependencies, here we make them explicit. *)
   (* The implicit dependencies arise from typeclasses instances. *)
   let open Libcrux_iot_sha3.Lane in
+  let open Libcrux_secrets.Int.Public_integers in
+  let open Libcrux_secrets.Traits in
   ()
 
 type t_KeccakState = {
@@ -537,37 +539,213 @@ let impl_KeccakState__load_block
   let self:t_KeccakState = load_block_2u32 v_RATE self blocks start in
   self
 
-let load_block_full_2u32
+let load_last_block_2u32
       (v_RATE: usize)
       (keccak_state: t_KeccakState)
-      (blocks: t_Array u8 (mk_usize 200))
-      (start: usize)
+      (last: t_Slice u8)
+      (len: usize)
+      (delimiter: u8)
     : Prims.Pure t_KeccakState
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
-        ((Rust_primitives.Hax.Int.from_machine start <: Hax_lib.Int.t_Int) +
-          (Rust_primitives.Hax.Int.from_machine v_RATE <: Hax_lib.Int.t_Int)
-          <:
-          Hax_lib.Int.t_Int) <=
-        (Rust_primitives.Hax.Int.from_machine (mk_i32 200) <: Hax_lib.Int.t_Int))
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 && len <. v_RATE &&
+        len <=. (Core_models.Slice.impl__len #u8 last <: usize))
       (fun _ -> Prims.l_True) =
+  let _:Prims.unit =
+    if true
+    then
+      let _:Prims.unit =
+        Hax_lib.v_assert (((v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 <: bool) &&
+            (len <. v_RATE <: bool) &&
+            (len <=. (Core_models.Slice.impl__len #u8 last <: usize) <: bool))
+      in
+      ()
+  in
+  let state_flat:t_Array Libcrux_iot_sha3.Lane.t_Lane2U32 (mk_usize 25) =
+    Rust_primitives.Hax.repeat (Libcrux_iot_sha3.Lane.impl_Lane2U32__zero ()
+        <:
+        Libcrux_iot_sha3.Lane.t_Lane2U32)
+      (mk_usize 25)
+  in
+  let state_flat:t_Array Libcrux_iot_sha3.Lane.t_Lane2U32 (mk_usize 25) =
+    Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
+      (v_RATE /! mk_usize 8 <: usize)
+      (fun state_flat temp_1_ ->
+          let state_flat:t_Array Libcrux_iot_sha3.Lane.t_Lane2U32 (mk_usize 25) = state_flat in
+          let _:usize = temp_1_ in
+          true)
+      state_flat
+      (fun state_flat i ->
+          let state_flat:t_Array Libcrux_iot_sha3.Lane.t_Lane2U32 (mk_usize 25) = state_flat in
+          let i:usize = i in
+          let bytes:t_Array u8 (mk_usize 8) =
+            Libcrux_secrets.Traits.f_classify #(t_Array u8 (mk_usize 8))
+              #FStar.Tactics.Typeclasses.solve
+              (Rust_primitives.Hax.repeat (mk_u8 0) (mk_usize 8) <: t_Array u8 (mk_usize 8))
+          in
+          let bytes:t_Array u8 (mk_usize 8) =
+            Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
+              (mk_usize 8)
+              (fun bytes temp_1_ ->
+                  let bytes:t_Array u8 (mk_usize 8) = bytes in
+                  let _:usize = temp_1_ in
+                  true)
+              bytes
+              (fun bytes k ->
+                  let bytes:t_Array u8 (mk_usize 8) = bytes in
+                  let k:usize = k in
+                  let pos:usize = (mk_usize 8 *! i <: usize) +! k in
+                  if pos <. len
+                  then
+                    let bytes:t_Array u8 (mk_usize 8) =
+                      Rust_primitives.Hax.Monomorphized_update_at.update_at_usize bytes
+                        k
+                        (last.[ pos ] <: u8)
+                    in
+                    bytes
+                  else
+                    if pos =. len
+                    then
+                      let bytes:t_Array u8 (mk_usize 8) =
+                        Rust_primitives.Hax.Monomorphized_update_at.update_at_usize bytes
+                          k
+                          delimiter
+                      in
+                      bytes
+                    else bytes)
+          in
+          let bytes:t_Array u8 (mk_usize 8) =
+            if i =. ((v_RATE /! mk_usize 8 <: usize) -! mk_usize 1 <: usize)
+            then
+              let bytes:t_Array u8 (mk_usize 8) =
+                Rust_primitives.Hax.Monomorphized_update_at.update_at_usize bytes
+                  (mk_usize 7)
+                  ((bytes.[ mk_usize 7 ] <: u8) |. mk_u8 128 <: u8)
+              in
+              bytes
+            else bytes
+          in
+          let a:u32 =
+            Core_models.Num.impl_u32__from_le_bytes (Core_models.Result.impl__unwrap #(t_Array u8
+                      (mk_usize 4))
+                  #Core_models.Array.t_TryFromSliceError
+                  (Core_models.Convert.f_try_into #(t_Slice u8)
+                      #(t_Array u8 (mk_usize 4))
+                      #FStar.Tactics.Typeclasses.solve
+                      (bytes.[ {
+                            Core_models.Ops.Range.f_start = mk_usize 0;
+                            Core_models.Ops.Range.f_end = mk_usize 4
+                          }
+                          <:
+                          Core_models.Ops.Range.t_Range usize ]
+                        <:
+                        t_Slice u8)
+                    <:
+                    Core_models.Result.t_Result (t_Array u8 (mk_usize 4))
+                      Core_models.Array.t_TryFromSliceError)
+                <:
+                t_Array u8 (mk_usize 4))
+          in
+          let b:u32 =
+            Core_models.Num.impl_u32__from_le_bytes (Core_models.Result.impl__unwrap #(t_Array u8
+                      (mk_usize 4))
+                  #Core_models.Array.t_TryFromSliceError
+                  (Core_models.Convert.f_try_into #(t_Slice u8)
+                      #(t_Array u8 (mk_usize 4))
+                      #FStar.Tactics.Typeclasses.solve
+                      (bytes.[ {
+                            Core_models.Ops.Range.f_start = mk_usize 4;
+                            Core_models.Ops.Range.f_end = mk_usize 8
+                          }
+                          <:
+                          Core_models.Ops.Range.t_Range usize ]
+                        <:
+                        t_Slice u8)
+                    <:
+                    Core_models.Result.t_Result (t_Array u8 (mk_usize 4))
+                      Core_models.Array.t_TryFromSliceError)
+                <:
+                t_Array u8 (mk_usize 4))
+          in
+          let state_flat:t_Array Libcrux_iot_sha3.Lane.t_Lane2U32 (mk_usize 25) =
+            Rust_primitives.Hax.Monomorphized_update_at.update_at_usize state_flat
+              i
+              (Libcrux_iot_sha3.Lane.impl_Lane2U32__interleave (Core_models.Convert.f_from #Libcrux_iot_sha3.Lane.t_Lane2U32
+                      #(t_Array u32 (mk_usize 2))
+                      #FStar.Tactics.Typeclasses.solve
+                      (let list = [a; b] in
+                        FStar.Pervasives.assert_norm (Prims.eq2 (List.Tot.length list) 2);
+                        Rust_primitives.Hax.array_of_list 2 list)
+                    <:
+                    Libcrux_iot_sha3.Lane.t_Lane2U32)
+                <:
+                Libcrux_iot_sha3.Lane.t_Lane2U32)
+          in
+          state_flat)
+  in
   let keccak_state:t_KeccakState =
-    load_block_2u32 v_RATE keccak_state (blocks <: t_Slice u8) start
+    Rust_primitives.Hax.Folds.fold_range (mk_usize 0)
+      (v_RATE /! mk_usize 8 <: usize)
+      (fun keccak_state temp_1_ ->
+          let keccak_state:t_KeccakState = keccak_state in
+          let _:usize = temp_1_ in
+          true)
+      keccak_state
+      (fun keccak_state i ->
+          let keccak_state:t_KeccakState = keccak_state in
+          let i:usize = i in
+          let got:Libcrux_iot_sha3.Lane.t_Lane2U32 =
+            impl_KeccakState__get_lane keccak_state
+              (i /! mk_usize 5 <: usize)
+              (i %! mk_usize 5 <: usize)
+          in
+          let keccak_state:t_KeccakState =
+            impl_KeccakState__set_lane keccak_state
+              (i /! mk_usize 5 <: usize)
+              (i %! mk_usize 5 <: usize)
+              (Libcrux_iot_sha3.Lane.impl_Lane2U32__from_ints (let list =
+                      [
+                        (got.[ mk_usize 0 ] <: u32) ^.
+                        ((state_flat.[ i ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 0 ]
+                          <:
+                          u32)
+                        <:
+                        u32;
+                        (got.[ mk_usize 1 ] <: u32) ^.
+                        ((state_flat.[ i ] <: Libcrux_iot_sha3.Lane.t_Lane2U32).[ mk_usize 1 ]
+                          <:
+                          u32)
+                        <:
+                        u32
+                      ]
+                    in
+                    FStar.Pervasives.assert_norm (Prims.eq2 (List.Tot.length list) 2);
+                    Rust_primitives.Hax.array_of_list 2 list)
+                <:
+                Libcrux_iot_sha3.Lane.t_Lane2U32)
+          in
+          keccak_state)
   in
   keccak_state
 
-let impl_KeccakState__load_block_full
+/// Load the final, partial block into the state.
+/// The `len` data bytes `last[0..len]` are absorbed, followed by the
+/// `delimiter` byte and the `0x80` padding bit (in the most significant
+/// byte of the rate). This is the padded last block of the sponge; it is
+/// XORed into the state directly, without first materializing a full
+/// `RATE`-byte (or `200`-byte) buffer. `delimiter` and `0x80` coincide in
+/// the same byte when `len == RATE - 1`.
+let impl_KeccakState__load_last_block
       (v_RATE: usize)
       (self: t_KeccakState)
-      (blocks: t_Array u8 (mk_usize 200))
-      (start: usize)
+      (last: t_Slice u8)
+      (len: usize)
+      (delimiter: u8)
     : Prims.Pure t_KeccakState
       (requires
-        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 &&
-        start <=. mk_usize 200 &&
-        (start +! v_RATE <: usize) <=. mk_usize 168)
+        (v_RATE %! mk_usize 8 <: usize) =. mk_usize 0 && v_RATE <=. mk_usize 168 && len <. v_RATE &&
+        len <=. (Core_models.Slice.impl__len #u8 last <: usize))
       (fun _ -> Prims.l_True) =
-  let self:t_KeccakState = load_block_full_2u32 v_RATE self blocks start in
+  let self:t_KeccakState = load_last_block_2u32 v_RATE self last len delimiter in
   self
 
 let store_block_2u32 (v_RATE: usize) (s: t_KeccakState) (out: t_Slice u8)
