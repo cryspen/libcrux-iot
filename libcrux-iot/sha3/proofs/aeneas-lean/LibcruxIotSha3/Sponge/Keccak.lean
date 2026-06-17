@@ -145,6 +145,42 @@ theorem iterate_keccak_f_zero
   show Nat.fold 0 _ _ = _
   rw [Nat.fold_zero]
 
+/-! ### Helper: `iterate_keccak_f` on a `BitVec.ofNat` count equals the fold.
+
+For `n ≤ Std.Usize.max`, wrapping `n` as a `Usize` loses no information, so
+`iterate_keccak_f ⟨BitVec.ofNat _ n⟩` agrees with `iterate_keccak_f_fold _ n`. -/
+theorem iterate_keccak_f_ofNat_eq_fold (n : Nat) (st : Std.Array Std.U64 25#usize)
+    (h_n_le : n ≤ Std.Usize.max) :
+    sponge.iterate_keccak_f (⟨BitVec.ofNat _ n⟩ : Std.Usize) st
+      = iterate_keccak_f_fold st n := by
+  rw [iterate_keccak_f_eq_fold]
+  have h_val : (⟨BitVec.ofNat _ n⟩ : Std.Usize).val = n := by
+    show (BitVec.ofNat _ n).toNat = n
+    rw [BitVec.toNat_ofNat]
+    apply Nat.mod_eq_of_lt
+    have h1 : Std.UScalarTy.Usize.numBits = Std.Usize.numBits := by
+      rw [Std.Usize.numBits]
+    rw [h1]
+    have hpos : 0 < 2 ^ Std.Usize.numBits := Nat.two_pow_pos _
+    have h2 : 2 ^ Std.Usize.numBits = Std.Usize.max + 1 := by
+      rw [Std.Usize.max]; omega
+    omega
+  rw [h_val]
+
+/-! ### Helper: middle-region index bound for the squeeze loop.
+
+For a "middle" output index `RATE ≤ k < blocks * RATE`, the shifted index
+`k - RATE` lands within the squeeze loop's range `(blocks - 1) * RATE`. -/
+theorem squeeze_middle_bound {RATE blocks_us_val blocks_nat k : Nat}
+    (h_blocks_us_val : blocks_us_val = blocks_nat) (h_blocks_pos : 1 ≤ blocks_nat)
+    (hk_lo : RATE ≤ k) (hk_hi : k < blocks_nat * RATE) :
+    k - RATE < (blocks_us_val - 1) * RATE := by
+  rw [h_blocks_us_val]
+  have h_eq : blocks_nat * RATE = (blocks_nat - 1) * RATE + RATE := by
+    have h2 : blocks_nat = (blocks_nat - 1) + 1 := by omega
+    conv_lhs => rw [h2]
+    rw [Nat.add_mul, Nat.one_mul]
+  omega
 
 /-! ### Helper: spec-side `sponge.absorb` equals the impl absorb pipeline.
 
@@ -748,26 +784,6 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
     -- We use sponge_squeeze_byte_eq with the s_b function set to:
     --   k → if k < RATE then lift s2 else if k < blocks*RATE then s_bj else s_spec_last.
     -- Define s_b directly:
-    -- Helper: iterate_keccak_f via squeeze_fold-conversion.
-    have h_iter_eq_fold : ∀ (n : Nat) (st : Std.Array Std.U64 25#usize),
-        n ≤ Std.Usize.max →
-        sponge.iterate_keccak_f (⟨BitVec.ofNat _ n⟩ : Std.Usize) st
-          = iterate_keccak_f_fold st n := by
-      intro n st h_n_le
-      rw [iterate_keccak_f_eq_fold]
-      -- (⟨BitVec.ofNat _ n⟩ : Usize).val = n.
-      have h_val : (⟨BitVec.ofNat _ n⟩ : Std.Usize).val = n := by
-        show (BitVec.ofNat _ n).toNat = n
-        rw [BitVec.toNat_ofNat]
-        apply Nat.mod_eq_of_lt
-        have h1 : Std.UScalarTy.Usize.numBits = Std.Usize.numBits := by
-          rw [Std.Usize.numBits]
-        rw [h1]
-        have hpos : 0 < 2 ^ Std.Usize.numBits := Nat.two_pow_pos _
-        have h2 : 2 ^ Std.Usize.numBits = Std.Usize.max + 1 := by
-          rw [Std.Usize.max]; omega
-        omega
-      rw [h_val]
     -- Bound: blocks_nat ≤ outlen / RATE so blocks_nat ≤ Std.Usize.max.
     have h_blocks_le_max : blocks_nat ≤ Std.Usize.max := by
       have : blocks_nat ≤ out.val.length := by
@@ -777,14 +793,8 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
     -- We use a "choice" s_b: for k < outlen_us.val, it returns the appropriate state.
     -- Helper: condition for being a "middle" k.
     have h_middle_bound : ∀ k : Nat, RATE.val ≤ k → k < blocks_nat * RATE.val →
-        k - RATE.val < (blocks_us.val - 1) * RATE.val := by
-      intro k hk_lo hk_hi
-      rw [h_blocks_us_val]
-      have h_eq : blocks_nat * RATE.val = (blocks_nat - 1) * RATE.val + RATE.val := by
-        have h2 : blocks_nat = (blocks_nat - 1) + 1 := by omega
-        conv_lhs => rw [h2]
-        rw [Nat.add_mul, Nat.one_mul]
-      omega
+        k - RATE.val < (blocks_us.val - 1) * RATE.val :=
+      fun k hk_lo hk_hi => squeeze_middle_bound h_blocks_us_val h_blocks_pos hk_lo hk_hi
     -- Existential witness function via Classical.choice on the relevant condition.
     let s_b : Nat → Std.Array Std.U64 25#usize := fun k =>
       if hk_lo : RATE.val ≤ k then
@@ -802,7 +812,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       have h_k_le : k ≤ Std.Usize.max := by omega
       have h_kRATE_le : k / RATE.val ≤ Std.Usize.max := by
         have := Nat.div_le_self k RATE.val; omega
-      rw [h_iter_eq_fold _ _ h_kRATE_le]
+      rw [iterate_keccak_f_ofNat_eq_fold _ _ h_kRATE_le]
       -- Split on which region k is in.
       by_cases hk_RATE : k < RATE.val
       · -- Region 1: k < RATE. k/RATE = 0, iterate 0 = .ok state.
@@ -1043,38 +1053,14 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
         rw [hblocks_nat_def]; exact Nat.div_le_self _ _
       omega
     have h_middle_bound : ∀ k : Nat, RATE.val ≤ k → k < blocks_nat * RATE.val →
-        k - RATE.val < (blocks_us.val - 1) * RATE.val := by
-      intro k hk_lo hk_hi
-      rw [h_blocks_us_val]
-      have h_eq : blocks_nat * RATE.val = (blocks_nat - 1) * RATE.val + RATE.val := by
-        have h2 : blocks_nat = (blocks_nat - 1) + 1 := by omega
-        conv_lhs => rw [h2]
-        rw [Nat.add_mul, Nat.one_mul]
-      omega
+        k - RATE.val < (blocks_us.val - 1) * RATE.val :=
+      fun k hk_lo hk_hi => squeeze_middle_bound h_blocks_us_val h_blocks_pos hk_lo hk_hi
     let s_b : Nat → Std.Array Std.U64 25#usize := fun k =>
       if hk_lo : RATE.val ≤ k then
         if hk_hi : k < blocks_nat * RATE.val then
           Classical.choose (h_loop_bytes (k - RATE.val) (h_middle_bound k hk_lo hk_hi))
         else Foundation.lift s3
       else Foundation.lift s2
-    have h_iter_eq_fold : ∀ (n : Nat) (st : Std.Array Std.U64 25#usize),
-        n ≤ Std.Usize.max →
-        sponge.iterate_keccak_f (⟨BitVec.ofNat _ n⟩ : Std.Usize) st
-          = iterate_keccak_f_fold st n := by
-      intro n st h_n_le
-      rw [iterate_keccak_f_eq_fold]
-      have h_val : (⟨BitVec.ofNat _ n⟩ : Std.Usize).val = n := by
-        show (BitVec.ofNat _ n).toNat = n
-        rw [BitVec.toNat_ofNat]
-        apply Nat.mod_eq_of_lt
-        have h1 : Std.UScalarTy.Usize.numBits = Std.Usize.numBits := by
-          rw [Std.Usize.numBits]
-        rw [h1]
-        have hpos : 0 < 2 ^ Std.Usize.numBits := Nat.two_pow_pos _
-        have h2 : 2 ^ Std.Usize.numBits = Std.Usize.max + 1 := by
-          rw [Std.Usize.max]; omega
-        omega
-      rw [h_val]
     have h_iter_const : ∀ k : Nat, k < outlen_us.val →
         sponge.iterate_keccak_f
             ⟨BitVec.ofNat _ (k / RATE.val)⟩ (Foundation.lift s2) = .ok (s_b k) := by
@@ -1083,7 +1069,7 @@ theorem keccak.keccak_keccak_spec_blocks_nonzero
       have h_k_le : k ≤ Std.Usize.max := by omega
       have h_kRATE_le : k / RATE.val ≤ Std.Usize.max := by
         have := Nat.div_le_self k RATE.val; omega
-      rw [h_iter_eq_fold _ _ h_kRATE_le]
+      rw [iterate_keccak_f_ofNat_eq_fold _ _ h_kRATE_le]
       by_cases hk_RATE : k < RATE.val
       · have hsb : s_b k = Foundation.lift s2 := by
           show (if hk_lo : RATE.val ≤ k then _ else Foundation.lift s2) = _
