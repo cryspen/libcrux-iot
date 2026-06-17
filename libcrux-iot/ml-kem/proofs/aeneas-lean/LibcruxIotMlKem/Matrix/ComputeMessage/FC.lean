@@ -8,7 +8,19 @@
     `hacspec_ml_kem.matrix.compute_message (lift_poly v)
        (lift_vec secret_as_ntt) (lift_vec u_as_ntt) = .ok (lift_poly p.1)`.
 -/
-import LibcruxIotMlKem.FCTargets
+import LibcruxIotMlKem.Spec.Lift
+import LibcruxIotMlKem.Vector.Portable.Arithmetic.PerElement
+import LibcruxIotMlKem.Vector.Portable.Arithmetic.Element
+import LibcruxIotMlKem.Vector.Portable.Ntt
+import LibcruxIotMlKem.Ntt
+import LibcruxIotMlKem.InvertNtt
+import LibcruxIotMlKem.Polynomial.NttDrivers
+import LibcruxIotMlKem.Polynomial.PolyOps
+import LibcruxIotMlKem.Polynomial.PolyOpsFcBarrett
+import LibcruxIotMlKem.Polynomial.PolyOpsFc
+import LibcruxIotMlKem.Polynomial.NttMultiply
+import LibcruxIotMlKem.Matrix.Common
+import LibcruxIotMlKem.Matrix.ComputeAsPlusE
 import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Matrix.ComputeMessage.Impl
 import LibcruxIotMlKem.Matrix.ComputeMessage.Correctness

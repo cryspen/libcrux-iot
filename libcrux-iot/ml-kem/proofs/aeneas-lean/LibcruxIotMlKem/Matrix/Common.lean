@@ -15,7 +15,20 @@
   SKELETON — no proofs beyond what is needed for these defs to
   elaborate. The named obligations live in the Impl/Correctness/FC files.
 -/
-import LibcruxIotMlKem.FCTargets
+import LibcruxIotMlKem.Spec.Lift
+import LibcruxIotMlKem.Vector.Portable.Arithmetic.PerElement
+import LibcruxIotMlKem.Vector.Portable.Arithmetic.Element
+import LibcruxIotMlKem.Vector.Portable.Ntt
+import LibcruxIotMlKem.Ntt
+import LibcruxIotMlKem.InvertNtt
+import LibcruxIotMlKem.Polynomial.NttDrivers
+import LibcruxIotMlKem.Polynomial.PolyOps
+import LibcruxIotMlKem.Polynomial.PolyOpsFcBarrett
+import LibcruxIotMlKem.Polynomial.PolyOpsFc
+import LibcruxIotMlKem.Polynomial.NttMultiply
+import LibcruxIotMlKem.Polynomial.PolyOps
+import LibcruxIotMlKem.Polynomial.PolyOpsFcBarrett
+import LibcruxIotMlKem.Polynomial.PolyOpsFc
 
 namespace libcrux_iot_ml_kem.BitMlKem.L7
 
@@ -257,3 +270,151 @@ theorem Impl.mont_strip_lift_poly_mont_eq_lift_poly
     exact Impl.lift_fe_mont_mul_1353_eq_lift_fe x
 
 end libcrux_iot_ml_kem.BitMlKem.L7
+
+/-! ### Extracted from FCTargets.lean (§matrix_entry). -/
+
+namespace libcrux_iot_ml_kem.BitMlKem.FCTargets
+open CoreModels Aeneas Aeneas.Std Std.Do
+open libcrux_iot_ml_kem.BitMlKem
+
+/-! ## §L6.8 — matrix per-cell accessor.
+
+    `matrix.entry K matrix i j` is a pure indexing op on a flat K·K slice
+    of polynomial-ring elements. The FC equation lifts the result via
+    `lift_poly` and matches the (i, j)-th matrix entry, which under
+    `lift_matrix_from_slice`'s column-major convention is accessed as
+    `L.val[j.val]!.val[i.val]!` (outer = column, inner = row). Uses the
+    file-scoped `Inhabited` instances `instInhabitedFEPoly_fcTargets` and
+    `instInhabitedFEPolyVec_fcTargets` (declared next to
+    `instInhabitedFEChunk_fcTargets`). -/
+
+/-- Pure-projection side lemma for `matrix.entry`. Reduces the impl `do`-block
+    to a single `Slice.index_usize` at row-major offset `i.val * K.val + j.val`,
+    under the canonical preconditions `matrix.length = K·K`, `i < K`, `j < K`.
+    Named without a `matrix.` prefix to avoid Lean's dot-notation projection
+    being triggered when a local variable `matrix` is in scope at the call
+    site (in `matrix.entry_fc`). -/
+theorem entry_eq_ok_fc_aux
+    (K : Std.Usize)
+    (matrix : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (i j : Std.Usize)
+    (h_len : matrix.val.length = K.val * K.val)
+    (h_i : i.val < K.val) (h_j : j.val < K.val) :
+    libcrux_iot_ml_kem.matrix.entry K portable_ops_inst matrix i j
+      = .ok (matrix.val[i.val * K.val + j.val]!) := by
+  -- Slice invariant + h_len combine to give the arithmetic bounds.
+  have h_slice_max : matrix.val.length ≤ Std.Usize.max := matrix.property
+  have h_KK_max : K.val * K.val ≤ Std.Usize.max := by rw [← h_len]; exact h_slice_max
+  -- K.val > 0 because i.val < K.val.
+  have h_K_pos : 0 < K.val := Nat.lt_of_le_of_lt (Nat.zero_le _) h_i
+  -- i.val * K.val ≤ (K.val - 1) * K.val < K.val * K.val.
+  have h_iK_lt : i.val * K.val < K.val * K.val :=
+    (Nat.mul_lt_mul_right h_K_pos).mpr h_i
+  have h_iK_max : i.val * K.val ≤ Std.Usize.max := by
+    apply le_trans (Nat.le_of_lt h_iK_lt) h_KK_max
+  -- i.val * K.val + j.val < K.val * K.val.
+  have h_idx_lt_KK : i.val * K.val + j.val < K.val * K.val := by
+    have : i.val * K.val + j.val < i.val * K.val + K.val := Nat.add_lt_add_left h_j _
+    have h_step : i.val * K.val + K.val ≤ K.val * K.val := by
+      have : (i.val + 1) * K.val ≤ K.val * K.val :=
+        Nat.mul_le_mul_right _ h_i
+      have h_expand : (i.val + 1) * K.val = i.val * K.val + K.val := by ring
+      rw [h_expand] at this; exact this
+    omega
+  have h_idx_max : i.val * K.val + j.val ≤ Std.Usize.max := by
+    apply le_trans (Nat.le_of_lt h_idx_lt_KK) h_KK_max
+  have h_idx_lt_len : i.val * K.val + j.val < matrix.val.length := by
+    rw [h_len]; exact h_idx_lt_KK
+  -- Now reduce the do-block step by step.
+  unfold libcrux_iot_ml_kem.matrix.entry
+  -- Step 1: `core.slice.Slice.len matrix` = `.ok matrix.len`.
+  unfold core.slice.Slice.len
+  -- Step 2: `K * K` = `.ok` of a Usize with val = K.val * K.val.
+  obtain ⟨kk, h_kk_eq, h_kk_val⟩ := usize_mul_ok_eq_fc K K h_KK_max
+  -- Step 3: `i * K` = `.ok` of a Usize with val = i.val * K.val.
+  obtain ⟨ik, h_ik_eq, h_ik_val⟩ := usize_mul_ok_eq_fc i K h_iK_max
+  -- Step 4: `ik + j` = `.ok` of a Usize with val = i.val * K.val + j.val.
+  have h_ikj_max : ik.val + j.val ≤ Std.Usize.max := by rw [h_ik_val]; exact h_idx_max
+  obtain ⟨idx, h_idx_eq, h_idx_val⟩ := usize_add_ok_eq_fc ik j h_ikj_max
+  -- Massert preconditions.
+  have h_massert_len : (Aeneas.Std.Slice.len matrix : Std.Usize) = kk := by
+    apply Std.UScalar.eq_of_val_eq
+    show matrix.val.length = kk.val
+    rw [h_kk_val, h_len]
+  -- Slice.index_usize at idx returns matrix.val[idx.val]!.
+  have h_idx_lt_matrix : idx.val < matrix.val.length := by
+    rw [h_idx_val, h_ik_val]; exact h_idx_lt_len
+  have h_slice_idx :
+      Aeneas.Std.Slice.index_usize matrix idx = .ok (matrix.val[idx.val]!) :=
+    libcrux_iot_ml_kem.Util.slice_index_usize_ok_eq matrix idx h_idx_lt_matrix
+  -- Rewrite the do-block.
+  simp only [pure, Pure.pure, Aeneas.Std.bind_tc_ok, h_kk_eq, h_ik_eq, h_idx_eq,
+             h_slice_idx, h_massert_len]
+  -- Discharge massert (i = kk equality), massert (i < K), massert (j < K).
+  unfold Aeneas.Std.massert
+  have h_i_K : i < K := (Std.UScalar.lt_equiv i K).mpr h_i
+  have h_j_K : j < K := (Std.UScalar.lt_equiv j K).mpr h_j
+  simp only [if_true, Aeneas.Std.bind_tc_ok, h_i_K, h_j_K]
+  -- Final goal: matrix.val[idx.val]! = matrix.val[i.val * K.val + j.val]!.
+  rw [h_idx_val, h_ik_val]
+
+/-- L6.8 — `matrix.entry`: row-major access of a flat K·K poly slice.
+    The FC equation says the impl's returned `PolynomialRingElement`
+    lifts (via `lift_poly`) to the `(i, j)`-th matrix entry, accessed
+    under `lift_matrix_from_slice`'s column-major convention as
+    `L.val[j.val]!.val[i.val]!` (outer = column, inner = row). -/
+@[spec]
+theorem matrix.entry_fc
+    (K : Std.Usize)
+    (matrix : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+                      libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
+    (i j : Std.Usize)
+    (h_len : matrix.val.length = K.val * K.val)
+    (h_i : i.val < K.val) (h_j : j.val < K.val) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.matrix.entry K portable_ops_inst matrix i j
+    ⦃ ⇓ r => ⌜ lift_poly r = (lift_matrix_from_slice matrix K).val[j.val]!.val[i.val]! ⌝ ⦄ := by
+  apply triple_of_ok_fc (entry_eq_ok_fc_aux K matrix i j h_len h_i h_j)
+  -- Goal: lift_poly matrix.val[i.val * K.val + j.val]!
+  --     = (lift_matrix_from_slice matrix K).val[j.val]!.val[i.val]!
+  -- Reduce the matrix lift's nested `Std.Array.make` constructions explicitly.
+  -- `(Std.Array.make n init _).val = init` (definitional), so each outer
+  -- `.val[idx]!` collapses to a `List`-indexing on the inner `init` list.
+  -- Under the column-major convention, outer index = j (column),
+  -- inner index = i (row).
+  unfold lift_matrix_from_slice
+  -- Outer-list index reduction (outer index = column `j`).
+  have h_range_len : (List.range K.val).length = K.val := by simp
+  have h_outer_len : ((List.range K.val).map (fun j' =>
+        Std.Array.make K ((List.range K.val).map (fun i' =>
+          lift_poly matrix.val[i' * K.val + j']!)) (by simp))).length = K.val := by
+    rw [List.length_map, h_range_len]
+  have h_j_lt_outer : j.val < ((List.range K.val).map (fun j' =>
+        Std.Array.make K ((List.range K.val).map (fun i' =>
+          lift_poly matrix.val[i' * K.val + j']!)) (by simp))).length := by
+    rw [h_outer_len]; exact h_j
+  -- Use `Std.Array.make`'s definitional `.val = init` to expose the outer list,
+  -- then resolve the outer index via `getElem!_pos`.
+  show lift_poly matrix.val[i.val * K.val + j.val]!
+       = ((((List.range K.val).map (fun j' =>
+            Std.Array.make K ((List.range K.val).map (fun i' =>
+              lift_poly matrix.val[i' * K.val + j']!)) (by simp)))[j.val]!).val[i.val]!)
+  rw [getElem!_pos _ j.val h_j_lt_outer]
+  rw [List.getElem_map, List.getElem_range]
+  -- The outer `(fun j' => Std.Array.make K ... _) j.val` β-reduces to
+  -- `Std.Array.make K (...) _`; its `.val` is the inner list.
+  show lift_poly matrix.val[i.val * K.val + j.val]!
+       = ((List.range K.val).map (fun i' =>
+            lift_poly matrix.val[i' * K.val + j.val]!))[i.val]!
+  have h_inner_len : ((List.range K.val).map (fun i' =>
+        lift_poly matrix.val[i' * K.val + j.val]!)).length = K.val := by
+    rw [List.length_map, h_range_len]
+  have h_i_lt_inner : i.val < ((List.range K.val).map (fun i' =>
+        lift_poly matrix.val[i' * K.val + j.val]!)).length := by
+    rw [h_inner_len]; exact h_i
+  rw [getElem!_pos _ i.val h_i_lt_inner]
+  rw [List.getElem_map, List.getElem_range]
+
+
+end libcrux_iot_ml_kem.BitMlKem.FCTargets

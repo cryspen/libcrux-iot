@@ -14,7 +14,19 @@
     surplus `R` the invert path carries; `Bridges.zmodOfFE_subtract_reduce_pure_lane`
     supplies the per-lane characterization, `1441·169 ≡ 512`).
 -/
-import LibcruxIotMlKem.FCTargets
+import LibcruxIotMlKem.Spec.Lift
+import LibcruxIotMlKem.Vector.Portable.Arithmetic.PerElement
+import LibcruxIotMlKem.Vector.Portable.Arithmetic.Element
+import LibcruxIotMlKem.Vector.Portable.Ntt
+import LibcruxIotMlKem.Ntt
+import LibcruxIotMlKem.InvertNtt
+import LibcruxIotMlKem.Polynomial.NttDrivers
+import LibcruxIotMlKem.Polynomial.PolyOps
+import LibcruxIotMlKem.Polynomial.PolyOpsFcBarrett
+import LibcruxIotMlKem.Polynomial.PolyOpsFc
+import LibcruxIotMlKem.Polynomial.NttMultiply
+import LibcruxIotMlKem.Matrix.Common
+import LibcruxIotMlKem.Matrix.ComputeAsPlusE
 import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Matrix.ComputeMessage.Bridges
 
