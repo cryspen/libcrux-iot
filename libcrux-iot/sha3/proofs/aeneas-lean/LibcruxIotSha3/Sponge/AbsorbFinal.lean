@@ -141,6 +141,30 @@ def padded_buf
   let buf2 : Std.Array Std.U8 200#usize := buf1.set len DELIM
   buf2.set i_r1 (buf2.val[i_r1.val]! ||| 128#u8)
 
+/-- `RangeFrom<usize>` slice subindexing (local copy of the spec in
+    `Absorb.lean`, kept here to avoid an import cycle). -/
+@[spec]
+private theorem core_models_Slice_Insts_index_RangeFromUsize_spec'
+    {T : Type} (s : Slice T) (r : CoreModels.core.ops.range.RangeFrom Std.Usize)
+    (h : r.start.val ≤ s.val.length) :
+    ⦃ ⌜ True ⌝ ⦄
+    CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+      (CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T) s r
+    ⦃ ⇓ r' => ⌜ r'.val = s.val.drop r.start.val
+                ∧ r'.val.length = s.val.length - r.start.val ⌝ ⦄ := by
+  unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+         CoreModels.core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexSliceSlice
+         core.slice.index.Slice.index
+         core.slice.index.SliceIndexRangeUsizeSlice.index
+  have h0' : (⟨r.start, s.len⟩ : CoreModels.core.ops.range.Range Std.Usize).start
+              ≤ (⟨r.start, s.len⟩ : CoreModels.core.ops.range.Range Std.Usize).end := by
+    simpa [Std.UScalar.le_equiv, Std.Slice.len, Std.Slice.length] using h
+  simp only [Std.Do.Triple, WP.wp]
+  simp [h0', Std.Slice.length, Std.Slice.len]
+  refine ⟨?_, ?_⟩
+  · unfold List.slice; exact List.take_of_length_le (by simp)
+  · unfold List.slice; rw [List.length_take, List.length_drop]; omega
+
 /-! ### Main Triple. -/
 
 /-- `keccak.absorb_final RATE DELIM s last start len`:
@@ -257,31 +281,16 @@ theorem keccak.absorb_final_spec
       (keccak.absorb_block_spec RATE s (Std.Array.to_slice buf3) 0#usize
         h_i h_RATE_mod h_RATE_le_200 h_blk h_off')
   obtain ⟨h_r_i, h_r_spec⟩ := h_r_post
-  -- absorb_block = load_block_full + keccakf1600 (after to_slice).
+  -- absorb_block = load_block_2u32 + keccakf1600 (after to_slice).
   have h_absorb_eq :
       (do
-        let s1 ← state.KeccakState.load_block_full RATE s buf3 0#usize
-        keccak.keccakf1600 s1)
+        let s2 ← state.load_block_2u32 RATE s (Std.Array.to_slice buf3) 0#usize
+        keccak.keccakf1600 s2)
       = keccak.absorb_block RATE s (Std.Array.to_slice buf3) 0#usize := by
-    unfold keccak.absorb_block
-    unfold state.KeccakState.load_block_full state.load_block_full_2u32
-    unfold state.KeccakState.load_block
-    show (do
-            let s1 ← (do
-                        let s2 ← Std.lift (α := Slice Std.U8) (Std.Array.to_slice buf3)
-                        state.load_block_2u32 RATE s s2 0#usize)
-            keccak.keccakf1600 s1) = (do
-            let s1 ← state.load_block_2u32 RATE s (Std.Array.to_slice buf3) 0#usize
-            keccak.keccakf1600 s1)
-    unfold Std.lift
-    show (do
-            let s1 ← (do
-                        let s2 ← (Result.ok (Std.Array.to_slice buf3) : Result (Slice Std.U8))
-                        state.load_block_2u32 RATE s s2 0#usize)
-            keccak.keccakf1600 s1) = _
-    simp only [bind_tc_ok]
+    unfold keccak.absorb_block state.KeccakState.load_block
+    rfl
   -- The if-branch produces `.ok buf1`. We prove this via case analysis.
-  have h_if_eq :
+  have _h_if_eq :
       (if len > 0#usize
         then
           (do
@@ -562,27 +571,77 @@ theorem keccak.absorb_final_spec
     exact h_r_spec
   -- Assemble the impl-side equation.
   refine ⟨r, ?_, h_r_i, h_spec_eq⟩
+  -- The new impl slices `last[start..]` and loads it lane-by-lane; we bridge
+  -- it to `load_block_2u32` on the materialized buffer `buf3`.
+  have h_start_le : start.val ≤ last.val.length := by omega
+  obtain ⟨s1, h_s1_eq, h_s1_val, h_s1_len⟩ :=
+    triple_exists_ok_af
+      (core_models_Slice_Insts_index_RangeFromUsize_spec' last { start := start } h_start_le)
+  -- `buf3` is the padded block: its bytes are `llb_byte` of the slice `s1`.
+  have buf1_len : buf1.val.length = 200 := buf1.property
+  have buf2_len : buf2.val.length = 200 := buf2.property
+  have hb1 : ∀ q, q < 200 → buf1.val[q]! = (if q < len.val then s1.val[q]! else 0#u8) := by
+    intro q hq
+    have hbuf0_q : buf0.val[q]! = 0#u8 := by
+      rw [hbuf0_def, show (Std.Array.repeat 200#usize 0#u8).val = List.replicate 200 0#u8 from rfl,
+          getElem!_pos _ q (by rw [List.length_replicate]; omega)]
+      exact List.getElem_replicate ..
+    show buf1_val[q]! = _
+    rw [hbuf1_val_def]
+    by_cases hlen0 : 0 < len.val
+    · rw [if_pos hlen0]
+      by_cases hql : q < len.val
+      · rw [List.getElem!_setSlice!_middle buf0.val _ 0 q
+              ⟨Nat.zero_le _, by rw [List.slice_length]; omega, by rw [h_buf0_len]; omega⟩,
+            Nat.sub_zero,
+            List.getElem!_slice start.val (start.val + len.val) q last.val ⟨by omega, by omega⟩,
+            if_pos hql, h_s1_val, List.getElem!_drop]
+      · rw [List.getElem!_setSlice!_same buf0.val _ 0 q (Or.inr (by rw [List.slice_length]; omega)),
+            if_neg hql, hbuf0_q]
+    · rw [if_neg hlen0, if_neg (by omega : ¬ q < len.val), hbuf0_q]
+  have hb2 : ∀ q, q < 200 → buf2.val[q]! = (if q = len.val then DELIM else buf1.val[q]!) := by
+    intro q hq
+    rw [← Aeneas.Std.Array.getElem!_Nat_eq, h_buf2_set]
+    by_cases hql : q = len.val
+    · rw [hql, Aeneas.Std.Array.getElem!_Nat_set_eq buf1 len len.val _
+            ⟨rfl, by scalar_tac⟩, if_pos rfl]
+    · rw [Aeneas.Std.Array.getElem!_Nat_set_ne buf1 len q _ (by omega), if_neg hql,
+          Aeneas.Std.Array.getElem!_Nat_eq]
+  have hdb : delim_byte = (if RATE.val - 1 = len.val then DELIM else 0#u8) := by
+    have hb2i := hb2 i_r1.val (by omega)
+    have hb1i := hb1 i_r1.val (by omega)
+    rw [h_idx_val,
+        show buf2.val[i_r1.val] = buf2.val[i_r1.val]! from
+          (getElem!_pos buf2.val i_r1.val (by rw [buf2_len]; omega)).symm,
+        hb2i, hb1i, h_i_r1_val, if_neg (by omega : ¬ RATE.val - 1 < len.val)]
+  have h_buf3_byte : ∀ p, p < RATE.val → buf3.val[p]! = llb_byte s1 len DELIM RATE.val p := by
+    intro p hp
+    have hb3 : buf3.val[p]! = (if p = RATE.val - 1 then delim_byte ||| 128#u8 else buf2.val[p]!) := by
+      rw [← Aeneas.Std.Array.getElem!_Nat_eq, h_buf3_set]
+      by_cases hpr : p = i_r1.val
+      · rw [hpr, Aeneas.Std.Array.getElem!_Nat_set_eq buf2 i_r1 i_r1.val _
+              ⟨rfl, by scalar_tac⟩, h_i_r1_val, if_pos rfl]
+      · rw [Aeneas.Std.Array.getElem!_Nat_set_ne buf2 i_r1 p _ (by omega),
+            if_neg (by rw [h_i_r1_val] at hpr; exact hpr), Aeneas.Std.Array.getElem!_Nat_eq]
+    rw [hb3]; simp only [llb_byte]
+    by_cases hpr : p = RATE.val - 1
+    · rw [if_pos hpr, if_pos hpr, hdb, hpr,
+          if_neg (by omega : ¬ RATE.val - 1 < len.val)]
+    · rw [if_neg hpr, if_neg hpr, hb2 p (by omega)]
+      by_cases hpl : p = len.val
+      · rw [if_pos hpl, if_neg (by omega : ¬ p < len.val), if_pos hpl]
+      · rw [if_neg hpl, hb1 p (by omega), if_neg hpl]
+  have h_ls_len : len.val ≤ s1.val.length := by rw [h_s1_len]; scalar_tac
+  have h_key : state.load_last_block_2u32 RATE s s1 len DELIM
+      = state.load_block_2u32 RATE s (Std.Array.to_slice buf3) 0#usize :=
+    load_last_block_2u32_eq_load_block RATE s s1 len DELIM buf3 h_RATE_mod h_RATE_le_200
+      h_len_lt_RATE h_ls_len h_buf3_byte
   unfold keccak.absorb_final
-  -- Skip the `show` — work directly with the desugared form.
   rw [h_ma]; simp only [bind_tc_ok]
-  -- `Array.repeat 200#usize 0#u8` is definitionally `buf0`, so `classify
-  -- (Array.repeat ...)` reduces. We apply `rw` directly on `classify`.
-  -- The let-bind for `a` is a `have` after simp.
-  simp only [hbuf0_def.symm]
-  rw [h_classify_buf0]; simp only [bind_tc_ok]
-  -- The `if-let-bind` desugars with __do_jp. Rewrite the if-branch's
-  -- value to `.ok buf1` directly using h_if_eq, by manipulating the
-  -- desugared form.
-  rw [h_if_eq]
-  -- Now blocks1 := buf1; continue.
-  simp only [bind_tc_ok]
+  rw [h_s1_eq]; simp only [bind_tc_ok]
   rw [h_classify_DELIM]; simp only [bind_tc_ok]
-  rw [h_buf2_eq]; simp only [bind_tc_ok]
-  rw [h_i_r1_eq]; simp only [bind_tc_ok]
-  rw [h_idx_eq]; simp only [bind_tc_ok]
-  rw [h_lift_or_eq delim_byte]; simp only [bind_tc_ok]
-  rw [h_buf3_eq]; simp only [bind_tc_ok]
-  rw [h_absorb_eq]
+  unfold state.KeccakState.load_last_block
+  rw [h_key, h_absorb_eq]
   exact h_r_eq
 
 end libcrux_iot_sha3.Sponge

@@ -689,6 +689,753 @@ theorem state.load_block_2u32_loop1_spec
         rw [h_set_ne]
         exact h_acc_undone j (Nat.le_of_lt hj_gt_k) hj_25
 
+/-! ### Inner byte loop of `state.load_last_block_2u32` (loop0_loop0).
+
+The body fills an 8-byte buffer for rate-lane `i`: at byte `k`, store
+`last[8*i+k]` when the absolute position `8*i+k` is `< len`, the
+`delimiter` when it equals `len`, and otherwise leave the byte at its
+initial value. We characterize the resulting buffer position-by-position.
+-/
+
+/-- Outer-fixpoint spec for the inner byte loop. For `iter = {0, 8}` the
+    result `r` has, at every byte `m < 8`, the data/delimiter/unchanged
+    value at absolute position `8*i + m`. -/
+@[spec]
+theorem state.load_last_block_2u32_loop0_loop0_spec
+    (iter : CoreModels.core.ops.range.Range Std.Usize)
+    (last : Slice Std.U8) (len : Std.Usize) (delimiter : Std.U8) (i : Std.Usize)
+    (bytes : Std.Array Std.U8 8#usize)
+    (h_le : iter.start.val ≤ iter.end.val)
+    (h_bnd : iter.end.val ≤ 8)
+    (h_off : 8 * i.val + 8 ≤ Std.Usize.max)
+    (h_last : len.val ≤ last.val.length)
+    (h_zero : iter.start.val = 0) :
+    ⦃ ⌜ True ⌝ ⦄
+    state.load_last_block_2u32_loop0_loop0 iter last len delimiter i bytes
+    ⦃ ⇓ r => ⌜ ∀ m : Nat, m < iter.end.val → m < 8 →
+        r.val[m]! = (if 8 * i.val + m < len.val then last.val[8 * i.val + m]!
+                     else if 8 * i.val + m = len.val then delimiter
+                     else bytes.val[m]!) ⌝ ⦄ := by
+  obtain ⟨iter_start, iter_end⟩ := iter
+  simp only at h_zero h_le
+  unfold state.load_last_block_2u32_loop0_loop0
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, b1) => state.load_last_block_2u32_loop0_loop0.body last len delimiter i iter1 b1)
+      bytes iter_start iter_end
+      (fun c b' => pure (
+          (∀ m : Nat, m < c.val → m < 8 →
+              b'.val[m]! = (if 8 * i.val + m < len.val then last.val[8 * i.val + m]!
+                            else if 8 * i.val + m = len.val then delimiter
+                            else bytes.val[m]!))
+          ∧ (∀ m : Nat, c.val ≤ m → m < 8 → b'.val[m]! = bytes.val[m]!)))
+      h_le
+      (pure_prop_holds ⟨
+        fun m hmk _ => by rw [h_zero] at hmk; exact absurd hmk (Nat.not_lt_zero m),
+        fun _ _ _ => rfl⟩)
+      ?_)
+  · rw [PostCond.entails_noThrow]
+    intro r h
+    obtain ⟨h_done, _⟩ := of_pure_prop_holds h
+    intro m hm_end hm_8
+    exact h_done m hm_end hm_8
+  · intro acc c h_ge h_le_c hinv
+    obtain ⟨h_acc_done, h_acc_undone⟩ := of_pure_prop_holds hinv
+    unfold state.load_last_block_2u32_loop0_loop0.body
+    apply Std.Do.Triple.bind _ _
+      (IteratorRange_next_spec_usize c iter_end
+        (Q := PostCond.noThrow fun (oi : Option Std.Usize × _) => ⌜
+          match oi.1 with
+          | none => c.val ≥ iter_end.val ∧
+                    oi.2 = { start := c, «end» := iter_end }
+          | some i => i = c ∧ c.val < iter_end.val ∧
+                      oi.2.«end» = iter_end ∧ oi.2.start.val = c.val + 1
+        ⌝)
+        (fun hlt s' hs' => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨rfl, hlt, rfl, hs'⟩)
+        (fun hge => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨hge, rfl⟩))
+    intro ⟨o, iter1⟩
+    apply triple_imp_intro
+    rcases o with _ | k
+    · rintro ⟨hge, hiter1_eq⟩
+      show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
+      have hc_eq : c.val = iter_end.val := Nat.le_antisymm h_le_c hge
+      refine triple_of_ok_local rfl (pure_prop_holds ⟨?_, ?_⟩)
+      · intro m hm_end hm_8
+        exact h_acc_done m (hc_eq ▸ hm_end) hm_8
+      · intro m hm_ge hm_8
+        exact h_acc_undone m (hc_eq ▸ hm_ge) hm_8
+    · rintro ⟨hk_eq, hc_lt, hiter1_end, hiter1_start⟩
+      cases hk_eq
+      have hc_8 : c.val < 8 := Nat.lt_of_lt_of_le hc_lt h_bnd
+      have h_8i_off : 8 * i.val + c.val ≤ Std.Usize.max := by
+        have := h_off; omega
+      mvcgen
+      all_goals (try scalar_tac)
+      all_goals expose_names
+      all_goals (refine ⟨hc_lt, hiter1_end, hiter1_start, ?_⟩; apply pure_prop_holds)
+      · -- branch `pos < len`: byte `c` becomes `last[8*i+c]`.
+        have h8 : (8#usize : Std.Usize).val = 8 := by rfl
+        have hr : r.val = 8 * i.val := by rw [h, h8]
+        have h_pos : r_1.val = 8 * i.val + c.val := by rw [h_2, hr]
+        have h_lt : 8 * i.val + c.val < len.val := by
+          have := (Std.UScalar.lt_equiv r_1 len).mp h_1; omega
+        have h_lt_acc : c.val < acc.val.length := by
+          rw [Aeneas.Std.Array.length_eq]; exact hc_8
+        refine ⟨?_, ?_⟩
+        · intro m hm hm8
+          rw [hiter1_start] at hm
+          rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hm) with hm_lt | hm_eq
+          · have h_ne : c.val ≠ m := Nat.ne_of_gt hm_lt
+            have h_get : (r_3.val)[m]! = (acc.val)[m]! := by
+              have : (r_3)[m]! = (acc)[m]! := by
+                rw [h_4]; exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+            rw [h_get]; exact h_acc_done m hm_lt hm8
+          · subst hm_eq
+            have h_get : (r_3.val)[c.val]! = r_2 := by
+              have : (r_3)[c.val]! = r_2 := by
+                rw [h_4]; exact Aeneas.Std.Array.getElem!_Nat_set_eq _ _ _ _ ⟨rfl, h_lt_acc⟩
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+            rw [h_get, if_pos h_lt, h_3]
+            have hb : r_1.val < last.val.length := by rw [h_pos]; omega
+            rw [← h_pos]
+            exact (getElem!_pos last.val r_1.val hb).symm
+        · intro m hm hm8
+          rw [hiter1_start] at hm
+          have h_ne : c.val ≠ m := by omega
+          have h_get : (r_3.val)[m]! = (acc.val)[m]! := by
+            have : (r_3)[m]! = (acc)[m]! := by
+              rw [h_4]; exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+          rw [h_get]; exact h_acc_undone m (by omega) hm8
+      · -- branch `pos = len`: byte `c` becomes `delimiter`.
+        have h8 : (8#usize : Std.Usize).val = 8 := by rfl
+        have hr : r.val = 8 * i.val := by rw [h, h8]
+        have h_pos : r_1.val = 8 * i.val + c.val := by rw [h_3, hr]
+        have h_eq : 8 * i.val + c.val = len.val := by
+          have : r_1.val = len.val := by rw [h_2]
+          omega
+        have h_not_lt : ¬ (8 * i.val + c.val < len.val) := by omega
+        have h_lt_acc : c.val < acc.val.length := by
+          rw [Aeneas.Std.Array.length_eq]; exact hc_8
+        refine ⟨?_, ?_⟩
+        · intro m hm hm8
+          rw [hiter1_start] at hm
+          rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hm) with hm_lt | hm_eq
+          · have h_ne : c.val ≠ m := Nat.ne_of_gt hm_lt
+            have h_get : (r_2.val)[m]! = (acc.val)[m]! := by
+              have : (r_2)[m]! = (acc)[m]! := by
+                rw [h_4]; exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+            rw [h_get]; exact h_acc_done m hm_lt hm8
+          · subst hm_eq
+            have h_get : (r_2.val)[c.val]! = delimiter := by
+              have : (r_2)[c.val]! = delimiter := by
+                rw [h_4]; exact Aeneas.Std.Array.getElem!_Nat_set_eq _ _ _ _ ⟨rfl, h_lt_acc⟩
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+            rw [h_get, if_neg h_not_lt, if_pos h_eq]
+        · intro m hm hm8
+          rw [hiter1_start] at hm
+          have h_ne : c.val ≠ m := by omega
+          have h_get : (r_2.val)[m]! = (acc.val)[m]! := by
+            have : (r_2)[m]! = (acc)[m]! := by
+              rw [h_4]; exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+          rw [h_get]; exact h_acc_undone m (by omega) hm8
+      · -- branch `pos > len`: byte `c` stays at its initial value.
+        have h8 : (8#usize : Std.Usize).val = 8 := by rfl
+        have hr : r.val = 8 * i.val := by rw [h, h8]
+        have h_pos : r_1.val = 8 * i.val + c.val := by rw [h_3, hr]
+        have hnl : ¬ (r_1.val < len.val) := fun hh => h_1 ((Std.UScalar.lt_equiv r_1 len).mpr hh)
+        have h_not_lt : ¬ (8 * i.val + c.val < len.val) := by omega
+        have h_not_eq : ¬ (8 * i.val + c.val = len.val) := by
+          have : r_1.val ≠ len.val := fun hh => h_2 (Std.UScalar.eq_of_val_eq hh)
+          omega
+        refine ⟨?_, ?_⟩
+        · intro m hm hm8
+          rw [hiter1_start] at hm
+          rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hm) with hm_lt | hm_eq
+          · exact h_acc_done m hm_lt hm8
+          · subst hm_eq
+            rw [if_neg h_not_lt, if_neg h_not_eq]
+            exact h_acc_undone c.val (Nat.le_refl _) hm8
+        · intro m hm hm8
+          rw [hiter1_start] at hm
+          exact h_acc_undone m (by omega) hm8
+
+/-! ### Outer lane loop of `state.load_last_block_2u32` (loop0).
+
+The body fills rate-lane `j` of `state_flat` directly from the padded
+last block: it builds the 8 bytes (`loop0_loop0`), OR-s the `0x80`
+padding bit into the final byte of the last lane, then interleaves the
+two `U32` halves. We characterize the result in the *same* BV form as
+`load_block_2u32_loop0_spec`, but against an explicit materialized
+buffer `blk` whose bytes coincide with the padded last block
+(`llb_byte`). This lets the caller equate the new loader's `state_flat`
+to the one produced by `load_block_2u32` on `blk`. -/
+
+/-- Shared `Array` subindexing over `Range<usize>` (the immutable analog of
+    `core_models_Array_Insts_index_mut_RangeUsize_spec`). Routes through
+    `Array.to_slice` to the slice spec. Needed by `load_last_block`'s lane
+    loop, which slices a freshly built `Array U8 8`. -/
+@[spec]
+theorem core_models_Array_Insts_index_RangeUsize_spec_loop0
+    {T : Type} {N : Std.Usize} (arr : Std.Array T N)
+    (r : CoreModels.core.ops.range.Range Std.Usize)
+    (h0 : r.start.val ≤ r.end.val) (h1 : r.end.val ≤ N.val) :
+    ⦃ ⌜ True ⌝ ⦄
+    CoreModels.core.Array.Insts.CoreOpsIndexIndex.index
+      (CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+        (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T)) arr r
+    ⦃ ⇓ r' => ⌜ r'.val = arr.val.slice r.start.val r.end.val ∧
+                r'.val.length = r.end.val - r.start.val ⌝ ⦄ := by
+  have h_val : (Std.Array.to_slice arr).val = arr.val := Std.Array.val_to_slice arr
+  have h_len : (Std.Array.to_slice arr).val.length = N.val := by
+    rw [h_val]; exact arr.property
+  have h1' : r.end.val ≤ (Std.Array.to_slice arr).val.length := by rw [h_len]; exact h1
+  have h := core_models_Slice_Insts_index_RangeUsize_spec (Std.Array.to_slice arr) r h0 h1'
+  have h_prog :
+      CoreModels.core.Array.Insts.CoreOpsIndexIndex.index
+        (CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+          (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T)) arr r
+      = CoreModels.core.Slice.Insts.CoreOpsIndexIndex.index
+          (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice T)
+          (Std.Array.to_slice arr) r := rfl
+  rw [h_prog]
+  simp only [h_val] at h
+  exact h
+
+/-- The byte of the padded last block at absolute position `p` (`p < rate`):
+    `last[p]` for `p < len`, the `delimiter` at `p = len`, `0` beyond, and
+    the `0x80` padding bit OR-ed into the final byte `p = rate - 1`. -/
+def llb_byte (last : Slice Std.U8) (len : Std.Usize) (delimiter : Std.U8)
+    (rate p : Nat) : Std.U8 :=
+  let base := if p < len.val then last.val[p]!
+              else if p = len.val then delimiter else 0#u8
+  if p = rate - 1 then base ||| 128#u8 else base
+
+/-- A 4-byte window of an 8-byte buffer `w` that matches the materialized
+    block `blk` on lane `j` (`w[m] = blk[base + m]`) equals the corresponding
+    window of `blk`. -/
+private theorem llb_slice4_eq
+    (w blk : List Std.U8) (base s : Nat)
+    (hw_len : w.length = 8) (hs4 : s + 4 ≤ 8)
+    (hlen : base + 8 ≤ blk.length)
+    (h_win : ∀ m, m < 8 → w[m]! = blk[base + m]!) :
+    List.slice s (s + 4) w = (blk.drop (base + s)).take 4 := by
+  unfold List.slice
+  rw [show s + 4 - s = 4 from by omega]
+  apply List.ext_getElem!
+  · simp only [List.length_take, List.length_drop]; omega
+  · intro n
+    by_cases hn : n < 4
+    · rw [List.getElem!_take_of_lt _ _ _ hn, List.getElem!_take_of_lt _ _ _ hn,
+          List.getElem!_drop, List.getElem!_drop, show base + s + n = base + (s + n) from by omega]
+      exact h_win (s + n) (by omega)
+    · rw [List.getElem!_take_eq_default _ _ _ (by omega),
+          List.getElem!_take_eq_default _ _ _ (by omega)]
+
+/-- The two `U32` halves the loader recovers from a window-matching 8-byte
+    buffer `w` coincide with the halves of `Lane2U32_from_4byte_LE_pairs blk 0 c`. -/
+private theorem llb_lane_pair_eq
+    (w : Std.Array Std.U8 8#usize) (blk : Slice Std.U8) (c : Nat)
+    (r6 r10 : Std.Array Std.U8 4#usize)
+    (hlen : 8 * c + 8 ≤ blk.val.length)
+    (hr6 : r6.val = List.slice 0 4 w.val)
+    (hr10 : r10.val = List.slice 4 8 w.val)
+    (h_win : ∀ m, m < 8 → w.val[m]! = blk.val[8 * c + m]!) :
+    Std.core.num.U32.from_le_bytes r6 = (Lane2U32_from_4byte_LE_pairs blk 0#usize c).val[0]!
+    ∧ Std.core.num.U32.from_le_bytes r10 = (Lane2U32_from_4byte_LE_pairs blk 0#usize c).val[1]! := by
+  have hw_lo := llb_slice4_eq w.val blk.val (8 * c) 0 w.property (by omega) hlen h_win
+  have hw_hi := llb_slice4_eq w.val blk.val (8 * c) 4 w.property (by omega) hlen h_win
+  have h_take_lo : ((blk.val.drop (8 * c)).take 4).length = 4 := by
+    rw [List.length_take, List.length_drop]; omega
+  have h_take_hi : ((blk.val.drop (8 * c + 4)).take 4).length = 4 := by
+    rw [List.length_take, List.length_drop]; omega
+  have h0 : ((0#usize : Std.Usize).val) = 0 := rfl
+  constructor
+  · unfold Lane2U32_from_4byte_LE_pairs
+    simp only [Aeneas.Std.Array.make, List.getElem!_cons_zero]
+    congr 1
+    apply Subtype.ext
+    show r6.val = _
+    rw [hr6, hw_lo]
+    simp only [h0, Nat.zero_add, Nat.add_zero, h_take_lo, Nat.sub_self,
+               List.replicate_zero, List.append_nil]
+  · unfold Lane2U32_from_4byte_LE_pairs
+    simp only [Aeneas.Std.Array.make, List.getElem!_cons_succ, List.getElem!_cons_zero]
+    congr 1
+    apply Subtype.ext
+    show r10.val = _
+    rw [hr10, hw_hi]
+    simp only [h0, Nat.zero_add, h_take_hi, Nat.sub_self,
+               List.replicate_zero, List.append_nil]
+
+@[spec]
+theorem state.load_last_block_2u32_loop0_spec
+    (iend : Std.Usize) (iter : CoreModels.core.ops.range.Range Std.Usize)
+    (last : Slice Std.U8) (len : Std.Usize) (delimiter : Std.U8)
+    (state_flat : Std.Array lane.Lane2U32 25#usize)
+    (blk : Slice Std.U8) (rate : Nat)
+    (h_le : iter.start.val ≤ iter.end.val)
+    (h_bnd : iter.end.val ≤ 25)
+    (h_zero : iter.start.val = 0)
+    (h_iend : iend.val = iter.end.val)
+    (h_rate : rate = 8 * iter.end.val)
+    (h_off : 8 * iter.end.val ≤ Std.Usize.max)
+    (h_last : len.val ≤ last.val.length)
+    (h_blk_len : 8 * iter.end.val ≤ blk.val.length)
+    (h_blk_byte : ∀ p : Nat, p < rate → blk.val[p]! = llb_byte last len delimiter rate p) :
+    ⦃ ⌜ True ⌝ ⦄
+    state.load_last_block_2u32_loop0 iend iter last len delimiter state_flat
+    ⦃ ⇓ r => ⌜
+        (∀ j : Nat, j < iter.end.val → j < 25 →
+          ((r.val[j]!).val[0]!.bv, (r.val[j]!).val[1]!.bv)
+            = interleave_bv
+                ((Lane2U32_from_4byte_LE_pairs blk 0#usize j).val[0]!).bv
+                ((Lane2U32_from_4byte_LE_pairs blk 0#usize j).val[1]!).bv)
+        ∧ (∀ j : Nat, iter.end.val ≤ j → j < 25 → r.val[j]! = state_flat.val[j]!)
+    ⌝ ⦄ := by
+  obtain ⟨iter_start, iter_end⟩ := iter
+  simp only at h_zero h_le h_iend h_rate
+  unfold state.load_last_block_2u32_loop0
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, s1) => state.load_last_block_2u32_loop0.body iend last len delimiter iter1 s1)
+      state_flat iter_start iter_end
+      (fun k s' => pure (
+          (∀ j : Nat, j < k.val → j < 25 →
+              ((s'.val[j]!).val[0]!.bv, (s'.val[j]!).val[1]!.bv)
+                = interleave_bv
+                    ((Lane2U32_from_4byte_LE_pairs blk 0#usize j).val[0]!).bv
+                    ((Lane2U32_from_4byte_LE_pairs blk 0#usize j).val[1]!).bv)
+          ∧ (∀ j : Nat, k.val ≤ j → j < 25 →
+                s'.val[j]! = state_flat.val[j]!)))
+      h_le
+      (pure_prop_holds ⟨
+        fun j hjk _ => by rw [h_zero] at hjk; exact absurd hjk (Nat.not_lt_zero j),
+        fun _ _ _ => rfl⟩)
+      ?_)
+  · rw [PostCond.entails_noThrow]
+    intro r h
+    exact of_pure_prop_holds h
+  · intro acc c h_ge h_le_c hinv
+    obtain ⟨h_acc_done, h_acc_undone⟩ := of_pure_prop_holds hinv
+    unfold state.load_last_block_2u32_loop0.body
+    apply Std.Do.Triple.bind _ _
+      (IteratorRange_next_spec_usize c iter_end
+        (Q := PostCond.noThrow fun (oi : Option Std.Usize × _) => ⌜
+          match oi.1 with
+          | none => c.val ≥ iter_end.val ∧
+                    oi.2 = { start := c, «end» := iter_end }
+          | some i => i = c ∧ c.val < iter_end.val ∧
+                      oi.2.«end» = iter_end ∧ oi.2.start.val = c.val + 1
+        ⌝)
+        (fun hlt s' hs' => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨rfl, hlt, rfl, hs'⟩)
+        (fun hge => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨hge, rfl⟩))
+    intro ⟨o, iter1⟩
+    apply triple_imp_intro
+    rcases o with _ | i
+    · rintro ⟨hge, hiter1_eq⟩
+      show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
+      have hc_eq : c.val = iter_end.val := Nat.le_antisymm h_le_c hge
+      refine triple_of_ok_local rfl (pure_prop_holds ⟨?_, ?_⟩)
+      · intro j hj_end hj_25
+        exact h_acc_done j (hc_eq ▸ hj_end) hj_25
+      · intro j hj_ge hj_25
+        exact h_acc_undone j (hc_eq ▸ hj_ge) hj_25
+    · rintro ⟨hi_eq, hc_lt, hiter1_end, hiter1_start⟩
+      cases hi_eq
+      -- Re-state the iter-bounds against the bare `iter_end` variable (the
+      -- `obtain` left unreduced `{…}.end` projections that `omega` treats as
+      -- distinct from the `iter_end` appearing in `hc_lt`).
+      have h_bnd' : iter_end.val ≤ 25 := h_bnd
+      have h_off' : 8 * iter_end.val ≤ Std.Usize.max := h_off
+      have h_blk_len' : 8 * iter_end.val ≤ blk.val.length := h_blk_len
+      have h_iend' : iend.val = iter_end.val := h_iend
+      have h_rate' : rate = 8 * iter_end.val := h_rate
+      have hc_25 : c.val < 25 := Nat.lt_of_lt_of_le hc_lt h_bnd'
+      have h_inner_off : 8 * c.val + 8 ≤ Std.Usize.max := by
+        have h1 : 8 * c.val + 8 ≤ 8 * iter_end.val := by omega
+        omega
+      mvcgen
+      rw [show (libcrux_secrets.traits.Classify.Blanket.classify (Std.Array.repeat 8#usize 0#u8)
+            : Result (Std.Array Std.U8 8#usize)) = Result.ok (Std.Array.repeat 8#usize 0#u8) from rfl]
+      unfold lane.Lane2U32.Insts.CoreConvertFromArrayU322.from
+      mvcgen
+      all_goals (try (first
+        | scalar_tac
+        | omega
+        | (expose_names; first
+            | exact ⟨_, h_3⟩ | exact ⟨_, h_4⟩ | exact ⟨_, h_5⟩ | exact ⟨_, h_6⟩
+            | exact ⟨_, h_7⟩ | exact ⟨_, h_8⟩ | exact ⟨_, h_9⟩ | exact ⟨_, h_10⟩
+            | exact ⟨_, h_11⟩ | exact ⟨_, h_12⟩ | exact ⟨_, h_13⟩ | exact ⟨_, h_14⟩)))
+      all_goals expose_names
+      · -- OR branch: `c = iend - 1`, so byte 7 of this lane carries `0x80`.
+        have h1le : 1 ≤ iend.val := by have := h_1.2; simpa using this
+        have hc_iend : c.val = iend.val - 1 := by
+          have h2 : c.val = r_1.val := by rw [h_2]
+          have hr1 : r_1.val = iend.val - 1 := by have := h_1.1; simpa using this
+          omega
+        have hrep0 : ∀ k, k < 8 → (Std.Array.repeat 8#usize 0#u8).val[k]! = 0#u8 := by
+          intro k hk
+          rw [show (Std.Array.repeat 8#usize 0#u8).val = List.replicate 8 0#u8 from rfl,
+              getElem!_pos _ k (by rw [List.length_replicate]; omega)]
+          exact List.getElem_replicate ..
+        have h_blk_len2 : 8 * c.val + 8 ≤ blk.val.length := by omega
+        have h7len : 7 < r.val.length := by rw [Aeneas.Std.Array.length_eq]; decide
+        have h_win : ∀ m, m < 8 → r_3.val[m]! = blk.val[8 * c.val + m]! := by
+          intro m hm
+          have hpos_lt : 8 * c.val + m < rate := by rw [h_rate', ← h_iend']; omega
+          rw [h_blk_byte (8 * c.val + m) hpos_lt]
+          simp only [llb_byte]
+          rw [← Aeneas.Std.Array.getElem!_Nat_eq, h_4]
+          by_cases hm7 : m = 7
+          · subst hm7
+            rw [Aeneas.Std.Array.getElem!_Nat_set_eq r 7#usize 7 _ ⟨by decide, h7len⟩, h_3]
+            simp only [show ((7#usize : Std.Usize).val) = 7 from rfl]
+            rw [if_pos (by omega : 8 * c.val + 7 = rate - 1),
+                h 7 (by decide) (by decide), hrep0 7 (by decide)]
+          · rw [Aeneas.Std.Array.getElem!_Nat_set_ne r 7#usize m _
+                  (by have : (7#usize : Std.Usize).val = 7 := rfl; omega),
+                if_neg (by omega : ¬ 8 * c.val + m = rate - 1),
+                Aeneas.Std.Array.getElem!_Nat_eq, h m (by simpa using hm) hm, hrep0 m hm]
+        have hr6 : r_6.val = List.slice 0 4 r_3.val := by
+          have h67 := CoreModels.core.result.Result.Ok.inj (h_7.symm.trans h_6)
+          rw [h67]; show r_4.val = _; exact h_5.1
+        have hr10 : r_10.val = List.slice 4 8 r_3.val := by
+          have h1011 := CoreModels.core.result.Result.Ok.inj (h_11.symm.trans h_10)
+          rw [h1011]; show r_8.val = _; exact h_9.1
+        obtain ⟨hlo, hhi⟩ := llb_lane_pair_eq r_3 blk c.val r_6 r_10 h_blk_len2 hr6 hr10 h_win
+        refine ⟨hc_lt, hiter1_end, hiter1_start, ?_⟩
+        apply pure_prop_holds
+        refine ⟨?_, ?_⟩
+        · intro j hj hj25
+          rw [hiter1_start] at hj
+          rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hj) with hjc | hjc
+          · have h_ne : c.val ≠ j := Nat.ne_of_gt hjc
+            have hset : (r_13.val)[j]! = (acc.val)[j]! := by
+              have : (r_13)[j]! = (acc)[j]! := by
+                rw [h_14]; exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+            rw [hset]; exact h_acc_done j hjc hj25
+          · subst hjc
+            have hset : (r_13.val)[c.val]! = r_12 := by
+              have : (r_13)[c.val]! = r_12 := by
+                rw [h_14]
+                exact Aeneas.Std.Array.getElem!_Nat_set_eq _ _ _ _
+                  ⟨rfl, by scalar_tac⟩
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+            rw [hset, h_13]
+            simp only [Aeneas.Std.Array.make, List.getElem!_cons_zero, List.getElem!_cons_succ]
+            rw [show r_7 = (Lane2U32_from_4byte_LE_pairs blk 0#usize c.val).val[0]! from h_8.trans hlo,
+                show r_11 = (Lane2U32_from_4byte_LE_pairs blk 0#usize c.val).val[1]! from h_12.trans hhi]
+        · intro j hj hj25
+          rw [hiter1_start] at hj
+          have h_ne : c.val ≠ j := by omega
+          have hset : (r_13.val)[j]! = (acc.val)[j]! := by
+            have : (r_13)[j]! = (acc)[j]! := by
+              rw [h_14]; exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+          rw [hset]; exact h_acc_undone j (by omega) hj25
+      · -- non-OR branch: `c ≠ iend - 1`, the lane carries no padding bit.
+        have h1le : 1 ≤ iend.val := by have := h_1.2; simpa using this
+        have hr1 : r_1.val = iend.val - 1 := by have := h_1.1; simpa using this
+        have hc_ne : c.val ≠ iend.val - 1 := by
+          rw [← hr1]; exact fun heq => h_2 (Std.UScalar.eq_of_val_eq heq)
+        have hc_lt_iend : c.val < iter_end.val := hc_lt
+        have hrep0 : ∀ k, k < 8 → (Std.Array.repeat 8#usize 0#u8).val[k]! = 0#u8 := by
+          intro k hk
+          rw [show (Std.Array.repeat 8#usize 0#u8).val = List.replicate 8 0#u8 from rfl,
+              getElem!_pos _ k (by rw [List.length_replicate]; omega)]
+          exact List.getElem_replicate ..
+        have h_blk_len2 : 8 * c.val + 8 ≤ blk.val.length := by omega
+        have h_win : ∀ m, m < 8 → r.val[m]! = blk.val[8 * c.val + m]! := by
+          intro m hm
+          have hpos_lt : 8 * c.val + m < rate := by rw [h_rate', ← h_iend']; omega
+          rw [h_blk_byte (8 * c.val + m) hpos_lt]
+          simp only [llb_byte]
+          rw [if_neg (by rw [h_rate', ← h_iend'] at *; omega : ¬ 8 * c.val + m = rate - 1),
+              h m (by simpa using hm) hm, hrep0 m hm]
+        have hr6 : r_4.val = List.slice 0 4 r.val := by
+          have h45 := CoreModels.core.result.Result.Ok.inj (h_5.symm.trans h_4)
+          rw [h45]; show r_2.val = _; exact h_3.1
+        have hr10 : r_8.val = List.slice 4 8 r.val := by
+          have h89 := CoreModels.core.result.Result.Ok.inj (h_9.symm.trans h_8)
+          rw [h89]; show r_6.val = _; exact h_7.1
+        obtain ⟨hlo, hhi⟩ := llb_lane_pair_eq r blk c.val r_4 r_8 h_blk_len2 hr6 hr10 h_win
+        refine ⟨hc_lt, hiter1_end, hiter1_start, ?_⟩
+        apply pure_prop_holds
+        refine ⟨?_, ?_⟩
+        · intro j hj hj25
+          rw [hiter1_start] at hj
+          rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hj) with hjc | hjc
+          · have h_ne : c.val ≠ j := Nat.ne_of_gt hjc
+            have hset : (r_11.val)[j]! = (acc.val)[j]! := by
+              have : (r_11)[j]! = (acc)[j]! := by
+                rw [h_12]; exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+            rw [hset]; exact h_acc_done j hjc hj25
+          · subst hjc
+            have hset : (r_11.val)[c.val]! = r_10 := by
+              have : (r_11)[c.val]! = r_10 := by
+                rw [h_12]
+                exact Aeneas.Std.Array.getElem!_Nat_set_eq _ _ _ _ ⟨rfl, by scalar_tac⟩
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+            rw [hset, h_11]
+            simp only [Aeneas.Std.Array.make, List.getElem!_cons_zero, List.getElem!_cons_succ]
+            rw [show r_5 = (Lane2U32_from_4byte_LE_pairs blk 0#usize c.val).val[0]! from h_6.trans hlo,
+                show r_9 = (Lane2U32_from_4byte_LE_pairs blk 0#usize c.val).val[1]! from h_10.trans hhi]
+        · intro j hj hj25
+          rw [hiter1_start] at hj
+          have h_ne : c.val ≠ j := by omega
+          have hset : (r_11.val)[j]! = (acc.val)[j]! := by
+            have : (r_11)[j]! = (acc)[j]! := by
+              rw [h_12]; exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using this
+          rw [hset]; exact h_acc_undone j (by omega) hj25
+
+/-- `load_block_2u32`'s lane loop leaves cells `j ≥ iter.end` at their
+    initial value (it only writes `[0, iter.end)`). -/
+theorem state.load_block_2u32_loop0_untouched
+    (iter : CoreModels.core.ops.range.Range Std.Usize)
+    (blocks : Slice Std.U8) (start : Std.Usize)
+    (state_flat : Std.Array lane.Lane2U32 25#usize)
+    (h_le : iter.start.val ≤ iter.end.val) (h_bnd : iter.end.val ≤ 25)
+    (h_off : start.val + 8 * iter.end.val ≤ Std.Usize.max)
+    (h_blk : start.val + 8 * iter.end.val ≤ blocks.val.length)
+    (h_zero : iter.start.val = 0) :
+    ⦃ ⌜ True ⌝ ⦄
+    state.load_block_2u32_loop0 iter blocks start state_flat
+    ⦃ ⇓ r => ⌜ ∀ j : Nat, iter.end.val ≤ j → j < 25 → r.val[j]! = state_flat.val[j]! ⌝ ⦄ := by
+  obtain ⟨iter_start, iter_end⟩ := iter
+  simp only at h_zero h_le
+  unfold state.load_block_2u32_loop0
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, s1) => state.load_block_2u32_loop0.body blocks start iter1 s1)
+      state_flat iter_start iter_end
+      (fun k s' => pure (∀ j : Nat, k.val ≤ j → j < 25 → s'.val[j]! = state_flat.val[j]!))
+      h_le
+      (pure_prop_holds (fun _ _ _ => rfl))
+      ?_)
+  · rw [PostCond.entails_noThrow]; intro r h; exact of_pure_prop_holds h
+  · intro acc c h_ge h_le_c hinv
+    have h_acc := of_pure_prop_holds hinv
+    unfold state.load_block_2u32_loop0.body
+    apply Std.Do.Triple.bind _ _
+      (IteratorRange_next_spec_usize c iter_end
+        (Q := PostCond.noThrow fun (oi : Option Std.Usize × _) => ⌜
+          match oi.1 with
+          | none => c.val ≥ iter_end.val ∧
+                    oi.2 = { start := c, «end» := iter_end }
+          | some i => i = c ∧ c.val < iter_end.val ∧
+                      oi.2.«end» = iter_end ∧ oi.2.start.val = c.val + 1
+        ⌝)
+        (fun hlt s' hs' => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨rfl, hlt, rfl, hs'⟩)
+        (fun hge => by
+          dsimp only [PostCond.noThrow, Std.Do.SPred.down_pure]
+          exact ⟨hge, rfl⟩))
+    intro ⟨o, iter1⟩
+    apply triple_imp_intro
+    rcases o with _ | i
+    · rintro ⟨hge, _⟩
+      show ⦃⌜True⌝⦄ (Aeneas.Std.Result.ok (done acc) : Result _) ⦃_⦄
+      have hc_eq : c.val = iter_end.val := Nat.le_antisymm h_le_c hge
+      exact triple_of_ok_local rfl (pure_prop_holds (fun j hj hj25 => h_acc j (hc_eq ▸ hj) hj25))
+    · rintro ⟨hi_eq, hc_lt, hiter1_end, hiter1_start⟩
+      cases hi_eq
+      have hc_25 : c.val < 25 := Nat.lt_of_lt_of_le hc_lt h_bnd
+      have h_blk' : start.val + 8 * iter_end.val ≤ blocks.val.length := h_blk
+      have h_off' : start.val + 8 * iter_end.val ≤ Std.Usize.max := h_off
+      have h_off1 : start.val + 8 * c.val + 4 ≤ blocks.val.length := by omega
+      have h_off2 : start.val + 8 * c.val + 8 ≤ blocks.val.length := by omega
+      have h_smax1 : start.val + 8 * c.val + 4 ≤ Std.Usize.max := by omega
+      have h_smax2 : start.val + 8 * c.val + 8 ≤ Std.Usize.max := by omega
+      unfold lane.Lane2U32.Insts.CoreConvertFromArrayU322.from
+      mvcgen
+      all_goals (try (first
+        | scalar_tac
+        | (expose_names; first | exact ⟨_, h_4⟩ | exact ⟨_, h_9⟩)))
+      all_goals expose_names
+      refine ⟨hc_lt, hiter1_end, hiter1_start, ?_⟩
+      apply pure_prop_holds
+      intro j hj hj25
+      rw [hiter1_start] at hj
+      have h_ne : c.val ≠ j := by omega
+      have hset : (r_13.val)[j]! = (acc.val)[j]! := by
+        have hh : (r_13)[j]! = (acc)[j]! := by
+          rw [h_13]; exact Aeneas.Std.Array.getElem!_Nat_set_ne _ _ _ _ h_ne
+        simpa [Aeneas.Std.Array.getElem!_Nat_eq] using hh
+      rw [hset]; exact h_acc j (by omega) hj25
+
+/-- The two `loop1` fixpoints (`load_last_block`'s and `load_block`'s) have
+    identical bodies, hence are equal as functions. -/
+theorem load_last_block_loop1_eq
+    (iter : CoreModels.core.ops.range.Range Std.Usize) (s : state.KeccakState)
+    (sf : Std.Array lane.Lane2U32 25#usize) :
+    state.load_last_block_2u32_loop1 iter s sf = state.load_block_2u32_loop1 iter s sf := by
+  unfold state.load_last_block_2u32_loop1 state.load_block_2u32_loop1
+  rfl
+
+/-- A `Lane2U32` is determined by the bitvectors of its two `U32` halves. -/
+private theorem lane_eq_of_bv (a b : lane.Lane2U32)
+    (h0 : a.val[0]!.bv = b.val[0]!.bv) (h1 : a.val[1]!.bv = b.val[1]!.bv) : a = b := by
+  have ha : a.val.length = 2 := a.property
+  have hb : b.val.length = 2 := b.property
+  apply Subtype.ext
+  apply List.ext_getElem!
+  · rw [ha, hb]
+  · intro n
+    match n with
+    | 0 => exact Std.UScalar.eq_of_val_eq (by show a.val[0]!.bv.toNat = b.val[0]!.bv.toNat; rw [h0])
+    | 1 => exact Std.UScalar.eq_of_val_eq (by show a.val[1]!.bv.toNat = b.val[1]!.bv.toNat; rw [h1])
+    | (k + 2) =>
+      rw [List.getElem!_default a.val (k + 2) (by omega), List.getElem!_default b.val (k + 2) (by omega)]
+
+/-- Triple → existence extractor (local copy). -/
+private theorem triple_exists_ok_ls {α : Type} {x : Result α} {P : α → Prop}
+    (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄) : ∃ v, x = .ok v ∧ P v := by
+  match hx : x with
+  | .ok v => refine ⟨v, rfl, ?_⟩; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this; exact this
+  | .fail _ => exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
+  | .div => exfalso; have := h; simp [Std.Do.Triple, WP.wp, PredTrans.apply] at this
+
+/-- `RATE % 8#usize = .ok 0#usize` when `RATE.val % 8 = 0`. -/
+private theorem rate_mod8_ok (RATE : Std.Usize) (h : RATE.val % 8 = 0) :
+    (RATE % 8#usize : Result Std.Usize) = .ok 0#usize := by
+  show Std.UScalar.rem RATE 8#usize = _
+  unfold Std.UScalar.rem
+  simp only [bne_iff_ne, ne_eq, (by decide : ¬ ((8#usize : Std.Usize).val = 0)),
+    not_false_eq_true, ↓reduceIte]
+  apply congrArg; apply Std.UScalar.eq_of_val_eq
+  show RATE.bv.toNat % ((8#usize : Std.Usize).bv).toNat = 0
+  rw [show ((8#usize : Std.Usize).bv).toNat = 8 from by decide]; exact h
+
+/-- `lane.Lane2U32.zero = .ok ⟨[0, 0], _⟩`. -/
+private theorem lane_zero_ok :
+    (lane.Lane2U32.zero : Result lane.Lane2U32) = .ok ⟨[0#u32, 0#u32], by decide⟩ := by
+  unfold lane.Lane2U32.zero libcrux_secrets.traits.Classify.Blanket.classify lane.Lane2U32.from_ints
+  rfl
+
+/-- **Key Lemma.** Loading the padded last block lane-by-lane
+    (`load_last_block_2u32` from a slice `ls`) produces the same state as
+    `load_block_2u32` on any materialized 200-byte buffer `blk` whose bytes
+    coincide with the padded block (`llb_byte`). -/
+theorem load_last_block_2u32_eq_load_block
+    (RATE : Std.Usize) (s : state.KeccakState) (ls : Slice Std.U8)
+    (len : Std.Usize) (delim : Std.U8) (blk : Std.Array Std.U8 200#usize)
+    (h_RATE_mod : RATE.val % 8 = 0) (h_RATE_le : RATE.val ≤ 200)
+    (h_len_lt : len.val < RATE.val) (h_ls_len : len.val ≤ ls.val.length)
+    (h_blk_byte : ∀ p, p < RATE.val → blk.val[p]! = llb_byte ls len delim RATE.val p) :
+    state.load_last_block_2u32 RATE s ls len delim
+      = state.load_block_2u32 RATE s (Std.Array.to_slice blk) 0#usize := by
+  -- Shared facts.
+  have h_RATE_max : RATE.val ≤ Std.Usize.max := by
+    have : (200 : Nat) ≤ Std.Usize.max := by scalar_tac
+    omega
+  obtain ⟨i2, h_div_eq, h_i2_val⟩ : ∃ i2 : Std.Usize, (RATE / 8#usize : Result Std.Usize) = .ok i2
+      ∧ i2.val = RATE.val / 8 := by
+    obtain ⟨i, hi, hival, _⟩ := Std.UScalar.div_bv_spec RATE (y := 8#usize) (by decide)
+    exact ⟨i, hi, by rw [hival]; show RATE.val / (8#usize : Std.Usize).val = _;
+                     rw [show ((8#usize : Std.Usize).val) = 8 from by decide]⟩
+  have h_rate_eq : RATE.val = 8 * i2.val := by
+    rw [h_i2_val]; omega
+  have h_i2_le : i2.val ≤ 25 := by rw [h_i2_val]; omega
+  have h_blk_val : (Std.Array.to_slice blk).val = blk.val := Std.Array.val_to_slice blk
+  have h_blk_len200 : (Std.Array.to_slice blk).val.length = 200 := by rw [h_blk_val]; exact blk.property
+  set zlane : lane.Lane2U32 := ⟨[0#u32, 0#u32], by decide⟩ with hz
+  set sf0 : Std.Array lane.Lane2U32 25#usize := Std.Array.repeat 25#usize zlane with hsf0
+  -- New loop0 result + characterization.
+  obtain ⟨NSF, hNSF_eq, hNSF_bv, hNSF_unt⟩ :=
+    triple_exists_ok_ls
+      (state.load_last_block_2u32_loop0_spec i2 ⟨0#usize, i2⟩ ls len delim sf0
+        (Std.Array.to_slice blk) RATE.val (by simp) h_i2_le (by simp) rfl (by simpa using h_rate_eq)
+        (by rw [← h_rate_eq]; exact h_RATE_max) h_ls_len
+        (by rw [h_blk_len200, ← h_rate_eq]; exact h_RATE_le)
+        (by intro p hp; rw [h_blk_val]; exact h_blk_byte p hp))
+  -- Old loop0 result + characterization + untouched.
+  obtain ⟨OSF, hOSF_eq, hOSF_bv⟩ :=
+    triple_exists_ok_ls
+      (state.load_block_2u32_loop0_spec ⟨0#usize, i2⟩ (Std.Array.to_slice blk) 0#usize sf0
+        (by simp) h_i2_le (by rw [← h_rate_eq]; simpa using h_RATE_max)
+        (by rw [h_blk_len200, ← h_rate_eq]; simpa using h_RATE_le) rfl)
+  obtain ⟨OSF', hOSF'_eq, hOSF_unt⟩ :=
+    triple_exists_ok_ls
+      (state.load_block_2u32_loop0_untouched ⟨0#usize, i2⟩ (Std.Array.to_slice blk) 0#usize sf0
+        (by simp) h_i2_le (by rw [← h_rate_eq]; simpa using h_RATE_max)
+        (by rw [h_blk_len200, ← h_rate_eq]; simpa using h_RATE_le) rfl)
+  have hOO : OSF = OSF' := by injection hOSF_eq.symm.trans hOSF'_eq
+  have h25 : ((25#usize : Std.Usize).val) = 25 := rfl
+  -- NSF = OSF, cell by cell.
+  have hNO : NSF = OSF := by
+    apply Subtype.ext
+    apply List.ext_getElem!
+    · rw [Aeneas.Std.Array.length_eq, Aeneas.Std.Array.length_eq]
+    · intro n
+      by_cases hn25 : n < 25
+      · by_cases hni2 : n < i2.val
+        · -- touched: equal BV pairs ⇒ equal lane
+          have hbv_n := hNSF_bv n hni2 hn25
+          have hbv_o := hOSF_bv n hni2 hn25
+          apply lane_eq_of_bv
+          · exact ((Prod.mk.injEq ..).mp (hbv_n.trans hbv_o.symm)).1
+          · exact ((Prod.mk.injEq ..).mp (hbv_n.trans hbv_o.symm)).2
+        · -- untouched: both equal sf0[n]
+          have h1 := hNSF_unt n (Nat.le_of_not_lt hni2) hn25
+          have h2 := hOSF_unt n (Nat.le_of_not_lt hni2) hn25
+          rw [h1, hOO, h2]
+      · rw [List.getElem!_default NSF.val n (by rw [Aeneas.Std.Array.length_eq, h25]; omega),
+            List.getElem!_default OSF.val n (by rw [Aeneas.Std.Array.length_eq, h25]; omega)]
+  -- Reduce both sides to `loop1 {0,i2} s NSF`.
+  have h_ls_slen : len.val ≤ (Std.Slice.len ls).val := by rw [Std.Slice.len_val]; exact h_ls_len
+  have h_blk_slen : RATE.val ≤ (Std.Slice.len (Std.Array.to_slice blk)).val := by
+    rw [Std.Slice.len_val]; show RATE.val ≤ (Std.Array.to_slice blk).val.length
+    rw [h_blk_len200]; exact h_RATE_le
+  have h_new : state.load_last_block_2u32 RATE s ls len delim
+      = state.load_last_block_2u32_loop1 ⟨0#usize, i2⟩ s NSF := by
+    unfold state.load_last_block_2u32
+    rw [rate_mod8_ok RATE h_RATE_mod]; simp only [bind_tc_ok]
+    rw [show massert True = .ok () from by unfold massert; exact if_pos True.intro]; simp only [bind_tc_ok]
+    rw [show massert (len < RATE) = .ok () from by
+          unfold massert; rw [if_pos ((Std.UScalar.lt_equiv len RATE).mpr h_len_lt)]]
+    simp only [bind_tc_ok]
+    rw [show CoreModels.core.slice.Slice.len ls = .ok (Std.Slice.len ls) from by
+          unfold CoreModels.core.slice.Slice.len; rfl]
+    simp only [bind_tc_ok]
+    rw [show massert (len ≤ Std.Slice.len ls) = .ok () from by
+          unfold massert; rw [if_pos ((Std.UScalar.le_equiv len _).mpr h_ls_slen)]]
+    simp only [bind_tc_ok]
+    rw [lane_zero_ok]; simp only [bind_tc_ok]
+    rw [h_div_eq]; simp only [bind_tc_ok]
+    rw [hNSF_eq]; simp only [bind_tc_ok]
+  have h_old : state.load_block_2u32 RATE s (Std.Array.to_slice blk) 0#usize
+      = state.load_block_2u32_loop1 ⟨0#usize, i2⟩ s OSF := by
+    unfold state.load_block_2u32
+    rw [show CoreModels.core.slice.Slice.len (Std.Array.to_slice blk)
+          = .ok (Std.Slice.len (Std.Array.to_slice blk)) from by
+          unfold CoreModels.core.slice.Slice.len; rfl]
+    simp only [bind_tc_ok]
+    rw [show massert (RATE ≤ Std.Slice.len (Std.Array.to_slice blk)) = .ok () from by
+          unfold massert; rw [if_pos ((Std.UScalar.le_equiv RATE _).mpr h_blk_slen)]]
+    simp only [bind_tc_ok]
+    rw [rate_mod8_ok RATE h_RATE_mod]; simp only [bind_tc_ok]
+    rw [show massert True = .ok () from by unfold massert; exact if_pos True.intro]; simp only [bind_tc_ok]
+    rw [lane_zero_ok]; simp only [bind_tc_ok]
+    rw [h_div_eq]; simp only [bind_tc_ok]
+    rw [hOSF_eq]; simp only [bind_tc_ok]
+  rw [h_new, h_old, load_last_block_loop1_eq, hNO]
+
 /-! ### Loop of `state.store_block_2u32`.
 
 The body reads `s.st[5*(i%5) + i/5]`, deinterleaves it, writes two

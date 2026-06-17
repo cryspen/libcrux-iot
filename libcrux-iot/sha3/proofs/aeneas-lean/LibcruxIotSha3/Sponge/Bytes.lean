@@ -1,6 +1,5 @@
 /-
-  # Byte ↔ Lane primitives (`load_block`, `store_block`,
-  # `load_block_full`).
+  # Byte ↔ Lane primitives (`load_block`, `store_block`).
 
   Top-level `@[spec]` Triples bridging the impl's byte-loop
   loaders/stores to the sponge spec's byte ↔ lane view:
@@ -11,8 +10,6 @@
   - `state.KeccakState.store_block_spec`     — unwraps `store_block_2u32`,
     composes the outer-loop Triple from `Sponge/LoopSpecs.lean` and
     preserves output-slice length.
-  - `state.KeccakState.load_block_full_spec` — delegates to
-    `load_block_spec` after `Array.to_slice` coercion.
 
   The BV-pure identity layer (`interleave_bv`, `deinterleave_bv`,
   `lift_lane_bv_xor`, `interleave_bv_lift_eq`,
@@ -450,63 +447,5 @@ theorem state.KeccakState.store_block_spec
   unfold state.KeccakState.store_block state.store_block_2u32
   simp only [h_div_eq, bind_tc_ok]
   exact h_r_eq
-
-/-- `state.KeccakState.load_block_full RATE s blocks start` delegates to
-    `load_block_2u32` after the `Array.to_slice` coercion. Same
-    termination post as `load_block_spec`. -/
-@[spec]
-theorem state.KeccakState.load_block_full_spec
-    (RATE : Std.Usize) (s : state.KeccakState)
-    (blocks : Std.Array Std.U8 200#usize) (start : Std.Usize)
-    (h_RATE_mod : RATE.val % 8 = 0)
-    (h_RATE_bnd : RATE.val ≤ 200)
-    (h_blk : start.val + RATE.val ≤ 200)
-    (h_off : start.val + RATE.val ≤ Std.Usize.max) :
-    ⦃ ⌜ True ⌝ ⦄
-    state.KeccakState.load_block_full RATE s blocks start
-    ⦃ ⇓ r => ⌜
-        r.i = s.i
-        ∧ ∀ k : Nat, k < 25 →
-            ((Foundation.lift r).val[k]!).bv =
-              (if k < RATE.val / 8 then
-                  ((Foundation.lift s).val[k]!).bv ^^^
-                    (BitVec.zeroExtend 64
-                        (((Lane2U32_from_4byte_LE_pairs (Std.Array.to_slice blocks) start
-                            k).val[1]!).bv) <<< 32
-                     ||| BitVec.zeroExtend 64
-                        (((Lane2U32_from_4byte_LE_pairs (Std.Array.to_slice blocks) start
-                            k).val[0]!).bv))
-               else ((Foundation.lift s).val[k]!).bv)
-    ⌝ ⦄ := by
-  -- `Array.to_slice` preserves `.val`; the array has length 200.
-  have h_to_slice_val : (Std.Array.to_slice blocks).val = blocks.val := rfl
-  have h_to_slice_len : (Std.Array.to_slice blocks).val.length = 200 := by
-    rw [h_to_slice_val]; exact blocks.property
-  have h_blk' : start.val + RATE.val ≤ (Std.Array.to_slice blocks).val.length := by
-    rw [h_to_slice_len]; exact h_blk
-  obtain ⟨r_final, h_inner_eq, h_post⟩ :=
-    triple_exists_ok_bytes
-      (state.KeccakState.load_block_spec RATE s
-        (Std.Array.to_slice blocks) start
-        h_RATE_mod h_RATE_bnd h_blk' h_off)
-  obtain ⟨h_r_i, h_r_per_cell⟩ := h_post
-  have h_inner_unfold :
-      state.load_block_2u32 RATE s (Std.Array.to_slice blocks) start = .ok r_final := by
-    have := h_inner_eq; unfold state.KeccakState.load_block at this; exact this
-  apply triple_of_ok_bytes (v := r_final) _ ⟨h_r_i, h_r_per_cell⟩
-  show state.KeccakState.load_block_full RATE s blocks start = .ok r_final
-  unfold state.KeccakState.load_block_full state.load_block_full_2u32
-  -- The body is `do s1 ← lift (Array.to_slice blocks); load_block_2u32 RATE s s1 start`.
-  -- For the public `Slice U8`, `lift` (here `Std.lift`) is `Result.ok` (identity).
-  -- We reduce `lift x = .ok x` and then chain.
-  show (do
-        let s1 ← Std.lift (α := Slice Std.U8) (Std.Array.to_slice blocks)
-        state.load_block_2u32 RATE s s1 start) = .ok r_final
-  unfold Std.lift
-  show (do
-        let s1 ← (Result.ok (Std.Array.to_slice blocks) : Result (Slice Std.U8))
-        state.load_block_2u32 RATE s s1 start) = .ok r_final
-  simp only [bind_tc_ok]
-  exact h_inner_unfold
 
 end libcrux_iot_sha3.Sponge
