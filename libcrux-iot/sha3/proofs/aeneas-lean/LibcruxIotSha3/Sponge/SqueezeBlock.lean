@@ -268,6 +268,71 @@ theorem core_models_Array_Insts_index_RangeUsize_spec
     · rw [hv_val, h_slice_val]
     · rw [hv_len]
 
+/-! ### Helper: copy the first `out.length` bytes of a 200-byte buffer.
+
+The trailing portion shared by `squeeze_last` and `squeeze_first_and_last`:
+given the filled 200-byte buffer `b1`, index it by `[0, out.length)` and
+`copy_from_slice` into `out`. Produces the resulting slice `s2` together with
+the impl-side index equality (already through the wrapper instance), the
+`copy_from_slice` equality, and the length / per-byte characterization. -/
+private theorem squeeze_copy_tail
+    (out : Slice Std.U8) (b1 : Std.Array Std.U8 200#usize)
+    (h_out_le : out.val.length ≤ 200) :
+    ∃ s2 : Slice Std.U8,
+      CoreModels.core.Array.Insts.CoreOpsIndexIndex.index
+        (CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+          (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8))
+        b1 { start := 0#usize, «end» := Std.Slice.len out } = .ok s2
+      ∧ CoreModels.core.slice.Slice.copy_from_slice
+          CoreModels.core.U8.Insts.CoreMarkerCopy out s2 = .ok s2
+      ∧ s2.val.length = out.val.length
+      ∧ ∀ k : Nat, k < out.val.length → s2.val[k]! = b1.val[k]! := by
+  set i := Std.Slice.len out
+  have h_i_val : i.val = out.val.length := by
+    simp [i, Std.Slice.len]
+  -- Index `b1` by `[0, i)` via the Array-index helper.
+  have h_i_le : (0#usize : Std.Usize).val ≤ i.val := by
+    show 0 ≤ i.val; omega
+  have h_i_le_N : i.val ≤ (200#usize : Std.Usize).val := by
+    rw [h_i_val]; show out.val.length ≤ 200; omega
+  obtain ⟨s2, h_s2_eq, h_s2_val, h_s2_len⟩ :=
+    triple_exists_ok_sb
+      (core_models_Array_Insts_index_RangeUsize_spec
+        b1 { start := 0#usize, «end» := i } h_i_le h_i_le_N)
+  have h_s2_len' : s2.val.length = out.val.length := by
+    rw [h_s2_len]
+    show i.val - 0 = out.val.length
+    omega
+  have h_s2_bytes : ∀ k : Nat, k < out.val.length → s2.val[k]! = b1.val[k]! := by
+    intro k hk
+    rw [h_s2_val]
+    -- `b1.val.slice 0 i.val = (b1.val.drop 0).take i.val = b1.val.take i.val`.
+    show (List.slice ((0#usize : Std.Usize).val) i.val b1.val)[k]! = _
+    have h_zero : ((0#usize : Std.Usize).val : Nat) = 0 := rfl
+    rw [h_zero]
+    unfold List.slice
+    rw [List.drop_zero]
+    have hk_i : k < i.val := by rw [h_i_val]; exact hk
+    exact List.getElem!_take_of_lt _ k _ hk_i
+  -- `copy_from_slice out s2` succeeds (lengths agree) and returns `s2`.
+  have h_copy : CoreModels.core.slice.Slice.copy_from_slice
+        CoreModels.core.U8.Insts.CoreMarkerCopy out s2 = .ok s2 := by
+    unfold CoreModels.core.slice.Slice.copy_from_slice
+    have h_len_eq : Std.Slice.len out = Std.Slice.len s2 := by
+      apply Std.UScalar.eq_of_val_eq
+      simp [Std.Slice.len, h_s2_len']
+    simp [h_len_eq]
+  -- Wrapper-identity: `Slice.Insts.CoreOpsIndexIndex inst = inst`.
+  have h_wrap_eq :
+      CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+        (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
+      = CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8 := by
+    unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex
+    rfl
+  refine ⟨s2, ?_, h_copy, h_s2_len', h_s2_bytes⟩
+  rw [h_wrap_eq]
+  exact h_s2_eq
+
 /-! ### Triple 3: `keccak.squeeze_last`. -/
 
 /-- `keccak.squeeze_last RATE s out` —
@@ -311,58 +376,10 @@ theorem keccak.squeeze_last_spec
   -- Step 3: discharge `Slice.len out`.
   have h_len : CoreModels.core.slice.Slice.len out = .ok (Std.Slice.len out) := by
     unfold CoreModels.core.slice.Slice.len; rfl
-  set i := Std.Slice.len out
-  have h_i_val : i.val = out.val.length := by
-    simp [i, Std.Slice.len]
-  -- Step 4: index `b1` by `[0, i)`. We use the helper above.
-  have h_i_le : (0#usize : Std.Usize).val ≤ i.val := by
-    show 0 ≤ i.val; omega
-  have h_i_le_N : i.val ≤ (200#usize : Std.Usize).val := by
-    rw [h_i_val]
-    have hb1len : b1.val.length = 200 := h_b1_len
-    have hb1_prop : b1.val.length = (200#usize : Std.Usize).val := by
-      rw [hb1len]; rfl
-    show i.val ≤ 200
-    -- Need out.val.length ≤ 200.
-    rw [h_i_val]
-    omega
-  obtain ⟨s2, h_s2_eq, h_s2_val, h_s2_len⟩ :=
-    triple_exists_ok_sb
-      (core_models_Array_Insts_index_RangeUsize_spec
-        b1 { start := 0#usize, «end» := i } h_i_le h_i_le_N)
-  -- s2.val = b1.val.slice 0 i.val = (b1.val.drop 0).take i.val.
-  -- We need: s2.val.length = out.val.length, and for k < out.val.length, s2.val[k]! = b1.val[k]!.
-  have h_s2_len' : s2.val.length = out.val.length := by
-    rw [h_s2_len]
-    show i.val - 0 = out.val.length
-    omega
-  have h_s2_bytes : ∀ k : Nat, k < out.val.length → s2.val[k]! = b1.val[k]! := by
-    intro k hk
-    rw [h_s2_val]
-    -- `b1.val.slice 0 i.val = (b1.val.drop 0).take i.val = b1.val.take i.val`.
-    show (List.slice ((0#usize : Std.Usize).val) i.val b1.val)[k]! = _
-    have h_zero : ((0#usize : Std.Usize).val : Nat) = 0 := rfl
-    rw [h_zero]
-    unfold List.slice
-    rw [List.drop_zero]
-    have hk_i : k < i.val := by rw [h_i_val]; exact hk
-    exact List.getElem!_take_of_lt _ k _ hk_i
-  -- Step 5: discharge `copy_from_slice out s2`. Length check: out.val.length = s2.val.length.
-  have h_copy : CoreModels.core.slice.Slice.copy_from_slice
-        CoreModels.core.U8.Insts.CoreMarkerCopy out s2 = .ok s2 := by
-    unfold CoreModels.core.slice.Slice.copy_from_slice
-    have h_len_eq : Std.Slice.len out = Std.Slice.len s2 := by
-      apply Std.UScalar.eq_of_val_eq
-      simp [Std.Slice.len, h_s2_len']
-    simp [h_len_eq]
-  -- Wrapper-identity: `Slice.Insts.CoreOpsIndexIndex inst = inst`.
-  have h_wrap_eq :
-      CoreModels.core.Slice.Insts.CoreOpsIndexIndex
-        (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
-      = CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8 := by
-    unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex
-    rfl
-  -- Step 6: assemble impl-side equality.
+  -- Step 4: copy the first `out.length` bytes of the 200-byte buffer `b1`.
+  obtain ⟨s2, h_s2_eq, h_copy, h_s2_len', h_s2_bytes⟩ :=
+    squeeze_copy_tail out b1 (by omega)
+  -- Step 5: assemble impl-side equality.
   have h_impl_eq :
       keccak.squeeze_last RATE s out = .ok s2 := by
     unfold keccak.squeeze_last
@@ -370,10 +387,9 @@ theorem keccak.squeeze_last_spec
     rw [h_classify]; simp only [bind_tc_ok]
     rw [h_b1_eq]; simp only [bind_tc_ok]
     rw [h_len]; simp only [bind_tc_ok]
-    rw [h_wrap_eq]
     rw [h_s2_eq]; simp only [bind_tc_ok]
     exact h_copy
-  -- Step 7: build the per-byte post.
+  -- Step 6: build the per-byte post.
   -- For k < out.val.length ≤ RATE.val, s2.val[k]! = b1.val[k]! = the toLEBytes-of-lift formula on s1.
   -- And `Foundation.lift s1 = s_spec` where keccak_f (lift s) = .ok s_spec.
   refine triple_of_ok_sb (v := s2) h_impl_eq ?_
@@ -415,50 +431,10 @@ theorem keccak.squeeze_first_and_last_spec
   -- Step 2: discharge `Slice.len out`.
   have h_len : CoreModels.core.slice.Slice.len out = .ok (Std.Slice.len out) := by
     unfold CoreModels.core.slice.Slice.len; rfl
-  set i := Std.Slice.len out
-  have h_i_val : i.val = out.val.length := by
-    simp [i, Std.Slice.len]
-  -- Step 3: index `b1` by `[0, i)`.
-  have h_i_le : (0#usize : Std.Usize).val ≤ i.val := by
-    show 0 ≤ i.val; omega
-  have h_i_le_N : i.val ≤ (200#usize : Std.Usize).val := by
-    rw [h_i_val]
-    show out.val.length ≤ 200
-    omega
-  obtain ⟨s2, h_s2_eq, h_s2_val, h_s2_len⟩ :=
-    triple_exists_ok_sb
-      (core_models_Array_Insts_index_RangeUsize_spec
-        b1 { start := 0#usize, «end» := i } h_i_le h_i_le_N)
-  have h_s2_len' : s2.val.length = out.val.length := by
-    rw [h_s2_len]
-    show i.val - 0 = out.val.length
-    omega
-  have h_s2_bytes : ∀ k : Nat, k < out.val.length → s2.val[k]! = b1.val[k]! := by
-    intro k hk
-    rw [h_s2_val]
-    show (List.slice ((0#usize : Std.Usize).val) i.val b1.val)[k]! = _
-    have h_zero : ((0#usize : Std.Usize).val : Nat) = 0 := rfl
-    rw [h_zero]
-    unfold List.slice
-    rw [List.drop_zero]
-    have hk_i : k < i.val := by rw [h_i_val]; exact hk
-    exact List.getElem!_take_of_lt _ k _ hk_i
-  -- Step 4: discharge `copy_from_slice out s2`.
-  have h_copy : CoreModels.core.slice.Slice.copy_from_slice
-        CoreModels.core.U8.Insts.CoreMarkerCopy out s2 = .ok s2 := by
-    unfold CoreModels.core.slice.Slice.copy_from_slice
-    have h_len_eq : Std.Slice.len out = Std.Slice.len s2 := by
-      apply Std.UScalar.eq_of_val_eq
-      simp [Std.Slice.len, h_s2_len']
-    simp [h_len_eq]
-  -- Wrapper-identity: `Slice.Insts.CoreOpsIndexIndex inst = inst`.
-  have h_wrap_eq :
-      CoreModels.core.Slice.Insts.CoreOpsIndexIndex
-        (CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8)
-      = CoreModels.core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.U8 := by
-    unfold CoreModels.core.Slice.Insts.CoreOpsIndexIndex
-    rfl
-  -- Step 5: assemble impl-side equality.
+  -- Step 3: copy the first `out.length` bytes of the 200-byte buffer `b1`.
+  obtain ⟨s2, h_s2_eq, h_copy, h_s2_len', h_s2_bytes⟩ :=
+    squeeze_copy_tail out b1 (by omega)
+  -- Step 4: assemble impl-side equality.
   have h_impl_eq :
       keccak.squeeze_first_and_last RATE s out = .ok s2 := by
     unfold keccak.squeeze_first_and_last
@@ -476,10 +452,9 @@ theorem keccak.squeeze_first_and_last_spec
     rw [h_classify]; simp only [bind_tc_ok]
     rw [h_b1_eq]; simp only [bind_tc_ok]
     rw [h_len]; simp only [bind_tc_ok]
-    rw [h_wrap_eq]
     rw [h_s2_eq]; simp only [bind_tc_ok]
     exact h_copy
-  -- Step 6: build the per-byte post.
+  -- Step 5: build the per-byte post.
   refine triple_of_ok_sb (v := s2) h_impl_eq ?_
   refine ⟨h_s2_len', ?_⟩
   intro k hk
