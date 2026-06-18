@@ -77,7 +77,8 @@ class extractAction(argparse.Action):
             "+libcrux_iot_ml_dsa::simd::portable::sample::*",
             "+libcrux_iot_ml_dsa::simd::portable::vector_type::*",
             "+libcrux_iot_ml_dsa::simd::portable::encoding::commitment::*",
-            "+libcrux_iot_ml_dsa::simd::portable::encoding::gamma1::*"
+            "+libcrux_iot_ml_dsa::simd::portable::encoding::gamma1::*",
+            "+libcrux_iot_ml_dsa::simd::portable::encoding::error::*"
         ]
         include_str = " ".join(includes)
         cargo_hax_into = [
