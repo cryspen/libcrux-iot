@@ -5592,4 +5592,110 @@ theorem inv_ntt_layer_3_step_fc
       exact h_v8_bnd_15
 
 
+
+/-- Chunk projection identity: `Spec.chunk_at (lift_poly re) k = lift_chunk re.coefs[k]`.
+
+    Pointwise equality at each lane: `lift_fe ((re.coefs[k]).elems[j])` on both sides. -/
+theorem chunk_at_lift_poly_fc
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (k : Nat) (hk : k < 16) :
+    Spec.chunk_at (lift_poly re) k = lift_chunk (re.coefficients.val[k]!) := by
+  unfold Spec.chunk_at lift_poly lift_chunk
+  apply Subtype.ext
+  have h_chunk_len : (re.coefficients.val[k]!).elements.val.length = 16 :=
+    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length _
+  -- Both sides .val unfold definitionally to a list; show list equality.
+  show (List.range 16).map
+        (fun j => ((List.range 256).map
+          (fun j' => lift_fe (re.coefficients.val[j' / 16]!).elements.val[j' % 16]!))[16 * k + j]!)
+      = (re.coefficients.val[k]!).elements.val.map lift_fe
+  apply List.ext_getElem
+  · simp
+  · intro i hi1 _hi2
+    have hi : i < 16 := by
+      have : i < ((List.range 16).map _).length := hi1
+      simpa using this
+    have h_idx_lt : 16 * k + i < 256 := by
+      have hk' : k ≤ 15 := by omega
+      have : 16 * k ≤ 16 * 15 := Nat.mul_le_mul_left _ hk'
+      omega
+    have h_list_len : ((List.range 256).map (fun j =>
+          lift_fe ((re.coefficients.val[j / 16]!).elements.val[j % 16]!))).length = 256 := by
+      simp
+    have h_div : (16 * k + i) / 16 = k := by
+      have h_i_div : i / 16 = 0 := Nat.div_eq_zero_iff.mpr (Or.inr hi)
+      have := Nat.add_mul_div_left i k (by decide : 0 < 16)
+      omega
+    have h_mod : (16 * k + i) % 16 = i := by
+      have := Nat.add_mul_mod_self_left i k 16
+      have h_i_mod : i % 16 = i := Nat.mod_eq_of_lt hi
+      omega
+    -- LHS chain: List.getElem_map (outer), List.getElem_range (outer),
+    --            getElem!_pos (big-list lookup), List.getElem_map (big-list),
+    --            List.getElem_range (big-list), h_div + h_mod.
+    rw [List.getElem_map, List.getElem_range,
+        getElem!_pos _ (16 * k + i) (by rw [h_list_len]; exact h_idx_lt),
+        List.getElem_map, List.getElem_range, h_div, h_mod]
+    -- Goal: lift_fe (val[i]!) = ((val).map lift_fe)[i]'_.
+    have h_getElem_pos :
+        (re.coefficients.val[k]!).elements.val[i]!
+          = (re.coefficients.val[k]!).elements.val[i]'(by rw [h_chunk_len]; exact hi) :=
+      getElem!_pos (re.coefficients.val[k]!).elements.val i
+        (by rw [h_chunk_len]; exact hi)
+    rw [h_getElem_pos]
+    -- Goal: lift_fe (val[i]'_) = (val.map lift_fe)[i]'_.
+    exact (List.getElem_map (f := lift_fe) (l := (re.coefficients.val[k]!).elements.val)).symm
+
+/-- Flatten-chunks identity (the chunked image of a poly under `lift_poly`).
+    Mathematically: if `chunks[k] = lift_chunk re.coefs[k]` for all k < 16,
+    then `flatten_chunks chunks = lift_poly re`.
+
+    Uses `getElem` (with proof) rather than `getElem!` in the hypothesis to
+    avoid a Lean elaborator issue with `Inhabited (Std.Array FE 16)`
+    synthesis in `∀` binders. -/
+theorem flatten_chunks_eq_lift_poly_fc
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (chunks : Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
+                16#usize)
+    (h_chunks_len : chunks.val.length = 16)
+    (h_chunks : ∀ k : Nat, (hk : k < 16) →
+      chunks.val[k]'(by rw [h_chunks_len]; exact hk)
+        = lift_chunk (re.coefficients.val[k]!)) :
+    Spec.flatten_chunks chunks = lift_poly re := by
+  unfold Spec.flatten_chunks lift_poly
+  apply Subtype.ext
+  show (List.range 256).map (fun j => (chunks.val[j / 16]!).val[j % 16]!)
+       = (List.range 256).map (fun j =>
+          lift_fe ((re.coefficients.val[j / 16]!).elements.val[j % 16]!))
+  apply List.ext_getElem
+  · simp
+  · intro j hj1 _hj2
+    have hj : j < 256 := by
+      have : j < ((List.range 256).map (fun j' => (chunks.val[j' / 16]!).val[j' % 16]!)).length := hj1
+      simpa using this
+    have h_div_lt : j / 16 < 16 := Nat.div_lt_iff_lt_mul (by decide : 0 < 16) |>.mpr hj
+    have h_mod_lt : j % 16 < 16 := Nat.mod_lt _ (by decide : 0 < 16)
+    have h_chunk_len : (re.coefficients.val[j / 16]!).elements.val.length = 16 :=
+      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length _
+    have h_map_len : ((re.coefficients.val[j / 16]!).elements.val.map lift_fe).length = 16 := by
+      rw [List.length_map]; exact h_chunk_len
+    -- Pull `chunks.val[j/16]!` through `h_chunks` using `getElem!_pos`.
+    have h_chunks_getElem :
+        chunks.val[j / 16]! = lift_chunk (re.coefficients.val[j / 16]!) := by
+      rw [getElem!_pos chunks.val (j / 16) (by rw [h_chunks_len]; exact h_div_lt)]
+      exact h_chunks (j / 16) h_div_lt
+    rw [List.getElem_map, List.getElem_map, List.getElem_range, h_chunks_getElem]
+    -- Goal: (lift_chunk re.coefficients[j/16]).val[j % 16]! = lift_fe ((...).val[j % 16]!).
+    -- LHS unfolds to ((re.coefs[j/16]).elements.val.map lift_fe)[j % 16]!.
+    show ((re.coefficients.val[j / 16]!).elements.val.map lift_fe)[j % 16]!
+        = lift_fe ((re.coefficients.val[j / 16]!).elements.val[j % 16]!)
+    rw [getElem!_pos ((re.coefficients.val[j / 16]!).elements.val.map lift_fe) (j % 16)
+          (by rw [h_map_len]; exact h_mod_lt),
+        getElem!_pos (re.coefficients.val[j / 16]!).elements.val (j % 16)
+          (by rw [h_chunk_len]; exact h_mod_lt)]
+    exact List.getElem_map (f := lift_fe)
+      (l := (re.coefficients.val[j / 16]!).elements.val)
+
 end libcrux_iot_ml_kem.Vector.Portable.Ntt

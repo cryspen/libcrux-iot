@@ -6,13 +6,14 @@ import LibcruxIotMlKem.Vector.Portable.Arithmetic.PerElement
 import LibcruxIotMlKem.Vector.Portable.Arithmetic.Element
 import LibcruxIotMlKem.Vector.Portable.Ntt
 import LibcruxIotMlKem.Polynomial.NttDrivers
+import LibcruxIotMlKem.Polynomial.PolyOpsFcBarrett
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
 
 namespace libcrux_iot_ml_kem.Ntt
-open libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
+open libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
 
@@ -60,110 +61,6 @@ theorem polynomial.zeta_fc (i : Std.Usize) (hi : i.val < 128) :
   unfold Spec.zeta_at
   rfl
 
-/-- Chunk projection identity: `Spec.chunk_at (lift_poly re) k = lift_chunk re.coefs[k]`.
-
-    Pointwise equality at each lane: `lift_fe ((re.coefs[k]).elems[j])` on both sides. -/
-theorem chunk_at_lift_poly_fc
-    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (k : Nat) (hk : k < 16) :
-    Spec.chunk_at (lift_poly re) k = lift_chunk (re.coefficients.val[k]!) := by
-  unfold Spec.chunk_at lift_poly lift_chunk
-  apply Subtype.ext
-  have h_chunk_len : (re.coefficients.val[k]!).elements.val.length = 16 :=
-    libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length _
-  -- Both sides .val unfold definitionally to a list; show list equality.
-  show (List.range 16).map
-        (fun j => ((List.range 256).map
-          (fun j' => lift_fe (re.coefficients.val[j' / 16]!).elements.val[j' % 16]!))[16 * k + j]!)
-      = (re.coefficients.val[k]!).elements.val.map lift_fe
-  apply List.ext_getElem
-  · simp
-  · intro i hi1 _hi2
-    have hi : i < 16 := by
-      have : i < ((List.range 16).map _).length := hi1
-      simpa using this
-    have h_idx_lt : 16 * k + i < 256 := by
-      have hk' : k ≤ 15 := by omega
-      have : 16 * k ≤ 16 * 15 := Nat.mul_le_mul_left _ hk'
-      omega
-    have h_list_len : ((List.range 256).map (fun j =>
-          lift_fe ((re.coefficients.val[j / 16]!).elements.val[j % 16]!))).length = 256 := by
-      simp
-    have h_div : (16 * k + i) / 16 = k := by
-      have h_i_div : i / 16 = 0 := Nat.div_eq_zero_iff.mpr (Or.inr hi)
-      have := Nat.add_mul_div_left i k (by decide : 0 < 16)
-      omega
-    have h_mod : (16 * k + i) % 16 = i := by
-      have := Nat.add_mul_mod_self_left i k 16
-      have h_i_mod : i % 16 = i := Nat.mod_eq_of_lt hi
-      omega
-    -- LHS chain: List.getElem_map (outer), List.getElem_range (outer),
-    --            getElem!_pos (big-list lookup), List.getElem_map (big-list),
-    --            List.getElem_range (big-list), h_div + h_mod.
-    rw [List.getElem_map, List.getElem_range,
-        getElem!_pos _ (16 * k + i) (by rw [h_list_len]; exact h_idx_lt),
-        List.getElem_map, List.getElem_range, h_div, h_mod]
-    -- Goal: lift_fe (val[i]!) = ((val).map lift_fe)[i]'_.
-    have h_getElem_pos :
-        (re.coefficients.val[k]!).elements.val[i]!
-          = (re.coefficients.val[k]!).elements.val[i]'(by rw [h_chunk_len]; exact hi) :=
-      getElem!_pos (re.coefficients.val[k]!).elements.val i
-        (by rw [h_chunk_len]; exact hi)
-    rw [h_getElem_pos]
-    -- Goal: lift_fe (val[i]'_) = (val.map lift_fe)[i]'_.
-    exact (List.getElem_map (f := lift_fe) (l := (re.coefficients.val[k]!).elements.val)).symm
-
-/-- Flatten-chunks identity (the chunked image of a poly under `lift_poly`).
-    Mathematically: if `chunks[k] = lift_chunk re.coefs[k]` for all k < 16,
-    then `flatten_chunks chunks = lift_poly re`.
-
-    Uses `getElem` (with proof) rather than `getElem!` in the hypothesis to
-    avoid a Lean elaborator issue with `Inhabited (Std.Array FE 16)`
-    synthesis in `∀` binders. -/
-theorem flatten_chunks_eq_lift_poly_fc
-    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
-            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (chunks : Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 16#usize)
-                16#usize)
-    (h_chunks_len : chunks.val.length = 16)
-    (h_chunks : ∀ k : Nat, (hk : k < 16) →
-      chunks.val[k]'(by rw [h_chunks_len]; exact hk)
-        = lift_chunk (re.coefficients.val[k]!)) :
-    Spec.flatten_chunks chunks = lift_poly re := by
-  unfold Spec.flatten_chunks lift_poly
-  apply Subtype.ext
-  show (List.range 256).map (fun j => (chunks.val[j / 16]!).val[j % 16]!)
-       = (List.range 256).map (fun j =>
-          lift_fe ((re.coefficients.val[j / 16]!).elements.val[j % 16]!))
-  apply List.ext_getElem
-  · simp
-  · intro j hj1 _hj2
-    have hj : j < 256 := by
-      have : j < ((List.range 256).map (fun j' => (chunks.val[j' / 16]!).val[j' % 16]!)).length := hj1
-      simpa using this
-    have h_div_lt : j / 16 < 16 := Nat.div_lt_iff_lt_mul (by decide : 0 < 16) |>.mpr hj
-    have h_mod_lt : j % 16 < 16 := Nat.mod_lt _ (by decide : 0 < 16)
-    have h_chunk_len : (re.coefficients.val[j / 16]!).elements.val.length = 16 :=
-      libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper.PortableVector_elements_length _
-    have h_map_len : ((re.coefficients.val[j / 16]!).elements.val.map lift_fe).length = 16 := by
-      rw [List.length_map]; exact h_chunk_len
-    -- Pull `chunks.val[j/16]!` through `h_chunks` using `getElem!_pos`.
-    have h_chunks_getElem :
-        chunks.val[j / 16]! = lift_chunk (re.coefficients.val[j / 16]!) := by
-      rw [getElem!_pos chunks.val (j / 16) (by rw [h_chunks_len]; exact h_div_lt)]
-      exact h_chunks (j / 16) h_div_lt
-    rw [List.getElem_map, List.getElem_map, List.getElem_range, h_chunks_getElem]
-    -- Goal: (lift_chunk re.coefficients[j/16]).val[j % 16]! = lift_fe ((...).val[j % 16]!).
-    -- LHS unfolds to ((re.coefs[j/16]).elements.val.map lift_fe)[j % 16]!.
-    show ((re.coefficients.val[j / 16]!).elements.val.map lift_fe)[j % 16]!
-        = lift_fe ((re.coefficients.val[j / 16]!).elements.val[j % 16]!)
-    rw [getElem!_pos ((re.coefficients.val[j / 16]!).elements.val.map lift_fe) (j % 16)
-          (by rw [h_map_len]; exact h_mod_lt),
-        getElem!_pos (re.coefficients.val[j / 16]!).elements.val (j % 16)
-          (by rw [h_chunk_len]; exact h_mod_lt)]
-    exact List.getElem_map (f := lift_fe)
-      (l := (re.coefficients.val[j / 16]!).elements.val)
 
 /-! ### L3.1.A — Loop scaffolding for `ntt_at_layer_1_portable_fc`.
 
@@ -4320,6 +4217,261 @@ theorem ntt_at_layer_1_portable_fc_strong
     cases this; rfl
   subst h_rr
   exact triple_of_ok_fc h_eq ⟨h_fc', h_bd'.1, h_bd'.2⟩
+
+
+/-- L3.3 — `ntt_binomially_sampled_ring_element` driver (7 layer
+    composition + barrett reduce). Projects on the poly component.
+
+    Input bound `≤ 3`: from the upstream binomial sampler with η₁=2,
+    which produces samples in `[-2, 2]`. We use `≤ 3` (one slack)
+    to match `ntt_at_layer_7_spec`'s legacy bound precondition.
+
+    Implementation chain: dedicated `ntt_at_layer_7` → 3× `ntt_at_layer_4_plus`
+    (layers 6, 5, 4) → `ntt_at_layer_3` → `ntt_at_layer_2` →
+    `ntt_at_layer_1` → `poly_barrett_reduce`. Each layer's FC equation
+    comes from FCTargets `ntt_at_layer_X_portable_fc`; the per-layer
+    output bound comes from legacy
+    `libcrux_iot_ml_kem.Equivalence.ntt_at_layer_X_spec(_B)`. -/
+@[spec]
+theorem ntt_binomially_sampled_ring_element_fc
+    (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
+            libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (scratch : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
+    (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ k : Nat, k < 16 →
+      ((re.coefficients.val[chunk]!).elements.val[k]!).val.natAbs ≤ 3) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_kem.ntt.ntt_binomially_sampled_ring_element
+      (vectortraitsOperationsInst := portable_ops_inst) re scratch
+    ⦃ ⇓ p => ⌜ lift_poly p.1 = Spec.ntt_pure (lift_poly re) ⌝ ⦄ := by
+  -- Strategy: collect all step equations using *_fc_strong combinators
+  -- and arithmetic helpers, then assemble the full impl-body equation via
+  -- `unfold ; simp [...]`. Close the Triple with `triple_of_ok_fc h_body`
+  -- and prove the lift_poly equation by chaining FC equations through
+  -- `Spec.ntt_pure` plus the barrett bridge.
+  -- =============================================================
+  -- Step 1: layer_7. re scratch → re1 scratch1. ≤ 3 → ≤ 4803.
+  -- =============================================================
+  obtain ⟨⟨re1, scratch1⟩, h1_eq, h1_fc, h1_bnd⟩ :=
+    triple_exists_ok_fc (ntt_at_layer_7_portable_fc_strong re scratch h_bnd)
+  dsimp only at h1_fc h1_bnd
+  -- =============================================================
+  -- Step 2: layer_4_plus (zeta_i=1, layer=6, bnd=11207). ≤ 4803 → ≤ 14535.
+  -- =============================================================
+  have h_re1_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re1.coefficients.val[i]!).elements.val[j]!).val.natAbs
+        ≤ (11207#usize : Std.Usize).val := by
+    intro i hi j hj
+    have hb := h1_bnd i hi j hj
+    show _ ≤ 11207
+    omega
+  obtain ⟨⟨zeta_i1, re2, scratch2⟩, h2_eq, h2_fc, h2_zout, h2_bnd⟩ :=
+    triple_exists_ok_fc
+      (ntt_at_layer_4_plus_portable_fc_strong 1#usize re1 6#usize scratch1 11207#usize
+        (by decide) (by decide) (by decide) h_re1_loose)
+  dsimp only at h2_fc h2_zout h2_bnd
+  have h_zeta_i1 : zeta_i1.val = 3 := by rw [h2_zout]; decide
+  -- =============================================================
+  -- Step 3: usize_add 11207 + 3328 = 14535.
+  -- =============================================================
+  obtain ⟨i14535, hi14535_eq, hi14535_val⟩ :=
+    usize_add_ok_eq_fc 11207#usize 3328#usize (by scalar_tac)
+  -- =============================================================
+  -- Step 4: layer_4_plus (zeta_i1, layer=5, bnd=14535). ≤ 14535 → ≤ 17863.
+  -- =============================================================
+  have h_re2_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re2.coefficients.val[i]!).elements.val[j]!).val.natAbs
+        ≤ i14535.val := by
+    intro i hi j hj
+    have hb := h2_bnd i hi j hj
+    have h11207 : (11207#usize : Std.Usize).val = 11207 := by decide
+    have h3328 : (3328#usize : Std.Usize).val = 3328 := by decide
+    rw [h11207] at hb
+    rw [hi14535_val, h11207, h3328]
+    omega
+  have h_i14535_bnd : i14535.val ≤ 8 * 3328 := by
+    have h := hi14535_val
+    have h11207 : (11207#usize : Std.Usize).val = 11207 := by decide
+    have h3328 : (3328#usize : Std.Usize).val = 3328 := by decide
+    rw [h11207, h3328] at h
+    omega
+  obtain ⟨⟨zeta_i2, re3, scratch3⟩, h4_eq, h4_fc, h4_zout, h4_bnd⟩ :=
+    triple_exists_ok_fc
+      (ntt_at_layer_4_plus_portable_fc_strong zeta_i1 re2 5#usize scratch2 i14535
+        (by decide) h_i14535_bnd
+        (by rw [h_zeta_i1]; decide) h_re2_loose)
+  dsimp only at h4_fc h4_zout h4_bnd
+  have h_zeta_i2 : zeta_i2.val = 7 := by
+    rw [h4_zout, h_zeta_i1]; decide
+  -- =============================================================
+  -- Step 5: usize_mul 2 * 3328 = 6656.
+  -- =============================================================
+  obtain ⟨i6656, hi6656_eq, hi6656_val⟩ :=
+    usize_mul_ok_eq_fc 2#usize 3328#usize (by scalar_tac)
+  -- =============================================================
+  -- Step 6: usize_add 11207 + 6656 = 17863.
+  -- =============================================================
+  obtain ⟨i17863, hi17863_eq, hi17863_val⟩ :=
+    usize_add_ok_eq_fc 11207#usize i6656 (by have := hi6656_val; scalar_tac)
+  -- =============================================================
+  -- Step 7: layer_4_plus (zeta_i2, layer=4, bnd=17863). ≤ 17863 → ≤ 21191.
+  -- =============================================================
+  have h_re3_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re3.coefficients.val[i]!).elements.val[j]!).val.natAbs
+        ≤ i17863.val := by
+    intro i hi j hj
+    have hb := h4_bnd i hi j hj
+    have h11207 : (11207#usize : Std.Usize).val = 11207 := by decide
+    have h3328 : (3328#usize : Std.Usize).val = 3328 := by decide
+    have h2 : (2#usize : Std.Usize).val = 2 := by decide
+    rw [hi14535_val, h11207, h3328] at hb
+    rw [hi17863_val, hi6656_val, h11207, h2, h3328]
+    omega
+  have h_i17863_bnd : i17863.val ≤ 8 * 3328 := by
+    have h := hi17863_val
+    have hm := hi6656_val
+    have h11207 : (11207#usize : Std.Usize).val = 11207 := by decide
+    have h2 : (2#usize : Std.Usize).val = 2 := by decide
+    have h3328 : (3328#usize : Std.Usize).val = 3328 := by decide
+    rw [h11207] at h
+    rw [h2, h3328] at hm
+    omega
+  obtain ⟨⟨zeta_i3, re4, scratch4⟩, h7_eq, h7_fc, h7_zout, h7_bnd⟩ :=
+    triple_exists_ok_fc
+      (ntt_at_layer_4_plus_portable_fc_strong zeta_i2 re3 4#usize scratch3 i17863
+        (by decide) h_i17863_bnd
+        (by rw [h_zeta_i2]; decide) h_re3_loose)
+  dsimp only at h7_fc h7_zout h7_bnd
+  have h_zeta_i3 : zeta_i3.val = 15 := by
+    rw [h7_zout, h_zeta_i2]; decide
+  -- =============================================================
+  -- Step 8: usize_mul 3 * 3328 = 9984.
+  -- =============================================================
+  obtain ⟨i9984, hi9984_eq, hi9984_val⟩ :=
+    usize_mul_ok_eq_fc 3#usize 3328#usize (by scalar_tac)
+  -- =============================================================
+  -- Step 9: usize_add 11207 + 9984 = 21191.
+  -- =============================================================
+  obtain ⟨i21191, hi21191_eq, hi21191_val⟩ :=
+    usize_add_ok_eq_fc 11207#usize i9984 (by have := hi9984_val; scalar_tac)
+  -- =============================================================
+  -- Step 10: layer_3 (zeta_i3=15, bnd=21191 Nat). → ≤ 24519. zeta_out=31.
+  -- =============================================================
+  have h_re4_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re4.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 21191 := by
+    intro i hi j hj
+    have hb := h7_bnd i hi j hj
+    have h11207 : (11207#usize : Std.Usize).val = 11207 := by decide
+    have h3328 : (3328#usize : Std.Usize).val = 3328 := by decide
+    have h2 : (2#usize : Std.Usize).val = 2 := by decide
+    rw [hi17863_val, hi6656_val, h11207, h2, h3328] at hb
+    omega
+  obtain ⟨⟨zeta_i4, re5⟩, h10_eq, h10_fc, h10_zout, h10_bnd⟩ :=
+    triple_exists_ok_fc
+      (ntt_at_layer_3_portable_fc_strong zeta_i3 re4 i21191 21191
+        (by decide) h_zeta_i3 h_re4_loose)
+  dsimp only at h10_fc h10_zout h10_bnd
+  -- =============================================================
+  -- Step 11: usize_mul 4 * 3328 = 13312.
+  -- =============================================================
+  obtain ⟨i13312, hi13312_eq, hi13312_val⟩ :=
+    usize_mul_ok_eq_fc 4#usize 3328#usize (by scalar_tac)
+  -- =============================================================
+  -- Step 12: usize_add 11207 + 13312 = 24519.
+  -- =============================================================
+  obtain ⟨i24519, hi24519_eq, hi24519_val⟩ :=
+    usize_add_ok_eq_fc 11207#usize i13312 (by have := hi13312_val; scalar_tac)
+  -- =============================================================
+  -- Step 13: layer_2 (zeta_i4=31, bnd=24519 Nat). → ≤ 27847. zeta_out=63.
+  -- =============================================================
+  have h_re5_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re5.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 24519 := by
+    intro i hi j hj
+    have hb := h10_bnd i hi j hj
+    omega
+  obtain ⟨⟨zeta_i5, re6⟩, h13_eq, h13_fc, h13_zout, h13_bnd⟩ :=
+    triple_exists_ok_fc
+      (ntt_at_layer_2_portable_fc_strong zeta_i4 re5 i24519 24519
+        (by decide) h10_zout h_re5_loose)
+  dsimp only at h13_fc h13_zout h13_bnd
+  -- =============================================================
+  -- Step 14: usize_mul 5 * 3328 = 16640.
+  -- =============================================================
+  obtain ⟨i16640, hi16640_eq, hi16640_val⟩ :=
+    usize_mul_ok_eq_fc 5#usize 3328#usize (by scalar_tac)
+  -- =============================================================
+  -- Step 15: usize_add 11207 + 16640 = 27847.
+  -- =============================================================
+  obtain ⟨i27847, hi27847_eq, hi27847_val⟩ :=
+    usize_add_ok_eq_fc 11207#usize i16640 (by have := hi16640_val; scalar_tac)
+  -- =============================================================
+  -- Step 16: layer_1 (zeta_i5=63, bnd=27847 Nat). → ≤ 31175. zeta_out=127.
+  -- =============================================================
+  have h_re6_loose : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
+      ((re6.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 27847 := by
+    intro i hi j hj
+    have hb := h13_bnd i hi j hj
+    omega
+  obtain ⟨⟨_zeta_i6, re7⟩, h16_eq, h16_fc, _h16_zout, h16_bnd⟩ :=
+    triple_exists_ok_fc
+      (ntt_at_layer_1_portable_fc_strong zeta_i5 re6 i27847 27847
+        (by decide) h13_zout h_re6_loose)
+  dsimp only at h16_fc h16_bnd
+  -- =============================================================
+  -- Step 17: poly_barrett_reduce. ≤ 31175 ≤ 32767 → canonical residue.
+  -- =============================================================
+  have h_re7_loose : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
+      ((re7.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 32767 := by
+    intro chunk hc ℓ hℓ
+    have hb := h16_bnd chunk hc ℓ hℓ
+    omega
+  obtain ⟨re8, h17_eq, h17_fc⟩ :=
+    triple_exists_ok_fc (poly_barrett_reduce_fc re7 h_re7_loose)
+  -- =============================================================
+  -- Compose: derive the full impl `do`-block equation by simp-folding
+  -- all step equations into the unfolded body.
+  -- =============================================================
+  have h_body :
+      libcrux_iot_ml_kem.ntt.ntt_binomially_sampled_ring_element
+        (vectortraitsOperationsInst := portable_ops_inst) re scratch
+        = .ok (re8, scratch4) := by
+    unfold libcrux_iot_ml_kem.ntt.ntt_binomially_sampled_ring_element
+    simp [h1_eq, h2_eq, h4_eq, h7_eq, h10_eq, h13_eq, h16_eq, h17_eq,
+          hi14535_eq, hi6656_eq, hi17863_eq,
+          hi9984_eq, hi21191_eq,
+          hi13312_eq, hi24519_eq,
+          hi16640_eq, hi27847_eq]
+  apply triple_of_ok_fc h_body
+  -- =============================================================
+  -- Prove lift_poly equation by chaining FC equations through Spec.ntt_pure.
+  -- =============================================================
+  show lift_poly re8 = Spec.ntt_pure (lift_poly re)
+  unfold Spec.ntt_pure
+  -- Bridge barrett: h17_fc : poly_barrett_reduce (lift_poly re7) = .ok (lift_poly re8).
+  have hB_bridge :
+      hacspec_ml_kem.polynomial.poly_barrett_reduce (lift_poly re7)
+        = .ok (Spec.Pure.polynomial.poly_barrett_reduce_pure (lift_poly re7)) :=
+    Spec.Pure.polynomial.poly_barrett_reduce_eq_ok (lift_poly re7)
+  rw [hB_bridge] at h17_fc
+  have h_re8_eq : lift_poly re8
+      = Spec.Pure.polynomial.poly_barrett_reduce_pure (lift_poly re7) := by
+    have h := h17_fc
+    exact (Aeneas.Std.Result.ok.injEq _ _).mp h.symm
+  -- zeta_i identifications: substitute zeta values into the spec chain via .val.
+  have h_zeta_i2 : zeta_i2.val = 7 := by rw [h4_zout, h_zeta_i1]; decide
+  have h_zeta_i3 : zeta_i3.val = 15 := by rw [h7_zout, h_zeta_i2]; decide
+  have h_zeta_eq1 : zeta_i1 = 3#usize := by
+    have := h_zeta_i1; scalar_tac
+  have h_zeta_eq2 : zeta_i2 = 7#usize := by
+    have := h_zeta_i2; scalar_tac
+  have h_zeta_eq3 : zeta_i3 = 15#usize := by
+    have := h_zeta_i3; scalar_tac
+  have h_zeta_eq4 : zeta_i4 = 31#usize := by
+    have := h10_zout; scalar_tac
+  have h_zeta_eq5 : zeta_i5 = 63#usize := by
+    have := h13_zout; scalar_tac
+  rw [h_re8_eq, h16_fc, h13_fc, h10_fc, h7_fc, h4_fc, h2_fc, h1_fc,
+      h_zeta_eq1, h_zeta_eq2, h_zeta_eq3, h_zeta_eq4, h_zeta_eq5]
+
 
 
 

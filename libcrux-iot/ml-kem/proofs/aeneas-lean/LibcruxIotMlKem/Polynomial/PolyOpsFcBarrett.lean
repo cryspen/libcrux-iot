@@ -5,8 +5,8 @@
   `FCTargets.lean`. Lives separately from `Polynomial/PolyOps.lean`
   to break a dependency cycle (the existing `PolyOps.lean` is imported
   by `Polynomial/NttDrivers.lean`, while the FC theorems here depend
-  on `Ntt.lean` / `InvertNtt.lean` which in turn depend on
-  `Polynomial/NttDrivers.lean`).
+  on `Polynomial/NttDrivers.lean` and feed into `Ntt.lean`'s
+  `ntt_binomially_sampled_ring_element_fc`).
 -/
 import LibcruxIotMlKem.Spec.Lift
 import LibcruxIotMlKem.Spec.Pure
@@ -14,7 +14,6 @@ import LibcruxIotMlKem.Spec.ModularArith
 import LibcruxIotMlKem.Vector.Portable.Arithmetic.PerElement
 import LibcruxIotMlKem.Vector.Portable.Arithmetic.Element
 import LibcruxIotMlKem.Vector.Portable.Ntt
-import LibcruxIotMlKem.Ntt
 import LibcruxIotMlKem.Polynomial.NttDrivers
 import LibcruxIotMlKem.Polynomial.PolyOps
 import LibcruxIotMlKem.Extraction.Funs
@@ -28,7 +27,7 @@ set_option linter.unusedSectionVars false
 /-! ### Extracted from FCTargets.lean (§poly_l6_1). -/
 
 namespace libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett
-open libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
+open libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
 

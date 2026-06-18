@@ -124,7 +124,7 @@ but use a pure Lean reference that reimplements the hacspec functions.
 
 | Theorem | impl function | what it does |
 |---------|---------------|--------------|
-| `libcrux_iot_ml_kem.InvertNtt.ntt_binomially_sampled_ring_element_fc` ([`InvertNtt.lean`](InvertNtt.lean)) | `ntt.ntt_binomially_sampled_ring_element` | forward NTT |
+| `libcrux_iot_ml_kem.Ntt.ntt_binomially_sampled_ring_element_fc` ([`Ntt.lean`](Ntt.lean)) | `ntt.ntt_binomially_sampled_ring_element` | forward NTT |
 | `libcrux_iot_ml_kem.InvertNtt.invert_ntt_montgomery_fc` ([`InvertNtt.lean`](InvertNtt.lean)) | `invert_ntt.invert_ntt_montgomery` | inverse NTT |
 | `libcrux_iot_ml_kem.Polynomial.NttMultiply.accumulating_ntt_multiply_fc` ([`Polynomial/NttMultiply.lean`](Polynomial/NttMultiply.lean)) | `vector.portable.ntt.accumulating_ntt_multiply` | pointwise NTT multiplication |
 

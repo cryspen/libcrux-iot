@@ -12,6 +12,7 @@ import LibcruxIotMlKem.Spec.ModularArith
 import LibcruxIotMlKem.Vector.Portable.Arithmetic.PerElement
 import LibcruxIotMlKem.Vector.Portable.Arithmetic.Element
 import LibcruxIotMlKem.Vector.Portable.Ntt
+import LibcruxIotMlKem.Ntt
 import LibcruxIotMlKem.Polynomial.NttDrivers
 import LibcruxIotMlKem.Polynomial.PolyOps
 import LibcruxIotMlKem.Polynomial.PolyOpsFcBarrett
