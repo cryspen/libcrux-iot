@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-HAX_VERSION = "1f85fc13b9967080cc657863e2000ba5d4aa8647"
+HAX_VERSION = "ffdf432705d409b62ec025d253a340234b59766f"
 AENEAS_VERSION = "8d2077c"
 
 
@@ -14,6 +14,9 @@ def check_version(cmd: list[str], name: str, expected: str) -> None:
     result = subprocess.run(cmd, capture_output=True, text=True)
     output = result.stdout + result.stderr
     if expected not in output:
+        if os.environ.get("SKIP_VERSION_CHECK") == "1":
+            print(f"warning: version mismatch for {name} (expected {expected!r}); continuing because SKIP_VERSION_CHECK=1", file=sys.stderr)
+            return
         print(f"Version mismatch for {name}: expected {expected!r} in output:\n{output}", file=sys.stderr)
         sys.exit(1)
 

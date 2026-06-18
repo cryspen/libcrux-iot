@@ -361,7 +361,7 @@ pub mod incremental {
 
     /// An unbuffered XOF state.
     #[derive(Clone, Copy)]
-    #[cfg_attr(not(eurydice), derive(Debug))]
+    #[cfg_attr(not(any(eurydice, hax_backend_lean)), derive(Debug))]
     #[cfg(feature = "unbuffered-xof")]
     pub struct UnbufferedXofState {
         state: crate::state::KeccakState,
