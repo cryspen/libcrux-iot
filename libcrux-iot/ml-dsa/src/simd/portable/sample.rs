@@ -1,6 +1,6 @@
 use libcrux_secrets::{CastOps as _, Classify as _, Declassify as _, I32, U8};
 
-use crate::{constants::FIELD_MODULUS, helper::cloop};
+use crate::constants::FIELD_MODULUS;
 
 #[inline(always)]
 #[hax_lib::requires(randomness.len() / 3 <= 4_294_967_295 && out.len() >= randomness.len() / 3)]
