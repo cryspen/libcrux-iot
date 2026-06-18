@@ -30,10 +30,10 @@ import LibcruxIotMlKem.Matrix.ComputeAsPlusE
 import LibcruxIotMlKem.Sampling
 import LibcruxIotMlKem.Serialize
 import LibcruxIotMlKem.Matrix.ComputeMessage.Impl
-import LibcruxIotMlKem.Matrix.ComputeMessage.Correctness
+import LibcruxIotMlKem.Matrix.ComputeMessage.Hacspec
 
 namespace libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Impl
-open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl
+open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Hacspec libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
 open Result ControlFlow

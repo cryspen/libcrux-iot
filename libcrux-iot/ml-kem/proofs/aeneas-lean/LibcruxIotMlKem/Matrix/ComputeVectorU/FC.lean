@@ -13,7 +13,7 @@
     rows 1..K consume it);
   * a hacspec part-A reduction `compute_vector_u_hacspec_eq` relating the
     hacspec do-block to the per-row `AllRowsFillFC.row_spec`. Because the
-    Correctness `extractCol`/`mcol_*` helpers are `private`, the
+    Hacspec `extractCol`/`mcol_*` helpers are `private`, the
     matrix-column reduction is re-derived locally here.
 
   PRE strengthening: `hK ≤ 4`, lengths, per-lane bounds.
@@ -34,11 +34,11 @@ import LibcruxIotMlKem.Matrix.ComputeAsPlusE
 import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Matrix.ComputeMessage.Impl
 import LibcruxIotMlKem.Matrix.ComputeVectorU.Impl
-import LibcruxIotMlKem.Matrix.ComputeMessage.Correctness
-import LibcruxIotMlKem.Matrix.ComputeVectorU.Correctness
+import LibcruxIotMlKem.Matrix.ComputeMessage.Hacspec
+import LibcruxIotMlKem.Matrix.ComputeVectorU.Hacspec
 
 namespace libcrux_iot_ml_kem.Matrix.ComputeVectorU.FC
-open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl libcrux_iot_ml_kem.Matrix.ComputeVectorU.Correctness libcrux_iot_ml_kem.Matrix.ComputeVectorU.Impl
+open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Hacspec libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl libcrux_iot_ml_kem.Matrix.ComputeVectorU.Hacspec libcrux_iot_ml_kem.Matrix.ComputeVectorU.Impl
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
 open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Sampling libcrux_iot_ml_kem.Serialize libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
@@ -63,11 +63,11 @@ private theorem triple_of_ok_fc {α : Type} {x : Result α} {v : α}
 
 /-! ## PART A — hacspec reduction.
 
-    The Correctness `extractCol`/`mcol_*` helpers + the public
+    The Hacspec `extractCol`/`mcol_*` helpers + the public
     `multiply_matrix_by_column_at_eq_multiply_vectors` are usable only modulo
     the `private` `extractCol` they refer to. Since we cannot name/unfold the
     private `extractCol`, we RE-DERIVE the matrix-column reduction locally with
-    a public-in-this-module copy `extractColL`, mirroring Correctness
+    a public-in-this-module copy `extractColL`, mirroring Hacspec
     `multiply_matrix_by_column_at_eq_mcol` / `multiply_vectors_eq_mcol`. -/
 
 section PartA
@@ -78,7 +78,7 @@ open Result ControlFlow
 /-- Polynomial as a 256-lane field-element array. -/
 private abbrev Poly256L := Std.Array FieldElement 256#usize
 
-/-- Local copy of Correctness `extractCol` (private there). -/
+/-- Local copy of Hacspec `extractCol` (private there). -/
 private noncomputable def extractColL {K : Std.Usize}
     (m : Std.Array (Std.Array Poly256L K) K)
     (i : Std.Usize) : Std.Array Poly256L K :=
@@ -94,7 +94,7 @@ private theorem extractColL_lane {K : Std.Usize}
   rw [getElem!_pos _ j (by simp [List.length_map, List.length_range, hj])]
   simp [List.getElem_map, List.getElem_range]
 
-/-- Local copy of Correctness `mcol_lane_at_step`. -/
+/-- Local copy of Hacspec `mcol_lane_at_step`. -/
 private noncomputable def mcolLane {K : Std.Usize}
     (col vec : Std.Array Poly256L K) (k : Nat) (ℓ : Nat) : FieldElement :=
   (List.range k).foldl
@@ -160,7 +160,7 @@ private theorem mcol_step_add_eq {K : Std.Usize}
 
 set_option maxHeartbeats 16000000 in
 set_option maxRecDepth 1000 in
-/-- Local copy of Correctness `multiply_vectors_eq_mcol`. -/
+/-- Local copy of Hacspec `multiply_vectors_eq_mcol`. -/
 private theorem multiply_vectors_eq_mcolL {K : Std.Usize}
     (col vec : Std.Array Poly256L K) :
     hacspec_ml_kem.matrix.multiply_vectors col vec
@@ -331,7 +331,7 @@ private theorem multiply_vectors_eq_mcolL {K : Std.Usize}
 
 set_option maxHeartbeats 16000000 in
 set_option maxRecDepth 1000 in
-/-- Local copy of Correctness `multiply_matrix_by_column_at_eq_mcol`. -/
+/-- Local copy of Hacspec `multiply_matrix_by_column_at_eq_mcol`. -/
 private theorem mmbc_at_eq_mcolL {K : Std.Usize}
     (m : Std.Array (Std.Array Poly256L K) K)
     (vec : Std.Array Poly256L K) (i : Std.Usize)

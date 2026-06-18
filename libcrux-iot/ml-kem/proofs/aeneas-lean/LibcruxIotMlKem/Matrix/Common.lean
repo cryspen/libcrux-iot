@@ -10,10 +10,10 @@
 
   These live above the `Impl.*_pure` mirror (defined in
   `L7/Impl/ComputeMessage.lean`) and the bridge lemmas (in
-  `L7/Correctness/ComputeMessage.lean`).
+  `Matrix/ComputeMessage/Hacspec.lean`).
 
   SKELETON — no proofs beyond what is needed for these defs to
-  elaborate. The named obligations live in the Impl/Correctness/FC files.
+  elaborate. The named obligations live in the Impl/Hacspec/FC files.
 -/
 import LibcruxIotMlKem.Spec.Lift
 import LibcruxIotMlKem.Vector.Portable.Arithmetic.PerElement

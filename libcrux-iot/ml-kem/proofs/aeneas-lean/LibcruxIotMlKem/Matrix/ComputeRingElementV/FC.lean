@@ -30,12 +30,12 @@ import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Sampling
 import LibcruxIotMlKem.Serialize
 import LibcruxIotMlKem.Matrix.ComputeRingElementV.Impl
-import LibcruxIotMlKem.Matrix.ComputeMessage.Correctness
-import LibcruxIotMlKem.Matrix.ComputeVectorU.Correctness
-import LibcruxIotMlKem.Matrix.ComputeRingElementV.Correctness
+import LibcruxIotMlKem.Matrix.ComputeMessage.Hacspec
+import LibcruxIotMlKem.Matrix.ComputeVectorU.Hacspec
+import LibcruxIotMlKem.Matrix.ComputeRingElementV.Hacspec
 
 namespace libcrux_iot_ml_kem.Matrix.ComputeRingElementV.FC
-open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Correctness libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Impl libcrux_iot_ml_kem.Matrix.ComputeVectorU.Correctness
+open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Hacspec libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Hacspec libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Impl libcrux_iot_ml_kem.Matrix.ComputeVectorU.Hacspec
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
 open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Sampling libcrux_iot_ml_kem.Serialize libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt

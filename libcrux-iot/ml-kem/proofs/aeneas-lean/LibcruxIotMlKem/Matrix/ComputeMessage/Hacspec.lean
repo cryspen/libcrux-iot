@@ -1,5 +1,5 @@
 /-
-  # `Matrix/ComputeMessage/Correctness.lean` — L7.4 pure/spec bridges.
+  # `Matrix/ComputeMessage/Hacspec.lean` — L7.4 pure/spec bridges.
 
   Pure-side and pure↔hacspec equational bridges for the direct
   `compute_message` decomposition:
@@ -30,7 +30,7 @@ import LibcruxIotMlKem.Matrix.ComputeAsPlusE
 import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Matrix.ComputeMessage.Bridges
 
-namespace libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness
+namespace libcrux_iot_ml_kem.Matrix.ComputeMessage.Hacspec
 open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
@@ -2240,4 +2240,4 @@ theorem sub_polynomials_scaleZ_eq
 
 end SubPolyScaleZ
 
-end libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness
+end libcrux_iot_ml_kem.Matrix.ComputeMessage.Hacspec

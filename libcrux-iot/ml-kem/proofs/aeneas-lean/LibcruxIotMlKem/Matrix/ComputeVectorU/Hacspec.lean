@@ -1,5 +1,5 @@
 /-
-  # `Matrix/ComputeVectorU/Correctness.lean` — L7.2 `D''` tail bridge.
+  # `Matrix/ComputeVectorU/Hacspec.lean` — L7.2 `D''` tail bridge.
 
   The hacspec↔pure equational bridge for the *add* (error-injection) tail of
   the `compute_vector_u` decomposition, directly analogous to the proven `D`
@@ -36,7 +36,7 @@ import LibcruxIotMlKem.Matrix.ComputeMessage.Bridges
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
 
-namespace libcrux_iot_ml_kem.Matrix.ComputeVectorU.Correctness
+namespace libcrux_iot_ml_kem.Matrix.ComputeVectorU.Hacspec
 open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
@@ -744,4 +744,4 @@ theorem multiply_matrix_by_column_at_eq_multiply_vectors {K : Std.Usize}
 
 end MatrixColEqVectors
 
-end libcrux_iot_ml_kem.Matrix.ComputeVectorU.Correctness
+end libcrux_iot_ml_kem.Matrix.ComputeVectorU.Hacspec

@@ -1081,7 +1081,7 @@ private theorem L7_4_Hlp.multiply_ntts_lane_eq_canonical_factor
 
 /-! ### local canonical-determination helper + per-lane bridge. -/
 
-/-- Local copy of `eq_of_zmod_lane_canon` (private in FCTargets/Correctness):
+/-- Local copy of `eq_of_zmod_lane_canon` (private in ComputeMessage.Hacspec):
     two canonical 256-FE arrays that agree on every `zmodOfFE` lane are equal. -/
 private theorem eq_of_zmod_lane_canon_local
     (u v : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)

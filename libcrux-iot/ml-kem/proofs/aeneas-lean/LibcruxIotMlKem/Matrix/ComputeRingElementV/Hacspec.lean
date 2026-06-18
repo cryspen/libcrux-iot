@@ -1,5 +1,5 @@
 /-
-  # `Matrix/ComputeRingElementV/Correctness.lean` — L7.3 `D′` tail bridge.
+  # `Matrix/ComputeRingElementV/Hacspec.lean` — L7.3 `D′` tail bridge.
 
   The hacspec↔pure equational bridge for the *add-message-error* tail of the
   `compute_ring_element_v` decomposition. The hacspec `compute_ring_element_v`
@@ -37,14 +37,14 @@ import LibcruxIotMlKem.Polynomial.PolyOpsFc
 import LibcruxIotMlKem.Polynomial.NttMultiply
 import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Matrix.ComputeAsPlusE
-import LibcruxIotMlKem.Matrix.ComputeMessage.Correctness
-import LibcruxIotMlKem.Matrix.ComputeVectorU.Correctness
+import LibcruxIotMlKem.Matrix.ComputeMessage.Hacspec
+import LibcruxIotMlKem.Matrix.ComputeVectorU.Hacspec
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
 
-namespace libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Correctness
-open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness libcrux_iot_ml_kem.Matrix.ComputeVectorU.Correctness
+namespace libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Hacspec
+open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Hacspec libcrux_iot_ml_kem.Matrix.ComputeVectorU.Hacspec
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
 open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
@@ -241,4 +241,4 @@ theorem add_message_error_scaleZ_eq
 
 end AddMessageErrorScaleZ
 
-end libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Correctness
+end libcrux_iot_ml_kem.Matrix.ComputeRingElementV.Hacspec

@@ -23,10 +23,10 @@ import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Matrix.ComputeAsPlusE
 import LibcruxIotMlKem.Matrix.Common
 import LibcruxIotMlKem.Matrix.ComputeMessage.Impl
-import LibcruxIotMlKem.Matrix.ComputeMessage.Correctness
+import LibcruxIotMlKem.Matrix.ComputeMessage.Hacspec
 
 namespace libcrux_iot_ml_kem.Matrix.ComputeMessage.FC
-open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Correctness libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl
+open libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeMessage.Bridges libcrux_iot_ml_kem.Matrix.ComputeMessage.Hacspec libcrux_iot_ml_kem.Matrix.ComputeMessage.Impl
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
 open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
@@ -48,7 +48,7 @@ private theorem triple_of_ok_fc {α : Type} {x : Result α} {v : α}
   subst hx; simp [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply, hp]
 
 /-- `scaleZ c p` lanes are `feOfZMod _`, hence canonical (local copy of the
-    `private canonArr_scaleZ'` in Correctness/ComputeMessage). -/
+    `private canonArr_scaleZ'` in ComputeMessage/Hacspec). -/
 private theorem scaleZ_canon (c : ZMod 3329)
     (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
     (j : Nat) (hj : j < 256) :
