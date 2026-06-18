@@ -28,7 +28,7 @@ and a flat array of 256 field elements.
 
 ### L7.1 — key generation: `Â · ŝ + ê`
 
-[`BitMlKem/FCTargets.lean`](BitMlKem/FCTargets.lean) — `compute_As_plus_e_fc`:
+[`Matrix/ComputeAsPlusE.lean`](Matrix/ComputeAsPlusE.lean) — `libcrux_iot_ml_kem.Matrix.ComputeAsPlusE.compute_As_plus_e_fc`:
 
 ```lean
 ⦃ ⌜ True ⌝ ⦄
@@ -48,7 +48,7 @@ axiom-clean.
 
 ### L7.2 — encryption: `Âᵀ · r̂ + ê₁`
 
-[`BitMlKem/L7/FC/ComputeVectorU.lean`](BitMlKem/L7/FC/ComputeVectorU.lean) — `compute_vector_u_fc`:
+[`Matrix/ComputeVectorU/FC.lean`](Matrix/ComputeVectorU/FC.lean) — `libcrux_iot_ml_kem.Matrix.ComputeVectorU.FC.compute_vector_u_fc`:
 
 ```lean
 ⦃ ⌜ True ⌝ ⦄
@@ -69,7 +69,7 @@ theorem is conditional on the matrix-sampling leaf axiom **A1** (see
 
 ### L7.3 — encryption: `t̂ · r̂ + e₂ + Decompress(message)`
 
-[`BitMlKem/L7/FC/ComputeRingElementV.lean`](BitMlKem/L7/FC/ComputeRingElementV.lean) — `compute_ring_element_v_fc`:
+[`Matrix/ComputeRingElementV/FC.lean`](Matrix/ComputeRingElementV/FC.lean) — `libcrux_iot_ml_kem.Matrix.ComputeRingElementV.FC.compute_ring_element_v_fc`:
 
 ```lean
 ⦃ ⌜ True ⌝ ⦄
@@ -92,7 +92,7 @@ is conditional on the deserialization leaf axiom **A2** (see
 
 ### L7.4 — decryption: `NTT⁻¹(v̂ − ŝ · û)`
 
-[`BitMlKem/L7/FC/ComputeMessage.lean`](BitMlKem/L7/FC/ComputeMessage.lean) — `compute_message_fc`:
+[`Matrix/ComputeMessage/FC.lean`](Matrix/ComputeMessage/FC.lean) — `libcrux_iot_ml_kem.Matrix.ComputeMessage.FC.compute_message_fc`:
 
 ```lean
 ⦃ ⌜ True ⌝ ⦄
@@ -114,8 +114,8 @@ so this theorem is fully axiom-clean.
 The four matrix-level theorems above are assembled from a stack of
 **polynomial-level** FC theorems — each over a single ring element
 (`PolynomialRingElement` = 256 coefficients) — stated and proven in
-[`BitMlKem/FCTargets.lean`](BitMlKem/FCTargets.lean). Unlike L7.2/L7.3,
-**none** of these depend on non-standard axioms.
+the files listed below. Unlike L7.2/L7.3, **none** of these depend on
+non-standard axioms.
 
 The polynomial-level theorems **do not use the hacspec implementation**
 but use a pure Lean reference that reimplements the hacspec functions.
@@ -124,9 +124,9 @@ but use a pure Lean reference that reimplements the hacspec functions.
 
 | Theorem | impl function | what it does |
 |---------|---------------|--------------|
-| `ntt_binomially_sampled_ring_element_fc` | `ntt.ntt_binomially_sampled_ring_element` | forward NTT |
-| `invert_ntt_montgomery_fc` | `invert_ntt.invert_ntt_montgomery` | inverse NTT |
-| `accumulating_ntt_multiply_fc` | `vector.portable.ntt.accumulating_ntt_multiply` | pointwise NTT multiplication |
+| `libcrux_iot_ml_kem.InvertNtt.ntt_binomially_sampled_ring_element_fc` ([`InvertNtt.lean`](InvertNtt.lean)) | `ntt.ntt_binomially_sampled_ring_element` | forward NTT |
+| `libcrux_iot_ml_kem.InvertNtt.invert_ntt_montgomery_fc` ([`InvertNtt.lean`](InvertNtt.lean)) | `invert_ntt.invert_ntt_montgomery` | inverse NTT |
+| `libcrux_iot_ml_kem.Polynomial.NttMultiply.accumulating_ntt_multiply_fc` ([`Polynomial/NttMultiply.lean`](Polynomial/NttMultiply.lean)) | `vector.portable.ntt.accumulating_ntt_multiply` | pointwise NTT multiplication |
 
 ### Reduction, error, and message combination
 
@@ -134,12 +134,12 @@ The poly-level arithmetic that finishes each ML-KEM step.
 
 | Theorem | impl function | what it does |
 |---------|-----------|--------------|
-| `poly_barrett_reduce_fc`          | `polynomial.PolynomialRingElement.poly_barrett_reduce`               | Barrett-reduce all 256 lanes to canonical residues |
-| `poly_reducing_from_i32_array_fc` | `polynomial.PolynomialRingElement.reducing_from_i32_array` | Montgomery-reduce an `i32[256]` accumulator into a ring element |
-| `subtract_reduce_fc`              | `polynomial.PolynomialRingElement.subtract_reduce`              | subtract two ring elements, then Barrett-reduce (decryption tail, L7.4) |
-| `add_error_reduce_fc`             | `polynomial.PolynomialRingElement.add_error_reduce`             | add an error polynomial (impl's `1441`-Montgomery multiply), Barrett-reduce |
-| `add_standard_error_reduce_fc`    | `polynomial.PolynomialRingElement.add_standard_error_reduce`    | add a standard error polynomial (`R`-Montgomery multiply), Barrett-reduce (keygen tail) |
-| `add_message_error_reduce_fc`     | `polynomial.PolynomialRingElement.add_message_error_reduce`     | add error + message to the (`1441`-multiplied) result, Barrett-reduce (L7.3 tail) |
+| `libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett.poly_barrett_reduce_fc` ([`Polynomial/PolyOpsFcBarrett.lean`](Polynomial/PolyOpsFcBarrett.lean)) | `polynomial.PolynomialRingElement.poly_barrett_reduce`               | Barrett-reduce all 256 lanes to canonical residues |
+| `libcrux_iot_ml_kem.Polynomial.PolyOpsFc.poly_reducing_from_i32_array_fc` ([`Polynomial/PolyOpsFc.lean`](Polynomial/PolyOpsFc.lean)) | `polynomial.PolynomialRingElement.reducing_from_i32_array` | Montgomery-reduce an `i32[256]` accumulator into a ring element |
+| `libcrux_iot_ml_kem.Polynomial.PolyOpsFc.subtract_reduce_fc` ([`Polynomial/PolyOpsFc.lean`](Polynomial/PolyOpsFc.lean)) | `polynomial.PolynomialRingElement.subtract_reduce`              | subtract two ring elements, then Barrett-reduce (decryption tail, L7.4) |
+| `libcrux_iot_ml_kem.Polynomial.PolyOpsFc.add_error_reduce_fc` ([`Polynomial/PolyOpsFc.lean`](Polynomial/PolyOpsFc.lean)) | `polynomial.PolynomialRingElement.add_error_reduce`             | add an error polynomial (impl's `1441`-Montgomery multiply), Barrett-reduce |
+| `libcrux_iot_ml_kem.Polynomial.PolyOpsFc.add_standard_error_reduce_fc` ([`Polynomial/PolyOpsFc.lean`](Polynomial/PolyOpsFc.lean)) | `polynomial.PolynomialRingElement.add_standard_error_reduce`    | add a standard error polynomial (`R`-Montgomery multiply), Barrett-reduce (keygen tail) |
+| `libcrux_iot_ml_kem.Polynomial.PolyOpsFc.add_message_error_reduce_fc` ([`Polynomial/PolyOpsFc.lean`](Polynomial/PolyOpsFc.lean)) | `polynomial.PolynomialRingElement.add_message_error_reduce`     | add error + message to the (`1441`-multiplied) result, Barrett-reduce (L7.3 tail) |
 
 ## Assumptions (trust boundary)
 
@@ -156,21 +156,21 @@ Every theorem depends on Lean's three standard axioms: `propext`,
 
 | Theorem | Standard | Leaf axiom |
 |---------|----------|------------|
-| L7.1 `compute_As_plus_e_fc`     | ✓ | — (fully clean) |
-| L7.2 `compute_vector_u_fc`      | ✓ | **A1** `sample_matrix_entry_fc` |
-| L7.3 `compute_ring_element_v_fc`| ✓ | **A2** `deserialize_to_reduced_ring_element_fc` |
-| L7.4 `compute_message_fc`       | ✓ | — (fully clean) |
+| L7.1 `Matrix.ComputeAsPlusE.compute_As_plus_e_fc`        | ✓ | — (fully clean) |
+| L7.2 `Matrix.ComputeVectorU.FC.compute_vector_u_fc`      | ✓ | **A1** `Sampling.sample_matrix_entry_fc` |
+| L7.3 `Matrix.ComputeRingElementV.FC.compute_ring_element_v_fc` | ✓ | **A2** `Serialize.deserialize_to_reduced_ring_element_fc` |
+| L7.4 `Matrix.ComputeMessage.FC.compute_message_fc`       | ✓ | — (fully clean) |
 
 ### The two deferred-leaf axioms (A1 / A2)
 
-Stated in [`BitMlKem/L7/Axioms.lean`](BitMlKem/L7/Axioms.lean).
-
-- **A1 `sample_matrix_entry_fc`** — characterizes one on-the-fly matrix
+- **A1** `libcrux_iot_ml_kem.Sampling.sample_matrix_entry_fc` (stated in
+  [`Sampling.lean`](Sampling.lean)) — characterizes one on-the-fly matrix
   entry: running the impl's XOF + rejection-sampling chain on `(seed, i, j)`
   produces the `(i, j)` entry of `lift_matrix_from_seed seed K` (row-major),
   with every coefficient in `[0, 3328]`.
 
-- **A2 `deserialize_to_reduced_ring_element_fc`** — characterizes one
+- **A2** `libcrux_iot_ml_kem.Serialize.deserialize_to_reduced_ring_element_fc`
+  (stated in [`Serialize.lean`](Serialize.lean)) — characterizes one
   384-byte public-key chunk: running the impl's 16-iteration
   `deserialize_12 + cond_subtract_3329` loop on chunk `i` produces
   `(lift_t_as_ntt_from_public_key public_key K).val[i]!`, coefficients in
@@ -186,8 +186,8 @@ which is why we omitted its verification.
 The impl works over `PortableVector`-backed `i16`/`i32` coefficients in
 the (signed, possibly non-canonical) **Montgomery** domain; the hacspec
 works over `parameters.FieldElement` (a `u16` wrapping `ZMod 3329`). The
-lift family (in [`BitMlKem/FCTargets.lean`](BitMlKem/FCTargets.lean))
-maps impl values to canonical spec values.
+lift family (in [`Spec/Lift.lean`](Spec/Lift.lean), namespace
+`libcrux_iot_ml_kem.Spec.Lift`) maps impl values to canonical spec values.
 
 ### Hierarchy (L0 → L7)
 

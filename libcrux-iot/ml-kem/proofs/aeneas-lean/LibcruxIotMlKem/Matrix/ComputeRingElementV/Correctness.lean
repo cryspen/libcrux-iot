@@ -185,7 +185,7 @@ theorem add_message_error_scaleZ_eq
   rw [add_polynomials_scaleZ_eq result2 e2 h_r2_canon]
   simp only [Aeneas.Std.bind_tc_ok]
   -- Outer add: reduce via createi.
-  rw [L7_1d_FC.matrix_add_polynomials_eq_ok (Spec.add_error_reduce_pure result2 e2) msg]
+  rw [Stage4MatrixAddFC.matrix_add_polynomials_eq_ok (Spec.add_error_reduce_pure result2 e2) msg]
   set L : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
     ⟨(List.range 256).map (fun k =>
         libcrux_iot_ml_kem.Spec.Pure.FieldElement.add_pure

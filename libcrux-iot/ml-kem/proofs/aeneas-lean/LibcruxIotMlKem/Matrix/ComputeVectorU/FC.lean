@@ -12,7 +12,7 @@
   * a vector output (K rows, two accumulation loops: row 0 fills the cache;
     rows 1..K consume it);
   * a hacspec part-A reduction `compute_vector_u_hacspec_eq` relating the
-    hacspec do-block to the per-row `L7_2c_FC.row_spec`. Because the
+    hacspec do-block to the per-row `AllRowsFillFC.row_spec`. Because the
     Correctness `extractCol`/`mcol_*` helpers are `private`, the
     matrix-column reduction is re-derived locally here.
 
@@ -133,14 +133,14 @@ private theorem mcolLane_succ {K : Std.Usize}
 private theorem mcol_mult_eq (a1 a2 : Poly256L) :
     hacspec_ml_kem.ntt.multiply_ntts a1 a2 = .ok (Spec.multiply_ntts_pure a1 a2) := by
   unfold Spec.multiply_ntts_pure
-  rw [L6_3b_FC.multiply_ntts_eq_pure_array]
+  rw [HelpersFC.multiply_ntts_eq_pure_array]
 
 private theorem mcol_step_add_eq {K : Std.Usize}
     (col vec : Std.Array Poly256L K) (k : Nat) :
     hacspec_ml_kem.matrix.add_polynomials (mcolResult col vec k)
         (Spec.multiply_ntts_pure (col.val[k]!) (vec.val[k]!))
       = .ok (mcolResult col vec (k + 1)) := by
-  rw [L7_1d_FC.matrix_add_polynomials_eq_ok]
+  rw [Stage4MatrixAddFC.matrix_add_polynomials_eq_ok]
   apply congrArg Result.ok
   apply Subtype.ext
   show (List.range 256).map (fun n =>
@@ -1044,7 +1044,7 @@ theorem compute_vector_u_fc
   -- Destructure row0_inv once.
   obtain ⟨_h_ex, h_acc2_bnd_raw, h_cache_done, _h_cache_undone⟩ := by
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-      L7_2a_FC.row0_inv, ← List.getElem!_eq_getElem?_getD] using h_row0
+      Row0FillFC.row0_inv, ← List.getElem!_eq_getElem?_getD] using h_row0
   -- cache-post bridge for loop1: from row0_inv conjunct (3) + h_r_arr.
   have h_cache_post : ∀ c : Nat, c < K.val →
       accumulating_ntt_multiply_poly_cache_post (r_as_ntt.val[c]!) (cache1.val[c]!) := by
@@ -1154,8 +1154,8 @@ theorem compute_vector_u_fc
   have h_s1_len : s1.length = K.val := by
     rw [h_s1_def, Aeneas.Std.Slice.set_length]; exact h_rslice2_len
   -- row-0 row_spec: row_spec lm r_as_ntt error_1 0 = .ok (lift_poly row0poly).
-  have h_row_spec0 : L7_2c_FC.row_spec lm r_as_ntt error_1 0 = .ok (lift_poly row0poly) := by
-    unfold L7_2c_FC.row_spec
+  have h_row_spec0 : AllRowsFillFC.row_spec lm r_as_ntt error_1 0 = .ok (lift_poly row0poly) := by
+    unfold AllRowsFillFC.row_spec
     have hA : hacspec_ml_kem.matrix.multiply_vectors (lm.val[0]!) (lift_vec_slice r_as_ntt K)
         = .ok (scaleZ 2285 (lift_poly result1)) := by
       rw [hlm_def, h_result1_lift, h_acc_slice_def]
@@ -1176,7 +1176,7 @@ theorem compute_vector_u_fc
   dsimp only at h_loop1_eq h_rows
   -- Destructure rows_inv: done rows [1,K) + unchanged rows + length.
   obtain ⟨h_rows_done, h_rows_undone, h_result3_len⟩ := by
-    simpa [L7_2c_FC.rows_inv, Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
+    simpa [AllRowsFillFC.rows_inv, Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
       ← List.getElem!_eq_getElem?_getD] using h_rows
   -- result3[0] = s1[0] = row0poly (loop1 leaves row 0 since start = 1).
   have h_result3_at0 : result3.val[0]! = row0poly := by
@@ -1188,7 +1188,7 @@ theorem compute_vector_u_fc
   have hW_at : ∀ r : Nat, r < K.val → W.val[r]! = lift_poly result3.val[r]! := by
     intro r hr; rw [hW_def]; exact lift_vec_slice_lane result3 K r hr
   have h_row_spec_all : ∀ r : Nat, r < K.val →
-      L7_2c_FC.row_spec lm r_as_ntt error_1 r = .ok (W.val[r]!) := by
+      AllRowsFillFC.row_spec lm r_as_ntt error_1 r = .ok (W.val[r]!) := by
     intro r hr
     rw [hW_at r hr]
     by_cases h0 : r = 0
@@ -1207,7 +1207,7 @@ theorem compute_vector_u_fc
         = .ok (W.val[i]!) := by
     intro i hi
     have h := h_row_spec_all i hi
-    unfold L7_2c_FC.row_spec at h
+    unfold AllRowsFillFC.row_spec at h
     rw [lift_vec_slice_lane error_1 K i hi]
     exact h
   -- PART A: hacspec compute_vector_u lm (lift r) (lift e) = .ok W.

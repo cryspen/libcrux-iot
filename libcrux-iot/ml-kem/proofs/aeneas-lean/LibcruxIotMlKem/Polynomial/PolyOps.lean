@@ -83,7 +83,7 @@ Loop invariant after `k` iterations (`k.val ∈ [0, 16]`), state `acc`:
   - For `j ≥ k.val`, `acc.coefficients[j] = re.coefficients[j]` (so the
     L1.3 precondition `≤ 32767` is inherited from `h_pre`). -/
 
-namespace L6_1
+namespace BarrettReduce
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -117,7 +117,7 @@ def step_post
         ∧ (inv re iter'.start acc').holds
   | .done y => (inv re 16#usize y).holds
 
-end L6_1
+end BarrettReduce
 
 /-- Per-iteration step lemma: each body call transforms
     `acc.coefficients[k]` from a `≤ 32767` PortableVector (via h_pre +
@@ -127,7 +127,7 @@ private theorem poly_barrett_reduce_step_lemma
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 32767)
-    (acc : L6_1.Acc)
+    (acc : BarrettReduce.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
     (h_acc_done : ∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
         ((acc.coefficients.val[j]!).elements.val[ℓ]!).val.natAbs ≤ 3328)
@@ -137,7 +137,7 @@ private theorem poly_barrett_reduce_step_lemma
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce_loop.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       { start := k, «end» := 16#usize } acc
-    ⦃ ⇓ r => ⌜ L6_1.step_post re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ BarrettReduce.step_post re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -179,7 +179,7 @@ private theorem poly_barrett_reduce_step_lemma
     set a : Std.Array
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       acc.coefficients.set k t1 with ha_def
-    set acc' : L6_1.Acc := ({ coefficients := a } : L6_1.Acc) with hacc'_def
+    set acc' : BarrettReduce.Acc := ({ coefficients := a } : BarrettReduce.Acc) with hacc'_def
     -- Compose the whole body into one `.ok` equation.
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce_loop.body
@@ -217,15 +217,15 @@ private theorem poly_barrett_reduce_step_lemma
       rw [h_t1_eq]
       rfl
     apply triple_of_ok_l6 h_body
-    show L6_1.step_post re k
+    show BarrettReduce.step_post re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L6_1.step_post
+    unfold BarrettReduce.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     -- Now: invariant at (s, acc').
     apply pure_prop_holds_l6
-    -- Two conjuncts of L6_1.inv at (s, acc').
+    -- Two conjuncts of BarrettReduce.inv at (s, acc').
     refine ⟨?_, ?_⟩
     · -- All j < s.val are bounded by 3328.
       intro j hj ℓ hℓ
@@ -292,9 +292,9 @@ private theorem poly_barrett_reduce_step_lemma
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_l6 h_body
-    show L6_1.step_post re k (.done acc)
-    unfold L6_1.step_post
-    show (L6_1.inv re 16#usize acc).holds
+    show BarrettReduce.step_post re k (.done acc)
+    unfold BarrettReduce.step_post
+    show (BarrettReduce.inv re 16#usize acc).holds
     apply pure_prop_holds_l6
     refine ⟨?_, ?_⟩
     · intro j hj ℓ hℓ; rw [h16] at hj
@@ -333,10 +333,10 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           iter1 acc1)
-      (β := L6_1.Acc)
+      (β := BarrettReduce.Acc)
       re
       0#usize 16#usize
-      (L6_1.inv re)
+      (BarrettReduce.inv re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (pure_prop_holds_l6 ⟨
         fun j hj _ _ => absurd hj (Nat.not_lt_zero j),
@@ -357,11 +357,11 @@ theorem PolynomialRingElement_poly_barrett_reduce_spec
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L6_1.step_post re k (.cont (iter', acc')) := by
+    · have hP : BarrettReduce.step_post re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_1.step_post] using hP
-    · have hP : L6_1.step_post re k (.done y) := by
+      simpa [BarrettReduce.step_post] using hP
+    · have hP : BarrettReduce.step_post re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_1.step_post] using hP
+      simpa [BarrettReduce.step_post] using hP
 
 end libcrux_iot_ml_kem.Polynomial.PolyOps

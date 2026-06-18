@@ -44,7 +44,7 @@ open libcrux_iot_ml_kem.Spec
     where `Spec.chunk_barrett_reduce_pure` lifts `Spec.barrett_pure`
     pointwise across 16 lanes. -/
 
-namespace L6_1_FC
+namespace BarrettReduceFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -83,7 +83,7 @@ def step_post
         ∧ (inv self iter'.start acc').holds
   | .done y => (inv self 16#usize y).holds
 
-end L6_1_FC
+end BarrettReduceFC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for `poly_barrett_reduce`. Given a valid
@@ -97,14 +97,14 @@ theorem poly_barrett_reduce_step_lemma_fc
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_bnd : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
       ((self.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 32767)
-    (acc : L6_1_FC.Acc)
+    (acc : BarrettReduceFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L6_1_FC.inv self k acc).holds) :
+    (h_inv : (BarrettReduceFC.inv self k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce_loop.body
       (vectortraitsOperationsInst := portable_ops_inst)
       { start := k, «end» := 16#usize } acc
-    ⦃ ⇓ r => ⌜ L6_1_FC.step_post self k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ BarrettReduceFC.step_post self k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -141,7 +141,7 @@ theorem poly_barrett_reduce_step_lemma_fc
     -- (3) Compose acc' = `{ coefficients := acc.coefs.set k t1 }`.
     set a : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       acc.coefficients.set k t1 with ha_def
-    set acc' : L6_1_FC.Acc := { coefficients := a } with hacc'_def
+    set acc' : BarrettReduceFC.Acc := { coefficients := a } with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst)
@@ -176,12 +176,12 @@ theorem poly_barrett_reduce_step_lemma_fc
       rw [h_t1_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L6_1_FC.step_post self k
+    show BarrettReduceFC.step_post self k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L6_1_FC.step_post
+    unfold BarrettReduceFC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
-    show (L6_1_FC.inv self s acc').holds
+    show (BarrettReduceFC.inv self s acc').holds
     -- Invariant at (s, acc'): only chunk k changes (to t1).
     have h_inv_pure :
         (∀ j : Nat, j < s.val →
@@ -251,9 +251,9 @@ theorem poly_barrett_reduce_step_lemma_fc
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_fc h_body
-    show L6_1_FC.step_post self k (.done acc)
-    unfold L6_1_FC.step_post
-    show (L6_1_FC.inv self 16#usize acc).holds
+    show BarrettReduceFC.step_post self k (.done acc)
+    unfold BarrettReduceFC.step_post
+    show (BarrettReduceFC.inv self 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -280,7 +280,7 @@ set_option maxHeartbeats 16000000 in
 
     Proof sketch:
     1. Unfold `VECTORS_IN_RING_ELEMENT = .ok 16#usize`.
-    2. Apply `loop_range_spec_usize` with invariant `L6_1_FC.inv`.
+    2. Apply `loop_range_spec_usize` with invariant `BarrettReduceFC.inv`.
     3. Per-iter step lemma (above) closes the body via `barrett_reduce_fc`.
     4. Post-entailment: at `k=16`, each chunk satisfies the FC equation
        `lift_chunk r.coefs[k] = chunk_barrett_reduce_pure (lift_chunk self.coefs[k])`.
@@ -315,10 +315,10 @@ theorem poly_barrett_reduce_fc
       (fun (iter1, acc1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.poly_barrett_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) iter1 acc1)
-      (β := L6_1_FC.Acc)
+      (β := BarrettReduceFC.Acc)
       self
       0#usize 16#usize
-      (L6_1_FC.inv self)
+      (BarrettReduceFC.inv self)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -334,7 +334,7 @@ theorem poly_barrett_reduce_fc
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L6_1_FC.inv self 16#usize r).holds := by
+    have h_inv_holds : (BarrettReduceFC.inv self 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -344,7 +344,7 @@ theorem poly_barrett_reduce_fc
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
             r.coefficients.val[j]! = self.coefficients.val[j]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L6_1_FC.inv] using h_inv_holds
+             BarrettReduceFC.inv] using h_inv_holds
     obtain ⟨h_done, _h_undone⟩ := h_inv
     -- Build chunks_arr matching `chunk_barrett_reduce_pure (chunk_at (lift_poly self) k)`,
     -- then apply `flatten_chunks_eq_lift_poly_fc` to get `flatten_chunks chunks_arr = lift_poly r`.
@@ -438,12 +438,12 @@ theorem poly_barrett_reduce_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L6_1_FC.step_post self k (.cont (iter', acc')) := by
+    · have hP : BarrettReduceFC.step_post self k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_1_FC.step_post] using hP
-    · have hP : L6_1_FC.step_post self k (.done y) := by
+      simpa [BarrettReduceFC.step_post] using hP
+    · have hP : BarrettReduceFC.step_post self k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_1_FC.step_post] using hP
+      simpa [BarrettReduceFC.step_post] using hP
 
 
 end libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett

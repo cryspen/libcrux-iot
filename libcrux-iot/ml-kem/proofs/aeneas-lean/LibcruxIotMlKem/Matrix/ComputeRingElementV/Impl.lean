@@ -374,7 +374,7 @@ theorem loop_chunks_exact_pk_spec {β : Type}
       · rw [hcnt']; exact hsuf'
       · rw [hcnt']; exact hinv'
 
-/-! ## §L7.3-loop — chunks-exact USE-CACHE column loop (namespace `L7_3_FC`).
+/-! ## §L7.3-loop — chunks-exact USE-CACHE column loop (namespace `ChunkLoopFC`).
 
     The `matrix.compute_ring_element_v_loop` body, per enumerate count `i`:
     * classify_ref the chunk (identity cast),
@@ -383,18 +383,18 @@ theorem loop_chunks_exact_pk_spec {β : Type}
     * read `r_as_ntt[i]`, `cache[i]` (read-only),
     * `accumulating_ntt_multiply_use_cache` → acc += t̂[i]·r[i].
 
-    Structurally `L7_2b_FC.row_i_inv` (USE-CACHE, 2-conjunct existential-mp) with
+    Structurally `RowIFillFC.row_i_inv` (USE-CACHE, 2-conjunct existential-mp) with
     the matrix factor pinned to `(lift_t_as_ntt_from_public_key public_key K)`
     (the deserialize axiom) instead of `(lift_matrix_from_seed seed K).val[i]`.
     The loop carries `(t_as_ntt_entry, acc)`. -/
 
-namespace L7_3_FC
+namespace ChunkLoopFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Sampling libcrux_iot_ml_kem.Serialize libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
 
-abbrev Acc := L6_3_FC.Acc
-abbrev Poly := L6_3_FC.Poly
+abbrev Acc := UseCacheFC.Acc
+abbrev Poly := UseCacheFC.Poly
 
 /-- 2-conjunct invariant for the chunks-exact USE-CACHE column loop, in the
     RESOLVED all-mont/existential form. `t̂rows` is the canonical deserialized
@@ -435,10 +435,10 @@ def loop_inv {K : Std.Usize}
     ∧ (∀ n : Nat, n < 256 →
         (p.2.val[n]!).val.natAbs ≤ (acc_init.val[n]!).val.natAbs + k * 2^25))
 
-end L7_3_FC
+end ChunkLoopFC
 
 -- Memory hygiene (rule 1). Mirrors `L7_2b_irreducible`. We do NOT mark
--- `L7_3_FC.loop_inv` irreducible (preserve `simpa`-based destructure).
+-- `ChunkLoopFC.loop_inv` irreducible (preserve `simpa`-based destructure).
 section L7_3_irreducible
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 open libcrux_iot_ml_kem.InvertNtt libcrux_iot_ml_kem.Matrix.Common libcrux_iot_ml_kem.Matrix.ComputeAsPlusE libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.NttMultiply libcrux_iot_ml_kem.Polynomial.PolyOpsFc libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcrux_iot_ml_kem.Sampling libcrux_iot_ml_kem.Serialize libcrux_iot_ml_kem.Spec.Lift libcrux_iot_ml_kem.Vector.Portable.Arithmetic.Element libcrux_iot_ml_kem.Vector.Portable.Arithmetic.PerElement libcrux_iot_ml_kem.Vector.Portable.Ntt
@@ -468,7 +468,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
     (r_arr : Std.Array
                   (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
                     libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
-    (acc_init : L7_3_FC.Acc)
+    (acc_init : ChunkLoopFC.Acc)
     (h_r_len : r_as_ntt.length = K.val)
     (h_cache_len : cache.length = K.val)
     (h_r_arr : ∀ c : Nat, c < K.val → r_arr.val[c]! = r_as_ntt.val[c]!)
@@ -478,14 +478,14 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
         (acc_init.val[n.val]!).val.natAbs + K.val * 2^25 ≤ 2^30)
     (h_cache_char : ∀ c : Nat, c < K.val →
         accumulating_ntt_multiply_poly_cache_post (r_as_ntt.val[c]!) (cache.val[c]!))
-    (t_as_ntt_entry : L7_3_FC.Poly)
-    (acc : L7_3_FC.Acc)
+    (t_as_ntt_entry : ChunkLoopFC.Poly)
+    (acc : ChunkLoopFC.Acc)
     (k : Nat) (h_le : k ≤ K.val)
     (rest : Slice Std.U8) (cnt : Std.Usize)
     (h_cnt : cnt.val = k)
     (h_rest_len : rest.length = (K.val - k) * 384)
     (h_suf : ∀ ℓ : Nat, rest.val[ℓ]! = public_key.val[k * 384 + ℓ]!)
-    (h_inv : (L7_3_FC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr acc_init
+    (h_inv : (ChunkLoopFC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr acc_init
                 k (t_as_ntt_entry, acc)).holds) :
     ⦃ ⌜ True ⌝ ⦄
     matrix.compute_ring_element_v_loop.body
@@ -497,9 +497,9 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
               ∧ iter'.iter.elements.length = (K.val - (k + 1)) * 384
               ∧ (∀ ℓ : Nat, iter'.iter.elements.val[ℓ]!
                     = public_key.val[(k + 1) * 384 + ℓ]!)
-              ∧ (L7_3_FC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr acc_init
+              ∧ (ChunkLoopFC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr acc_init
                     (k + 1) acc').holds ⌝
-        | .done y => ⌜ (L7_3_FC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr
+        | .done y => ⌜ (ChunkLoopFC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr
                           acc_init K.val y).holds ⌝ ⦄ := by
   set trows : Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K :=
     lift_t_as_ntt_from_public_key public_key K with htrows_def
@@ -607,8 +607,8 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
               .ok (ControlFlow.cont
                 (({ iter := { cs := 384#usize, elements := drop }, count := cnt' } : EnumCE),
                   t_as_ntt_entry1, accumulator1)))
-            : Result (ControlFlow (EnumCE × (L7_3_FC.Poly × L7_3_FC.Acc))
-                        (L7_3_FC.Poly × L7_3_FC.Acc))) = _
+            : Result (ControlFlow (EnumCE × (ChunkLoopFC.Poly × ChunkLoopFC.Acc))
+                        (ChunkLoopFC.Poly × ChunkLoopFC.Acc))) = _
       rw [h_te_eq]
       simp only [Aeneas.Std.bind_tc_ok]
       rw [h_idx_r]
@@ -622,7 +622,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
     show k < K.val ∧ (384#usize : Std.Usize) = 384#usize ∧ cnt'.val = k + 1
       ∧ drop.length = (K.val - (k + 1)) * 384
       ∧ (∀ ℓ : Nat, drop.val[ℓ]! = public_key.val[(k + 1) * 384 + ℓ]!)
-      ∧ (L7_3_FC.loop_inv trows r_arr acc_init (k + 1) (te1, acc1)).holds
+      ∧ (ChunkLoopFC.loop_inv trows r_arr acc_init (k + 1) (te1, acc1)).holds
     refine ⟨h_lt, rfl, by rw [h_cnt'_val, h_cnt], ?_, ?_, ?_⟩
     · -- drop length.
       have h384 : (384#usize : Std.Usize).val = 384 := rfl
@@ -779,7 +779,7 @@ private theorem compute_ring_element_v_loop_step_lemma_fc
       rw [h_next_eq]
       rfl
     apply triple_of_ok_chunks h_body
-    show (L7_3_FC.loop_inv trows r_arr acc_init K.val (t_as_ntt_entry, acc)).holds
+    show (ChunkLoopFC.loop_inv trows r_arr acc_init K.val (t_as_ntt_entry, acc)).holds
     have h_inv_pure :
         (∃ mp' : Std.Array (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
                               libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K,
@@ -833,7 +833,7 @@ set_option maxHeartbeats 4000000 in
     step lemma as `h_step`. -/
 theorem compute_ring_element_v_loop_fc (K : Std.Usize) (hK : K.val ≤ 4)
     (public_key : Slice Std.U8) (h_pk_len : public_key.length = K.val * 384)
-    (t_as_ntt_entry : L7_3_FC.Poly)
+    (t_as_ntt_entry : ChunkLoopFC.Poly)
     (r_as_ntt cache : Slice (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
                               libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector))
     (r_arr : Std.Array (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -852,7 +852,7 @@ theorem compute_ring_element_v_loop_fc (K : Std.Usize) (hK : K.val ≤ 4)
     matrix.compute_ring_element_v_loop
       (vectortraitsOperationsInst := portable_ops_inst) iter0
       t_as_ntt_entry r_as_ntt cache accumulator
-    ⦃ ⇓ p => ⌜ (L7_3_FC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr accumulator
+    ⦃ ⇓ p => ⌜ (ChunkLoopFC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr accumulator
                   K.val p).holds ⌝ ⦄ := by
   set trows : Std.Array (Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) K :=
     lift_t_as_ntt_from_public_key public_key K with htrows_def
@@ -872,15 +872,15 @@ theorem compute_ring_element_v_loop_fc (K : Std.Usize) (hK : K.val ≤ 4)
       (fun (iter1, p) =>
         matrix.compute_ring_element_v_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) r_as_ntt cache iter1 p.1 p.2)
-      (β := L7_3_FC.Poly × L7_3_FC.Acc)
+      (β := ChunkLoopFC.Poly × ChunkLoopFC.Acc)
       (t_as_ntt_entry, accumulator)
       public_key 384#usize K.val
-      (fun k p => L7_3_FC.loop_inv trows r_arr accumulator k p)
+      (fun k p => ChunkLoopFC.loop_inv trows r_arr accumulator k p)
       (by decide : 0 < (384#usize : Std.Usize).val)
       (by rw [h_pk_len]; rfl)
       (by
         -- Base case at k = 0.
-        show (L7_3_FC.loop_inv trows r_arr accumulator 0 (t_as_ntt_entry, accumulator)).holds
+        show (ChunkLoopFC.loop_inv trows r_arr accumulator 0 (t_as_ntt_entry, accumulator)).holds
         show (pure _ : Result Prop).holds
         simp only [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp]
         intro _
@@ -894,9 +894,9 @@ theorem compute_ring_element_v_loop_fc (K : Std.Usize) (hK : K.val ≤ 4)
   · -- Post entailment at K.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_holds : (L7_3_FC.loop_inv trows r_arr accumulator K.val r).holds := by
+    have h_holds : (ChunkLoopFC.loop_inv trows r_arr accumulator K.val r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
-    show (L7_3_FC.loop_inv trows r_arr accumulator K.val r).holds
+    show (ChunkLoopFC.loop_inv trows r_arr accumulator K.val r).holds
     exact h_holds
   · -- Step entailment: apply the step lemma.
     intro p k rest cnt hk_le hcnt hrest_len hsuf hinv
@@ -913,7 +913,7 @@ theorem compute_ring_element_v_loop_fc (K : Std.Usize) (hK : K.val ≤ 4)
               ∧ iter'.iter.elements.length = (K.val - (k + 1)) * 384
               ∧ (∀ ℓ : Nat, iter'.iter.elements.val[ℓ]!
                     = public_key.val[(k + 1) * 384 + ℓ]!)
-              ∧ (L7_3_FC.loop_inv trows r_arr accumulator (k + 1) acc').holds := by
+              ∧ (ChunkLoopFC.loop_inv trows r_arr accumulator (k + 1) acc').holds := by
         have := hh
         simp only [Std.Do.SPred.down_pure] at this
         exact this
@@ -922,7 +922,7 @@ theorem compute_ring_element_v_loop_fc (K : Std.Usize) (hK : K.val ≤ 4)
       refine ⟨h_klt, h_cs, h_cnt', ?_, ?_, h_inv'⟩
       · rw [h384]; exact h_len'
       · intro ℓ; rw [h384]; exact h_suf' ℓ
-    · have h_done : (L7_3_FC.loop_inv trows r_arr accumulator K.val y).holds := by
+    · have h_done : (ChunkLoopFC.loop_inv trows r_arr accumulator K.val y).holds := by
         have := hh
         simp only [Std.Do.SPred.down_pure] at this
         exact this
@@ -997,7 +997,7 @@ set_option maxHeartbeats 1000000 in
     by `R = 2285`. A thin wrapper REUSING L7.4 `compute_message_acc_bridge`: the
     existential witness `mp` of `loop_inv` supplies the t-as-ntt array, `r_arr`
     the r-as-ntt array, and `loop_inv`'s two conjuncts are exactly
-    `L7_4_FC.loop_inv mp r_arr`'s two conjuncts. The two vector args are
+    `S1LoopFC.loop_inv mp r_arr`'s two conjuncts. The two vector args are
     rewritten via `lift_vec_mp_eq` / `lift_vec_r_arr_eq`. Mirrors
     `compute_vector_u_rowi_acc_bridge`. -/
 theorem compute_ring_element_v_acc_bridge {K : Std.Usize} (hK : K.val ≤ 4)
@@ -1011,8 +1011,8 @@ theorem compute_ring_element_v_acc_bridge {K : Std.Usize} (hK : K.val ≤ 4)
     (h_r_arr : ∀ c : Nat, c < K.val → r_arr.val[c]! = r_as_ntt.val[c]!)
     (h_r_bnd : ∀ c : Nat, c < K.val → ∀ a : Fin 16, ∀ b : Fin 16,
         ((r_as_ntt.val[c]!.coefficients.val[a.val]!).elements.val[b.val]!).val.natAbs ≤ 3328)
-    (t_ent : L7_3_FC.Poly)
-    (h_char : (L7_3_FC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr acc_init
+    (t_ent : ChunkLoopFC.Poly)
+    (h_char : (ChunkLoopFC.loop_inv (lift_t_as_ntt_from_public_key public_key K) r_arr acc_init
                 K.val (t_ent, acc2)).holds) :
     hacspec_ml_kem.matrix.multiply_vectors
         (lift_t_as_ntt_from_public_key public_key K) (lift_vec_slice r_as_ntt K)
@@ -1024,8 +1024,8 @@ theorem compute_ring_element_v_acc_bridge {K : Std.Usize} (hK : K.val ≤ 4)
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_char
   dsimp only at h_inv_acc h_inv_bnd
   -- `h_inv_acc` (mont foldl) and `h_inv_bnd` (bound) are exactly
-  -- `L7_4_FC.loop_inv mp r_arr acc_init K acc2`'s two conjuncts.
-  have h_char4 : (L7_4_FC.loop_inv mp r_arr acc_init K acc2).holds := by
+  -- `S1LoopFC.loop_inv mp r_arr acc_init K acc2`'s two conjuncts.
+  have h_char4 : (S1LoopFC.loop_inv mp r_arr acc_init K acc2).holds := by
     show (pure
         ((∀ j : Nat, j < 16 → ∀ ℓ : Nat, ℓ < 16 →
             Spec.mont_reduce_pure (lift_fe_int (acc2.val[16 * j + ℓ]!).val)

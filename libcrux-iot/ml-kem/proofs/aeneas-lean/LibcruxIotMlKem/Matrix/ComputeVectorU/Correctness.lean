@@ -189,7 +189,7 @@ theorem add_polynomials_scaleZ_eq
       = .ok (Spec.add_error_reduce_pure b e) := by
   have hc : ∀ k : Nat, k < 256 → Canonical ((scaleZ 512 b).val[k]!) :=
     fun k hk => canonArr_scaleZ'' 512 b k hk
-  rw [L7_1d_FC.matrix_add_polynomials_eq_ok (scaleZ 512 b) e]
+  rw [Stage4MatrixAddFC.matrix_add_polynomials_eq_ok (scaleZ 512 b) e]
   -- The reduced LHS array (set L); show it equals `add_error_reduce_pure b e`.
   set L : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
     ⟨(List.range 256).map (fun k =>
@@ -334,7 +334,7 @@ private theorem mcol_step_add_eq {K : Std.Usize}
     hacspec_ml_kem.matrix.add_polynomials (mcol_result_at_step col vec k)
         (Spec.multiply_ntts_pure (col.val[k]!) (vec.val[k]!))
       = .ok (mcol_result_at_step col vec (k + 1)) := by
-  rw [L7_1d_FC.matrix_add_polynomials_eq_ok]
+  rw [Stage4MatrixAddFC.matrix_add_polynomials_eq_ok]
   apply congrArg Result.ok
   apply Subtype.ext
   show (List.range 256).map (fun n =>
@@ -356,7 +356,7 @@ private theorem mcol_step_add_eq {K : Std.Usize}
 private theorem mcol_mult_eq (a1 a2 : Poly256) :
     hacspec_ml_kem.ntt.multiply_ntts a1 a2 = .ok (Spec.multiply_ntts_pure a1 a2) := by
   unfold Spec.multiply_ntts_pure
-  rw [L6_3b_FC.multiply_ntts_eq_pure_array]
+  rw [HelpersFC.multiply_ntts_eq_pure_array]
 
 set_option maxHeartbeats 16000000 in
 set_option maxRecDepth 1000 in

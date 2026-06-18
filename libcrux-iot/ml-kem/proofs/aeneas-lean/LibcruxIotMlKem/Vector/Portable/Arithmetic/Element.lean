@@ -517,7 +517,7 @@ theorem negate_spec
     body-reduction-to-Result-equation, step lemma) with the
     conditional branching inlined. -/
 
-namespace L1_5
+namespace CondSubtract3329
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -841,7 +841,7 @@ private theorem cond_step
       apply h_acc_undone j _ hj_lt
       rw [hk_eq]; rw [h_16] at hj_ge; exact hj_ge
 
-end L1_5
+end CondSubtract3329
 
 @[spec]
 theorem cond_subtract_3329_spec
@@ -866,9 +866,9 @@ theorem cond_subtract_3329_spec
         libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329_loop.body
           iter1 vec1)
       vec 0#usize 16#usize
-      (L1_5.cond_inv vec)
+      (CondSubtract3329.cond_inv vec)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
-      (L1_5.pure_prop_holds_l1 ⟨
+      (CondSubtract3329.pure_prop_holds_l1 ⟨
         fun j hj => by
           have h0 : (0#usize : Std.Usize).val = 0 := rfl
           rw [h0] at hj; exact absurd hj (Nat.not_lt_zero j),
@@ -876,7 +876,7 @@ theorem cond_subtract_3329_spec
       ?_)
   · rw [PostCond.entails_noThrow]
     intro r h
-    obtain ⟨h_done, _h_undone⟩ := L1_5.of_pure_prop_holds_l1 h
+    obtain ⟨h_done, _h_undone⟩ := CondSubtract3329.of_pure_prop_holds_l1 h
     intro j hj
     -- Per-element: derive 0 ≤ r[j] < 3329 and r[j] % 3329 = vec[j] % 3329.
     obtain ⟨h_vec_ge, h_vec_lt⟩ := h_bounds j hj
@@ -929,17 +929,17 @@ theorem cond_subtract_3329_spec
       · rw [h_eq]; exact h_lt
       · rw [h_eq]
   · intro acc k h_ge h_le hinv
-    have h_step := L1_5.cond_step vec acc k h_le hinv
+    have h_step := CondSubtract3329.cond_step vec acc k h_le hinv
     apply Std.Do.Triple.of_entails_right _ h_step
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L1_5.cond_step_post vec k (.cont (iter', acc')) := by
+    · have hP : CondSubtract3329.cond_step_post vec k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L1_5.cond_step_post] using hP
-    · have hP : L1_5.cond_step_post vec k (.done y) := by
+      simpa [CondSubtract3329.cond_step_post] using hP
+    · have hP : CondSubtract3329.cond_step_post vec k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L1_5.cond_step_post] using hP
+      simpa [CondSubtract3329.cond_step_post] using hP
 
 /-! ## L1.7 — `multiply_by_constant_spec`
 
@@ -2249,13 +2249,13 @@ theorem montgomery_multiply_by_constant_fc
         fits I16, so `r[i].val = vec[i].val - 3329 ≡ vec[i].val (mod 3329)`.
       - `vec[i] < 3329` branch: `r[i] = vec[i]`, trivially mod-3329 equivalent.
 
-    Below we reproduce a stripped-down copy of the L1_5 loop machinery
+    Below we reproduce a stripped-down copy of the CondSubtract3329 loop machinery
     (private to FCTargets) yielding just the per-element disjunction. The
-    full proof closely mirrors `Equivalence.L1_5.cond_step`; comments are
+    full proof closely mirrors `Equivalence.CondSubtract3329.cond_step`; comments are
     abbreviated since the structure is verbatim.
 -/
 
-namespace L1_5_FC
+namespace CondSubtract3329FC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -2277,7 +2277,7 @@ theorem pure_prop_holds_l1 {P : Prop} (h : P) : (pure P : Result Prop).holds := 
   intro _; exact h
 
 /-- Per-element invariant for `cond_subtract_3329` (FCTargets-local copy
-    of `Equivalence.L1_5.cond_inv`; precondition-free). -/
+    of `Equivalence.CondSubtract3329.cond_inv`; precondition-free). -/
 def cond_inv
     (input : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) :
     Std.Usize →
@@ -2564,7 +2564,7 @@ theorem cond_step
       apply h_acc_undone j _ hj_lt
       rw [hk_eq]; rw [h_16] at hj_ge; exact hj_ge
 
-end L1_5_FC
+end CondSubtract3329FC
 
 /-- L1.5 — `cond_subtract_3329` on a chunk.
     NO HACSPEC EQUIVALENT — the impl conditionally subtracts q to
@@ -2572,7 +2572,7 @@ end L1_5_FC
     spec target we land against is the identity at the FE-array level.
 
     No precondition required: the mod-3329 equivalence holds in BOTH
-    branches of the conditional unconditionally (see `L1_5_FC` namespace
+    branches of the conditional unconditionally (see `CondSubtract3329FC` namespace
     above for the precondition-free invariant). -/
 @[spec high]
 theorem cond_subtract_3329_fc
@@ -2602,9 +2602,9 @@ theorem cond_subtract_3329_fc
           libcrux_iot_ml_kem.vector.portable.arithmetic.cond_subtract_3329_loop.body
             iter1 vec1)
         vec 0#usize 16#usize
-        (L1_5_FC.cond_inv vec)
+        (CondSubtract3329FC.cond_inv vec)
         (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
-        (L1_5_FC.pure_prop_holds_l1 ⟨
+        (CondSubtract3329FC.pure_prop_holds_l1 ⟨
           fun j hj => by
             have h0 : (0#usize : Std.Usize).val = 0 := rfl
             rw [h0] at hj; exact absurd hj (Nat.not_lt_zero j),
@@ -2612,22 +2612,22 @@ theorem cond_subtract_3329_fc
         ?_)
     · rw [PostCond.entails_noThrow]
       intro r h
-      obtain ⟨h_done, _h_undone⟩ := L1_5_FC.of_pure_prop_holds_l1 h
+      obtain ⟨h_done, _h_undone⟩ := CondSubtract3329FC.of_pure_prop_holds_l1 h
       intro j hj
       exact h_done j (by rw [show (16#usize : Std.Usize).val = 16 from rfl]; exact hj)
     · -- Step lemma.
       intro acc k h_ge h_le hinv
-      have h_step := L1_5_FC.cond_step vec acc k h_le hinv
+      have h_step := CondSubtract3329FC.cond_step vec acc k h_le hinv
       apply Std.Do.Triple.of_entails_right _ h_step
       rw [PostCond.entails_noThrow]
       intro r hh
       rcases r with ⟨iter', acc'⟩ | y
-      · have hP : L1_5_FC.cond_step_post vec k (.cont (iter', acc')) := by
+      · have hP : CondSubtract3329FC.cond_step_post vec k (.cont (iter', acc')) := by
           simpa [Std.Do.SPred.down_pure] using hh
-        simpa [L1_5_FC.cond_step_post] using hP
-      · have hP : L1_5_FC.cond_step_post vec k (.done y) := by
+        simpa [CondSubtract3329FC.cond_step_post] using hP
+      · have hP : CondSubtract3329FC.cond_step_post vec k (.done y) := by
           simpa [Std.Do.SPred.down_pure] using hh
-        simpa [L1_5_FC.cond_step_post] using hP
+        simpa [CondSubtract3329FC.cond_step_post] using hP
   -- 2. Apply h_disj and convert per-lane disjunction to lift_fe equality.
   obtain ⟨r0, h_eq, h_per⟩ := triple_exists_ok_fc h_disj
   apply triple_of_ok_fc (v := r0) h_eq

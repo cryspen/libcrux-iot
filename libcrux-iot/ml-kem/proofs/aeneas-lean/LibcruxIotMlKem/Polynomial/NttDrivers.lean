@@ -147,7 +147,7 @@ Loop invariant after `k` iterations (`k.val ∈ [0, 16]`), state
   - For `j ≥ k.val`, `cur_re.coefficients[j] = re.coefficients[j]`
     (so per `h_pre`, all 16 elements are bounded by `7 * 3328`). -/
 
-namespace L3_1
+namespace Layer1
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -183,7 +183,7 @@ def step_post
         ∧ (inv re iter'.start acc').holds
   | .done y => (inv re 16#usize y).holds
 
-end L3_1
+end Layer1
 
 /-- Per-iteration step lemma: each body call advances `zeta_i` by 4 and
     transforms `re.coefficients[k]` from a `≤ 7·3328` PortableVector to
@@ -193,7 +193,7 @@ private theorem ntt_at_layer_1_step_lemma
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 7 * 3328)
-    (acc : L3_1.Acc)
+    (acc : Layer1.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
     (h_zeta_acc : acc.1.val = 63 + 4 * k.val)
     (h_acc_done : ∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
@@ -204,7 +204,7 @@ private theorem ntt_at_layer_1_step_lemma
     libcrux_iot_ml_kem.ntt.ntt_at_layer_1_loop.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_1.step_post re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer1.step_post re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -295,7 +295,7 @@ private theorem ntt_at_layer_1_step_lemma
     set a : Std.Array
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       acc.2.coefficients.set k t1 with ha_def
-    set acc' : L3_1.Acc := (zi7, { coefficients := a }) with hacc'_def
+    set acc' : Layer1.Acc := (zi7, { coefficients := a }) with hacc'_def
     -- Compose the whole body into one `.ok` equation.
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_1_loop.body
@@ -339,15 +339,15 @@ private theorem ntt_at_layer_1_step_lemma
       rw [h_t1_eq]
       rfl
     apply triple_of_ok_l3 h_body
-    show L3_1.step_post re k
+    show Layer1.step_post re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L3_1.step_post
+    unfold Layer1.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     -- Now: invariant at (s, acc').
     apply pure_prop_holds_l3
-    -- Three conjuncts of L3_1.inv at (s, acc').
+    -- Three conjuncts of Layer1.inv at (s, acc').
     refine ⟨?_, ?_, ?_⟩
     · -- acc'.1.val = zi7.val = 63 + 4 * s.val.
       show zi7.val = 63 + 4 * s.val
@@ -420,9 +420,9 @@ private theorem ntt_at_layer_1_step_lemma
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_l3 h_body
-    show L3_1.step_post re k (.done acc)
-    unfold L3_1.step_post
-    show (L3_1.inv re 16#usize acc).holds
+    show Layer1.step_post re k (.done acc)
+    unfold Layer1.step_post
+    show (Layer1.inv re 16#usize acc).holds
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
     · rw [hk_eq] at h_zeta_acc; rw [show (16#usize : Std.Usize).val = 16 from rfl]
@@ -458,10 +458,10 @@ theorem ntt_at_layer_1_spec
         libcrux_iot_ml_kem.ntt.ntt_at_layer_1_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           iter1 acc1.1 acc1.2)
-      (β := L3_1.Acc)
+      (β := Layer1.Acc)
       (zeta_i, re)
       0#usize 16#usize
-      (L3_1.inv re)
+      (Layer1.inv re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (pure_prop_holds_l3 ⟨by rw [h_zeta]; rfl,
         fun j hj _ _ => absurd hj (Nat.not_lt_zero j),
@@ -485,12 +485,12 @@ theorem ntt_at_layer_1_spec
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_1.step_post re k (.cont (iter', acc')) := by
+    · have hP : Layer1.step_post re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_1.step_post] using hP
-    · have hP : L3_1.step_post re k (.done y) := by
+      simpa [Layer1.step_post] using hP
+    · have hP : Layer1.step_post re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_1.step_post] using hP
+      simpa [Layer1.step_post] using hP
 
 /-! ## L3.1.B — `ntt_at_layer_1_spec_B`
 
@@ -504,7 +504,7 @@ precondition `bnd ≤ 8 * 3328` matches the upstream
 The existing `ntt_at_layer_1_spec` is the `bnd = 7 * 3328`
 instantiation and is left untouched. -/
 
-namespace L3_1_B
+namespace Layer1Bounded
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -541,7 +541,7 @@ def step_post_B
         ∧ (inv_B bnd re iter'.start acc').holds
   | .done y => (inv_B bnd re 16#usize y).holds
 
-end L3_1_B
+end Layer1Bounded
 
 /-- Per-iteration step lemma (Nat-bnd parameterised). Mirrors
     `ntt_at_layer_1_step_lemma` but threads `bnd` and dispatches via
@@ -552,7 +552,7 @@ private theorem ntt_at_layer_1_step_lemma_B
     (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd)
-    (acc : L3_1_B.Acc)
+    (acc : Layer1Bounded.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
     (h_zeta_acc : acc.1.val = 63 + 4 * k.val)
     (h_acc_done : ∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
@@ -563,7 +563,7 @@ private theorem ntt_at_layer_1_step_lemma_B
     libcrux_iot_ml_kem.ntt.ntt_at_layer_1_loop.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_1_B.step_post_B bnd re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer1Bounded.step_post_B bnd re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -647,7 +647,7 @@ private theorem ntt_at_layer_1_step_lemma_B
     set a : Std.Array
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       acc.2.coefficients.set k t1 with ha_def
-    set acc' : L3_1_B.Acc := (zi7, { coefficients := a }) with hacc'_def
+    set acc' : Layer1Bounded.Acc := (zi7, { coefficients := a }) with hacc'_def
     -- Compose the whole body into one `.ok` equation.
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_1_loop.body
@@ -683,11 +683,11 @@ private theorem ntt_at_layer_1_step_lemma_B
       rw [h_t1_eq]
       rfl
     apply triple_of_ok_l3 h_body
-    show L3_1_B.step_post_B bnd re k
+    show Layer1Bounded.step_post_B bnd re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L3_1_B.step_post_B
+    unfold Layer1Bounded.step_post_B
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
@@ -756,9 +756,9 @@ private theorem ntt_at_layer_1_step_lemma_B
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_l3 h_body
-    show L3_1_B.step_post_B bnd re k (.done acc)
-    unfold L3_1_B.step_post_B
-    show (L3_1_B.inv_B bnd re 16#usize acc).holds
+    show Layer1Bounded.step_post_B bnd re k (.done acc)
+    unfold Layer1Bounded.step_post_B
+    show (Layer1Bounded.inv_B bnd re 16#usize acc).holds
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
     · rw [hk_eq] at h_zeta_acc; rw [show (16#usize : Std.Usize).val = 16 from rfl]
@@ -794,10 +794,10 @@ theorem ntt_at_layer_1_spec_B
         libcrux_iot_ml_kem.ntt.ntt_at_layer_1_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           iter1 acc1.1 acc1.2)
-      (β := L3_1_B.Acc)
+      (β := Layer1Bounded.Acc)
       (zeta_i, re)
       0#usize 16#usize
-      (L3_1_B.inv_B bnd re)
+      (Layer1Bounded.inv_B bnd re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (pure_prop_holds_l3 ⟨by rw [h_zeta]; rfl,
         fun j hj _ _ => absurd hj (Nat.not_lt_zero j),
@@ -819,12 +819,12 @@ theorem ntt_at_layer_1_spec_B
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_1_B.step_post_B bnd re k (.cont (iter', acc')) := by
+    · have hP : Layer1Bounded.step_post_B bnd re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_1_B.step_post_B] using hP
-    · have hP : L3_1_B.step_post_B bnd re k (.done y) := by
+      simpa [Layer1Bounded.step_post_B] using hP
+    · have hP : Layer1Bounded.step_post_B bnd re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_1_B.step_post_B] using hP
+      simpa [Layer1Bounded.step_post_B] using hP
 
 /-! ## L3.2 — `ntt_at_layer_2_spec`
 
@@ -835,7 +835,7 @@ dispatches `OpsInst.ntt_layer_2_step`, and writes back. `zeta_i.val`
 advances by 2 per iter (state stores `zeta_i1 + 1 = zeta_i + 2`); the
 bound per coefficient goes `6·3328 → 7·3328`. -/
 
-namespace L3_2
+namespace Layer2
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -867,14 +867,14 @@ def step_post
         ∧ (inv re iter'.start acc').holds
   | .done y => (inv re 16#usize y).holds
 
-end L3_2
+end Layer2
 
 private theorem ntt_at_layer_2_step_lemma
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 6 * 3328)
-    (acc : L3_2.Acc)
+    (acc : Layer2.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
     (h_zeta_acc : acc.1.val = 31 + 2 * k.val)
     (h_acc_done : ∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
@@ -885,7 +885,7 @@ private theorem ntt_at_layer_2_step_lemma
     libcrux_iot_ml_kem.ntt.ntt_at_layer_2_loop.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_2.step_post re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer2.step_post re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -948,7 +948,7 @@ private theorem ntt_at_layer_2_step_lemma
     set a : Std.Array
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       acc.2.coefficients.set k t1 with ha_def
-    set acc' : L3_2.Acc := (zi3, { coefficients := a }) with hacc'_def
+    set acc' : Layer2.Acc := (zi3, { coefficients := a }) with hacc'_def
     -- Compose the whole body into one `.ok` equation.
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_2_loop.body
@@ -983,11 +983,11 @@ private theorem ntt_at_layer_2_step_lemma
       rw [h_t1_eq]
       rfl
     apply triple_of_ok_l3 h_body
-    show L3_2.step_post re k
+    show Layer2.step_post re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L3_2.step_post
+    unfold Layer2.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
@@ -1057,9 +1057,9 @@ private theorem ntt_at_layer_2_step_lemma
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_l3 h_body
-    show L3_2.step_post re k (.done acc)
-    unfold L3_2.step_post
-    show (L3_2.inv re 16#usize acc).holds
+    show Layer2.step_post re k (.done acc)
+    unfold Layer2.step_post
+    show (Layer2.inv re 16#usize acc).holds
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
     · rw [hk_eq] at h_zeta_acc; rw [show (16#usize : Std.Usize).val = 16 from rfl]
@@ -1094,10 +1094,10 @@ theorem ntt_at_layer_2_spec
         libcrux_iot_ml_kem.ntt.ntt_at_layer_2_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           iter1 acc1.1 acc1.2)
-      (β := L3_2.Acc)
+      (β := Layer2.Acc)
       (zeta_i, re)
       0#usize 16#usize
-      (L3_2.inv re)
+      (Layer2.inv re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (pure_prop_holds_l3 ⟨by rw [h_zeta]; rfl,
         fun j hj _ _ => absurd hj (Nat.not_lt_zero j),
@@ -1119,12 +1119,12 @@ theorem ntt_at_layer_2_spec
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_2.step_post re k (.cont (iter', acc')) := by
+    · have hP : Layer2.step_post re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_2.step_post] using hP
-    · have hP : L3_2.step_post re k (.done y) := by
+      simpa [Layer2.step_post] using hP
+    · have hP : Layer2.step_post re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_2.step_post] using hP
+      simpa [Layer2.step_post] using hP
 
 /-! ## L3.2.B — `ntt_at_layer_2_spec_B`
 
@@ -1133,7 +1133,7 @@ driver loop (16 iterations) and same ζ-thread (`31 → 63`); per-iter
 two ζ lookups, dispatches `ntt_layer_2_step_spec_bnd`. Input bound
 `6 * 3328` → `bnd`; output bound `7 * 3328` → `bnd + 3328`. -/
 
-namespace L3_2_B
+namespace Layer2Bounded
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -1167,7 +1167,7 @@ def step_post_B
         ∧ (inv_B bnd re iter'.start acc').holds
   | .done y => (inv_B bnd re 16#usize y).holds
 
-end L3_2_B
+end Layer2Bounded
 
 private theorem ntt_at_layer_2_step_lemma_B
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -1175,7 +1175,7 @@ private theorem ntt_at_layer_2_step_lemma_B
     (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd)
-    (acc : L3_2_B.Acc)
+    (acc : Layer2Bounded.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
     (h_zeta_acc : acc.1.val = 31 + 2 * k.val)
     (h_acc_done : ∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
@@ -1186,7 +1186,7 @@ private theorem ntt_at_layer_2_step_lemma_B
     libcrux_iot_ml_kem.ntt.ntt_at_layer_2_loop.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_2_B.step_post_B bnd re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer2Bounded.step_post_B bnd re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -1241,7 +1241,7 @@ private theorem ntt_at_layer_2_step_lemma_B
     set a : Std.Array
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       acc.2.coefficients.set k t1 with ha_def
-    set acc' : L3_2_B.Acc := (zi3, { coefficients := a }) with hacc'_def
+    set acc' : Layer2Bounded.Acc := (zi3, { coefficients := a }) with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_2_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
@@ -1275,11 +1275,11 @@ private theorem ntt_at_layer_2_step_lemma_B
       rw [h_t1_eq]
       rfl
     apply triple_of_ok_l3 h_body
-    show L3_2_B.step_post_B bnd re k
+    show Layer2Bounded.step_post_B bnd re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L3_2_B.step_post_B
+    unfold Layer2Bounded.step_post_B
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
@@ -1348,9 +1348,9 @@ private theorem ntt_at_layer_2_step_lemma_B
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_l3 h_body
-    show L3_2_B.step_post_B bnd re k (.done acc)
-    unfold L3_2_B.step_post_B
-    show (L3_2_B.inv_B bnd re 16#usize acc).holds
+    show Layer2Bounded.step_post_B bnd re k (.done acc)
+    unfold Layer2Bounded.step_post_B
+    show (Layer2Bounded.inv_B bnd re 16#usize acc).holds
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
     · rw [hk_eq] at h_zeta_acc; rw [show (16#usize : Std.Usize).val = 16 from rfl]
@@ -1386,10 +1386,10 @@ theorem ntt_at_layer_2_spec_B
         libcrux_iot_ml_kem.ntt.ntt_at_layer_2_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           iter1 acc1.1 acc1.2)
-      (β := L3_2_B.Acc)
+      (β := Layer2Bounded.Acc)
       (zeta_i, re)
       0#usize 16#usize
-      (L3_2_B.inv_B bnd re)
+      (Layer2Bounded.inv_B bnd re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (pure_prop_holds_l3 ⟨by rw [h_zeta]; rfl,
         fun j hj _ _ => absurd hj (Nat.not_lt_zero j),
@@ -1411,12 +1411,12 @@ theorem ntt_at_layer_2_spec_B
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_2_B.step_post_B bnd re k (.cont (iter', acc')) := by
+    · have hP : Layer2Bounded.step_post_B bnd re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_2_B.step_post_B] using hP
-    · have hP : L3_2_B.step_post_B bnd re k (.done y) := by
+      simpa [Layer2Bounded.step_post_B] using hP
+    · have hP : Layer2Bounded.step_post_B bnd re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_2_B.step_post_B] using hP
+      simpa [Layer2Bounded.step_post_B] using hP
 
 /-! ## L3.3 — `ntt_at_layer_3_spec`
 
@@ -1427,7 +1427,7 @@ Driver loop: 16 iterations over `re.coefficients`. Each iteration reads
 per iter (state stores `zeta_i1 = zeta_i + 1`); the bound per
 coefficient goes `5·3328 → 6·3328`. -/
 
-namespace L3_3
+namespace Layer3
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -1459,14 +1459,14 @@ def step_post
         ∧ (inv re iter'.start acc').holds
   | .done y => (inv re 16#usize y).holds
 
-end L3_3
+end Layer3
 
 private theorem ntt_at_layer_3_step_lemma
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 5 * 3328)
-    (acc : L3_3.Acc)
+    (acc : Layer3.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
     (h_zeta_acc : acc.1.val = 15 + k.val)
     (h_acc_done : ∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
@@ -1477,7 +1477,7 @@ private theorem ntt_at_layer_3_step_lemma
     libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_3.step_post re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer3.step_post re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -1528,7 +1528,7 @@ private theorem ntt_at_layer_3_step_lemma
     set a : Std.Array
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       acc.2.coefficients.set k t1 with ha_def
-    set acc' : L3_3.Acc := (zi1, { coefficients := a }) with hacc'_def
+    set acc' : Layer3.Acc := (zi1, { coefficients := a }) with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
@@ -1562,11 +1562,11 @@ private theorem ntt_at_layer_3_step_lemma
       rw [h_t1_eq]
       rfl
     apply triple_of_ok_l3 h_body
-    show L3_3.step_post re k
+    show Layer3.step_post re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L3_3.step_post
+    unfold Layer3.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
@@ -1636,9 +1636,9 @@ private theorem ntt_at_layer_3_step_lemma
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_l3 h_body
-    show L3_3.step_post re k (.done acc)
-    unfold L3_3.step_post
-    show (L3_3.inv re 16#usize acc).holds
+    show Layer3.step_post re k (.done acc)
+    unfold Layer3.step_post
+    show (Layer3.inv re 16#usize acc).holds
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
     · rw [hk_eq] at h_zeta_acc; rw [show (16#usize : Std.Usize).val = 16 from rfl]
@@ -1673,10 +1673,10 @@ theorem ntt_at_layer_3_spec
         libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           iter1 acc1.1 acc1.2)
-      (β := L3_3.Acc)
+      (β := Layer3.Acc)
       (zeta_i, re)
       0#usize 16#usize
-      (L3_3.inv re)
+      (Layer3.inv re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (pure_prop_holds_l3 ⟨by rw [h_zeta]; rfl,
         fun j hj _ _ => absurd hj (Nat.not_lt_zero j),
@@ -1698,12 +1698,12 @@ theorem ntt_at_layer_3_spec
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_3.step_post re k (.cont (iter', acc')) := by
+    · have hP : Layer3.step_post re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_3.step_post] using hP
-    · have hP : L3_3.step_post re k (.done y) := by
+      simpa [Layer3.step_post] using hP
+    · have hP : Layer3.step_post re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_3.step_post] using hP
+      simpa [Layer3.step_post] using hP
 
 /-! ## L3.3.B — `ntt_at_layer_3_spec_B`
 
@@ -1712,7 +1712,7 @@ driver loop (16 iterations) and same ζ-thread (`15 → 31`); per-iter
 single ζ lookup, dispatches `ntt_layer_3_step_spec_bnd`. Input bound
 `5 * 3328` → `bnd`; output bound `6 * 3328` → `bnd + 3328`. -/
 
-namespace L3_3_B
+namespace Layer3Bounded
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -1746,7 +1746,7 @@ def step_post_B
         ∧ (inv_B bnd re iter'.start acc').holds
   | .done y => (inv_B bnd re 16#usize y).holds
 
-end L3_3_B
+end Layer3Bounded
 
 private theorem ntt_at_layer_3_step_lemma_B
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
@@ -1754,7 +1754,7 @@ private theorem ntt_at_layer_3_step_lemma_B
     (bnd : Nat) (h_bnd : bnd ≤ 29439)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ bnd)
-    (acc : L3_3_B.Acc)
+    (acc : Layer3Bounded.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
     (h_zeta_acc : acc.1.val = 15 + k.val)
     (h_acc_done : ∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
@@ -1765,7 +1765,7 @@ private theorem ntt_at_layer_3_step_lemma_B
     libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_3_B.step_post_B bnd re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer3Bounded.step_post_B bnd re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -1809,7 +1809,7 @@ private theorem ntt_at_layer_3_step_lemma_B
     set a : Std.Array
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       acc.2.coefficients.set k t1 with ha_def
-    set acc' : L3_3_B.Acc := (zi1, { coefficients := a }) with hacc'_def
+    set acc' : Layer3Bounded.Acc := (zi1, { coefficients := a }) with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
@@ -1843,11 +1843,11 @@ private theorem ntt_at_layer_3_step_lemma_B
       rw [h_t1_eq]
       rfl
     apply triple_of_ok_l3 h_body
-    show L3_3_B.step_post_B bnd re k
+    show Layer3Bounded.step_post_B bnd re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L3_3_B.step_post_B
+    unfold Layer3Bounded.step_post_B
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
@@ -1916,9 +1916,9 @@ private theorem ntt_at_layer_3_step_lemma_B
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_l3 h_body
-    show L3_3_B.step_post_B bnd re k (.done acc)
-    unfold L3_3_B.step_post_B
-    show (L3_3_B.inv_B bnd re 16#usize acc).holds
+    show Layer3Bounded.step_post_B bnd re k (.done acc)
+    unfold Layer3Bounded.step_post_B
+    show (Layer3Bounded.inv_B bnd re 16#usize acc).holds
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
     · rw [hk_eq] at h_zeta_acc; rw [show (16#usize : Std.Usize).val = 16 from rfl]
@@ -1954,10 +1954,10 @@ theorem ntt_at_layer_3_spec_B
         libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           iter1 acc1.1 acc1.2)
-      (β := L3_3_B.Acc)
+      (β := Layer3Bounded.Acc)
       (zeta_i, re)
       0#usize 16#usize
-      (L3_3_B.inv_B bnd re)
+      (Layer3Bounded.inv_B bnd re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (pure_prop_holds_l3 ⟨by rw [h_zeta]; rfl,
         fun j hj _ _ => absurd hj (Nat.not_lt_zero j),
@@ -1979,12 +1979,12 @@ theorem ntt_at_layer_3_spec_B
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_3_B.step_post_B bnd re k (.cont (iter', acc')) := by
+    · have hP : Layer3Bounded.step_post_B bnd re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_3_B.step_post_B] using hP
-    · have hP : L3_3_B.step_post_B bnd re k (.done y) := by
+      simpa [Layer3Bounded.step_post_B] using hP
+    · have hP : Layer3Bounded.step_post_B bnd re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_3_B.step_post_B] using hP
+      simpa [Layer3Bounded.step_post_B] using hP
 
 /-! ## L3.5 — `ntt_at_layer_7_spec`
 
@@ -2060,7 +2060,7 @@ private theorem iter_next_none_eq_gen
   obtain ⟨v, hveq, hP⟩ := triple_exists_ok_l3 hT
   rw [hveq, hP]
 
-namespace L3_5
+namespace Layer7
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -2103,7 +2103,7 @@ def step_post
         ∧ (inv re iter'.start acc').holds
   | .done y => (inv re 8#usize y).holds
 
-end L3_5
+end Layer7
 
 set_option maxHeartbeats 16000000 in
 private theorem ntt_at_layer_7_step_lemma
@@ -2111,7 +2111,7 @@ private theorem ntt_at_layer_7_step_lemma
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_pre : ∀ i : Nat, i < 16 → ∀ j : Nat, j < 16 →
       ((re.coefficients.val[i]!).elements.val[j]!).val.natAbs ≤ 3)
-    (acc : L3_5.Acc)
+    (acc : Layer7.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (8#usize : Std.Usize).val)
     (h_done_lo : ∀ j : Nat, j < k.val → ∀ ℓ : Nat, ℓ < 16 →
         ((acc.1.coefficients.val[j]!).elements.val[ℓ]!).val.natAbs ≤ 4803)
@@ -2125,7 +2125,7 @@ private theorem ntt_at_layer_7_step_lemma
     libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       8#usize { start := k, «end» := 8#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_5.step_post re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer7.step_post re k r ⌝ ⦄ := by
   have h8 : (8#usize : Std.Usize).val = 8 := rfl
   have h_coef_len : acc.1.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -2333,7 +2333,7 @@ private theorem ntt_at_layer_7_step_lemma
     set a2 : Std.Array
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       a1.set i t4 with ha2_def
-    set acc' : L3_5.Acc := ({ coefficients := a2 }, scratch2) with hacc'_def
+    set acc' : Layer7.Acc := ({ coefficients := a2 }, scratch2) with hacc'_def
     -- Compose into a single .ok equation.
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
@@ -2373,11 +2373,11 @@ private theorem ntt_at_layer_7_step_lemma
       -- (via the `let`-chain a1 = a.set k t2, a2 = a1.set i t4).
       rfl
     apply triple_of_ok_l3 h_body
-    show L3_5.step_post re k
+    show Layer7.step_post re k
       (.cont (({ start := s, «end» := 8#usize }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L3_5.step_post
+    unfold Layer7.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_, ?_⟩
@@ -2531,9 +2531,9 @@ private theorem ntt_at_layer_7_step_lemma
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_l3 h_body
-    show L3_5.step_post re k (.done acc)
-    unfold L3_5.step_post
-    show (L3_5.inv re 8#usize acc).holds
+    show Layer7.step_post re k (.done acc)
+    unfold Layer7.step_post
+    show (Layer7.inv re 8#usize acc).holds
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_, ?_⟩
     · intro j hj ℓ hℓ
@@ -2593,10 +2593,10 @@ theorem ntt_at_layer_7_spec
         libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           8#usize iter1 acc1.1 acc1.2)
-      (β := L3_5.Acc)
+      (β := Layer7.Acc)
       (re, scratch)
       0#usize 8#usize
-      (L3_5.inv re)
+      (Layer7.inv re)
       (by decide : (0#usize : Std.Usize).val ≤ (8#usize : Std.Usize).val)
       (pure_prop_holds_l3
         ⟨fun j hj _ _ => absurd hj (Nat.not_lt_zero j),
@@ -2626,12 +2626,12 @@ theorem ntt_at_layer_7_spec
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_5.step_post re k (.cont (iter', acc')) := by
+    · have hP : Layer7.step_post re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_5.step_post] using hP
-    · have hP : L3_5.step_post re k (.done y) := by
+      simpa [Layer7.step_post] using hP
+    · have hP : Layer7.step_post re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_5.step_post] using hP
+      simpa [Layer7.step_post] using hP
 
 /-! ## L3.4 — `ntt_at_layer_4_plus_spec`
 
@@ -2940,7 +2940,7 @@ to be disjoint and lie within `[0, 16)` — i.e. `a_offset + step_vec ≤ b_offs
 and `b_offset + step_vec ≤ 16` (with `a_offset ≤ b_offset` from L3.4's caller).
 -/
 
-namespace L3_4_Inner
+namespace Layer4PlusInner
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -2994,7 +2994,7 @@ def step_post
         ∧ (inv re a_offset b_offset step_vec bnd iter'.start acc').holds
   | .done y => (inv re a_offset b_offset step_vec bnd step_vec y).holds
 
-end L3_4_Inner
+end Layer4PlusInner
 
 /-- Inner-loop step lemma. Each body iter calls `ntt_layer_int_vec_step` on
     lanes `(a_offset+j, b_offset+j)`, transforming both bounds from `bnd` to
@@ -3009,14 +3009,14 @@ private theorem ntt_at_layer_4_plus_inner_step_lemma
                  ∧ b_offset.val + step_vec.val ≤ 16)
     (h_pre_a : ∀ ℓ' : Nat, ℓ' < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
       ((re.coefficients.val[a_offset.val + ℓ']!).elements.val[ℓ]!).val.natAbs ≤ bnd)
-    (acc : L3_4_Inner.Acc)
+    (acc : Layer4PlusInner.Acc)
     (j : Std.Usize) (h_le : j.val ≤ step_vec.val)
-    (hinv : (L3_4_Inner.inv re a_offset b_offset step_vec bnd j acc).holds) :
+    (hinv : (Layer4PlusInner.inv re a_offset b_offset step_vec bnd j acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0_loop0.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       zeta_i a_offset b_offset { start := j, «end» := step_vec } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_4_Inner.step_post re a_offset b_offset step_vec bnd j r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer4PlusInner.step_post re a_offset b_offset step_vec bnd j r ⌝ ⦄ := by
   obtain ⟨h_a_disj, h_b_le_16⟩ := h_ranges
   -- The 5 invariant conjuncts.
   obtain ⟨h_a_done, h_b_done, h_a_undone, h_b_undone, h_other⟩ :=
@@ -3068,7 +3068,7 @@ private theorem ntt_at_layer_4_plus_inner_step_lemma
           h_i_lt h_i1_lt h_i_ne_i1 h_zeta_bd bnd h_bnd h_pre_i)
     obtain ⟨h_step_a_bd, h_step_b_bd, h_step_other⟩ := h_step_post
     -- Next-state.
-    set acc' : L3_4_Inner.Acc :=
+    set acc' : Layer4PlusInner.Acc :=
       ({ coefficients := step_out.1 }, step_out.2) with hacc'_def
     -- Compose the body into one .ok.
     have h_body :
@@ -3097,11 +3097,11 @@ private theorem ntt_at_layer_4_plus_inner_step_lemma
       -- definitionally.
       rfl
     apply triple_of_ok_l3 h_body
-    show L3_4_Inner.step_post re a_offset b_offset step_vec bnd j
+    show Layer4PlusInner.step_post re a_offset b_offset step_vec bnd j
       (.cont (({ start := s, «end» := step_vec }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L3_4_Inner.step_post
+    unfold Layer4PlusInner.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     apply pure_prop_holds_l3
     -- We need to show inv at s = j+1.
@@ -3216,9 +3216,9 @@ private theorem ntt_at_layer_4_plus_inner_step_lemma
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_l3 h_body
-    show L3_4_Inner.step_post re a_offset b_offset step_vec bnd j (.done acc)
-    unfold L3_4_Inner.step_post
-    show (L3_4_Inner.inv re a_offset b_offset step_vec bnd step_vec acc).holds
+    show Layer4PlusInner.step_post re a_offset b_offset step_vec bnd j (.done acc)
+    unfold Layer4PlusInner.step_post
+    show (Layer4PlusInner.inv re a_offset b_offset step_vec bnd step_vec acc).holds
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_, ?_, ?_⟩
     · intro ℓ' hℓ' ℓ hℓ; rw [← hj_eq] at hℓ'; exact h_a_done ℓ' hℓ' ℓ hℓ
@@ -3234,7 +3234,7 @@ set_option maxHeartbeats 16000000 in
 private theorem ntt_at_layer_4_plus_inner_loop_lemma
     (re : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
-    (acc_in : L3_4_Inner.Acc)
+    (acc_in : Layer4PlusInner.Acc)
     (zeta_i a_offset b_offset step_vec : Std.Usize) (bnd : Nat) (h_bnd : bnd ≤ 8 * 3328)
     (h_zeta_lt : zeta_i.val < 128)
     (h_step_vec_pos : 0 < step_vec.val)
@@ -3267,10 +3267,10 @@ private theorem ntt_at_layer_4_plus_inner_loop_lemma
         libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0_loop0.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           zeta_i a_offset b_offset iter1 acc1.1 acc1.2)
-      (β := L3_4_Inner.Acc)
+      (β := Layer4PlusInner.Acc)
       acc_in
       0#usize step_vec
-      (L3_4_Inner.inv re a_offset b_offset step_vec bnd)
+      (Layer4PlusInner.inv re a_offset b_offset step_vec bnd)
       (by scalar_tac : (0#usize : Std.Usize).val ≤ step_vec.val)
       (pure_prop_holds_l3
         ⟨fun ℓ' hℓ' _ _ => absurd hℓ' (Nat.not_lt_zero _),
@@ -3293,12 +3293,12 @@ private theorem ntt_at_layer_4_plus_inner_loop_lemma
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_4_Inner.step_post re a_offset b_offset step_vec bnd k (.cont (iter', acc')) := by
+    · have hP : Layer4PlusInner.step_post re a_offset b_offset step_vec bnd k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_4_Inner.step_post] using hP
-    · have hP : L3_4_Inner.step_post re a_offset b_offset step_vec bnd k (.done y) := by
+      simpa [Layer4PlusInner.step_post] using hP
+    · have hP : Layer4PlusInner.step_post re a_offset b_offset step_vec bnd k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_4_Inner.step_post] using hP
+      simpa [Layer4PlusInner.step_post] using hP
 
 /-! ### outer loop helper
 
@@ -3324,7 +3324,7 @@ private theorem usize_mul_ok_eq (x y : Std.Usize)
   show z.val = x.val * y.val
   exact h_v
 
-namespace L3_4_Outer
+namespace Layer4PlusOuter
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Result ControlFlow
 
@@ -3361,7 +3361,7 @@ def step_post
         ∧ (inv re zeta_i_init step_vec bnd iter'.start acc').holds
   | .done y => (inv re zeta_i_init step_vec bnd outer_count y).holds
 
-end L3_4_Outer
+end Layer4PlusOuter
 
 set_option maxHeartbeats 16000000 in
 /-- Outer-loop step lemma. Each iter calls the inner loop on the window
@@ -3378,14 +3378,14 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma
     (h_zeta_init_lt : zeta_i_init.val + outer_count.val < 128)
     (h_pre : ∀ i : Nat, i < 16 → ∀ ℓ : Nat, ℓ < 16 →
       ((re.coefficients.val[i]!).elements.val[ℓ]!).val.natAbs ≤ bnd)
-    (acc : L3_4_Outer.Acc)
+    (acc : Layer4PlusOuter.Acc)
     (round : Std.Usize) (h_le : round.val ≤ outer_count.val)
-    (hinv : (L3_4_Outer.inv re zeta_i_init step_vec bnd round acc).holds) :
+    (hinv : (Layer4PlusOuter.inv re zeta_i_init step_vec bnd round acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
       libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
       step_vec { start := round, «end» := outer_count } acc.1 acc.2.1 acc.2.2
-    ⦃ ⇓ r => ⌜ L3_4_Outer.step_post re zeta_i_init step_vec outer_count bnd round r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer4PlusOuter.step_post re zeta_i_init step_vec outer_count bnd round r ⌝ ⦄ := by
   obtain ⟨h_zeta_acc, h_done, h_undone⟩ := of_pure_prop_holds_l3 hinv
   unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
   by_cases h_lt : round.val < outer_count.val
@@ -3510,7 +3510,7 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma
     obtain ⟨inner_out, h_inner_eq, h_inner_post⟩ := triple_exists_ok_l3 h_inner_spec
     obtain ⟨h_inner_a_bd, h_inner_b_bd, h_inner_other⟩ := h_inner_post
     -- Next-state.
-    set acc' : L3_4_Outer.Acc := (zi1, inner_out.1, inner_out.2) with hacc'_def
+    set acc' : Layer4PlusOuter.Acc := (zi1, inner_out.1, inner_out.2) with hacc'_def
     -- Compose the body into one .ok.
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
@@ -3535,11 +3535,11 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma
       simp [bind_tc_ok, h_zi1_eq, h_ri2_eq, h_ao_eq, h_bo_eq, h_inner_eq, hacc'_def]
       rfl
     apply triple_of_ok_l3 h_body
-    show L3_4_Outer.step_post re zeta_i_init step_vec outer_count bnd round
+    show Layer4PlusOuter.step_post re zeta_i_init step_vec outer_count bnd round
       (.cont (({ start := s, «end» := outer_count }
                 : CoreModels.core.ops.range.Range Std.Usize),
               acc'))
-    unfold L3_4_Outer.step_post
+    unfold Layer4PlusOuter.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
@@ -3641,9 +3641,9 @@ private theorem ntt_at_layer_4_plus_outer_step_lemma
     have h_acc_eq : (acc.1, acc.2.1, acc.2.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_l3 h_body
-    show L3_4_Outer.step_post re zeta_i_init step_vec outer_count bnd round (.done acc)
-    unfold L3_4_Outer.step_post
-    show (L3_4_Outer.inv re zeta_i_init step_vec bnd outer_count acc).holds
+    show Layer4PlusOuter.step_post re zeta_i_init step_vec outer_count bnd round (.done acc)
+    unfold Layer4PlusOuter.step_post
+    show (Layer4PlusOuter.inv re zeta_i_init step_vec bnd outer_count acc).holds
     apply pure_prop_holds_l3
     refine ⟨?_, ?_, ?_⟩
     · rw [h_zeta_acc, hr_eq]
@@ -3678,10 +3678,10 @@ private theorem ntt_at_layer_4_plus_outer_loop_lemma
         libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
           libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector.Insts.Libcrux_iot_ml_kemVectorTraitsOperations
           step_vec iter1 acc1.1 acc1.2.1 acc1.2.2)
-      (β := L3_4_Outer.Acc)
+      (β := Layer4PlusOuter.Acc)
       (zeta_i_init, re, scratch)
       0#usize outer_count
-      (L3_4_Outer.inv re zeta_i_init step_vec bnd)
+      (Layer4PlusOuter.inv re zeta_i_init step_vec bnd)
       (by scalar_tac : (0#usize : Std.Usize).val ≤ outer_count.val)
       (pure_prop_holds_l3
         ⟨by show zeta_i_init.val = zeta_i_init.val + (0#usize : Std.Usize).val; rfl,
@@ -3707,12 +3707,12 @@ private theorem ntt_at_layer_4_plus_outer_loop_lemma
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_4_Outer.step_post re zeta_i_init step_vec outer_count bnd k (.cont (iter', acc')) := by
+    · have hP : Layer4PlusOuter.step_post re zeta_i_init step_vec outer_count bnd k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_4_Outer.step_post] using hP
-    · have hP : L3_4_Outer.step_post re zeta_i_init step_vec outer_count bnd k (.done y) := by
+      simpa [Layer4PlusOuter.step_post] using hP
+    · have hP : Layer4PlusOuter.step_post re zeta_i_init step_vec outer_count bnd k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_4_Outer.step_post] using hP
+      simpa [Layer4PlusOuter.step_post] using hP
 
 /-! ### top-level `ntt_at_layer_4_plus_spec` -/
 

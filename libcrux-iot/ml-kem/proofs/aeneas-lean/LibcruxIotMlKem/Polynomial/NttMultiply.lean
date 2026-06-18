@@ -143,10 +143,10 @@ theorem hacspec_ZETAS_ok_and_zeta_at :
     `multiply_ntts` to a pure-list, then `Subtype.ext` + per-lane reduction
     closes the chunked-decomposition equality.
 
-    Helpers live inside `L6_3b_FC` namespace for hygiene; only the final
+    Helpers live inside `HelpersFC` namespace for hygiene; only the final
     theorem is re-exported. -/
 
-namespace L6_3b_FC
+namespace HelpersFC
 
 /-- `feOfZMod` always produces a canonical FE (since `z.val < 3329`). The
     `BitVec.ofNat 16` lift is in-range modulo `2^16 = 65536 > 3329`. -/
@@ -587,7 +587,7 @@ theorem multiply_ntts_lane_pure_eq_chunked
   exact multiply_ntts_lane_pure_eq_chunked_aux p1 p2 (i / 16) (i % 16)
     (by omega) (Nat.mod_lt _ (by decide))
 
-end L6_3b_FC
+end HelpersFC
 
 set_option maxHeartbeats 4000000 in
 /-- **§L6.3b bridge: hacspec `multiply_ntts` ↔ chunked `ntt_multiply_pure_no_acc`.**
@@ -609,9 +609,9 @@ set_option maxHeartbeats 4000000 in
     Proof composes:
     - .1 (`hacspec_ZETAS_ok_and_zeta_at`): zetas at [64..128)
       correspondence.
-    - .3 (`L6_3b_FC.multiply_ntts_eq_pure_array`): lifts
+    - .3 (`HelpersFC.multiply_ntts_eq_pure_array`): lifts
       `ntt.multiply_ntts p1 p2` to `.ok ⟨pure-list, _⟩`.
-    - .4 (`L6_3b_FC.multiply_ntts_lane_pure_eq_chunked`): per-lane
+    - .4 (`HelpersFC.multiply_ntts_lane_pure_eq_chunked`): per-lane
       equality.
     - Array extensionality (`Subtype.ext` + `List.map_congr_left`). -/
 theorem Spec.multiply_ntts_pure_eq_chunked_no_acc
@@ -627,10 +627,10 @@ theorem Spec.multiply_ntts_pure_eq_chunked_no_acc
             (Spec.zeta_at (64 + 4 * j + 3))),
          by simp⟩ := by
   unfold Spec.multiply_ntts_pure
-  rw [L6_3b_FC.multiply_ntts_eq_pure_array]
+  rw [HelpersFC.multiply_ntts_eq_pure_array]
   -- Reduce `match .ok r with .ok r => r | _ => default` to `r` so the Array constructor
   -- on the LHS aligns with the Spec.flatten_chunks Array on the RHS.
-  show (⟨(List.range 256).map (L6_3b_FC.multiply_ntts_lane_pure p1 p2),
+  show (⟨(List.range 256).map (HelpersFC.multiply_ntts_lane_pure p1 p2),
           by simp [List.length_map, List.length_range]⟩ :
          Aeneas.Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize) = _
   apply Subtype.ext
@@ -638,7 +638,7 @@ theorem Spec.multiply_ntts_pure_eq_chunked_no_acc
   -- Reduce: ↑⟨L, _⟩ = L by `Subtype.coe_mk`-rfl, and `(Spec.flatten_chunks ⟨L, h⟩).val =
   -- (List.range 256).map (fun j => ⟨L, h⟩.val[j/16]!.val[j%16]!) = (List.range 256).map
   -- (fun j => L[j/16]!.val[j%16]!)` by unfolding Spec.flatten_chunks and Std.Array.make.
-  show (List.range 256).map (L6_3b_FC.multiply_ntts_lane_pure p1 p2) =
+  show (List.range 256).map (HelpersFC.multiply_ntts_lane_pure p1 p2) =
        (List.range 256).map (fun j =>
          ((List.range 16).map (fun j' =>
            Spec.ntt_multiply_pure_no_acc
@@ -670,7 +670,7 @@ theorem Spec.multiply_ntts_pure_eq_chunked_no_acc
         (Spec.zeta_at (64 + 4 * (i / 16) + 3)) := by
     rw [List.getElem!_eq_getElem?_getD, List.getElem?_map,
         List.getElem?_range hi_div_lt]; rfl
-  show L6_3b_FC.multiply_ntts_lane_pure p1 p2 i =
+  show HelpersFC.multiply_ntts_lane_pure p1 p2 i =
       ((List.range 16).map (fun j' =>
         Spec.ntt_multiply_pure_no_acc
           (Spec.chunk_at p1 j') (Spec.chunk_at p2 j')
@@ -679,7 +679,7 @@ theorem Spec.multiply_ntts_pure_eq_chunked_no_acc
           (Spec.zeta_at (64 + 4 * j' + 2))
           (Spec.zeta_at (64 + 4 * j' + 3))))[i / 16]!.val[i % 16]!
   rw [h_chunks_at]
-  exact L6_3b_FC.multiply_ntts_lane_pure_eq_chunked p1 p2 i h_i_lt
+  exact HelpersFC.multiply_ntts_lane_pure_eq_chunked p1 p2 i h_i_lt
 
 /-- Accumulating base-case NTT multiply: pointwise sum of the initial
     accumulator with the no-acc product. Defined as
@@ -9376,7 +9376,7 @@ noncomputable def accumulating_ntt_multiply_poly_post
               (Spec.zeta_at (64 + 4 * j + 2))
               (Spec.zeta_at (64 + 4 * j + 3))).val[ℓ]!)
 
-namespace L6_3_FC
+namespace UseCacheFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -9425,7 +9425,7 @@ def step_post (myself rhs : Poly) (acc_init : Acc) (k : Std.Usize)
         ∧ (inv myself rhs acc_init iter'.start acc').holds
   | .done y => (inv myself rhs acc_init 16#usize y).holds
 
-end L6_3_FC
+end UseCacheFC
 
 /-- Array sub-slice extraction via `index_mut` over a `Range Usize`,
     in `.ok`-form. Mirrors `slice_index_range_ok_eq_fc` but for
@@ -9490,20 +9490,20 @@ set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for
     `polynomial.PolynomialRingElement.accumulating_ntt_multiply`. -/
 theorem accumulating_ntt_multiply_poly_step_lemma_fc
-    (myself rhs : L6_3_FC.Poly) (acc_init : L6_3_FC.Acc)
+    (myself rhs : UseCacheFC.Poly) (acc_init : UseCacheFC.Acc)
     (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
         ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
         ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_acc_bnd : ∀ n : Fin 256, (acc_init.val[n.val]!).val.natAbs ≤ 2^30)
-    (acc : L6_3_FC.Acc)
+    (acc : UseCacheFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L6_3_FC.inv myself rhs acc_init k acc).holds) :
+    (h_inv : (UseCacheFC.inv myself rhs acc_init k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) myself rhs
       { start := k, «end» := 16#usize } acc
-    ⦃ ⇓ r => ⌜ L6_3_FC.step_post myself rhs acc_init k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ UseCacheFC.step_post myself rhs acc_init k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_acc_len : acc.val.length = 256 :=
     (Std.Array.length_eq acc)
@@ -9698,7 +9698,7 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
       rw [h_s_lane_init k' hk'] at h_step_bnd
       exact h_step_bnd
     -- (7) Compose acc1 := back s1.
-    set acc1 : L6_3_FC.Acc := back s1 with hacc1_def
+    set acc1 : UseCacheFC.Acc := back s1 with hacc1_def
     have h_acc1_val : acc1.val = acc.val.setSlice! i1.val s1.val :=
       h_back_eq s1 (by show s1.val.length = i3.val - i1.val; rw [← h_s_len_eq];
                        show s1.length = s.length; rw [h_s1_len, h_s_len16])
@@ -9822,12 +9822,12 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
       rw [h_s1_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L6_3_FC.step_post myself rhs acc_init k
+    show UseCacheFC.step_post myself rhs acc_init k
       (.cont (({ start := s_iter, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc1))
-    unfold L6_3_FC.step_post
+    unfold UseCacheFC.step_post
     refine ⟨h_lt, rfl, hs_val_eq, ?_⟩
-    show (L6_3_FC.inv myself rhs acc_init s_iter acc1).holds
+    show (UseCacheFC.inv myself rhs acc_init s_iter acc1).holds
     -- Build the three invariant conjuncts.
     have h_inv_pure :
         (∀ j : Nat, j < s_iter.val → ∀ ℓ : Nat, ℓ < 16 →
@@ -10014,9 +10014,9 @@ theorem accumulating_ntt_multiply_poly_step_lemma_fc
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_fc h_body
-    show L6_3_FC.step_post myself rhs acc_init k (.done acc)
-    unfold L6_3_FC.step_post
-    show (L6_3_FC.inv myself rhs acc_init 16#usize acc).holds
+    show UseCacheFC.step_post myself rhs acc_init k (.done acc)
+    unfold UseCacheFC.step_post
+    show (UseCacheFC.inv myself rhs acc_init 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
@@ -10103,10 +10103,10 @@ theorem accumulating_ntt_multiply_poly_fc
       (fun (iter1, acc1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) myself rhs iter1 acc1)
-      (β := L6_3_FC.Acc)
+      (β := UseCacheFC.Acc)
       accumulator
       0#usize 16#usize
-      (L6_3_FC.inv myself rhs accumulator)
+      (UseCacheFC.inv myself rhs accumulator)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -10120,7 +10120,7 @@ theorem accumulating_ntt_multiply_poly_fc
   · -- Post entailment: at k = 16, derive the locked POST.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L6_3_FC.inv myself rhs accumulator 16#usize r).holds := by
+    have h_inv_holds : (UseCacheFC.inv myself rhs accumulator 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
@@ -10139,7 +10139,7 @@ theorem accumulating_ntt_multiply_poly_fc
         ∧ (∀ n : Nat, n < 256 →
             (r.val[n]!).val.natAbs ≤ (accumulator.val[n]!).val.natAbs + 2^25) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L6_3_FC.inv] using h_inv_holds
+             UseCacheFC.inv] using h_inv_holds
     obtain ⟨h_done, _h_undone, h_bnd⟩ := h_inv
     refine ⟨?_, ?_⟩
     · intro n; exact h_bnd n.val n.isLt
@@ -10156,12 +10156,12 @@ theorem accumulating_ntt_multiply_poly_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L6_3_FC.step_post myself rhs accumulator k (.cont (iter', acc')) := by
+    · have hP : UseCacheFC.step_post myself rhs accumulator k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_3_FC.step_post] using hP
-    · have hP : L6_3_FC.step_post myself rhs accumulator k (.done y) := by
+      simpa [UseCacheFC.step_post] using hP
+    · have hP : UseCacheFC.step_post myself rhs accumulator k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_3_FC.step_post] using hP
+      simpa [UseCacheFC.step_post] using hP
 
 /-! ## §L6.3c — Cache-variant polynomial-level Triple statements.
 
@@ -10202,12 +10202,12 @@ noncomputable def accumulating_ntt_multiply_poly_cache_post
               (Spec.zeta_at (64 + 4 * j.val + 2))
               (Spec.zeta_at (64 + 4 * j.val + 3)))
 
-namespace L6_3c_fill_FC
+namespace FillCacheFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
-abbrev Acc := L6_3_FC.Acc
-abbrev Poly := L6_3_FC.Poly
+abbrev Acc := UseCacheFC.Acc
+abbrev Poly := UseCacheFC.Poly
 
 /-- 5-conjunct invariant for the fill_cache loop. -/
 def inv (myself rhs : Poly) (acc_init : Acc) (cache_init : Poly) :
@@ -10252,7 +10252,7 @@ def step_post (myself rhs : Poly) (acc_init : Acc) (cache_init : Poly)
         ∧ (inv myself rhs acc_init cache_init iter'.start acc' cache').holds
   | .done y => (inv myself rhs acc_init cache_init 16#usize y.1 y.2).holds
 
-end L6_3c_fill_FC
+end FillCacheFC
 
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Heavy POST predicates and
 -- the namespace's `inv` / `step_post` are made locally irreducible across
@@ -10275,21 +10275,21 @@ set_option maxHeartbeats 16000000 in
     `accumulating_ntt_multiply_poly_step_lemma_fc` (L6.3 base,)
     but threads BOTH `acc` and `cache` through the ControlFlow. -/
 theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
-    (myself rhs : L6_3c_fill_FC.Poly) (acc_init : L6_3c_fill_FC.Acc)
-    (cache_init : L6_3c_fill_FC.Poly)
+    (myself rhs : FillCacheFC.Poly) (acc_init : FillCacheFC.Acc)
+    (cache_init : FillCacheFC.Poly)
     (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
         ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
         ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_acc_bnd : ∀ n : Fin 256, (acc_init.val[n.val]!).val.natAbs ≤ 2^30)
-    (acc : L6_3c_fill_FC.Acc) (cache : L6_3c_fill_FC.Poly)
+    (acc : FillCacheFC.Acc) (cache : FillCacheFC.Poly)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L6_3c_fill_FC.inv myself rhs acc_init cache_init k acc cache).holds) :
+    (h_inv : (FillCacheFC.inv myself rhs acc_init cache_init k acc cache).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) myself rhs
       { start := k, «end» := 16#usize } acc cache
-    ⦃ ⇓ r => ⌜ L6_3c_fill_FC.step_post myself rhs acc_init cache_init k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ FillCacheFC.step_post myself rhs acc_init cache_init k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_acc_len : acc.val.length = 256 := Std.Array.length_eq acc
   have h_acc_init_len : acc_init.val.length = 256 := Std.Array.length_eq acc_init
@@ -10490,7 +10490,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
       rw [h_s_lane_init k' hk'] at h_step_bnd
       exact h_step_bnd
     -- (7) Compose acc1 := back s1.
-    set acc1 : L6_3c_fill_FC.Acc := back s1 with hacc1_def
+    set acc1 : FillCacheFC.Acc := back s1 with hacc1_def
     have h_acc1_val : acc1.val = acc.val.setSlice! i1.val s1.val :=
       h_back_eq s1 (by show s1.val.length = i3.val - i1.val; rw [← h_s_len_eq];
                        show s1.length = s.length; rw [h_s1_len, h_s_len16])
@@ -10534,7 +10534,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
         have h_eq16 : 16 * k.val + 16 = 16 * (k.val + 1) := by ring
         rw [h_eq16]; exact hge
     -- (7') Compose cache1 := { coefficients := cache.coefficients.set k cache_chunk1 }.
-    set cache1 : L6_3c_fill_FC.Poly :=
+    set cache1 : FillCacheFC.Poly :=
       { coefficients := cache.coefficients.set k cache_chunk1 } with hcache1_def
     have h_cache1_at : cache1.coefficients.val[k.val]! = cache_chunk1 := by
       show (cache.coefficients.set k cache_chunk1).val[k.val]! = cache_chunk1
@@ -10630,13 +10630,13 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
       rw [h_p_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L6_3c_fill_FC.step_post myself rhs acc_init cache_init k
+    show FillCacheFC.step_post myself rhs acc_init cache_init k
       (.cont (({ start := s_iter, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc1, cache1))
-    unfold L6_3c_fill_FC.step_post
+    unfold FillCacheFC.step_post
     refine ⟨h_lt, rfl, hs_val_eq, ?_⟩
-    show (L6_3c_fill_FC.inv myself rhs acc_init cache_init s_iter acc1 cache1).holds
-    unfold L6_3c_fill_FC.inv
+    show (FillCacheFC.inv myself rhs acc_init cache_init s_iter acc1 cache1).holds
+    unfold FillCacheFC.inv
     -- Build the five invariant conjuncts.
     have h_inv_pure :
         (∀ j : Nat, j < s_iter.val → ∀ ℓ : Nat, ℓ < 16 →
@@ -10823,10 +10823,10 @@ theorem accumulating_ntt_multiply_fill_cache_poly_step_lemma_fc
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_fc h_body
-    show L6_3c_fill_FC.step_post myself rhs acc_init cache_init k (.done (acc, cache))
-    unfold L6_3c_fill_FC.step_post
-    show (L6_3c_fill_FC.inv myself rhs acc_init cache_init 16#usize acc cache).holds
-    unfold L6_3c_fill_FC.inv
+    show FillCacheFC.step_post myself rhs acc_init cache_init k (.done (acc, cache))
+    unfold FillCacheFC.step_post
+    show (FillCacheFC.inv myself rhs acc_init cache_init 16#usize acc cache).holds
+    unfold FillCacheFC.inv
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
@@ -10913,10 +10913,10 @@ theorem accumulating_ntt_multiply_fill_cache_poly_fc
       (fun (iter1, p) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_fill_cache_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) myself rhs iter1 p.1 p.2)
-      (β := L6_3c_fill_FC.Acc × L6_3c_fill_FC.Poly)
+      (β := FillCacheFC.Acc × FillCacheFC.Poly)
       (accumulator, cache)
       0#usize 16#usize
-      (fun k p => L6_3c_fill_FC.inv myself rhs accumulator cache k p.1 p.2)
+      (fun k p => FillCacheFC.inv myself rhs accumulator cache k p.1 p.2)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -10932,7 +10932,7 @@ theorem accumulating_ntt_multiply_fill_cache_poly_fc
   · -- Post entailment at k = 16: derive the locked POST.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L6_3c_fill_FC.inv myself rhs accumulator cache 16#usize r.1 r.2).holds := by
+    have h_inv_holds : (FillCacheFC.inv myself rhs accumulator cache 16#usize r.1 r.2).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     obtain ⟨h_done, _h_undone, h_bnd, h_cache_done, _h_cache_undone⟩ := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_holds
@@ -10959,19 +10959,19 @@ theorem accumulating_ntt_multiply_fill_cache_poly_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc_cache⟩ | y
-    · have hP : L6_3c_fill_FC.step_post myself rhs accumulator cache k
+    · have hP : FillCacheFC.step_post myself rhs accumulator cache k
                   (.cont (iter', acc_cache.1, acc_cache.2)) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_3c_fill_FC.step_post] using hP
-    · have hP : L6_3c_fill_FC.step_post myself rhs accumulator cache k (.done (y.1, y.2)) := by
+      simpa [FillCacheFC.step_post] using hP
+    · have hP : FillCacheFC.step_post myself rhs accumulator cache k (.done (y.1, y.2)) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_3c_fill_FC.step_post] using hP
+      simpa [FillCacheFC.step_post] using hP
 
 end L6_3c_fill_irreducible
 
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Same irreducible-attribute
 -- discipline as the L6.3c.fill section, applied to the read-only `_use_cache`
--- step lemma + outer Triple. We REUSE `L6_3_FC.inv` / `L6_3_FC.step_post`
+-- step lemma + outer Triple. We REUSE `UseCacheFC.inv` / `UseCacheFC.step_post`
 -- (cache is closure-captured, not threaded), so neither is added to the
 -- irreducible list (this would break the `simpa` destructure of `h_inv`).
 section L6_3c_use_irreducible
@@ -10989,24 +10989,24 @@ set_option maxHeartbeats 16000000 in
     `accumulating_ntt_multiply_poly_step_lemma_fc` (L6.3 base) but accepts
     a read-only `cache` parameter (closure-captured in the body) together
     with the polynomial-level cache PRE `h_cache`. Cache is unchanged, so
-    the carrier is `L6_3_FC.Acc` and the invariant is the L6.3 base 3-tuple. -/
+    the carrier is `UseCacheFC.Acc` and the invariant is the L6.3 base 3-tuple. -/
 theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
-    (myself rhs : L6_3_FC.Poly) (cache : L6_3_FC.Poly)
-    (acc_init : L6_3_FC.Acc)
+    (myself rhs : UseCacheFC.Poly) (cache : UseCacheFC.Poly)
+    (acc_init : UseCacheFC.Acc)
     (h_self : ∀ i : Fin 16, ∀ j : Fin 16,
         ((myself.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_rhs : ∀ i : Fin 16, ∀ j : Fin 16,
         ((rhs.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_acc_bnd : ∀ n : Fin 256, (acc_init.val[n.val]!).val.natAbs ≤ 2^30)
     (h_cache : accumulating_ntt_multiply_poly_cache_post rhs cache)
-    (acc : L6_3_FC.Acc)
+    (acc : UseCacheFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L6_3_FC.inv myself rhs acc_init k acc).holds) :
+    (h_inv : (UseCacheFC.inv myself rhs acc_init k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) myself rhs cache
       { start := k, «end» := 16#usize } acc
-    ⦃ ⇓ r => ⌜ L6_3_FC.step_post myself rhs acc_init k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ UseCacheFC.step_post myself rhs acc_init k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_acc_len : acc.val.length = 256 := Std.Array.length_eq acc
   have h_acc_init_len : acc_init.val.length = 256 := Std.Array.length_eq acc_init
@@ -11159,7 +11159,7 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
       rw [h_s_lane_init k' hk'] at h_step_bnd
       exact h_step_bnd
     -- (8) Compose acc1 := back s1.
-    set acc1 : L6_3_FC.Acc := back s1 with hacc1_def
+    set acc1 : UseCacheFC.Acc := back s1 with hacc1_def
     have h_acc1_val : acc1.val = acc.val.setSlice! i1.val s1.val :=
       h_back_eq s1 (by show s1.val.length = i3.val - i1.val; rw [← h_s_len_eq];
                        show s1.length = s.length; rw [h_s1_len, h_s_len16])
@@ -11257,12 +11257,12 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
       rw [h_s1_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L6_3_FC.step_post myself rhs acc_init k
+    show UseCacheFC.step_post myself rhs acc_init k
       (.cont (({ start := s_iter, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc1))
-    unfold L6_3_FC.step_post
+    unfold UseCacheFC.step_post
     refine ⟨h_lt, rfl, hs_val_eq, ?_⟩
-    show (L6_3_FC.inv myself rhs acc_init s_iter acc1).holds
+    show (UseCacheFC.inv myself rhs acc_init s_iter acc1).holds
     -- Build the three invariant conjuncts (same shape as L6.3 base).
     have h_inv_pure :
         (∀ j : Nat, j < s_iter.val → ∀ ℓ : Nat, ℓ < 16 →
@@ -11409,9 +11409,9 @@ theorem accumulating_ntt_multiply_use_cache_poly_step_lemma_fc
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_fc h_body
-    show L6_3_FC.step_post myself rhs acc_init k (.done acc)
-    unfold L6_3_FC.step_post
-    show (L6_3_FC.inv myself rhs acc_init 16#usize acc).holds
+    show UseCacheFC.step_post myself rhs acc_init k (.done acc)
+    unfold UseCacheFC.step_post
+    show (UseCacheFC.inv myself rhs acc_init 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
@@ -11481,10 +11481,10 @@ theorem accumulating_ntt_multiply_use_cache_poly_fc
       (fun (iter1, acc1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.accumulating_ntt_multiply_use_cache_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) myself rhs cache iter1 acc1)
-      (β := L6_3_FC.Acc)
+      (β := UseCacheFC.Acc)
       accumulator
       0#usize 16#usize
-      (L6_3_FC.inv myself rhs accumulator)
+      (UseCacheFC.inv myself rhs accumulator)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -11498,7 +11498,7 @@ theorem accumulating_ntt_multiply_use_cache_poly_fc
   · -- Post entailment at k = 16: derive the locked POST.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L6_3_FC.inv myself rhs accumulator 16#usize r).holds := by
+    have h_inv_holds : (UseCacheFC.inv myself rhs accumulator 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     obtain ⟨h_done, _h_undone, h_bnd⟩ := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_holds
@@ -11516,12 +11516,12 @@ theorem accumulating_ntt_multiply_use_cache_poly_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L6_3_FC.step_post myself rhs accumulator k (.cont (iter', acc')) := by
+    · have hP : UseCacheFC.step_post myself rhs accumulator k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_3_FC.step_post] using hP
-    · have hP : L6_3_FC.step_post myself rhs accumulator k (.done y) := by
+      simpa [UseCacheFC.step_post] using hP
+    · have hP : UseCacheFC.step_post myself rhs accumulator k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_3_FC.step_post] using hP
+      simpa [UseCacheFC.step_post] using hP
 
 end L6_3c_use_irreducible
 

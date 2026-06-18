@@ -30,7 +30,7 @@ open libcrux_iot_ml_kem.Ntt libcrux_iot_ml_kem.Polynomial.PolyOpsFcBarrett libcr
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_kem.Spec
 
-namespace L6_2_FC
+namespace ReducingFromI32ArrayFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -70,7 +70,7 @@ def step_post
         ∧ (inv self b_init iter'.start acc').holds
   | .done y => (inv self b_init 16#usize y).holds
 
-end L6_2_FC
+end ReducingFromI32ArrayFC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for `subtract_reduce`. Given a valid loop
@@ -86,14 +86,14 @@ theorem subtract_reduce_step_lemma_fc
       ((self.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 29439)
     (h_b_bnd : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
       ((b_init.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 32767)
-    (acc : L6_2_FC.Acc)
+    (acc : ReducingFromI32ArrayFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L6_2_FC.inv self b_init k acc).holds) :
+    (h_inv : (ReducingFromI32ArrayFC.inv self b_init k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.subtract_reduce_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) self
       { start := k, «end» := 16#usize } acc
-    ⦃ ⇓ r => ⌜ L6_2_FC.step_post self b_init k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ ReducingFromI32ArrayFC.step_post self b_init k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -299,7 +299,7 @@ theorem subtract_reduce_step_lemma_fc
     -- (13) Compose acc' = `{ coefficients := a2.set k t8 }`.
     set a3 : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       a2.set k t8 with ha3_def
-    set acc' : L6_2_FC.Acc := { coefficients := a3 } with hacc'_def
+    set acc' : ReducingFromI32ArrayFC.Acc := { coefficients := a3 } with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.subtract_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) self
@@ -358,12 +358,12 @@ theorem subtract_reduce_step_lemma_fc
       rw [h_t8_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L6_2_FC.step_post self b_init k
+    show ReducingFromI32ArrayFC.step_post self b_init k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L6_2_FC.step_post
+    unfold ReducingFromI32ArrayFC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
-    show (L6_2_FC.inv self b_init s acc').holds
+    show (ReducingFromI32ArrayFC.inv self b_init s acc').holds
     -- Invariant at (s, acc'). acc'.coefficients = a3 = ((acc.coefs.set k t1).set k t4).set k t6).set k t8.
     -- Equivalently: only chunk k changes, to t8.
     have h_inv_pure :
@@ -598,9 +598,9 @@ theorem subtract_reduce_step_lemma_fc
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_fc h_body
-    show L6_2_FC.step_post self b_init k (.done acc)
-    unfold L6_2_FC.step_post
-    show (L6_2_FC.inv self b_init 16#usize acc).holds
+    show ReducingFromI32ArrayFC.step_post self b_init k (.done acc)
+    unfold ReducingFromI32ArrayFC.step_post
+    show (ReducingFromI32ArrayFC.inv self b_init 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -660,10 +660,10 @@ theorem subtract_reduce_fc
       (fun (iter1, b1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.subtract_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) self iter1 b1)
-      (β := L6_2_FC.Acc)
+      (β := ReducingFromI32ArrayFC.Acc)
       b
       0#usize 16#usize
-      (L6_2_FC.inv self b)
+      (ReducingFromI32ArrayFC.inv self b)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -678,7 +678,7 @@ theorem subtract_reduce_fc
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L6_2_FC.inv self b 16#usize r).holds := by
+    have h_inv_holds : (ReducingFromI32ArrayFC.inv self b 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -689,7 +689,7 @@ theorem subtract_reduce_fc
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
             r.coefficients.val[j]! = b.coefficients.val[j]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L6_2_FC.inv] using h_inv_holds
+             ReducingFromI32ArrayFC.inv] using h_inv_holds
     obtain ⟨h_done, _h_undone⟩ := h_inv
     -- Build chunks_arr matching the Spec definition, then apply
     -- flatten_chunks_eq_lift_poly_fc.
@@ -725,12 +725,12 @@ theorem subtract_reduce_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L6_2_FC.step_post self b k (.cont (iter', acc')) := by
+    · have hP : ReducingFromI32ArrayFC.step_post self b k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_2_FC.step_post] using hP
-    · have hP : L6_2_FC.step_post self b k (.done y) := by
+      simpa [ReducingFromI32ArrayFC.step_post] using hP
+    · have hP : ReducingFromI32ArrayFC.step_post self b k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_2_FC.step_post] using hP
+      simpa [ReducingFromI32ArrayFC.step_post] using hP
 
 /-! ### L6.3 — `add_to_ring_element` (DOCUMENTED, NO STANDALONE FC).
 
@@ -749,7 +749,7 @@ theorem subtract_reduce_fc
 
 /-! ### L6.4.A — Loop scaffolding for `add_error_reduce_fc`. -/
 
-namespace L6_4_FC
+namespace AddErrorReduceFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -789,7 +789,7 @@ def step_post
         ∧ (inv self_init error iter'.start acc').holds
   | .done y => (inv self_init error 16#usize y).holds
 
-end L6_4_FC
+end AddErrorReduceFC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for `add_error_reduce`. Given a valid loop
@@ -805,14 +805,14 @@ theorem add_error_reduce_step_lemma_fc
       ((self_init.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 32767)
     (h_error_bnd : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
       ((error.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 29439)
-    (acc : L6_4_FC.Acc)
+    (acc : AddErrorReduceFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L6_4_FC.inv self_init error k acc).holds) :
+    (h_inv : (AddErrorReduceFC.inv self_init error k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_error_reduce_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) error
       { start := k, «end» := 16#usize } acc
-    ⦃ ⇓ r => ⌜ L6_4_FC.step_post self_init error k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ AddErrorReduceFC.step_post self_init error k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -942,7 +942,7 @@ theorem add_error_reduce_step_lemma_fc
     -- (10) Compose acc' = `{ coefficients := a1.set k t6 }`.
     set a2 : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       a1.set k t6 with ha2_def
-    set acc' : L6_4_FC.Acc := { coefficients := a2 } with hacc'_def
+    set acc' : AddErrorReduceFC.Acc := { coefficients := a2 } with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_error_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) error
@@ -992,12 +992,12 @@ theorem add_error_reduce_step_lemma_fc
       rw [h_t6_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L6_4_FC.step_post self_init error k
+    show AddErrorReduceFC.step_post self_init error k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L6_4_FC.step_post
+    unfold AddErrorReduceFC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
-    show (L6_4_FC.inv self_init error s acc').holds
+    show (AddErrorReduceFC.inv self_init error s acc').holds
     have h_inv_pure :
         (∀ j : Nat, j < s.val →
           lift_chunk (acc'.coefficients.val[j]!)
@@ -1184,9 +1184,9 @@ theorem add_error_reduce_step_lemma_fc
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_fc h_body
-    show L6_4_FC.step_post self_init error k (.done acc)
-    unfold L6_4_FC.step_post
-    show (L6_4_FC.inv self_init error 16#usize acc).holds
+    show AddErrorReduceFC.step_post self_init error k (.done acc)
+    unfold AddErrorReduceFC.step_post
+    show (AddErrorReduceFC.inv self_init error 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -1241,10 +1241,10 @@ theorem add_error_reduce_fc
       (fun (iter1, self1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_error_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) error iter1 self1)
-      (β := L6_4_FC.Acc)
+      (β := AddErrorReduceFC.Acc)
       self
       0#usize 16#usize
-      (L6_4_FC.inv self error)
+      (AddErrorReduceFC.inv self error)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -1257,7 +1257,7 @@ theorem add_error_reduce_fc
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L6_4_FC.inv self error 16#usize r).holds := by
+    have h_inv_holds : (AddErrorReduceFC.inv self error 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -1268,7 +1268,7 @@ theorem add_error_reduce_fc
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
             r.coefficients.val[j]! = self.coefficients.val[j]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L6_4_FC.inv] using h_inv_holds
+             AddErrorReduceFC.inv] using h_inv_holds
     obtain ⟨h_done, _h_undone⟩ := h_inv
     -- Build chunks_arr matching the Spec definition, then apply
     -- flatten_chunks_eq_lift_poly_fc.
@@ -1304,16 +1304,16 @@ theorem add_error_reduce_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L6_4_FC.step_post self error k (.cont (iter', acc')) := by
+    · have hP : AddErrorReduceFC.step_post self error k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_4_FC.step_post] using hP
-    · have hP : L6_4_FC.step_post self error k (.done y) := by
+      simpa [AddErrorReduceFC.step_post] using hP
+    · have hP : AddErrorReduceFC.step_post self error k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_4_FC.step_post] using hP
+      simpa [AddErrorReduceFC.step_post] using hP
 
 /-! ### L6.5.A — Loop scaffolding for `add_standard_error_reduce_fc`. -/
 
-namespace L6_5_FC
+namespace AddStandardErrorReduceFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -1354,7 +1354,7 @@ def step_post
         ∧ (inv self_init error iter'.start acc').holds
   | .done y => (inv self_init error 16#usize y).holds
 
-end L6_5_FC
+end AddStandardErrorReduceFC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for `add_standard_error_reduce`. Given a
@@ -1371,14 +1371,14 @@ theorem add_standard_error_reduce_step_lemma_fc
       ((self_init.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 32767)
     (h_error_bnd : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
       ((error.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 29439)
-    (acc : L6_5_FC.Acc)
+    (acc : AddStandardErrorReduceFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L6_5_FC.inv self_init error k acc).holds) :
+    (h_inv : (AddStandardErrorReduceFC.inv self_init error k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_standard_error_reduce_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) error
       { start := k, «end» := 16#usize } acc
-    ⦃ ⇓ r => ⌜ L6_5_FC.step_post self_init error k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ AddStandardErrorReduceFC.step_post self_init error k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -1513,7 +1513,7 @@ theorem add_standard_error_reduce_step_lemma_fc
     -- (10) Compose acc' = `{ coefficients := a1.set k t6 }`.
     set a2 : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       a1.set k t6 with ha2_def
-    set acc' : L6_5_FC.Acc := { coefficients := a2 } with hacc'_def
+    set acc' : AddStandardErrorReduceFC.Acc := { coefficients := a2 } with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_standard_error_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) error
@@ -1564,12 +1564,12 @@ theorem add_standard_error_reduce_step_lemma_fc
       rw [h_t6_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L6_5_FC.step_post self_init error k
+    show AddStandardErrorReduceFC.step_post self_init error k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L6_5_FC.step_post
+    unfold AddStandardErrorReduceFC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
-    show (L6_5_FC.inv self_init error s acc').holds
+    show (AddStandardErrorReduceFC.inv self_init error s acc').holds
     have h_inv_pure :
         (∀ j : Nat, j < s.val →
           lift_chunk (acc'.coefficients.val[j]!)
@@ -1756,9 +1756,9 @@ theorem add_standard_error_reduce_step_lemma_fc
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_fc h_body
-    show L6_5_FC.step_post self_init error k (.done acc)
-    unfold L6_5_FC.step_post
-    show (L6_5_FC.inv self_init error 16#usize acc).holds
+    show AddStandardErrorReduceFC.step_post self_init error k (.done acc)
+    unfold AddStandardErrorReduceFC.step_post
+    show (AddStandardErrorReduceFC.inv self_init error 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -1814,10 +1814,10 @@ theorem add_standard_error_reduce_fc
       (fun (iter1, self1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_standard_error_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) error iter1 self1)
-      (β := L6_5_FC.Acc)
+      (β := AddStandardErrorReduceFC.Acc)
       self
       0#usize 16#usize
-      (L6_5_FC.inv self error)
+      (AddStandardErrorReduceFC.inv self error)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -1830,7 +1830,7 @@ theorem add_standard_error_reduce_fc
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L6_5_FC.inv self error 16#usize r).holds := by
+    have h_inv_holds : (AddStandardErrorReduceFC.inv self error 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -1841,7 +1841,7 @@ theorem add_standard_error_reduce_fc
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
             r.coefficients.val[j]! = self.coefficients.val[j]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L6_5_FC.inv] using h_inv_holds
+             AddStandardErrorReduceFC.inv] using h_inv_holds
     obtain ⟨h_done, _h_undone⟩ := h_inv
     -- Build chunks_arr matching the Spec definition, then apply
     -- flatten_chunks_eq_lift_poly_fc.
@@ -1877,12 +1877,12 @@ theorem add_standard_error_reduce_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L6_5_FC.step_post self error k (.cont (iter', acc')) := by
+    · have hP : AddStandardErrorReduceFC.step_post self error k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_5_FC.step_post] using hP
-    · have hP : L6_5_FC.step_post self error k (.done y) := by
+      simpa [AddStandardErrorReduceFC.step_post] using hP
+    · have hP : AddStandardErrorReduceFC.step_post self error k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_5_FC.step_post] using hP
+      simpa [AddStandardErrorReduceFC.step_post] using hP
 
 /-! ### L6.6.A — Loop scaffolding for `add_message_error_reduce_fc`.
 
@@ -1892,7 +1892,7 @@ theorem add_standard_error_reduce_fc
     is unconstrained at iteration boundaries (`scratch_15 = self[15] +
     message[15]` at exit, but the FC theorem only projects `p.1`). -/
 
-namespace L6_6_FC
+namespace AddMessageErrorReduceFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -1937,7 +1937,7 @@ def step_post
         ∧ (inv self_init message_init result_init iter'.start acc').holds
   | .done y => (inv self_init message_init result_init 16#usize y).holds
 
-end L6_6_FC
+end AddMessageErrorReduceFC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for `add_message_error_reduce`. Given a
@@ -1962,14 +1962,14 @@ theorem add_message_error_reduce_step_lemma_fc
       (((self_init.coefficients.val[chunk]!).elements.val[ℓ]!).val
         + ((message_init.coefficients.val[chunk]!).elements.val[ℓ]!).val
             : Int).natAbs ≤ 29439)
-    (acc : L6_6_FC.Acc)
+    (acc : AddMessageErrorReduceFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L6_6_FC.inv self_init message_init result_init k acc).holds) :
+    (h_inv : (AddMessageErrorReduceFC.inv self_init message_init result_init k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) self_init message_init
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L6_6_FC.step_post self_init message_init result_init k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ AddMessageErrorReduceFC.step_post self_init message_init result_init k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.1.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -2139,7 +2139,7 @@ theorem add_message_error_reduce_step_lemma_fc
     set acc1' : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
         libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
       { coefficients := a2 } with hacc1'_def
-    set acc' : L6_6_FC.Acc := (acc1', scratch2) with hacc'_def
+    set acc' : AddMessageErrorReduceFC.Acc := (acc1', scratch2) with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) self_init message_init
@@ -2195,12 +2195,12 @@ theorem add_message_error_reduce_step_lemma_fc
       rw [h_t6_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L6_6_FC.step_post self_init message_init result_init k
+    show AddMessageErrorReduceFC.step_post self_init message_init result_init k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L6_6_FC.step_post
+    unfold AddMessageErrorReduceFC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
-    show (L6_6_FC.inv self_init message_init result_init s acc').holds
+    show (AddMessageErrorReduceFC.inv self_init message_init result_init s acc').holds
     have h_inv_pure :
         (∀ j : Nat, j < s.val →
           lift_chunk (acc'.1.coefficients.val[j]!)
@@ -2420,9 +2420,9 @@ theorem add_message_error_reduce_step_lemma_fc
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_fc h_body
-    show L6_6_FC.step_post self_init message_init result_init k (.done acc)
-    unfold L6_6_FC.step_post
-    show (L6_6_FC.inv self_init message_init result_init 16#usize acc).holds
+    show AddMessageErrorReduceFC.step_post self_init message_init result_init k (.done acc)
+    unfold AddMessageErrorReduceFC.step_post
+    show (AddMessageErrorReduceFC.inv self_init message_init result_init 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -2484,10 +2484,10 @@ theorem add_message_error_reduce_fc
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.add_message_error_reduce_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) self message
           iter1 acc1.1 acc1.2)
-      (β := L6_6_FC.Acc)
+      (β := AddMessageErrorReduceFC.Acc)
       (result, scratch)
       0#usize 16#usize
-      (L6_6_FC.inv self message result)
+      (AddMessageErrorReduceFC.inv self message result)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -2500,7 +2500,7 @@ theorem add_message_error_reduce_fc
   · -- Post entailment.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L6_6_FC.inv self message result 16#usize r).holds := by
+    have h_inv_holds : (AddMessageErrorReduceFC.inv self message result 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         (∀ j : Nat, j < (16#usize : Std.Usize).val →
@@ -2512,7 +2512,7 @@ theorem add_message_error_reduce_fc
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
             r.1.coefficients.val[j]! = result.coefficients.val[j]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L6_6_FC.inv] using h_inv_holds
+             AddMessageErrorReduceFC.inv] using h_inv_holds
     obtain ⟨h_done, _h_undone⟩ := h_inv
     unfold Spec.add_message_error_reduce_pure
     set chunks_arr : Std.Array
@@ -2550,14 +2550,14 @@ theorem add_message_error_reduce_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L6_6_FC.step_post self message result k (.cont (iter', acc')) := by
+    · have hP : AddMessageErrorReduceFC.step_post self message result k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_6_FC.step_post] using hP
-    · have hP : L6_6_FC.step_post self message result k (.done y) := by
+      simpa [AddMessageErrorReduceFC.step_post] using hP
+    · have hP : AddMessageErrorReduceFC.step_post self message result k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_6_FC.step_post] using hP
+      simpa [AddMessageErrorReduceFC.step_post] using hP
 
-namespace L6_7_FC
+namespace SubtractReduceFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -2599,7 +2599,7 @@ def step_post (a : Slice Std.I32) (out_init : Acc) (k : Std.Usize)
         ∧ (inv a out_init iter'.start acc').holds
   | .done y => (inv a out_init 16#usize y).holds
 
-end L6_7_FC
+end SubtractReduceFC
 
 /-- Sub-slice extraction `.ok`-form. Given a slice `a` and a range
     `[start, end] ⊆ [0, a.length]`, the `core_models`-level slice index
@@ -2630,17 +2630,17 @@ set_option maxHeartbeats 16000000 in
     `lift_fe_mont acc'[k][ℓ] = Spec.mont_reduce_pure (lift_fe_int a[16k+ℓ])`
     for all ℓ, while preserving chunks `j ≠ k`. -/
 theorem poly_reducing_from_i32_array_step_lemma_fc
-    (a : Slice Std.I32) (out_init : L6_7_FC.Acc)
+    (a : Slice Std.I32) (out_init : SubtractReduceFC.Acc)
     (hlen : a.length = 256)
     (hbound : ∀ i : Nat, i < 256 → (a.val[i]!).val.natAbs ≤ 2^16 * 3328)
-    (acc : L6_7_FC.Acc)
+    (acc : SubtractReduceFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L6_7_FC.inv a out_init k acc).holds) :
+    (h_inv : (SubtractReduceFC.inv a out_init k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) a
       { start := k, «end» := 16#usize } acc
-    ⦃ ⇓ r => ⌜ L6_7_FC.step_post a out_init k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ SubtractReduceFC.step_post a out_init k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_a_len : a.val.length = 256 := hlen
   have h_coef_len : acc.coefficients.length = 16 :=
@@ -2746,7 +2746,7 @@ theorem poly_reducing_from_i32_array_step_lemma_fc
         Aeneas.Std.Array.getElem!_Nat_set_eq acc.coefficients k k.val t1
           ⟨rfl, by rw [h_coef_len]; exact hk_16⟩
     -- (8) Compose acc'.
-    set acc' : L6_7_FC.Acc := { coefficients := a1 } with hacc'_def
+    set acc' : SubtractReduceFC.Acc := { coefficients := a1 } with hacc'_def
     -- (9) Body equation.
     have h_body :
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
@@ -2805,12 +2805,12 @@ theorem poly_reducing_from_i32_array_step_lemma_fc
       rw [h_t1_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L6_7_FC.step_post a out_init k
+    show SubtractReduceFC.step_post a out_init k
       (.cont (({ start := s_iter, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L6_7_FC.step_post
+    unfold SubtractReduceFC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
-    show (L6_7_FC.inv a out_init s_iter acc').holds
+    show (SubtractReduceFC.inv a out_init s_iter acc').holds
     have h_inv_pure :
         (∀ j : Nat, j < s_iter.val → ∀ ℓ : Nat, ℓ < 16 →
           lift_fe_mont ((acc'.coefficients.val[j]!).elements.val[ℓ]!)
@@ -2939,9 +2939,9 @@ theorem poly_reducing_from_i32_array_step_lemma_fc
           from rfl]
       rw [h_iter_none]; rfl
     apply triple_of_ok_fc h_body
-    show L6_7_FC.step_post a out_init k (.done acc)
-    unfold L6_7_FC.step_post
-    show (L6_7_FC.inv a out_init 16#usize acc).holds
+    show SubtractReduceFC.step_post a out_init k (.done acc)
+    unfold SubtractReduceFC.step_post
+    show (SubtractReduceFC.inv a out_init 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
@@ -2996,10 +2996,10 @@ theorem poly_reducing_from_i32_array_fc
       (fun (iter1, out1) =>
         libcrux_iot_ml_kem.polynomial.PolynomialRingElement.reducing_from_i32_array_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) a iter1 out1)
-      (β := L6_7_FC.Acc)
+      (β := SubtractReduceFC.Acc)
       out
       0#usize 16#usize
-      (L6_7_FC.inv a out)
+      (SubtractReduceFC.inv a out)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -3014,7 +3014,7 @@ theorem poly_reducing_from_i32_array_fc
     -- AND the per-lane I16 bound `|r[j][ℓ]| ≤ 4993` for all j < 16.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L6_7_FC.inv a out 16#usize r).holds := by
+    have h_inv_holds : (SubtractReduceFC.inv a out 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
@@ -3025,7 +3025,7 @@ theorem poly_reducing_from_i32_array_fc
         ∧ (∀ j : Nat, j < (16#usize : Std.Usize).val → ∀ ℓ : Nat, ℓ < 16 →
             ((r.coefficients.val[j]!).elements.val[ℓ]!).val.natAbs ≤ 4993) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L6_7_FC.inv] using h_inv_holds
+             SubtractReduceFC.inv] using h_inv_holds
     obtain ⟨h_done, _h_undone, h_bnd⟩ := h_inv
     refine ⟨?_, ?_⟩
     · -- Goal: `lift_poly_mont r = Spec.poly_reducing_from_i32_array_pure a`.
@@ -3065,12 +3065,12 @@ theorem poly_reducing_from_i32_array_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L6_7_FC.step_post a out k (.cont (iter', acc')) := by
+    · have hP : SubtractReduceFC.step_post a out k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_7_FC.step_post] using hP
-    · have hP : L6_7_FC.step_post a out k (.done y) := by
+      simpa [SubtractReduceFC.step_post] using hP
+    · have hP : SubtractReduceFC.step_post a out k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L6_7_FC.step_post] using hP
+      simpa [SubtractReduceFC.step_post] using hP
 
 
 end libcrux_iot_ml_kem.Polynomial.PolyOpsFc

@@ -10,7 +10,7 @@
   `mont_reduce_pure`-per-lane `List.range`-foldl characterization plus
   the running bound `≤ accumulator[n] + k·2^25`.
 
-  Mirrors `L7_1b_FC.row_i_inv` / `compute_As_plus_e_loop1_loop0_fc` — the
+  Mirrors `Stage2UseCacheFC.row_i_inv` / `compute_As_plus_e_loop1_loop0_fc` — the
   2-conjunct, accumulator-only (no cache) precedent — but drops the
   matrix-row index (two source arrays `secret_as_ntt[c]`, `u_as_ntt[c]`
   indexed directly by `c`), and uses the plain
@@ -60,16 +60,16 @@ private theorem triple_of_ok_fc {α : Type} {x : Result α} {v : α}
 
 /-! ## S1 — the corrected loop FC for `matrix.compute_message_loop`.
 
-    Namespace `L7_4_FC` provides the loop invariant + step-post predicates
+    Namespace `S1LoopFC` provides the loop invariant + step-post predicates
     used to characterize `matrix.compute_message_loop` via
     `loop_range_spec_usize`. The accumulator state is a single I32[256]
     array (no cache) — `Acc := Std.Array Std.I32 256#usize`. -/
 
-namespace L7_4_FC
+namespace S1LoopFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
-abbrev Acc := L6_3_FC.Acc
+abbrev Acc := UseCacheFC.Acc
 
 /-- 2-conjunct invariant for the message-accumulation loop. Tracks:
     (1) accumulator characterization: for each (chunk j, lane ℓ) in
@@ -78,7 +78,7 @@ abbrev Acc := L6_3_FC.Acc
         `secret_as_ntt[c] ⊛ u_as_ntt[c]` from columns `[0, k)`.
     (2) accumulator bound: `|acc.val[n]| ≤ |acc_init.val[n]| + k · 2^25`.
 
-    Cache-free analog of `L7_1b_FC.row_i_inv` with the
+    Cache-free analog of `Stage2UseCacheFC.row_i_inv` with the
     matrix-row index dropped: both source arrays are indexed directly by
     the column `c`. -/
 def loop_inv {K : Std.Usize}
@@ -122,14 +122,14 @@ def step_post {K : Std.Usize}
         ∧ (loop_inv secret_as_ntt u_as_ntt acc_init iter'.start acc').holds
   | .done y => (loop_inv secret_as_ntt u_as_ntt acc_init K y).holds
 
-end L7_4_FC
+end S1LoopFC
 
 -- Memory hygiene (rule 1 / SKILL §5.7 Idiom 2). Mirrors `L7_1b_irreducible`
 -- — heavy POST predicates are made locally irreducible
 -- across the step lemma + outer Triple so that elaboration does not
 -- whnf-explode through the 2-conjunct `loop_inv` body or the nested
 -- `∀ j, ∀ ℓ` accumulator characterization. -- we do NOT mark
--- `L7_4_FC.loop_inv` / `step_post` irreducible.
+-- `S1LoopFC.loop_inv` / `step_post` irreducible.
 section L7_4_irreducible
 attribute [local irreducible] accumulating_ntt_multiply_poly_post
 attribute [local irreducible] Spec.ntt_multiply_pure_no_acc
@@ -152,21 +152,21 @@ private theorem compute_message_loop_step_lemma_fc
     (secret_as_ntt u_as_ntt : Std.Array
                   (libcrux_iot_ml_kem.polynomial.PolynomialRingElement
                     libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector) K)
-    (acc_init : L7_4_FC.Acc)
+    (acc_init : S1LoopFC.Acc)
     (h_secret_bnd : ∀ k : Fin K.val, ∀ i j : Fin 16,
         ((secret_as_ntt.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_u_bnd : ∀ k : Fin K.val, ∀ i j : Fin 16,
         ((u_as_ntt.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (h_acc_bnd : ∀ n : Fin 256,
         (acc_init.val[n.val]!).val.natAbs + K.val * 2^25 ≤ 2^30)
-    (acc : L7_4_FC.Acc)
+    (acc : S1LoopFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ K.val)
-    (h_inv : (L7_4_FC.loop_inv secret_as_ntt u_as_ntt acc_init k acc).holds) :
+    (h_inv : (S1LoopFC.loop_inv secret_as_ntt u_as_ntt acc_init k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.matrix.compute_message_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) secret_as_ntt u_as_ntt
       { start := k, «end» := K } acc
-    ⦃ ⇓ r => ⌜ L7_4_FC.step_post secret_as_ntt u_as_ntt acc_init k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ S1LoopFC.step_post secret_as_ntt u_as_ntt acc_init k r ⌝ ⦄ := by
   have h_secret_len : secret_as_ntt.length = K.val := Std.Array.length_eq secret_as_ntt
   have h_u_len : u_as_ntt.length = K.val := Std.Array.length_eq u_as_ntt
   have h_acc_len : acc.length = 256 := Std.Array.length_eq acc
@@ -264,13 +264,13 @@ private theorem compute_message_loop_step_lemma_fc
       rfl
     apply triple_of_ok_fc h_body
     -- (6) Discharge the step_post.
-    show L7_4_FC.step_post secret_as_ntt u_as_ntt acc_init k
+    show S1LoopFC.step_post secret_as_ntt u_as_ntt acc_init k
       (.cont (({ start := s_iter, «end» := K }
                 : CoreModels.core.ops.range.Range Std.Usize), acc1))
     refine ⟨h_lt, rfl, hs_iter_val, ?_⟩
     -- (7) Re-establish `loop_inv` at s_iter (= k+1).
-    show (L7_4_FC.loop_inv secret_as_ntt u_as_ntt acc_init s_iter acc1).holds
-    unfold L7_4_FC.loop_inv
+    show (S1LoopFC.loop_inv secret_as_ntt u_as_ntt acc_init s_iter acc1).holds
+    unfold S1LoopFC.loop_inv
     have h_inv_pure :
         (∀ j : Nat, j < 16 → ∀ ℓ : Nat, ℓ < 16 →
           Spec.mont_reduce_pure (lift_fe_int (acc1.val[16 * j + ℓ]!).val)
@@ -378,9 +378,9 @@ private theorem compute_message_loop_step_lemma_fc
       rw [hv_iter_eq]
       rfl
     apply triple_of_ok_fc h_body
-    show L7_4_FC.step_post secret_as_ntt u_as_ntt acc_init k (.done acc)
-    show (L7_4_FC.loop_inv secret_as_ntt u_as_ntt acc_init K acc).holds
-    unfold L7_4_FC.loop_inv
+    show S1LoopFC.step_post secret_as_ntt u_as_ntt acc_init k (.done acc)
+    show (S1LoopFC.loop_inv secret_as_ntt u_as_ntt acc_init K acc).holds
+    unfold S1LoopFC.loop_inv
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < 16 → ∀ ℓ : Nat, ℓ < 16 →
@@ -451,7 +451,7 @@ theorem compute_message_loop_fc
     libcrux_iot_ml_kem.matrix.compute_message_loop
       (vectortraitsOperationsInst := portable_ops_inst)
       { start := 0#usize, «end» := K } secret_as_ntt u_as_ntt accumulator
-    ⦃ ⇓ acc2 => ⌜ (L7_4_FC.loop_inv secret_as_ntt u_as_ntt accumulator K acc2).holds ⌝ ⦄ := by
+    ⦃ ⇓ acc2 => ⌜ (S1LoopFC.loop_inv secret_as_ntt u_as_ntt accumulator K acc2).holds ⌝ ⦄ := by
   unfold libcrux_iot_ml_kem.matrix.compute_message_loop
   apply Std.Do.Triple.of_entails_right _
     (libcrux_iot_ml_kem.Util.LoopSpecs.loop_range_spec_usize
@@ -459,10 +459,10 @@ theorem compute_message_loop_fc
         libcrux_iot_ml_kem.matrix.compute_message_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) secret_as_ntt u_as_ntt
           iter1 acc1)
-      (β := L7_4_FC.Acc)
+      (β := S1LoopFC.Acc)
       accumulator
       0#usize K
-      (fun k acc => L7_4_FC.loop_inv secret_as_ntt u_as_ntt accumulator k acc)
+      (fun k acc => S1LoopFC.loop_inv secret_as_ntt u_as_ntt accumulator k acc)
       (by
         have h0 : (0#usize : Std.Usize).val = 0 := rfl
         rw [h0]; exact Nat.zero_le _)
@@ -485,9 +485,9 @@ theorem compute_message_loop_fc
   · -- Post entailment: the final invariant holds at K.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L7_4_FC.loop_inv secret_as_ntt u_as_ntt accumulator K r).holds := by
+    have h_inv_holds : (S1LoopFC.loop_inv secret_as_ntt u_as_ntt accumulator K r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
-    show (L7_4_FC.loop_inv secret_as_ntt u_as_ntt accumulator K r).holds
+    show (S1LoopFC.loop_inv secret_as_ntt u_as_ntt accumulator K r).holds
     exact h_inv_holds
   · -- Step entailment.
     intro acc k _h_ge h_le hinv
@@ -497,14 +497,14 @@ theorem compute_message_loop_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L7_4_FC.step_post secret_as_ntt u_as_ntt accumulator k
+    · have hP : S1LoopFC.step_post secret_as_ntt u_as_ntt accumulator k
                   (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L7_4_FC.step_post] using hP
-    · have hP : L7_4_FC.step_post secret_as_ntt u_as_ntt accumulator k
+      simpa [S1LoopFC.step_post] using hP
+    · have hP : S1LoopFC.step_post secret_as_ntt u_as_ntt accumulator k
                   (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L7_4_FC.step_post] using hP
+      simpa [S1LoopFC.step_post] using hP
 
 end L7_4_irreducible
 
@@ -533,7 +533,7 @@ end L7_4_irreducible
     `Spec.multiply_ntts_pure_eq_chunked_no_acc` + `foldl_add_mul_distrib`)
     to `scaleZ 2285 (mont_strip_pure (poly_reducing(acc2)))` lane
     (`= mul_pure (loop_inv-foldl-sum) (lift_fe_mont 1353)` then `·2285`),
-    where the shared foldl-sum is exactly S1's `L7_4_FC.loop_inv`
+    where the shared foldl-sum is exactly S1's `S1LoopFC.loop_inv`
     characterization. -/
 theorem compute_message_recon_lane
     (p : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize)
@@ -756,8 +756,8 @@ private theorem multiply_vectors_eq {K : Std.Usize}
         have h_mult_eq : hacspec_ml_kem.ntt.multiply_ntts a1 a2
             = .ok (Spec.multiply_ntts_pure a1 a2) := by
           unfold Spec.multiply_ntts_pure
-          rw [L6_3b_FC.multiply_ntts_eq_pure_array]
-        have h_add_eq := L7_1d_FC.matrix_add_polynomials_eq_ok
+          rw [HelpersFC.multiply_ntts_eq_pure_array]
+        have h_add_eq := Stage4MatrixAddFC.matrix_add_polynomials_eq_ok
           (vec_loop_result_at_step secret_as_ntt u_as_ntt k.val)
           (Spec.multiply_ntts_pure a1 a2)
         set new_acc : Std.Array hacspec_ml_kem.parameters.FieldElement 256#usize :=
@@ -1178,7 +1178,7 @@ theorem compute_message_acc_bridge {K : Std.Usize}
         ((secret_as_ntt.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
     (_h_u_bnd : ∀ k : Fin K.val, ∀ i j : Fin 16,
         ((u_as_ntt.val[k.val]!.coefficients.val[i.val]!).elements.val[j.val]!).val.natAbs ≤ 3328)
-    (h_char : (L7_4_FC.loop_inv secret_as_ntt u_as_ntt acc_init K acc2).holds) :
+    (h_char : (S1LoopFC.loop_inv secret_as_ntt u_as_ntt acc_init K acc2).holds) :
     hacspec_ml_kem.matrix.multiply_vectors (lift_vec secret_as_ntt) (lift_vec u_as_ntt)
       = .ok (scaleZ 2285 (Impl.mont_strip_pure
                (Spec.poly_reducing_from_i32_array_pure (Aeneas.Std.Array.to_slice acc2)))) := by

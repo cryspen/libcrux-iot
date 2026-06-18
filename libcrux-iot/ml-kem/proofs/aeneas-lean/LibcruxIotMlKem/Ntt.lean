@@ -180,7 +180,7 @@ theorem flatten_chunks_eq_lift_poly_fc
     3× usize_add, ntt_layer_1_step) using `polynomial.zeta_fc` and
     `ntt_layer_1_step_fc` (both `@[spec]`-tagged). -/
 
-namespace L3_1_FC
+namespace Layer1FC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -231,7 +231,7 @@ def step_post
         ∧ (inv zeta_i_0 re iter'.start acc').holds
   | .done y => (inv zeta_i_0 re 16#usize y).holds
 
-end L3_1_FC
+end Layer1FC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma. Given a valid loop state `(acc, k)` with
@@ -244,14 +244,14 @@ theorem ntt_at_layer_1_step_lemma_fc
     (h_pre : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
       ((re.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 29439)
     (h_zeta_bnd : zeta_i_0.val + 64 ≤ 127)
-    (acc : L3_1_FC.Acc)
+    (acc : Layer1FC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L3_1_FC.inv zeta_i_0 re k acc).holds) :
+    (h_inv : (Layer1FC.inv zeta_i_0 re k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_1_loop.body
       (vectortraitsOperationsInst := portable_ops_inst)
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_1_FC.step_post zeta_i_0 re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer1FC.step_post zeta_i_0 re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -273,7 +273,7 @@ theorem ntt_at_layer_1_step_lemma_fc
     have h_z_max : acc.1.val + (1#usize : Std.Usize).val ≤ Std.Usize.max := by
       rw [h_um]; scalar_tac
     obtain ⟨zi1, h_zi1_eq, h_zi1_val⟩ :=
-      L3_1_FC.usize_add_ok_eq acc.1 1#usize h_z_max
+      Layer1FC.usize_add_ok_eq acc.1 1#usize h_z_max
     have h_zi1_val_arith : zi1.val = acc.1.val + 1 := by rw [h_zi1_val, h_um]
     have h_zi1_lt : zi1.val < 128 := by
       rw [h_zi1_val_arith, h_zeta_acc]; omega
@@ -296,7 +296,7 @@ theorem ntt_at_layer_1_step_lemma_fc
     have h_zi3_max : zi1.val + (1#usize : Std.Usize).val ≤ Std.Usize.max := by
       rw [h_um]; scalar_tac
     obtain ⟨zi3, h_zi3_eq, h_zi3_val⟩ :=
-      L3_1_FC.usize_add_ok_eq zi1 1#usize h_zi3_max
+      Layer1FC.usize_add_ok_eq zi1 1#usize h_zi3_max
     have h_zi3_val_arith : zi3.val = acc.1.val + 2 := by
       rw [h_zi3_val, h_um, h_zi1_val_arith]
     have h_zi3_lt : zi3.val < 128 := by
@@ -308,7 +308,7 @@ theorem ntt_at_layer_1_step_lemma_fc
     have h_zi5_max : zi1.val + (2#usize : Std.Usize).val ≤ Std.Usize.max := by
       rw [h_um2]; scalar_tac
     obtain ⟨zi5, h_zi5_eq, h_zi5_val⟩ :=
-      L3_1_FC.usize_add_ok_eq zi1 2#usize h_zi5_max
+      Layer1FC.usize_add_ok_eq zi1 2#usize h_zi5_max
     have h_zi5_val_arith : zi5.val = acc.1.val + 3 := by
       rw [h_zi5_val, h_um2, h_zi1_val_arith]
     have h_zi5_lt : zi5.val < 128 := by
@@ -320,7 +320,7 @@ theorem ntt_at_layer_1_step_lemma_fc
     have h_zi7_max : zi1.val + (3#usize : Std.Usize).val ≤ Std.Usize.max := by
       rw [h_um3]; scalar_tac
     obtain ⟨zi7, h_zi7_eq, h_zi7_val⟩ :=
-      L3_1_FC.usize_add_ok_eq zi1 3#usize h_zi7_max
+      Layer1FC.usize_add_ok_eq zi1 3#usize h_zi7_max
     have h_zi7_val_arith : zi7.val = acc.1.val + 4 := by
       rw [h_zi7_val, h_um3, h_zi1_val_arith]
     have h_zi7_lt : zi7.val < 128 := by
@@ -342,7 +342,7 @@ theorem ntt_at_layer_1_step_lemma_fc
       triple_exists_ok_fc (ntt_layer_1_step_fc t z1 z2 z3 z4
         ⟨h_z1_bd, h_z2_bd, h_z3_bd, h_z4_bd⟩ h_t_bd)
     -- Compose entire body.
-    set acc' : L3_1_FC.Acc := (zi7, { coefficients := acc.2.coefficients.set k t1 })
+    set acc' : Layer1FC.Acc := (zi7, { coefficients := acc.2.coefficients.set k t1 })
       with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_1_loop.body
@@ -376,13 +376,13 @@ theorem ntt_at_layer_1_step_lemma_fc
             = _
       rw [h_t1_eq]; rfl
     apply triple_of_ok_fc h_body
-    show L3_1_FC.step_post zeta_i_0 re k
+    show Layer1FC.step_post zeta_i_0 re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L3_1_FC.step_post
+    unfold Layer1FC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     -- Invariant at (s, acc').
-    show (L3_1_FC.inv zeta_i_0 re s acc').holds
+    show (Layer1FC.inv zeta_i_0 re s acc').holds
     have h_inv_pure :
         acc'.1.val = zeta_i_0.val + 4 * s.val
         ∧ (∀ j : Nat, j < s.val →
@@ -480,9 +480,9 @@ theorem ntt_at_layer_1_step_lemma_fc
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_fc h_body
-    show L3_1_FC.step_post zeta_i_0 re k (.done acc)
-    unfold L3_1_FC.step_post
-    show (L3_1_FC.inv zeta_i_0 re 16#usize acc).holds
+    show Layer1FC.step_post zeta_i_0 re k (.done acc)
+    unfold Layer1FC.step_post
+    show (Layer1FC.inv zeta_i_0 re 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         acc.1.val = zeta_i_0.val + 4 * (16#usize : Std.Usize).val
@@ -536,10 +536,10 @@ theorem ntt_at_layer_1_portable_fc
         libcrux_iot_ml_kem.ntt.ntt_at_layer_1_loop.body
           (vectortraitsOperationsInst := portable_ops_inst)
           iter1 acc1.1 acc1.2)
-      (β := L3_1_FC.Acc)
+      (β := Layer1FC.Acc)
       (zeta_i, re)
       0#usize 16#usize
-      (L3_1_FC.inv zeta_i re)
+      (Layer1FC.inv zeta_i re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -561,7 +561,7 @@ theorem ntt_at_layer_1_portable_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     -- Manually extract the inv payload (avoid `simp` aggression on `[!]`).
-    have h_inv_holds : (L3_1_FC.inv zeta_i re 16#usize r).holds := by
+    have h_inv_holds : (Layer1FC.inv zeta_i re 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         r.1.val = zeta_i.val + 4 * (16#usize : Std.Usize).val
@@ -576,7 +576,7 @@ theorem ntt_at_layer_1_portable_fc
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
             r.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L3_1_FC.inv] using h_inv_holds
+             Layer1FC.inv] using h_inv_holds
     obtain ⟨_h_zeta_eq, h_done, _h_undone⟩ := h_inv
     have h16 : (16#usize : Std.Usize).val = 16 := rfl
     -- `Spec.ntt_layer_1_pure (lift_poly re) zeta_i` unfolds to
@@ -620,12 +620,12 @@ theorem ntt_at_layer_1_portable_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_1_FC.step_post zeta_i re k (.cont (iter', acc')) := by
+    · have hP : Layer1FC.step_post zeta_i re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_1_FC.step_post] using hP
-    · have hP : L3_1_FC.step_post zeta_i re k (.done y) := by
+      simpa [Layer1FC.step_post] using hP
+    · have hP : Layer1FC.step_post zeta_i re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_1_FC.step_post] using hP
+      simpa [Layer1FC.step_post] using hP
 
 /-! ### L3.2.A — Loop scaffolding for `ntt_at_layer_2_portable_fc`.
 
@@ -642,11 +642,11 @@ theorem ntt_at_layer_1_portable_fc
     1× usize_add, ntt_layer_2_step) using `polynomial.zeta_fc` and
     `ntt_layer_2_step_fc` (both `@[spec]`-tagged). -/
 
-namespace L3_2_FC
+namespace Layer2FC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
-/-- Local `usize_add_ok_eq` helper (mirrors `L3_1_FC.usize_add_ok_eq`). -/
+/-- Local `usize_add_ok_eq` helper (mirrors `Layer1FC.usize_add_ok_eq`). -/
 theorem usize_add_ok_eq (x y : Std.Usize)
     (h_max : x.val + y.val ≤ Std.Usize.max) :
     ∃ z : Std.Usize, (x + y : Result Std.Usize) = .ok z ∧ z.val = x.val + y.val := by
@@ -691,7 +691,7 @@ def step_post
         ∧ (inv zeta_i_0 re iter'.start acc').holds
   | .done y => (inv zeta_i_0 re 16#usize y).holds
 
-end L3_2_FC
+end Layer2FC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for layer 2. Given a valid loop state
@@ -704,14 +704,14 @@ theorem ntt_at_layer_2_step_lemma_fc
     (h_pre : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
       ((re.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 29439)
     (h_zeta_bnd : zeta_i_0.val + 32 ≤ 127)
-    (acc : L3_2_FC.Acc)
+    (acc : Layer2FC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L3_2_FC.inv zeta_i_0 re k acc).holds) :
+    (h_inv : (Layer2FC.inv zeta_i_0 re k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_2_loop.body
       (vectortraitsOperationsInst := portable_ops_inst)
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_2_FC.step_post zeta_i_0 re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer2FC.step_post zeta_i_0 re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -731,7 +731,7 @@ theorem ntt_at_layer_2_step_lemma_fc
     have h_z_max : acc.1.val + (1#usize : Std.Usize).val ≤ Std.Usize.max := by
       rw [h_um]; scalar_tac
     obtain ⟨zi1, h_zi1_eq, h_zi1_val⟩ :=
-      L3_2_FC.usize_add_ok_eq acc.1 1#usize h_z_max
+      Layer2FC.usize_add_ok_eq acc.1 1#usize h_z_max
     have h_zi1_val_arith : zi1.val = acc.1.val + 1 := by rw [h_zi1_val, h_um]
     have h_zi1_lt : zi1.val < 128 := by
       rw [h_zi1_val_arith, h_zeta_acc]; omega
@@ -754,7 +754,7 @@ theorem ntt_at_layer_2_step_lemma_fc
     have h_zi3_max : zi1.val + (1#usize : Std.Usize).val ≤ Std.Usize.max := by
       rw [h_um]; scalar_tac
     obtain ⟨zi3, h_zi3_eq, h_zi3_val⟩ :=
-      L3_2_FC.usize_add_ok_eq zi1 1#usize h_zi3_max
+      Layer2FC.usize_add_ok_eq zi1 1#usize h_zi3_max
     have h_zi3_val_arith : zi3.val = acc.1.val + 2 := by
       rw [h_zi3_val, h_um, h_zi1_val_arith]
     have h_zi3_lt : zi3.val < 128 := by
@@ -776,7 +776,7 @@ theorem ntt_at_layer_2_step_lemma_fc
       triple_exists_ok_fc (ntt_layer_2_step_fc t z1 z2
         ⟨h_z1_bd, h_z2_bd⟩ h_t_bd)
     -- Compose entire body.
-    set acc' : L3_2_FC.Acc := (zi3, { coefficients := acc.2.coefficients.set k t1 })
+    set acc' : Layer2FC.Acc := (zi3, { coefficients := acc.2.coefficients.set k t1 })
       with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_2_loop.body
@@ -809,13 +809,13 @@ theorem ntt_at_layer_2_step_lemma_fc
             = _
       rw [h_t1_eq]; rfl
     apply triple_of_ok_fc h_body
-    show L3_2_FC.step_post zeta_i_0 re k
+    show Layer2FC.step_post zeta_i_0 re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L3_2_FC.step_post
+    unfold Layer2FC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     -- Invariant at (s, acc').
-    show (L3_2_FC.inv zeta_i_0 re s acc').holds
+    show (Layer2FC.inv zeta_i_0 re s acc').holds
     have h_inv_pure :
         acc'.1.val = zeta_i_0.val + 2 * s.val
         ∧ (∀ j : Nat, j < s.val →
@@ -899,9 +899,9 @@ theorem ntt_at_layer_2_step_lemma_fc
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_fc h_body
-    show L3_2_FC.step_post zeta_i_0 re k (.done acc)
-    unfold L3_2_FC.step_post
-    show (L3_2_FC.inv zeta_i_0 re 16#usize acc).holds
+    show Layer2FC.step_post zeta_i_0 re k (.done acc)
+    unfold Layer2FC.step_post
+    show (Layer2FC.inv zeta_i_0 re 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         acc.1.val = zeta_i_0.val + 2 * (16#usize : Std.Usize).val
@@ -953,10 +953,10 @@ theorem ntt_at_layer_2_portable_fc
         libcrux_iot_ml_kem.ntt.ntt_at_layer_2_loop.body
           (vectortraitsOperationsInst := portable_ops_inst)
           iter1 acc1.1 acc1.2)
-      (β := L3_2_FC.Acc)
+      (β := Layer2FC.Acc)
       (zeta_i, re)
       0#usize 16#usize
-      (L3_2_FC.inv zeta_i re)
+      (Layer2FC.inv zeta_i re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -977,7 +977,7 @@ theorem ntt_at_layer_2_portable_fc
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L3_2_FC.inv zeta_i re 16#usize r).holds := by
+    have h_inv_holds : (Layer2FC.inv zeta_i re 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         r.1.val = zeta_i.val + 2 * (16#usize : Std.Usize).val
@@ -990,7 +990,7 @@ theorem ntt_at_layer_2_portable_fc
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
             r.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L3_2_FC.inv] using h_inv_holds
+             Layer2FC.inv] using h_inv_holds
     obtain ⟨_h_zeta_eq, h_done, _h_undone⟩ := h_inv
     have h16 : (16#usize : Std.Usize).val = 16 := rfl
     unfold Spec.ntt_layer_2_pure
@@ -1025,12 +1025,12 @@ theorem ntt_at_layer_2_portable_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_2_FC.step_post zeta_i re k (.cont (iter', acc')) := by
+    · have hP : Layer2FC.step_post zeta_i re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_2_FC.step_post] using hP
-    · have hP : L3_2_FC.step_post zeta_i re k (.done y) := by
+      simpa [Layer2FC.step_post] using hP
+    · have hP : Layer2FC.step_post zeta_i re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_2_FC.step_post] using hP
+      simpa [Layer2FC.step_post] using hP
 
 /-! ### L3.3'.A — Loop scaffolding for `ntt_at_layer_3_portable_fc`.
 
@@ -1045,11 +1045,11 @@ theorem ntt_at_layer_2_portable_fc
     The step lemma chains the body's 4 sub-ops (zeta_i+1, index_mut, 1× zeta,
     ntt_layer_3_step) using `polynomial.zeta_fc` and `ntt_layer_3_step_fc`. -/
 
-namespace L3_3_FC
+namespace Layer3FC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
-/-- Local `usize_add_ok_eq` helper (mirrors `L3_2_FC.usize_add_ok_eq`). -/
+/-- Local `usize_add_ok_eq` helper (mirrors `Layer2FC.usize_add_ok_eq`). -/
 theorem usize_add_ok_eq (x y : Std.Usize)
     (h_max : x.val + y.val ≤ Std.Usize.max) :
     ∃ z : Std.Usize, (x + y : Result Std.Usize) = .ok z ∧ z.val = x.val + y.val := by
@@ -1093,7 +1093,7 @@ def step_post
         ∧ (inv zeta_i_0 re iter'.start acc').holds
   | .done y => (inv zeta_i_0 re 16#usize y).holds
 
-end L3_3_FC
+end Layer3FC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for layer 3. Given a valid loop state
@@ -1106,14 +1106,14 @@ theorem ntt_at_layer_3_step_lemma_fc
     (h_pre : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
       ((re.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 29439)
     (h_zeta_bnd : zeta_i_0.val + 16 ≤ 127)
-    (acc : L3_3_FC.Acc)
+    (acc : Layer3FC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (16#usize : Std.Usize).val)
-    (h_inv : (L3_3_FC.inv zeta_i_0 re k acc).holds) :
+    (h_inv : (Layer3FC.inv zeta_i_0 re k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
       (vectortraitsOperationsInst := portable_ops_inst)
       { start := k, «end» := 16#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_3_FC.step_post zeta_i_0 re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer3FC.step_post zeta_i_0 re k r ⌝ ⦄ := by
   have h16 : (16#usize : Std.Usize).val = 16 := rfl
   have h_coef_len : acc.2.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -1133,7 +1133,7 @@ theorem ntt_at_layer_3_step_lemma_fc
     have h_z_max : acc.1.val + (1#usize : Std.Usize).val ≤ Std.Usize.max := by
       rw [h_um]; scalar_tac
     obtain ⟨zi1, h_zi1_eq, h_zi1_val⟩ :=
-      L3_3_FC.usize_add_ok_eq acc.1 1#usize h_z_max
+      Layer3FC.usize_add_ok_eq acc.1 1#usize h_z_max
     have h_zi1_val_arith : zi1.val = acc.1.val + 1 := by rw [h_zi1_val, h_um]
     have h_zi1_lt : zi1.val < 128 := by
       rw [h_zi1_val_arith, h_zeta_acc]; omega
@@ -1165,7 +1165,7 @@ theorem ntt_at_layer_3_step_lemma_fc
     obtain ⟨t1, h_t1_eq, h_t1_lift⟩ :=
       triple_exists_ok_fc (ntt_layer_3_step_fc t z1 h_z1_bd h_t_bd)
     -- Compose entire body.
-    set acc' : L3_3_FC.Acc := (zi1, { coefficients := acc.2.coefficients.set k t1 })
+    set acc' : Layer3FC.Acc := (zi1, { coefficients := acc.2.coefficients.set k t1 })
       with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
@@ -1198,13 +1198,13 @@ theorem ntt_at_layer_3_step_lemma_fc
             = _
       rw [h_t1_eq]; rfl
     apply triple_of_ok_fc h_body
-    show L3_3_FC.step_post zeta_i_0 re k
+    show Layer3FC.step_post zeta_i_0 re k
       (.cont (({ start := s, «end» := 16#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L3_3_FC.step_post
+    unfold Layer3FC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     -- Invariant at (s, acc').
-    show (L3_3_FC.inv zeta_i_0 re s acc').holds
+    show (Layer3FC.inv zeta_i_0 re s acc').holds
     have h_inv_pure :
         acc'.1.val = zeta_i_0.val + s.val
         ∧ (∀ j : Nat, j < s.val →
@@ -1283,9 +1283,9 @@ theorem ntt_at_layer_3_step_lemma_fc
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_fc h_body
-    show L3_3_FC.step_post zeta_i_0 re k (.done acc)
-    unfold L3_3_FC.step_post
-    show (L3_3_FC.inv zeta_i_0 re 16#usize acc).holds
+    show Layer3FC.step_post zeta_i_0 re k (.done acc)
+    unfold Layer3FC.step_post
+    show (Layer3FC.inv zeta_i_0 re 16#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         acc.1.val = zeta_i_0.val + (16#usize : Std.Usize).val
@@ -1334,10 +1334,10 @@ theorem ntt_at_layer_3_portable_fc
         libcrux_iot_ml_kem.ntt.ntt_at_layer_3_loop.body
           (vectortraitsOperationsInst := portable_ops_inst)
           iter1 acc1.1 acc1.2)
-      (β := L3_3_FC.Acc)
+      (β := Layer3FC.Acc)
       (zeta_i, re)
       0#usize 16#usize
-      (L3_3_FC.inv zeta_i re)
+      (Layer3FC.inv zeta_i re)
       (by decide : (0#usize : Std.Usize).val ≤ (16#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -1358,7 +1358,7 @@ theorem ntt_at_layer_3_portable_fc
   · -- Post entailment: at k=16, the invariant gives all 16 FC equations.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L3_3_FC.inv zeta_i re 16#usize r).holds := by
+    have h_inv_holds : (Layer3FC.inv zeta_i re 16#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         r.1.val = zeta_i.val + (16#usize : Std.Usize).val
@@ -1370,7 +1370,7 @@ theorem ntt_at_layer_3_portable_fc
         ∧ (∀ j : Nat, (16#usize : Std.Usize).val ≤ j → j < 16 →
             r.2.coefficients.val[j]! = re.coefficients.val[j]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L3_3_FC.inv] using h_inv_holds
+             Layer3FC.inv] using h_inv_holds
     obtain ⟨_h_zeta_eq, h_done, _h_undone⟩ := h_inv
     have h16 : (16#usize : Std.Usize).val = 16 := rfl
     unfold Spec.ntt_layer_3_pure
@@ -1403,12 +1403,12 @@ theorem ntt_at_layer_3_portable_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_3_FC.step_post zeta_i re k (.cont (iter', acc')) := by
+    · have hP : Layer3FC.step_post zeta_i re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_3_FC.step_post] using hP
-    · have hP : L3_3_FC.step_post zeta_i re k (.done y) := by
+      simpa [Layer3FC.step_post] using hP
+    · have hP : Layer3FC.step_post zeta_i re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_3_FC.step_post] using hP
+      simpa [Layer3FC.step_post] using hP
 
 /-! ### L3.7.A — Loop scaffolding for `ntt_at_layer_7_portable_fc`.
 
@@ -1427,11 +1427,11 @@ theorem ntt_at_layer_3_portable_fc
       (c) chunks `j` for `k ≤ j < 8`: unchanged.
       (d) chunks `j+8` for `k ≤ j < 8`: unchanged. -/
 
-namespace L3_7_FC
+namespace Layer7FC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
-/-- Local `usize_add_ok_eq` helper (mirrors `L3_2_FC.usize_add_ok_eq`). -/
+/-- Local `usize_add_ok_eq` helper (mirrors `Layer2FC.usize_add_ok_eq`). -/
 theorem usize_add_ok_eq (x y : Std.Usize)
     (h_max : x.val + y.val ≤ Std.Usize.max) :
     ∃ z : Std.Usize, (x + y : Result Std.Usize) = .ok z ∧ z.val = x.val + y.val := by
@@ -1552,7 +1552,7 @@ def step_post
         ∧ (inv re iter'.start acc').holds
   | .done y => (inv re 8#usize y).holds
 
-end L3_7_FC
+end Layer7FC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for layer 7. Given a valid loop state
@@ -1563,14 +1563,14 @@ theorem ntt_at_layer_7_step_lemma_fc
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector)
     (h_pre : ∀ chunk : Nat, chunk < 16 → ∀ ℓ : Nat, ℓ < 16 →
       ((re.coefficients.val[chunk]!).elements.val[ℓ]!).val.natAbs ≤ 20)
-    (acc : L3_7_FC.Acc)
+    (acc : Layer7FC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ (8#usize : Std.Usize).val)
-    (h_inv : (L3_7_FC.inv re k acc).holds) :
+    (h_inv : (Layer7FC.inv re k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
       (vectortraitsOperationsInst := portable_ops_inst) 8#usize
       { start := k, «end» := 8#usize } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_7_FC.step_post re k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer7FC.step_post re k r ⌝ ⦄ := by
   have h8 : (8#usize : Std.Usize).val = 8 := rfl
   have h_coef_len : acc.1.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -1582,13 +1582,13 @@ theorem ntt_at_layer_7_step_lemma_fc
     have hk_8 : k.val < 8 := by rw [h8] at h_lt; exact h_lt
     have hk_lt_16 : k.val < 16 := by omega
     have hk8_lt_16 : k.val + 8 < 16 := by omega
-    obtain ⟨s, hs_val, h_iter_some⟩ := L3_7_FC.iter_next8_some_eq k h_lt
+    obtain ⟨s, hs_val, h_iter_some⟩ := Layer7FC.iter_next8_some_eq k h_lt
     -- (1) `j + 8 = i`. Bound: k.val + 8 ≤ 15.
     have h_um8 : (8#usize : Std.Usize).val = 8 := rfl
     have h_i_max : k.val + (8#usize : Std.Usize).val ≤ Std.Usize.max := by
       rw [h_um8]; scalar_tac
     obtain ⟨i_idx, h_i_eq, h_i_val⟩ :=
-      L3_7_FC.usize_add_ok_eq k 8#usize h_i_max
+      Layer7FC.usize_add_ok_eq k 8#usize h_i_max
     have h_i_val_arith : i_idx.val = k.val + 8 := by rw [h_i_val, h_um8]
     -- (2) `index_usize re.coefficients i` → `scratch1 = acc.1.coefs[k+8]`.
     set scratch1 : libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector :=
@@ -1767,7 +1767,7 @@ theorem ntt_at_layer_7_step_lemma_fc
     -- Compose acc'.
     set a2 : Std.Array libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector 16#usize :=
       a1.set i_idx t4 with ha2_def
-    set acc' : L3_7_FC.Acc := (({ coefficients := a2 }
+    set acc' : Layer7FC.Acc := (({ coefficients := a2 }
               : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
                   libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector),
             scratch2) with hacc'_def
@@ -1826,12 +1826,12 @@ theorem ntt_at_layer_7_step_lemma_fc
       rw [h_t4_eq]; simp only [Aeneas.Std.bind_tc_ok]
       rfl
     apply triple_of_ok_fc h_body
-    show L3_7_FC.step_post re k
+    show Layer7FC.step_post re k
       (.cont (({ start := s, «end» := 8#usize }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L3_7_FC.step_post
+    unfold Layer7FC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
-    show (L3_7_FC.inv re s acc').holds
+    show (Layer7FC.inv re s acc').holds
     -- Now the invariant at (s, acc'). Note acc'.1.coefficients = a2 = (a.set k t2).set i_idx t4.
     --   a.set k t2: at i=k.val it is t2, elsewhere it is a = acc.1.coefs.set i_idx t.
     --   .set i_idx t4: at i=i_idx.val it is t4, elsewhere unchanged.
@@ -2050,7 +2050,7 @@ theorem ntt_at_layer_7_step_lemma_fc
   · -- `None` branch: k ≥ 8, done.
     have hk_ge : k.val ≥ (8#usize : Std.Usize).val := Nat.not_lt.mp h_lt
     have hk_eq : k.val = 8 := by rw [h8] at hk_ge; omega
-    have h_iter_none := L3_7_FC.iter_next8_none_eq k hk_ge
+    have h_iter_none := Layer7FC.iter_next8_none_eq k hk_ge
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) 8#usize
@@ -2071,9 +2071,9 @@ theorem ntt_at_layer_7_step_lemma_fc
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_fc h_body
-    show L3_7_FC.step_post re k (.done acc)
-    unfold L3_7_FC.step_post
-    show (L3_7_FC.inv re 8#usize acc).holds
+    show Layer7FC.step_post re k (.done acc)
+    unfold Layer7FC.step_post
+    show (Layer7FC.inv re 8#usize acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         (∀ j : Nat, j < (8#usize : Std.Usize).val →
@@ -2161,10 +2161,10 @@ theorem ntt_at_layer_7_portable_fc
         libcrux_iot_ml_kem.ntt.ntt_at_layer_7_loop.body
           (vectortraitsOperationsInst := portable_ops_inst) 8#usize
           iter1 acc1.1 acc1.2)
-      (β := L3_7_FC.Acc)
+      (β := Layer7FC.Acc)
       (re, scratch)
       0#usize 8#usize
-      (L3_7_FC.inv re)
+      (Layer7FC.inv re)
       (by decide : (0#usize : Std.Usize).val ≤ (8#usize : Std.Usize).val)
       (by
         show (pure _ : Result Prop).holds
@@ -2179,7 +2179,7 @@ theorem ntt_at_layer_7_portable_fc
   · -- Post entailment: at k=8, the invariant gives all FC equations.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L3_7_FC.inv re 8#usize r).holds := by
+    have h_inv_holds : (Layer7FC.inv re 8#usize r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         (∀ j : Nat, j < (8#usize : Std.Usize).val →
@@ -2199,7 +2199,7 @@ theorem ntt_at_layer_7_portable_fc
         ∧ (∀ j : Nat, (8#usize : Std.Usize).val ≤ j → j < 8 →
             r.1.coefficients.val[j + 8]! = re.coefficients.val[j + 8]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L3_7_FC.inv] using h_inv_holds
+             Layer7FC.inv] using h_inv_holds
     obtain ⟨h_done_a, h_done_b, _h_undone_a, _h_undone_b⟩ := h_inv
     have h8 : (8#usize : Std.Usize).val = 8 := rfl
     unfold Spec.ntt_at_layer_7_pure
@@ -2279,12 +2279,12 @@ theorem ntt_at_layer_7_portable_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_7_FC.step_post re k (.cont (iter', acc')) := by
+    · have hP : Layer7FC.step_post re k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_7_FC.step_post] using hP
-    · have hP : L3_7_FC.step_post re k (.done y) := by
+      simpa [Layer7FC.step_post] using hP
+    · have hP : Layer7FC.step_post re k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_7_FC.step_post] using hP
+      simpa [Layer7FC.step_post] using hP
 
 /-! ### L3.4_plus' — Helper namespace and lemmas.
 
@@ -2295,7 +2295,7 @@ theorem ntt_at_layer_7_portable_fc
     performs `(coefs[a], coefs[b]) := (coefs[a] + scratch2, coefs[a] - scratch2)`
     where `scratch2 := mont_mult(coefs[b], zeta_r)`. -/
 
-namespace L3_4_plus_FC
+namespace Layer4PlusFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -2381,7 +2381,7 @@ theorem iter_next_none_eq_gen (i e : Std.Usize)
   | .fail _, hT => exact absurd hT (by simp [Std.Do.Triple, Std.Do.WP.wp, PostCond.noThrow, PredTrans.apply])
   | .div, hT => exact absurd hT (by simp [Std.Do.Triple, Std.Do.WP.wp, PostCond.noThrow, PredTrans.apply])
 
-end L3_4_plus_FC
+end Layer4PlusFC
 
 set_option maxHeartbeats 16000000 in
 /-- L3.4_plus' keystone: full FC equation for `ntt.ntt_layer_int_vec_step`
@@ -2812,7 +2812,7 @@ theorem ntt_layer_int_vec_step_fc
 
 /-! ### L3.4_plus' — Inner loop scaffolding. -/
 
-namespace L3_4_plus_inner_FC
+namespace Layer4PlusInnerFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -2874,7 +2874,7 @@ def step_post
         ∧ (inv re0 a_offset b_offset zeta iter'.start acc').holds
   | .done y => (inv re0 a_offset b_offset zeta step_vec y).holds
 
-end L3_4_plus_inner_FC
+end Layer4PlusInnerFC
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for the inner loop. -/
@@ -2891,16 +2891,16 @@ theorem ntt_at_layer_4_plus_inner_step_lemma_fc
       ((re0.coefficients.val[a_offset.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 29439)
     (h_pre_b : ∀ j : Nat, j < step_vec.val → ∀ ℓ : Nat, ℓ < 16 →
       ((re0.coefficients.val[b_offset.val + j]!).elements.val[ℓ]!).val.natAbs ≤ 29439)
-    (acc : L3_4_plus_inner_FC.Acc)
+    (acc : Layer4PlusInnerFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ step_vec.val)
-    (h_inv : (L3_4_plus_inner_FC.inv re0 a_offset b_offset
+    (h_inv : (Layer4PlusInnerFC.inv re0 a_offset b_offset
               (Spec.zeta_at zeta_i1.val) k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0_loop0.body
       (vectortraitsOperationsInst := portable_ops_inst)
       zeta_i1 a_offset b_offset
       { start := k, «end» := step_vec } acc.1 acc.2
-    ⦃ ⇓ r => ⌜ L3_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+    ⦃ ⇓ r => ⌜ Layer4PlusInnerFC.step_post re0 a_offset b_offset step_vec
               (Spec.zeta_at zeta_i1.val) k r ⌝ ⦄ := by
   have h_coef_len : acc.1.coefficients.length = 16 :=
     Std.Array.length_eq _
@@ -2910,19 +2910,19 @@ theorem ntt_at_layer_4_plus_inner_step_lemma_fc
   by_cases h_lt : k.val < step_vec.val
   · -- Some j = k branch.
     obtain ⟨s, hs_val, h_iter_some⟩ :=
-      L3_4_plus_FC.iter_next_some_eq_gen k step_vec h_lt
+      Layer4PlusFC.iter_next_some_eq_gen k step_vec h_lt
     -- (1) i ← a_offset + k.
     have h_a_max : a_offset.val + k.val ≤ Std.Usize.max := by
       have h_ab_b : a_offset.val + k.val ≤ 16 := by omega
       scalar_tac
     obtain ⟨i, h_i_eq, h_i_val⟩ :=
-      L3_4_plus_FC.usize_add_ok_eq a_offset k h_a_max
+      Layer4PlusFC.usize_add_ok_eq a_offset k h_a_max
     -- (2) i1 ← b_offset + k.
     have h_b_max : b_offset.val + k.val ≤ Std.Usize.max := by
       have h_bb_b : b_offset.val + k.val ≤ 16 := by omega
       scalar_tac
     obtain ⟨i1, h_i1_eq, h_i1_val⟩ :=
-      L3_4_plus_FC.usize_add_ok_eq b_offset k h_b_max
+      Layer4PlusFC.usize_add_ok_eq b_offset k h_b_max
     -- (3) zeta lookup.
     obtain ⟨z, h_z_eq, h_z_v, h_z_bd, h_z_lift⟩ :=
       triple_exists_ok_fc (polynomial.zeta_fc zeta_i1 h_zi1_lt)
@@ -2971,7 +2971,7 @@ theorem ntt_at_layer_4_plus_inner_step_lemma_fc
         acc.1.coefficients i i1 acc.2 z h_i_lt_16 h_i1_lt_16 h_i_ne_i1
         h_zeta_bnd h_acc_at_i_bnd h_acc_at_i1_bnd)
     -- r_pair is (new_coefs, scratch2). Build the new accumulator.
-    set acc' : L3_4_plus_inner_FC.Acc :=
+    set acc' : Layer4PlusInnerFC.Acc :=
       (({ coefficients := r_pair.1 }
         : libcrux_iot_ml_kem.polynomial.PolynomialRingElement
             libcrux_iot_ml_kem.vector.portable.vector_type.PortableVector),
@@ -3015,14 +3015,14 @@ theorem ntt_at_layer_4_plus_inner_step_lemma_fc
       rw [h_z_eq]; simp only [Aeneas.Std.bind_tc_ok]
       rw [h_r_eq]; rfl
     apply triple_of_ok_fc h_body
-    show L3_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+    show Layer4PlusInnerFC.step_post re0 a_offset b_offset step_vec
       (Spec.zeta_at zeta_i1.val) k
       (.cont (({ start := s, «end» := step_vec }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L3_4_plus_inner_FC.step_post
+    unfold Layer4PlusInnerFC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
     -- Show inv at s acc'.
-    show (L3_4_plus_inner_FC.inv re0 a_offset b_offset
+    show (Layer4PlusInnerFC.inv re0 a_offset b_offset
             (Spec.zeta_at zeta_i1.val) s acc').holds
     have h_inv_pure :
         (∀ j' : Nat, j' < s.val →
@@ -3120,7 +3120,7 @@ theorem ntt_at_layer_4_plus_inner_step_lemma_fc
   · -- None branch: k ≥ step_vec, done.
     have hk_ge : k.val ≥ step_vec.val := Nat.not_lt.mp h_lt
     have hk_eq : k.val = step_vec.val := by omega
-    have h_iter_none := L3_4_plus_FC.iter_next_none_eq_gen k step_vec hk_ge
+    have h_iter_none := Layer4PlusFC.iter_next_none_eq_gen k step_vec hk_ge
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0_loop0.body
           (vectortraitsOperationsInst := portable_ops_inst)
@@ -3142,10 +3142,10 @@ theorem ntt_at_layer_4_plus_inner_step_lemma_fc
     have h_acc_eq : (acc.1, acc.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_fc h_body
-    show L3_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+    show Layer4PlusInnerFC.step_post re0 a_offset b_offset step_vec
       (Spec.zeta_at zeta_i1.val) k (.done acc)
-    unfold L3_4_plus_inner_FC.step_post
-    show (L3_4_plus_inner_FC.inv re0 a_offset b_offset
+    unfold Layer4PlusInnerFC.step_post
+    show (Layer4PlusInnerFC.inv re0 a_offset b_offset
             (Spec.zeta_at zeta_i1.val) step_vec acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
@@ -3176,7 +3176,7 @@ theorem ntt_at_layer_4_plus_inner_step_lemma_fc
 
 /-! ### L3.4_plus' — Outer loop scaffolding. -/
 
-namespace L3_4_plus_outer_FC
+namespace Layer4PlusOuterFC
 
 open libcrux_iot_ml_kem.Spec.ModularArith libcrux_iot_ml_kem.Spec.Montgomery libcrux_iot_ml_kem.Spec.NumericKeystones libcrux_iot_ml_kem.Util.CreateI libcrux_iot_ml_kem.Util.LoopSpecs libcrux_iot_ml_kem.Util.SliceSpecs libcrux_iot_ml_kem.Vector.Portable.Arithmetic.BvMasks libcrux_iot_ml_kem.Vector.Portable.Arithmetic.LoopHelper Aeneas.Std Std.Do Result ControlFlow
 
@@ -3241,7 +3241,7 @@ def step_post
         ∧ (inv re0 zeta_i_0 step_vec iter'.start acc').holds
   | .done y => (inv re0 zeta_i_0 step_vec i_end y).holds
 
-end L3_4_plus_outer_FC
+end Layer4PlusOuterFC
 
 /-- Helper: chunks lifted via `re0` at index `2*round'*step_vec + j'`
     (a-side) are exactly the original re0 chunks (since these positions
@@ -3362,10 +3362,10 @@ theorem ntt_at_layer_4_plus_inner_loop_fc
         libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0_loop0.body
           (vectortraitsOperationsInst := portable_ops_inst)
           zeta_i1 a_offset b_offset iter1 acc1.1 acc1.2)
-      (β := L3_4_plus_inner_FC.Acc)
+      (β := Layer4PlusInnerFC.Acc)
       (re0, scratch)
       0#usize step_vec
-      (L3_4_plus_inner_FC.inv re0 a_offset b_offset (Spec.zeta_at zeta_i1.val))
+      (Layer4PlusInnerFC.inv re0 a_offset b_offset (Spec.zeta_at zeta_i1.val))
       (by
         -- 0 ≤ step_vec.
         have : (0#usize : Std.Usize).val = 0 := rfl
@@ -3386,7 +3386,7 @@ theorem ntt_at_layer_4_plus_inner_loop_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     have h_inv_holds :
-        (L3_4_plus_inner_FC.inv re0 a_offset b_offset
+        (Layer4PlusInnerFC.inv re0 a_offset b_offset
               (Spec.zeta_at zeta_i1.val) step_vec r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
@@ -3406,7 +3406,7 @@ theorem ntt_at_layer_4_plus_inner_loop_fc
             (∀ j' : Nat, j' < step_vec.val → k' ≠ a_offset.val + j' ∧ k' ≠ b_offset.val + j') →
             r.1.coefficients.val[k']! = re0.coefficients.val[k']!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L3_4_plus_inner_FC.inv] using h_inv_holds
+             Layer4PlusInnerFC.inv] using h_inv_holds
     exact h_inv
   · -- Step lemma dispatch.
     intro acc k _h_ge h_le hinv
@@ -3417,14 +3417,14 @@ theorem ntt_at_layer_4_plus_inner_loop_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+    · have hP : Layer4PlusInnerFC.step_post re0 a_offset b_offset step_vec
                   (Spec.zeta_at zeta_i1.val) k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_4_plus_inner_FC.step_post] using hP
-    · have hP : L3_4_plus_inner_FC.step_post re0 a_offset b_offset step_vec
+      simpa [Layer4PlusInnerFC.step_post] using hP
+    · have hP : Layer4PlusInnerFC.step_post re0 a_offset b_offset step_vec
                   (Spec.zeta_at zeta_i1.val) k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_4_plus_inner_FC.step_post] using hP
+      simpa [Layer4PlusInnerFC.step_post] using hP
 
 set_option maxHeartbeats 16000000 in
 /-- Per-iteration FC step lemma for the outer loop. Dispatches the
@@ -3438,27 +3438,27 @@ theorem ntt_at_layer_4_plus_outer_step_lemma_fc
     (h_step_vec_pos : 1 ≤ step_vec.val)
     (h_step_vec_dvd : 2 * i_end.val * step_vec.val = 16)
     (h_zeta_bnd : zeta_i_0.val + i_end.val ≤ 127)
-    (acc : L3_4_plus_outer_FC.Acc)
+    (acc : Layer4PlusOuterFC.Acc)
     (k : Std.Usize) (h_le : k.val ≤ i_end.val)
-    (h_inv : (L3_4_plus_outer_FC.inv re0 zeta_i_0 step_vec k acc).holds) :
+    (h_inv : (Layer4PlusOuterFC.inv re0 zeta_i_0 step_vec k acc).holds) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
       (vectortraitsOperationsInst := portable_ops_inst)
       step_vec { start := k, «end» := i_end } acc.1 acc.2.1 acc.2.2
-    ⦃ ⇓ r => ⌜ L3_4_plus_outer_FC.step_post re0 zeta_i_0 step_vec i_end k r ⌝ ⦄ := by
+    ⦃ ⇓ r => ⌜ Layer4PlusOuterFC.step_post re0 zeta_i_0 step_vec i_end k r ⌝ ⦄ := by
   obtain ⟨h_zeta_acc, h_acc_a, h_acc_b, h_acc_undone⟩ := by
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
   unfold libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
   by_cases h_lt : k.val < i_end.val
   · -- Some round = k branch.
     obtain ⟨s, hs_val, h_iter_some⟩ :=
-      L3_4_plus_FC.iter_next_some_eq_gen k i_end h_lt
+      Layer4PlusFC.iter_next_some_eq_gen k i_end h_lt
     -- (1) zeta_i1 ← zeta_i + 1.
     have h_um : (1#usize : Std.Usize).val = 1 := rfl
     have h_z_max : acc.1.val + (1#usize : Std.Usize).val ≤ Std.Usize.max := by
       rw [h_um, h_zeta_acc]; scalar_tac
     obtain ⟨zi1, h_zi1_eq, h_zi1_val⟩ :=
-      L3_4_plus_FC.usize_add_ok_eq acc.1 1#usize h_z_max
+      Layer4PlusFC.usize_add_ok_eq acc.1 1#usize h_z_max
     have h_zi1_arith : zi1.val = zeta_i_0.val + k.val + 1 := by
       rw [h_zi1_val, h_um, h_zeta_acc]
     have h_zi1_lt_128 : zi1.val < 128 := by
@@ -3477,7 +3477,7 @@ theorem ntt_at_layer_4_plus_outer_step_lemma_fc
         omega
       scalar_tac
     obtain ⟨ii, h_ii_eq, h_ii_val⟩ :=
-      L3_4_plus_FC.usize_mul_ok_eq k 2#usize h_i_max
+      Layer4PlusFC.usize_mul_ok_eq k 2#usize h_i_max
     have h_ii_arith : ii.val = 2 * k.val := by rw [h_ii_val, h_um2, Nat.mul_comm]
     -- (3) a_offset ← ii * step_vec.
     have h_a_max : ii.val * step_vec.val ≤ Std.Usize.max := by
@@ -3488,7 +3488,7 @@ theorem ntt_at_layer_4_plus_outer_step_lemma_fc
         nlinarith
       scalar_tac
     obtain ⟨ao, h_ao_eq, h_ao_val⟩ :=
-      L3_4_plus_FC.usize_mul_ok_eq ii step_vec h_a_max
+      Layer4PlusFC.usize_mul_ok_eq ii step_vec h_a_max
     have h_ao_arith : ao.val = 2 * k.val * step_vec.val := by
       rw [h_ao_val, h_ii_arith]
     -- (4) b_offset ← a_offset + step_vec.
@@ -3500,7 +3500,7 @@ theorem ntt_at_layer_4_plus_outer_step_lemma_fc
         nlinarith
       scalar_tac
     obtain ⟨bo, h_bo_eq, h_bo_val⟩ :=
-      L3_4_plus_FC.usize_add_ok_eq ao step_vec h_b_max
+      Layer4PlusFC.usize_add_ok_eq ao step_vec h_b_max
     have h_bo_arith : bo.val = 2 * k.val * step_vec.val + step_vec.val := by
       rw [h_bo_val, h_ao_arith]
     -- Now dispatch the inner loop.
@@ -3551,7 +3551,7 @@ theorem ntt_at_layer_4_plus_outer_step_lemma_fc
     obtain ⟨r_pair, h_r_eq, h_r_a, h_r_b, h_r_undone⟩ :=
       triple_exists_ok_fc h_inner
     -- Compose body.
-    set acc' : L3_4_plus_outer_FC.Acc :=
+    set acc' : Layer4PlusOuterFC.Acc :=
       (zi1, r_pair.1, r_pair.2) with hacc'_def
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
@@ -3590,12 +3590,12 @@ theorem ntt_at_layer_4_plus_outer_step_lemma_fc
       rw [h_bo_eq]; simp only [Aeneas.Std.bind_tc_ok]
       rw [h_r_eq]; rfl
     apply triple_of_ok_fc h_body
-    show L3_4_plus_outer_FC.step_post re0 zeta_i_0 step_vec i_end k
+    show Layer4PlusOuterFC.step_post re0 zeta_i_0 step_vec i_end k
       (.cont (({ start := s, «end» := i_end }
                 : CoreModels.core.ops.range.Range Std.Usize), acc'))
-    unfold L3_4_plus_outer_FC.step_post
+    unfold Layer4PlusOuterFC.step_post
     refine ⟨h_lt, rfl, hs_val, ?_⟩
-    show (L3_4_plus_outer_FC.inv re0 zeta_i_0 step_vec s acc').holds
+    show (Layer4PlusOuterFC.inv re0 zeta_i_0 step_vec s acc').holds
     have h_inv_pure :
         acc'.1.val = zeta_i_0.val + s.val
         ∧ (∀ round' : Nat, round' < s.val →
@@ -3745,7 +3745,7 @@ theorem ntt_at_layer_4_plus_outer_step_lemma_fc
   · -- None branch: k ≥ i_end, done.
     have hk_ge : k.val ≥ i_end.val := Nat.not_lt.mp h_lt
     have hk_eq : k.val = i_end.val := by omega
-    have h_iter_none := L3_4_plus_FC.iter_next_none_eq_gen k i_end hk_ge
+    have h_iter_none := Layer4PlusFC.iter_next_none_eq_gen k i_end hk_ge
     have h_body :
         libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
           (vectortraitsOperationsInst := portable_ops_inst)
@@ -3766,9 +3766,9 @@ theorem ntt_at_layer_4_plus_outer_step_lemma_fc
     have h_acc_eq : (acc.1, acc.2.1, acc.2.2) = acc := rfl
     rw [h_acc_eq] at h_body
     apply triple_of_ok_fc h_body
-    show L3_4_plus_outer_FC.step_post re0 zeta_i_0 step_vec i_end k (.done acc)
-    unfold L3_4_plus_outer_FC.step_post
-    show (L3_4_plus_outer_FC.inv re0 zeta_i_0 step_vec i_end acc).holds
+    show Layer4PlusOuterFC.step_post re0 zeta_i_0 step_vec i_end k (.done acc)
+    unfold Layer4PlusOuterFC.step_post
+    show (Layer4PlusOuterFC.inv re0 zeta_i_0 step_vec i_end acc).holds
     show (pure _ : Result Prop).holds
     have h_inv_pure :
         acc.1.val = zeta_i_0.val + i_end.val
@@ -3831,7 +3831,7 @@ set_option maxHeartbeats 16000000 in
        `Aeneas.Std.UScalar.ShiftLeft_spec`, `UScalar.div_spec`,
        `UScalar.ShiftRight_spec` (all sound for layer ∈ {4,5,6}).
     2. Unfold `ntt_at_layer_4_plus_loop0` and apply
-       `loop_range_spec_usize` with invariant `L3_4_plus_outer_FC.inv`
+       `loop_range_spec_usize` with invariant `Layer4PlusOuterFC.inv`
        (zeta-thread + per-round a/b butterflies + untouched).
     3. Initial inv at k=0: zeta-thread trivial, no round' < 0 absurd,
        chunks unchanged trivially.
@@ -3936,10 +3936,10 @@ theorem ntt_at_layer_4_plus_portable_fc
         libcrux_iot_ml_kem.ntt.ntt_at_layer_4_plus_loop0.body
           (vectortraitsOperationsInst := portable_ops_inst) step_vec
           iter1 acc1.1 acc1.2.1 acc1.2.2)
-      (β := L3_4_plus_outer_FC.Acc)
+      (β := Layer4PlusOuterFC.Acc)
       (zeta_i, re, scratch)
       0#usize i_end
-      (L3_4_plus_outer_FC.inv re zeta_i step_vec)
+      (Layer4PlusOuterFC.inv re zeta_i step_vec)
       (by
         have h_zero : (0#usize : Std.Usize).val = 0 := rfl
         omega)
@@ -3965,7 +3965,7 @@ theorem ntt_at_layer_4_plus_portable_fc
     -- flatten_chunks_eq_lift_poly_fc.
     rw [PostCond.entails_noThrow]
     intro r hh
-    have h_inv_holds : (L3_4_plus_outer_FC.inv re zeta_i step_vec i_end r).holds := by
+    have h_inv_holds : (Layer4PlusOuterFC.inv re zeta_i step_vec i_end r).holds := by
       simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
     have h_inv :
         r.1.val = zeta_i.val + i_end.val
@@ -3990,7 +3990,7 @@ theorem ntt_at_layer_4_plus_portable_fc
                 ∧ c ≠ 2 * round' * step_vec.val + step_vec.val + j') →
             r.2.1.coefficients.val[c]! = re.coefficients.val[c]!) := by
       simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp,
-             L3_4_plus_outer_FC.inv] using h_inv_holds
+             Layer4PlusOuterFC.inv] using h_inv_holds
     obtain ⟨_h_zeta_done, h_done_a, h_done_b, _h_done_undone⟩ := h_inv
     -- Build chunks_arr matching the Spec layout.
     unfold Spec.ntt_at_layer_4_plus_pure
@@ -4125,12 +4125,12 @@ theorem ntt_at_layer_4_plus_portable_fc
     rw [PostCond.entails_noThrow]
     intro r hh
     rcases r with ⟨iter', acc'⟩ | y
-    · have hP : L3_4_plus_outer_FC.step_post re zeta_i step_vec i_end k (.cont (iter', acc')) := by
+    · have hP : Layer4PlusOuterFC.step_post re zeta_i step_vec i_end k (.cont (iter', acc')) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_4_plus_outer_FC.step_post] using hP
-    · have hP : L3_4_plus_outer_FC.step_post re zeta_i step_vec i_end k (.done y) := by
+      simpa [Layer4PlusOuterFC.step_post] using hP
+    · have hP : Layer4PlusOuterFC.step_post re zeta_i step_vec i_end k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
-      simpa [L3_4_plus_outer_FC.step_post] using hP
+      simpa [Layer4PlusOuterFC.step_post] using hP
 
 /-! ### Per-layer FC+bound combinators
 
