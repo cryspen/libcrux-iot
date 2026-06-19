@@ -60,6 +60,22 @@ OPAQUE = [
     "crate::encoding::*",
     "crate::ml_dsa_generic::*",
     "crate::pre_hash::*",
+    # Phase-7 vector drivers that iterate a `&mut [PolynomialRingElement]` with a
+    # nested slice iterator (hax issue #720). The installed aeneas cannot
+    # translate that region pattern and emits a `sorry` body; keep them opaque
+    # (signature only) so the extraction stays axiom-/sorry-free. The NTT core
+    # (Phases 2–6) does not use them; the per-element `power2round_element` /
+    # `decompose_element` (the actual Phase-7 FC targets) extract fine.
+    "crate::arithmetic::power2round_vector",
+    "crate::arithmetic::decompose_vector",
+    # Phase-8 (matrix-level) drivers: the pinned aeneas renders their nested
+    # loops with a malformed `matrix.compute_*_loop0` field-projection on the
+    # bounded-`Vec` subtype (`{ l // l.length ≤ Usize.max }`). Phase 8 is the
+    # last/optional phase (and may instead compose from `Spec/Pure` per
+    # `Plan.lean`), so keep them opaque to get a clean NTT-core (Phases 2–7)
+    # build; revisit the matrix extraction when Phase 8 starts.
+    "crate::matrix::compute_as1_plus_s2",
+    "crate::matrix::compute_matrix_x_mask",
 ]
 
 

@@ -10,11 +10,11 @@ import LibcruxIotMlDsa.Spec.Lift
 -- Build-time spec validation (round-trip + Rust ZETAS cross-check, axiom-free).
 import LibcruxIotMlDsa.Spec.Validation
 
--- Phase-0+ (re-enable once `hax_aeneas.py` has generated `Extraction/Funs.lean`
--- and `Util/` has been ported from ml-kem):
--- import LibcruxIotMlDsa.Extraction.Funs
--- import LibcruxIotMlDsa.Util.SliceSpecs
--- import LibcruxIotMlDsa.Util.LoopSpecs
+-- Phase-0: extraction + generic Util specs (ported from ml-kem).
+import LibcruxIotMlDsa.Extraction.Funs
+import LibcruxIotMlDsa.Util.SliceSpecs
+import LibcruxIotMlDsa.Util.LoopSpecs
+-- Phases 2-8 (re-enable as the proof files land; ml-dsa has no `createi`):
 -- import LibcruxIotMlDsa.Util.CreateI
 -- import LibcruxIotMlDsa.Vector.Portable.Arithmetic   -- L0/L1
 -- import LibcruxIotMlDsa.Vector.Portable.Ntt          -- L2 butterflies
