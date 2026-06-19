@@ -1,0 +1,27 @@
+name = "LibcruxIotMlDsa"
+version = "0.1.0"
+defaultTargets = ["LibcruxIotMlDsa"]
+
+[[lean_lib]]
+name = "LibcruxIotMlDsa"
+
+[[require]]
+name = "Hax"
+git = { url = "https://github.com/cryspen/hax-evit", subDir = "hax-lib/proof-libs/aeneas-lean" }
+rev = "ffdf432705d409b62ec025d253a340234b59766f"
+
+# NOTE (Phase 8 — matrix-level): the clean-Z_q ML-DSA hacspec lives in
+# `~/libcrux-ml-dsa-proofs/specs/ml-dsa/`. There is no aeneas-lean extraction
+# of it yet (only F* + Rust). The matrix-level FC targets reference
+# `hacspec_ml_dsa.matrix.compute_*`, so before Phase 8 we must run
+# `hax_aeneas.py` in that spec crate, publish the resulting
+# `specs/ml-dsa/proofs/aeneas-lean/` library, and uncomment a pin here:
+#
+# [[require]]
+# name = "HacspecMlDsa"
+# git = { url = "https://github.com/cryspen/libcrux-ml-dsa", subDir = "specs/ml-dsa/proofs/aeneas-lean" }
+# rev = "<TBD>"
+#
+# The NTT-core phases (1–7) target the hand-written pure-Lean reference under
+# `LibcruxIotMlDsa/Spec/` (analogue of ML-KEM's `Spec/Pure.lean`) and do NOT
+# need this dependency.
