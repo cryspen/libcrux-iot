@@ -741,9 +741,9 @@ def simd.portable.arithmetic.add_loop.body
   match o with
   | core.option.Option.None => ok (done a)
   | core.option.Option.Some i =>
-    let i1 ← Array.index_usize rhs.values i
-    let i2 ← Array.index_usize a i
-    let i3 ← i2 + i1
+    let i1 ← Array.index_usize a i
+    let i2 ← Array.index_usize rhs.values i
+    let i3 ← core.num.I32.wrapping_add i1 i2
     let a1 ← Array.update a i i3
     ok (cont (iter1, a1))
 
@@ -761,7 +761,7 @@ def simd.portable.arithmetic.add_loop
     (iter, a)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::add]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 14:0-21:1
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 14:0-18:1
     Visibility: public -/
 def simd.portable.arithmetic.add
   (lhs : simd.portable.vector_type.Coefficients)
@@ -776,7 +776,7 @@ def simd.portable.arithmetic.add
   ok { values := a }
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::subtract]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 25:4-27:5
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 22:4-24:5
     Visibility: public -/
 @[rust_loop_body]
 def simd.portable.arithmetic.subtract_loop.body
@@ -791,14 +791,14 @@ def simd.portable.arithmetic.subtract_loop.body
   match o with
   | core.option.Option.None => ok (done a)
   | core.option.Option.Some i =>
-    let i1 ← Array.index_usize rhs.values i
-    let i2 ← Array.index_usize a i
-    let i3 ← i2 - i1
+    let i1 ← Array.index_usize a i
+    let i2 ← Array.index_usize rhs.values i
+    let i3 ← core.num.I32.wrapping_sub i1 i2
     let a1 ← Array.update a i i3
     ok (cont (iter1, a1))
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::subtract]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 25:4-27:5
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 22:4-24:5
     Visibility: public -/
 @[rust_loop]
 def simd.portable.arithmetic.subtract_loop
@@ -812,7 +812,7 @@ def simd.portable.arithmetic.subtract_loop
     (iter, a)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::subtract]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 24:0-31:1
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 21:0-25:1
     Visibility: public -/
 def simd.portable.arithmetic.subtract
   (lhs : simd.portable.vector_type.Coefficients)
@@ -827,11 +827,11 @@ def simd.portable.arithmetic.subtract
   ok { values := a }
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::get_n_least_significant_bits]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 34:0-36:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 29:0-31:1 -/
 def simd.portable.arithmetic.get_n_least_significant_bits
   (n : Std.U8) (value : Std.U64) : Result Std.U64 := do
   let i ← 1#u64 <<< n
-  let i1 ← i - 1#u64
+  let i1 ← core.num.U64.wrapping_sub i 1#u64
   ok (value &&& i1)
 
 /-- [libcrux_iot_ml_dsa::simd::traits::INVERSE_OF_MODULUS_MOD_MONTGOMERY_R]
@@ -847,14 +847,16 @@ def simd.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R : Std.U64 := 58728449#u64
 def simd.traits.FIELD_MODULUS : Std.I32 := 8380417#i32
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_reduce_element]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 39:0-50:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 34:0-45:1 -/
 def simd.portable.arithmetic.montgomery_reduce_element
   (value : Std.I64) : Result Std.I32 := do
   let i ← libcrux_secrets.I64.Insts.Libcrux_secretsIntCastOps.as_u64 value
   let i1 ←
     simd.portable.arithmetic.get_n_least_significant_bits
       simd.portable.arithmetic.MONTGOMERY_SHIFT i
-  let t ← i1 * simd.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R
+  let t ←
+    core.num.U64.wrapping_mul i1
+      simd.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R
   let i2 ←
     simd.portable.arithmetic.get_n_least_significant_bits
       simd.portable.arithmetic.MONTGOMERY_SHIFT t
@@ -862,25 +864,25 @@ def simd.portable.arithmetic.montgomery_reduce_element
   let i3 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 k
   let i4 ← lift (IScalar.cast .I64 simd.traits.FIELD_MODULUS)
   let i5 ← libcrux_secrets.traits.Classify.Blanket.classify i4
-  let k_times_modulus ← i3 * i5
+  let k_times_modulus ← core.num.I64.wrapping_mul i3 i5
   let i6 ← k_times_modulus >>> simd.portable.arithmetic.MONTGOMERY_SHIFT
   let c ← libcrux_secrets.I64.Insts.Libcrux_secretsIntCastOps.as_i32 i6
   let i7 ← value >>> simd.portable.arithmetic.MONTGOMERY_SHIFT
   let value_high ←
     libcrux_secrets.I64.Insts.Libcrux_secretsIntCastOps.as_i32 i7
-  value_high - c
+  core.num.I32.wrapping_sub value_high c
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_fe_by_fer]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 53:0-58:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 48:0-53:1 -/
 def simd.portable.arithmetic.montgomery_multiply_fe_by_fer
   (fe : Std.I32) (fer : Std.I32) : Result Std.I32 := do
   let i ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 fe
   let i1 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 fer
-  let i2 ← i * i1
+  let i2 ← core.num.I64.wrapping_mul i i1
   simd.portable.arithmetic.montgomery_reduce_element i2
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_by_constant]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 62:4-65:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 57:4-60:5 -/
 @[rust_loop_body]
 def simd.portable.arithmetic.montgomery_multiply_by_constant_loop.body
   (c : Std.I32) (iter : core.ops.range.Range Std.Usize)
@@ -897,13 +899,13 @@ def simd.portable.arithmetic.montgomery_multiply_by_constant_loop.body
     let i1 ← Array.index_usize a i
     let i2 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 i1
     let i3 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 c
-    let i4 ← i2 * i3
+    let i4 ← core.num.I64.wrapping_mul i2 i3
     let i5 ← simd.portable.arithmetic.montgomery_reduce_element i4
     let a1 ← Array.update a i i5
     ok (cont (iter1, a1))
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_by_constant]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 62:4-65:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 57:4-60:5 -/
 @[rust_loop]
 def simd.portable.arithmetic.montgomery_multiply_by_constant_loop
   (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
@@ -917,7 +919,7 @@ def simd.portable.arithmetic.montgomery_multiply_by_constant_loop
     (iter, a)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_by_constant]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 61:0-69:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 56:0-61:1 -/
 def simd.portable.arithmetic.montgomery_multiply_by_constant
   (simd_unit : simd.portable.vector_type.Coefficients) (c : Std.I32) :
   Result simd.portable.vector_type.Coefficients
@@ -930,7 +932,7 @@ def simd.portable.arithmetic.montgomery_multiply_by_constant
   ok { values := a }
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 73:4-76:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 65:4-68:5 -/
 @[rust_loop_body]
 def simd.portable.arithmetic.montgomery_multiply_loop.body
   (rhs : simd.portable.vector_type.Coefficients)
@@ -948,13 +950,13 @@ def simd.portable.arithmetic.montgomery_multiply_loop.body
     let i2 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 i1
     let i3 ← Array.index_usize rhs.values i
     let i4 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 i3
-    let i5 ← i2 * i4
+    let i5 ← core.num.I64.wrapping_mul i2 i4
     let i6 ← simd.portable.arithmetic.montgomery_reduce_element i5
     let a1 ← Array.update a i i6
     ok (cont (iter1, a1))
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 73:4-76:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 65:4-68:5 -/
 @[rust_loop]
 def simd.portable.arithmetic.montgomery_multiply_loop
   (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
@@ -967,7 +969,7 @@ def simd.portable.arithmetic.montgomery_multiply_loop
     (iter, a)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 72:0-80:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 64:0-69:1 -/
 def simd.portable.arithmetic.montgomery_multiply
   (lhs : simd.portable.vector_type.Coefficients)
   (rhs : simd.portable.vector_type.Coefficients) :
@@ -981,23 +983,23 @@ def simd.portable.arithmetic.montgomery_multiply
   ok { values := a }
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round_element]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 91:0-111:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 80:0-103:1 -/
 def simd.portable.arithmetic.power2round_element
   (t : Std.I32) : Result (Std.I32 × Std.I32) := do
   let i ← t >>> 31#i32
   let i1 ← lift (i &&& simd.traits.FIELD_MODULUS)
-  let t1 ← t + i1
-  let i2 ← t1 - 1#i32
+  let t1 ← core.num.I32.wrapping_add t i1
+  let i2 ← core.num.I32.wrapping_sub t1 1#i32
   let i3 ← constants.BITS_IN_LOWER_PART_OF_T - 1#usize
   let i4 ← 1#i32 <<< i3
-  let i5 ← i2 + i4
+  let i5 ← core.num.I32.wrapping_add i2 i4
   let t11 ← i5 >>> constants.BITS_IN_LOWER_PART_OF_T
   let i6 ← t11 <<< constants.BITS_IN_LOWER_PART_OF_T
-  let t0 ← t1 - i6
+  let t0 ← core.num.I32.wrapping_sub t1 i6
   ok (t0, t11)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 115:4-117:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 107:4-109:5 -/
 @[rust_loop_body]
 def simd.portable.arithmetic.power2round_loop.body
   (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
@@ -1019,7 +1021,7 @@ def simd.portable.arithmetic.power2round_loop.body
     ok (cont (iter1, a1, { values := a2 }))
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 115:4-117:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 107:4-109:5 -/
 @[rust_loop]
 def simd.portable.arithmetic.power2round_loop
   (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
@@ -1032,7 +1034,7 @@ def simd.portable.arithmetic.power2round_loop
     (iter, a, t1)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 114:0-121:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 106:0-110:1 -/
 def simd.portable.arithmetic.power2round
   (t0 : simd.portable.vector_type.Coefficients)
   (t1 : simd.portable.vector_type.Coefficients) :
@@ -1047,7 +1049,7 @@ def simd.portable.arithmetic.power2round
   ok ({ values := a }, t11)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::infinity_norm_exceeds]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 131:4-154:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 120:4-144:5 -/
 @[rust_loop_body]
 def simd.portable.arithmetic.infinity_norm_exceeds_loop.body
   (a : Array Std.I32 8#usize) (bound : Std.I32)
@@ -1063,9 +1065,9 @@ def simd.portable.arithmetic.infinity_norm_exceeds_loop.body
     let coefficient ← Array.index_usize a i
     let sign ← coefficient >>> 31#i32
     let i1 ← libcrux_secrets.traits.Classify.Blanket.classify 2#i32
-    let i2 ← i1 * coefficient
+    let i2 ← core.num.I32.wrapping_sub i1 coefficient
     let i3 ← lift (sign &&& i2)
-    let normalized ← coefficient - i3
+    let normalized ← core.num.I32.wrapping_sub coefficient i3
     if result
     then ok (cont (iter1, true))
     else
@@ -1074,7 +1076,7 @@ def simd.portable.arithmetic.infinity_norm_exceeds_loop.body
       ok (cont (iter1, i4 >= bound))
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::infinity_norm_exceeds]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 131:4-154:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 120:4-144:5 -/
 @[rust_loop]
 def simd.portable.arithmetic.infinity_norm_exceeds_loop
   (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
@@ -1088,7 +1090,7 @@ def simd.portable.arithmetic.infinity_norm_exceeds_loop
     (iter, result)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::infinity_norm_exceeds]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 126:0-157:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 115:0-147:1 -/
 def simd.portable.arithmetic.infinity_norm_exceeds
   (simd_unit : simd.portable.vector_type.Coefficients) (bound : Std.I32) :
   Result Bool
@@ -1099,17 +1101,17 @@ def simd.portable.arithmetic.infinity_norm_exceeds
     { start := 0#usize, «end» := i } simd_unit.values bound false
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::reduce_element]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 160:0-164:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 150:0-154:1 -/
 def simd.portable.arithmetic.reduce_element
   (fe : Std.I32) : Result Std.I32 := do
   let i ← 1#i32 <<< 22#i32
-  let i1 ← fe + i
+  let i1 ← core.num.I32.wrapping_add fe i
   let quotient ← i1 >>> 23#i32
-  let i2 ← quotient * simd.traits.FIELD_MODULUS
-  fe - i2
+  let i2 ← core.num.I32.wrapping_sub quotient simd.traits.FIELD_MODULUS
+  core.num.I32.wrapping_sub fe i2
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::shift_left_then_reduce]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 168:4-170:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 159:4-161:5 -/
 @[rust_loop_body]
 def simd.portable.arithmetic.shift_left_then_reduce_loop.body
   (SHIFT_BY : Std.I32) (iter : core.ops.range.Range Std.Usize)
@@ -1130,7 +1132,7 @@ def simd.portable.arithmetic.shift_left_then_reduce_loop.body
     ok (cont (iter1, a1))
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::shift_left_then_reduce]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 168:4-170:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 159:4-161:5 -/
 @[rust_loop]
 def simd.portable.arithmetic.shift_left_then_reduce_loop
   (SHIFT_BY : Std.I32) (iter : core.ops.range.Range Std.Usize)
@@ -1144,7 +1146,7 @@ def simd.portable.arithmetic.shift_left_then_reduce_loop
     (iter, a)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::shift_left_then_reduce]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 167:0-174:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 158:0-162:1 -/
 def simd.portable.arithmetic.shift_left_then_reduce
   (SHIFT_BY : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients) :
   Result simd.portable.vector_type.Coefficients
@@ -1157,7 +1159,7 @@ def simd.portable.arithmetic.shift_left_then_reduce
   ok { values := a }
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_one_hint]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 177:0-183:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 167:0-173:1 -/
 def simd.portable.arithmetic.compute_one_hint
   (low : Std.I32) (high : Std.I32) (gamma2 : Std.I32) : Result Std.I32 := do
   if low > gamma2
@@ -1174,7 +1176,7 @@ def simd.portable.arithmetic.compute_one_hint
       else ok 0#i32
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_hint]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 197:4-205:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 188:4-197:5 -/
 @[rust_loop_body]
 def simd.portable.arithmetic.compute_hint_loop.body
   (low : simd.portable.vector_type.Coefficients)
@@ -1204,7 +1206,7 @@ def simd.portable.arithmetic.compute_hint_loop.body
     ok (cont (iter1, a1, one_hints_count1))
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_hint]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 197:4-205:5 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 188:4-197:5 -/
 @[rust_loop]
 def simd.portable.arithmetic.compute_hint_loop
   (iter : core.ops.range.Range Std.Usize)
@@ -1220,7 +1222,7 @@ def simd.portable.arithmetic.compute_hint_loop
     (iter, a, one_hints_count)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_hint]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 186:0-208:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 177:0-200:1 -/
 def simd.portable.arithmetic.compute_hint
   (low : simd.portable.vector_type.Coefficients)
   (high : simd.portable.vector_type.Coefficients) (gamma2 : Std.I32)
@@ -1235,49 +1237,49 @@ def simd.portable.arithmetic.compute_hint
   ok (one_hints_count, { values := a })
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose_element]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 225:0-270:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 218:0-265:1 -/
 def simd.portable.arithmetic.decompose_element
   (gamma2 : Std.I32) (r : Std.I32) : Result (Std.I32 × Std.I32) := do
   let i ← r >>> 31#i32
   let i1 ← lift (i &&& simd.traits.FIELD_MODULUS)
-  let r1 ← r + i1
-  let i2 ← r1 + 127#i32
+  let r1 ← core.num.I32.wrapping_add r i1
+  let i2 ← core.num.I32.wrapping_add r1 127#i32
   let ceil_of_r_by_128 ← i2 >>> 7#i32
   let r11 ←
     match gamma2 with
     | 95232#iscalar =>
       do
-      let i3 ← ceil_of_r_by_128 * 11275#i32
+      let i3 ← core.num.I32.wrapping_mul ceil_of_r_by_128 11275#i32
       let i4 ← 1#i32 <<< 23#i32
-      let i5 ← i3 + i4
+      let i5 ← core.num.I32.wrapping_add i3 i4
       let result ← i5 >>> 24#i32
       let i6 ← libcrux_secrets.traits.Classify.Blanket.classify 43#i32
-      let i7 ← i6 - result
+      let i7 ← core.num.I32.wrapping_sub i6 result
       let i8 ← i7 >>> 31#i32
       let i9 ← lift (result ^^^ i8)
       ok (i9 &&& result)
     | 261888#iscalar =>
       do
-      let i3 ← ceil_of_r_by_128 * 1025#i32
+      let i3 ← core.num.I32.wrapping_mul ceil_of_r_by_128 1025#i32
       let i4 ← 1#i32 <<< 21#i32
-      let i5 ← i3 + i4
+      let i5 ← core.num.I32.wrapping_add i3 i4
       let result ← i5 >>> 22#i32
       ok (result &&& 15#i32)
     | _ => fail panic
   let alpha ← gamma2 * 2#i32
-  let i3 ← r11 * alpha
-  let r0 ← r1 - i3
+  let i3 ← core.num.I32.wrapping_mul r11 alpha
+  let r0 ← core.num.I32.wrapping_sub r1 i3
   let i4 ← simd.traits.FIELD_MODULUS - 1#i32
   let i5 ← i4 / 2#i32
   let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
-  let i7 ← i6 - r0
+  let i7 ← core.num.I32.wrapping_sub i6 r0
   let i8 ← i7 >>> 31#i32
   let i9 ← lift (i8 &&& simd.traits.FIELD_MODULUS)
-  let r01 ← r0 - i9
+  let r01 ← core.num.I32.wrapping_sub r0 i9
   ok (r01, r11)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_one_hint]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 273:0-307:1 -/
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 269:0-303:1 -/
 def simd.portable.arithmetic.use_one_hint
   (gamma2 : Std.I32) (r : Std.I32) (hint : Std.I32) : Result Std.I32 := do
   let i ← libcrux_secrets.traits.Classify.Blanket.classify r
@@ -1290,22 +1292,24 @@ def simd.portable.arithmetic.use_one_hint
     match gamma2 with
     | 95232#iscalar =>
       if r01 > 0#i32
-      then if r11 = 43#i32
-           then ok 0#i32
-           else r11 + hint
-      else if r11 = 0#i32
-           then ok 43#i32
-           else r11 - hint
+      then
+        if r11 = 43#i32
+        then ok 0#i32
+        else core.num.I32.wrapping_add r11 hint
+      else
+        if r11 = 0#i32
+        then ok 43#i32
+        else core.num.I32.wrapping_sub r11 hint
     | 261888#iscalar =>
       if r01 > 0#i32
-      then let i1 ← r11 + hint
+      then let i1 ← core.num.I32.wrapping_add r11 hint
            ok (i1 &&& 15#i32)
-      else let i1 ← r11 - hint
+      else let i1 ← core.num.I32.wrapping_sub r11 hint
            ok (i1 &&& 15#i32)
     | _ => fail panic
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 316:4-318:5
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 313:4-315:5
     Visibility: public -/
 @[rust_loop_body]
 def simd.portable.arithmetic.decompose_loop.body
@@ -1329,7 +1333,7 @@ def simd.portable.arithmetic.decompose_loop.body
     ok (cont (iter1, a1, { values := a2 }))
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 316:4-318:5
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 313:4-315:5
     Visibility: public -/
 @[rust_loop]
 def simd.portable.arithmetic.decompose_loop
@@ -1344,7 +1348,7 @@ def simd.portable.arithmetic.decompose_loop
     (iter, a, high)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 310:0-322:1
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 307:0-316:1
     Visibility: public -/
 def simd.portable.arithmetic.decompose
   (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
@@ -1361,7 +1365,7 @@ def simd.portable.arithmetic.decompose
   ok ({ values := a }, high1)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_hint]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 326:4-336:5
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 321:4-331:5
     Visibility: public -/
 @[rust_loop_body]
 def simd.portable.arithmetic.use_hint_loop.body
@@ -1386,7 +1390,7 @@ def simd.portable.arithmetic.use_hint_loop.body
     ok (cont (iter1, a1))
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_hint]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 326:4-336:5
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 321:4-331:5
     Visibility: public -/
 @[rust_loop]
 def simd.portable.arithmetic.use_hint_loop
@@ -1401,7 +1405,7 @@ def simd.portable.arithmetic.use_hint_loop
     (iter, a)
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_hint]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 325:0-340:1
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 320:0-332:1
     Visibility: public -/
 def simd.portable.arithmetic.use_hint
   (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
