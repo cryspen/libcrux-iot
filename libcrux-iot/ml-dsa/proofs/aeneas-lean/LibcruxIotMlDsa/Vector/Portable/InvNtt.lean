@@ -37,6 +37,7 @@ set_option linter.unusedSectionVars false
 namespace libcrux_iot_ml_dsa.Vector.Portable.InvNtt
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_dsa.Util.LoopHelper
+open libcrux_iot_ml_dsa.Util.LoopSpecs
 open libcrux_iot_ml_dsa.Spec.Lift libcrux_iot_ml_dsa.Spec.Montgomery
   libcrux_iot_ml_dsa.Spec.Parameters
 
@@ -970,6 +971,542 @@ theorem simd_unit_invert_ntt_at_layer_2_fc
     | 6, _ => rw [hr6]; exact Nat.le_trans ht2_bd (by omega)
     | 7, _ => rw [hr7]; exact Nat.le_trans ht3_bd (by omega)
     | (n + 8), h => exact absurd h (by omega)
+
+
+/-! ## The cross-unit INVERSE NTT layer op `outer_3_plus` FC.
+
+Inverse (Gentleman–Sande) analogue of the forward cross-unit keystone
+`Ntt.Layer3OuterFC`. Loops `j` over `[OFFSET, OFFSET+STEP_BY)` applying the
+inverse butterfly to the pair of WHOLE `Coefficients` SIMD units
+`(j, j+STEP_BY)`:
+* `out[j] = re[j] + re[i]`            (plain whole-unit `add`, NO zeta), and
+* `out[i] = (re[i] − re[j]) · ζ`      (whole-unit `subtract`, THEN
+  `montgomery_multiply_by_constant` on the difference).
+
+Structurally clones the forward keystone (Range-Usize loop via
+`loop_range_spec_usize`, two swept sub-ranges in the invariant), but the
+per-iteration write order is `re.set j c3 |>.set i a_minus_b1 |>.set i c5`
+(unit `j` once, unit `i` twice; the double-set at `i` collapses via
+`List.set_set`, last write `c5` = the Montgomery result). Output bound is the
+uniform `2B + 2^24` (out[j] ≤ 2B, out[i] ≤ 2^24); the checked-free `add`/
+`subtract` no-overflow precond is the two-input `2B ≤ 2^31 − 1`. -/
+
+namespace InvLayer3OuterFC
+
+/-- The cross-unit accumulator: the whole 32-unit array. -/
+abbrev Acc := Aeneas.Std.Array libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients 32#usize
+
+/-- Local `usize_add_ok_eq` helper. -/
+theorem usize_add_ok_eq (x y : Std.Usize) (h_max : x.val + y.val ≤ Std.Usize.max) :
+    ∃ z : Std.Usize, (x + y : Result Std.Usize) = .ok z ∧ z.val = x.val + y.val := by
+  have hT := Std.Usize.add_spec h_max
+  obtain ⟨z, h_eq, h_v⟩ := Std.WP.spec_imp_exists hT
+  exact ⟨z, h_eq, h_v⟩
+
+/-- FC loop invariant for `outer_3_plus_fc`.  `S = STEP_BY.val`.
+    `acc` agrees with the clean inverse butterfly on the lower swept range
+    `[OFFSET, k)`, is unchanged outside the touched window, and stays
+    `≤ 2*B + 2^24`. -/
+def inv
+    (OFFSET STEP_BY : Std.Usize) (ZETA : Std.I32)
+    (re : Acc) (B : Nat) :
+    Std.Usize → Acc → Result Prop :=
+  fun k acc => pure (
+    (∀ j : Nat, OFFSET.val ≤ j → j < k.val →
+        (∀ l : Nat, l < 8 →
+          liftZ (acc.val[j]!).values.val[l]!.val
+            = liftZ (re.val[j]!).values.val[l]!.val
+              + liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val)
+      ∧ (∀ l : Nat, l < 8 →
+          liftZ (acc.val[j + STEP_BY.val]!).values.val[l]!.val
+            = (liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val
+                - liftZ (re.val[j]!).values.val[l]!.val) * liftZ ZETA.val))
+    ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ k.val ≤ u) →
+          (u < OFFSET.val + STEP_BY.val ∨ k.val + STEP_BY.val ≤ u) →
+          acc.val[u]! = re.val[u]!)
+    ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+          (acc.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24))
+
+/-- Step-post for `loop_range_spec_usize`. -/
+def step_post
+    (OFFSET STEP_BY : Std.Usize) (ZETA : Std.I32)
+    (re : Acc) (B : Nat) (e : Std.Usize) (k : Std.Usize)
+    (r : ControlFlow ((CoreModels.core.ops.range.Range Std.Usize) × Acc) Acc) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < e.val ∧ iter'.«end» = e ∧ iter'.start.val = k.val + 1
+        ∧ (inv OFFSET STEP_BY ZETA re B iter'.start acc').holds
+  | .done y => (inv OFFSET STEP_BY ZETA re B e y).holds
+
+end InvLayer3OuterFC
+
+set_option maxHeartbeats 16000000 in
+/-- Per-iteration FC step lemma for `outer_3_plus_fc`. At cursor `j = k` with
+    `OFFSET ≤ k < OFFSET+STEP_BY`, applies the inverse butterfly to the pair
+    `(k, k+STEP_BY)`, extending the lower swept range and preserving the
+    unchanged window + bound. -/
+theorem outer_3_plus_step_lemma_fc
+    (OFFSET STEP_BY : Std.Usize) (ZETA : Std.I32)
+    (re : InvLayer3OuterFC.Acc) (B : Nat)
+    (hzeta : ZETA.val.natAbs ≤ 8380416)
+    (hB : (2 : Int) * B ≤ 2 ^ 31 - 1)
+    (hstep : 1 ≤ STEP_BY.val)
+    (hbound : OFFSET.val + 2 * STEP_BY.val ≤ 32)
+    (hin : ∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 → (re.val[u]!).values.val[l]!.val.natAbs ≤ B)
+    (acc : InvLayer3OuterFC.Acc) (k : Std.Usize) (e : Std.Usize)
+    (h_ge : OFFSET.val ≤ k.val)
+    (h_le : k.val ≤ e.val)
+    (h_e : e.val = OFFSET.val + STEP_BY.val)
+    (h_inv : (InvLayer3OuterFC.inv OFFSET STEP_BY ZETA re B k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus_loop.body STEP_BY ZETA
+      { start := k, «end» := e } acc
+    ⦃ ⇓ r => ⌜ InvLayer3OuterFC.step_post OFFSET STEP_BY ZETA re B e k r ⌝ ⦄ := by
+  have h_acc_len : acc.length = 32 := Std.Array.length_eq _
+  obtain ⟨h_done, h_undone, h_bd⟩ := by
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv
+  unfold libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus_loop.body
+  by_cases h_lt : k.val < e.val
+  · -- `Some j = k` branch.
+    have hk_lt_oS : k.val < OFFSET.val + STEP_BY.val := by rw [← h_e]; exact h_lt
+    have hk_lt_32 : k.val < 32 := by omega
+    obtain ⟨s, hs_val, h_iter_some⟩ := iter_next_some_eq k e h_lt
+    -- i = k + STEP_BY.
+    have hi_max : k.val + STEP_BY.val ≤ Std.Usize.max := by
+      have h_kS_le_32 : k.val + STEP_BY.val ≤ 32 := by omega
+      have h_32_le_max : (32 : Nat) ≤ Std.Usize.max := by scalar_tac
+      omega
+    obtain ⟨i, hi_eq, hi_val⟩ := InvLayer3OuterFC.usize_add_ok_eq k STEP_BY hi_max
+    have hi_val' : i.val = k.val + STEP_BY.val := hi_val
+    have hi_lt_32 : i.val < 32 := by rw [hi_val']; omega
+    have h_ne_ki : k.val ≠ i.val := by rw [hi_val']; omega
+    -- No-hazard: acc[k] = re[k], acc[i] = re[k+S] = re[i].
+    have h_acc_k : acc.val[k.val]! = re.val[k.val]! :=
+      h_undone k.val hk_lt_32 (Or.inr (Nat.le_refl _)) (Or.inl hk_lt_oS)
+    have h_acc_i : acc.val[i.val]! = re.val[i.val]! :=
+      h_undone i.val hi_lt_32 (Or.inr (by omega)) (Or.inr (by omega))
+    -- Opaque names for the two read units (prevents `simp` index renormalization).
+    set ai : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients := acc.val[i.val]! with hai_def
+    set ak : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients := acc.val[k.val]! with hak_def
+    -- (1) c = acc[i]; rejs = a_minus_b = ai (clones are identity-on-value).
+    have h_idx_i :
+        Aeneas.Std.Array.index_usize acc i = .ok ai :=
+      array_index_usize_ok_eq acc i (by rw [h_acc_len]; exact hi_lt_32)
+    -- (2) c1 = acc[k] = ak.
+    have h_idx_k :
+        Aeneas.Std.Array.index_usize acc k = .ok ak :=
+      array_index_usize_ok_eq acc k (by rw [h_acc_len]; exact hk_lt_32)
+    -- Per-lane bounds on the two read units.
+    have h_bd_rek : ∀ l : Nat, l < 8 → (re.val[k.val]!).values.val[l]!.val.natAbs ≤ B :=
+      fun l hl => hin k.val hk_lt_32 l hl
+    have h_bd_rei : ∀ l : Nat, l < 8 → (re.val[i.val]!).values.val[l]!.val.natAbs ≤ B :=
+      fun l hl => hin i.val hi_lt_32 l hl
+    have h_bd_ak : ∀ l : Nat, l < 8 → (ak.values.val[l]!).val.natAbs ≤ B := by
+      intro l hl; rw [h_acc_k]; exact h_bd_rek l hl
+    have h_bd_ai : ∀ l : Nat, l < 8 → (ai.values.val[l]!).val.natAbs ≤ B := by
+      intro l hl; rw [h_acc_i]; exact h_bd_rei l hl
+    -- (3) a_minus_b1 = subtract ai ak  (rejs - re[j] = re[i] - re[j]).
+    have h_sub_pre : ∀ l : Nat, l < 8 →
+        ((ai.values.val[l]!).val - (ak.values.val[l]!).val : Int).natAbs ≤ 2 ^ 31 - 1 := by
+      intro l hl
+      have hi := h_bd_ai l hl
+      have hk := h_bd_ak l hl
+      have := (sum_abs_bound2 (ai.values.val[l]!).val (ak.values.val[l]!).val B hi hk).2
+      omega
+    obtain ⟨amb, h_amb_eq, h_amb_P⟩ :=
+      triple_exists_ok
+        (libcrux_iot_ml_dsa.Vector.Portable.Element.subtract_spec ai ak h_sub_pre)
+    -- (4) (c2, mb) = index_mut_usize acc k; c2 = acc[k] = ak, mb = acc.set k.
+    have h_imt_k :
+        Aeneas.Std.Array.index_mut_usize acc k = .ok (ak, acc.set k) := by
+      unfold Aeneas.Std.Array.index_mut_usize
+      rw [h_idx_k]; rfl
+    -- (5) c3 = add ak ai  (re[j] + re[i]).
+    have h_add_pre : ∀ l : Nat, l < 8 →
+        ((ak.values.val[l]!).val + (ai.values.val[l]!).val : Int).natAbs ≤ 2 ^ 31 - 1 := by
+      intro l hl
+      have hk := h_bd_ak l hl
+      have hi := h_bd_ai l hl
+      have := (sum_abs_bound2 (ak.values.val[l]!).val (ai.values.val[l]!).val B hk hi).1
+      omega
+    obtain ⟨c3, h_c3_eq, h_c3_P⟩ :=
+      triple_exists_ok
+        (libcrux_iot_ml_dsa.Vector.Portable.Element.add_spec ak ai h_add_pre)
+    -- re1 = mb c3 = acc.set k c3.  (WRITE unit j = k.)  Kept as the literal
+    -- `acc.set k c3` since `simp` reduces `index_mut_back c3` to that form.
+    have hre1_len : (acc.set k c3).length = 32 := by rw [Std.Array.set_length]; exact h_acc_len
+    -- (6) re2 = update (acc.set k c3) i amb = (acc.set k c3).set i amb.  (WRITE i, first.)
+    have h_upd_re2 :
+        Aeneas.Std.Array.update (acc.set k c3) i amb = .ok ((acc.set k c3).set i amb) :=
+      array_update_ok_eq (acc.set k c3) i amb (by rw [hre1_len]; exact hi_lt_32)
+    set re2 : InvLayer3OuterFC.Acc := (acc.set k c3).set i amb with hre2_def
+    have hre2_len : re2.length = 32 := by rw [hre2_def, Std.Array.set_length]; exact hre1_len
+    -- re2[i] = amb.
+    have hre2_i : re2.val[i.val]! = amb := by
+      rw [hre2_def]
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+        Aeneas.Std.Array.getElem!_Nat_set_eq (acc.set k c3) i i.val amb
+          ⟨rfl, by rw [hre1_len]; exact hi_lt_32⟩
+    -- (7) (c4, mb1) = index_mut_usize re2 i; c4 = re2[i] = amb, mb1 = re2.set i.
+    have h_idx_re2_i :
+        Aeneas.Std.Array.index_usize re2 i = .ok amb :=
+      (array_index_usize_ok_eq re2 i (by rw [hre2_len]; exact hi_lt_32)).trans
+        (congrArg Result.ok hre2_i)
+    have h_imt_i :
+        Aeneas.Std.Array.index_mut_usize re2 i = .ok (amb, re2.set i) := by
+      unfold Aeneas.Std.Array.index_mut_usize
+      rw [h_idx_re2_i]; rfl
+    -- (8) c5 = montgomery_multiply_by_constant amb ZETA.
+    obtain ⟨c5, h_c5_eq, h_c5_P⟩ :=
+      triple_exists_ok
+        (libcrux_iot_ml_dsa.Vector.Portable.Element.montgomery_multiply_by_constant_spec
+          amb ZETA hzeta)
+    -- a = mb1 c5 = re2.set i c5 = (re1.set i amb).set i c5 = re1.set i c5
+    -- = (acc.set k c3).set i c5  (double-set at i collapses, last wins = c5).
+    set a : InvLayer3OuterFC.Acc := re2.set i c5 with ha_def
+    have ha_eq : a = (acc.set k c3).set i c5 := by
+      rw [ha_def, hre2_def]
+      apply Subtype.ext
+      simp only [Aeneas.Std.Array.set_val_eq, List.set_set]
+    have ha_len : a.length = 32 := by rw [ha_def, Std.Array.set_length]; exact hre2_len
+    -- Compose the body to .ok (cont (iter', a)).
+    have h_body :
+        libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus_loop.body STEP_BY ZETA
+          { start := k, «end» := e } acc
+        = .ok (ControlFlow.cont (({ start := s, «end» := e }
+                  : CoreModels.core.ops.range.Range Std.Usize), a)) := by
+      unfold libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus_loop.body
+      conv_lhs =>
+        rw [show
+          (core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := e } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := e }
+                  : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp [Aeneas.Std.bind_tc_ok, hi_eq, h_idx_i,
+        show simd.portable.vector_type.Coefficients.Insts.CoreCloneClone.clone ai = .ok ai from rfl,
+        h_idx_k, h_amb_eq, h_imt_k, h_c3_eq, h_upd_re2, h_imt_i, classify_ok, h_c5_eq]
+      exact ha_def.symm
+    apply triple_of_ok h_body
+    -- step_post: cont branch.
+    show InvLayer3OuterFC.step_post OFFSET STEP_BY ZETA re B e k
+      (.cont (({ start := s, «end» := e } : CoreModels.core.ops.range.Range Std.Usize), a))
+    unfold InvLayer3OuterFC.step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    -- Invariant at (s, a).  s.val = k.val + 1.
+    show (InvLayer3OuterFC.inv OFFSET STEP_BY ZETA re B s a).holds
+    -- The mont lift seam: c5 = mont(amb) lifts to liftZ amb · liftZ ZETA.
+    have h_lift_c5 : ∀ l : Nat, l < 8 →
+        liftZ (c5.values.val[l]!).val
+          = (liftZ (re.val[k.val + STEP_BY.val]!).values.val[l]!.val
+              - liftZ (re.val[k.val]!).values.val[l]!.val) * liftZ ZETA.val := by
+      intro l hl
+      have h := (h_c5_P l hl).1
+      have hseam := liftZ_of_mont (c5.values.val[l]!).val (amb.values.val[l]!).val ZETA.val h
+      -- amb[l] = ai[l] - ak[l].
+      have hamb_val := (h_amb_P l hl).1
+      rw [hamb_val, liftZ_sub, h_acc_i, h_acc_k,
+        show i.val = k.val + STEP_BY.val from hi_val'] at hseam
+      exact hseam
+    -- a[k] = c3 = add ak ai  (the ADD lane = j = k).
+    have ha_k : a.val[k.val]! = c3 := by
+      rw [ha_eq]
+      rw [show ((acc.set k c3).set i c5).val[k.val]! = (acc.set k c3).val[k.val]! from by
+        simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+          Aeneas.Std.Array.getElem!_Nat_set_ne (acc.set k c3) i k.val c5 (Ne.symm h_ne_ki)]
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+        Aeneas.Std.Array.getElem!_Nat_set_eq acc k k.val c3
+          ⟨rfl, by rw [h_acc_len]; exact hk_lt_32⟩
+    -- a[i] = c5 = mont(amb)  (the MONT lane = i = k+S).
+    have ha_i : a.val[i.val]! = c5 := by
+      rw [ha_eq]
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+        Aeneas.Std.Array.getElem!_Nat_set_eq (acc.set k c3) i i.val c5
+          ⟨rfl, by rw [Std.Array.set_length]; exact (by rw [h_acc_len]; exact hi_lt_32)⟩
+    have ha_kS : a.val[k.val + STEP_BY.val]! = c5 := by
+      rw [show k.val + STEP_BY.val = i.val from hi_val'.symm]; exact ha_i
+    have h_inv_pure :
+        (∀ j : Nat, OFFSET.val ≤ j → j < s.val →
+            (∀ l : Nat, l < 8 →
+              liftZ (a.val[j]!).values.val[l]!.val
+                = liftZ (re.val[j]!).values.val[l]!.val
+                  + liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val)
+          ∧ (∀ l : Nat, l < 8 →
+              liftZ (a.val[j + STEP_BY.val]!).values.val[l]!.val
+                = (liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val
+                    - liftZ (re.val[j]!).values.val[l]!.val) * liftZ ZETA.val))
+        ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ s.val ≤ u) →
+              (u < OFFSET.val + STEP_BY.val ∨ s.val + STEP_BY.val ≤ u) →
+              a.val[u]! = re.val[u]!)
+        ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+              (a.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) := by
+      refine ⟨?_, ?_, ?_⟩
+      · -- Butterfly equations for j < s.val = k.val + 1.
+        intro j hj_ge hj_lt
+        rw [hs_val] at hj_lt
+        rcases Nat.lt_succ_iff_lt_or_eq.mp hj_lt with hj_lt_k | hj_eq_k
+        · -- j < k.val: unchanged by both sets (j ≠ k, j+S ≠ k, j ≠ i, j+S ≠ i).
+          have h_j_ne_k : j ≠ k.val := Nat.ne_of_lt hj_lt_k
+          have h_j_ne_i : j ≠ i.val := by rw [hi_val']; omega
+          have h_jS_ne_k : j + STEP_BY.val ≠ k.val := by omega
+          have h_jS_ne_i : j + STEP_BY.val ≠ i.val := by rw [hi_val']; omega
+          have h_a_j : a.val[j]! = acc.val[j]! := by
+            rw [ha_eq]
+            rw [show ((acc.set k c3).set i c5).val[j]! = (acc.set k c3).val[j]! from by
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+                Aeneas.Std.Array.getElem!_Nat_set_ne (acc.set k c3) i j c5 (Ne.symm h_j_ne_i)]
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne acc k j c3 (Ne.symm h_j_ne_k)
+          have h_a_jS : a.val[j + STEP_BY.val]! = acc.val[j + STEP_BY.val]! := by
+            rw [ha_eq]
+            rw [show ((acc.set k c3).set i c5).val[j + STEP_BY.val]!
+                = (acc.set k c3).val[j + STEP_BY.val]! from by
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+                Aeneas.Std.Array.getElem!_Nat_set_ne (acc.set k c3) i (j + STEP_BY.val) c5
+                  (Ne.symm h_jS_ne_i)]
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne acc k (j + STEP_BY.val) c3 (Ne.symm h_jS_ne_k)
+          rw [h_a_j, h_a_jS]
+          exact h_done j hj_ge hj_lt_k
+        · -- j = k.val: the freshly-written pair.
+          subst hj_eq_k
+          refine ⟨?_, ?_⟩
+          · -- a[k] = c3 = add ak ai → liftZ re[k] + liftZ re[k+S].
+            intro l hl
+            rw [ha_k]
+            have hval := (h_c3_P l hl).1
+            rw [hval, liftZ_add, h_acc_k, h_acc_i,
+              show i.val = k.val + STEP_BY.val from hi_val']
+          · -- a[k+S] = a[i] = c5 = mont → (liftZ re[k+S] - liftZ re[k]) · liftZ ZETA.
+            intro l hl
+            rw [ha_kS]
+            exact h_lift_c5 l hl
+      · -- Unchanged window for the new cursor s.val = k.val + 1.
+        intro u hu_lt hu_disj1 hu_disj2
+        rw [hs_val] at hu_disj1 hu_disj2
+        have h_u_ne_k : u ≠ k.val := by
+          rcases hu_disj1 with h | h
+          · omega
+          · omega
+        have h_u_ne_i : u ≠ i.val := by
+          rw [hi_val']
+          rcases hu_disj2 with h | h
+          · omega
+          · omega
+        have h_a_u : a.val[u]! = acc.val[u]! := by
+          rw [ha_eq]
+          rw [show ((acc.set k c3).set i c5).val[u]! = (acc.set k c3).val[u]! from by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+              Aeneas.Std.Array.getElem!_Nat_set_ne (acc.set k c3) i u c5 (Ne.symm h_u_ne_i)]
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+            Aeneas.Std.Array.getElem!_Nat_set_ne acc k u c3 (Ne.symm h_u_ne_k)
+        rw [h_a_u]
+        apply h_undone u hu_lt
+        · rcases hu_disj1 with h | h
+          · exact Or.inl h
+          · exact Or.inr (by omega)
+        · rcases hu_disj2 with h | h
+          · exact Or.inl h
+          · exact Or.inr (by omega)
+      · -- Bound on all lanes of a.
+        intro u hu_lt l hl
+        by_cases h_u_k : u = k.val
+        · subst h_u_k
+          rw [ha_k]
+          have hval := (h_c3_P l hl).1
+          rw [hval]
+          have hk := h_bd_ak l hl
+          have hi := h_bd_ai l hl
+          have := (sum_abs_bound2 (ak.values.val[l]!).val (ai.values.val[l]!).val B hk hi).1
+          omega
+        · by_cases h_u_i : u = i.val
+          · subst h_u_i
+            rw [ha_i]
+            have := (h_c5_P l hl).2
+            omega
+          · -- Untouched lane: bound from invariant.
+            have h_a_u : a.val[u]! = acc.val[u]! := by
+              rw [ha_eq]
+              rw [show ((acc.set k c3).set i c5).val[u]! = (acc.set k c3).val[u]! from by
+                simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+                  Aeneas.Std.Array.getElem!_Nat_set_ne (acc.set k c3) i u c5 (Ne.symm h_u_i)]
+              simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
+                Aeneas.Std.Array.getElem!_Nat_set_ne acc k u c3 (Ne.symm h_u_k)
+            rw [h_a_u]
+            exact h_bd u hu_lt l hl
+    show (pure _ : Result Prop).holds
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+  · -- `None` branch: k ≥ e, done.
+    have hk_ge : k.val ≥ e.val := Nat.not_lt.mp h_lt
+    have h_iter_none := iter_next_none_eq k e hk_ge
+    have h_body :
+        libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus_loop.body STEP_BY ZETA
+          { start := k, «end» := e } acc
+        = .ok (ControlFlow.done acc) := by
+      unfold libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus_loop.body
+      conv_lhs =>
+        rw [show
+          (core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := e } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := e }
+                  : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    apply triple_of_ok h_body
+    show InvLayer3OuterFC.step_post OFFSET STEP_BY ZETA re B e k (.done acc)
+    unfold InvLayer3OuterFC.step_post
+    have hk_eq : k.val = e.val := by omega
+    show (InvLayer3OuterFC.inv OFFSET STEP_BY ZETA re B e acc).holds
+    have h_inv_pure :
+        (∀ j : Nat, OFFSET.val ≤ j → j < e.val →
+            (∀ l : Nat, l < 8 →
+              liftZ (acc.val[j]!).values.val[l]!.val
+                = liftZ (re.val[j]!).values.val[l]!.val
+                  + liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val)
+          ∧ (∀ l : Nat, l < 8 →
+              liftZ (acc.val[j + STEP_BY.val]!).values.val[l]!.val
+                = (liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val
+                    - liftZ (re.val[j]!).values.val[l]!.val) * liftZ ZETA.val))
+        ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ e.val ≤ u) →
+              (u < OFFSET.val + STEP_BY.val ∨ e.val + STEP_BY.val ≤ u) →
+              acc.val[u]! = re.val[u]!)
+        ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+              (acc.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) := by
+      refine ⟨?_, ?_, h_bd⟩
+      · intro j hj_ge hj_lt
+        exact h_done j hj_ge (by rw [hk_eq]; exact hj_lt)
+      · intro u hu_lt hu_disj1 hu_disj2
+        apply h_undone u hu_lt
+        · rcases hu_disj1 with h | h
+          · exact Or.inl h
+          · exact Or.inr (by rw [hk_eq]; exact h)
+        · rcases hu_disj2 with h | h
+          · exact Or.inl h
+          · exact Or.inr (by rw [hk_eq]; exact h)
+    show (pure _ : Result Prop).holds
+    simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
+
+set_option maxHeartbeats 16000000 in
+/-- KEYSTONE cross-unit INVERSE NTT layer op `outer_3_plus` FC. Loops `j` over
+    `[OFFSET, OFFSET+STEP_BY)` applying a Gentleman–Sande inverse butterfly to
+    the pair of WHOLE `Coefficients` SIMD units `(j, j+STEP_BY)`:
+    `out[j] = re[j] + re[j+S]` (plain add) and
+    `out[j+S] = (re[j+S] − re[j]) · ZETA` (subtract then mont-by-const). -/
+@[spec]
+theorem outer_3_plus_fc
+    (OFFSET STEP_BY : Std.Usize) (ZETA : Std.I32)
+    (re : Aeneas.Std.Array libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients 32#usize)
+    (B : Nat)
+    (hzeta : ZETA.val.natAbs ≤ 8380416)
+    (hB : (2 : Int) * B ≤ 2 ^ 31 - 1)
+    (hstep : 1 ≤ STEP_BY.val)
+    (hbound : OFFSET.val + 2 * STEP_BY.val ≤ 32)
+    (hin : ∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 → (re.val[u]!).values.val[l]!.val.natAbs ≤ B) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus OFFSET STEP_BY ZETA re
+    ⦃ ⇓ r => ⌜
+      (∀ j : Nat, OFFSET.val ≤ j → j < OFFSET.val + STEP_BY.val →
+          (∀ l : Nat, l < 8 →
+            liftZ (r.val[j]!).values.val[l]!.val
+              = liftZ (re.val[j]!).values.val[l]!.val
+                + liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val)
+        ∧ (∀ l : Nat, l < 8 →
+            liftZ (r.val[j + STEP_BY.val]!).values.val[l]!.val
+              = (liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val
+                  - liftZ (re.val[j]!).values.val[l]!.val) * liftZ ZETA.val))
+      ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ OFFSET.val + 2 * STEP_BY.val ≤ u) →
+            r.val[u]! = re.val[u]!)
+      ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+            (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
+  -- Discharge the checked `OFFSET + STEP_BY` add as `.ok e` (no overflow ≤ 32).
+  have he_max : OFFSET.val + STEP_BY.val ≤ Std.Usize.max := by
+    have h_kS_le_32 : OFFSET.val + STEP_BY.val ≤ 32 := by omega
+    have h_32_le_max : (32 : Nat) ≤ Std.Usize.max := by scalar_tac
+    omega
+  obtain ⟨e, he_eq, he_val⟩ := InvLayer3OuterFC.usize_add_ok_eq OFFSET STEP_BY he_max
+  rw [he_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  unfold libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus_loop
+  have h_le : OFFSET.val ≤ e.val := by rw [he_val]; omega
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, acc1) =>
+        libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus_loop.body STEP_BY ZETA iter1 acc1)
+      (β := InvLayer3OuterFC.Acc)
+      re
+      OFFSET e
+      (InvLayer3OuterFC.inv OFFSET STEP_BY ZETA re B)
+      h_le
+      (by
+        -- h_init: at k = OFFSET the butterfly conjunct is vacuous, unchanged trivial,
+        -- bound from hin since B ≤ 2B + 2^24.
+        show (pure _ : Result Prop).holds
+        have h_init_pure :
+            (∀ j : Nat, OFFSET.val ≤ j → j < OFFSET.val →
+                (∀ l : Nat, l < 8 →
+                  liftZ (re.val[j]!).values.val[l]!.val
+                    = liftZ (re.val[j]!).values.val[l]!.val
+                      + liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val)
+              ∧ (∀ l : Nat, l < 8 →
+                  liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val
+                    = (liftZ (re.val[j + STEP_BY.val]!).values.val[l]!.val
+                        - liftZ (re.val[j]!).values.val[l]!.val) * liftZ ZETA.val))
+            ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ OFFSET.val ≤ u) →
+                  (u < OFFSET.val + STEP_BY.val ∨ OFFSET.val + STEP_BY.val ≤ u) →
+                  re.val[u]! = re.val[u]!)
+            ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+                  (re.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) := by
+          refine ⟨?_, ?_, ?_⟩
+          · intro j hj_ge hj_lt; exact absurd hj_lt (by omega)
+          · intro u _ _ _; rfl
+          · intro u hu l hl; have hbu := hin u hu l hl; omega
+        simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_init_pure)
+      ?_)
+  · -- Post-entailment: inv at k=e yields the locked post.
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    have h_inv_holds : (InvLayer3OuterFC.inv OFFSET STEP_BY ZETA re B e r).holds := by
+      simpa [PostCond.noThrow, Std.Do.SPred.down_pure] using hh
+    obtain ⟨h_done, h_undone, h_bd⟩ := by
+      simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_holds
+    refine ⟨?_, ?_, ?_⟩
+    · -- Butterfly eqns: rewrite `< OFFSET+STEP_BY` into `< e.val`.
+      intro j hj_ge hj_lt
+      exact h_done j hj_ge (by rw [he_val]; exact hj_lt)
+    · -- Unchanged units: derive the two inv-clauses from `u < OFFSET ∨ OFFSET+2S ≤ u`.
+      intro u hu_lt hu_disj
+      apply h_undone u hu_lt
+      · rcases hu_disj with h | h
+        · exact Or.inl h
+        · exact Or.inr (by rw [he_val]; omega)
+      · rcases hu_disj with h | h
+        · exact Or.inl (by omega)
+        · exact Or.inr (by rw [he_val]; omega)
+    · -- Output bound.
+      exact h_bd
+  · -- Step lemma dispatch.
+    intro acc k h_ge_k h_le_k hinv
+    have h_step :=
+      outer_3_plus_step_lemma_fc OFFSET STEP_BY ZETA re B hzeta hB hstep hbound hin acc k e
+        h_ge_k h_le_k (by rw [he_val]) hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : InvLayer3OuterFC.step_post OFFSET STEP_BY ZETA re B e k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [InvLayer3OuterFC.step_post] using hP
+    · have hP : InvLayer3OuterFC.step_post OFFSET STEP_BY ZETA re B e k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [InvLayer3OuterFC.step_post] using hP
 
 
 end libcrux_iot_ml_dsa.Vector.Portable.InvNtt
