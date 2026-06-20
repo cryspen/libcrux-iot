@@ -136,7 +136,7 @@ pub(super) fn infinity_norm_exceeds(simd_unit: &Coefficients, bound: i32) -> boo
         // don't convert it into a different representation.
         let sign = coefficient >> 31;
         let normalized =
-            coefficient.wrapping_sub(sign & (2i32.classify().wrapping_sub(coefficient)));
+            coefficient.wrapping_sub(sign & (2i32.classify().wrapping_mul(coefficient)));
 
         // FIXME: return
         // [hax] https://github.com/hacspec/hax/issues/1204

@@ -1065,7 +1065,7 @@ def simd.portable.arithmetic.infinity_norm_exceeds_loop.body
     let coefficient ← Array.index_usize a i
     let sign ← coefficient >>> 31#i32
     let i1 ← libcrux_secrets.traits.Classify.Blanket.classify 2#i32
-    let i2 ← core.num.I32.wrapping_sub i1 coefficient
+    let i2 ← core.num.I32.wrapping_mul i1 coefficient
     let i3 ← lift (sign &&& i2)
     let normalized ← core.num.I32.wrapping_sub coefficient i3
     if result
