@@ -19,9 +19,9 @@ import LibcruxIotMlDsa.Vector.Portable.Arithmetic
 -- Phase-2: L1 elementwise loop infra + Coefficients add/subtract Triples.
 import LibcruxIotMlDsa.Util.LoopHelper
 import LibcruxIotMlDsa.Vector.Portable.Element
+import LibcruxIotMlDsa.Vector.Portable.Ntt           -- L2 butterflies
 -- Phases 3-8 (re-enable as the proof files land; ml-dsa has no `createi`):
 -- import LibcruxIotMlDsa.Util.CreateI
--- import LibcruxIotMlDsa.Vector.Portable.Ntt          -- L2 butterflies
 -- import LibcruxIotMlDsa.Ntt                          -- L3 forward drivers
 -- import LibcruxIotMlDsa.InvertNtt                    -- L3 inverse drivers
 -- import LibcruxIotMlDsa.Polynomial.NttMultiply       -- L6 pointwise mul
