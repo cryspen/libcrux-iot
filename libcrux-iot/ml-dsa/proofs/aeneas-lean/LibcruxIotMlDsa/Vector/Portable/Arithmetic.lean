@@ -31,6 +31,21 @@ private theorem triple_of_ok_l0 {α : Type} {x : Result α} {v : α}
     ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
   subst hx; simp [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply, hp]
 
+/-- Extract the `.ok` witness from a true-pre Triple — mirror of the SKILL §13.5
+    helper, scoped to this file. Lets a downstream proof consume a `@[spec]`
+    Triple without reaching into its privates. -/
+private theorem triple_exists_ok_l0 {α : Type} {x : Result α} {P : α → Prop}
+    (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄) :
+    ∃ v, x = .ok v ∧ P v := by
+  match hx : x with
+  | .ok v =>
+    exact ⟨v, rfl,
+      (by subst hx; simpa [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply] using h)⟩
+  | .fail _ =>
+    exact absurd h (by simp [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply])
+  | .div =>
+    exact absurd h (by simp [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply])
+
 /-! ## `get_n_least_significant_bits` (U64 version) -/
 
 private theorem get_n_least_significant_bits_eq_ok
@@ -363,6 +378,134 @@ theorem montgomery_reduce_element_spec (value : Std.I64) (hb : value.val.natAbs 
       rw [h_const] at h_div_le
       exact le_trans h_div_le (by norm_num)
     rw [Int.abs_eq_natAbs] at h_res_abs; exact_mod_cast h_res_abs
+
+/-! ## `montgomery_multiply_fe_by_fer` — widen-multiply then reduce
+
+  The impl sign-extends `fe, fer : i32` to `i64`, forms the exact i64 product
+  `fe·fer`, and feeds it to the `montgomery_reduce_element` keystone:
+
+      let i  := (fe  : i64)                    -- sign-extend, value-preserving
+      let i1 := (fer : i64)
+      let i2 := wrapping_mul i i1              -- exact i64 product fe·fer
+      montgomery_reduce_element i2
+
+  Under `|fer| ≤ q-1 = 8380416` and the ambient `|fe| ≤ 2^31` (any i32), the
+  product `|fe·fer| ≤ 2^31·8380416 < 2^55` is exact (no wrap) and satisfies the
+  keystone precondition, so the result lifts to `(fe)·(fer)·R⁻¹` in `Z_q`. -/
+
+/-- Closed form of the do-block at the i64-product level: the impl reduces to
+    `montgomery_reduce_element` of the exact (non-wrapped) i64 product. -/
+private theorem mmfbf_eq_ok (fe fer : Std.I32) :
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer fe fer
+      = libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_reduce_element
+          (Aeneas.Std.I64.wrapping_mul
+            (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fe)
+            (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fer)) := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer
+  simp only [libcrux_secrets.traits.Classify.Blanket.classify,
+             libcrux_secrets.traits.Declassify.Blanket.declassify,
+             libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64,
+             CoreModels.core.num.I64.wrapping_mul,
+             rust_primitives.arithmetic.wrapping_mul_i64,
+             Aeneas.Std.bind_tc_ok, Aeneas.Std.lift]
+
+/-- Under `|fer| ≤ 8380416`, the i64 product is exact (no wrap): its `.val` is
+    `fe.val * fer.val` (in `Int`). Both casts are sign-extends that preserve
+    value, and `|fe·fer| ≤ 2^31·8380416 < 2^63`. Mirrors the keystone's
+    `h_km_val`. -/
+private theorem mmfbf_product_val
+    (fe fer : Std.I32) (hfer : fer.val.natAbs ≤ 8380416) :
+    (Aeneas.Std.I64.wrapping_mul
+        (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fe)
+        (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fer)).val
+      = fe.val * fer.val := by
+  -- i32 value bounds: -2^31 ≤ fe.val < 2^31, and |fer.val| ≤ 8380416.
+  have h_fe_bounds := fe.hBounds
+  have h_red31 : (Aeneas.Std.IScalarTy.I32.numBits - 1) = 31 := by decide
+  rw [h_red31] at h_fe_bounds
+  have h_fe_abs : |fe.val| ≤ ((2 : Int)^31) :=
+    abs_le.mpr ⟨h_fe_bounds.1, le_of_lt h_fe_bounds.2⟩
+  have h_fer_abs : |fer.val| ≤ (8380416 : Int) := by
+    rw [Int.abs_eq_natAbs]; exact_mod_cast hfer
+  -- (cast .I64 x).val = x.val (sign-extend I32 → I64 preserves value).
+  have h_fe_cast : (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fe).val = fe.val := by
+    show (fe.bv.signExtend 64).toInt = fe.bv.toInt
+    exact BitVec.toInt_signExtend_of_le (by decide)
+  have h_fer_cast : (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fer).val = fer.val := by
+    show (fer.bv.signExtend 64).toInt = fer.bv.toInt
+    exact BitVec.toInt_signExtend_of_le (by decide)
+  -- |fe.val * fer.val| ≤ 2^31 * 8380416 < 2^63.
+  have h_prod_abs : |fe.val * fer.val| ≤ ((2 : Int)^31) * 8380416 := by
+    rw [abs_mul]
+    calc |fe.val| * |fer.val|
+        ≤ ((2 : Int)^31) * |fer.val| :=
+          mul_le_mul_of_nonneg_right h_fe_abs (abs_nonneg _)
+      _ ≤ ((2 : Int)^31) * 8380416 :=
+          mul_le_mul_of_nonneg_left h_fer_abs (by norm_num)
+  have h_prod_lb : -((2 : Int)^31 * 8380416) ≤ fe.val * fer.val := (abs_le.mp h_prod_abs).1
+  have h_prod_ub : fe.val * fer.val ≤ ((2 : Int)^31 * 8380416) := (abs_le.mp h_prod_abs).2
+  -- The wrapping_mul is exact: bmod (fe·fer) (2^64) = fe·fer.
+  show (Aeneas.Std.I64.wrapping_mul _ _).bv.toInt = _
+  have h_bv : (Aeneas.Std.I64.wrapping_mul
+      (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fe)
+      (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fer)).bv
+        = (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fe).bv
+          * (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fer).bv := by
+    simp only [Aeneas.Std.I64.wrapping_mul_bv_eq]
+  rw [h_bv, BitVec.toInt_mul]
+  show Int.bmod _ _ = _
+  rw [show (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fe).bv.toInt = fe.val from h_fe_cast,
+      show (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fer).bv.toInt = fer.val from h_fer_cast]
+  apply Arith.Int.bmod_pow2_eq_of_inBounds' 64 _ (by decide)
+  · -- -2^(64-1) ≤ fe.val * fer.val
+    refine le_trans ?_ h_prod_lb
+    norm_num
+  · -- fe.val * fer.val < 2^(64-1)
+    refine lt_of_le_of_lt h_prod_ub ?_
+    norm_num
+
+/-! ## L0 Triple — `montgomery_multiply_fe_by_fer` -/
+
+@[spec high]
+theorem montgomery_multiply_fe_by_fer_spec
+    (fe fer : Std.I32) (hfer : fer.val.natAbs ≤ 8380416) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer fe fer
+    ⦃ ⇓ r => ⌜ liftZ_std r.val = (fe.val : Zq) * (fer.val : Zq) * (RINV : Zq)
+              ∧ r.val.natAbs ≤ 2^24 ⌝ ⦄ := by
+  -- Reduce the impl to a single `montgomery_reduce_element` on the exact product.
+  set product : Std.I64 :=
+    Aeneas.Std.I64.wrapping_mul
+      (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fe)
+      (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fer) with h_product_def
+  have h_product_val : product.val = fe.val * fer.val := mmfbf_product_val fe fer hfer
+  -- The keystone precondition: |fe·fer| ≤ 2^31 · 8380416 < 2^55.
+  have h_pre : product.val.natAbs ≤ 2^55 := by
+    rw [h_product_val, Int.natAbs_mul]
+    -- |fe.val| ≤ 2^31 (any i32) and |fer.val| ≤ 8380416.
+    have h_fe_bounds := fe.hBounds
+    have h_red31 : (Aeneas.Std.IScalarTy.I32.numBits - 1) = 31 := by decide
+    rw [h_red31] at h_fe_bounds
+    have h_fe_abs : (fe.val.natAbs : Int) ≤ ((2 : Int)^31) := by
+      rw [← Int.abs_eq_natAbs]
+      exact abs_le.mpr ⟨h_fe_bounds.1, le_of_lt h_fe_bounds.2⟩
+    have h_nat_fe : fe.val.natAbs ≤ 2^31 := by exact_mod_cast h_fe_abs
+    -- fe.natAbs * fer.natAbs ≤ 2^31 * 8380416 ≤ 2^55.
+    have h_mul : fe.val.natAbs * fer.val.natAbs ≤ 2^31 * 8380416 := Nat.mul_le_mul h_nat_fe hfer
+    have h_step : (2^31 * 8380416 : Nat) ≤ 2^55 := by norm_num
+    exact le_trans h_mul h_step
+  -- Extract the keystone's conclusion via `triple_exists_ok_l0`.
+  obtain ⟨r0, h_eq_ok, h_lift, h_bound⟩ :=
+    triple_exists_ok_l0 (montgomery_reduce_element_spec product h_pre)
+  -- The impl reduces to .ok r0; close via triple_of_ok_l0.
+  apply triple_of_ok_l0 (v := r0) (by rw [mmfbf_eq_ok]; exact h_eq_ok)
+  refine ⟨?_, h_bound⟩
+  -- Equality: liftZ_std r0.val = (fe.val·fer.val : Zq)·R⁻¹ = (fe)·(fer)·R⁻¹.
+  rw [h_lift, h_product_val]
+  show ((fe.val * fer.val : Int) : Zq) * (RINV : Zq)
+        = (fe.val : Zq) * (fer.val : Zq) * (RINV : Zq)
+  push_cast
+  ring
 
 /-! ## `reduce_element` — centered Barrett reduction (i32, q = 8380417, shift 23)
 
