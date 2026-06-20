@@ -95,7 +95,7 @@ theorem mont_reduce_element_eq_ok (value : Std.I64) :
 /-! ## `.val` in Int terms -/
 
 private theorem mont_reduce_impl_value_val
-    (value : Std.I64) (hb : value.val.natAbs ≤ 2^31 * 8) :
+    (value : Std.I64) (hb : value.val.natAbs ≤ 2^55) :
     (mont_reduce_impl_value value).val
       = let v32 := Int.bmod value.val (2^32)
         let k32 := Int.bmod (v32 * 58728449) (2^32)
@@ -103,7 +103,7 @@ private theorem mont_reduce_impl_value_val
         value.val / (2^32 : Int) - km / (2^32 : Int) := by
   unfold mont_reduce_impl_value
   set v : Int := value.val
-  have h_v_abs : |v| ≤ (2^31 * 8 : Int) := by
+  have h_v_abs : |v| ≤ (2^55 : Int) := by
     rw [Int.abs_eq_natAbs]; exact_mod_cast hb
   have h_v32_lb : -(2^31 : Int) ≤ Int.bmod v (2^32) := (Arith.Int.bmod_pow2_bounds 32 v).1
   have h_v32_ub : Int.bmod v (2^32) < (2^31 : Int) := (Arith.Int.bmod_pow2_bounds 32 v).2
@@ -245,17 +245,15 @@ private theorem mont_reduce_impl_value_val
     rw [Aeneas.Std.IScalar.val_mod_pow_inBounds]
     · exact h_shr
     · rw [h_shr]
-      have h_lb : -(2^31 * 8 : Int) ≤ v := by
-        have := neg_abs_le v; have := h_v_abs; omega
+      have h_lb : -(2^55 : Int) ≤ v := le_trans (neg_le_neg h_v_abs) (neg_abs_le v)
       have h_ediv := Int.ediv_le_ediv (c := 2^32) (by decide) h_lb
-      have h_const : -(2^31 * 8 : Int) / 2^32 = -4 := by norm_num
+      have h_const : -(2^55 : Int) / 2^32 = -8388608 := by norm_num
       have h_pow31 : -(2:Int)^(IScalarTy.I32.numBits-1) = -2147483648 := by decide
       rw [h_const] at h_ediv; rw [h_pow31]; omega
     · rw [h_shr]
-      have h_ub : v ≤ (2^31 * 8 : Int) := by
-        have := le_abs_self v; have := h_v_abs; omega
+      have h_ub : v ≤ (2^55 : Int) := le_trans (le_abs_self v) h_v_abs
       have h_ediv := Int.ediv_le_ediv (c := 2^32) (by decide) h_ub
-      have h_const : (2^31 * 8 : Int) / 2^32 = 4 := by norm_num
+      have h_const : (2^55 : Int) / 2^32 = 8388608 := by norm_num
       have h_pow31 : (2:Int)^(IScalarTy.I32.numBits-1) = 2147483648 := by decide
       rw [h_const] at h_ediv; rw [h_pow31]; omega
 
@@ -265,11 +263,10 @@ private theorem mont_reduce_impl_value_val
   rw [show vh.bv.toInt = vh.val from rfl, show c.bv.toInt = c.val from rfl]
   rw [h_vh_val, h_c_val, h_km_val, h_k_eq_k32]
   apply Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
-  · have h_v_div_lb : v / (2^32 : Int) ≥ -4 := by
-      have h_lb : -(2^31 * 8 : Int) ≤ v := by
-        have := neg_abs_le v; have := h_v_abs; omega
+  · have h_v_div_lb : v / (2^32 : Int) ≥ -8388608 := by
+      have h_lb : -(2^55 : Int) ≤ v := le_trans (neg_le_neg h_v_abs) (neg_abs_le v)
       have h_ediv := Int.ediv_le_ediv (c := 2^32) (by decide) h_lb
-      have h_const : -(2^31 * 8 : Int) / 2^32 = -4 := by norm_num
+      have h_const : -(2^55 : Int) / 2^32 = -8388608 := by norm_num
       rw [h_const] at h_ediv; omega
     have h_km_div_ub : k32 * 8380417 / (2^32 : Int) ≤ 4190208 := by
       -- k32 ≤ 2^31 via le_of_lt (avoids omega on raw 2^31 → kernel deep recursion);
@@ -280,11 +277,10 @@ private theorem mont_reduce_impl_value_val
       rw [h_const] at h_ediv; omega
     have h31 : (2 : Int)^(32 - 1) = (2147483648 : Int) := by norm_num
     rw [h31]; omega
-  · have h_v_div_ub : v / (2^32 : Int) ≤ 4 := by
-      have h_ub : v ≤ (2^31 * 8 : Int) := by
-        have := le_abs_self v; have := h_v_abs; omega
+  · have h_v_div_ub : v / (2^32 : Int) ≤ 8388608 := by
+      have h_ub : v ≤ (2^55 : Int) := le_trans (le_abs_self v) h_v_abs
       have h_ediv := Int.ediv_le_ediv (c := 2^32) (by decide) h_ub
-      have h_const : (2^31 * 8 : Int) / 2^32 = 4 := by norm_num
+      have h_const : (2^55 : Int) / 2^32 = 8388608 := by norm_num
       rw [h_const] at h_ediv; omega
     have h_km_div_lb : k32 * 8380417 / (2^32 : Int) ≥ -4190209 := by
       have h_mul := mul_le_mul_of_nonneg_right h_k32_lb (by decide : (0:Int) ≤ 8380417)
@@ -297,7 +293,7 @@ private theorem mont_reduce_impl_value_val
 /-! ## Integer core identity -/
 
 private theorem mont_reduce_core
-    (v : Int) (hb : v.natAbs ≤ 2^31 * 8) :
+    (v : Int) (hb : v.natAbs ≤ 2^55) :
     let v32 := Int.bmod v (2^32)
     let k32 := Int.bmod (v32 * 58728449) (2^32)
     let km  := k32 * 8380417
@@ -330,11 +326,11 @@ private theorem mont_reduce_core
 /-! ## L0 Triple -/
 
 @[spec high]
-theorem montgomery_reduce_element_spec (value : Std.I64) (hb : value.val.natAbs ≤ 2^31 * 8) :
+theorem montgomery_reduce_element_spec (value : Std.I64) (hb : value.val.natAbs ≤ 2^55) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_reduce_element value
     ⦃ ⇓ r => ⌜ liftZ_std r.val = (value.val : Zq) * (RINV : Zq)
-              ∧ r.val.natAbs ≤ 2^31 * 8 ⌝ ⦄ := by
+              ∧ r.val.natAbs ≤ 2^24 ⌝ ⦄ := by
   apply triple_of_ok_l0 (v := mont_reduce_impl_value value) (mont_reduce_element_eq_ok value)
   rw [mont_reduce_impl_value_val value hb]
   set v : Int := value.val
@@ -344,29 +340,28 @@ theorem montgomery_reduce_element_spec (value : Std.I64) (hb : value.val.natAbs 
   set res := v / (2^32 : Int) - km / (2^32 : Int)
   have h_k32_lb : -(2^31 : Int) ≤ k32 := (Arith.Int.bmod_pow2_bounds 32 (v32 * 58728449)).1
   have h_k32_ub : k32 < (2^31 : Int) := (Arith.Int.bmod_pow2_bounds 32 (v32 * 58728449)).2
-  have h_v_abs : |v| ≤ (2^31 * 8 : Int) := by
+  have h_v_abs : |v| ≤ (2^55 : Int) := by
     rw [Int.abs_eq_natAbs]; exact_mod_cast hb
   have h_res_R := mont_reduce_core v hb
   constructor
   · -- Equality clause: (res : Zq) = (v : Zq) * RINV
     show (res : Zq) = (v : Zq) * (RINV : Zq)
     exact mont_reduce_zmod v k32 res h_res_R
-  · -- Bound: res.natAbs ≤ 2^31 * 8
+  · -- Bound: res.natAbs ≤ 2^24 (with |v| ≤ 2^55, |res| ≤ (2^55 + 2^31·q)/2^32 = 12578816 < 2^24)
     have h_km_abs : |km| ≤ (2^31 : Int) * 8380417 := by
       show |k32 * 8380417| ≤ _; rw [abs_mul]
       exact mul_le_mul_of_nonneg_right (abs_le.mpr ⟨h_k32_lb, le_of_lt h_k32_ub⟩) (by decide)
-    have h_res_abs : |res| ≤ (2^31 : Int) * 8 := by
-      have h_bound : |res| * (2^32 : Int) ≤ (2^31 : Int) * (8 + 8380417) := by
+    have h_res_abs : |res| ≤ (2^24 : Int) := by
+      have h_bound : |res| * (2^32 : Int) ≤ 2^55 + (2^31 : Int) * 8380417 := by
         calc |res| * (2^32 : Int)
             = |res * (2^32 : Int)| := by rw [abs_mul]; simp
           _ = |v - km| := by rw [h_res_R]
           _ ≤ |v| + |km| := abs_sub v km
-          _ ≤ (2^31 : Int) * 8 + (2^31 : Int) * 8380417 := add_le_add h_v_abs h_km_abs
-          _ = (2^31 : Int) * (8 + 8380417) := by ring
+          _ ≤ 2^55 + (2^31 : Int) * 8380417 := add_le_add h_v_abs h_km_abs
       have h_div_le := (Int.le_ediv_iff_mul_le (by decide : (0:Int) < 2^32)).mpr h_bound
-      have h_const : (2^31 : Int) * (8 + 8380417) / 2^32 = 4190212 := by norm_num
-      have h31 : (2:Int)^31 = 2147483648 := by decide
-      rw [h_const] at h_div_le; rw [h31]; omega
+      have h_const : (2^55 + (2^31 : Int) * 8380417) / 2^32 = 12578816 := by norm_num
+      rw [h_const] at h_div_le
+      exact le_trans h_div_le (by norm_num)
     rw [Int.abs_eq_natAbs] at h_res_abs; exact_mod_cast h_res_abs
 
 /-! ## `reduce_element` — centered Barrett reduction (i32, q = 8380417, shift 23)
