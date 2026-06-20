@@ -127,7 +127,7 @@ private theorem mont_reduce_impl_value_val
 
   -- mask.toNat = 2^32 - 1 (for 64-bit; avoid `decide` on large bitvec)
   have h_mask_toNat : ((1#64 <<< (32 : Nat)) - 1#64 : BitVec 64).toNat = 2^32 - 1 := by
-    simp [BitVec.toNat_sub, BitVec.toNat_shiftLeft]
+    simp
 
   -- i1.val = v32 % 2^32 (as Nat)
   set i1 : Std.U64 := ⟨(Aeneas.Std.IScalar.hcast Aeneas.Std.UScalarTy.U64 value).bv
@@ -171,12 +171,13 @@ private theorem mont_reduce_impl_value_val
   have h_k_eq_k32 : k.val = k32 := by
     rw [h_k_val, h_i2_val]
     -- Goal: Int.bmod (↑(↑i1 * 58728449 % 2^32)) (2^32) = k32
-    -- Use Int.emod_bmod: bmod (x % n) n = bmod x n
     have h_cast : ((i1.val * 58728449 % 2 ^ 32 : ℕ) : Int) = (i1.val : Int) * 58728449 % (2^32 : Int) := by
       omega
-    rw [h_cast, Int.emod_bmod, h_i1_val_int]
-    -- Goal: Int.bmod (v32 % 2^32 * 58728449) (2^32) = k32
-    rw [Int.emod_mul_bmod]
+    rw [h_cast, h_i1_val_int]
+    -- Goal: (v32 % 2^32 * 58728449 % 2^32).bmod (2^32) = k32.
+    -- `Int.emod_bmod`/`Int.emod_mul_bmod` match the modulus only up to defeq ((2^32 : Int) vs
+    -- ↑(2^32 : ℕ)); `rw` matches syntactically and fails here, so chain them in term mode.
+    exact (Int.emod_bmod ((v32 % 2^32) * 58728449) (2^32)).trans (Int.emod_mul_bmod v32 (2^32))
 
   -- i3.val = k.val (sign-extend I32 → I64 preserves value)
   set i3 := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 k
@@ -197,24 +198,20 @@ private theorem mont_reduce_impl_value_val
       simp only [Aeneas.Std.I64.wrapping_mul_bv_eq]
     rw [h_bv, BitVec.toInt_mul]
     show Int.bmod _ _ = _
-    rw [show i3.bv.toInt = k.val from h_i3_val, show i4q.bv.toInt = 8380417 from h_i4q_val]
-    -- bmod (k.val * 8380417) (2^64) = k.val * 8380417 since product is in (-2^63, 2^63)
-    -- Use Int.bmod_eq_of_le with concrete numerals to avoid kernel 2^64 deep-recursion
-    have h_pow : (2:Nat)^64 = 18446744073709551616 := by norm_num
-    rw [h_pow]
-    apply Int.bmod_eq_of_le
-    · -- -(18446744073709551616/2) ≤ k.val * 8380417, i.e. -9223372036854775808 ≤ ...
-      rw [h_k_eq_k32]
-      have h1 := mul_le_mul_of_nonneg_right h_k32_lb (by decide : (0:Int) ≤ 8380417)
-      have h_pow31 : (2:Int)^31 = 2147483648 := by decide
-      have h_neg_lo : (-9223372036854775808 : Int) ≤ -2147483648 * 8380417 := by norm_num
-      rw [h_pow31] at h1; omega
-    · -- k.val * 8380417 < (18446744073709551616+1)/2, i.e. ... < 9223372036854775808
-      rw [h_k_eq_k32]
-      have h1 := mul_lt_mul_of_pos_right h_k32_ub (by decide : (0:Int) < 8380417)
-      have h_pow31 : (2:Int)^31 = 2147483648 := by decide
-      have h_pos_hi : (2147483648 : Int) * 8380417 < 9223372036854775808 := by norm_num
-      rw [h_pow31] at h1; omega
+    rw [show i3.bv.toInt = k.val from h_i3_val, show i4q.bv.toInt = 8380417 from h_i4q_val,
+        h_k_eq_k32]
+    -- bmod (k32 * 8380417) (2^64) = k32 * 8380417 since |k32 * Q| ≤ 2^31 * Q < 2^63.
+    -- Use bmod_pow2_eq_of_inBounds' 64 + norm_num bounds (NO omega on 2⁶³-scale: it trips
+    -- the kernel recursion limit; mirrors the final 2^32 step below).
+    apply Arith.Int.bmod_pow2_eq_of_inBounds' 64 _ (by decide)
+    · -- -2^(64-1) ≤ k32 * 8380417
+      have hlb := mul_le_mul_of_nonneg_right h_k32_lb (by norm_num : (0:Int) ≤ 8380417)
+      refine le_trans ?_ hlb
+      norm_num
+    · -- k32 * 8380417 < 2^(64-1)
+      have hub := mul_lt_mul_of_pos_right h_k32_ub (by norm_num : (0:Int) < 8380417)
+      refine lt_of_lt_of_le hub ?_
+      norm_num
 
   -- c.val = km.val / 2^32
   set c := Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I32 (⟨km.bv.sshiftRight 32⟩ : Std.I64)
@@ -231,10 +228,11 @@ private theorem mont_reduce_impl_value_val
       have h_pow31 : -(2:Int)^(IScalarTy.I32.numBits-1) = -2147483648 := by decide
       rw [h_const] at h_ediv; rw [h_pow31]; omega
     · rw [h_shr, h_km_val, h_k_eq_k32]
-      have h_k32_le : k32 ≤ 2^31 - 1 := by omega
-      have h_mul := mul_le_mul_of_nonneg_right h_k32_le (by decide : (0:Int) ≤ 8380417)
+      -- bound k32 ≤ 2^31 via le_of_lt (avoids omega on raw 2^31 → kernel deep recursion);
+      -- 2^31 * 8380417 / 2^32 = 8380417 / 2 = 4190208 (8380417 odd), same constant.
+      have h_mul := mul_le_mul_of_nonneg_right (le_of_lt h_k32_ub) (by decide : (0:Int) ≤ 8380417)
       have h_ediv := Int.ediv_le_ediv (c := 2^32) (by decide) h_mul
-      have h_const : (2^31 - 1 : Int) * 8380417 / 2^32 = 4190208 := by norm_num
+      have h_const : (2^31 : Int) * 8380417 / 2^32 = 4190208 := by norm_num
       have h_pow31 : (2:Int)^(IScalarTy.I32.numBits-1) = 2147483648 := by decide
       rw [h_const] at h_ediv; rw [h_pow31]; omega
 
@@ -274,10 +272,11 @@ private theorem mont_reduce_impl_value_val
       have h_const : -(2^31 * 8 : Int) / 2^32 = -4 := by norm_num
       rw [h_const] at h_ediv; omega
     have h_km_div_ub : k32 * 8380417 / (2^32 : Int) ≤ 4190208 := by
-      have h_k32_le : k32 ≤ 2^31 - 1 := by omega
-      have h_mul := mul_le_mul_of_nonneg_right h_k32_le (by decide : (0:Int) ≤ 8380417)
+      -- k32 ≤ 2^31 via le_of_lt (avoids omega on raw 2^31 → kernel deep recursion);
+      -- 2^31 * 8380417 / 2^32 = 8380417 / 2 = 4190208 (8380417 odd), same constant.
+      have h_mul := mul_le_mul_of_nonneg_right (le_of_lt h_k32_ub) (by decide : (0:Int) ≤ 8380417)
       have h_ediv := Int.ediv_le_ediv (c := 2^32) (by decide) h_mul
-      have h_const : (2^31 - 1 : Int) * 8380417 / 2^32 = 4190208 := by norm_num
+      have h_const : (2^31 : Int) * 8380417 / 2^32 = 4190208 := by norm_num
       rw [h_const] at h_ediv; omega
     have h31 : (2 : Int)^(32 - 1) = (2147483648 : Int) := by norm_num
     rw [h31]; omega
