@@ -34,6 +34,24 @@ abbrev SpecPoly := Array Zq
 /-- Build a 256-element `SpecPoly` from an index function. -/
 def build (f : Nat → Zq) : SpecPoly := ((List.range 256).map f).toArray
 
+/-- Two `build`s agree if their index functions agree on `[0, 256)`. The driver
+    FCs reduce a `lift_units r = ntt_layer (lift_units re) layer` post (both sides
+    `build`s) to a per-index goal via this. -/
+theorem build_congr {f g : Nat → Zq} (h : ∀ i, i < 256 → f i = g i) : build f = build g := by
+  unfold build
+  congr 1
+  apply List.map_congr_left
+  intro x hx
+  rw [List.mem_range] at hx
+  exact h x hx
+
+/-- `(build f)[i]! = f i` for `i < 256`. Turns spec-side `(build …)[i]!`
+    lookups (e.g. `(lift_units re)[i]!`) into the underlying index function. -/
+theorem build_getElem (f : Nat → Zq) (i : Nat) (hi : i < 256) : (build f)[i]! = f i := by
+  unfold build
+  rw [getElem!_pos _ i (by simp; exact hi)]
+  simp [List.getElem_map, List.getElem_range]
+
 /-- `256⁻¹` as a field element (the `reduce_polynomial` scale). -/
 def inv256 : Zq := (Montgomery.INV256 : Zq)
 

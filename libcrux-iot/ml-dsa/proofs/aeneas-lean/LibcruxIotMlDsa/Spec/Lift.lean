@@ -77,6 +77,21 @@ def lift_poly
     Pure.SpecPoly :=
   Pure.build (fun i => liftZ ((re.simd_units.val[i / 8]!).values.val[i % 8]!).val)
 
+open Aeneas.Std in
+/-- 32 units × 8 lanes (as a raw SIMD-unit array) → flat 256-array. The
+    `Array`-level analogue of `lift_poly`; the layer drivers operate on the
+    `.simd_units` field directly and speak this. -/
+def lift_units
+    (arr : Aeneas.Std.Array libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients 32#usize) :
+    Pure.SpecPoly :=
+  Pure.build (fun i => liftZ ((arr.val[i / 8]!).values.val[i % 8]!).val)
+
+/-- `lift_poly` is `lift_units` on the `.simd_units` field. -/
+theorem lift_poly_eq_lift_units
+    (re : libcrux_iot_ml_dsa.polynomial.PolynomialRingElement
+            libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients) :
+    lift_poly re = lift_units re.simd_units := rfl
+
 /-! ## Zeta-bridge spot-checks (build-time R-reconciliation, SKILL §13.13)
 
 `liftZ (inline montgomery zeta literal) = Parameters.zeta (spec index)` — i.e. the
