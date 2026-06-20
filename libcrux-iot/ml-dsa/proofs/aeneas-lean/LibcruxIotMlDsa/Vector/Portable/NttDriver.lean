@@ -120,4 +120,142 @@ theorem ntt_at_layer_7_fc
   · -- Bound conjunct = `hbd` directly.
     exact hbd
 
+/-! ## Layer 6 (`len = 64`, `k = 2`, `STEP_BY = 8`, 2 cross-unit calls)
+
+`ntt_at_layer_6` chains two `outer_3_plus` calls on the disjoint unit blocks
+`[0,16)` (call 0, `ZETA = -2608894 → zeta 2`) and `[16,32)` (call 1,
+`ZETA = -518909 → zeta 3`). The frame is one step: block-0 units are left
+unchanged by call 1 (`OFFSET₁ = 16`), block-1 units are left unchanged by call 0
+(`OFFSET₀ + 2·8 = 16`), so each block's butterfly is in terms of `re`. -/
+
+set_option maxRecDepth 4000 in
+private theorem zeta6_bridge0 :
+    liftZ (((-2608894)#i32 : Std.I32).val : Int) = zeta 2 := by decide
+set_option maxRecDepth 4000 in
+private theorem zeta6_bridge1 :
+    liftZ (((-518909)#i32 : Std.I32).val : Int) = zeta 3 := by decide
+
+/-- i32 zeta-magnitude facts hoisted out of the Triple so the kernel does not
+    recheck the (heavy, two's-complement) `decide` terms inside the big proof. -/
+private theorem zeta6_mag0 : ((-2608894)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zeta6_mag1 : ((-518909)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+theorem ntt_at_layer_6_fc
+    (re : Aeneas.Std.Array libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients 32#usize)
+    (B : Nat)
+    (hB : (B : Int) + 2 * 2 ^ 24 ≤ 2 ^ 31 - 1)
+    (hin : ∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+        (re.val[u]!).values.val[l]!.val.natAbs ≤ B) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.ntt.ntt_at_layer_6 re
+    ⦃ ⇓ r => ⌜ lift_units r = Pure.ntt_layer (lift_units re) 6
+             ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ B + 2 * 2 ^ 24) ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.ntt.ntt_at_layer_6
+  -- Shared bound arguments for `outer_3_plus_fc`.
+  have hstep : 1 ≤ (8#usize : Std.Usize).val := by scalar_tac
+  have hz0 := zeta6_mag0
+  have hz1 := zeta6_mag1
+  have hbnd0 : (0#usize : Std.Usize).val + 2 * (8#usize : Std.Usize).val ≤ 32 := by scalar_tac
+  have hbnd1 : (16#usize : Std.Usize).val + 2 * (8#usize : Std.Usize).val ≤ 32 := by scalar_tac
+  have e24 : (2 : Int) ^ 24 = 16777216 := by norm_num
+  have e31 : (2 : Int) ^ 31 = 2147483648 := by norm_num
+  have hB0 : (B : Int) + 2 ^ 24 ≤ 2 ^ 31 - 1 := by omega
+  have hB1 : ((B + 2 ^ 24 : Nat) : Int) + 2 ^ 24 ≤ 2 ^ 31 - 1 := by push_cast; omega
+  -- Call 0 on block [0,16).
+  obtain ⟨r1, hr1_eq, h0butter, h0unch, h0bd⟩ :=
+    triple_exists_ok
+      (outer_3_plus_fc 0#usize 8#usize (-2608894)#i32 re B hz0 hB0 hstep hbnd0 hin)
+  -- Call 1 on block [16,32); input bound is `B + 2^24` (from `h0bd`).
+  obtain ⟨r2, hr2_eq, h1butter, h1unch, h1bd⟩ :=
+    triple_exists_ok
+      (outer_3_plus_fc 16#usize 8#usize (-518909)#i32 r1 (B + 2 ^ 24) hz1 hB1 hstep hbnd1 h0bd)
+  simp only [hr1_eq, Aeneas.Std.bind_tc_ok]
+  apply triple_of_ok hr2_eq
+  -- Normalize usize literal coercions in the butterfly/unchanged posts.
+  have e0 : (0#usize : Std.Usize).val = 0 := by simp
+  have e8 : (8#usize : Std.Usize).val = 8 := by simp
+  have e16 : (16#usize : Std.Usize).val = 16 := by simp
+  simp only [e0, e8, e16, Nat.zero_add] at h0butter h0unch h1butter h1unch
+  refine ⟨?_, ?_⟩
+  · -- Equality conjunct.
+    unfold lift_units
+    apply Pure.build_congr
+    intro i hi
+    -- Spec at layer 6: `len = 64`, `2*len = 128`, `k = 2`.
+    have hzv0 : liftZ ((((-2608894)#i32 : Std.I32).val : Int)) = zeta 2 := zeta6_bridge0
+    have hzv1 : liftZ ((((-518909)#i32 : Std.I32).val : Int)) = zeta 3 := zeta6_bridge1
+    by_cases hround0 : i < 128
+    · -- Round 0 (call 0), spec `round = 0`, `idx = i`, `z = zeta 2`.
+      have hround : i / 128 = 0 := by omega
+      have hidx : i % 128 = i := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.zero_add]
+      by_cases hlt : i < 64
+      · -- Low half: unit `u = i/8 ∈ [0,8)`, paired `u+8`, coeff `i+64`.
+        rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 64) / 8 = i / 8 + 8 := by omega
+        have hmod : (i + 64) % 8 = i % 8 := by omega
+        have hidx2 : i + 64 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 64) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h0butter (i / 8) (by omega) (by omega)
+        -- LHS unit `i/8` is in block 0: call 1 leaves it unchanged (`r2[i/8] = r1[i/8]`).
+        rw [h1unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl, hzv0, mul_comm]
+      · -- High half: paired unit `u-8 = (i-64)/8 ∈ [0,8)`, coeff `i-64`.
+        rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 64) / 8 + 8 := by omega
+        have hmod : (i - 64) % 8 = i % 8 := by omega
+        have hidx2 : i - 64 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 64) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h0butter ((i - 64) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h1unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh', hzv0, mul_comm]
+    · -- Round 1 (call 1), spec `round = 1`, `idx = i - 128`, `z = zeta (1+2) = zeta 3`.
+      have hround : i / 128 = 1 := by omega
+      have hidx : i % 128 = i - 128 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceAdd]
+      by_cases hlt : i - 128 < 64
+      · -- Low half: unit `u = i/8 ∈ [16,24)`, paired `u+8`, coeff `i+64`.
+        rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 64) / 8 = i / 8 + 8 := by omega
+        have hmod : (i + 64) % 8 = i % 8 := by omega
+        have hidx2 : i + 64 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 64) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h1butter (i / 8) (by omega) (by omega)
+        -- LHS `r2[i/8]` → butterfly in terms of `r1`; call 0 left block 1 = `re`.
+        rw [hlow (i % 8) hl]
+        rw [h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 8) (by omega) (by omega)]
+        rw [hzv1, mul_comm]
+      · -- High half: paired unit `u-8 = (i-64)/8 ∈ [16,24)`, coeff `i-64`.
+        rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 64) / 8 + 8 := by omega
+        have hmod : (i - 64) % 8 = i % 8 := by omega
+        have hidx2 : i - 64 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 64) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h1butter ((i - 64) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [hdiv, hhigh']
+        rw [h0unch ((i - 64) / 8 + 8) (by omega) (by omega),
+            h0unch ((i - 64) / 8) (by omega) (by omega)]
+        rw [hzv1, mul_comm]
+  · -- Bound conjunct: block 1 (units [16,32)) ≤ B+2·2^24 from `h1bd`; block 0 ≤
+    -- B+2^24 from `h0bd`, carried through call 1 (`h1unch`), then `≤ B+2·2^24`.
+    intro u hu l hl
+    by_cases hb : u < 16
+    · -- Block 0: unchanged by call 1.
+      rw [h1unch u hu (by omega)]
+      have h := h0bd u hu l hl
+      have hmono : B + 2 ^ 24 ≤ B + 2 * 2 ^ 24 := by omega
+      exact Nat.le_trans h hmono
+    · -- Block 1: `h1bd` gives ≤ (B+2^24)+2^24; rewrite the target to that shape.
+      rw [show B + 2 * 2 ^ 24 = B + 2 ^ 24 + 2 ^ 24 from by ring]
+      exact h1bd u hu l hl
+
 end libcrux_iot_ml_dsa.Vector.Portable.NttDriver
