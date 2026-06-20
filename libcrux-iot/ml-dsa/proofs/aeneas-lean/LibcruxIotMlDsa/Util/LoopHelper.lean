@@ -159,6 +159,279 @@ theorem array_update_ok_eq
   obtain ⟨v', hveq, hPv'⟩ := h_ex
   rw [hveq, hPv']
 
+/-! ## Unary loop body (canonical shape from Funs.lean).
+
+The accumulator is the raw `CoeffArray = Array Std.I32 8#usize`. The per-element
+op has type `I32 → Result I32`; it reads `a[i]`, applies `per_elem`, and writes
+back to `a[i]`. This is the binary body with the `rhs`/`input_rhs` operand
+dropped (e.g. `negate`, `montgomery_multiply_by_constant`'s per-lane op closes
+over a free constant `c`, so the loop carries a single array). -/
+
+def unary_loop_body
+    (per_elem : Std.I32 → Result Std.I32)
+    (iter : CoreModels.core.ops.range.Range Std.Usize)
+    (a : CoeffArray) :
+    Result (ControlFlow
+      ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray)
+      CoeffArray) := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done a)
+  | core.option.Option.Some i =>
+    let i1 ← Aeneas.Std.Array.index_usize a i
+    let i2 ← per_elem i1
+    let a1 ← Aeneas.Std.Array.update a i i2
+    ok (cont (iter1, a1))
+
+/-- 2-conjunct unary invariant:
+    - For `j < k`, `a[j]` equals the per-elem-op output `r` for input
+      `input[j]` (carrying the per-elem predicate `P`).
+    - For `j ≥ k`, `a[j] = input[j]`. -/
+def unary_loop_inv
+    (per_elem : Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Prop)
+    (input : CoeffArray) :
+    Std.Usize → CoeffArray → Result Prop :=
+  fun k a => pure (
+    (∀ j : Nat, j < k.val →
+      ∃ r, per_elem (input.val[j]!) = .ok r
+            ∧ a.val[j]! = r
+            ∧ P (input.val[j]!) r)
+    ∧ (∀ j : Nat, k.val ≤ j → j < 8 →
+        a.val[j]! = input.val[j]!))
+
+/-- Per-iteration post for `unary_loop_body`. -/
+def unary_step_post
+    (per_elem : Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Prop)
+    (input : CoeffArray)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray)
+      CoeffArray) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (8#usize : Std.Usize).val ∧ iter'.«end» = 8#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (unary_loop_inv per_elem P input iter'.start acc').holds
+  | .done y => (unary_loop_inv per_elem P input 8#usize y).holds
+
+set_option maxHeartbeats 4000000 in
+theorem elementwise_unary_step
+    (per_elem : Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Prop)
+    (per_elem_spec :
+      ∀ (x : Std.I32),
+        ⦃ ⌜ True ⌝ ⦄ per_elem x ⦃ ⇓ r => ⌜ P x r ⌝ ⦄)
+    (input : CoeffArray)
+    (acc : CoeffArray)
+    (k : Std.Usize)
+    (h_le : k.val ≤ (8#usize : Std.Usize).val)
+    (h_inv : (unary_loop_inv per_elem P input k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    unary_loop_body per_elem { start := k, «end» := 8#usize } acc
+    ⦃ ⇓ r => ⌜ unary_step_post per_elem P input k r ⌝ ⦄ := by
+  obtain ⟨h_acc_done, h_acc_undone⟩ := of_pure_prop_holds_pv h_inv
+  have h_acc_len : acc.length = 8 := CoeffArray_length acc
+  have h_8 : (8#usize : Std.Usize).val = 8 := rfl
+  unfold unary_loop_body
+  by_cases h_lt : k.val < (8#usize : Std.Usize).val
+  · -- Some i = k branch.
+    have hk_8 : k.val < 8 := by rw [h_8] at h_lt; exact h_lt
+    obtain ⟨s, hs_val, h_iter_some⟩ := iter_next_some_eq k 8#usize h_lt
+    have h_idx :
+        Aeneas.Std.Array.index_usize acc k = .ok (acc.val[k.val]!) :=
+      array_index_usize_ok_eq acc k (by rw [h_acc_len]; exact hk_8)
+    obtain ⟨r, h_per_eq, h_per_P⟩ :=
+      triple_exists_ok_pv (per_elem_spec (acc.val[k.val]!))
+    have h_upd :
+        Aeneas.Std.Array.update acc k r
+        = .ok (acc.set k r) :=
+      array_update_ok_eq acc k r (by rw [h_acc_len]; exact hk_8)
+    have h_body :
+        (do
+          let (o, iter1) ←
+            core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize)
+          match o with
+          | core.option.Option.None =>
+              (Result.ok (ControlFlow.done acc) :
+                Result (ControlFlow
+                  ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray)
+                  CoeffArray))
+          | core.option.Option.Some i =>
+            let i1 ← Aeneas.Std.Array.index_usize acc i
+            let i2 ← per_elem i1
+            let a1 ← Aeneas.Std.Array.update acc i i2
+            ok (cont (iter1, a1)))
+        = .ok (cont
+            (({ start := s, «end» := 8#usize }
+                : CoreModels.core.ops.range.Range Std.Usize),
+             acc.set k r)) := by
+      conv_lhs =>
+        rw [show
+          (core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp only [bind_tc_ok]
+      rw [h_idx]
+      simp only [bind_tc_ok]
+      rw [h_per_eq]
+      simp only [bind_tc_ok]
+      rw [h_upd]
+      rfl
+    apply triple_of_ok_pv h_body
+    show unary_step_post per_elem P input k
+            (.cont (({ start := s, «end» := 8#usize }
+                       : CoreModels.core.ops.range.Range Std.Usize),
+                    acc.set k r))
+    unfold unary_step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    show (unary_loop_inv per_elem P input s (acc.set k r)).holds
+    apply pure_prop_holds_pv
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      rw [hs_val] at hj
+      rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj_lt_k | hj_eq_k
+      · obtain ⟨r_j, h_per_j, h_acc_j, h_P_j⟩ := h_acc_done j hj_lt_k
+        refine ⟨r_j, h_per_j, ?_, h_P_j⟩
+        have h_ne : k.val ≠ j := Nat.ne_of_gt hj_lt_k
+        have h_set_ne : (acc.set k r)[j]! = acc[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne acc k j r h_ne
+        have : (acc.set k r).val[j]! = acc.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+        show (acc.set k r).val[j]! = r_j
+        rw [this]; exact h_acc_j
+      · subst hj_eq_k
+        refine ⟨r, ?_, ?_, ?_⟩
+        · have h_eq : acc.val[k.val]! = input.val[k.val]! :=
+            h_acc_undone k.val (Nat.le_refl _) hk_8
+          rw [← h_eq]; exact h_per_eq
+        · have h_lt'' : k.val < acc.length := by rw [h_acc_len]; exact hk_8
+          have h_set_eq : (acc.set k r)[k.val]! = r :=
+            Aeneas.Std.Array.getElem!_Nat_set_eq acc k k.val r ⟨rfl, h_lt''⟩
+          have : (acc.set k r).val[k.val]! = r := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_eq
+          show (acc.set k r).val[k.val]! = r
+          exact this
+        · have h_eq : acc.val[k.val]! = input.val[k.val]! :=
+            h_acc_undone k.val (Nat.le_refl _) hk_8
+          rw [← h_eq]; exact h_per_P
+    · intro j hj_ge hj_lt
+      rw [hs_val] at hj_ge
+      have h_ne : k.val ≠ j := by omega
+      have h_ge' : k.val ≤ j := by omega
+      have h_set_ne : (acc.set k r)[j]! = acc[j]! :=
+        Aeneas.Std.Array.getElem!_Nat_set_ne acc k j r h_ne
+      have : (acc.set k r).val[j]! = acc.val[j]! := by
+        simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+      show (acc.set k r).val[j]! = input.val[j]!
+      rw [this]
+      exact h_acc_undone j h_ge' hj_lt
+  · -- None branch.
+    have hk_ge : k.val ≥ (8#usize : Std.Usize).val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = 8 := by rw [h_8] at hk_ge; omega
+    have h_iter_none := iter_next_none_eq k 8#usize hk_ge
+    have h_body :
+        (do
+          let (o, iter1) ←
+            core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize)
+          match o with
+          | core.option.Option.None =>
+              (Result.ok (ControlFlow.done acc) :
+                Result (ControlFlow
+                  ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray)
+                  CoeffArray))
+          | core.option.Option.Some i =>
+            let i1 ← Aeneas.Std.Array.index_usize acc i
+            let i2 ← per_elem i1
+            let a1 ← Aeneas.Std.Array.update acc i i2
+            ok (cont (iter1, a1)))
+        = .ok (done acc) := by
+      conv_lhs =>
+        rw [show
+          (core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    apply triple_of_ok_pv h_body
+    show unary_step_post per_elem P input k (.done acc)
+    unfold unary_step_post
+    show (unary_loop_inv per_elem P input 8#usize acc).holds
+    apply pure_prop_holds_pv
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      apply h_acc_done j
+      rw [hk_eq]; rw [h_8] at hj; exact hj
+    · intro j hj_ge hj_lt
+      apply h_acc_undone j _ hj_lt
+      rw [hk_eq]; rw [h_8] at hj_ge; exact hj_ge
+
+/-! ## Top-level unary elementwise spec wrapper -/
+
+set_option maxHeartbeats 2000000 in
+theorem elementwise_unary_spec
+    (per_elem : Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Prop)
+    (per_elem_spec :
+      ∀ (x : Std.I32),
+        ⦃ ⌜ True ⌝ ⦄ per_elem x ⦃ ⇓ r => ⌜ P x r ⌝ ⦄)
+    (input : CoeffArray) :
+    ⦃ ⌜ True ⌝ ⦄
+    loop (fun p => unary_loop_body per_elem p.1 p.2)
+      (({ start := 0#usize, «end» := 8#usize }
+        : CoreModels.core.ops.range.Range Std.Usize), input)
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 8 →
+              ∃ ri, per_elem (input.val[i]!) = .ok ri
+                    ∧ r.val[i]! = ri
+                    ∧ P (input.val[i]!) ri ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, vec1) => unary_loop_body per_elem iter1 vec1)
+      input 0#usize 8#usize
+      (unary_loop_inv per_elem P input)
+      (by decide : (0#usize : Std.Usize).val ≤ (8#usize : Std.Usize).val)
+      (pure_prop_holds_pv ⟨
+        fun j hj => by
+          have h0 : (0#usize : Std.Usize).val = 0 := rfl
+          rw [h0] at hj; exact absurd hj (Nat.not_lt_zero j),
+        fun _ _ _ => rfl⟩)
+      ?_)
+  · rw [PostCond.entails_noThrow]
+    intro r h
+    obtain ⟨h_done, _h_undone⟩ := of_pure_prop_holds_pv h
+    intro j hj
+    apply h_done j
+    show j < (8#usize : Std.Usize).val
+    exact hj
+  · intro acc k h_ge h_le hinv
+    have h_step :=
+      elementwise_unary_step per_elem P per_elem_spec input acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : unary_step_post per_elem P input k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [unary_step_post] using hP
+    · have hP : unary_step_post per_elem P input k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [unary_step_post] using hP
+
 /-! ## Binary loop body (canonical shape from Funs.lean).
 
 The accumulator is the raw `CoeffArray = Array Std.I32 8#usize`; `rhs` is the
@@ -448,5 +721,6 @@ theorem elementwise_binary_spec
     · have hP : binary_step_post per_elem P input_lhs input_rhs k (.done y) := by
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [binary_step_post] using hP
+
 
 end libcrux_iot_ml_dsa.Util.LoopHelper
