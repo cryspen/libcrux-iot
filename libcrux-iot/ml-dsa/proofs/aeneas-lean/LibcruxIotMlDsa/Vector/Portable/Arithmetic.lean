@@ -395,7 +395,7 @@ theorem montgomery_reduce_element_spec (value : Std.I64) (hb : value.val.natAbs 
 
 /-- Closed form of the do-block at the i64-product level: the impl reduces to
     `montgomery_reduce_element` of the exact (non-wrapped) i64 product. -/
-private theorem mmfbf_eq_ok (fe fer : Std.I32) :
+theorem mmfbf_eq_ok (fe fer : Std.I32) :
     libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer fe fer
       = libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_reduce_element
           (Aeneas.Std.I64.wrapping_mul

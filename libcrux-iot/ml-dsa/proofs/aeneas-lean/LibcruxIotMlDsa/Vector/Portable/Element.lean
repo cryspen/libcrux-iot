@@ -15,6 +15,7 @@
   Triple, then post-process to the equality-form post on `Coefficients`.
 -/
 import LibcruxIotMlDsa.Util.LoopHelper
+import LibcruxIotMlDsa.Vector.Portable.Arithmetic
 
 set_option mvcgen.warning false
 set_option linter.unusedVariables false
@@ -24,6 +25,8 @@ namespace libcrux_iot_ml_dsa.Vector.Portable.Element
 open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_dsa.Util.LoopHelper libcrux_iot_ml_dsa.Util.LoopSpecs
   libcrux_iot_ml_dsa.Util.SliceSpecs
+open libcrux_iot_ml_dsa.Spec.Lift libcrux_iot_ml_dsa.Spec.Montgomery
+  libcrux_iot_ml_dsa.Spec.Parameters
 
 /-! ## Local Triple ↔ Result.ok bridges. -/
 
@@ -249,5 +252,101 @@ theorem subtract_spec
   show (out.val[j]!).val = _ ∧ _
   rw [h_acc]
   exact h_P (hpre j hj)
+
+/-! ## `montgomery_multiply_spec`
+
+    `simd.portable.arithmetic.montgomery_multiply lhs rhs` is an 8-iter loop
+    calling `montgomery_multiply_fe_by_fer lhs.values[i] rhs.values[i]` and
+    writing back. Under the per-lane bound `|rhs[j]| ≤ q-1 = 8380416`, each lane
+    lifts to `(lhs[j]) · (rhs[j]) · R⁻¹` in `Z_q` and stays `≤ 2^24` in size. -/
+
+/-- Per-element predicate (guarded form): given the bound on `fer` (the `rhs`
+    lane), the output lifts to `(fe)·(fer)·R⁻¹` and is `≤ 2^24` in size. -/
+private def mmul_per_elem_P (fe fer r : Std.I32) : Prop :=
+  fer.val.natAbs ≤ 8380416 →
+    liftZ_std r.val = (fe.val : Zq) * (fer.val : Zq) * (RINV : Zq)
+      ∧ r.val.natAbs ≤ 2 ^ 24
+
+/-- Per-element Triple: under the `fer` bound, strengthen the leaf
+    `montgomery_multiply_fe_by_fer_spec` post to the guarded `P`; when the bound
+    fails the post is vacuous, but the op is still total (`mmfbf_eq_ok`). -/
+private theorem mmul_per_elem_spec (fe fer : Std.I32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer fe fer
+    ⦃ ⇓ r => ⌜ mmul_per_elem_P fe fer r ⌝ ⦄ := by
+  by_cases hfer : fer.val.natAbs ≤ 8380416
+  · -- Guard TRUE: extract the leaf spec's `.ok` witness + post, re-close with `P`.
+    obtain ⟨r0, h_eq_ok, h_lift, h_bound⟩ :=
+      triple_exists_ok
+        (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+          fe fer hfer)
+    refine triple_of_ok (v := r0) h_eq_ok ?_
+    intro _
+    exact ⟨h_lift, h_bound⟩
+  · -- Guard FALSE: post antecedent (`fer ≤ q-1`) is false, so `P` holds
+    -- vacuously. The op is total regardless of the bound: `mmfbf_eq_ok` reduces
+    -- it to `montgomery_reduce_element`, and `mont_reduce_element_eq_ok` shows
+    -- that is unconditionally `.ok` (no `2^55` precondition needed).
+    refine triple_of_ok
+      (v := libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.mont_reduce_impl_value
+        (Aeneas.Std.I64.wrapping_mul
+          (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fe)
+          (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fer)))
+      (by
+        rw [libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.mmfbf_eq_ok,
+            libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.mont_reduce_element_eq_ok]) ?_
+    intro hbad
+    exact absurd hbad hfer
+
+@[spec]
+theorem montgomery_multiply_spec
+    (lhs rhs : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (hpre : ∀ j : Nat, j < 8 → (rhs.values.val[j]!).val.natAbs ≤ 8380416) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply lhs rhs
+    ⦃ ⇓ r => ⌜ ∀ j : Nat, j < 8 →
+                liftZ_std (r.values.val[j]!).val
+                  = ((lhs.values.val[j]!).val : Zq) * ((rhs.values.val[j]!).val : Zq) * (RINV : Zq)
+              ∧ (r.values.val[j]!).val.natAbs ≤ 2 ^ 24 ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply
+  rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice lhs.values)
+        = .ok (Aeneas.Std.Array.to_slice lhs.values) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [show CoreModels.core.slice.Slice.len (Aeneas.Std.Array.to_slice lhs.values)
+        = .ok (Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice lhs.values)) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [coeff_slice_len_eq lhs.values]
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_loop
+  -- Bridge `montgomery_multiply_loop.body rhs` to
+  -- `binary_loop_body montgomery_multiply_fe_by_fer rhs`.
+  have h_body_eq :
+      (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_loop.body rhs p.1 p.2)
+      = (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        binary_loop_body
+          libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer rhs p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, a1⟩
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_loop.body
+    unfold binary_loop_body
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer
+    rfl
+  rw [h_body_eq]
+  obtain ⟨out, h_out_eq, h_out_P⟩ :=
+    triple_exists_ok
+      (elementwise_binary_spec
+        libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer
+        mmul_per_elem_P
+        mmul_per_elem_spec
+        lhs.values rhs)
+  rw [h_out_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  refine triple_of_ok (v := { values := out }) rfl ?_
+  intro j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := h_out_P j hj
+  show liftZ_std (out.val[j]!).val = _ ∧ _
+  rw [h_acc]
+  exact h_P (hpre j hj)
+
 
 end libcrux_iot_ml_dsa.Vector.Portable.Element
