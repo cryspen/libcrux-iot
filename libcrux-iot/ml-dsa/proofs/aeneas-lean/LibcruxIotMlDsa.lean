@@ -16,6 +16,9 @@ import LibcruxIotMlDsa.Util.SliceSpecs
 import LibcruxIotMlDsa.Util.LoopSpecs
 -- Phase-2: L0 scalar Montgomery reduction keystone (montgomery_reduce_element_spec).
 import LibcruxIotMlDsa.Vector.Portable.Arithmetic
+-- Phase-2: L1 elementwise loop infra + Coefficients add/subtract Triples.
+import LibcruxIotMlDsa.Util.LoopHelper
+import LibcruxIotMlDsa.Vector.Portable.Element
 -- Phases 3-8 (re-enable as the proof files land; ml-dsa has no `createi`):
 -- import LibcruxIotMlDsa.Util.CreateI
 -- import LibcruxIotMlDsa.Vector.Portable.Ntt          -- L2 butterflies

@@ -1,0 +1,253 @@
+/-
+  # `Vector/Portable/Element.lean` — Layer-1 elementwise `Coefficients` ops (ML-DSA)
+
+  ML-DSA analogue of ml-kem's
+  `LibcruxIotMlKem/Vector/Portable/Arithmetic/Element.lean` (`add_spec`/`sub_spec`).
+
+  - **`add_spec`** — `simd.portable.arithmetic.add` folds
+    `core.num.I32.wrapping_add` over the 8 `Std.I32` lanes of the
+    `Coefficients.values` array. Under the per-lane no-overflow bound
+    `|lhs[j] + rhs[j]| ≤ 2^31 - 1`, the wrap is the identity and the output
+    equals the exact integer sum.
+  - **`subtract_spec`** — same, with `wrapping_sub` / `-`.
+
+  Both instantiate `Util.LoopHelper.elementwise_binary_spec` with a per-element
+  Triple, then post-process to the equality-form post on `Coefficients`.
+-/
+import LibcruxIotMlDsa.Util.LoopHelper
+
+set_option mvcgen.warning false
+set_option linter.unusedVariables false
+set_option linter.unusedSectionVars false
+
+namespace libcrux_iot_ml_dsa.Vector.Portable.Element
+open CoreModels Aeneas Aeneas.Std Std.Do
+open libcrux_iot_ml_dsa.Util.LoopHelper libcrux_iot_ml_dsa.Util.LoopSpecs
+  libcrux_iot_ml_dsa.Util.SliceSpecs
+
+/-! ## Local Triple ↔ Result.ok bridges. -/
+
+/-- `⦃True⦄ x ⦃⇓ r => ⌜P r⌝⦄` closer for `x = .ok v`. -/
+private theorem triple_of_ok
+    {α : Type} {x : Result α} {v : α} {P : α → Prop}
+    (hx : x = .ok v) (hp : P v) :
+    ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄ := by
+  subst hx; simp [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply, hp]
+
+/-- Reflect a `⦃True⦄ x ⦃⇓ r => ⌜P r⌝⦄` Triple into an `.ok` witness plus the post. -/
+private theorem triple_exists_ok
+    {α : Type} {x : Result α} {P : α → Prop}
+    (h : ⦃ ⌜ True ⌝ ⦄ x ⦃ ⇓ r => ⌜ P r ⌝ ⦄) :
+    ∃ v, x = .ok v ∧ P v := by
+  match hx : x with
+  | .ok v => exact ⟨v, rfl,
+      (by subst hx; simpa [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply] using h)⟩
+  | .fail _ => exact absurd h (by simp [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply])
+  | .div => exact absurd h (by simp [Std.Do.Triple, WP.wp, PostCond.noThrow, PredTrans.apply])
+
+/-- `Slice.len (Array.to_slice (a : CoeffArray)) = 8#usize`. -/
+private theorem coeff_slice_len_eq (a : CoeffArray) :
+    Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice a) = (8#usize : Std.Usize) := by
+  apply Std.UScalar.eq_of_val_eq
+  rw [Aeneas.Std.Slice.len_val]
+  show (Aeneas.Std.Array.to_slice a).length = (8#usize : Std.Usize).val
+  rw [Aeneas.Std.Array.length_to_slice a]
+
+/-! ## `add_spec`
+
+    `simd.portable.arithmetic.add lhs rhs` is an 8-iter loop calling
+    `core.num.I32.wrapping_add lhs.values[i] rhs.values[i]` and writing the
+    result back. Under the per-element no-overflow bound
+    `|lhs.val + rhs.val| ≤ 2^31 - 1`, `Int.bmod _ (2^32)` is the identity. -/
+
+/-- Per-element predicate (guarded form): given the no-overflow bound on
+    `x + y`, the output value equals the sum and is in range. -/
+private def add_per_elem_P (x y r : Std.I32) : Prop :=
+  ((x.val + y.val : Int)).natAbs ≤ 2 ^ 31 - 1 →
+    r.val = x.val + y.val ∧ r.val.natAbs ≤ 2 ^ 31 - 1
+
+/-- Per-element Triple: `core.num.I32.wrapping_add x y` reduces to
+    `.ok (Std.I32.wrapping_add x y)`, whose `.val` is `Int.bmod (x.val + y.val) (2^32)`.
+    Under the no-overflow bound, `Int.bmod` is the identity. -/
+private theorem add_per_elem_spec (x y : Std.I32) :
+    ⦃ ⌜ True ⌝ ⦄
+    CoreModels.core.num.I32.wrapping_add x y
+    ⦃ ⇓ r => ⌜ add_per_elem_P x y r ⌝ ⦄ := by
+  have h_ok :
+      CoreModels.core.num.I32.wrapping_add x y
+        = .ok (Aeneas.Std.I32.wrapping_add x y) := by
+    unfold CoreModels.core.num.I32.wrapping_add
+    unfold rust_primitives.arithmetic.wrapping_add_i32
+    rfl
+  rw [h_ok]
+  simp only [Std.Do.Triple, WP.wp]
+  intro _
+  show add_per_elem_P x y (Aeneas.Std.I32.wrapping_add x y)
+  unfold add_per_elem_P
+  intro hb
+  have h_val := Aeneas.Std.I32.wrapping_add_val_eq x y
+  have h_lb : -(2 ^ 31 : Int) ≤ x.val + y.val := by
+    have h_abs : ((x.val + y.val : Int)).natAbs ≤ 2 ^ 31 - 1 := hb
+    omega
+  have h_ub : x.val + y.val < (2 ^ 31 : Int) := by
+    have h_abs : ((x.val + y.val : Int)).natAbs ≤ 2 ^ 31 - 1 := hb
+    omega
+  have h_bmod : Int.bmod (x.val + y.val) (2 ^ 32) = x.val + y.val := by
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+    · have h_const : -((2 : Int) ^ (32 - 1)) ≤ -(2 ^ 31 : Int) := by decide
+      exact le_trans h_const h_lb
+    · have h_const : (2 ^ 31 : Int) ≤ (2 : Int) ^ (32 - 1) := by decide
+      exact lt_of_lt_of_le h_ub h_const
+  refine ⟨?_, ?_⟩
+  · rw [h_val, h_bmod]
+  · rw [h_val, h_bmod]; exact hb
+
+@[spec]
+theorem add_spec
+    (lhs rhs : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (hpre : ∀ j : Nat, j < 8 →
+      ((lhs.values.val[j]!).val + (rhs.values.val[j]!).val : Int).natAbs ≤ 2 ^ 31 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.add lhs rhs
+    ⦃ ⇓ r => ⌜ ∀ j : Nat, j < 8 →
+                (r.values.val[j]!).val
+                  = (lhs.values.val[j]!).val + (rhs.values.val[j]!).val
+              ∧ (r.values.val[j]!).val.natAbs ≤ 2 ^ 31 - 1 ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.add
+  -- `lift (Array.to_slice lhs.values) = .ok (Array.to_slice lhs.values)`.
+  rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice lhs.values)
+        = .ok (Aeneas.Std.Array.to_slice lhs.values) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  -- `core.slice.Slice.len s = .ok (Slice.len s)`.
+  rw [show CoreModels.core.slice.Slice.len (Aeneas.Std.Array.to_slice lhs.values)
+        = .ok (Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice lhs.values)) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  -- The derived bound `Slice.len (to_slice lhs.values)` is `8#usize`.
+  rw [coeff_slice_len_eq lhs.values]
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.add_loop
+  -- Bridge `add_loop.body rhs` to `binary_loop_body wrapping_add rhs`.
+  have h_body_eq :
+      (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        libcrux_iot_ml_dsa.simd.portable.arithmetic.add_loop.body rhs p.1 p.2)
+      = (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        binary_loop_body CoreModels.core.num.I32.wrapping_add rhs p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, a1⟩
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.add_loop.body
+    unfold binary_loop_body
+    rfl
+  rw [h_body_eq]
+  -- Extract the loop output `out` and its per-index post; the whole `do`
+  -- reduces to `.ok { values := out }`.
+  obtain ⟨out, h_out_eq, h_out_P⟩ :=
+    triple_exists_ok
+      (elementwise_binary_spec
+        CoreModels.core.num.I32.wrapping_add
+        add_per_elem_P
+        add_per_elem_spec
+        lhs.values rhs)
+  rw [h_out_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  refine triple_of_ok (v := { values := out }) rfl ?_
+  intro j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := h_out_P j hj
+  show (out.val[j]!).val = _ ∧ _
+  rw [h_acc]
+  exact h_P (hpre j hj)
+
+/-! ## `subtract_spec`
+
+    `simd.portable.arithmetic.subtract lhs rhs` is an 8-iter loop calling
+    `core.num.I32.wrapping_sub lhs.values[i] rhs.values[i]`. Same structure
+    as `add_spec` but with `-`. -/
+
+/-- Per-element predicate (guarded form): given the no-overflow bound on
+    `x - y`, the output value equals the difference and is in range. -/
+private def sub_per_elem_P (x y r : Std.I32) : Prop :=
+  ((x.val - y.val : Int)).natAbs ≤ 2 ^ 31 - 1 →
+    r.val = x.val - y.val ∧ r.val.natAbs ≤ 2 ^ 31 - 1
+
+/-- Per-element Triple: `core.num.I32.wrapping_sub x y` reduces to
+    `.ok (Std.I32.wrapping_sub x y)`, whose `.val` is `Int.bmod (x.val - y.val) (2^32)`.
+    Under the no-overflow bound, `Int.bmod` is the identity. -/
+private theorem sub_per_elem_spec (x y : Std.I32) :
+    ⦃ ⌜ True ⌝ ⦄
+    CoreModels.core.num.I32.wrapping_sub x y
+    ⦃ ⇓ r => ⌜ sub_per_elem_P x y r ⌝ ⦄ := by
+  have h_ok :
+      CoreModels.core.num.I32.wrapping_sub x y
+        = .ok (Aeneas.Std.I32.wrapping_sub x y) := by
+    unfold CoreModels.core.num.I32.wrapping_sub
+    unfold rust_primitives.arithmetic.wrapping_sub_i32
+    rfl
+  rw [h_ok]
+  simp only [Std.Do.Triple, WP.wp]
+  intro _
+  show sub_per_elem_P x y (Aeneas.Std.I32.wrapping_sub x y)
+  unfold sub_per_elem_P
+  intro hb
+  have h_val := Aeneas.Std.I32.wrapping_sub_val_eq x y
+  have h_lb : -(2 ^ 31 : Int) ≤ x.val - y.val := by
+    have h_abs : ((x.val - y.val : Int)).natAbs ≤ 2 ^ 31 - 1 := hb
+    omega
+  have h_ub : x.val - y.val < (2 ^ 31 : Int) := by
+    have h_abs : ((x.val - y.val : Int)).natAbs ≤ 2 ^ 31 - 1 := hb
+    omega
+  have h_bmod : Int.bmod (x.val - y.val) (2 ^ 32) = x.val - y.val := by
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+    · have h_const : -((2 : Int) ^ (32 - 1)) ≤ -(2 ^ 31 : Int) := by decide
+      exact le_trans h_const h_lb
+    · have h_const : (2 ^ 31 : Int) ≤ (2 : Int) ^ (32 - 1) := by decide
+      exact lt_of_lt_of_le h_ub h_const
+  refine ⟨?_, ?_⟩
+  · rw [h_val, h_bmod]
+  · rw [h_val, h_bmod]; exact hb
+
+@[spec]
+theorem subtract_spec
+    (lhs rhs : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (hpre : ∀ j : Nat, j < 8 →
+      ((lhs.values.val[j]!).val - (rhs.values.val[j]!).val : Int).natAbs ≤ 2 ^ 31 - 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.subtract lhs rhs
+    ⦃ ⇓ r => ⌜ ∀ j : Nat, j < 8 →
+                (r.values.val[j]!).val
+                  = (lhs.values.val[j]!).val - (rhs.values.val[j]!).val
+              ∧ (r.values.val[j]!).val.natAbs ≤ 2 ^ 31 - 1 ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.subtract
+  rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice lhs.values)
+        = .ok (Aeneas.Std.Array.to_slice lhs.values) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [show CoreModels.core.slice.Slice.len (Aeneas.Std.Array.to_slice lhs.values)
+        = .ok (Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice lhs.values)) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [coeff_slice_len_eq lhs.values]
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.subtract_loop
+  have h_body_eq :
+      (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        libcrux_iot_ml_dsa.simd.portable.arithmetic.subtract_loop.body rhs p.1 p.2)
+      = (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        binary_loop_body CoreModels.core.num.I32.wrapping_sub rhs p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, a1⟩
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.subtract_loop.body
+    unfold binary_loop_body
+    rfl
+  rw [h_body_eq]
+  obtain ⟨out, h_out_eq, h_out_P⟩ :=
+    triple_exists_ok
+      (elementwise_binary_spec
+        CoreModels.core.num.I32.wrapping_sub
+        sub_per_elem_P
+        sub_per_elem_spec
+        lhs.values rhs)
+  rw [h_out_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  refine triple_of_ok (v := { values := out }) rfl ?_
+  intro j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := h_out_P j hj
+  show (out.val[j]!).val = _ ∧ _
+  rw [h_acc]
+  exact h_P (hpre j hj)
+
+end libcrux_iot_ml_dsa.Vector.Portable.Element
