@@ -16,7 +16,7 @@ import LibcruxIotMlDsa.Util.SliceSpecs
 import LibcruxIotMlDsa.Util.LoopSpecs
 -- Phases 2-8 (re-enable as the proof files land; ml-dsa has no `createi`):
 -- import LibcruxIotMlDsa.Util.CreateI
--- import LibcruxIotMlDsa.Vector.Portable.Arithmetic   -- L0/L1
+-- import LibcruxIotMlDsa.Vector.Portable.Arithmetic   -- L0/L1 (WIP — 2 residual proof issues, see handoff)
 -- import LibcruxIotMlDsa.Vector.Portable.Ntt          -- L2 butterflies
 -- import LibcruxIotMlDsa.Ntt                          -- L3 forward drivers
 -- import LibcruxIotMlDsa.InvertNtt                    -- L3 inverse drivers
