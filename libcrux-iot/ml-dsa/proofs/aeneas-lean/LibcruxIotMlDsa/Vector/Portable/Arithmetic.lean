@@ -369,4 +369,292 @@ theorem montgomery_reduce_element_spec (value : Std.I64) (hb : value.val.natAbs 
       rw [h_const] at h_div_le; rw [h31]; omega
     rw [Int.abs_eq_natAbs] at h_res_abs; exact_mod_cast h_res_abs
 
+/-! ## `reduce_element` — centered Barrett reduction (i32, q = 8380417, shift 23)
+
+  The impl computes `fe - ((fe + 2^22) >> 23) * q`, a centered Barrett reduction:
+
+      let i  := 1 <<< 22                     -- 2^22
+      let i1 := wrapping_add fe i            -- fe + 2^22
+      let q' := i1 >>> 23                     -- (fe + 2^22) / 2^23  (arithmetic shift)
+      let i2 := wrapping_mul q' FIELD_MODULUS -- q' * q
+      wrapping_sub fe i2                       -- fe - q' * q
+
+  Derived precondition: `|fe| ≤ 2^31 - 2^23`. Binding constraint is the `wrapping_add`
+  no-overflow (`fe + 2^22 ≤ 2^31 - 2^22 < 2^31`); this also yields `|quotient| ≤ 255`,
+  so `|quotient * q| ≤ 255·q < 2^31` (the `wrapping_mul` no-overflow).
+
+  Derived output bound: `|result| ≤ 6283009`, from the decomposition
+  `result = (fe - q'·2^23) + q'·(2^23 - q) = (fe - q'·2^23) + q'·8191` where
+  `|fe - q'·2^23| ≤ 2^22` (floor-div remainder) and `|q'·8191| ≤ 255·8191`,
+  so `|result| ≤ 2^22 + 255·8191 = 6283009`. -/
+
+/-- Closed-form value computed by the `reduce_element` impl, as an `IScalar.I32`.
+
+    Stages the BV-level result of unfolding `reduce_element` so the Triple proof can
+    apply `triple_of_ok_l0`. Mirrors ML-KEM's `barrett_reduce_impl_value`. -/
+def reduce_impl_value (fe : Std.I32) : Std.I32 :=
+  let i  : Std.I32 := ⟨(1#i32 : Std.I32).bv.shiftLeft 22⟩
+  let i1 : Std.I32 := Aeneas.Std.I32.wrapping_add fe i
+  let quotient : Std.I32 := ⟨i1.bv.sshiftRight 23⟩
+  let i2 : Std.I32 := Aeneas.Std.I32.wrapping_mul quotient (8380417#i32)
+  Aeneas.Std.I32.wrapping_sub fe i2
+
+/-- The `do`-block reduces to `Result.ok (reduce_impl_value fe)`. -/
+theorem reduce_element_eq_ok (fe : Std.I32) :
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.reduce_element fe
+      = .ok (reduce_impl_value fe) := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.reduce_element reduce_impl_value
+  have h_q : libcrux_iot_ml_dsa.simd.traits.FIELD_MODULUS = 8380417#i32 := by
+    unfold libcrux_iot_ml_dsa.simd.traits.FIELD_MODULUS; rfl
+  -- `1#i32 <<< 22#i32` is `IScalar.shiftLeft_IScalar`.
+  have h_22_pos : (22#i32 : Std.I32).val ≥ 0 := by decide
+  have h_22_lt : (22#i32 : Std.I32).toNat < Aeneas.Std.IScalarTy.I32.numBits := by decide
+  -- `i1 >>> 23#i32` is `IScalar.shiftRight_IScalar`.
+  have h_23_pos : (23#i32 : Std.I32).val ≥ 0 := by decide
+  have h_23_lt : (23#i32 : Std.I32).toNat < Aeneas.Std.IScalarTy.I32.numBits := by decide
+  simp only [HShiftLeft.hShiftLeft, Aeneas.Std.IScalar.shiftLeft_IScalar,
+             Aeneas.Std.IScalar.shiftLeft,
+             HShiftRight.hShiftRight, Aeneas.Std.IScalar.shiftRight_IScalar,
+             Aeneas.Std.IScalar.shiftRight,
+             h_22_pos, h_22_lt, h_23_pos, h_23_lt, reduceIte,
+             CoreModels.core.num.I32.wrapping_add,
+             CoreModels.core.num.I32.wrapping_mul,
+             CoreModels.core.num.I32.wrapping_sub,
+             rust_primitives.arithmetic.wrapping_add_i32,
+             rust_primitives.arithmetic.wrapping_mul_i32,
+             rust_primitives.arithmetic.wrapping_sub_i32,
+             Aeneas.Std.bind_tc_ok, h_q]
+  rfl
+
+/-- Bridge: `(reduce_impl_value fe).val = fe.val - quotient * 8380417` (as `Int`), where
+    `quotient = (fe.val + 2^22) / 2^23`, under `|fe.val| ≤ 2^31 - 2^23`. -/
+private theorem reduce_impl_value_val
+    (fe : Std.I32) (hb : fe.val.natAbs ≤ 2^31 - 2^23) :
+    (reduce_impl_value fe).val
+      = fe.val - ((fe.val + (2^22 : Int)) / (2^23 : Int)) * 8380417 := by
+  unfold reduce_impl_value
+  set v : Int := fe.val with hv_def
+  -- |v| ≤ 2^31 - 2^23.
+  have h_v_abs : |v| ≤ (2^31 - 2^23 : Int) := by
+    rw [Int.abs_eq_natAbs]
+    have : (v.natAbs : Int) ≤ ((2^31 - 2^23 : Nat) : Int) := by exact_mod_cast hb
+    have h2 : ((2^31 - 2^23 : Nat) : Int) = (2^31 - 2^23 : Int) := by norm_num
+    omega
+  have h_v_lb : -(2^31 - 2^23 : Int) ≤ v := (abs_le.mp h_v_abs).1
+  have h_v_ub : v ≤ (2^31 - 2^23 : Int) := (abs_le.mp h_v_abs).2
+  -- i := 1 <<< 22 = 2^22.
+  have h_i_val : (⟨(1#i32 : Std.I32).bv.shiftLeft 22⟩ : Std.I32).val = (2^22 : Int) := by decide
+  set i : Std.I32 := ⟨(1#i32 : Std.I32).bv.shiftLeft 22⟩
+  -- i1 := wrapping_add fe i. No wrap: -2^31 ≤ v + 2^22 < 2^31.
+  set i1 : Std.I32 := Aeneas.Std.I32.wrapping_add fe i
+  have h_sum_lb : -(2 : Int)^31 ≤ v + 2^22 := by
+    have h_const : -(2 : Int)^31 ≤ -(2^31 - 2^23 : Int) + 2^22 := by norm_num
+    omega
+  have h_sum_ub : v + 2^22 < (2 : Int)^31 := by
+    have h_const : (2^31 - 2^23 : Int) + 2^22 < (2 : Int)^31 := by norm_num
+    omega
+  have h_i1_val : i1.val = v + 2^22 := by
+    show (Aeneas.Std.I32.wrapping_add _ _).val = _
+    rw [Aeneas.Std.I32.wrapping_add_val_eq, h_i_val]
+    apply Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+    · have h_red : ((2 : Int)^(32-1)) = (2 : Int)^31 := by norm_num
+      rw [h_red]; exact h_sum_lb
+    · have h_red : ((2 : Int)^(32-1)) = (2 : Int)^31 := by norm_num
+      rw [h_red]; exact h_sum_ub
+  -- quotient := i1 >>> 23 = i1.val / 2^23.
+  set quotient : Std.I32 := ⟨i1.bv.sshiftRight 23⟩
+  have h_quotient_val : quotient.val = i1.val / (2^23 : Int) := by
+    show (i1.bv.sshiftRight 23).toInt = _
+    rw [BitVec.toInt_sshiftRight, Int.shiftRight_eq_div_pow]
+    have h_pow_nat : ((2^23 : Nat) : Int) = ((2 : Int)^23) := by push_cast
+    rw [h_pow_nat]
+    show i1.bv.toInt / _ = i1.val / _
+    rfl
+  -- quotient = (v + 2^22) / 2^23.
+  have h_quotient_eq : quotient.val = (v + 2^22) / (2^23 : Int) := by
+    rw [h_quotient_val, h_i1_val]
+  -- |quotient| ≤ 255 (so the multiply fits): -255 ≤ quotient ≤ 255.
+  have h_quotient_bounds : -255 ≤ quotient.val ∧ quotient.val ≤ 255 := by
+    rw [h_quotient_eq]
+    refine ⟨?_, ?_⟩
+    · have h_lb2 : -(2^31 - 2^23 : Int) + 2^22 ≤ v + 2^22 := by omega
+      have h := Int.ediv_le_ediv (a := -(2^31 - 2^23 : Int) + 2^22)
+                  (b := v + 2^22) (c := (2^23 : Int)) (by norm_num) h_lb2
+      have h_const : (-(2^31 - 2^23 : Int) + 2^22) / (2^23 : Int) = -255 := by norm_num
+      rw [h_const] at h; omega
+    · have h_ub2 : v + 2^22 ≤ (2^31 - 2^23 : Int) + 2^22 := by omega
+      have h := Int.ediv_le_ediv (a := v + 2^22)
+                  (b := (2^31 - 2^23 : Int) + 2^22) (c := (2^23 : Int)) (by norm_num) h_ub2
+      have h_const : ((2^31 - 2^23 : Int) + 2^22) / (2^23 : Int) = 255 := by norm_num
+      rw [h_const] at h; omega
+  -- i2 := wrapping_mul quotient 8380417. No wrap: |quotient * q| ≤ 255 * q < 2^31.
+  have h_q_lit : (8380417#i32 : Std.I32).val = 8380417 := by decide
+  set i2 : Std.I32 := Aeneas.Std.I32.wrapping_mul quotient (8380417#i32)
+  have h_i2_val : i2.val = quotient.val * 8380417 := by
+    show (Aeneas.Std.I32.wrapping_mul _ _).val = _
+    rw [Aeneas.Std.I32.wrapping_mul_val_eq, h_q_lit]
+    apply Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+    · have h_lb := mul_le_mul_of_nonneg_right h_quotient_bounds.1 (by decide : (0 : Int) ≤ 8380417)
+      have h_red : ((2 : Int)^(32-1)) = (2 : Int)^31 := by norm_num
+      have h_const : -(2 : Int)^31 ≤ (-255 : Int) * 8380417 := by norm_num
+      rw [h_red]; omega
+    · have h_ub := mul_le_mul_of_nonneg_right h_quotient_bounds.2 (by decide : (0 : Int) ≤ 8380417)
+      have h_red : ((2 : Int)^(32-1)) = (2 : Int)^31 := by norm_num
+      have h_const : (255 : Int) * 8380417 < (2 : Int)^31 := by norm_num
+      rw [h_red]; omega
+  -- Bound on i2.val for the final wrapping_sub: |i2.val| ≤ 255 * 8380417.
+  have h_i2_bounds : -(255 * 8380417 : Int) ≤ i2.val ∧ i2.val ≤ (255 * 8380417 : Int) := by
+    rw [h_i2_val]
+    constructor
+    · have h_lb := mul_le_mul_of_nonneg_right h_quotient_bounds.1 (by decide : (0 : Int) ≤ 8380417)
+      have : (-255 : Int) * 8380417 = -(255 * 8380417 : Int) := by ring
+      omega
+    · exact mul_le_mul_of_nonneg_right h_quotient_bounds.2 (by decide : (0 : Int) ≤ 8380417)
+  -- result := wrapping_sub fe i2. No wrap: |v - i2.val| < 2^31.
+  -- (|v| ≤ 2^31 - 2^23 and |i2| ≤ 255*q < 2^31; their difference still fits.)
+  -- Concrete-numeral bounds on v (for the omega-on-difference steps).
+  have h_vlb_lit : (-2139095040 : Int) ≤ v := by
+    have h_const : -(2^31 - 2^23 : Int) = -2139095040 := by norm_num
+    rw [h_const] at h_v_lb; exact h_v_lb
+  have h_vub_lit : v ≤ (2139095040 : Int) := by
+    have h_const : (2^31 - 2^23 : Int) = 2139095040 := by norm_num
+    rw [h_const] at h_v_ub; exact h_v_ub
+  have h_q255 : (255 * 8380417 : Int) = 2137006335 := by norm_num
+  have h_sub_lb : -(2 : Int)^31 ≤ v - i2.val := by
+    have h_i2_ub := h_i2_bounds.2
+    have h_pow31 : (2 : Int)^31 = 2147483648 := by norm_num
+    rw [h_q255] at h_i2_ub; rw [h_pow31]; omega
+  have h_sub_ub : v - i2.val < (2 : Int)^31 := by
+    have h_i2_lb := h_i2_bounds.1
+    have h_pow31 : (2 : Int)^31 = 2147483648 := by norm_num
+    rw [h_q255] at h_i2_lb; rw [h_pow31]; omega
+  show (Aeneas.Std.I32.wrapping_sub fe i2).val = _
+  rw [Aeneas.Std.I32.wrapping_sub_val_eq, h_i2_val, h_quotient_eq]
+  apply Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+  · have h_red : ((2 : Int)^(32-1)) = (2 : Int)^31 := by norm_num
+    rw [h_i2_val, h_quotient_eq] at h_sub_lb; rw [h_red]; exact h_sub_lb
+  · have h_red : ((2 : Int)^(32-1)) = (2 : Int)^31 := by norm_num
+    rw [h_i2_val, h_quotient_eq] at h_sub_ub; rw [h_red]; exact h_sub_ub
+
+/-- **Pure `Int`-level core of the centered Barrett reduction.**
+
+    With `quotient = (v + 2^22) / 2^23` and `r = v - quotient·q`, under `|v| ≤ 2^31 - 2^23`:
+    `r ≡ v (mod q)` (trivially, the difference is a multiple of q) and `|r| ≤ 6283009`.
+
+    Bound via the decomposition `r = (v - quotient·2^23) + quotient·(2^23 - q)` where
+    `2^23 - q = 8191`, `v - quotient·2^23 ∈ [-2^22, 2^22)` (floor-div remainder), and
+    `|quotient| ≤ 255`, giving `|r| ≤ 2^22 + 255·8191 = 6283009`. -/
+private theorem reduce_element_core
+    (v : Int) (hb : v.natAbs ≤ 2^31 - 2^23) :
+    let quotient := (v + (2^22 : Int)) / (2^23 : Int)
+    let r := v - quotient * 8380417
+    (r : Zq) = (v : Zq) ∧ r.natAbs ≤ 6283009 := by
+  -- |v| ≤ 2^31 - 2^23.
+  have h_v_abs : |v| ≤ (2^31 - 2^23 : Int) := by
+    rw [Int.abs_eq_natAbs]
+    have : (v.natAbs : Int) ≤ ((2^31 - 2^23 : Nat) : Int) := by exact_mod_cast hb
+    have h2 : ((2^31 - 2^23 : Nat) : Int) = (2^31 - 2^23 : Int) := by norm_num
+    omega
+  have h_v_lb : -(2139095040 : Int) ≤ v := by
+    have h_const : -(2^31 - 2^23 : Int) = -2139095040 := by norm_num
+    have := (abs_le.mp h_v_abs).1; rw [h_const] at this; exact this
+  have h_v_ub : v ≤ (2139095040 : Int) := by
+    have h_const : (2^31 - 2^23 : Int) = 2139095040 := by norm_num
+    have := (abs_le.mp h_v_abs).2; rw [h_const] at this; exact this
+  set quotient : Int := (v + (2^22 : Int)) / (2^23 : Int) with hq_def
+  set r : Int := v - quotient * 8380417 with hr_def
+  refine ⟨?_, ?_⟩
+  · -- (r : Zq) = (v : Zq) since r = v - quotient·q and (q : Zq) = 0.
+    show ((v - quotient * 8380417 : Int) : Zq) = (v : Zq)
+    have h_q_zero : ((8380417 : Int) : Zq) = 0 := by
+      show ((8380417 : Int) : ZMod Q) = 0
+      rw [show (8380417 : Int) = ((Q : Nat) : Int) from by norm_num]
+      push_cast
+      exact ZMod.natCast_self Q
+    rw [Int.cast_sub, Int.cast_mul, h_q_zero, mul_zero, sub_zero]
+  · -- |r| ≤ 6283009 via the decomposition r = (v - quotient·2^23) + quotient·8191.
+    -- Floor-div remainder: v + 2^22 - quotient·2^23 ∈ [0, 2^23).
+    have h_rem_lb : (0 : Int) ≤ (v + 2^22) - quotient * (2^23 : Int) := by
+      have h := Int.emod_nonneg (v + 2^22) (by norm_num : (2^23 : Int) ≠ 0)
+      have h_decomp : (v + 2^22) % (2^23 : Int) = (v + 2^22) - quotient * (2^23 : Int) := by
+        rw [hq_def, Int.emod_def]; ring
+      rw [h_decomp] at h; exact h
+    have h_rem_ub : (v + 2^22) - quotient * (2^23 : Int) < (2^23 : Int) := by
+      have h := Int.emod_lt_of_pos (v + 2^22) (by norm_num : (0 : Int) < 2^23)
+      have h_decomp : (v + 2^22) % (2^23 : Int) = (v + 2^22) - quotient * (2^23 : Int) := by
+        rw [hq_def, Int.emod_def]; ring
+      rw [h_decomp] at h; exact h
+    -- So d := v - quotient·2^23 ∈ [-2^22, 2^22).
+    set d : Int := v - quotient * (2^23 : Int) with hd_def
+    have h_d_lb : -(2^22 : Int) ≤ d := by
+      have : (0 : Int) ≤ d + 2^22 := by rw [hd_def]; linarith [h_rem_lb]
+      linarith
+    have h_d_ub : d < (2^22 : Int) := by
+      have : d + 2^22 < (2^23 : Int) := by rw [hd_def]; linarith [h_rem_ub]
+      have h_pow : (2^23 : Int) - 2^22 = 2^22 := by norm_num
+      linarith [this, h_pow]
+    -- |quotient| ≤ 255.
+    have h_quot_bounds : -255 ≤ quotient ∧ quotient ≤ 255 := by
+      rw [hq_def]
+      refine ⟨?_, ?_⟩
+      · have h_31_23 : -(2^31 - 2^23 : Int) = -2139095040 := by norm_num
+        have h_lb2 : -(2^31 - 2^23 : Int) + 2^22 ≤ v + 2^22 := by
+          rw [h_31_23]; linarith [h_v_lb]
+        have h := Int.ediv_le_ediv (a := -(2^31 - 2^23 : Int) + 2^22)
+                    (b := v + 2^22) (c := (2^23 : Int)) (by norm_num) h_lb2
+        have h_const : (-(2^31 - 2^23 : Int) + 2^22) / (2^23 : Int) = -255 := by norm_num
+        rw [h_const] at h; omega
+      · have h_31_23 : (2^31 - 2^23 : Int) = 2139095040 := by norm_num
+        have h_ub2 : v + 2^22 ≤ (2^31 - 2^23 : Int) + 2^22 := by
+          rw [h_31_23]; linarith [h_v_ub]
+        have h := Int.ediv_le_ediv (a := v + 2^22)
+                    (b := (2^31 - 2^23 : Int) + 2^22) (c := (2^23 : Int)) (by norm_num) h_ub2
+        have h_const : ((2^31 - 2^23 : Int) + 2^22) / (2^23 : Int) = 255 := by norm_num
+        rw [h_const] at h; omega
+    -- r = d + quotient·8191  (since 2^23 - q = 8191).
+    have h_r_decomp : r = d + quotient * 8191 := by
+      rw [hr_def, hd_def]
+      have h_2_23 : (2^23 : Int) = 8380417 + 8191 := by norm_num
+      have : quotient * (2^23 : Int) = quotient * 8380417 + quotient * 8191 := by
+        rw [h_2_23]; ring
+      linarith [this]
+    -- |r| ≤ 2^22 + 255·8191 = 6283009.
+    have h_quot8191_lb : -(255 * 8191 : Int) ≤ quotient * 8191 := by
+      have := mul_le_mul_of_nonneg_right h_quot_bounds.1 (by norm_num : (0 : Int) ≤ 8191)
+      have h_eq : (-255 : Int) * 8191 = -(255 * 8191 : Int) := by ring
+      linarith [this, h_eq]
+    have h_quot8191_ub : quotient * 8191 ≤ (255 * 8191 : Int) :=
+      mul_le_mul_of_nonneg_right h_quot_bounds.2 (by norm_num : (0 : Int) ≤ 8191)
+    have h_r_lb : -(6283009 : Int) ≤ r := by
+      rw [h_r_decomp]
+      have h_2_22 : -(2^22 : Int) = -4194304 := by norm_num
+      have h_255 : (255 * 8191 : Int) = 2088705 := by norm_num
+      linarith [h_d_lb, h_quot8191_lb, h_2_22, h_255]
+    have h_r_ub : r ≤ (6283009 : Int) := by
+      rw [h_r_decomp]
+      have h_2_22 : (2^22 : Int) = 4194304 := by norm_num
+      have h_255 : (255 * 8191 : Int) = 2088705 := by norm_num
+      linarith [h_d_ub, h_quot8191_ub, h_2_22, h_255]
+    have h_abs : |r| ≤ (6283009 : Int) := abs_le.mpr ⟨h_r_lb, h_r_ub⟩
+    rw [Int.abs_eq_natAbs] at h_abs
+    exact_mod_cast h_abs
+
+/-! ## L0 Triple -/
+
+@[spec high]
+theorem reduce_element_spec (fe : Std.I32) (h : fe.val.natAbs ≤ 2^31 - 2^23) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.reduce_element fe
+    ⦃ ⇓ r => ⌜ liftZ_std r.val = liftZ_std fe.val
+              ∧ r.val.natAbs ≤ 6283009 ⌝ ⦄ := by
+  apply triple_of_ok_l0 (v := reduce_impl_value fe) (reduce_element_eq_ok fe)
+  rw [reduce_impl_value_val fe h]
+  -- Goal: liftZ_std (fe.val - q' * 8380417) = liftZ_std fe.val ∧ (…).natAbs ≤ 6283009.
+  have h_core := reduce_element_core fe.val h
+  refine ⟨?_, h_core.2⟩
+  -- liftZ_std x = (x : Zq); reduce to the core's Zq equality.
+  show ((fe.val - ((fe.val + (2^22 : Int)) / (2^23 : Int)) * 8380417 : Int) : Zq)
+        = (fe.val : Zq)
+  exact h_core.1
+
 end libcrux_iot_ml_dsa.Vector.Portable.Arithmetic
