@@ -1107,7 +1107,7 @@ def simd.portable.arithmetic.reduce_element
   let i ← 1#i32 <<< 22#i32
   let i1 ← core.num.I32.wrapping_add fe i
   let quotient ← i1 >>> 23#i32
-  let i2 ← core.num.I32.wrapping_sub quotient simd.traits.FIELD_MODULUS
+  let i2 ← core.num.I32.wrapping_mul quotient simd.traits.FIELD_MODULUS
   core.num.I32.wrapping_sub fe i2
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::shift_left_then_reduce]: loop body 0:

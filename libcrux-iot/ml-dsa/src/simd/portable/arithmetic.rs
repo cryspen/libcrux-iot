@@ -150,7 +150,7 @@ pub(super) fn infinity_norm_exceeds(simd_unit: &Coefficients, bound: i32) -> boo
 fn reduce_element(fe: FieldElement) -> FieldElement {
     let quotient = (fe.wrapping_add(1 << 22)) >> 23;
 
-    fe.wrapping_sub(quotient.wrapping_sub(FIELD_MODULUS))
+    fe.wrapping_sub(quotient.wrapping_mul(FIELD_MODULUS))
 }
 
 #[inline(always)]
