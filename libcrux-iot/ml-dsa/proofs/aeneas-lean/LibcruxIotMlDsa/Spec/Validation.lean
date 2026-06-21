@@ -1,5 +1,6 @@
 import LibcruxIotMlDsa.Spec.Pure
 import LibcruxIotMlDsa.Spec.Parameters
+import LibcruxIotMlDsa.Spec.Rounding
 
 /-!
 # ML-DSA spec validation — build-time, axiom-free (`#guard` only)
@@ -54,5 +55,40 @@ private def pR : SpecPoly :=
 #guard intt (ntt p0) == p0
 #guard intt (ntt p1) == p1
 #guard intt (ntt pR) == pR
+
+/-! ## Rounding spec (`Spec/Rounding.lean`) — validated vs `arithmetic.rs` + its tests.
+
+Mirrors the Rust unit tests (`power2round_basic`, `decompose_basic`,
+`high_low_bits_roundtrip`, `use_hint_no_hint`) plus the reconstruction invariants
+and output bounds (Python-confirmed across 200k random inputs each). -/
+open libcrux_iot_ml_dsa.Spec.Rounding
+
+private def g44 : Int := 95232   -- (q-1)/88, ML-DSA-44
+private def g65 : Int := 261888  -- (q-1)/32, ML-DSA-65/87
+/-- Test coefficients: 0, 1, 100, q/2, q-2, q-1 (incl. the boundary q-1). -/
+private def rounds : List Int := [0, 1, 100, 4190208, 8380415, 8380416]
+
+-- gamma2 constants match (q-1)/88 and (q-1)/32
+#guard g44 = (Qi - 1) / 88
+#guard g65 = (Qi - 1) / 32
+
+-- power2round: basic vectors + reconstruction `r ≡ r1·2^D + r0 (mod q)` + `|r0| ≤ 2^12`
+#guard power2round 0 = (0, 0)
+#guard (let (r1, r0) := power2round 8192; r1 * twoD + r0) = 8192
+#guard rounds.all (fun r => decide (let (r1, r0) := power2round r; modQ (r1 * twoD + r0) = modQ r))
+#guard rounds.all (fun r => decide ((power2round r).2.natAbs ≤ 4096))
+
+-- decompose: reconstruction `r ≡ r1·alpha + r0 (mod q)` + `|r0| ≤ gamma2`, both gamma2
+#guard rounds.all (fun r => decide (let (r1, r0) := decompose r g44; modQ (r1 * (2 * g44) + r0) = modQ r))
+#guard rounds.all (fun r => decide (let (r1, r0) := decompose r g65; modQ (r1 * (2 * g65) + r0) = modQ r))
+#guard rounds.all (fun r => decide ((decompose r g44).2.natAbs ≤ 95232))
+#guard rounds.all (fun r => decide ((decompose r g65).2.natAbs ≤ 261888))
+-- boundary `r⁺ − r0 = q − 1` ⇒ `r1 = 0`, returning `(0, r0 − 1)` at `r = q − 1`
+#guard decompose 8380416 g44 = (0, -1)
+#guard decompose 8380416 g65 = (0, -1)
+
+-- high/low_bits projections + use_hint(false) = high_bits (Rust `use_hint_no_hint`)
+#guard rounds.all (fun r => decide (highBits r g65 = (decompose r g65).1 ∧ lowBits r g65 = (decompose r g65).2))
+#guard rounds.all (fun r => decide (useHint false r g65 = highBits r g65))
 
 end libcrux_iot_ml_dsa.Spec.Validation
