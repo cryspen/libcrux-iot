@@ -4576,4 +4576,1973 @@ theorem invert_ntt_at_layer_6_fc
       exact h1bd u (by omega) (by omega) l hl
 
 
+/-! ### Shared block-restriction helper for the multi-call inverse drivers L5/L4/L3.
+
+    Generalizes L6's `restrict_hin_0_8`/`restrict_hin1_16_8` to any block: given that
+    the current array `arr` agrees with the original `re` on the call's block
+    `[OFFSET, OFFSET + 2·STEP_BY)` (a frame-chain over the disjoint earlier blocks),
+    plus the uniform `hin`, supply the leaf-shaped block-local input bound. The leaf
+    `…InvNtt.outer_3_plus_fc` is called by its FULLY-QUALIFIED inverse name (the bare
+    `outer_3_plus_fc` is ambiguous with the FORWARD overload, whose unifier loops). -/
+private theorem restrict_hin_block
+    (OFFSET STEP_BY : Std.Usize)
+    (re arr : Aeneas.Std.Array libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients 32#usize)
+    (B : Nat)
+    (hsub : OFFSET.val + 2 * STEP_BY.val ≤ 32)
+    (heq : ∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
+        arr.val[u]! = re.val[u]!)
+    (hin : ∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+        (re.val[u]!).values.val[l]!.val.natAbs ≤ B) :
+    ∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
+      ∀ l : Nat, l < 8 → (arr.val[u]!).values.val[l]!.val.natAbs ≤ B := by
+  intro u h1 h2 l hl
+  have h32 : u < 32 := by omega
+  rw [heq u h1 h2]; exact hin u h32 l hl
+
+
+/-! ### Layer-5 cross-unit inverse driver `invert_ntt_at_layer_5_fc`.
+
+    `invert_ntt_at_layer_5 re` chains FOUR disjoint cross-unit `outer_3_plus` calls
+    (`STEP_BY = 4`): call `c` on block `[8c, 8c+8)` with `OFFSET = 8c`,
+    `ZETA → zeta (7 − c)` (call 0 → zeta 7 = 466468, 1 → zeta 6 = -876248,
+    2 → zeta 5 = -777960, 3 → zeta 4 = 237124). The lifted result equals
+    `Pure.intt_layer (lift_units re) 5` (`len = 32`, `k = 256/32 − 1 = 7`,
+    `round = i/64 = c`). The blocks are disjoint, so each call leaves the others'
+    blocks intact (block-local frame-chaining); the input bound for call `c` comes
+    from the chained frames of calls `0..c-1` plus the uniform `hin`. The output
+    bound stays the uniform `2B + 2^24`. The inverse hi-lane sign closes by `ring`. -/
+
+set_option maxRecDepth 4000 in
+private theorem zetaInv5_bridge0 : liftZ ((466468#i32 : Std.I32).val : Int) = zeta 7 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv5_bridge1 :
+    liftZ (((-876248)#i32 : Std.I32).val : Int) = zeta 6 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv5_bridge2 :
+    liftZ (((-777960)#i32 : Std.I32).val : Int) = zeta 5 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv5_bridge3 : liftZ ((237124#i32 : Std.I32).val : Int) = zeta 4 := by decide
+
+private theorem zetaInv5_mag0 : (466468#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv5_mag1 : ((-876248)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv5_mag2 : ((-777960)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv5_mag3 : (237124#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+theorem invert_ntt_at_layer_5_fc
+    (re : Aeneas.Std.Array libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients 32#usize)
+    (B : Nat)
+    (hB : (2 : Int) * B ≤ 2 ^ 31 - 1)
+    (hin : ∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+        (re.val[u]!).values.val[l]!.val.natAbs ≤ B) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_5 re
+    ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 5
+             ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_5
+  have hstep : 1 ≤ (4#usize : Std.Usize).val := by decide
+  have hz0 := zetaInv5_mag0
+  have hz1 := zetaInv5_mag1
+  have hz2 := zetaInv5_mag2
+  have hz3 := zetaInv5_mag3
+  have hbnd0 : (0#usize : Std.Usize).val + 2 * (4#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd1 : (8#usize : Std.Usize).val + 2 * (4#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd2 : (16#usize : Std.Usize).val + 2 * (4#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd3 : (24#usize : Std.Usize).val + 2 * (4#usize : Std.Usize).val ≤ 32 := by decide
+  -- Usize literal normalizers for the frame-chained block-equalities.
+  have e0 : (0#usize : Std.Usize).val = 0 := by decide
+  have e4 : (4#usize : Std.Usize).val = 4 := by decide
+  have e8 : (8#usize : Std.Usize).val = 8 := by decide
+  have e16 : (16#usize : Std.Usize).val = 16 := by decide
+  have e24 : (24#usize : Std.Usize).val = 24 := by decide
+  -- Call 0 on block [0,8), ZETA = 466468 → zeta 7.
+  obtain ⟨r1, hr1_eq, h0butter, h0unch, h0bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 0#usize 4#usize 466468#i32 re B
+        hz0 hB hstep hbnd0
+        (restrict_hin_block 0#usize 4#usize re re B hbnd0 (fun u _ _ => rfl) hin))
+  -- Call 1 on block [8,16); input bound from call 0's frame.
+  obtain ⟨r2, hr2_eq, h1butter, h1unch, h1bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 8#usize 4#usize (-876248)#i32 r1 B
+        hz1 hB hstep hbnd1
+        (restrict_hin_block 8#usize 4#usize re r1 B hbnd1
+          (fun u h1 h2 => by
+            simp only [e8, e4] at h1 h2
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e4]; omega))) hin))
+  -- Call 2 on block [16,24); input bound from calls 0,1 frames.
+  obtain ⟨r3, hr3_eq, h2butter, h2unch, h2bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 16#usize 4#usize (-777960)#i32 r2 B
+        hz2 hB hstep hbnd2
+        (restrict_hin_block 16#usize 4#usize re r2 B hbnd2
+          (fun u h1 h2 => by
+            simp only [e16, e4] at h1 h2
+            rw [h1unch u (by omega) (Or.inr (by simp only [e8, e4]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e4]; omega))) hin))
+  -- Call 3 on block [24,32); input bound from calls 0,1,2 frames.
+  obtain ⟨r4, hr4_eq, h3butter, h3unch, h3bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 24#usize 4#usize 237124#i32 r3 B
+        hz3 hB hstep hbnd3
+        (restrict_hin_block 24#usize 4#usize re r3 B hbnd3
+          (fun u h1 h2 => by
+            simp only [e24, e4] at h1 h2
+            rw [h2unch u (by omega) (Or.inr (by simp only [e16, e4]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e8, e4]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e4]; omega))) hin))
+  simp only [hr1_eq, hr2_eq, hr3_eq, Aeneas.Std.bind_tc_ok]
+  apply triple_of_ok hr4_eq
+  -- Normalize usize literal coercions in the butterfly/frame/bound posts.
+  simp only [e0, e4, e8, e16, e24, Nat.zero_add] at h0butter h0unch h1butter h1unch h2butter h2unch h3butter h3unch h0bd h1bd h2bd h3bd
+  refine ⟨?_, ?_⟩
+  · -- Equality conjunct.
+    unfold lift_units
+    apply Pure.build_congr
+    intro i hi
+    -- Spec at layer 5: len = 32, 2*len = 64, k = 256/32 − 1 = 7, round = i/64.
+    have hzv0 : liftZ ((466468#i32 : Std.I32).val : Int) = zeta 7 := zetaInv5_bridge0
+    have hzv1 : liftZ (((-876248)#i32 : Std.I32).val : Int) = zeta 6 := zetaInv5_bridge1
+    have hzv2 : liftZ (((-777960)#i32 : Std.I32).val : Int) = zeta 5 := zetaInv5_bridge2
+    have hzv3 : liftZ ((237124#i32 : Std.I32).val : Int) = zeta 4 := zetaInv5_bridge3
+    rcases (by omega : i < 64 ∨ 64 ≤ i ∧ i < 128 ∨ 128 ≤ i ∧ i < 192 ∨ 192 ≤ i) with
+      hr0 | hr1 | hr2 | hr3
+    · -- Round 0 (call 0): round = 0, idx = i, z = zeta (7 − 0) = zeta 7.
+      have hround : i / 64 = 0 := by omega
+      have hidx : i % 64 = i := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, Nat.reduceSub,
+        hround, hidx, Nat.sub_zero]
+      by_cases hlt : i < 32
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 32) / 8 = i / 8 + 4 := by omega
+        have hmod : (i + 32) % 8 = i % 8 := by omega
+        have hidx2 : i + 32 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 32) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h0butter (i / 8) (by omega) (by omega)
+        rw [h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 32) / 8 + 4 := by omega
+        have hmod : (i - 32) % 8 = i % 8 := by omega
+        have hidx2 : i - 32 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 32) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h0butter ((i - 32) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh', hzv0]
+        ring
+    · -- Round 1 (call 1): round = 1, idx = i − 64, z = zeta (7 − 1) = zeta 6.
+      have hround : i / 64 = 1 := by omega
+      have hidx : i % 64 = i - 64 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 64 < 32
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 32) / 8 = i / 8 + 4 := by omega
+        have hmod : (i + 32) % 8 = i % 8 := by omega
+        have hidx2 : i + 32 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 32) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h1butter (i / 8) (by omega) (by omega)
+        rw [h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 4) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 32) / 8 + 4 := by omega
+        have hmod : (i - 32) % 8 = i % 8 := by omega
+        have hidx2 : i - 32 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 32) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h1butter ((i - 32) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h0unch ((i - 32) / 8 + 4) (by omega) (by omega),
+            h0unch ((i - 32) / 8) (by omega) (by omega)]
+        rw [hzv1]
+        ring
+    · -- Round 2 (call 2): round = 2, idx = i − 128, z = zeta (7 − 2) = zeta 5.
+      have hround : i / 64 = 2 := by omega
+      have hidx : i % 64 = i - 128 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 128 < 32
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 32) / 8 = i / 8 + 4 := by omega
+        have hmod : (i + 32) % 8 = i % 8 := by omega
+        have hidx2 : i + 32 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 32) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h2butter (i / 8) (by omega) (by omega)
+        rw [h3unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 4) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 4) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 32) / 8 + 4 := by omega
+        have hmod : (i - 32) % 8 = i % 8 := by omega
+        have hidx2 : i - 32 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 32) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h2butter ((i - 32) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h3unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h1unch ((i - 32) / 8 + 4) (by omega) (by omega),
+            h1unch ((i - 32) / 8) (by omega) (by omega),
+            h0unch ((i - 32) / 8 + 4) (by omega) (by omega),
+            h0unch ((i - 32) / 8) (by omega) (by omega)]
+        rw [hzv2]
+        ring
+    · -- Round 3 (call 3): round = 3, idx = i − 192, z = zeta (7 − 3) = zeta 4.
+      have hround : i / 64 = 3 := by omega
+      have hidx : i % 64 = i - 192 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 192 < 32
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 32) / 8 = i / 8 + 4 := by omega
+        have hmod : (i + 32) % 8 = i % 8 := by omega
+        have hidx2 : i + 32 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 32) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h3butter (i / 8) (by omega) (by omega)
+        rw [hlow (i % 8) hl]
+        rw [h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 4) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 4) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 4) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 32) / 8 + 4 := by omega
+        have hmod : (i - 32) % 8 = i % 8 := by omega
+        have hidx2 : i - 32 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 32) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h3butter ((i - 32) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [hdiv, hhigh']
+        rw [h2unch ((i - 32) / 8 + 4) (by omega) (by omega),
+            h2unch ((i - 32) / 8) (by omega) (by omega),
+            h1unch ((i - 32) / 8 + 4) (by omega) (by omega),
+            h1unch ((i - 32) / 8) (by omega) (by omega),
+            h0unch ((i - 32) / 8 + 4) (by omega) (by omega),
+            h0unch ((i - 32) / 8) (by omega) (by omega)]
+        rw [hzv3]
+        ring
+  · -- Bound conjunct: every unit lies in exactly one block; later calls leave it intact.
+    intro u hu l hl
+    rcases (by omega : u < 8 ∨ 8 ≤ u ∧ u < 16 ∨ 16 ≤ u ∧ u < 24 ∨ 24 ≤ u) with
+      hb0 | hb1 | hb2 | hb3
+    · rw [h3unch u (by omega) (by omega), h2unch u (by omega) (by omega),
+          h1unch u (by omega) (by omega)]
+      exact h0bd u (by omega) (by omega) l hl
+    · rw [h3unch u (by omega) (by omega), h2unch u (by omega) (by omega)]
+      exact h1bd u (by omega) (by omega) l hl
+    · rw [h3unch u (by omega) (by omega)]
+      exact h2bd u (by omega) (by omega) l hl
+    · exact h3bd u (by omega) (by omega) l hl
+
+
+/-! ### Layer-4 cross-unit inverse driver `invert_ntt_at_layer_4_fc`.
+
+    `invert_ntt_at_layer_4 re` chains EIGHT disjoint cross-unit `outer_3_plus` calls
+    (`STEP_BY = 2`): call `c` on block `[4c, 4c+4)` with `OFFSET = 4c`,
+    `ZETA → zeta (15 − c)` (2680103, 3111497, -2884855, 3119733, -2091905, -359251,
+    2353451, 1826347 → zeta 15…8). The lifted result equals
+    `Pure.intt_layer (lift_units re) 4` (`len = 16`, `k = 256/16 − 1 = 15`,
+    `round = i/32 = c`). Same disjoint-block frame-chaining as L5/L6: call `c`'s
+    input bound comes from calls `0..c-1` frames + the uniform `hin`; output bound
+    stays the uniform `2B + 2^24`; the inverse hi-lane sign closes by `ring`. -/
+
+set_option maxRecDepth 4000 in
+private theorem zetaInv4_bridge0 :
+    liftZ ((2680103#i32 : Std.I32).val : Int) = zeta 15 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv4_bridge1 :
+    liftZ ((3111497#i32 : Std.I32).val : Int) = zeta 14 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv4_bridge2 :
+    liftZ (((-2884855)#i32 : Std.I32).val : Int) = zeta 13 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv4_bridge3 :
+    liftZ ((3119733#i32 : Std.I32).val : Int) = zeta 12 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv4_bridge4 :
+    liftZ (((-2091905)#i32 : Std.I32).val : Int) = zeta 11 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv4_bridge5 :
+    liftZ (((-359251)#i32 : Std.I32).val : Int) = zeta 10 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv4_bridge6 :
+    liftZ ((2353451#i32 : Std.I32).val : Int) = zeta 9 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv4_bridge7 :
+    liftZ ((1826347#i32 : Std.I32).val : Int) = zeta 8 := by decide
+
+private theorem zetaInv4_mag0 : (2680103#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv4_mag1 : (3111497#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv4_mag2 : ((-2884855)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv4_mag3 : (3119733#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv4_mag4 : ((-2091905)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv4_mag5 : ((-359251)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv4_mag6 : (2353451#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv4_mag7 : (1826347#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+theorem invert_ntt_at_layer_4_fc
+    (re : Aeneas.Std.Array libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients 32#usize)
+    (B : Nat)
+    (hB : (2 : Int) * B ≤ 2 ^ 31 - 1)
+    (hin : ∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+        (re.val[u]!).values.val[l]!.val.natAbs ≤ B) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_4 re
+    ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 4
+             ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_4
+  have hstep : 1 ≤ (2#usize : Std.Usize).val := by decide
+  have hz0 := zetaInv4_mag0
+  have hz1 := zetaInv4_mag1
+  have hz2 := zetaInv4_mag2
+  have hz3 := zetaInv4_mag3
+  have hz4 := zetaInv4_mag4
+  have hz5 := zetaInv4_mag5
+  have hz6 := zetaInv4_mag6
+  have hz7 := zetaInv4_mag7
+  have hbnd0 : (0#usize : Std.Usize).val + 2 * (2#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd1 : (4#usize : Std.Usize).val + 2 * (2#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd2 : (8#usize : Std.Usize).val + 2 * (2#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd3 : (12#usize : Std.Usize).val + 2 * (2#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd4 : (16#usize : Std.Usize).val + 2 * (2#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd5 : (20#usize : Std.Usize).val + 2 * (2#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd6 : (24#usize : Std.Usize).val + 2 * (2#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd7 : (28#usize : Std.Usize).val + 2 * (2#usize : Std.Usize).val ≤ 32 := by decide
+  have e0 : (0#usize : Std.Usize).val = 0 := by decide
+  have e2 : (2#usize : Std.Usize).val = 2 := by decide
+  have e4 : (4#usize : Std.Usize).val = 4 := by decide
+  have e8 : (8#usize : Std.Usize).val = 8 := by decide
+  have e12 : (12#usize : Std.Usize).val = 12 := by decide
+  have e16 : (16#usize : Std.Usize).val = 16 := by decide
+  have e20 : (20#usize : Std.Usize).val = 20 := by decide
+  have e24 : (24#usize : Std.Usize).val = 24 := by decide
+  have e28 : (28#usize : Std.Usize).val = 28 := by decide
+  obtain ⟨r1, hr1_eq, h0butter, h0unch, h0bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 0#usize 2#usize 2680103#i32 re B
+        hz0 hB hstep hbnd0
+        (restrict_hin_block 0#usize 2#usize re re B hbnd0 (fun u _ _ => rfl) hin))
+  obtain ⟨r2, hr2_eq, h1butter, h1unch, h1bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 4#usize 2#usize 3111497#i32 r1 B
+        hz1 hB hstep hbnd1
+        (restrict_hin_block 4#usize 2#usize re r1 B hbnd1
+          (fun u h1 h2 => by
+            simp only [e4, e2] at h1 h2
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e2]; omega))) hin))
+  obtain ⟨r3, hr3_eq, h2butter, h2unch, h2bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 8#usize 2#usize (-2884855)#i32 r2 B
+        hz2 hB hstep hbnd2
+        (restrict_hin_block 8#usize 2#usize re r2 B hbnd2
+          (fun u h1 h2 => by
+            simp only [e8, e2] at h1 h2
+            rw [h1unch u (by omega) (Or.inr (by simp only [e4, e2]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e2]; omega))) hin))
+  obtain ⟨r4, hr4_eq, h3butter, h3unch, h3bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 12#usize 2#usize 3119733#i32 r3 B
+        hz3 hB hstep hbnd3
+        (restrict_hin_block 12#usize 2#usize re r3 B hbnd3
+          (fun u h1 h2 => by
+            simp only [e12, e2] at h1 h2
+            rw [h2unch u (by omega) (Or.inr (by simp only [e8, e2]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e4, e2]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e2]; omega))) hin))
+  obtain ⟨r5, hr5_eq, h4butter, h4unch, h4bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 16#usize 2#usize (-2091905)#i32 r4 B
+        hz4 hB hstep hbnd4
+        (restrict_hin_block 16#usize 2#usize re r4 B hbnd4
+          (fun u h1 h2 => by
+            simp only [e16, e2] at h1 h2
+            rw [h3unch u (by omega) (Or.inr (by simp only [e12, e2]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e8, e2]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e4, e2]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e2]; omega))) hin))
+  obtain ⟨r6, hr6_eq, h5butter, h5unch, h5bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 20#usize 2#usize (-359251)#i32 r5 B
+        hz5 hB hstep hbnd5
+        (restrict_hin_block 20#usize 2#usize re r5 B hbnd5
+          (fun u h1 h2 => by
+            simp only [e20, e2] at h1 h2
+            rw [h4unch u (by omega) (Or.inr (by simp only [e16, e2]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e12, e2]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e8, e2]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e4, e2]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e2]; omega))) hin))
+  obtain ⟨r7, hr7_eq, h6butter, h6unch, h6bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 24#usize 2#usize 2353451#i32 r6 B
+        hz6 hB hstep hbnd6
+        (restrict_hin_block 24#usize 2#usize re r6 B hbnd6
+          (fun u h1 h2 => by
+            simp only [e24, e2] at h1 h2
+            rw [h5unch u (by omega) (Or.inr (by simp only [e20, e2]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e16, e2]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e12, e2]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e8, e2]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e4, e2]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e2]; omega))) hin))
+  obtain ⟨r8, hr8_eq, h7butter, h7unch, h7bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 28#usize 2#usize 1826347#i32 r7 B
+        hz7 hB hstep hbnd7
+        (restrict_hin_block 28#usize 2#usize re r7 B hbnd7
+          (fun u h1 h2 => by
+            simp only [e28, e2] at h1 h2
+            rw [h6unch u (by omega) (Or.inr (by simp only [e24, e2]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e20, e2]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e16, e2]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e12, e2]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e8, e2]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e4, e2]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e2]; omega))) hin))
+  simp only [hr1_eq, hr2_eq, hr3_eq, hr4_eq, hr5_eq, hr6_eq, hr7_eq, Aeneas.Std.bind_tc_ok]
+  apply triple_of_ok hr8_eq
+  simp only [e0, e2, e4, e8, e12, e16, e20, e24, e28, Nat.zero_add] at h0butter h0unch h1butter h1unch h2butter h2unch h3butter h3unch h4butter h4unch h5butter h5unch h6butter h6unch h7butter h7unch h0bd h1bd h2bd h3bd h4bd h5bd h6bd h7bd
+  refine ⟨?_, ?_⟩
+  · unfold lift_units
+    apply Pure.build_congr
+    intro i hi
+    -- Spec at layer 4: len = 16, 2*len = 32, k = 15, round = i/32.
+    have hzv0 : liftZ ((2680103#i32 : Std.I32).val : Int) = zeta 15 := zetaInv4_bridge0
+    have hzv1 : liftZ ((3111497#i32 : Std.I32).val : Int) = zeta 14 := zetaInv4_bridge1
+    have hzv2 : liftZ (((-2884855)#i32 : Std.I32).val : Int) = zeta 13 := zetaInv4_bridge2
+    have hzv3 : liftZ ((3119733#i32 : Std.I32).val : Int) = zeta 12 := zetaInv4_bridge3
+    have hzv4 : liftZ (((-2091905)#i32 : Std.I32).val : Int) = zeta 11 := zetaInv4_bridge4
+    have hzv5 : liftZ (((-359251)#i32 : Std.I32).val : Int) = zeta 10 := zetaInv4_bridge5
+    have hzv6 : liftZ ((2353451#i32 : Std.I32).val : Int) = zeta 9 := zetaInv4_bridge6
+    have hzv7 : liftZ ((1826347#i32 : Std.I32).val : Int) = zeta 8 := zetaInv4_bridge7
+    rcases (by omega : i < 32 ∨ 32 ≤ i ∧ i < 64 ∨ 64 ≤ i ∧ i < 96 ∨ 96 ≤ i ∧ i < 128 ∨
+        128 ≤ i ∧ i < 160 ∨ 160 ≤ i ∧ i < 192 ∨ 192 ≤ i ∧ i < 224 ∨ 224 ≤ i) with
+      hr0 | hr1 | hr2 | hr3 | hr4 | hr5 | hr6 | hr7
+    · -- Round 0 (call 0): z = zeta (15 − 0) = zeta 15.
+      have hround : i / 32 = 0 := by omega
+      have hidx : i % 32 = i := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, Nat.reduceSub,
+        hround, hidx, Nat.sub_zero]
+      by_cases hlt : i < 16
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 16) / 8 = i / 8 + 2 := by omega
+        have hmod : (i + 16) % 8 = i % 8 := by omega
+        have hidx2 : i + 16 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 16) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h0butter (i / 8) (by omega) (by omega)
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 16) / 8 + 2 := by omega
+        have hmod : (i - 16) % 8 = i % 8 := by omega
+        have hidx2 : i - 16 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 16) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h0butter ((i - 16) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh', hzv0]
+        ring
+    · -- Round 1 (call 1): z = zeta 14.
+      have hround : i / 32 = 1 := by omega
+      have hidx : i % 32 = i - 32 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 32 < 16
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 16) / 8 = i / 8 + 2 := by omega
+        have hmod : (i + 16) % 8 = i % 8 := by omega
+        have hidx2 : i + 16 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 16) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h1butter (i / 8) (by omega) (by omega)
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 2) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 16) / 8 + 2 := by omega
+        have hmod : (i - 16) % 8 = i % 8 := by omega
+        have hidx2 : i - 16 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 16) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h1butter ((i - 16) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h0unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h0unch ((i - 16) / 8) (by omega) (by omega)]
+        rw [hzv1]
+        ring
+    · -- Round 2 (call 2): z = zeta 13.
+      have hround : i / 32 = 2 := by omega
+      have hidx : i % 32 = i - 64 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 64 < 16
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 16) / 8 = i / 8 + 2 := by omega
+        have hmod : (i + 16) % 8 = i % 8 := by omega
+        have hidx2 : i + 16 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 16) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h2butter (i / 8) (by omega) (by omega)
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 2) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 2) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 16) / 8 + 2 := by omega
+        have hmod : (i - 16) % 8 = i % 8 := by omega
+        have hidx2 : i - 16 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 16) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h2butter ((i - 16) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h1unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h1unch ((i - 16) / 8) (by omega) (by omega),
+            h0unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h0unch ((i - 16) / 8) (by omega) (by omega)]
+        rw [hzv2]
+        ring
+    · -- Round 3 (call 3): z = zeta 12.
+      have hround : i / 32 = 3 := by omega
+      have hidx : i % 32 = i - 96 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 96 < 16
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 16) / 8 = i / 8 + 2 := by omega
+        have hmod : (i + 16) % 8 = i % 8 := by omega
+        have hidx2 : i + 16 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 16) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h3butter (i / 8) (by omega) (by omega)
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 2) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 2) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 2) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 16) / 8 + 2 := by omega
+        have hmod : (i - 16) % 8 = i % 8 := by omega
+        have hidx2 : i - 16 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 16) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h3butter ((i - 16) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h2unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h2unch ((i - 16) / 8) (by omega) (by omega),
+            h1unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h1unch ((i - 16) / 8) (by omega) (by omega),
+            h0unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h0unch ((i - 16) / 8) (by omega) (by omega)]
+        rw [hzv3]
+        ring
+    · -- Round 4 (call 4): z = zeta 11.
+      have hround : i / 32 = 4 := by omega
+      have hidx : i % 32 = i - 128 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 128 < 16
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 16) / 8 = i / 8 + 2 := by omega
+        have hmod : (i + 16) % 8 = i % 8 := by omega
+        have hidx2 : i + 16 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 16) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h4butter (i / 8) (by omega) (by omega)
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 2) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 2) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 2) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 2) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 16) / 8 + 2 := by omega
+        have hmod : (i - 16) % 8 = i % 8 := by omega
+        have hidx2 : i - 16 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 16) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h4butter ((i - 16) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h3unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h3unch ((i - 16) / 8) (by omega) (by omega),
+            h2unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h2unch ((i - 16) / 8) (by omega) (by omega),
+            h1unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h1unch ((i - 16) / 8) (by omega) (by omega),
+            h0unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h0unch ((i - 16) / 8) (by omega) (by omega)]
+        rw [hzv4]
+        ring
+    · -- Round 5 (call 5): z = zeta 10.
+      have hround : i / 32 = 5 := by omega
+      have hidx : i % 32 = i - 160 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 160 < 16
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 16) / 8 = i / 8 + 2 := by omega
+        have hmod : (i + 16) % 8 = i % 8 := by omega
+        have hidx2 : i + 16 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 16) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h5butter (i / 8) (by omega) (by omega)
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 2) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 2) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 2) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 2) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 2) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 16) / 8 + 2 := by omega
+        have hmod : (i - 16) % 8 = i % 8 := by omega
+        have hidx2 : i - 16 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 16) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h5butter ((i - 16) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h7unch (i / 8) (by omega) (by omega), h6unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h4unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h4unch ((i - 16) / 8) (by omega) (by omega),
+            h3unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h3unch ((i - 16) / 8) (by omega) (by omega),
+            h2unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h2unch ((i - 16) / 8) (by omega) (by omega),
+            h1unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h1unch ((i - 16) / 8) (by omega) (by omega),
+            h0unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h0unch ((i - 16) / 8) (by omega) (by omega)]
+        rw [hzv5]
+        ring
+    · -- Round 6 (call 6): z = zeta 9.
+      have hround : i / 32 = 6 := by omega
+      have hidx : i % 32 = i - 192 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 192 < 16
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 16) / 8 = i / 8 + 2 := by omega
+        have hmod : (i + 16) % 8 = i % 8 := by omega
+        have hidx2 : i + 16 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 16) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h6butter (i / 8) (by omega) (by omega)
+        rw [h7unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 2) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 2) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 2) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 2) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 2) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 2) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 16) / 8 + 2 := by omega
+        have hmod : (i - 16) % 8 = i % 8 := by omega
+        have hidx2 : i - 16 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 16) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h6butter ((i - 16) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h7unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h5unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h5unch ((i - 16) / 8) (by omega) (by omega),
+            h4unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h4unch ((i - 16) / 8) (by omega) (by omega),
+            h3unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h3unch ((i - 16) / 8) (by omega) (by omega),
+            h2unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h2unch ((i - 16) / 8) (by omega) (by omega),
+            h1unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h1unch ((i - 16) / 8) (by omega) (by omega),
+            h0unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h0unch ((i - 16) / 8) (by omega) (by omega)]
+        rw [hzv6]
+        ring
+    · -- Round 7 (call 7): z = zeta 8.
+      have hround : i / 32 = 7 := by omega
+      have hidx : i % 32 = i - 224 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 224 < 16
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 16) / 8 = i / 8 + 2 := by omega
+        have hmod : (i + 16) % 8 = i % 8 := by omega
+        have hidx2 : i + 16 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 16) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h7butter (i / 8) (by omega) (by omega)
+        rw [hlow (i % 8) hl]
+        rw [h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 2) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 2) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 2) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 2) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 2) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 2) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 2) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 16) / 8 + 2 := by omega
+        have hmod : (i - 16) % 8 = i % 8 := by omega
+        have hidx2 : i - 16 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 16) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h7butter ((i - 16) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [hdiv, hhigh']
+        rw [h6unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h6unch ((i - 16) / 8) (by omega) (by omega),
+            h5unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h5unch ((i - 16) / 8) (by omega) (by omega),
+            h4unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h4unch ((i - 16) / 8) (by omega) (by omega),
+            h3unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h3unch ((i - 16) / 8) (by omega) (by omega),
+            h2unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h2unch ((i - 16) / 8) (by omega) (by omega),
+            h1unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h1unch ((i - 16) / 8) (by omega) (by omega),
+            h0unch ((i - 16) / 8 + 2) (by omega) (by omega),
+            h0unch ((i - 16) / 8) (by omega) (by omega)]
+        rw [hzv7]
+        ring
+  · intro u hu l hl
+    rcases (by omega : u < 4 ∨ 4 ≤ u ∧ u < 8 ∨ 8 ≤ u ∧ u < 12 ∨ 12 ≤ u ∧ u < 16 ∨
+        16 ≤ u ∧ u < 20 ∨ 20 ≤ u ∧ u < 24 ∨ 24 ≤ u ∧ u < 28 ∨ 28 ≤ u) with
+      hb0 | hb1 | hb2 | hb3 | hb4 | hb5 | hb6 | hb7
+    · rw [h7unch u (by omega) (by omega), h6unch u (by omega) (by omega),
+          h5unch u (by omega) (by omega), h4unch u (by omega) (by omega),
+          h3unch u (by omega) (by omega), h2unch u (by omega) (by omega),
+          h1unch u (by omega) (by omega)]
+      exact h0bd u (by omega) (by omega) l hl
+    · rw [h7unch u (by omega) (by omega), h6unch u (by omega) (by omega),
+          h5unch u (by omega) (by omega), h4unch u (by omega) (by omega),
+          h3unch u (by omega) (by omega), h2unch u (by omega) (by omega)]
+      exact h1bd u (by omega) (by omega) l hl
+    · rw [h7unch u (by omega) (by omega), h6unch u (by omega) (by omega),
+          h5unch u (by omega) (by omega), h4unch u (by omega) (by omega),
+          h3unch u (by omega) (by omega)]
+      exact h2bd u (by omega) (by omega) l hl
+    · rw [h7unch u (by omega) (by omega), h6unch u (by omega) (by omega),
+          h5unch u (by omega) (by omega), h4unch u (by omega) (by omega)]
+      exact h3bd u (by omega) (by omega) l hl
+    · rw [h7unch u (by omega) (by omega), h6unch u (by omega) (by omega),
+          h5unch u (by omega) (by omega)]
+      exact h4bd u (by omega) (by omega) l hl
+    · rw [h7unch u (by omega) (by omega), h6unch u (by omega) (by omega)]
+      exact h5bd u (by omega) (by omega) l hl
+    · rw [h7unch u (by omega) (by omega)]
+      exact h6bd u (by omega) (by omega) l hl
+    · exact h7bd u (by omega) (by omega) l hl
+
+
+/-! ### Layer-3 cross-unit inverse driver `invert_ntt_at_layer_3_fc`.
+
+    `invert_ntt_at_layer_3 re` chains SIXTEEN disjoint cross-unit `outer_3_plus`
+    calls (`STEP_BY = 1`): call `c` on block `[2c, 2c+2)` with `OFFSET = 2c`,
+    `ZETA → zeta (31 − c)`. The lifted result equals
+    `Pure.intt_layer (lift_units re) 3` (`len = 8`, `k = 256/8 − 1 = 31`,
+    `round = i/16 = c`). Same disjoint-block frame-chaining as L4/L5/L6: call `c`'s
+    input bound comes from calls `0..c-1` frames + the uniform `hin`; output bound
+    stays the uniform `2B + 2^24`; the inverse hi-lane sign closes by `ring`. -/
+
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge0 :
+    liftZ ((280005#i32 : Std.I32).val : Int) = zeta 31 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge1 :
+    liftZ ((4010497#i32 : Std.I32).val : Int) = zeta 30 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge2 :
+    liftZ (((-19422)#i32 : Std.I32).val : Int) = zeta 29 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge3 :
+    liftZ ((1757237#i32 : Std.I32).val : Int) = zeta 28 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge4 :
+    liftZ (((-3277672)#i32 : Std.I32).val : Int) = zeta 27 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge5 :
+    liftZ (((-1399561)#i32 : Std.I32).val : Int) = zeta 26 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge6 :
+    liftZ (((-3859737)#i32 : Std.I32).val : Int) = zeta 25 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge7 :
+    liftZ (((-2118186)#i32 : Std.I32).val : Int) = zeta 24 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge8 :
+    liftZ (((-2108549)#i32 : Std.I32).val : Int) = zeta 23 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge9 :
+    liftZ ((2619752#i32 : Std.I32).val : Int) = zeta 22 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge10 :
+    liftZ (((-1119584)#i32 : Std.I32).val : Int) = zeta 21 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge11 :
+    liftZ (((-549488)#i32 : Std.I32).val : Int) = zeta 20 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge12 :
+    liftZ ((3585928#i32 : Std.I32).val : Int) = zeta 19 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge13 :
+    liftZ (((-1079900)#i32 : Std.I32).val : Int) = zeta 18 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge14 :
+    liftZ ((1024112#i32 : Std.I32).val : Int) = zeta 17 := by decide
+set_option maxRecDepth 4000 in
+private theorem zetaInv3_bridge15 :
+    liftZ ((2725464#i32 : Std.I32).val : Int) = zeta 16 := by decide
+private theorem zetaInv3_mag0 : (280005#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag1 : (4010497#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag2 : ((-19422)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag3 : (1757237#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag4 : ((-3277672)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag5 : ((-1399561)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag6 : ((-3859737)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag7 : ((-2118186)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag8 : ((-2108549)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag9 : (2619752#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag10 : ((-1119584)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag11 : ((-549488)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag12 : (3585928#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag13 : ((-1079900)#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag14 : (1024112#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+private theorem zetaInv3_mag15 : (2725464#i32 : Std.I32).val.natAbs ≤ 8380416 := by decide
+
+set_option maxHeartbeats 16000000 in
+@[spec]
+theorem invert_ntt_at_layer_3_fc
+    (re : Aeneas.Std.Array libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients 32#usize)
+    (B : Nat)
+    (hB : (2 : Int) * B ≤ 2 ^ 31 - 1)
+    (hin : ∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+        (re.val[u]!).values.val[l]!.val.natAbs ≤ B) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_3 re
+    ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 3
+             ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_3
+  have hstep : 1 ≤ (1#usize : Std.Usize).val := by decide
+  have hz0 := zetaInv3_mag0
+  have hz1 := zetaInv3_mag1
+  have hz2 := zetaInv3_mag2
+  have hz3 := zetaInv3_mag3
+  have hz4 := zetaInv3_mag4
+  have hz5 := zetaInv3_mag5
+  have hz6 := zetaInv3_mag6
+  have hz7 := zetaInv3_mag7
+  have hz8 := zetaInv3_mag8
+  have hz9 := zetaInv3_mag9
+  have hz10 := zetaInv3_mag10
+  have hz11 := zetaInv3_mag11
+  have hz12 := zetaInv3_mag12
+  have hz13 := zetaInv3_mag13
+  have hz14 := zetaInv3_mag14
+  have hz15 := zetaInv3_mag15
+  have hbnd0 : (0#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd1 : (2#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd2 : (4#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd3 : (6#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd4 : (8#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd5 : (10#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd6 : (12#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd7 : (14#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd8 : (16#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd9 : (18#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd10 : (20#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd11 : (22#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd12 : (24#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd13 : (26#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd14 : (28#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have hbnd15 : (30#usize : Std.Usize).val + 2 * (1#usize : Std.Usize).val ≤ 32 := by decide
+  have e0 : (0#usize : Std.Usize).val = 0 := by decide
+  have e1 : (1#usize : Std.Usize).val = 1 := by decide
+  have e2 : (2#usize : Std.Usize).val = 2 := by decide
+  have e4 : (4#usize : Std.Usize).val = 4 := by decide
+  have e6 : (6#usize : Std.Usize).val = 6 := by decide
+  have e8 : (8#usize : Std.Usize).val = 8 := by decide
+  have e10 : (10#usize : Std.Usize).val = 10 := by decide
+  have e12 : (12#usize : Std.Usize).val = 12 := by decide
+  have e14 : (14#usize : Std.Usize).val = 14 := by decide
+  have e16 : (16#usize : Std.Usize).val = 16 := by decide
+  have e18 : (18#usize : Std.Usize).val = 18 := by decide
+  have e20 : (20#usize : Std.Usize).val = 20 := by decide
+  have e22 : (22#usize : Std.Usize).val = 22 := by decide
+  have e24 : (24#usize : Std.Usize).val = 24 := by decide
+  have e26 : (26#usize : Std.Usize).val = 26 := by decide
+  have e28 : (28#usize : Std.Usize).val = 28 := by decide
+  have e30 : (30#usize : Std.Usize).val = 30 := by decide
+  obtain ⟨r1, hr1_eq, h0butter, h0unch, h0bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 0#usize 1#usize 280005#i32 re B
+        hz0 hB hstep hbnd0
+        (restrict_hin_block 0#usize 1#usize re re B hbnd0 (fun u _ _ => rfl) hin))
+  obtain ⟨r2, hr2_eq, h1butter, h1unch, h1bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 2#usize 1#usize 4010497#i32 r1 B
+        hz1 hB hstep hbnd1
+        (restrict_hin_block 2#usize 1#usize re r1 B hbnd1
+          (fun u h1 h2 => by
+            simp only [e2, e1] at h1 h2
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r3, hr3_eq, h2butter, h2unch, h2bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 4#usize 1#usize (-19422)#i32 r2 B
+        hz2 hB hstep hbnd2
+        (restrict_hin_block 4#usize 1#usize re r2 B hbnd2
+          (fun u h1 h2 => by
+            simp only [e4, e1] at h1 h2
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r4, hr4_eq, h3butter, h3unch, h3bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 6#usize 1#usize 1757237#i32 r3 B
+        hz3 hB hstep hbnd3
+        (restrict_hin_block 6#usize 1#usize re r3 B hbnd3
+          (fun u h1 h2 => by
+            simp only [e6, e1] at h1 h2
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r5, hr5_eq, h4butter, h4unch, h4bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 8#usize 1#usize (-3277672)#i32 r4 B
+        hz4 hB hstep hbnd4
+        (restrict_hin_block 8#usize 1#usize re r4 B hbnd4
+          (fun u h1 h2 => by
+            simp only [e8, e1] at h1 h2
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r6, hr6_eq, h5butter, h5unch, h5bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 10#usize 1#usize (-1399561)#i32 r5 B
+        hz5 hB hstep hbnd5
+        (restrict_hin_block 10#usize 1#usize re r5 B hbnd5
+          (fun u h1 h2 => by
+            simp only [e10, e1] at h1 h2
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r7, hr7_eq, h6butter, h6unch, h6bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 12#usize 1#usize (-3859737)#i32 r6 B
+        hz6 hB hstep hbnd6
+        (restrict_hin_block 12#usize 1#usize re r6 B hbnd6
+          (fun u h1 h2 => by
+            simp only [e12, e1] at h1 h2
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r8, hr8_eq, h7butter, h7unch, h7bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 14#usize 1#usize (-2118186)#i32 r7 B
+        hz7 hB hstep hbnd7
+        (restrict_hin_block 14#usize 1#usize re r7 B hbnd7
+          (fun u h1 h2 => by
+            simp only [e14, e1] at h1 h2
+            rw [h6unch u (by omega) (Or.inr (by simp only [e12, e1]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r9, hr9_eq, h8butter, h8unch, h8bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 16#usize 1#usize (-2108549)#i32 r8 B
+        hz8 hB hstep hbnd8
+        (restrict_hin_block 16#usize 1#usize re r8 B hbnd8
+          (fun u h1 h2 => by
+            simp only [e16, e1] at h1 h2
+            rw [h7unch u (by omega) (Or.inr (by simp only [e14, e1]; omega))]
+            rw [h6unch u (by omega) (Or.inr (by simp only [e12, e1]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r10, hr10_eq, h9butter, h9unch, h9bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 18#usize 1#usize 2619752#i32 r9 B
+        hz9 hB hstep hbnd9
+        (restrict_hin_block 18#usize 1#usize re r9 B hbnd9
+          (fun u h1 h2 => by
+            simp only [e18, e1] at h1 h2
+            rw [h8unch u (by omega) (Or.inr (by simp only [e16, e1]; omega))]
+            rw [h7unch u (by omega) (Or.inr (by simp only [e14, e1]; omega))]
+            rw [h6unch u (by omega) (Or.inr (by simp only [e12, e1]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r11, hr11_eq, h10butter, h10unch, h10bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 20#usize 1#usize (-1119584)#i32 r10 B
+        hz10 hB hstep hbnd10
+        (restrict_hin_block 20#usize 1#usize re r10 B hbnd10
+          (fun u h1 h2 => by
+            simp only [e20, e1] at h1 h2
+            rw [h9unch u (by omega) (Or.inr (by simp only [e18, e1]; omega))]
+            rw [h8unch u (by omega) (Or.inr (by simp only [e16, e1]; omega))]
+            rw [h7unch u (by omega) (Or.inr (by simp only [e14, e1]; omega))]
+            rw [h6unch u (by omega) (Or.inr (by simp only [e12, e1]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r12, hr12_eq, h11butter, h11unch, h11bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 22#usize 1#usize (-549488)#i32 r11 B
+        hz11 hB hstep hbnd11
+        (restrict_hin_block 22#usize 1#usize re r11 B hbnd11
+          (fun u h1 h2 => by
+            simp only [e22, e1] at h1 h2
+            rw [h10unch u (by omega) (Or.inr (by simp only [e20, e1]; omega))]
+            rw [h9unch u (by omega) (Or.inr (by simp only [e18, e1]; omega))]
+            rw [h8unch u (by omega) (Or.inr (by simp only [e16, e1]; omega))]
+            rw [h7unch u (by omega) (Or.inr (by simp only [e14, e1]; omega))]
+            rw [h6unch u (by omega) (Or.inr (by simp only [e12, e1]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r13, hr13_eq, h12butter, h12unch, h12bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 24#usize 1#usize 3585928#i32 r12 B
+        hz12 hB hstep hbnd12
+        (restrict_hin_block 24#usize 1#usize re r12 B hbnd12
+          (fun u h1 h2 => by
+            simp only [e24, e1] at h1 h2
+            rw [h11unch u (by omega) (Or.inr (by simp only [e22, e1]; omega))]
+            rw [h10unch u (by omega) (Or.inr (by simp only [e20, e1]; omega))]
+            rw [h9unch u (by omega) (Or.inr (by simp only [e18, e1]; omega))]
+            rw [h8unch u (by omega) (Or.inr (by simp only [e16, e1]; omega))]
+            rw [h7unch u (by omega) (Or.inr (by simp only [e14, e1]; omega))]
+            rw [h6unch u (by omega) (Or.inr (by simp only [e12, e1]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r14, hr14_eq, h13butter, h13unch, h13bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 26#usize 1#usize (-1079900)#i32 r13 B
+        hz13 hB hstep hbnd13
+        (restrict_hin_block 26#usize 1#usize re r13 B hbnd13
+          (fun u h1 h2 => by
+            simp only [e26, e1] at h1 h2
+            rw [h12unch u (by omega) (Or.inr (by simp only [e24, e1]; omega))]
+            rw [h11unch u (by omega) (Or.inr (by simp only [e22, e1]; omega))]
+            rw [h10unch u (by omega) (Or.inr (by simp only [e20, e1]; omega))]
+            rw [h9unch u (by omega) (Or.inr (by simp only [e18, e1]; omega))]
+            rw [h8unch u (by omega) (Or.inr (by simp only [e16, e1]; omega))]
+            rw [h7unch u (by omega) (Or.inr (by simp only [e14, e1]; omega))]
+            rw [h6unch u (by omega) (Or.inr (by simp only [e12, e1]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r15, hr15_eq, h14butter, h14unch, h14bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 28#usize 1#usize 1024112#i32 r14 B
+        hz14 hB hstep hbnd14
+        (restrict_hin_block 28#usize 1#usize re r14 B hbnd14
+          (fun u h1 h2 => by
+            simp only [e28, e1] at h1 h2
+            rw [h13unch u (by omega) (Or.inr (by simp only [e26, e1]; omega))]
+            rw [h12unch u (by omega) (Or.inr (by simp only [e24, e1]; omega))]
+            rw [h11unch u (by omega) (Or.inr (by simp only [e22, e1]; omega))]
+            rw [h10unch u (by omega) (Or.inr (by simp only [e20, e1]; omega))]
+            rw [h9unch u (by omega) (Or.inr (by simp only [e18, e1]; omega))]
+            rw [h8unch u (by omega) (Or.inr (by simp only [e16, e1]; omega))]
+            rw [h7unch u (by omega) (Or.inr (by simp only [e14, e1]; omega))]
+            rw [h6unch u (by omega) (Or.inr (by simp only [e12, e1]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  obtain ⟨r16, hr16_eq, h15butter, h15unch, h15bd⟩ :=
+    triple_exists_ok
+      (libcrux_iot_ml_dsa.Vector.Portable.InvNtt.outer_3_plus_fc 30#usize 1#usize 2725464#i32 r15 B
+        hz15 hB hstep hbnd15
+        (restrict_hin_block 30#usize 1#usize re r15 B hbnd15
+          (fun u h1 h2 => by
+            simp only [e30, e1] at h1 h2
+            rw [h14unch u (by omega) (Or.inr (by simp only [e28, e1]; omega))]
+            rw [h13unch u (by omega) (Or.inr (by simp only [e26, e1]; omega))]
+            rw [h12unch u (by omega) (Or.inr (by simp only [e24, e1]; omega))]
+            rw [h11unch u (by omega) (Or.inr (by simp only [e22, e1]; omega))]
+            rw [h10unch u (by omega) (Or.inr (by simp only [e20, e1]; omega))]
+            rw [h9unch u (by omega) (Or.inr (by simp only [e18, e1]; omega))]
+            rw [h8unch u (by omega) (Or.inr (by simp only [e16, e1]; omega))]
+            rw [h7unch u (by omega) (Or.inr (by simp only [e14, e1]; omega))]
+            rw [h6unch u (by omega) (Or.inr (by simp only [e12, e1]; omega))]
+            rw [h5unch u (by omega) (Or.inr (by simp only [e10, e1]; omega))]
+            rw [h4unch u (by omega) (Or.inr (by simp only [e8, e1]; omega))]
+            rw [h3unch u (by omega) (Or.inr (by simp only [e6, e1]; omega))]
+            rw [h2unch u (by omega) (Or.inr (by simp only [e4, e1]; omega))]
+            rw [h1unch u (by omega) (Or.inr (by simp only [e2, e1]; omega))]
+            exact h0unch u (by omega) (Or.inr (by simp only [e0, e1]; omega))) hin))
+  simp only [hr1_eq, hr2_eq, hr3_eq, hr4_eq, hr5_eq, hr6_eq, hr7_eq, hr8_eq, hr9_eq, hr10_eq, hr11_eq, hr12_eq, hr13_eq, hr14_eq, hr15_eq, Aeneas.Std.bind_tc_ok]
+  apply triple_of_ok hr16_eq
+  simp only [e0, e1, e2, e4, e6, e8, e10, e12, e14, e16, e18, e20, e22, e24, e26, e28, e30, Nat.zero_add] at h0butter h0unch h1butter h1unch h2butter h2unch h3butter h3unch h4butter h4unch h5butter h5unch h6butter h6unch h7butter h7unch h8butter h8unch h9butter h9unch h10butter h10unch h11butter h11unch h12butter h12unch h13butter h13unch h14butter h14unch h15butter h15unch h0bd h1bd h2bd h3bd h4bd h5bd h6bd h7bd h8bd h9bd h10bd h11bd h12bd h13bd h14bd h15bd
+  refine ⟨?_, ?_⟩
+  · unfold lift_units
+    apply Pure.build_congr
+    intro i hi
+    -- Spec at layer 3: len = 8, 2*len = 16, k = 31, round = i/16.
+    have hzv0 : liftZ ((280005#i32 : Std.I32).val : Int) = zeta 31 := zetaInv3_bridge0
+    have hzv1 : liftZ ((4010497#i32 : Std.I32).val : Int) = zeta 30 := zetaInv3_bridge1
+    have hzv2 : liftZ (((-19422)#i32 : Std.I32).val : Int) = zeta 29 := zetaInv3_bridge2
+    have hzv3 : liftZ ((1757237#i32 : Std.I32).val : Int) = zeta 28 := zetaInv3_bridge3
+    have hzv4 : liftZ (((-3277672)#i32 : Std.I32).val : Int) = zeta 27 := zetaInv3_bridge4
+    have hzv5 : liftZ (((-1399561)#i32 : Std.I32).val : Int) = zeta 26 := zetaInv3_bridge5
+    have hzv6 : liftZ (((-3859737)#i32 : Std.I32).val : Int) = zeta 25 := zetaInv3_bridge6
+    have hzv7 : liftZ (((-2118186)#i32 : Std.I32).val : Int) = zeta 24 := zetaInv3_bridge7
+    have hzv8 : liftZ (((-2108549)#i32 : Std.I32).val : Int) = zeta 23 := zetaInv3_bridge8
+    have hzv9 : liftZ ((2619752#i32 : Std.I32).val : Int) = zeta 22 := zetaInv3_bridge9
+    have hzv10 : liftZ (((-1119584)#i32 : Std.I32).val : Int) = zeta 21 := zetaInv3_bridge10
+    have hzv11 : liftZ (((-549488)#i32 : Std.I32).val : Int) = zeta 20 := zetaInv3_bridge11
+    have hzv12 : liftZ ((3585928#i32 : Std.I32).val : Int) = zeta 19 := zetaInv3_bridge12
+    have hzv13 : liftZ (((-1079900)#i32 : Std.I32).val : Int) = zeta 18 := zetaInv3_bridge13
+    have hzv14 : liftZ ((1024112#i32 : Std.I32).val : Int) = zeta 17 := zetaInv3_bridge14
+    have hzv15 : liftZ ((2725464#i32 : Std.I32).val : Int) = zeta 16 := zetaInv3_bridge15
+    rcases (by omega : i < 16 ∨ 16 ≤ i ∧ i < 32 ∨ 32 ≤ i ∧ i < 48 ∨ 48 ≤ i ∧ i < 64 ∨ 64 ≤ i ∧ i < 80 ∨ 80 ≤ i ∧ i < 96 ∨ 96 ≤ i ∧ i < 112 ∨ 112 ≤ i ∧ i < 128 ∨ 128 ≤ i ∧ i < 144 ∨ 144 ≤ i ∧ i < 160 ∨ 160 ≤ i ∧ i < 176 ∨ 176 ≤ i ∧ i < 192 ∨ 192 ≤ i ∧ i < 208 ∨ 208 ≤ i ∧ i < 224 ∨ 224 ≤ i ∧ i < 240 ∨ 240 ≤ i) with
+      hr0 | hr1 | hr2 | hr3 | hr4 | hr5 | hr6 | hr7 | hr8 | hr9 | hr10 | hr11 | hr12 | hr13 | hr14 | hr15
+    · -- Round 0 (call 0): z = zeta 31.
+      have hround : i / 16 = 0 := by omega
+      have hidx : i % 16 = i := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, Nat.reduceSub,
+        hround, hidx, Nat.sub_zero]
+      by_cases hlt : i < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h0butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega), h1unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h0butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega), h1unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [hzv0]
+        ring
+    · -- Round 1 (call 1): z = zeta 30.
+      have hround : i / 16 = 1 := by omega
+      have hidx : i % 16 = i - 16 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 16 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h1butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h1butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h2unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv1]
+        ring
+    · -- Round 2 (call 2): z = zeta 29.
+      have hround : i / 16 = 2 := by omega
+      have hidx : i % 16 = i - 32 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 32 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h2butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h2butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv2]
+        ring
+    · -- Round 3 (call 3): z = zeta 28.
+      have hround : i / 16 = 3 := by omega
+      have hidx : i % 16 = i - 48 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 48 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h3butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h3butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega), h4unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv3]
+        ring
+    · -- Round 4 (call 4): z = zeta 27.
+      have hround : i / 16 = 4 := by omega
+      have hidx : i % 16 = i - 64 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 64 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h4butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h4butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h5unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv4]
+        ring
+    · -- Round 5 (call 5): z = zeta 26.
+      have hround : i / 16 = 5 := by omega
+      have hidx : i % 16 = i - 80 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 80 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h5butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h5butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv5]
+        ring
+    · -- Round 6 (call 6): z = zeta 25.
+      have hround : i / 16 = 6 := by omega
+      have hidx : i % 16 = i - 96 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 96 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h6butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h6butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega), h7unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv6]
+        ring
+    · -- Round 7 (call 7): z = zeta 24.
+      have hround : i / 16 = 7 := by omega
+      have hidx : i % 16 = i - 112 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 112 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h7butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 1) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h7butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h8unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h6unch ((i - 8) / 8 + 1) (by omega) (by omega), h6unch ((i - 8) / 8) (by omega) (by omega),
+            h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv7]
+        ring
+    · -- Round 8 (call 8): z = zeta 23.
+      have hround : i / 16 = 8 := by omega
+      have hidx : i % 16 = i - 128 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 128 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h8butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h7unch (i / 8) (by omega) (by omega), h7unch (i / 8 + 1) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 1) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h8butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h7unch ((i - 8) / 8 + 1) (by omega) (by omega), h7unch ((i - 8) / 8) (by omega) (by omega),
+            h6unch ((i - 8) / 8 + 1) (by omega) (by omega), h6unch ((i - 8) / 8) (by omega) (by omega),
+            h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv8]
+        ring
+    · -- Round 9 (call 9): z = zeta 22.
+      have hround : i / 16 = 9 := by omega
+      have hidx : i % 16 = i - 144 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 144 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h9butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h8unch (i / 8) (by omega) (by omega), h8unch (i / 8 + 1) (by omega) (by omega),
+            h7unch (i / 8) (by omega) (by omega), h7unch (i / 8 + 1) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 1) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h9butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega), h10unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h8unch ((i - 8) / 8 + 1) (by omega) (by omega), h8unch ((i - 8) / 8) (by omega) (by omega),
+            h7unch ((i - 8) / 8 + 1) (by omega) (by omega), h7unch ((i - 8) / 8) (by omega) (by omega),
+            h6unch ((i - 8) / 8 + 1) (by omega) (by omega), h6unch ((i - 8) / 8) (by omega) (by omega),
+            h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv9]
+        ring
+    · -- Round 10 (call 10): z = zeta 21.
+      have hround : i / 16 = 10 := by omega
+      have hidx : i % 16 = i - 160 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 160 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h10butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h9unch (i / 8) (by omega) (by omega), h9unch (i / 8 + 1) (by omega) (by omega),
+            h8unch (i / 8) (by omega) (by omega), h8unch (i / 8 + 1) (by omega) (by omega),
+            h7unch (i / 8) (by omega) (by omega), h7unch (i / 8 + 1) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 1) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h10butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h11unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h9unch ((i - 8) / 8 + 1) (by omega) (by omega), h9unch ((i - 8) / 8) (by omega) (by omega),
+            h8unch ((i - 8) / 8 + 1) (by omega) (by omega), h8unch ((i - 8) / 8) (by omega) (by omega),
+            h7unch ((i - 8) / 8 + 1) (by omega) (by omega), h7unch ((i - 8) / 8) (by omega) (by omega),
+            h6unch ((i - 8) / 8 + 1) (by omega) (by omega), h6unch ((i - 8) / 8) (by omega) (by omega),
+            h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv10]
+        ring
+    · -- Round 11 (call 11): z = zeta 20.
+      have hround : i / 16 = 11 := by omega
+      have hidx : i % 16 = i - 176 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 176 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h11butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h10unch (i / 8) (by omega) (by omega), h10unch (i / 8 + 1) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h9unch (i / 8 + 1) (by omega) (by omega),
+            h8unch (i / 8) (by omega) (by omega), h8unch (i / 8 + 1) (by omega) (by omega),
+            h7unch (i / 8) (by omega) (by omega), h7unch (i / 8 + 1) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 1) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h11butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h10unch ((i - 8) / 8 + 1) (by omega) (by omega), h10unch ((i - 8) / 8) (by omega) (by omega),
+            h9unch ((i - 8) / 8 + 1) (by omega) (by omega), h9unch ((i - 8) / 8) (by omega) (by omega),
+            h8unch ((i - 8) / 8 + 1) (by omega) (by omega), h8unch ((i - 8) / 8) (by omega) (by omega),
+            h7unch ((i - 8) / 8 + 1) (by omega) (by omega), h7unch ((i - 8) / 8) (by omega) (by omega),
+            h6unch ((i - 8) / 8 + 1) (by omega) (by omega), h6unch ((i - 8) / 8) (by omega) (by omega),
+            h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv11]
+        ring
+    · -- Round 12 (call 12): z = zeta 19.
+      have hround : i / 16 = 12 := by omega
+      have hidx : i % 16 = i - 192 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 192 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h12butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h11unch (i / 8) (by omega) (by omega), h11unch (i / 8 + 1) (by omega) (by omega),
+            h10unch (i / 8) (by omega) (by omega), h10unch (i / 8 + 1) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h9unch (i / 8 + 1) (by omega) (by omega),
+            h8unch (i / 8) (by omega) (by omega), h8unch (i / 8 + 1) (by omega) (by omega),
+            h7unch (i / 8) (by omega) (by omega), h7unch (i / 8 + 1) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 1) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h12butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega), h13unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h11unch ((i - 8) / 8 + 1) (by omega) (by omega), h11unch ((i - 8) / 8) (by omega) (by omega),
+            h10unch ((i - 8) / 8 + 1) (by omega) (by omega), h10unch ((i - 8) / 8) (by omega) (by omega),
+            h9unch ((i - 8) / 8 + 1) (by omega) (by omega), h9unch ((i - 8) / 8) (by omega) (by omega),
+            h8unch ((i - 8) / 8 + 1) (by omega) (by omega), h8unch ((i - 8) / 8) (by omega) (by omega),
+            h7unch ((i - 8) / 8 + 1) (by omega) (by omega), h7unch ((i - 8) / 8) (by omega) (by omega),
+            h6unch ((i - 8) / 8 + 1) (by omega) (by omega), h6unch ((i - 8) / 8) (by omega) (by omega),
+            h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv12]
+        ring
+    · -- Round 13 (call 13): z = zeta 18.
+      have hround : i / 16 = 13 := by omega
+      have hidx : i % 16 = i - 208 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 208 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h13butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h12unch (i / 8) (by omega) (by omega), h12unch (i / 8 + 1) (by omega) (by omega),
+            h11unch (i / 8) (by omega) (by omega), h11unch (i / 8 + 1) (by omega) (by omega),
+            h10unch (i / 8) (by omega) (by omega), h10unch (i / 8 + 1) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h9unch (i / 8 + 1) (by omega) (by omega),
+            h8unch (i / 8) (by omega) (by omega), h8unch (i / 8 + 1) (by omega) (by omega),
+            h7unch (i / 8) (by omega) (by omega), h7unch (i / 8 + 1) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 1) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h13butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega), h14unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h12unch ((i - 8) / 8 + 1) (by omega) (by omega), h12unch ((i - 8) / 8) (by omega) (by omega),
+            h11unch ((i - 8) / 8 + 1) (by omega) (by omega), h11unch ((i - 8) / 8) (by omega) (by omega),
+            h10unch ((i - 8) / 8 + 1) (by omega) (by omega), h10unch ((i - 8) / 8) (by omega) (by omega),
+            h9unch ((i - 8) / 8 + 1) (by omega) (by omega), h9unch ((i - 8) / 8) (by omega) (by omega),
+            h8unch ((i - 8) / 8 + 1) (by omega) (by omega), h8unch ((i - 8) / 8) (by omega) (by omega),
+            h7unch ((i - 8) / 8 + 1) (by omega) (by omega), h7unch ((i - 8) / 8) (by omega) (by omega),
+            h6unch ((i - 8) / 8 + 1) (by omega) (by omega), h6unch ((i - 8) / 8) (by omega) (by omega),
+            h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv13]
+        ring
+    · -- Round 14 (call 14): z = zeta 17.
+      have hround : i / 16 = 14 := by omega
+      have hidx : i % 16 = i - 224 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 224 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h14butter (i / 8) (by omega) (by omega)
+        rw [h15unch (i / 8) (by omega) (by omega)]
+        rw [hlow (i % 8) hl]
+        rw [h13unch (i / 8) (by omega) (by omega), h13unch (i / 8 + 1) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h12unch (i / 8 + 1) (by omega) (by omega),
+            h11unch (i / 8) (by omega) (by omega), h11unch (i / 8 + 1) (by omega) (by omega),
+            h10unch (i / 8) (by omega) (by omega), h10unch (i / 8 + 1) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h9unch (i / 8 + 1) (by omega) (by omega),
+            h8unch (i / 8) (by omega) (by omega), h8unch (i / 8 + 1) (by omega) (by omega),
+            h7unch (i / 8) (by omega) (by omega), h7unch (i / 8 + 1) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 1) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h14butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [h15unch (i / 8) (by omega) (by omega)]
+        rw [hdiv, hhigh']
+        rw [h13unch ((i - 8) / 8 + 1) (by omega) (by omega), h13unch ((i - 8) / 8) (by omega) (by omega),
+            h12unch ((i - 8) / 8 + 1) (by omega) (by omega), h12unch ((i - 8) / 8) (by omega) (by omega),
+            h11unch ((i - 8) / 8 + 1) (by omega) (by omega), h11unch ((i - 8) / 8) (by omega) (by omega),
+            h10unch ((i - 8) / 8 + 1) (by omega) (by omega), h10unch ((i - 8) / 8) (by omega) (by omega),
+            h9unch ((i - 8) / 8 + 1) (by omega) (by omega), h9unch ((i - 8) / 8) (by omega) (by omega),
+            h8unch ((i - 8) / 8 + 1) (by omega) (by omega), h8unch ((i - 8) / 8) (by omega) (by omega),
+            h7unch ((i - 8) / 8 + 1) (by omega) (by omega), h7unch ((i - 8) / 8) (by omega) (by omega),
+            h6unch ((i - 8) / 8 + 1) (by omega) (by omega), h6unch ((i - 8) / 8) (by omega) (by omega),
+            h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv14]
+        ring
+    · -- Round 15 (call 15): z = zeta 16.
+      have hround : i / 16 = 15 := by omega
+      have hidx : i % 16 = i - 240 := by omega
+      simp only [Nat.reduceShiftLeft, Nat.reduceMul, Nat.reduceDiv, hround, hidx, Nat.reduceSub]
+      by_cases hlt : i - 240 < 8
+      · rw [if_pos hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : (i + 8) / 8 = i / 8 + 1 := by omega
+        have hmod : (i + 8) % 8 = i % 8 := by omega
+        have hidx2 : i + 8 < 256 := by omega
+        rw [Pure.build_getElem _ i hi, Pure.build_getElem _ (i + 8) hidx2, hdiv, hmod]
+        obtain ⟨hlow, _⟩ := h15butter (i / 8) (by omega) (by omega)
+        rw [hlow (i % 8) hl]
+        rw [h14unch (i / 8) (by omega) (by omega), h14unch (i / 8 + 1) (by omega) (by omega),
+            h13unch (i / 8) (by omega) (by omega), h13unch (i / 8 + 1) (by omega) (by omega),
+            h12unch (i / 8) (by omega) (by omega), h12unch (i / 8 + 1) (by omega) (by omega),
+            h11unch (i / 8) (by omega) (by omega), h11unch (i / 8 + 1) (by omega) (by omega),
+            h10unch (i / 8) (by omega) (by omega), h10unch (i / 8 + 1) (by omega) (by omega),
+            h9unch (i / 8) (by omega) (by omega), h9unch (i / 8 + 1) (by omega) (by omega),
+            h8unch (i / 8) (by omega) (by omega), h8unch (i / 8 + 1) (by omega) (by omega),
+            h7unch (i / 8) (by omega) (by omega), h7unch (i / 8 + 1) (by omega) (by omega),
+            h6unch (i / 8) (by omega) (by omega), h6unch (i / 8 + 1) (by omega) (by omega),
+            h5unch (i / 8) (by omega) (by omega), h5unch (i / 8 + 1) (by omega) (by omega),
+            h4unch (i / 8) (by omega) (by omega), h4unch (i / 8 + 1) (by omega) (by omega),
+            h3unch (i / 8) (by omega) (by omega), h3unch (i / 8 + 1) (by omega) (by omega),
+            h2unch (i / 8) (by omega) (by omega), h2unch (i / 8 + 1) (by omega) (by omega),
+            h1unch (i / 8) (by omega) (by omega), h1unch (i / 8 + 1) (by omega) (by omega),
+            h0unch (i / 8) (by omega) (by omega), h0unch (i / 8 + 1) (by omega) (by omega)]
+      · rw [if_neg hlt]
+        have hl : i % 8 < 8 := by omega
+        have hdiv : i / 8 = (i - 8) / 8 + 1 := by omega
+        have hmod : (i - 8) % 8 = i % 8 := by omega
+        have hidx2 : i - 8 < 256 := by omega
+        rw [Pure.build_getElem _ (i - 8) hidx2, Pure.build_getElem _ i hi, hmod]
+        obtain ⟨_, hhigh⟩ := h15butter ((i - 8) / 8) (by omega) (by omega)
+        have hhigh' := hhigh (i % 8) hl
+        rw [hdiv, hhigh']
+        rw [h14unch ((i - 8) / 8 + 1) (by omega) (by omega), h14unch ((i - 8) / 8) (by omega) (by omega),
+            h13unch ((i - 8) / 8 + 1) (by omega) (by omega), h13unch ((i - 8) / 8) (by omega) (by omega),
+            h12unch ((i - 8) / 8 + 1) (by omega) (by omega), h12unch ((i - 8) / 8) (by omega) (by omega),
+            h11unch ((i - 8) / 8 + 1) (by omega) (by omega), h11unch ((i - 8) / 8) (by omega) (by omega),
+            h10unch ((i - 8) / 8 + 1) (by omega) (by omega), h10unch ((i - 8) / 8) (by omega) (by omega),
+            h9unch ((i - 8) / 8 + 1) (by omega) (by omega), h9unch ((i - 8) / 8) (by omega) (by omega),
+            h8unch ((i - 8) / 8 + 1) (by omega) (by omega), h8unch ((i - 8) / 8) (by omega) (by omega),
+            h7unch ((i - 8) / 8 + 1) (by omega) (by omega), h7unch ((i - 8) / 8) (by omega) (by omega),
+            h6unch ((i - 8) / 8 + 1) (by omega) (by omega), h6unch ((i - 8) / 8) (by omega) (by omega),
+            h5unch ((i - 8) / 8 + 1) (by omega) (by omega), h5unch ((i - 8) / 8) (by omega) (by omega),
+            h4unch ((i - 8) / 8 + 1) (by omega) (by omega), h4unch ((i - 8) / 8) (by omega) (by omega),
+            h3unch ((i - 8) / 8 + 1) (by omega) (by omega), h3unch ((i - 8) / 8) (by omega) (by omega),
+            h2unch ((i - 8) / 8 + 1) (by omega) (by omega), h2unch ((i - 8) / 8) (by omega) (by omega),
+            h1unch ((i - 8) / 8 + 1) (by omega) (by omega), h1unch ((i - 8) / 8) (by omega) (by omega),
+            h0unch ((i - 8) / 8 + 1) (by omega) (by omega), h0unch ((i - 8) / 8) (by omega) (by omega)]
+        rw [hzv15]
+        ring
+  · intro u hu l hl
+    rcases (by omega : u < 2 ∨ 2 ≤ u ∧ u < 4 ∨ 4 ≤ u ∧ u < 6 ∨ 6 ≤ u ∧ u < 8 ∨ 8 ≤ u ∧ u < 10 ∨ 10 ≤ u ∧ u < 12 ∨ 12 ≤ u ∧ u < 14 ∨ 14 ≤ u ∧ u < 16 ∨ 16 ≤ u ∧ u < 18 ∨ 18 ≤ u ∧ u < 20 ∨ 20 ≤ u ∧ u < 22 ∨ 22 ≤ u ∧ u < 24 ∨ 24 ≤ u ∧ u < 26 ∨ 26 ≤ u ∧ u < 28 ∨ 28 ≤ u ∧ u < 30 ∨ 30 ≤ u) with
+      hb0 | hb1 | hb2 | hb3 | hb4 | hb5 | hb6 | hb7 | hb8 | hb9 | hb10 | hb11 | hb12 | hb13 | hb14 | hb15
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega),
+          h9unch u (by omega) (by omega), h8unch u (by omega) (by omega), h7unch u (by omega) (by omega),
+          h6unch u (by omega) (by omega), h5unch u (by omega) (by omega), h4unch u (by omega) (by omega),
+          h3unch u (by omega) (by omega), h2unch u (by omega) (by omega), h1unch u (by omega) (by omega)]
+      exact h0bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega),
+          h9unch u (by omega) (by omega), h8unch u (by omega) (by omega), h7unch u (by omega) (by omega),
+          h6unch u (by omega) (by omega), h5unch u (by omega) (by omega), h4unch u (by omega) (by omega),
+          h3unch u (by omega) (by omega), h2unch u (by omega) (by omega)]
+      exact h1bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega),
+          h9unch u (by omega) (by omega), h8unch u (by omega) (by omega), h7unch u (by omega) (by omega),
+          h6unch u (by omega) (by omega), h5unch u (by omega) (by omega), h4unch u (by omega) (by omega),
+          h3unch u (by omega) (by omega)]
+      exact h2bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega),
+          h9unch u (by omega) (by omega), h8unch u (by omega) (by omega), h7unch u (by omega) (by omega),
+          h6unch u (by omega) (by omega), h5unch u (by omega) (by omega), h4unch u (by omega) (by omega)]
+      exact h3bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega),
+          h9unch u (by omega) (by omega), h8unch u (by omega) (by omega), h7unch u (by omega) (by omega),
+          h6unch u (by omega) (by omega), h5unch u (by omega) (by omega)]
+      exact h4bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega),
+          h9unch u (by omega) (by omega), h8unch u (by omega) (by omega), h7unch u (by omega) (by omega),
+          h6unch u (by omega) (by omega)]
+      exact h5bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega),
+          h9unch u (by omega) (by omega), h8unch u (by omega) (by omega), h7unch u (by omega) (by omega)]
+      exact h6bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega),
+          h9unch u (by omega) (by omega), h8unch u (by omega) (by omega)]
+      exact h7bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega),
+          h9unch u (by omega) (by omega)]
+      exact h8bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega), h10unch u (by omega) (by omega)]
+      exact h9bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega), h11unch u (by omega) (by omega)]
+      exact h10bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega),
+          h12unch u (by omega) (by omega)]
+      exact h11bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega), h13unch u (by omega) (by omega)]
+      exact h12bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega), h14unch u (by omega) (by omega)]
+      exact h13bd u (by omega) (by omega) l hl
+    · rw [h15unch u (by omega) (by omega)]
+      exact h14bd u (by omega) (by omega) l hl
+    · exact h15bd u (by omega) (by omega) l hl
+
+
 end libcrux_iot_ml_dsa.Vector.Portable.InvNttDriver
