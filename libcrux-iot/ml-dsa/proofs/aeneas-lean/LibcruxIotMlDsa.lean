@@ -25,6 +25,7 @@ import LibcruxIotMlDsa.Vector.Portable.NttDriver     -- L3 forward NTT layer dri
 import LibcruxIotMlDsa.Vector.Portable.InvNttDriver  -- L2 inverse NTT within-unit driver
 import LibcruxIotMlDsa.Vector.Portable.NttMaster     -- forward NTT master (8-layer compose)
 import LibcruxIotMlDsa.Vector.Portable.InvNttMaster  -- inverse NTT master (8-layer + finalize)
+import LibcruxIotMlDsa.Vector.Portable.Rounding      -- Phase-7 decompose dual-output keystone
 -- Phases 3-8 (re-enable as the proof files land; ml-dsa has no `createi`):
 -- import LibcruxIotMlDsa.Util.CreateI
 -- import LibcruxIotMlDsa.Ntt                          -- L3 forward drivers
