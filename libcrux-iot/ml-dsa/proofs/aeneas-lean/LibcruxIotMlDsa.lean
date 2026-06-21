@@ -24,6 +24,7 @@ import LibcruxIotMlDsa.Vector.Portable.InvNtt        -- L0 inverse butterflies
 import LibcruxIotMlDsa.Vector.Portable.NttDriver     -- L3 forward NTT layer drivers
 import LibcruxIotMlDsa.Vector.Portable.InvNttDriver  -- L2 inverse NTT within-unit driver
 import LibcruxIotMlDsa.Vector.Portable.NttMaster     -- forward NTT master (8-layer compose)
+import LibcruxIotMlDsa.Vector.Portable.InvNttMaster  -- inverse NTT master (8-layer + finalize)
 -- Phases 3-8 (re-enable as the proof files land; ml-dsa has no `createi`):
 -- import LibcruxIotMlDsa.Util.CreateI
 -- import LibcruxIotMlDsa.Ntt                          -- L3 forward drivers
