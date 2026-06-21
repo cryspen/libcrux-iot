@@ -85,4 +85,15 @@ def useHint (hint : Bool) (r gamma2 : Int) : Int :=
   else if hint = true ∧ r0 ≤ 0 then ((r1 - 1) % m + m) % m
   else r1
 
+/-- **ComputeHint** — the SIMD-level hint bit (`arithmetic.rs::compute_one_hint`).
+    Given the already-decomposed `low`/`high` bits of a coefficient, returns `1`
+    iff the low bits leave the centered range `[-gamma2, gamma2]` (with the
+    `low = -gamma2 ∧ high ≠ 0` boundary set), else `0`.
+
+    NB: this is the libcrux SIMD-level bit on decomposed `(low, high)` inputs; the
+    FIPS `makeHint (z, r)` (= `highBits r ≠ highBits (r+z)`) connection is a
+    higher-level property (the callers supply `low`/`high` so that they agree). -/
+def computeHint (low high gamma2 : Int) : Int :=
+  if low > gamma2 ∨ low < -gamma2 ∨ (low = -gamma2 ∧ high ≠ 0) then 1 else 0
+
 end libcrux_iot_ml_dsa.Spec.Rounding

@@ -91,4 +91,14 @@ private def rounds : List Int := [0, 1, 100, 4190208, 8380415, 8380416]
 #guard rounds.all (fun r => decide (highBits r g65 = (decompose r g65).1 ∧ lowBits r g65 = (decompose r g65).2))
 #guard rounds.all (fun r => decide (useHint false r g65 = highBits r g65))
 
+-- compute_hint: SIMD-level bit (`compute_one_hint`) — set iff low leaves `[-gamma2, gamma2]`
+#guard computeHint (g65 + 1) 0 g65 = 1        -- low > gamma2
+#guard computeHint (-g65 - 1) 0 g65 = 1       -- low < -gamma2
+#guard computeHint (-g65) 5 g65 = 1           -- low = -gamma2 ∧ high ≠ 0 (boundary set)
+#guard computeHint (-g65) 0 g65 = 0           -- low = -gamma2 ∧ high = 0 (boundary clear)
+#guard computeHint 0 0 g65 = 0                -- in range
+#guard computeHint g65 0 g65 = 0              -- low = gamma2 (not strictly >)
+#guard [(-g65-1,3),(-g65,0),(0,0),(g65,1),(g65+1,0)].all
+  (fun p => decide (computeHint p.1 p.2 g65 = 0 ∨ computeHint p.1 p.2 g65 = 1))
+
 end libcrux_iot_ml_dsa.Spec.Validation
