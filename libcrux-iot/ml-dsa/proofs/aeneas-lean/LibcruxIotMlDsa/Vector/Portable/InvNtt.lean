@@ -1024,7 +1024,8 @@ def inv
     ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ k.val ≤ u) →
           (u < OFFSET.val + STEP_BY.val ∨ k.val + STEP_BY.val ≤ u) →
           acc.val[u]! = re.val[u]!)
-    ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+    ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
+          ∀ l : Nat, l < 8 →
           (acc.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24))
 
 /-- Step-post for `loop_range_spec_usize`. -/
@@ -1052,7 +1053,8 @@ theorem outer_3_plus_step_lemma_fc
     (hB : (2 : Int) * B ≤ 2 ^ 31 - 1)
     (hstep : 1 ≤ STEP_BY.val)
     (hbound : OFFSET.val + 2 * STEP_BY.val ≤ 32)
-    (hin : ∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 → (re.val[u]!).values.val[l]!.val.natAbs ≤ B)
+    (hin : ∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
+        ∀ l : Nat, l < 8 → (re.val[u]!).values.val[l]!.val.natAbs ≤ B)
     (acc : InvLayer3OuterFC.Acc) (k : Std.Usize) (e : Std.Usize)
     (h_ge : OFFSET.val ≤ k.val)
     (h_le : k.val ≤ e.val)
@@ -1098,9 +1100,9 @@ theorem outer_3_plus_step_lemma_fc
       array_index_usize_ok_eq acc k (by rw [h_acc_len]; exact hk_lt_32)
     -- Per-lane bounds on the two read units.
     have h_bd_rek : ∀ l : Nat, l < 8 → (re.val[k.val]!).values.val[l]!.val.natAbs ≤ B :=
-      fun l hl => hin k.val hk_lt_32 l hl
+      fun l hl => hin k.val h_ge (by omega) l hl
     have h_bd_rei : ∀ l : Nat, l < 8 → (re.val[i.val]!).values.val[l]!.val.natAbs ≤ B :=
-      fun l hl => hin i.val hi_lt_32 l hl
+      fun l hl => hin i.val (by omega) (by omega) l hl
     have h_bd_ak : ∀ l : Nat, l < 8 → (ak.values.val[l]!).val.natAbs ≤ B := by
       intro l hl; rw [h_acc_k]; exact h_bd_rek l hl
     have h_bd_ai : ∀ l : Nat, l < 8 → (ai.values.val[l]!).val.natAbs ≤ B := by
@@ -1242,7 +1244,8 @@ theorem outer_3_plus_step_lemma_fc
         ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ s.val ≤ u) →
               (u < OFFSET.val + STEP_BY.val ∨ s.val + STEP_BY.val ≤ u) →
               a.val[u]! = re.val[u]!)
-        ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+        ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
+              ∀ l : Nat, l < 8 →
               (a.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) := by
       refine ⟨?_, ?_, ?_⟩
       · -- Butterfly equations for j < s.val = k.val + 1.
@@ -1312,8 +1315,8 @@ theorem outer_3_plus_step_lemma_fc
         · rcases hu_disj2 with h | h
           · exact Or.inl h
           · exact Or.inr (by omega)
-      · -- Bound on all lanes of a.
-        intro u hu_lt l hl
+      · -- Bound on the in-block lanes of a.
+        intro u h_u_ge h_u_lt l hl
         by_cases h_u_k : u = k.val
         · subst h_u_k
           rw [ha_k]
@@ -1337,7 +1340,7 @@ theorem outer_3_plus_step_lemma_fc
               simpa [Aeneas.Std.Array.getElem!_Nat_eq] using
                 Aeneas.Std.Array.getElem!_Nat_set_ne acc k u c3 (Ne.symm h_u_k)
             rw [h_a_u]
-            exact h_bd u hu_lt l hl
+            exact h_bd u h_u_ge h_u_lt l hl
     show (pure _ : Result Prop).holds
     simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_inv_pure
   · -- `None` branch: k ≥ e, done.
@@ -1377,7 +1380,8 @@ theorem outer_3_plus_step_lemma_fc
         ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ e.val ≤ u) →
               (u < OFFSET.val + STEP_BY.val ∨ e.val + STEP_BY.val ≤ u) →
               acc.val[u]! = re.val[u]!)
-        ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+        ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
+              ∀ l : Nat, l < 8 →
               (acc.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) := by
       refine ⟨?_, ?_, h_bd⟩
       · intro j hj_ge hj_lt
@@ -1408,7 +1412,8 @@ theorem outer_3_plus_fc
     (hB : (2 : Int) * B ≤ 2 ^ 31 - 1)
     (hstep : 1 ≤ STEP_BY.val)
     (hbound : OFFSET.val + 2 * STEP_BY.val ≤ 32)
-    (hin : ∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 → (re.val[u]!).values.val[l]!.val.natAbs ≤ B) :
+    (hin : ∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
+        ∀ l : Nat, l < 8 → (re.val[u]!).values.val[l]!.val.natAbs ≤ B) :
     ⦃ ⌜ True ⌝ ⦄
     libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus OFFSET STEP_BY ZETA re
     ⦃ ⇓ r => ⌜
@@ -1423,7 +1428,8 @@ theorem outer_3_plus_fc
                   - liftZ (re.val[j]!).values.val[l]!.val) * liftZ ZETA.val))
       ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ OFFSET.val + 2 * STEP_BY.val ≤ u) →
             r.val[u]! = re.val[u]!)
-      ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+      ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
+            ∀ l : Nat, l < 8 →
             (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
   -- Discharge the checked `OFFSET + STEP_BY` add as `.ok e` (no overflow ≤ 32).
@@ -1462,12 +1468,13 @@ theorem outer_3_plus_fc
             ∧ (∀ u : Nat, u < 32 → (u < OFFSET.val ∨ OFFSET.val ≤ u) →
                   (u < OFFSET.val + STEP_BY.val ∨ OFFSET.val + STEP_BY.val ≤ u) →
                   re.val[u]! = re.val[u]!)
-            ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
+            ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
+                  ∀ l : Nat, l < 8 →
                   (re.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) := by
           refine ⟨?_, ?_, ?_⟩
           · intro j hj_ge hj_lt; exact absurd hj_lt (by omega)
           · intro u _ _ _; rfl
-          · intro u hu l hl; have hbu := hin u hu l hl; omega
+          · intro u h1 h2 l hl; have hbu := hin u h1 h2 l hl; omega
         simpa [Aeneas.Std.Result.holds, Std.Do.Triple, Std.Do.WP.wp] using h_init_pure)
       ?_)
   · -- Post-entailment: inv at k=e yields the locked post.
