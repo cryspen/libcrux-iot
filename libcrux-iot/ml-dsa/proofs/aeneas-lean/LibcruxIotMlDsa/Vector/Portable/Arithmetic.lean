@@ -1,6 +1,7 @@
 import LibcruxIotMlDsa.Extraction.Funs
 import LibcruxIotMlDsa.Spec.Montgomery
 import LibcruxIotMlDsa.Spec.Lift
+import LibcruxIotMlDsa.Spec.Rounding
 import LibcruxIotMlDsa.Util.LoopHelper
 
 /-!
@@ -1060,5 +1061,372 @@ theorem shift_left_then_reduce_spec
   show liftZ_std (out.val[j]!).val = _ ∧ _
   rw [h_acc]
   exact h_P (hbound j hj)
+
+/-! ## `power2round_element` (Phase-7 first DUAL-OUTPUT rounding keystone)
+
+    `simd.portable.arithmetic.power2round_element` is the per-lane Power2Round:
+    given a signed `i32` `t` in `[-q, q)`, it computes the canonical `[0, q)` rep
+    `t1` (via a sign-mask add of `q`), then splits `t1` into the high part
+    `r1 = ⌊(t1 - 1 + 2^12)/2^13⌋` and low part `r0 = t1 - r1·2^13`, returning
+    `(r0, r1)` (LOW, HIGH). The clean spec `Spec.Rounding.power2round` returns
+    `(r1, r0)` (HIGH, LOW) — the output order is SWAPPED.
+
+    New shift-`.val` infra (reused by `decompose`/`use_hint`):
+    - `sshiftRight_val_i32` — signed right shift `.val = x.val / 2^k` (T-division;
+      for `x ≥ 0` this is floor; mirrors the inline `BitVec.toInt_sshiftRight` lemmas).
+    - `shiftRight_IScalar_ok` / `shiftRight_UScalar_ok` — the `Result.ok` forms for the
+      `>>> 31#i32` and `>>> 13#usize` shift mechanics.
+    - `shiftLeft_UScalar_ok` — the `Result.ok` form for `1#i32 <<< 12#usize` /
+      `t11 <<< 13#usize` (usize-amount); `.val` via the existing
+      `shiftLeft_shifted_val`.
+    - `power2round_sign_mask_val` — the riskiest fact: the sign mask
+      `(t >> 31) & q` is `q` iff `t < 0`, else `0`; proven via the value route
+      (`(t >> 31).toInt = t.val / 2^31 ∈ {-1, 0}` ⟹ bv is `allOnes`/`0`),
+      kernel-checkable and `bv_decide`-free. -/
+
+/-- Signed right shift `.val` (T-division). For `x ≥ 0` it equals floor division
+    (used for `i5 >>> 13` where `i5 ≥ 4095 > 0`). -/
+private theorem sshiftRight_val_i32 (x : Std.I32) (k : Nat) :
+    (⟨x.bv.sshiftRight k⟩ : Std.I32).val = x.val / (2 ^ k : Int) := by
+  show (x.bv.sshiftRight k).toInt = _
+  rw [BitVec.toInt_sshiftRight, Int.shiftRight_eq_div_pow]; norm_cast
+
+/-- `>>> SHIFT#i32` (I32-amount), `Result.ok` form, when `0 ≤ SHIFT < 32`. -/
+private theorem shiftRight_IScalar_ok (x SHIFT : Std.I32)
+    (h0 : 0 ≤ SHIFT.val) (h32 : SHIFT.toNat < 32) :
+    (x >>> SHIFT) = .ok (⟨x.bv.sshiftRight SHIFT.toNat⟩ : Std.I32) := by
+  show Aeneas.Std.IScalar.shiftRight_IScalar x SHIFT = _
+  unfold Aeneas.Std.IScalar.shiftRight_IScalar Aeneas.Std.IScalar.shiftRight
+  rw [if_pos h0, if_pos (show SHIFT.toNat < Aeneas.Std.IScalarTy.I32.numBits from h32)]
+
+/-- `>>> SHIFT#usize` (usize-amount) on an I32, `Result.ok` form, when the value of
+    `SHIFT` is `< 32`. -/
+private theorem shiftRight_UScalar_ok (x : Std.I32) (SHIFT : Std.Usize)
+    (h32 : SHIFT.val < 32) :
+    (x >>> SHIFT) = .ok (⟨x.bv.sshiftRight SHIFT.val⟩ : Std.I32) := by
+  show Aeneas.Std.IScalar.shiftRight_UScalar x SHIFT = _
+  unfold Aeneas.Std.IScalar.shiftRight_UScalar Aeneas.Std.IScalar.shiftRight
+  rw [if_pos (show SHIFT.val < Aeneas.Std.IScalarTy.I32.numBits from h32)]
+
+/-- `<<< SHIFT#usize` (usize-amount) on an I32, `Result.ok` form, when the value of
+    `SHIFT` is `< 32`. -/
+private theorem shiftLeft_UScalar_ok (x : Std.I32) (SHIFT : Std.Usize)
+    (h32 : SHIFT.val < 32) :
+    (x <<< SHIFT) = .ok (⟨x.bv.shiftLeft SHIFT.val⟩ : Std.I32) := by
+  show Aeneas.Std.IScalar.shiftLeft_UScalar x SHIFT = _
+  unfold Aeneas.Std.IScalar.shiftLeft_UScalar Aeneas.Std.IScalar.shiftLeft
+  rw [if_pos (show SHIFT.val < Aeneas.Std.IScalarTy.I32.numBits from h32)]
+
+/-- I32 `wrapping_add` value, no-overflow form. -/
+private theorem wrapping_add_val_noov (x y : Std.I32)
+    (hlb : -(2 ^ 31 : Int) ≤ x.val + y.val) (hub : x.val + y.val < 2 ^ 31) :
+    (Aeneas.Std.I32.wrapping_add x y).val = x.val + y.val := by
+  rw [Aeneas.Std.I32.wrapping_add_val_eq]
+  apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+  · rw [show ((2 : Int) ^ (32 - 1)) = 2 ^ 31 from by norm_num]; exact hlb
+  · rw [show ((2 : Int) ^ (32 - 1)) = 2 ^ 31 from by norm_num]; exact hub
+
+/-- I32 `wrapping_sub` value, no-overflow form. -/
+private theorem wrapping_sub_val_noov (x y : Std.I32)
+    (hlb : -(2 ^ 31 : Int) ≤ x.val - y.val) (hub : x.val - y.val < 2 ^ 31) :
+    (Aeneas.Std.I32.wrapping_sub x y).val = x.val - y.val := by
+  rw [Aeneas.Std.I32.wrapping_sub_val_eq]
+  apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+  · rw [show ((2 : Int) ^ (32 - 1)) = 2 ^ 31 from by norm_num]; exact hlb
+  · rw [show ((2 : Int) ^ (32 - 1)) = 2 ^ 31 from by norm_num]; exact hub
+
+/-- The sign-mask `.val`: `(t >> 31) & q` is `q` iff `t < 0`, else `0`.
+
+    Value route (kernel-checkable, `bv_decide`-free): `(t >> 31).toInt = t.val / 2^31`
+    which is `-1` (`t < 0`) or `0` (`t ≥ 0`) under the I32 bound `|t.val| < 2^31`; the
+    only I32 bitvector with `toInt = -1` is `allOnes` (with `allOnes &&& q = q`) and with
+    `toInt = 0` is `0#32` (with `0 &&& q = 0`). -/
+private theorem power2round_sign_mask_val (t : Std.I32) :
+    (⟨(t.bv.sshiftRight 31) &&& (8380417#i32 : Std.I32).bv⟩ : Std.I32).val
+      = if t.val < 0 then 8380417 else 0 := by
+  have h_bd := Aeneas.Std.IScalar.hBounds t
+  have h_lb : -(2 ^ 31 : Int) ≤ t.val := by
+    have := h_bd.1
+    simp only [show Aeneas.Std.IScalarTy.I32.numBits - 1 = 31 from rfl] at this; exact this
+  have h_ub : t.val < (2 ^ 31 : Int) := by
+    have := h_bd.2
+    simp only [show Aeneas.Std.IScalarTy.I32.numBits - 1 = 31 from rfl] at this; exact this
+  have h_shrtoInt : (t.bv.sshiftRight 31).toInt = t.val / (2 ^ 31 : Int) := by
+    rw [BitVec.toInt_sshiftRight, Int.shiftRight_eq_div_pow]; norm_cast
+  by_cases h : t.val < 0
+  · rw [if_pos h]
+    have h_div : t.val / (2 ^ 31 : Int) = -1 := by omega
+    have h_allones : t.bv.sshiftRight 31 = BitVec.allOnes 32 := by
+      apply BitVec.eq_of_toInt_eq; rw [h_shrtoInt, h_div]; decide
+    show ((t.bv.sshiftRight 31) &&& (8380417#i32 : Std.I32).bv).toInt = _
+    rw [h_allones, BitVec.allOnes_and]; decide
+  · rw [if_neg h]
+    have h_div : t.val / (2 ^ 31 : Int) = 0 := by omega
+    have h_zero : t.bv.sshiftRight 31 = 0#32 := by
+      apply BitVec.eq_of_toInt_eq; rw [h_shrtoInt, h_div]; decide
+    show ((t.bv.sshiftRight 31) &&& (8380417#i32 : Std.I32).bv).toInt = _
+    rw [h_zero, BitVec.zero_and]; decide
+
+/-- Closed pure form of `power2round_element` (LOW, HIGH). Mirrors `reduce_impl_value`. -/
+def power2round_impl_value (t : Std.I32) : Std.I32 × Std.I32 :=
+  let i   : Std.I32 := ⟨t.bv.sshiftRight 31⟩
+  let i1  : Std.I32 := ⟨i.bv &&& (8380417#i32 : Std.I32).bv⟩
+  let t1  : Std.I32 := Aeneas.Std.I32.wrapping_add t i1
+  let i2  : Std.I32 := Aeneas.Std.I32.wrapping_sub t1 (1#i32)
+  let i4  : Std.I32 := ⟨(1#i32 : Std.I32).bv.shiftLeft 12⟩
+  let i5  : Std.I32 := Aeneas.Std.I32.wrapping_add i2 i4
+  let t11 : Std.I32 := ⟨i5.bv.sshiftRight 13⟩
+  let i6  : Std.I32 := ⟨t11.bv.shiftLeft 13⟩
+  let t0  : Std.I32 := Aeneas.Std.I32.wrapping_sub t1 i6
+  (t0, t11)
+
+set_option maxHeartbeats 1000000 in
+/-- The `do`-block reduces to `Result.ok (power2round_impl_value t)`. -/
+theorem power2round_element_eq_ok (t : Std.I32) :
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round_element t
+      = .ok (power2round_impl_value t) := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round_element power2round_impl_value
+  have h_q : libcrux_iot_ml_dsa.simd.traits.FIELD_MODULUS = 8380417#i32 := by
+    unfold libcrux_iot_ml_dsa.simd.traits.FIELD_MODULUS; rfl
+  have h_d : libcrux_iot_ml_dsa.constants.BITS_IN_LOWER_PART_OF_T = 13#usize := by
+    unfold libcrux_iot_ml_dsa.constants.BITS_IN_LOWER_PART_OF_T; rfl
+  -- `>>> 31#i32`.
+  have h_shr31 : (t >>> (31#i32 : Std.I32)) = .ok (⟨t.bv.sshiftRight 31⟩ : Std.I32) := by
+    have h := shiftRight_IScalar_ok t (31#i32 : Std.I32) (by decide) (by decide)
+    rw [h]; congr 1
+  -- `i3 = BITS - 1` with `.val = 12`.
+  obtain ⟨i3', h_i3eq, h_i3val⟩ :
+      ∃ i3' : Std.Usize,
+        (libcrux_iot_ml_dsa.constants.BITS_IN_LOWER_PART_OF_T - (1#usize : Std.Usize)
+          : Result Std.Usize) = .ok i3' ∧ i3'.val = 12 := by
+    rw [h_d]
+    have hs := Aeneas.Std.Usize.sub_spec
+      (x := (13#usize : Std.Usize)) (y := (1#usize : Std.Usize)) (by decide)
+    obtain ⟨v', hveq, hPv'⟩ := Aeneas.Std.WP.spec_imp_exists hs
+    refine ⟨v', hveq, ?_⟩
+    rw [show (13#usize : Std.Usize).val = 13 from rfl,
+        show (1#usize : Std.Usize).val = 1 from rfl] at hPv'
+    omega
+  -- `1#i32 <<< i3'`.
+  have h_shl_i3 : ((1#i32 : Std.I32) <<< i3')
+      = .ok (⟨(1#i32 : Std.I32).bv.shiftLeft 12⟩ : Std.I32) := by
+    have := shiftLeft_UScalar_ok (1#i32 : Std.I32) i3' (by rw [h_i3val]; decide)
+    rwa [h_i3val] at this
+  -- `i5 >>> 13#usize`.
+  have h_shr13 : ∀ x : Std.I32,
+      (x >>> libcrux_iot_ml_dsa.constants.BITS_IN_LOWER_PART_OF_T)
+        = .ok (⟨x.bv.sshiftRight 13⟩ : Std.I32) := by
+    intro x; rw [h_d]
+    have := shiftRight_UScalar_ok x (13#usize : Std.Usize) (by decide)
+    rwa [show (13#usize : Std.Usize).val = 13 from rfl] at this
+  -- `t11 <<< 13#usize`.
+  have h_shl13 : ∀ x : Std.I32,
+      (x <<< libcrux_iot_ml_dsa.constants.BITS_IN_LOWER_PART_OF_T)
+        = .ok (⟨x.bv.shiftLeft 13⟩ : Std.I32) := by
+    intro x; rw [h_d]
+    have := shiftLeft_UScalar_ok x (13#usize : Std.Usize) (by decide)
+    rwa [show (13#usize : Std.Usize).val = 13 from rfl] at this
+  -- Chain the do-block.
+  rw [h_shr31, h_q]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [show (Aeneas.Std.lift (⟨t.bv.sshiftRight 31⟩ &&& (8380417#i32 : Std.I32)) : Result Std.I32)
+        = .ok (⟨(⟨t.bv.sshiftRight 31⟩ : Std.I32).bv &&& (8380417#i32 : Std.I32).bv⟩) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok, CoreModels.core.num.I32.wrapping_sub,
+             CoreModels.core.num.I32.wrapping_add,
+             rust_primitives.arithmetic.wrapping_sub_i32,
+             rust_primitives.arithmetic.wrapping_add_i32]
+  rw [h_i3eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [h_shl_i3]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [h_shr13]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [h_shl13]
+  simp only [Aeneas.Std.bind_tc_ok]
+
+set_option maxHeartbeats 2000000 in
+/-- The component `.val`s of `power2round_impl_value` under the `[-q, q)` precond:
+    with `t1v` the canonical `[0, q)` rep, the HIGH output is `⌊(t1v-1+2^12)/2^13⌋`
+    and the LOW output is `t1v - HIGH·2^13`. -/
+private theorem power2round_impl_value_val (t : Std.I32)
+    (hlo : -(8380417 : Int) ≤ t.val) (hhi : t.val < 8380417) :
+    let t1v := t.val + (if t.val < 0 then 8380417 else 0)
+    (power2round_impl_value t).2.val = (t1v - 1 + 4096) / 8192
+    ∧ (power2round_impl_value t).1.val = t1v - ((t1v - 1 + 4096) / 8192) * 8192 := by
+  intro t1v
+  unfold power2round_impl_value
+  have h_i1 :
+      (⟨(⟨t.bv.sshiftRight 31⟩ : Std.I32).bv &&& (8380417#i32 : Std.I32).bv⟩ : Std.I32).val
+        = if t.val < 0 then 8380417 else 0 := power2round_sign_mask_val t
+  have h_t1 :
+      (Aeneas.Std.I32.wrapping_add t
+        (⟨(⟨t.bv.sshiftRight 31⟩ : Std.I32).bv &&& (8380417#i32 : Std.I32).bv⟩ : Std.I32)).val
+        = t1v := by
+    rw [wrapping_add_val_noov _ _ (by rw [h_i1]; split <;> omega)
+                                  (by rw [h_i1]; split <;> omega), h_i1]
+  set t1 : Std.I32 := Aeneas.Std.I32.wrapping_add t
+    (⟨(⟨t.bv.sshiftRight 31⟩ : Std.I32).bv &&& (8380417#i32 : Std.I32).bv⟩ : Std.I32) with ht1def
+  have h_t1_lo : 0 ≤ t1.val := by rw [h_t1]; simp only [t1v]; split <;> omega
+  have h_t1_hi : t1.val < 8380417 := by rw [h_t1]; simp only [t1v]; split <;> omega
+  have h_i2 : (Aeneas.Std.I32.wrapping_sub t1 (1#i32)).val = t1.val - 1 := by
+    apply wrapping_sub_val_noov <;> rw [show (1#i32 : Std.I32).val = 1 from rfl] <;> omega
+  set i2 : Std.I32 := Aeneas.Std.I32.wrapping_sub t1 (1#i32) with hi2def
+  have h_i4 : (⟨(1#i32 : Std.I32).bv.shiftLeft 12⟩ : Std.I32).val = 4096 := by decide
+  set i4 : Std.I32 := ⟨(1#i32 : Std.I32).bv.shiftLeft 12⟩ with hi4def
+  have h_i5 : (Aeneas.Std.I32.wrapping_add i2 i4).val = t1.val - 1 + 4096 := by
+    rw [wrapping_add_val_noov i2 i4 (by rw [h_i2, h_i4]; omega) (by rw [h_i2, h_i4]; omega),
+        h_i2, h_i4]
+  set i5 : Std.I32 := Aeneas.Std.I32.wrapping_add i2 i4 with hi5def
+  have h_i5_lo : 0 ≤ i5.val := by rw [h_i5]; omega
+  have h_t11 : (⟨i5.bv.sshiftRight 13⟩ : Std.I32).val = i5.val / 8192 := by
+    rw [sshiftRight_val_i32]; norm_num
+  set t11 : Std.I32 := ⟨i5.bv.sshiftRight 13⟩ with ht11def
+  have h_t11_lo : 0 ≤ t11.val := by rw [h_t11]; exact Int.ediv_nonneg h_i5_lo (by norm_num)
+  have h_t11_hi : t11.val ≤ 1023 := by
+    rw [h_t11]
+    have hle : i5.val ≤ 8384511 := by rw [h_i5]; omega
+    have h2 := Int.ediv_le_ediv (a := i5.val) (b := 8384511) (c := 8192) (by norm_num) hle
+    rw [show (8384511 : Int) / 8192 = 1023 from by norm_num] at h2; exact h2
+  have h_i6 : (⟨t11.bv.shiftLeft 13⟩ : Std.I32).val = t11.val * 8192 := by
+    rw [show (8192 : Int) = 2 ^ 13 from by norm_num]
+    apply shiftLeft_shifted_val t11 13
+    have h_na : (t11.val).natAbs ≤ 1023 := by omega
+    calc (t11.val).natAbs * 2 ^ 13 ≤ 1023 * 2 ^ 13 := by
+          apply Nat.mul_le_mul_right; exact h_na
+      _ ≤ 2 ^ 31 - 2 ^ 23 := by norm_num
+  set i6 : Std.I32 := ⟨t11.bv.shiftLeft 13⟩ with hi6def
+  have h_t0 : (Aeneas.Std.I32.wrapping_sub t1 i6).val = t1.val - i6.val := by
+    apply wrapping_sub_val_noov
+    · rw [h_i6, h_t11]
+      have : 0 ≤ i5.val / 8192 := Int.ediv_nonneg h_i5_lo (by norm_num); omega
+    · rw [h_i6]; omega
+  refine ⟨?_, ?_⟩
+  · show t11.val = (t1v - 1 + 4096) / 8192
+    rw [h_t11, h_i5, h_t1]
+  · show (Aeneas.Std.I32.wrapping_sub t1 i6).val = t1v - ((t1v - 1 + 4096) / 8192) * 8192
+    rw [h_t0, h_i6, h_t11, h_i5, h_t1]
+
+/-- The integer Power2Round identity bridging the impl's `(r0, r1)` (LOW, HIGH)
+    closed form to the swap of the clean spec `Spec.Rounding.power2round` (HIGH, LOW). -/
+private theorem power2round_int_identity (t : Int)
+    (hlo : -(8380417 : Int) ≤ t) (hhi : t < 8380417) :
+    let t1v := t + (if t < 0 then 8380417 else 0)
+    (t1v - ((t1v - 1 + 4096) / 8192) * 8192
+        = (libcrux_iot_ml_dsa.Spec.Rounding.power2round t).2)
+    ∧ ((t1v - 1 + 4096) / 8192 = (libcrux_iot_ml_dsa.Spec.Rounding.power2round t).1) := by
+  intro t1v
+  have hQ : (libcrux_iot_ml_dsa.Spec.Parameters.Q : Int) = 8380417 := rfl
+  unfold libcrux_iot_ml_dsa.Spec.Rounding.power2round libcrux_iot_ml_dsa.Spec.Rounding.modPm
+  simp only [libcrux_iot_ml_dsa.Spec.Rounding.twoD, libcrux_iot_ml_dsa.Spec.Rounding.Dbits,
+             libcrux_iot_ml_dsa.Spec.Rounding.Qi, hQ,
+             show ((2 : Int) ^ 13) = 8192 from by norm_num]
+  rw [show (if t % 8380417 < 0 then t % 8380417 + 8380417 else t % 8380417) = t1v from by
+        simp only [t1v]; omega]
+  have h0 : 0 ≤ t1v := by simp only [t1v]; split <;> omega
+  have hq : t1v < 8380417 := by simp only [t1v]; split <;> omega
+  rw [show ((t1v % 8192) + 8192) % 8192 = t1v % 8192 from by omega]
+  constructor <;> omega
+
+set_option maxHeartbeats 2000000 in
+/-- Per-element Power2Round Triple: under the `[-q, q)` precond, the LOW output
+    matches `(Spec.Rounding.power2round t.val).2` and the HIGH output matches
+    `(Spec.Rounding.power2round t.val).1` (note the impl/spec output-order swap). -/
+theorem power2round_element_spec (t : Std.I32)
+    (hlo : -(libcrux_iot_ml_dsa.Spec.Rounding.Qi : Int) ≤ t.val)
+    (hhi : t.val < (libcrux_iot_ml_dsa.Spec.Rounding.Qi : Int)) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round_element t
+    ⦃ ⇓ p => ⌜ p.1.val = (libcrux_iot_ml_dsa.Spec.Rounding.power2round t.val).2
+             ∧ p.2.val = (libcrux_iot_ml_dsa.Spec.Rounding.power2round t.val).1 ⌝ ⦄ := by
+  have h_Qi : (libcrux_iot_ml_dsa.Spec.Rounding.Qi : Int) = 8380417 := rfl
+  rw [h_Qi] at hlo hhi
+  apply triple_of_ok_l0 (v := power2round_impl_value t) (power2round_element_eq_ok t)
+  obtain ⟨h_high, h_low⟩ := power2round_impl_value_val t hlo hhi
+  obtain ⟨h_id_low, h_id_high⟩ := power2round_int_identity t.val hlo hhi
+  refine ⟨?_, ?_⟩
+  · rw [h_low, h_id_low]
+  · rw [h_high, h_id_high]
+
+/-! ## `power2round_spec` — top-level dual-output rounding keystone
+
+    `simd.portable.arithmetic.power2round t0 t1` is an 8-iter dual-output loop
+    applying `power2round_element` to each lane of `t0`, writing the LOW outputs
+    into a fresh LOW poly and the HIGH outputs into the (write-only scratch) `t1`.
+    Returns `({values := lows}, highs)` (LOW poly, HIGH poly). Mirrors
+    `shift_left_then_reduce_spec` structurally, via `elementwise_dual_output_spec`.
+    The `t1` argument's input values are irrelevant (all lanes overwritten). -/
+
+/-- Per-element predicate for the `power2round` loop (guarded by the `[-q, q)`
+    per-lane bound; matches `power2round_element_spec`). -/
+private def power2round_per_elem_P (x : Std.I32) (p : Std.I32 × Std.I32) : Prop :=
+  -(libcrux_iot_ml_dsa.Spec.Rounding.Qi : Int) ≤ x.val →
+    x.val < (libcrux_iot_ml_dsa.Spec.Rounding.Qi : Int) →
+    p.1.val = (libcrux_iot_ml_dsa.Spec.Rounding.power2round x.val).2
+    ∧ p.2.val = (libcrux_iot_ml_dsa.Spec.Rounding.power2round x.val).1
+
+/-- Per-element Triple (always-true pre, guarded post) feeding the loop wrapper. -/
+private theorem power2round_per_elem_spec (x : Std.I32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round_element x
+    ⦃ ⇓ p => ⌜ power2round_per_elem_P x p ⌝ ⦄ := by
+  apply triple_of_ok_l0 (v := power2round_impl_value x) (power2round_element_eq_ok x)
+  intro hlo hhi
+  obtain ⟨v, hv_eq, hv_P⟩ := triple_exists_ok_l0 (power2round_element_spec x hlo hhi)
+  rw [power2round_element_eq_ok x] at hv_eq
+  rw [Result.ok.inj hv_eq]; exact hv_P
+
+set_option maxHeartbeats 2000000 in
+@[spec]
+theorem power2round_spec
+    (t0 t1 : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (hbound : ∀ j : Nat, j < 8 →
+        -(libcrux_iot_ml_dsa.Spec.Rounding.Qi : Int) ≤ (t0.values.val[j]!).val
+          ∧ (t0.values.val[j]!).val < (libcrux_iot_ml_dsa.Spec.Rounding.Qi : Int)) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round t0 t1
+    ⦃ ⇓ p => ⌜ ∀ j : Nat, j < 8 →
+        (p.1.values.val[j]!).val
+          = (libcrux_iot_ml_dsa.Spec.Rounding.power2round (t0.values.val[j]!).val).2
+      ∧ (p.2.values.val[j]!).val
+          = (libcrux_iot_ml_dsa.Spec.Rounding.power2round (t0.values.val[j]!).val).1 ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round
+  rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice t0.values)
+        = .ok (Aeneas.Std.Array.to_slice t0.values) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [show CoreModels.core.slice.Slice.len (Aeneas.Std.Array.to_slice t0.values)
+        = .ok (Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice t0.values)) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [coeff_slice_len_eq t0.values]
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round_loop
+  -- Bridge `power2round_loop.body` to `dual_output_loop_body power2round_element`.
+  have h_body_eq :
+      (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray
+              × libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients) =>
+         libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round_loop.body p.1 p.2.1 p.2.2)
+      = (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray
+              × libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients) =>
+         dual_output_loop_body
+           libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round_element p.1 p.2.1 p.2.2) := by
+    funext p
+    obtain ⟨iter1, a1, b1⟩ := p
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round_loop.body
+    unfold dual_output_loop_body
+    rfl
+  rw [h_body_eq]
+  obtain ⟨out, h_out_eq, h_out_P⟩ :=
+    triple_exists_ok_l0
+      (elementwise_dual_output_spec
+        libcrux_iot_ml_dsa.simd.portable.arithmetic.power2round_element
+        power2round_per_elem_P power2round_per_elem_spec t0.values t1)
+  rw [h_out_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  refine triple_of_ok_l0 (v := ({ values := out.1 }, out.2)) rfl ?_
+  intro j hj
+  obtain ⟨pj, _h_eq, h_a, h_b, h_P⟩ := h_out_P j hj
+  obtain ⟨hb_lo, hb_hi⟩ := hbound j hj
+  obtain ⟨h_low, h_high⟩ := h_P hb_lo hb_hi
+  show (out.1.val[j]!).val = _ ∧ (out.2.values.val[j]!).val = _
+  rw [h_a, h_b]
+  exact ⟨h_low, h_high⟩
 
 end libcrux_iot_ml_dsa.Vector.Portable.Arithmetic
