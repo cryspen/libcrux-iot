@@ -1071,4 +1071,167 @@ theorem use_hint_spec (gamma2 : Std.I32)
   rw [h_val]
   exact h_P hb_lo hb_hi hacc
 
+/-! ## Phase-7 `compute_hint` — per-lane bit, top-level dual output (count + array). -/
+
+/-- `compute_one_hint` returns exactly `computeHint low high gamma2`, a `{0,1}` bit.
+    The impl is total (no decompose); the only no-panic obligation is the checked `-. gamma2`,
+    which needs `gamma2 ∈ {95232, 261888}` so `-gamma2` stays in `I32` bounds. -/
+theorem compute_one_hint_spec (low high gamma2 : Std.I32)
+    (hg : gamma2 = 95232#i32 ∨ gamma2 = 261888#i32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_one_hint low high gamma2
+    ⦃ ⇓ r => ⌜ r.val = libcrux_iot_ml_dsa.Spec.Rounding.computeHint low.val high.val gamma2.val
+             ∧ (r.val = 0 ∨ r.val = 1) ⌝ ⦄ := by
+  -- The checked negation `-. gamma2` reduces to `.ok gi` with `gi.val = -gamma2.val`.
+  obtain ⟨gi, h_neg, h_gi_val⟩ : ∃ gi : Std.I32,
+      (-. gamma2 : Result Std.I32) = .ok gi ∧ gi.val = -gamma2.val := by
+    rcases hg with hg | hg <;> subst hg
+    · exact ⟨(-95232)#i32, by rfl, by decide⟩
+    · exact ⟨(-261888)#i32, by rfl, by decide⟩
+  have h_g_val : gamma2.val = 95232 ∨ gamma2.val = 261888 := by
+    rcases hg with hg | hg <;> subst hg
+    · exact Or.inl rfl
+    · exact Or.inr rfl
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_one_hint
+  unfold libcrux_iot_ml_dsa.Spec.Rounding.computeHint
+  by_cases h1 : low > gamma2
+  · rw [if_pos h1]
+    have h1' : low.val > gamma2.val := (Aeneas.Std.IScalar.lt_equiv gamma2 low).mp h1
+    apply triple_of_ok_l0 (v := 1#i32) rfl
+    exact ⟨by rw [if_pos (Or.inl h1')]; rfl, Or.inr rfl⟩
+  · rw [if_neg h1, h_neg]
+    simp only [Aeneas.Std.bind_tc_ok]
+    have h1' : ¬ low.val > gamma2.val := fun hc =>
+      h1 ((Aeneas.Std.IScalar.lt_equiv gamma2 low).mpr hc)
+    by_cases h2 : low < gi
+    · rw [if_pos h2]
+      have h2' : low.val < -gamma2.val := by
+        have := (Aeneas.Std.IScalar.lt_equiv low gi).mp h2; rw [h_gi_val] at this; exact this
+      apply triple_of_ok_l0 (v := 1#i32) rfl
+      exact ⟨by rw [if_pos (Or.inr (Or.inl h2'))]; rfl, Or.inr rfl⟩
+    · rw [if_neg h2]
+      have h2' : ¬ low.val < -gamma2.val := by
+        intro hc; exact h2 ((Aeneas.Std.IScalar.lt_equiv low gi).mpr (by rw [h_gi_val]; exact hc))
+      by_cases h3 : low = gi
+      · rw [if_pos h3]
+        have h3' : low.val = -gamma2.val := by rw [h3, h_gi_val]
+        by_cases h4 : high != (0#i32 : Std.I32)
+        · rw [if_pos h4]
+          have h4' : high.val ≠ 0 := by
+            intro hc
+            have : high = 0#i32 := Aeneas.Std.IScalar.eq_of_val_eq (by rw [hc]; rfl)
+            simp [this] at h4
+          apply triple_of_ok_l0 (v := 1#i32) rfl
+          exact ⟨by rw [if_pos (Or.inr (Or.inr ⟨h3', h4'⟩))]; rfl, Or.inr rfl⟩
+        · rw [if_neg h4]
+          have h4' : high.val = 0 := by
+            by_contra hc
+            exact h4 (by simp only [bne_iff_ne]; intro hh; exact hc (by rw [hh]; rfl))
+          apply triple_of_ok_l0 (v := 0#i32) rfl
+          refine ⟨?_, Or.inl rfl⟩
+          rw [if_neg (by
+            rintro (hc | hc | ⟨_, hc⟩)
+            · exact h1' hc
+            · exact h2' hc
+            · exact hc h4')]; rfl
+      · rw [if_neg h3]
+        have h3' : low.val ≠ -gamma2.val := fun hc =>
+          h3 (Aeneas.Std.IScalar.eq_of_val_eq (by rw [h_gi_val]; exact hc))
+        apply triple_of_ok_l0 (v := 0#i32) rfl
+        refine ⟨?_, Or.inl rfl⟩
+        rw [if_neg (by
+          rintro (hc | hc | ⟨hc, _⟩)
+          · exact h1' hc
+          · exact h2' hc
+          · exact h3' hc)]; rfl
+
+/-! ## `compute_hint_spec` — top-level dual output: the hint array AND the `1`-bit count. -/
+
+/-- Per-lane predicate for the combinator: the written bit equals the spec `computeHint`. -/
+private def compute_hint_per_elem_P (gamma2 : Std.I32) (x y r : Std.I32) : Prop :=
+  r.val = libcrux_iot_ml_dsa.Spec.Rounding.computeHint x.val y.val gamma2.val
+
+/-- The per-element spec in the `(r.val ∈ {0,1}) ∧ P` shape required by the combinator. -/
+private theorem compute_hint_per_elem_spec (gamma2 : Std.I32)
+    (hg : gamma2 = 95232#i32 ∨ gamma2 = 261888#i32) (x y : Std.I32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_one_hint x y gamma2
+    ⦃ ⇓ r => ⌜ (r.val = 0 ∨ r.val = 1) ∧ compute_hint_per_elem_P gamma2 x y r ⌝ ⦄ := by
+  obtain ⟨v, hv_eq, hv_P, hv_01⟩ := triple_exists_ok_l0 (compute_one_hint_spec x y gamma2 hg)
+  apply triple_of_ok_l0 (v := v) hv_eq
+  exact ⟨hv_01, hv_P⟩
+
+set_option maxHeartbeats 2000000 in
+@[spec]
+theorem compute_hint_spec (low high : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (gamma2 : Std.I32)
+    (hint : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (hg : gamma2 = 95232#i32 ∨ gamma2 = 261888#i32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_hint low high gamma2 hint
+    ⦃ ⇓ p => ⌜ (∀ j : Nat, j < 8 →
+          (p.2.values.val[j]!).val
+            = libcrux_iot_ml_dsa.Spec.Rounding.computeHint
+                (low.values.val[j]!).val (high.values.val[j]!).val gamma2.val)
+        ∧ p.1.val = ((List.range 8).map (fun j =>
+              libcrux_iot_ml_dsa.Spec.Rounding.computeHint
+                (low.values.val[j]!).val (high.values.val[j]!).val gamma2.val)).sum ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_hint
+  rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice hint.values)
+        = .ok (Aeneas.Std.Array.to_slice hint.values) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [show CoreModels.core.slice.Slice.len (Aeneas.Std.Array.to_slice hint.values)
+        = .ok (Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice hint.values)) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [coeff_slice_len_eq hint.values]
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_hint_loop
+  have h_body_eq :
+      (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray × Std.Usize) =>
+         libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_hint_loop.body
+           low high gamma2 p.1 p.2.1 p.2.2)
+      = (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray × Std.Usize) =>
+         two_src_count_output_loop_body
+           (fun x y => libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_one_hint x y gamma2)
+           low high p.1 p.2.1 p.2.2) := by
+    funext p
+    obtain ⟨iter1, a1, count1⟩ := p
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_hint_loop.body
+    unfold two_src_count_output_loop_body
+    rfl
+  rw [h_body_eq]
+  obtain ⟨out, h_out_eq, h_out_arr, h_out_count⟩ :=
+    triple_exists_ok_l0
+      (elementwise_two_src_count_output_spec
+        (fun x y => libcrux_iot_ml_dsa.simd.portable.arithmetic.compute_one_hint x y gamma2)
+        (compute_hint_per_elem_P gamma2) (compute_hint_per_elem_spec gamma2 hg)
+        low high hint.values)
+  rw [h_out_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  refine triple_of_ok_l0 (v := (out.2, { values := out.1 })) rfl ?_
+  refine ⟨?_, ?_⟩
+  · -- hint array: out.1[j] = computeHint low[j] high[j] gamma2.
+    intro j hj
+    obtain ⟨rj, _h_eq, h_arr_j, _h01_j, h_P_j⟩ := h_out_arr j hj
+    show (out.1.val[j]!).val = _
+    rw [h_arr_j]; exact h_P_j
+  · -- count: out.2 = Σ of the spec bits. The combinator gives out.2 = Σ (out.1[j].val);
+    -- rewrite each out.1[j].val = computeHint via the array conjunct.
+    show (out.2.val : Int)
+        = ((List.range 8).map (fun j =>
+            libcrux_iot_ml_dsa.Spec.Rounding.computeHint
+              (low.values.val[j]!).val (high.values.val[j]!).val gamma2.val)).sum
+    rw [h_out_count]
+    have h_map_eq :
+        ((List.range 8).map (fun j => (out.1.val[j]!).val))
+        = ((List.range 8).map (fun j =>
+            libcrux_iot_ml_dsa.Spec.Rounding.computeHint
+              (low.values.val[j]!).val (high.values.val[j]!).val gamma2.val)) := by
+      apply List.map_congr_left
+      intro x hx
+      rw [List.mem_range] at hx
+      obtain ⟨rj, _h_eq, h_arr_j, _h01_j, h_P_j⟩ := h_out_arr x hx
+      show (out.1.val[x]!).val = _
+      rw [h_arr_j]; exact h_P_j
+    rw [h_map_eq]
+
 end libcrux_iot_ml_dsa.Vector.Portable.Rounding

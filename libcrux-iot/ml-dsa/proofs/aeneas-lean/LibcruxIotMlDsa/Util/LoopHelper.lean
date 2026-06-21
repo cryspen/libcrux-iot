@@ -1616,4 +1616,400 @@ theorem elementwise_two_src_single_output_spec
         simpa [Std.Do.SPred.down_pure] using hh
       simpa [two_src_single_output_step_post] using hP
 
+/-! ## Two-source count-output loop body (read-only `low`/`high` + written array + count).
+
+Structural shape from `simd.portable.arithmetic.compute_hint_loop.body`: TWO separate read-only
+`Coefficients` sources (`low`, `high`) plus a `CoeffArray` written output `a` and a `Std.Usize`
+count accumulator. The state is `β = CoeffArray × Std.Usize`.
+
+Read order per lane `i`: `low.values[i]`, declassify; `high.values[i]`, declassify; `per_elem`;
+classify; write `a[i]`; re-read `a[i]`, declassify; `hcast .Usize`; `count + ·`. The `declassify`
+/`classify`/`hcast`/`count + ·` calls appear VERBATIM so the top-level `h_body_eq` is `funext`+`rfl`
+against `compute_hint_loop.body`.
+
+Since the per-element op reads ONLY `low`/`high` (never `a`), the invariant has NO `a`-tail
+conjunct (cf. `src_dual_output`); only the written prefix `j < k` constrains `a`. The count
+conjunct tracks the running sum of the written bits. -/
+
+/-- `declassify` is the identity (`= .ok`). -/
+private theorem lh_declassify_ok (z : Std.I32) :
+    libcrux_secrets.traits.Declassify.Blanket.declassify z = .ok z := rfl
+
+/-- `classify` is the identity (`= .ok`). -/
+private theorem lh_classify_ok (z : Std.I32) :
+    libcrux_secrets.traits.Classify.Blanket.classify z = .ok z := rfl
+
+def two_src_count_output_loop_body
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (low high : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (iter : CoreModels.core.ops.range.Range Std.Usize)
+    (a : CoeffArray)
+    (count : Std.Usize) :
+    Result (ControlFlow
+      ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray × Std.Usize)
+      (CoeffArray × Std.Usize)) := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done (a, count))
+  | core.option.Option.Some i =>
+    let i1 ← Aeneas.Std.Array.index_usize low.values i
+    let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
+    let i3 ← Aeneas.Std.Array.index_usize high.values i
+    let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify i3
+    let i5 ← per_elem i2 i4
+    let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
+    let a1 ← Aeneas.Std.Array.update a i i6
+    let i7 ← Aeneas.Std.Array.index_usize a1 i
+    let i8 ← libcrux_secrets.traits.Declassify.Blanket.declassify i7
+    let i9 ← Aeneas.Std.lift (Std.IScalar.hcast .Usize i8)
+    let count1 ← count + i9
+    ok (cont (iter1, a1, count1))
+
+/-- Invariant: written prefix carries `P`, and the count is the running sum of written bits.
+    `P low high r` is expected to entail both `r.val = <spec bit>` and `r.val ∈ {0,1}`. -/
+def two_src_count_output_loop_inv
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Std.I32 → Prop)
+    (low high : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients) :
+    Std.Usize → (CoeffArray × Std.Usize) → Result Prop :=
+  fun k ac => pure (
+    (∀ j : Nat, j < k.val →
+      ∃ r, per_elem (low.values.val[j]!) (high.values.val[j]!) = .ok r
+            ∧ ac.1.val[j]! = r
+            ∧ (r.val = 0 ∨ r.val = 1)
+            ∧ P (low.values.val[j]!) (high.values.val[j]!) r)
+    ∧ ac.2.val = ((List.range k.val).map (fun j => (ac.1.val[j]!).val)).sum)
+
+/-- Per-iteration post for `two_src_count_output_loop_body`. -/
+def two_src_count_output_step_post
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Std.I32 → Prop)
+    (low high : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray × Std.Usize)
+      (CoeffArray × Std.Usize)) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (8#usize : Std.Usize).val ∧ iter'.«end» = 8#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (two_src_count_output_loop_inv per_elem P low high iter'.start acc').holds
+  | .done y => (two_src_count_output_loop_inv per_elem P low high 8#usize y).holds
+
+set_option maxHeartbeats 4000000 in
+theorem elementwise_two_src_count_output_step
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Std.I32 → Prop)
+    (per_elem_spec :
+      ∀ (x y : Std.I32),
+        ⦃ ⌜ True ⌝ ⦄ per_elem x y ⦃ ⇓ r => ⌜ (r.val = 0 ∨ r.val = 1) ∧ P x y r ⌝ ⦄)
+    (low high : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (acc : CoeffArray × Std.Usize)
+    (k : Std.Usize)
+    (h_le : k.val ≤ (8#usize : Std.Usize).val)
+    (h_inv : (two_src_count_output_loop_inv per_elem P low high k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    two_src_count_output_loop_body per_elem low high { start := k, «end» := 8#usize } acc.1 acc.2
+    ⦃ ⇓ r => ⌜ two_src_count_output_step_post per_elem P low high k r ⌝ ⦄ := by
+  obtain ⟨h_done, h_count⟩ := of_pure_prop_holds_pv h_inv
+  obtain ⟨a, count⟩ := acc
+  have h_a_len : a.length = 8 := CoeffArray_length a
+  have h_low_len : low.values.length = 8 := Coefficients_values_length low
+  have h_high_len : high.values.length = 8 := Coefficients_values_length high
+  have h_8 : (8#usize : Std.Usize).val = 8 := rfl
+  unfold two_src_count_output_loop_body
+  by_cases h_lt : k.val < (8#usize : Std.Usize).val
+  · -- Some i = k branch.
+    have hk_8 : k.val < 8 := by rw [h_8] at h_lt; exact h_lt
+    obtain ⟨s, hs_val, h_iter_some⟩ := iter_next_some_eq k 8#usize h_lt
+    have h_idx_low :
+        Aeneas.Std.Array.index_usize low.values k = .ok (low.values.val[k.val]!) :=
+      array_index_usize_ok_eq low.values k (by rw [h_low_len]; exact hk_8)
+    have h_idx_high :
+        Aeneas.Std.Array.index_usize high.values k = .ok (high.values.val[k.val]!) :=
+      array_index_usize_ok_eq high.values k (by rw [h_high_len]; exact hk_8)
+    obtain ⟨r, h_per_eq, h_r01, h_per_P⟩ :=
+      triple_exists_ok_pv (per_elem_spec (low.values.val[k.val]!) (high.values.val[k.val]!))
+    have h_upd :
+        Aeneas.Std.Array.update a k r = .ok (a.set k r) :=
+      array_update_ok_eq a k r (by rw [h_a_len]; exact hk_8)
+    -- re-read the freshly written `a[k] = r`.
+    have h_idx_a1 :
+        Aeneas.Std.Array.index_usize (a.set k r) k = .ok ((a.set k r).val[k.val]!) :=
+      array_index_usize_ok_eq (a.set k r) k (by
+        rw [Aeneas.Std.Array.set_length, h_a_len]; exact hk_8)
+    have h_set_k : (a.set k r).val[k.val]! = r := by
+      have h_lt'' : k.val < a.length := by rw [h_a_len]; exact hk_8
+      have h_set_eq : (a.set k r)[k.val]! = r :=
+        Aeneas.Std.Array.getElem!_Nat_set_eq a k k.val r ⟨rfl, h_lt''⟩
+      simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_eq
+    -- hcast: r.val ∈ {0,1} ⊆ [0, Usize.max], so `lift (hcast .Usize r) = .ok rc` with `rc.val = r.val`.
+    have h_r_nn : (0 : Int) ≤ r.val := by rcases h_r01 with h | h <;> rw [h] <;> decide
+    have h_r_le : r.val ≤ Std.UScalar.max Std.UScalarTy.Usize := by
+      have : r.val ≤ 1 := by rcases h_r01 with h | h <;> rw [h] <;> decide
+      have h1 : (1 : Int) ≤ Std.UScalar.max Std.UScalarTy.Usize := by
+        have := Std.UScalarTy.Usize_numBits_eq
+        simp only [Std.UScalar.max, this]
+        cases System.Platform.numBits_eq <;> rename_i hb <;> rw [hb] <;> decide
+      omega
+    obtain ⟨rc, h_hcast_eq, h_rc_val⟩ :=
+      Aeneas.Std.WP.spec_imp_exists
+        (Std.IScalar.hcast_inBounds_spec (src_ty := Std.IScalarTy.I32) Std.UScalarTy.Usize
+          ((a.set k r).val[k.val]!) (by rw [h_set_k]; exact ⟨h_r_nn, h_r_le⟩))
+    -- count add no-overflow: count.val = (sum of k bits) ≤ k ≤ 8 ≤ Usize.max, plus rc.val ≤ 1.
+    have h_each : ∀ x ∈ (List.range k.val).map (fun j => (a.val[j]!).val), x ≤ (1 : Int) := by
+      intro x hx
+      simp only [List.mem_map, List.mem_range] at hx
+      obtain ⟨j, hj, hxeq⟩ := hx
+      obtain ⟨rj, _, h_aj, h_rj01, _⟩ := h_done j hj
+      rw [← hxeq, h_aj]; rcases h_rj01 with h | h <;> rw [h] <;> decide
+    have h_sum_le : ((List.range k.val).map (fun j => (a.val[j]!).val)).sum ≤ (k.val : Int) := by
+      have h1 := List.sum_le_card_nsmul ((List.range k.val).map (fun j => (a.val[j]!).val)) 1 h_each
+      simpa using h1
+    have h_rc_le : (rc.val : Int) ≤ 1 := by
+      rw [h_rc_val, h_set_k]; rcases h_r01 with h | h <;> rw [h] <;> decide
+    have h_k_le : (k.val : Int) ≤ 8 := by rw [h_8] at h_le; exact_mod_cast h_le
+    have h_max9 : (9 : Int) ≤ Std.UScalar.max Std.UScalarTy.Usize := by
+      have := Std.UScalarTy.Usize_numBits_eq
+      simp only [Std.UScalar.max, this]
+      cases System.Platform.numBits_eq <;> rename_i hb <;> rw [hb] <;> decide
+    have h_count_le : (count.val : Int) ≤ (k.val : Int) := h_count.trans_le h_sum_le
+    have h_count_bound : (count.val : Int) + (rc.val : Int) ≤ Std.UScalar.max Std.UScalarTy.Usize := by
+      omega
+    have h_count_bound_nat : count.val + rc.val ≤ Std.UScalar.max Std.UScalarTy.Usize := by
+      have h := h_count_bound
+      have h_cast : ((count.val + rc.val : Nat) : Int)
+          = (count.val : Int) + (rc.val : Int) := by push_cast; ring
+      omega
+    obtain ⟨count1, h_add_eq, h_count1_val⟩ :=
+      Aeneas.Std.WP.spec_imp_exists
+        (Std.UScalar.add_spec (x := count) (y := rc) h_count_bound_nat)
+    have h_body :
+        (do
+          let (o, iter1) ←
+            core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize)
+          match o with
+          | core.option.Option.None =>
+              (Result.ok (ControlFlow.done (a, count)) :
+                Result (ControlFlow
+                  ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray × Std.Usize)
+                  (CoeffArray × Std.Usize)))
+          | core.option.Option.Some i =>
+            let i1 ← Aeneas.Std.Array.index_usize low.values i
+            let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
+            let i3 ← Aeneas.Std.Array.index_usize high.values i
+            let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify i3
+            let i5 ← per_elem i2 i4
+            let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
+            let a1 ← Aeneas.Std.Array.update a i i6
+            let i7 ← Aeneas.Std.Array.index_usize a1 i
+            let i8 ← libcrux_secrets.traits.Declassify.Blanket.declassify i7
+            let i9 ← Aeneas.Std.lift (Std.IScalar.hcast .Usize i8)
+            let count1 ← count + i9
+            ok (cont (iter1, a1, count1)))
+        = .ok (cont
+            (({ start := s, «end» := 8#usize }
+                : CoreModels.core.ops.range.Range Std.Usize),
+             a.set k r, count1)) := by
+      conv_lhs =>
+        rw [show
+          (core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp only [bind_tc_ok]
+      rw [h_idx_low]
+      simp only [bind_tc_ok]
+      rw [lh_declassify_ok]
+      simp only [bind_tc_ok]
+      rw [h_idx_high]
+      simp only [bind_tc_ok]
+      rw [lh_declassify_ok]
+      simp only [bind_tc_ok]
+      rw [h_per_eq]
+      simp only [bind_tc_ok]
+      rw [lh_classify_ok]
+      simp only [bind_tc_ok]
+      rw [h_upd]
+      simp only [bind_tc_ok]
+      rw [h_idx_a1]
+      simp only [bind_tc_ok]
+      rw [lh_declassify_ok]
+      simp only [bind_tc_ok]
+      rw [h_hcast_eq]
+      simp only [bind_tc_ok]
+      rw [h_add_eq]
+      simp only [bind_tc_ok]
+    apply triple_of_ok_pv h_body
+    show two_src_count_output_step_post per_elem P low high k
+            (.cont (({ start := s, «end» := 8#usize }
+                       : CoreModels.core.ops.range.Range Std.Usize),
+                    a.set k r, count1))
+    unfold two_src_count_output_step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    show (two_src_count_output_loop_inv per_elem P low high s (a.set k r, count1)).holds
+    apply pure_prop_holds_pv
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      rw [hs_val] at hj
+      rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj_lt_k | hj_eq_k
+      · obtain ⟨r_j, h_per_j, h_a_j, h_r01_j, h_P_j⟩ := h_done j hj_lt_k
+        refine ⟨r_j, h_per_j, ?_, h_r01_j, h_P_j⟩
+        have h_ne : k.val ≠ j := Nat.ne_of_gt hj_lt_k
+        have h_set_ne : (a.set k r)[j]! = a[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne a k j r h_ne
+        have : (a.set k r).val[j]! = a.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+        show (a.set k r).val[j]! = r_j
+        rw [this]; exact h_a_j
+      · subst hj_eq_k
+        exact ⟨r, h_per_eq, h_set_k, h_r01, h_per_P⟩
+    · -- count: ↑count1.val = sum over range (k+1) of the (set) array bits.
+      -- The prefix is unchanged by `set k`, the new term (lane k) is `r.val`.
+      show (count1.val : Int)
+          = ((List.range s.val).map (fun j => ((a.set k r).val[j]!).val)).sum
+      have h_prefix :
+          ((List.range k.val).map (fun j => ((a.set k r).val[j]!).val))
+          = ((List.range k.val).map (fun j => (a.val[j]!).val)) := by
+        apply List.map_congr_left
+        intro j hj
+        rw [List.mem_range] at hj
+        have h_ne : k.val ≠ j := Nat.ne_of_gt hj
+        have h_set_ne : (a.set k r)[j]! = a[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne a k j r h_ne
+        have : (a.set k r).val[j]! = a.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+        rw [this]
+      have h_split :
+          ((List.range s.val).map (fun j => ((a.set k r).val[j]!).val)).sum
+          = ((List.range k.val).map (fun j => (a.val[j]!).val)).sum + r.val := by
+        rw [hs_val, List.range_succ, List.map_append, List.sum_append, h_prefix]
+        simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, add_zero, h_set_k]
+      have h_rc_eq_r : (rc.val : Int) = r.val := by rw [h_rc_val, h_set_k]
+      have h_c1 : (count1.val : Int) = (count.val : Int) + (rc.val : Int) := by
+        rw [h_count1_val]; push_cast; ring
+      calc (count1.val : Int)
+          = (count.val : Int) + (rc.val : Int) := h_c1
+        _ = ((List.range k.val).map (fun j => (a.val[j]!).val)).sum + r.val := by
+              rw [← h_count, h_rc_eq_r]
+        _ = ((List.range s.val).map (fun j => ((a.set k r).val[j]!).val)).sum := h_split.symm
+  · -- None branch.
+    have hk_ge : k.val ≥ (8#usize : Std.Usize).val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = 8 := by rw [h_8] at hk_ge; omega
+    have h_iter_none := iter_next_none_eq k 8#usize hk_ge
+    have h_body :
+        (do
+          let (o, iter1) ←
+            core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize)
+          match o with
+          | core.option.Option.None =>
+              (Result.ok (ControlFlow.done (a, count)) :
+                Result (ControlFlow
+                  ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray × Std.Usize)
+                  (CoeffArray × Std.Usize)))
+          | core.option.Option.Some i =>
+            let i1 ← Aeneas.Std.Array.index_usize low.values i
+            let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
+            let i3 ← Aeneas.Std.Array.index_usize high.values i
+            let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify i3
+            let i5 ← per_elem i2 i4
+            let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
+            let a1 ← Aeneas.Std.Array.update a i i6
+            let i7 ← Aeneas.Std.Array.index_usize a1 i
+            let i8 ← libcrux_secrets.traits.Declassify.Blanket.declassify i7
+            let i9 ← Aeneas.Std.lift (Std.IScalar.hcast .Usize i8)
+            let count1 ← count + i9
+            ok (cont (iter1, a1, count1)))
+        = .ok (done (a, count)) := by
+      conv_lhs =>
+        rw [show
+          (core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    apply triple_of_ok_pv h_body
+    show two_src_count_output_step_post per_elem P low high k (.done (a, count))
+    unfold two_src_count_output_step_post
+    show (two_src_count_output_loop_inv per_elem P low high 8#usize (a, count)).holds
+    apply pure_prop_holds_pv
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      apply h_done j; rw [hk_eq]; rw [h_8] at hj; exact hj
+    · show (count.val : Int)
+          = ((List.range (8#usize : Std.Usize).val).map (fun j => (a.val[j]!).val)).sum
+      have h_k8 : List.range (8#usize : Std.Usize).val = List.range k.val := by rw [h_8, hk_eq]
+      rw [h_k8]; exact h_count
+
+/-! ## Top-level two-source count-output elementwise spec wrapper -/
+
+set_option maxHeartbeats 2000000 in
+theorem elementwise_two_src_count_output_spec
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Std.I32 → Prop)
+    (per_elem_spec :
+      ∀ (x y : Std.I32),
+        ⦃ ⌜ True ⌝ ⦄ per_elem x y ⦃ ⇓ r => ⌜ (r.val = 0 ∨ r.val = 1) ∧ P x y r ⌝ ⦄)
+    (low high : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (input : CoeffArray) :
+    ⦃ ⌜ True ⌝ ⦄
+    loop (fun p => two_src_count_output_loop_body per_elem low high p.1 p.2.1 p.2.2)
+      (({ start := 0#usize, «end» := 8#usize }
+        : CoreModels.core.ops.range.Range Std.Usize), input, 0#usize)
+    ⦃ ⇓ r => ⌜ (∀ i : Nat, i < 8 →
+              ∃ ri, per_elem (low.values.val[i]!) (high.values.val[i]!) = .ok ri
+                    ∧ r.1.val[i]! = ri
+                    ∧ (ri.val = 0 ∨ ri.val = 1)
+                    ∧ P (low.values.val[i]!) (high.values.val[i]!) ri)
+          ∧ r.2.val = ((List.range 8).map (fun j => (r.1.val[j]!).val)).sum ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun p => two_src_count_output_loop_body per_elem low high p.1 p.2.1 p.2.2)
+      (input, 0#usize) 0#usize 8#usize
+      (two_src_count_output_loop_inv per_elem P low high)
+      (by decide : (0#usize : Std.Usize).val ≤ (8#usize : Std.Usize).val)
+      (pure_prop_holds_pv ⟨
+        fun j hj => by
+          have h0 : (0#usize : Std.Usize).val = 0 := rfl
+          rw [h0] at hj; exact absurd hj (Nat.not_lt_zero j),
+        by rw [show (0#usize : Std.Usize).val = 0 from rfl]; simp⟩)
+      ?_)
+  · rw [PostCond.entails_noThrow]
+    intro r h
+    obtain ⟨h_done, h_count⟩ := of_pure_prop_holds_pv h
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      apply h_done j
+      show j < (8#usize : Std.Usize).val
+      exact hj
+    · show (r.2.val : Int) = ((List.range 8).map (fun j => (r.1.val[j]!).val)).sum
+      have h_8 : List.range (8#usize : Std.Usize).val = List.range 8 := rfl
+      rw [h_8] at h_count; exact h_count
+  · intro acc k h_ge h_le hinv
+    have h_step :=
+      elementwise_two_src_count_output_step per_elem P per_elem_spec low high acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : two_src_count_output_step_post per_elem P low high k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [two_src_count_output_step_post] using hP
+    · have hP : two_src_count_output_step_post per_elem P low high k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [two_src_count_output_step_post] using hP
+
 end libcrux_iot_ml_dsa.Util.LoopHelper
