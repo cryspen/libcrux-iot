@@ -1323,4 +1323,297 @@ theorem elementwise_src_dual_output_spec
       simpa [src_dual_output_step_post] using hP
 
 
+/-! ## Two-source single-output loop body (read-only `src` + read+write `acc`).
+
+The structural shape from `simd.portable.arithmetic.use_hint_loop.body`: a SEPARATE read-only
+`src : Coefficients` (the input `simd_unit`) plus an accumulator `a : CoeffArray` that is BOTH
+read (`a[i]`) and written (`a[i] := per_elem (src.values[i]) (a[i])`). Single output array.
+
+Read order in the impl body: `src.values[i]` FIRST, then `a[i]`, then `per_elem src acc`, then
+write. The accumulator starts as `hint.values`, so a lane `j ≥ k` still reads its initial value
+(`input.val[j]`), recovering `hint.values[j]`. Hence the 2-conjunct invariant (`< k` written,
+`≥ k` untouched) mirrors `unary`/`binary`, with the per-elem op now reading `src.values[j]` and
+the running accumulator (whose `≥ k` value is `input.val[j]`). -/
+
+def two_src_single_output_loop_body
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (src : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (iter : CoreModels.core.ops.range.Range Std.Usize)
+    (a : CoeffArray) :
+    Result (ControlFlow
+      ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray)
+      CoeffArray) := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done a)
+  | core.option.Option.Some i =>
+    let i1 ← Aeneas.Std.Array.index_usize src.values i
+    let i3 ← Aeneas.Std.Array.index_usize a i
+    let i5 ← per_elem i1 i3
+    let a1 ← Aeneas.Std.Array.update a i i5
+    ok (cont (iter1, a1))
+
+/-- 2-conjunct invariant:
+    - For `j < k`, `a[j]` equals the per-elem-op output `r` for inputs `src.values[j]` and the
+      original accumulator value `input[j]` (carrying the per-elem predicate `P`).
+    - For `j ≥ k`, `a[j] = input[j]` (the accumulator is untouched there). -/
+def two_src_single_output_loop_inv
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Std.I32 → Prop)
+    (src : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (input : CoeffArray) :
+    Std.Usize → CoeffArray → Result Prop :=
+  fun k a => pure (
+    (∀ j : Nat, j < k.val →
+      ∃ r, per_elem (src.values.val[j]!) (input.val[j]!) = .ok r
+            ∧ a.val[j]! = r
+            ∧ P (src.values.val[j]!) (input.val[j]!) r)
+    ∧ (∀ j : Nat, k.val ≤ j → j < 8 →
+        a.val[j]! = input.val[j]!))
+
+/-- Per-iteration post for `two_src_single_output_loop_body`. -/
+def two_src_single_output_step_post
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Std.I32 → Prop)
+    (src : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (input : CoeffArray)
+    (k : Std.Usize)
+    (r : ControlFlow
+      ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray)
+      CoeffArray) : Prop :=
+  match r with
+  | .cont (iter', acc') =>
+      k.val < (8#usize : Std.Usize).val ∧ iter'.«end» = 8#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (two_src_single_output_loop_inv per_elem P src input iter'.start acc').holds
+  | .done y => (two_src_single_output_loop_inv per_elem P src input 8#usize y).holds
+
+set_option maxHeartbeats 4000000 in
+theorem elementwise_two_src_single_output_step
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Std.I32 → Prop)
+    (per_elem_spec :
+      ∀ (x y : Std.I32),
+        ⦃ ⌜ True ⌝ ⦄ per_elem x y ⦃ ⇓ r => ⌜ P x y r ⌝ ⦄)
+    (src : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (input : CoeffArray)
+    (acc : CoeffArray)
+    (k : Std.Usize)
+    (h_le : k.val ≤ (8#usize : Std.Usize).val)
+    (h_inv : (two_src_single_output_loop_inv per_elem P src input k acc).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    two_src_single_output_loop_body per_elem src { start := k, «end» := 8#usize } acc
+    ⦃ ⇓ r => ⌜ two_src_single_output_step_post per_elem P src input k r ⌝ ⦄ := by
+  obtain ⟨h_acc_done, h_acc_undone⟩ := of_pure_prop_holds_pv h_inv
+  have h_acc_len : acc.length = 8 := CoeffArray_length acc
+  have h_src_len : src.values.length = 8 := Coefficients_values_length src
+  have h_8 : (8#usize : Std.Usize).val = 8 := rfl
+  unfold two_src_single_output_loop_body
+  by_cases h_lt : k.val < (8#usize : Std.Usize).val
+  · -- Some i = k branch.
+    have hk_8 : k.val < 8 := by rw [h_8] at h_lt; exact h_lt
+    obtain ⟨s, hs_val, h_iter_some⟩ := iter_next_some_eq k 8#usize h_lt
+    have h_idx_src :
+        Aeneas.Std.Array.index_usize src.values k
+          = .ok (src.values.val[k.val]!) :=
+      array_index_usize_ok_eq src.values k (by rw [h_src_len]; exact hk_8)
+    have h_idx_acc :
+        Aeneas.Std.Array.index_usize acc k = .ok (acc.val[k.val]!) :=
+      array_index_usize_ok_eq acc k (by rw [h_acc_len]; exact hk_8)
+    obtain ⟨r, h_per_eq, h_per_P⟩ :=
+      triple_exists_ok_pv (per_elem_spec (src.values.val[k.val]!)
+                                          (acc.val[k.val]!))
+    have h_upd :
+        Aeneas.Std.Array.update acc k r
+        = .ok (acc.set k r) :=
+      array_update_ok_eq acc k r (by rw [h_acc_len]; exact hk_8)
+    have h_body :
+        (do
+          let (o, iter1) ←
+            core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize)
+          match o with
+          | core.option.Option.None =>
+              (Result.ok (ControlFlow.done acc) :
+                Result (ControlFlow
+                  ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray)
+                  CoeffArray))
+          | core.option.Option.Some i =>
+            let i1 ← Aeneas.Std.Array.index_usize src.values i
+            let i3 ← Aeneas.Std.Array.index_usize acc i
+            let i5 ← per_elem i1 i3
+            let a1 ← Aeneas.Std.Array.update acc i i5
+            ok (cont (iter1, a1)))
+        = .ok (cont
+            (({ start := s, «end» := 8#usize }
+                : CoreModels.core.ops.range.Range Std.Usize),
+             acc.set k r)) := by
+      conv_lhs =>
+        rw [show
+          (core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp only [bind_tc_ok]
+      rw [h_idx_src]
+      simp only [bind_tc_ok]
+      rw [h_idx_acc]
+      simp only [bind_tc_ok]
+      rw [h_per_eq]
+      simp only [bind_tc_ok]
+      rw [h_upd]
+      rfl
+    apply triple_of_ok_pv h_body
+    show two_src_single_output_step_post per_elem P src input k
+            (.cont (({ start := s, «end» := 8#usize }
+                       : CoreModels.core.ops.range.Range Std.Usize),
+                    acc.set k r))
+    unfold two_src_single_output_step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    show (two_src_single_output_loop_inv per_elem P src input s (acc.set k r)).holds
+    apply pure_prop_holds_pv
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      rw [hs_val] at hj
+      rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj_lt_k | hj_eq_k
+      · obtain ⟨r_j, h_per_j, h_acc_j, h_P_j⟩ := h_acc_done j hj_lt_k
+        refine ⟨r_j, h_per_j, ?_, h_P_j⟩
+        have h_ne : k.val ≠ j := Nat.ne_of_gt hj_lt_k
+        have h_set_ne : (acc.set k r)[j]! = acc[j]! :=
+          Aeneas.Std.Array.getElem!_Nat_set_ne acc k j r h_ne
+        have : (acc.set k r).val[j]! = acc.val[j]! := by
+          simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+        show (acc.set k r).val[j]! = r_j
+        rw [this]; exact h_acc_j
+      · subst hj_eq_k
+        refine ⟨r, ?_, ?_, ?_⟩
+        · have h_eq : acc.val[k.val]! = input.val[k.val]! :=
+            h_acc_undone k.val (Nat.le_refl _) hk_8
+          rw [← h_eq]; exact h_per_eq
+        · have h_lt'' : k.val < acc.length := by rw [h_acc_len]; exact hk_8
+          have h_set_eq : (acc.set k r)[k.val]! = r :=
+            Aeneas.Std.Array.getElem!_Nat_set_eq acc k k.val r ⟨rfl, h_lt''⟩
+          have : (acc.set k r).val[k.val]! = r := by
+            simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_eq
+          show (acc.set k r).val[k.val]! = r
+          exact this
+        · have h_eq : acc.val[k.val]! = input.val[k.val]! :=
+            h_acc_undone k.val (Nat.le_refl _) hk_8
+          rw [← h_eq]; exact h_per_P
+    · intro j hj_ge hj_lt
+      rw [hs_val] at hj_ge
+      have h_ne : k.val ≠ j := by omega
+      have h_ge' : k.val ≤ j := by omega
+      have h_set_ne : (acc.set k r)[j]! = acc[j]! :=
+        Aeneas.Std.Array.getElem!_Nat_set_ne acc k j r h_ne
+      have : (acc.set k r).val[j]! = acc.val[j]! := by
+        simpa [Aeneas.Std.Array.getElem!_Nat_eq] using h_set_ne
+      show (acc.set k r).val[j]! = input.val[j]!
+      rw [this]
+      exact h_acc_undone j h_ge' hj_lt
+  · -- None branch.
+    have hk_ge : k.val ≥ (8#usize : Std.Usize).val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = 8 := by rw [h_8] at hk_ge; omega
+    have h_iter_none := iter_next_none_eq k 8#usize hk_ge
+    have h_body :
+        (do
+          let (o, iter1) ←
+            core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize)
+          match o with
+          | core.option.Option.None =>
+              (Result.ok (ControlFlow.done acc) :
+                Result (ControlFlow
+                  ((CoreModels.core.ops.range.Range Std.Usize) × CoeffArray)
+                  CoeffArray))
+          | core.option.Option.Some i =>
+            let i1 ← Aeneas.Std.Array.index_usize src.values i
+            let i3 ← Aeneas.Std.Array.index_usize acc i
+            let i5 ← per_elem i1 i3
+            let a1 ← Aeneas.Std.Array.update acc i i5
+            ok (cont (iter1, a1)))
+        = .ok (done acc) := by
+      conv_lhs =>
+        rw [show
+          (core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    apply triple_of_ok_pv h_body
+    show two_src_single_output_step_post per_elem P src input k (.done acc)
+    unfold two_src_single_output_step_post
+    show (two_src_single_output_loop_inv per_elem P src input 8#usize acc).holds
+    apply pure_prop_holds_pv
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      apply h_acc_done j
+      rw [hk_eq]; rw [h_8] at hj; exact hj
+    · intro j hj_ge hj_lt
+      apply h_acc_undone j _ hj_lt
+      rw [hk_eq]; rw [h_8] at hj_ge; exact hj_ge
+
+/-! ## Top-level two-source single-output elementwise spec wrapper -/
+
+set_option maxHeartbeats 2000000 in
+theorem elementwise_two_src_single_output_spec
+    (per_elem : Std.I32 → Std.I32 → Result Std.I32)
+    (P : Std.I32 → Std.I32 → Std.I32 → Prop)
+    (per_elem_spec :
+      ∀ (x y : Std.I32),
+        ⦃ ⌜ True ⌝ ⦄ per_elem x y ⦃ ⇓ r => ⌜ P x y r ⌝ ⦄)
+    (src : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (input : CoeffArray) :
+    ⦃ ⌜ True ⌝ ⦄
+    loop (fun p => two_src_single_output_loop_body per_elem src p.1 p.2)
+      (({ start := 0#usize, «end» := 8#usize }
+        : CoreModels.core.ops.range.Range Std.Usize), input)
+    ⦃ ⇓ r => ⌜ ∀ i : Nat, i < 8 →
+              ∃ ri, per_elem (src.values.val[i]!) (input.val[i]!) = .ok ri
+                    ∧ r.val[i]! = ri
+                    ∧ P (src.values.val[i]!) (input.val[i]!) ri ⌝ ⦄ := by
+  apply Std.Do.Triple.of_entails_right _
+    (loop_range_spec_usize
+      (fun (iter1, vec1) => two_src_single_output_loop_body per_elem src iter1 vec1)
+      input 0#usize 8#usize
+      (two_src_single_output_loop_inv per_elem P src input)
+      (by decide : (0#usize : Std.Usize).val ≤ (8#usize : Std.Usize).val)
+      (pure_prop_holds_pv ⟨
+        fun j hj => by
+          have h0 : (0#usize : Std.Usize).val = 0 := rfl
+          rw [h0] at hj; exact absurd hj (Nat.not_lt_zero j),
+        fun _ _ _ => rfl⟩)
+      ?_)
+  · rw [PostCond.entails_noThrow]
+    intro r h
+    obtain ⟨h_done, _h_undone⟩ := of_pure_prop_holds_pv h
+    intro j hj
+    apply h_done j
+    show j < (8#usize : Std.Usize).val
+    exact hj
+  · intro acc k h_ge h_le hinv
+    have h_step :=
+      elementwise_two_src_single_output_step per_elem P per_elem_spec src input acc k h_le hinv
+    apply Std.Do.Triple.of_entails_right _ h_step
+    rw [PostCond.entails_noThrow]
+    intro r hh
+    rcases r with ⟨iter', acc'⟩ | y
+    · have hP : two_src_single_output_step_post per_elem P src input k (.cont (iter', acc')) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [two_src_single_output_step_post] using hP
+    · have hP : two_src_single_output_step_post per_elem P src input k (.done y) := by
+        simpa [Std.Do.SPred.down_pure] using hh
+      simpa [two_src_single_output_step_post] using hP
+
 end libcrux_iot_ml_dsa.Util.LoopHelper

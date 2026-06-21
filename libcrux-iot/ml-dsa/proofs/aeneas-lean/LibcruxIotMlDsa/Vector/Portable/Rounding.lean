@@ -739,4 +739,336 @@ theorem decompose_spec (gamma2 : Std.I32)
   rw [h_a, h_b]
   exact ⟨h_low, h_high⟩
 
+/-! ## Phase-7 `use_hint` — high-bits range, per-lane, and top-level. -/
+
+/-- `classify`/`declassify` are the identity (`= .ok`). -/
+private theorem classify_ok (z : Std.I32) :
+    libcrux_secrets.traits.Classify.Blanket.classify z = .ok z := rfl
+
+private theorem declassify_ok (z : Std.I32) :
+    libcrux_secrets.traits.Declassify.Blanket.declassify z = .ok z := rfl
+
+open libcrux_iot_ml_dsa.Spec.Rounding in
+/-- The decompose **high** value lies in `[0, m-1]` (`m = (q-1)/(2·gamma2)`): 44 for 95232,
+    16 for 261888. The single load-bearing arithmetic fact for the `use_hint` bridges. Derived
+    from the first conjunct of `decompose_int_identity_*`, whose `r11v` is in range by construction. -/
+theorem decompose_high_range (gamma2 : Std.I32) (r : Int)
+    (hg : gamma2 = 95232#i32 ∨ gamma2 = 261888#i32)
+    (hlo : -(8380417 : Int) ≤ r) (hhi : r < 8380417) :
+    0 ≤ (libcrux_iot_ml_dsa.Spec.Rounding.decompose r gamma2.val).1
+      ∧ (libcrux_iot_ml_dsa.Spec.Rounding.decompose r gamma2.val).1
+          ≤ ((8380417 : Int) - 1) / (2 * gamma2.val) - 1 := by
+  rcases hg with hg | hg <;> subst hg
+  · -- 95232: m = 44, r11v = if 43 < res then 0 else res, res ∈ [0,44]
+    obtain ⟨h_id_hi, _h_id_lo⟩ := decompose_int_identity_95232 r hlo hhi
+    have hm : ((8380417 : Int) - 1) / (2 * (95232#i32 : Std.I32).val) - 1 = 43 := by
+      norm_num [show (95232#i32 : Std.I32).val = 95232 from rfl]
+    show 0 ≤ (libcrux_iot_ml_dsa.Spec.Rounding.decompose r 95232).1
+      ∧ (libcrux_iot_ml_dsa.Spec.Rounding.decompose r 95232).1
+          ≤ ((8380417 : Int) - 1) / (2 * (95232#i32 : Std.I32).val) - 1
+    rw [← h_id_hi, hm]
+    -- r11v = if 43 < res then 0 else res; in both cases 0 ≤ · ≤ 43
+    split <;> omega
+  · -- 261888: m = 16, r11v = res % 16, res % 16 ∈ [0,15]
+    obtain ⟨h_id_hi, _h_id_lo⟩ := decompose_int_identity_261888 r hlo hhi
+    have hm : ((8380417 : Int) - 1) / (2 * (261888#i32 : Std.I32).val) - 1 = 15 := by
+      norm_num [show (261888#i32 : Std.I32).val = 261888 from rfl]
+    show 0 ≤ (libcrux_iot_ml_dsa.Spec.Rounding.decompose r 261888).1
+      ∧ (libcrux_iot_ml_dsa.Spec.Rounding.decompose r 261888).1
+          ≤ ((8380417 : Int) - 1) / (2 * (261888#i32 : Std.I32).val) - 1
+    rw [← h_id_hi, hm]
+    have hpos : (0 : Int) < 16 := by norm_num
+    refine ⟨Int.emod_nonneg _ (by norm_num), ?_⟩
+    have := Int.emod_lt_of_pos
+      ((((r + (if r < 0 then 8380417 else 0)) + 127) / 128 * 1025 + 2097152) / 4194304) hpos
+    omega
+
+/-! ## `use_one_hint_spec` — per-lane equality bridge to `Spec.Rounding.useHint`. -/
+
+open libcrux_iot_ml_dsa.Spec.Rounding in
+/-- `core.num.I32.wrapping_add r11 hint = .ok (Aeneas.Std.I32.wrapping_add r11 hint)` (rfl). -/
+private theorem core_wrapping_add_ok (x y : Std.I32) :
+    CoreModels.core.num.I32.wrapping_add x y = .ok (Aeneas.Std.I32.wrapping_add x y) := rfl
+
+private theorem core_wrapping_sub_ok (x y : Std.I32) :
+    CoreModels.core.num.I32.wrapping_sub x y = .ok (Aeneas.Std.I32.wrapping_sub x y) := rfl
+
+set_option maxHeartbeats 2000000 in
+theorem use_one_hint_spec (gamma2 r hint : Std.I32)
+    (hg : gamma2 = 95232#i32 ∨ gamma2 = 261888#i32)
+    (hlo : -(8380417 : Int) ≤ r.val) (hhi : r.val < (8380417 : Int))
+    (hh : hint.val = 0 ∨ hint.val = 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.use_one_hint gamma2 r hint
+    ⦃ ⇓ z => ⌜ z.val = libcrux_iot_ml_dsa.Spec.Rounding.useHint
+        ((hint.val == 1) : Bool) r.val gamma2.val ⌝ ⦄ := by
+  -- decompose projections (black-box): r0.val = lowBits, r1.val = highBits.
+  obtain ⟨v, hv_eq, h_v_lo, h_v_hi⟩ :=
+    triple_exists_ok_l0 (decompose_element_spec gamma2 r hg hlo hhi)
+  obtain ⟨v0, v1⟩ := v
+  simp only at h_v_lo h_v_hi
+  -- high-bits range.
+  obtain ⟨h_hi_lo, h_hi_hi⟩ := decompose_high_range gamma2 r.val hg hlo hhi
+  -- reduce the prefix (classify / decompose / declassify) of the do-block.
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.use_one_hint
+  simp only [classify_ok, declassify_ok, hv_eq, Aeneas.Std.bind_tc_ok]
+  -- name the spec projections; `r01 = v0.val = lowBits`, `r11 = v1.val = highBits`.
+  set r0s := (libcrux_iot_ml_dsa.Spec.Rounding.decompose r.val gamma2.val).2 with hr0s
+  set r1s := (libcrux_iot_ml_dsa.Spec.Rounding.decompose r.val gamma2.val).1 with hr1s
+  -- `useHint` reduces with these projections.
+  have h_useHint :
+      libcrux_iot_ml_dsa.Spec.Rounding.useHint ((hint.val == 1) : Bool) r.val gamma2.val
+      = (if (hint.val == 1) = true ∧ r0s > 0 then (r1s + 1) % ((8380417 - 1) / (2 * gamma2.val))
+         else if (hint.val == 1) = true ∧ r0s ≤ 0 then
+           ((r1s - 1) % ((8380417 - 1) / (2 * gamma2.val))
+              + ((8380417 - 1) / (2 * gamma2.val))) % ((8380417 - 1) / (2 * gamma2.val))
+         else r1s) := by
+    unfold libcrux_iot_ml_dsa.Spec.Rounding.useHint
+    simp only [libcrux_iot_ml_dsa.Spec.Rounding.Qi, show ((Q : Int)) = 8380417 from rfl,
+      hr0s, hr1s]
+  -- impl-comparison bridges (stated before the substs, so `r0s`/`r1s` stay abstract).
+  have h_gt : (0#i32 : Std.I32) < v0 ↔ r0s > 0 := by
+    rw [Aeneas.Std.IScalar.lt_equiv, ← h_v_lo]; rfl
+  have h_v1_43 : (v1 = 43#i32) ↔ (r1s = 43) := by
+    rw [← h_v_hi]; constructor
+    · intro h; rw [h]; rfl
+    · intro h; apply Aeneas.Std.IScalar.eq_of_val_eq; rw [h]; rfl
+  have h_v1_0 : (v1 = 0#i32) ↔ (r1s = 0) := by
+    rw [← h_v_hi]; constructor
+    · intro h; rw [h]; rfl
+    · intro h; apply Aeneas.Std.IScalar.eq_of_val_eq; rw [h]; rfl
+  rcases hh with hh0 | hh1
+  · -- hint.val = 0 ⇒ hint = 0#i32 ⇒ impl returns r11 = v1.val = r1s; useHint bool = false.
+    have h_hint_eq : hint = 0#i32 := by
+      apply Aeneas.Std.IScalar.eq_of_val_eq; rw [hh0]; rfl
+    have h_bool : ((hint.val == 1) : Bool) = false := by rw [hh0]; rfl
+    subst h_hint_eq
+    apply triple_of_ok_l0 (v := v1) rfl
+    rw [h_useHint, h_bool]; simp only [Bool.false_eq_true, false_and, if_false]
+    exact h_v_hi
+  · -- hint.val = 1 ⇒ hint = 1#i32 ⇒ branch on gamma2 / r01 / r11.
+    have h_hint_eq : hint = 1#i32 := by
+      apply Aeneas.Std.IScalar.eq_of_val_eq; rw [hh1]; rfl
+    have h_bool : ((hint.val == 1) : Bool) = true := by rw [hh1]; rfl
+    subst h_hint_eq
+    rw [h_useHint, h_bool]
+    simp only [true_and]
+    rcases hg with hg | hg <;> subst hg
+    · -- gamma2 = 95232, m = 44, r1s ∈ [0,43].
+      show ⦃ ⌜ True ⌝ ⦄
+        (if v0 > 0#i32 then
+           (if v1 = 43#i32 then Result.ok 0#i32 else core.num.I32.wrapping_add v1 1#i32)
+         else
+           (if v1 = 0#i32 then Result.ok 43#i32 else core.num.I32.wrapping_sub v1 1#i32))
+        ⦃ ⇓ z => ⌜ z.val = (if r0s > 0 then (r1s + 1) % ((8380417 - 1) / (2 * (95232#i32 : Std.I32).val))
+            else if r0s ≤ 0 then
+              ((r1s - 1) % ((8380417 - 1) / (2 * (95232#i32 : Std.I32).val))
+                + ((8380417 - 1) / (2 * (95232#i32 : Std.I32).val)))
+                  % ((8380417 - 1) / (2 * (95232#i32 : Std.I32).val))
+            else r1s) ⌝ ⦄
+      have hm43 : ((8380417 : Int) - 1) / (2 * (95232#i32 : Std.I32).val) = 44 := by
+        norm_num [show (95232#i32 : Std.I32).val = 95232 from rfl]
+      have h_r1_lo : 0 ≤ r1s := h_hi_lo
+      have h_r1_hi : r1s ≤ 43 := by
+        have := h_hi_hi; rw [show ((8380417 : Int) - 1) / (2 * (95232#i32 : Std.I32).val) - 1 = 43
+          from by norm_num [show (95232#i32 : Std.I32).val = 95232 from rfl]] at this; exact this
+      by_cases hgt : (0#i32 : Std.I32) < v0
+      · -- r0s > 0 ⇒ spec (r1s+1)%44.
+        have hr0s_pos : r0s > 0 := h_gt.mp hgt
+        rw [if_pos hgt, if_pos hr0s_pos, hm43]
+        by_cases h43 : v1 = 43#i32
+        · rw [if_pos h43]
+          have : r1s = 43 := h_v1_43.mp h43
+          apply triple_of_ok_l0 (v := 0#i32) rfl
+          rw [this]; rfl
+        · rw [if_neg h43]
+          have hne : r1s ≠ 43 := fun h => h43 (h_v1_43.mpr h)
+          apply triple_of_ok_l0 (v := Aeneas.Std.I32.wrapping_add v1 1#i32)
+            (core_wrapping_add_ok v1 1#i32)
+          rw [wrapping_add_val_noov v1 1#i32 (by rw [h_v_hi]; omega) (by rw [h_v_hi]; omega),
+            h_v_hi, show ((1#i32 : Std.I32).val) = 1 from rfl]
+          omega
+      · -- r0s ≤ 0 ⇒ spec ((r1s-1)%44+44)%44.
+        have hr0s_le : r0s ≤ 0 := by
+          by_contra hc; exact hgt (h_gt.mpr (by omega))
+        rw [if_neg hgt, if_neg (by omega : ¬ r0s > 0), if_pos hr0s_le, hm43]
+        by_cases h0 : v1 = 0#i32
+        · rw [if_pos h0]
+          have : r1s = 0 := h_v1_0.mp h0
+          apply triple_of_ok_l0 (v := 43#i32) rfl
+          rw [this]; rfl
+        · rw [if_neg h0]
+          have hne : r1s ≠ 0 := fun h => h0 (h_v1_0.mpr h)
+          apply triple_of_ok_l0 (v := Aeneas.Std.I32.wrapping_sub v1 1#i32)
+            (core_wrapping_sub_ok v1 1#i32)
+          rw [wrapping_sub_val_noov v1 1#i32 (by rw [h_v_hi]; omega) (by rw [h_v_hi]; omega),
+            h_v_hi, show ((1#i32 : Std.I32).val) = 1 from rfl]
+          omega
+    · -- gamma2 = 261888, m = 16, r1s ∈ [0,15].
+      show ⦃ ⌜ True ⌝ ⦄
+        (if v0 > 0#i32 then
+           (core.num.I32.wrapping_add v1 1#i32 >>= fun i1 => Result.ok (i1 &&& 15#i32))
+         else
+           (core.num.I32.wrapping_sub v1 1#i32 >>= fun i1 => Result.ok (i1 &&& 15#i32)))
+        ⦃ ⇓ z => ⌜ z.val = (if r0s > 0 then (r1s + 1) % ((8380417 - 1) / (2 * (261888#i32 : Std.I32).val))
+            else if r0s ≤ 0 then
+              ((r1s - 1) % ((8380417 - 1) / (2 * (261888#i32 : Std.I32).val))
+                + ((8380417 - 1) / (2 * (261888#i32 : Std.I32).val)))
+                  % ((8380417 - 1) / (2 * (261888#i32 : Std.I32).val))
+            else r1s) ⌝ ⦄
+      have hm16 : ((8380417 : Int) - 1) / (2 * (261888#i32 : Std.I32).val) = 16 := by
+        norm_num [show (261888#i32 : Std.I32).val = 261888 from rfl]
+      have h_r1_lo : 0 ≤ r1s := h_hi_lo
+      have h_r1_hi : r1s ≤ 15 := by
+        have := h_hi_hi; rw [show ((8380417 : Int) - 1) / (2 * (261888#i32 : Std.I32).val) - 1 = 15
+          from by norm_num [show (261888#i32 : Std.I32).val = 261888 from rfl]] at this; exact this
+      by_cases hgt : (0#i32 : Std.I32) < v0
+      · -- r0s > 0 ⇒ spec (r1s+1)%16. impl (v1+1)&&&15.
+        have hr0s_pos : r0s > 0 := h_gt.mp hgt
+        rw [if_pos hgt, if_pos hr0s_pos, hm16]
+        have h_add : (Aeneas.Std.I32.wrapping_add v1 1#i32).val = r1s + 1 := by
+          rw [wrapping_add_val_noov v1 1#i32 (by rw [h_v_hi]; omega) (by rw [h_v_hi]; omega),
+            h_v_hi, show ((1#i32 : Std.I32).val) = 1 from rfl]
+        rw [core_wrapping_add_ok]; simp only [Aeneas.Std.bind_tc_ok]
+        apply triple_of_ok_l0 (v := (Aeneas.Std.I32.wrapping_add v1 1#i32) &&& 15#i32) rfl
+        rw [show ((Aeneas.Std.I32.wrapping_add v1 1#i32) &&& 15#i32)
+            = (⟨(Aeneas.Std.I32.wrapping_add v1 1#i32).bv &&& (15#i32 : Std.I32).bv⟩ : Std.I32) from rfl,
+          and_15_val _ (by rw [h_add]; omega) (by rw [h_add]; omega), h_add]
+      · -- r0s ≤ 0 ⇒ spec ((r1s-1)%16+16)%16. impl (v1-1)&&&15; r1s=0 special-cased.
+        have hr0s_le : r0s ≤ 0 := by
+          by_contra hc; exact hgt (h_gt.mpr (by omega))
+        rw [if_neg hgt, if_neg (by omega : ¬ r0s > 0), if_pos hr0s_le, hm16]
+        have h_sub : (Aeneas.Std.I32.wrapping_sub v1 1#i32).val = r1s - 1 := by
+          rw [wrapping_sub_val_noov v1 1#i32 (by rw [h_v_hi]; omega) (by rw [h_v_hi]; omega),
+            h_v_hi, show ((1#i32 : Std.I32).val) = 1 from rfl]
+        rw [core_wrapping_sub_ok]; simp only [Aeneas.Std.bind_tc_ok]
+        apply triple_of_ok_l0 (v := (Aeneas.Std.I32.wrapping_sub v1 1#i32) &&& 15#i32) rfl
+        rw [show ((Aeneas.Std.I32.wrapping_sub v1 1#i32) &&& 15#i32)
+            = (⟨(Aeneas.Std.I32.wrapping_sub v1 1#i32).bv &&& (15#i32 : Std.I32).bv⟩ : Std.I32) from rfl]
+        by_cases h0 : r1s = 0
+        · -- (v1-1).val = -1 ⇒ and_15_val precondition fails; handle directly.
+          have hbv : (Aeneas.Std.I32.wrapping_sub v1 1#i32).bv = BitVec.allOnes 32 := by
+            apply BitVec.eq_of_toInt_eq
+            show (Aeneas.Std.I32.wrapping_sub v1 1#i32).val = (BitVec.allOnes 32).toInt
+            rw [h_sub, h0]; decide
+          show ((Aeneas.Std.I32.wrapping_sub v1 1#i32).bv &&& (15#i32 : Std.I32).bv).toInt = _
+          rw [hbv, h0]
+          rw [show (BitVec.allOnes 32 &&& (15#i32 : Std.I32).bv) = (15 : BitVec 32) from by decide]
+          decide
+        · -- r1s ∈ [1,15] ⇒ (v1-1).val = r1s-1 ∈ [0,14]; and_15_val applies.
+          rw [and_15_val _ (by rw [h_sub]; omega) (by rw [h_sub]; omega), h_sub]
+          omega
+
+/-! ## `use_hint_spec` — top-level `@[spec]` per-lane equality keystone. -/
+
+/-- Per-element predicate carrying the precondition→post for `use_hint`'s lanes. -/
+private def use_hint_per_elem_P (gamma2 : Std.I32) (src_x acc_x : Std.I32) (z : Std.I32) : Prop :=
+  -(8380417 : Int) ≤ src_x.val → src_x.val < (8380417 : Int) →
+    (acc_x.val = 0 ∨ acc_x.val = 1) →
+      z.val = libcrux_iot_ml_dsa.Spec.Rounding.useHint
+        ((acc_x.val == 1) : Bool) src_x.val gamma2.val
+
+/-- `use_one_hint` is total for `gamma2 ∈ {95232, 261888}` (the `| _ => fail` arm is dead);
+    the result `.ok` value follows by reducing the do-block prefix and casing on the branches. -/
+private theorem use_one_hint_ok_exists (gamma2 src_x acc_x : Std.I32)
+    (hg : gamma2 = 95232#i32 ∨ gamma2 = 261888#i32) :
+    ∃ v, libcrux_iot_ml_dsa.simd.portable.arithmetic.use_one_hint gamma2 src_x acc_x = .ok v := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.use_one_hint
+  simp only [classify_ok, declassify_ok, decompose_element_eq_ok gamma2 src_x hg,
+    Aeneas.Std.bind_tc_ok]
+  obtain ⟨d0, d1, hd⟩ : ∃ a b, decompose_impl_value gamma2 src_x = (a, b) := ⟨_, _, rfl⟩
+  rw [hd]
+  rcases hg with hg | hg <;> subst hg
+  · show ∃ v,
+      (if acc_x = 0#i32 then Result.ok d1
+       else
+         if d0 > 0#i32 then
+           (if d1 = 43#i32 then Result.ok 0#i32 else core.num.I32.wrapping_add d1 acc_x)
+         else
+           (if d1 = 0#i32 then Result.ok 43#i32 else core.num.I32.wrapping_sub d1 acc_x)) = .ok v
+    simp only [core_wrapping_add_ok, core_wrapping_sub_ok]
+    split_ifs <;> exact ⟨_, rfl⟩
+  · show ∃ v,
+      (if acc_x = 0#i32 then Result.ok d1
+       else
+         if d0 > 0#i32 then
+           (core.num.I32.wrapping_add d1 acc_x >>= fun i1 => Result.ok (i1 &&& 15#i32))
+         else
+           (core.num.I32.wrapping_sub d1 acc_x >>= fun i1 => Result.ok (i1 &&& 15#i32))) = .ok v
+    simp only [core_wrapping_add_ok, core_wrapping_sub_ok, Aeneas.Std.bind_tc_ok]
+    split_ifs <;> exact ⟨_, rfl⟩
+
+private theorem use_hint_per_elem_spec (gamma2 : Std.I32)
+    (hg : gamma2 = 95232#i32 ∨ gamma2 = 261888#i32) (src_x acc_x : Std.I32) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.use_one_hint gamma2 src_x acc_x
+    ⦃ ⇓ z => ⌜ use_hint_per_elem_P gamma2 src_x acc_x z ⌝ ⦄ := by
+  obtain ⟨v, hv_eq⟩ := use_one_hint_ok_exists gamma2 src_x acc_x hg
+  apply triple_of_ok_l0 (v := v) hv_eq
+  unfold use_hint_per_elem_P
+  intro hlo hhi hacc
+  obtain ⟨z, hz_eq, hz_P⟩ :=
+    triple_exists_ok_l0 (use_one_hint_spec gamma2 src_x acc_x hg hlo hhi hacc)
+  rw [hv_eq] at hz_eq
+  rw [Result.ok.inj hz_eq]; exact hz_P
+
+set_option maxHeartbeats 2000000 in
+@[spec]
+theorem use_hint_spec (gamma2 : Std.I32)
+    (simd_unit hint : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (hg : gamma2 = 95232#i32 ∨ gamma2 = 261888#i32)
+    (hbound : ∀ j : Nat, j < 8 →
+        -(8380417 : Int) ≤ (simd_unit.values.val[j]!).val
+          ∧ (simd_unit.values.val[j]!).val < (8380417 : Int))
+    (hhint : ∀ j : Nat, j < 8 →
+        (hint.values.val[j]!).val = 0 ∨ (hint.values.val[j]!).val = 1) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.use_hint gamma2 simd_unit hint
+    ⦃ ⇓ p => ⌜ ∀ j : Nat, j < 8 →
+        (p.values.val[j]!).val = libcrux_iot_ml_dsa.Spec.Rounding.useHint
+          (((hint.values.val[j]!).val == 1) : Bool)
+          (simd_unit.values.val[j]!).val gamma2.val ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.use_hint
+  rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice hint.values)
+        = .ok (Aeneas.Std.Array.to_slice hint.values) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [show CoreModels.core.slice.Slice.len (Aeneas.Std.Array.to_slice hint.values)
+        = .ok (Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice hint.values)) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [coeff_slice_len_eq hint.values]
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.use_hint_loop
+  have h_body_eq :
+      (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+         libcrux_iot_ml_dsa.simd.portable.arithmetic.use_hint_loop.body
+           gamma2 simd_unit p.1 p.2)
+      = (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+         two_src_single_output_loop_body
+           (fun src_x acc_x =>
+             libcrux_iot_ml_dsa.simd.portable.arithmetic.use_one_hint gamma2 src_x acc_x)
+           simd_unit p.1 p.2) := by
+    funext p
+    obtain ⟨iter1, a1⟩ := p
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.use_hint_loop.body
+    unfold two_src_single_output_loop_body
+    simp only [classify_ok, declassify_ok, Aeneas.Std.bind_tc_ok]
+    rfl
+  rw [h_body_eq]
+  obtain ⟨out, h_out_eq, h_out_P⟩ :=
+    triple_exists_ok_l0
+      (elementwise_two_src_single_output_spec
+        (fun src_x acc_x =>
+          libcrux_iot_ml_dsa.simd.portable.arithmetic.use_one_hint gamma2 src_x acc_x)
+        (use_hint_per_elem_P gamma2) (use_hint_per_elem_spec gamma2 hg)
+        simd_unit hint.values)
+  rw [h_out_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  refine triple_of_ok_l0 (v := ({ values := out })) rfl ?_
+  intro j hj
+  obtain ⟨pj, _h_eq, h_val, h_P⟩ := h_out_P j hj
+  obtain ⟨hb_lo, hb_hi⟩ := hbound j hj
+  have hacc := hhint j hj
+  show (out.val[j]!).val = _
+  rw [h_val]
+  exact h_P hb_lo hb_hi hacc
+
 end libcrux_iot_ml_dsa.Vector.Portable.Rounding
