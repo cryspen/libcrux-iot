@@ -87,25 +87,33 @@ from `Funs.lean` (the impl bakes zetas inline per layer fn).
 
 /-! ## Phase 5 — L3 NTT driver FC (the core results)
 
-Forward (`ntt.rs::ntt`, `simd/portable/ntt.rs`):
+**SCOPE (S07 user decision):** the ml-dsa extraction materialises NO
+`simd.traits.Operations Coefficients` instance and never invokes the generic
+trait wrappers `ntt.ntt` / `ntt.invert_ntt_montgomery` concretely (only this
+Plan referenced them). The masters are therefore proven about the CONCRETE
+portable functions, on the `Array`-level `Lift.lift_units` (≡ `lift_poly` on
+`.simd_units` by `lift_poly_eq_lift_units`).
+
+Forward (`simd/portable/ntt.rs::ntt`) — **DONE**, `ntt_inner_fc` (`NttMaster.lean`):
 ```
-@[spec high] theorem ntt_fc (re : <PolynomialRingElement>) (h : <input bound>) :
-  ⦃ ⌜ True ⌝ ⦄ ntt.ntt re
-  ⦃ ⇓ r => ⌜ Lift.lift_poly r = Pure.ntt_pure (Lift.lift_poly re) ⌝ ⦄
--- sketch: per-layer step-lemma + loop-driver compose (SKILL §13.6); layers 0–2
---   map within-unit butterflies over 32 units, layers 3–7 drive outer_3_plus;
---   compose 8 layers; zeta bridge (Phase 4) supplies the clean zetas.
+@[spec] theorem ntt_inner_fc (re) (B) (hB : B + 34·2^24 ≤ 2^31-1) (hin) :
+  ⦃ ⌜ True ⌝ ⦄ simd.portable.ntt.ntt re
+  ⦃ ⇓ r => ⌜ Lift.lift_units r = Pure.ntt (Lift.lift_units re) ∧ bound ≤ B+34·2^24 ⌝ ⦄
 ```
-Inverse (`ntt.rs::invert_ntt_montgomery`, `.../invntt.rs`):
+Inverse (`simd/portable/.../invert_ntt_montgomery`) — TODO, mirror the forward
+master about the concrete fn:
 ```
-@[spec high] theorem invert_ntt_montgomery_fc (re : <…>) (h : <input bound>) :
-  ⦃ ⌜ True ⌝ ⦄ ntt.invert_ntt_montgomery re
-  ⦃ ⇓ r => ⌜ Lift.lift_poly r = Pure.intt_pure (Lift.lift_poly re) ⌝ ⦄
--- sketch: 8 Gentleman–Sande layers then ×41978 finalize (= R²·256⁻¹), which
---   realizes the spec's reduce_polynomial (×256⁻¹) after R-reconciliation.
+@[spec] theorem invert_ntt_inner_fc (re) (B) (h…) :
+  ⦃ ⌜ True ⌝ ⦄ simd.portable.ntt.invert_ntt_montgomery re
+  ⦃ ⇓ r => ⌜ Lift.lift_units r = <Pure.intt … × R-reconciliation: liftZ-double-strip
+              OR (Pure.intt (lift_units re)).map (·*R)> ⌝ ⦄
+-- 8 Gentleman–Sande layers then ×41978 finalize (= R²·256⁻¹). R-reconciliation
+--   SETTLED (S07): liftZ(out) = Pure.intt(lift_units re)·R (one extra R);
+--   liftZ(liftZ(out)) = Pure.intt(lift_units re). Pick the lift form at dispatch.
 ```
-Per-layer drivers `ntt_at_layer_{0..7}_fc`, `invert_ntt_at_layer_{0..7}_fc` are
-the §13.6 combinator lemmas the composers chain.
+Per-layer drivers `ntt_at_layer_{0..7}_fc` (**DONE**),
+`invert_ntt_at_layer_{0..7}_fc` (TODO) are the §13.6 combinator lemmas the
+composers chain.
 -/
 
 /-! ## Phase 6 — pointwise multiply + poly reduce FC
