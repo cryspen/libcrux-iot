@@ -214,7 +214,7 @@ private theorem roundInv2_fc
         ∧ liftZ ((out.val[k]!).values.val[7]!).val
             = (liftZ ((re.val[k]!).values.val[7]!).val - liftZ ((re.val[k]!).values.val[3]!).val) * liftZ zeta.val)
       ∧ (∀ u : Nat, u < 32 → u ≠ k → out.val[u]! = re.val[u]!)
-      ∧ (∀ l : Nat, l < 8 → ((out.val[k]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24) := by
+      ∧ (∀ l : Nat, l < 8 → ((out.val[k]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816) := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_2.round
   have hre_len : re.length = 32 := Std.Array.length_eq _
   have hk_len : (k#usize : Std.Usize).val < re.length := by
@@ -252,7 +252,7 @@ theorem invert_ntt_at_layer_2_fc
     libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_2 re
     ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 2
              ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
-                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_2
   have hkeep0 : ∀ u, 0 ≤ u → u < 32 → re.val[u]! = re.val[u]! := fun u _ _ => rfl
   obtain ⟨r1, hr1_eq, hbut0, hfr0, hbd0⟩ :=
@@ -1159,72 +1159,72 @@ theorem invert_ntt_at_layer_2_fc
     | 30, _ => exact hbfu30 l hl
     | 31, _ => exact hbfu31 l hl
     | (n + 32), h => exact absurd h (by omega)
-  have hbnd0 : ∀ l, l < 8 → ((r32.val[0]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd0 : ∀ l, l < 8 → ((r32.val[0]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u0]; exact hbd0 l hl
-  have hbnd1 : ∀ l, l < 8 → ((r32.val[1]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd1 : ∀ l, l < 8 → ((r32.val[1]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u1]; exact hbd1 l hl
-  have hbnd2 : ∀ l, l < 8 → ((r32.val[2]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd2 : ∀ l, l < 8 → ((r32.val[2]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u2]; exact hbd2 l hl
-  have hbnd3 : ∀ l, l < 8 → ((r32.val[3]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd3 : ∀ l, l < 8 → ((r32.val[3]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u3]; exact hbd3 l hl
-  have hbnd4 : ∀ l, l < 8 → ((r32.val[4]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd4 : ∀ l, l < 8 → ((r32.val[4]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u4]; exact hbd4 l hl
-  have hbnd5 : ∀ l, l < 8 → ((r32.val[5]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd5 : ∀ l, l < 8 → ((r32.val[5]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u5]; exact hbd5 l hl
-  have hbnd6 : ∀ l, l < 8 → ((r32.val[6]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd6 : ∀ l, l < 8 → ((r32.val[6]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u6]; exact hbd6 l hl
-  have hbnd7 : ∀ l, l < 8 → ((r32.val[7]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd7 : ∀ l, l < 8 → ((r32.val[7]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u7]; exact hbd7 l hl
-  have hbnd8 : ∀ l, l < 8 → ((r32.val[8]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd8 : ∀ l, l < 8 → ((r32.val[8]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u8]; exact hbd8 l hl
-  have hbnd9 : ∀ l, l < 8 → ((r32.val[9]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd9 : ∀ l, l < 8 → ((r32.val[9]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u9]; exact hbd9 l hl
-  have hbnd10 : ∀ l, l < 8 → ((r32.val[10]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd10 : ∀ l, l < 8 → ((r32.val[10]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u10]; exact hbd10 l hl
-  have hbnd11 : ∀ l, l < 8 → ((r32.val[11]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd11 : ∀ l, l < 8 → ((r32.val[11]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u11]; exact hbd11 l hl
-  have hbnd12 : ∀ l, l < 8 → ((r32.val[12]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd12 : ∀ l, l < 8 → ((r32.val[12]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u12]; exact hbd12 l hl
-  have hbnd13 : ∀ l, l < 8 → ((r32.val[13]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd13 : ∀ l, l < 8 → ((r32.val[13]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u13]; exact hbd13 l hl
-  have hbnd14 : ∀ l, l < 8 → ((r32.val[14]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd14 : ∀ l, l < 8 → ((r32.val[14]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u14]; exact hbd14 l hl
-  have hbnd15 : ∀ l, l < 8 → ((r32.val[15]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd15 : ∀ l, l < 8 → ((r32.val[15]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u15]; exact hbd15 l hl
-  have hbnd16 : ∀ l, l < 8 → ((r32.val[16]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd16 : ∀ l, l < 8 → ((r32.val[16]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u16]; exact hbd16 l hl
-  have hbnd17 : ∀ l, l < 8 → ((r32.val[17]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd17 : ∀ l, l < 8 → ((r32.val[17]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u17]; exact hbd17 l hl
-  have hbnd18 : ∀ l, l < 8 → ((r32.val[18]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd18 : ∀ l, l < 8 → ((r32.val[18]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u18]; exact hbd18 l hl
-  have hbnd19 : ∀ l, l < 8 → ((r32.val[19]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd19 : ∀ l, l < 8 → ((r32.val[19]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u19]; exact hbd19 l hl
-  have hbnd20 : ∀ l, l < 8 → ((r32.val[20]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd20 : ∀ l, l < 8 → ((r32.val[20]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u20]; exact hbd20 l hl
-  have hbnd21 : ∀ l, l < 8 → ((r32.val[21]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd21 : ∀ l, l < 8 → ((r32.val[21]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u21]; exact hbd21 l hl
-  have hbnd22 : ∀ l, l < 8 → ((r32.val[22]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd22 : ∀ l, l < 8 → ((r32.val[22]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u22]; exact hbd22 l hl
-  have hbnd23 : ∀ l, l < 8 → ((r32.val[23]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd23 : ∀ l, l < 8 → ((r32.val[23]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u23]; exact hbd23 l hl
-  have hbnd24 : ∀ l, l < 8 → ((r32.val[24]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd24 : ∀ l, l < 8 → ((r32.val[24]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u24]; exact hbd24 l hl
-  have hbnd25 : ∀ l, l < 8 → ((r32.val[25]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd25 : ∀ l, l < 8 → ((r32.val[25]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u25]; exact hbd25 l hl
-  have hbnd26 : ∀ l, l < 8 → ((r32.val[26]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd26 : ∀ l, l < 8 → ((r32.val[26]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u26]; exact hbd26 l hl
-  have hbnd27 : ∀ l, l < 8 → ((r32.val[27]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd27 : ∀ l, l < 8 → ((r32.val[27]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u27]; exact hbd27 l hl
-  have hbnd28 : ∀ l, l < 8 → ((r32.val[28]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd28 : ∀ l, l < 8 → ((r32.val[28]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u28]; exact hbd28 l hl
-  have hbnd29 : ∀ l, l < 8 → ((r32.val[29]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd29 : ∀ l, l < 8 → ((r32.val[29]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u29]; exact hbd29 l hl
-  have hbnd30 : ∀ l, l < 8 → ((r32.val[30]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd30 : ∀ l, l < 8 → ((r32.val[30]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u30]; exact hbd30 l hl
-  have hbnd31 : ∀ l, l < 8 → ((r32.val[31]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd31 : ∀ l, l < 8 → ((r32.val[31]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u31]; exact hbd31 l hl
   have hbnd : ∀ u, u < 32 → ∀ l, l < 8 →
-      ((r32.val[u]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+      ((r32.val[u]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro u hu l hl
     match u, hu with
     | 0, _ => exact hbnd0 l hl
@@ -1586,7 +1586,7 @@ private theorem roundInv1_fc
         ∧ liftZ ((out.val[k]!).values.val[7]!).val
             = (liftZ ((re.val[k]!).values.val[7]!).val - liftZ ((re.val[k]!).values.val[5]!).val) * liftZ zeta1.val)
       ∧ (∀ u : Nat, u < 32 → u ≠ k → out.val[u]! = re.val[u]!)
-      ∧ (∀ l : Nat, l < 8 → ((out.val[k]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24) := by
+      ∧ (∀ l : Nat, l < 8 → ((out.val[k]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816) := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_1.round
   have hre_len : re.length = 32 := Std.Array.length_eq _
   have hk_len : (k#usize : Std.Usize).val < re.length := by
@@ -1624,7 +1624,7 @@ theorem invert_ntt_at_layer_1_fc
     libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_1 re
     ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 1
              ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
-                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_1
   have hkeep0 : ∀ u, 0 ≤ u → u < 32 → re.val[u]! = re.val[u]! := fun u _ _ => rfl
   obtain ⟨r1, hr1_eq, hbut0, hfr0, hbd0⟩ :=
@@ -2531,72 +2531,72 @@ theorem invert_ntt_at_layer_1_fc
     | 30, _ => exact hbfu30 l hl
     | 31, _ => exact hbfu31 l hl
     | (n + 32), h => exact absurd h (by omega)
-  have hbnd0 : ∀ l, l < 8 → ((r32.val[0]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd0 : ∀ l, l < 8 → ((r32.val[0]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u0]; exact hbd0 l hl
-  have hbnd1 : ∀ l, l < 8 → ((r32.val[1]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd1 : ∀ l, l < 8 → ((r32.val[1]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u1]; exact hbd1 l hl
-  have hbnd2 : ∀ l, l < 8 → ((r32.val[2]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd2 : ∀ l, l < 8 → ((r32.val[2]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u2]; exact hbd2 l hl
-  have hbnd3 : ∀ l, l < 8 → ((r32.val[3]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd3 : ∀ l, l < 8 → ((r32.val[3]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u3]; exact hbd3 l hl
-  have hbnd4 : ∀ l, l < 8 → ((r32.val[4]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd4 : ∀ l, l < 8 → ((r32.val[4]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u4]; exact hbd4 l hl
-  have hbnd5 : ∀ l, l < 8 → ((r32.val[5]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd5 : ∀ l, l < 8 → ((r32.val[5]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u5]; exact hbd5 l hl
-  have hbnd6 : ∀ l, l < 8 → ((r32.val[6]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd6 : ∀ l, l < 8 → ((r32.val[6]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u6]; exact hbd6 l hl
-  have hbnd7 : ∀ l, l < 8 → ((r32.val[7]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd7 : ∀ l, l < 8 → ((r32.val[7]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u7]; exact hbd7 l hl
-  have hbnd8 : ∀ l, l < 8 → ((r32.val[8]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd8 : ∀ l, l < 8 → ((r32.val[8]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u8]; exact hbd8 l hl
-  have hbnd9 : ∀ l, l < 8 → ((r32.val[9]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd9 : ∀ l, l < 8 → ((r32.val[9]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u9]; exact hbd9 l hl
-  have hbnd10 : ∀ l, l < 8 → ((r32.val[10]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd10 : ∀ l, l < 8 → ((r32.val[10]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u10]; exact hbd10 l hl
-  have hbnd11 : ∀ l, l < 8 → ((r32.val[11]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd11 : ∀ l, l < 8 → ((r32.val[11]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u11]; exact hbd11 l hl
-  have hbnd12 : ∀ l, l < 8 → ((r32.val[12]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd12 : ∀ l, l < 8 → ((r32.val[12]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u12]; exact hbd12 l hl
-  have hbnd13 : ∀ l, l < 8 → ((r32.val[13]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd13 : ∀ l, l < 8 → ((r32.val[13]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u13]; exact hbd13 l hl
-  have hbnd14 : ∀ l, l < 8 → ((r32.val[14]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd14 : ∀ l, l < 8 → ((r32.val[14]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u14]; exact hbd14 l hl
-  have hbnd15 : ∀ l, l < 8 → ((r32.val[15]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd15 : ∀ l, l < 8 → ((r32.val[15]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u15]; exact hbd15 l hl
-  have hbnd16 : ∀ l, l < 8 → ((r32.val[16]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd16 : ∀ l, l < 8 → ((r32.val[16]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u16]; exact hbd16 l hl
-  have hbnd17 : ∀ l, l < 8 → ((r32.val[17]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd17 : ∀ l, l < 8 → ((r32.val[17]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u17]; exact hbd17 l hl
-  have hbnd18 : ∀ l, l < 8 → ((r32.val[18]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd18 : ∀ l, l < 8 → ((r32.val[18]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u18]; exact hbd18 l hl
-  have hbnd19 : ∀ l, l < 8 → ((r32.val[19]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd19 : ∀ l, l < 8 → ((r32.val[19]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u19]; exact hbd19 l hl
-  have hbnd20 : ∀ l, l < 8 → ((r32.val[20]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd20 : ∀ l, l < 8 → ((r32.val[20]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u20]; exact hbd20 l hl
-  have hbnd21 : ∀ l, l < 8 → ((r32.val[21]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd21 : ∀ l, l < 8 → ((r32.val[21]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u21]; exact hbd21 l hl
-  have hbnd22 : ∀ l, l < 8 → ((r32.val[22]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd22 : ∀ l, l < 8 → ((r32.val[22]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u22]; exact hbd22 l hl
-  have hbnd23 : ∀ l, l < 8 → ((r32.val[23]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd23 : ∀ l, l < 8 → ((r32.val[23]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u23]; exact hbd23 l hl
-  have hbnd24 : ∀ l, l < 8 → ((r32.val[24]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd24 : ∀ l, l < 8 → ((r32.val[24]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u24]; exact hbd24 l hl
-  have hbnd25 : ∀ l, l < 8 → ((r32.val[25]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd25 : ∀ l, l < 8 → ((r32.val[25]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u25]; exact hbd25 l hl
-  have hbnd26 : ∀ l, l < 8 → ((r32.val[26]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd26 : ∀ l, l < 8 → ((r32.val[26]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u26]; exact hbd26 l hl
-  have hbnd27 : ∀ l, l < 8 → ((r32.val[27]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd27 : ∀ l, l < 8 → ((r32.val[27]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u27]; exact hbd27 l hl
-  have hbnd28 : ∀ l, l < 8 → ((r32.val[28]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd28 : ∀ l, l < 8 → ((r32.val[28]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u28]; exact hbd28 l hl
-  have hbnd29 : ∀ l, l < 8 → ((r32.val[29]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd29 : ∀ l, l < 8 → ((r32.val[29]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u29]; exact hbd29 l hl
-  have hbnd30 : ∀ l, l < 8 → ((r32.val[30]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd30 : ∀ l, l < 8 → ((r32.val[30]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u30]; exact hbd30 l hl
-  have hbnd31 : ∀ l, l < 8 → ((r32.val[31]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd31 : ∀ l, l < 8 → ((r32.val[31]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u31]; exact hbd31 l hl
   have hbnd : ∀ u, u < 32 → ∀ l, l < 8 →
-      ((r32.val[u]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+      ((r32.val[u]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro u hu l hl
     match u, hu with
     | 0, _ => exact hbnd0 l hl
@@ -3218,7 +3218,7 @@ private theorem roundInv0_fc
         ∧ liftZ ((out.val[k]!).values.val[7]!).val
             = (liftZ ((re.val[k]!).values.val[7]!).val - liftZ ((re.val[k]!).values.val[6]!).val) * liftZ zeta3.val)
       ∧ (∀ u : Nat, u < 32 → u ≠ k → out.val[u]! = re.val[u]!)
-      ∧ (∀ l : Nat, l < 8 → ((out.val[k]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24) := by
+      ∧ (∀ l : Nat, l < 8 → ((out.val[k]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816) := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_0.round
   have hre_len : re.length = 32 := Std.Array.length_eq _
   have hk_len : (k#usize : Std.Usize).val < re.length := by
@@ -3256,7 +3256,7 @@ theorem invert_ntt_at_layer_0_fc
     libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_0 re
     ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 0
              ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
-                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_0
   have hkeep0 : ∀ u, 0 ≤ u → u < 32 → re.val[u]! = re.val[u]! := fun u _ _ => rfl
   obtain ⟨r1, hr1_eq, hbut0, hfr0, hbd0⟩ :=
@@ -4163,72 +4163,72 @@ theorem invert_ntt_at_layer_0_fc
     | 30, _ => exact hbfu30 l hl
     | 31, _ => exact hbfu31 l hl
     | (n + 32), h => exact absurd h (by omega)
-  have hbnd0 : ∀ l, l < 8 → ((r32.val[0]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd0 : ∀ l, l < 8 → ((r32.val[0]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u0]; exact hbd0 l hl
-  have hbnd1 : ∀ l, l < 8 → ((r32.val[1]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd1 : ∀ l, l < 8 → ((r32.val[1]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u1]; exact hbd1 l hl
-  have hbnd2 : ∀ l, l < 8 → ((r32.val[2]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd2 : ∀ l, l < 8 → ((r32.val[2]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u2]; exact hbd2 l hl
-  have hbnd3 : ∀ l, l < 8 → ((r32.val[3]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd3 : ∀ l, l < 8 → ((r32.val[3]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u3]; exact hbd3 l hl
-  have hbnd4 : ∀ l, l < 8 → ((r32.val[4]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd4 : ∀ l, l < 8 → ((r32.val[4]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u4]; exact hbd4 l hl
-  have hbnd5 : ∀ l, l < 8 → ((r32.val[5]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd5 : ∀ l, l < 8 → ((r32.val[5]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u5]; exact hbd5 l hl
-  have hbnd6 : ∀ l, l < 8 → ((r32.val[6]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd6 : ∀ l, l < 8 → ((r32.val[6]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u6]; exact hbd6 l hl
-  have hbnd7 : ∀ l, l < 8 → ((r32.val[7]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd7 : ∀ l, l < 8 → ((r32.val[7]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u7]; exact hbd7 l hl
-  have hbnd8 : ∀ l, l < 8 → ((r32.val[8]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd8 : ∀ l, l < 8 → ((r32.val[8]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u8]; exact hbd8 l hl
-  have hbnd9 : ∀ l, l < 8 → ((r32.val[9]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd9 : ∀ l, l < 8 → ((r32.val[9]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u9]; exact hbd9 l hl
-  have hbnd10 : ∀ l, l < 8 → ((r32.val[10]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd10 : ∀ l, l < 8 → ((r32.val[10]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u10]; exact hbd10 l hl
-  have hbnd11 : ∀ l, l < 8 → ((r32.val[11]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd11 : ∀ l, l < 8 → ((r32.val[11]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u11]; exact hbd11 l hl
-  have hbnd12 : ∀ l, l < 8 → ((r32.val[12]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd12 : ∀ l, l < 8 → ((r32.val[12]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u12]; exact hbd12 l hl
-  have hbnd13 : ∀ l, l < 8 → ((r32.val[13]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd13 : ∀ l, l < 8 → ((r32.val[13]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u13]; exact hbd13 l hl
-  have hbnd14 : ∀ l, l < 8 → ((r32.val[14]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd14 : ∀ l, l < 8 → ((r32.val[14]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u14]; exact hbd14 l hl
-  have hbnd15 : ∀ l, l < 8 → ((r32.val[15]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd15 : ∀ l, l < 8 → ((r32.val[15]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u15]; exact hbd15 l hl
-  have hbnd16 : ∀ l, l < 8 → ((r32.val[16]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd16 : ∀ l, l < 8 → ((r32.val[16]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u16]; exact hbd16 l hl
-  have hbnd17 : ∀ l, l < 8 → ((r32.val[17]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd17 : ∀ l, l < 8 → ((r32.val[17]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u17]; exact hbd17 l hl
-  have hbnd18 : ∀ l, l < 8 → ((r32.val[18]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd18 : ∀ l, l < 8 → ((r32.val[18]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u18]; exact hbd18 l hl
-  have hbnd19 : ∀ l, l < 8 → ((r32.val[19]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd19 : ∀ l, l < 8 → ((r32.val[19]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u19]; exact hbd19 l hl
-  have hbnd20 : ∀ l, l < 8 → ((r32.val[20]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd20 : ∀ l, l < 8 → ((r32.val[20]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u20]; exact hbd20 l hl
-  have hbnd21 : ∀ l, l < 8 → ((r32.val[21]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd21 : ∀ l, l < 8 → ((r32.val[21]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u21]; exact hbd21 l hl
-  have hbnd22 : ∀ l, l < 8 → ((r32.val[22]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd22 : ∀ l, l < 8 → ((r32.val[22]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u22]; exact hbd22 l hl
-  have hbnd23 : ∀ l, l < 8 → ((r32.val[23]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd23 : ∀ l, l < 8 → ((r32.val[23]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u23]; exact hbd23 l hl
-  have hbnd24 : ∀ l, l < 8 → ((r32.val[24]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd24 : ∀ l, l < 8 → ((r32.val[24]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u24]; exact hbd24 l hl
-  have hbnd25 : ∀ l, l < 8 → ((r32.val[25]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd25 : ∀ l, l < 8 → ((r32.val[25]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u25]; exact hbd25 l hl
-  have hbnd26 : ∀ l, l < 8 → ((r32.val[26]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd26 : ∀ l, l < 8 → ((r32.val[26]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u26]; exact hbd26 l hl
-  have hbnd27 : ∀ l, l < 8 → ((r32.val[27]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd27 : ∀ l, l < 8 → ((r32.val[27]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u27]; exact hbd27 l hl
-  have hbnd28 : ∀ l, l < 8 → ((r32.val[28]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd28 : ∀ l, l < 8 → ((r32.val[28]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u28]; exact hbd28 l hl
-  have hbnd29 : ∀ l, l < 8 → ((r32.val[29]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd29 : ∀ l, l < 8 → ((r32.val[29]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u29]; exact hbd29 l hl
-  have hbnd30 : ∀ l, l < 8 → ((r32.val[30]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd30 : ∀ l, l < 8 → ((r32.val[30]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u30]; exact hbd30 l hl
-  have hbnd31 : ∀ l, l < 8 → ((r32.val[31]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+  have hbnd31 : ∀ l, l < 8 → ((r32.val[31]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro l hl; rw [hr32u31]; exact hbd31 l hl
   have hbnd : ∀ u, u < 32 → ∀ l, l < 8 →
-      ((r32.val[u]!).values.val[l]!).val.natAbs ≤ 2 * B + 2 ^ 24 := by
+      ((r32.val[u]!).values.val[l]!).val.natAbs ≤ max (2 * B) 12578816 := by
     intro u hu l hl
     match u, hu with
     | 0, _ => exact hbnd0 l hl
@@ -4342,7 +4342,7 @@ theorem invert_ntt_at_layer_7_fc
     libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_7 re
     ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 7
              ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
-                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_7
   -- Pull the inverse cross-unit keystone at OFFSET=0, STEP_BY=16, ZETA=25847.
   have hz := zetaInv7_mag
@@ -4474,7 +4474,7 @@ theorem invert_ntt_at_layer_6_fc
     libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_6 re
     ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 6
              ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
-                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_6
   have hstep : 1 ≤ (8#usize : Std.Usize).val := by decide
   have hz0 := zetaInv6_mag0
@@ -4640,7 +4640,7 @@ theorem invert_ntt_at_layer_5_fc
     libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_5 re
     ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 5
              ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
-                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_5
   have hstep : 1 ≤ (4#usize : Std.Usize).val := by decide
   have hz0 := zetaInv5_mag0
@@ -4902,7 +4902,7 @@ theorem invert_ntt_at_layer_4_fc
     libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_4 re
     ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 4
              ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
-                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_4
   have hstep : 1 ≤ (2#usize : Std.Usize).val := by decide
   have hz0 := zetaInv4_mag0
@@ -5456,7 +5456,7 @@ theorem invert_ntt_at_layer_3_fc
     libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_3 re
     ⦃ ⇓ r => ⌜ lift_units r = Pure.intt_layer (lift_units re) 3
              ∧ (∀ u : Nat, u < 32 → ∀ l : Nat, l < 8 →
-                  (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+                  (r.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.invert_ntt_at_layer_3
   have hstep : 1 ≤ (1#usize : Std.Usize).val := by decide
   have hz0 := zetaInv3_mag0

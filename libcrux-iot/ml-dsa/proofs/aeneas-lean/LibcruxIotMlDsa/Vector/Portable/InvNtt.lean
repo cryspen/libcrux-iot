@@ -160,7 +160,7 @@ theorem simd_unit_invert_ntt_at_layer_0_fc
               ∧ liftZ (r.values.val[5]!).val = (liftZ (simd_unit.values.val[5]!).val - liftZ (simd_unit.values.val[4]!).val) * liftZ zeta2.val
               ∧ liftZ (r.values.val[6]!).val = liftZ (simd_unit.values.val[6]!).val + liftZ (simd_unit.values.val[7]!).val
               ∧ liftZ (r.values.val[7]!).val = (liftZ (simd_unit.values.val[7]!).val - liftZ (simd_unit.values.val[6]!).val) * liftZ zeta3.val)
-            ∧ (∀ j : Nat, j < 8 → (r.values.val[j]!).val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+            ∧ (∀ j : Nat, j < 8 → (r.values.val[j]!).val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   have h_len : simd_unit.values.length = 8 := Coefficients_values_length simd_unit
   -- Abbreviate the 8 input lanes.
   set v0 : Std.I32 := simd_unit.values.val[0]! with hv0
@@ -191,16 +191,16 @@ theorem simd_unit_invert_ntt_at_layer_0_fc
   obtain ⟨s3, hs3_eq, hs3_val, hs3_bd⟩ := checked_add_ok2 v6 v7 B hb6 hb7 hB
   -- mont-mul leaves on the DIFFERENCE: t_p = mmfbf amb_p zeta_p.
   obtain ⟨t0, ht0_eq, ht0_lift, ht0_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb0 zeta0 hz0)
   obtain ⟨t1, ht1_eq, ht1_lift, ht1_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb1 zeta1 hz1)
   obtain ⟨t2, ht2_eq, ht2_lift, ht2_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb2 zeta2 hz2)
   obtain ⟨t3, ht3_eq, ht3_lift, ht3_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb3 zeta3 hz3)
   -- ===== Index/update bridges (read the EXACT lane each step touches). =====
   -- Pair 0: hi=1, lo=0.  Reads simd_unit[1], simd_unit[0]; update 0 (s0) then update 1 (t0).
@@ -405,7 +405,7 @@ theorem simd_unit_invert_ntt_at_layer_0_fc
         show amb3.val = v7.val - v6.val from hamb3_val, liftZ_sub]
   · -- Output bounds on all 8 lanes (lo lanes ≤ 2B, hi lanes ≤ 2^24, both ≤ 2B+2^24).
     intro j hj
-    show (final_unit.values.val[j]!).val.natAbs ≤ 2 * B + 2 ^ 24
+    show (final_unit.values.val[j]!).val.natAbs ≤ max (2 * B) 12578816
     rw [show final_unit.values = a7 from rfl]
     match j, hj with
     | 0, _ => rw [hr0]; exact Nat.le_trans hs0_bd (by omega)
@@ -441,7 +441,7 @@ theorem simd_unit_invert_ntt_at_layer_1_fc
               ∧ liftZ (r.values.val[5]!).val = liftZ (simd_unit.values.val[5]!).val + liftZ (simd_unit.values.val[7]!).val
               ∧ liftZ (r.values.val[6]!).val = (liftZ (simd_unit.values.val[6]!).val - liftZ (simd_unit.values.val[4]!).val) * liftZ zeta1.val
               ∧ liftZ (r.values.val[7]!).val = (liftZ (simd_unit.values.val[7]!).val - liftZ (simd_unit.values.val[5]!).val) * liftZ zeta1.val)
-            ∧ (∀ j : Nat, j < 8 → (r.values.val[j]!).val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+            ∧ (∀ j : Nat, j < 8 → (r.values.val[j]!).val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   have h_len : simd_unit.values.length = 8 := Coefficients_values_length simd_unit
   set v0 : Std.I32 := simd_unit.values.val[0]! with hv0
   set v1 : Std.I32 := simd_unit.values.val[1]! with hv1
@@ -473,16 +473,16 @@ theorem simd_unit_invert_ntt_at_layer_1_fc
   obtain ⟨s3, hs3_eq, hs3_val, hs3_bd⟩ := checked_add_ok2 v5 v7 B hb5 hb7 hB
   -- mont-mul leaves on the differences: pairs 0,1 use zeta0; pairs 2,3 use zeta1.
   obtain ⟨t0, ht0_eq, ht0_lift, ht0_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb0 zeta0 hz0)
   obtain ⟨t1, ht1_eq, ht1_lift, ht1_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb1 zeta0 hz0)
   obtain ⟨t2, ht2_eq, ht2_lift, ht2_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb2 zeta1 hz1)
   obtain ⟨t3, ht3_eq, ht3_lift, ht3_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb3 zeta1 hz1)
   -- ===== Index/update bridges (update order: 0, 2, 1, 3, 4, 6, 5, 7). =====
   -- Pair 0: hi=2, lo=0.  Reads simd_unit[2], simd_unit[0]; update 0 (s0) then update 2 (t0).
@@ -683,7 +683,7 @@ theorem simd_unit_invert_ntt_at_layer_1_fc
     rw [show final_unit.values = a7 from rfl, hr7, hlift3,
         show amb3.val = v7.val - v5.val from hamb3_val, liftZ_sub]
   · intro j hj
-    show (final_unit.values.val[j]!).val.natAbs ≤ 2 * B + 2 ^ 24
+    show (final_unit.values.val[j]!).val.natAbs ≤ max (2 * B) 12578816
     rw [show final_unit.values = a7 from rfl]
     match j, hj with
     | 0, _ => rw [hr0]; exact Nat.le_trans hs0_bd (by omega)
@@ -720,7 +720,7 @@ theorem simd_unit_invert_ntt_at_layer_2_fc
               ∧ liftZ (r.values.val[5]!).val = (liftZ (simd_unit.values.val[5]!).val - liftZ (simd_unit.values.val[1]!).val) * liftZ zeta.val
               ∧ liftZ (r.values.val[6]!).val = (liftZ (simd_unit.values.val[6]!).val - liftZ (simd_unit.values.val[2]!).val) * liftZ zeta.val
               ∧ liftZ (r.values.val[7]!).val = (liftZ (simd_unit.values.val[7]!).val - liftZ (simd_unit.values.val[3]!).val) * liftZ zeta.val)
-            ∧ (∀ j : Nat, j < 8 → (r.values.val[j]!).val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+            ∧ (∀ j : Nat, j < 8 → (r.values.val[j]!).val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   have h_len : simd_unit.values.length = 8 := Coefficients_values_length simd_unit
   set v0 : Std.I32 := simd_unit.values.val[0]! with hv0
   set v1 : Std.I32 := simd_unit.values.val[1]! with hv1
@@ -752,16 +752,16 @@ theorem simd_unit_invert_ntt_at_layer_2_fc
   obtain ⟨s3, hs3_eq, hs3_val, hs3_bd⟩ := checked_add_ok2 v3 v7 B hb3 hb7 hB
   -- mont-mul leaves on the differences: all 4 use the single zeta.
   obtain ⟨t0, ht0_eq, ht0_lift, ht0_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb0 zeta hz)
   obtain ⟨t1, ht1_eq, ht1_lift, ht1_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb1 zeta hz)
   obtain ⟨t2, ht2_eq, ht2_lift, ht2_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb2 zeta hz)
   obtain ⟨t3, ht3_eq, ht3_lift, ht3_bd⟩ :=
-    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec
+    triple_exists_ok (libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong
       amb3 zeta hz)
   -- ===== Index/update bridges (update order: 0, 4, 1, 5, 2, 6, 3, 7). =====
   -- Pair 0: hi=4, lo=0.  Reads simd_unit[4], simd_unit[0]; update 0 (s0) then update 4 (t0).
@@ -959,7 +959,7 @@ theorem simd_unit_invert_ntt_at_layer_2_fc
     rw [show final_unit.values = a7 from rfl, hr7, hlift3,
         show amb3.val = v7.val - v3.val from hamb3_val, liftZ_sub]
   · intro j hj
-    show (final_unit.values.val[j]!).val.natAbs ≤ 2 * B + 2 ^ 24
+    show (final_unit.values.val[j]!).val.natAbs ≤ max (2 * B) 12578816
     rw [show final_unit.values = a7 from rfl]
     match j, hj with
     | 0, _ => rw [hr0]; exact Nat.le_trans hs0_bd (by omega)
@@ -1026,7 +1026,7 @@ def inv
           acc.val[u]! = re.val[u]!)
     ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
           ∀ l : Nat, l < 8 →
-          (acc.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24))
+          (acc.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816))
 
 /-- Step-post for `loop_range_spec_usize`. -/
 def step_post
@@ -1161,7 +1161,7 @@ theorem outer_3_plus_step_lemma_fc
     -- (8) c5 = montgomery_multiply_by_constant amb ZETA.
     obtain ⟨c5, h_c5_eq, h_c5_P⟩ :=
       triple_exists_ok
-        (libcrux_iot_ml_dsa.Vector.Portable.Element.montgomery_multiply_by_constant_spec
+        (libcrux_iot_ml_dsa.Vector.Portable.Element.montgomery_multiply_by_constant_spec_strong
           amb ZETA hzeta)
     -- a = mb1 c5 = re2.set i c5 = (re1.set i amb).set i c5 = re1.set i c5
     -- = (acc.set k c3).set i c5  (double-set at i collapses, last wins = c5).
@@ -1246,7 +1246,7 @@ theorem outer_3_plus_step_lemma_fc
               a.val[u]! = re.val[u]!)
         ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
               ∀ l : Nat, l < 8 →
-              (a.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) := by
+              (a.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) := by
       refine ⟨?_, ?_, ?_⟩
       · -- Butterfly equations for j < s.val = k.val + 1.
         intro j hj_ge hj_lt
@@ -1382,7 +1382,7 @@ theorem outer_3_plus_step_lemma_fc
               acc.val[u]! = re.val[u]!)
         ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
               ∀ l : Nat, l < 8 →
-              (acc.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) := by
+              (acc.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) := by
       refine ⟨?_, ?_, h_bd⟩
       · intro j hj_ge hj_lt
         exact h_done j hj_ge (by rw [hk_eq]; exact hj_lt)
@@ -1430,7 +1430,7 @@ theorem outer_3_plus_fc
             r.val[u]! = re.val[u]!)
       ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
             ∀ l : Nat, l < 8 →
-            (r.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) ⌝ ⦄ := by
+            (r.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) ⌝ ⦄ := by
   unfold libcrux_iot_ml_dsa.simd.portable.invntt.outer_3_plus
   -- Discharge the checked `OFFSET + STEP_BY` add as `.ok e` (no overflow ≤ 32).
   have he_max : OFFSET.val + STEP_BY.val ≤ Std.Usize.max := by
@@ -1470,7 +1470,7 @@ theorem outer_3_plus_fc
                   re.val[u]! = re.val[u]!)
             ∧ (∀ u : Nat, OFFSET.val ≤ u → u < OFFSET.val + 2 * STEP_BY.val →
                   ∀ l : Nat, l < 8 →
-                  (re.val[u]!).values.val[l]!.val.natAbs ≤ 2 * B + 2 ^ 24) := by
+                  (re.val[u]!).values.val[l]!.val.natAbs ≤ max (2 * B) 12578816) := by
           refine ⟨?_, ?_, ?_⟩
           · intro j hj_ge hj_lt; exact absurd hj_lt (by omega)
           · intro u _ _ _; rfl

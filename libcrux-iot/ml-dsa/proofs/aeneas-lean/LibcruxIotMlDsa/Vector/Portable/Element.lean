@@ -425,6 +425,77 @@ theorem montgomery_multiply_by_constant_spec
   rw [h_acc]
   exact h_P
 
+/-- Strong variant of `mmul_by_const_per_elem_P`: tight montgomery output bound
+    `r.val.natAbs ≤ 12578816` instead of `≤ 2^24`. -/
+private def mmul_by_const_per_elem_P_strong (c x r : Std.I32) : Prop :=
+  liftZ_std r.val = (x.val : Zq) * (c.val : Zq) * (RINV : Zq)
+    ∧ r.val.natAbs ≤ 12578816
+
+/-- Strong variant of `montgomery_multiply_by_constant_spec`: exposes the TIGHT
+    montgomery output bound `≤ 12578816` (instead of `≤ 2^24`) on every lane, via
+    `montgomery_multiply_fe_by_fer_spec_strong`. Invoked EXPLICITLY by the
+    inverse-NTT cross-unit leaf; no `@[spec]` to avoid hax_mvcgen ambiguity. -/
+theorem montgomery_multiply_by_constant_spec_strong
+    (simd_unit : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients) (c : Std.I32)
+    (hc : c.val.natAbs ≤ 8380416) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_by_constant simd_unit c
+    ⦃ ⇓ r => ⌜ ∀ j : Nat, j < 8 →
+                liftZ_std (r.values.val[j]!).val
+                  = ((simd_unit.values.val[j]!).val : Zq) * (c.val : Zq) * (RINV : Zq)
+              ∧ (r.values.val[j]!).val.natAbs ≤ 12578816 ⌝ ⦄ := by
+  -- Per-element spec: the leaf `montgomery_multiply_fe_by_fer_spec_strong x c hc` IS the
+  -- per-element post verbatim (`P := mmul_by_const_per_elem_P_strong c`); `hc` is closed
+  -- over, so no guard or entailment massaging is needed.
+  have per_elem_spec : ∀ x : Std.I32,
+      ⦃ ⌜ True ⌝ ⦄
+      libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer x c
+      ⦃ ⇓ r => ⌜ mmul_by_const_per_elem_P_strong c x r ⌝ ⦄ :=
+    fun x =>
+      libcrux_iot_ml_dsa.Vector.Portable.Arithmetic.montgomery_multiply_fe_by_fer_spec_strong x c hc
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_by_constant
+  rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice simd_unit.values)
+        = .ok (Aeneas.Std.Array.to_slice simd_unit.values) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [show CoreModels.core.slice.Slice.len (Aeneas.Std.Array.to_slice simd_unit.values)
+        = .ok (Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice simd_unit.values)) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [coeff_slice_len_eq simd_unit.values]
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_by_constant_loop
+  -- Bridge `montgomery_multiply_by_constant_loop.body c` to
+  -- `unary_loop_body (fun x => montgomery_multiply_fe_by_fer x c)`. Single index,
+  -- free `c` — plain `rfl` after unfolding both bodies and `mmfbf`.
+  have h_body_eq :
+      (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_by_constant_loop.body
+          c p.1 p.2)
+      = (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        unary_loop_body
+          (fun x => libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer x c)
+          p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, a1⟩
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_by_constant_loop.body
+    unfold unary_loop_body
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer
+    rfl
+  rw [h_body_eq]
+  obtain ⟨out, h_out_eq, h_out_P⟩ :=
+    triple_exists_ok
+      (elementwise_unary_spec
+        (fun x => libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer x c)
+        (mmul_by_const_per_elem_P_strong c)
+        per_elem_spec
+        simd_unit.values)
+  rw [h_out_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  refine triple_of_ok (v := { values := out }) rfl ?_
+  intro j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := h_out_P j hj
+  show liftZ_std (out.val[j]!).val = _ ∧ _
+  rw [h_acc]
+  exact h_P
+
 
 
 end libcrux_iot_ml_dsa.Vector.Portable.Element

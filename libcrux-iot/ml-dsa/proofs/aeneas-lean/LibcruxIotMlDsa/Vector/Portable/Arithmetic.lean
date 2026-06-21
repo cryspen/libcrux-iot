@@ -379,6 +379,48 @@ theorem montgomery_reduce_element_spec (value : Std.I64) (hb : value.val.natAbs 
       exact le_trans h_div_le (by norm_num)
     rw [Int.abs_eq_natAbs] at h_res_abs; exact_mod_cast h_res_abs
 
+/-- Strong variant of `montgomery_reduce_element_spec`: exposes the TIGHT montgomery
+    output bound `r.val.natAbs ≤ 12578816` (the true reduce bound), instead of the
+    loose `≤ 2^24`. Invoked EXPLICITLY by the inverse-NTT leaves; no `@[spec]` to
+    avoid hax_mvcgen ambiguity with the original. -/
+theorem montgomery_reduce_element_spec_strong (value : Std.I64) (hb : value.val.natAbs ≤ 2^55) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_reduce_element value
+    ⦃ ⇓ r => ⌜ liftZ_std r.val = (value.val : Zq) * (RINV : Zq)
+              ∧ r.val.natAbs ≤ 12578816 ⌝ ⦄ := by
+  apply triple_of_ok_l0 (v := mont_reduce_impl_value value) (mont_reduce_element_eq_ok value)
+  rw [mont_reduce_impl_value_val value hb]
+  set v : Int := value.val
+  set v32 := Int.bmod v (2^32)
+  set k32 := Int.bmod (v32 * 58728449) (2^32)
+  set km := k32 * 8380417
+  set res := v / (2^32 : Int) - km / (2^32 : Int)
+  have h_k32_lb : -(2^31 : Int) ≤ k32 := (Arith.Int.bmod_pow2_bounds 32 (v32 * 58728449)).1
+  have h_k32_ub : k32 < (2^31 : Int) := (Arith.Int.bmod_pow2_bounds 32 (v32 * 58728449)).2
+  have h_v_abs : |v| ≤ (2^55 : Int) := by
+    rw [Int.abs_eq_natAbs]; exact_mod_cast hb
+  have h_res_R := mont_reduce_core v hb
+  constructor
+  · -- Equality clause: (res : Zq) = (v : Zq) * RINV
+    show (res : Zq) = (v : Zq) * (RINV : Zq)
+    exact mont_reduce_zmod v k32 res h_res_R
+  · -- Bound: res.natAbs ≤ 12578816 (with |v| ≤ 2^55, |res| ≤ (2^55 + 2^31·q)/2^32 = 12578816)
+    have h_km_abs : |km| ≤ (2^31 : Int) * 8380417 := by
+      show |k32 * 8380417| ≤ _; rw [abs_mul]
+      exact mul_le_mul_of_nonneg_right (abs_le.mpr ⟨h_k32_lb, le_of_lt h_k32_ub⟩) (by decide)
+    have h_res_abs : |res| ≤ (12578816 : Int) := by
+      have h_bound : |res| * (2^32 : Int) ≤ 2^55 + (2^31 : Int) * 8380417 := by
+        calc |res| * (2^32 : Int)
+            = |res * (2^32 : Int)| := by rw [abs_mul]; simp
+          _ = |v - km| := by rw [h_res_R]
+          _ ≤ |v| + |km| := abs_sub v km
+          _ ≤ 2^55 + (2^31 : Int) * 8380417 := add_le_add h_v_abs h_km_abs
+      have h_div_le := (Int.le_ediv_iff_mul_le (by decide : (0:Int) < 2^32)).mpr h_bound
+      have h_const : (2^55 + (2^31 : Int) * 8380417) / 2^32 = 12578816 := by norm_num
+      rw [h_const] at h_div_le
+      exact h_div_le
+    rw [Int.abs_eq_natAbs] at h_res_abs; exact_mod_cast h_res_abs
+
 /-! ## `montgomery_multiply_fe_by_fer` — widen-multiply then reduce
 
   The impl sign-extends `fe, fer : i32` to `i64`, forms the exact i64 product
@@ -497,6 +539,50 @@ theorem montgomery_multiply_fe_by_fer_spec
   -- Extract the keystone's conclusion via `triple_exists_ok_l0`.
   obtain ⟨r0, h_eq_ok, h_lift, h_bound⟩ :=
     triple_exists_ok_l0 (montgomery_reduce_element_spec product h_pre)
+  -- The impl reduces to .ok r0; close via triple_of_ok_l0.
+  apply triple_of_ok_l0 (v := r0) (by rw [mmfbf_eq_ok]; exact h_eq_ok)
+  refine ⟨?_, h_bound⟩
+  -- Equality: liftZ_std r0.val = (fe.val·fer.val : Zq)·R⁻¹ = (fe)·(fer)·R⁻¹.
+  rw [h_lift, h_product_val]
+  show ((fe.val * fer.val : Int) : Zq) * (RINV : Zq)
+        = (fe.val : Zq) * (fer.val : Zq) * (RINV : Zq)
+  push_cast
+  ring
+
+/-- Strong variant of `montgomery_multiply_fe_by_fer_spec`: exposes the TIGHT
+    montgomery output bound `r.val.natAbs ≤ 12578816` (instead of `≤ 2^24`), via
+    `montgomery_reduce_element_spec_strong`. Invoked EXPLICITLY by the inverse-NTT
+    leaves; no `@[spec]` to avoid hax_mvcgen ambiguity with the original. -/
+theorem montgomery_multiply_fe_by_fer_spec_strong
+    (fe fer : Std.I32) (hfer : fer.val.natAbs ≤ 8380416) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.montgomery_multiply_fe_by_fer fe fer
+    ⦃ ⇓ r => ⌜ liftZ_std r.val = (fe.val : Zq) * (fer.val : Zq) * (RINV : Zq)
+              ∧ r.val.natAbs ≤ 12578816 ⌝ ⦄ := by
+  -- Reduce the impl to a single `montgomery_reduce_element` on the exact product.
+  set product : Std.I64 :=
+    Aeneas.Std.I64.wrapping_mul
+      (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fe)
+      (Aeneas.Std.IScalar.cast Aeneas.Std.IScalarTy.I64 fer) with h_product_def
+  have h_product_val : product.val = fe.val * fer.val := mmfbf_product_val fe fer hfer
+  -- The keystone precondition: |fe·fer| ≤ 2^31 · 8380416 < 2^55.
+  have h_pre : product.val.natAbs ≤ 2^55 := by
+    rw [h_product_val, Int.natAbs_mul]
+    -- |fe.val| ≤ 2^31 (any i32) and |fer.val| ≤ 8380416.
+    have h_fe_bounds := fe.hBounds
+    have h_red31 : (Aeneas.Std.IScalarTy.I32.numBits - 1) = 31 := by decide
+    rw [h_red31] at h_fe_bounds
+    have h_fe_abs : (fe.val.natAbs : Int) ≤ ((2 : Int)^31) := by
+      rw [← Int.abs_eq_natAbs]
+      exact abs_le.mpr ⟨h_fe_bounds.1, le_of_lt h_fe_bounds.2⟩
+    have h_nat_fe : fe.val.natAbs ≤ 2^31 := by exact_mod_cast h_fe_abs
+    -- fe.natAbs * fer.natAbs ≤ 2^31 * 8380416 ≤ 2^55.
+    have h_mul : fe.val.natAbs * fer.val.natAbs ≤ 2^31 * 8380416 := Nat.mul_le_mul h_nat_fe hfer
+    have h_step : (2^31 * 8380416 : Nat) ≤ 2^55 := by norm_num
+    exact le_trans h_mul h_step
+  -- Extract the keystone's conclusion via `triple_exists_ok_l0`.
+  obtain ⟨r0, h_eq_ok, h_lift, h_bound⟩ :=
+    triple_exists_ok_l0 (montgomery_reduce_element_spec_strong product h_pre)
   -- The impl reduces to .ok r0; close via triple_of_ok_l0.
   apply triple_of_ok_l0 (v := r0) (by rw [mmfbf_eq_ok]; exact h_eq_ok)
   refine ⟨?_, h_bound⟩
