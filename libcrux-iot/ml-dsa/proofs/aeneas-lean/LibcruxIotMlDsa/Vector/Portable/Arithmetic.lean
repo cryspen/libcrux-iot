@@ -1,6 +1,7 @@
 import LibcruxIotMlDsa.Extraction.Funs
 import LibcruxIotMlDsa.Spec.Montgomery
 import LibcruxIotMlDsa.Spec.Lift
+import LibcruxIotMlDsa.Util.LoopHelper
 
 /-!
   # `Vector/Portable/Arithmetic.lean` — Layer-0 scalar Montgomery reduction
@@ -24,6 +25,7 @@ open CoreModels Aeneas Aeneas.Std Std.Do
 open libcrux_iot_ml_dsa.Spec.Parameters
 open libcrux_iot_ml_dsa.Spec.Montgomery
 open libcrux_iot_ml_dsa.Spec.Lift
+open libcrux_iot_ml_dsa.Util.LoopHelper
 
 /-- The Triple `⦃True⦄ x ⦃⇓ r => ⌜P r⌝⦄` closer for `x = .ok v`. -/
 private theorem triple_of_ok_l0 {α : Type} {x : Result α} {v : α}
@@ -880,5 +882,183 @@ theorem reduce_element_spec (fe : Std.I32) (h : fe.val.natAbs ≤ 2^31 - 2^23) :
   show ((fe.val - ((fe.val + (2^22 : Int)) / (2^23 : Int)) * 8380417 : Int) : Zq)
         = (fe.val : Zq)
   exact h_core.1
+
+/-! ## `shift_left_then_reduce_spec`
+
+    `simd.portable.arithmetic.shift_left_then_reduce SHIFT_BY simd_unit` is an
+    8-iter loop applying `reduce_element (simd_unit.values[i] <<< SHIFT_BY)` to
+    each lane. STRUCTURALLY IDENTICAL to `montgomery_multiply_by_constant`
+    (a single free parameter `SHIFT_BY` carried by the loop, no per-lane guard on
+    the operand), so it is proven the same way via `elementwise_unary_spec`.
+
+    The one new ingredient is the signed-left-shift `.val` closed form:
+    `shiftLeft_ok` (the in-range `Result.ok` form) + `shiftLeft_shifted_val`
+    (the no-overflow `.val = x·2^k` value, pure-`BitVec`); power2round/decompose
+    will reuse these. Outputs are CLEAN mod-q, so the post is in `liftZ_std`
+    form (residue-preserving): under `hbound`, the signed shift equals
+    `x·2^SHIFT_BY` exactly and `reduce_element` preserves the residue. -/
+
+/-- `Slice.len (Array.to_slice (a : CoeffArray)) = 8#usize`. -/
+private theorem coeff_slice_len_eq (a : CoeffArray) :
+    Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice a) = (8#usize : Std.Usize) := by
+  apply Std.UScalar.eq_of_val_eq
+  rw [Aeneas.Std.Slice.len_val]
+  show (Aeneas.Std.Array.to_slice a).length = (8#usize : Std.Usize).val
+  rw [Aeneas.Std.Array.length_to_slice a]
+
+/-- Signed I32 left shift, `Result.ok` form. Generalizes the literal
+    `1#i32 <<< 22#i32` case used inside `reduce_element_eq_ok` to a runtime
+    `SHIFT_BY`: `IScalar.shiftLeft_IScalar` discharges `SHIFT_BY.val ≥ 0` and
+    `SHIFT_BY.toNat < I32.numBits`, yielding `⟨x.bv.shiftLeft SHIFT_BY.toNat⟩`. -/
+theorem shiftLeft_ok (x : Std.I32) (SHIFT_BY : Std.I32)
+    (h0 : 0 ≤ SHIFT_BY.val) (h32 : SHIFT_BY.val < 32) :
+    (x <<< SHIFT_BY) = .ok ⟨x.bv.shiftLeft SHIFT_BY.toNat⟩ := by
+  have h_pos : SHIFT_BY.val ≥ 0 := h0
+  have h_lt : SHIFT_BY.toNat < Aeneas.Std.IScalarTy.I32.numBits := by
+    show SHIFT_BY.val.toNat < 32; omega
+  simp only [HShiftLeft.hShiftLeft, Aeneas.Std.IScalar.shiftLeft_IScalar,
+             Aeneas.Std.IScalar.shiftLeft, h_pos, h_lt, reduceIte]
+
+/-- Signed I32 left shift, `.val` closed form under no-overflow (pure `BitVec`).
+    `(x.bv.shiftLeft k).toInt = x.val * 2^k` whenever
+    `|x.val|·2^k ≤ 2^31 - 2^23` (so `x.val·2^k ∈ [−2^31, 2^31)`, no wrap).
+    Mirrors how the `sshiftRight` `.val` lemmas bridge `BitVec.toInt`; here the
+    bridge is `x.bv.toNat ≡ x.val (mod 2^32)`, so the unsigned `toInt_shiftLeft`
+    form collapses to the signed product after a `bmod` cancellation. -/
+theorem shiftLeft_shifted_val (x : Std.I32) (k : Nat)
+    (hb : x.val.natAbs * 2 ^ k ≤ 2 ^ 31 - 2 ^ 23) :
+    (⟨x.bv.shiftLeft k⟩ : Std.I32).val = x.val * 2 ^ k := by
+  show (x.bv.shiftLeft k).toInt = x.val * 2 ^ k
+  rw [show x.bv.shiftLeft k = x.bv <<< k from rfl, BitVec.toInt_shiftLeft]
+  rw [Nat.shiftLeft_eq, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat]
+  -- ↑x.bv.toNat = x.val + 2^32 * q, so the leading `2^32` summand drops under `bmod`.
+  have h_decomp : (x.bv.toNat : Int)
+      = x.val + (2^32 : Nat) * Int.bdiv (x.bv.toNat : Int) (2^32) := by
+    have h := Int.bmod_eq_self_sub_mul_bdiv (x.bv.toNat : Int) (2^32)
+    have h_xval : x.val = Int.bmod (x.bv.toNat : Int) (2^32) := by
+      show x.bv.toInt = _; rw [BitVec.toInt_eq_toNat_bmod]
+    rw [← h_xval] at h; omega
+  rw [h_decomp, add_mul, mul_assoc, Int.add_mul_bmod_self_left]
+  -- `(x.val * 2^k).bmod 2^32 = x.val * 2^k` from the no-overflow window.
+  have h_pow_pos : (0 : Int) < 2 ^ k := by positivity
+  have h_abs_bound : |x.val * 2 ^ k| ≤ (2 ^ 31 - 2 ^ 23 : Int) := by
+    rw [abs_mul, abs_of_pos h_pow_pos, Int.abs_eq_natAbs]
+    calc (x.val.natAbs : Int) * 2 ^ k
+        = ((x.val.natAbs * 2 ^ k : Nat) : Int) := by push_cast; ring
+      _ ≤ ((2 ^ 31 - 2 ^ 23 : Nat) : Int) := by exact_mod_cast hb
+      _ = (2 ^ 31 - 2 ^ 23 : Int) := by norm_num
+  have h_lb : -(2 ^ 31 : Int) ≤ x.val * 2 ^ k := by
+    have h := (abs_le.mp h_abs_bound).1; norm_num at h ⊢; omega
+  have h_ub : x.val * 2 ^ k < (2 ^ 31 : Int) := by
+    have h := (abs_le.mp h_abs_bound).2; norm_num at h ⊢; omega
+  apply Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+  · have h_red : ((2 : Int)^(32-1)) = (2 : Int)^31 := by norm_num
+    rw [h_red]; exact h_lb
+  · have h_red : ((2 : Int)^(32-1)) = (2 : Int)^31 := by norm_num
+    rw [h_red]; exact h_ub
+
+/-- Per-element predicate (guarded form): given the per-lane no-overflow bound,
+    the output lifts (residue-preservingly) to `(x·2^SHIFT_BY)` in `Z_q` and
+    stays `≤ 6283009` in size. The uniform shift bounds (`h0`/`h32`) are closed
+    over by the per-element spec. -/
+private def slr_per_elem_P (SHIFT_BY x r : Std.I32) : Prop :=
+  x.val.natAbs * 2 ^ SHIFT_BY.toNat ≤ 2 ^ 31 - 2 ^ 23 →
+    liftZ_std r.val = liftZ_std x.val * (2 : Zq) ^ SHIFT_BY.toNat
+    ∧ r.val.natAbs ≤ 6283009
+
+/-- Per-element Triple: `(x <<< SHIFT_BY) >>= reduce_element` realizes
+    `slr_per_elem_P SHIFT_BY x`. The shift always succeeds (given `h0`/`h32`), so
+    the program reduces to `reduce_element ⟨x.bv.shiftLeft SHIFT_BY.toNat⟩`; under
+    the guarded lane bound, `shiftLeft_shifted_val` exposes its value as `x·2^k`,
+    and `reduce_element_spec` gives the residue-preserving post. -/
+private theorem slr_per_elem_spec (SHIFT_BY x : Std.I32)
+    (h0 : 0 ≤ SHIFT_BY.val) (h32 : SHIFT_BY.val < 32) :
+    ⦃ ⌜ True ⌝ ⦄
+    (do let i2 ← x <<< SHIFT_BY
+        libcrux_iot_ml_dsa.simd.portable.arithmetic.reduce_element i2)
+    ⦃ ⇓ r => ⌜ slr_per_elem_P SHIFT_BY x r ⌝ ⦄ := by
+  rw [shiftLeft_ok x SHIFT_BY h0 h32]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [reduce_element_eq_ok]
+  refine triple_of_ok_l0 (v := reduce_impl_value ⟨x.bv.shiftLeft SHIFT_BY.toNat⟩) rfl ?_
+  show slr_per_elem_P SHIFT_BY x _
+  intro hb
+  set i2 : Std.I32 := ⟨x.bv.shiftLeft SHIFT_BY.toNat⟩ with hi2
+  have h_shl_val : i2.val = x.val * 2 ^ SHIFT_BY.toNat :=
+    shiftLeft_shifted_val x SHIFT_BY.toNat hb
+  have h_red_pre : i2.val.natAbs ≤ 2 ^ 31 - 2 ^ 23 := by
+    rw [h_shl_val]
+    have h_abs : (x.val * 2 ^ SHIFT_BY.toNat).natAbs = x.val.natAbs * 2 ^ SHIFT_BY.toNat := by
+      rw [Int.natAbs_mul]; congr 1
+    rw [h_abs]; exact hb
+  obtain ⟨rv, h_red_ok, h_red_P⟩ :=
+    triple_exists_ok_l0 (reduce_element_spec i2 h_red_pre)
+  rw [reduce_element_eq_ok] at h_red_ok
+  have h_eq : reduce_impl_value i2 = rv := Result.ok.inj h_red_ok
+  rw [h_eq]
+  refine ⟨?_, h_red_P.2⟩
+  rw [h_red_P.1, h_shl_val]
+  show ((x.val * 2 ^ SHIFT_BY.toNat : Int) : Zq) = (x.val : Zq) * (2 : Zq) ^ SHIFT_BY.toNat
+  push_cast; ring
+
+set_option maxHeartbeats 2000000 in
+@[spec]
+theorem shift_left_then_reduce_spec
+    (SHIFT_BY : Std.I32)
+    (simd_unit : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (hshift : 0 ≤ SHIFT_BY.val ∧ SHIFT_BY.val < 32)
+    (hbound : ∀ j, j < 8 →
+      (simd_unit.values.val[j]!).val.natAbs * 2 ^ SHIFT_BY.toNat ≤ 2 ^ 31 - 2 ^ 23) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.shift_left_then_reduce SHIFT_BY simd_unit
+    ⦃ ⇓ r => ⌜ ∀ j : Nat, j < 8 →
+                liftZ_std (r.values.val[j]!).val
+                  = liftZ_std (simd_unit.values.val[j]!).val * (2 : Zq) ^ SHIFT_BY.toNat
+              ∧ (r.values.val[j]!).val.natAbs ≤ 6283009 ⌝ ⦄ := by
+  obtain ⟨h0, h32⟩ := hshift
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.shift_left_then_reduce
+  rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice simd_unit.values)
+        = .ok (Aeneas.Std.Array.to_slice simd_unit.values) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [show CoreModels.core.slice.Slice.len (Aeneas.Std.Array.to_slice simd_unit.values)
+        = .ok (Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice simd_unit.values)) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [coeff_slice_len_eq simd_unit.values]
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.shift_left_then_reduce_loop
+  -- Bridge `shift_left_then_reduce_loop.body SHIFT_BY` to
+  -- `unary_loop_body (fun x => (x <<< SHIFT_BY) >>= reduce_element)`. Single index,
+  -- free `SHIFT_BY`; `bind_assoc` re-associates the two-bind body, then `rfl`.
+  have h_body_eq :
+      (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        libcrux_iot_ml_dsa.simd.portable.arithmetic.shift_left_then_reduce_loop.body
+          SHIFT_BY p.1 p.2)
+      = (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × CoeffArray) =>
+        unary_loop_body
+          (fun x => do let i2 ← x <<< SHIFT_BY
+                       libcrux_iot_ml_dsa.simd.portable.arithmetic.reduce_element i2)
+          p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, a1⟩
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.shift_left_then_reduce_loop.body
+    unfold unary_loop_body
+    simp only [bind_assoc]
+    rfl
+  rw [h_body_eq]
+  obtain ⟨out, h_out_eq, h_out_P⟩ :=
+    triple_exists_ok_l0
+      (elementwise_unary_spec
+        (fun x => do let i2 ← x <<< SHIFT_BY
+                     libcrux_iot_ml_dsa.simd.portable.arithmetic.reduce_element i2)
+        (slr_per_elem_P SHIFT_BY)
+        (fun x => slr_per_elem_spec SHIFT_BY x h0 h32)
+        simd_unit.values)
+  rw [h_out_eq]
+  simp only [Aeneas.Std.bind_tc_ok]
+  refine triple_of_ok_l0 (v := { values := out }) rfl ?_
+  intro j hj
+  obtain ⟨rj, _h_eq, h_acc, h_P⟩ := h_out_P j hj
+  show liftZ_std (out.val[j]!).val = _ ∧ _
+  rw [h_acc]
+  exact h_P (hbound j hj)
 
 end libcrux_iot_ml_dsa.Vector.Portable.Arithmetic
