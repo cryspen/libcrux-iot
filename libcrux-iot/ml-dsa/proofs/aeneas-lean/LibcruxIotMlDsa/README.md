@@ -6,7 +6,10 @@ per-SIMD-unit arithmetic in `libcrux-iot/ml-dsa/src/` computes the same
 functions as a clean-`Z_q` (q = 8 380 417) hacspec-style reference. The impl is
 auto-extracted via the `cargo hax into aeneas-lean` pipeline; this directory then
 proves functional-correctness (FC) equivalence against a pure Lean spec
-(`Spec/Pure.lean`, mirroring `specs/ml-dsa`).
+(`Spec/Pure.lean`, mirroring `specs/ml-dsa`), which is itself proven equal to the
+**machine-extracted** `specs/ml-dsa` Rust spec (`HacspecMlDsa`) — the trusted
+reference (see
+[Equivalence to the extracted spec](#equivalence-to-the-machine-extracted-spec-hacspecmldsa)).
 
 Every theorem below is **axiom-clean** — it depends only on Lean's three
 standard axioms (`propext`, `Classical.choice`, `Quot.sound`) and **no** leaf
@@ -68,6 +71,38 @@ theorem ntt_fc (re : PolynomialRingElement Coefficients) (B : Nat)
 `from_i32_array_fc` additionally has a `lift_poly`-form corollary
 `from_i32_array_lift_fc`.
 
+## Equivalence to the machine-extracted spec (`HacspecMlDsa`)
+
+The `specs/ml-dsa` Rust spec crate (`hacspec_ml_dsa`) is machine-extracted to
+aeneas-lean as the `HacspecMlDsa` Lake dependency (the same `cargo hax into
+aeneas-lean` pipeline as the impl). Each `Spec.Pure.*` op is proven equal to its
+extracted `hacspec_ml_dsa.*` counterpart, giving each op a corollary FC whose
+post references the extracted spec directly.
+
+The bridge ([`Spec/HacspecBridge.lean`](Spec/HacspecBridge.lean)) maps the
+extracted spec's canonical-residue `[i32; 256]` to clean `Z_q` (`lift_res`),
+proves the extracted `mod_q` total and residue-preserving (`mod_q_eq`), and
+establishes `Pure.<op> (lift_res a) … = lift_res (<extracted op> a …)` for every
+op. The corollary Triples (`*_hacspec_fc`) over the impl entry points post:
+
+| Theorem (file) | extracted-spec post |
+|---|---|
+| `poly_{add,sub,pointwise_mul}_hacspec_fc` ([`Polynomial/HacspecFC.lean`](Polynomial/HacspecFC.lean)) | `hacspec_ml_dsa.polynomial.poly_{add,sub,pointwise_mul} (lift_poly_res …) = .ok (lift_poly_res r)` |
+| `ntt_hacspec_fc` ([`Polynomial/HacspecNtt.lean`](Polynomial/HacspecNtt.lean)) | `hacspec_ml_dsa.ntt.ntt (lift_poly_res re) = .ok (lift_poly_res r)` |
+| `intt_hacspec_fc` ([`Polynomial/HacspecNtt.lean`](Polynomial/HacspecNtt.lean)) | `hacspec_ml_dsa.ntt.intt (lift_poly_res re) = .ok (lift_poly_res_intt r)` (Montgomery `·R` stripped via `·R⁻¹`) |
+| `infinity_norm_exceeds_hacspec_fc` ([`Polynomial/HacspecNorm.lean`](Polynomial/HacspecNorm.lean)) | `r = decide (bound ≤ poly_infinity_norm (canon_raw self))`, under a centering precond¹ |
+
+The `ZETAS`-table bridge (`zetas_bridge`: the extracted clean table equals
+`Pure.zeta`) is a kernel `decide` in `Z_q` over the whole 256-entry table. Four
+impl ops (`reduce`, `zero`, `to_i32_array`, `from_i32_array`) map to identity / a
+constant / a copy in the spec, with no non-trivial extracted counterpart.
+
+> ¹ **Representation note.** The impl and `Spec.Pure` compute the raw signed
+> `|coefficient|`; the Rust spec's `coeff_norm`/`poly_infinity_norm` compute the
+> centered FIPS norm. These coincide when each coefficient is a centered
+> representative (`|·| ≤ (q−1)/2`), which the FIPS signing context guarantees;
+> the connection FC carries an explicit `hcentered` hypothesis.
+
 ## Supporting layers
 
 The top-level theorems are corollaries / loop-compositions of a stack of proven
@@ -111,10 +146,14 @@ What is **trusted** rather than **proven** in this directory:
   proof. The per-SIMD-unit versions of the vector rounding wrappers
   (`power2round`, `decompose`) *are* verified (see the rounding row above); only
   the 32-unit vector maps over them are opaque.
-- **Spec faithfulness** — `Spec/Pure.lean` is trusted to match the FIPS-204 /
-  `specs/ml-dsa` reference; it is cross-checked at build time by the `#guard`s in
-  [`Spec/Validation.lean`](Spec/Validation.lean) (NTT round-trip, the Rust
-  `ZETAS` table, rounding reconstruction/boundary invariants, ∞-norm agreement).
+- **Spec faithfulness** — the trusted reference is the machine-**extracted**
+  `specs/ml-dsa` Rust spec (`HacspecMlDsa`, see
+  [Equivalence to the extracted spec](#equivalence-to-the-machine-extracted-spec-hacspecmldsa)):
+  the extraction of the same Rust source the F\*/test artifacts use.
+  `Spec/Pure.lean` is proven equal to it and serves as a clean-`Z_q`
+  intermediate; build-time `#guard`s in
+  [`Spec/Validation.lean`](Spec/Validation.lean) additionally pin it to the Rust
+  `ZETAS` table, the NTT round-trip, and rounding boundary invariants.
 
 ## Proof architecture
 

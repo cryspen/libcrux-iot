@@ -1,5 +1,5 @@
 /-
-  # `Polynomial/HacspecNtt.lean` — re-target the `ntt` / `invert_ntt` FCs at the EXTRACTED hacspec
+  # `Polynomial/HacspecNtt.lean` — `ntt` / `invert_ntt` equivalence to the extracted hacspec
 
   The poly-layer NTT impl FCs (`Polynomial/Ntt.lean::{ntt_fc, invert_ntt_montgomery_fc}`)
   post the impl result equal (through `lift_poly`) to the HAND spec `Spec.Pure.{ntt,intt}`

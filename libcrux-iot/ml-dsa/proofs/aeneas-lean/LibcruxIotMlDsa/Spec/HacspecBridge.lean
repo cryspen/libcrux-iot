@@ -1,5 +1,5 @@
 /-
-  # `Spec/HacspecBridge.lean` — re-target the poly-layer FCs at the EXTRACTED hacspec
+  # `Spec/HacspecBridge.lean` — hand spec ↔ extracted hacspec bridge (poly layer)
 
   The poly-layer impl FCs (`Polynomial/Arithmetic.lean::{add_fc,subtract_fc}`,
   `Polynomial/NttArith.lean::ntt_multiply_montgomery_fc`) post the impl result equal

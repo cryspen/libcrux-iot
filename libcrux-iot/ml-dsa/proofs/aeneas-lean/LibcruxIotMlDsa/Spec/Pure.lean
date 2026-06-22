@@ -13,14 +13,13 @@ The hacspec `mod_q` is the identity on `ZMod q`, so the spec ops are plain
 `ZMod q` ring operations. Coefficients are indexed `[0,256)` via `Array … !`
 (default-on-OOB) so no `Fin` bound proofs are needed.
 
-⚠️ **Phase-1 draft.** These bodies are a careful by-hand translation but have
-not been machine-checked against the compiler or `plausible` in this scaffold.
-The first Phase-1 dispatch MUST:
-  1. `lake build` this file, and
-  2. `plausible`-check the spec-level round-trip `intt (ntt p) = p` and a small
-     `#eval` cross-check vs the Rust spec, BEFORE any impl↔spec Triple relies on
-     it. Fix the translation here if either fails (the spec is mutable; the impl
-     is not).
+These bodies are proven equal to the machine-extracted Rust spec (`HacspecMlDsa`)
+under the residue lift — see `Spec/HacspecBridge.lean` (`poly_*_bridge`),
+`Polynomial/HacspecNtt.lean` (`ntt_bridge`/`intt_bridge`) and
+`Polynomial/HacspecNorm.lean` (`coeff_norm_bridge`) — and serve as a clean-`Z_q`
+intermediate between the impl FCs and that extracted spec. Build-time `#guard`s
+in `Spec/Validation.lean` pin them to the Rust `ZETAS` table and the NTT
+round-trip.
 -/
 
 namespace libcrux_iot_ml_dsa.Spec.Pure

@@ -1,6 +1,6 @@
 /-
-  # `Polynomial/HacspecNorm.lean` — re-target the `infinity_norm_exceeds` FC at the
-  EXTRACTED hacspec (`arithmetic.coeff_norm` / `polynomial.poly_infinity_norm`)
+  # `Polynomial/HacspecNorm.lean` — `infinity_norm_exceeds` equivalence to the
+  extracted hacspec (`arithmetic.coeff_norm` / `polynomial.poly_infinity_norm`)
 
   The poly-layer impl `infinity_norm_exceeds` FC (`Polynomial/InfinityNorm.lean::
   infinity_norm_exceeds_fc`) posts the impl result equal to the HAND spec

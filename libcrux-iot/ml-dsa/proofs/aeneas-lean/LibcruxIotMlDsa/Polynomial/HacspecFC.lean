@@ -1,5 +1,5 @@
 /-
-  # `Polynomial/HacspecFC.lean` — `@[spec]` Triple corollaries re-targeting the EXTRACTED hacspec
+  # `Polynomial/HacspecFC.lean` — `@[spec]` Triple corollaries with extracted-hacspec posts
 
   The impl poly-layer FCs (`Polynomial/Arithmetic.lean::{add_fc,subtract_fc}`,
   `Polynomial/NttArith.lean::ntt_multiply_montgomery_fc`) post the impl result equal
