@@ -111,6 +111,40 @@ def poly_sub (a b : SpecPoly) : SpecPoly :=
     lane (`liftZ 0 = 0`) gives this. -/
 def zero_poly : SpecPoly := build (fun _ => 0)
 
+/-! ## Infinity-norm rejection check (`arithmetic.rs::infinity_norm_exceeds`).
+
+The signing rejection test: `true` iff some coefficient's centered absolute value
+is `≥ bound`. The libcrux-iot impl computes `|coefficient|` of the RAW signed
+coefficient directly (sign-mask `|c| = c - (sign & 2c)`), so this spec is stated
+over the raw signed `.val`s (the FC altitude is the integer magnitude, NOT the
+`Z_q` lift). Coefficients are supplied by an index function `[0,256) → Int`.
+
+Note the comparison is `≥` (`bound ≤ |·|`), matching the impl's `>=`. -/
+
+/-- The centered absolute value of `a`'s residue class mod `q`
+    (`~/libcrux-ml-dsa-proofs/specs/ml-dsa/src/arithmetic.rs::coeff_norm`):
+    `m = ((a % q) + q) % q; if m > q/2 then q - m else m`. Used to cross-check that
+    for centered representatives the impl's raw `|a|` agrees with the FIPS norm. -/
+def coeff_norm (a : Int) : Int :=
+  let q : Int := (Parameters.Q : Int)
+  let m := ((a % q) + q) % q
+  if m > q / 2 then q - m else m
+
+/-- **Infinity-norm-exceeds** (`arithmetic.rs::infinity_norm_exceeds`): `true` iff
+    some coefficient `coeffs i` (i < 256) has `bound ≤ |coeffs i|`. This is the
+    pure reference for the polynomial-layer rejection FC; the impl computes the raw
+    signed absolute value, so the spec uses `|·|` (= `Int.natAbs` cast) on the
+    signed coefficient directly. -/
+def infinity_norm_exceeds (coeffs : Nat → Int) (bound : Int) : Prop :=
+  ∃ i, i < 256 ∧ bound ≤ |coeffs i|
+
+/-- `infinity_norm_exceeds` is decidable (bounded existential over `[0,256)`); this
+    instance lets the FC posts spell `decide (infinity_norm_exceeds …)` and the
+    `#guard` validations evaluate. -/
+instance (coeffs : Nat → Int) (bound : Int) :
+    Decidable (infinity_norm_exceeds coeffs bound) := by
+  unfold infinity_norm_exceeds; infer_instance
+
 /-! ## Canonical FC-post aliases (referenced by `Plan.lean`'s Triples). -/
 
 /-- Forward-NTT reference for the FC posts. -/

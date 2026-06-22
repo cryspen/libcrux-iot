@@ -113,6 +113,36 @@ private def rounds : List Int := [0, 1, 100, 4190208, 8380415, 8380416]
 #guard [(-g65-1,3),(-g65,0),(0,0),(g65,1),(g65+1,0)].all
   (fun p => decide (computeHint p.1 p.2 g65 = 0 ∨ computeHint p.1 p.2 g65 = 1))
 
+/-! ## Infinity-norm-exceeds spec (`Spec/Pure.lean`) — `arithmetic.rs::infinity_norm_exceeds`.
+
+`infinity_norm_exceeds coeffs bound` is `∃ i < 256, bound ≤ |coeffs i|`. Validated on
+small explicit polys (true/false cases), plus the `coeff_norm` cross-check that for
+CENTERED representatives (`|a| ≤ q/2`) the impl's raw `|a|` agrees with the FIPS
+`coeff_norm a` (plausible-first discipline, §D.3). -/
+
+-- `coeff_norm a = |a|` for centered representatives (`|a| ≤ q/2 = 4190208`), so the
+-- impl's raw `bound ≤ |a|` agrees with the FIPS `bound ≤ coeff_norm a`.
+#guard [(-4190208 : Int), -100, -1, 0, 1, 100, 4190208].all
+  (fun a => decide (coeff_norm a = |a|))
+-- and the rejection test agrees with `coeff_norm` for centered inputs, both directions.
+#guard [((-4190208 : Int), (4190208 : Int)), (100, 50), (100, 101), (-100, 100), (0, 1)].all
+  (fun p => decide ((p.2 ≤ |p.1|) = (p.2 ≤ coeff_norm p.1)))
+
+-- TRUE case: a poly with coefficient 5 at index 3, bound 5 (≥, so 5 ≤ |5| holds).
+#guard decide (infinity_norm_exceeds (fun i => if i = 3 then 5 else 0) 5)
+-- TRUE case: a negative coefficient -7 at index 200, bound 7 (7 ≤ |-7| = 7).
+#guard decide (infinity_norm_exceeds (fun i => if i = 200 then -7 else 0) 7)
+-- FALSE case: all coefficients 0, bound 1 (no |0| = 0 ≥ 1).
+#guard !decide (infinity_norm_exceeds (fun _ => 0) 1)
+-- FALSE case: max coefficient 4 everywhere, bound 5 (4 < 5).
+#guard !decide (infinity_norm_exceeds (fun _ => 4) 5)
+-- boundary: bound 5, coefficient exactly 5 ⇒ TRUE (the check is `≥`, not `>`).
+#guard decide (infinity_norm_exceeds (fun i => if i = 0 then 5 else 0) 5)
+-- boundary: bound 6, coefficient exactly 5 ⇒ FALSE.
+#guard !decide (infinity_norm_exceeds (fun i => if i = 0 then 5 else 0) 6)
+-- out-of-range index does not count: coefficient at i=256 ignored (i < 256 required).
+#guard !decide (infinity_norm_exceeds (fun i => if i = 256 then 1000 else 0) 1)
+
 /-! ## `zero_poly` sanity (`Spec/Pure.lean`). -/
 
 -- every lane of `zero_poly` is `0`, and it has 256 coefficients.

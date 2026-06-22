@@ -22,7 +22,7 @@ set_option linter.unusedVariables false
 set_option linter.unusedSectionVars false
 
 namespace libcrux_iot_ml_dsa.Vector.Portable.Arithmetic
-open CoreModels Aeneas Aeneas.Std Std.Do
+open CoreModels Aeneas Aeneas.Std Std.Do Result ControlFlow
 open libcrux_iot_ml_dsa.Spec.Parameters
 open libcrux_iot_ml_dsa.Spec.Montgomery
 open libcrux_iot_ml_dsa.Spec.Lift
@@ -1428,5 +1428,388 @@ theorem power2round_spec
   show (out.1.val[j]!).val = _ ∧ (out.2.values.val[j]!).val = _
   rw [h_a, h_b]
   exact ⟨h_low, h_high⟩
+
+/-! ## `infinity_norm_exceeds` (per-unit) — the signing rejection check.
+
+  The security-critical per-lane check. The Rust per-unit fn computes, for each of
+  the 8 coefficients `c`:
+
+      sign       = c >> 31                         -- -1 if c < 0, else 0
+      normalized = c - (sign & (2·c))              -- = |c|  (the bug-fixed site)
+      result     = result || (normalized >= bound) -- short-circuiting OR
+
+  `normalized = |c|`: when `c ≥ 0`, `sign = 0` so the `& (2·c)` is masked to `0`
+  (even if `2·c` overflows!), giving `c`; when `c < 0`, `sign = allOnes` so the mask
+  is `2·c` (exact under `c ≥ -2^30`), giving `c - 2·c = -c`. Hence the per-lane
+  no-overflow precond is `|c| ≤ 2^30` (only the negative side `c ≥ -2^30` binds;
+  the positive overflow at `c = 2^30` is harmless because `sign = 0`).
+
+  This is the impl-bug-#2 site: the per-unit FC was never proven. The post is
+  EQUALITY-form: `r = decide (∃ j < 8, bound.val ≤ |c_j|)`. -/
+
+/-- The pure value computed by the per-unit body for one coefficient `c`
+    (`normalized` in the Rust). -/
+def unit_norm_impl (c : Std.I32) : Std.I32 :=
+  let sign : Std.I32 := ⟨c.bv.sshiftRight 31⟩
+  let i2 : Std.I32 := Aeneas.Std.I32.wrapping_mul (2#i32) c
+  let i3 : Std.I32 := ⟨sign.bv &&& i2.bv⟩
+  Aeneas.Std.I32.wrapping_sub c i3
+
+/-- **The bug-fixed identity:** `normalized = |c|` under `|c| ≤ 2^30`. -/
+theorem unit_norm_impl_val_abs (c : Std.I32) (hpre : c.val.natAbs ≤ 2^30) :
+    (unit_norm_impl c).val = |c.val| := by
+  have h_abs30 : |c.val| ≤ (2^30 : Int) := by
+    rw [Int.abs_eq_natAbs]; exact_mod_cast hpre
+  have h_lb30 : (-2^30 : Int) ≤ c.val := (abs_le.mp h_abs30).1
+  have h_ub30 : c.val ≤ (2^30 : Int) := (abs_le.mp h_abs30).2
+  have h_bd := Aeneas.Std.IScalar.hBounds c
+  have h_lb : -(2 ^ 31 : Int) ≤ c.val := by
+    have := h_bd.1
+    simp only [show Aeneas.Std.IScalarTy.I32.numBits - 1 = 31 from rfl] at this; exact this
+  have h_ub : c.val < (2 ^ 31 : Int) := by
+    have := h_bd.2
+    simp only [show Aeneas.Std.IScalarTy.I32.numBits - 1 = 31 from rfl] at this; exact this
+  have h_shrtoInt : (c.bv.sshiftRight 31).toInt = c.val / (2 ^ 31 : Int) := by
+    rw [BitVec.toInt_sshiftRight, Int.shiftRight_eq_div_pow]; norm_cast
+  -- `(sign & 2c).val = if c < 0 then 2c else 0`.
+  have h_mask :
+      (⟨(c.bv.sshiftRight 31) &&& (Aeneas.Std.I32.wrapping_mul (2#i32) c).bv⟩ : Std.I32).val
+        = if c.val < 0 then 2 * c.val else 0 := by
+    by_cases hneg : c.val < 0
+    · rw [if_pos hneg]
+      have h_div : c.val / (2 ^ 31 : Int) = -1 := by omega
+      have h_allones : c.bv.sshiftRight 31 = BitVec.allOnes 32 := by
+        apply BitVec.eq_of_toInt_eq; rw [h_shrtoInt, h_div]; decide
+      show ((c.bv.sshiftRight 31) &&& (Aeneas.Std.I32.wrapping_mul (2#i32) c).bv).toInt = _
+      rw [h_allones, BitVec.allOnes_and]
+      show (Aeneas.Std.I32.wrapping_mul (2#i32) c).val = 2 * c.val
+      rw [Aeneas.Std.I32.wrapping_mul_val_eq]
+      show Int.bmod ((2#i32 : Std.I32).val * c.val) (2^32) = _
+      rw [show (2#i32 : Std.I32).val = 2 from rfl]
+      apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+      · rw [show ((2:Int)^(32-1)) = 2^31 from by norm_num]; omega
+      · rw [show ((2:Int)^(32-1)) = 2^31 from by norm_num]; omega
+    · rw [if_neg hneg]
+      have h_div : c.val / (2 ^ 31 : Int) = 0 := by omega
+      have h_zero : c.bv.sshiftRight 31 = 0#32 := by
+        apply BitVec.eq_of_toInt_eq; rw [h_shrtoInt, h_div]; decide
+      show ((c.bv.sshiftRight 31) &&& (Aeneas.Std.I32.wrapping_mul (2#i32) c).bv).toInt = _
+      rw [h_zero, BitVec.zero_and]; decide
+  unfold unit_norm_impl
+  show (Aeneas.Std.I32.wrapping_sub c
+        (⟨(⟨c.bv.sshiftRight 31⟩ : Std.I32).bv
+          &&& (Aeneas.Std.I32.wrapping_mul (2#i32) c).bv⟩ : Std.I32)).val = _
+  rw [Aeneas.Std.I32.wrapping_sub_val_eq,
+      show (⟨(⟨c.bv.sshiftRight 31⟩ : Std.I32).bv
+              &&& (Aeneas.Std.I32.wrapping_mul (2#i32) c).bv⟩ : Std.I32).val
+            = if c.val < 0 then 2 * c.val else 0 from h_mask]
+  by_cases hneg : c.val < 0
+  · rw [if_pos hneg, abs_of_neg hneg, show c.val - 2 * c.val = -c.val from by ring]
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+    · rw [show ((2:Int)^(32-1)) = 2^31 from by norm_num]; omega
+    · rw [show ((2:Int)^(32-1)) = 2^31 from by norm_num]; omega
+  · rw [if_neg hneg, abs_of_nonneg (by omega), show c.val - 0 = c.val from by ring]
+    apply Aeneas.Arith.Int.bmod_pow2_eq_of_inBounds' 32 _ (by decide)
+    · rw [show ((2:Int)^(32-1)) = 2^31 from by norm_num]; omega
+    · rw [show ((2:Int)^(32-1)) = 2^31 from by norm_num]; omega
+
+/-! ### Per-unit Bool-accumulator loop. -/
+
+/-- Pure-prop holds helpers for the Bool-accumulator invariant. -/
+private theorem pure_prop_holds_inf {P : Prop} (h : P) : (pure P : Result Prop).holds := by
+  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp]; intro _; exact h
+
+private theorem of_pure_prop_holds_inf {P : Prop}
+    (h : (pure P : Result Prop).holds) : P := by
+  simp only [Aeneas.Std.Result.holds, Std.Do.Triple, WP.wp] at h; exact h trivial
+
+/-- The whole per-coefficient chunk (computation + short-circuiting `if`) reduces to
+    `.ok (cont (iter1, if result then true else unit_norm_impl c >= bound))`. -/
+theorem inf_chunk_if_eq (c bound : Std.I32) (result : Bool)
+    (iter1 : CoreModels.core.ops.range.Range Std.Usize) :
+    (do
+      let sign ← c >>> 31#i32
+      let i1 ← libcrux_secrets.traits.Classify.Blanket.classify 2#i32
+      let i2 ← CoreModels.core.num.I32.wrapping_mul i1 c
+      let i3 ← Aeneas.Std.lift (sign &&& i2)
+      let normalized ← CoreModels.core.num.I32.wrapping_sub c i3
+      if result
+      then ok (ControlFlow.cont (iter1, true))
+      else
+        let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify normalized
+        ok (ControlFlow.cont (iter1, i4 >= bound)) :
+      Result (ControlFlow ((CoreModels.core.ops.range.Range Std.Usize) × Bool) Bool))
+    = .ok (ControlFlow.cont (iter1, if result then true else (unit_norm_impl c >= bound))) := by
+  unfold unit_norm_impl
+  have h_shr31 : (c >>> (31#i32 : Std.I32)) = .ok (⟨c.bv.sshiftRight 31⟩ : Std.I32) := by
+    have h := shiftRight_IScalar_ok c (31#i32 : Std.I32) (by decide) (by decide)
+    rw [h]; congr 1
+  rw [h_shr31]
+  simp only [libcrux_secrets.traits.Classify.Blanket.classify,
+             libcrux_secrets.traits.Declassify.Blanket.declassify,
+             CoreModels.core.num.I32.wrapping_mul, CoreModels.core.num.I32.wrapping_sub,
+             rust_primitives.arithmetic.wrapping_mul_i32,
+             rust_primitives.arithmetic.wrapping_sub_i32,
+             Aeneas.Std.bind_tc_ok, Aeneas.Std.lift]
+  cases result <;> rfl
+
+/-- The per-unit loop body (the `infinity_norm_exceeds_loop.body` shape on the raw
+    8-element coefficient array `a`). -/
+def inf_body (a : CoeffArray) (bound : Std.I32)
+    (iter : CoreModels.core.ops.range.Range Std.Usize) (result : Bool) :
+    Result (ControlFlow ((CoreModels.core.ops.range.Range Std.Usize) × Bool) Bool) := do
+  let (o, iter1) ←
+    CoreModels.core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      CoreModels.core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | CoreModels.core.option.Option.None => ok (ControlFlow.done result)
+  | CoreModels.core.option.Option.Some i =>
+    let coefficient ← Aeneas.Std.Array.index_usize a i
+    let sign ← coefficient >>> 31#i32
+    let i1 ← libcrux_secrets.traits.Classify.Blanket.classify 2#i32
+    let i2 ← CoreModels.core.num.I32.wrapping_mul i1 coefficient
+    let i3 ← Aeneas.Std.lift (sign &&& i2)
+    let normalized ← CoreModels.core.num.I32.wrapping_sub coefficient i3
+    if result
+    then ok (ControlFlow.cont (iter1, true))
+    else
+      let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify normalized
+      ok (ControlFlow.cont (iter1, i4 >= bound))
+
+/-- The per-unit loop invariant: `result = decide(∃ j < k, bound ≤ |a[j]|)`. -/
+def inf_inv (a : CoeffArray) (bound : Std.I32) :
+    Std.Usize → Bool → Result Prop :=
+  fun k result => pure
+    (result = decide (∃ j : Nat, j < k.val ∧ (bound.val : Int) ≤ |(a.val[j]!).val|))
+
+/-- Per-iteration step post for the per-unit loop. -/
+def inf_step_post (a : CoeffArray) (bound : Std.I32) (k : Std.Usize)
+    (r : ControlFlow ((CoreModels.core.ops.range.Range Std.Usize) × Bool) Bool) : Prop :=
+  match r with
+  | .cont (iter', result') =>
+      k.val < (8#usize : Std.Usize).val ∧ iter'.«end» = 8#usize
+        ∧ iter'.start.val = k.val + 1
+        ∧ (inf_inv a bound iter'.start result').holds
+  | .done y => (inf_inv a bound 8#usize y).holds
+
+/-- Invariant extension at the `Some` step: `decide(∃ j < k+1, P j)` from
+    `decide(∃ j < k, P j)` and the freshly-tested `P k = (bound ≤ |a[k]|)`. -/
+private theorem inf_extend (a : CoeffArray) (bound : Std.I32)
+    (k : Nat) (hk : k < 8) (result : Bool)
+    (hpre_k : (a.val[k]!).val.natAbs ≤ 2^30)
+    (h_res : result = decide (∃ j : Nat, j < k ∧ (bound.val : Int) ≤ |(a.val[j]!).val|)) :
+    (if result then true else (unit_norm_impl (a.val[k]!) >= bound))
+      = decide (∃ j : Nat, j < k + 1 ∧ (bound.val : Int) ≤ |(a.val[j]!).val|) := by
+  -- the per-lane Bool test equals `decide (bound.val ≤ |a[k]|)`.
+  have h_norm : (unit_norm_impl (a.val[k]!)).val = |(a.val[k]!).val| :=
+    unit_norm_impl_val_abs (a.val[k]!) hpre_k
+  have h_test : ((unit_norm_impl (a.val[k]!) >= bound) : Bool)
+      = decide ((bound.val : Int) ≤ |(a.val[k]!).val|) := by
+    show decide (bound ≤ unit_norm_impl (a.val[k]!)) = _
+    rw [decide_eq_decide]
+    show ((bound.val : Int) ≤ (unit_norm_impl (a.val[k]!)).val) ↔ _
+    rw [h_norm]
+  rw [h_test, h_res]
+  -- `(if decide P then true else decide Q) = decide (P ∨ Q)`, then prove the iff.
+  rw [show ∀ (P Q : Prop) [Decidable P] [Decidable Q],
+        (if decide P then true else decide Q) = decide (P ∨ Q) from by
+        intro P Q _ _; by_cases h : P <;> simp [h]]
+  rw [decide_eq_decide]
+  constructor
+  · rintro (⟨j, hj, hjb⟩ | hk')
+    · exact ⟨j, by omega, hjb⟩
+    · exact ⟨k, by omega, hk'⟩
+  · rintro ⟨j, hj, hjb⟩
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hj with h | h
+    · exact Or.inl ⟨j, h, hjb⟩
+    · subst h; exact Or.inr hjb
+
+set_option maxHeartbeats 4000000 in
+/-- Per-iteration step lemma for the per-unit OR-loop. -/
+theorem inf_step_lemma
+    (a : CoeffArray) (bound : Std.I32)
+    (hpre : ∀ j : Nat, j < 8 → (a.val[j]!).val.natAbs ≤ 2^30)
+    (result : Bool) (k : Std.Usize)
+    (h_le : k.val ≤ (8#usize : Std.Usize).val)
+    (h_inv : (inf_inv a bound k result).holds) :
+    ⦃ ⌜ True ⌝ ⦄
+    inf_body a bound { start := k, «end» := 8#usize } result
+    ⦃ ⇓ r => ⌜ inf_step_post a bound k r ⌝ ⦄ := by
+  have h_8 : (8#usize : Std.Usize).val = 8 := rfl
+  have h_a_len : a.length = 8 := CoeffArray_length a
+  have h_res : result = decide (∃ j : Nat, j < k.val ∧ (bound.val : Int) ≤ |(a.val[j]!).val|) :=
+    of_pure_prop_holds_inf h_inv
+  unfold inf_body
+  by_cases h_lt : k.val < (8#usize : Std.Usize).val
+  · -- `Some k` branch.
+    have hk_8 : k.val < 8 := by rw [h_8] at h_lt; exact h_lt
+    obtain ⟨s, hs_val, h_iter_some⟩ := iter_next_some_eq k 8#usize h_lt
+    set c : Std.I32 := a.val[k.val]! with hc_def
+    have h_idx : Aeneas.Std.Array.index_usize a k = .ok c :=
+      array_index_usize_ok_eq a k (by rw [h_a_len]; exact hk_8)
+    set new_res : Bool :=
+      if result then true else (unit_norm_impl c >= bound) with hnr_def
+    have h_body :
+        (do
+          let (o, iter1) ←
+            CoreModels.core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              CoreModels.core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize)
+          match o with
+          | CoreModels.core.option.Option.None =>
+              (Result.ok (ControlFlow.done result) :
+                Result (ControlFlow ((CoreModels.core.ops.range.Range Std.Usize) × Bool) Bool))
+          | CoreModels.core.option.Option.Some i =>
+            let coefficient ← Aeneas.Std.Array.index_usize a i
+            let sign ← coefficient >>> 31#i32
+            let i1 ← libcrux_secrets.traits.Classify.Blanket.classify 2#i32
+            let i2 ← CoreModels.core.num.I32.wrapping_mul i1 coefficient
+            let i3 ← Aeneas.Std.lift (sign &&& i2)
+            let normalized ← CoreModels.core.num.I32.wrapping_sub coefficient i3
+            if result
+            then ok (ControlFlow.cont (iter1, true))
+            else
+              let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify normalized
+              ok (ControlFlow.cont (iter1, i4 >= bound)))
+        = .ok (ControlFlow.cont
+            (({ start := s, «end» := 8#usize }
+                : CoreModels.core.ops.range.Range Std.Usize), new_res)) := by
+      conv_lhs =>
+        rw [show
+          (CoreModels.core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              CoreModels.core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                CoreModels.core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_some]
+      simp only [Aeneas.Std.bind_tc_ok]
+      rw [h_idx]
+      simp only [Aeneas.Std.bind_tc_ok]
+      rw [inf_chunk_if_eq c bound result
+            ({ start := s, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize)]
+    apply triple_of_ok_l0 h_body
+    show inf_step_post a bound k
+      (.cont (({ start := s, «end» := 8#usize }
+                : CoreModels.core.ops.range.Range Std.Usize), new_res))
+    unfold inf_step_post
+    refine ⟨h_lt, rfl, hs_val, ?_⟩
+    show (inf_inv a bound s new_res).holds
+    apply pure_prop_holds_inf
+    show new_res = decide (∃ j : Nat, j < s.val ∧ (bound.val : Int) ≤ |(a.val[j]!).val|)
+    rw [hs_val, hnr_def, hc_def]
+    exact inf_extend a bound k.val hk_8 result (hpre k.val hk_8) h_res
+  · -- `None` branch.
+    have hk_ge : k.val ≥ (8#usize : Std.Usize).val := Nat.not_lt.mp h_lt
+    have hk_eq : k.val = 8 := by rw [h_8] at hk_ge; omega
+    have h_iter_none := iter_next_none_eq k 8#usize hk_ge
+    have h_body :
+        (do
+          let (o, iter1) ←
+            CoreModels.core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              CoreModels.core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize)
+          match o with
+          | CoreModels.core.option.Option.None =>
+              (Result.ok (ControlFlow.done result) :
+                Result (ControlFlow ((CoreModels.core.ops.range.Range Std.Usize) × Bool) Bool))
+          | CoreModels.core.option.Option.Some i =>
+            let coefficient ← Aeneas.Std.Array.index_usize a i
+            let sign ← coefficient >>> 31#i32
+            let i1 ← libcrux_secrets.traits.Classify.Blanket.classify 2#i32
+            let i2 ← CoreModels.core.num.I32.wrapping_mul i1 coefficient
+            let i3 ← Aeneas.Std.lift (sign &&& i2)
+            let normalized ← CoreModels.core.num.I32.wrapping_sub coefficient i3
+            if result
+            then ok (ControlFlow.cont (iter1, true))
+            else
+              let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify normalized
+              ok (ControlFlow.cont (iter1, i4 >= bound)))
+        = .ok (ControlFlow.done result) := by
+      conv_lhs =>
+        rw [show
+          (CoreModels.core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+              CoreModels.core.Usize.Insts.CoreIterRangeStep
+              ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+            = (CoreModels.core.iter.range.IteratorRange.next
+                CoreModels.core.Usize.Insts.CoreIterRangeStep
+                ({ start := k, «end» := 8#usize } : CoreModels.core.ops.range.Range Std.Usize))
+          from rfl]
+      rw [h_iter_none]; rfl
+    apply triple_of_ok_l0 h_body
+    show inf_step_post a bound k (.done result)
+    unfold inf_step_post
+    show (inf_inv a bound 8#usize result).holds
+    apply pure_prop_holds_inf
+    show result = decide (∃ j : Nat, j < 8 ∧ (bound.val : Int) ≤ |(a.val[j]!).val|)
+    rw [h_res, hk_eq]
+
+/-! ### Per-unit FC. -/
+
+set_option maxHeartbeats 2000000 in
+/-- **`infinity_norm_exceeds` per-unit FC** (the impl-bug-#2 site). Returns `true`
+    iff some of the 8 coefficients has `bound ≤ |coefficient|`. EQUALITY-form post.
+    Per-lane no-overflow precond: `|values[j]| ≤ 2^30`. -/
+theorem infinity_norm_exceeds_unit_spec
+    (simd_unit : simd.portable.vector_type.Coefficients) (bound : Std.I32)
+    (hpre : ∀ j : Nat, j < 8 → (simd_unit.values.val[j]!).val.natAbs ≤ 2^30) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.arithmetic.infinity_norm_exceeds simd_unit bound
+    ⦃ ⇓ r => ⌜ r = decide (∃ j : Nat, j < 8
+                  ∧ (bound.val : Int) ≤ |(simd_unit.values.val[j]!).val|) ⌝ ⦄ := by
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.infinity_norm_exceeds
+  rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice simd_unit.values)
+        = .ok (Aeneas.Std.Array.to_slice simd_unit.values) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [show CoreModels.core.slice.Slice.len (Aeneas.Std.Array.to_slice simd_unit.values)
+        = .ok (Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice simd_unit.values)) from rfl]
+  simp only [Aeneas.Std.bind_tc_ok]
+  rw [coeff_slice_len_eq simd_unit.values]
+  unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.infinity_norm_exceeds_loop
+  -- Bridge the extracted body to `inf_body`.
+  have h_body_eq :
+      (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × Bool) =>
+        libcrux_iot_ml_dsa.simd.portable.arithmetic.infinity_norm_exceeds_loop.body
+          simd_unit.values bound p.1 p.2)
+      = (fun (p : (CoreModels.core.ops.range.Range Std.Usize) × Bool) =>
+        inf_body simd_unit.values bound p.1 p.2) := by
+    funext p
+    rcases p with ⟨iter1, result1⟩
+    unfold libcrux_iot_ml_dsa.simd.portable.arithmetic.infinity_norm_exceeds_loop.body inf_body
+    rfl
+  rw [h_body_eq]
+  obtain ⟨out, h_out_eq, h_out_holds⟩ :=
+    triple_exists_ok_l0
+      (Util.LoopSpecs.loop_range_spec_usize
+        (fun p => inf_body simd_unit.values bound p.1 p.2)
+        false 0#usize 8#usize
+        (inf_inv simd_unit.values bound)
+        (by decide : (0#usize : Std.Usize).val ≤ (8#usize : Std.Usize).val)
+        (by
+          apply pure_prop_holds_inf
+          show (false : Bool)
+            = decide (∃ j : Nat, j < 0
+                ∧ (bound.val : Int) ≤ |(simd_unit.values.val[j]!).val|)
+          symm; rw [decide_eq_false_iff_not]; rintro ⟨j, hj, _⟩; exact absurd hj (Nat.not_lt_zero j))
+        (by
+          intro acc k _h_ge h_le hinv
+          have h_step := inf_step_lemma simd_unit.values bound hpre acc k h_le hinv
+          apply Std.Do.Triple.of_entails_right _ h_step
+          rw [PostCond.entails_noThrow]
+          intro r hh
+          rcases r with ⟨iter', acc'⟩ | y
+          · have hP : inf_step_post simd_unit.values bound k (.cont (iter', acc')) := by
+              simpa [Std.Do.SPred.down_pure] using hh
+            simpa [inf_step_post] using hP
+          · have hP : inf_step_post simd_unit.values bound k (.done y) := by
+              simpa [Std.Do.SPred.down_pure] using hh
+            simpa [inf_step_post] using hP))
+  rw [h_out_eq]
+  apply triple_of_ok_l0 (v := out) rfl
+  have h_final : out = decide (∃ j : Nat, j < 8
+      ∧ (bound.val : Int) ≤ |(simd_unit.values.val[j]!).val|) :=
+    of_pure_prop_holds_inf h_out_holds
+  rw [h_final]
 
 end libcrux_iot_ml_dsa.Vector.Portable.Arithmetic
