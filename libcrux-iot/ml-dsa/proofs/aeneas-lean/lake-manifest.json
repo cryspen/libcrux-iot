@@ -1,13 +1,15 @@
 {"version": "1.2.0",
  "packagesDir": ".lake/packages",
  "packages":
- [{"type": "path",
+ [{"url": "https://github.com/cryspen/libcrux",
+   "type": "git",
+   "subDir": "specs/ml-dsa/proofs/aeneas-lean",
    "scope": "",
+   "rev": "e17b91789337650666e3dea86a1e42abb32919a4",
    "name": "HacspecMlDsa",
    "manifestFile": "lake-manifest.json",
+   "inputRev": "e17b91789337650666e3dea86a1e42abb32919a4",
    "inherited": false,
-   "dir":
-   "../../../../../libcrux-ml-dsa-proofs/specs/ml-dsa/proofs/aeneas-lean",
    "configFile": "lakefile.toml"},
   {"url": "https://github.com/cryspen/hax-evit",
    "type": "git",
