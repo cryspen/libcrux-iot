@@ -28,6 +28,7 @@ import LibcruxIotMlDsa.Vector.Portable.InvNttMaster  -- inverse NTT master (8-la
 import LibcruxIotMlDsa.Vector.Portable.Rounding      -- Phase-7 decompose dual-output keystone
 import LibcruxIotMlDsa.Polynomial.Ntt                -- poly-layer NTT FCs (ntt / invert_ntt_montgomery)
 import LibcruxIotMlDsa.Polynomial.Arithmetic         -- poly-layer add / subtract FCs
+import LibcruxIotMlDsa.Polynomial.NttArith            -- poly-layer ntt_multiply_montgomery / reduce FCs
 -- Phases 3-8 (re-enable as the proof files land; ml-dsa has no `createi`):
 -- import LibcruxIotMlDsa.Util.CreateI
 -- import LibcruxIotMlDsa.Ntt                          -- L3 forward drivers
