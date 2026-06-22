@@ -79,6 +79,12 @@ jobs:
           cargo clean
           cargo check -F kyber,check-secret-independence --verbose
 
+      # Benchmarks
+      - name: 🔨 Build Benchmarks
+        run: |
+          cargo clean
+          cargo bench --no-run
+
   valgrind-ct-test:
     if: ${{ github.event_name != 'merge_group' }}
     runs-on: ubuntu-24.04-arm
