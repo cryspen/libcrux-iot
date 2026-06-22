@@ -1,6 +1,5 @@
--- ML-DSA NTT: impl ↔ spec equivalence (aeneas-lean).
--- See `LibcruxIotMlDsa/README.md` and the campaign scaffold
--- `LibcruxIotMlDsa/Plan.lean`.
+-- ML-DSA `PolynomialRingElement` layer: impl ↔ spec equivalence (aeneas-lean).
+-- See `LibcruxIotMlDsa/README.md` for the top-level theorems and trust boundary.
 
 -- Self-contained spec reference (clean Z_q) — builds without an extraction.
 import LibcruxIotMlDsa.Spec.Parameters
