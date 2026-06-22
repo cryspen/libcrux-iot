@@ -60,6 +60,7 @@
           extensions = [
             "rust-src"
             "rust-analyzer"
+            "llvm-tools-preview"
           ];
           # Targets needed for libcrux-nucleo-l4r5zi (real board + qemu mps2-an386).
           targets = [ "thumbv7em-none-eabihf" ];
@@ -93,6 +94,8 @@
             pkgs.valgrind
             pkgs.libclang
             pkgs.python3
+            pkgs.cargo-bloat
+            pkgs.cargo-binutils
             # `qemu-system-arm` for emulating the nucleo-l4r5zi binaries
             # (libcrux-nucleo-l4r5zi/run-qemu.sh). Pulls in all qemu system
             # emulators; if size matters this can be narrowed in the future.
