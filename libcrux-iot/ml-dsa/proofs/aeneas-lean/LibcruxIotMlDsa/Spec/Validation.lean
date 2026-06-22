@@ -56,6 +56,18 @@ private def pR : SpecPoly :=
 #guard intt (ntt p1) == p1
 #guard intt (ntt pR) == pR
 
+/-! ## Pointwise poly `add`/`sub` sanity (`Spec/Pure.lean`). -/
+
+-- `poly_add` is lane-wise `+`, `poly_sub` lane-wise `-`.
+#guard (poly_add p0 p1)[5]! == p0[5]! + p1[5]!
+#guard (poly_sub p0 p1)[5]! == p0[5]! - p1[5]!
+-- `add`/`sub` are mutual inverses: `(a + b) - b = a`.
+#guard poly_sub (poly_add p0 p1) p1 == p0
+#guard poly_sub (poly_add pR p1) p1 == pR
+-- `a - a = 0`, `a + 0 = a`.
+#guard poly_sub p1 p1 == build (fun _ => (0 : Zq))
+#guard poly_add p1 (build (fun _ => (0 : Zq))) == p1
+
 /-! ## Rounding spec (`Spec/Rounding.lean`) — validated vs `arithmetic.rs` + its tests.
 
 Mirrors the Rust unit tests (`power2round_basic`, `decompose_basic`,

@@ -95,6 +95,17 @@ def intt (p : SpecPoly) : SpecPoly :=
 def poly_pointwise_mul (a b : SpecPoly) : SpecPoly :=
   build (fun i => a[i]! * b[i]!)
 
+/-- Pointwise polynomial addition (`polynomial.rs::PolynomialRingElement::add`).
+    The impl is a 32-unit loop calling per-lane `wrapping_add`; in clean `Z_q`
+    this is lane-wise `+`. -/
+def poly_add (a b : SpecPoly) : SpecPoly :=
+  build (fun i => a[i]! + b[i]!)
+
+/-- Pointwise polynomial subtraction
+    (`polynomial.rs::PolynomialRingElement::subtract`). Lane-wise `-` in `Z_q`. -/
+def poly_sub (a b : SpecPoly) : SpecPoly :=
+  build (fun i => a[i]! - b[i]!)
+
 /-! ## Canonical FC-post aliases (referenced by `Plan.lean`'s Triples). -/
 
 /-- Forward-NTT reference for the FC posts. -/
