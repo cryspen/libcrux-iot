@@ -6,7 +6,7 @@ resolver = "3"
 version = "0.0.3"
 authors = ["Cryspen"]
 license = "AGPL-3.0-only"
-homepage = "iot.cryspen.com" # TODO: Set this up
+homepage = "iot.cryspen.com"                          # TODO: Set this up
 edition = "2021"
 repository = "https://github.com/cryspen/libcrux-iot"
 readme = "README.md"
@@ -21,7 +21,12 @@ hax-lib = { version = "0.3.6" }
 
 
 [workspace.lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(hax)', 'cfg(eurydice)', 'cfg(doc_cfg)'] }
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(hax)',
+    'cfg(eurydice)',
+    'cfg(doc_cfg)',
+    'cfg(hax_backend_lean)',
+] }
 
 [patch.crates-io]
 hax-lib = { git = "https://github.com/cryspen/hax", branch = "jonas/fstar-wrapping" }
