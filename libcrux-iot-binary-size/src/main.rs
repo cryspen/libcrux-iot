@@ -17,6 +17,13 @@ use libcrux_iot_ml_dsa::MLDSASigningKey;
 #[cfg(feature = "mldsa-verify")]
 use libcrux_iot_ml_dsa::{MLDSASignature, MLDSAVerificationKey};
 
+#[cfg(feature = "mlkem512")]
+use libcrux_iot_ml_kem::mlkem512 as mlkem;
+#[cfg(feature = "mlkem768")]
+use libcrux_iot_ml_kem::mlkem768 as mlkem;
+#[cfg(feature = "mlkem1024")]
+use libcrux_iot_ml_kem::mlkem1024 as mlkem;
+
 #[cfg(feature = "mldsa-sign")]
 mod sign {
     #[cfg(feature = "mldsa44")]
@@ -44,6 +51,33 @@ mod verify {
     pub const SIG: [u8; 4627] = [0; _];
 }
 
+#[cfg(feature = "mlkem-encaps")]
+mod encaps {
+    #[cfg(feature = "mlkem512")]
+    pub const PK: [u8; 800] = [0; _];
+    #[cfg(feature = "mlkem768")]
+    pub const PK: [u8; 1184] = [0; _];
+    #[cfg(feature = "mlkem1024")]
+    pub const PK: [u8; 1568] = [0; _];
+}
+
+#[cfg(feature = "mlkem-decaps")]
+mod decaps {
+    #[cfg(feature = "mlkem512")]
+    pub const SK: [u8; 1632] = [0; _];
+    #[cfg(feature = "mlkem768")]
+    pub const SK: [u8; 2400] = [0; _];
+    #[cfg(feature = "mlkem1024")]
+    pub const SK: [u8; 3168] = [0; _];
+
+    #[cfg(feature = "mlkem512")]
+    pub const CT: [u8; 768] = [0; _];
+    #[cfg(feature = "mlkem768")]
+    pub const CT: [u8; 1088] = [0; _];
+    #[cfg(feature = "mlkem1024")]
+    pub const CT: [u8; 1568] = [0; _];
+}
+
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
     loop {}
@@ -67,6 +101,19 @@ fn main() -> ! {
         black_box(&[]),
         black_box(&[]),
         black_box(&MLDSASignature::new(verify::SIG)),
+    ));
+
+    #[cfg(feature = "mlkem-keygen")]
+    let _ = black_box(mlkem::generate_key_pair(black_box([0; _])));
+    #[cfg(feature = "mlkem-encaps")]
+    let _ = black_box(mlkem::encapsulate(
+        black_box(&encaps::PK.into()),
+        black_box([0; _]),
+    ));
+    #[cfg(feature = "mlkem-decaps")]
+    let _ = black_box(mlkem::decapsulate(
+        black_box(&decaps::SK.into()),
+        black_box(&decaps::CT.into()),
     ));
 
     loop {}
