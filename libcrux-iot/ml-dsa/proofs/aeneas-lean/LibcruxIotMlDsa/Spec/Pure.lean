@@ -106,6 +106,11 @@ def poly_add (a b : SpecPoly) : SpecPoly :=
 def poly_sub (a b : SpecPoly) : SpecPoly :=
   build (fun i => a[i]! - b[i]!)
 
+/-- The all-zero spec polynomial (`polynomial.rs::PolynomialRingElement::zero`).
+    The impl returns a 32-unit ring element whose every lane is `0`; lifting each
+    lane (`liftZ 0 = 0`) gives this. -/
+def zero_poly : SpecPoly := build (fun _ => 0)
+
 /-! ## Canonical FC-post aliases (referenced by `Plan.lean`'s Triples). -/
 
 /-- Forward-NTT reference for the FC posts. -/

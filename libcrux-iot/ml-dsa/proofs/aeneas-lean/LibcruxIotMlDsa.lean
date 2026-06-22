@@ -29,6 +29,7 @@ import LibcruxIotMlDsa.Vector.Portable.Rounding      -- Phase-7 decompose dual-o
 import LibcruxIotMlDsa.Polynomial.Ntt                -- poly-layer NTT FCs (ntt / invert_ntt_montgomery)
 import LibcruxIotMlDsa.Polynomial.Arithmetic         -- poly-layer add / subtract FCs
 import LibcruxIotMlDsa.Polynomial.NttArith            -- poly-layer ntt_multiply_montgomery / reduce FCs
+import LibcruxIotMlDsa.Polynomial.Convert             -- poly-layer zero / to_i32_array / from_i32_array FCs
 -- Phases 3-8 (re-enable as the proof files land; ml-dsa has no `createi`):
 -- import LibcruxIotMlDsa.Util.CreateI
 -- import LibcruxIotMlDsa.Ntt                          -- L3 forward drivers

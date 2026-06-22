@@ -113,4 +113,10 @@ private def rounds : List Int := [0, 1, 100, 4190208, 8380415, 8380416]
 #guard [(-g65-1,3),(-g65,0),(0,0),(g65,1),(g65+1,0)].all
   (fun p => decide (computeHint p.1 p.2 g65 = 0 ∨ computeHint p.1 p.2 g65 = 1))
 
+/-! ## `zero_poly` sanity (`Spec/Pure.lean`). -/
+
+-- every lane of `zero_poly` is `0`, and it has 256 coefficients.
+#guard (List.range 256).all (fun i => zero_poly[i]! == (0 : Zq))
+#guard zero_poly.size = 256
+
 end libcrux_iot_ml_dsa.Spec.Validation

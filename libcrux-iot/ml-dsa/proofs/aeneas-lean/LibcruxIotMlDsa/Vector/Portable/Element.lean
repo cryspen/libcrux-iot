@@ -15,6 +15,7 @@
   Triple, then post-process to the equality-form post on `Coefficients`.
 -/
 import LibcruxIotMlDsa.Util.LoopHelper
+import LibcruxIotMlDsa.Util.SliceSpecs
 import LibcruxIotMlDsa.Vector.Portable.Arithmetic
 
 set_option mvcgen.warning false
@@ -497,5 +498,125 @@ theorem montgomery_multiply_by_constant_spec_strong
   exact h_P
 
 
+/-! ## Per-unit (`Coefficients`-level) convert FCs.
+
+    `zero` / `to_coefficient_array` / `from_coefficient_array` are the elementwise
+    primitives the poly-layer `zero` / `to_i32_array` / `from_i32_array` loops call
+    per SIMD unit. Each reduces to a trivial slice/`Array.repeat` manipulation;
+    `declassify_ref`/`classify` are identities (`Extraction/Missing.lean`). -/
+
+/-- **`zero` unit.** `simd.portable.vector_type.zero = ok { values := repeat 8 (classify 0) }`;
+    `classify` is identity, so every lane is `0`. -/
+theorem zero_unit_spec :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.vector_type.zero
+    ⦃ ⇓ r => ⌜ ∀ j : Nat, j < 8 → (r.values.val[j]!).val = 0 ⌝ ⦄ := by
+  have h_ok : libcrux_iot_ml_dsa.simd.portable.vector_type.zero
+      = .ok { values := Array.repeat 8#usize (0#i32 : Std.I32) } := by
+    unfold libcrux_iot_ml_dsa.simd.portable.vector_type.zero
+    unfold libcrux_secrets.traits.Classify.Blanket.classify
+    rfl
+  refine triple_of_ok (v := { values := Array.repeat 8#usize (0#i32 : Std.I32) }) h_ok ?_
+  intro j hj
+  show ((Array.repeat 8#usize (0#i32 : Std.I32)).val[j]!).val = 0
+  rw [Array.repeat_val, List.getElem!_eq_getElem?_getD, List.getElem?_replicate]
+  simp [hj]
+
+/-- **`to_coefficient_array` unit.** `declassify_ref value.values` is identity, then
+    `copy_from_slice out (to_slice value.values)` returns the source slice (lengths
+    both `8`). Result slice's lanes equal `value`'s lanes. The precond `hout` (out
+    length `8`) is what the impl's `copy_from_slice` genuinely needs. -/
+theorem to_coefficient_array_spec
+    (value : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients) (out : Slice Std.I32)
+    (hout : out.val.length = 8) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.vector_type.to_coefficient_array value out
+    ⦃ ⇓ r => ⌜ ∀ j : Nat, j < 8 → (r.val[j]!).val = (value.values.val[j]!).val ⌝ ⦄ := by
+  have h_ok : libcrux_iot_ml_dsa.simd.portable.vector_type.to_coefficient_array value out
+      = .ok (Aeneas.Std.Array.to_slice value.values) := by
+    unfold libcrux_iot_ml_dsa.simd.portable.vector_type.to_coefficient_array
+    unfold libcrux_secrets.SharedAT.Insts.Libcrux_secretsTraitsDeclassifyRefSharedAT.declassify_ref
+    simp only [Aeneas.Std.bind_tc_ok]
+    rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice value.values)
+          = .ok (Aeneas.Std.Array.to_slice value.values) from rfl]
+    simp only [Aeneas.Std.bind_tc_ok]
+    unfold CoreModels.core.slice.Slice.copy_from_slice
+    have h1 : Aeneas.Std.Slice.len out
+        = Aeneas.Std.Slice.len (Aeneas.Std.Array.to_slice value.values) := by
+      apply Std.UScalar.eq_of_val_eq
+      rw [Aeneas.Std.Slice.len_val, Aeneas.Std.Slice.len_val,
+          Aeneas.Std.Array.length_to_slice]
+      show out.val.length = (8 : Nat)
+      rw [hout]
+    rw [if_pos h1]
+  refine triple_of_ok (v := Aeneas.Std.Array.to_slice value.values) h_ok ?_
+  intro j hj
+  show ((Aeneas.Std.Array.to_slice value.values).val[j]!).val = _
+  rfl
+
+/-- **`from_coefficient_array` unit.** Indexes `array[0..8]` into `out.values` (via
+    `to_slice_mut` + `copy_from_slice` + write-back). Result unit's lanes equal the
+    first `8` lanes of `array`. The precond `harr` (`array` length `8`) is the
+    in-bounds requirement of the `array[0..8]` index. -/
+theorem from_coefficient_array_spec
+    (array : Slice Std.I32)
+    (out : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)
+    (harr : 8 ≤ array.val.length) :
+    ⦃ ⌜ True ⌝ ⦄
+    libcrux_iot_ml_dsa.simd.portable.vector_type.from_coefficient_array array out
+    ⦃ ⇓ r => ⌜ ∀ j : Nat, j < 8 → (r.values.val[j]!).val = (array.val[j]!).val ⌝ ⦄ := by
+  obtain ⟨r, h_ok, h_P⟩ :
+      ∃ r, libcrux_iot_ml_dsa.simd.portable.vector_type.from_coefficient_array array out = .ok r
+        ∧ ∀ j : Nat, j < 8 → (r.values.val[j]!).val = (array.val[j]!).val := by
+    unfold libcrux_iot_ml_dsa.simd.portable.vector_type.from_coefficient_array
+    rw [show Aeneas.Std.lift (Aeneas.Std.Array.to_slice_mut out.values)
+          = .ok (Aeneas.Std.Array.to_slice_mut out.values) from rfl]
+    simp only [Aeneas.Std.bind_tc_ok]
+    rw [show simd.traits.COEFFICIENTS_IN_SIMD_UNIT = 8#usize by
+          simp [simd.traits.COEFFICIENTS_IN_SIMD_UNIT]]
+    have hsp_len : (Aeneas.Std.Array.to_slice_mut out.values).1.val.length = 8 :=
+      out.values.property
+    have hback_eq : (Aeneas.Std.Array.to_slice_mut out.values).2 = out.values.from_slice := rfl
+    rcases hp : out.values.to_slice_mut with ⟨sp, back⟩
+    -- Collapse the literal pair-destructuring `let (s, back) := (sp, back)`.
+    show ∃ r, (do
+        let s1 ← core.Slice.Insts.CoreOpsIndexIndex.index
+                (core.ops.range.RangeUsize.Insts.CoreSliceIndexSliceIndexSliceSlice Std.I32) array
+                { start := 0#usize, «end» := 8#usize }
+        let s2 ← CoreModels.core.slice.Slice.copy_from_slice core.I32.Insts.CoreMarkerCopy sp s1
+        Result.ok ({ values := back s2 }
+          : libcrux_iot_ml_dsa.simd.portable.vector_type.Coefficients)) = .ok r
+        ∧ ∀ j : Nat, j < 8 → (r.values.val[j]!).val = (array.val[j]!).val
+    obtain ⟨s1, hs1_eq, hs1_val, hs1_len⟩ :=
+      triple_exists_ok
+        (core_models_Slice_Insts_index_RangeUsize_spec array
+          { start := 0#usize, «end» := 8#usize } (by decide) (by exact harr))
+    rw [hs1_eq]
+    simp only [Aeneas.Std.bind_tc_ok]
+    have hsp_len8 : sp.val.length = 8 := by
+      rw [show sp = (out.values.to_slice_mut).1 from by rw [hp], hsp_len]
+    have hs1_len8 : s1.val.length = 8 := by rw [hs1_len]; rfl
+    obtain ⟨s2, hs2_eq, hs2_val⟩ :=
+      triple_exists_ok
+        (core_models_slice_Slice_copy_from_slice_spec core.I32.Insts.CoreMarkerCopy sp s1
+          (by rw [hsp_len8, hs1_len8]))
+    rw [hs2_eq]
+    simp only [Aeneas.Std.bind_tc_ok]
+    refine ⟨_, rfl, ?_⟩
+    intro j hj
+    show (back s2).val[j]!.val = _
+    have hback : back = out.values.from_slice := by
+      rw [show back = (out.values.to_slice_mut).2 from by rw [hp], hback_eq]
+    rw [hback]
+    have hfrom : (out.values.from_slice s2).val = s2.val := by
+      rw [Aeneas.Std.Array.from_slice_val]; rw [hs2_val, hs1_len8]; rfl
+    rw [hfrom, hs2_val, hs1_val]
+    show ((List.slice 0 8 array.val)[j]!).val = _
+    congr 1
+    unfold List.slice
+    simp only [List.drop_zero]
+    rw [List.getElem!_eq_getElem?_getD, List.getElem!_eq_getElem?_getD]
+    rw [List.getElem?_take_of_lt hj]
+  exact triple_of_ok h_ok h_P
 
 end libcrux_iot_ml_dsa.Vector.Portable.Element
