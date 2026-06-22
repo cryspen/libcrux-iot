@@ -40,6 +40,7 @@ import LibcruxIotMlDsa.Polynomial.InfinityNorm        -- poly-layer infinity_nor
 import LibcruxIotMlDsa.Spec.HacspecBridge              -- createi/mod_q/lift_res + poly_{add,sub,mul} hand↔extracted bridges
 import LibcruxIotMlDsa.Polynomial.HacspecFC            -- @[spec] poly_{add,sub,mul}_hacspec_fc (extracted-spec posts)
 import LibcruxIotMlDsa.Polynomial.HacspecNtt           -- ntt/intt_layer + ntt/intt bridges + @[spec] ntt/intt_hacspec_fc
+import LibcruxIotMlDsa.Polynomial.HacspecNorm          -- coeff_norm/poly_infinity_norm bridges + @[spec] infinity_norm_exceeds_hacspec_fc
 -- Phases 3-8 (re-enable as the proof files land; ml-dsa has no `createi`):
 -- import LibcruxIotMlDsa.Util.CreateI
 -- import LibcruxIotMlDsa.Ntt                          -- L3 forward drivers
