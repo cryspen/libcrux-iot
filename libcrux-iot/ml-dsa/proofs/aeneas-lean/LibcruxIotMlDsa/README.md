@@ -2,14 +2,13 @@
 
 This directory contains the Lean 4 proof that the Rust implementation of
 ML-DSA's **`PolynomialRingElement<SIMDUnit>` API** and its supporting
-per-SIMD-unit arithmetic in `libcrux-iot/ml-dsa/src/` computes the same
-functions as a clean-`Z_q` (q = 8 380 417) hacspec-style reference. The impl is
-auto-extracted via the `cargo hax into aeneas-lean` pipeline; this directory then
-proves functional-correctness (FC) equivalence against a pure Lean spec
-(`Spec/Pure.lean`, mirroring `specs/ml-dsa`), which is itself proven equal to the
-**machine-extracted** `specs/ml-dsa` Rust spec (`HacspecMlDsa`) — the trusted
-reference (see
-[Equivalence to the extracted spec](#equivalence-to-the-machine-extracted-spec-hacspecmldsa)).
+per-SIMD-unit arithmetic in `libcrux-iot/ml-dsa/src/` computes the same functions
+as the ML-DSA specification in `specs/ml-dsa` (q = 8 380 417). **Both sides are
+machine-extracted** to aeneas-lean by the `cargo hax into aeneas-lean` pipeline:
+the impl from `libcrux-iot/ml-dsa/src/`, the spec from the `hacspec_ml_dsa` crate
+(the `HacspecMlDsa` dependency). The top-level theorems state that each impl
+function matches its `hacspec_ml_dsa.*` counterpart — no hand-written reference is
+trusted.
 
 Every theorem below is **axiom-clean** — it depends only on Lean's three
 standard axioms (`propext`, `Classical.choice`, `Quot.sound`) and **no** leaf
@@ -37,71 +36,66 @@ the code that ships.
 
 ## Top-level theorems — the `PolynomialRingElement` API
 
-Each is an `mvcgen` Triple of the form
-`⦃ True ⦄ <impl> portable_ops_inst args… ⦃ ⇓ r => ⌜ <post over lift_poly r> ⌝ ⦄`,
-linking the extracted impl to the pure spec through the **`lift_poly`** bridge
-(`Spec/Lift.lean`): `lift_poly` strips the Montgomery factor (`· R⁻¹`) lane-wise
-and flattens the 32 SIMD units × 8 lanes into a flat 256-coefficient `Z_q`
-polynomial. (The `infinity_norm_exceeds` post is at a different altitude — raw
-signed-integer magnitudes — since it is a norm check, not a `Z_q` computation.)
+Each is an `mvcgen` Triple `⦃ True ⦄ <impl> portable_ops_inst args… ⦃ ⇓ r => ⌜ <post> ⌝ ⦄`
+that ties the impl function directly to its counterpart in the extracted spec
+`hacspec_ml_dsa.*`. The impl stores coefficients as 32 SIMD units × 8 signed,
+Montgomery-domain `i32` lanes; **`lift_poly_res`** ([`Spec/HacspecBridge.lean`](Spec/HacspecBridge.lean))
+re-encodes them as the spec's representation — a flat canonical-residue `[i32; 256]`,
+Montgomery factor stripped lane-wise.
 
-Representative statement ([`Polynomial/Ntt.lean`](Polynomial/Ntt.lean)):
+Representative statement ([`Polynomial/HacspecNtt.lean`](Polynomial/HacspecNtt.lean)):
 
 ```lean
-theorem ntt_fc (re : PolynomialRingElement Coefficients) (B : Nat)
-    (hB : (B : Int) + 34 * 2 ^ 24 ≤ 2 ^ 31 - 1) (hin : …per-lane bound B…) :
+theorem ntt_hacspec_fc (re : PolynomialRingElement Coefficients) (B : Nat)
+    (hB : …) (hin : …per-lane bound B…) :
     ⦃ ⌜ True ⌝ ⦄
     ntt.ntt portable_ops_inst re
-    ⦃ ⇓ r => ⌜ lift_poly r = Pure.ntt (lift_poly re) ∧ …output bound… ⌝ ⦄
+    ⦃ ⇓ r => ⌜ hacspec_ml_dsa.ntt.ntt (lift_poly_res re) = .ok (lift_poly_res r) ⌝ ⦄
 ```
 
-| Theorem (file) | impl function | post (functional core) |
+| Theorem (file) | impl function | extracted-spec post |
 |---|---|---|
-| `ntt_fc` ([`Polynomial/Ntt.lean`](Polynomial/Ntt.lean)) | `ntt.ntt` | `lift_poly r = Pure.ntt (lift_poly re)` |
-| `invert_ntt_montgomery_fc` ([`Polynomial/Ntt.lean`](Polynomial/Ntt.lean)) | `ntt.invert_ntt_montgomery` | `lift_poly r = (Pure.intt (lift_poly re)).map (·*R)` |
-| `ntt_multiply_montgomery_fc` ([`Polynomial/NttArith.lean`](Polynomial/NttArith.lean)) | `ntt.ntt_multiply_montgomery` | `lift_poly r = Pure.poly_pointwise_mul (lift_poly lhs) (lift_poly rhs)` |
+| `ntt_hacspec_fc` ([`Polynomial/HacspecNtt.lean`](Polynomial/HacspecNtt.lean)) | `ntt.ntt` | `hacspec_ml_dsa.ntt.ntt (lift_poly_res re) = .ok (lift_poly_res r)` |
+| `intt_hacspec_fc` ([`Polynomial/HacspecNtt.lean`](Polynomial/HacspecNtt.lean)) | `ntt.invert_ntt_montgomery` | `hacspec_ml_dsa.ntt.intt (lift_poly_res re) = .ok (lift_poly_res_intt r)`¹ |
+| `poly_pointwise_mul_hacspec_fc` ([`Polynomial/HacspecFC.lean`](Polynomial/HacspecFC.lean)) | `ntt.ntt_multiply_montgomery` | `hacspec_ml_dsa.polynomial.poly_pointwise_mul (lift_poly_res lhs) (lift_poly_res rhs) = .ok (lift_poly_res r)` |
+| `poly_add_hacspec_fc` ([`Polynomial/HacspecFC.lean`](Polynomial/HacspecFC.lean)) | `…PolynomialRingElement.add` | `hacspec_ml_dsa.polynomial.poly_add (lift_poly_res self) (lift_poly_res rhs) = .ok (lift_poly_res r)` |
+| `poly_sub_hacspec_fc` ([`Polynomial/HacspecFC.lean`](Polynomial/HacspecFC.lean)) | `…PolynomialRingElement.subtract` | `hacspec_ml_dsa.polynomial.poly_sub (lift_poly_res self) (lift_poly_res rhs) = .ok (lift_poly_res r)` |
+| `infinity_norm_exceeds_hacspec_fc` ([`Polynomial/HacspecNorm.lean`](Polynomial/HacspecNorm.lean)) | `…PolynomialRingElement.infinity_norm_exceeds` | `r = decide (bound ≤ poly_infinity_norm (canon_raw self))`² |
+
+¹ The impl's inverse NTT leaves its output in the Montgomery domain (`· R`);
+`lift_poly_res_intt` strips that factor (`· R⁻¹`) so the result matches the
+extracted `intt`.
+² Centering precond — see the representation note below.
+
+Four impl ops have no non-trivial counterpart in the spec (it treats them as
+identity / a constant / a copy), so they are stated as direct value equations:
+
+| Theorem (file) | impl function | post |
+|---|---|---|
 | `reduce_fc` ([`Polynomial/NttArith.lean`](Polynomial/NttArith.lean)) | `ntt.reduce` | `lift_poly r = lift_poly re` (Barrett-reduce; residues unchanged) |
-| `add_fc` ([`Polynomial/Arithmetic.lean`](Polynomial/Arithmetic.lean)) | `…PolynomialRingElement.add` | `lift_poly r = Pure.poly_add (lift_poly self) (lift_poly rhs)` |
-| `subtract_fc` ([`Polynomial/Arithmetic.lean`](Polynomial/Arithmetic.lean)) | `…PolynomialRingElement.subtract` | `lift_poly r = Pure.poly_sub (lift_poly self) (lift_poly rhs)` |
-| `zero_fc` ([`Polynomial/Convert.lean`](Polynomial/Convert.lean)) | `…PolynomialRingElement.zero` | `lift_poly r = Pure.zero_poly` |
-| `to_i32_array_fc` ([`Polynomial/Convert.lean`](Polynomial/Convert.lean)) | `…PolynomialRingElement.to_i32_array` | `∀ k<256, (r[k]).val =` self's coefficient `k` |
-| `from_i32_array_fc` ([`Polynomial/Convert.lean`](Polynomial/Convert.lean)) | `…PolynomialRingElement.from_i32_array` | `∀ k<256,` r's coefficient `k` `= (array[k]).val` |
-| `infinity_norm_exceeds_fc` ([`Polynomial/InfinityNorm.lean`](Polynomial/InfinityNorm.lean)) | `…PolynomialRingElement.infinity_norm_exceeds` | `r = decide (Spec.Pure.infinity_norm_exceeds coeffs bound)` |
+| `zero_fc` ([`Polynomial/Convert.lean`](Polynomial/Convert.lean)) | `…zero` | `lift_poly r = 0` (the zero polynomial) |
+| `to_i32_array_fc` ([`Polynomial/Convert.lean`](Polynomial/Convert.lean)) | `…to_i32_array` | `∀ k<256, (r[k]).val =` self coefficient `k` |
+| `from_i32_array_fc` ([`Polynomial/Convert.lean`](Polynomial/Convert.lean)) | `…from_i32_array` | `∀ k<256,` r coefficient `k` `= (array[k]).val` |
 
-`from_i32_array_fc` additionally has a `lift_poly`-form corollary
-`from_i32_array_lift_fc`.
+### How the equivalence is established
 
-## Equivalence to the machine-extracted spec (`HacspecMlDsa`)
+`hacspec_ml_dsa.*` is the `specs/ml-dsa` Rust spec crate machine-extracted to
+aeneas-lean (the same pipeline as the impl), wired in as the `HacspecMlDsa` Lake
+dependency. The bridge ([`Spec/HacspecBridge.lean`](Spec/HacspecBridge.lean))
+re-encodes between the impl's SIMD lanes and the spec's `[i32; 256]`, proves the
+extracted `mod_q` total and residue-preserving (`mod_q_eq`), and matches each
+extracted op to the impl; the `ZETAS`-table match (`zetas_bridge`) is a kernel
+`decide` in `Z_q` over the full 256-entry table. Internally the equivalence
+factors through a clean-`Z_q` Lean restatement
+([`Spec/Pure.lean`](Spec/Pure.lean), proven equal to the extracted spec) — a
+proof convenience that keeps the algebra in `ZMod q`, not a separately trusted
+artifact.
 
-The `specs/ml-dsa` Rust spec crate (`hacspec_ml_dsa`) is machine-extracted to
-aeneas-lean as the `HacspecMlDsa` Lake dependency (the same `cargo hax into
-aeneas-lean` pipeline as the impl). Each `Spec.Pure.*` op is proven equal to its
-extracted `hacspec_ml_dsa.*` counterpart, giving each op a corollary FC whose
-post references the extracted spec directly.
-
-The bridge ([`Spec/HacspecBridge.lean`](Spec/HacspecBridge.lean)) maps the
-extracted spec's canonical-residue `[i32; 256]` to clean `Z_q` (`lift_res`),
-proves the extracted `mod_q` total and residue-preserving (`mod_q_eq`), and
-establishes `Pure.<op> (lift_res a) … = lift_res (<extracted op> a …)` for every
-op. The corollary Triples (`*_hacspec_fc`) over the impl entry points post:
-
-| Theorem (file) | extracted-spec post |
-|---|---|
-| `poly_{add,sub,pointwise_mul}_hacspec_fc` ([`Polynomial/HacspecFC.lean`](Polynomial/HacspecFC.lean)) | `hacspec_ml_dsa.polynomial.poly_{add,sub,pointwise_mul} (lift_poly_res …) = .ok (lift_poly_res r)` |
-| `ntt_hacspec_fc` ([`Polynomial/HacspecNtt.lean`](Polynomial/HacspecNtt.lean)) | `hacspec_ml_dsa.ntt.ntt (lift_poly_res re) = .ok (lift_poly_res r)` |
-| `intt_hacspec_fc` ([`Polynomial/HacspecNtt.lean`](Polynomial/HacspecNtt.lean)) | `hacspec_ml_dsa.ntt.intt (lift_poly_res re) = .ok (lift_poly_res_intt r)` (Montgomery `·R` stripped via `·R⁻¹`) |
-| `infinity_norm_exceeds_hacspec_fc` ([`Polynomial/HacspecNorm.lean`](Polynomial/HacspecNorm.lean)) | `r = decide (bound ≤ poly_infinity_norm (canon_raw self))`, under a centering precond¹ |
-
-The `ZETAS`-table bridge (`zetas_bridge`: the extracted clean table equals
-`Pure.zeta`) is a kernel `decide` in `Z_q` over the whole 256-entry table. Four
-impl ops (`reduce`, `zero`, `to_i32_array`, `from_i32_array`) map to identity / a
-constant / a copy in the spec, with no non-trivial extracted counterpart.
-
-> ¹ **Representation note.** The impl and `Spec.Pure` compute the raw signed
-> `|coefficient|`; the Rust spec's `coeff_norm`/`poly_infinity_norm` compute the
+> **Representation note (`infinity_norm_exceeds`).** The impl computes the raw
+> signed `|coefficient|`; the spec's `coeff_norm`/`poly_infinity_norm` compute the
 > centered FIPS norm. These coincide when each coefficient is a centered
-> representative (`|·| ≤ (q−1)/2`), which the FIPS signing context guarantees;
-> the connection FC carries an explicit `hcentered` hypothesis.
+> representative (`|·| ≤ (q−1)/2`), which the FIPS signing context guarantees; the
+> connection FC carries an explicit `hcentered` hypothesis.
 
 ## Supporting layers
 
@@ -146,21 +140,23 @@ What is **trusted** rather than **proven** in this directory:
   proof. The per-SIMD-unit versions of the vector rounding wrappers
   (`power2round`, `decompose`) *are* verified (see the rounding row above); only
   the 32-unit vector maps over them are opaque.
-- **Spec faithfulness** — the trusted reference is the machine-**extracted**
-  `specs/ml-dsa` Rust spec (`HacspecMlDsa`, see
-  [Equivalence to the extracted spec](#equivalence-to-the-machine-extracted-spec-hacspecmldsa)):
-  the extraction of the same Rust source the F\*/test artifacts use.
-  `Spec/Pure.lean` is proven equal to it and serves as a clean-`Z_q`
-  intermediate; build-time `#guard`s in
-  [`Spec/Validation.lean`](Spec/Validation.lean) additionally pin it to the Rust
-  `ZETAS` table, the NTT round-trip, and rounding boundary invariants.
+- **Spec faithfulness** — the reference is the machine-**extracted** `specs/ml-dsa`
+  Rust spec (`HacspecMlDsa`): the same Rust source the F\*/test artifacts use,
+  extracted by the same `cargo hax` pipeline. The trust assumption is that this
+  extraction faithfully reflects the Rust source — no hand-written spec is
+  trusted. The `Spec/Pure.lean` restatement is proven equal to the extraction,
+  and build-time `#guard`s in [`Spec/Validation.lean`](Spec/Validation.lean)
+  independently check it against the Rust `ZETAS` table, the NTT round-trip, and
+  rounding boundary invariants.
 
 ## Proof architecture
 
 The impl works over `Coefficients`-backed `i32` lanes in the (signed,
-non-canonical) **Montgomery** domain, packed as 32 SIMD units of 8 lanes; the
-spec works over a flat `Array (ZMod q)` of 256 canonical coefficients. The lift
-family in [`Spec/Lift.lean`](Spec/Lift.lean) bridges them:
+non-canonical) **Montgomery** domain, packed as 32 SIMD units of 8 lanes. The
+proofs reduce these lane-wise to a clean `Array (ZMod q)` of 256 coefficients —
+the working representation in which the algebra is done (the spec's own
+`[i32; 256]` is its canonical-residue image). The lift family in
+[`Spec/Lift.lean`](Spec/Lift.lean):
 
 - `liftZ x = (x : Z_q) · R⁻¹` (strips one Montgomery factor); `liftZ_std x = (x : Z_q)`.
 - `lift_units` / `lift_poly` flatten 32×8 lanes into a 256-element `Z_q` poly,
