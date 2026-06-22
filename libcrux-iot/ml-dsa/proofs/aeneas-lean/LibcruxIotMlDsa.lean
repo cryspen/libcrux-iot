@@ -9,6 +9,12 @@ import LibcruxIotMlDsa.Spec.Lift
 -- Build-time spec validation (round-trip + Rust ZETAS cross-check, axiom-free).
 import LibcruxIotMlDsa.Spec.Validation
 
+-- Spec-extraction campaign: the machine-EXTRACTED clean-Z_q ML-DSA hacspec.
+-- The poly-layer spec-bridge lemmas (Phase C) prove the hand `Spec.Pure.*`
+-- equals these `hacspec_ml_dsa.*` defs, so the extracted spec — not the hand
+-- spec — is the trusted reference.
+import HacspecMlDsa.Extraction.Funs
+
 -- Phase-0: extraction + generic Util specs (ported from ml-kem).
 import LibcruxIotMlDsa.Extraction.Funs
 import LibcruxIotMlDsa.Util.SliceSpecs
