@@ -30,6 +30,44 @@ pub(crate) fn reduce<SIMDUnit: Operations>(re: &mut PolynomialRingElement<SIMDUn
     SIMDUnit::reduce(&mut re.simd_units);
 }
 
+/// Verification-only anchor — NOT part of the shipped library.
+///
+/// ML-DSA's `PolynomialRingElement<SIMDUnit>` / `ntt` API is generic over the
+/// `simd::traits::Operations` trait. The crate's only concrete (monomorphic)
+/// callers — `matrix` and `ml_dsa_generic` — are kept opaque in the Lean
+/// extraction (hax #720), so Charon finds no *use* of the concrete
+/// `Operations for Coefficients` instance and prunes it, which leaves the whole
+/// polynomial layer looking like dead code in the proof tree.
+///
+/// This function is that missing monomorphic user: it instantiates the generic
+/// polynomial/NTT API at the portable `Coefficients` SIMD unit so Charon retains
+/// the instance. It is gated on `hax_backend_lean` (set only by the extraction
+/// driver's `RUSTFLAGS`, never by a normal `cargo build`), so it is not compiled
+/// into the shipped library. It is placed in this module (rather than next to the
+/// impl in `simd::portable`) so the extracted Lean call sites resolve to the
+/// top-level `ntt::ntt` rather than the per-SIMD-unit `simd::portable::ntt::ntt`.
+/// This mirrors ML-KEM, whose non-opaque `matrix::compute_*` functions keep its
+/// portable `Operations` instance alive.
+#[cfg(hax_backend_lean)]
+pub fn _portable_operations_anchor(
+    re: &mut PolynomialRingElement<crate::simd::portable::PortableSIMDUnit>,
+    rhs: &PolynomialRingElement<crate::simd::portable::PortableSIMDUnit>,
+    array: &[libcrux_secrets::I32],
+    bound: i32,
+) -> bool {
+    use crate::simd::portable::PortableSIMDUnit as Unit;
+    crate::ntt::ntt::<Unit>(re);
+    crate::ntt::invert_ntt_montgomery::<Unit>(re);
+    crate::ntt::ntt_multiply_montgomery::<Unit>(re, rhs);
+    crate::ntt::reduce::<Unit>(re);
+    PolynomialRingElement::<Unit>::from_i32_array(array, re);
+    re.add(rhs);
+    re.subtract(rhs);
+    let _coeffs = re.to_i32_array();
+    let _zero = PolynomialRingElement::<Unit>::zero();
+    re.infinity_norm_exceeds(bound)
+}
+
 #[cfg(test)]
 mod tests {
     use libcrux_secrets::ClassifyRef as _;

@@ -715,390 +715,16 @@ def ntt.reduce
   let a ← simdtraitsOperationsInst.«reduce» re.simd_units
   ok { simd_units := a }
 
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::MONTGOMERY_SHIFT]
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 11:0-11:43 -/
-@[global_simps, irreducible]
-def simd.portable.arithmetic.MONTGOMERY_SHIFT : Std.U8 := 32#u8
-
 /-- [libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients]
     Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 10:0-12:1 -/
 structure simd.portable.vector_type.Coefficients where
   values : Array Std.I32 8#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::add]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 15:4-17:5
-    Visibility: public -/
-@[rust_loop_body]
-def simd.portable.arithmetic.add_loop.body
-  (rhs : simd.portable.vector_type.Coefficients)
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
-    8#usize)) (Array Std.I32 8#usize))
-  := do
-  let (o, iter1) ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
-      core.Usize.Insts.CoreIterRangeStep iter
-  match o with
-  | core.option.Option.None => ok (done a)
-  | core.option.Option.Some i =>
-    let i1 ← Array.index_usize a i
-    let i2 ← Array.index_usize rhs.values i
-    let i3 ← core.num.I32.wrapping_add i1 i2
-    let a1 ← Array.update a i i3
-    ok (cont (iter1, a1))
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::add]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 15:4-17:5
-    Visibility: public -/
-@[rust_loop]
-def simd.portable.arithmetic.add_loop
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
-  (rhs : simd.portable.vector_type.Coefficients) :
-  Result (Array Std.I32 8#usize)
-  := do
-  loop
-    (fun (iter1, a1) => simd.portable.arithmetic.add_loop.body rhs iter1 a1)
-    (iter, a)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::add]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 14:0-18:1
-    Visibility: public -/
-def simd.portable.arithmetic.add
-  (lhs : simd.portable.vector_type.Coefficients)
-  (rhs : simd.portable.vector_type.Coefficients) :
-  Result simd.portable.vector_type.Coefficients
-  := do
-  let s ← lift (Array.to_slice lhs.values)
-  let i ← core.slice.Slice.len s
-  let a ←
-    simd.portable.arithmetic.add_loop { start := 0#usize, «end» := i }
-      lhs.values rhs
-  ok { values := a }
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::subtract]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 22:4-24:5
-    Visibility: public -/
-@[rust_loop_body]
-def simd.portable.arithmetic.subtract_loop.body
-  (rhs : simd.portable.vector_type.Coefficients)
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
-    8#usize)) (Array Std.I32 8#usize))
-  := do
-  let (o, iter1) ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
-      core.Usize.Insts.CoreIterRangeStep iter
-  match o with
-  | core.option.Option.None => ok (done a)
-  | core.option.Option.Some i =>
-    let i1 ← Array.index_usize a i
-    let i2 ← Array.index_usize rhs.values i
-    let i3 ← core.num.I32.wrapping_sub i1 i2
-    let a1 ← Array.update a i i3
-    ok (cont (iter1, a1))
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::subtract]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 22:4-24:5
-    Visibility: public -/
-@[rust_loop]
-def simd.portable.arithmetic.subtract_loop
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
-  (rhs : simd.portable.vector_type.Coefficients) :
-  Result (Array Std.I32 8#usize)
-  := do
-  loop
-    (fun (iter1, a1) => simd.portable.arithmetic.subtract_loop.body rhs iter1
-      a1)
-    (iter, a)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::subtract]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 21:0-25:1
-    Visibility: public -/
-def simd.portable.arithmetic.subtract
-  (lhs : simd.portable.vector_type.Coefficients)
-  (rhs : simd.portable.vector_type.Coefficients) :
-  Result simd.portable.vector_type.Coefficients
-  := do
-  let s ← lift (Array.to_slice lhs.values)
-  let i ← core.slice.Slice.len s
-  let a ←
-    simd.portable.arithmetic.subtract_loop { start := 0#usize, «end» := i }
-      lhs.values rhs
-  ok { values := a }
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::get_n_least_significant_bits]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 29:0-31:1 -/
-def simd.portable.arithmetic.get_n_least_significant_bits
-  (n : Std.U8) (value : Std.U64) : Result Std.U64 := do
-  let i ← 1#u64 <<< n
-  let i1 ← core.num.U64.wrapping_sub i 1#u64
-  ok (value &&& i1)
-
-/-- [libcrux_iot_ml_dsa::simd::traits::INVERSE_OF_MODULUS_MOD_MONTGOMERY_R]
-    Source: 'ml-dsa/src/simd/traits.rs', lines 14:0-14:64
-    Visibility: public -/
-@[global_simps, irreducible]
-def simd.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R : Std.U64 := 58728449#u64
 
 /-- [libcrux_iot_ml_dsa::simd::traits::FIELD_MODULUS]
     Source: 'ml-dsa/src/simd/traits.rs', lines 11:0-11:41
     Visibility: public -/
 @[global_simps, irreducible]
 def simd.traits.FIELD_MODULUS : Std.I32 := 8380417#i32
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_reduce_element]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 34:0-45:1 -/
-def simd.portable.arithmetic.montgomery_reduce_element
-  (value : Std.I64) : Result Std.I32 := do
-  let i ← libcrux_secrets.I64.Insts.Libcrux_secretsIntCastOps.as_u64 value
-  let i1 ←
-    simd.portable.arithmetic.get_n_least_significant_bits
-      simd.portable.arithmetic.MONTGOMERY_SHIFT i
-  let t ←
-    core.num.U64.wrapping_mul i1
-      simd.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R
-  let i2 ←
-    simd.portable.arithmetic.get_n_least_significant_bits
-      simd.portable.arithmetic.MONTGOMERY_SHIFT t
-  let k ← libcrux_secrets.U64.Insts.Libcrux_secretsIntCastOps.as_i32 i2
-  let i3 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 k
-  let i4 ← lift (IScalar.cast .I64 simd.traits.FIELD_MODULUS)
-  let i5 ← libcrux_secrets.traits.Classify.Blanket.classify i4
-  let k_times_modulus ← core.num.I64.wrapping_mul i3 i5
-  let i6 ← k_times_modulus >>> simd.portable.arithmetic.MONTGOMERY_SHIFT
-  let c ← libcrux_secrets.I64.Insts.Libcrux_secretsIntCastOps.as_i32 i6
-  let i7 ← value >>> simd.portable.arithmetic.MONTGOMERY_SHIFT
-  let value_high ←
-    libcrux_secrets.I64.Insts.Libcrux_secretsIntCastOps.as_i32 i7
-  core.num.I32.wrapping_sub value_high c
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_fe_by_fer]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 48:0-53:1 -/
-def simd.portable.arithmetic.montgomery_multiply_fe_by_fer
-  (fe : Std.I32) (fer : Std.I32) : Result Std.I32 := do
-  let i ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 fe
-  let i1 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 fer
-  let i2 ← core.num.I64.wrapping_mul i i1
-  simd.portable.arithmetic.montgomery_reduce_element i2
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_by_constant]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 57:4-60:5 -/
-@[rust_loop_body]
-def simd.portable.arithmetic.montgomery_multiply_by_constant_loop.body
-  (c : Std.I32) (iter : core.ops.range.Range Std.Usize)
-  (a : Array Std.I32 8#usize) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
-    8#usize)) (Array Std.I32 8#usize))
-  := do
-  let (o, iter1) ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
-      core.Usize.Insts.CoreIterRangeStep iter
-  match o with
-  | core.option.Option.None => ok (done a)
-  | core.option.Option.Some i =>
-    let i1 ← Array.index_usize a i
-    let i2 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 i1
-    let i3 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 c
-    let i4 ← core.num.I64.wrapping_mul i2 i3
-    let i5 ← simd.portable.arithmetic.montgomery_reduce_element i4
-    let a1 ← Array.update a i i5
-    ok (cont (iter1, a1))
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_by_constant]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 57:4-60:5 -/
-@[rust_loop]
-def simd.portable.arithmetic.montgomery_multiply_by_constant_loop
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
-  (c : Std.I32) :
-  Result (Array Std.I32 8#usize)
-  := do
-  loop
-    (fun (iter1, a1) =>
-      simd.portable.arithmetic.montgomery_multiply_by_constant_loop.body c
-      iter1 a1)
-    (iter, a)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_by_constant]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 56:0-61:1 -/
-def simd.portable.arithmetic.montgomery_multiply_by_constant
-  (simd_unit : simd.portable.vector_type.Coefficients) (c : Std.I32) :
-  Result simd.portable.vector_type.Coefficients
-  := do
-  let s ← lift (Array.to_slice simd_unit.values)
-  let i ← core.slice.Slice.len s
-  let a ←
-    simd.portable.arithmetic.montgomery_multiply_by_constant_loop
-      { start := 0#usize, «end» := i } simd_unit.values c
-  ok { values := a }
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 65:4-68:5 -/
-@[rust_loop_body]
-def simd.portable.arithmetic.montgomery_multiply_loop.body
-  (rhs : simd.portable.vector_type.Coefficients)
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
-    8#usize)) (Array Std.I32 8#usize))
-  := do
-  let (o, iter1) ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
-      core.Usize.Insts.CoreIterRangeStep iter
-  match o with
-  | core.option.Option.None => ok (done a)
-  | core.option.Option.Some i =>
-    let i1 ← Array.index_usize a i
-    let i2 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 i1
-    let i3 ← Array.index_usize rhs.values i
-    let i4 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 i3
-    let i5 ← core.num.I64.wrapping_mul i2 i4
-    let i6 ← simd.portable.arithmetic.montgomery_reduce_element i5
-    let a1 ← Array.update a i i6
-    ok (cont (iter1, a1))
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 65:4-68:5 -/
-@[rust_loop]
-def simd.portable.arithmetic.montgomery_multiply_loop
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
-  (rhs : simd.portable.vector_type.Coefficients) :
-  Result (Array Std.I32 8#usize)
-  := do
-  loop
-    (fun (iter1, a1) => simd.portable.arithmetic.montgomery_multiply_loop.body
-      rhs iter1 a1)
-    (iter, a)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 64:0-69:1 -/
-def simd.portable.arithmetic.montgomery_multiply
-  (lhs : simd.portable.vector_type.Coefficients)
-  (rhs : simd.portable.vector_type.Coefficients) :
-  Result simd.portable.vector_type.Coefficients
-  := do
-  let s ← lift (Array.to_slice lhs.values)
-  let i ← core.slice.Slice.len s
-  let a ←
-    simd.portable.arithmetic.montgomery_multiply_loop
-      { start := 0#usize, «end» := i } lhs.values rhs
-  ok { values := a }
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round_element]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 80:0-103:1 -/
-def simd.portable.arithmetic.power2round_element
-  (t : Std.I32) : Result (Std.I32 × Std.I32) := do
-  let i ← t >>> 31#i32
-  let i1 ← lift (i &&& simd.traits.FIELD_MODULUS)
-  let t1 ← core.num.I32.wrapping_add t i1
-  let i2 ← core.num.I32.wrapping_sub t1 1#i32
-  let i3 ← constants.BITS_IN_LOWER_PART_OF_T - 1#usize
-  let i4 ← 1#i32 <<< i3
-  let i5 ← core.num.I32.wrapping_add i2 i4
-  let t11 ← i5 >>> constants.BITS_IN_LOWER_PART_OF_T
-  let i6 ← t11 <<< constants.BITS_IN_LOWER_PART_OF_T
-  let t0 ← core.num.I32.wrapping_sub t1 i6
-  ok (t0, t11)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 107:4-109:5 -/
-@[rust_loop_body]
-def simd.portable.arithmetic.power2round_loop.body
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
-  (t1 : simd.portable.vector_type.Coefficients) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
-    8#usize) × simd.portable.vector_type.Coefficients) ((Array Std.I32
-    8#usize) × simd.portable.vector_type.Coefficients))
-  := do
-  let (o, iter1) ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
-      core.Usize.Insts.CoreIterRangeStep iter
-  match o with
-  | core.option.Option.None => ok (done (a, t1))
-  | core.option.Option.Some i =>
-    let i1 ← Array.index_usize a i
-    let (i2, i3) ← simd.portable.arithmetic.power2round_element i1
-    let a1 ← Array.update a i i2
-    let a2 ← Array.update t1.values i i3
-    ok (cont (iter1, a1, { values := a2 }))
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 107:4-109:5 -/
-@[rust_loop]
-def simd.portable.arithmetic.power2round_loop
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
-  (t1 : simd.portable.vector_type.Coefficients) :
-  Result ((Array Std.I32 8#usize) × simd.portable.vector_type.Coefficients)
-  := do
-  loop
-    (fun (iter1, a1, t11) => simd.portable.arithmetic.power2round_loop.body
-      iter1 a1 t11)
-    (iter, a, t1)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 106:0-110:1 -/
-def simd.portable.arithmetic.power2round
-  (t0 : simd.portable.vector_type.Coefficients)
-  (t1 : simd.portable.vector_type.Coefficients) :
-  Result (simd.portable.vector_type.Coefficients ×
-    simd.portable.vector_type.Coefficients)
-  := do
-  let s ← lift (Array.to_slice t0.values)
-  let i ← core.slice.Slice.len s
-  let (a, t11) ←
-    simd.portable.arithmetic.power2round_loop
-      { start := 0#usize, «end» := i } t0.values t1
-  ok ({ values := a }, t11)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::infinity_norm_exceeds]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 120:4-144:5 -/
-@[rust_loop_body]
-def simd.portable.arithmetic.infinity_norm_exceeds_loop.body
-  (a : Array Std.I32 8#usize) (bound : Std.I32)
-  (iter : core.ops.range.Range Std.Usize) (result : Bool) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × Bool) Bool)
-  := do
-  let (o, iter1) ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
-      core.Usize.Insts.CoreIterRangeStep iter
-  match o with
-  | core.option.Option.None => ok (done result)
-  | core.option.Option.Some i =>
-    let coefficient ← Array.index_usize a i
-    let sign ← coefficient >>> 31#i32
-    let i1 ← libcrux_secrets.traits.Classify.Blanket.classify 2#i32
-    let i2 ← core.num.I32.wrapping_mul i1 coefficient
-    let i3 ← lift (sign &&& i2)
-    let normalized ← core.num.I32.wrapping_sub coefficient i3
-    if result
-    then ok (cont (iter1, true))
-    else
-      let i4 ←
-        libcrux_secrets.traits.Declassify.Blanket.declassify normalized
-      ok (cont (iter1, i4 >= bound))
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::infinity_norm_exceeds]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 120:4-144:5 -/
-@[rust_loop]
-def simd.portable.arithmetic.infinity_norm_exceeds_loop
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
-  (bound : Std.I32) (result : Bool) :
-  Result Bool
-  := do
-  loop
-    (fun (iter1, result1) =>
-      simd.portable.arithmetic.infinity_norm_exceeds_loop.body a bound iter1
-      result1)
-    (iter, result)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::infinity_norm_exceeds]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 115:0-147:1 -/
-def simd.portable.arithmetic.infinity_norm_exceeds
-  (simd_unit : simd.portable.vector_type.Coefficients) (bound : Std.I32) :
-  Result Bool
-  := do
-  let s ← lift (Array.to_slice simd_unit.values)
-  let i ← core.slice.Slice.len s
-  simd.portable.arithmetic.infinity_norm_exceeds_loop
-    { start := 0#usize, «end» := i } simd_unit.values bound false
 
 /-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::reduce_element]:
     Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 150:0-154:1 -/
@@ -1158,218 +784,176 @@ def simd.portable.arithmetic.shift_left_then_reduce
       { start := 0#usize, «end» := i } simd_unit.values
   ok { values := a }
 
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_one_hint]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 167:0-173:1 -/
-def simd.portable.arithmetic.compute_one_hint
-  (low : Std.I32) (high : Std.I32) (gamma2 : Std.I32) : Result Std.I32 := do
-  if low > gamma2
-  then ok 1#i32
-  else
-    let i ← -. gamma2
-    if low < i
-    then ok 1#i32
-    else
-      if low = i
-      then if high != 0#i32
-           then ok 1#i32
-           else ok 0#i32
-      else ok 0#i32
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_hint]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 188:4-197:5 -/
-@[rust_loop_body]
-def simd.portable.arithmetic.compute_hint_loop.body
-  (low : simd.portable.vector_type.Coefficients)
-  (high : simd.portable.vector_type.Coefficients) (gamma2 : Std.I32)
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
-  (one_hints_count : Std.Usize) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
-    8#usize) × Std.Usize) ((Array Std.I32 8#usize) × Std.Usize))
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::shift_left_then_reduce]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 45:4-47:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.shift_left_then_reduce
+  (SHIFT_BY : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
   := do
-  let (o, iter1) ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
-      core.Usize.Insts.CoreIterRangeStep iter
-  match o with
-  | core.option.Option.None => ok (done (a, one_hints_count))
-  | core.option.Option.Some i =>
-    let i1 ← Array.index_usize low.values i
-    let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
-    let i3 ← Array.index_usize high.values i
-    let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify i3
-    let i5 ← simd.portable.arithmetic.compute_one_hint i2 i4 gamma2
-    let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
-    let a1 ← Array.update a i i6
-    let i7 ← Array.index_usize a1 i
-    let i8 ← libcrux_secrets.traits.Declassify.Blanket.declassify i7
-    let i9 ← lift (IScalar.hcast .Usize i8)
-    let one_hints_count1 ← one_hints_count + i9
-    ok (cont (iter1, a1, one_hints_count1))
+  simd.portable.arithmetic.shift_left_then_reduce SHIFT_BY simd_unit
 
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_hint]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 188:4-197:5 -/
-@[rust_loop]
-def simd.portable.arithmetic.compute_hint_loop
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::reduce]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 131:8-133:9 -/
+@[rust_loop_body]
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.reduce_loop.body
   (iter : core.ops.range.Range Std.Usize)
-  (low : simd.portable.vector_type.Coefficients)
-  (high : simd.portable.vector_type.Coefficients) (gamma2 : Std.I32)
-  (a : Array Std.I32 8#usize) (one_hints_count : Std.Usize) :
-  Result ((Array Std.I32 8#usize) × Std.Usize)
-  := do
-  loop
-    (fun (iter1, a1, one_hints_count1) =>
-      simd.portable.arithmetic.compute_hint_loop.body low high gamma2 iter1 a1
-      one_hints_count1)
-    (iter, a, one_hints_count)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_hint]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 177:0-200:1 -/
-def simd.portable.arithmetic.compute_hint
-  (low : simd.portable.vector_type.Coefficients)
-  (high : simd.portable.vector_type.Coefficients) (gamma2 : Std.I32)
-  (hint : simd.portable.vector_type.Coefficients) :
-  Result (Std.Usize × simd.portable.vector_type.Coefficients)
-  := do
-  let s ← lift (Array.to_slice hint.values)
-  let i ← core.slice.Slice.len s
-  let (a, one_hints_count) ←
-    simd.portable.arithmetic.compute_hint_loop
-      { start := 0#usize, «end» := i } low high gamma2 hint.values 0#usize
-  ok (one_hints_count, { values := a })
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose_element]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 218:0-265:1 -/
-def simd.portable.arithmetic.decompose_element
-  (gamma2 : Std.I32) (r : Std.I32) : Result (Std.I32 × Std.I32) := do
-  let i ← r >>> 31#i32
-  let i1 ← lift (i &&& simd.traits.FIELD_MODULUS)
-  let r1 ← core.num.I32.wrapping_add r i1
-  let i2 ← core.num.I32.wrapping_add r1 127#i32
-  let ceil_of_r_by_128 ← i2 >>> 7#i32
-  let r11 ←
-    match gamma2 with
-    | 95232#iscalar =>
-      do
-      let i3 ← core.num.I32.wrapping_mul ceil_of_r_by_128 11275#i32
-      let i4 ← 1#i32 <<< 23#i32
-      let i5 ← core.num.I32.wrapping_add i3 i4
-      let result ← i5 >>> 24#i32
-      let i6 ← libcrux_secrets.traits.Classify.Blanket.classify 43#i32
-      let i7 ← core.num.I32.wrapping_sub i6 result
-      let i8 ← i7 >>> 31#i32
-      let i9 ← lift (result ^^^ i8)
-      ok (i9 &&& result)
-    | 261888#iscalar =>
-      do
-      let i3 ← core.num.I32.wrapping_mul ceil_of_r_by_128 1025#i32
-      let i4 ← 1#i32 <<< 21#i32
-      let i5 ← core.num.I32.wrapping_add i3 i4
-      let result ← i5 >>> 22#i32
-      ok (result &&& 15#i32)
-    | _ => fail panic
-  let alpha ← gamma2 * 2#i32
-  let i3 ← core.num.I32.wrapping_mul r11 alpha
-  let r0 ← core.num.I32.wrapping_sub r1 i3
-  let i4 ← simd.traits.FIELD_MODULUS - 1#i32
-  let i5 ← i4 / 2#i32
-  let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
-  let i7 ← core.num.I32.wrapping_sub i6 r0
-  let i8 ← i7 >>> 31#i32
-  let i9 ← lift (i8 &&& simd.traits.FIELD_MODULUS)
-  let r01 ← core.num.I32.wrapping_sub r0 i9
-  ok (r01, r11)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_one_hint]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 269:0-303:1 -/
-def simd.portable.arithmetic.use_one_hint
-  (gamma2 : Std.I32) (r : Std.I32) (hint : Std.I32) : Result Std.I32 := do
-  let i ← libcrux_secrets.traits.Classify.Blanket.classify r
-  let (r0, r1) ← simd.portable.arithmetic.decompose_element gamma2 i
-  let r01 ← libcrux_secrets.traits.Declassify.Blanket.declassify r0
-  let r11 ← libcrux_secrets.traits.Declassify.Blanket.declassify r1
-  if hint = 0#i32
-  then ok r11
-  else
-    match gamma2 with
-    | 95232#iscalar =>
-      if r01 > 0#i32
-      then
-        if r11 = 43#i32
-        then ok 0#i32
-        else core.num.I32.wrapping_add r11 hint
-      else
-        if r11 = 0#i32
-        then ok 43#i32
-        else core.num.I32.wrapping_sub r11 hint
-    | 261888#iscalar =>
-      if r01 > 0#i32
-      then let i1 ← core.num.I32.wrapping_add r11 hint
-           ok (i1 &&& 15#i32)
-      else let i1 ← core.num.I32.wrapping_sub r11 hint
-           ok (i1 &&& 15#i32)
-    | _ => fail panic
-
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 313:4-315:5
-    Visibility: public -/
-@[rust_loop_body]
-def simd.portable.arithmetic.decompose_loop.body
-  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
-  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
-  (high : simd.portable.vector_type.Coefficients) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
-    8#usize) × simd.portable.vector_type.Coefficients) ((Array Std.I32
-    8#usize) × simd.portable.vector_type.Coefficients))
+  (simd_units : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array
+    simd.portable.vector_type.Coefficients 32#usize)) (Array
+    simd.portable.vector_type.Coefficients 32#usize))
   := do
   let (o, iter1) ←
     core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
       core.Usize.Insts.CoreIterRangeStep iter
   match o with
-  | core.option.Option.None => ok (done (a, high))
+  | core.option.Option.None => ok (done simd_units)
   | core.option.Option.Some i =>
-    let i1 ← Array.index_usize simd_unit.values i
-    let (i2, i3) ← simd.portable.arithmetic.decompose_element gamma2 i1
-    let a1 ← Array.update a i i2
-    let a2 ← Array.update high.values i i3
-    ok (cont (iter1, a1, { values := a2 }))
+    let (c, index_mut_back) ← Array.index_mut_usize simd_units i
+    let c1 ←
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.shift_left_then_reduce
+        0#i32 c
+    let a := index_mut_back c1
+    ok (cont (iter1, a))
 
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 313:4-315:5
-    Visibility: public -/
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::reduce]: loop 0:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 131:8-133:9 -/
 @[rust_loop]
-def simd.portable.arithmetic.decompose_loop
-  (iter : core.ops.range.Range Std.Usize) (gamma2 : Std.I32)
-  (simd_unit : simd.portable.vector_type.Coefficients)
-  (a : Array Std.I32 8#usize) (high : simd.portable.vector_type.Coefficients) :
-  Result ((Array Std.I32 8#usize) × simd.portable.vector_type.Coefficients)
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.reduce_loop
+  (iter : core.ops.range.Range Std.Usize)
+  (simd_units : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
   := do
   loop
-    (fun (iter1, a1, high1) => simd.portable.arithmetic.decompose_loop.body
-      gamma2 simd_unit iter1 a1 high1)
-    (iter, a, high)
+    (fun (iter1, simd_units1) =>
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.reduce_loop.body
+      iter1 simd_units1)
+    (iter, simd_units)
 
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 307:0-316:1
-    Visibility: public -/
-def simd.portable.arithmetic.decompose
-  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
-  (low : simd.portable.vector_type.Coefficients)
-  (high : simd.portable.vector_type.Coefficients) :
-  Result (simd.portable.vector_type.Coefficients ×
-    simd.portable.vector_type.Coefficients)
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::reduce]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 130:4-134:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.reduce
+  (simd_units : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
   := do
-  let s ← lift (Array.to_slice low.values)
+  let s ← lift (Array.to_slice simd_units)
   let i ← core.slice.Slice.len s
-  let (a, high1) ←
-    simd.portable.arithmetic.decompose_loop { start := 0#usize, «end» := i }
-      gamma2 simd_unit low.values high
-  ok ({ values := a }, high1)
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.reduce_loop
+    { start := 0#usize, «end» := i } simd_units
 
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_hint]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 321:4-331:5
+/-- [libcrux_iot_ml_dsa::simd::portable::vector_type::{impl core::clone::Clone for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::clone]:
+    Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 8:9-8:14
+    Visibility: public -/
+def simd.portable.vector_type.Coefficients.Insts.CoreCloneClone.clone
+  (self : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  ok self
+
+/-- [libcrux_iot_ml_dsa::simd::traits::INVERSE_OF_MODULUS_MOD_MONTGOMERY_R]
+    Source: 'ml-dsa/src/simd/traits.rs', lines 14:0-14:64
+    Visibility: public -/
+@[global_simps, irreducible]
+def simd.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R : Std.U64 := 58728449#u64
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::get_n_least_significant_bits]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 29:0-31:1 -/
+def simd.portable.arithmetic.get_n_least_significant_bits
+  (n : Std.U8) (value : Std.U64) : Result Std.U64 := do
+  let i ← 1#u64 <<< n
+  let i1 ← core.num.U64.wrapping_sub i 1#u64
+  ok (value &&& i1)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::MONTGOMERY_SHIFT]
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 11:0-11:43 -/
+@[global_simps, irreducible]
+def simd.portable.arithmetic.MONTGOMERY_SHIFT : Std.U8 := 32#u8
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_reduce_element]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 34:0-45:1 -/
+def simd.portable.arithmetic.montgomery_reduce_element
+  (value : Std.I64) : Result Std.I32 := do
+  let i ← libcrux_secrets.I64.Insts.Libcrux_secretsIntCastOps.as_u64 value
+  let i1 ←
+    simd.portable.arithmetic.get_n_least_significant_bits
+      simd.portable.arithmetic.MONTGOMERY_SHIFT i
+  let t ←
+    core.num.U64.wrapping_mul i1
+      simd.traits.INVERSE_OF_MODULUS_MOD_MONTGOMERY_R
+  let i2 ←
+    simd.portable.arithmetic.get_n_least_significant_bits
+      simd.portable.arithmetic.MONTGOMERY_SHIFT t
+  let k ← libcrux_secrets.U64.Insts.Libcrux_secretsIntCastOps.as_i32 i2
+  let i3 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 k
+  let i4 ← lift (IScalar.cast .I64 simd.traits.FIELD_MODULUS)
+  let i5 ← libcrux_secrets.traits.Classify.Blanket.classify i4
+  let k_times_modulus ← core.num.I64.wrapping_mul i3 i5
+  let i6 ← k_times_modulus >>> simd.portable.arithmetic.MONTGOMERY_SHIFT
+  let c ← libcrux_secrets.I64.Insts.Libcrux_secretsIntCastOps.as_i32 i6
+  let i7 ← value >>> simd.portable.arithmetic.MONTGOMERY_SHIFT
+  let value_high ←
+    libcrux_secrets.I64.Insts.Libcrux_secretsIntCastOps.as_i32 i7
+  core.num.I32.wrapping_sub value_high c
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_by_constant]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 57:4-60:5 -/
+@[rust_loop_body]
+def simd.portable.arithmetic.montgomery_multiply_by_constant_loop.body
+  (c : Std.I32) (iter : core.ops.range.Range Std.Usize)
+  (a : Array Std.I32 8#usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
+    8#usize)) (Array Std.I32 8#usize))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done a)
+  | core.option.Option.Some i =>
+    let i1 ← Array.index_usize a i
+    let i2 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 i1
+    let i3 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 c
+    let i4 ← core.num.I64.wrapping_mul i2 i3
+    let i5 ← simd.portable.arithmetic.montgomery_reduce_element i4
+    let a1 ← Array.update a i i5
+    ok (cont (iter1, a1))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_by_constant]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 57:4-60:5 -/
+@[rust_loop]
+def simd.portable.arithmetic.montgomery_multiply_by_constant_loop
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
+  (c : Std.I32) :
+  Result (Array Std.I32 8#usize)
+  := do
+  loop
+    (fun (iter1, a1) =>
+      simd.portable.arithmetic.montgomery_multiply_by_constant_loop.body c
+      iter1 a1)
+    (iter, a)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_by_constant]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 56:0-61:1 -/
+def simd.portable.arithmetic.montgomery_multiply_by_constant
+  (simd_unit : simd.portable.vector_type.Coefficients) (c : Std.I32) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  let s ← lift (Array.to_slice simd_unit.values)
+  let i ← core.slice.Slice.len s
+  let a ←
+    simd.portable.arithmetic.montgomery_multiply_by_constant_loop
+      { start := 0#usize, «end» := i } simd_unit.values c
+  ok { values := a }
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::subtract]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 22:4-24:5
     Visibility: public -/
 @[rust_loop_body]
-def simd.portable.arithmetic.use_hint_loop.body
-  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
+def simd.portable.arithmetic.subtract_loop.body
+  (rhs : simd.portable.vector_type.Coefficients)
   (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize) :
   Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
     8#usize)) (Array Std.I32 8#usize))
@@ -1380,90 +964,380 @@ def simd.portable.arithmetic.use_hint_loop.body
   match o with
   | core.option.Option.None => ok (done a)
   | core.option.Option.Some i =>
-    let i1 ← Array.index_usize simd_unit.values i
-    let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
-    let i3 ← Array.index_usize a i
-    let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify i3
-    let i5 ← simd.portable.arithmetic.use_one_hint gamma2 i2 i4
-    let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
-    let a1 ← Array.update a i i6
+    let i1 ← Array.index_usize a i
+    let i2 ← Array.index_usize rhs.values i
+    let i3 ← core.num.I32.wrapping_sub i1 i2
+    let a1 ← Array.update a i i3
     ok (cont (iter1, a1))
 
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_hint]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 321:4-331:5
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::subtract]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 22:4-24:5
     Visibility: public -/
 @[rust_loop]
-def simd.portable.arithmetic.use_hint_loop
-  (iter : core.ops.range.Range Std.Usize) (gamma2 : Std.I32)
-  (simd_unit : simd.portable.vector_type.Coefficients)
-  (a : Array Std.I32 8#usize) :
+def simd.portable.arithmetic.subtract_loop
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
+  (rhs : simd.portable.vector_type.Coefficients) :
   Result (Array Std.I32 8#usize)
   := do
   loop
-    (fun (iter1, a1) => simd.portable.arithmetic.use_hint_loop.body gamma2
-      simd_unit iter1 a1)
+    (fun (iter1, a1) => simd.portable.arithmetic.subtract_loop.body rhs iter1
+      a1)
     (iter, a)
 
-/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_hint]:
-    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 320:0-332:1
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::subtract]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 21:0-25:1
     Visibility: public -/
-def simd.portable.arithmetic.use_hint
-  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
-  (hint : simd.portable.vector_type.Coefficients) :
+def simd.portable.arithmetic.subtract
+  (lhs : simd.portable.vector_type.Coefficients)
+  (rhs : simd.portable.vector_type.Coefficients) :
   Result simd.portable.vector_type.Coefficients
   := do
-  let s ← lift (Array.to_slice hint.values)
+  let s ← lift (Array.to_slice lhs.values)
   let i ← core.slice.Slice.len s
   let a ←
-    simd.portable.arithmetic.use_hint_loop { start := 0#usize, «end» := i }
-      gamma2 simd_unit hint.values
+    simd.portable.arithmetic.subtract_loop { start := 0#usize, «end» := i }
+      lhs.values rhs
   ok { values := a }
 
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::simd_unit_invert_ntt_at_layer_0]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 10:0-32:1
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::add]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 15:4-17:5
     Visibility: public -/
-def simd.portable.invntt.simd_unit_invert_ntt_at_layer_0
-  (simd_unit : simd.portable.vector_type.Coefficients) (zeta0 : Std.I32)
-  (zeta1 : Std.I32) (zeta2 : Std.I32) (zeta3 : Std.I32) :
+@[rust_loop_body]
+def simd.portable.arithmetic.add_loop.body
+  (rhs : simd.portable.vector_type.Coefficients)
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
+    8#usize)) (Array Std.I32 8#usize))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done a)
+  | core.option.Option.Some i =>
+    let i1 ← Array.index_usize a i
+    let i2 ← Array.index_usize rhs.values i
+    let i3 ← core.num.I32.wrapping_add i1 i2
+    let a1 ← Array.update a i i3
+    ok (cont (iter1, a1))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::add]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 15:4-17:5
+    Visibility: public -/
+@[rust_loop]
+def simd.portable.arithmetic.add_loop
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
+  (rhs : simd.portable.vector_type.Coefficients) :
+  Result (Array Std.I32 8#usize)
+  := do
+  loop
+    (fun (iter1, a1) => simd.portable.arithmetic.add_loop.body rhs iter1 a1)
+    (iter, a)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::add]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 14:0-18:1
+    Visibility: public -/
+def simd.portable.arithmetic.add
+  (lhs : simd.portable.vector_type.Coefficients)
+  (rhs : simd.portable.vector_type.Coefficients) :
   Result simd.portable.vector_type.Coefficients
   := do
-  let i ← Array.index_usize simd_unit.values 1#usize
+  let s ← lift (Array.to_slice lhs.values)
+  let i ← core.slice.Slice.len s
+  let a ←
+    simd.portable.arithmetic.add_loop { start := 0#usize, «end» := i }
+      lhs.values rhs
+  ok { values := a }
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::outer_3_plus]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 210:4-218:5 -/
+@[rust_loop_body]
+def simd.portable.invntt.outer_3_plus_loop.body
+  (STEP_BY : Std.Usize) (ZETA : Std.I32)
+  (iter : core.ops.range.Range Std.Usize)
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array
+    simd.portable.vector_type.Coefficients 32#usize)) (Array
+    simd.portable.vector_type.Coefficients 32#usize))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done re)
+  | core.option.Option.Some j =>
+    let i ← j + STEP_BY
+    let c ← Array.index_usize re i
+    let rejs ←
+      simd.portable.vector_type.Coefficients.Insts.CoreCloneClone.clone c
+    let a_minus_b ←
+      simd.portable.vector_type.Coefficients.Insts.CoreCloneClone.clone rejs
+    let c1 ← Array.index_usize re j
+    let a_minus_b1 ← simd.portable.arithmetic.subtract a_minus_b c1
+    let (c2, index_mut_back) ← Array.index_mut_usize re j
+    let c3 ← simd.portable.arithmetic.add c2 rejs
+    let re1 := index_mut_back c3
+    let re2 ← Array.update re1 i a_minus_b1
+    let (c4, index_mut_back1) ← Array.index_mut_usize re2 i
+    let i1 ← libcrux_secrets.traits.Classify.Blanket.classify ZETA
+    let c5 ← simd.portable.arithmetic.montgomery_multiply_by_constant c4 i1
+    let a := index_mut_back1 c5
+    ok (cont (iter1, a))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::outer_3_plus]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 210:4-218:5 -/
+@[rust_loop]
+def simd.portable.invntt.outer_3_plus_loop
+  (STEP_BY : Std.Usize) (ZETA : Std.I32)
+  (iter : core.ops.range.Range Std.Usize)
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  loop
+    (fun (iter1, re1) => simd.portable.invntt.outer_3_plus_loop.body STEP_BY
+      ZETA iter1 re1)
+    (iter, re)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::outer_3_plus]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 207:0-222:1 -/
+def simd.portable.invntt.outer_3_plus
+  (OFFSET : Std.Usize) (STEP_BY : Std.Usize) (ZETA : Std.I32)
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let i ← OFFSET + STEP_BY
+  simd.portable.invntt.outer_3_plus_loop STEP_BY ZETA
+    { start := OFFSET, «end» := i } re
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_7]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 283:0-288:1 -/
+def simd.portable.invntt.invert_ntt_at_layer_7
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  simd.portable.invntt.outer_3_plus 0#usize 16#usize 25847#i32 re
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_6]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 274:0-280:1 -/
+def simd.portable.invntt.invert_ntt_at_layer_6
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ←
+    simd.portable.invntt.outer_3_plus 0#usize 8#usize (-518909)#i32 re
+  simd.portable.invntt.outer_3_plus 16#usize 8#usize (-2608894)#i32 re1
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_5]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 263:0-271:1 -/
+def simd.portable.invntt.invert_ntt_at_layer_5
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ← simd.portable.invntt.outer_3_plus 0#usize 4#usize 466468#i32 re
+  let re2 ←
+    simd.portable.invntt.outer_3_plus 8#usize 4#usize (-876248)#i32 re1
+  let re3 ←
+    simd.portable.invntt.outer_3_plus 16#usize 4#usize (-777960)#i32 re2
+  simd.portable.invntt.outer_3_plus 24#usize 4#usize 237124#i32 re3
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_4]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 248:0-260:1 -/
+def simd.portable.invntt.invert_ntt_at_layer_4
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ← simd.portable.invntt.outer_3_plus 0#usize 2#usize 2680103#i32 re
+  let re2 ← simd.portable.invntt.outer_3_plus 4#usize 2#usize 3111497#i32 re1
+  let re3 ←
+    simd.portable.invntt.outer_3_plus 8#usize 2#usize (-2884855)#i32 re2
+  let re4 ←
+    simd.portable.invntt.outer_3_plus 12#usize 2#usize 3119733#i32 re3
+  let re5 ←
+    simd.portable.invntt.outer_3_plus 16#usize 2#usize (-2091905)#i32 re4
+  let re6 ←
+    simd.portable.invntt.outer_3_plus 20#usize 2#usize (-359251)#i32 re5
+  let re7 ←
+    simd.portable.invntt.outer_3_plus 24#usize 2#usize 2353451#i32 re6
+  simd.portable.invntt.outer_3_plus 28#usize 2#usize 1826347#i32 re7
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_3]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 225:0-245:1 -/
+def simd.portable.invntt.invert_ntt_at_layer_3
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ← simd.portable.invntt.outer_3_plus 0#usize 1#usize 280005#i32 re
+  let re2 ← simd.portable.invntt.outer_3_plus 2#usize 1#usize 4010497#i32 re1
+  let re3 ←
+    simd.portable.invntt.outer_3_plus 4#usize 1#usize (-19422)#i32 re2
+  let re4 ← simd.portable.invntt.outer_3_plus 6#usize 1#usize 1757237#i32 re3
+  let re5 ←
+    simd.portable.invntt.outer_3_plus 8#usize 1#usize (-3277672)#i32 re4
+  let re6 ←
+    simd.portable.invntt.outer_3_plus 10#usize 1#usize (-1399561)#i32 re5
+  let re7 ←
+    simd.portable.invntt.outer_3_plus 12#usize 1#usize (-3859737)#i32 re6
+  let re8 ←
+    simd.portable.invntt.outer_3_plus 14#usize 1#usize (-2118186)#i32 re7
+  let re9 ←
+    simd.portable.invntt.outer_3_plus 16#usize 1#usize (-2108549)#i32 re8
+  let re10 ←
+    simd.portable.invntt.outer_3_plus 18#usize 1#usize 2619752#i32 re9
+  let re11 ←
+    simd.portable.invntt.outer_3_plus 20#usize 1#usize (-1119584)#i32 re10
+  let re12 ←
+    simd.portable.invntt.outer_3_plus 22#usize 1#usize (-549488)#i32 re11
+  let re13 ←
+    simd.portable.invntt.outer_3_plus 24#usize 1#usize 3585928#i32 re12
+  let re14 ←
+    simd.portable.invntt.outer_3_plus 26#usize 1#usize (-1079900)#i32 re13
+  let re15 ←
+    simd.portable.invntt.outer_3_plus 28#usize 1#usize 1024112#i32 re14
+  simd.portable.invntt.outer_3_plus 30#usize 1#usize 2725464#i32 re15
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply_fe_by_fer]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 48:0-53:1 -/
+def simd.portable.arithmetic.montgomery_multiply_fe_by_fer
+  (fe : Std.I32) (fer : Std.I32) : Result Std.I32 := do
+  let i ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 fe
+  let i1 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 fer
+  let i2 ← core.num.I64.wrapping_mul i i1
+  simd.portable.arithmetic.montgomery_reduce_element i2
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::simd_unit_invert_ntt_at_layer_2]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 54:0-70:1
+    Visibility: public -/
+def simd.portable.invntt.simd_unit_invert_ntt_at_layer_2
+  (simd_unit : simd.portable.vector_type.Coefficients) (zeta : Std.I32) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  let i ← Array.index_usize simd_unit.values 4#usize
   let i1 ← Array.index_usize simd_unit.values 0#usize
   let a_minus_b ← i - i1
   let i2 ← i1 + i
   let a ← Array.update simd_unit.values 0#usize i2
-  let i3 ← libcrux_secrets.traits.Classify.Blanket.classify zeta0
+  let i3 ← libcrux_secrets.traits.Classify.Blanket.classify zeta
   let i4 ←
     simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b i3
-  let a1 ← Array.update a 1#usize i4
-  let i5 ← Array.index_usize a1 3#usize
-  let i6 ← Array.index_usize a1 2#usize
+  let a1 ← Array.update a 4#usize i4
+  let i5 ← Array.index_usize a1 5#usize
+  let i6 ← Array.index_usize a1 1#usize
   let a_minus_b1 ← i5 - i6
   let i7 ← i6 + i5
-  let a2 ← Array.update a1 2#usize i7
-  let i8 ← libcrux_secrets.traits.Classify.Blanket.classify zeta1
-  let i9 ←
-    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b1 i8
-  let a3 ← Array.update a2 3#usize i9
-  let i10 ← Array.index_usize a3 5#usize
-  let i11 ← Array.index_usize a3 4#usize
-  let a_minus_b2 ← i10 - i11
-  let i12 ← i11 + i10
-  let a4 ← Array.update a3 4#usize i12
-  let i13 ← libcrux_secrets.traits.Classify.Blanket.classify zeta2
-  let i14 ←
-    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b2 i13
-  let a5 ← Array.update a4 5#usize i14
-  let i15 ← Array.index_usize a5 7#usize
-  let i16 ← Array.index_usize a5 6#usize
-  let a_minus_b3 ← i15 - i16
-  let i17 ← i16 + i15
-  let a6 ← Array.update a5 6#usize i17
-  let i18 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
-  let i19 ←
-    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b3 i18
-  let a7 ← Array.update a6 7#usize i19
+  let a2 ← Array.update a1 1#usize i7
+  let i8 ←
+    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b1 i3
+  let a3 ← Array.update a2 5#usize i8
+  let i9 ← Array.index_usize a3 6#usize
+  let i10 ← Array.index_usize a3 2#usize
+  let a_minus_b2 ← i9 - i10
+  let i11 ← i10 + i9
+  let a4 ← Array.update a3 2#usize i11
+  let i12 ←
+    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b2 i3
+  let a5 ← Array.update a4 6#usize i12
+  let i13 ← Array.index_usize a5 7#usize
+  let i14 ← Array.index_usize a5 3#usize
+  let a_minus_b3 ← i13 - i14
+  let i15 ← i14 + i13
+  let a6 ← Array.update a5 3#usize i15
+  let i16 ←
+    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b3 i3
+  let a7 ← Array.update a6 7#usize i16
   ok { values := a7 }
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_2::round]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 168:4-170:5 -/
+def simd.portable.invntt.invert_ntt_at_layer_2.round
+  (re : Array simd.portable.vector_type.Coefficients 32#usize)
+  (index : Std.Usize) (zeta1 : Std.I32) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let (c, index_mut_back) ← Array.index_mut_usize re index
+  let c1 ← simd.portable.invntt.simd_unit_invert_ntt_at_layer_2 c zeta1
+  ok (index_mut_back c1)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_2]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 167:0-204:1 -/
+def simd.portable.invntt.invert_ntt_at_layer_2
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re 0#usize (-2797779)#i32
+  let re2 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re1 1#usize 2071892#i32
+  let re3 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re2 2#usize (-2556880)#i32
+  let re4 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re3 3#usize 3900724#i32
+  let re5 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re4 4#usize 3881043#i32
+  let re6 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re5 5#usize 954230#i32
+  let re7 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re6 6#usize 531354#i32
+  let re8 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re7 7#usize 811944#i32
+  let re9 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re8 8#usize 3699596#i32
+  let re10 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re9 9#usize (-1600420)#i32
+  let re11 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re10 10#usize
+      (-2140649)#i32
+  let re12 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re11 11#usize 3507263#i32
+  let re13 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re12 12#usize
+      (-3821735)#i32
+  let re14 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re13 13#usize 3505694#i32
+  let re15 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re14 14#usize
+      (-1643818)#i32
+  let re16 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re15 15#usize
+      (-1699267)#i32
+  let re17 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re16 16#usize
+      (-539299)#i32
+  let re18 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re17 17#usize 2348700#i32
+  let re19 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re18 18#usize
+      (-300467)#i32
+  let re20 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re19 19#usize 3539968#i32
+  let re21 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re20 20#usize
+      (-2867647)#i32
+  let re22 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re21 21#usize 3574422#i32
+  let re23 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re22 22#usize
+      (-3043716)#i32
+  let re24 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re23 23#usize
+      (-3861115)#i32
+  let re25 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re24 24#usize 3915439#i32
+  let re26 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re25 25#usize
+      (-2537516)#i32
+  let re27 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re26 26#usize
+      (-3592148)#i32
+  let re28 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re27 27#usize
+      (-1661693)#i32
+  let re29 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re28 28#usize 3530437#i32
+  let re30 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re29 29#usize 3077325#i32
+  let re31 ←
+    simd.portable.invntt.invert_ntt_at_layer_2.round re30 30#usize 95776#i32
+  simd.portable.invntt.invert_ntt_at_layer_2.round re31 31#usize 2706023#i32
 
 /-- [libcrux_iot_ml_dsa::simd::portable::invntt::simd_unit_invert_ntt_at_layer_1]:
     Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 35:0-51:1
@@ -1509,46 +1383,164 @@ def simd.portable.invntt.simd_unit_invert_ntt_at_layer_1
   let a7 ← Array.update a6 7#usize i17
   ok { values := a7 }
 
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::simd_unit_invert_ntt_at_layer_2]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 54:0-70:1
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_1::round]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 123:4-130:5 -/
+def simd.portable.invntt.invert_ntt_at_layer_1.round
+  (re : Array simd.portable.vector_type.Coefficients 32#usize)
+  (index : Std.Usize) (zeta_00 : Std.I32) (zeta_01 : Std.I32) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let (c, index_mut_back) ← Array.index_mut_usize re index
+  let c1 ←
+    simd.portable.invntt.simd_unit_invert_ntt_at_layer_1 c zeta_00 zeta_01
+  ok (index_mut_back c1)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_1]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 121:0-164:1 -/
+def simd.portable.invntt.invert_ntt_at_layer_1
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re 0#usize 3839961#i32
+      (-3628969)#i32
+  let re2 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re1 1#usize (-3881060)#i32
+      (-3019102)#i32
+  let re3 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re2 2#usize (-1439742)#i32
+      (-812732)#i32
+  let re4 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re3 3#usize (-1584928)#i32
+      1285669#i32
+  let re5 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re4 4#usize 1341330#i32
+      1315589#i32
+  let re6 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re5 5#usize (-177440)#i32
+      (-2409325)#i32
+  let re7 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re6 6#usize (-1851402)#i32
+      3159746#i32
+  let re8 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re7 7#usize (-3553272)#i32
+      189548#i32
+  let re9 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re8 8#usize (-1316856)#i32
+      759969#i32
+  let re10 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re9 9#usize (-210977)#i32
+      2389356#i32
+  let re11 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re10 10#usize
+      (-3249728)#i32 1653064#i32
+  let re12 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re11 11#usize (-8578)#i32
+      (-3724342)#i32
+  let re13 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re12 12#usize 3958618#i32
+      904516#i32
+  let re14 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re13 13#usize
+      (-1100098)#i32 44288#i32
+  let re15 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re14 14#usize 3097992#i32
+      508951#i32
+  let re16 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re15 15#usize 264944#i32
+      (-3343383)#i32
+  let re17 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re16 16#usize
+      (-1430430)#i32 1852771#i32
+  let re18 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re17 17#usize 1349076#i32
+      (-381987)#i32
+  let re19 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re18 18#usize
+      (-1308169)#i32 (-22981)#i32
+  let re20 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re19 19#usize
+      (-1228525)#i32 (-671102)#i32
+  let re21 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re20 20#usize
+      (-2477047)#i32 (-411027)#i32
+  let re22 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re21 21#usize
+      (-3693493)#i32 (-2967645)#i32
+  let re23 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re22 22#usize 2715295#i32
+      2147896#i32
+  let re24 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re23 23#usize
+      (-983419)#i32 3412210#i32
+  let re25 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re24 24#usize 126922#i32
+      (-3632928)#i32
+  let re26 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re25 25#usize
+      (-3157330)#i32 (-3190144)#i32
+  let re27 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re26 26#usize
+      (-1000202)#i32 (-4083598)#i32
+  let re28 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re27 27#usize 1939314#i32
+      (-1257611)#i32
+  let re29 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re28 28#usize
+      (-1585221)#i32 2176455#i32
+  let re30 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re29 29#usize 3475950#i32
+      (-1452451)#i32
+  let re31 ←
+    simd.portable.invntt.invert_ntt_at_layer_1.round re30 30#usize
+      (-3041255)#i32 (-3677745)#i32
+  simd.portable.invntt.invert_ntt_at_layer_1.round re31 31#usize (-1528703)#i32
+    (-3930395)#i32
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::simd_unit_invert_ntt_at_layer_0]:
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 10:0-32:1
     Visibility: public -/
-def simd.portable.invntt.simd_unit_invert_ntt_at_layer_2
-  (simd_unit : simd.portable.vector_type.Coefficients) (zeta : Std.I32) :
+def simd.portable.invntt.simd_unit_invert_ntt_at_layer_0
+  (simd_unit : simd.portable.vector_type.Coefficients) (zeta0 : Std.I32)
+  (zeta1 : Std.I32) (zeta2 : Std.I32) (zeta3 : Std.I32) :
   Result simd.portable.vector_type.Coefficients
   := do
-  let i ← Array.index_usize simd_unit.values 4#usize
+  let i ← Array.index_usize simd_unit.values 1#usize
   let i1 ← Array.index_usize simd_unit.values 0#usize
   let a_minus_b ← i - i1
   let i2 ← i1 + i
   let a ← Array.update simd_unit.values 0#usize i2
-  let i3 ← libcrux_secrets.traits.Classify.Blanket.classify zeta
+  let i3 ← libcrux_secrets.traits.Classify.Blanket.classify zeta0
   let i4 ←
     simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b i3
-  let a1 ← Array.update a 4#usize i4
-  let i5 ← Array.index_usize a1 5#usize
-  let i6 ← Array.index_usize a1 1#usize
+  let a1 ← Array.update a 1#usize i4
+  let i5 ← Array.index_usize a1 3#usize
+  let i6 ← Array.index_usize a1 2#usize
   let a_minus_b1 ← i5 - i6
   let i7 ← i6 + i5
-  let a2 ← Array.update a1 1#usize i7
-  let i8 ←
-    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b1 i3
-  let a3 ← Array.update a2 5#usize i8
-  let i9 ← Array.index_usize a3 6#usize
-  let i10 ← Array.index_usize a3 2#usize
-  let a_minus_b2 ← i9 - i10
-  let i11 ← i10 + i9
-  let a4 ← Array.update a3 2#usize i11
-  let i12 ←
-    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b2 i3
-  let a5 ← Array.update a4 6#usize i12
-  let i13 ← Array.index_usize a5 7#usize
-  let i14 ← Array.index_usize a5 3#usize
-  let a_minus_b3 ← i13 - i14
-  let i15 ← i14 + i13
-  let a6 ← Array.update a5 3#usize i15
-  let i16 ←
-    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b3 i3
-  let a7 ← Array.update a6 7#usize i16
+  let a2 ← Array.update a1 2#usize i7
+  let i8 ← libcrux_secrets.traits.Classify.Blanket.classify zeta1
+  let i9 ←
+    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b1 i8
+  let a3 ← Array.update a2 3#usize i9
+  let i10 ← Array.index_usize a3 5#usize
+  let i11 ← Array.index_usize a3 4#usize
+  let a_minus_b2 ← i10 - i11
+  let i12 ← i11 + i10
+  let a4 ← Array.update a3 4#usize i12
+  let i13 ← libcrux_secrets.traits.Classify.Blanket.classify zeta2
+  let i14 ←
+    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b2 i13
+  let a5 ← Array.update a4 5#usize i14
+  let i15 ← Array.index_usize a5 7#usize
+  let i16 ← Array.index_usize a5 6#usize
+  let a_minus_b3 ← i15 - i16
+  let i17 ← i16 + i15
+  let a6 ← Array.update a5 6#usize i17
+  let i18 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
+  let i19 ←
+    simd.portable.arithmetic.montgomery_multiply_fe_by_fer a_minus_b3 i18
+  let a7 ← Array.update a6 7#usize i19
   ok { values := a7 }
 
 /-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_0::round]:
@@ -1667,418 +1659,6 @@ def simd.portable.invntt.invert_ntt_at_layer_0
   simd.portable.invntt.invert_ntt_at_layer_0.round re31 31#usize 3817976#i32
     2316500#i32 3407706#i32 2091667#i32
 
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_1::round]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 123:4-130:5 -/
-def simd.portable.invntt.invert_ntt_at_layer_1.round
-  (re : Array simd.portable.vector_type.Coefficients 32#usize)
-  (index : Std.Usize) (zeta_00 : Std.I32) (zeta_01 : Std.I32) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let (c, index_mut_back) ← Array.index_mut_usize re index
-  let c1 ←
-    simd.portable.invntt.simd_unit_invert_ntt_at_layer_1 c zeta_00 zeta_01
-  ok (index_mut_back c1)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_1]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 121:0-164:1 -/
-def simd.portable.invntt.invert_ntt_at_layer_1
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re 0#usize 3839961#i32
-      (-3628969)#i32
-  let re2 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re1 1#usize (-3881060)#i32
-      (-3019102)#i32
-  let re3 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re2 2#usize (-1439742)#i32
-      (-812732)#i32
-  let re4 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re3 3#usize (-1584928)#i32
-      1285669#i32
-  let re5 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re4 4#usize 1341330#i32
-      1315589#i32
-  let re6 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re5 5#usize (-177440)#i32
-      (-2409325)#i32
-  let re7 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re6 6#usize (-1851402)#i32
-      3159746#i32
-  let re8 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re7 7#usize (-3553272)#i32
-      189548#i32
-  let re9 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re8 8#usize (-1316856)#i32
-      759969#i32
-  let re10 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re9 9#usize (-210977)#i32
-      2389356#i32
-  let re11 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re10 10#usize
-      (-3249728)#i32 1653064#i32
-  let re12 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re11 11#usize (-8578)#i32
-      (-3724342)#i32
-  let re13 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re12 12#usize 3958618#i32
-      904516#i32
-  let re14 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re13 13#usize
-      (-1100098)#i32 44288#i32
-  let re15 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re14 14#usize 3097992#i32
-      508951#i32
-  let re16 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re15 15#usize 264944#i32
-      (-3343383)#i32
-  let re17 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re16 16#usize
-      (-1430430)#i32 1852771#i32
-  let re18 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re17 17#usize 1349076#i32
-      (-381987)#i32
-  let re19 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re18 18#usize
-      (-1308169)#i32 (-22981)#i32
-  let re20 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re19 19#usize
-      (-1228525)#i32 (-671102)#i32
-  let re21 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re20 20#usize
-      (-2477047)#i32 (-411027)#i32
-  let re22 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re21 21#usize
-      (-3693493)#i32 (-2967645)#i32
-  let re23 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re22 22#usize 2715295#i32
-      2147896#i32
-  let re24 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re23 23#usize
-      (-983419)#i32 3412210#i32
-  let re25 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re24 24#usize 126922#i32
-      (-3632928)#i32
-  let re26 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re25 25#usize
-      (-3157330)#i32 (-3190144)#i32
-  let re27 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re26 26#usize
-      (-1000202)#i32 (-4083598)#i32
-  let re28 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re27 27#usize 1939314#i32
-      (-1257611)#i32
-  let re29 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re28 28#usize
-      (-1585221)#i32 2176455#i32
-  let re30 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re29 29#usize 3475950#i32
-      (-1452451)#i32
-  let re31 ←
-    simd.portable.invntt.invert_ntt_at_layer_1.round re30 30#usize
-      (-3041255)#i32 (-3677745)#i32
-  simd.portable.invntt.invert_ntt_at_layer_1.round re31 31#usize (-1528703)#i32
-    (-3930395)#i32
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_2::round]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 168:4-170:5 -/
-def simd.portable.invntt.invert_ntt_at_layer_2.round
-  (re : Array simd.portable.vector_type.Coefficients 32#usize)
-  (index : Std.Usize) (zeta1 : Std.I32) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let (c, index_mut_back) ← Array.index_mut_usize re index
-  let c1 ← simd.portable.invntt.simd_unit_invert_ntt_at_layer_2 c zeta1
-  ok (index_mut_back c1)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_2]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 167:0-204:1 -/
-def simd.portable.invntt.invert_ntt_at_layer_2
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re 0#usize (-2797779)#i32
-  let re2 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re1 1#usize 2071892#i32
-  let re3 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re2 2#usize (-2556880)#i32
-  let re4 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re3 3#usize 3900724#i32
-  let re5 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re4 4#usize 3881043#i32
-  let re6 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re5 5#usize 954230#i32
-  let re7 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re6 6#usize 531354#i32
-  let re8 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re7 7#usize 811944#i32
-  let re9 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re8 8#usize 3699596#i32
-  let re10 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re9 9#usize (-1600420)#i32
-  let re11 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re10 10#usize
-      (-2140649)#i32
-  let re12 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re11 11#usize 3507263#i32
-  let re13 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re12 12#usize
-      (-3821735)#i32
-  let re14 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re13 13#usize 3505694#i32
-  let re15 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re14 14#usize
-      (-1643818)#i32
-  let re16 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re15 15#usize
-      (-1699267)#i32
-  let re17 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re16 16#usize
-      (-539299)#i32
-  let re18 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re17 17#usize 2348700#i32
-  let re19 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re18 18#usize
-      (-300467)#i32
-  let re20 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re19 19#usize 3539968#i32
-  let re21 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re20 20#usize
-      (-2867647)#i32
-  let re22 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re21 21#usize 3574422#i32
-  let re23 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re22 22#usize
-      (-3043716)#i32
-  let re24 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re23 23#usize
-      (-3861115)#i32
-  let re25 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re24 24#usize 3915439#i32
-  let re26 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re25 25#usize
-      (-2537516)#i32
-  let re27 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re26 26#usize
-      (-3592148)#i32
-  let re28 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re27 27#usize
-      (-1661693)#i32
-  let re29 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re28 28#usize 3530437#i32
-  let re30 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re29 29#usize 3077325#i32
-  let re31 ←
-    simd.portable.invntt.invert_ntt_at_layer_2.round re30 30#usize 95776#i32
-  simd.portable.invntt.invert_ntt_at_layer_2.round re31 31#usize 2706023#i32
-
-/-- [libcrux_iot_ml_dsa::simd::portable::vector_type::{impl core::clone::Clone for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::clone]:
-    Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 8:9-8:14
-    Visibility: public -/
-def simd.portable.vector_type.Coefficients.Insts.CoreCloneClone.clone
-  (self : simd.portable.vector_type.Coefficients) :
-  Result simd.portable.vector_type.Coefficients
-  := do
-  ok self
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::outer_3_plus]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 210:4-218:5 -/
-@[rust_loop_body]
-def simd.portable.invntt.outer_3_plus_loop.body
-  (STEP_BY : Std.Usize) (ZETA : Std.I32)
-  (iter : core.ops.range.Range Std.Usize)
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array
-    simd.portable.vector_type.Coefficients 32#usize)) (Array
-    simd.portable.vector_type.Coefficients 32#usize))
-  := do
-  let (o, iter1) ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
-      core.Usize.Insts.CoreIterRangeStep iter
-  match o with
-  | core.option.Option.None => ok (done re)
-  | core.option.Option.Some j =>
-    let i ← j + STEP_BY
-    let c ← Array.index_usize re i
-    let rejs ←
-      simd.portable.vector_type.Coefficients.Insts.CoreCloneClone.clone c
-    let a_minus_b ←
-      simd.portable.vector_type.Coefficients.Insts.CoreCloneClone.clone rejs
-    let c1 ← Array.index_usize re j
-    let a_minus_b1 ← simd.portable.arithmetic.subtract a_minus_b c1
-    let (c2, index_mut_back) ← Array.index_mut_usize re j
-    let c3 ← simd.portable.arithmetic.add c2 rejs
-    let re1 := index_mut_back c3
-    let re2 ← Array.update re1 i a_minus_b1
-    let (c4, index_mut_back1) ← Array.index_mut_usize re2 i
-    let i1 ← libcrux_secrets.traits.Classify.Blanket.classify ZETA
-    let c5 ← simd.portable.arithmetic.montgomery_multiply_by_constant c4 i1
-    let a := index_mut_back1 c5
-    ok (cont (iter1, a))
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::outer_3_plus]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 210:4-218:5 -/
-@[rust_loop]
-def simd.portable.invntt.outer_3_plus_loop
-  (STEP_BY : Std.Usize) (ZETA : Std.I32)
-  (iter : core.ops.range.Range Std.Usize)
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  loop
-    (fun (iter1, re1) => simd.portable.invntt.outer_3_plus_loop.body STEP_BY
-      ZETA iter1 re1)
-    (iter, re)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::outer_3_plus]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 207:0-222:1 -/
-def simd.portable.invntt.outer_3_plus
-  (OFFSET : Std.Usize) (STEP_BY : Std.Usize) (ZETA : Std.I32)
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let i ← OFFSET + STEP_BY
-  simd.portable.invntt.outer_3_plus_loop STEP_BY ZETA
-    { start := OFFSET, «end» := i } re
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_3]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 225:0-245:1 -/
-def simd.portable.invntt.invert_ntt_at_layer_3
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ← simd.portable.invntt.outer_3_plus 0#usize 1#usize 280005#i32 re
-  let re2 ← simd.portable.invntt.outer_3_plus 2#usize 1#usize 4010497#i32 re1
-  let re3 ←
-    simd.portable.invntt.outer_3_plus 4#usize 1#usize (-19422)#i32 re2
-  let re4 ← simd.portable.invntt.outer_3_plus 6#usize 1#usize 1757237#i32 re3
-  let re5 ←
-    simd.portable.invntt.outer_3_plus 8#usize 1#usize (-3277672)#i32 re4
-  let re6 ←
-    simd.portable.invntt.outer_3_plus 10#usize 1#usize (-1399561)#i32 re5
-  let re7 ←
-    simd.portable.invntt.outer_3_plus 12#usize 1#usize (-3859737)#i32 re6
-  let re8 ←
-    simd.portable.invntt.outer_3_plus 14#usize 1#usize (-2118186)#i32 re7
-  let re9 ←
-    simd.portable.invntt.outer_3_plus 16#usize 1#usize (-2108549)#i32 re8
-  let re10 ←
-    simd.portable.invntt.outer_3_plus 18#usize 1#usize 2619752#i32 re9
-  let re11 ←
-    simd.portable.invntt.outer_3_plus 20#usize 1#usize (-1119584)#i32 re10
-  let re12 ←
-    simd.portable.invntt.outer_3_plus 22#usize 1#usize (-549488)#i32 re11
-  let re13 ←
-    simd.portable.invntt.outer_3_plus 24#usize 1#usize 3585928#i32 re12
-  let re14 ←
-    simd.portable.invntt.outer_3_plus 26#usize 1#usize (-1079900)#i32 re13
-  let re15 ←
-    simd.portable.invntt.outer_3_plus 28#usize 1#usize 1024112#i32 re14
-  simd.portable.invntt.outer_3_plus 30#usize 1#usize 2725464#i32 re15
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_3::STEP]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 226:4-226:26 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_3.STEP : Std.Usize := 8#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_3::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 227:4-227:29 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_3.STEP_BY : Std.Usize := 1#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_4]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 248:0-260:1 -/
-def simd.portable.invntt.invert_ntt_at_layer_4
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ← simd.portable.invntt.outer_3_plus 0#usize 2#usize 2680103#i32 re
-  let re2 ← simd.portable.invntt.outer_3_plus 4#usize 2#usize 3111497#i32 re1
-  let re3 ←
-    simd.portable.invntt.outer_3_plus 8#usize 2#usize (-2884855)#i32 re2
-  let re4 ←
-    simd.portable.invntt.outer_3_plus 12#usize 2#usize 3119733#i32 re3
-  let re5 ←
-    simd.portable.invntt.outer_3_plus 16#usize 2#usize (-2091905)#i32 re4
-  let re6 ←
-    simd.portable.invntt.outer_3_plus 20#usize 2#usize (-359251)#i32 re5
-  let re7 ←
-    simd.portable.invntt.outer_3_plus 24#usize 2#usize 2353451#i32 re6
-  simd.portable.invntt.outer_3_plus 28#usize 2#usize 1826347#i32 re7
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_4::STEP]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 249:4-249:27 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_4.STEP : Std.Usize := 16#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_4::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 250:4-250:29 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_4.STEP_BY : Std.Usize := 2#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_5]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 263:0-271:1 -/
-def simd.portable.invntt.invert_ntt_at_layer_5
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ← simd.portable.invntt.outer_3_plus 0#usize 4#usize 466468#i32 re
-  let re2 ←
-    simd.portable.invntt.outer_3_plus 8#usize 4#usize (-876248)#i32 re1
-  let re3 ←
-    simd.portable.invntt.outer_3_plus 16#usize 4#usize (-777960)#i32 re2
-  simd.portable.invntt.outer_3_plus 24#usize 4#usize 237124#i32 re3
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_5::STEP]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 264:4-264:27 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_5.STEP : Std.Usize := 32#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_5::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 265:4-265:29 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_5.STEP_BY : Std.Usize := 4#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_6]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 274:0-280:1 -/
-def simd.portable.invntt.invert_ntt_at_layer_6
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ←
-    simd.portable.invntt.outer_3_plus 0#usize 8#usize (-518909)#i32 re
-  simd.portable.invntt.outer_3_plus 16#usize 8#usize (-2608894)#i32 re1
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_6::STEP]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 275:4-275:27 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_6.STEP : Std.Usize := 64#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_6::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 276:4-276:29 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_6.STEP_BY : Std.Usize := 8#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_7]:
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 283:0-288:1 -/
-def simd.portable.invntt.invert_ntt_at_layer_7
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  simd.portable.invntt.outer_3_plus 0#usize 16#usize 25847#i32 re
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_7::STEP]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 284:4-284:28 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_7.STEP : Std.Usize := 128#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_7::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 285:4-285:30 -/
-@[global_simps, irreducible]
-def simd.portable.invntt.invert_ntt_at_layer_7.STEP_BY : Std.Usize := 16#usize
-
 /-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_montgomery]: loop body 0:
     Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 300:4-307:5 -/
 @[rust_loop_body]
@@ -2133,51 +1713,248 @@ def simd.portable.invntt.invert_ntt_montgomery
   simd.portable.invntt.invert_ntt_montgomery_loop
     { start := 0#usize, «end» := i } re8
 
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::simd_unit_ntt_at_layer_0]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 8:0-30:1
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::invert_ntt_montgomery]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 126:4-128:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.invert_ntt_montgomery
+  (simd_units : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  simd.portable.invntt.invert_ntt_montgomery simd_units
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::outer_3_plus]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 209:4-216:5 -/
+@[rust_loop_body]
+def simd.portable.ntt.outer_3_plus_loop.body
+  (STEP_BY : Std.Usize) (ZETA : Std.I32)
+  (iter : core.ops.range.Range Std.Usize)
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array
+    simd.portable.vector_type.Coefficients 32#usize)) (Array
+    simd.portable.vector_type.Coefficients 32#usize))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done re)
+  | core.option.Option.Some j =>
+    let i ← j + STEP_BY
+    let tmp ← Array.index_usize re i
+    let i1 ← libcrux_secrets.traits.Classify.Blanket.classify ZETA
+    let tmp1 ←
+      simd.portable.arithmetic.montgomery_multiply_by_constant tmp i1
+    let c ← Array.index_usize re j
+    let re1 ← Array.update re i c
+    let (c1, index_mut_back) ← Array.index_mut_usize re1 i
+    let c2 ← simd.portable.arithmetic.subtract c1 tmp1
+    let re2 := index_mut_back c2
+    let (c3, index_mut_back1) ← Array.index_mut_usize re2 j
+    let c4 ← simd.portable.arithmetic.add c3 tmp1
+    let a := index_mut_back1 c4
+    ok (cont (iter1, a))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::outer_3_plus]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 209:4-216:5 -/
+@[rust_loop]
+def simd.portable.ntt.outer_3_plus_loop
+  (STEP_BY : Std.Usize) (ZETA : Std.I32)
+  (iter : core.ops.range.Range Std.Usize)
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  loop
+    (fun (iter1, re1) => simd.portable.ntt.outer_3_plus_loop.body STEP_BY ZETA
+      iter1 re1)
+    (iter, re)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::outer_3_plus]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 206:0-218:1 -/
+def simd.portable.ntt.outer_3_plus
+  (OFFSET : Std.Usize) (STEP_BY : Std.Usize) (ZETA : Std.I32)
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let i ← OFFSET + STEP_BY
+  simd.portable.ntt.outer_3_plus_loop STEP_BY ZETA
+    { start := OFFSET, «end» := i } re
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_7]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 279:0-284:1 -/
+def simd.portable.ntt.ntt_at_layer_7
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  simd.portable.ntt.outer_3_plus 0#usize 16#usize 25847#i32 re
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_6]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 270:0-276:1 -/
+def simd.portable.ntt.ntt_at_layer_6
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ← simd.portable.ntt.outer_3_plus 0#usize 8#usize (-2608894)#i32 re
+  simd.portable.ntt.outer_3_plus 16#usize 8#usize (-518909)#i32 re1
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_5]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 259:0-267:1 -/
+def simd.portable.ntt.ntt_at_layer_5
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ← simd.portable.ntt.outer_3_plus 0#usize 4#usize 237124#i32 re
+  let re2 ← simd.portable.ntt.outer_3_plus 8#usize 4#usize (-777960)#i32 re1
+  let re3 ← simd.portable.ntt.outer_3_plus 16#usize 4#usize (-876248)#i32 re2
+  simd.portable.ntt.outer_3_plus 24#usize 4#usize 466468#i32 re3
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_4]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 244:0-256:1 -/
+def simd.portable.ntt.ntt_at_layer_4
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ← simd.portable.ntt.outer_3_plus 0#usize 2#usize 1826347#i32 re
+  let re2 ← simd.portable.ntt.outer_3_plus 4#usize 2#usize 2353451#i32 re1
+  let re3 ← simd.portable.ntt.outer_3_plus 8#usize 2#usize (-359251)#i32 re2
+  let re4 ←
+    simd.portable.ntt.outer_3_plus 12#usize 2#usize (-2091905)#i32 re3
+  let re5 ← simd.portable.ntt.outer_3_plus 16#usize 2#usize 3119733#i32 re4
+  let re6 ←
+    simd.portable.ntt.outer_3_plus 20#usize 2#usize (-2884855)#i32 re5
+  let re7 ← simd.portable.ntt.outer_3_plus 24#usize 2#usize 3111497#i32 re6
+  simd.portable.ntt.outer_3_plus 28#usize 2#usize 2680103#i32 re7
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_3]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 221:0-241:1 -/
+def simd.portable.ntt.ntt_at_layer_3
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ← simd.portable.ntt.outer_3_plus 0#usize 1#usize 2725464#i32 re
+  let re2 ← simd.portable.ntt.outer_3_plus 2#usize 1#usize 1024112#i32 re1
+  let re3 ← simd.portable.ntt.outer_3_plus 4#usize 1#usize (-1079900)#i32 re2
+  let re4 ← simd.portable.ntt.outer_3_plus 6#usize 1#usize 3585928#i32 re3
+  let re5 ← simd.portable.ntt.outer_3_plus 8#usize 1#usize (-549488)#i32 re4
+  let re6 ←
+    simd.portable.ntt.outer_3_plus 10#usize 1#usize (-1119584)#i32 re5
+  let re7 ← simd.portable.ntt.outer_3_plus 12#usize 1#usize 2619752#i32 re6
+  let re8 ←
+    simd.portable.ntt.outer_3_plus 14#usize 1#usize (-2108549)#i32 re7
+  let re9 ←
+    simd.portable.ntt.outer_3_plus 16#usize 1#usize (-2118186)#i32 re8
+  let re10 ←
+    simd.portable.ntt.outer_3_plus 18#usize 1#usize (-3859737)#i32 re9
+  let re11 ←
+    simd.portable.ntt.outer_3_plus 20#usize 1#usize (-1399561)#i32 re10
+  let re12 ←
+    simd.portable.ntt.outer_3_plus 22#usize 1#usize (-3277672)#i32 re11
+  let re13 ← simd.portable.ntt.outer_3_plus 24#usize 1#usize 1757237#i32 re12
+  let re14 ←
+    simd.portable.ntt.outer_3_plus 26#usize 1#usize (-19422)#i32 re13
+  let re15 ← simd.portable.ntt.outer_3_plus 28#usize 1#usize 4010497#i32 re14
+  simd.portable.ntt.outer_3_plus 30#usize 1#usize 280005#i32 re15
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::simd_unit_ntt_at_layer_2]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 52:0-68:1
     Visibility: public -/
-def simd.portable.ntt.simd_unit_ntt_at_layer_0
-  (simd_unit : simd.portable.vector_type.Coefficients) (zeta0 : Std.I32)
-  (zeta1 : Std.I32) (zeta2 : Std.I32) (zeta3 : Std.I32) :
+def simd.portable.ntt.simd_unit_ntt_at_layer_2
+  (simd_unit : simd.portable.vector_type.Coefficients) (zeta : Std.I32) :
   Result simd.portable.vector_type.Coefficients
   := do
-  let i ← Array.index_usize simd_unit.values 1#usize
-  let i1 ← libcrux_secrets.traits.Classify.Blanket.classify zeta0
+  let i ← Array.index_usize simd_unit.values 4#usize
+  let i1 ← libcrux_secrets.traits.Classify.Blanket.classify zeta
   let t ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i i1
   let i2 ← Array.index_usize simd_unit.values 0#usize
   let i3 ← i2 - t
-  let a ← Array.update simd_unit.values 1#usize i3
+  let a ← Array.update simd_unit.values 4#usize i3
   let i4 ← Array.index_usize a 0#usize
   let i5 ← i4 + t
   let a1 ← Array.update a 0#usize i5
-  let i6 ← Array.index_usize a1 3#usize
-  let i7 ← libcrux_secrets.traits.Classify.Blanket.classify zeta1
-  let t1 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i6 i7
-  let i8 ← Array.index_usize a1 2#usize
-  let i9 ← i8 - t1
-  let a2 ← Array.update a1 3#usize i9
-  let i10 ← Array.index_usize a2 2#usize
-  let i11 ← i10 + t1
-  let a3 ← Array.update a2 2#usize i11
-  let i12 ← Array.index_usize a3 5#usize
-  let i13 ← libcrux_secrets.traits.Classify.Blanket.classify zeta2
-  let t2 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i12 i13
-  let i14 ← Array.index_usize a3 4#usize
-  let i15 ← i14 - t2
-  let a4 ← Array.update a3 5#usize i15
-  let i16 ← Array.index_usize a4 4#usize
-  let i17 ← i16 + t2
-  let a5 ← Array.update a4 4#usize i17
-  let i18 ← Array.index_usize a5 7#usize
-  let i19 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
-  let t3 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i18 i19
-  let i20 ← Array.index_usize a5 6#usize
-  let i21 ← i20 - t3
-  let a6 ← Array.update a5 7#usize i21
-  let i22 ← Array.index_usize a6 6#usize
-  let i23 ← i22 + t3
-  let a7 ← Array.update a6 6#usize i23
+  let i6 ← Array.index_usize a1 5#usize
+  let t1 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i6 i1
+  let i7 ← Array.index_usize a1 1#usize
+  let i8 ← i7 - t1
+  let a2 ← Array.update a1 5#usize i8
+  let i9 ← Array.index_usize a2 1#usize
+  let i10 ← i9 + t1
+  let a3 ← Array.update a2 1#usize i10
+  let i11 ← Array.index_usize a3 6#usize
+  let t2 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i11 i1
+  let i12 ← Array.index_usize a3 2#usize
+  let i13 ← i12 - t2
+  let a4 ← Array.update a3 6#usize i13
+  let i14 ← Array.index_usize a4 2#usize
+  let i15 ← i14 + t2
+  let a5 ← Array.update a4 2#usize i15
+  let i16 ← Array.index_usize a5 7#usize
+  let t3 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i16 i1
+  let i17 ← Array.index_usize a5 3#usize
+  let i18 ← i17 - t3
+  let a6 ← Array.update a5 7#usize i18
+  let i19 ← Array.index_usize a6 3#usize
+  let i20 ← i19 + t3
+  let a7 ← Array.update a6 3#usize i20
   ok { values := a7 }
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_2::round]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 167:4-169:5 -/
+def simd.portable.ntt.ntt_at_layer_2.round
+  (re : Array simd.portable.vector_type.Coefficients 32#usize)
+  (index : Std.Usize) (zeta : Std.I32) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let (c, index_mut_back) ← Array.index_mut_usize re index
+  let c1 ← simd.portable.ntt.simd_unit_ntt_at_layer_2 c zeta
+  ok (index_mut_back c1)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_2]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 165:0-203:1 -/
+def simd.portable.ntt.ntt_at_layer_2
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ← simd.portable.ntt.ntt_at_layer_2.round re 0#usize 2706023#i32
+  let re2 ← simd.portable.ntt.ntt_at_layer_2.round re1 1#usize 95776#i32
+  let re3 ← simd.portable.ntt.ntt_at_layer_2.round re2 2#usize 3077325#i32
+  let re4 ← simd.portable.ntt.ntt_at_layer_2.round re3 3#usize 3530437#i32
+  let re5 ← simd.portable.ntt.ntt_at_layer_2.round re4 4#usize (-1661693)#i32
+  let re6 ← simd.portable.ntt.ntt_at_layer_2.round re5 5#usize (-3592148)#i32
+  let re7 ← simd.portable.ntt.ntt_at_layer_2.round re6 6#usize (-2537516)#i32
+  let re8 ← simd.portable.ntt.ntt_at_layer_2.round re7 7#usize 3915439#i32
+  let re9 ← simd.portable.ntt.ntt_at_layer_2.round re8 8#usize (-3861115)#i32
+  let re10 ←
+    simd.portable.ntt.ntt_at_layer_2.round re9 9#usize (-3043716)#i32
+  let re11 ← simd.portable.ntt.ntt_at_layer_2.round re10 10#usize 3574422#i32
+  let re12 ←
+    simd.portable.ntt.ntt_at_layer_2.round re11 11#usize (-2867647)#i32
+  let re13 ← simd.portable.ntt.ntt_at_layer_2.round re12 12#usize 3539968#i32
+  let re14 ←
+    simd.portable.ntt.ntt_at_layer_2.round re13 13#usize (-300467)#i32
+  let re15 ← simd.portable.ntt.ntt_at_layer_2.round re14 14#usize 2348700#i32
+  let re16 ←
+    simd.portable.ntt.ntt_at_layer_2.round re15 15#usize (-539299)#i32
+  let re17 ←
+    simd.portable.ntt.ntt_at_layer_2.round re16 16#usize (-1699267)#i32
+  let re18 ←
+    simd.portable.ntt.ntt_at_layer_2.round re17 17#usize (-1643818)#i32
+  let re19 ← simd.portable.ntt.ntt_at_layer_2.round re18 18#usize 3505694#i32
+  let re20 ←
+    simd.portable.ntt.ntt_at_layer_2.round re19 19#usize (-3821735)#i32
+  let re21 ← simd.portable.ntt.ntt_at_layer_2.round re20 20#usize 3507263#i32
+  let re22 ←
+    simd.portable.ntt.ntt_at_layer_2.round re21 21#usize (-2140649)#i32
+  let re23 ←
+    simd.portable.ntt.ntt_at_layer_2.round re22 22#usize (-1600420)#i32
+  let re24 ← simd.portable.ntt.ntt_at_layer_2.round re23 23#usize 3699596#i32
+  let re25 ← simd.portable.ntt.ntt_at_layer_2.round re24 24#usize 811944#i32
+  let re26 ← simd.portable.ntt.ntt_at_layer_2.round re25 25#usize 531354#i32
+  let re27 ← simd.portable.ntt.ntt_at_layer_2.round re26 26#usize 954230#i32
+  let re28 ← simd.portable.ntt.ntt_at_layer_2.round re27 27#usize 3881043#i32
+  let re29 ← simd.portable.ntt.ntt_at_layer_2.round re28 28#usize 3900724#i32
+  let re30 ←
+    simd.portable.ntt.ntt_at_layer_2.round re29 29#usize (-2556880)#i32
+  let re31 ← simd.portable.ntt.ntt_at_layer_2.round re30 30#usize 2071892#i32
+  simd.portable.ntt.ntt_at_layer_2.round re31 31#usize (-2797779)#i32
 
 /-- [libcrux_iot_ml_dsa::simd::portable::ntt::simd_unit_ntt_at_layer_1]:
     Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 33:0-49:1
@@ -2223,46 +2000,160 @@ def simd.portable.ntt.simd_unit_ntt_at_layer_1
   let a7 ← Array.update a6 5#usize i21
   ok { values := a7 }
 
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::simd_unit_ntt_at_layer_2]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 52:0-68:1
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_1::round]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 121:4-128:5 -/
+def simd.portable.ntt.ntt_at_layer_1.round
+  (re : Array simd.portable.vector_type.Coefficients 32#usize)
+  (index : Std.Usize) (zeta_0 : Std.I32) (zeta_1 : Std.I32) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let (c, index_mut_back) ← Array.index_mut_usize re index
+  let c1 ← simd.portable.ntt.simd_unit_ntt_at_layer_1 c zeta_0 zeta_1
+  ok (index_mut_back c1)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_1]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 119:0-162:1 -/
+def simd.portable.ntt.ntt_at_layer_1
+  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  let re1 ←
+    simd.portable.ntt.ntt_at_layer_1.round re 0#usize (-3930395)#i32
+      (-1528703)#i32
+  let re2 ←
+    simd.portable.ntt.ntt_at_layer_1.round re1 1#usize (-3677745)#i32
+      (-3041255)#i32
+  let re3 ←
+    simd.portable.ntt.ntt_at_layer_1.round re2 2#usize (-1452451)#i32
+      3475950#i32
+  let re4 ←
+    simd.portable.ntt.ntt_at_layer_1.round re3 3#usize 2176455#i32
+      (-1585221)#i32
+  let re5 ←
+    simd.portable.ntt.ntt_at_layer_1.round re4 4#usize (-1257611)#i32
+      1939314#i32
+  let re6 ←
+    simd.portable.ntt.ntt_at_layer_1.round re5 5#usize (-4083598)#i32
+      (-1000202)#i32
+  let re7 ←
+    simd.portable.ntt.ntt_at_layer_1.round re6 6#usize (-3190144)#i32
+      (-3157330)#i32
+  let re8 ←
+    simd.portable.ntt.ntt_at_layer_1.round re7 7#usize (-3632928)#i32
+      126922#i32
+  let re9 ←
+    simd.portable.ntt.ntt_at_layer_1.round re8 8#usize 3412210#i32
+      (-983419)#i32
+  let re10 ←
+    simd.portable.ntt.ntt_at_layer_1.round re9 9#usize 2147896#i32 2715295#i32
+  let re11 ←
+    simd.portable.ntt.ntt_at_layer_1.round re10 10#usize (-2967645)#i32
+      (-3693493)#i32
+  let re12 ←
+    simd.portable.ntt.ntt_at_layer_1.round re11 11#usize (-411027)#i32
+      (-2477047)#i32
+  let re13 ←
+    simd.portable.ntt.ntt_at_layer_1.round re12 12#usize (-671102)#i32
+      (-1228525)#i32
+  let re14 ←
+    simd.portable.ntt.ntt_at_layer_1.round re13 13#usize (-22981)#i32
+      (-1308169)#i32
+  let re15 ←
+    simd.portable.ntt.ntt_at_layer_1.round re14 14#usize (-381987)#i32
+      1349076#i32
+  let re16 ←
+    simd.portable.ntt.ntt_at_layer_1.round re15 15#usize 1852771#i32
+      (-1430430)#i32
+  let re17 ←
+    simd.portable.ntt.ntt_at_layer_1.round re16 16#usize (-3343383)#i32
+      264944#i32
+  let re18 ←
+    simd.portable.ntt.ntt_at_layer_1.round re17 17#usize 508951#i32 3097992#i32
+  let re19 ←
+    simd.portable.ntt.ntt_at_layer_1.round re18 18#usize 44288#i32
+      (-1100098)#i32
+  let re20 ←
+    simd.portable.ntt.ntt_at_layer_1.round re19 19#usize 904516#i32 3958618#i32
+  let re21 ←
+    simd.portable.ntt.ntt_at_layer_1.round re20 20#usize (-3724342)#i32
+      (-8578)#i32
+  let re22 ←
+    simd.portable.ntt.ntt_at_layer_1.round re21 21#usize 1653064#i32
+      (-3249728)#i32
+  let re23 ←
+    simd.portable.ntt.ntt_at_layer_1.round re22 22#usize 2389356#i32
+      (-210977)#i32
+  let re24 ←
+    simd.portable.ntt.ntt_at_layer_1.round re23 23#usize 759969#i32
+      (-1316856)#i32
+  let re25 ←
+    simd.portable.ntt.ntt_at_layer_1.round re24 24#usize 189548#i32
+      (-3553272)#i32
+  let re26 ←
+    simd.portable.ntt.ntt_at_layer_1.round re25 25#usize 3159746#i32
+      (-1851402)#i32
+  let re27 ←
+    simd.portable.ntt.ntt_at_layer_1.round re26 26#usize (-2409325)#i32
+      (-177440)#i32
+  let re28 ←
+    simd.portable.ntt.ntt_at_layer_1.round re27 27#usize 1315589#i32
+      1341330#i32
+  let re29 ←
+    simd.portable.ntt.ntt_at_layer_1.round re28 28#usize 1285669#i32
+      (-1584928)#i32
+  let re30 ←
+    simd.portable.ntt.ntt_at_layer_1.round re29 29#usize (-812732)#i32
+      (-1439742)#i32
+  let re31 ←
+    simd.portable.ntt.ntt_at_layer_1.round re30 30#usize (-3019102)#i32
+      (-3881060)#i32
+  simd.portable.ntt.ntt_at_layer_1.round re31 31#usize (-3628969)#i32
+    3839961#i32
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::simd_unit_ntt_at_layer_0]:
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 8:0-30:1
     Visibility: public -/
-def simd.portable.ntt.simd_unit_ntt_at_layer_2
-  (simd_unit : simd.portable.vector_type.Coefficients) (zeta : Std.I32) :
+def simd.portable.ntt.simd_unit_ntt_at_layer_0
+  (simd_unit : simd.portable.vector_type.Coefficients) (zeta0 : Std.I32)
+  (zeta1 : Std.I32) (zeta2 : Std.I32) (zeta3 : Std.I32) :
   Result simd.portable.vector_type.Coefficients
   := do
-  let i ← Array.index_usize simd_unit.values 4#usize
-  let i1 ← libcrux_secrets.traits.Classify.Blanket.classify zeta
+  let i ← Array.index_usize simd_unit.values 1#usize
+  let i1 ← libcrux_secrets.traits.Classify.Blanket.classify zeta0
   let t ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i i1
   let i2 ← Array.index_usize simd_unit.values 0#usize
   let i3 ← i2 - t
-  let a ← Array.update simd_unit.values 4#usize i3
+  let a ← Array.update simd_unit.values 1#usize i3
   let i4 ← Array.index_usize a 0#usize
   let i5 ← i4 + t
   let a1 ← Array.update a 0#usize i5
-  let i6 ← Array.index_usize a1 5#usize
-  let t1 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i6 i1
-  let i7 ← Array.index_usize a1 1#usize
-  let i8 ← i7 - t1
-  let a2 ← Array.update a1 5#usize i8
-  let i9 ← Array.index_usize a2 1#usize
-  let i10 ← i9 + t1
-  let a3 ← Array.update a2 1#usize i10
-  let i11 ← Array.index_usize a3 6#usize
-  let t2 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i11 i1
-  let i12 ← Array.index_usize a3 2#usize
-  let i13 ← i12 - t2
-  let a4 ← Array.update a3 6#usize i13
-  let i14 ← Array.index_usize a4 2#usize
-  let i15 ← i14 + t2
-  let a5 ← Array.update a4 2#usize i15
-  let i16 ← Array.index_usize a5 7#usize
-  let t3 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i16 i1
-  let i17 ← Array.index_usize a5 3#usize
-  let i18 ← i17 - t3
-  let a6 ← Array.update a5 7#usize i18
-  let i19 ← Array.index_usize a6 3#usize
-  let i20 ← i19 + t3
-  let a7 ← Array.update a6 3#usize i20
+  let i6 ← Array.index_usize a1 3#usize
+  let i7 ← libcrux_secrets.traits.Classify.Blanket.classify zeta1
+  let t1 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i6 i7
+  let i8 ← Array.index_usize a1 2#usize
+  let i9 ← i8 - t1
+  let a2 ← Array.update a1 3#usize i9
+  let i10 ← Array.index_usize a2 2#usize
+  let i11 ← i10 + t1
+  let a3 ← Array.update a2 2#usize i11
+  let i12 ← Array.index_usize a3 5#usize
+  let i13 ← libcrux_secrets.traits.Classify.Blanket.classify zeta2
+  let t2 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i12 i13
+  let i14 ← Array.index_usize a3 4#usize
+  let i15 ← i14 - t2
+  let a4 ← Array.update a3 5#usize i15
+  let i16 ← Array.index_usize a4 4#usize
+  let i17 ← i16 + t2
+  let a5 ← Array.update a4 4#usize i17
+  let i18 ← Array.index_usize a5 7#usize
+  let i19 ← libcrux_secrets.traits.Classify.Blanket.classify zeta3
+  let t3 ← simd.portable.arithmetic.montgomery_multiply_fe_by_fer i18 i19
+  let i20 ← Array.index_usize a5 6#usize
+  let i21 ← i20 - t3
+  let a6 ← Array.update a5 7#usize i21
+  let i22 ← Array.index_usize a6 6#usize
+  let i23 ← i22 + t3
+  let a7 ← Array.update a6 6#usize i23
   ok { values := a7 }
 
 /-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_0::round]:
@@ -2380,358 +2271,6 @@ def simd.portable.ntt.ntt_at_layer_0
   simd.portable.ntt.ntt_at_layer_0.round re31 31#usize 3937738#i32 1400424#i32
     (-846154)#i32 1976782#i32
 
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_1::round]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 121:4-128:5 -/
-def simd.portable.ntt.ntt_at_layer_1.round
-  (re : Array simd.portable.vector_type.Coefficients 32#usize)
-  (index : Std.Usize) (zeta_0 : Std.I32) (zeta_1 : Std.I32) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let (c, index_mut_back) ← Array.index_mut_usize re index
-  let c1 ← simd.portable.ntt.simd_unit_ntt_at_layer_1 c zeta_0 zeta_1
-  ok (index_mut_back c1)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_1]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 119:0-162:1 -/
-def simd.portable.ntt.ntt_at_layer_1
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ←
-    simd.portable.ntt.ntt_at_layer_1.round re 0#usize (-3930395)#i32
-      (-1528703)#i32
-  let re2 ←
-    simd.portable.ntt.ntt_at_layer_1.round re1 1#usize (-3677745)#i32
-      (-3041255)#i32
-  let re3 ←
-    simd.portable.ntt.ntt_at_layer_1.round re2 2#usize (-1452451)#i32
-      3475950#i32
-  let re4 ←
-    simd.portable.ntt.ntt_at_layer_1.round re3 3#usize 2176455#i32
-      (-1585221)#i32
-  let re5 ←
-    simd.portable.ntt.ntt_at_layer_1.round re4 4#usize (-1257611)#i32
-      1939314#i32
-  let re6 ←
-    simd.portable.ntt.ntt_at_layer_1.round re5 5#usize (-4083598)#i32
-      (-1000202)#i32
-  let re7 ←
-    simd.portable.ntt.ntt_at_layer_1.round re6 6#usize (-3190144)#i32
-      (-3157330)#i32
-  let re8 ←
-    simd.portable.ntt.ntt_at_layer_1.round re7 7#usize (-3632928)#i32
-      126922#i32
-  let re9 ←
-    simd.portable.ntt.ntt_at_layer_1.round re8 8#usize 3412210#i32
-      (-983419)#i32
-  let re10 ←
-    simd.portable.ntt.ntt_at_layer_1.round re9 9#usize 2147896#i32 2715295#i32
-  let re11 ←
-    simd.portable.ntt.ntt_at_layer_1.round re10 10#usize (-2967645)#i32
-      (-3693493)#i32
-  let re12 ←
-    simd.portable.ntt.ntt_at_layer_1.round re11 11#usize (-411027)#i32
-      (-2477047)#i32
-  let re13 ←
-    simd.portable.ntt.ntt_at_layer_1.round re12 12#usize (-671102)#i32
-      (-1228525)#i32
-  let re14 ←
-    simd.portable.ntt.ntt_at_layer_1.round re13 13#usize (-22981)#i32
-      (-1308169)#i32
-  let re15 ←
-    simd.portable.ntt.ntt_at_layer_1.round re14 14#usize (-381987)#i32
-      1349076#i32
-  let re16 ←
-    simd.portable.ntt.ntt_at_layer_1.round re15 15#usize 1852771#i32
-      (-1430430)#i32
-  let re17 ←
-    simd.portable.ntt.ntt_at_layer_1.round re16 16#usize (-3343383)#i32
-      264944#i32
-  let re18 ←
-    simd.portable.ntt.ntt_at_layer_1.round re17 17#usize 508951#i32 3097992#i32
-  let re19 ←
-    simd.portable.ntt.ntt_at_layer_1.round re18 18#usize 44288#i32
-      (-1100098)#i32
-  let re20 ←
-    simd.portable.ntt.ntt_at_layer_1.round re19 19#usize 904516#i32 3958618#i32
-  let re21 ←
-    simd.portable.ntt.ntt_at_layer_1.round re20 20#usize (-3724342)#i32
-      (-8578)#i32
-  let re22 ←
-    simd.portable.ntt.ntt_at_layer_1.round re21 21#usize 1653064#i32
-      (-3249728)#i32
-  let re23 ←
-    simd.portable.ntt.ntt_at_layer_1.round re22 22#usize 2389356#i32
-      (-210977)#i32
-  let re24 ←
-    simd.portable.ntt.ntt_at_layer_1.round re23 23#usize 759969#i32
-      (-1316856)#i32
-  let re25 ←
-    simd.portable.ntt.ntt_at_layer_1.round re24 24#usize 189548#i32
-      (-3553272)#i32
-  let re26 ←
-    simd.portable.ntt.ntt_at_layer_1.round re25 25#usize 3159746#i32
-      (-1851402)#i32
-  let re27 ←
-    simd.portable.ntt.ntt_at_layer_1.round re26 26#usize (-2409325)#i32
-      (-177440)#i32
-  let re28 ←
-    simd.portable.ntt.ntt_at_layer_1.round re27 27#usize 1315589#i32
-      1341330#i32
-  let re29 ←
-    simd.portable.ntt.ntt_at_layer_1.round re28 28#usize 1285669#i32
-      (-1584928)#i32
-  let re30 ←
-    simd.portable.ntt.ntt_at_layer_1.round re29 29#usize (-812732)#i32
-      (-1439742)#i32
-  let re31 ←
-    simd.portable.ntt.ntt_at_layer_1.round re30 30#usize (-3019102)#i32
-      (-3881060)#i32
-  simd.portable.ntt.ntt_at_layer_1.round re31 31#usize (-3628969)#i32
-    3839961#i32
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_2::round]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 167:4-169:5 -/
-def simd.portable.ntt.ntt_at_layer_2.round
-  (re : Array simd.portable.vector_type.Coefficients 32#usize)
-  (index : Std.Usize) (zeta : Std.I32) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let (c, index_mut_back) ← Array.index_mut_usize re index
-  let c1 ← simd.portable.ntt.simd_unit_ntt_at_layer_2 c zeta
-  ok (index_mut_back c1)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_2]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 165:0-203:1 -/
-def simd.portable.ntt.ntt_at_layer_2
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ← simd.portable.ntt.ntt_at_layer_2.round re 0#usize 2706023#i32
-  let re2 ← simd.portable.ntt.ntt_at_layer_2.round re1 1#usize 95776#i32
-  let re3 ← simd.portable.ntt.ntt_at_layer_2.round re2 2#usize 3077325#i32
-  let re4 ← simd.portable.ntt.ntt_at_layer_2.round re3 3#usize 3530437#i32
-  let re5 ← simd.portable.ntt.ntt_at_layer_2.round re4 4#usize (-1661693)#i32
-  let re6 ← simd.portable.ntt.ntt_at_layer_2.round re5 5#usize (-3592148)#i32
-  let re7 ← simd.portable.ntt.ntt_at_layer_2.round re6 6#usize (-2537516)#i32
-  let re8 ← simd.portable.ntt.ntt_at_layer_2.round re7 7#usize 3915439#i32
-  let re9 ← simd.portable.ntt.ntt_at_layer_2.round re8 8#usize (-3861115)#i32
-  let re10 ←
-    simd.portable.ntt.ntt_at_layer_2.round re9 9#usize (-3043716)#i32
-  let re11 ← simd.portable.ntt.ntt_at_layer_2.round re10 10#usize 3574422#i32
-  let re12 ←
-    simd.portable.ntt.ntt_at_layer_2.round re11 11#usize (-2867647)#i32
-  let re13 ← simd.portable.ntt.ntt_at_layer_2.round re12 12#usize 3539968#i32
-  let re14 ←
-    simd.portable.ntt.ntt_at_layer_2.round re13 13#usize (-300467)#i32
-  let re15 ← simd.portable.ntt.ntt_at_layer_2.round re14 14#usize 2348700#i32
-  let re16 ←
-    simd.portable.ntt.ntt_at_layer_2.round re15 15#usize (-539299)#i32
-  let re17 ←
-    simd.portable.ntt.ntt_at_layer_2.round re16 16#usize (-1699267)#i32
-  let re18 ←
-    simd.portable.ntt.ntt_at_layer_2.round re17 17#usize (-1643818)#i32
-  let re19 ← simd.portable.ntt.ntt_at_layer_2.round re18 18#usize 3505694#i32
-  let re20 ←
-    simd.portable.ntt.ntt_at_layer_2.round re19 19#usize (-3821735)#i32
-  let re21 ← simd.portable.ntt.ntt_at_layer_2.round re20 20#usize 3507263#i32
-  let re22 ←
-    simd.portable.ntt.ntt_at_layer_2.round re21 21#usize (-2140649)#i32
-  let re23 ←
-    simd.portable.ntt.ntt_at_layer_2.round re22 22#usize (-1600420)#i32
-  let re24 ← simd.portable.ntt.ntt_at_layer_2.round re23 23#usize 3699596#i32
-  let re25 ← simd.portable.ntt.ntt_at_layer_2.round re24 24#usize 811944#i32
-  let re26 ← simd.portable.ntt.ntt_at_layer_2.round re25 25#usize 531354#i32
-  let re27 ← simd.portable.ntt.ntt_at_layer_2.round re26 26#usize 954230#i32
-  let re28 ← simd.portable.ntt.ntt_at_layer_2.round re27 27#usize 3881043#i32
-  let re29 ← simd.portable.ntt.ntt_at_layer_2.round re28 28#usize 3900724#i32
-  let re30 ←
-    simd.portable.ntt.ntt_at_layer_2.round re29 29#usize (-2556880)#i32
-  let re31 ← simd.portable.ntt.ntt_at_layer_2.round re30 30#usize 2071892#i32
-  simd.portable.ntt.ntt_at_layer_2.round re31 31#usize (-2797779)#i32
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::outer_3_plus]: loop body 0:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 209:4-216:5 -/
-@[rust_loop_body]
-def simd.portable.ntt.outer_3_plus_loop.body
-  (STEP_BY : Std.Usize) (ZETA : Std.I32)
-  (iter : core.ops.range.Range Std.Usize)
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array
-    simd.portable.vector_type.Coefficients 32#usize)) (Array
-    simd.portable.vector_type.Coefficients 32#usize))
-  := do
-  let (o, iter1) ←
-    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
-      core.Usize.Insts.CoreIterRangeStep iter
-  match o with
-  | core.option.Option.None => ok (done re)
-  | core.option.Option.Some j =>
-    let i ← j + STEP_BY
-    let tmp ← Array.index_usize re i
-    let i1 ← libcrux_secrets.traits.Classify.Blanket.classify ZETA
-    let tmp1 ←
-      simd.portable.arithmetic.montgomery_multiply_by_constant tmp i1
-    let c ← Array.index_usize re j
-    let re1 ← Array.update re i c
-    let (c1, index_mut_back) ← Array.index_mut_usize re1 i
-    let c2 ← simd.portable.arithmetic.subtract c1 tmp1
-    let re2 := index_mut_back c2
-    let (c3, index_mut_back1) ← Array.index_mut_usize re2 j
-    let c4 ← simd.portable.arithmetic.add c3 tmp1
-    let a := index_mut_back1 c4
-    ok (cont (iter1, a))
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::outer_3_plus]: loop 0:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 209:4-216:5 -/
-@[rust_loop]
-def simd.portable.ntt.outer_3_plus_loop
-  (STEP_BY : Std.Usize) (ZETA : Std.I32)
-  (iter : core.ops.range.Range Std.Usize)
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  loop
-    (fun (iter1, re1) => simd.portable.ntt.outer_3_plus_loop.body STEP_BY ZETA
-      iter1 re1)
-    (iter, re)
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::outer_3_plus]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 206:0-218:1 -/
-def simd.portable.ntt.outer_3_plus
-  (OFFSET : Std.Usize) (STEP_BY : Std.Usize) (ZETA : Std.I32)
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let i ← OFFSET + STEP_BY
-  simd.portable.ntt.outer_3_plus_loop STEP_BY ZETA
-    { start := OFFSET, «end» := i } re
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_3]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 221:0-241:1 -/
-def simd.portable.ntt.ntt_at_layer_3
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ← simd.portable.ntt.outer_3_plus 0#usize 1#usize 2725464#i32 re
-  let re2 ← simd.portable.ntt.outer_3_plus 2#usize 1#usize 1024112#i32 re1
-  let re3 ← simd.portable.ntt.outer_3_plus 4#usize 1#usize (-1079900)#i32 re2
-  let re4 ← simd.portable.ntt.outer_3_plus 6#usize 1#usize 3585928#i32 re3
-  let re5 ← simd.portable.ntt.outer_3_plus 8#usize 1#usize (-549488)#i32 re4
-  let re6 ←
-    simd.portable.ntt.outer_3_plus 10#usize 1#usize (-1119584)#i32 re5
-  let re7 ← simd.portable.ntt.outer_3_plus 12#usize 1#usize 2619752#i32 re6
-  let re8 ←
-    simd.portable.ntt.outer_3_plus 14#usize 1#usize (-2108549)#i32 re7
-  let re9 ←
-    simd.portable.ntt.outer_3_plus 16#usize 1#usize (-2118186)#i32 re8
-  let re10 ←
-    simd.portable.ntt.outer_3_plus 18#usize 1#usize (-3859737)#i32 re9
-  let re11 ←
-    simd.portable.ntt.outer_3_plus 20#usize 1#usize (-1399561)#i32 re10
-  let re12 ←
-    simd.portable.ntt.outer_3_plus 22#usize 1#usize (-3277672)#i32 re11
-  let re13 ← simd.portable.ntt.outer_3_plus 24#usize 1#usize 1757237#i32 re12
-  let re14 ←
-    simd.portable.ntt.outer_3_plus 26#usize 1#usize (-19422)#i32 re13
-  let re15 ← simd.portable.ntt.outer_3_plus 28#usize 1#usize 4010497#i32 re14
-  simd.portable.ntt.outer_3_plus 30#usize 1#usize 280005#i32 re15
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_3::STEP]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 222:4-222:26 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_3.STEP : Std.Usize := 8#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_3::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 223:4-223:29 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_3.STEP_BY : Std.Usize := 1#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_4]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 244:0-256:1 -/
-def simd.portable.ntt.ntt_at_layer_4
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ← simd.portable.ntt.outer_3_plus 0#usize 2#usize 1826347#i32 re
-  let re2 ← simd.portable.ntt.outer_3_plus 4#usize 2#usize 2353451#i32 re1
-  let re3 ← simd.portable.ntt.outer_3_plus 8#usize 2#usize (-359251)#i32 re2
-  let re4 ←
-    simd.portable.ntt.outer_3_plus 12#usize 2#usize (-2091905)#i32 re3
-  let re5 ← simd.portable.ntt.outer_3_plus 16#usize 2#usize 3119733#i32 re4
-  let re6 ←
-    simd.portable.ntt.outer_3_plus 20#usize 2#usize (-2884855)#i32 re5
-  let re7 ← simd.portable.ntt.outer_3_plus 24#usize 2#usize 3111497#i32 re6
-  simd.portable.ntt.outer_3_plus 28#usize 2#usize 2680103#i32 re7
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_4::STEP]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 245:4-245:27 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_4.STEP : Std.Usize := 16#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_4::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 246:4-246:29 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_4.STEP_BY : Std.Usize := 2#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_5]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 259:0-267:1 -/
-def simd.portable.ntt.ntt_at_layer_5
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ← simd.portable.ntt.outer_3_plus 0#usize 4#usize 237124#i32 re
-  let re2 ← simd.portable.ntt.outer_3_plus 8#usize 4#usize (-777960)#i32 re1
-  let re3 ← simd.portable.ntt.outer_3_plus 16#usize 4#usize (-876248)#i32 re2
-  simd.portable.ntt.outer_3_plus 24#usize 4#usize 466468#i32 re3
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_5::STEP]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 260:4-260:27 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_5.STEP : Std.Usize := 32#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_5::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 261:4-261:29 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_5.STEP_BY : Std.Usize := 4#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_6]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 270:0-276:1 -/
-def simd.portable.ntt.ntt_at_layer_6
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  let re1 ← simd.portable.ntt.outer_3_plus 0#usize 8#usize (-2608894)#i32 re
-  simd.portable.ntt.outer_3_plus 16#usize 8#usize (-518909)#i32 re1
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_6::STEP]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 271:4-271:27 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_6.STEP : Std.Usize := 64#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_6::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 272:4-272:29 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_6.STEP_BY : Std.Usize := 8#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_7]:
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 279:0-284:1 -/
-def simd.portable.ntt.ntt_at_layer_7
-  (re : Array simd.portable.vector_type.Coefficients 32#usize) :
-  Result (Array simd.portable.vector_type.Coefficients 32#usize)
-  := do
-  simd.portable.ntt.outer_3_plus 0#usize 16#usize 25847#i32 re
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_7::STEP]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 280:4-280:28 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_7.STEP : Std.Usize := 128#usize
-
-/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_7::STEP_BY]
-    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 281:4-281:30 -/
-@[global_simps, irreducible]
-def simd.portable.ntt.ntt_at_layer_7.STEP_BY : Std.Usize := 16#usize
-
 /-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt]:
     Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 287:0-296:1 -/
 def simd.portable.ntt.ntt
@@ -2747,21 +2286,747 @@ def simd.portable.ntt.ntt
   let re7 ← simd.portable.ntt.ntt_at_layer_1 re6
   simd.portable.ntt.ntt_at_layer_0 re7
 
-/-- Trait implementation: [libcrux_iot_ml_dsa::simd::portable::vector_type::{impl core::clone::Clone for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}]
-    Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 8:9-8:14 -/
-@[reducible]
-def simd.portable.vector_type.Coefficients.Insts.CoreCloneClone :
-  core.clone.Clone simd.portable.vector_type.Coefficients := {
-  clone := simd.portable.vector_type.Coefficients.Insts.CoreCloneClone.clone
-}
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::ntt]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 122:4-124:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.ntt
+  (simd_units : Array simd.portable.vector_type.Coefficients 32#usize) :
+  Result (Array simd.portable.vector_type.Coefficients 32#usize)
+  := do
+  simd.portable.ntt.ntt simd_units
 
-/-- [libcrux_iot_ml_dsa::simd::portable::vector_type::zero]:
-    Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 14:0-18:1 -/
-def simd.portable.vector_type.zero
-  : Result simd.portable.vector_type.Coefficients := do
-  let i ← libcrux_secrets.traits.Classify.Blanket.classify 0#i32
-  let a := Array.repeat 8#usize i
+/-- [libcrux_iot_ml_dsa::simd::portable::encoding::t1::deserialize]:
+    Source: 'ml-dsa/src/simd/portable/encoding/t1.rs', lines 31:0-54:1
+    Visibility: public -/
+opaque simd.portable.encoding.t1.deserialize
+  :
+  Slice Std.U8 → simd.portable.vector_type.Coefficients → Result
+    simd.portable.vector_type.Coefficients
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::t1_deserialize]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 118:4-120:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.t1_deserialize
+  (serialized : Slice Std.U8) (out : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  simd.portable.encoding.t1.deserialize serialized out
+
+/-- [libcrux_iot_ml_dsa::simd::portable::encoding::t1::serialize]:
+    Source: 'ml-dsa/src/simd/portable/encoding/t1.rs', lines 8:0-28:1
+    Visibility: public -/
+opaque simd.portable.encoding.t1.serialize
+  :
+  simd.portable.vector_type.Coefficients → Slice Std.U8 → Result (Slice
+    Std.U8)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::t1_serialize]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 114:4-116:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.t1_serialize
+  (simd_unit : simd.portable.vector_type.Coefficients) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  simd.portable.encoding.t1.serialize simd_unit out
+
+/-- [libcrux_iot_ml_dsa::simd::portable::encoding::t0::deserialize]:
+    Source: 'ml-dsa/src/simd/portable/encoding/t0.rs', lines 61:0-125:1
+    Visibility: public -/
+opaque simd.portable.encoding.t0.deserialize
+  :
+  Slice Std.U8 → simd.portable.vector_type.Coefficients → Result
+    simd.portable.vector_type.Coefficients
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::t0_deserialize]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 110:4-112:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.t0_deserialize
+  (serialized : Slice Std.U8) (out : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  simd.portable.encoding.t0.deserialize serialized out
+
+/-- [libcrux_iot_ml_dsa::simd::portable::encoding::t0::serialize]:
+    Source: 'ml-dsa/src/simd/portable/encoding/t0.rs', lines 13:0-58:1
+    Visibility: public -/
+opaque simd.portable.encoding.t0.serialize
+  :
+  simd.portable.vector_type.Coefficients → Slice Std.U8 → Result (Slice
+    Std.U8)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::t0_serialize]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 106:4-108:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.t0_serialize
+  (simd_unit : simd.portable.vector_type.Coefficients) (out : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  simd.portable.encoding.t0.serialize simd_unit out
+
+/-- [libcrux_iot_ml_dsa::simd::portable::encoding::error::deserialize]:
+    Source: 'ml-dsa/src/simd/portable/encoding/error.rs', lines 92:0-99:1 -/
+opaque simd.portable.encoding.error.deserialize
+  :
+  constants.Eta → Slice Std.U8 → simd.portable.vector_type.Coefficients →
+    Result simd.portable.vector_type.Coefficients
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::error_deserialize]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 102:4-104:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.error_deserialize
+  (eta : constants.Eta) (serialized : Slice Std.U8)
+  (out : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  simd.portable.encoding.error.deserialize eta serialized out
+
+/-- [libcrux_iot_ml_dsa::simd::portable::encoding::error::serialize]:
+    Source: 'ml-dsa/src/simd/portable/encoding/error.rs', lines 45:0-51:1 -/
+opaque simd.portable.encoding.error.serialize
+  :
+  constants.Eta → simd.portable.vector_type.Coefficients → Slice Std.U8 →
+    Result (Slice Std.U8)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::error_serialize]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 98:4-100:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.error_serialize
+  (eta : constants.Eta) (simd_unit : simd.portable.vector_type.Coefficients)
+  (serialized : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  simd.portable.encoding.error.serialize eta simd_unit serialized
+
+/-- [libcrux_iot_ml_dsa::simd::portable::encoding::commitment::serialize]:
+    Source: 'ml-dsa/src/simd/portable/encoding/commitment.rs', lines 6:0-42:1
+    Visibility: public -/
+opaque simd.portable.encoding.commitment.serialize
+  :
+  simd.portable.vector_type.Coefficients → Slice Std.U8 → Result (Slice
+    Std.U8)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::commitment_serialize]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 94:4-96:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.commitment_serialize
+  (simd_unit : simd.portable.vector_type.Coefficients)
+  (serialized : Slice Std.U8) :
+  Result (Slice Std.U8)
+  := do
+  simd.portable.encoding.commitment.serialize simd_unit serialized
+
+/-- [libcrux_iot_ml_dsa::simd::portable::encoding::gamma1::deserialize]:
+    Source: 'ml-dsa/src/simd/portable/encoding/gamma1.rs', lines 150:0-156:1 -/
+opaque simd.portable.encoding.gamma1.deserialize
+  :
+  Slice Std.U8 → simd.portable.vector_type.Coefficients → Std.Usize →
+    Result simd.portable.vector_type.Coefficients
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::gamma1_deserialize]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 90:4-92:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.gamma1_deserialize
+  (serialized : Slice Std.U8) (out : simd.portable.vector_type.Coefficients)
+  (gamma1_exponent : Std.Usize) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  simd.portable.encoding.gamma1.deserialize serialized out gamma1_exponent
+
+/-- [libcrux_iot_ml_dsa::simd::portable::encoding::gamma1::serialize]:
+    Source: 'ml-dsa/src/simd/portable/encoding/gamma1.rs', lines 68:0-74:1 -/
+opaque simd.portable.encoding.gamma1.serialize
+  :
+  simd.portable.vector_type.Coefficients → Slice Std.U8 → Std.Usize →
+    Result (Slice Std.U8)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::gamma1_serialize]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 86:4-88:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.gamma1_serialize
+  (simd_unit : simd.portable.vector_type.Coefficients)
+  (serialized : Slice Std.U8) (gamma1_exponent : Std.Usize) :
+  Result (Slice Std.U8)
+  := do
+  simd.portable.encoding.gamma1.serialize simd_unit serialized gamma1_exponent
+
+/-- [libcrux_iot_ml_dsa::simd::portable::sample::rejection_sample_less_than_eta_equals_4]:
+    Source: 'ml-dsa/src/simd/portable/sample.rs', lines 69:0-98:1
+    Visibility: public -/
+opaque simd.portable.sample.rejection_sample_less_than_eta_equals_4
+  : Slice Std.U8 → Slice Std.I32 → Result (Std.Usize × (Slice Std.I32))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::rejection_sample_less_than_eta_equals_4]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 82:4-84:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.rejection_sample_less_than_eta_equals_4
+  (randomness : Slice Std.U8) (out : Slice Std.I32) :
+  Result (Std.Usize × (Slice Std.I32))
+  := do
+  simd.portable.sample.rejection_sample_less_than_eta_equals_4 randomness out
+
+/-- [libcrux_iot_ml_dsa::simd::portable::sample::rejection_sample_less_than_eta_equals_2]:
+    Source: 'ml-dsa/src/simd/portable/sample.rs', lines 28:0-66:1
+    Visibility: public -/
+opaque simd.portable.sample.rejection_sample_less_than_eta_equals_2
+  : Slice Std.U8 → Slice Std.I32 → Result (Std.Usize × (Slice Std.I32))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::rejection_sample_less_than_eta_equals_2]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 78:4-80:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.rejection_sample_less_than_eta_equals_2
+  (randomness : Slice Std.U8) (out : Slice Std.I32) :
+  Result (Std.Usize × (Slice Std.I32))
+  := do
+  simd.portable.sample.rejection_sample_less_than_eta_equals_2 randomness out
+
+/-- [libcrux_iot_ml_dsa::simd::portable::sample::rejection_sample_less_than_field_modulus]:
+    Source: 'ml-dsa/src/simd/portable/sample.rs', lines 6:0-25:1
+    Visibility: public -/
+opaque simd.portable.sample.rejection_sample_less_than_field_modulus
+  : Slice Std.U8 → Slice Std.I32 → Result (Std.Usize × (Slice Std.I32))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::rejection_sample_less_than_field_modulus]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 74:4-76:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.rejection_sample_less_than_field_modulus
+  (randomness : Slice Std.U8) (out : Slice Std.I32) :
+  Result (Std.Usize × (Slice Std.I32))
+  := do
+  simd.portable.sample.rejection_sample_less_than_field_modulus randomness out
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose_element]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 218:0-265:1 -/
+def simd.portable.arithmetic.decompose_element
+  (gamma2 : Std.I32) (r : Std.I32) : Result (Std.I32 × Std.I32) := do
+  let i ← r >>> 31#i32
+  let i1 ← lift (i &&& simd.traits.FIELD_MODULUS)
+  let r1 ← core.num.I32.wrapping_add r i1
+  let i2 ← core.num.I32.wrapping_add r1 127#i32
+  let ceil_of_r_by_128 ← i2 >>> 7#i32
+  let r11 ←
+    match gamma2 with
+    | 95232#iscalar =>
+      do
+      let i3 ← core.num.I32.wrapping_mul ceil_of_r_by_128 11275#i32
+      let i4 ← 1#i32 <<< 23#i32
+      let i5 ← core.num.I32.wrapping_add i3 i4
+      let result ← i5 >>> 24#i32
+      let i6 ← libcrux_secrets.traits.Classify.Blanket.classify 43#i32
+      let i7 ← core.num.I32.wrapping_sub i6 result
+      let i8 ← i7 >>> 31#i32
+      let i9 ← lift (result ^^^ i8)
+      ok (i9 &&& result)
+    | 261888#iscalar =>
+      do
+      let i3 ← core.num.I32.wrapping_mul ceil_of_r_by_128 1025#i32
+      let i4 ← 1#i32 <<< 21#i32
+      let i5 ← core.num.I32.wrapping_add i3 i4
+      let result ← i5 >>> 22#i32
+      ok (result &&& 15#i32)
+    | _ => fail panic
+  let alpha ← gamma2 * 2#i32
+  let i3 ← core.num.I32.wrapping_mul r11 alpha
+  let r0 ← core.num.I32.wrapping_sub r1 i3
+  let i4 ← simd.traits.FIELD_MODULUS - 1#i32
+  let i5 ← i4 / 2#i32
+  let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
+  let i7 ← core.num.I32.wrapping_sub i6 r0
+  let i8 ← i7 >>> 31#i32
+  let i9 ← lift (i8 &&& simd.traits.FIELD_MODULUS)
+  let r01 ← core.num.I32.wrapping_sub r0 i9
+  ok (r01, r11)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_one_hint]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 269:0-303:1 -/
+def simd.portable.arithmetic.use_one_hint
+  (gamma2 : Std.I32) (r : Std.I32) (hint : Std.I32) : Result Std.I32 := do
+  let i ← libcrux_secrets.traits.Classify.Blanket.classify r
+  let (r0, r1) ← simd.portable.arithmetic.decompose_element gamma2 i
+  let r01 ← libcrux_secrets.traits.Declassify.Blanket.declassify r0
+  let r11 ← libcrux_secrets.traits.Declassify.Blanket.declassify r1
+  if hint = 0#i32
+  then ok r11
+  else
+    match gamma2 with
+    | 95232#iscalar =>
+      if r01 > 0#i32
+      then
+        if r11 = 43#i32
+        then ok 0#i32
+        else core.num.I32.wrapping_add r11 hint
+      else
+        if r11 = 0#i32
+        then ok 43#i32
+        else core.num.I32.wrapping_sub r11 hint
+    | 261888#iscalar =>
+      if r01 > 0#i32
+      then let i1 ← core.num.I32.wrapping_add r11 hint
+           ok (i1 &&& 15#i32)
+      else let i1 ← core.num.I32.wrapping_sub r11 hint
+           ok (i1 &&& 15#i32)
+    | _ => fail panic
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_hint]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 321:4-331:5
+    Visibility: public -/
+@[rust_loop_body]
+def simd.portable.arithmetic.use_hint_loop.body
+  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
+    8#usize)) (Array Std.I32 8#usize))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done a)
+  | core.option.Option.Some i =>
+    let i1 ← Array.index_usize simd_unit.values i
+    let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
+    let i3 ← Array.index_usize a i
+    let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify i3
+    let i5 ← simd.portable.arithmetic.use_one_hint gamma2 i2 i4
+    let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
+    let a1 ← Array.update a i i6
+    ok (cont (iter1, a1))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_hint]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 321:4-331:5
+    Visibility: public -/
+@[rust_loop]
+def simd.portable.arithmetic.use_hint_loop
+  (iter : core.ops.range.Range Std.Usize) (gamma2 : Std.I32)
+  (simd_unit : simd.portable.vector_type.Coefficients)
+  (a : Array Std.I32 8#usize) :
+  Result (Array Std.I32 8#usize)
+  := do
+  loop
+    (fun (iter1, a1) => simd.portable.arithmetic.use_hint_loop.body gamma2
+      simd_unit iter1 a1)
+    (iter, a)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::use_hint]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 320:0-332:1
+    Visibility: public -/
+def simd.portable.arithmetic.use_hint
+  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
+  (hint : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  let s ← lift (Array.to_slice hint.values)
+  let i ← core.slice.Slice.len s
+  let a ←
+    simd.portable.arithmetic.use_hint_loop { start := 0#usize, «end» := i }
+      gamma2 simd_unit hint.values
   ok { values := a }
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::use_hint]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 70:4-72:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.use_hint
+  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
+  (hint : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  simd.portable.arithmetic.use_hint gamma2 simd_unit hint
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_one_hint]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 167:0-173:1 -/
+def simd.portable.arithmetic.compute_one_hint
+  (low : Std.I32) (high : Std.I32) (gamma2 : Std.I32) : Result Std.I32 := do
+  if low > gamma2
+  then ok 1#i32
+  else
+    let i ← -. gamma2
+    if low < i
+    then ok 1#i32
+    else
+      if low = i
+      then if high != 0#i32
+           then ok 1#i32
+           else ok 0#i32
+      else ok 0#i32
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_hint]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 188:4-197:5 -/
+@[rust_loop_body]
+def simd.portable.arithmetic.compute_hint_loop.body
+  (low : simd.portable.vector_type.Coefficients)
+  (high : simd.portable.vector_type.Coefficients) (gamma2 : Std.I32)
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
+  (one_hints_count : Std.Usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
+    8#usize) × Std.Usize) ((Array Std.I32 8#usize) × Std.Usize))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done (a, one_hints_count))
+  | core.option.Option.Some i =>
+    let i1 ← Array.index_usize low.values i
+    let i2 ← libcrux_secrets.traits.Declassify.Blanket.declassify i1
+    let i3 ← Array.index_usize high.values i
+    let i4 ← libcrux_secrets.traits.Declassify.Blanket.declassify i3
+    let i5 ← simd.portable.arithmetic.compute_one_hint i2 i4 gamma2
+    let i6 ← libcrux_secrets.traits.Classify.Blanket.classify i5
+    let a1 ← Array.update a i i6
+    let i7 ← Array.index_usize a1 i
+    let i8 ← libcrux_secrets.traits.Declassify.Blanket.declassify i7
+    let i9 ← lift (IScalar.hcast .Usize i8)
+    let one_hints_count1 ← one_hints_count + i9
+    ok (cont (iter1, a1, one_hints_count1))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_hint]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 188:4-197:5 -/
+@[rust_loop]
+def simd.portable.arithmetic.compute_hint_loop
+  (iter : core.ops.range.Range Std.Usize)
+  (low : simd.portable.vector_type.Coefficients)
+  (high : simd.portable.vector_type.Coefficients) (gamma2 : Std.I32)
+  (a : Array Std.I32 8#usize) (one_hints_count : Std.Usize) :
+  Result ((Array Std.I32 8#usize) × Std.Usize)
+  := do
+  loop
+    (fun (iter1, a1, one_hints_count1) =>
+      simd.portable.arithmetic.compute_hint_loop.body low high gamma2 iter1 a1
+      one_hints_count1)
+    (iter, a, one_hints_count)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::compute_hint]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 177:0-200:1 -/
+def simd.portable.arithmetic.compute_hint
+  (low : simd.portable.vector_type.Coefficients)
+  (high : simd.portable.vector_type.Coefficients) (gamma2 : Std.I32)
+  (hint : simd.portable.vector_type.Coefficients) :
+  Result (Std.Usize × simd.portable.vector_type.Coefficients)
+  := do
+  let s ← lift (Array.to_slice hint.values)
+  let i ← core.slice.Slice.len s
+  let (a, one_hints_count) ←
+    simd.portable.arithmetic.compute_hint_loop
+      { start := 0#usize, «end» := i } low high gamma2 hint.values 0#usize
+  ok (one_hints_count, { values := a })
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::compute_hint]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 61:4-68:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.compute_hint
+  (low : simd.portable.vector_type.Coefficients)
+  (high : simd.portable.vector_type.Coefficients) (gamma2 : Std.I32)
+  (hint : simd.portable.vector_type.Coefficients) :
+  Result (Std.Usize × simd.portable.vector_type.Coefficients)
+  := do
+  simd.portable.arithmetic.compute_hint low high gamma2 hint
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 313:4-315:5
+    Visibility: public -/
+@[rust_loop_body]
+def simd.portable.arithmetic.decompose_loop.body
+  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
+  (high : simd.portable.vector_type.Coefficients) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
+    8#usize) × simd.portable.vector_type.Coefficients) ((Array Std.I32
+    8#usize) × simd.portable.vector_type.Coefficients))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done (a, high))
+  | core.option.Option.Some i =>
+    let i1 ← Array.index_usize simd_unit.values i
+    let (i2, i3) ← simd.portable.arithmetic.decompose_element gamma2 i1
+    let a1 ← Array.update a i i2
+    let a2 ← Array.update high.values i i3
+    ok (cont (iter1, a1, { values := a2 }))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 313:4-315:5
+    Visibility: public -/
+@[rust_loop]
+def simd.portable.arithmetic.decompose_loop
+  (iter : core.ops.range.Range Std.Usize) (gamma2 : Std.I32)
+  (simd_unit : simd.portable.vector_type.Coefficients)
+  (a : Array Std.I32 8#usize) (high : simd.portable.vector_type.Coefficients) :
+  Result ((Array Std.I32 8#usize) × simd.portable.vector_type.Coefficients)
+  := do
+  loop
+    (fun (iter1, a1, high1) => simd.portable.arithmetic.decompose_loop.body
+      gamma2 simd_unit iter1 a1 high1)
+    (iter, a, high)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::decompose]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 307:0-316:1
+    Visibility: public -/
+def simd.portable.arithmetic.decompose
+  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
+  (low : simd.portable.vector_type.Coefficients)
+  (high : simd.portable.vector_type.Coefficients) :
+  Result (simd.portable.vector_type.Coefficients ×
+    simd.portable.vector_type.Coefficients)
+  := do
+  let s ← lift (Array.to_slice low.values)
+  let i ← core.slice.Slice.len s
+  let (a, high1) ←
+    simd.portable.arithmetic.decompose_loop { start := 0#usize, «end» := i }
+      gamma2 simd_unit low.values high
+  ok ({ values := a }, high1)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::decompose]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 57:4-59:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.decompose
+  (gamma2 : Std.I32) (simd_unit : simd.portable.vector_type.Coefficients)
+  (low : simd.portable.vector_type.Coefficients)
+  (high : simd.portable.vector_type.Coefficients) :
+  Result (simd.portable.vector_type.Coefficients ×
+    simd.portable.vector_type.Coefficients)
+  := do
+  simd.portable.arithmetic.decompose gamma2 simd_unit low high
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::infinity_norm_exceeds]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 120:4-144:5 -/
+@[rust_loop_body]
+def simd.portable.arithmetic.infinity_norm_exceeds_loop.body
+  (a : Array Std.I32 8#usize) (bound : Std.I32)
+  (iter : core.ops.range.Range Std.Usize) (result : Bool) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × Bool) Bool)
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done result)
+  | core.option.Option.Some i =>
+    let coefficient ← Array.index_usize a i
+    let sign ← coefficient >>> 31#i32
+    let i1 ← libcrux_secrets.traits.Classify.Blanket.classify 2#i32
+    let i2 ← core.num.I32.wrapping_mul i1 coefficient
+    let i3 ← lift (sign &&& i2)
+    let normalized ← core.num.I32.wrapping_sub coefficient i3
+    if result
+    then ok (cont (iter1, true))
+    else
+      let i4 ←
+        libcrux_secrets.traits.Declassify.Blanket.declassify normalized
+      ok (cont (iter1, i4 >= bound))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::infinity_norm_exceeds]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 120:4-144:5 -/
+@[rust_loop]
+def simd.portable.arithmetic.infinity_norm_exceeds_loop
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
+  (bound : Std.I32) (result : Bool) :
+  Result Bool
+  := do
+  loop
+    (fun (iter1, result1) =>
+      simd.portable.arithmetic.infinity_norm_exceeds_loop.body a bound iter1
+      result1)
+    (iter, result)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::infinity_norm_exceeds]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 115:0-147:1 -/
+def simd.portable.arithmetic.infinity_norm_exceeds
+  (simd_unit : simd.portable.vector_type.Coefficients) (bound : Std.I32) :
+  Result Bool
+  := do
+  let s ← lift (Array.to_slice simd_unit.values)
+  let i ← core.slice.Slice.len s
+  simd.portable.arithmetic.infinity_norm_exceeds_loop
+    { start := 0#usize, «end» := i } simd_unit.values bound false
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::infinity_norm_exceeds]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 53:4-55:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.infinity_norm_exceeds
+  (simd_unit : simd.portable.vector_type.Coefficients) (bound : Std.I32) :
+  Result Bool
+  := do
+  simd.portable.arithmetic.infinity_norm_exceeds simd_unit bound
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round_element]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 80:0-103:1 -/
+def simd.portable.arithmetic.power2round_element
+  (t : Std.I32) : Result (Std.I32 × Std.I32) := do
+  let i ← t >>> 31#i32
+  let i1 ← lift (i &&& simd.traits.FIELD_MODULUS)
+  let t1 ← core.num.I32.wrapping_add t i1
+  let i2 ← core.num.I32.wrapping_sub t1 1#i32
+  let i3 ← constants.BITS_IN_LOWER_PART_OF_T - 1#usize
+  let i4 ← 1#i32 <<< i3
+  let i5 ← core.num.I32.wrapping_add i2 i4
+  let t11 ← i5 >>> constants.BITS_IN_LOWER_PART_OF_T
+  let i6 ← t11 <<< constants.BITS_IN_LOWER_PART_OF_T
+  let t0 ← core.num.I32.wrapping_sub t1 i6
+  ok (t0, t11)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 107:4-109:5 -/
+@[rust_loop_body]
+def simd.portable.arithmetic.power2round_loop.body
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
+  (t1 : simd.portable.vector_type.Coefficients) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
+    8#usize) × simd.portable.vector_type.Coefficients) ((Array Std.I32
+    8#usize) × simd.portable.vector_type.Coefficients))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done (a, t1))
+  | core.option.Option.Some i =>
+    let i1 ← Array.index_usize a i
+    let (i2, i3) ← simd.portable.arithmetic.power2round_element i1
+    let a1 ← Array.update a i i2
+    let a2 ← Array.update t1.values i i3
+    ok (cont (iter1, a1, { values := a2 }))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 107:4-109:5 -/
+@[rust_loop]
+def simd.portable.arithmetic.power2round_loop
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
+  (t1 : simd.portable.vector_type.Coefficients) :
+  Result ((Array Std.I32 8#usize) × simd.portable.vector_type.Coefficients)
+  := do
+  loop
+    (fun (iter1, a1, t11) => simd.portable.arithmetic.power2round_loop.body
+      iter1 a1 t11)
+    (iter, a, t1)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::power2round]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 106:0-110:1 -/
+def simd.portable.arithmetic.power2round
+  (t0 : simd.portable.vector_type.Coefficients)
+  (t1 : simd.portable.vector_type.Coefficients) :
+  Result (simd.portable.vector_type.Coefficients ×
+    simd.portable.vector_type.Coefficients)
+  := do
+  let s ← lift (Array.to_slice t0.values)
+  let i ← core.slice.Slice.len s
+  let (a, t11) ←
+    simd.portable.arithmetic.power2round_loop
+      { start := 0#usize, «end» := i } t0.values t1
+  ok ({ values := a }, t11)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::power2round]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 49:4-51:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.power2round
+  (t0 : simd.portable.vector_type.Coefficients)
+  (t1 : simd.portable.vector_type.Coefficients) :
+  Result (simd.portable.vector_type.Coefficients ×
+    simd.portable.vector_type.Coefficients)
+  := do
+  simd.portable.arithmetic.power2round t0 t1
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply]: loop body 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 65:4-68:5 -/
+@[rust_loop_body]
+def simd.portable.arithmetic.montgomery_multiply_loop.body
+  (rhs : simd.portable.vector_type.Coefficients)
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array Std.I32
+    8#usize)) (Array Std.I32 8#usize))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done a)
+  | core.option.Option.Some i =>
+    let i1 ← Array.index_usize a i
+    let i2 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 i1
+    let i3 ← Array.index_usize rhs.values i
+    let i4 ← libcrux_secrets.I32.Insts.Libcrux_secretsIntCastOps.as_i64 i3
+    let i5 ← core.num.I64.wrapping_mul i2 i4
+    let i6 ← simd.portable.arithmetic.montgomery_reduce_element i5
+    let a1 ← Array.update a i i6
+    ok (cont (iter1, a1))
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply]: loop 0:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 65:4-68:5 -/
+@[rust_loop]
+def simd.portable.arithmetic.montgomery_multiply_loop
+  (iter : core.ops.range.Range Std.Usize) (a : Array Std.I32 8#usize)
+  (rhs : simd.portable.vector_type.Coefficients) :
+  Result (Array Std.I32 8#usize)
+  := do
+  loop
+    (fun (iter1, a1) => simd.portable.arithmetic.montgomery_multiply_loop.body
+      rhs iter1 a1)
+    (iter, a)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::arithmetic::montgomery_multiply]:
+    Source: 'ml-dsa/src/simd/portable/arithmetic.rs', lines 64:0-69:1 -/
+def simd.portable.arithmetic.montgomery_multiply
+  (lhs : simd.portable.vector_type.Coefficients)
+  (rhs : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  let s ← lift (Array.to_slice lhs.values)
+  let i ← core.slice.Slice.len s
+  let a ←
+    simd.portable.arithmetic.montgomery_multiply_loop
+      { start := 0#usize, «end» := i } lhs.values rhs
+  ok { values := a }
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::montgomery_multiply]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 41:4-43:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.montgomery_multiply
+  (lhs : simd.portable.vector_type.Coefficients)
+  (rhs : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  simd.portable.arithmetic.montgomery_multiply lhs rhs
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::subtract]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 37:4-39:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.subtract
+  (lhs : simd.portable.vector_type.Coefficients)
+  (rhs : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  simd.portable.arithmetic.subtract lhs rhs
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::add]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 33:4-35:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.add
+  (lhs : simd.portable.vector_type.Coefficients)
+  (rhs : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
+  := do
+  simd.portable.arithmetic.add lhs rhs
+
+/-- [libcrux_iot_ml_dsa::simd::portable::vector_type::to_coefficient_array]:
+    Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 26:0-31:1 -/
+def simd.portable.vector_type.to_coefficient_array
+  (value : simd.portable.vector_type.Coefficients) (out : Slice Std.I32) :
+  Result (Slice Std.I32)
+  := do
+  let a ←
+    libcrux_secrets.SharedAT.Insts.Libcrux_secretsTraitsDeclassifyRefSharedAT.declassify_ref
+      value.values
+  let s ← lift (Array.to_slice a)
+  core.slice.Slice.copy_from_slice core.I32.Insts.CoreMarkerCopy out s
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::to_coefficient_array]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 29:4-31:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.to_coefficient_array
+  (value : simd.portable.vector_type.Coefficients) (out : Slice Std.I32) :
+  Result (Slice Std.I32)
+  := do
+  simd.portable.vector_type.to_coefficient_array value out
 
 /-- [libcrux_iot_ml_dsa::simd::portable::vector_type::from_coefficient_array]:
     Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 20:0-23:1 -/
@@ -2780,16 +3045,368 @@ def simd.portable.vector_type.from_coefficient_array
   let a := to_slice_mut_back s2
   ok { values := a }
 
-/-- [libcrux_iot_ml_dsa::simd::portable::vector_type::to_coefficient_array]:
-    Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 26:0-31:1 -/
-def simd.portable.vector_type.to_coefficient_array
-  (value : simd.portable.vector_type.Coefficients) (out : Slice Std.I32) :
-  Result (Slice Std.I32)
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::from_coefficient_array]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 25:4-27:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.from_coefficient_array
+  (array : Slice Std.I32) (out : simd.portable.vector_type.Coefficients) :
+  Result simd.portable.vector_type.Coefficients
   := do
+  simd.portable.vector_type.from_coefficient_array array out
+
+/-- [libcrux_iot_ml_dsa::simd::portable::vector_type::zero]:
+    Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 14:0-18:1 -/
+def simd.portable.vector_type.zero
+  : Result simd.portable.vector_type.Coefficients := do
+  let i ← libcrux_secrets.traits.Classify.Blanket.classify 0#i32
+  let a := Array.repeat 8#usize i
+  ok { values := a }
+
+/-- [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}::zero]:
+    Source: 'ml-dsa/src/simd/portable.rs', lines 21:4-23:5 -/
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.zero
+  : Result simd.portable.vector_type.Coefficients := do
+  simd.portable.vector_type.zero
+
+/-- Trait implementation: [libcrux_iot_ml_dsa::simd::portable::vector_type::{impl core::clone::Clone for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}]
+    Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 8:9-8:14 -/
+@[reducible]
+def simd.portable.vector_type.Coefficients.Insts.CoreCloneClone :
+  core.clone.Clone simd.portable.vector_type.Coefficients := {
+  clone := simd.portable.vector_type.Coefficients.Insts.CoreCloneClone.clone
+}
+
+/-- Trait implementation: [libcrux_iot_ml_dsa::simd::portable::vector_type::{impl core::marker::Copy for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}]
+    Source: 'ml-dsa/src/simd/portable/vector_type.rs', lines 8:16-8:20 -/
+@[reducible]
+def simd.portable.vector_type.Coefficients.Insts.CoreMarkerCopy :
+  core.marker.Copy simd.portable.vector_type.Coefficients := {
+  cloneCloneInst := simd.portable.vector_type.Coefficients.Insts.CoreCloneClone
+}
+
+/-- Trait implementation: [libcrux_iot_ml_dsa::simd::portable::{impl libcrux_iot_ml_dsa::simd::traits::Operations for libcrux_iot_ml_dsa::simd::portable::vector_type::Coefficients}]
+    Source: 'ml-dsa/src/simd/portable.rs', lines 20:0-135:1 -/
+@[reducible]
+def
+  simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+  : simd.traits.Operations simd.portable.vector_type.Coefficients := {
+  coremarkerCopyInst :=
+    simd.portable.vector_type.Coefficients.Insts.CoreMarkerCopy
+  corecloneCloneInst :=
+    simd.portable.vector_type.Coefficients.Insts.CoreCloneClone
+  zero :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.zero
+  from_coefficient_array :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.from_coefficient_array
+  to_coefficient_array :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.to_coefficient_array
+  add :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.add
+  subtract :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.subtract
+  infinity_norm_exceeds :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.infinity_norm_exceeds
+  decompose :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.decompose
+  compute_hint :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.compute_hint
+  use_hint :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.use_hint
+  montgomery_multiply :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.montgomery_multiply
+  shift_left_then_reduce := fun (SHIFT_BY : Std.I32) =>
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.shift_left_then_reduce
+    SHIFT_BY
+  power2round :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.power2round
+  rejection_sample_less_than_field_modulus :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.rejection_sample_less_than_field_modulus
+  rejection_sample_less_than_eta_equals_2 :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.rejection_sample_less_than_eta_equals_2
+  rejection_sample_less_than_eta_equals_4 :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.rejection_sample_less_than_eta_equals_4
+  gamma1_serialize :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.gamma1_serialize
+  gamma1_deserialize :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.gamma1_deserialize
+  commitment_serialize :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.commitment_serialize
+  error_serialize :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.error_serialize
+  error_deserialize :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.error_deserialize
+  t0_serialize :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.t0_serialize
+  t0_deserialize :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.t0_deserialize
+  t1_serialize :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.t1_serialize
+  t1_deserialize :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.t1_deserialize
+  ntt :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.ntt
+  invert_ntt_montgomery :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.invert_ntt_montgomery
+  «reduce» :=
+    simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations.reduce
+}
+
+/-- [libcrux_iot_ml_dsa::polynomial::{libcrux_iot_ml_dsa::polynomial::PolynomialRingElement<SIMDUnit>}::subtract]: loop body 0:
+    Source: 'ml-dsa/src/polynomial.rs', lines 74:8-76:9 -/
+@[rust_loop_body]
+def polynomial.PolynomialRingElement.subtract_loop.body
+  {SIMDUnit : Type} (simdtraitsOperationsInst : simd.traits.Operations
+  SIMDUnit) (rhs : polynomial.PolynomialRingElement SIMDUnit)
+  (iter : core.ops.range.Range Std.Usize) (a : Array SIMDUnit 32#usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array SIMDUnit
+    32#usize)) (Array SIMDUnit 32#usize))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done a)
+  | core.option.Option.Some i =>
+    let (t, index_mut_back) ← Array.index_mut_usize a i
+    let t1 ← Array.index_usize rhs.simd_units i
+    let t2 ← simdtraitsOperationsInst.subtract t t1
+    let a1 := index_mut_back t2
+    ok (cont (iter1, a1))
+
+/-- [libcrux_iot_ml_dsa::polynomial::{libcrux_iot_ml_dsa::polynomial::PolynomialRingElement<SIMDUnit>}::subtract]: loop 0:
+    Source: 'ml-dsa/src/polynomial.rs', lines 74:8-76:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.subtract_loop
+  {SIMDUnit : Type} (simdtraitsOperationsInst : simd.traits.Operations
+  SIMDUnit) (iter : core.ops.range.Range Std.Usize)
+  (a : Array SIMDUnit 32#usize)
+  (rhs : polynomial.PolynomialRingElement SIMDUnit) :
+  Result (Array SIMDUnit 32#usize)
+  := do
+  loop
+    (fun (iter1, a1) => polynomial.PolynomialRingElement.subtract_loop.body
+      simdtraitsOperationsInst rhs iter1 a1)
+    (iter, a)
+
+/-- [libcrux_iot_ml_dsa::polynomial::{libcrux_iot_ml_dsa::polynomial::PolynomialRingElement<SIMDUnit>}::subtract]:
+    Source: 'ml-dsa/src/polynomial.rs', lines 73:4-79:5 -/
+def polynomial.PolynomialRingElement.subtract
+  {SIMDUnit : Type} (simdtraitsOperationsInst : simd.traits.Operations
+  SIMDUnit) (self : polynomial.PolynomialRingElement SIMDUnit)
+  (rhs : polynomial.PolynomialRingElement SIMDUnit) :
+  Result (polynomial.PolynomialRingElement SIMDUnit)
+  := do
+  let s ← lift (Array.to_slice self.simd_units)
+  let i ← core.slice.Slice.len s
   let a ←
-    libcrux_secrets.SharedAT.Insts.Libcrux_secretsTraitsDeclassifyRefSharedAT.declassify_ref
-      value.values
-  let s ← lift (Array.to_slice a)
-  core.slice.Slice.copy_from_slice core.I32.Insts.CoreMarkerCopy out s
+    polynomial.PolynomialRingElement.subtract_loop simdtraitsOperationsInst
+      { start := 0#usize, «end» := i } self.simd_units rhs
+  ok { simd_units := a }
+
+/-- [libcrux_iot_ml_dsa::polynomial::{libcrux_iot_ml_dsa::polynomial::PolynomialRingElement<SIMDUnit>}::add]: loop body 0:
+    Source: 'ml-dsa/src/polynomial.rs', lines 65:8-67:9 -/
+@[rust_loop_body]
+def polynomial.PolynomialRingElement.add_loop.body
+  {SIMDUnit : Type} (simdtraitsOperationsInst : simd.traits.Operations
+  SIMDUnit) (rhs : polynomial.PolynomialRingElement SIMDUnit)
+  (iter : core.ops.range.Range Std.Usize) (a : Array SIMDUnit 32#usize) :
+  Result (ControlFlow ((core.ops.range.Range Std.Usize) × (Array SIMDUnit
+    32#usize)) (Array SIMDUnit 32#usize))
+  := do
+  let (o, iter1) ←
+    core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.next
+      core.Usize.Insts.CoreIterRangeStep iter
+  match o with
+  | core.option.Option.None => ok (done a)
+  | core.option.Option.Some i =>
+    let (t, index_mut_back) ← Array.index_mut_usize a i
+    let t1 ← Array.index_usize rhs.simd_units i
+    let t2 ← simdtraitsOperationsInst.add t t1
+    let a1 := index_mut_back t2
+    ok (cont (iter1, a1))
+
+/-- [libcrux_iot_ml_dsa::polynomial::{libcrux_iot_ml_dsa::polynomial::PolynomialRingElement<SIMDUnit>}::add]: loop 0:
+    Source: 'ml-dsa/src/polynomial.rs', lines 65:8-67:9 -/
+@[rust_loop]
+def polynomial.PolynomialRingElement.add_loop
+  {SIMDUnit : Type} (simdtraitsOperationsInst : simd.traits.Operations
+  SIMDUnit) (iter : core.ops.range.Range Std.Usize)
+  (a : Array SIMDUnit 32#usize)
+  (rhs : polynomial.PolynomialRingElement SIMDUnit) :
+  Result (Array SIMDUnit 32#usize)
+  := do
+  loop
+    (fun (iter1, a1) => polynomial.PolynomialRingElement.add_loop.body
+      simdtraitsOperationsInst rhs iter1 a1)
+    (iter, a)
+
+/-- [libcrux_iot_ml_dsa::polynomial::{libcrux_iot_ml_dsa::polynomial::PolynomialRingElement<SIMDUnit>}::add]:
+    Source: 'ml-dsa/src/polynomial.rs', lines 64:4-70:5 -/
+def polynomial.PolynomialRingElement.add
+  {SIMDUnit : Type} (simdtraitsOperationsInst : simd.traits.Operations
+  SIMDUnit) (self : polynomial.PolynomialRingElement SIMDUnit)
+  (rhs : polynomial.PolynomialRingElement SIMDUnit) :
+  Result (polynomial.PolynomialRingElement SIMDUnit)
+  := do
+  let s ← lift (Array.to_slice self.simd_units)
+  let i ← core.slice.Slice.len s
+  let a ←
+    polynomial.PolynomialRingElement.add_loop simdtraitsOperationsInst
+      { start := 0#usize, «end» := i } self.simd_units rhs
+  ok { simd_units := a }
+
+/-- [libcrux_iot_ml_dsa::ntt::_portable_operations_anchor]:
+    Source: 'ml-dsa/src/ntt.rs', lines 52:0-69:1
+    Visibility: public -/
+def ntt._portable_operations_anchor
+  (re : polynomial.PolynomialRingElement
+  simd.portable.vector_type.Coefficients)
+  (rhs : polynomial.PolynomialRingElement
+  simd.portable.vector_type.Coefficients) (array : Slice Std.I32)
+  (bound : Std.I32) :
+  Result (Bool × (polynomial.PolynomialRingElement
+    simd.portable.vector_type.Coefficients))
+  := do
+  let re1 ←
+    ntt.ntt
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+      re
+  let re2 ←
+    ntt.invert_ntt_montgomery
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+      re1
+  let re3 ←
+    ntt.ntt_multiply_montgomery
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+      re2 rhs
+  let re4 ←
+    ntt.reduce
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+      re3
+  let re5 ←
+    polynomial.PolynomialRingElement.from_i32_array
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+      array re4
+  let re6 ←
+    polynomial.PolynomialRingElement.add
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+      re5 rhs
+  let re7 ←
+    polynomial.PolynomialRingElement.subtract
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+      re6 rhs
+  let _ ←
+    polynomial.PolynomialRingElement.to_i32_array
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+      re7
+  let _ ←
+    polynomial.PolynomialRingElement.zero
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+  let b ←
+    polynomial.PolynomialRingElement.infinity_norm_exceeds
+      simd.portable.vector_type.Coefficients.Insts.Libcrux_iot_ml_dsaSimdTraitsOperations
+      re7 bound
+  ok (b, re7)
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_3::STEP]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 226:4-226:26 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_3.STEP : Std.Usize := 8#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_3::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 227:4-227:29 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_3.STEP_BY : Std.Usize := 1#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_4::STEP]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 249:4-249:27 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_4.STEP : Std.Usize := 16#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_4::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 250:4-250:29 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_4.STEP_BY : Std.Usize := 2#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_5::STEP]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 264:4-264:27 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_5.STEP : Std.Usize := 32#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_5::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 265:4-265:29 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_5.STEP_BY : Std.Usize := 4#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_6::STEP]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 275:4-275:27 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_6.STEP : Std.Usize := 64#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_6::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 276:4-276:29 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_6.STEP_BY : Std.Usize := 8#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_7::STEP]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 284:4-284:28 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_7.STEP : Std.Usize := 128#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::invntt::invert_ntt_at_layer_7::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/invntt.rs', lines 285:4-285:30 -/
+@[global_simps, irreducible]
+def simd.portable.invntt.invert_ntt_at_layer_7.STEP_BY : Std.Usize := 16#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_3::STEP]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 222:4-222:26 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_3.STEP : Std.Usize := 8#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_3::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 223:4-223:29 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_3.STEP_BY : Std.Usize := 1#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_4::STEP]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 245:4-245:27 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_4.STEP : Std.Usize := 16#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_4::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 246:4-246:29 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_4.STEP_BY : Std.Usize := 2#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_5::STEP]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 260:4-260:27 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_5.STEP : Std.Usize := 32#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_5::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 261:4-261:29 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_5.STEP_BY : Std.Usize := 4#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_6::STEP]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 271:4-271:27 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_6.STEP : Std.Usize := 64#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_6::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 272:4-272:29 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_6.STEP_BY : Std.Usize := 8#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_7::STEP]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 280:4-280:28 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_7.STEP : Std.Usize := 128#usize
+
+/-- [libcrux_iot_ml_dsa::simd::portable::ntt::ntt_at_layer_7::STEP_BY]
+    Source: 'ml-dsa/src/simd/portable/ntt.rs', lines 281:4-281:30 -/
+@[global_simps, irreducible]
+def simd.portable.ntt.ntt_at_layer_7.STEP_BY : Std.Usize := 16#usize
 
 end libcrux_iot_ml_dsa

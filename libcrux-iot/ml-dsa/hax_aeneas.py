@@ -45,6 +45,13 @@ START_FROM = [
     "crate::simd::portable::invntt::*",
     "crate::simd::portable::arithmetic::*",
     "crate::simd::portable::vector_type::*",
+    # Verification-only anchor (ntt.rs, `#[cfg(hax_backend_lean)]`) that instantiates the
+    # generic polynomial/ntt API at the concrete `Coefficients` SIMD unit. This
+    # is the reachable, non-opaque, monomorphic *user* of the
+    # `Operations for Coefficients` trait impl that Charon needs to retain the
+    # instance (ML-DSA's real users — matrix / ml_dsa_generic — are opaque, so
+    # without it the impl is pruned). Mirrors ML-KEM's non-opaque matrix roots.
+    "crate::ntt::_portable_operations_anchor",
     "crate::simd::traits::*",
     "crate::matrix::compute_as1_plus_s2",
     "crate::matrix::compute_matrix_x_mask",
@@ -60,6 +67,13 @@ OPAQUE = [
     "crate::encoding::*",
     "crate::ml_dsa_generic::*",
     "crate::pre_hash::*",
+    # The impl's serialize/sample methods forward to these nested portable
+    # modules, whose bodies use unmodeled chunks_exact/as_u8. They are out of
+    # the NTT/arithmetic scope, so keep them opaque (signature only); the
+    # Operations instance's serialize/sample fields then forward to opaque
+    # leaves, while the NTT/arith fields forward to the verified concrete fns.
+    "crate::simd::portable::encoding::*",
+    "crate::simd::portable::sample::*",
     # Phase-7 vector drivers that iterate a `&mut [PolynomialRingElement]` with a
     # nested slice iterator (hax issue #720). The installed aeneas cannot
     # translate that region pattern and emits a `sorry` body; keep them opaque
