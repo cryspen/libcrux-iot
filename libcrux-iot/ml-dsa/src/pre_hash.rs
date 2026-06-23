@@ -11,12 +11,15 @@ use crate::{constants::CONTEXT_MAX_LEN, hash_functions, SigningError, Verificati
 pub(crate) const PRE_HASH_OID_LEN: usize = 11;
 pub(crate) type PreHashOID = [u8; PRE_HASH_OID_LEN];
 
+#[hax_lib::attributes]
 pub(crate) trait PreHash {
     /// The object identifier (OID) of the hash function or XOF used
     /// to perform the pre-hashing of the message.
+    #[hax_lib::requires(true)]
     fn oid() -> PreHashOID;
 
     /// Used to derive the pre-hash PH of the message before signing.
+    #[hax_lib::ensures(|_| future(output).len() == output.len())]
     fn hash<Shake128: hash_functions::shake128::Xof>(message: &[U8], output: &mut [U8]);
 }
 
@@ -29,12 +32,15 @@ const SHAKE128_OID: PreHashOID = [
     0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x0b,
 ];
 
+#[hax_lib::attributes]
 impl PreHash for SHAKE128_PH {
     fn oid() -> PreHashOID {
         SHAKE128_OID
     }
 
     #[inline(always)]
+    #[hax_lib::requires(output.len() == 32)]
+    #[hax_lib::ensures(|_| future(output).len() == output.len())]
     fn hash<Shake128: hash_functions::shake128::Xof>(message: &[U8], output: &mut [U8]) {
         #[cfg(not(eurydice))]
         debug_assert_eq!(output.len(), 32);
