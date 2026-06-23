@@ -70,7 +70,9 @@ pub(crate) mod shake128 {
     pub(crate) const BLOCK_SIZE: usize = 168;
     pub(crate) const FIVE_BLOCKS_SIZE: usize = BLOCK_SIZE * 5;
 
+    #[hax_lib::attributes]
     pub(crate) trait Xof {
+        #[hax_lib::ensures(|_| future(out).len() == out.len())]
         fn shake128(input: &[U8], out: &mut [U8]);
     }
 
