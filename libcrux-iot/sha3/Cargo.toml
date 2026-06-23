@@ -36,13 +36,18 @@ full-unroll = []
 unbuffered-xof = []
 
 # Turn on secret-independence checking via `libcrux-secrets`
-check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-traits/check-secret-independence"]
+check-secret-independence = [
+    "libcrux-secrets/check-secret-independence",
+    "libcrux-traits/check-secret-independence",
+]
 
 [dev-dependencies]
 criterion = "0.5.1"
 hex = "0.4.3"
 rand = "0.8.5"
 pretty_env_logger = "0.5.0"
+hacspec_sha3 = { git = "https://github.com/cryspen/libcrux.git", rev = "8470b57c228f12c81b27eb5abcba298729a72826" }
+proptest = "1.2.0"
 libcrux-kats = { workspace = true, features = ["sha3"] }
 
 [lints]

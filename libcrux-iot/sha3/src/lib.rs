@@ -73,7 +73,8 @@ mod impl_digest_trait;
 pub use impl_digest_trait::*;
 
 /// The Digest Algorithm.
-#[cfg_attr(not(eurydice), derive(Copy, Clone, Debug, PartialEq))]
+#[cfg_attr(not(eurydice), derive(Copy, Clone, PartialEq))]
+#[cfg_attr(not(any(eurydice, hax_backend_lean)), derive(Debug))]
 #[repr(u32)]
 pub enum Algorithm {
     /// SHA3 224
