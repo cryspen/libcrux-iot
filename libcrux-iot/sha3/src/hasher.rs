@@ -1,19 +1,42 @@
 use crate::*;
 
-const SHA3_224_LEN: usize = 28;
-const SHA3_256_LEN: usize = 32;
-const SHA3_384_LEN: usize = 48;
-const SHA3_512_LEN: usize = 64;
+const SHA3_224_RATE: usize = 144;
+const SHA3_256_RATE: usize = 136;
+const SHA3_384_RATE: usize = 104;
+const SHA3_512_RATE: usize = 72;
 
-macro_rules! impl_hash_traits {
-    ($type:ident, $hasher:ident, $len:expr, $method:expr) => {
-        #[doc = concat!("A struct that implements [`libcrux_traits::digest`] traits.")]
-        #[doc = concat!("\n\n")]
-        #[doc = concat!("[`",stringify!($hasher), "`] is a convenient hasher for this struct.")]
-        pub struct $type;
+use crate::keccak::KeccakSpongeState;
 
-        #[doc = concat!("A hasher for [`",stringify!($type), "`].")]
-        pub type $hasher = libcrux_traits::digest::Hasher<$len, $type>;
+macro_rules! impl_incremental_hash {
+    ($type:ident, $len:expr, $rate:expr, $method:expr) => {
+        /// A type that allows incremental hashing."
+        ///
+        /// This type also implements the array-ref and slice one-shot hashing [`libcrux_traits::digest`] traits."
+        pub struct $type {
+            inner: KeccakSpongeState<$rate>,
+        }
+
+        impl $type {
+            /// Create a new incremental hasher state.
+            pub fn new() -> Self {
+                Self {
+                    inner: KeccakSpongeState::new(),
+                }
+            }
+
+            /// Update the hasher state with the provided payload.
+            pub fn update(&mut self, payload: &[U8]) {
+                self.inner.absorb(payload);
+            }
+
+            /// Consume the hasher state and return the digest.
+            pub fn finish(mut self) -> [U8; $len] {
+                self.inner.absorb_final::<0x06>(&[]);
+                let mut out = [U8(0); $len];
+                self.inner.squeeze(&mut out);
+                out
+            }
+        }
 
         #[cfg_attr(hax_backend_lean, charon::exclude)]
         impl libcrux_traits::digest::arrayref::Hash<$len> for $type {
@@ -39,10 +62,10 @@ macro_rules! impl_hash_traits {
     };
 }
 
-impl_hash_traits!(Sha3_224, Sha3_224Hasher, SHA3_224_LEN, sha224_ema);
-impl_hash_traits!(Sha3_256, Sha3_256Hasher, SHA3_256_LEN, sha256_ema);
-impl_hash_traits!(Sha3_384, Sha3_384Hasher, SHA3_384_LEN, sha384_ema);
-impl_hash_traits!(Sha3_512, Sha3_512Hasher, SHA3_512_LEN, sha512_ema);
+impl_incremental_hash!(Sha3_224, SHA3_224_DIGEST_SIZE, SHA3_224_RATE, sha224_ema);
+impl_incremental_hash!(Sha3_256, SHA3_256_DIGEST_SIZE, SHA3_256_RATE, sha256_ema);
+impl_incremental_hash!(Sha3_384, SHA3_384_DIGEST_SIZE, SHA3_384_RATE, sha384_ema);
+impl_incremental_hash!(Sha3_512, SHA3_512_DIGEST_SIZE, SHA3_512_RATE, sha512_ema);
 
 // Implement the slice hash trait
 // This is excluded for the hax extraction
@@ -51,8 +74,8 @@ impl_hash_traits!(Sha3_512, Sha3_512Hasher, SHA3_512_LEN, sha512_ema);
 mod slice {
     use super::*;
 
-    libcrux_traits::digest::slice::impl_hash_trait!(Sha3_224 => SHA3_224_LEN);
-    libcrux_traits::digest::slice::impl_hash_trait!(Sha3_256 => SHA3_256_LEN);
-    libcrux_traits::digest::slice::impl_hash_trait!(Sha3_384 => SHA3_384_LEN);
-    libcrux_traits::digest::slice::impl_hash_trait!(Sha3_512 => SHA3_512_LEN);
+    libcrux_traits::digest::slice::impl_hash_trait!(Sha3_224 => SHA3_224_DIGEST_SIZE);
+    libcrux_traits::digest::slice::impl_hash_trait!(Sha3_256 => SHA3_256_DIGEST_SIZE);
+    libcrux_traits::digest::slice::impl_hash_trait!(Sha3_384 => SHA3_384_DIGEST_SIZE);
+    libcrux_traits::digest::slice::impl_hash_trait!(Sha3_512 => SHA3_512_DIGEST_SIZE);
 }

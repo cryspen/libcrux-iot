@@ -8,6 +8,10 @@
 //! provided digest buffers (`*_ema` variants, short for External Memory
 //! Allocation).
 //!
+//! The types [`Sha3_224`], [`Sha3_256`], [`Sha3_384`], and [`Sha3_512`]
+//! provide an incremental hashing API, where an `update(payload)` method
+//! can be called multiple times, before `finish()` returns the digest.
+//!
 //! In addition, an incremental, input-buffering interface (i.e. `init`,
 //! `absorb`, `absorb_final` and `squeeze` functions) is provided for the
 //! SHAKE functions.
