@@ -2701,9 +2701,7 @@ pub(crate) fn keccak<const RATE: usize, const DELIM: u8>(data: &[U8], out: &mut 
         squeeze_first_block::<RATE>(&s, out);
         let mut offset = RATE;
         for _i in 1..blocks {
-            hax_lib::loop_invariant!(|_i: usize| {
-                out.len() == outlen && offset == _i * RATE
-            });
+            hax_lib::loop_invariant!(|_i: usize| { out.len() == outlen && offset == _i * RATE });
             squeeze_next_block::<RATE>(&mut s, &mut out[offset..]);
             offset += RATE;
         }
