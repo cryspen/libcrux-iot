@@ -26,11 +26,13 @@ pub fn subtract(lhs: &mut Coefficients, rhs: &Coefficients) {
 
 #[inline(always)]
 #[hax_lib::requires(n < 64)]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 pub(crate) fn get_n_least_significant_bits(n: u8, value: U64) -> U64 {
     value & ((1u64 << n).wrapping_sub(1)) // XXX: Get rid of wrapping sub
 }
 
 #[inline(always)]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 pub(crate) fn montgomery_reduce_element(value: I64) -> FieldElementTimesMontgomeryR {
     let t = get_n_least_significant_bits(MONTGOMERY_SHIFT, value.as_u64())
         .wrapping_mul(INVERSE_OF_MODULUS_MOD_MONTGOMERY_R);
@@ -45,6 +47,7 @@ pub(crate) fn montgomery_reduce_element(value: I64) -> FieldElementTimesMontgome
 }
 
 #[inline(always)]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 pub(crate) fn montgomery_multiply_fe_by_fer(
     fe: FieldElement,
     fer: FieldElementTimesMontgomeryR,

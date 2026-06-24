@@ -9,6 +9,8 @@ use super::{
 use crate::simd::traits::{COEFFICIENTS_IN_SIMD_UNIT, SIMD_UNITS_IN_RING_ELEMENT};
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 pub fn simd_unit_invert_ntt_at_layer_0(
     simd_unit: &mut Coefficients,
     zeta0: i32,
@@ -34,6 +36,8 @@ pub fn simd_unit_invert_ntt_at_layer_0(
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 pub fn simd_unit_invert_ntt_at_layer_1(simd_unit: &mut Coefficients, zeta0: i32, zeta1: i32) {
     let a_minus_b = simd_unit.values[2].wrapping_sub(simd_unit.values[0]);
     simd_unit.values[0] = simd_unit.values[0].wrapping_add(simd_unit.values[2]);
@@ -53,6 +57,8 @@ pub fn simd_unit_invert_ntt_at_layer_1(simd_unit: &mut Coefficients, zeta0: i32,
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 pub fn simd_unit_invert_ntt_at_layer_2(simd_unit: &mut Coefficients, zeta: i32) {
     let a_minus_b = simd_unit.values[4].wrapping_sub(simd_unit.values[0]);
     simd_unit.values[0] = simd_unit.values[0].wrapping_add(simd_unit.values[4]);
@@ -72,9 +78,12 @@ pub fn simd_unit_invert_ntt_at_layer_2(simd_unit: &mut Coefficients, zeta: i32) 
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 fn invert_ntt_at_layer_0(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
     #[inline(always)]
     #[hax_lib::requires(index < SIMD_UNITS_IN_RING_ELEMENT)]
+    #[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
     fn round(
         re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT],
         index: usize,
@@ -121,9 +130,12 @@ fn invert_ntt_at_layer_0(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 fn invert_ntt_at_layer_1(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
     #[inline(always)]
     #[hax_lib::requires(index < SIMD_UNITS_IN_RING_ELEMENT)]
+    #[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
     fn round(
         re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT],
         index: usize,
@@ -168,8 +180,11 @@ fn invert_ntt_at_layer_1(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 fn invert_ntt_at_layer_2(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
     #[hax_lib::requires(index < SIMD_UNITS_IN_RING_ELEMENT)]
+    #[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
     fn round(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT], index: usize, zeta1: i32) {
         simd_unit_invert_ntt_at_layer_2(&mut re[index], zeta1);
     }
@@ -209,6 +224,8 @@ fn invert_ntt_at_layer_2(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 #[hax_lib::requires(OFFSET.to_int() + 2.to_int() * STEP_BY.to_int() <= SIMD_UNITS_IN_RING_ELEMENT.to_int())]
 fn outer_3_plus<const OFFSET: usize, const STEP_BY: usize, const ZETA: i32>(
     re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT],
@@ -225,6 +242,8 @@ fn outer_3_plus<const OFFSET: usize, const STEP_BY: usize, const ZETA: i32>(
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 fn invert_ntt_at_layer_3(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
     const STEP: usize = 8; // 1 << LAYER;
     const STEP_BY: usize = 1; // step / COEFFICIENTS_IN_SIMD_UNIT;
@@ -248,6 +267,8 @@ fn invert_ntt_at_layer_3(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 fn invert_ntt_at_layer_4(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
     const STEP: usize = 16; // 1 << LAYER;
     const STEP_BY: usize = 2; // step / COEFFICIENTS_IN_SIMD_UNIT;
@@ -263,6 +284,8 @@ fn invert_ntt_at_layer_4(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 fn invert_ntt_at_layer_5(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
     const STEP: usize = 32; // 1 << LAYER;
     const STEP_BY: usize = 4; // step / COEFFICIENTS_IN_SIMD_UNIT;
@@ -274,6 +297,8 @@ fn invert_ntt_at_layer_5(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 fn invert_ntt_at_layer_6(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
     const STEP: usize = 64; // 1 << LAYER;
     const STEP_BY: usize = 8; // step / COEFFICIENTS_IN_SIMD_UNIT;
@@ -283,6 +308,8 @@ fn invert_ntt_at_layer_6(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
 }
 
 #[inline(always)]
+#[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 fn invert_ntt_at_layer_7(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
     const STEP: usize = 128; // 1 << LAYER;
     const STEP_BY: usize = 16; // step / COEFFICIENTS_IN_SIMD_UNIT;
@@ -291,9 +318,7 @@ fn invert_ntt_at_layer_7(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
 }
 
 #[hax_lib::fstar::options("--z3rlimit 200 --split_queries always")]
-#[hax_lib::fstar::verification_status(lax)] // XXX: This is to make progress
-                                            // on other modules, before
-                                            // resolving the Z3 issues here.
+#[hax_lib::fstar::before(r#"[@@ "opaque_to_smt"]"#)]
 pub(crate) fn invert_ntt_montgomery(re: &mut [Coefficients; SIMD_UNITS_IN_RING_ELEMENT]) {
     invert_ntt_at_layer_0(re);
     invert_ntt_at_layer_1(re);
