@@ -68,9 +68,9 @@ pub const SHA3_384_DIGEST_SIZE: usize = 48;
 pub const SHA3_512_DIGEST_SIZE: usize = 64;
 
 #[cfg(not(any(hax, eurydice)))]
-mod impl_digest_trait;
+mod hasher;
 #[cfg(not(any(hax, eurydice)))]
-pub use impl_digest_trait::*;
+pub use hasher::*;
 
 /// The Digest Algorithm.
 #[cfg_attr(not(eurydice), derive(Copy, Clone, PartialEq))]
