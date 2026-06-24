@@ -147,11 +147,10 @@ theorem iterate_keccak_f_zero
 
 /-! ### Main theorem: `keccak.keccak_keccak_spec` (blocks = 0 branch).
 
-We land the `blocks = 0` case end-to-end. The post is the textbook
-equality-form. The `blocks ≥ 1` branch is gated by a non-trivial
-chain through `iterate_keccak_f`-totality which depends on `s_b k`
-being explicitly computed by impl-side `keccakf1600` calls — that
-chain is partially staged but not closed in this dispatch. -/
+This lemma lands the `blocks = 0` case end-to-end; the post is the textbook
+equality-form. The `blocks ≥ 1` case is handled separately by
+`keccak.keccak_keccak_spec_blocks_nonzero`, and the two branches are combined
+in the top-level `keccak.keccak_keccak_spec`. -/
 
 -- Set higher heartbeats for this composition Triple.
 set_option maxHeartbeats 16000000 in
