@@ -372,7 +372,7 @@ pub mod incremental {
         state: crate::state::KeccakState,
     }
 
-    use crate::keccak::KeccakXofState;
+    use crate::keccak::KeccakSpongeState;
     #[cfg(feature = "unbuffered-xof")]
     use crate::keccak::{
         absorb_final, squeeze_first_block, squeeze_first_five_blocks, squeeze_first_three_blocks,
@@ -387,12 +387,12 @@ pub mod incremental {
 
     /// Input-buffering SHAKE128 state
     pub struct Shake128Xof {
-        state: KeccakXofState<168>,
+        state: KeccakSpongeState<168>,
     }
 
     /// Input-buffering SHAKE256 state
     pub struct Shake256Xof {
-        state: KeccakXofState<136>,
+        state: KeccakSpongeState<136>,
     }
 
     /// Interface for an input-buffering Extendable Output Function
@@ -443,7 +443,7 @@ pub mod incremental {
     impl Xof<168> for Shake128Xof {
         fn new() -> Self {
             Self {
-                state: KeccakXofState::<168>::new(),
+                state: KeccakSpongeState::<168>::new(),
             }
         }
         #[hax_lib::requires(self.state.buf_len < 168)]
@@ -465,7 +465,7 @@ pub mod incremental {
     impl Xof<136> for Shake256Xof {
         fn new() -> Self {
             Self {
-                state: KeccakXofState::<136>::new(),
+                state: KeccakSpongeState::<136>::new(),
             }
         }
 

@@ -10,8 +10,8 @@ use libcrux_secrets::{Declassify, U32};
 use crate::state::KeccakState;
 
 /// The internal keccak state that can also buffer inputs to absorb.
-/// This is used in the general xof APIs.
-pub(crate) struct KeccakXofState<const RATE: usize> {
+/// This is used in the general xof APIs and the incremental hashers in [`crate::hasher`].
+pub(crate) struct KeccakSpongeState<const RATE: usize> {
     inner: KeccakState,
 
     // Buffer inputs on absorb.
@@ -25,7 +25,7 @@ pub(crate) struct KeccakXofState<const RATE: usize> {
 }
 
 #[hax_lib::attributes]
-impl<const RATE: usize> KeccakXofState<RATE> {
+impl<const RATE: usize> KeccakSpongeState<RATE> {
     /// An all zero block
     pub(crate) fn zero_block() -> [U8; RATE] {
         [0; RATE].classify()
@@ -200,7 +200,7 @@ impl<const RATE: usize> KeccakXofState<RATE> {
 #[inline(always)]
 #[hax_lib::requires(RATE == 168 || RATE == 144 || RATE == 136 || RATE == 104 || RATE == 72)]
 #[hax_lib::fstar::options("--z3rlimit 60")]
-fn _squeeze<const RATE: usize>(keccak_state: &mut KeccakXofState<RATE>, out: &mut [U8]) {
+fn _squeeze<const RATE: usize>(keccak_state: &mut KeccakSpongeState<RATE>, out: &mut [U8]) {
     if keccak_state.sponge {
         // If we called `squeeze` before, call f1600 first.
         // We do it this way around so that we don't call f1600 at the end
