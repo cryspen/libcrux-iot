@@ -2612,7 +2612,7 @@ pub(crate) fn absorb_final<const RATE: usize, const DELIM: u8>(
     blocks[len] = DELIM.classify();
     blocks[RATE - 1] |= 0x80;
     s.load_block_full::<RATE>(&blocks, 0);
-    keccakf1600(s)
+    keccakf1600(s);
 }
 
 #[inline(always)]
