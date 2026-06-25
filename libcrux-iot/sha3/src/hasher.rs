@@ -12,6 +12,7 @@ macro_rules! impl_incremental_hash {
         /// A type that allows incremental hashing."
         ///
         /// This type also implements the array-ref and slice one-shot hashing [`libcrux_traits::digest`] traits."
+        #[derive(Clone)]
         pub struct $type {
             inner: KeccakSpongeState<$rate>,
         }

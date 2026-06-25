@@ -11,6 +11,7 @@ use crate::state::KeccakState;
 
 /// The internal keccak state that can also buffer inputs to absorb.
 /// This is used in the general xof APIs and the incremental hashers in [`crate::hasher`].
+#[derive(Clone)]
 pub(crate) struct KeccakSpongeState<const RATE: usize> {
     inner: KeccakState,
 
