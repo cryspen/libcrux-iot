@@ -1,4 +1,6 @@
-use libcrux_secrets::{CastOps as _, Classify as _, Declassify as _, IntOps as _, U8};
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::IntOps as _;
+use libcrux_secrets::{CastOps as _, Classify as _, Declassify as _, U8};
 
 use crate::{helper::cloop, simd::portable::vector_type::Coefficients};
 

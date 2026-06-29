@@ -1,6 +1,8 @@
 #[cfg(hax)]
 use hax_lib::ToInt;
-use libcrux_secrets::{Classify as _, IntOps as _};
+use libcrux_secrets::Classify as _;
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::IntOps as _;
 
 use super::{
     arithmetic::{self, montgomery_multiply_by_constant, montgomery_multiply_fe_by_fer},

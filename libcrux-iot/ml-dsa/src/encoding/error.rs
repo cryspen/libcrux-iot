@@ -3,7 +3,7 @@
 use libcrux_secrets::U8;
 
 #[cfg(hax)]
-use crate::{constants::error_ring_element_size, simd::traits::SIMD_UNITS_IN_RING_ELEMENT};
+use crate::simd::traits::SIMD_UNITS_IN_RING_ELEMENT;
 use crate::{
     constants::Eta, helper::cloop, ntt::ntt, polynomial::PolynomialRingElement,
     simd::traits::Operations,

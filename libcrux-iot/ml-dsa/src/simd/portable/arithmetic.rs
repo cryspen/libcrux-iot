@@ -1,4 +1,6 @@
-use libcrux_secrets::{CastOps as _, Classify as _, Declassify as _, IntOps as _, I32, I64, U64};
+#[cfg(feature = "check-secret-independence")]
+use libcrux_secrets::IntOps as _;
+use libcrux_secrets::{CastOps as _, Classify as _, Declassify as _, I32, I64, U64};
 
 use super::vector_type::{Coefficients, FieldElement};
 use crate::{

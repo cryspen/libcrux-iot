@@ -76,6 +76,7 @@ impl<const SIZE: usize> MLDSASigningKey<SIZE> {
     }
 }
 
+#[cfg(not(hax))]
 macro_rules! impl_non_hax_types {
     ($name:ident) => {
         impl<const SIZE: usize> $name<SIZE> {
