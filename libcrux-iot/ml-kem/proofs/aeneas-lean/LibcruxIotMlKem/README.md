@@ -17,8 +17,11 @@ trust boundary.
 ## Matrix-level theorems
 
 All four main results are `mvcgen` Triples of the form
-`⦃ True ⦄ <impl> ⦃ ⇓ p => ⌜ <hacspec> (lift args…) = .ok (lift p…) ⌝ ⦄`
-— i.e. they link the Aeneas-extracted impl to the hacspec spec through a `lift` bridge.
+`⦃ True ⦄ <impl> ⦃ ⇓ p => ⌜ ∃ spec_out, <hacspec> (lift args…) = .ok spec_out ∧ <output p relates to spec_out> ⌝ ⦄`
+— i.e. they link the Aeneas-extracted impl to the hacspec spec through a `lift`
+bridge **on the inputs**, while the output side carries **no** `lift`: each impl
+output lane, sign-corrected into `[0, q)`, is stated to literally equal the spec
+residue `.val.val` (see [The lift bridge](#the-lift-bridge)).
 The `lift` bridge accounts for different representations of the input/output data:
 The impl uses potentially non-canonical values mod 3329,
 stores coefficients in the Montgomery domain, and
@@ -35,16 +38,27 @@ and a flat array of 256 field elements.
   libcrux_iot_ml_kem.matrix.compute_As_plus_e
     (vectortraitsOperationsInst := portable_ops_inst)
     t_as_ntt matrix_A s_as_ntt error_as_ntt s_cache accumulator
-⦃ ⇓ p => ⌜ hacspec_ml_kem.matrix.compute_As_plus_e
-              (lift_matrix_from_slice matrix_A K)
-              (lift_vec s_as_ntt) (lift_vec error_as_ntt)
-            = .ok (lift_vec p.1) ⌝ ⦄ 
+⦃ ⇓ p => ⌜ ∃ spec_out,
+              hacspec_ml_kem.matrix.compute_As_plus_e
+                (lift_matrix_from_slice matrix_A K)
+                (lift_vec s_as_ntt) (lift_vec error_as_ntt) = .ok spec_out
+            ∧ (∀ r < K.val, ∀ ℓ < 256,
+                let x := (p.1.val[r]!).coefficients.val[ℓ/16]!.elements.val[ℓ%16]!.val
+                (x + (if x < 0 then 3329 else 0)).toNat
+                  = ((spec_out.val[r]!).val[ℓ]!).val.val) ⌝ ⦄
 ```
 
-The impl's `compute_As_plus_e`, lifted, equals
-the hacspec `compute_As_plus_e`. The matrix is read from a **stored**
-array, so this theorem is fully
-axiom-clean.
+The impl's `compute_As_plus_e` inputs are lifted into the hacspec spec, and the
+spec output `spec_out` is related to the impl output **without any lift on the
+output**: each impl coefficient — a Barrett representative in the symmetric range
+`|x| ≤ 3328`, so possibly negative — is sign-corrected into `[0, q)` by adding
+`q` when negative, and this **literally equals** the spec's canonical residue
+`.val.val`. No `mod`, no `ZMod`, no `lift_*` appears on the output; the sign-fix
+`if x < 0 then q else 0` is the whole audit surface. This strengthens the older
+`= .ok (lift_vec p.1)` form: it additionally certifies the output magnitude bound
+`|x| ≤ 3328` (threaded up from `barrett_reduce_fc`) and the exact representative
+correspondence. The matrix is read from a **stored** array, so this theorem is
+fully axiom-clean.
 
 ### L7.2 — encryption: `Âᵀ · r̂ + ê₁`
 
@@ -55,16 +69,24 @@ axiom-clean.
   libcrux_iot_ml_kem.matrix.compute_vector_u
     K (vectortraitsOperationsInst := portable_ops_inst) hash_functionsHashInst
     matrix_entry seed r_as_ntt error_1 result scratch cache accumulator
-⦃ ⇓ p => ⌜ hacspec_ml_kem.matrix.compute_vector_u
-              (lift_matrix_from_seed seed K)
-              (lift_vec_slice r_as_ntt K)
-              (lift_vec_slice error_1 K)
-            = .ok (lift_vec_slice p.2.1 K) ⌝ ⦄
+⦃ ⇓ p => ⌜ ∃ spec_out,
+              hacspec_ml_kem.matrix.compute_vector_u
+                (lift_matrix_from_seed seed K)
+                (lift_vec_slice r_as_ntt K)
+                (lift_vec_slice error_1 K)
+              = .ok spec_out
+            ∧ (∀ r < K.val, ∀ ℓ < 256,
+                let x := (p.2.1.val[r]!).coefficients.val[ℓ/16]!.elements.val[ℓ%16]!.val
+                (x + (if x < 0 then 3329 else 0)).toNat
+                  = ((spec_out.val[r]!).val[ℓ]!).val.val) ⌝ ⦄
 ```
-The impl's `compute_vector_u`, lifted, equals
-the hacspec `compute_vector_u`. Here the matrix is
-**sampled on the fly** from `seed` (`lift_matrix_from_seed`), so this
-theorem is conditional on the matrix-sampling leaf axiom **A1** (see
+The impl's `compute_vector_u` inputs are lifted into the hacspec spec, and the
+spec output `spec_out` is related to the impl output **without any lift on the
+output** — the same canonical-output form as L7.1: each impl lane is a symmetric
+Barrett representative `|x| ≤ 3328`, sign-corrected into `[0, q)` by adding `q`
+when negative, literally equal to the spec residue `.val.val`. Here the matrix is
+**sampled on the fly** from `seed` (`lift_matrix_from_seed`), so this theorem is
+conditional on the matrix-sampling leaf axiom **A1** (see
 [Assumptions](#assumptions-trust-boundary)).
 
 ### L7.3 — encryption: `t̂ · r̂ + e₂ + Decompress(message)`
@@ -77,17 +99,24 @@ theorem is conditional on the matrix-sampling leaf axiom **A1** (see
     K (vectortraitsOperationsInst := portable_ops_inst)
     public_key t_as_ntt_entry r_as_ntt error_2 message result scratch
     cache accumulator
-⦃ ⇓ p => ⌜ hacspec_ml_kem.matrix.compute_ring_element_v
-              (lift_t_as_ntt_from_public_key public_key K)
-              (lift_vec_slice r_as_ntt K)
-              (lift_poly error_2) (lift_poly message)
-            = .ok (lift_poly p.2.1) ⌝ ⦄
+⦃ ⇓ p => ⌜ ∃ spec_out,
+              hacspec_ml_kem.matrix.compute_ring_element_v
+                (lift_t_as_ntt_from_public_key public_key K)
+                (lift_vec_slice r_as_ntt K)
+                (lift_poly error_2) (lift_poly message)
+              = .ok spec_out
+            ∧ (∀ ℓ < 256,
+                let x := (p.2.1.coefficients.val[ℓ/16]!).elements.val[ℓ%16]!.val
+                (x + (if x < 0 then 3329 else 0)).toNat
+                  = (spec_out.val[ℓ]!).val.val) ⌝ ⦄
 ```
 
-The impl's `compute_ring_element_v`, lifted, equals
-the hacspec `compute_ring_element_v`. The first vector `t̂` is **deserialized**
-from the public key (`lift_t_as_ntt_from_public_key`), so this theorem
-is conditional on the deserialization leaf axiom **A2** (see
+The impl's `compute_ring_element_v` inputs are lifted into the hacspec spec, and
+the spec output `spec_out` is related to the impl output **without any lift on
+the output** (canonical-output form; symmetric Barrett representative
+`|x| ≤ 3328` sign-corrected into `[0, q)`). The first vector `t̂` is
+**deserialized** from the public key (`lift_t_as_ntt_from_public_key`), so this
+theorem is conditional on the deserialization leaf axiom **A2** (see
 [Assumptions](#assumptions-trust-boundary)).
 
 ### L7.4 — decryption: `NTT⁻¹(v̂ − ŝ · û)`
@@ -99,15 +128,22 @@ is conditional on the deserialization leaf axiom **A2** (see
   libcrux_iot_ml_kem.matrix.compute_message
     (vectortraitsOperationsInst := portable_ops_inst)
     v secret_as_ntt u_as_ntt result scratch accumulator
-⦃ ⇓ p => ⌜ hacspec_ml_kem.matrix.compute_message
-              (lift_poly v)
-              (lift_vec secret_as_ntt) (lift_vec u_as_ntt)
-            = .ok (lift_poly p.1) ⌝ ⦄ 
+⦃ ⇓ p => ⌜ ∃ spec_out,
+              hacspec_ml_kem.matrix.compute_message
+                (lift_poly v)
+                (lift_vec secret_as_ntt) (lift_vec u_as_ntt)
+              = .ok spec_out
+            ∧ (∀ ℓ < 256,
+                let x := (p.1.coefficients.val[ℓ/16]!).elements.val[ℓ%16]!.val
+                (x + (if x < 0 then 3329 else 0)).toNat
+                  = (spec_out.val[ℓ]!).val.val) ⌝ ⦄
 ```
 
-The impl's `compute_message`, lifted, equals
-the hacspec `compute_message`. All inputs are passed-in polynomials,
-so this theorem is fully axiom-clean.
+The impl's `compute_message` inputs are lifted into the hacspec spec, and the
+spec output `spec_out` is related to the impl output **without any lift on the
+output** (canonical-output form; symmetric Barrett representative `|x| ≤ 3328`
+sign-corrected into `[0, q)`). All inputs are passed-in polynomials, so this
+theorem is fully axiom-clean.
 
 ## Polynomial-level theorems
 
@@ -188,6 +224,34 @@ the (signed, possibly non-canonical) **Montgomery** domain; the hacspec
 works over `parameters.FieldElement` (a `u16` wrapping `ZMod 3329`). The
 lift family (in [`Spec/Lift.lean`](Spec/Lift.lean), namespace
 `libcrux_iot_ml_kem.Spec.Lift`) maps impl values to canonical spec values.
+
+All four L7 POSTs lift their *inputs* into the spec (unavoidable — the hacspec is
+typed in `FieldElement`), so each is only as strong as `lift` is
+information-preserving on those inputs. A reviewer need not read the `lift_*`
+bodies to trust them: the `§Audit` section at the end of
+[`Spec/Lift.lean`](Spec/Lift.lean) proves the bridge is **faithful**
+(`lift_fe_spec`: projecting a lifted lane back yields the impl lane mod
+`q = 3329`) and **injective up to `q`** (`lift_fe_inj_mod`: a
+constant/collapsing lift is impossible), then lifts both facts up the tower
+to `lift_poly_*`, `lift_vec_*`, and `lift_matrix_from_slice_*`. Reading
+those lemma *statements* is enough to confirm each input lift expresses genuine
+spec↔impl equivalence, coefficient-by-coefficient mod `q` — not a vacuous
+equation. (The input lift equates residue classes mod `q`; it deliberately does
+not constrain the concrete i16 representative — see the trust boundary.)
+
+**No `lift` on the output — all four L7 POSTs.** Rather than an equation *through*
+`lift` on the output side, each POST relates the impl output to the spec residue
+by a *literal* `Nat` equality with an explicit sign-fix,
+`(x + if x < 0 then q else 0).toNat = spec.val.val`. This needs the impl output
+bound `|x| ≤ 3328`, threaded up from `barrett_reduce_fc` through the tail
+poly-level op (`add_standard_error_reduce_fc` for L7.1, `add_error_reduce_fc` for
+L7.2, `add_message_error_reduce_fc` for L7.3, `subtract_reduce_fc` for L7.4), the
+loop invariants, and the per-row/finalize glue. The residue↔canonical step is
+`canonical_rep_eq` (pure arithmetic) plus the §Audit getters
+(`lift_poly_getElem`/`lift_vec_getElem`/`lift_vec_slice_lane`) and
+`Element.lift_fe_val_val`. The payoff: every L7 POST additionally certifies the
+output magnitude bound and the exact representative, so there is no residual
+"concrete representative" gap on the output.
 
 ### Hierarchy (L0 → L7)
 
