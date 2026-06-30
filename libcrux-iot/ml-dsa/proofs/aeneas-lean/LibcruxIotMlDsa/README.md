@@ -136,7 +136,6 @@ trusted extracted spec, not an independently trusted artifact.
 
 - For running the proofs:
   - Lean 4 toolchain `leanprover/lean4:v4.30.0-rc2` (pinned in `lean-toolchain`).
-  - Hacspec ML-DSA spec from https://github.com/cryspen/libcrux at commit `a4cfb1ebf26431b2ee81f0dc19383158aaf397b7`
 - For extraction:
   - Hax at commit `ffdf432705d409b62ec025d253a340234b59766f`
     (not publicly available yet, https://github.com/cryspen/hax-evit)
