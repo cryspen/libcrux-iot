@@ -59,3 +59,6 @@ for a crude benchmark of ML-DSA 87.
 
 Other parameter sets are available behind `mldsa44/65` and
 `mlkem512/768` features.
+
+## Formal Verification
+The implementations in this crate have received formal verification. For details on what was proven and the methodology employed, please refer to `VERIFICATION.md`.
