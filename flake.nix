@@ -15,6 +15,12 @@
     hax.url = "github:hacspec/hax/87ba96831ecfeb7dbb54efcf97036fbc5f25bc71";
     fstar-pinned.url = "github:FStarLang/FStar/v2025.10.06";
 
+    # Lean LSP MCP server (https://github.com/oOo0oOo/lean-lsp-mcp), used by
+    # the `aeneas-lean` devShell. Its flake exposes `packages.<system>.default`
+    # providing the `lean-lsp-mcp` binary, so we pin it here instead of
+    # fetching from PyPI via `uvx` at runtime.
+    lean-lsp-mcp.url = "github:oOo0oOo/lean-lsp-mcp";
+
     # --- Aeneas/Lean proof toolchain ---------------------------------------
     # Used by the `aeneas-lean` devShell, which serves *all* the Aeneas/Lean
     # proofs in this repo (currently sha3 and ml-kem; they share one toolchain).
@@ -184,6 +190,13 @@
             # Proving: elan provisions the pinned Lean toolchain (from the
             # lean-toolchain file) and provides `lake`.
             pkgs.elan
+
+            # Lean LSP MCP server, pinned via the `lean-lsp-mcp` flake input
+            # (provides the `lean-lsp-mcp` binary). It drives the Lean
+            # toolchain above and uses `ripgrep` (`rg`) for its local-search
+            # tools.
+            inputs.lean-lsp-mcp.packages.${system}.default
+            pkgs.ripgrep
 
             # Common build deps for lake / native crates.
             pkgs.git
