@@ -1,5 +1,7 @@
 # Performance Measurements
 
+Measurements taken at revision `95a43e554866d4eb2db411c066ca0fb528eddbfd`.
+
 ## Cycle-minimizing Configuration (16 MHz)
 
 ### ML-KEM
