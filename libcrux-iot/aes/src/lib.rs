@@ -26,8 +26,10 @@
 //! let mut ct = [0; 43];
 //! let mut pt_out = [0; 43];
 //!
-//! k.encrypt(&mut ct, &mut tag, &nonce, b"", pt.classify_ref()).unwrap();
-//! k.decrypt(pt_out.classify_ref_mut(), &nonce, b"", &ct, &tag).unwrap();
+//! k.encrypt(&mut ct, &mut tag, &nonce, b"", pt.classify_ref())
+//!     .unwrap();
+//! k.decrypt(pt_out.classify_ref_mut(), &nonce, b"", &ct, &tag)
+//!     .unwrap();
 //! assert_eq!(pt, &pt_out);
 //! ```
 //!
@@ -85,8 +87,10 @@ mod aes_gcm;
 /// let mut ct = [0; 43];
 /// let mut pt_out = [0; 43];
 ///
-/// k.encrypt(&mut ct, &mut tag, &nonce, b"", pt.classify_ref()).unwrap();
-/// k.decrypt(pt_out.classify_ref_mut(), &nonce, b"", &ct, &tag).unwrap();
+/// k.encrypt(&mut ct, &mut tag, &nonce, b"", pt.classify_ref())
+///     .unwrap();
+/// k.decrypt(pt_out.classify_ref_mut(), &nonce, b"", &ct, &tag)
+///     .unwrap();
 /// assert_eq!(pt, &pt_out);
 /// ```
 ///
@@ -102,16 +106,20 @@ mod aes_gcm;
 /// let mut tag_bytes = [0; TAG_LEN];
 /// let tag = algo.new_tag_mut(tag_bytes.classify_ref_mut()).unwrap();
 ///
-/// let key = algo.new_key((&[0; AesGcm128::KEY_LEN]).classify_ref()).unwrap();
+/// let key = algo
+///     .new_key((&[0; AesGcm128::KEY_LEN]).classify_ref())
+///     .unwrap();
 /// let nonce = algo.new_nonce((&[0; NONCE_LEN]).classify_ref()).unwrap();
 ///
 /// let pt = b"the quick brown fox jumps over the lazy dog";
 /// let mut ct = [0; 43];
 /// let mut pt_out = [0; 43];
 ///
-/// key.encrypt(&mut ct, tag, nonce, b"", pt.classify_ref()).unwrap();
+/// key.encrypt(&mut ct, tag, nonce, b"", pt.classify_ref())
+///     .unwrap();
 /// let tag = algo.new_tag(tag_bytes.classify_ref()).unwrap();
-/// key.decrypt(pt_out.classify_ref_mut(), nonce, b"", &ct, tag).unwrap();
+/// key.decrypt(pt_out.classify_ref_mut(), nonce, b"", &ct, tag)
+///     .unwrap();
 /// assert_eq!(pt, &pt_out);
 /// ```
 pub mod aes_gcm_128;
@@ -149,8 +157,10 @@ pub mod aes_gcm_128;
 /// let mut ct = [0; 43];
 /// let mut pt_out = [0; 43];
 ///
-/// k.encrypt(&mut ct, &mut tag, &nonce, b"", pt.classify_ref()).unwrap();
-/// k.decrypt(pt_out.classify_ref_mut(), &nonce, b"", &ct, &tag).unwrap();
+/// k.encrypt(&mut ct, &mut tag, &nonce, b"", pt.classify_ref())
+///     .unwrap();
+/// k.decrypt(pt_out.classify_ref_mut(), &nonce, b"", &ct, &tag)
+///     .unwrap();
 /// assert_eq!(pt, &pt_out);
 /// ```
 ///
@@ -166,16 +176,20 @@ pub mod aes_gcm_128;
 /// let mut tag_bytes = [0; TAG_LEN];
 /// let tag = algo.new_tag_mut(tag_bytes.classify_ref_mut()).unwrap();
 ///
-/// let key = algo.new_key((&[0; AesGcm256::KEY_LEN]).classify_ref()).unwrap();
+/// let key = algo
+///     .new_key((&[0; AesGcm256::KEY_LEN]).classify_ref())
+///     .unwrap();
 /// let nonce = algo.new_nonce((&[0; NONCE_LEN]).classify_ref()).unwrap();
 ///
 /// let pt = b"the quick brown fox jumps over the lazy dog";
 /// let mut ct = [0; 43];
 /// let mut pt_out = [0; 43];
 ///
-/// key.encrypt(&mut ct, tag, nonce, b"", pt.classify_ref()).unwrap();
+/// key.encrypt(&mut ct, tag, nonce, b"", pt.classify_ref())
+///     .unwrap();
 /// let tag = algo.new_tag(tag_bytes.classify_ref()).unwrap();
-/// key.decrypt(pt_out.classify_ref_mut(), nonce, b"", &ct, tag).unwrap();
+/// key.decrypt(pt_out.classify_ref_mut(), nonce, b"", &ct, tag)
+///     .unwrap();
 /// assert_eq!(pt, &pt_out);
 /// ```
 pub mod aes_gcm_256;
@@ -187,13 +201,13 @@ pub(crate) trait State {
     fn set_nonce(&mut self, nonce: &[u8]);
     fn encrypt<'a>(
         &mut self,
-        aad: impl core::iter::Iterator<Item = &'a u8>,
+        aad: impl core::iter::ExactSizeIterator<Item = &'a u8>,
         payload: &mut [u8],
         tag: &mut [u8],
     );
     fn decrypt<'a>(
         &mut self,
-        aad: impl core::iter::Iterator<Item = &'a u8>,
+        aad: impl core::iter::ExactSizeIterator<Item = &'a u8>,
         tag: &[u8],
         payload: &mut [u8],
     ) -> Result<(), DecryptError>;
@@ -255,7 +269,7 @@ pub use libcrux_traits::aead::arrayref::{DecryptError, EncryptError, KeyGenError
 pub(crate) fn encrypt<'a, S: State>(
     key: &[u8],
     nonce: &[u8],
-    aad: impl core::iter::Iterator<Item = &'a u8>,
+    aad: impl core::iter::ExactSizeIterator<Item = &'a u8>,
     payload: &mut [u8],
     tag: &mut [u8],
 ) -> Result<(), EncryptError> {
@@ -278,7 +292,7 @@ pub(crate) fn encrypt<'a, S: State>(
 pub(crate) fn decrypt<'a, S: State>(
     key: &[u8],
     nonce: &[u8],
-    aad: impl core::iter::Iterator<Item = &'a u8>,
+    aad: impl core::iter::ExactSizeIterator<Item = &'a u8>,
     tag: &[u8],
     payload: &mut [u8],
 ) -> Result<(), DecryptError> {
@@ -309,7 +323,7 @@ macro_rules! pub_crate_mod {
             pub fn encrypt<'a>(
                 key: &[u8],
                 nonce: &[u8],
-                aad: impl core::iter::Iterator<Item = &'a u8>,
+                aad: impl core::iter::ExactSizeIterator<Item = &'a u8>,
                 payload: &mut [u8],
                 tag: &mut [u8],
             ) -> Result<(), EncryptError> {
@@ -322,7 +336,7 @@ macro_rules! pub_crate_mod {
             pub fn decrypt<'a>(
                 key: &[u8],
                 nonce: &[u8],
-                aad: impl core::iter::Iterator<Item = &'a u8>,
+                aad: impl core::iter::ExactSizeIterator<Item = &'a u8>,
                 tag: &[u8],
                 payload: &mut [u8],
             ) -> Result<(), DecryptError> {

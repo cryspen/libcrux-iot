@@ -33,7 +33,7 @@ macro_rules! aesgcm {
 
             fn encrypt<'a>(
                 &mut self,
-                aad: impl core::iter::Iterator<Item = &'a u8>,
+                aad: impl core::iter::ExactSizeIterator<Item = &'a u8>,
                 payload: &mut [u8],
                 tag: &mut [u8],
             ) {
@@ -59,7 +59,7 @@ macro_rules! aesgcm {
 
             fn decrypt<'a>(
                 &mut self,
-                aad: impl core::iter::Iterator<Item = &'a u8>,
+                aad: impl core::iter::ExactSizeIterator<Item = &'a u8>,
                 tag: &[u8],
                 payload: &mut [u8],
             ) -> Result<(), DecryptError> {
